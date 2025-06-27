@@ -38,6 +38,9 @@ export type ChatProps = {
   actionBar?: React.ReactNode;
 };
 
+const speechFeatureFlagEnabled =
+  localStorage.getItem("speechFeatureFlag") === "true";
+
 export const Chat = (props: ChatProps) => {
   const {
     className = "",
@@ -50,7 +53,7 @@ export const Chat = (props: ChatProps) => {
     },
     actionBar,
   } = props;
-  const speech = allowedMessageTypes.speech;
+  const speech = speechFeatureFlagEnabled && allowedMessageTypes.speech;
 
   const [files, setFiles] = useState<File[]>([]);
   const onAddFiles = useCallback(

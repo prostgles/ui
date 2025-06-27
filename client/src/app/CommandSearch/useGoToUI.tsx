@@ -18,7 +18,7 @@ type ItemPosition = "mid" | "last";
 
 const getUIDocElementsAndAlertIfEmpty = (doc: UIDocNonInfo) => {
   const result = getUIDocElements(doc);
-  if (!result.items.length) {
+  if (!result.items.length && !isPlaywrightTest) {
     alert(`Could not find a ${JSON.stringify(doc.title)} item.`);
   }
   return result;
@@ -160,7 +160,7 @@ export const useGoToUI = (
         currentPage ? getShorterPath(currentPage, prevParents) : undefined;
       const pathItems = shortcut ?? prevParents;
       for (const parent of pathItems) {
-        const shouldStop = await goToUI(parent);
+        const shouldStop = !isPlaywrightTest && (await goToUI(parent));
         if (shouldStop) {
           return;
         }

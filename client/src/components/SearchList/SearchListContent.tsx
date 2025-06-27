@@ -39,6 +39,7 @@ export const SearchListContent = <M extends boolean = false>(
     onChange,
     onPressEnter,
     dataSignature,
+    leftContent,
   } = props;
   const multiSelect = !!onMultiToggle;
   const isSearch = variant?.startsWith("search");
@@ -143,6 +144,7 @@ export const SearchListContent = <M extends boolean = false>(
         }
         style={searchStyle}
       >
+        {leftContent}
         {!hasSearch ?
           multiSelect ?
             <div className="pl-1 py-p5 noselect text-1p5 ws-nowrap">

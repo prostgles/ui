@@ -655,6 +655,7 @@ export default class FormField extends React.Component<
                 }
               )
             }
+            asRow={variant === "row"}
             value={rawValue}
             required={required}
             multiSelect={multiSelect}

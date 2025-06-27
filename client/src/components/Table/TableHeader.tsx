@@ -280,7 +280,6 @@ export class TableHeader<
                       bottom: 0,
                       width: "30px",
                       cursor: "ew-resize",
-                      zIndex: 1,
                       marginRight: iCol === cols.length - 1 ? 0 : "-15px",
                     }}
                     onDoubleTap={(_, __, node) => {

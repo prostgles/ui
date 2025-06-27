@@ -170,7 +170,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             allowedMessageTypes={{
               speech: {
                 audio: true,
-                tts: false,
+                tts: true,
               },
               file: true,
             }}

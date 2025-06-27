@@ -71,7 +71,7 @@ export const navbarUIDoc = {
           selector: ".table-component",
           title: "User List",
           description: "List of all users in the system.",
-          itemSelector: ".table-row",
+          itemSelector: ".TableBody div[role='row']",
           itemContent: [
             {
               type: "smartform-popup",

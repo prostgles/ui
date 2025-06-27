@@ -10,6 +10,8 @@ import {
   type ColumnDisplayMode,
 } from "./ERDSchema/ERDSchema";
 import type { SchemaGraphProps } from "./SchemaGraph";
+import type { CASCADE } from "../SQLEditor/SQLCompletion/getPGObjects";
+import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
 
 export const SchemaGraphControls = ({
   columnColorMode,
@@ -18,12 +20,17 @@ export const SchemaGraphControls = ({
   setColumnColorMode,
   connectionId,
   dbs,
+  db,
   setColumnDisplayMode,
   setDisplayMode,
   setSchemaKey,
   schemaKey,
+  db_schema_filter,
 }: ReturnType<typeof useSchemaGraphControls> &
-  Pick<SchemaGraphProps, "dbs" | "connectionId">) => {
+  Pick<
+    SchemaGraphProps,
+    "dbs" | "db" | "connectionId" | "db_schema_filter"
+  >) => {
   return (
     <FlexRow
       className="w-full"
@@ -35,6 +42,27 @@ export const SchemaGraphControls = ({
         className="font-16   f-1 relative s-fit"
         style={{ fontWeight: "normal" }}
       >
+        <SchemaFilter
+          db={db}
+          db_schema_filter={db_schema_filter}
+          asSelect={{
+            btnProps: {
+              size: "small",
+            },
+            asRow: true,
+            className: "ml-auto",
+          }}
+          onChange={(newDbSchemaFilter) => {
+            dbs.connections.update(
+              {
+                id: connectionId,
+              },
+              {
+                db_schema_filter: newDbSchemaFilter,
+              },
+            );
+          }}
+        />
         <Select
           data-command="SchemaGraph.TopControls.tableRelationsFilter"
           value={displayMode}
@@ -157,12 +185,12 @@ export const CASCADE_LEGEND = {
       "Automatically deletes or updates related rows in the child table when a row in the parent table is deleted or updated",
   },
   RESTRICT: {
-    color: getCssVariableValue("--text-warning"),
+    color: getCssVariableValue("--b-warning"),
     title:
       "Prevents deletion or update of a parent row if there are dependent rows in the child table",
   },
-  NOACTION: {
-    color: getCssVariableValue("--text-warning"),
+  "NO ACTION": {
+    color: getCssVariableValue("--b-warning"),
     title:
       "Similar to RESTRICT, but the check is deferred until the end of the transaction (this is the default)",
   },
@@ -176,6 +204,6 @@ export const CASCADE_LEGEND = {
     title:
       "Sets the foreign key columns to their default values when the referenced row is deleted or updated",
   },
-} as const;
+} as const satisfies Record<CASCADE, { color: string; title: string }>;
 
 export type SchemaGraphDisplayMode = (typeof DISPLAY_MODES)[number]["key"];

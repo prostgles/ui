@@ -20,7 +20,7 @@ export type PGDatabase = {
   escaped_identifier: string;
 };
 
-type CASCADE =
+export type CASCADE =
   | "CASCADE"
   | "RESTRICT"
   | "SET NULL"
@@ -41,6 +41,7 @@ export type PGConstraint = {
   on_update_action: CASCADE | null;
   on_delete_action: CASCADE | null;
   table_oid: number;
+  ftable_oid: number | null;
 };
 
 export type PG_Role = {
@@ -941,7 +942,8 @@ export const PG_OBJECT_QUERIES = {
           WHEN 'd' THEN 'SET DEFAULT'
           ELSE NULL -- Should only be relevant for FKs
       END as on_update_action ,
-      c.conrelid as table_oid
+      c.conrelid as table_oid,
+      c.confrelid as ftable_oid
       FROM pg_catalog.pg_constraint c
       INNER JOIN pg_catalog.pg_class rel
         ON rel.oid = c.conrelid

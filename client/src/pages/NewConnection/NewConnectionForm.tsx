@@ -16,6 +16,7 @@ import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import ErrorComponent from "../../components/ErrorComponent";
 import { t } from "../../i18n/i18nUtils";
 import { getDBCloneQuery, SSL_MODES } from "./newConnectionUtils";
+import { SchemaFilter } from "./SchemaFilter";
 
 type DBProps = {
   origCon: Partial<Connection>;
@@ -325,43 +326,16 @@ export const NewConnectionForm = ({
               "data-command": "NewConnectionForm.MoreOptionsToggle",
             }}
           >
-            <FormField
-              id="schema_filter"
-              label={t.NewConnectionForm["Schema list"]}
-              optional={true}
-              multiSelect={true}
-              data-command="NewConnectionForm.schemaFilter"
-              fullOptions={
-                suggestions?.schemas?.map((s) => ({
-                  key: s.schema_name,
-                  subLabel: s.schema_owner,
-                })) ?? []
-              }
-              value={Object.keys(c.db_schema_filter || { public: 1 })}
-              disabledInfo={
-                !suggestions?.schemas ?
-                  t.NewConnectionForm["Must connect to see schemas"]
-                : undefined
-              }
-              onChange={(schema_keys) => {
+            <SchemaFilter
+              db_schema_filter={c.db_schema_filter}
+              db={dbProject}
+              onChange={(newDbSchemaFilter) => {
                 updateConnection({
                   type: "Standard",
-                  db_schema_filter: schema_keys.reduce(
-                    (acc, key) => ({
-                      ...acc,
-                      [key]:
-                        (
-                          Object.values(
-                            c.db_schema_filter || { a: 1 },
-                          ).includes(1)
-                        ) ?
-                          1
-                        : 0,
-                    }),
-                    {},
-                  ),
+                  db_schema_filter: newDbSchemaFilter,
                 });
               }}
+              asSelect={undefined}
             />
             <FormField
               id="timeout"

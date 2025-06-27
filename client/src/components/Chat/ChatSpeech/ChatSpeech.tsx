@@ -82,9 +82,6 @@ export const ChatSpeech = ({ onFinished, audio, tts }: P) => {
               onChange={(v) => setIsSpeechToTextEnabled(v)}
             />
           )}
-          {isSpeechToTextEnabled && speechToText.isListening && (
-            <div>{speechToText.text}</div>
-          )}
         </Popup>
       )}
     </>

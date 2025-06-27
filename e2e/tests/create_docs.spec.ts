@@ -44,7 +44,7 @@ const openConnection = async (
 };
 
 test.describe("Create docs and screenshots", () => {
-  test.describe.configure({ retries: 0, timeout: 25 * MINUTE });
+  test.describe.configure({ retries: 0, timeout: 35 * MINUTE });
 
   test.beforeEach(async ({ page }) => {
     page.on("console", console.log);

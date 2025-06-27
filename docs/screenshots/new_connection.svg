@@ -22,7 +22,7 @@
 --color-3: rgb(44, 44, 44); 
 --color-9: rgb(36, 36, 36); 
 --color-12: rgb(255, 255, 255); 
---color-4: rgb(107, 114, 128); 
+--color-4: rgb(75, 85, 99); 
 --color-8: rgb(77, 77, 77); 
 --shadow-5: drop-shadow(rgba(255, 255, 255, 0.075) 0px 0px 0.3px) drop-shadow(rgba(0, 0, 0, 0.05) 0px 0px 0px) drop-shadow(rgba(0, 0, 0, 0.02) 0px 0.3px 0.2px) drop-shadow(rgba(0, 0, 0, 0.043) 0px 0.9px 0.8px) drop-shadow(rgba(0, 0, 0, 0.09) 0px 3.5px 3px); 
 --color-6: rgb(244, 245, 247); 

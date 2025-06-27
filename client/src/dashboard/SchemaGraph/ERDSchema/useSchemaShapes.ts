@@ -185,13 +185,13 @@ export const useSchemaShapes = (
           .filter(isDefined);
 
         const box: Rectangle<typeof table, { width: number } | undefined> = {
-          id: table.name,
+          id: table.info.oid,
           type: "rectangle",
           coords: [x - PADDING, y - COL_SPACING - PADDING],
           w: rectangleContentWidth + 2 * PADDING,
           h: (cols.length + 1) * COL_SPACING + 2 * PADDING,
           fillStyle: getCssVariableValue("--bg-color-0"),
-          strokeStyle: getCssVariableValue("--text-2"),
+          strokeStyle: getCssVariableValue("--b-color-0"),
           lineWidth: 1,
           borderRadius: 12,
           children: [
@@ -218,12 +218,8 @@ export const useSchemaShapes = (
 
     const linkShapes: LinkLine[] = fkeys
       .flatMap((fkCons) => {
-        const tbl = nodeShapes.find(
-          (n) => n.id === fkCons.table_name && fkCons.schema === "public",
-        );
-        const ftbl = nodeShapes.find(
-          (n) => n.id === fkCons.ftable_name && fkCons.schema === "public",
-        );
+        const tbl = nodeShapes.find((n) => n.id === fkCons.table_oid);
+        const ftbl = nodeShapes.find((n) => n.id === fkCons.ftable_oid);
         if (!tbl || !ftbl) {
           if (displayMode !== "leaf") {
             console.warn("link not found", fkCons);
@@ -254,9 +250,9 @@ export const useSchemaShapes = (
               columnColorMode === "root" ?
                 (ftbl.data.rootColor ?? getCssVariableValue("--text-2"))
               : columnColorMode === "on-delete" ?
-                CASCADE_LEGEND[fkCons.on_delete_action ?? "NOACTION"]
+                CASCADE_LEGEND[fkCons.on_delete_action ?? "NO ACTION"].color
               : columnColorMode === "on-update" ?
-                CASCADE_LEGEND[fkCons.on_update_action ?? "NOACTION"]
+                CASCADE_LEGEND[fkCons.on_update_action ?? "NO ACTION"].color
               : getCssVariableValue("--text-2"),
           } satisfies LinkLine;
         });

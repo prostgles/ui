@@ -9,7 +9,10 @@ import { useSchemaShapes, type SchemaShape } from "./useSchemaShapes";
 
 export type ColumnDisplayMode = "none" | "all" | "references";
 export type ColumnColorMode = "default" | "root" | "on-update" | "on-delete";
-export type ERDSchemaProps = Omit<SchemaGraphProps, "theme"> &
+export type ERDSchemaProps = Omit<
+  SchemaGraphProps,
+  "theme" | "db_schema_filter"
+> &
   Pick<
     ReturnType<typeof useSchemaGraphControls>,
     "displayMode" | "columnDisplayMode" | "columnColorMode"
@@ -22,7 +25,7 @@ export const ERDSchema = ({
   displayMode,
   columnDisplayMode,
   columnColorMode,
-}: ERDSchemaProps) => {
+}: ERDSchemaProps & Pick<SchemaGraphProps, "db_schema_filter">) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
@@ -72,7 +75,7 @@ export const ERDSchema = ({
         }),
         {} as Record<string, { x: number; y: number }>,
       );
-    if (!dbConfId) return;
+    if (!dbConfId || displayMode !== "all") return;
     dbs.database_configs.update(
       {
         id: dbConfId,
@@ -85,7 +88,14 @@ export const ERDSchema = ({
         },
       },
     );
-  }, [dbConfId, dbs.database_configs, positionRef, scaleRef, shapesRef]);
+  }, [
+    dbConfId,
+    dbs.database_configs,
+    displayMode,
+    positionRef,
+    scaleRef,
+    shapesRef,
+  ]);
 
   useSetPanShapes({
     setScaleAndPosition,

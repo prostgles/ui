@@ -12,6 +12,8 @@ type SpeechToTextState =
       stop: () => void;
     };
 
+let confirmed = false;
+
 export const useSpeechToText = (
   onFinished: (audioOrTranscript: Blob | string) => void,
 ): SpeechToTextState => {
@@ -19,7 +21,8 @@ export const useSpeechToText = (
   const [text, setText] = useState("");
   const recognitionRef = useRef<SpeechRecognition>();
   useEffect(() => {
-    if (!isListening && text.length) {
+    if (text.length) {
+      //!isListening &&
       onFinished(text);
       setText("");
     }
@@ -56,6 +59,11 @@ export const useSpeechToText = (
 
     recognition.onerror = (error): void => {
       console.error("Speech recognition error:", error);
+      if (error.error === "network") {
+        alert(
+          "Speech recognition is not supported in this browser. Please try a different browser (preferrably Chrome) or check your network connection.",
+        );
+      }
       setIsListening(false);
     };
 
@@ -67,11 +75,13 @@ export const useSpeechToText = (
   }, []);
 
   const start = useCallback((): void => {
-    if (Math.PI) {
-      alert("Speech recognition is not supported in this browser.");
-      throw new Error(
-        "TODO: users must be aware of privacy implications of using speech recognition",
+    confirmed =
+      confirmed ||
+      window.confirm(
+        "Speech recognition will access your microphone to convert speech to text. Your browser's privacy settings control how this data is handled. Do you want to continue?",
       );
+    if (!confirmed) {
+      return;
     }
     if (!recognitionRef.current) {
       recognitionRef.current = initializeRecognition();

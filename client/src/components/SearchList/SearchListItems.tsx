@@ -118,6 +118,8 @@ export const SearchListItems = React.forwardRef<
               !d.onPress || d.disabledInfo ?
                 undefined
               : (e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
                   d.onPress!(e, searchTerm);
                   endSearch();
                 };

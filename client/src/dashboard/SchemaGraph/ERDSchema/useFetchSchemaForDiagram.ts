@@ -1,6 +1,6 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import { fetchNamedSVG } from "../../../components/SvgIcon";
 import { isEmpty } from "prostgles-types";
+import { fetchNamedSVG } from "../../../components/SvgIcon";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
@@ -18,7 +18,7 @@ export const useFetchSchemaForDiagram = (
     db,
     dbs,
     connectionId,
-    tables,
+    tables: dbTables,
     columnColorMode,
     columnDisplayMode,
     displayMode,
@@ -37,15 +37,16 @@ export const useFetchSchemaForDiagram = (
 
   const schemaInfo = usePromise(async () => {
     if (!dbConf) return;
+    const { sql } = db;
     const constraints =
-      !db.sql ?
+      !sql ?
         []
-      : ((await db.sql(
+      : ((await sql(
           PG_OBJECT_QUERIES.constraints.sql,
           {},
           { returnType: "rows" },
         )) as (typeof PG_OBJECT_QUERIES.constraints.type)[]);
-
+    const tables = dbTables;
     const defaultIconColor = getCssVariableValue("--text-2");
     const columnConstraintIcons = {
       pkey: await fetchSVGImage("Key", defaultIconColor),
@@ -195,7 +196,7 @@ export const useFetchSchemaForDiagram = (
       fkeys,
       columnConstraintIcons,
     };
-  }, [columnColorMode, db, dbConf, tables]);
+  }, [columnColorMode, db, dbConf, dbTables]);
 
   return { schemaInfo, dbConfId: dbConf?.id, dbConf };
 };

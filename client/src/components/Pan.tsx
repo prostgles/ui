@@ -4,7 +4,8 @@ import { setPan, type PanListeners } from "../dashboard/setPan";
 
 type PanProps = TestSelectors &
   PanListeners & {
-    style?: React.CSSProperties;
+    /** Setting zIndex AND position absolute allows "clicking" through any popups that obscure this element */
+    style?: Omit<React.CSSProperties, "zIndex">;
     className?: string;
     threshold?: number;
     children?: React.ReactNode;
@@ -25,6 +26,11 @@ export const Pan = (props: PanProps) => {
     onPress,
   } = props;
   const ref = React.useRef<HTMLDivElement>(null);
+  if ((style as React.CSSProperties | undefined)?.zIndex !== undefined) {
+    throw new Error(
+      "Setting zIndex AND position absolute allows clicking through any popups that obscure this element.",
+    );
+  }
   useEffect(() => {
     if (!ref.current) {
       return;

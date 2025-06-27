@@ -2,10 +2,9 @@ import type { Primitive } from "d3";
 import { type AnyObject } from "prostgles-types";
 import React from "react";
 import type { TestSelectors } from "../../Testing";
-import Btn from "../Btn";
 import "../List.css";
-import Popup from "../Popup/Popup";
 import type { OptionKey } from "../Select/Select";
+import type { SearchInputProps } from "./SearchInput";
 import "./SearchList.css";
 import { SearchListContent } from "./SearchListContent";
 
@@ -82,7 +81,12 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   checkboxed?: boolean;
   placeholder?: string;
   autoFocus?: boolean;
-  inputProps?: Pick<React.HTMLProps<HTMLInputElement>, "type"> & TestSelectors;
+  inputProps?: Pick<
+    SearchInputProps,
+    "type" | "leftContent" | keyof TestSelectors
+  >;
+
+  leftContent?: React.ReactNode;
 
   /**
    * If provided then allows toggling all values
@@ -143,35 +147,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
 export const SearchList = <M extends boolean = false>(
   props: SearchListProps<M>,
 ) => {
-  const { variant, selectedKey } = props;
-
-  const [selectPopup, setSelectPopup] = React.useState(false);
-
   const content = <SearchListContent {...props} />;
-
-  // if (variant === "select") {
-  //   if (selectPopup) {
-  //     return (
-  //       <Popup
-  //         onClose={() => {
-  //           this.setState({ selectPopup: false });
-  //         }}
-  //       >
-  //         {content}
-  //       </Popup>
-  //     );
-  //   } else {
-  //     return (
-  //       <Btn
-  //         onClick={() => {
-  //           this.setState({ selectPopup: true });
-  //         }}
-  //       >
-  //         {selectedKey?.toString()}
-  //       </Btn>
-  //     );
-  //   }
-  // }
 
   return content;
 };

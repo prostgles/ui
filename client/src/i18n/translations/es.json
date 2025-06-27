@@ -156,7 +156,7 @@
     "CA Certificate": "Certificado CA",
     "SSL Mode": "Modo SSL",
     "Connection timeout (ms)": "Tiempo de espera de conexión (ms)",
-    "Schema list": "Lista de esquemas",
+    "Schemas": "Lista de esquemas",
     "More options": "Más opciones",
     "Must connect to see schemas": "Debes conectarte para ver los esquemas",
     "You are about to create a new database": "Estás a punto de crear una nueva base de datos",

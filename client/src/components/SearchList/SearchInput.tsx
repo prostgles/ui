@@ -8,7 +8,7 @@ import Loading from "../Loading";
 
 export const SearchInputZIndex = 2;
 
-type SearchInputProps = Pick<
+export type SearchInputProps = Pick<
   React.HTMLProps<HTMLInputElement>,
   "type" | "title"
 > &
@@ -29,6 +29,7 @@ type SearchInputProps = Pick<
     inputWrapperRef?: React.LegacyRef<HTMLDivElement>;
     inputRef?: React.LegacyRef<HTMLInputElement>;
     mode: undefined | { "!listNode": boolean; "!noList": boolean };
+    leftContent?: React.ReactNode;
   };
 export const SearchInput = (props: SearchInputProps) => {
   const {
@@ -43,6 +44,7 @@ export const SearchInput = (props: SearchInputProps) => {
     withShadow,
     style,
     mode,
+    leftContent,
     ...inputProps
   } = props;
 
@@ -65,6 +67,7 @@ export const SearchInput = (props: SearchInputProps) => {
       }}
       onClick={onClickWrapper}
     >
+      {leftContent}
       <Input
         className={classOverride("Input f-1 w-full", className)}
         autoCorrect="off"

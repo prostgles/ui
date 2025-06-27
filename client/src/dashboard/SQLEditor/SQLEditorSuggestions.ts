@@ -297,7 +297,12 @@ export const getSqlSuggestions = async (
       const documentation =
         t.is_view ?
           `**Definition:**  \n\n${asSQL(t.view_definition || "")}`
-        : (!t.tableStats ? "" : (
+        : `${t.comment ? `\n**Comment:** \n\n ${t.comment}` : ""}\n\n**Columns (${cols.length}):**  \n${asSQL(cols.map((c) => c.definition).join(",  \n"))} \n` +
+          `\n**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map((c) => c.definition + ";").join("\n"))} \n` +
+          `**Indexes (${tIndexes.length}):** \n ${asSQL(tIndexes.map((d) => d.indexdef + ";").join("\n"))}  \n` +
+          `**Triggers (${tableTriggers.length}):** \n ${asSQL(tableTriggers.map((d) => d.trigger_name + ";").join("\n"))}  \n` +
+          `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map((p) => p.definition + ";").join("\n\n"))} \n` +
+          (!t.tableStats ? "" : (
             `\n ${asListObject({
               oid: t.tableStats.relid,
               Size: t.tableStats.table_size,
@@ -308,12 +313,7 @@ export const getSqlSuggestions = async (
               "Seq Scans": t.tableStats.seq_scans,
               "Idx Scans": t.tableStats.idx_scans,
             })}\n`
-          )) +
-          `${t.comment ? `\n**Comment:** \n\n ${t.comment}` : ""}\n\n**Columns (${cols.length}):**  \n${asSQL(cols.map((c) => c.definition).join(",  \n"))} \n` +
-          `\n**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map((c) => c.definition + ";").join("\n"))} \n` +
-          `**Indexes (${tIndexes.length}):** \n ${asSQL(tIndexes.map((d) => d.indexdef + ";").join("\n"))}  \n` +
-          `**Triggers (${tableTriggers.length}):** \n ${asSQL(tableTriggers.map((d) => d.trigger_name + ";").join("\n"))}  \n` +
-          `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map((p) => p.definition + ";").join("\n\n"))}`;
+          ));
       suggestions.push({
         type,
         label: { label: t.name, description: t.schema },

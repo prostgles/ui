@@ -347,7 +347,7 @@ export function addEvent(node: HTMLElement, type, func) {
     }
   };
   node.removeEventListener(type, wrappedEvent);
-  node.addEventListener(type, wrappedEvent, { passive: false });
+  node.addEventListener(type, wrappedEvent, { passive: false, capture: false });
   return function () {
     node.removeEventListener(type, wrappedEvent);
   };

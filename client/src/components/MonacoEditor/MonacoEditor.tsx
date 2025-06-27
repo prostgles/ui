@@ -52,9 +52,11 @@ const useMonacoSingleton = () => {
 export const MonacoEditor = (props: MonacoEditorProps) => {
   const { loadedSuggestions } = props;
 
-  const loadedLanguage = usePromise(async () => {
-    await loadPSQLLanguage(loadedSuggestions);
-    return true;
+  const [loadedLanguage, setLoadedLanguage] = useState(false);
+  useEffect(() => {
+    loadPSQLLanguage(loadedSuggestions).then(() => {
+      setLoadedLanguage(true);
+    });
   }, [loadedSuggestions]);
 
   const [editor, setEditor] = React.useState<editor.IStandaloneCodeEditor>();

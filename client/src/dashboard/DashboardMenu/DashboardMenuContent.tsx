@@ -6,11 +6,11 @@ import {
   mdiScriptTextPlay,
   mdiTable,
   mdiTableEdit,
+  mdiTableEye,
 } from "@mdi/js";
 import type { MethodFullDef } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import React, { useRef } from "react";
-import { ROUTES } from "../../../../commonTypes/utils";
 import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRowWrap } from "../../components/Flex";
@@ -18,6 +18,8 @@ import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import { SearchList } from "../../components/SearchList/SearchList";
 import { SvgIcon } from "../../components/SvgIcon";
+import { t } from "../../i18n/i18nUtils";
+import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
 import { SchemaGraph } from "../SchemaGraph/SchemaGraph";
 import { WorkspaceAddBtn } from "../WorkspaceMenu/WorkspaceAddBtn";
@@ -196,7 +198,34 @@ export const DashboardMenuContent = (props: P) => {
           limit={100}
           style={ensureFadeDoesNotShowForOneItem}
           noSearchLimit={0}
-          inputProps={dataCommand("dashboard.menu.tablesSearchListInput")}
+          leftContent={
+            <SchemaFilter
+              asSelect={{
+                btnProps: {
+                  children: "",
+                  title: t.NewConnectionForm["Schemas"],
+                  iconPath: mdiFilter,
+                  variant: "icon",
+                },
+                label: "",
+              }}
+              db={db}
+              db_schema_filter={props.prgl.connection.db_schema_filter}
+              onChange={(newDbSchemaFilter) => {
+                dbs.connections.update(
+                  {
+                    id: prgl.connectionId,
+                  },
+                  {
+                    db_schema_filter: newDbSchemaFilter,
+                  },
+                );
+              }}
+            />
+          }
+          inputProps={{
+            "data-command": "dashboard.menu.tablesSearchListInput",
+          }}
           placeholder={`${tables.length} tables/views`}
           noResultsContent={
             <FlexCol>
@@ -214,15 +243,6 @@ export const DashboardMenuContent = (props: P) => {
               >
                 Refresh schema
               </Btn>
-              <Btn
-                asNavLink={true}
-                variant="faded"
-                color="action"
-                iconPath={mdiFilter}
-                href={`${ROUTES.CONFIG}/${props.prgl.connectionId}`}
-              >
-                Edit schema list (in "More options ...")
-              </Btn>
             </FlexCol>
           }
           items={tablesWithInfo.map((t, i) => {
@@ -237,11 +257,17 @@ export const DashboardMenuContent = (props: P) => {
                   {t.icon ?
                     <SvgIcon icon={t.icon} />
                   : <Icon
+                      title={
+                        t.info.isFileTable ? "File table"
+                        : t.info.isView ?
+                          "View"
+                        : "Table"
+                      }
                       path={
                         t.info.isFileTable ? mdiFile
                         : db[t.name]?.insert ?
                           mdiTableEdit
-                        : mdiTable
+                        : mdiTableEye
                       }
                       size={1}
                     />
@@ -250,6 +276,7 @@ export const DashboardMenuContent = (props: P) => {
               ),
               key: t.name,
               label: t.label,
+              title: t.info.comment,
               contentRight: t.endText.length > 0 && (
                 <span title={t.endTitle} className="text-2 ml-auto">
                   {t.endText}
@@ -305,6 +332,7 @@ export const DashboardMenuContent = (props: P) => {
         <SchemaGraph
           tables={tables}
           connectionId={props.prgl.connectionId}
+          db_schema_filter={props.prgl.connection.db_schema_filter}
           dbs={dbs}
           db={db}
           theme={theme}

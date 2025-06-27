@@ -158,7 +158,7 @@
     "CA Certificate": "CA сертификат",
     "SSL Mode": "Режим SSL",
     "Connection timeout (ms)": "Таймаут подключения (мс)",
-    "Schema list": "Список схем",
+    "Schemas": "Список схем",
     "More options": "Дополнительные параметры",
     "Must connect to see schemas": "Необходимо подключиться, чтобы увидеть схемы",
     "You are about to create a new database": "Вы собираетесь создать новую базу данных",

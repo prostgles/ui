@@ -154,7 +154,7 @@
     "CA Certificate": "CA 证书",
     "SSL Mode": "SSL 模式",
     "Connection timeout (ms)": "连接超时（毫秒）",
-    "Schema list": "模式列表",
+    "Schemas": "模式列表",
     "More options": "更多选项",
     "Must connect to see schemas": "必须连接才能查看模式",
     "You are about to create a new database": "您将要创建一个新的数据库",

@@ -11,11 +11,13 @@ import {
   SchemaGraphControls,
   useSchemaGraphControls,
 } from "./SchemaGraphControls";
+import type { Connection } from "../../pages/NewConnection/NewConnnection";
 
 export type SchemaGraphProps = Pick<Prgl, "connectionId" | "theme"> & {
   db: DBHandlerClient;
   dbs: DBS;
   tables: DBSchemaTablesWJoins;
+  db_schema_filter: Connection["db_schema_filter"];
 };
 
 export const SchemaGraph = (props: SchemaGraphProps) => {

@@ -186,7 +186,7 @@ export const translations = {
     "CA Certificate": undefined,
     "SSL Mode": undefined,
     "Connection timeout (ms)": undefined,
-    "Schema list": undefined,
+    Schemas: undefined,
     "More options": undefined,
     "Must connect to see schemas": undefined,
     "You are about to create a new database": undefined,

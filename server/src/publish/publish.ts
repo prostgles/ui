@@ -212,6 +212,7 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
           name: 1,
           url_path: 1,
           table_options: 1,
+          db_schema_filter: 1,
         },
         validate: async ({ update, dbx, filter }) => {
           const row = await dbx.connections.findOne(filter);
