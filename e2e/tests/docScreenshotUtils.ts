@@ -3,12 +3,12 @@ import * as path from "path";
 import { MINUTE, type PageWIds } from "./utils";
 
 const SVG_SCREENSHOT_NAMES = {
+  schema_diagram: 1,
   sql_editor: 1,
   new_connection: 1,
   command_search: 1,
   connections: 1,
   dashboard: 1,
-  schema_diagram: 1,
   table: 1,
   smart_filter_bar: 1,
   map: 1,

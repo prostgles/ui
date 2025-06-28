@@ -17,7 +17,7 @@ Browse data, execute SQL queries, manage database objects, and access various to
 - <a href="#workspace_area">Workspace area</a>: Main content area of the dashboard, where the SQL editor and other components are displayed.  
 - <a href="#ai_assistant">AI Assistant</a>: Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.  
 - **Feedback**: Opens the feedback form, allowing you to provide feedback about the application.  
-- **Go to connections**: Opens the connections list page.  
+- **Go to Connections**: Opens the connections list page.  
 
 <h2 id="dashboard_menu"> Dashboard menu </h2> 
 

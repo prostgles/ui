@@ -57,7 +57,7 @@ export const smartFilterBarUIDoc = {
           type: "input",
           inputType: "text",
           selector: ".SmartSearch input",
-          title: "Search Input",
+          title: "Search",
           description:
             "Type to search across all searchable fields in the table. The search is a simple contains search. Selecting a result will add a filter to the table.",
         },

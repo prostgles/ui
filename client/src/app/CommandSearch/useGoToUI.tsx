@@ -69,7 +69,11 @@ export const useGoToUI = (
         waitedForClick = true;
       }
       if (!waitedForClick) {
-        await tout(itemPosition === "mid" ? 500 : 2000);
+        await tout(
+          isPlaywrightTest ? 0
+          : itemPosition === "mid" ? 500
+          : 2000,
+        );
       }
       setHighlights([]);
       setMessage(undefined);
@@ -160,8 +164,8 @@ export const useGoToUI = (
         currentPage ? getShorterPath(currentPage, prevParents) : undefined;
       const pathItems = shortcut ?? prevParents;
       for (const parent of pathItems) {
-        const shouldStop = !isPlaywrightTest && (await goToUI(parent));
-        if (shouldStop) {
+        const shouldStop = await goToUI(parent);
+        if (!isPlaywrightTest && shouldStop) {
           return;
         }
         await tout(200);

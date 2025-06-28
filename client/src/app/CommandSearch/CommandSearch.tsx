@@ -78,7 +78,6 @@ export const CommandSearch = ({ isElectron }: { isElectron: boolean }) => {
                     label: data.title,
                     subLabel: data.description,
                     onPress: async () => {
-                      console.log("Selected:", data);
                       setShowSection(undefined);
                       await goToUIDocItem(data);
                     },

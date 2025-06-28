@@ -22,7 +22,7 @@ export const serverSettingsUIDoc = {
       children: [
         {
           type: "smartform",
-          title: "Server settings",
+          title: "Settings form",
           description: "Configure server settings.",
           selectorCommand: "SmartForm",
           tableName: "server_settings",

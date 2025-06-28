@@ -85,7 +85,7 @@ It provides a user-friendly interface to add filters, search for data, and perfo
     - **Join To**: Toggles join view to specify which tables a join path to a specific table from which to select a column to filter by.  
     - **Filterable Columns**: List of columns available for filtering. Click to add a filter.  
   - **Search Bar**: Quick search functionality across the table data.  
-    - **Search Input**: Type to search across all searchable fields in the table. The search is a simple contains search. Selecting a result will add a filter to the table.  
+    - **Search**: Type to search across all searchable fields in the table. The search is a simple contains search. Selecting a result will add a filter to the table.  
     - **Match Case**: Toggle to match the case of the search term with the data.  
   - **Table actions**: Additional table data actions.  
     - **Show additional actions**: Opens a menu with additional actions for the table data.  

@@ -7,7 +7,7 @@ Manage server settings to enhance security, configure authentication methods, an
 </picture>
 
 - **Security**: Security. Configure domain access, IP restrictions, session duration, and login rate limits to enhance security.  
-  - **Server settings**: Configure server settings.  
+  - **Settings form**: Configure server settings.  
 - **Authentication**: Manage user authentication methods, default user roles, and third-party login providers to control access.  
   - **Website URL**: Website URL. Used for email and third-party login redirect URL. When first visiting the app as an admin user, it is automatically set to the current URL which will trigger a page refresh.  
   - **Default user type**: The default user type assigned to new users. Defaults to 'default'.  

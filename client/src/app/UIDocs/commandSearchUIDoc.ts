@@ -17,7 +17,7 @@ export const commandSearchUIDoc = {
     {
       type: "input",
       inputType: "text",
-      title: "Search input",
+      title: "Search commands input",
       description: "Type to search for commands, files, and other actions",
       selectorCommand: "SearchAll",
     },

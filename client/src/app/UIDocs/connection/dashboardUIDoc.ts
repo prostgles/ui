@@ -149,7 +149,7 @@ export const dashboardUIDoc = {
     {
       type: "link",
       selector: getCommandElemSelector("dashboard.goToConnections"),
-      title: "Go to connections",
+      title: "Go to Connections",
       description: "Opens the connections list page.",
       path: ROUTES.CONNECTIONS,
     },
