@@ -66,9 +66,9 @@ export const ERDSchema = ({
           s.type === "rectangle",
       )
       .reduce(
-        (acc, { id, coords: [x, y] }) => ({
+        (acc, { coords: [x, y], data }) => ({
           ...acc,
-          [id as string]: {
+          [data.name]: {
             x,
             y,
           },

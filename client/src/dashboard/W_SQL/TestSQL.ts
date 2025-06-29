@@ -1,3 +1,4 @@
+import { tryCatchV2 } from "prostgles-types";
 import { tout } from "../../pages/ElectronSetup/ElectronSetup";
 import {
   TopHeaderClassName,
@@ -8,7 +9,6 @@ import { mainTestScripts } from "./demoScripts/mainTestScripts";
 import { testBugs } from "./demoScripts/testBugs";
 import { testMiscAndBugs } from "./demoScripts/testMiscAndBugs";
 import { getDemoUtils } from "./getDemoUtils";
-import { tryCatch, tryCatchV2 } from "prostgles-types";
 
 export const VIDEO_DEMO_DB_NAME = "prostgles_video_demo";
 export const TestSQL = async (w: WindowSyncItem<"sql">) => {

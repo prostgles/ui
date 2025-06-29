@@ -126,7 +126,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
             <>
               {t.ConnectionConfig["Table config"]}{" "}
               <span className="text-2 font-14">
-                {t.ConnectionConfig.experimental}
+                ({t.ConnectionConfig.experimental})
               </span>
             </>
           ),

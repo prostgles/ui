@@ -10,7 +10,7 @@ export const commandSearchUIDoc = {
     This allows you to quickly navigate to different parts of the application without having to browse through menus or panels.
 
     Press <kbd>Ctrl+K</kbd> to open the command search popup. Type to search for commands, files, and other actions.
-    <img src="./screenshots/command_search.svg" alt="Command Search" />
+    <img src="/screenshots/command_search.svg" alt="Command Search" />
   `,
   selectorCommand: "CommandSearch",
   children: [

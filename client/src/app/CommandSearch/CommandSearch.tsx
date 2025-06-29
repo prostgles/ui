@@ -7,6 +7,7 @@ import { flatDocs } from "../UIDocs";
 import { Documentation } from "./Documentation";
 import { useGoToUI } from "./useGoToUI";
 import "./CommandSearch.css";
+import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
@@ -85,7 +86,10 @@ export const CommandSearch = ({ isElectron }: { isElectron: boolean }) => {
                   };
                 })}
               />
-            : <Documentation isElectron={isElectron} />}
+            : <ScrollFade className="oy-auto">
+                <Documentation isElectron={isElectron} />
+              </ScrollFade>
+            }
           </Popup>
         )
       }

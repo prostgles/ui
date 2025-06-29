@@ -14,7 +14,7 @@ export const backupAndRestoreUIDoc = {
     Backups can be saved to a local file system or to cloud storage to AWS S3.
     Similarly, you can restore backups from local files or from AWS S3.
 
-    <img src="./screenshots/backup_and_restore.svg" alt="Backup and Restore" />
+    <img src="/screenshots/backup_and_restore.svg" alt="Backup and Restore" />
   `,
   children: [
     {

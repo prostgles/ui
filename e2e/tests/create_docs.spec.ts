@@ -10,7 +10,15 @@ import {
   COMMAND_SEARCH_ATTRIBUTE_NAME,
   getDataKeyElemSelector,
 } from "./Testing";
-import { goTo, login, MINUTE, monacoType, PageWIds, USERS } from "./utils";
+import {
+  goTo,
+  login,
+  MINUTE,
+  monacoType,
+  PageWIds,
+  runDbsSql,
+  USERS,
+} from "./utils";
 
 test.use({
   viewport: {
@@ -32,6 +40,7 @@ test.describe("Create docs and screenshots", () => {
     timeout: 35 * MINUTE,
   });
 
+  let flatDocs: any[];
   test.beforeEach(async ({ page: p }) => {
     const page = p as PageWIds;
     page.on("console", console.log);
@@ -56,7 +65,6 @@ test.describe("Create docs and screenshots", () => {
     await page.waitForTimeout(100);
   });
 
-  let flatDocs: any[];
   const workers = 2;
   for (let i = 0; i < workers; i++) {
     test(`Test command search ${i}`, async ({ page: p }) => {
@@ -224,10 +232,22 @@ test.describe("Create docs and screenshots", () => {
     const open = openConnection.bind(null, page);
     await page.waitForTimeout(1100);
     if (!IS_PIPELINE) {
+      await prepare(page);
+      const openMenuIfClosed = async () => {
+        await page.waitForTimeout(1500);
+        const menuBtn = await page.getByTestId("dashboard.menu");
+        if (await menuBtn.count()) {
+          menuBtn.click();
+        }
+      };
       await saveSVGScreenshots(page, async (fileName) => {
-        if (fileName === "sql_editor") {
+        if (fileName === "schema_diagram") {
           await open("prostgles_video_demo");
-          await page.waitForTimeout(500);
+          await openMenuIfClosed();
+          await page.getByTestId("SchemaGraph").click();
+        } else if (fileName === "sql_editor") {
+          await open("prostgles_video_demo");
+          await openMenuIfClosed();
           if (!(await page.getByTestId("MonacoEditor").count())) {
             await page.getByTestId("dashboard.menu.sqlEditor").click();
           }
@@ -264,13 +284,6 @@ test.describe("Create docs and screenshots", () => {
         } else if (fileName === "new_connection") {
           await goTo(page, "/connections");
           await page.getByTestId("Connections.new").click();
-        } else if (fileName === "schema_diagram") {
-          await open("food_delivery");
-          const menuBtn = await page.getByTestId("dashboard.menu");
-          if (await menuBtn.count()) {
-            menuBtn.click();
-          }
-          await page.getByTestId("SchemaGraph").click();
         } else if (fileName === "ai_assistant") {
           await open("prostgles_video_demo");
           await page.getByTestId("AskLLM").click();
@@ -363,4 +376,46 @@ const openConnection = async (
     .locator(getDataKeyElemSelector(connectionName))
     .getByTestId("Connection.openConnection")
     .click();
+};
+
+const prepare = async (page: PageWIds) => {
+  await runDbsSql(
+    page,
+    "UPDATE database_configs SET table_schema_transform = $1, table_schema_positions = $2 WHERE db_name = 'prostgles_video_demo';",
+    [
+      {
+        scale: 0.6054127940141592,
+        translate: {
+          x: 255.48757732436974,
+          y: 222.24872020228725,
+        },
+      },
+      {
+        chats: {
+          x: 56.65461492027448,
+          y: -48.61370734626732,
+        },
+        users: {
+          x: -386.5771496372805,
+          y: -94.50849696823889,
+        },
+        orders: {
+          x: -24.605404166298356,
+          y: 149.52211472623705,
+        },
+        contacts: {
+          x: -37.987816516202955,
+          y: -274.46819244071696,
+        },
+        messages: {
+          x: 264.9505194760658,
+          y: -214.05139083148245,
+        },
+        chat_members: {
+          x: 279.98574299550825,
+          y: 50.72883570617583,
+        },
+      },
+    ],
+  );
 };
