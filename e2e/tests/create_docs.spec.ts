@@ -247,8 +247,9 @@ test.describe("Create docs and screenshots", () => {
           await page.getByTestId("SchemaGraph").click();
         } else if (fileName === "sql_editor") {
           await open("prostgles_video_demo");
-          await openMenuIfClosed();
+          await page.waitForTimeout(1500);
           if (!(await page.getByTestId("MonacoEditor").count())) {
+            await openMenuIfClosed();
             await page.getByTestId("dashboard.menu.sqlEditor").click();
           }
           const togglePinned = await page.getByTestId(
@@ -262,8 +263,10 @@ test.describe("Create docs and screenshots", () => {
           await monacoType(page, `.ProstglesSQL`, query, { deleteAll: true });
           await page.waitForTimeout(500);
           await page.reload();
-          await monacoType(page, `.ProstglesSQL`, `t`);
+          await page.waitForTimeout(1500);
+          await monacoType(page, `.ProstglesSQL`, `t`, { deleteAll: false });
           await page.keyboard.press("Backspace");
+          await page.keyboard.press("Control+Space");
           await page.waitForTimeout(500);
         } else if (fileName === "map") {
           await open("food_delivery");
@@ -322,7 +325,9 @@ test.describe("Create docs and screenshots", () => {
         }
       });
     }
+  });
 
+  test("Ensure all screenshots exist", async () => {
     await svgScreenshotsCompleteReferenced();
   });
 

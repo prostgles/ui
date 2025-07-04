@@ -80,6 +80,7 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
             type="checkbox"
             checked={checked}
             disabled={!!disabledInfo}
+            {...(!labelProps ? testSelectors : {})}
             onChange={
               disabledInfo ? undefined : (
                 (e) => {

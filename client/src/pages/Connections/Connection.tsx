@@ -55,7 +55,9 @@ export const Connection = (props: ConnectionProps) => {
 
   const showAccessInfo = isAdmin && connection.access_control.length > 0;
 
-  /** Remove published workspaces that have been cloned */
+  /** Remove published workspaces that have been cloned
+   * TODO: remove workspaces from other users
+   */
   const workspaces = connection.workspaces.filter((w) => {
     return !connection.workspaces.some(
       (pw) => pw.id === w.parent_workspace_id && pw.name === w.name,

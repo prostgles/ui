@@ -26,9 +26,9 @@ export type W_SQLResultsProps = Pick<
   Pick<W_SQLProps, "childWindow" | "tables"> & {
     w: SyncDataItem<Required<WindowData<"sql">>, true>;
     onResize: (newCols: W_SQLState["cols"]) => void;
-    onSort: (newSort: ColumnSortSQL[]) => any;
-    onPageChange: (newPage: number) => any;
-    onPageSizeChange: (newPageSize: W_SQLState["pageSize"]) => any;
+    onSort: (newSort: ColumnSortSQL[]) => void;
+    onPageChange: (newPage: number) => void;
+    onPageSizeChange: (newPageSize: W_SQLState["pageSize"]) => void;
   };
 
 export const W_SQLResults = (props: W_SQLResultsProps) => {

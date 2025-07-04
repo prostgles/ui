@@ -302,7 +302,7 @@ const ToggleBtn = (isLeft: boolean, onClick: VoidFunction) => {
           color: "white",
           transform: isLeft ? undefined : "rotate(180deg)",
         }}
-        size="34px"
+        sizePx={34}
       />
     </div>
   );

@@ -1,10 +1,6 @@
-import {
-  isObject,
-  type AnyObject,
-  type ValidatedColumnInfo,
-} from "prostgles-types";
+import { isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
+import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { RenderFilter, type RenderFilterProps } from "../RenderFilter";
 import SortByControl from "../SmartFilter/SortByControl";
 import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";
@@ -59,6 +55,9 @@ export const SmartCardListHeaderControls = (
             buttonProps={{
               children: "Add",
             }}
+            {...(isObject(showTopBar) && isObject(showTopBar.insert) ?
+              showTopBar.insert
+            : {})}
             db={db}
             tables={tables}
             methods={methods}
@@ -76,6 +75,7 @@ export const SmartCardListHeaderControls = (
             style={{
               width: "unset",
               margin: "unset",
+              flex: "1",
             }}
           />
         )}

@@ -82,7 +82,7 @@ export default class Chip extends React.Component<ChipProps> {
               iconPath={leftIcon.path}
               onClick={leftIcon.onClick}
               className={classOverride("mr-p5 round", leftIcon.className)}
-              size="medium"
+              size="default"
               style={{
                 padding: 0,
                 background: "transparent",
@@ -135,7 +135,7 @@ export default class Chip extends React.Component<ChipProps> {
               onDelete(e);
             }}
             className="Chip_DeleteBtn ml-p5 round as-start text-1"
-            size="medium"
+            size="default"
             style={{
               padding: 0,
               borderRadius: "1000%",

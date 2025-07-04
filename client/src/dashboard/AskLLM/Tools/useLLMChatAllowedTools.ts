@@ -1,42 +1,35 @@
 import { useMemoDeep } from "prostgles-client/dist/react-hooks";
 import { useMemo } from "react";
 import {
+  suggestDashboardsTool,
   executeSQLTool,
-  getSuggestedTaskTools,
+  getAddTaskTools,
   getMCPFullToolName,
   type PROSTGLES_MCP_TOOLS,
-} from "../../../../../commonTypes/mcp";
+} from "../../../../../commonTypes/prostglesMcpTools";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import { isDefined } from "../../../utils";
 import type { AskLLMToolsProps } from "./AskLLMToolApprover";
-import { omitKeys } from "prostgles-types";
 
 export type ApproveRequest =
-  | {
-      id: number;
-      server_name: string;
-      tool_name: string;
-      description: string;
-      name: string;
+  | (Pick<
+      DBSSchema["mcp_server_tools"],
+      "id" | "name" | "description" | "server_name"
+    > & {
       type: "mcp";
+      tool_name: string;
       auto_approve: boolean;
-    }
-  | {
-      id: number;
-      name: string;
-      type: "function";
+    })
+  | (Pick<DBSSchema["published_methods"], "id" | "name" | "description"> & {
+      type: "db-method";
       auto_approve: boolean;
-      description: string;
-    }
+      functionName: string;
+    })
   | {
       name: (typeof PROSTGLES_MCP_TOOLS)[number]["name"];
       type: "db";
       auto_approve: boolean;
       description: string;
-      chatDBPermissions: Extract<
-        DBSSchema["llm_chats"]["db_data_permissions"],
-        { type: "Run SQL" }
-      >;
     };
 
 export const useLLMChatAllowedTools = ({
@@ -60,30 +53,44 @@ export const useLLMChatAllowedTools = ({
   const { data: llm_chats_allowed_functions } =
     dbs.llm_chats_allowed_functions.useSubscribe(filter);
 
-  const allToolsForTask = useMemo(
-    () => [
-      ...(mcp_server_tools?.map((tool) => ({
+  const allFunctions = useMemo(
+    () =>
+      published_methods?.map((tool) => ({
         ...tool,
+        name: getMCPFullToolName({
+          server_name: "db-methods",
+          name: tool.name,
+        }),
+        functionName: tool.name,
+        type: "db-method" as const,
+      })),
+    [published_methods],
+  );
+  const allMCPTools = useMemo(
+    () =>
+      mcp_server_tools?.map((tool) => ({
+        ...tool,
+        tool_name: tool.name,
         type: "mcp" as const,
         name: getMCPFullToolName(tool),
-      })) ?? []),
-      ...(published_methods?.map((tool) => ({
-        ...tool,
-        type: "function" as const,
-      })) ?? []),
-    ],
-    [mcp_server_tools, published_methods],
+      })),
+    [mcp_server_tools],
+  );
+
+  const allToolsForTask = useMemo(
+    () => [...(allMCPTools ?? []), ...(allFunctions ?? [])],
+    [allMCPTools, allFunctions],
   );
 
   const allowedTools = useMemo(() => {
     if (
       !llm_chats_allowed_mcp_tools ||
       !llm_chats_allowed_functions ||
-      !mcp_server_tools ||
-      !published_methods
+      !allMCPTools ||
+      !allFunctions
     )
       return [];
-    const allowedMCPTools = mcp_server_tools
+    const allowedMCPTools = allMCPTools
       .map((tool) => {
         const allowedInfo = llm_chats_allowed_mcp_tools.find(
           ({ tool_id }) => tool_id === tool.id,
@@ -92,10 +99,11 @@ export const useLLMChatAllowedTools = ({
         return {
           ...tool,
           ...allowedInfo,
+          auto_approve: !!allowedInfo.auto_approve,
         };
       })
       .filter(isDefined);
-    const allowedFunctions = published_methods
+    const allowedFunctions = allFunctions
       .map((func) => {
         const allowedInfo = llm_chats_allowed_functions.find(
           ({ server_function_id }) => server_function_id === func.id,
@@ -104,30 +112,13 @@ export const useLLMChatAllowedTools = ({
         return {
           ...func,
           ...allowedInfo,
+          auto_approve: !!allowedInfo.auto_approve,
         };
       })
       .filter(isDefined);
     const tools: ApproveRequest[] = [
-      ...allowedMCPTools.map(
-        ({ description = "", ...tool }) =>
-          ({
-            ...tool,
-            name: getMCPFullToolName(tool),
-            tool_name: tool.name,
-            description,
-            auto_approve: !!tool.auto_approve,
-            type: "mcp" as const,
-          }) satisfies ApproveRequest,
-      ),
-      ...allowedFunctions.map(
-        ({ description = "", ...func }) =>
-          ({
-            ...func,
-            description,
-            auto_approve: !!func.auto_approve,
-            type: "function" as const,
-          }) satisfies ApproveRequest,
-      ),
+      ...allowedMCPTools,
+      ...allowedFunctions,
       chatDBPermissions?.type === "Run SQL" ?
         {
           ...executeSQLTool,
@@ -137,21 +128,34 @@ export const useLLMChatAllowedTools = ({
         }
       : undefined,
       {
-        ...getSuggestedTaskTools(),
+        ...getAddTaskTools(),
         auto_approve: false,
         type: "db" as const,
-        /** TOOD: a better way to organise this */
-        chatDBPermissions: chatDBPermissions as any,
       },
+      {
+        ...suggestDashboardsTool,
+        type: "db" as const,
+        auto_approve: true,
+      } satisfies ApproveRequest,
     ].filter(isDefined);
     return tools;
   }, [
+    allFunctions,
+    allMCPTools,
     chatDBPermissions,
     llm_chats_allowed_functions,
     llm_chats_allowed_mcp_tools,
-    mcp_server_tools,
-    published_methods,
   ]);
 
-  return { allowedTools, allToolsForTask };
+  return {
+    allowedTools,
+    allToolsForTask,
+    chatDBPermissions:
+      chatDBPermissions?.type === "Run SQL" ? chatDBPermissions : undefined,
+  };
 };
+
+export type ChatDBPermissions = Exclude<
+  DBSSchema["llm_chats"]["db_data_permissions"],
+  undefined | { type: "None" } | null
+>;

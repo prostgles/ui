@@ -1,4 +1,4 @@
-import { isDefined, type AnyObject } from "prostgles-types";
+import { isDefined, isObject, type AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import { MediaViewer } from "../../../components/MediaViewer";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
@@ -12,19 +12,21 @@ export const useJoinedSectionFieldConfigs = ({
   sectionTable,
   tables,
   tableName,
+  tablesToShow,
 }: {
   sectionTable: DBSchemaTableWJoins;
   tableName: string | undefined;
-} & Pick<JoinedRecordsProps, "tables">): FieldConfig[] | undefined => {
-  const fileTable = useMemo(
-    () => tables.find((t) => t.info.isFileTable),
-    [tables],
-  );
-  const rootTable = useMemo(
-    () => (!tableName ? undefined : tables.find((t) => t.name === tableName)),
-    [tables, tableName],
-  );
+} & Pick<JoinedRecordsProps, "tables" | "tablesToShow">):
+  | FieldConfig[]
+  | undefined => {
   return useMemo(() => {
+    const tableInfo = tablesToShow?.[sectionTable.name];
+    if (isObject(tableInfo) && tableInfo.fieldConfigs) {
+      return tableInfo.fieldConfigs;
+    }
+    const fileTable = tables.find((t) => t.info.isFileTable);
+    const rootTable =
+      !tableName ? undefined : tables.find((t) => t.name === tableName);
     if (fileTable?.name === sectionTable.name) {
       return [
         {
@@ -101,5 +103,12 @@ export const useJoinedSectionFieldConfigs = ({
         ...extraColumnsToShow,
       ] satisfies FieldConfig[];
     }
-  }, [fileTable, sectionTable, rootTable, tables]);
+  }, [
+    sectionTable.columns,
+    sectionTable.joinsV2,
+    sectionTable.name,
+    tableName,
+    tables,
+    tablesToShow,
+  ]);
 };

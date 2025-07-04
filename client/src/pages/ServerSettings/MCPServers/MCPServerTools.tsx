@@ -1,10 +1,9 @@
-import { mdiCheck, mdiCheckboxBlankOutline } from "@mdi/js";
+import { mdiCheck, mdiCheckAll, mdiCheckboxBlankOutline } from "@mdi/js";
 import React from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import Chip from "../../../components/Chip";
 import { ScrollFade } from "../../../components/ScrollFade/ScrollFade";
-import { MCPServerConfig } from "./MCPServerConfig/MCPServerConfig";
 import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
 
 export const MCPServerTools = ({
@@ -22,17 +21,17 @@ export const MCPServerTools = ({
   llm_chats_allowed_mcp_tools:
     | {
         tool_id: number;
+        auto_approve: boolean | null;
       }[]
     | undefined;
   selectedToolName: string | undefined;
   chatId: number | undefined;
 } & Pick<Prgl, "dbs" | "dbsMethods">) => {
-  const { onToggle, setShowServerConfig, showServerConfig } =
-    useMCPServerEnable({
-      dbs,
-      mcp_server: server,
-      dbsMethods,
-    });
+  const { onToggle } = useMCPServerEnable({
+    dbs,
+    mcp_server: server,
+    dbsMethods,
+  });
 
   return (
     <ScrollFade
@@ -40,19 +39,19 @@ export const MCPServerTools = ({
       className="gap-p25 flex-row-wrap o-auto no-scroll-bar"
     >
       {tools.map((tool, i) => {
-        const isAllowed = llm_chats_allowed_mcp_tools?.some(
+        const allowedTool = llm_chats_allowed_mcp_tools?.find(
           (at) => at.tool_id === tool.id,
         );
         return (
           <Chip
             key={`${tool.name}${i}`}
             title={tool.description}
-            className={"pointer " + (isAllowed ? "bdb-active noselect" : "")}
+            className={"pointer " + (allowedTool ? "bdb-active noselect" : "")}
             leftIcon={
               !chatId ? undefined
-              : isAllowed ?
+              : allowedTool ?
                 {
-                  path: mdiCheck,
+                  path: allowedTool.auto_approve ? mdiCheckAll : mdiCheck,
                   style: {
                     marginRight: "0.25rem",
                   },
@@ -68,8 +67,8 @@ export const MCPServerTools = ({
                 }
 
             }
-            aria-checked={isAllowed}
-            color={isAllowed ? "blue" : undefined}
+            aria-checked={!!allowedTool}
+            color={allowedTool ? "blue" : undefined}
             onClick={
               !chatId ? undefined : (
                 async () => {
@@ -78,7 +77,7 @@ export const MCPServerTools = ({
                     chat_id: chatId,
                   };
                   await dbs.llm_chats_allowed_mcp_tools.delete(data);
-                  const checked = !isAllowed;
+                  const checked = !allowedTool;
                   if (!server.enabled) {
                     await onToggle();
                   }
@@ -93,14 +92,6 @@ export const MCPServerTools = ({
           </Chip>
         );
       })}
-      {showServerConfig && (
-        <MCPServerConfig
-          dbs={dbs}
-          existingConfig={undefined}
-          serverName={server.name}
-          onDone={() => setShowServerConfig(false)}
-        />
-      )}
     </ScrollFade>
   );
 };

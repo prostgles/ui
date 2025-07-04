@@ -1,19 +1,24 @@
+import { mdiDelete } from "@mdi/js";
 import React, { useMemo } from "react";
-import { filterArr, filterArrInverse } from "../../../../commonTypes/llmUtils";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { Message } from "../../components/Chat/Chat";
-import { Marked } from "../../components/Chat/Marked";
-import { CopyToClipboardBtn } from "../../components/CopyToClipboardBtn";
-import { FlexCol } from "../../components/Flex";
-import Loading from "../../components/Loading";
-import { MediaViewer } from "../../components/MediaViewer";
-import { isDefined } from "../../utils";
-import { Counter } from "../W_SQL/W_SQL";
-import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
+import {
+  filterArr,
+  filterArrInverse,
+} from "../../../../../../commonTypes/llmUtils";
+import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import type { Message } from "../../../../components/Chat/Chat";
+import { Marked } from "../../../../components/Chat/Marked";
+import Chip from "../../../../components/Chip";
+import { CopyToClipboardBtn } from "../../../../components/CopyToClipboardBtn";
+import { FlexCol, FlexRow } from "../../../../components/Flex";
+import Loading from "../../../../components/Loading";
+import { MediaViewer } from "../../../../components/MediaViewer";
+import Select from "../../../../components/Select/Select";
+import { t } from "../../../../i18n/i18nUtils";
+import { isDefined } from "../../../../utils";
+import { Counter } from "../../../W_SQL/W_SQL";
 import { ToolUseChatMessage } from "./ToolUseChatMessage";
-import type { UseLLMChatProps } from "./useLLMChat";
 import { useMarkdownCodeHeader } from "./useMarkdownCodeHeader";
-import Chip from "../../components/Chip";
+import type { UseLLMChatProps } from "../useLLMChat";
 
 type P = UseLLMChatProps & {
   activeChat: DBSSchema["llm_chats"] | undefined;
@@ -61,6 +66,11 @@ export const useLLMChatMessages = (props: P) => {
                   <MediaViewer
                     key={`${id}-${m.type}-${idx}`}
                     url={m.source.data}
+                    style={{
+                      maxHeight: "200px",
+                      maxWidth: "fit-content",
+                      border: "1px solid var(--b-color)",
+                    }}
                   />
                 );
               }
@@ -91,7 +101,7 @@ export const useLLMChatMessages = (props: P) => {
               id,
               incoming: user_id !== user?.id,
               messageTopContent: (
-                <>
+                <FlexRow className="show-on-parent-hover f-1">
                   {!user_id && (
                     <Chip
                       className="ml-p5"
@@ -100,19 +110,50 @@ export const useLLMChatMessages = (props: P) => {
                       {`$${costNum.toFixed(!costNum ? 0 : 2)}`}
                     </Chip>
                   )}
+                  <Select
+                    title={t.common.Delete + "..."}
+                    fullOptions={[
+                      {
+                        key: "thisMessage",
+                        label: "Delete this message",
+                      },
+                      {
+                        key: "allToBottom",
+                        label: "Delete this and all following messages",
+                      },
+                    ]}
+                    btnProps={{
+                      size: "micro",
+                      variant: "icon",
+                      iconPath: mdiDelete,
+                      children: "",
+                    }}
+                    onChange={async (option) => {
+                      if (option === "thisMessage") {
+                        await dbs.llm_messages.delete({ id });
+                      } else {
+                        await dbs.llm_messages.delete({
+                          chat_id: activeChat?.id,
+                          created: {
+                            $gte: created,
+                          },
+                        });
+                      }
+                    }}
+                    className="ml-auto"
+                  />
                   {textMessageToCopy && (
                     <CopyToClipboardBtn
-                      className="show-on-parent-hover"
                       content={textMessageToCopy}
                       size="micro"
-                      style={{
-                        top: "0.25em",
-                        right: "0.25em",
-                        position: "absolute",
-                      }}
+                      // style={{
+                      //   top: "0.25em",
+                      //   right: "0.25em",
+                      //   position: "absolute",
+                      // }}
                     />
                   )}
-                </>
+                </FlexRow>
               ),
               message: (
                 <FlexCol>
@@ -133,11 +174,13 @@ export const useLLMChatMessages = (props: P) => {
         .filter(isDefined),
     [
       llmMessages,
-      user?.id,
       is_loading,
+      user?.id,
       sqlHandler,
-      markdownCodeHeader,
       loadedSuggestions,
+      markdownCodeHeader,
+      dbs.llm_messages,
+      activeChat?.id,
     ],
   );
 

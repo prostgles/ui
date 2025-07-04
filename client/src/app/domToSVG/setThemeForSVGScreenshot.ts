@@ -37,5 +37,5 @@ export const setThemeForSVGScreenshot = async (theme: undefined | "dark") => {
   for (const cb of resetUICallbacks) {
     await cb();
   }
-  await tout(1000);
+  await tout(3000);
 };

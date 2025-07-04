@@ -168,7 +168,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
       {queryIsRunning ?
         <>
           <Btn
-            size="medium"
+            size="default"
             color="action"
             iconPath={mdiStopCircleOutline}
             title={t.W_SQLBottomBar["Cancel this query (Esc)"]}
@@ -181,7 +181,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             Cancel
           </Btn>
           <Btn
-            size="medium"
+            size="default"
             title={t.W_SQLBottomBar["Terminate this query"]}
             {...dataCommand("W_SQLBottomBar.terminateQuery")}
             color="danger"
@@ -207,7 +207,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
           {notifEventSub ?
             <Btn
               title={t.W_SQLBottomBar["Stop LISTEN"]}
-              size="medium"
+              size="default"
               color="action"
               iconPath={mdiStopCircleOutline}
               {...dataCommand("W_SQLBottomBar.stopListen")}
@@ -251,7 +251,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               color="action"
               title={t.W_SQLBottomBar["Run query (CTRL+E, ALT+E)"]}
               disabledInfo={!db.sql ? SQL_NOT_ALLOWED : undefined}
-              size="medium"
+              size="default"
               iconPath={mdiPlay}
               onClick={(e) => {
                 runSQL();

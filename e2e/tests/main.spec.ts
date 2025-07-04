@@ -225,6 +225,12 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
 
     await login(page);
+
+    await goTo(page, "/component-list");
+    await expect(page.locator("body")).toContainText(
+      "All button heights match for loading state.",
+    );
+
     await goTo(page, "/server-settings");
 
     /** SmartForm onLoaded bug */
@@ -744,6 +750,26 @@ test.describe("Main test", () => {
     await page
       .getByText("my_new_value_1")
       .waitFor({ state: "visible", timeout: 15e3 });
+
+    /**
+     * Flaky test. Last failure logs
+     * 
+      {stack: Array(1), message: Invalid or disallowed table: table_name}
+      There was an issue reconnecting old subscriptions {stack: Array(1), message: Invalid or disallowed table: table_name} {lastData: Array(0), tableName: table_name, command: subscribe, param1: Object, param2: Object}
+      Uncaught error within running subscription 
+      _psqlWS_..table_name.{}.{"select":{"*":1},"limit":0}.m.sub {stack: Array(1), message: Invalid or disallowed table: table_name}
+      1751466146652 onDebug schemaChanged []
+      1751466146652 onDebug onReady.call [sql] 
+      Table not found: table_name 
+      Table not found: table_name
+      {message: Unexpected empty object select}
+      Subscribe failed {message: Unexpected empty object select} 
+      Table not found: table_name
+      Table not found: table_name
+      {message: Unexpected empty object select}
+      Subscribe failed {message: Unexpected empty object select}
+    */
+
     await page
       .getByText("my_new_value_3")
       .waitFor({ state: "visible", timeout: 15e3 });

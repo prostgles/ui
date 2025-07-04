@@ -595,13 +595,18 @@ export default class FormField extends React.Component<
             />
           )
         }
-        errorWrapperClassname={`${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect || (inputContent && asJSON !== "codeEditor") ? "" : "f-1"}`}
+        errorWrapperClassname={`${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect || (inputContent && asJSON !== "codeEditor" && type !== "checkbox") ? "" : "f-1"}`}
         inputWrapperClassname={
           (type === "checkbox" ? " ai-center " : "") +
           (type === "checkbox" || asJSON === "JSONBSchema" || arrayEditor ?
             " focus-border-unset "
           : " ") +
-          (options || fullOptions || asJSON === "JSONBSchema" ?
+          ((
+            options ||
+            fullOptions ||
+            asJSON === "JSONBSchema" ||
+            type === "checkbox"
+          ) ?
             "w-fit"
           : "w-full")
         }

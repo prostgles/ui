@@ -49,6 +49,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     rowFilter,
     parentForm,
     errors,
+    tablesToShow,
   } = props;
   const [isLoadingSections, setIsLoadingSections] = useState(false);
 
@@ -73,7 +74,9 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
   const { diplayedTables, descendants } = useMemo(() => {
     const tableJoins = table?.joins.filter((j) => j.hasFkeys) ?? [];
     const diplayedTables = tableJoins.filter(
-      (t) => !parentFormTableNames.includes(t.tableName),
+      (t) =>
+        (!tablesToShow || t.tableName in tablesToShow) &&
+        !parentFormTableNames.includes(t.tableName),
     );
 
     const descendants = tables.filter((t) =>
@@ -81,7 +84,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     );
 
     return { diplayedTables, descendants };
-  }, [tables, tableName, parentFormTableNames, table?.joins]);
+  }, [tables, tableName, parentFormTableNames, table?.joins, tablesToShow]);
 
   const nestedInsertData = useMemo(
     () =>
@@ -101,8 +104,10 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
       diplayedTables.map(async (j) => {
         const canInsert = db[j.tableName]?.insert && j.hasFkeys;
         if (action === "insert" && !canInsert) return;
-        const path = [j.tableName]; // j.path ??
-        const detailedJoinFilter = getJoinFilter(path, tableName, rowFilter);
+        const path = [j.tableName];
+        const detailedJoinFilter = getJoinFilter(path, tableName, rowFilter, {
+          minimised: true,
+        });
         const joinFilter = getSmartGroupFilter(detailedJoinFilter);
         let countStr = "0";
         let countError: string | undefined;

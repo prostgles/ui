@@ -1,8 +1,11 @@
-import type { WorkspaceInsertModel } from "../../../../commonTypes/DashboardTypes";
-import { isObject, type DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { Prgl } from "../../App";
+import type { WorkspaceInsertModel } from "../../../../../commonTypes/DashboardTypes";
+import {
+  isObject,
+  type DBSSchema,
+} from "../../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../../App";
 import { isDefined, omitKeys } from "prostgles-types";
-import { CHIP_COLOR_NAMES } from "../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
+import { CHIP_COLOR_NAMES } from "../../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
 
 export const loadGeneratedWorkspaces = async (
   basicWorkspaces: WorkspaceInsertModel[],

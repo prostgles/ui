@@ -3,8 +3,8 @@ import * as path from "path";
 import { MINUTE, type PageWIds } from "./utils";
 
 const SVG_SCREENSHOT_NAMES = {
-  schema_diagram: 1,
   sql_editor: 1,
+  schema_diagram: 1,
   new_connection: 1,
   command_search: 1,
   connections: 1,
@@ -113,7 +113,7 @@ export const svgScreenshotsCompleteReferenced = async () => {
       .map((v) => v.split(`"`)[0])
       .forEach((src) => {
         if (!usedSrcValues.includes(src)) {
-          usedSrcValues.push(src.slice(SCREENSHOTS_PATH.length + 2, -4));
+          usedSrcValues.push(src.slice(SCREENSHOTS_PATH.length + 1, -4));
         }
       });
   }

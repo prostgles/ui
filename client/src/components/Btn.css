@@ -91,21 +91,21 @@ button.fade-in,
 }
 
 .btn-color-action {
-  /* --color: #5dabff; */
   --filled-bg: var(--blue-500);
   --border-color: var(--blue-500);
   --color: var(--blue-500);
   --faded-bg: var(--blue-100);
   --faded-bg-hover: var(--blue-200);
 }
+
 .dark-theme .btn-color-action {
   --filled-bg: #3079c5;
   --border-color: #5292d7;
   --color: var(--blue-200);
-  /* --faded-bg: #3988ffa6; */
   --faded-bg: #004fa3cc;
   --faded-bg-hover: #6195e4ee;
 }
+
 .dark-theme .btn-color-action.btn-faded {
   --color: white;
 }

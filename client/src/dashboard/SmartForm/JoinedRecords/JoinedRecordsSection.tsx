@@ -29,6 +29,7 @@ const JoinedRecordsSectionCardList = (
     descendants,
     newRowDataHandler,
     tableName,
+    tablesToShow,
   } = props;
 
   const descendantInsertTables = useMemo(
@@ -59,65 +60,65 @@ const JoinedRecordsSectionCardList = (
     sectionTable: s.table,
     tables,
     tableName,
+    tablesToShow,
   });
 
   const { count } = s;
 
   const limit = 20;
   if (isInsert) {
-    if (descendantInsertTables.includes(s.tableName)) {
-      return (
-        <SmartCardListJoinedNewRecords
-          key={s.path.join(".")}
-          db={db as DBHandlerClient}
-          methods={methods}
-          table={s.table}
-          tables={tables}
-          className="px-1"
-          excludeNulls={true}
-          onSuccess={onSuccess}
-          data={nestedInsertData?.[s.tableName] ?? []}
-          onChange={(newData) => {
-            newRowDataHandler?.setNestedTable(s.tableName, newData);
-          }}
-          noDataComponent={
-            <InfoRow className=" " color="info" variant="filled">
-              No records
-            </InfoRow>
-          }
-          noDataComponentMode="hide-all"
-        />
-      );
+    if (!descendantInsertTables.includes(s.tableName)) {
+      return null;
     }
-
-    return null;
-  } else {
     return (
-      <div className="flex-col">
-        {count > 20 && <div>Showing top {limit} records</div>}
-        <SmartCardList
-          key={s.path.join(".")}
-          db={db}
-          tables={tables}
-          methods={methods}
-          tableName={s.tableName}
-          filter={s.joinFilter}
-          className="px-1"
-          onSuccess={onSuccess}
-          realtime={true}
-          excludeNulls={true}
-          showTopBar={false}
-          noDataComponent={
-            <InfoRow className=" " color="info" variant="filled">
-              No records
-            </InfoRow>
-          }
-          noDataComponentMode="hide-all"
-          fieldConfigs={fieldConfigs}
-        />
-      </div>
+      <SmartCardListJoinedNewRecords
+        key={s.path.join(".")}
+        db={db as DBHandlerClient}
+        methods={methods}
+        table={s.table}
+        tables={tables}
+        className="px-1"
+        excludeNulls={true}
+        onSuccess={onSuccess}
+        data={nestedInsertData?.[s.tableName] ?? []}
+        onChange={(newData) => {
+          newRowDataHandler?.setNestedTable(s.tableName, newData);
+        }}
+        noDataComponent={
+          <InfoRow className=" " color="info" variant="filled">
+            No records
+          </InfoRow>
+        }
+        noDataComponentMode="hide-all"
+      />
     );
   }
+
+  return (
+    <div className="flex-col">
+      {count > 20 && <div>Showing top {limit} records</div>}
+      <SmartCardList
+        key={s.path.join(".")}
+        db={db}
+        tables={tables}
+        methods={methods}
+        tableName={s.tableName}
+        filter={s.joinFilter}
+        className="px-1"
+        onSuccess={onSuccess}
+        realtime={true}
+        excludeNulls={true}
+        showTopBar={false}
+        noDataComponent={
+          <InfoRow className=" " color="info" variant="filled">
+            No records
+          </InfoRow>
+        }
+        noDataComponentMode="hide-all"
+        fieldConfigs={fieldConfigs}
+      />
+    </div>
+  );
 };
 
 export const JoinedRecordsSection = ({

@@ -4,7 +4,7 @@ import {
   getLLMMessageToolUse,
   type LLMMessage,
 } from "../../../../../commonTypes/llmUtils";
-import { getMCPToolNameParts } from "../../../../../commonTypes/mcp";
+import { getMCPToolNameParts } from "../../../../../commonTypes/prostglesMcpTools";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { AskLLMToolsProps } from "./AskLLMToolApprover";
 import { getLLMToolUseResult } from "./getLLMToolUseResult";
@@ -34,10 +34,11 @@ export const useLLMTools = ({
 }) => {
   const fetchingForMessageId = useRef<string>();
 
-  const { allowedTools, allToolsForTask } = useLLMChatAllowedTools({
-    activeChat,
-    dbs,
-  });
+  const { allowedTools, allToolsForTask, chatDBPermissions } =
+    useLLMChatAllowedTools({
+      activeChat,
+      dbs,
+    });
 
   const { is_state_db } = connection;
 
@@ -87,6 +88,7 @@ export const useLLMTools = ({
         }
 
         const toolResult = await getLLMToolUseResult(
+          chatDBPermissions,
           !!is_state_db,
           allToolsForTask,
           matchedTool,

@@ -51,11 +51,7 @@ type BtnCustomProps = (
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
 
-  /**
-   * If provided will override existing top classname
-   */
-  exactClassName?: string;
-  size?: "large" | "medium" | "small" | "micro";
+  size?: "large" | "default" | "small" | "micro";
   variant?: "outline" | "filled" | "faded" | "icon" | "text" | "default";
   color?:
     | "danger"
@@ -89,12 +85,14 @@ type BtnCustomProps = (
           showMessage: ClickMessageArgs,
         ) => void;
         onClickPromise?: undefined;
+        onClickPromiseMode?: undefined;
       }
     | {
         onClickMessage?: undefined;
         onClickPromise?: (
           e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
         ) => Promise<void>;
+        onClickPromiseMode?: "noTickIcon";
         /**
          * Will display it instead of the error message
          */
@@ -124,7 +122,6 @@ const CUSTOM_ATTRS: OmmitedKeys[] = [
   "ref",
   "style",
   "size",
-  "exactClassName",
   "iconProps",
   "iconNode",
   "iconPosition",
@@ -132,6 +129,7 @@ const CUSTOM_ATTRS: OmmitedKeys[] = [
   "onClickMessage",
   "onClickPromise",
   "onClickPromiseMessage",
+  "onClickPromiseMode",
   "asNavLink" as any,
   "iconStyle",
   "titleAsLabel",
@@ -191,7 +189,11 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       });
     } else if ("ok" in msg) {
       this.setState({
-        clickMessage: { type: "ok", msg: msg.ok, replace: msg.replace },
+        clickMessage: {
+          type: "ok",
+          msg: msg.ok,
+          replace: msg.replace,
+        },
       });
     } else if ("loading" in msg) {
       if (!msg.loading) {
@@ -203,7 +205,9 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
             this.mounted &&
             JSON.stringify(this.latestMsg) === JSON.stringify(msg)
           ) {
-            this.setState({ clickMessage: { type: "loading", msg: "" } });
+            this.setState({
+              clickMessage: { type: "loading", msg: "" },
+            });
           }
         }, msg.delay ?? 750);
       }
@@ -221,12 +225,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     );
   };
 
-  setPromise = async (promise: Promise<any>) => {
+  setPromise = async (
+    promise: ReturnType<Required<BtnProps>["onClickPromise"]>,
+  ) => {
     this.clickMessage({ loading: 1, delay: 0 });
     const minDuration = 500;
     const startTime = Date.now();
     try {
-      await promise;
+      const res = await promise;
       const endTime = Date.now();
       const duration = endTime - startTime;
       if (!this.mounted) return;
@@ -255,7 +261,6 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       disabledVariant = "",
       title,
       fadeIn,
-      exactClassName,
       variant = "default",
       iconProps,
       iconNode,
@@ -263,6 +268,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       titleAsLabel,
       label,
       clickConfirmation,
+      onClickPromiseMode,
       ...otherProps
     } = this.props;
     const { clickMessage, showClickConfirmation } = this.state;
@@ -280,59 +286,53 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     if (clickMessage?.replace) return clickMessage.msg;
 
     const isDisabled = disabledInfo || loading;
-    let _className = exactClassName || "";
-    const { size = window.isLowWidthScreen ? "small" : "large" } = this.props;
+    let _className = "";
+    const { size = window.isLowWidthScreen ? "small" : "default" } = this.props;
 
-    if (!exactClassName) {
-      const hasBgClassname = (className + "").includes("bg-");
-      _className =
-        " f-0 flex-row gap-p5 ai-center  " +
-        ("href" in this.props ? " button-css " : "  ") +
-        (variant === "outline" ? " b " : "");
+    const hasBgClassname = (className + "").includes("bg-");
+    _className =
+      " f-0 flex-row gap-p5 ai-center  " +
+      ("href" in this.props ? " button-css " : "  ") +
+      (variant === "outline" ? " b " : "");
 
-      if (children) {
-        if (variant === "outline") {
-          if (!hasBgClassname)
-            _className =
-              _className.replace("bg-transparent", "") + " bg-color-0 ";
-          extraStyle = {
-            borderColor: "currentcolor",
-          };
-        }
-
-        if (size === "micro") {
-          extraStyle.padding = iconPath || loading ? `2px 6px` : "2px 4px";
-        }
-
-        if (size === "small") {
-          extraStyle.padding = iconPath || loading ? `2px 8px` : "2px 8px";
-        }
-
-        if (size === "medium") {
-          extraStyle.padding = iconPath || loading ? `6px 10px` : "10px";
-        }
-        if (size === "large") {
-          extraStyle.padding = iconPath || loading ? `8px 12px` : "12px";
-        }
-
-        if (variant === "text") {
-          extraStyle.paddingLeft = 0;
-        }
-
-        /** Is icon Btn */
-      } else {
+    if (children && !iconNode && !iconPath && !loading) {
+      if (variant === "outline") {
+        if (!hasBgClassname)
+          _className =
+            _className.replace("bg-transparent", "") + " bg-color-0 ";
         extraStyle = {
-          padding:
-            size === "micro" ? "2px"
-            : size === "small" ? "4px"
-            : size === "medium" ? "6px"
-            : "8px",
+          borderColor: "currentcolor",
         };
-
-        if (variant === "icon" || variant === "outline") {
-          extraStyle.padding = "0.5em";
-        }
       }
+
+      if (size === "micro") {
+        extraStyle.padding = "5px";
+      }
+
+      if (size === "small") {
+        extraStyle.padding = "6px 8px";
+      }
+
+      if (size === "default") {
+        extraStyle.padding = "12px 14px";
+      }
+      if (size === "large") {
+        extraStyle.padding = "12px";
+      }
+
+      if (variant === "text") {
+        extraStyle.paddingLeft = 0;
+      }
+
+      /** Is icon Btn */
+    } else {
+      extraStyle = {
+        padding:
+          size === "micro" ? "4px"
+          : size === "small" ? "6px"
+          : size === "default" ? "8px"
+          : "10px",
+      };
     }
 
     _className +=
@@ -344,15 +344,15 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     const loadingSize = {
       large: 22,
-      medium: 18,
-      small: 12,
+      default: 20,
+      small: 14,
       micro: 12,
     }[size];
     const loadingMargin = {
       large: 1,
-      medium: 3,
-      small: 4,
-      micro: 3,
+      default: 1,
+      small: 0,
+      micro: 2,
     }[size];
     const childrenContent =
       children === undefined || children === null || children === "" ? null
@@ -374,11 +374,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
             <Icon
               path={
                 clickMessage?.type === "err" ? mdiAlert
-                : clickMessage?.type === "ok" ?
+                : (
+                  clickMessage?.type === "ok" &&
+                  onClickPromiseMode !== "noTickIcon"
+                ) ?
                   mdiCheck
                 : (iconPath ?? iconProps!.path)
               }
-              size={size === "micro" ? 0.75 : 1}
+              sizeName={size}
               className={iconClassname + " f-0 "}
               style={iconStyle}
               {...iconProps}
@@ -433,7 +436,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     const FontSizeMap: Record<Required<BtnCustomProps>["size"], string> = {
       large: "16px",
-      medium: "16px",
+      default: "16px",
       small: "14px",
       micro: "12px",
     };

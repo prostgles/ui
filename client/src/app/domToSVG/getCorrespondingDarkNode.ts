@@ -6,12 +6,6 @@ export const getCorrespondingDarkNode = (
   index: number,
 ): SVGScreenshotNodeType | undefined => {
   let darkNode = darkNodes[index];
-  if (
-    lightNode.nodeName === darkNode?.nodeName &&
-    lightNode._bboxCode === darkNode._bboxCode
-  ) {
-    return darkNode;
-  }
 
   const darkNodesArr = Array.from(darkNodes);
   const matchesTypes = darkNodesArr.filter(
@@ -26,6 +20,16 @@ export const getCorrespondingDarkNode = (
   const lightBBox = lightNode.getBBox();
   let matchedTypeAndOverlap = matchesTypes.filter((n) => {
     const nBBox = n.getBBox();
+
+    if (!lightBBox.width || !lightBBox.height) {
+      return (
+        lightBBox.width === nBBox.width &&
+        lightBBox.height === nBBox.height &&
+        lightBBox.x === nBBox.x &&
+        lightBBox.y === nBBox.y
+      );
+    }
+
     const bboxesOverlap =
       lightBBox.x < nBBox.x + nBBox.width &&
       lightBBox.x + lightBBox.width > nBBox.x &&
@@ -49,7 +53,7 @@ export const getCorrespondingDarkNode = (
   }
   // if (
   //   lightNode instanceof SVGTextElement &&
-  //   lightNode.textContent?.includes("()")
+  //   lightNode.textContent?.includes("username")
   //   // &&
   //   // lightNode.getAttribute("fill") === "rgb(108, 6, 171)"
   // ) {

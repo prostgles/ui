@@ -41,3 +41,9 @@ export const filterArrInverse = (arr, pattern) => {
         return patternEntries.every(([key, value]) => item[key] !== value);
     });
 };
+export const LLM_PROMPT_VARIABLES = {
+    PROSTGLES_SOFTWARE_NAME: "${prostglesSoftwareName}",
+    SCHEMA: "${schema}",
+    DASHBOARD_TYPES: "${dashboardTypes}",
+    TODAY: "${today}",
+};

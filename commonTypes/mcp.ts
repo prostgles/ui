@@ -1500,19 +1500,6 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
   },
 };
 
-const MCP_TOOL_NAME_SEPARATOR = "--";
-export const getMCPFullToolName = ({
-  server_name,
-  name,
-}: Pick<DBSSchema["mcp_server_tools"], "server_name" | "name">) => {
-  return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}` as const;
-};
-export const getMCPToolNameParts = (fullName: string) => {
-  const [serverName, toolName] = fullName.split(MCP_TOOL_NAME_SEPARATOR);
-  if (serverName && toolName) {
-    return { serverName, toolName };
-  }
-};
 export type McpToolCallResponse = {
   _meta?: Record<string, any>;
   content: Array<
@@ -1537,56 +1524,3 @@ export type McpToolCallResponse = {
   >;
   isError?: boolean;
 };
-
-export const executeSQLTool = {
-  name: getMCPFullToolName({
-    server_name: "prostgles",
-    name: "execute_sql",
-  } as const),
-  description: "Run SQL query on the current database",
-  input_schema: {
-    type: "object",
-    properties: {
-      sql: {
-        type: "string",
-        description: "SQL query to execute",
-      },
-    },
-    required: ["sql"],
-    additionalProperties: false,
-  },
-} as const;
-
-export const getSuggestedTaskTools = (toolNames: string[] = []) => ({
-  name: getMCPFullToolName({
-    server_name: "prostgles",
-    name: "choose_tools_for_task",
-  } as const),
-  description:
-    "For a given task description and the provided tools, returns a list of tools that can be used to complete the task.",
-  input_schema: {
-    $schema: "https://json-schema.org/draft/2020-12/schema",
-    type: "object",
-    required: ["suggested_tools"],
-    properties: {
-      suggested_tools: {
-        type: "array",
-        items: {
-          type: "object",
-          required: ["tool_name"],
-          properties: {
-            tool_name: {
-              type: "string",
-              ...(toolNames.length ? { enum: toolNames } : {}),
-            },
-          },
-        },
-      },
-    },
-  } as any,
-});
-
-export const PROSTGLES_MCP_TOOLS = [
-  executeSQLTool,
-  getSuggestedTaskTools(),
-] as const;

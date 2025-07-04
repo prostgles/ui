@@ -1,8 +1,5 @@
-import { mdiFile } from "@mdi/js";
 import React from "react";
-import ErrorComponent from "../ErrorComponent";
 import { FlexCol } from "../Flex";
-import { Icon } from "../Icon/Icon";
 import Loading from "../Loading";
 import type { Message } from "./Chat";
 

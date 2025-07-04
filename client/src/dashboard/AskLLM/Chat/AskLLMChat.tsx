@@ -1,21 +1,21 @@
 import React, { useCallback, useMemo } from "react";
-import type { LLMMessage } from "../../../../commonTypes/llmUtils";
-import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { Chat, type ChatProps } from "../../components/Chat/Chat";
-import { FlexCol } from "../../components/Flex";
-import Popup from "../../components/Popup/Popup";
-import { CHAT_WIDTH } from "./AskLLM";
-import { AskLLMChatActionBar } from "./AskLLMChatActionBar/AskLLMChatActionBar";
+import type { LLMMessage } from "../../../../../commonTypes/llmUtils";
+import type { Prgl } from "../../../App";
+import Btn from "../../../components/Btn";
+import { Chat, type ChatProps } from "../../../components/Chat/Chat";
+import { FlexCol } from "../../../components/Flex";
+import Popup from "../../../components/Popup/Popup";
+import { CHAT_WIDTH } from "../AskLLM";
+import { AskLLMChatActionBar } from "../ChatActionBar/AskLLMChatActionBar";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
-import { AskLLMToolApprover } from "./Tools/AskLLMToolApprover";
+import { AskLLMToolApprover } from "../Tools/AskLLMToolApprover";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
-import type { LLMSetupStateReady } from "./useLLMSetupState";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { isDefined } from "../../utils";
-import { MINUTE } from "../../../../commonTypes/utils";
-import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
+import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import { isDefined } from "../../../utils";
+import { MINUTE } from "../../../../../commonTypes/utils";
+import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 
 export type AskLLMChatProps = {
   prgl: Prgl;

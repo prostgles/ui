@@ -31,13 +31,16 @@ export const addOverflowClipPath = (
    * If overflow is set to hidden, we need to add a clip path to the group
    */
   if (!mustAddClipPath(element, style)) return;
-
   const borderWidth =
     whatToRender.border?.type === "border" ?
       whatToRender.border.borderWidth
     : 0;
-  /** This is to ensure we don't cut out the rounded parent corners */
-  const inputBorderRadius = "8px";
+
+  /**
+   * This is to ensure we don't cut out the rounded parent corners
+   * */
+  // const parentWithRoundedCorners = element
+  const inputBorderRadius = element instanceof HTMLInputElement ? "8px" : "0";
   const { path: clipRect } = getRectanglePath(
     {
       ...style,

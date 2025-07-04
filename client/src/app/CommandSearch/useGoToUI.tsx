@@ -13,13 +13,19 @@ import { getDocPagePath, getUIDocElements } from "./utils";
 import type { CommandSearchHighlight } from "./CommandSearch";
 import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "../../Testing";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
+import { useAlert, type AlertContext } from "../../components/AlertProvider";
 
 type ItemPosition = "mid" | "last";
 
-const getUIDocElementsAndAlertIfEmpty = (doc: UIDocNonInfo) => {
+const getUIDocElementsAndAlertIfEmpty = (
+  doc: UIDocNonInfo,
+  addAlert: AlertContext["addAlert"],
+) => {
   const result = getUIDocElements(doc);
   if (!result.items.length && !isPlaywrightTest) {
-    alert(`Could not find a ${JSON.stringify(doc.title)} item.`);
+    addAlert({
+      children: `Could not find a ${JSON.stringify(doc.title)} item.`,
+    });
   }
   return result;
 };
@@ -33,9 +39,11 @@ export const useGoToUI = (
     left: number;
     top: number;
   }>();
+
+  const { addAlert } = useAlert();
   const highlight = useCallback(
     async (doc: UIDocNonInfo, itemPosition: ItemPosition) => {
-      const { items } = getUIDocElementsAndAlertIfEmpty(doc);
+      const { items } = getUIDocElementsAndAlertIfEmpty(doc, addAlert);
       [...items].at(-1)?.scrollIntoView();
       await tout(500);
       const mustChooseOne = items.length > 1 && itemPosition !== "last";
@@ -79,17 +87,19 @@ export const useGoToUI = (
       setMessage(undefined);
       return Array.from(items);
     },
-    [setHighlights],
+    [addAlert, setHighlights],
   );
   const showMultiHighlight = useCallback(
     async (doc: UIDocNonInfo, duration: ItemPosition) => {
       const [firstItem] = await highlight(doc, duration);
       if (!firstItem) {
-        alert(`No items found in the ${JSON.stringify(doc.title)} list.`);
+        addAlert({
+          children: `No items found in the ${JSON.stringify(doc.title)} list.`,
+        });
         return;
       }
     },
-    [highlight],
+    [highlight, addAlert],
   );
 
   const location = useLocation();
@@ -140,7 +150,7 @@ export const useGoToUI = (
         }
       } else if (nonIteractableContainers.includes(doc.type)) {
         // Do not highlight non-interactable container types
-        const { items } = getUIDocElementsAndAlertIfEmpty(doc);
+        const { items } = getUIDocElementsAndAlertIfEmpty(doc, addAlert);
         return !items.length;
       } else if (
         doc.type === "popup" ||
@@ -154,7 +164,7 @@ export const useGoToUI = (
         await highlight(doc, "mid");
       }
     },
-    [location.pathname, navigate, clickOneOrHighlight, highlight],
+    [location.pathname, navigate, clickOneOrHighlight, highlight, addAlert],
   );
 
   const goToUIDocItem = useCallback(

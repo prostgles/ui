@@ -20,6 +20,7 @@ import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
 import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { InsertButtonProps } from "../SmartForm/InsertButton";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -37,7 +38,6 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   className?: string;
   style?: React.CSSProperties;
   variant?: "row" | "col" | "row-wrap";
-  disableVariantToggle?: boolean;
 
   hideColumns?: string[];
 
@@ -49,7 +49,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   fieldConfigs?: FieldConfig<T>[];
 
   title?: React.ReactNode | ((args: { count: number }) => React.ReactNode);
-  getRowFooter?: (row: AnyObject | any) => React.ReactNode | React.JSX.Element;
+  getRowFooter?: (row: T) => React.ReactNode | React.JSX.Element;
   footer?: React.ReactNode;
 
   /**
@@ -69,7 +69,16 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
 
   showTopBar?:
     | boolean
-    | { leftContent?: React.ReactNode; insert?: true; sort?: true };
+    | {
+        leftContent?: React.ReactNode;
+        insert?:
+          | true
+          | Pick<
+              InsertButtonProps,
+              "buttonProps" | "defaultData" | "fixedData"
+            >;
+        sort?: true;
+      };
   rowProps?: {
     style?: React.CSSProperties;
     className?: string;
@@ -106,7 +115,6 @@ export const SmartCardList = <T extends AnyObject>(
     tables,
     className = "",
     style = {},
-    disableVariantToggle = true,
     popupFixedStyle,
     fieldConfigs: _fieldConfigs,
     getRowFooter,
@@ -188,9 +196,8 @@ export const SmartCardList = <T extends AnyObject>(
                   methods={methods}
                   tables={tables}
                   tableName={tableName}
-                  defaultData={defaultData}
+                  defaultData={defaultData as T}
                   columns={columns}
-                  disableVariantToggle={disableVariantToggle}
                   excludeNulls={excludeNulls}
                   popupFixedStyle={popupFixedStyle}
                   fieldConfigs={_fieldConfigs}

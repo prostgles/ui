@@ -207,7 +207,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         data-key={column.name}
         leftIcon={
           ftableIcon ?
-            <SvgIcon className="f-0 text-1 mt-p25 mr-p5" icon={ftableIcon} />
+            <SvgIcon className="f-0 text-1 mr-p5" icon={ftableIcon} />
           : someColumnsHaveIcons && (
               <div
                 className="mt-p25 mr-p5"

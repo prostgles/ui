@@ -22,6 +22,7 @@ import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 import { t } from "../i18n/i18nUtils";
+import { classOverride } from "../components/Flex";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
@@ -86,10 +87,10 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     <>
       <div
         data-command="Window.W_QuickMenu"
-        className={
-          "W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 " +
-          bgColorClass
-        }
+        className={classOverride(
+          "W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 o-auto no-scroll-bar ",
+          bgColorClass,
+        )}
         style={{ maxWidth: "fit-content", margin: "2px 0" }}
         ref={divRef}
       >

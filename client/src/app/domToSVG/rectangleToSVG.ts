@@ -67,12 +67,14 @@ export const rectangleToSVG = (
     context.defs.appendChild(combinedMask);
     g.setAttribute("mask", `url(#${combinedMask.id})`);
 
-    maskLinearGradients.slice(1).forEach((grad, index) => {
+    const masks = maskLinearGradients.slice(1);
+
+    masks.forEach((grad, index) => {
       const direction =
         grad.startsWith("to top") ? "toTop"
         : grad.startsWith("to left") ? "toLeft"
         : undefined;
-      if (direction !== "toTop" && Math.PI) {
+      if (index) {
         // Mask combining does not work
         return;
       }

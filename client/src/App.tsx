@@ -40,6 +40,7 @@ import { useAppState } from "./useAppState/useAppState";
 import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
 import { Documentation } from "./app/CommandSearch/Documentation";
 import { ScrollFade } from "./components/ScrollFade/ScrollFade";
+import { AlertProvider } from "./components/AlertProvider";
 
 export type ClientUser = {
   sid: string;
@@ -175,151 +176,153 @@ export const App = () => {
   }
   const isElectron = !!serverState.isElectron;
   return (
-    <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
-      <CommandSearch isElectron={isElectron} />
-      <XRealIpSpoofableAlert {...state} />
-      {demoStarted && <MousePointer />}
-      {isDisconnected && (
-        <Loading
-          message={t.App["Reconnecting..."]}
-          variant="cover"
-          style={{ zIndex: 467887 }}
-        />
-      )}
-      <NonHTTPSWarning {...prglState} />
-      <Switch>
-        <Route
-          key="0"
-          path="/"
-          element={<Navigate to={ROUTES.CONNECTIONS} replace />}
-        />
-        <Route
-          key="1"
-          path={ROUTES.CONNECTIONS}
-          element={
-            <NavBarWrapper
-              extraProps={extraProps}
-              needsUser={true}
-              userThemeOption={userThemeOption}
-            >
-              <Connections {...extraProps} />
-            </NavBarWrapper>
-          }
-        />
-        <Route
-          key="2"
-          path={ROUTES.USERS}
-          element={
-            <NavBarWrapper
-              extraProps={extraProps}
-              needsUser={false}
-              userThemeOption={userThemeOption}
-            >
-              <UserManager {...extraProps} />
-            </NavBarWrapper>
-          }
-        />
-        <Route
-          key="3"
-          path={ROUTES.ACCOUNT}
-          element={
-            <NavBarWrapper
-              extraProps={extraProps}
-              needsUser={false}
-              userThemeOption={userThemeOption}
-            >
-              <Account {...extraProps} />
-            </NavBarWrapper>
-          }
-        />
-        <Route
-          key="4"
-          path={`${ROUTES.CONNECTIONS}/:cid`}
-          element={<ProjectConnection prglState={extraProps} />}
-        />
-        <Route
-          key="5"
-          path={ROUTES.NEW_CONNECTION}
-          element={
-            <NewConnnection
-              connectionId={undefined}
-              db={undefined}
-              prglState={extraProps}
-              showTitle={true}
-            />
-          }
-        />
-        <Route
-          key="6"
-          path={`${ROUTES.EDIT_CONNECTION}/:id`}
-          element={
-            <NewConnnection
-              connectionId={undefined}
-              db={undefined}
-              prglState={extraProps}
-              showTitle={true}
-            />
-          }
-        />
-        <Route
-          key="7"
-          path={`${ROUTES.CONFIG}/:cid`}
-          element={
-            <ProjectConnection
-              prglState={extraProps}
-              showConnectionConfig={true}
-            />
-          }
-        />
-        <Route
-          key="8"
-          path={ROUTES.SERVER_SETTINGS}
-          element={
-            <NavBarWrapper
-              extraProps={extraProps}
-              needsUser={true}
-              userThemeOption={userThemeOption}
-            >
-              <ServerSettings {...extraProps} />
-            </NavBarWrapper>
-          }
-        />
-        <Route
-          key="9"
-          path={ROUTES.COMPONENT_LIST}
-          element={
-            <NavBarWrapper
-              extraProps={extraProps}
-              needsUser={false}
-              userThemeOption={userThemeOption}
-            >
-              <ComponentList />
-            </NavBarWrapper>
-          }
-        />
-        <Route
-          key="10"
-          path={ROUTES.LOGIN}
-          element={<Login {...extraProps} />}
-        />
-        <Route
-          key="11"
-          path={ROUTES.DOCUMENTATION}
-          element={
-            <NavBarWrapper
-              extraProps={extraProps}
-              needsUser={false}
-              userThemeOption={userThemeOption}
-            >
-              <ScrollFade className="o-auto f-1 w-full ai-center flex-col bg-color-0">
-                <Documentation isElectron={isElectron} />
-              </ScrollFade>
-            </NavBarWrapper>
-          }
-        />
-        <Route key="12" path="*" element={<NotFound />} />
-      </Switch>
-    </FlexCol>
+    <AlertProvider>
+      <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
+        <CommandSearch isElectron={isElectron} />
+        <XRealIpSpoofableAlert {...state} />
+        {demoStarted && <MousePointer />}
+        {isDisconnected && (
+          <Loading
+            message={t.App["Reconnecting..."]}
+            variant="cover"
+            style={{ zIndex: 467887 }}
+          />
+        )}
+        <NonHTTPSWarning {...prglState} />
+        <Switch>
+          <Route
+            key="0"
+            path="/"
+            element={<Navigate to={ROUTES.CONNECTIONS} replace />}
+          />
+          <Route
+            key="1"
+            path={ROUTES.CONNECTIONS}
+            element={
+              <NavBarWrapper
+                extraProps={extraProps}
+                needsUser={true}
+                userThemeOption={userThemeOption}
+              >
+                <Connections {...extraProps} />
+              </NavBarWrapper>
+            }
+          />
+          <Route
+            key="2"
+            path={ROUTES.USERS}
+            element={
+              <NavBarWrapper
+                extraProps={extraProps}
+                needsUser={false}
+                userThemeOption={userThemeOption}
+              >
+                <UserManager {...extraProps} />
+              </NavBarWrapper>
+            }
+          />
+          <Route
+            key="3"
+            path={ROUTES.ACCOUNT}
+            element={
+              <NavBarWrapper
+                extraProps={extraProps}
+                needsUser={false}
+                userThemeOption={userThemeOption}
+              >
+                <Account {...extraProps} />
+              </NavBarWrapper>
+            }
+          />
+          <Route
+            key="4"
+            path={`${ROUTES.CONNECTIONS}/:cid`}
+            element={<ProjectConnection prglState={extraProps} />}
+          />
+          <Route
+            key="5"
+            path={ROUTES.NEW_CONNECTION}
+            element={
+              <NewConnnection
+                connectionId={undefined}
+                db={undefined}
+                prglState={extraProps}
+                showTitle={true}
+              />
+            }
+          />
+          <Route
+            key="6"
+            path={`${ROUTES.EDIT_CONNECTION}/:id`}
+            element={
+              <NewConnnection
+                connectionId={undefined}
+                db={undefined}
+                prglState={extraProps}
+                showTitle={true}
+              />
+            }
+          />
+          <Route
+            key="7"
+            path={`${ROUTES.CONFIG}/:cid`}
+            element={
+              <ProjectConnection
+                prglState={extraProps}
+                showConnectionConfig={true}
+              />
+            }
+          />
+          <Route
+            key="8"
+            path={ROUTES.SERVER_SETTINGS}
+            element={
+              <NavBarWrapper
+                extraProps={extraProps}
+                needsUser={true}
+                userThemeOption={userThemeOption}
+              >
+                <ServerSettings {...extraProps} />
+              </NavBarWrapper>
+            }
+          />
+          <Route
+            key="9"
+            path={ROUTES.COMPONENT_LIST}
+            element={
+              <NavBarWrapper
+                extraProps={extraProps}
+                needsUser={false}
+                userThemeOption={userThemeOption}
+              >
+                <ComponentList />
+              </NavBarWrapper>
+            }
+          />
+          <Route
+            key="10"
+            path={ROUTES.LOGIN}
+            element={<Login {...extraProps} />}
+          />
+          <Route
+            key="11"
+            path={ROUTES.DOCUMENTATION}
+            element={
+              <NavBarWrapper
+                extraProps={extraProps}
+                needsUser={false}
+                userThemeOption={userThemeOption}
+              >
+                <ScrollFade className="o-auto f-1 w-full ai-center flex-col bg-color-0">
+                  <Documentation isElectron={isElectron} />
+                </ScrollFade>
+              </NavBarWrapper>
+            }
+          />
+          <Route key="12" path="*" element={<NotFound />} />
+        </Switch>
+      </FlexCol>
+    </AlertProvider>
   );
 };
 

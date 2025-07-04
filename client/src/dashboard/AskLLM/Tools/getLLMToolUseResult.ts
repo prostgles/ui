@@ -5,23 +5,26 @@ import type {
 import {
   executeSQLTool,
   getMCPToolNameParts,
-  getSuggestedTaskTools,
+  getAddTaskTools,
   PROSTGLES_MCP_TOOLS,
-} from "../../../../../commonTypes/mcp";
+  suggestDashboardsTool,
+} from "../../../../../commonTypes/prostglesMcpTools";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import { isDefined } from "../../../utils";
 import type { DBS, DBSMethods } from "../../Dashboard/DBS";
 import {
   type useLLMChatAllowedTools,
   type ApproveRequest,
+  type ChatDBPermissions,
 } from "./useLLMChatAllowedTools";
 import { getSerialisableError } from "prostgles-types";
 
-const taskTool = getSuggestedTaskTools();
+const taskTool = getAddTaskTools();
 /**
  * Get tool result without checking if the tool is allowed for the chat
  */
 export const getLLMToolUseResult = async (
+  chatDBPermissions: ChatDBPermissions | undefined,
   is_state_db: boolean,
   allToolsForTask: ReturnType<typeof useLLMChatAllowedTools>["allToolsForTask"],
   matchedTool: ApproveRequest,
@@ -39,11 +42,13 @@ export const getLLMToolUseResult = async (
   >["content"];
   is_error?: true;
 }> => {
-  if (matchedTool.type === "function") {
-    const method = methods[funcName];
+  if (matchedTool.type === "db-method") {
+    const method = methods[matchedTool.functionName];
     if (method) {
       const methodFunc = typeof method === "function" ? method : method.run;
-      const result = parseToolResultToMessage(() => methodFunc(input));
+      const result = parseToolResultToMessage(() =>
+        methodFunc(input).then((res) => JSON.stringify(res ?? "")),
+      );
       return result;
     }
   } else if (matchedTool.type === "db") {
@@ -63,8 +68,10 @@ export const getLLMToolUseResult = async (
         if (typeof query !== "string") {
           throw new Error("input.sql must be a string");
         }
-        const { query_timeout = 0, commit = false } =
-          matchedTool.chatDBPermissions;
+        if (!chatDBPermissions) {
+          throw new Error("chatDBPermissions is not defined");
+        }
+        const { query_timeout = 0, commit = false } = chatDBPermissions;
         const finalQuery =
           query_timeout && Number.isInteger(query_timeout) ?
             [`SET LOCAL statement_timeout to '${query_timeout}s'`, query].join(
@@ -99,6 +106,13 @@ export const getLLMToolUseResult = async (
         await dbs.llm_chats_allowed_mcp_tools.insert(suggestedTools);
 
         return `${suggestedTools.length} tools added to this chat`;
+      });
+    }
+    if (dbTool?.name === suggestDashboardsTool.name) {
+      return parseToolResultToMessage(async () => {
+        /** TODO: Should validate to ensure the unsert would work */
+
+        return `Dashboards are being presented to the user. The user can then choose to create them. Wait for their feedback`;
       });
     }
   } else {

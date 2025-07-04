@@ -57,7 +57,7 @@ export type FieldConfigRender<T extends AnyObject = AnyObject> = (
 
 export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
   FieldConfigBase<T> & {
-    select?: number | AnyObject | (keyof T & string);
+    select?: number | AnyObject | (keyof T & string) | "*";
     hideIf?: (value, row) => boolean;
     render?: FieldConfigRender<T>;
     /**
@@ -77,7 +77,7 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
   "db" | "tables" | "methods"
 > &
   Pick<SmartCardListProps<T>, "tableName" | "tables"> & {
-    defaultData: AnyObject;
+    defaultData: T;
     rowFilter?: DetailedFilterBase[];
 
     columns?: ValidatedColumnInfo[];
@@ -87,7 +87,6 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
     contentClassname?: string;
     contentStyle?: React.CSSProperties;
     variant?: "row" | "col" | "row-wrap";
-    disableVariantToggle?: boolean;
 
     confirmUpdates?: boolean;
     showLocalChanges?: boolean;
@@ -103,9 +102,9 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
      */
     fieldConfigs?: FieldConfig<T>[] | string[];
 
-    title?: (row: AnyObject) => React.ReactNode;
-    footer?: (row: AnyObject) => React.ReactNode;
-    getActions?: (row: AnyObject) => React.ReactNode;
+    title?: (row: T) => React.ReactNode;
+    footer?: (row: T) => React.ReactNode;
+    getActions?: (row: T) => React.ReactNode;
 
     enableInsert?: boolean;
 
@@ -127,7 +126,6 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
   const {
     className = "",
     style = {},
-    disableVariantToggle = false,
     fieldConfigs: _fieldConfigs,
     footer = null,
     title,
@@ -154,22 +152,10 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
   return (
     <div
       className={classOverride(
-        `SmartCard card bg-color-0 relative ${variantClass} ${disableVariantToggle ? "" : " pointer "}`,
+        `SmartCard card bg-color-0 relative ${variantClass} `,
         className,
       )}
       style={{ padding: ".25em", ...style }}
-      onClick={
-        disableVariantToggle ? undefined : (
-          () => {
-            const v = variant;
-            setVariant(
-              v === "row" ? "col"
-              : v === "col" ? DEFAULT_VARIANT
-              : "row",
-            );
-          }
-        )
-      }
     >
       <div className="flex-col min-w-0 min-h-0 f-1">
         {title?.(defaultData)}

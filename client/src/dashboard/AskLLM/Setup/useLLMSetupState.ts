@@ -1,5 +1,5 @@
-import type { Prgl } from "../../App";
-import type { DbsByUserType } from "../Dashboard/DBS";
+import type { Prgl } from "../../../App";
+import type { DbsByUserType } from "../../Dashboard/DBS";
 
 export type LLMSetupState = ReturnType<typeof useLLMSetupState>;
 export type LLMSetupStateReady = Extract<LLMSetupState, { state: "ready" }>;

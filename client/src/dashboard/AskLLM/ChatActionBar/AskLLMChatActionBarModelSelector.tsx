@@ -9,7 +9,7 @@ import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import Select, { type FullOption } from "../../../components/Select/Select";
 import { SvgIconFromURL } from "../../../components/SvgIcon";
 import { SmartForm, SmartFormPopup } from "../../SmartForm/SmartForm";
-import type { AskLLMChatProps } from "../AskLLMChat";
+import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { btnStyleProps } from "./AskLLMChatActionBar";
 import { RowCard } from "../../W_Table/RowCard";
 

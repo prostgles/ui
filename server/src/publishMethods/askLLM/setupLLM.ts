@@ -1,4 +1,5 @@
 import type { DBS } from "../..";
+import { LLM_PROMPT_VARIABLES } from "../../../../commonTypes/llmUtils";
 import type { DBSSchemaForInsert } from "../../../../commonTypes/publishUtils";
 export const setupLLM = async (dbs: DBS) => {
   /** In case of stale schema update */
@@ -6,6 +7,10 @@ export const setupLLM = async (dbs: DBS) => {
   if (dbs.llm_prompts && !(await dbs.llm_prompts.findOne())) {
     const adminUser = await dbs.users.findOne({ passwordless_admin: true });
     const user_id = adminUser?.id;
+    const firstLine = [
+      `You are an assistant for a PostgreSQL based software called ${LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME}.`,
+      `Today is ${LLM_PROMPT_VARIABLES.TODAY}.`,
+    ].join("\n");
     await dbs.llm_prompts.insert([
       {
         name: "Chat",
@@ -15,16 +20,16 @@ export const setupLLM = async (dbs: DBS) => {
           prompt_type: "chat",
         },
         prompt: [
-          "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
+          firstLine,
           "Assist user with any queries they might have. Do not add empty lines in your sql response.",
           "Reply with a full and concise answer that does not require further clarification or revisions.",
           "Below is the database schema they're currently working with:",
           "",
-          "${schema}",
+          LLM_PROMPT_VARIABLES.SCHEMA,
         ].join("\n"),
       },
       {
-        name: "Dashboards",
+        name: "Create dashboards",
         description: "Create dashboards. Claude Sonnet recommended",
         user_id,
         options: {
@@ -32,33 +37,33 @@ export const setupLLM = async (dbs: DBS) => {
           prompt_type: "dashboards",
         },
         prompt: [
-          "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
+          firstLine,
           "Assist user with any queries they might have.",
           "Below is the database schema they're currently working with:",
           "",
-          "${schema}",
+          LLM_PROMPT_VARIABLES.SCHEMA,
           "",
           "Using dashboard structure below create workspaces with useful views my current schema.",
           "Return a json of this format: { prostglesWorkspaces: WorkspaceInsertModel[] }",
           "Return valid json, markdown compatible and in a clearly delimited section with a json code block.",
           "",
-          "${dashboardTypes}",
+          LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,
         ].join("\n"),
       },
       {
-        name: "Tasks",
+        name: "Create task",
         description: "Create tasks. Claude Sonnet recommended",
         user_id,
         options: {
           prompt_type: "tasks",
         },
         prompt: [
-          "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
+          firstLine,
           "Assist the user with any queries they might have in their current task mode.",
           "They expect you to look at the schema and the tools available to them and return a list of tools and configurations they should use to accomplish.",
           "Below is the database schema they're currently working with:",
           "",
-          "${schema}",
+          LLM_PROMPT_VARIABLES.SCHEMA,
           "",
         ].join("\n"),
       },
@@ -71,7 +76,10 @@ export const setupLLM = async (dbs: DBS) => {
     ]);
 
     const addedPrompts = await dbs.llm_prompts.find();
-    console.warn("Added default prompts", addedPrompts);
+    console.warn(
+      "Inserted default prompts",
+      addedPrompts.map((p) => p.name),
+    );
   }
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -146,7 +154,7 @@ export const setupLLM = async (dbs: DBS) => {
         },
         llm_models: [
           {
-            name: "claude-sonnet-4-20250514	",
+            name: "claude-sonnet-4-20250514",
             pricing_info: {
               input: 3,
               output: 15,
@@ -290,6 +298,16 @@ export const setupLLM = async (dbs: DBS) => {
             context_length: 128_000,
             mcp_tool_support: true,
           },
+          {
+            name: "gemma3",
+            context_length: 128_000,
+            mcp_tool_support: true,
+          },
+          {
+            name: "qwen2.5vl",
+            context_length: 128_000,
+            mcp_tool_support: true,
+          },
         ],
         extra_body: {
           think: false,
@@ -352,6 +370,12 @@ export const setupLLM = async (dbs: DBS) => {
   }
 };
 
+// type OpenAIModel = {
+//   id: string;
+//   created: number;
+//   object: "model";
+//   owned_by: string;
+// };
 // const fetchOpenAIModels = async (bearerToken: string) => {
 //   try {
 //     const response = await fetch("https://api.openai.com/v1/models", {
@@ -376,13 +400,6 @@ export const setupLLM = async (dbs: DBS) => {
 //     throw error;
 //   }
 // };
-
-type OpenAIModel = {
-  id: string;
-  created: number;
-  object: "model";
-  owned_by: string;
-};
 
 type ModelInfo = {
   id: string;

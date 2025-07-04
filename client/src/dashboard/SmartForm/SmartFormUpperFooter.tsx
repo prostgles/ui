@@ -94,8 +94,9 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
       }
       ref={rootDivRef}
       style={{
-        boxShadow: "0px 3px 9px 0px var(--shadow0)",
-        clipPath: "inset(-10px 1px 0px 1px)",
+        /** Replaced shadow with ScrollFade */
+        // boxShadow: "0px 3px 9px 0px var(--shadow0)",
+        // clipPath: "inset(-10px 1px 0px 1px)",
         minHeight: "1px",
         flex: 0.3,
         /** Expand full allowed height to prevent size change when toggling joined records sections */
@@ -133,6 +134,9 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
           modeType={modeType}
           db={db}
           tables={tables}
+          tablesToShow={
+            isObject(showJoinedTables) ? showJoinedTables : undefined
+          }
           methods={methods}
           rowFilter={rowFilter}
           newRowData={newRowData}

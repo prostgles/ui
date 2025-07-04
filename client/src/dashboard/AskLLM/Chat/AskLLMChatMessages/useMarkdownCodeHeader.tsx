@@ -1,12 +1,12 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useCallback } from "react";
-import { isObject } from "../../../../commonTypes/publishUtils";
-import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { type MarkedProps } from "../../components/Chat/Marked";
-import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
-import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
-import type { LLMSetupStateReady } from "./useLLMSetupState";
+import { isObject } from "../../../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../../../App";
+import Btn from "../../../../components/Btn";
+import { type MarkedProps } from "../../../../components/Chat/Marked";
+import { useSetNewWorkspace } from "../../../WorkspaceMenu/WorkspaceMenu";
+import { loadGeneratedWorkspaces } from "../../Tools/loadGeneratedWorkspaces";
+import type { LLMSetupStateReady } from "../../Setup/useLLMSetupState";
 
 type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {

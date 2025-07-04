@@ -609,10 +609,21 @@ const setActiveCodeBlock = async function (
     }
   }
 
-  const signatureDiffers = !isEqual(
-    this.codeBlockSignature,
-    codeBlockSignature,
-  );
+  let currentDecorationsNotRendered = false;
+  const currentPosition = editor.getPosition();
+  const currDecorationsIds = (this.currentDecorations as any)
+    ?._decorationIds as string[] | undefined;
+  if (currentPosition && currDecorationsIds) {
+    const renderedDecorators = editor.getLineDecorations(
+      currentPosition.lineNumber,
+    );
+    currentDecorationsNotRendered = !renderedDecorators?.some((d) =>
+      currDecorationsIds.includes(d.id),
+    );
+  }
+  const signatureDiffers =
+    !isEqual(this.codeBlockSignature, codeBlockSignature) ||
+    currentDecorationsNotRendered;
   const noSelection = !document.getSelection()?.toString();
   if (signatureDiffers && noSelection) {
     this.codeBlockSignature = codeBlockSignature;

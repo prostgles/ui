@@ -1,4 +1,4 @@
-import { mdiFilter, mdiMagnify } from "@mdi/js";
+import { mdiFilter, mdiMagnify, mdiPlay, mdiPlayBox, mdiStop } from "@mdi/js";
 import React from "react";
 import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
 import Btn from "../../../../components/Btn";
@@ -24,8 +24,16 @@ export const MCPServersToolbar = ({
         <AddMCPServer dbs={dbs} />
         <Btn
           color="action"
-          variant="faded"
-          data-command="MCPServersToolbar.disableAllToggle"
+          variant="outline"
+          data-command="MCPServersToolbar.stopAllToggle"
+          title={
+            globalSettings.data?.mcp_servers_disabled ?
+              "Start all MCP Servers"
+            : "Stop all MCP Servers"
+          }
+          iconPath={
+            globalSettings.data?.mcp_servers_disabled ? mdiPlay : mdiStop
+          }
           onClick={() => {
             dbs.global_settings.update(
               {},
@@ -35,11 +43,7 @@ export const MCPServersToolbar = ({
               },
             );
           }}
-        >
-          {globalSettings.data?.mcp_servers_disabled ?
-            "Enable all MCP Servers"
-          : "Disable all MCP Servers"}
-        </Btn>
+        />
 
         <Select
           className="min-w-0 ml-auto"

@@ -106,7 +106,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
             color: "var(--gray-100)",
             background: "var(--gray-700)",
           }}
-          size="medium"
+          size="default"
           title={user.username || "Account"}
           className=" flex-col text-white b g-gray-700"
         >

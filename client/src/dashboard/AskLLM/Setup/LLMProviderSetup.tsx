@@ -1,14 +1,14 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { Prgl } from "../../App";
-import Chip from "../../components/Chip";
-import { InfoRow } from "../../components/InfoRow";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../../App";
+import Chip from "../../../components/Chip";
+import { InfoRow } from "../../../components/InfoRow";
 import {
   SmartCardList,
   type SmartCardListProps,
-} from "../SmartCardList/SmartCardList";
-import Btn from "../../components/Btn";
+} from "../../SmartCardList/SmartCardList";
+import Btn from "../../../components/Btn";
 import { mdiRefresh } from "@mdi/js";
 
 export const LLMProviderSetup = ({
@@ -48,7 +48,7 @@ export const LLMProviderSetup = ({
       SmartCardListProps<DBSSchema["llm_credentials"]>,
       "fieldConfigs" | "showTopBar"
     >;
-  }, [dbsMethods.refreshModels]);
+  }, []);
 
   return (
     <>

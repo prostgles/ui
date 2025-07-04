@@ -3,7 +3,6 @@ import { omitKeys } from "prostgles-types";
 import React, { useCallback } from "react";
 import { type DetailedFilterBase } from "../../../../commonTypes/filterUtils";
 import type { Prgl } from "../../App";
-import type { Command } from "../../Testing";
 import { SuccessMessage } from "../../components/Animations";
 import ErrorComponent from "../../components/ErrorComponent";
 import { classOverride } from "../../components/Flex";
@@ -19,6 +18,7 @@ import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
+import type { JoinedRecordsProps } from "./JoinedRecords/JoinedRecords";
 
 export type getErrorsHook = (
   cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,
@@ -95,7 +95,7 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
 
   className?: string;
 
-  showJoinedTables?: boolean;
+  showJoinedTables?: boolean | JoinedRecordsProps["tablesToShow"];
 
   disabledActions?: ("update" | "delete" | "clone")[];
 

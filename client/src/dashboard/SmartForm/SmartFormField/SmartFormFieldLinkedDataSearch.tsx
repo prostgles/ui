@@ -1,14 +1,13 @@
 import { mdiCheckCircle, mdiCheckCircleOutline } from "@mdi/js";
 import React, { useMemo } from "react";
 import Btn from "../../../components/Btn";
+import { tout } from "../../../utils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
-import { type SmartCardListProps } from "../../SmartCardList/SmartCardList";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
 import {
   ViewMoreSmartCardList,
   type ViewMoreSmartCardListProps,
 } from "./ViewMoreSmartCardList";
-import { tout } from "../../../utils";
 
 type P = Pick<
   SmartFormFieldLinkedDataProps,
@@ -68,6 +67,7 @@ export const SmartFormFieldLinkedDataSearch = ({
         {
           fieldName: fcol,
           value: row[column.name],
+          minimised: true,
         },
       ],
     } satisfies Pick<ViewMoreSmartCardListProps, "searchFilter" | "getActions">;

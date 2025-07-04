@@ -68,7 +68,6 @@
   --indigo-800: #42389d;
   --indigo-900: #362f78;
 
-  /* rgb(51,144,236) */
   --active: #00a1ff;
   --action: var(--blue-500);
   --active-hover: #51bfff;
@@ -96,7 +95,6 @@
   --text-default: var(--gray-600);
   --text-action: var(--active);
 
-  /* --green-500: #0e9f6e; */
   --text-green: #057a55;
 
   --b-warning: var(--yellow-400);
@@ -828,7 +826,7 @@ textarea {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-color: #fff;
+  background-color: var(--bg-color-0);
   border-color: var(--b-default);
   border-width: 1px;
   border-radius: 0.375rem;
@@ -1037,10 +1035,6 @@ textarea:focus {
   border-bottom-width: 1px;
 }
 
-.bg-indigo-900-hover:hover {
-  background-color: var(--indigo-900);
-}
-
 .b,
 .b-1 {
   border-style: solid;
@@ -1055,13 +1049,6 @@ textarea:focus {
   border-radius: 0.375rem;
 }
 
-.transition-150 {
-  transition-property: background-color, border-color, color, fill, stroke,
-    opacity, box-shadow, transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 0.15s;
-}
-
 .transparent {
   opacity: 0;
 }
@@ -1074,10 +1061,6 @@ textarea:focus {
   color: black;
 }
 
-.text-white-hover:hover {
-  color: white;
-}
-
 .text-xs {
   font-size: 0.75rem;
 }
@@ -1086,54 +1069,12 @@ textarea:focus {
   font-size: 0.875rem;
 }
 
-.text-base {
-  font-size: 1rem;
-}
-
 .text-lg {
   font-size: 1.125rem;
 }
 
 .text-xl {
   font-size: 1.25rem;
-}
-
-.text-2xl {
-  font-size: 1.5rem;
-}
-
-.text-3xl {
-  font-size: 1.875rem;
-}
-
-.text-4xl {
-  font-size: 2.25rem;
-}
-
-.text-5xl {
-  font-size: 3rem;
-}
-
-.text-6xl {
-  font-size: 4rem;
-}
-
-.font-sans {
-  font-family:
-    Inter var,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    Segoe UI,
-    Roboto,
-    Helvetica Neue,
-    Arial,
-    Noto Sans,
-    sans-serif,
-    Apple Color Emoji,
-    Segoe UI Emoji,
-    Segoe UI Symbol,
-    Noto Color Emoji;
 }
 
 .font-normal {
@@ -1160,13 +1101,8 @@ textarea:focus {
   overflow: auto;
 }
 
-.cursor-not-allowed,
 .not-allowed {
   cursor: not-allowed;
-}
-
-.capitalize {
-  text-transform: capitalize;
 }
 
 .jc-between {
@@ -1230,9 +1166,6 @@ textarea:focus {
 
 .no-decor {
   text-decoration: none;
-}
-.x-spacers-1 > *:not(:last-child) {
-  margin-right: 1em;
 }
 
 .o-auto {
@@ -1337,13 +1270,6 @@ textarea:focus {
   white-space: normal;
 }
 
-.avatar {
-  height: 46px;
-  width: 46px;
-  border-radius: 23px;
-  overflow: hidden;
-}
-
 .no-pointer-events {
   touch-action: none;
   pointer-events: none;
@@ -1400,7 +1326,7 @@ select {
   width: 100%;
   cursor: pointer;
   border: 1px solid #d2d6dc;
-
+  appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   background: transparent;
@@ -1410,25 +1336,14 @@ select {
   background-position-y: 5px;
 }
 
-/* Hide arrow icon in IE browsers
-.select::-ms-expand {
-  display: none;
-} 
-*/
-/* Hover style */
 select:hover {
   border-color: #888;
 }
 
-/* Focus style */
 .select-button:focus,
 select:focus {
   border: 1px solid var(--focus-color);
   box-shadow: 0 0 0 1px var(--focus-color);
-  /* It'd be nice to use -webkit-focus-ring-color here but it doesn't work on box-shadow */
-  /* box-shadow: inset  0 0 5px 1px rgba(59, 153, 252, .7); */
-  /* box-shadow: 0 0 0 3px -moz-mac-focusring; */
-  /* color: #222;  */
   outline: none;
 }
 
@@ -1436,7 +1351,7 @@ select:focus {
   border-color: transparent !important;
 }
 
-input[type="checkbox"]:focus {
+input[type="checkbox"]:focus-visible {
   border: 1px solid var(--focus-color);
   outline: none;
   box-shadow: 0 0 0 3px rgb(0 183 255 / 15%);
@@ -1495,10 +1410,6 @@ button {
   padding-bottom: 0.5rem;
   padding-left: 1rem;
   padding-right: 1rem;
-  transition-property: background-color, border-color, color, fill, stroke,
-    opacity, box-shadow, transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 0.15s;
   height: fit-content;
   user-select: none;
   overflow: hidden;
@@ -1758,15 +1669,6 @@ button.toggle:focus {
   border-color: var(--blue-500);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  user-select: none;
-}
-
 .absolute-centered {
   position: absolute;
   left: 50%;
@@ -1774,14 +1676,6 @@ h6 {
   transform: translate(-50%, -50%);
 }
 
-.c--spaced > *:not(:last-child) {
-  margin-bottom: 1em;
-}
-.c--spaced > * {
-  margin-right: 1em;
-}
-
-ul.plain,
 li.no-decor,
 ul.left-nav-list {
   list-style: none;
@@ -1813,30 +1707,6 @@ nav.left-nav-list a.active {
   pointer-events: none;
 }
 
-.cspacing-p5 > * {
-  margin-top: 0.5em;
-  margin-left: 0.5em;
-}
-
-.bottom-fader {
-  width: 100%;
-  height: 40px;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  background: linear-gradient(transparent 50%, white);
-  touch-action: none;
-  pointer-events: none;
-}
-
-.contextmenu {
-  -webkit-user-select: none; /* disable selection/Copy of UIWebView */
-  -webkit-touch-callout: none; /* disable the IOS popup when long-press on a link */
-  /* cursor: context-menu; */
-}
-
 .bg-color-0 {
   background-color: var(--bg-color-0);
 }
@@ -1856,10 +1726,6 @@ nav.left-nav-list a.active {
 .bg-li.selected {
   background: var(--bg-li-selected);
 }
-
-/* .dark-theme input {
-  background-color: var(--gray-900);
-} */
 
 .w-800 {
   width: 800px;

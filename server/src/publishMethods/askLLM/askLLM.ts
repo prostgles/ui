@@ -3,12 +3,16 @@ import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import { getSerialisableError, isObject } from "prostgles-types";
 import { type DBS } from "../..";
 import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
-import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
+import {
+  getLLMMessageText,
+  LLM_PROMPT_VARIABLES,
+} from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { sliceText } from "../../../../commonTypes/utils";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
 import { getLLMTools } from "./getLLMTools";
+import { getElectronConfig } from "../../electronConfig";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -140,14 +144,18 @@ export const askLLM = async (
   );
   try {
     const promptWithContext = prompt
-      .replace("${schema}", schema)
-      .replace("${dashboardTypes}", dashboardTypes);
+      .replaceAll(
+        LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME,
+        getElectronConfig()?.isElectron ? "Prostgles Desktop" : "Prostgles UI",
+      )
+      .replace(LLM_PROMPT_VARIABLES.TODAY, new Date().toISOString())
+      .replace(LLM_PROMPT_VARIABLES.SCHEMA, schema)
+      .replace(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypes);
 
     const tools = await getLLMTools({
       isAdmin: user.type === "admin",
       dbs,
       chat,
-      provider: llm_credential.provider_id,
       connectionId,
       prompt: promptObj,
     });

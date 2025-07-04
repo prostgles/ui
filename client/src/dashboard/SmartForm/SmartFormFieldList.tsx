@@ -16,6 +16,7 @@ import { SmartFormFileSection } from "./SmartFormFileSection";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
+import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 type P = Pick<
   SmartFormProps,
@@ -74,7 +75,7 @@ export const SmartFormFieldList = (props: P) => {
   }, [displayedColumns, tables]);
 
   return (
-    <div
+    <ScrollFade
       className={classOverride(
         "SmartFormFieldList flex-col f-1 o-auto min-h-0 min-w-0 pb-1 gap-1 px-2",
         contentClassname,
@@ -155,6 +156,6 @@ export const SmartFormFieldList = (props: P) => {
           />
         );
       })}
-    </div>
+    </ScrollFade>
   );
 };

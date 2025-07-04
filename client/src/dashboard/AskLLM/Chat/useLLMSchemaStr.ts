@@ -1,7 +1,7 @@
 import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
 import { useMemo } from "react";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { Prgl } from "../../App";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../../App";
 
 type P = Pick<Prgl, "connection" | "db" | "tables"> & {
   activeChat: DBSSchema["llm_chats"] | undefined;

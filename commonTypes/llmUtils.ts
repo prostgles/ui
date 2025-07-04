@@ -69,3 +69,10 @@ export const filterArrInverse = <T, U extends Partial<T>>(
     );
   }) as FilterUnMatch<T, U>[];
 };
+
+export const LLM_PROMPT_VARIABLES = {
+  PROSTGLES_SOFTWARE_NAME: "${prostglesSoftwareName}",
+  SCHEMA: "${schema}",
+  DASHBOARD_TYPES: "${dashboardTypes}",
+  TODAY: "${today}",
+} as const;

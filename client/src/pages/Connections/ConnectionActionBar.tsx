@@ -126,7 +126,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       <PopupMenu
         button={
           <Btn
-            size="medium"
+            size="default"
             iconPath={mdiDotsHorizontal}
             style={{
               padding: "11px",

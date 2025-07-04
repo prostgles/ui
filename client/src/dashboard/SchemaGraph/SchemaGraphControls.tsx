@@ -12,6 +12,7 @@ import {
 import type { SchemaGraphProps } from "./SchemaGraph";
 import type { CASCADE } from "../SQLEditor/SQLCompletion/getPGObjects";
 import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
+import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 export const SchemaGraphControls = ({
   columnColorMode,
@@ -38,8 +39,8 @@ export const SchemaGraphControls = ({
       data-command="SchemaGraph.TopControls"
     >
       <div className="f-0">Schema diagram</div>
-      <FlexRowWrap
-        className="font-16   f-1 relative s-fit"
+      <ScrollFade
+        className="flex-row gap-p5 ox-auto font-16   f-1 relative s-fit no-scroll-bar"
         style={{ fontWeight: "normal" }}
       >
         <SchemaFilter
@@ -130,7 +131,7 @@ export const SchemaGraphControls = ({
         >
           Reset layout
         </Btn>
-      </FlexRowWrap>
+      </ScrollFade>
     </FlexRow>
   );
 };

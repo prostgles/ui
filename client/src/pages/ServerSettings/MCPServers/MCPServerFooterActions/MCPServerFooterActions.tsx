@@ -1,25 +1,23 @@
 import { mdiReload } from "@mdi/js";
 import React from "react";
 import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import { useAlert } from "../../../../components/AlertProvider";
 import Btn from "../../../../components/Btn";
 import { FlexRow } from "../../../../components/Flex";
 import PopupMenu from "../../../../components/PopupMenu";
 import { SwitchToggle } from "../../../../components/SwitchToggle";
 import { CodeEditor } from "../../../../dashboard/CodeEditor/CodeEditor";
 import type { ServerSettingsProps } from "../../ServerSettings";
-import { MCPServerConfig } from "../MCPServerConfig/MCPServerConfig";
-import { MCPServersInstall } from "./MCPServersInstall";
-import { useMCPServerEnable } from "../MCPServerConfig/useMCPServerEnable";
 import { MCPServerConfigButton } from "../MCPServerConfig/MCPServerConfigButton";
+import { useMCPServerEnable } from "../MCPServerConfig/useMCPServerEnable";
+import type { MCPServerWithToolAndConfigs } from "../useMCPServersListProps";
+import { MCPServersInstall } from "./MCPServersInstall";
 
 export type MCPServerFooterActionsProps = Pick<
   ServerSettingsProps,
   "dbs" | "dbsMethods"
 > & {
-  mcp_server: DBSSchema["mcp_servers"] & {
-    mcp_server_configs: DBSSchema["mcp_server_configs"][];
-    mcp_server_logs: DBSSchema["mcp_server_logs"][];
-  };
+  mcp_server: MCPServerWithToolAndConfigs;
   envInfo:
     | {
         os: string;
@@ -41,13 +39,12 @@ export const MCPServerFooterActions = ({
   const logItem: DBSSchema["mcp_server_logs"] | undefined =
     mcp_server.mcp_server_logs[0];
 
-  const { onToggle, setShowServerConfig, showServerConfig } =
-    useMCPServerEnable({
-      dbs,
-      mcp_server,
-      dbsMethods,
-    });
-
+  const { onToggle } = useMCPServerEnable({
+    dbs,
+    mcp_server,
+    dbsMethods,
+  });
+  const { addAlert } = useAlert();
   return (
     <FlexRow className="jc-end pl-p5">
       {mcp_server.source && (
@@ -95,14 +92,15 @@ export const MCPServerFooterActions = ({
       )}
       {reloadMcpServerTools && (
         <Btn
+          title={"Refresh tools"}
+          data-command="MCPServerFooterActions.refreshTools"
           iconPath={mdiReload}
           disabledInfo={
             mcp_server.enabled ? undefined : "Must enable server first"
           }
-          title={"Reload tools"}
           onClickPromise={async () => {
             const toolCount = await reloadMcpServerTools(mcp_server.name);
-            alert(`Reloaded ${toolCount || 0} tools`);
+            addAlert(`Reloaded ${toolCount || 0} tools`);
           }}
         />
       )}
@@ -122,18 +120,6 @@ export const MCPServerFooterActions = ({
         checked={!!mcp_server.enabled}
         onChange={onToggle}
       />
-
-      {showServerConfig && (
-        <MCPServerConfig
-          existingConfig={undefined}
-          dbs={dbs}
-          onDone={() => {
-            showServerConfig.onFinished();
-            setShowServerConfig(false);
-          }}
-          serverName={mcp_server.name}
-        />
-      )}
     </FlexRow>
   );
 };

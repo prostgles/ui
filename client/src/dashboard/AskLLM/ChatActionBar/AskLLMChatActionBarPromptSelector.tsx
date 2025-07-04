@@ -10,7 +10,7 @@ import PopupMenu from "../../../components/PopupMenu";
 import Tabs from "../../../components/Tabs";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
-import type { AskLLMChatProps } from "../AskLLMChat";
+import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { btnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarPromptSelector = (
@@ -35,7 +35,7 @@ export const AskLLMChatActionBarPromptSelector = (
   }, [dbSchemaForPrompt, prompt]);
   return (
     <PopupMenu
-      title="Prompt settings"
+      title="Prompt Selector"
       positioning="above-center"
       data-command="LLMChatOptions.Prompt"
       showFullscreenToggle={{}}
@@ -53,6 +53,10 @@ export const AskLLMChatActionBarPromptSelector = (
           maxWidth: "min(600px, 100vw)",
         }}
         showTopBar={{ insert: true }}
+        rowProps={{
+          className: "pointer hover-bg",
+        }}
+        showEdit={true}
         fieldConfigs={[
           {
             name: "name",

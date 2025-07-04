@@ -2,8 +2,8 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback } from "react";
 import {
   executeSQLTool,
-  getSuggestedTaskTools,
-} from "../../../../../commonTypes/mcp";
+  getAddTaskTools,
+} from "../../../../../commonTypes/prostglesMcpTools";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import { FlexCol, FlexRow } from "../../../components/Flex";
@@ -25,14 +25,14 @@ export type AskLLMToolsProps = {
   ) => Promise<void>;
   callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
 } & Pick<Prgl, "methods" | "connection">;
-const taskTool = getSuggestedTaskTools();
+const taskTool = getAddTaskTools();
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   const { dbs, activeChat } = props;
   const activeChatId = activeChat.id;
   const [mustApprove, setMustApprove] = React.useState<
     {
-      onAccepted: (mode: "once" | "for-chat" | "deny") => void;
+      onResponse: (mode: "once" | "for-chat" | "deny") => void;
       input: any;
     } & ApproveRequest
   >();
@@ -43,24 +43,25 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         setMustApprove({
           input,
           ...req,
-          onAccepted: async (mode) => {
-            if (mode === "for-chat") {
+          onResponse: async (toolUseResponse) => {
+            if (toolUseResponse !== "deny") {
+              const auto_approve = toolUseResponse === "for-chat";
               if (req.type === "mcp") {
                 await dbs.llm_chats_allowed_mcp_tools.upsert(
                   { chat_id: activeChatId, tool_id: req.id },
                   {
                     chat_id: activeChatId,
                     tool_id: req.id,
-                    auto_approve: true,
+                    auto_approve,
                   },
                 );
-              } else if (req.type === "function") {
+              } else if (req.type === "db-method") {
                 await dbs.llm_chats_allowed_functions.upsert(
                   { chat_id: activeChatId, server_function_id: req.id },
                   {
                     chat_id: activeChatId,
                     server_function_id: req.id,
-                    auto_approve: true,
+                    auto_approve,
                   },
                 );
               } else if (req.name === executeSQLTool.name) {
@@ -71,7 +72,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                   {
                     db_data_permissions: {
                       type: "Run SQL",
-                      auto_approve: true,
+                      auto_approve,
                     },
                   },
                 );
@@ -84,7 +85,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
               }
             }
             resolve({
-              approved: mode !== "deny",
+              approved: toolUseResponse !== "deny",
             });
           },
         });
@@ -112,7 +113,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         : `Allow function to run?`
       }
       onClose={() => {
-        mustApprove.onAccepted("deny");
+        mustApprove.onResponse("deny");
         setMustApprove(undefined);
       }}
       clickCatchStyle={{ opacity: 1 }}
@@ -126,7 +127,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           color: "danger",
           variant: "faded",
           onClick: () => {
-            mustApprove.onAccepted("deny");
+            mustApprove.onResponse("deny");
             setMustApprove(undefined);
           },
         },
@@ -136,7 +137,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           color: "action",
           variant: "filled",
           onClick: () => {
-            mustApprove.onAccepted("once");
+            mustApprove.onResponse("once");
             setMustApprove(undefined);
           },
         },
@@ -145,7 +146,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           color: "action",
           variant: "filled",
           onClick: () => {
-            mustApprove.onAccepted("for-chat");
+            mustApprove.onResponse("for-chat");
             setMustApprove(undefined);
           },
         },

@@ -213,6 +213,6 @@ export const flatDocs = UIDocs.filter((d) => d.type !== "info")
   .filter(isDefined)
   .flat() as UIDocFlat[];
 
-if (isPlaywrightTest) {
+if (isPlaywrightTest || true) {
   window.toSVG = domToThemeAwareSVG;
 }

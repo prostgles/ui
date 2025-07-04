@@ -1,9 +1,9 @@
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
 import { useCallback, useMemo, useState } from "react";
-import type { Prgl } from "../../App";
-import { useLLMChatMessages } from "./useLLMChatMessages";
-import type { LLMSetupStateReady } from "./useLLMSetupState";
-import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
+import type { Prgl } from "../../../App";
+import { useLLMChatMessages } from "./AskLLMChatMessages/useLLMChatMessages";
+import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
+import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 
 export type UseLLMChatProps = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId" | "db"> & {

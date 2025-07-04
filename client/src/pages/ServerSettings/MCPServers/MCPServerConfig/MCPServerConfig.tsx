@@ -1,8 +1,6 @@
-import React, { useCallback, useState } from "react";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
-import Btn from "../../../../components/Btn";
+import React from "react";
 import ErrorComponent from "../../../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../../../components/Flex";
+import { FlexCol } from "../../../../components/Flex";
 import FormField from "../../../../components/FormField/FormField";
 import Popup from "../../../../components/Popup/Popup";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
@@ -107,4 +105,68 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
       </FlexCol>
     </Popup>
   );
+};
+
+export type MCPServerConfigContext = {
+  setServerToConfigure: (
+    p: Omit<MCPServerConfigProps, "onDone" | "dbs">,
+  ) => Promise<void>;
+};
+
+export const MCPServerConfigContext = React.createContext<
+  MCPServerConfigContext | undefined
+>(undefined);
+
+export const MCPServerConfigProvider = ({
+  children,
+  dbs,
+}: {
+  children: React.ReactNode;
+  dbs: DBS;
+}) => {
+  const [serverToConfigure, setServerToConfigure] =
+    React.useState<MCPServerConfigProps>();
+
+  const value = React.useMemo(() => {
+    return {
+      setServerToConfigure: async (
+        props: Omit<MCPServerConfigProps, "onDone" | "dbs">,
+      ) => {
+        return new Promise<void>((resolve) => {
+          setServerToConfigure({
+            ...props,
+            dbs,
+            onDone: () => {
+              resolve();
+            },
+          });
+        });
+      },
+    };
+  }, [dbs]);
+
+  return (
+    <MCPServerConfigContext.Provider value={value}>
+      {children}
+      {serverToConfigure && (
+        <MCPServerConfig
+          {...serverToConfigure}
+          onDone={() => {
+            serverToConfigure.onDone();
+            setServerToConfigure(undefined);
+          }}
+        />
+      )}
+    </MCPServerConfigContext.Provider>
+  );
+};
+
+export const useMCPServerConfig = () => {
+  const context = React.useContext(MCPServerConfigContext);
+  if (!context) {
+    throw new Error(
+      "useMCPServerConfig must be used within a MCPServerConfigProvider",
+    );
+  }
+  return context;
 };

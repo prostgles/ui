@@ -2,7 +2,8 @@ import { domToSVG } from "./domToSVG";
 import { getCorrespondingDarkNode } from "./getCorrespondingDarkNode";
 import type { TextForSVG } from "./text/getTextForSVG";
 import { setThemeForSVGScreenshot } from "./setThemeForSVGScreenshot";
-
+const displayNoneIfLight = "--dark-theme-hide";
+const displayNoneIfDark = "--light-theme-hide";
 export const domToThemeAwareSVG = async (node: HTMLElement) => {
   const { svg: svgLight } = await domToSVG(node);
   svgLight.parentElement?.removeChild(svgLight);
@@ -76,11 +77,11 @@ export const domToThemeAwareSVG = async (node: HTMLElement) => {
     const darkNode = getCorrespondingDarkNode(darkNodes, lightNode, index);
 
     if (lightNode instanceof SVGUseElement) {
-      const href = lightNode.getAttribute("href");
+      const lightHref = lightNode.getAttribute("href");
       const darkHref = darkNode?.getAttribute("href");
-      if (href && darkHref) {
-        const darkRefImg = svgLight.querySelector<SVGImageElement>(darkHref);
-        const lightRefImg = svgDark.querySelector<SVGImageElement>(href);
+      if (lightHref && darkHref) {
+        const darkRefImg = svgDark.querySelector<SVGImageElement>(darkHref);
+        const lightRefImg = svgLight.querySelector<SVGImageElement>(lightHref);
         const darkRefImgData = darkRefImg?.href.baseVal;
         const lightRefImgData = lightRefImg?.href.baseVal;
         if (
@@ -95,17 +96,23 @@ export const domToThemeAwareSVG = async (node: HTMLElement) => {
             .querySelector("defs")
             ?.appendChild(darkImage);
 
-          const varName = upsertCssVar("color", href, "#" + darkImage.id);
-          lightNode.setAttribute("href", `var(--${varName})`);
+          const darkThemeUse = lightNode.cloneNode(true) as SVGUseElement;
+          darkThemeUse.setAttribute("href", `#${darkImage.id}`);
+          darkThemeUse.style.display = `var(${displayNoneIfLight})`;
+          lightNode.parentElement?.appendChild(darkThemeUse);
+          lightNode.style.display = `var(${displayNoneIfDark})`;
         }
       }
       return;
     }
     if (!darkNode) {
       console.warn(
-        "No corresponding dark node found for light node",
+        "No corresponding dark node found for light node " + lightNode.nodeName,
         lightNode._bboxCode,
       );
+      // if (lightNode instanceof SVGUseElement) {
+      //   debugger;
+      // }
       return;
     }
 
@@ -179,8 +186,24 @@ export const domToThemeAwareSVG = async (node: HTMLElement) => {
   const cssSheet = document.createElement("style");
   cssSheet.setAttribute("type", "text/css");
   svgLight.appendChild(cssSheet);
-  cssSheet.textContent = `:root { \n${colorArr.map(({ varName, lightColor }) => `--${varName}: ${lightColor}; `).join("\n")} \n}\n`;
-  cssSheet.textContent += `@media (prefers-color-scheme: dark) { \n :root  { \n${colorArr.map(({ varName, darkColor }) => `--${varName}: ${darkColor}; `).join("\n")} \n} \n} \n`;
+  cssSheet.textContent = [
+    `:root { `,
+    `  ${displayNoneIfLight}: none;`,
+    ...colorArr.map(
+      ({ varName, lightColor }) => `  --${varName}: ${lightColor}; `,
+    ),
+    `}\n`,
+  ].join("\n");
+  cssSheet.textContent += [
+    `@media (prefers-color-scheme: dark) { `,
+    ` :root  { `,
+    `  ${displayNoneIfDark}: none;`,
+    ...colorArr.map(
+      ({ varName, darkColor }) => `  --${varName}: ${darkColor}; `,
+    ),
+    `  }`,
+    `} \n`,
+  ].join("\n");
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svgLight);

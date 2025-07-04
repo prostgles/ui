@@ -131,10 +131,10 @@ export const AIAssistantUIDoc = {
             },
             {
               type: "button",
-              title: "Disable/Enable all MCP tools",
-              description: "Disables/Enables all MCP tools for all chats.",
+              title: "Stop/Start all MCP Servers",
+              description: "Quick way to stop/restart all MCP servers.",
               selector: getCommandElemSelector(
-                "MCPServersToolbar.disableAllToggle",
+                "MCPServersToolbar.stopAllToggle",
               ),
             },
             {
@@ -148,7 +148,7 @@ export const AIAssistantUIDoc = {
               type: "list",
               title: "MCP tools",
               description:
-                "List of available MCP tools for the current chat. Each tool represents a specific functionality or integration.",
+                "List of available MCP tools. To allow a tool to be used in the current chat it must be ticked. Each tool represents a specific functionality or integration.",
               selector:
                 getCommandElemSelector("LLMChatOptions.MCPTools") +
                 " " +
@@ -199,9 +199,16 @@ export const AIAssistantUIDoc = {
                 },
                 {
                   type: "button",
+                  title: "Reload MCP tools",
+                  description:
+                    "Reloads the MCP tools for the selected MCP server, updating the list of available tools.",
+                  selectorCommand: "MCPServerFooterActions.refreshTools",
+                },
+                {
+                  type: "button",
                   title: "Enable/Disable MCP server",
                   description:
-                    "Enables or disables the selected MCP server for all chats.",
+                    "Enables or disables the selected MCP server for all chats. If configuration is required a popup will be shown.",
                   selector: getCommandElemSelector(
                     "MCPServerFooterActions.enableToggle",
                   ),
@@ -221,9 +228,9 @@ export const AIAssistantUIDoc = {
         },
         {
           type: "popup",
-          title: "Prompt settings",
+          title: "Prompt Selector",
           description:
-            "Opens the prompt settings for the current chat, allowing you to manage the prompt template and other related settings.",
+            "Opens the prompt details for the current chat, allowing you to manage the prompt template and other related settings.",
           selector: getCommandElemSelector("LLMChatOptions.Prompt"),
           children: [],
         },

@@ -1,11 +1,16 @@
-import React, { useMemo } from "react";
-import type { DBS } from "../../../dashboard/Dashboard/DBS";
+import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
-import { MCPServerTools } from "./MCPServerTools";
-import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
 import type { Prgl } from "../../../App";
-import { FlexRow } from "../../../components/Flex";
-import Checkbox from "../../../components/Checkbox";
+import type { DBS } from "../../../dashboard/Dashboard/DBS";
+import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
+import { MCPServerHeaderCheckbox } from "./MCPServerHeaderCheckbox";
+import { MCPServerTools } from "./MCPServerTools";
+
+export type MCPServerWithToolAndConfigs = DBSSchema["mcp_servers"] & {
+  mcp_server_tools: DBSSchema["mcp_server_tools"][];
+  mcp_server_configs: DBSSchema["mcp_server_configs"][];
+  mcp_server_logs: DBSSchema["mcp_server_logs"][];
+};
 
 export const useMCPServersListProps = (
   chatId: number | undefined,
@@ -13,7 +18,7 @@ export const useMCPServersListProps = (
   dbsMethods: Prgl["dbsMethods"],
 ) => {
   const [selectedTool, setSelectedTool] =
-    React.useState<DBSSchema["mcp_server_tools"]>();
+    useState<DBSSchema["mcp_server_tools"]>();
 
   const { data: llm_chats_allowed_mcp_tools } =
     dbs.llm_chats_allowed_mcp_tools.useSubscribe(
@@ -23,6 +28,7 @@ export const useMCPServersListProps = (
       {
         select: {
           tool_id: 1,
+          auto_approve: 1,
         },
       },
     );
@@ -41,41 +47,15 @@ export const useMCPServersListProps = (
           name: "name",
           label: "",
           renderMode: "full",
-          render: (name: string, mcpServer) => {
-            const mcpServerTools =
-              mcpServer.mcp_server_tools as DBSSchema["mcp_server_tools"][];
-            const someToolsAllowed = !!llm_chats_allowed_mcp_tools?.some((at) =>
-              mcpServerTools.some((t) => t.id === at.tool_id),
-            );
-
-            return (
-              <FlexRow className="bold mx-p25 w-full">
-                {chatId && llm_chats_allowed_mcp_tools ?
-                  <Checkbox
-                    variant="header"
-                    title="Toggle all tools"
-                    className="m-0"
-                    label={name}
-                    checked={someToolsAllowed}
-                    onChange={() => {
-                      if (someToolsAllowed) {
-                        dbs.llm_chats_allowed_mcp_tools.delete({
-                          chat_id: chatId,
-                        });
-                      } else {
-                        dbs.llm_chats_allowed_mcp_tools.insert(
-                          mcpServerTools.map((t) => ({
-                            chat_id: chatId,
-                            tool_id: t.id,
-                          })),
-                        );
-                      }
-                    }}
-                  />
-                : name}
-              </FlexRow>
-            );
-          },
+          render: (_, mcpServer) => (
+            <MCPServerHeaderCheckbox
+              mcpServer={mcpServer}
+              chatId={chatId}
+              dbs={dbs}
+              dbsMethods={dbsMethods}
+              llm_chats_allowed_mcp_tools={llm_chats_allowed_mcp_tools}
+            />
+          ),
         },
         {
           name: "mcp_server_configs",
@@ -101,7 +81,7 @@ export const useMCPServersListProps = (
           render: (tools: DBSSchema["mcp_server_tools"][], server) => {
             return (
               <MCPServerTools
-                server={server as any}
+                server={server}
                 llm_chats_allowed_mcp_tools={llm_chats_allowed_mcp_tools}
                 tools={tools}
                 selectedToolName={selectedTool?.name}
@@ -118,7 +98,7 @@ export const useMCPServersListProps = (
             hide: true,
           }),
         ),
-      ] satisfies FieldConfig[],
+      ] satisfies FieldConfig<MCPServerWithToolAndConfigs>[],
     [chatId, dbs, dbsMethods, llm_chats_allowed_mcp_tools, selectedTool?.name],
   );
   return {
@@ -126,5 +106,6 @@ export const useMCPServersListProps = (
     setSelectedTool,
     filter,
     fieldConfigs,
+    llm_chats_allowed_mcp_tools,
   };
 };

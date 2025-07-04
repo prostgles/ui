@@ -16,6 +16,8 @@ type P = TestSelectors & {
   readOnly?: boolean;
   title?: string;
   variant?: "minimal" | "micro" | "button" | "header";
+  disabledInfo?: string;
+  iconPath?: string;
 };
 
 export default class Checkbox extends React.Component<P, any> {
@@ -33,7 +35,8 @@ export default class Checkbox extends React.Component<P, any> {
       readOnly,
       title,
       variant,
-      // children,
+      disabledInfo,
+      iconPath,
       ...testSel
     } = props;
 
@@ -44,9 +47,7 @@ export default class Checkbox extends React.Component<P, any> {
     const defaultInputClass =
       " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit formfield-bg-color " +
       (!variant ? " b b-color " : "") +
-      (variant === "micro" ? ""
-      : variant === "minimal" ? " round "
-      : " focusable ") +
+      (variant === "minimal" ? " round " : " ") +
       (isBtn ? "bg-color-2 b-color p-p5 no-outline"
       : isMiniOrMicro ? "bg-transparent b-unset no-outline"
       : "relative ");
@@ -77,19 +78,20 @@ export default class Checkbox extends React.Component<P, any> {
           type="checkbox"
           checked={checked}
           onChange={
-            !onChange ? undefined : (
+            !onChange || disabledInfo ? undefined : (
               (e) => {
                 onChange(e, e.target.checked);
               }
             )
           }
-          readOnly={readOnly}
+          readOnly={readOnly || Boolean(disabledInfo) || !onChange}
         />
         <Icon
           path={
-            variant === "header" && !checked ?
+            iconPath ??
+            (variant === "header" && !checked ?
               mdiCheckboxBlankOutline
-            : mdiCheckBold
+            : mdiCheckBold)
           }
           size={
             variant === "button" ? 1
@@ -126,10 +128,11 @@ export default class Checkbox extends React.Component<P, any> {
         }}
         htmlFor={id}
         className={classOverride(
-          "Checkbox flex-row-wrap ai-center pointer w-fit h-fit",
+          "Checkbox flex-row-wrap ai-center pointer w-fit h-fit " +
+            (disabledInfo ? " disabled " : ""),
           className,
         )}
-        title={title}
+        title={disabledInfo ?? title}
         {...testSel}
       >
         {checkbox}

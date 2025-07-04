@@ -1,14 +1,17 @@
 import { mdiPlus } from "@mdi/js";
 import React from "react";
-import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import Select from "../../components/Select/Select";
-import { t } from "../../i18n/i18nUtils";
-import { getPGIntervalAsText } from "../W_SQL/customRenderers";
-import { LLMChatOptions, type LLMChatOptionsProps } from "./LLMChatOptions";
+import type { Prgl } from "../../../App";
+import Btn from "../../../components/Btn";
+import { FlexCol, FlexRow } from "../../../components/Flex";
+import Select from "../../../components/Select/Select";
+import { t } from "../../../i18n/i18nUtils";
+import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
+import {
+  AskLLMChatOptions,
+  type LLMChatOptionsProps,
+} from "./AskLLMChatOptions";
 import type { LLMChatState } from "./useLLMChat";
-import type { LLMSetupStateReady } from "./useLLMSetupState";
+import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
 
 export const AskLLMChatHeader = (
   props: LLMChatState &
@@ -38,7 +41,7 @@ export const AskLLMChatHeader = (
         <span className="text-2 font-14">({t.common.experimental})</span>
       </FlexCol>
       <FlexRow className="gap-p25 min-w-0">
-        <LLMChatOptions
+        <AskLLMChatOptions
           dbsMethods={prgl.dbsMethods}
           dbs={prgl.dbs}
           dbsTables={prgl.dbsTables}

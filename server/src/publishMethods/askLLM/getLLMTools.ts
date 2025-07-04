@@ -1,10 +1,15 @@
-import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
+import {
+  getJSONBSchemaAsJSONSchema,
+  pickKeys,
+  type JSONB,
+} from "prostgles-types";
 import type { DBS } from "../..";
 import {
-  getSuggestedTaskTools,
+  suggestDashboardsTool,
+  executeSQLTool,
+  getAddTaskTools,
   getMCPFullToolName,
-  PROSTGLES_MCP_TOOLS,
-} from "../../../../commonTypes/mcp";
+} from "../../../../commonTypes/prostglesMcpTools";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 type Args = {
@@ -12,7 +17,6 @@ type Args = {
   chat: DBSSchema["llm_chats"];
   prompt: DBSSchema["llm_prompts"];
   dbs: DBS;
-  provider: string;
   connectionId: string;
 };
 
@@ -25,20 +29,12 @@ type MCPToolSchema = {
 export const getLLMTools = async ({
   isAdmin,
   dbs,
-  provider,
   chat,
   connectionId,
   prompt,
 }: Args): Promise<undefined | MCPToolSchema[]> => {
   const { disable_tools, prompt_type } = prompt.options ?? {};
-  // const providerSupportsToolUse =
-  //   provider === "Prostgles" ||
-  //   provider === "Anthropic" ||
-  //   provider === "OpenAI" ||
-  //   provider === "Google";
-  // const canUseTools =
-  //   providerSupportsToolUse &&
-  //   !disable_tools;
+
   /** Tools are not used with Dashboarding due to induced errors */
   if (disable_tools) return undefined;
   const { id: chatId } = chat;
@@ -50,8 +46,10 @@ export const getLLMTools = async ({
     const { serverSideFuncTools } = await getPublishedMethodsTools(dbs, {});
     const { mcpTools } = await getMCPServerTools(dbs, {});
     return [
-      getSuggestedTaskTools(
-        [...serverSideFuncTools, ...mcpTools].map((t) => t.name),
+      getAddTaskTools(
+        [...serverSideFuncTools, ...mcpTools].map((t) =>
+          pickKeys(t, ["name", "description"]),
+        ),
       ) as MCPToolSchema,
     ];
   }
@@ -59,12 +57,12 @@ export const getLLMTools = async ({
   const dbTool: MCPToolSchema | undefined =
     chat.db_data_permissions?.type === "Run SQL" ?
       {
-        ...PROSTGLES_MCP_TOOLS[0],
-        input_schema: getJSONBSchemaAsJSONSchema("prostgles", "execute_sql", {
-          type: {
-            sql: "string",
-          },
-        }),
+        ...(executeSQLTool as MCPToolSchema),
+        // input_schema: getJSONBSchemaAsJSONSchema("prostgles", "execute_sql", {
+        //   type: {
+        //     sql: "string",
+        //   },
+        // }),
       }
     : undefined;
 
@@ -87,7 +85,12 @@ export const getLLMTools = async ({
   const tools: Record<string, MCPToolSchema> = {};
 
   /** Check for name collisions */
-  [...mcpTools, ...serverSideFuncTools, dbTool].forEach((tool) => {
+  [
+    ...mcpTools,
+    ...serverSideFuncTools,
+    dbTool,
+    suggestDashboardsTool as MCPToolSchema,
+  ].forEach((tool) => {
     if (!tool) return;
     const { name } = tool;
     if (tools[name]) {
@@ -104,13 +107,13 @@ export const getLLMTools = async ({
 
 const getMCPServerTools = async (
   dbs: DBS,
-  //@ts-ignore
   filter: Parameters<typeof dbs.mcp_server_tools.find>[0],
 ): Promise<{ mcpTools: MCPToolSchema[] }> => {
   const mcpTools = (await dbs.mcp_server_tools.find(filter)).map((t) => {
     return {
       name: getMCPFullToolName(t),
       description: t.description,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       input_schema: t.inputSchema,
     };
   });
@@ -139,7 +142,7 @@ const getPublishedMethodsTools = async (
       {} as JSONB.ObjectType["type"],
     );
     return {
-      name,
+      name: getMCPFullToolName({ server_name: "db-methods", name }),
       description,
       input_schema: getJSONBSchemaAsJSONSchema(
         "published_methods",

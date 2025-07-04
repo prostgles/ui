@@ -12,6 +12,7 @@ import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import { JoinedRecordsSection } from "./JoinedRecordsSection";
 import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
+import type { FieldConfig } from "../../SmartCard/SmartCard";
 
 export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
   Pick<SmartFormProps, "onSuccess" | "parentForm"> & {
@@ -21,18 +22,32 @@ export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
     rowFilter?: DetailedFilterBase[];
     newRowData: NewRow | undefined;
     newRowDataHandler: NewRowDataHandler | undefined;
-    showLookupTables?: boolean;
     showRelated?: "descendants";
     modeType?: "update" | "insert" | "view";
     onTabChange: (tabKey: string | undefined) => void;
     activeTabKey: string | undefined;
     errors: AnyObject;
     row?: AnyObject;
+    tablesToShow?: Record<
+      string,
+      | true
+      | {
+          /**
+           * @deprecated
+           */
+          fieldConfigs?: FieldConfig[];
+        }
+    >;
   };
 
 export const JoinedRecords = (props: JoinedRecordsProps) => {
-  const res = useJoinedRecordsSections(props);
-  const { sections = [], isLoadingSections, descendants, isInsert } = res;
+  const sectionData = useJoinedRecordsSections(props);
+  const {
+    sections = [],
+    isLoadingSections,
+    descendants,
+    isInsert,
+  } = sectionData;
   const {
     db,
     tables,
@@ -77,7 +92,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
         return (
           <Section
             key={path.join(".")}
-            className="trigger-hover"
+            className="trigger-hover pl-p5"
             btnProps={{
               ["data-command"]: "JoinedRecords.SectionToggle",
               ["data-key"]: path.join("."),

@@ -95,8 +95,17 @@ export class TableHeader<
               "flex-col h-full min-w-0 px-p5 py-p5 text-left font-14 relative " +
               " font-medium text-0 tracking-wider to-ellipsis jc-center " +
               (onSort && col.sortable ? " pointer " : "") +
-              (col.onContextMenu ? " contextmenu " : "") +
               (col.width ? " f-0 " : " f-1 ");
+
+            const contextMenuStyles =
+              !col.onContextMenu ? undefined : (
+                ({
+                  /* disable selection/Copy of UIWebView */
+                  WebkitUserSelect: "none",
+                  /* disable the IOS popup when long-press on a link */
+                  WebkitTouchCallout: "none",
+                } satisfies React.CSSProperties)
+              );
 
             return (
               <div
@@ -122,7 +131,10 @@ export class TableHeader<
                   )
                 }
                 role="columnheader"
-                style={{ ...getDraggedTableColStyle(col, iCol, draggedCol) }} //  borderRight: "1px solid var(--gray-100)"
+                style={{
+                  ...getDraggedTableColStyle(col, iCol, draggedCol),
+                  ...contextMenuStyles,
+                }}
                 draggable={true}
                 onDragStart={(e) => {
                   e.dataTransfer.setData("text/plain", col.name + "");

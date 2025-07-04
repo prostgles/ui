@@ -1,13 +1,13 @@
 import { mdiCogOutline } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
-import Popup from "../../components/Popup/Popup";
-import { t } from "../../i18n/i18nUtils";
-import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../../App";
+import Btn from "../../../components/Btn";
+import { FlexCol } from "../../../components/Flex";
+import Popup from "../../../components/Popup/Popup";
+import { t } from "../../../i18n/i18nUtils";
+import { SmartForm, type SmartFormProps } from "../../SmartForm/SmartForm";
 
 export type LLMChatOptionsProps = Pick<
   Prgl,
@@ -20,7 +20,7 @@ export type LLMChatOptionsProps = Pick<
   chatRootDiv: HTMLDivElement;
 };
 
-export const LLMChatOptions = (props: LLMChatOptionsProps) => {
+export const AskLLMChatOptions = (props: LLMChatOptionsProps) => {
   const { chatRootDiv, dbs, activeChatId, dbsTables } = props;
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement>();
 

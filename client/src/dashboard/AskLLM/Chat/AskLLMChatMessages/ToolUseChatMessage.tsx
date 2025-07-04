@@ -1,16 +1,17 @@
 import { mdiTools } from "@mdi/js";
 import { isEmpty, isObject, tryCatchV2 } from "prostgles-types";
 import React, { useMemo } from "react";
-import { filterArr } from "../../../../commonTypes/llmUtils";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import Btn from "../../components/Btn";
+import { filterArr } from "../../../../../../commonTypes/llmUtils";
+import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import Btn from "../../../../components/Btn";
 import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,
-} from "../../components/Chat/MarkdownMonacoCode";
-import { FlexCol } from "../../components/Flex";
-import { MediaViewer } from "../../components/MediaViewer";
-import { sliceText } from "../../../../commonTypes/utils";
+} from "../../../../components/Chat/MarkdownMonacoCode";
+import { FlexCol } from "../../../../components/Flex";
+import { MediaViewer } from "../../../../components/MediaViewer";
+import { sliceText } from "../../../../../../commonTypes/utils";
+import { suggestDashboardsTool } from "../../../../../../commonTypes/prostglesMcpTools";
 
 type ToolUseMessageProps = {
   messages: DBSSchema["llm_messages"][];
@@ -108,6 +109,7 @@ export const ToolUseChatMessage = ({
           )}
         </>
       )}
+      {m.name === suggestDashboardsTool.name && <div>hehe</div>}
     </FlexCol>
   );
 };
@@ -207,3 +209,5 @@ const getToolUseResult = (
   }
   return;
 };
+
+throw "finish this. TIDY prostgles MCP tools for cliend-side only types: suggest_dashboard, add_tools";

@@ -51,7 +51,7 @@ export const textToSVG = (
   };
   const fontSize = parseFloat(textNodeStyle.fontSize);
   const isInputElement = element instanceof HTMLInputElement;
-  textNode.setAttribute("y", isInputElement ? y : y + fontSize);
+  textNode.setAttribute("y", (isInputElement ? y : y + fontSize) - 2);
   textNode.setAttribute("fill", textNodeStyle.color);
   textNode.setAttribute("font-family", textNodeStyle.fontFamily);
   textNode.setAttribute("font-size", textNodeStyle.fontSize);
@@ -189,11 +189,16 @@ const unnestRedundantGElements = (svg: SVGElement) => {
 
 export const wrapAllSVGText = async (svg: SVGElement) => {
   /** Must render svg to ensure the text length calcs work */
+  const topStyle = {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    zIndex: "9999",
+  } as const;
   if (!svg.isConnected) {
-    svg.style.position = "absolute";
-    svg.style.left = "0";
-    svg.style.top = "0";
-    svg.style.zIndex = "9999";
+    Object.entries(topStyle).forEach(([key, value]) => {
+      svg.style[key] = value;
+    });
     document.body.appendChild(svg);
   }
 
@@ -215,6 +220,7 @@ export const wrapAllSVGText = async (svg: SVGElement) => {
 
   if (svg.isConnected) {
     await tout(1000);
+    svg.removeAttribute("style");
     svg.remove();
   }
 };
