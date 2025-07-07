@@ -29,8 +29,8 @@ export type ConnectionProps = (
     showDbName: boolean;
   };
 
-const getConnectionPath = (cid: string, wid?: string) =>
-  `${ROUTES.CONNECTIONS}/${cid}` + (wid ? `?workspaceId=${wid}` : "");
+const getConnectionPath = (connectionId: string, wid?: string) =>
+  `${ROUTES.CONNECTIONS}/${connectionId}` + (wid ? `?workspaceId=${wid}` : "");
 
 export const Connection = (props: ConnectionProps) => {
   const { connection, isAdmin } = props;

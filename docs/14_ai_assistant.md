@@ -32,7 +32,7 @@ The message input area allows you to write text, attach files and control other 
     - **Add MCP server**: Opens the form to add a new MCP server for the current chat.  
       - **MCP tool json config**: JSON configuration for the MCP tool to be added.  
       - **Add MCP server**: Adds the specified MCP server to the current chat.  
-    - **Disable/Enable all MCP tools**: Disables/Enables all MCP tools for all chats.  
+    - **Stop/Start all MCP Servers**: Quick way to stop/restart all MCP servers.  
     - **Search tools**: Searches for specific MCP tools in the list of available tools.  
     - **MCP tools**: List of available MCP tools. To allow a tool to be used in the current chat it must be ticked. Each tool represents a specific functionality or integration.  
       - **MCP server name**: Name of the parent MCP server associated with the tool.  

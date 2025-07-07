@@ -236,7 +236,7 @@ export const App = () => {
           />
           <Route
             key="4"
-            path={`${ROUTES.CONNECTIONS}/:cid`}
+            path={`${ROUTES.CONNECTIONS}/:connectionId`}
             element={<ProjectConnection prglState={extraProps} />}
           />
           <Route
@@ -265,7 +265,7 @@ export const App = () => {
           />
           <Route
             key="7"
-            path={`${ROUTES.CONFIG}/:cid`}
+            path={`${ROUTES.CONFIG}/:connectionId`}
             element={
               <ProjectConnection
                 prglState={extraProps}

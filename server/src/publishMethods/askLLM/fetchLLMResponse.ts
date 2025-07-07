@@ -10,6 +10,7 @@ import {
   type LLMParsedResponse,
 } from "./parseLLMResponseObject";
 import { readFetchStream } from "./readFetchStream";
+import type { MCPToolSchema } from "./getLLMTools";
 export type LLMMessageWithRole = {
   role: "system" | "user" | "assistant" | "model";
   content: DBSSchema["llm_messages"]["message"];
@@ -19,13 +20,7 @@ export type FetchLLMResponseArgs = {
   llm_model: DBSSchema["llm_models"];
   llm_provider: DBSSchema["llm_providers"];
   llm_credential: DBSSchema["llm_credentials"];
-  tools:
-    | undefined
-    | {
-        name: string;
-        description: string;
-        input_schema: AnyObject;
-      }[];
+  tools: undefined | MCPToolSchema[];
   messages: LLMMessageWithRole[];
 };
 

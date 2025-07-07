@@ -1,0 +1,228 @@
+import { getJSONBObjectSchemaValidationError } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
+import { getSerialisableError, isDefined } from "prostgles-types";
+import { connMgr } from "../..";
+import { filterArr } from "../../../../commonTypes/llmUtils";
+import { getMCPToolNameParts } from "../../../../commonTypes/mcp";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { callMCPServerTool } from "../../McpHub/callMCPServerTool";
+import { askLLM, type AskLLMArgs, type LLMMessage } from "./askLLM";
+import type { getLLMTools, MCPToolSchemaWithApproveInfo } from "./getLLMTools";
+import { executeSQLToolSchema } from "./prostglesMcpTools";
+
+type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
+type ToolUseMessageWithInfo =
+  | (ToolUseMessage & {
+      tool: MCPToolSchemaWithApproveInfo;
+      state: "approved";
+    })
+  | (ToolUseMessage & {
+      tool: MCPToolSchemaWithApproveInfo;
+      state: "needs-approval";
+    })
+  | (ToolUseMessage & {
+      tool: undefined;
+      state: "tool-missing";
+    });
+type ToolResultMessage = Extract<LLMMessage[number], { type: "tool_result" }>;
+
+export const runApprovedTools = async (
+  args: Omit<AskLLMArgs, "userMessage">,
+  chat: DBSSchema["llm_chats"],
+  aiResponse: LLMMessage,
+  lastMessage: LLMMessage | undefined,
+  allowedTools: Awaited<ReturnType<typeof getLLMTools>>,
+) => {
+  const { user, chatId, dbs, type } = args;
+  /**
+   * Here we expect
+   */
+  if (type === "approve-tool-use") {
+  }
+  const toolUseRequests = filterArr(aiResponse, {
+    type: "tool_use",
+  } as const).map((toolUse) => {
+    const tool = allowedTools?.find((t) => t.name === toolUse.name);
+    if (!tool) {
+      return {
+        ...toolUse,
+        tool: undefined,
+        state: "tool-missing",
+      } satisfies ToolUseMessageWithInfo;
+    }
+    return {
+      ...toolUse,
+      tool,
+      state:
+        tool.auto_approve || tool.type === "prostgles-ui" ?
+          "approved"
+        : "needs-approval",
+    } satisfies ToolUseMessageWithInfo;
+  });
+
+  /** Wait for user to approve/deny all pending requests */
+  if (toolUseRequests.some((tr) => tr.state === "needs-approval")) {
+    return;
+  }
+
+  const toolResults: (ToolResultMessage | undefined)[] = await Promise.all(
+    toolUseRequests.map(async (toolUseRequest) => {
+      const toolUseInfo = {
+        type: "tool_result",
+        tool_use_id: toolUseRequest.id,
+        tool_name: toolUseRequest.name,
+      } as const;
+      const asResponse = (
+        content: ToolResultMessage["content"],
+        is_error = false,
+      ) => {
+        return {
+          ...toolUseInfo,
+          content,
+          is_error,
+        } satisfies ToolResultMessage;
+      };
+      const tool = toolUseRequest.tool;
+      if (!tool) {
+        return asResponse(
+          `Tool use request for "${toolUseRequest.name}" but tool name is invalid or not allowed`,
+          true,
+        );
+      }
+
+      if (tool.type === "prostgles-ui") {
+        return asResponse("Done");
+      } else if (!tool.auto_approve) {
+        // Wait for user to approve it
+      } else if (tool.type === "mcp") {
+        const toolNameParts = getMCPToolNameParts(toolUseRequest.name);
+        if (!toolNameParts) {
+          return asResponse(
+            `Tool use request for "${toolUseRequest.name}" but tool name is invalid`,
+            true,
+          );
+        }
+        const { serverName, toolName } = toolNameParts;
+        const { content, isError } = await callMCPServerTool(
+          user,
+          chatId,
+          dbs,
+          serverName,
+          toolName,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          toolUseRequest.input,
+        ).catch((e) => ({
+          content: e instanceof Error ? e.message : JSON.stringify(e),
+          isError: true,
+        }));
+
+        return asResponse(content, isError);
+      } else if (tool.type === "prostgles-db-methods") {
+        const { content, is_error } = await parseToolResultToMessage(
+          async () => {
+            const connection = connMgr.getConnection(args.connectionId);
+            const { clientMethods } = await connection.prgl.getClientDBHandlers(
+              args.clientReq,
+            );
+            const method = clientMethods[tool.tool_name];
+            if (!method) {
+              throw new Error(
+                `Invalid or disallowed method: "${tool.tool_name}"`,
+              );
+            }
+            const methodFunc =
+              typeof method === "function" ? method : method.run;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const res = await methodFunc(toolUseRequest.input);
+            return JSON.stringify(res ?? "");
+          },
+        );
+        return asResponse(content, is_error);
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      } else if (tool.type === "prostgles-db") {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (tool.tool_name !== "execute_sql") {
+          return asResponse(
+            `Tool use request for "${toolUseRequest.name}" but tool name is invalid`,
+            true,
+          );
+        }
+        const connection = connMgr.getConnection(args.connectionId);
+        const { clientDb } = await connection.prgl.getClientDBHandlers(
+          args.clientReq,
+        );
+        const validatedInput = getJSONBObjectSchemaValidationError(
+          executeSQLToolSchema.type,
+          toolUseRequest.input,
+          "",
+        );
+
+        const { content, is_error } = await parseToolResultToMessage(
+          async () => {
+            if (validatedInput.error !== undefined) {
+              throw new Error(
+                `Tool use request for "${toolUseRequest.name}" but input is invalid: ${validatedInput.error}`,
+              );
+            }
+            if (connection.con.is_state_db) {
+              throw new Error(
+                "Executing SQL on Prostgles UI state database is not allowed for security reasons",
+              );
+            }
+            const { data } = validatedInput;
+            const sql = clientDb.sql;
+            if (!(sql as unknown))
+              throw new Error("Executing SQL not allowed to this user");
+            const query = data.sql;
+            if (typeof query !== "string") {
+              throw new Error("input.sql must be a string");
+            }
+            const chatDBPermissions = chat.db_data_permissions;
+            if (chatDBPermissions?.type !== "Run SQL") {
+              throw new Error("chatDBPermissions is not defined");
+            }
+            const { query_timeout = 0, commit = false } = chatDBPermissions;
+            const finalQuery =
+              query_timeout && Number.isInteger(query_timeout) ?
+                [
+                  `SET LOCAL statement_timeout to '${query_timeout}s'`,
+                  query,
+                ].join(";\n")
+              : query;
+            const { rows } = await sql(
+              finalQuery,
+              {},
+              { returnType: commit ? "rows" : "default-with-rollback" },
+            );
+            return JSON.stringify(rows);
+          },
+        );
+        return asResponse(content, is_error);
+      }
+    }),
+  );
+
+  const nonEmptyToolResults = toolResults.filter(isDefined);
+
+  if (nonEmptyToolResults.length) {
+    await askLLM({
+      ...args,
+      userMessage:
+        nonEmptyToolResults satisfies DBSSchema["llm_messages"]["message"],
+    });
+  }
+};
+
+const parseToolResultToMessage = (
+  func: () => Promise<string | undefined>,
+): Promise<
+  | { content: string; is_error?: undefined }
+  | { content: string; is_error: boolean }
+> => {
+  return func()
+    .then((content: string | undefined) => ({ content: content ?? "" }))
+    .catch((e) => ({
+      content: JSON.stringify(getSerialisableError(e)),
+      is_error: true as const,
+    }));
+};

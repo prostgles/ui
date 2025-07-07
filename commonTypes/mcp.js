@@ -1,4 +1,20 @@
 import { mcpGithub } from "./mcpGithub";
+export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
+    "prostgles-db-methods": [""],
+    "prostgles-db": ["execute_sql"],
+    "prostgles-ui": ["suggest_tools_and_prompt", "suggest_dashboards"],
+};
+const MCP_TOOL_NAME_SEPARATOR = "--";
+export const getMCPFullToolName = (server_name, name) => {
+    return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}`;
+};
+export const getProstglesMCPFullToolName = (server_name, name) => getMCPFullToolName(server_name, name);
+export const getMCPToolNameParts = (fullName) => {
+    const [serverName, toolName] = fullName.split(MCP_TOOL_NAME_SEPARATOR);
+    if (serverName && toolName) {
+        return { serverName, toolName };
+    }
+};
 export const DefaultMCPServers = {
     "duckduckgo-search": {
         command: "uvx",

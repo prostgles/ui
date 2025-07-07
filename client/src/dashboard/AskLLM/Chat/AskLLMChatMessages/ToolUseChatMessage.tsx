@@ -3,20 +3,24 @@ import { isEmpty, isObject, tryCatchV2 } from "prostgles-types";
 import React, { useMemo } from "react";
 import { filterArr } from "../../../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import { sliceText } from "../../../../../../commonTypes/utils";
 import Btn from "../../../../components/Btn";
 import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,
 } from "../../../../components/Chat/MarkdownMonacoCode";
-import { FlexCol } from "../../../../components/Flex";
+import { FlexCol, FlexRow } from "../../../../components/Flex";
 import { MediaViewer } from "../../../../components/MediaViewer";
-import { sliceText } from "../../../../../../commonTypes/utils";
-import { suggestDashboardsTool } from "../../../../../../commonTypes/prostglesMcpTools";
+
+import { LoadSuggestedDashboards } from "../../Tools/ClientSideMCP/LoadSuggestedDashboards";
+import { LoadSuggestedToolsAndPrompt } from "../../Tools/ClientSideMCP/LoadSuggestedToolsAndPrompt";
+import { getProstglesMCPFullToolName } from "../../../../../../commonTypes/mcp";
 
 type ToolUseMessageProps = {
   messages: DBSSchema["llm_messages"][];
   messageIndex: number;
   toolUseMessageIndex: number;
+  workspaceId: string | undefined;
 } & Pick<MarkdownMonacoCodeProps, "sqlHandler" | "loadedSuggestions">;
 
 export const ToolUseChatMessage = ({
@@ -25,10 +29,12 @@ export const ToolUseChatMessage = ({
   messageIndex,
   sqlHandler,
   loadedSuggestions,
+  workspaceId,
 }: ToolUseMessageProps) => {
   const [open, setOpen] = React.useState(false);
 
-  const m = messages[messageIndex]?.message[toolUseMessageIndex];
+  const fullMessage = messages[messageIndex];
+  const m = fullMessage?.message[toolUseMessageIndex];
   const inputTextSummary = useMemo(() => {
     if (m?.type !== "tool_use" || !m.input) return undefined;
     const maxLength = 50;
@@ -51,7 +57,7 @@ export const ToolUseChatMessage = ({
     return sliceText(JSON.stringify(m.input), maxLength, undefined, true);
   }, [m]);
 
-  if (m?.type !== "tool_use") {
+  if (!fullMessage || m?.type !== "tool_use") {
     return <>Unexpected message tool use message</>;
   }
 
@@ -109,7 +115,24 @@ export const ToolUseChatMessage = ({
           )}
         </>
       )}
-      {m.name === suggestDashboardsTool.name && <div>hehe</div>}
+      {m.name ===
+        getProstglesMCPFullToolName("prostgles-ui", "suggest_dashboards") && (
+        <FlexRow className=" ">
+          <LoadSuggestedDashboards workspaceId={workspaceId} message={m} />
+        </FlexRow>
+      )}
+      {m.name ===
+        getProstglesMCPFullToolName(
+          "prostgles-ui",
+          "suggest_tools_and_prompt",
+        ) && (
+        <FlexRow className=" ">
+          <LoadSuggestedToolsAndPrompt
+            message={m}
+            chatId={fullMessage.chat_id}
+          />
+        </FlexRow>
+      )}
     </FlexCol>
   );
 };
@@ -210,4 +233,6 @@ const getToolUseResult = (
   return;
 };
 
-throw "finish this. TIDY prostgles MCP tools for cliend-side only types: suggest_dashboard, add_tools";
+console.error(
+  "finish this. TIDY prostgles MCP tools for cliend-side only types: suggest_dashboard, add_tools",
+);

@@ -15,7 +15,7 @@ type PrglProjectStateError = {
   state: "error";
   errorType?: "connNotFound" | "databaseConfigNotFound" | "connectionError";
 };
-type PrglProjectState =
+export type PrglProjectState =
   | {
       error?: undefined;
       state: "loading";

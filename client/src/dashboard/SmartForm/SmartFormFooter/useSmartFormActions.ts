@@ -144,9 +144,11 @@ export const useSmartFormActions = ({
                   newRow,
                   onInserted || onSuccess ? { returning: "*" } : {},
                 );
+
                 return newRow;
               };
               const result = await doInsert();
+
               onSuccess?.("insert", result);
               onInserted?.(result);
 
@@ -187,6 +189,9 @@ export const useSmartFormActions = ({
                         returning: "*",
                       },
                     );
+                    if (!nr?.length) {
+                      throw "No rows were updated. Access rules may not allow this update.";
+                    }
                     onSuccess?.("update", nr as any);
                     setSuccessMessage("Updated");
                   });
@@ -213,7 +218,13 @@ export const useSmartFormActions = ({
               onAccept: async () => {
                 setConfirmPopup(undefined);
                 await performAction(async () => {
-                  await tableHandlerDelete(mode.rowFilterObj);
+                  const nr = await tableHandlerDelete(mode.rowFilterObj, {
+                    returning: "*",
+                  });
+
+                  if (!nr?.length) {
+                    throw "No rows were deleted. Access rules may not allow this update.";
+                  }
                   onSuccess?.("delete");
                   setSuccessMessage("Deleted");
                 });

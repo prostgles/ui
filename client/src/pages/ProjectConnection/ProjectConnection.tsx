@@ -1,6 +1,4 @@
-import { mdiArrowLeft, mdiLogin } from "@mdi/js";
 import React from "react";
-import ErrorComponent from "../../components/ErrorComponent";
 import Loading from "../../components/Loading";
 
 import type { CommonWindowProps } from "../../dashboard/Dashboard/Dashboard";
@@ -11,16 +9,13 @@ import type {
   MethodHandler,
 } from "prostgles-client/dist/prostgles";
 import type { ExtraProps, Prgl, PrglState } from "../../App";
-import Btn from "../../components/Btn";
 
 import { useParams, useSearchParams } from "react-router-dom";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { Command } from "../../Testing";
 import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionConfig";
+import { ProjectConnectionError } from "./ProjectConnectionError";
 import { useProjectDb } from "./useProjectDb";
-import { ROUTES } from "../../../../commonTypes/utils";
-import { FlexRow } from "../../components/Flex";
-import { t } from "../../i18n/i18nUtils";
+import { PrglProvider } from "./PrglContextProvider";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -42,7 +37,7 @@ export const ProjectConnection = (props: ProjectProps) => {
   const { prglState, showConnectionConfig } = props;
   const projectDb = useProjectDb({
     prglState,
-    connId: params.cid,
+    connId: params.connectionId,
   });
 
   if (projectDb.state === "loading") {
@@ -57,59 +52,9 @@ export const ProjectConnection = (props: ProjectProps) => {
     );
   }
 
-  const canLogin =
-    !prglState.auth.user || prglState.auth.user.type === "public";
   if (projectDb.state === "error") {
-    const error = projectDb.error;
     return (
-      <div
-        className="flex-col w-full h-full ai-center jc-center p-2 gap-1"
-        data-command={"ProjectConnection.error" satisfies Command}
-      >
-        {projectDb.errorType === "connNotFound" && (
-          <div className="p-1">
-            This project was not found or you are not allowed to access it
-          </div>
-        )}
-        {!!error && (
-          <>
-            Database connection error:
-            <ErrorComponent error={error} findMsg={true} />
-          </>
-        )}
-
-        <FlexRow>
-          <Btn
-            style={{ fontSize: "18px", fontWeight: "bold" }}
-            className="mt-1"
-            variant="outline"
-            asNavLink={true}
-            href={`/`}
-            iconPath={mdiArrowLeft}
-            color="action"
-          >
-            {t.App.Connections}
-          </Btn>
-          {canLogin && (
-            <Btn
-              style={{ fontSize: "18px", fontWeight: "bold" }}
-              className="mt-1"
-              variant="filled"
-              asNavLink={true}
-              href={
-                ROUTES.LOGIN +
-                (!params.cid ? "" : (
-                  `?returnURL=${encodeURIComponent(window.location.pathname + window.location.search)}`
-                ))
-              }
-              iconPath={mdiLogin}
-              color="action"
-            >
-              {t.common.Login}
-            </Btn>
-          )}
-        </FlexRow>
-      </div>
+      <ProjectConnectionError prglState={prglState} projectDb={projectDb} />
     );
   }
 
@@ -118,10 +63,14 @@ export const ProjectConnection = (props: ProjectProps) => {
     ...projectDb,
   };
 
-  const connectionId = params.cid;
+  const connectionId = params.connectionId;
   const { connection } = projectDb;
   if (showConnectionConfig && connectionId) {
-    return <ConnectionConfig prgl={prgl} connection={connection} />;
+    return (
+      <PrglProvider prgl={prgl}>
+        <ConnectionConfig connection={connection} />
+      </PrglProvider>
+    );
   }
 
   return (
@@ -136,26 +85,15 @@ export const ProjectConnection = (props: ProjectProps) => {
         className="f-1 w-full h-full flex-col"
         style={prgl.theme === "dark" ? { background: "black" } : {}}
       >
-        <Dashboard
-          key={workspaceId}
-          prgl={prgl}
-          workspaceId={workspaceId}
-          onLoaded={() => {}}
-        />
+        <PrglProvider prgl={prgl}>
+          <Dashboard
+            key={workspaceId}
+            workspaceId={workspaceId}
+            onLoaded={() => {}}
+          />
+        </PrglProvider>
       </div>
     </div>
-  );
-};
-
-const getConnectionTitle = (c: DBSSchema["connections"], short = false) => {
-  if (short)
-    return (
-      c.db_conn ||
-      `${c.db_user}@${c.db_host}:${c.db_port || "5432"}/${c.db_name}`
-    );
-  return (
-    c.db_conn ||
-    `postgres://${c.db_user}:***@${c.db_host}:${c.db_port || "5432"}/${c.db_name}`
   );
 };
 

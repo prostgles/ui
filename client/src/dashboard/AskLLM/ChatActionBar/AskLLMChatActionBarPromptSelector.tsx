@@ -1,4 +1,4 @@
-import { mdiCheck, mdiCircleOutline } from "@mdi/js";
+import { mdiCheck, mdiCircleOutline, mdiViewCarousel } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
 import { dashboardTypes } from "../../../../../commonTypes/DashboardTypes";
@@ -12,6 +12,7 @@ import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveBut
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { btnStyleProps } from "./AskLLMChatActionBar";
+import { LLM_PROMPT_VARIABLES } from "../../../../../commonTypes/llmUtils";
 
 export const AskLLMChatActionBarPromptSelector = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -30,8 +31,8 @@ export const AskLLMChatActionBarPromptSelector = (
   const promptContent = useMemo(() => {
     if (!prompt) return "";
     return prompt.prompt
-      .replaceAll("${schema}", dbSchemaForPrompt)
-      .replaceAll("${dashboardTypes}", dashboardTypes);
+      .replaceAll(LLM_PROMPT_VARIABLES.SCHEMA, dbSchemaForPrompt)
+      .replaceAll(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypes);
   }, [dbSchemaForPrompt, prompt]);
   return (
     <PopupMenu
@@ -43,7 +44,15 @@ export const AskLLMChatActionBarPromptSelector = (
       onClickClose={false}
       contentClassName="p-2 flex-col gap-1"
       button={
-        <Btn title="Prompt" {...btnStyleProps}>
+        <Btn
+          title="Prompt"
+          {...btnStyleProps}
+          iconPath={
+            prompt?.options?.prompt_type === "dashboards" ?
+              mdiViewCarousel
+            : undefined
+          }
+        >
           {prompt?.name}
         </Btn>
       }

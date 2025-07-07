@@ -2,6 +2,7 @@ import type { WorkspaceInsertModel } from "../../../../../commonTypes/DashboardT
 import {
   isObject,
   type DBSSchema,
+  type DBSSchemaForInsert,
 } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import { isDefined, omitKeys } from "prostgles-types";
@@ -9,11 +10,15 @@ import { CHIP_COLOR_NAMES } from "../../W_Table/ColumnMenu/ColumnDisplayFormat/C
 
 export const loadGeneratedWorkspaces = async (
   basicWorkspaces: WorkspaceInsertModel[],
+  tool_use_id: string,
   { dbs, connectionId }: Pick<Prgl, "dbs" | "connectionId">,
 ) => {
   const viewIdToIndex: Record<string, number> = {};
   const workspaces = basicWorkspaces.map((bw, i) => {
-    const windows = bw.windows.map((bw, wIndex) => {
+    const windows: Omit<
+      DBSSchemaForInsert["windows"],
+      "last_updated" | "user_id"
+    >[] = bw.windows.map((bw, wIndex) => {
       viewIdToIndex[bw.id] = wIndex;
       if (bw.type === "map") {
         return {
@@ -87,6 +92,14 @@ export const loadGeneratedWorkspaces = async (
       last_updated: undefined as any,
       connection_id: connectionId,
       windows,
+      source: {
+        tool_use_id,
+      },
+    } satisfies DBSSchemaForInsert["workspaces"] & {
+      windows: Omit<
+        DBSSchemaForInsert["windows"],
+        "last_updated" | "user_id"
+      >[];
     };
   });
 

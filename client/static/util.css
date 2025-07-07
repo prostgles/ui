@@ -1402,7 +1402,6 @@ button {
   /* background-color: rgba(88,80,236,var(--bg-opacity)); */
   border-color: transparent;
   border-width: 1px;
-  justify-content: center;
   font-weight: 500;
   font-size: 0.875rem;
   line-height: 1.25rem;

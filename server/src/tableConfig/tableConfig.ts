@@ -896,6 +896,12 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         },
       },
       publish_mode: `TEXT REFERENCES workspace_publish_modes `,
+      source: {
+        nullable: true,
+        jsonbSchemaType: {
+          tool_use_id: "string",
+        },
+      },
     },
     constraints: {
       unique_url_path: `UNIQUE(url_path)`,

@@ -201,13 +201,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       name: `TEXT NOT NULL DEFAULT 'New prompt'`,
       description: `TEXT DEFAULT ''`,
       user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
-      prompt: `TEXT NOT NULL `, // CHECK(LENGTH(prompt) > 0)
+      prompt: `TEXT NOT NULL DEFAULT ''`,
       options: {
         nullable: true,
         jsonbSchemaType: {
-          disable_tools: { type: "boolean", optional: true },
           prompt_type: {
-            enum: ["chat", "dashboards", "tasks"],
+            enum: ["dashboards", "tasks"],
             optional: true,
             description:
               "Internal prompt type used in controlling chat context. Some tools may not be available for all types",
@@ -217,9 +216,9 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       created: `TIMESTAMP DEFAULT NOW()`,
     },
     indexes: {
-      unique_llm_prompt_name: {
+      unique_llm_prompt: {
         unique: true,
-        columns: "name, user_id",
+        columns: "name, user_id, prompt",
       },
     },
   },
@@ -397,7 +396,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                 type: {
                   type: { enum: ["tool_result"] },
                   tool_use_id: "string",
-                  tool_name: { type: "string", optional: true },
+                  tool_name: { type: "string" },
                   content: toolUseContent,
                   is_error: { optional: true, type: "boolean" },
                 },

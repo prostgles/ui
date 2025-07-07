@@ -385,7 +385,7 @@ export type DBGeneratedSchema = {
       message:  ( 
  |  {  type: 'text';  text: string; }
  |  {  type: 'image' | 'audio' | 'video' | 'application' | 'text';  source: {  type: 'base64';  media_type: string;  data: string; }; }
- |  {  type: 'tool_result';  tool_use_id: string;  tool_name?: string;  content: | string |  (  |  {  type: 'text';  text: string; } |  {  type: 'image' | 'audio';  mimeType: string;  data: string; } |  {  type: 'resource';  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } )[];  is_error?: boolean; }
+ |  {  type: 'tool_result';  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: 'text';  text: string; } |  {  type: 'image' | 'audio';  mimeType: string;  data: string; } |  {  type: 'resource';  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } )[];  is_error?: boolean; }
  |  {  type: 'tool_use';  id: string;  name: string;  input: any; } )[]
       meta?: null | any;
       user_id?: null | string;
@@ -424,8 +424,8 @@ export type DBGeneratedSchema = {
       description?: null | string;
       id?: number;
       name?: string;
-      options?: null | {    disable_tools?: boolean;   prompt_type?: 'chat' | 'dashboards' | 'tasks';  };
-      prompt: string;
+      options?: null | {    prompt_type?: 'dashboards' | 'tasks';  };
+      prompt?: string;
       user_id?: null | string;
     };
   };
@@ -822,6 +822,7 @@ export type DBGeneratedSchema = {
       parent_workspace_id?: null | string;
       publish_mode?: null | string;
       published?: boolean;
+      source?: null | {    tool_use_id: string;  };
       url_path?: null | string;
       user_id: string;
     };

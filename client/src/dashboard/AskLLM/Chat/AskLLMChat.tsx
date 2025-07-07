@@ -16,6 +16,7 @@ import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import { isDefined } from "../../../utils";
 import { MINUTE } from "../../../../../commonTypes/utils";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
+import { useAlert } from "../../../components/AlertProvider";
 
 export type AskLLMChatProps = {
   prgl: Prgl;
@@ -27,6 +28,7 @@ export type AskLLMChatProps = {
   workspaceId: string | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
 };
+
 export const AskLLMChat = (props: AskLLMChatProps) => {
   const {
     anchorEl,
@@ -57,8 +59,14 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     workspaceId,
     db,
   });
-  const { messages, activeChat, activeChatId, latestChats, llmMessages } =
-    chatState;
+  const {
+    messages,
+    activeChat,
+    activeChatId,
+    latestChats,
+    llmMessages,
+    prompt,
+  } = chatState;
   const { preferredPromptId, createNewChat } = chatState;
   const { dbSchemaForPrompt } = useLLMSchemaStr({
     tables,
@@ -67,23 +75,30 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     activeChat,
   });
   const isAdmin = user?.type === "admin";
-
+  const { addAlert } = useAlert();
   const sendQuery = useCallback(
-    async (msg: LLMMessage["message"] | undefined) => {
+    async (msg: LLMMessage["message"] | undefined, isToolApproval: boolean) => {
       if (!msg || !activeChatId) return;
       /** TODO: move dbSchemaForPrompt to server-side */
-      void askLLM(connectionId, msg, dbSchemaForPrompt, activeChatId).catch(
-        (error) => {
-          const errorText = error?.message || error;
-          alert(
-            typeof errorText === "string" ? errorText : (
-              JSON.stringify(errorText)
-            ),
-          );
-        },
-      );
+      void askLLM(
+        connectionId,
+        msg,
+        dbSchemaForPrompt,
+        activeChatId,
+        isToolApproval ? "approve-tool-use" : "new-message",
+      ).catch((error) => {
+        const errorText = error?.message || error;
+        addAlert(
+          (
+            "Error when when sending AI Assistant query" + typeof errorText ===
+              "string"
+          ) ?
+            errorText
+          : JSON.stringify(errorText),
+        );
+      });
     },
-    [askLLM, dbSchemaForPrompt, activeChatId, connectionId],
+    [activeChatId, askLLM, connectionId, dbSchemaForPrompt, addAlert],
   );
 
   const sendMessage: ChatProps["onSend"] = useCallback(
@@ -96,6 +111,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           text ? ({ type: "text", text } as const) : undefined,
           ...fileMessages,
         ].filter(isDefined),
+        false,
       );
     },
     [sendQuery],
@@ -186,16 +202,19 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               )
             }
           />
-          <AskLLMToolApprover
-            connection={connection}
-            dbs={dbs}
-            activeChat={activeChat}
-            messages={llmMessages ?? []}
-            methods={methods}
-            sendQuery={sendQuery}
-            callMCPServerTool={callMCPServerTool}
-            db={db}
-          />
+          {prompt && (
+            <AskLLMToolApprover
+              connection={connection}
+              dbs={dbs}
+              activeChat={activeChat}
+              messages={llmMessages ?? []}
+              methods={methods}
+              sendQuery={sendQuery}
+              callMCPServerTool={callMCPServerTool}
+              db={db}
+              prompt={prompt}
+            />
+          )}
         </FlexCol>
       )}
       {latestChats && !activeChat && (

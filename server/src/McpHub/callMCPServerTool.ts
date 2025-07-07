@@ -11,7 +11,7 @@ export const callMCPServerTool = async (
   dbs: DBS,
   serverName: string,
   toolName: string,
-  toolArguments?: Record<string, unknown>,
+  toolArguments: Record<string, unknown> | undefined,
 ): Promise<McpToolCallResponse> => {
   const start = new Date();
   const argErrors = getJSONBObjectSchemaValidationError(

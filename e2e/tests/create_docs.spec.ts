@@ -325,9 +325,6 @@ test.describe("Create docs and screenshots", () => {
         }
       });
     }
-  });
-
-  test("Ensure all screenshots exist", async () => {
     await svgScreenshotsCompleteReferenced();
   });
 

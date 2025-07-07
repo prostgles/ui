@@ -16,10 +16,8 @@ import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValid
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject } from "prostgles-types";
 import { asName, isEmpty, pickKeys } from "prostgles-types";
-import { isDefined } from "../../../commonTypes/filterUtils";
 import type { LLMMessage } from "../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import type { SampleSchema, SampleSchemaDir } from "../../../commonTypes/utils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { checkClientIP, createSessionSecret } from "../authConfig/sessionUtils";
 import type { Backups } from "../BackupManager/BackupManager";
@@ -34,11 +32,10 @@ import {
 import {
   getCompiledTS,
   getDatabaseConfigFilter,
-  getEvaledExports,
 } from "../ConnectionManager/connectionManagerUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
-import { actualRootDir, getElectronConfig } from "../electronConfig";
+import { getElectronConfig } from "../electronConfig";
 import { initBackupManager, statePrgl } from "../init/startProstgles";
 import { callMCPServerTool } from "../McpHub/callMCPServerTool";
 import {
@@ -51,18 +48,17 @@ import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
 import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import { upsertConnection } from "../upsertConnection";
+import { getSampleSchemas } from "./applySampleSchema";
 import { askLLM } from "./askLLM/askLLM";
+import { refreshModels } from "./askLLM/refreshModels";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
-import { getSampleSchemas } from "./applySampleSchema";
-import { refreshModels } from "./askLLM/refreshModels";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
 ) => {
   const { dbo: dbs, clientReq, db: _dbs, user } = params;
   const { socket } = clientReq;
-
   const bkpManager = await initBackupManager(_dbs, dbs);
   if (!user || !user.id) {
     return {};
@@ -585,8 +581,9 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
         userMessage: LLMMessage["message"],
         schema: string,
         chatId: number,
+        type: "new-message" | "approve-tool-use",
       ) => {
-        await askLLM(
+        await askLLM({
           connectionId,
           userMessage,
           schema,
@@ -595,7 +592,9 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
           user,
           allowedLLMCreds,
           accessRules,
-        );
+          clientReq,
+          type,
+        });
       },
     }),
     sendFeedback: async ({

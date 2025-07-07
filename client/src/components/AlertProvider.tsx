@@ -44,18 +44,18 @@ export const AlertProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
       {alertProps && (
         <Popup
+          clickCatchStyle={{ opacity: 1 }}
+          footerButtons={[
+            {
+              label: "OK",
+              color: "action",
+              variant: "filled",
+              className: "ml-auto",
+              onClick: removeFirstAlert,
+            },
+          ]}
           {...alertProps}
           onClose={removeFirstAlert}
-          footerButtons={
-            alertProps.footerButtons ?? [
-              {
-                label: "Close",
-                color: "action",
-                variant: "filled",
-                onClick: removeFirstAlert,
-              },
-            ]
-          }
         />
       )}
     </AlertContext.Provider>

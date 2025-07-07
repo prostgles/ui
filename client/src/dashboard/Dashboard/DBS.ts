@@ -30,6 +30,7 @@ export type DBSMethods = Partial<{
     userMessage: LLMMessage["message"],
     schema: string,
     chatId: number,
+    type: "new-message" | "approve-tool-use",
   ) => Promise<AnyObject>;
   pgDump: (
     conId: string,

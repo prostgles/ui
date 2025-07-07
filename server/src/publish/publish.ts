@@ -2,7 +2,7 @@ import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import { getKeys, type FilterItem } from "prostgles-types";
+import { getKeys } from "prostgles-types";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { isDefined } from "../../../commonTypes/filterUtils";
 import {
@@ -15,7 +15,6 @@ import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMo
 import { checkClientIP } from "../authConfig/sessionUtils";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
 import { getPublishLLM } from "./getPublishLLM";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 
 export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
   params,
@@ -232,7 +231,7 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
         filterFields: "*",
         validate: async (filter) => {
           const adminVal = await db.user_types.findOne({
-            $and: [filter ?? {}, { id: "admin" }],
+            $and: [filter, { id: "admin" }],
           });
           if (adminVal) throw "Cannot delete the admin value";
         },

@@ -47,7 +47,7 @@ type FilterMatch<T, U> = T extends U ? T : never;
 type FilterUnMatch<T, U> = T extends U ? never : T;
 
 export const filterArr = <T, U extends Partial<T>>(
-  arr: T[],
+  arr: T[] | readonly T[],
   pattern: U,
 ): FilterMatch<T, U>[] => {
   const patternEntries = Object.entries(pattern);

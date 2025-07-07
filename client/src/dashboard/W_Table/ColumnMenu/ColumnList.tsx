@@ -23,7 +23,6 @@ import type { ColumnConfig } from "./ColumnMenu";
 import { getColumnListItem } from "./ColumnsMenu";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { SummariseColumn } from "./SummariseColumns";
-import type { DBS } from "../../Dashboard/DBS";
 
 type P = {
   columns: ColumnConfigWInfo[];

@@ -13,15 +13,15 @@ export const domToThemeAwareSVG = async (node: HTMLElement) => {
   document.body.appendChild(svgDark);
   document.body.appendChild(svgLight);
 
-  let cid = 0;
+  let varId = 0;
   type CSSProperty = "color" | "shadow" | "opacity" | "fontFamily" | "href";
   const getUniqueColorVarName = (
     property: CSSProperty,
     value: string,
   ): string => {
-    let varName = `${property}-${cid++}`;
+    let varName = `${property}-${varId++}`;
     while (lightToDarkMap.get(value)?.some((c) => c.varName === varName)) {
-      varName = `${property}-${cid++}`;
+      varName = `${property}-${varId++}`;
     }
     return varName;
   };

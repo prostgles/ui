@@ -323,15 +323,16 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       if (variant === "text") {
         extraStyle.paddingLeft = 0;
       }
-
-      /** Is icon Btn */
     } else {
+      const padding =
+        size === "micro" ? "4px"
+        : size === "small" ? "6px"
+        : size === "default" ? "8px"
+        : "10px";
+      const sidePadding = children ? `calc(${padding} * 1.5)` : padding;
+      /** Must add right padding to icon and text button */
       extraStyle = {
-        padding:
-          size === "micro" ? "4px"
-          : size === "small" ? "6px"
-          : size === "default" ? "8px"
-          : "10px",
+        padding: `${padding} ${sidePadding}`,
       };
     }
 

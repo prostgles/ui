@@ -5,7 +5,7 @@ import {
   mdiViewCarousel,
 } from "@mdi/js";
 import React, { useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
@@ -22,6 +22,7 @@ import { WorkspaceSettings } from "./WorkspaceSettings";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
 import { ROUTES } from "../../../../commonTypes/utils";
 import type { Command } from "../../Testing";
+import type { DBS } from "../Dashboard/DBS";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -29,18 +30,30 @@ type P = {
   className?: string;
 };
 
+const WorkspaceIdSearchParam = "workspaceId" as const;
 export const getWorkspacePath = (
   w: Pick<Workspace, "id" | "connection_id">,
 ) => {
-  return [ROUTES.CONNECTIONS, `${w.connection_id}?workspaceId=${w.id}`]
+  return [
+    ROUTES.CONNECTIONS,
+    `${w.connection_id}?${WorkspaceIdSearchParam}=${w.id}`,
+  ]
     .filter((v) => v)
     .join("/");
 };
 
-export const useSetNewWorkspace = (currentWorkspaceId: string | undefined) => {
+export const useSetActiveWorkspace = (
+  currentWorkspaceId: string | undefined,
+) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const setWorkspace = useCallback(
-    (w: Pick<Workspace, "id" | "connection_id">) => {
+    (w: Pick<Workspace, "id" | "connection_id"> | undefined) => {
+      if (!w) {
+        searchParams.delete(WorkspaceIdSearchParam);
+        setSearchParams(searchParams);
+        return;
+      }
       if (w.id === currentWorkspaceId) {
         return;
       }
@@ -48,10 +61,21 @@ export const useSetNewWorkspace = (currentWorkspaceId: string | undefined) => {
 
       navigate(path);
     },
-    [currentWorkspaceId, navigate],
+    [currentWorkspaceId, navigate, searchParams, setSearchParams],
   );
 
   return { setWorkspace };
+};
+
+/**
+ * The purpose of this is to ensure that we reuse sync'd workspaces
+ */
+export const useWorkspacesSync = (dbs: DBS, connection_id: string) => {
+  const { data: unsortedWorkspaces = [] } = dbs.workspaces.useSync!(
+    { connection_id, deleted: false },
+    { handlesOnData: true, select: "*", patchText: false },
+  );
+  return unsortedWorkspaces;
 };
 
 export const WorkspaceMenu = (props: P) => {
@@ -62,11 +86,8 @@ export const WorkspaceMenu = (props: P) => {
   } = props;
   const listRef = useRef<HTMLDivElement>(null);
 
-  const { data: unsortedWorkspaces = [] } = dbs.workspaces.useSync!(
-    { connection_id: workspace.connection_id, deleted: false },
-    { handlesOnData: true, select: "*", patchText: false },
-  );
-  const { setWorkspace } = useSetNewWorkspace(workspace.id);
+  const unsortedWorkspaces = useWorkspacesSync(dbs, workspace.connection_id);
+  const { setWorkspace } = useSetActiveWorkspace(workspace.id);
   const userId = user?.id;
   const isAdmin = user?.type === "admin";
   const workspaces = useMemo(() => {

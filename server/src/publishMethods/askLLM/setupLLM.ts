@@ -16,9 +16,6 @@ export const setupLLM = async (dbs: DBS) => {
         name: "Chat",
         description: "Basic chat",
         user_id,
-        options: {
-          prompt_type: "chat",
-        },
         prompt: [
           firstLine,
           "Assist user with any queries they might have. Do not add empty lines in your sql response.",
@@ -33,7 +30,6 @@ export const setupLLM = async (dbs: DBS) => {
         description: "Create dashboards. Claude Sonnet recommended",
         user_id,
         options: {
-          disable_tools: true,
           prompt_type: "dashboards",
         },
         prompt: [

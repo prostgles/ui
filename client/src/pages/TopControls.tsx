@@ -37,7 +37,7 @@ type TopControlsProps = {
 );
 export const TopControls = (props: TopControlsProps) => {
   const { prgl, location, loadedSuggestions } = props;
-  const { connectionId, connection: c } = prgl;
+  const { connectionId } = prgl;
   const menuBtnProps: DashboardMenuBtnProps<any> =
     props.location === "config" ?
       {

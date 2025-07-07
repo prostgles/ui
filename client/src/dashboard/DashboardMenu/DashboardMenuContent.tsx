@@ -23,7 +23,7 @@ import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
 import { SchemaGraph } from "../SchemaGraph/SchemaGraph";
 import { WorkspaceAddBtn } from "../WorkspaceMenu/WorkspaceAddBtn";
-import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
+import { useSetActiveWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { useLocalSettings } from "../localSettings";
 import type { DashboardMenuProps, DashboardMenuState } from "./DashboardMenu";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
@@ -79,7 +79,7 @@ export const DashboardMenuContent = (props: P) => {
       ...(methods[methodName] as MethodFullDef),
     }));
 
-  const { setWorkspace } = useSetNewWorkspace(workspace.id);
+  const { setWorkspace } = useSetActiveWorkspace(workspace.id);
 
   const ref = useRef<HTMLDivElement>(null);
   const ensureFadeDoesNotShowForOneItem = { minHeight: "120px" } as const;

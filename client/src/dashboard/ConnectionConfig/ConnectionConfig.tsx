@@ -10,7 +10,6 @@ import {
 } from "@mdi/js";
 import React, { useMemo } from "react";
 import type { CONNECTION_CONFIG_SECTIONS } from "../../../../commonTypes/utils";
-import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
 import { FlexRow } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
@@ -18,6 +17,7 @@ import type { TabItem } from "../../components/Tabs";
 import Tabs from "../../components/Tabs";
 import { t } from "../../i18n/i18nUtils";
 import NewConnection from "../../pages/NewConnection/NewConnnection";
+import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
 import { TopControls } from "../../pages/TopControls";
 import { getKeys } from "../../utils";
@@ -36,12 +36,13 @@ type ConnectionConfigProps = Pick<
   "style" | "className" | "children"
 > & {
   connection: Connections;
-  prgl: Prgl;
 };
 
 export const ConnectionConfig = (props: ConnectionConfigProps) => {
-  const { className = "", style = {}, prgl, connection } = props;
+  const { className = "", style = {}, connection } = props;
+  const prgl = usePrgl();
   const { serverState, dbs, connectionId, db, dbsMethods } = prgl;
+  const propsWithPrgl = useMemo(() => ({ ...props, prgl }), [props, prgl]);
   const disabledText =
     (dbs.access_control as any)?.update ?
       undefined
@@ -64,7 +65,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           content: (
             <NewConnection
               showTitle={false}
-              prglState={props.prgl}
+              prglState={prgl}
               contentOnly={true}
               db={db}
               connectionId={connectionId}
@@ -103,14 +104,14 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           listProps: dataCommand("config.files"),
           leftIconPath: mdiImage,
           disabledText: disabledText || stateDisabledInfo,
-          content: <FileTableConfigControls {...props} />,
+          content: <FileTableConfigControls {...propsWithPrgl} />,
         },
         backups: {
           label: t.ConnectionConfig["Backup/Restore"],
           listProps: dataCommand("config.bkp"),
           leftIconPath: mdiDatabaseSync,
           disabledText,
-          content: <BackupsControls {...props} />,
+          content: <BackupsControls {...propsWithPrgl} />,
         },
         API: {
           label: t.ConnectionConfig["API"],
@@ -119,7 +120,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           disabledText:
             disabledText ||
             (isElectron ? "Not available for desktop" : undefined),
-          content: <APIDetails {...props.prgl} />,
+          content: <APIDetails {...prgl} />,
         },
         table_config: {
           label: (
@@ -133,7 +134,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           disabledText: disabledText || stateDisabledInfo,
           listProps: dataCommand("config.tableConfig"),
           leftIconPath: mdiTableEdit,
-          content: <TableConfig {...props} />,
+          content: <TableConfig {...propsWithPrgl} />,
         },
         methods: {
           label: (
@@ -162,7 +163,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       disabledText,
       isElectron,
       prgl,
-      props,
+      propsWithPrgl,
       stateDisabledInfo,
     ],
   );
@@ -174,7 +175,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
     <div className={`flex-col f-1 min-s-0 ${className}`} style={style}>
       <TopControls
         location="config"
-        prgl={props.prgl}
+        prgl={prgl}
         loadedSuggestions={undefined}
       />
 

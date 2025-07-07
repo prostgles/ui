@@ -163,8 +163,7 @@ export const getPublishLLM = (
       },
       update: isAdmin && {
         fields: "*",
-        forcedData,
-        forcedFilter,
+        forcedFilter: userOwnsRelatedChat,
       },
     },
     mcp_servers: isAdmin && {

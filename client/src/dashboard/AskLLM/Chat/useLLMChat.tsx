@@ -1,9 +1,9 @@
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
 import { useCallback, useMemo, useState } from "react";
 import type { Prgl } from "../../../App";
-import { useLLMChatMessages } from "./AskLLMChatMessages/useLLMChatMessages";
-import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
+import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
+import { useLLMChatMessages } from "./AskLLMChatMessages/useLLMChatMessages";
 
 export type UseLLMChatProps = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId" | "db"> & {
@@ -83,6 +83,10 @@ export const useLLMChat = (props: UseLLMChatProps) => {
     activeChat,
   });
 
+  const prompt = useMemo(() => {
+    return prompts.find((p) => p.id === activeChat?.llm_prompt_id);
+  }, [activeChat?.llm_prompt_id, prompts]);
+
   return {
     activeChatId,
     createNewChat,
@@ -94,5 +98,6 @@ export const useLLMChat = (props: UseLLMChatProps) => {
     credentials,
     defaultCredential,
     activeChat,
+    prompt,
   };
 };

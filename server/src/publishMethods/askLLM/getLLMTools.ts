@@ -1,16 +1,21 @@
 import {
   getJSONBSchemaAsJSONSchema,
-  pickKeys,
+  isDefined,
   type JSONB,
 } from "prostgles-types";
 import type { DBS } from "../..";
+
 import {
-  suggestDashboardsTool,
+  getMCPFullToolName,
+  getProstglesMCPFullToolName,
+  type ProstglesMcpTool,
+} from "../../../../commonTypes/mcp";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import {
   executeSQLTool,
   getAddTaskTools,
-  getMCPFullToolName,
-} from "../../../../commonTypes/prostglesMcpTools";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+  suggestDashboardsTool,
+} from "./prostglesMcpTools";
 
 type Args = {
   isAdmin: boolean;
@@ -20,50 +25,60 @@ type Args = {
   connectionId: string;
 };
 
-type MCPToolSchema = {
+export type MCPToolSchema = {
   name: string;
   description: string;
   input_schema: ReturnType<typeof getJSONBSchemaAsJSONSchema>;
 };
 
+export type MCPToolSchemaWithApproveInfo = MCPToolSchema &
+  (
+    | {
+        type: "mcp";
+        auto_approve: boolean;
+      }
+    | (ProstglesMcpTool & {
+        auto_approve: boolean;
+      })
+  );
 export const getLLMTools = async ({
   isAdmin,
   dbs,
   chat,
   connectionId,
   prompt,
-}: Args): Promise<undefined | MCPToolSchema[]> => {
-  const { disable_tools, prompt_type } = prompt.options ?? {};
+}: Args): Promise<undefined | MCPToolSchemaWithApproveInfo[]> => {
+  const { prompt_type } = prompt.options ?? {};
 
-  /** Tools are not used with Dashboarding due to induced errors */
-  if (disable_tools) return undefined;
   const { id: chatId } = chat;
 
+  let taskTool: MCPToolSchema | undefined = undefined;
   if (prompt_type === "tasks") {
     if (!isAdmin) {
       throw new Error("Only admins can use task creation tools");
     }
-    const { serverSideFuncTools } = await getPublishedMethodsTools(dbs, {});
-    const { mcpTools } = await getMCPServerTools(dbs, {});
-    return [
-      getAddTaskTools(
-        [...serverSideFuncTools, ...mcpTools].map((t) =>
-          pickKeys(t, ["name", "description"]),
-        ),
-      ) as MCPToolSchema,
-    ];
+    const { published_methods } = await getPublishedMethodsTools(dbs, {});
+    const { mcp_server_tools } = await getMCPServerTools(dbs, {});
+    taskTool = getAddTaskTools({
+      availableMCPTools: mcp_server_tools.map((t) => ({
+        ...t,
+        name: getMCPFullToolName(t.server_name, t.name),
+      })),
+      availableDBTools: published_methods.map((t) => ({
+        ...t,
+        name: getProstglesMCPFullToolName("prostgles-db-methods", t.name),
+      })),
+    });
   }
 
-  const dbTool: MCPToolSchema | undefined =
+  const dbTool =
     chat.db_data_permissions?.type === "Run SQL" ?
-      {
-        ...(executeSQLTool as MCPToolSchema),
-        // input_schema: getJSONBSchemaAsJSONSchema("prostgles", "execute_sql", {
-        //   type: {
-        //     sql: "string",
-        //   },
-        // }),
-      }
+      ({
+        ...executeSQLTool,
+        tool_name: "execute_sql",
+        auto_approve: Boolean(chat.db_data_permissions.auto_approve),
+        type: "prostgles-db",
+      } satisfies MCPToolSchemaWithApproveInfo)
     : undefined;
 
   const { serverSideFuncTools } = await getPublishedMethodsTools(dbs, {
@@ -74,7 +89,15 @@ export const getLLMTools = async ({
       },
     },
   });
+  const llm_chats_allowed_functions =
+    await dbs.llm_chats_allowed_functions.find({
+      chat_id: chatId,
+    });
 
+  const llm_chats_allowed_mcp_tools =
+    await dbs.llm_chats_allowed_mcp_tools.find({
+      chat_id: chatId,
+    });
   const { mcpTools } = await getMCPServerTools(dbs, {
     $existsJoined: {
       llm_chats_allowed_mcp_tools: {
@@ -82,14 +105,54 @@ export const getLLMTools = async ({
       },
     },
   });
-  const tools: Record<string, MCPToolSchema> = {};
+  const tools: Record<string, MCPToolSchemaWithApproveInfo> = {};
 
   /** Check for name collisions */
   [
-    ...mcpTools,
-    ...serverSideFuncTools,
+    ...mcpTools
+      .map(({ id, ...t }) => {
+        const info = llm_chats_allowed_mcp_tools.find(
+          ({ tool_id }) => tool_id === id,
+        );
+        if (!info) return;
+        return {
+          type: "mcp" as const,
+          ...t,
+          ...info,
+          auto_approve: Boolean(info.auto_approve),
+        };
+      })
+      .filter(isDefined),
+    ...serverSideFuncTools
+      .map(({ id, ...t }) => {
+        const info = llm_chats_allowed_functions.find(
+          ({ server_function_id }) => server_function_id === id,
+        );
+        if (!info) return;
+        return {
+          type: "prostgles-db-methods" as const,
+          ...t,
+          ...info,
+          auto_approve: Boolean(info.auto_approve),
+        };
+      })
+      .filter(isDefined),
     dbTool,
-    suggestDashboardsTool as MCPToolSchema,
+    prompt_type === "dashboards" ?
+      ({
+        ...suggestDashboardsTool,
+        auto_approve: true,
+        type: "prostgles-ui",
+        tool_name: "suggest_dashboards",
+      } satisfies MCPToolSchemaWithApproveInfo)
+    : undefined,
+    taskTool &&
+      ({
+        ...taskTool,
+        auto_approve: true,
+        type: "prostgles-ui",
+        tool_name: "suggest_tools_and_prompt",
+      } satisfies MCPToolSchemaWithApproveInfo),
   ].forEach((tool) => {
     if (!tool) return;
     const { name } = tool;
@@ -108,25 +171,27 @@ export const getLLMTools = async ({
 const getMCPServerTools = async (
   dbs: DBS,
   filter: Parameters<typeof dbs.mcp_server_tools.find>[0],
-): Promise<{ mcpTools: MCPToolSchema[] }> => {
-  const mcpTools = (await dbs.mcp_server_tools.find(filter)).map((t) => {
+) => {
+  const mcp_server_tools = await dbs.mcp_server_tools.find(filter);
+  const mcpTools = mcp_server_tools.map((t) => {
     return {
-      name: getMCPFullToolName(t),
+      id: t.id,
+      name: getMCPFullToolName(t.server_name, t.name),
       description: t.description,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       input_schema: t.inputSchema,
-    };
+    } satisfies MCPToolSchema & { id: number };
   });
-  return { mcpTools };
+  return { mcpTools, mcp_server_tools };
 };
 
 const getPublishedMethodsTools = async (
   dbs: DBS,
   filter: Parameters<typeof dbs.published_methods.find>[0],
-): Promise<{ serverSideFuncTools: MCPToolSchema[] }> => {
+) => {
   const published_methods = await dbs.published_methods.find(filter);
   const serverSideFuncTools = published_methods.map((m) => {
-    const { name, description, arguments: _arguments } = m;
+    const { name, description, arguments: _arguments, id } = m;
     const properties = _arguments.reduce(
       (acc, arg) => ({
         ...acc,
@@ -142,7 +207,9 @@ const getPublishedMethodsTools = async (
       {} as JSONB.ObjectType["type"],
     );
     return {
-      name: getMCPFullToolName({ server_name: "db-methods", name }),
+      id,
+      tool_name: name,
+      name: getProstglesMCPFullToolName("prostgles-db-methods", name),
       description,
       input_schema: getJSONBSchemaAsJSONSchema(
         "published_methods",
@@ -151,7 +218,7 @@ const getPublishedMethodsTools = async (
           type: properties,
         },
       ),
-    };
+    } satisfies MCPToolSchema & { id: number; tool_name: string };
   });
-  return { serverSideFuncTools };
+  return { serverSideFuncTools, published_methods };
 };

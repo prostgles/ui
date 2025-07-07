@@ -16,16 +16,15 @@ import Select from "../../../../components/Select/Select";
 import { t } from "../../../../i18n/i18nUtils";
 import { isDefined } from "../../../../utils";
 import { Counter } from "../../../W_SQL/W_SQL";
-import { ToolUseChatMessage } from "./ToolUseChatMessage";
-import { useMarkdownCodeHeader } from "./useMarkdownCodeHeader";
 import type { UseLLMChatProps } from "../useLLMChat";
+import { ToolUseChatMessage } from "./ToolUseChatMessage";
 
 type P = UseLLMChatProps & {
   activeChat: DBSSchema["llm_chats"] | undefined;
 };
 
 export const useLLMChatMessages = (props: P) => {
-  const { dbs, user, activeChat, db, loadedSuggestions } = props;
+  const { dbs, user, activeChat, db, loadedSuggestions, workspaceId } = props;
   const { is_loading } = activeChat ?? {};
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChat?.id },
@@ -33,7 +32,6 @@ export const useLLMChatMessages = (props: P) => {
     { skip: !activeChat?.id },
   );
 
-  const { markdownCodeHeader } = useMarkdownCodeHeader(props);
   const sqlHandler = db.sql;
 
   const actualMessages: Message[] | undefined = useMemo(
@@ -54,7 +52,7 @@ export const useLLMChatMessages = (props: P) => {
                 return (
                   <Marked
                     key={`${id}-text-${idx}`}
-                    codeHeader={markdownCodeHeader}
+                    codeHeader={undefined}
                     content={m.text}
                     sqlHandler={sqlHandler}
                     loadedSuggestions={loadedSuggestions}
@@ -83,6 +81,7 @@ export const useLLMChatMessages = (props: P) => {
                   toolUseMessageIndex={idx}
                   sqlHandler={sqlHandler}
                   loadedSuggestions={loadedSuggestions}
+                  workspaceId={workspaceId}
                 />
               );
             });
@@ -101,7 +100,7 @@ export const useLLMChatMessages = (props: P) => {
               id,
               incoming: user_id !== user?.id,
               messageTopContent: (
-                <FlexRow className="show-on-parent-hover f-1">
+                <FlexRow className="show-on-parent-hover f-1 gap-p25">
                   {!user_id && (
                     <Chip
                       className="ml-p5"
@@ -178,7 +177,7 @@ export const useLLMChatMessages = (props: P) => {
       user?.id,
       sqlHandler,
       loadedSuggestions,
-      markdownCodeHeader,
+      workspaceId,
       dbs.llm_messages,
       activeChat?.id,
     ],

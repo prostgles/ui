@@ -1,5 +1,5 @@
 import { mcpGithub } from "./mcpGithub";
-import type { DBSSchema, DBSSchemaForInsert } from "./publishUtils";
+import type { DBSSchemaForInsert } from "./publishUtils";
 
 export type MCPServerInfo = Omit<
   DBSSchemaForInsert["mcp_servers"],
@@ -9,6 +9,46 @@ export type MCPServerInfo = Omit<
     DBSSchemaForInsert["mcp_server_tools"],
     "id" | "server_name"
   >[];
+};
+
+export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
+  "prostgles-db-methods": ["" as string],
+  "prostgles-db": ["execute_sql"],
+  "prostgles-ui": ["suggest_tools_and_prompt", "suggest_dashboards"],
+} as const;
+
+type ProstglesMcpTools = typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
+export type ProstglesMcpTool = {
+  [K in keyof ProstglesMcpTools]: {
+    type: K;
+    tool_name: ProstglesMcpTools[K][number];
+  };
+}[keyof ProstglesMcpTools];
+
+const MCP_TOOL_NAME_SEPARATOR = "--";
+export const getMCPFullToolName = <
+  Name extends string,
+  ServerName extends string,
+>(
+  server_name: ServerName,
+  name: Name,
+): `${ServerName}${typeof MCP_TOOL_NAME_SEPARATOR}${Name}` => {
+  return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}` as const;
+};
+
+export const getProstglesMCPFullToolName = <
+  ServerName extends keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS,
+  Name extends (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)[ServerName][number],
+>(
+  server_name: ServerName,
+  name: Name,
+) => getMCPFullToolName(server_name, name);
+
+export const getMCPToolNameParts = (fullName: string) => {
+  const [serverName, toolName] = fullName.split(MCP_TOOL_NAME_SEPARATOR);
+  if (serverName && toolName) {
+    return { serverName, toolName };
+  }
 };
 
 export const DefaultMCPServers: Record<string, MCPServerInfo> = {

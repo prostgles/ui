@@ -47,6 +47,7 @@ import type {
 import { TopHeaderClassName } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
 import { ROUTES } from "../../../../commonTypes/utils";
+import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -590,12 +591,18 @@ export class _Dashboard extends RTComp<
 }
 
 export const Dashboard = (
-  p: Omit<DashboardProps, "localSettings" | "navigate">,
+  p: Omit<DashboardProps, "localSettings" | "navigate" | "prgl">,
 ) => {
   const localSettings = useLocalSettings();
   const navigate = useNavigate();
+  const prgl = usePrgl();
   return (
-    <_Dashboard {...p} localSettings={localSettings} navigate={navigate} />
+    <_Dashboard
+      {...p}
+      prgl={prgl}
+      localSettings={localSettings}
+      navigate={navigate}
+    />
   );
 };
 

@@ -1,9 +1,6 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback } from "react";
-import {
-  executeSQLTool,
-  getAddTaskTools,
-} from "../../../../../commonTypes/prostglesMcpTools";
+
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import { FlexCol, FlexRow } from "../../../components/Flex";
@@ -13,19 +10,20 @@ import { isEmpty } from "../../../utils";
 import { CodeEditor } from "../../CodeEditor/CodeEditor";
 import type { DBS } from "../../Dashboard/DBS";
 import { type ApproveRequest } from "./useLLMChatAllowedTools";
-import { useLLMTools } from "./useLLMTools";
+import { useLLMToolsApprover } from "./useLLMToolsApprover";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
   db: DBHandlerClient;
   activeChat: DBSSchema["llm_chats"];
+  prompt: DBSSchema["llm_prompts"];
   messages: DBSSchema["llm_messages"][];
   sendQuery: (
     msg: DBSSchema["llm_messages"]["message"] | undefined,
+    isToolApproval: boolean,
   ) => Promise<void>;
   callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
 } & Pick<Prgl, "methods" | "connection">;
-const taskTool = getAddTaskTools();
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   const { dbs, activeChat } = props;
@@ -55,7 +53,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                     auto_approve,
                   },
                 );
-              } else if (req.type === "db-method") {
+              } else if (req.type === "prostgles-db-methods") {
                 await dbs.llm_chats_allowed_functions.upsert(
                   { chat_id: activeChatId, server_function_id: req.id },
                   {
@@ -64,7 +62,12 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                     auto_approve,
                   },
                 );
-              } else if (req.name === executeSQLTool.name) {
+              } else if (
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                req.type === "prostgles-db" &&
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                req.tool_name === "execute_sql"
+              ) {
                 await dbs.llm_chats.update(
                   {
                     id: activeChatId,
@@ -76,11 +79,9 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                     },
                   },
                 );
-              } else if (req.name === taskTool.name) {
-                // Task tool cannot be auto-approved
               } else {
                 throw new Error(
-                  `Unexpected tool use request ${req.name} (${req.type})`,
+                  `Unexpected tool use request ${JSON.stringify(req)}`,
                 );
               }
             }
@@ -99,7 +100,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     ],
   );
 
-  useLLMTools({ ...props, requestApproval: onRequestToolUse });
+  useLLMToolsApprover({ ...props, requestApproval: onRequestToolUse });
 
   if (!mustApprove) return null;
 
@@ -133,7 +134,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         },
         {
           className: "ml-auto",
-          label: "Approve once",
+          label: "Allow once",
           color: "action",
           variant: "filled",
           onClick: () => {
@@ -142,7 +143,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           },
         },
         {
-          label: "Approve for this chat",
+          label: "Allow always",
           color: "action",
           variant: "filled",
           onClick: () => {

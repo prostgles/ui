@@ -29,10 +29,24 @@ export const getLLMMessageToolUseResult = ({ message, }) => {
         return [];
     return filterArr(message, { type: "tool_result" });
 };
+// export const filterArr = <T, U extends Partial<T>>(
+//   arr: T[] | readonly T[],
+//   pattern: U,
+// ): FilterMatch<T, U>[] => {
+//   const patternEntries = Object.entries(pattern);
+//   return arr.filter((item) => {
+//     return patternEntries.every(
+//       ([key, value]) => item[key as keyof T] === value,
+//     );
+//   }) as FilterMatch<T, U>[];
+// };
+// FIXED VERSION
 export const filterArr = (arr, pattern) => {
     const patternEntries = Object.entries(pattern);
     return arr.filter((item) => {
-        return patternEntries.every(([key, value]) => item[key] === value);
+        return patternEntries.every(
+        // This is safer than the original `keyof T` which only works for shared keys
+        ([key, value]) => item[key] === value);
     });
 };
 export const filterArrInverse = (arr, pattern) => {
