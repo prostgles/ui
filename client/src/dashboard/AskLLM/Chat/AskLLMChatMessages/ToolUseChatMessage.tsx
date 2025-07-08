@@ -14,7 +14,8 @@ import { MediaViewer } from "../../../../components/MediaViewer";
 
 import { LoadSuggestedDashboards } from "../../Tools/ClientSideMCP/LoadSuggestedDashboards";
 import { LoadSuggestedToolsAndPrompt } from "../../Tools/ClientSideMCP/LoadSuggestedToolsAndPrompt";
-import { getProstglesMCPFullToolName } from "../../../../../../commonTypes/mcp";
+import { getProstglesMCPFullToolName } from "../../../../../../commonTypes/prostglesMcp";
+import { ErrorTrap } from "../../../../components/ErrorComponent";
 
 type ToolUseMessageProps = {
   messages: DBSSchema["llm_messages"][];
@@ -72,67 +73,72 @@ export const ToolUseChatMessage = ({
     : undefined;
 
   return (
-    <FlexCol className={"ToolUseMessage gap-p5 "}>
-      <Btn
-        iconPath={mdiTools}
-        style={open ? { width: "100%" } : {}}
-        onClick={() => setOpen(!open)}
-        variant="faded"
-        size="small"
-        color={
-          toolUseResult?.toolUseResultMessage.is_error ? "danger" : undefined
-        }
-        title={
-          toolUseResult ?
-            `Tool use result for: ${m.name}`
-          : `Awaiting tool result: ${m.name}`
-        }
-        loading={!toolUseResult}
-        children={
-          uiToolName ? undefined : (
-            <>
-              {" "}
-              {m.name}
-              {inputTextSummary && (
-                <span style={{ fontWeight: "normal", opacity: 0.75 }}>
-                  {inputTextSummary}
-                </span>
-              )}
-            </>
-          )
-        }
-      />
-      {open && (
-        <>
-          {m.input && !isEmpty(m.input) && (
-            <MarkdownMonacoCode
-              key={`${m.type}-input`}
-              title="Arguments:"
-              codeString={
-                tryCatchV2(() => JSON.stringify(m.input, null, 2)).data ?? ""
-              }
-              language="json"
-              codeHeader={undefined}
-              sqlHandler={undefined}
-              loadedSuggestions={undefined}
-            />
-          )}
-          {toolUseResult && (
-            <ContentRender
-              toolUseResult={toolUseResult}
-              sqlHandler={sqlHandler}
-              loadedSuggestions={loadedSuggestions}
-            />
-          )}
-        </>
-      )}
-      {uiToolName === "dashboards" && (
-        <LoadSuggestedDashboards workspaceId={workspaceId} message={m} />
-      )}
-      {uiToolName === "taskTools" && (
-        <LoadSuggestedToolsAndPrompt message={m} chatId={fullMessage.chat_id} />
-      )}
-    </FlexCol>
+    <ErrorTrap>
+      <FlexCol className={"ToolUseMessage gap-p5 "}>
+        <Btn
+          iconPath={mdiTools}
+          style={open ? { width: "100%" } : {}}
+          onClick={() => setOpen(!open)}
+          variant="faded"
+          size="small"
+          color={
+            toolUseResult?.toolUseResultMessage.is_error ? "danger" : undefined
+          }
+          title={
+            toolUseResult ?
+              `Tool use result for: ${m.name}`
+            : `Awaiting tool result: ${m.name}`
+          }
+          loading={!toolUseResult}
+          children={
+            uiToolName ? undefined : (
+              <>
+                {" "}
+                {m.name}
+                {inputTextSummary && (
+                  <span style={{ fontWeight: "normal", opacity: 0.75 }}>
+                    {inputTextSummary}
+                  </span>
+                )}
+              </>
+            )
+          }
+        />
+        {open && (
+          <>
+            {m.input && !isEmpty(m.input) && (
+              <MarkdownMonacoCode
+                key={`${m.type}-input`}
+                title="Arguments:"
+                codeString={
+                  tryCatchV2(() => JSON.stringify(m.input, null, 2)).data ?? ""
+                }
+                language="json"
+                codeHeader={undefined}
+                sqlHandler={undefined}
+                loadedSuggestions={undefined}
+              />
+            )}
+            {toolUseResult && (
+              <ContentRender
+                toolUseResult={toolUseResult}
+                sqlHandler={sqlHandler}
+                loadedSuggestions={loadedSuggestions}
+              />
+            )}
+          </>
+        )}
+        {uiToolName === "dashboards" && (
+          <LoadSuggestedDashboards workspaceId={workspaceId} message={m} />
+        )}
+        {uiToolName === "taskTools" && (
+          <LoadSuggestedToolsAndPrompt
+            message={m}
+            chatId={fullMessage.chat_id}
+          />
+        )}
+      </FlexCol>
+    </ErrorTrap>
   );
 };
 

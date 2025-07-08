@@ -7,12 +7,15 @@ import type { DBS } from "../..";
 
 import {
   getMCPFullToolName,
+  getProstglesDBTools,
   getProstglesMCPFullToolName,
+  PROSTGLES_MCP_SERVERS_AND_TOOLS,
   type ProstglesMcpTool,
-} from "../../../../commonTypes/mcp";
+} from "../../../../commonTypes/prostglesMcp";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import {
-  executeSQLTool,
+  executeSQLToolWithCommit,
+  executeSQLToolWithRollback,
   getAddTaskTools,
   suggestDashboardsTool,
 } from "./prostglesMcpTools";
@@ -71,15 +74,69 @@ export const getLLMTools = async ({
     });
   }
 
-  const dbTool =
-    chat.db_data_permissions?.type === "Run SQL" ?
-      ({
-        ...executeSQLTool,
-        tool_name: "execute_sql",
-        auto_approve: Boolean(chat.db_data_permissions.auto_approve),
-        type: "prostgles-db",
-      } satisfies MCPToolSchemaWithApproveInfo)
-    : undefined;
+  // const dbAccess = chat.db_data_permissions;
+  // const tableTools =
+  //   dbAccess?.type === "Custom" ?
+  //     dbAccess.tables.reduce(
+  //       (a, tableRule) => {
+  //         const actions = ["select", "update", "insert", "delete"] as const;
+  //         for (const actionName of actions) {
+  //           if (tableRule[actionName] && !a[actionName]) {
+  //             a[actionName] = {
+  //               name: getProstglesMCPFullToolName("prostgles-db", actionName),
+  //               type: "prostgles-db",
+  //               tool_name: actionName,
+  //               input_schema: getJSONBSchemaAsJSONSchema(
+  //                 "",
+  //                 "",
+  //                 PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][actionName]
+  //                   .schema,
+  //               ),
+  //               description:
+  //                 PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][actionName]
+  //                   .description,
+  //               //@ts-ignore
+  //               auto_approve: Boolean(dbAccess.auto_approve),
+  //             };
+  //           }
+  //         }
+
+  //         return a;
+  //       },
+  //       {} as Record<string, MCPToolSchemaWithApproveInfo>,
+  //     )
+  //   : undefined;
+  // const dbTools = [
+  //   ...Object.values(tableTools ?? {}),
+  //   (
+  //     dbAccess?.type === "Run readonly SQL" ||
+  //     dbAccess?.type === "Run commited SQL"
+  //   ) ?
+  //     ({
+  //       ...executeSQLToolWithRollback,
+  //       tool_name: "execute_sql_with_rollback",
+  //       auto_approve: Boolean(dbAccess.auto_approve),
+  //       type: "prostgles-db",
+  //     } satisfies MCPToolSchemaWithApproveInfo)
+  //   : undefined,
+  //   dbAccess?.type === "Run commited SQL" ?
+  //     ({
+  //       ...executeSQLToolWithCommit,
+  //       tool_name: "execute_sql_with_commit",
+  //       auto_approve: Boolean(dbAccess.auto_approve),
+  //       type: "prostgles-db",
+  //     } satisfies MCPToolSchemaWithApproveInfo)
+  //   : undefined,
+  // ].filter(isDefined);
+
+  const dbTools: MCPToolSchemaWithApproveInfo[] = getProstglesDBTools(chat).map(
+    (tool) => {
+      return {
+        ...tool,
+        input_schema: getJSONBSchemaAsJSONSchema("", "", tool.schema),
+      };
+    },
+  );
 
   const { serverSideFuncTools } = await getPublishedMethodsTools(dbs, {
     connection_id: connectionId,
@@ -137,7 +194,7 @@ export const getLLMTools = async ({
         };
       })
       .filter(isDefined),
-    dbTool,
+    ...dbTools,
     prompt_type === "dashboards" ?
       ({
         ...suggestDashboardsTool,

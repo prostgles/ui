@@ -28,6 +28,7 @@ export type AsJSON = {
       component: "JSONBSchema";
       jsonbSchema: JSONB.JSONBSchema<JSONB.FieldTypeObj>;
       noLabels: boolean;
+      opts: Exclude<SmartFormFieldProps["jsonbSchemaWithControls"], boolean>;
     }
 );
 
@@ -60,14 +61,16 @@ export const useSmartFormFieldAsJSON = ({
 
     if (column.udt_name.startsWith("json") && tableName) {
       if (jsonbSchemaWithControls && column.jsonbSchema) {
-        const noLabels =
-          isObject(jsonbSchemaWithControls) &&
-          jsonbSchemaWithControls.variant === "no-labels";
+        const opts =
+          isObject(jsonbSchemaWithControls) ?
+            jsonbSchemaWithControls
+          : undefined;
 
         return {
           component: "JSONBSchema",
           jsonbSchema: column.jsonbSchema,
-          noLabels,
+          noLabels: opts?.variant === "no-labels",
+          opts,
         };
       }
       const jsonSchema =

@@ -1,5 +1,7 @@
 import type { JSONB } from "prostgles-types";
 import { getKeys, isObject } from "prostgles-types";
+import { getEntries } from "../../../../commonTypes/utils";
+import { getFieldObj } from "./JSONBSchemaOneOfType";
 
 export const getSchemaFromField = (s: JSONB.FieldType): JSONB.FieldTypeObj =>
   typeof s === "string" ? { type: s } : s;
@@ -18,7 +20,11 @@ export const getJSONBError = (
   return undefined;
 };
 
-export const isCompleteJSONB = (v: any, s: JSONB.JSONBSchema | JSONB.OneOf) => {
+export const isCompleteJSONB = (
+  v: any,
+  ss: JSONB.JSONBSchema | JSONB.OneOf | JSONB.FieldType,
+) => {
+  const s = typeof ss === "string" ? getSchemaFromField(ss) : ss;
   if ((s as JSONB.BasicType).optional && v === undefined) {
     return true;
   }
@@ -36,13 +42,12 @@ export const isCompleteJSONB = (v: any, s: JSONB.JSONBSchema | JSONB.OneOf) => {
     return true;
   }
   if (isObject(s.type) && isObject(v)) {
-    return getKeys(s.type).every((propName) =>
-      isCompleteJSONB(v[propName]!, s.type![propName]),
+    return getEntries(s.type).every(([propName, propSchema]) =>
+      isCompleteJSONB(v[propName]!, propSchema),
     );
   }
   if (s.arrayOf || s.arrayOfType) {
-    const arrSchema =
-      s.arrayOf ? getSchemaFromField(s.arrayOf) : { ...s, type: s.arrayOfType };
+    const arrSchema = s.arrayOf ? s.arrayOf : { type: s.arrayOfType };
     return (
       Array.isArray(v) && v.every((elem) => isCompleteJSONB(elem, arrSchema))
     );

@@ -56,7 +56,11 @@ export const setupLLM = async (dbs: DBS) => {
         prompt: [
           firstLine,
           "Assist the user with any queries they might have in their current task mode.",
-          "They expect you to look at the schema and the tools available to them and return a list of tools and configurations they should use to accomplish.",
+          "They expect you to look at the schema and the tools available to them and return a list of tools are best suited for accomplishing their task.",
+          "Do not assume anything and ask the user for more information until you're 90% confident of what tools they need.",
+          "When suggesting a prompt make sure you add a ${today} placeholder that will be replaced with today's date.",
+          "",
+          "",
           "Below is the database schema they're currently working with:",
           "",
           LLM_PROMPT_VARIABLES.SCHEMA,
@@ -348,7 +352,7 @@ export const setupLLM = async (dbs: DBS) => {
           {
             name: "claude-3-5-sonnet-20241022",
             pricing_info: { input: 3, output: 15 },
-            chat_suitability_rank: "1",
+            chat_suitability_rank: "2",
           },
         ],
       },

@@ -67,9 +67,10 @@ export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
                 lookup: {
                   title: "Table column",
                   lookup: {
-                    type: "data-def",
-                    column: "",
-                    table: "",
+                    type: "schema",
+                    // column: "",
+                    // table: "",
+                    object: "column",
                   },
                 },
               },

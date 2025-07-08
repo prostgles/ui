@@ -1,5 +1,5 @@
 import { getJSONBObjectSchemaValidationError } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
-import { getSerialisableError, isEqual, tryCatchV2 } from "prostgles-types";
+import { getSerialisableError, tryCatchV2 } from "prostgles-types";
 import type { DBS } from "..";
 import type { McpToolCallResponse } from "../../../commonTypes/mcp";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";

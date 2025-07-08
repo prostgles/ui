@@ -35,6 +35,7 @@ export const useLLMToolsApprover = ({
   });
 
   usePromise(async () => {
+    if (!allowedTools) return;
     const lastMessage = messages.at(-1);
     if (!isAssistantMessageRequestingToolUse(lastMessage)) return;
     if (reachedMaximumNumberOfConsecutiveToolRequests(messages, 4)) return;

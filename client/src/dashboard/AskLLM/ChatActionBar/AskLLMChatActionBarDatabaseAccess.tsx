@@ -25,7 +25,14 @@ export const AskLLMChatActionBarDatabaseAccess = (
     });
 
   const allowedFunctions = llm_chats_allowed_functions?.length;
-
+  const dataPermission = activeChat.db_data_permissions;
+  const tablePermissionInfo =
+    dataPermission?.type === "Custom" ?
+      dataPermission.tables.map(
+        (t) =>
+          `${t.tableName}: ${["select", "update", "insert", "delete"].filter((v) => t[v])}`,
+      )
+    : undefined;
   return (
     <PopupMenu
       data-command="LLMChatOptions.DatabaseAccess"
@@ -39,18 +46,12 @@ export const AskLLMChatActionBarDatabaseAccess = (
           title={[
             `Database access for this chat:\n`,
             `Schema read access: ${activeChat.db_schema_permissions?.type}`,
-            `Data: ${activeChat.db_data_permissions?.type} ${
-              activeChat.db_data_permissions?.type === "Run SQL" ?
-                activeChat.db_data_permissions.commit ?
-                  " (with commit)"
-                : "(without commit)"
-              : "None"
-            }`,
+            `Data: \n ${tablePermissionInfo || dataPermission?.type || "None"}`,
             allowedFunctions ? `Allowed Functions: ${allowedFunctions}` : "",
           ].join("\n")}
           color={
             (
-              activeChat.db_data_permissions?.type === "Run SQL" ||
+              (dataPermission && dataPermission.type !== "None") ||
               llm_chats_allowed_functions?.length
             ) ?
               "action"
@@ -78,7 +79,10 @@ export const AskLLMChatActionBarDatabaseAccess = (
         }}
         contentClassname="p-1"
         // contentClassname="p-0 pb-1"
-        jsonbSchemaWithControls={{ variant: "no-labels" }}
+        jsonbSchemaWithControls={{
+          variant: "no-labels",
+          lookupTables: props.prgl.tables,
+        }}
       />
       {/* <SmartCardList<DBSSchema["published_methods"]>
         db={dbs as DBHandlerClient}

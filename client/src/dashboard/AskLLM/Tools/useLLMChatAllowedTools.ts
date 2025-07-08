@@ -1,11 +1,11 @@
-import { useMemoDeep } from "prostgles-client/dist/react-hooks";
 import { useMemo } from "react";
 
 import {
   getMCPFullToolName,
+  getProstglesDBTools,
   getProstglesMCPFullToolName,
   type ProstglesMcpTool,
-} from "../../../../../commonTypes/mcp";
+} from "../../../../../commonTypes/prostglesMcp";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import { isDefined } from "../../../utils";
 import type { AskLLMToolsProps } from "./AskLLMToolApprover";
@@ -31,10 +31,6 @@ export const useLLMChatAllowedTools = ({
   prompt,
 }: Pick<AskLLMToolsProps, "dbs" | "activeChat" | "prompt">) => {
   const activeChatId = activeChat.id;
-  const chatDBPermissions = useMemoDeep(
-    () => activeChat.db_data_permissions,
-    [activeChat.db_data_permissions],
-  );
 
   const { data: mcp_server_tools } = dbs.mcp_server_tools.useSubscribe();
   const { data: published_methods } = dbs.published_methods.useSubscribe();
@@ -79,10 +75,16 @@ export const useLLMChatAllowedTools = ({
       ),
     [mcp_server_tools],
   );
-
-  const dbTaskPermission =
-    chatDBPermissions?.type === "Run SQL" ? chatDBPermissions : undefined;
-
+  const dbTools = useMemo(
+    () =>
+      getProstglesDBTools(activeChat).map(({ schema, ...tool }) => {
+        return {
+          ...tool,
+          id: -1,
+        };
+      }),
+    [activeChat],
+  );
   const allowedTools = useMemo(() => {
     if (
       !llm_chats_allowed_mcp_tools ||
@@ -90,7 +92,7 @@ export const useLLMChatAllowedTools = ({
       !allMCPTools ||
       !allFunctions
     )
-      return [];
+      return;
     const allowedMCPTools = allMCPTools
       .map((tool) => {
         const allowedInfo = llm_chats_allowed_mcp_tools.find(
@@ -120,22 +122,13 @@ export const useLLMChatAllowedTools = ({
     const tools: ApproveRequest[] = [
       ...allowedMCPTools,
       ...allowedFunctions,
-      dbTaskPermission &&
-        ({
-          // ...executeSQLTool,
-          name: getProstglesMCPFullToolName("prostgles-db", "execute_sql"),
-          description: "Run SQL query on the current database",
-          tool_name: "execute_sql",
-          type: "prostgles-db",
-          auto_approve: !!dbTaskPermission.auto_approve,
-          id: -1,
-        } satisfies ApproveRequest),
+      ...dbTools,
 
       prompt.options?.prompt_type === "tasks" ?
         ({
-          tool_name: "suggest_tools_and_prompt",
           auto_approve: true,
           type: "prostgles-ui",
+          tool_name: "suggest_tools_and_prompt",
           name: getProstglesMCPFullToolName(
             "prostgles-ui",
             "suggest_tools_and_prompt",
@@ -163,7 +156,7 @@ export const useLLMChatAllowedTools = ({
   }, [
     allFunctions,
     allMCPTools,
-    dbTaskPermission,
+    dbTools,
     llm_chats_allowed_functions,
     llm_chats_allowed_mcp_tools,
     prompt.options?.prompt_type,

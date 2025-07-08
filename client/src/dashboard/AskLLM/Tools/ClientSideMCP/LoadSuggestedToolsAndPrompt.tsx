@@ -1,4 +1,7 @@
 import {
+  mdiDatabase,
+  mdiDatabaseEdit,
+  mdiDatabaseSearch,
   mdiLanguageTypescript,
   mdiOpenInNew,
   mdiScript,
@@ -9,7 +12,7 @@ import React, { useState } from "react";
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../../../commonTypes/mcp";
+} from "../../../../../../commonTypes/prostglesMcp";
 import { type DBSSchema } from "../../../../../../commonTypes/publishUtils";
 import { sliceText } from "../../../../../../commonTypes/utils";
 import { useAlert } from "../../../../components/AlertProvider";
@@ -36,13 +39,14 @@ export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
 
   const { addAlert } = useAlert();
   const [expandPrompt, setExpandPrompt] = useState(false);
+  const dbAccess = data.suggested_database_access;
   return (
     <FlexCol>
       <Chip
+        title={"Prompt"}
         color="blue"
         className="pointer"
         leftIcon={{ path: mdiScript }}
-        title={data.suggested_prompt}
         onClick={() => {
           setExpandPrompt((prev) => !prev);
         }}
@@ -57,10 +61,32 @@ export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
           content={data.suggested_prompt}
         />
       )}
+
+      {dbAccess !== "none" && (
+        <Chip
+          title="Database access"
+          leftIcon={{
+            path:
+              dbAccess === "execute_sql_commit" ? mdiDatabaseEdit : (
+                mdiDatabaseSearch
+              ),
+          }}
+          color="blue"
+        >
+          {dbAccess === "execute_sql_commit" ?
+            "Execute SQL with rollback"
+          : "Execute SQL with commit"}
+        </Chip>
+      )}
       <FlexRowWrap>
         {data.suggested_mcp_tool_names.map((toolName) => {
           return (
-            <Chip key={toolName} color="blue" leftIcon={{ path: mdiTools }}>
+            <Chip
+              key={toolName}
+              title="MCP Tool"
+              color="blue"
+              leftIcon={{ path: mdiTools }}
+            >
               {toolName}
             </Chip>
           );
@@ -70,6 +96,7 @@ export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
             <Chip
               key={funcName}
               color="blue"
+              title="Database Function"
               leftIcon={{ path: mdiLanguageTypescript }}
             >
               {funcName}

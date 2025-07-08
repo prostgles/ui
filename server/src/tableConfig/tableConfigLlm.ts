@@ -4,6 +4,22 @@ import type {
 } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { JSONB } from "prostgles-types";
 
+const commonrunSQLOpts = {
+  query_timeout: {
+    type: "integer",
+    title: "Query timeout (s)",
+    optional: true,
+    description: "Timeout in seconds for the queries.",
+  },
+  auto_approve: {
+    type: "boolean",
+    title: "Auto approve",
+    optional: true,
+    description:
+      "If true then the assistant can run queries without asking for approval",
+  },
+} satisfies JSONB.ObjectType["type"];
+
 const toolUseContent: JSONB.FieldType = {
   oneOf: [
     "string",
@@ -317,47 +333,57 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
             {
               type: {
                 title: "Type",
-                enum: ["Run SQL"],
+                enum: ["Run readonly SQL"],
                 description:
-                  "Can run SQL queries (if the current user is allowed)",
+                  "Can run readonly SQL queries (if the current user is allowed)",
               },
-              commit: {
-                type: "boolean",
-                title: "Allow commiting",
-                optional: true,
+              ...commonrunSQLOpts,
+            },
+            {
+              type: {
+                title: "Type",
+                enum: ["Run commited SQL"],
                 description:
-                  "Allows commiting changes to the database. By default the queries are rolled-back. Use with caution",
+                  "Can run SQL queries that will be commited (if the current user is allowed). Use with caution",
               },
-              query_timeout: {
-                type: "integer",
-                title: "Query timeout (s)",
-                optional: true,
-                description: "Timeout in seconds for the queries.",
-              },
-              auto_approve: {
-                type: "boolean",
-                title: "Auto approve",
-                optional: true,
+              ...commonrunSQLOpts,
+            },
+            {
+              type: {
+                title: "Type",
+                enum: ["Custom"],
                 description:
-                  "If true then the assistant can run queries without asking for approval",
+                  "Can only access specific tables on behalf of the user",
+              },
+              auto_approve: commonrunSQLOpts.auto_approve,
+              tables: {
+                title: "Tables",
+                description: "Tables the assistant can access",
+                arrayOfType: {
+                  tableName: {
+                    type: "Lookup[]",
+                    lookup: {
+                      type: "schema",
+                      object: "table",
+                    },
+                  },
+                  select: { type: "boolean", optional: true },
+                  update: { type: "boolean", optional: true },
+                  insert: { type: "boolean", optional: true },
+                  delete: { type: "boolean", optional: true },
+                  columns: {
+                    optional: true,
+                    type: "Lookup[]",
+                    lookup: {
+                      type: "schema",
+                      object: "column",
+                    },
+                    description:
+                      "Columns the assistant can access in the table",
+                  },
+                },
               },
             },
-            // {
-            //   type: {
-            //     title: "Type",
-            //     enum: ["Custom"],
-            //     description: "Can only access specific tables",
-            //   },
-            //   tables: {
-            //     title: "Tables",
-            //     description: "Tables the assistant can access",
-            //     type: "Lookup[]",
-            //     lookup: {
-            //       type: "schema",
-            //       object: "column",
-            //     },
-            //   },
-            // },
           ],
         },
       },

@@ -308,12 +308,14 @@ export type DBGeneratedSchema = {
       db_data_permissions?: 
        | null
        |  {  type: 'None'; }
-       |  {  type: 'Run SQL';  commit?: boolean;  query_timeout?: number;  auto_approve?: boolean; }
+       |  {  type: 'Run readonly SQL';  query_timeout?: number;  auto_approve?: boolean; }
+       |  {  type: 'Run commited SQL';  query_timeout?: number;  auto_approve?: boolean; }
+       |  {  type: 'Custom';  auto_approve?: boolean;  tables: (  {  tableName: string;  select?: boolean;  update?: boolean;  insert?: boolean;  delete?: boolean;  columns?: { "table": string; "column": string; }; } )[]; }
       db_schema_permissions?: 
        | null
        |  {  type: 'None'; }
        |  {  type: 'Full'; }
-       |  {  type: 'Custom';  tables: Lookup[]; }
+       |  {  type: 'Custom';  tables: string; }
       disabled_message?: null | string;
       disabled_until?: null | string;
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
@@ -605,7 +607,7 @@ export type DBGeneratedSchema = {
     columns: {
       arguments?:  ( 
  |  {  name: string;  type: 'any' | 'string' | 'number' | 'boolean' | 'Date' | 'time' | 'timestamp' | 'string[]' | 'number[]' | 'boolean[]' | 'Date[]' | 'time[]' | 'timestamp[]';  defaultValue?: string;  optional?: boolean;  allowedValues?: string[]; }
- |  {  name: string;  type: 'Lookup' | 'Lookup[]';  defaultValue?: any;  optional?: boolean;  lookup:  {    table: string;   column: string;   filter?: Record<string, any>;   isArray?: boolean;   searchColumns?: string[];   isFullRow?: {  displayColumns?: string[]; };   showInRowCard?: Record<string, any>;  }; }
+ |  {  name: string;  type: 'Lookup' | 'Lookup[]';  defaultValue?: any;  optional?: boolean;  lookup: { "table": string; "column": string; }; }
  |  {  name: string;  type: 'JsonbSchema';  defaultValue?: any;  optional?: boolean;  schema: |  {  type: 'boolean' | 'number' | 'integer' | 'string' | 'Date' | 'time' | 'timestamp' | 'any' | 'boolean[]' | 'number[]' | 'integer[]' | 'string[]' | 'Date[]' | 'time[]' | 'timestamp[]' | 'any[]';  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; } |  {  type: 'object' | 'object[]';  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any;  properties: Record<string,  {  type: 'boolean' | 'number' | 'integer' | 'string' | 'Date' | 'time' | 'timestamp' | 'any' | 'boolean[]' | 'number[]' | 'integer[]' | 'string[]' | 'Date[]' | 'time[]' | 'timestamp[]' | 'any[]';  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; }>; }; } )[]
       connection_id?: null | string;
       description?: string;

@@ -28,6 +28,7 @@ export const JSONBSchemaLookup = ({
 }: P) => {
   let defaultValue: string | undefined = undefined;
   const { lookup } = schema;
+  // const tables = oProps.
 
   if (lookup.type === "schema" || lookup.type === "data-def") {
     const { filter } = lookup;

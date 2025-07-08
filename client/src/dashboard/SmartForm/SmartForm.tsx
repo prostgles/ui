@@ -83,6 +83,7 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
     | boolean
     | {
         variant?: "no-labels";
+        lookupTables?: DBSchemaTablesWJoins;
       };
 
   /**

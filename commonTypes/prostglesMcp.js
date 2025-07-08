@@ -1,0 +1,181 @@
+import { isDefined } from "./filterUtils";
+import { getEntries } from "./utils";
+const runSQLSchema = {
+    type: {
+        sql: {
+            type: "string",
+            description: "SQL query to execute",
+        },
+    },
+};
+export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
+    "prostgles-db-methods": { [""]: "" },
+    "prostgles-db": {
+        execute_sql_with_rollback: {
+            description: "Executes a SQL query on the connected database in readonly mode (no data can be changed, the transaction is rolled back at the end).",
+            schema: runSQLSchema,
+        },
+        execute_sql_with_commit: {
+            description: "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction commited at the end).",
+            schema: runSQLSchema,
+        },
+        select: {
+            description: "Selects rows from a table.",
+            schema: {
+                type: {
+                    tableName: {
+                        type: "string",
+                        description: "Table to select from",
+                    },
+                    filter: {
+                        type: "any",
+                        description: "Filter to select rows. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }",
+                    },
+                },
+            },
+        },
+        insert: {
+            description: "Inserts rows into a table.",
+            schema: {
+                type: {
+                    tableName: {
+                        type: "string",
+                        description: "Table to insert into",
+                    },
+                    data: {
+                        description: "Data to insert into the table. Must satisfy the table schema.",
+                        arrayOf: "any",
+                    },
+                },
+            },
+        },
+        update: {
+            description: "Updates rows in a table.",
+            schema: {
+                type: {
+                    tableName: {
+                        type: "string",
+                        description: "Table to insert into",
+                    },
+                    filter: {
+                        type: "any",
+                        description: "Filter to select rows to update. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }",
+                    },
+                    data: {
+                        description: "Data to insert into the table. Must satisfy the table schema.",
+                        record: {},
+                    },
+                },
+            },
+        },
+        delete: {
+            description: "Deletes rows from a table.",
+            schema: {
+                type: {
+                    tableName: {
+                        type: "string",
+                        description: "Table to delete from",
+                    },
+                    filter: {
+                        type: "any",
+                        description: "Filter to select rows to delete. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }",
+                    },
+                },
+            },
+        },
+    },
+    "prostgles-ui": {
+        suggest_tools_and_prompt: {
+            schema: {
+                type: {
+                    suggested_mcp_tool_names: {
+                        description: "List of MCP tools that can be used to complete the task",
+                        arrayOf: "string",
+                    },
+                    suggested_database_tool_names: {
+                        description: "List of database tools that can be used to complete the task",
+                        arrayOf: "string",
+                    },
+                    suggested_prompt: {
+                        description: "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task",
+                        type: "string",
+                    },
+                    suggested_database_access: {
+                        description: "If access to the database is needed, an access type can be specified",
+                        enum: ["none", "execute_sql_rollback", "execute_sql_commit"],
+                    },
+                },
+            },
+        },
+        suggest_dashboards: {
+            schema: {
+                type: {
+                    prostglesWorkspaces: {
+                        description: "Workspace to create. Must satisfy the typescript WorkspaceInsertModel type",
+                        arrayOf: "any",
+                    },
+                },
+            },
+        },
+    },
+};
+const MCP_TOOL_NAME_SEPARATOR = "--";
+export const getMCPFullToolName = (server_name, name) => {
+    return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}`;
+};
+export const getProstglesMCPFullToolName = (server_name, name) => getMCPFullToolName(server_name, name);
+export const getMCPToolNameParts = (fullName) => {
+    const [serverName, toolName] = fullName.split(MCP_TOOL_NAME_SEPARATOR);
+    if (serverName && toolName) {
+        return { serverName, toolName };
+    }
+};
+export const getProstglesDBTools = (chat) => {
+    const dbAccess = chat.db_data_permissions;
+    if (!dbAccess || dbAccess.type === "None") {
+        return [];
+    }
+    if ((dbAccess === null || dbAccess === void 0 ? void 0 : dbAccess.type) === "Custom") {
+        const tableTools = dbAccess.tables.reduce((a, tableRule) => {
+            const actions = ["select", "update", "insert", "delete"];
+            for (const actionName of actions) {
+                if (tableRule[actionName] && !a[actionName]) {
+                    a[actionName] = {
+                        name: getProstglesMCPFullToolName("prostgles-db", actionName),
+                        type: "prostgles-db",
+                        tool_name: actionName,
+                        description: PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][actionName]
+                            .description,
+                        auto_approve: Boolean(dbAccess.auto_approve),
+                        schema: PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][actionName]
+                            .schema,
+                    };
+                }
+            }
+            return a;
+        }, {});
+        return Object.values(tableTools);
+    }
+    const sqlTools = getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"])
+        .map(([toolName, { description, schema }]) => {
+        if (toolName === "execute_sql_with_rollback" ||
+            toolName === "execute_sql_with_commit") {
+            const tool = {
+                name: getProstglesMCPFullToolName("prostgles-db", toolName),
+                type: "prostgles-db",
+                tool_name: toolName,
+                description,
+                auto_approve: Boolean(dbAccess.auto_approve),
+                schema,
+            };
+            const isAllowed = dbAccess.type === "Run commited SQL" ||
+                (dbAccess.type === "Run readonly SQL" &&
+                    toolName === "execute_sql_with_rollback");
+            if (isAllowed) {
+                return tool;
+            }
+        }
+    })
+        .filter(isDefined);
+    return sqlTools;
+};

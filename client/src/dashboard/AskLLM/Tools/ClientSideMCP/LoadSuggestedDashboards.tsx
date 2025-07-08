@@ -1,7 +1,7 @@
 import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";
 import type { JSONB } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../../../../commonTypes/mcp";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../../../../commonTypes/prostglesMcp";
 import {
   isObject,
   type DBSSchema,

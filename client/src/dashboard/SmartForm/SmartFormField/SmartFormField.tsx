@@ -238,7 +238,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
               noLabels={renderAsJSON.noLabels}
               db={db}
               schema={renderAsJSON.jsonbSchema}
-              tables={tables}
+              tables={renderAsJSON.opts?.lookupTables ?? tables}
               value={value}
               onChange={onCheckAndChange}
             />

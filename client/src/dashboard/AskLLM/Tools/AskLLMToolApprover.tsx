@@ -64,19 +64,31 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                 );
               } else if (
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                req.type === "prostgles-db" &&
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                req.tool_name === "execute_sql"
+                req.type === "prostgles-db"
               ) {
                 await dbs.llm_chats.update(
                   {
                     id: activeChatId,
                   },
                   {
-                    db_data_permissions: {
-                      type: "Run SQL",
-                      auto_approve,
-                    },
+                    db_data_permissions:
+                      req.tool_name === "execute_sql_with_commit" ?
+                        {
+                          type: "Run commited SQL",
+                          auto_approve,
+                        }
+                      : req.tool_name === "execute_sql_with_rollback" ?
+                        {
+                          type: "Run readonly SQL",
+                          auto_approve,
+                        }
+                      : {
+                          ...(activeChat.db_data_permissions as Extract<
+                            typeof activeChat.db_data_permissions,
+                            { type: "Custom" }
+                          >),
+                          auto_approve,
+                        },
                   },
                 );
               } else {
@@ -93,10 +105,11 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       });
     },
     [
-      activeChatId,
       dbs.llm_chats_allowed_mcp_tools,
       dbs.llm_chats_allowed_functions,
       dbs.llm_chats,
+      activeChatId,
+      activeChat,
     ],
   );
 

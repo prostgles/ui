@@ -1,11 +1,16 @@
 import { getJSONBObjectSchemaValidationError } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
-import { getSerialisableError, isDefined } from "prostgles-types";
+import {
+  getSerialisableError,
+  isDefined,
+  type JSONB,
+  type TableHandler,
+} from "prostgles-types";
 import { connMgr } from "../../..";
 import { filterArr } from "../../../../../commonTypes/llmUtils";
 import {
   getMCPToolNameParts,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../../commonTypes/mcp";
+} from "../../../../../commonTypes/prostglesMcp";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
@@ -172,60 +177,185 @@ export const runApprovedTools = async (
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (tool.type !== "prostgles-db" || tool.tool_name !== "execute_sql") {
+      if (tool.type !== "prostgles-db") {
         return asResponse(
           `Tool use request for "${toolUseRequest.name}" but tool name is invalid`,
           true,
         );
       }
 
+      const chatDBPermissions = chat.db_data_permissions;
       const connection = connMgr.getConnection(args.connectionId);
+
       const { clientDb } = await connection.prgl.getClientDBHandlers(
         args.clientReq,
       );
-      const validatedInput = getJSONBObjectSchemaValidationError(
-        PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["execute_sql"].schema
-          .type,
-        toolUseRequest.input,
-        "",
-      );
+
+      const toolSchema =
+        tool.tool_name === "execute_sql_with_commit" ?
+          PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][
+            "execute_sql_with_commit"
+          ].schema
+        : tool.tool_name === "execute_sql_with_rollback" ?
+          PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][
+            "execute_sql_with_rollback"
+          ].schema
+        : tool.tool_name === "select" ?
+          PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["select"].schema
+        : tool.tool_name === "delete" ?
+          PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["delete"].schema
+        : tool.tool_name === "insert" ?
+          PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["insert"].schema
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        : tool.tool_name === "update" ?
+          PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["update"].schema
+        : undefined;
+
+      if (!toolSchema) {
+        return asResponse(
+          `toolSchema missing for "${toolUseRequest.name}" tool use request`,
+          true,
+        );
+      }
 
       const { content, is_error } = await parseToolResultToMessage(async () => {
+        const validatedInput = getJSONBObjectSchemaValidationError(
+          toolSchema.type,
+          toolUseRequest.input,
+          "",
+        );
         if (validatedInput.error !== undefined) {
           throw new Error(
             `Tool use request for "${toolUseRequest.name}" but input is invalid: ${validatedInput.error}`,
           );
         }
-        if (connection.con.is_state_db) {
-          throw new Error(
-            "Executing SQL on Prostgles UI state database is not allowed for security reasons",
+        const { data: validatedData } = validatedInput;
+
+        if (
+          tool.tool_name === "execute_sql_with_commit" ||
+          tool.tool_name === "execute_sql_with_rollback"
+        ) {
+          const data = validatedData as unknown as JSONB.GetObjectType<
+            | (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"]["execute_sql_with_commit"]["schema"]["type"]
+            // eslint-disable-next-line @typescript-eslint/no-duplicate-type-constituents
+            | (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"]["execute_sql_with_rollback"]["schema"]["type"]
+          >;
+          if (connection.con.is_state_db) {
+            throw new Error(
+              "Executing SQL on Prostgles UI state database is not allowed for security reasons",
+            );
+          }
+
+          if (
+            chatDBPermissions?.type !== "Run commited SQL" &&
+            chatDBPermissions?.type !== "Run readonly SQL"
+          ) {
+            throw new Error("chatDBPermissions is not defined");
+          }
+          const sql = clientDb.sql;
+          if (!(sql as unknown))
+            throw new Error("Executing SQL not allowed to this user");
+          const query = data.sql;
+          if (typeof query !== "string") {
+            throw new Error("input.sql must be a string");
+          }
+
+          const { query_timeout = 0 } = chatDBPermissions;
+          const finalQuery =
+            query_timeout && Number.isInteger(query_timeout) ?
+              [
+                `SET LOCAL statement_timeout to '${query_timeout}s'`,
+                query,
+              ].join(";\n")
+            : query;
+          const commit = chatDBPermissions.type === "Run commited SQL";
+          const { rows } = await sql(
+            finalQuery,
+            {},
+            { returnType: commit ? "rows" : "default-with-rollback" },
           );
+          return JSON.stringify(rows);
         }
-        const { data } = validatedInput;
-        const sql = clientDb.sql;
-        if (!(sql as unknown))
-          throw new Error("Executing SQL not allowed to this user");
-        const query = data.sql;
-        if (typeof query !== "string") {
-          throw new Error("input.sql must be a string");
-        }
-        const chatDBPermissions = chat.db_data_permissions;
-        if (chatDBPermissions?.type !== "Run SQL") {
+
+        if (chatDBPermissions?.type !== "Custom") {
           throw new Error("chatDBPermissions is not defined");
         }
-        const { query_timeout = 0, commit = false } = chatDBPermissions;
-        const finalQuery =
-          query_timeout && Number.isInteger(query_timeout) ?
-            [`SET LOCAL statement_timeout to '${query_timeout}s'`, query].join(
-              ";\n",
-            )
-          : query;
-        const { rows } = await sql(
-          finalQuery,
-          {},
-          { returnType: commit ? "rows" : "default-with-rollback" },
+
+        const getTableHandler = (
+          tableName: string,
+          action: "select" | "update" | "delete" | "insert",
+        ) => {
+          const tablePermissions = chatDBPermissions.tables.find(
+            (t) => t.tableName === tableName,
+          );
+          if (!tablePermissions?.[action]) {
+            throw new Error(
+              `User does not have permission to ${action} from table "${tableName}"`,
+            );
+          }
+
+          const tableHandler = clientDb[tableName] as TableHandler | undefined;
+          if (!tableHandler) {
+            throw new Error(
+              `Table "${tableName}" is invalid or not allowed to the user`,
+            );
+          }
+
+          return tableHandler;
+        };
+
+        if (tool.tool_name === "delete") {
+          const data = validatedData as unknown as JSONB.GetObjectType<
+            (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"]["delete"]["schema"]["type"]
+          >;
+          const result = await getTableHandler(data.tableName, "delete").delete(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            data.filter,
+            { returning: "*" },
+          );
+
+          return JSON.stringify(`${result?.length ?? 0} rows deleted`);
+        }
+        if (tool.tool_name === "insert") {
+          const data = validatedData as unknown as JSONB.GetObjectType<
+            (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"]["insert"]["schema"]["type"]
+          >;
+          const result = await getTableHandler(data.tableName, "insert").insert(
+            data.data,
+            { returning: "*" },
+          );
+
+          return JSON.stringify(`${result.length} rows inserted`);
+        }
+
+        if (tool.tool_name === "select") {
+          const data = validatedData as unknown as JSONB.GetObjectType<
+            (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"]["select"]["schema"]["type"]
+          >;
+          const result = await getTableHandler(data.tableName, "select").find(
+            data.filter,
+          );
+
+          return JSON.stringify(result);
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (tool.tool_name !== "update") {
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+          throw new Error(`Unexpected tool name: ${tool.tool_name}`);
+        }
+
+        const data = validatedData as unknown as JSONB.GetObjectType<
+          (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"]["update"]["schema"]["type"]
+        >;
+        const result = await getTableHandler(data.tableName, "update").update(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          data.filter,
+          data.data,
+          { returning: "*" },
         );
-        return JSON.stringify(rows);
+
+        return JSON.stringify(`${result?.length ?? 0} rows updated`);
       });
       return asResponse(content, is_error);
     }),

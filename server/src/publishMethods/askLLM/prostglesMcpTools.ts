@@ -3,16 +3,34 @@ import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import {
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../commonTypes/mcp";
+} from "../../../../commonTypes/prostglesMcp";
 import { fixIndent } from "../../../../commonTypes/utils";
 
-export const executeSQLTool = {
-  name: getProstglesMCPFullToolName("prostgles-db", "execute_sql"),
-  description: "Executes a SQL query on the connected database.",
+export const executeSQLToolWithRollback = {
+  name: getProstglesMCPFullToolName(
+    "prostgles-db",
+    "execute_sql_with_rollback",
+  ),
+  description:
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["execute_sql_with_rollback"]
+      .description,
   input_schema: getJSONBSchemaAsJSONSchema(
     "",
     "",
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["execute_sql"].schema,
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["execute_sql_with_rollback"]
+      .schema,
+  ),
+};
+export const executeSQLToolWithCommit = {
+  name: getProstglesMCPFullToolName("prostgles-db", "execute_sql_with_commit"),
+  description:
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["execute_sql_with_commit"]
+      .description,
+  input_schema: getJSONBSchemaAsJSONSchema(
+    "",
+    "",
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]["execute_sql_with_commit"]
+      .schema,
   ),
 };
 
@@ -62,7 +80,7 @@ export const suggestDashboardsTool = {
 };
 
 export const PROSTGLES_MCP_TOOLS = [
-  executeSQLTool,
+  executeSQLToolWithRollback,
   suggestDashboardsTool,
   getAddTaskTools(),
 ] as const;

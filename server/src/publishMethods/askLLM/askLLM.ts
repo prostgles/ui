@@ -18,7 +18,7 @@ import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../commonTypes/mcp";
+} from "../../../../commonTypes/prostglesMcp";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
 export const getBestLLMChatModel = async (
@@ -215,7 +215,11 @@ export const askLLM = async (args: AskLLMArgs) => {
         getElectronConfig()?.isElectron ? "Prostgles Desktop" : "Prostgles UI",
       )
       .replace(LLM_PROMPT_VARIABLES.TODAY, new Date().toISOString())
-      .replace(LLM_PROMPT_VARIABLES.SCHEMA, schema)
+      .replace(
+        LLM_PROMPT_VARIABLES.SCHEMA,
+        schema ||
+          "Schema is empty: there are no tables or views in the database",
+      )
       .replace(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypes);
 
     const modelData = (await dbs.llm_models.findOne(
