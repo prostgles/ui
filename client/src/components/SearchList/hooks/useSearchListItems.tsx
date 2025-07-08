@@ -58,6 +58,9 @@ export const useSearchListItems = (
       ...match,
     };
   };
+
+  const sortDisabledLast = (a: ParsedListItem, b: ParsedListItem) =>
+    Number(!!a.disabledInfo) - Number(!!b.disabledInfo);
   const renderedItemsWithoutHeaders: ParsedListItem[] =
     onSearchItems ? searchItems
     : dontHighlight ? items
@@ -65,10 +68,12 @@ export const useSearchListItems = (
     : items
         .map(getFullItem)
         .filter((d, i) => d.rank !== Infinity)
-        .sort((a, b) =>
-          !searchTerm ? 0 : (
-            (a.rank ?? 0) - (b.rank ?? 0) || getLen(a.label) - getLen(b.label)
-          ),
+        .sort(
+          (a, b) =>
+            sortDisabledLast(a, b) ||
+            (!searchTerm ? 0 : (
+              (a.rank ?? 0) - (b.rank ?? 0) || getLen(a.label) - getLen(b.label)
+            )),
         )
         .slice(0, (searchTerm ? 2 : 1) * limit);
 

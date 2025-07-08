@@ -88,6 +88,7 @@ type ModelInfo = {
   description: string;
   context_length: number; // Maximum context window size in tokens
   architecture: {
+    modality: string; // Input modality (e.g., "text+image->text")
     input_modalities: string[]; // Supported input types: ["file", "image", "text"]
     output_modalities: string[]; // Supported output types: ["text"]
     tokenizer: string; // Tokenization method used

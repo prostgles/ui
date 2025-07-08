@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
@@ -47,6 +47,23 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
     {},
     { deps: [serverToConfigure] },
   );
+  useEffect(() => {
+    const canBeEnabledServers = mcpServersThatNeedEnabling?.filter(
+      (server) => !server.config_schema,
+    );
+    if (!canBeEnabledServers?.length) {
+      return;
+    }
+    void dbs.mcp_servers.update(
+      {
+        name: { $in: canBeEnabledServers.map((s) => s.name) },
+      },
+      { enabled: true },
+    );
+  }, [dbs.mcp_servers, mcpServersThatNeedEnabling]);
+  const mcpServersThatConfiguring = mcpServersThatNeedEnabling?.filter(
+    (server) => server.config_schema,
+  );
 
   const btnRef = React.useRef<HTMLButtonElement>(null);
 
@@ -61,7 +78,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
         }`}
         {...btnStyleProps}
         color={
-          mcpServersThatNeedEnabling?.length ? "danger"
+          mcpServersThatConfiguring?.length ? "danger"
           : allowedTools?.length ?
             "action"
           : undefined
@@ -71,7 +88,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
         disabledInfo={!dbsMethods.getMcpHostInfo ? "Must be admin" : undefined}
         children={allowedTools?.length || null}
       />
-      {!!mcpServersThatNeedEnabling?.length &&
+      {!!mcpServersThatConfiguring?.length &&
         !serverToConfigure &&
         btnRef.current && (
           <Popup
@@ -88,7 +105,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
               Some of the MCP servers allowed for this chat are not configured.
             </div>
             <ScrollFade className="flex-col gap-1 o-auto">
-              {mcpServersThatNeedEnabling.map((server) => (
+              {mcpServersThatConfiguring.map((server) => (
                 <FlexRow
                   key={server.name}
                   className="pl-1 pr-p5 py-p5 b b-color rounded"

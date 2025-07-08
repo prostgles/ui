@@ -1,4 +1,4 @@
-import { mdiDelete } from "@mdi/js";
+import { mdiBrain, mdiDelete } from "@mdi/js";
 import React, { useMemo } from "react";
 import {
   filterArr,
@@ -18,6 +18,10 @@ import { isDefined } from "../../../../utils";
 import { Counter } from "../../../W_SQL/W_SQL";
 import type { UseLLMChatProps } from "../useLLMChat";
 import { ToolUseChatMessage } from "./ToolUseChatMessage";
+import { ExpandSection } from "../../../../components/ExpandSection";
+import Expander from "../../../../components/Expander";
+import Btn from "../../../../components/Btn";
+import ErrorComponent from "../../../../components/ErrorComponent";
 
 type P = UseLLMChatProps & {
   activeChat: DBSSchema["llm_chats"] | undefined;
@@ -50,13 +54,36 @@ export const useLLMChatMessages = (props: P) => {
             const messageNode = messagesWithoutToolResponses.map((m, idx) => {
               if (m.type === "text" && "text" in m) {
                 return (
-                  <Marked
-                    key={`${id}-text-${idx}`}
-                    codeHeader={undefined}
-                    content={m.text}
-                    sqlHandler={sqlHandler}
-                    loadedSuggestions={loadedSuggestions}
-                  />
+                  <React.Fragment key={`${id}-${m.type}-${idx}`}>
+                    {m.reasoning && (
+                      <Expander
+                        getButton={() => (
+                          <Btn
+                            title="Reasoning"
+                            iconPath={mdiBrain}
+                            variant="faded"
+                          >
+                            Reasoning...
+                          </Btn>
+                        )}
+                      >
+                        <Marked
+                          key={`${id}-reasoning-${idx}`}
+                          codeHeader={undefined}
+                          content={m.reasoning}
+                          sqlHandler={sqlHandler}
+                          loadedSuggestions={loadedSuggestions}
+                        />
+                      </Expander>
+                    )}
+                    <Marked
+                      key={`${id}-text-${idx}`}
+                      codeHeader={undefined}
+                      content={m.text}
+                      sqlHandler={sqlHandler}
+                      loadedSuggestions={loadedSuggestions}
+                    />
+                  </React.Fragment>
                 );
               }
               if (m.type !== "tool_use") {
@@ -120,6 +147,10 @@ export const useLLMChatMessages = (props: P) => {
                         key: "allToBottom",
                         label: "Delete this and all following messages",
                       },
+                      // {
+                      //   key: "regenerate",
+                      //   label: "Delete and re-generate from this message",
+                      // },
                     ]}
                     btnProps={{
                       size: "micro",
@@ -159,8 +190,14 @@ export const useLLMChatMessages = (props: P) => {
                   {messageNode}
                   {isLoading && (
                     <>
-                      <Loading /> <Counter from={new Date(is_loading!)} />
+                      <Loading />
+                      <Counter from={new Date(is_loading!)} />
                     </>
+                  )}
+                  {meta?.stop_reason?.toLowerCase() === "max_tokens" && (
+                    <ErrorComponent
+                      error={`stop_reason: "max_tokens".\n\nThe response was cut off because it reached the maximum token limit`}
+                    />
                   )}
                 </FlexCol>
               ),

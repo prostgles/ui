@@ -11,6 +11,7 @@ export const AskLLMChatActionBar = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
+    llmMessages: DBSSchema["llm_messages"][];
   },
 ) => {
   return (

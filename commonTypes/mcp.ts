@@ -12,16 +12,65 @@ export type MCPServerInfo = Omit<
 };
 
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
-  "prostgles-db-methods": ["" as string],
-  "prostgles-db": ["execute_sql"],
-  "prostgles-ui": ["suggest_tools_and_prompt", "suggest_dashboards"],
+  "prostgles-db-methods": { ["" as string]: "" },
+  "prostgles-db": {
+    execute_sql: {
+      schema: {
+        type: {
+          sql: {
+            type: "string",
+            description: "SQL query to execute",
+          },
+        },
+      },
+    },
+  },
+  "prostgles-ui": {
+    suggest_tools_and_prompt: {
+      schema: {
+        type: {
+          suggested_mcp_tool_names: {
+            description:
+              "List of MCP tools that can be used to complete the task",
+            arrayOf: "string",
+          },
+          suggested_database_tool_names: {
+            description:
+              "List of database tools that can be used to complete the task",
+            arrayOf: "string",
+          },
+          suggested_prompt: {
+            description:
+              "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task",
+            type: "string",
+          },
+          suggested_database_access: {
+            description:
+              "If access to the database is needed, an access type can be specified",
+            enum: ["none", "execute_sql_rollback", "execute_sql_commit"],
+          },
+        },
+      },
+    },
+    suggest_dashboards: {
+      schema: {
+        type: {
+          prostglesWorkspaces: {
+            description:
+              "Workspace to create. Must satisfy the typescript WorkspaceInsertModel type",
+            arrayOf: "any",
+          },
+        },
+      },
+    },
+  },
 } as const;
 
 type ProstglesMcpTools = typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
 export type ProstglesMcpTool = {
   [K in keyof ProstglesMcpTools]: {
     type: K;
-    tool_name: ProstglesMcpTools[K][number];
+    tool_name: keyof ProstglesMcpTools[K];
   };
 }[keyof ProstglesMcpTools];
 
@@ -37,8 +86,8 @@ export const getMCPFullToolName = <
 };
 
 export const getProstglesMCPFullToolName = <
-  ServerName extends keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS,
-  Name extends (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)[ServerName][number],
+  ServerName extends keyof ProstglesMcpTools,
+  Name extends keyof ProstglesMcpTools[ServerName] & string,
 >(
   server_name: ServerName,
   name: Name,

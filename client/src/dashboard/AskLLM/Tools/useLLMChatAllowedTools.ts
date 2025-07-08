@@ -134,7 +134,7 @@ export const useLLMChatAllowedTools = ({
       prompt.options?.prompt_type === "tasks" ?
         ({
           tool_name: "suggest_tools_and_prompt",
-          auto_approve: false,
+          auto_approve: true,
           type: "prostgles-ui",
           name: getProstglesMCPFullToolName(
             "prostgles-ui",

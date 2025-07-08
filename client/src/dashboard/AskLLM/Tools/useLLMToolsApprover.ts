@@ -1,17 +1,14 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { useRef } from "react";
-import {
-  getLLMMessageToolUse,
-  type LLMMessage,
-} from "../../../../../commonTypes/llmUtils";
-import { getMCPToolNameParts } from "../../../../../commonTypes/mcp";
+import { getLLMMessageToolUse } from "../../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import { useAlert } from "../../../components/AlertProvider";
+import { isDefined } from "../../../utils";
 import type { AskLLMToolsProps } from "./AskLLMToolApprover";
 import {
   useLLMChatAllowedTools,
   type ApproveRequest,
 } from "./useLLMChatAllowedTools";
-import { isDefined } from "../../../utils";
 
 /**
  * https://docs.anthropic.com/en/docs/build-with-claude/tool-use
@@ -30,7 +27,7 @@ export const useLLMToolsApprover = ({
   ) => Promise<{ approved: boolean }>;
 }) => {
   const fetchingForMessageId = useRef<string>();
-
+  const { addAlert } = useAlert();
   const { allowedTools } = useLLMChatAllowedTools({
     activeChat,
     dbs,
@@ -47,53 +44,52 @@ export const useLLMToolsApprover = ({
     )
       return;
     const toolUseRequests = getLLMMessageToolUse(lastMessage);
-    fetchingForMessageId.current = lastMessage.id;
-    const toolApprovalReponses = await Promise.all(
-      toolUseRequests.map(async (toolUseRequest) => {
-        const sendError = (error: string) => {
-          return {
-            type: "tool_result",
-            tool_name: toolUseRequest.name,
-            tool_use_id: toolUseRequest.id,
-            is_error: true,
-            content: error,
-          } satisfies LLMMessage["message"][number];
-        };
-
+    const toolUseRequestsThatNeedApproval = toolUseRequests
+      .map((toolUseRequest) => {
         const matchedTool = allowedTools.find((tool) => {
           return toolUseRequest.name === tool.name;
         });
 
         if (!matchedTool) {
-          return sendError(`Tool ${toolUseRequest.name} was not found`);
+          addAlert(`Tool ${toolUseRequest.name} was not found`);
         }
-
-        const isAllowedWithoutApproval = matchedTool.auto_approve;
-        if (!isAllowedWithoutApproval) {
-          const nameParts = getMCPToolNameParts(toolUseRequest.name);
-          if (!nameParts) {
-            return sendError("Invalid tool name");
-          }
-
-          const { approved } = await requestApproval(
-            matchedTool,
-            toolUseRequest.input,
-          );
-
-          if (approved) {
-            return toolUseRequest;
-          } else {
-            return undefined;
-          }
+        if (!matchedTool || matchedTool.auto_approve) {
+          return;
         }
-      }),
+        return {
+          toolUseRequest,
+          matchedTool,
+        };
+      })
+      .filter(isDefined);
+    fetchingForMessageId.current = lastMessage.id;
+    const toolApprovalReponses = await Promise.all(
+      toolUseRequestsThatNeedApproval.map(
+        async ({ matchedTool, toolUseRequest }) => {
+          const isAllowedWithoutApproval = matchedTool.auto_approve;
+          if (!isAllowedWithoutApproval) {
+            const { approved } = await requestApproval(
+              matchedTool,
+              toolUseRequest.input,
+            );
+
+            if (approved) {
+              return toolUseRequest;
+            } else {
+              return undefined;
+            }
+          }
+        },
+      ),
     );
-    await sendQuery(toolApprovalReponses.filter(isDefined), true);
-  }, [messages, sendQuery, allowedTools, requestApproval]);
+    if (toolUseRequestsThatNeedApproval.length) {
+      await sendQuery(toolApprovalReponses.filter(isDefined), true);
+    }
+  }, [messages, sendQuery, allowedTools, addAlert, requestApproval]);
 };
 
 const reachedMaximumNumberOfConsecutiveToolRequests = (
-  messages: AskLLMToolsProps["messages"],
+  messages: DBSSchema["llm_messages"][],
   limit: number,
 ): boolean => {
   const count =

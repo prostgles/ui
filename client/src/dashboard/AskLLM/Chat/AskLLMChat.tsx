@@ -88,13 +88,11 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
         isToolApproval ? "approve-tool-use" : "new-message",
       ).catch((error) => {
         const errorText = error?.message || error;
+        const errorTextMessage =
+          typeof errorText === "string" ? errorText : JSON.stringify(errorText);
+
         addAlert(
-          (
-            "Error when when sending AI Assistant query" + typeof errorText ===
-              "string"
-          ) ?
-            errorText
-          : JSON.stringify(errorText),
+          "Error when when sending AI Assistant query" + errorTextMessage,
         );
       });
     },
@@ -198,6 +196,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
                   activeChat={activeChat}
                   setupState={setupState}
                   dbSchemaForPrompt={dbSchemaForPrompt}
+                  llmMessages={llmMessages ?? []}
                 />
               )
             }

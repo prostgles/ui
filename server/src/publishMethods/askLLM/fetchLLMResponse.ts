@@ -5,12 +5,12 @@ import {
 } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { getLLMRequestBody } from "./getLLMRequestBody";
+import type { MCPToolSchema } from "./getLLMTools";
 import {
   parseLLMResponseObject,
   type LLMParsedResponse,
 } from "./parseLLMResponseObject";
 import { readFetchStream } from "./readFetchStream";
-import type { MCPToolSchema } from "./getLLMTools";
 export type LLMMessageWithRole = {
   role: "system" | "user" | "assistant" | "model";
   content: DBSSchema["llm_messages"]["message"];
@@ -48,6 +48,8 @@ export const fetchLLMResponse = async (
     return Promise.reject(getSerialisableError(err));
   });
 
+  const responseClone = res.clone();
+
   const responseData = (await readFetchStream(res)) as AnyObject | undefined;
   if (!res.ok) {
     if (isObject(responseData)) {
@@ -60,6 +62,15 @@ export const fetchLLMResponse = async (
   if (!responseData) {
     throw new Error("No response data from LLM");
   }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log("LLM Response Data:", responseData);
+
+    try {
+      void responseClone.json().then(console.log);
+    } catch (err) {}
+  }
+
   return parseLLMResponseObject({
     provider,
     responseData,

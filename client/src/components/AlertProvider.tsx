@@ -9,7 +9,7 @@ import Popup, { type PopupProps } from "./Popup/Popup";
 
 type AlertDialogProps = Pick<
   PopupProps,
-  "children" | "footerButtons" | "title" | "subTitle"
+  "children" | "footerButtons" | "title" | "subTitle" | "contentClassName"
 >;
 
 export type AlertContext = {

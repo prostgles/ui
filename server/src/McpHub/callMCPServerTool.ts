@@ -46,14 +46,14 @@ export const callMCPServerTool = async (
     if (!chatAllowedMCPTool) {
       throw new Error("Tool invalid or not allowed for this chat");
     }
-    if (
-      chatAllowedMCPTool.allowed_inputs?.length &&
-      !chatAllowedMCPTool.allowed_inputs.some((allowedArgs) =>
-        isEqual(allowedArgs, toolArguments),
-      )
-    ) {
-      throw new Error("Invalid/dissalowed arguments");
-    }
+    // if (
+    //   chatAllowedMCPTool.allowed_inputs?.length &&
+    //   !chatAllowedMCPTool.allowed_inputs.some((allowedArgs) =>
+    //     isEqual(allowedArgs, toolArguments),
+    //   )
+    // ) {
+    //   throw new Error("Invalid/dissalowed arguments");
+    // }
     const mcpHub = await startMcpHub(dbs);
     const res = await mcpHub.callTool(serverName, toolName, toolArguments);
     return res;

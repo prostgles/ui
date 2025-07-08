@@ -128,6 +128,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       architecture: {
         nullable: true,
         jsonbSchemaType: {
+          modality: {
+            optional: true,
+            type: "string",
+            description:
+              "Input modality (e.g., 'text+image->text'). Indicates how input is processed and output is generated.",
+          },
           input_modalities: "string[]", // Supported input types: ["file", "image", "text"]
           output_modalities: "string[]", // Supported output types: ["text"]
           tokenizer: "string", // Tokenization method used
@@ -139,21 +145,26 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         jsonbSchema: {
           arrayOf: {
             type: "string",
-            allowedValues: [
-              "tools", // - Function calling capabilities
-              "tool_choice", // - Tool selection control
-              "max_tokens", // - Response length limiting
-              "temperature", // - Randomness control
-              "top_p", // - Nucleus sampling
-              "reasoning", // - Internal reasoning mode
-              "include_reasoning", // - Include reasoning in response
-              "structured_outputs", // - JSON schema enforcement
-              "response_format", // - Output format specification
-              "stop", // - Custom stop sequences
-              "frequency_penalty", // - Repetition reduction
-              "presence_penalty", // - Topic diversity
-              "seed", // - Deterministic outputs
-            ],
+            /**
+             * https://openrouter.ai/docs/overview/models
+             */
+            // undocumented values keep on being added so disabled for now.
+            // allowedValues: [
+            //   "tools", // - Function calling capabilities
+            //   "tool_choice", // - Tool selection control
+            //   "max_tokens", // - Response length limiting
+            //   "temperature", // - Randomness control
+            //   "top_p", // - Nucleus sampling
+            //   "top_k",
+            //   "reasoning", // - Internal reasoning mode
+            //   "include_reasoning", // - Include reasoning in response
+            //   "structured_outputs", // - JSON schema enforcement
+            //   "response_format", // - Output format specification
+            //   "stop", // - Custom stop sequences
+            //   "frequency_penalty", // - Repetition reduction
+            //   "presence_penalty", // - Topic diversity
+            //   "seed", // - Deterministic outputstools - Function calling capabilities
+            // ],
           },
         },
       },
@@ -376,6 +387,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                     enum: ["text"],
                   },
                   text: "string",
+                  reasoning: {
+                    type: "string",
+                    optional: true,
+                    description:
+                      "Internal reasoning message used by the model to explain its thought process",
+                  },
                 },
               },
               {

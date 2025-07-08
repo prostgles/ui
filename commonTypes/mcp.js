@@ -1,8 +1,52 @@
 import { mcpGithub } from "./mcpGithub";
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
-    "prostgles-db-methods": [""],
-    "prostgles-db": ["execute_sql"],
-    "prostgles-ui": ["suggest_tools_and_prompt", "suggest_dashboards"],
+    "prostgles-db-methods": { [""]: "" },
+    "prostgles-db": {
+        execute_sql: {
+            schema: {
+                type: {
+                    sql: {
+                        type: "string",
+                        description: "SQL query to execute",
+                    },
+                },
+            },
+        },
+    },
+    "prostgles-ui": {
+        suggest_tools_and_prompt: {
+            schema: {
+                type: {
+                    suggested_mcp_tool_names: {
+                        description: "List of MCP tools that can be used to complete the task",
+                        arrayOf: "string",
+                    },
+                    suggested_database_tool_names: {
+                        description: "List of database tools that can be used to complete the task",
+                        arrayOf: "string",
+                    },
+                    suggested_prompt: {
+                        description: "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task",
+                        type: "string",
+                    },
+                    suggested_database_access: {
+                        description: "If access to the database is needed, an access type can be specified",
+                        enum: ["none", "execute_sql_rollback", "execute_sql_commit"],
+                    },
+                },
+            },
+        },
+        suggest_dashboards: {
+            schema: {
+                type: {
+                    prostglesWorkspaces: {
+                        description: "Workspace to create. Must satisfy the typescript WorkspaceInsertModel type",
+                        arrayOf: "any",
+                    },
+                },
+            },
+        },
+    },
 };
 const MCP_TOOL_NAME_SEPARATOR = "--";
 export const getMCPFullToolName = (server_name, name) => {

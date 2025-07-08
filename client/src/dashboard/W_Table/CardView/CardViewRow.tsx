@@ -124,7 +124,7 @@ export const CardViewRow = ({
       key={indexedRow.index}
       data-row-index={indexedRow.index}
       className={
-        "CardView_Item relative card jc-start f-0 min-w-0 " +
+        "CardView_Item relative card jc-start ai-start f-0 min-w-0 " +
         (cardRows > 1 ? " fit " : "")
       }
       style={style}

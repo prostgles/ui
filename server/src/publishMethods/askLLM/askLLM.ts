@@ -19,7 +19,7 @@ import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "../../../../commonTypes/mcp";
-import { runApprovedTools } from "./runApprovedTools";
+import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -95,6 +95,22 @@ export const askLLM = async (args: AskLLMArgs) => {
     { chat_id: chatId },
     { orderBy: { created: 1 } },
   );
+
+  const toolsWithInfo = await getLLMTools({
+    isAdmin: user.type === "admin",
+    dbs,
+    chat,
+    connectionId,
+    prompt: promptObj,
+  });
+  const tools = toolsWithInfo?.map(({ name, description, input_schema }) => {
+    return {
+      name,
+      description,
+      input_schema: omitKeys(input_schema, ["$id"]),
+    } satisfies MCPToolSchema;
+  });
+
   const lastMessage = pastMessages.at(-1);
   if (type === "new-message") {
     await dbs.llm_messages.insert({
@@ -103,6 +119,31 @@ export const askLLM = async (args: AskLLMArgs) => {
       message: userMessage,
       llm_model_id: chat.model,
     });
+
+    /** Update chat name based on first user message */
+    const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
+    if (isFirstUserMessage) {
+      const questionText = getLLMMessageText({ message: userMessage });
+      const isOnlyImage =
+        !questionText && userMessage.some((m) => m.type === "image");
+      void dbs.llm_chats.update(
+        { id: chatId },
+        {
+          name:
+            isOnlyImage ? "[Attached image]" : (
+              sliceText(questionText, 25)?.replaceAll("\n", " ")
+            ),
+        },
+      );
+    }
+  } else {
+    return runApprovedTools(
+      args,
+      chat,
+      userMessage,
+      lastMessage?.message,
+      toolsWithInfo,
+    );
   }
 
   const allowedUsedCreds = allowedLLMCreds?.filter(
@@ -139,35 +180,16 @@ export const askLLM = async (args: AskLLMArgs) => {
     }
   }
 
-  /** Update chat name based on first user message */
-  const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
-  if (isFirstUserMessage) {
-    const questionText = getLLMMessageText({ message: userMessage });
-    const isOnlyImage =
-      !questionText && userMessage.some((m) => m.type === "image");
-    void dbs.llm_chats.update(
-      { id: chatId },
-      {
-        name:
-          isOnlyImage ? "[Attached image]" : (
-            sliceText(questionText, 25)?.replaceAll("\n", " ")
-          ),
-      },
-    );
-  }
-
-  const firstMessage = userMessage[0];
-  const isUIToolUseResponseThatDoesNotRequireResponse =
-    userMessage.length === 1 &&
-    firstMessage?.type === "tool_result" &&
-    lastMessage?.message.some(
-      (m) =>
-        m.type === "tool_use" &&
-        m.id === firstMessage.tool_use_id &&
-        getMCPToolNameParts(m.name)?.serverName ===
-          ("prostgles-ui" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS),
-    );
-  if (isUIToolUseResponseThatDoesNotRequireResponse) {
+  const hasMessagesThatNeedsAIResponse = userMessage.some(
+    (m) =>
+      !(
+        m.type === "tool_result" &&
+        !m.is_error &&
+        getMCPToolNameParts(m.tool_name)?.serverName ===
+          ("prostgles-ui" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)
+      ),
+  );
+  if (!hasMessagesThatNeedsAIResponse) {
     return;
   }
 
@@ -195,21 +217,6 @@ export const askLLM = async (args: AskLLMArgs) => {
       .replace(LLM_PROMPT_VARIABLES.TODAY, new Date().toISOString())
       .replace(LLM_PROMPT_VARIABLES.SCHEMA, schema)
       .replace(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypes);
-
-    const toolsWithInfo = await getLLMTools({
-      isAdmin: user.type === "admin",
-      dbs,
-      chat,
-      connectionId,
-      prompt: promptObj,
-    });
-    const tools = toolsWithInfo?.map(({ name, description, input_schema }) => {
-      return {
-        name,
-        description,
-        input_schema: omitKeys(input_schema, ["$id"]),
-      } satisfies MCPToolSchema;
-    });
 
     const modelData = (await dbs.llm_models.findOne(
       { id: chat.model },

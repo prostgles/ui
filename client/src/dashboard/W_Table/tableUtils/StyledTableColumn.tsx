@@ -109,8 +109,8 @@ export const StyledCell = ({
         style={{
           ...(style.chipColor && {
             backgroundColor: style.chipColor,
-            padding: "6px 8px",
-            borderRadius: "26px",
+            padding: "4px 8px",
+            borderRadius: "12px",
             width: "fit-content",
             whiteSpace: "nowrap",
           }),

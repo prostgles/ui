@@ -9,7 +9,7 @@ import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,
 } from "../../../../components/Chat/MarkdownMonacoCode";
-import { FlexCol, FlexRow } from "../../../../components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
 import { MediaViewer } from "../../../../components/MediaViewer";
 
 import { LoadSuggestedDashboards } from "../../Tools/ClientSideMCP/LoadSuggestedDashboards";
@@ -66,6 +66,11 @@ export const ToolUseChatMessage = ({
     m,
   );
 
+  const uiToolName =
+    m.name === uiToolNames.dashboards ? "dashboards"
+    : m.name === uiToolNames.taskTools ? "taskTools"
+    : undefined;
+
   return (
     <FlexCol className={"ToolUseMessage gap-p5 "}>
       <Btn
@@ -83,14 +88,20 @@ export const ToolUseChatMessage = ({
           : `Awaiting tool result: ${m.name}`
         }
         loading={!toolUseResult}
-      >
-        {m.name}
-        {inputTextSummary && (
-          <span style={{ fontWeight: "normal", opacity: 0.75 }}>
-            {inputTextSummary}
-          </span>
-        )}
-      </Btn>
+        children={
+          uiToolName ? undefined : (
+            <>
+              {" "}
+              {m.name}
+              {inputTextSummary && (
+                <span style={{ fontWeight: "normal", opacity: 0.75 }}>
+                  {inputTextSummary}
+                </span>
+              )}
+            </>
+          )
+        }
+      />
       {open && (
         <>
           {m.input && !isEmpty(m.input) && (
@@ -115,27 +126,23 @@ export const ToolUseChatMessage = ({
           )}
         </>
       )}
-      {m.name ===
-        getProstglesMCPFullToolName("prostgles-ui", "suggest_dashboards") && (
-        <FlexRow className=" ">
-          <LoadSuggestedDashboards workspaceId={workspaceId} message={m} />
-        </FlexRow>
+      {uiToolName === "dashboards" && (
+        <LoadSuggestedDashboards workspaceId={workspaceId} message={m} />
       )}
-      {m.name ===
-        getProstglesMCPFullToolName(
-          "prostgles-ui",
-          "suggest_tools_and_prompt",
-        ) && (
-        <FlexRow className=" ">
-          <LoadSuggestedToolsAndPrompt
-            message={m}
-            chatId={fullMessage.chat_id}
-          />
-        </FlexRow>
+      {uiToolName === "taskTools" && (
+        <LoadSuggestedToolsAndPrompt message={m} chatId={fullMessage.chat_id} />
       )}
     </FlexCol>
   );
 };
+
+const uiToolNames = {
+  dashboards: getProstglesMCPFullToolName("prostgles-ui", "suggest_dashboards"),
+  taskTools: getProstglesMCPFullToolName(
+    "prostgles-ui",
+    "suggest_tools_and_prompt",
+  ),
+} as const;
 
 const ContentRender = ({
   toolUseResult,

@@ -1,4 +1,10 @@
-import { mdiDownload, mdiFullscreen, mdiPlay, mdiStop } from "@mdi/js";
+import {
+  mdiDownload,
+  mdiFullscreen,
+  mdiOpenInNew,
+  mdiPlay,
+  mdiStop,
+} from "@mdi/js";
 import type { editor } from "monaco-editor";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useMemo, useState } from "react";
@@ -182,6 +188,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
                 )}
               </>
             )}
+            <OpenHTMLFromStringBtn code={codeString} language={language} />
             <CopyToClipboardBtn
               size="small"
               style={{
@@ -258,5 +265,41 @@ const FullscreenWrapper = (props: {
     >
       {children}
     </Popup>
+  );
+};
+
+const OpenHTMLFromStringBtn = ({
+  code,
+  language,
+}: {
+  code: string;
+  language: string;
+}) => {
+  if (language !== "html") {
+    return null;
+  }
+
+  return (
+    <Btn
+      iconPath={mdiOpenInNew}
+      title="Open in new tab..."
+      clickConfirmation={{
+        buttonText: "Open",
+        color: "action",
+        message:
+          "This will open the generated HTML code in a new tab. Proceed with caution!",
+      }}
+      onClick={() => {
+        const newWindow = window.open("about:blank", "_blank");
+        if (!newWindow) {
+          alert(
+            "Failed to open new window. Please allow popups for this site.",
+          );
+          return;
+        }
+        newWindow.document.write(code);
+        newWindow.document.close();
+      }}
+    />
   );
 };

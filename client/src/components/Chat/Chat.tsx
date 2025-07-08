@@ -211,6 +211,9 @@ export const Chat = (props: ChatProps) => {
             data-command={"Chat.textarea"}
             className="no-scroll-bar text-0 bg-transparent"
             rows={1}
+            style={{
+              maxHeight: "50vh",
+            }}
             defaultValue={getCurrentMessage()}
             onPaste={handleOnPaste}
             onKeyDown={(e) => {

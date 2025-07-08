@@ -1,25 +1,26 @@
-import { mdiAccountKey, mdiEye, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
+import { mdiAccountKey, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DetailedJoinSelect, FilterItem } from "prostgles-types";
-import React, { useState } from "react";
+import type { DetailedJoinSelect } from "prostgles-types";
+import React, { useMemo, useState } from "react";
 import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import Btn from "../../../components/Btn";
+import Chip from "../../../components/Chip";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import Select, { type FullOption } from "../../../components/Select/Select";
 import { SvgIconFromURL } from "../../../components/SvgIcon";
 import { SmartForm, SmartFormPopup } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { btnStyleProps } from "./AskLLMChatActionBar";
-import { RowCard } from "../../W_Table/RowCard";
 
 export const AskLLMChatActionBarModelSelector = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
+    llmMessages: DBSSchema["llm_messages"][];
   },
 ) => {
-  const { prgl, activeChat } = props;
+  const { prgl, activeChat, llmMessages } = props;
   const activeChatId = activeChat.id;
   const { dbs, dbsMethods } = prgl;
 
@@ -42,7 +43,12 @@ export const AskLLMChatActionBarModelSelector = (
 
   const [addProviderCredentials, setAddProviderCredentials] = useState("");
   const [viewModelForm, setViewModelForm] = useState<DetailedFilterBase>();
-
+  const totalCost = useMemo(() => {
+    return llmMessages.reduce((acc, msg) => {
+      const cost = parseFloat(msg.cost);
+      return acc + cost;
+    }, 0);
+  }, [llmMessages]);
   return (
     <>
       {viewModelForm && (
@@ -183,6 +189,15 @@ export const AskLLMChatActionBarModelSelector = (
           </FlexCol>
         }
       />
+      {!!totalCost && (
+        <Chip
+          title={"Total cost: " + totalCost}
+          style={{ fontSize: "12px", background: "transparent", opacity: 0.75 }}
+          className="pointer"
+        >
+          ${totalCost.toFixed(2)}
+        </Chip>
+      )}
     </>
   );
 };

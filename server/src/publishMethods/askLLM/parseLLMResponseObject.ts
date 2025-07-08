@@ -119,6 +119,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
             ({
               type: "text",
               text: c.message.content,
+              reasoning: c.message.reasoning || undefined,
             } satisfies LLMMessageWithRole["content"][number])
           : undefined,
         ];

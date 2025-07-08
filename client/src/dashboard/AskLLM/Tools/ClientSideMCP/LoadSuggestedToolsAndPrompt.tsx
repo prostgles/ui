@@ -1,12 +1,24 @@
-import { mdiPlus } from "@mdi/js";
-import React from "react";
+import {
+  mdiLanguageTypescript,
+  mdiOpenInNew,
+  mdiScript,
+  mdiTools,
+} from "@mdi/js";
+import type { JSONB } from "prostgles-types";
+import React, { useState } from "react";
+import {
+  getMCPToolNameParts,
+  type PROSTGLES_MCP_SERVERS_AND_TOOLS,
+} from "../../../../../../commonTypes/mcp";
 import { type DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import { sliceText } from "../../../../../../commonTypes/utils";
+import { useAlert } from "../../../../components/AlertProvider";
 import Btn from "../../../../components/Btn";
+import { Marked } from "../../../../components/Chat/Marked";
+import Chip from "../../../../components/Chip";
+import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
 import { usePrgl } from "../../../../pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../../utils";
-import { useAlert } from "../../../../components/AlertProvider";
-import { FlexCol } from "../../../../components/Flex";
-import { getMCPToolNameParts } from "../../../../../../commonTypes/mcp";
 
 type P = {
   chatId: number;
@@ -18,25 +30,63 @@ type P = {
 
 export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
   const { dbs, connectionId } = usePrgl();
-  const data = message.input as {
-    suggested_mcp_tools: string[];
-    suggested_database_tools: string[];
-    suggested_prompt: string;
-  };
+  const data = message.input as JSONB.GetObjectType<
+    (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]
+  >;
 
   const { addAlert } = useAlert();
+  const [expandPrompt, setExpandPrompt] = useState(false);
   return (
     <FlexCol>
+      <Chip
+        color="blue"
+        className="pointer"
+        leftIcon={{ path: mdiScript }}
+        title={data.suggested_prompt}
+        onClick={() => {
+          setExpandPrompt((prev) => !prev);
+        }}
+      >
+        {sliceText(data.suggested_prompt, 70)}
+      </Chip>
+      {expandPrompt && (
+        <Marked
+          codeHeader={undefined}
+          loadedSuggestions={undefined}
+          sqlHandler={undefined}
+          content={data.suggested_prompt}
+        />
+      )}
+      <FlexRowWrap>
+        {data.suggested_mcp_tool_names.map((toolName) => {
+          return (
+            <Chip key={toolName} color="blue" leftIcon={{ path: mdiTools }}>
+              {toolName}
+            </Chip>
+          );
+        })}
+        {data.suggested_database_tool_names.map((funcName) => {
+          return (
+            <Chip
+              key={funcName}
+              color="blue"
+              leftIcon={{ path: mdiLanguageTypescript }}
+            >
+              {funcName}
+            </Chip>
+          );
+        })}
+      </FlexRowWrap>
       <Btn
         color="action"
-        iconPath={mdiPlus}
+        iconPath={mdiOpenInNew}
         variant="filled"
         onClickPromise={async () => {
           await dbs.llm_chats_allowed_mcp_tools.delete({
             chat_id: chatId,
           });
           const allowedMcpTools = await dbs.mcp_server_tools.find({
-            $or: data.suggested_mcp_tools
+            $or: data.suggested_mcp_tool_names
               .map((toolName) => {
                 const nameParts = getMCPToolNameParts(toolName);
                 if (!nameParts) return;
@@ -60,7 +110,7 @@ export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
             chat_id: chatId,
           });
           const allowedFunctions = await dbs.published_methods.find({
-            $or: data.suggested_database_tools.map((toolName) => {
+            $or: data.suggested_database_tool_names.map((toolName) => {
               const name = getMCPToolNameParts(toolName)!.toolName;
               return {
                 connection_id: connectionId,
@@ -79,11 +129,11 @@ export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
           );
 
           addAlert(
-            `${data.suggested_mcp_tools.length} MCP tools and ${data.suggested_database_tools} DB Functions added to this chat`,
+            `${data.suggested_mcp_tool_names.length} MCP tools and ${data.suggested_database_tool_names} DB Functions added to this chat`,
           );
         }}
       >
-        Create new chat with suggested tools and prompt
+        Load task chat
       </Btn>
     </FlexCol>
   );

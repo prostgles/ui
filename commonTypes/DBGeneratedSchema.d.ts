@@ -346,7 +346,6 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      allowed_inputs?: null |  ( any )[]
       auto_approve?: null | boolean;
       chat_id: number;
       tool_id: number;
@@ -383,7 +382,7 @@ export type DBGeneratedSchema = {
       id?: string;
       llm_model_id?: null | number;
       message:  ( 
- |  {  type: 'text';  text: string; }
+ |  {  type: 'text';  text: string;  reasoning?: string; }
  |  {  type: 'image' | 'audio' | 'video' | 'application' | 'text';  source: {  type: 'base64';  media_type: string;  data: string; }; }
  |  {  type: 'tool_result';  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: 'text';  text: string; } |  {  type: 'image' | 'audio';  mimeType: string;  data: string; } |  {  type: 'resource';  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } )[];  is_error?: boolean; }
  |  {  type: 'tool_use';  id: string;  name: string;  input: any; } )[]
@@ -398,7 +397,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      architecture?: null | {    input_modalities: string[];   output_modalities: string[];   tokenizer: string;   instruct_type: | null
+      architecture?: null | {    modality?: string;   input_modalities: string[];   output_modalities: string[];   tokenizer: string;   instruct_type: | null
  | string;  };
       chat_suitability_rank?: null | string;
       context_length?: number;
