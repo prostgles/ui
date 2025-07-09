@@ -19,6 +19,7 @@ import { useSmartForm, type SmartFormState } from "./useSmartForm";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import type { JoinedRecordsProps } from "./JoinedRecords/JoinedRecords";
+import type { JSONBSchemaCommonProps } from "../../components/JSONBSchema/JSONBSchema";
 
 export type getErrorsHook = (
   cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,
@@ -81,10 +82,9 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
    */
   jsonbSchemaWithControls?:
     | boolean
-    | {
-        variant?: "no-labels";
-        lookupTables?: DBSchemaTablesWJoins;
-      };
+    | Partial<
+        Pick<JSONBSchemaCommonProps, "schemaStyles" | "tables" | "noLabels">
+      >;
 
   /**
    * Fired after a successful update/insert

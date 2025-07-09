@@ -18,6 +18,7 @@ type P = JSONBSchemaCommonProps & {
 
 export const JSONBSchemaLookupMatch = (s: JSONB.JSONBSchema): s is Schema =>
   isObject(s.lookup);
+
 export const JSONBSchemaLookup = ({
   value: rawValue,
   schema,
@@ -28,7 +29,6 @@ export const JSONBSchemaLookup = ({
 }: P) => {
   let defaultValue: string | undefined = undefined;
   const { lookup } = schema;
-  // const tables = oProps.
 
   if (lookup.type === "schema" || lookup.type === "data-def") {
     const { filter } = lookup;

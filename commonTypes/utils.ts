@@ -235,18 +235,19 @@ export function matchObj(
   return false;
 }
 
-export function sliceText(
-  text: string | undefined,
+export function sliceText<T extends string | undefined>(
+  _text: T,
   maxLen: number,
   ellipseText = "...",
   midEllipse = false,
-) {
+): T {
+  const text = _text as string;
   if (isDefined(text) && text.length > maxLen) {
-    if (!midEllipse) return `${text.slice(0, maxLen)}${ellipseText}`;
-    return `${text.slice(0, maxLen / 2)}${ellipseText}${text.slice(text.length - maxLen / 2 + 3)}`;
+    if (!midEllipse) return `${text.slice(0, maxLen)}${ellipseText}` as T;
+    return `${text.slice(0, maxLen / 2)}${ellipseText}${text.slice(text.length - maxLen / 2 + 3)}` as T;
   }
 
-  return text;
+  return _text;
 }
 
 export type ColType = {

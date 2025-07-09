@@ -80,8 +80,15 @@ export const AskLLMChatActionBarDatabaseAccess = (
         contentClassname="p-1"
         // contentClassname="p-0 pb-1"
         jsonbSchemaWithControls={{
-          variant: "no-labels",
-          lookupTables: props.prgl.tables,
+          tables: props.prgl.tables,
+          schemaStyles: [
+            {
+              path: ["3", "tables"],
+              style: {
+                width: "100%",
+              },
+            },
+          ],
         }}
       />
       {/* <SmartCardList<DBSSchema["published_methods"]>

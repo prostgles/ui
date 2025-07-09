@@ -4,6 +4,7 @@ import Chip from "./Chip";
 import { FlexCol } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import Popup from "./Popup/Popup";
+import { sliceText } from "../../../commonTypes/utils";
 
 export const ContentTypes = ["image", "video", "audio"] as const;
 type ValidContentType = (typeof ContentTypes)[number];
@@ -36,6 +37,7 @@ export const MediaViewer = (props: P) => {
       {
         raw: url,
         validated: url,
+        forDisplay: sliceText(url, 100),
         type: content_type,
         content_type,
       }
@@ -59,6 +61,7 @@ export const MediaViewer = (props: P) => {
       setUrlInfo({
         raw: url,
         validated: url,
+        forDisplay: sliceText(url, 100),
         type: ContentTypes.find((ct) => contentType?.startsWith(ct)),
         content_type: contentType,
       });
@@ -134,7 +137,7 @@ export const MediaViewer = (props: P) => {
                 style={{ fontWeight: 400 }}
                 rel="noreferrer"
               >
-                {urlInfo.validated}
+                {urlInfo.forDisplay}
               </a>
             )
           }
@@ -169,6 +172,7 @@ export const MediaViewer = (props: P) => {
 type UrlInfo = {
   raw: string;
   validated: string;
+  forDisplay: string;
   content_type?: string; // If undefined then show as URL
   type?: ValidContentType;
 };

@@ -126,7 +126,7 @@ export const FormFieldSkeleton = forwardRef(
 
           <div
             className={
-              "form-field__right-content-wrapper flex-row f-1 ai-center min-w-0 gap-p25 "
+              "form-field__right-content-wrapper flex-row f-0 ai-center min-w-0 gap-p25 "
             }
           >
             <div

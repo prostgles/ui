@@ -27,15 +27,21 @@ export type JSONBSchemaCommonProps = Pick<Prgl, "db" | "tables"> & {
   value: unknown | undefined;
   setHasErrors?: (hasErrors: boolean) => void;
   showErrors?: boolean;
-  isNested?: boolean;
+  nestingPath?: (string | number)[];
   allowIncomplete?: boolean;
   noLabels?: boolean;
+  schemaStyles?: {
+    path: string[];
+    style?: React.CSSProperties;
+    className?: string;
+  }[];
 };
 
 type P<S extends Schema> = JSONBSchemaCommonProps & {
   schema: S;
   onChange: (newValue: JSONB.GetType<S>) => void;
 };
+
 export const JSONBSchema = <S extends Schema>(props: P<S>) => {
   const {
     style,
@@ -46,7 +52,7 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
     setHasErrors,
     ...otherProps
   } = props;
-  const { allowIncomplete, isNested } = otherProps;
+  const { allowIncomplete, nestingPath: isNested } = otherProps;
   const [_localValueRaw, setlocalValue] = useState<any>();
   const localValueRaw = _localValueRaw ?? value;
   const localValue = isNested ? value : localValueRaw;
@@ -153,11 +159,11 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
     const isDisabled =
       isObject(schema) && schema.optional && localValue === undefined;
     const styleDisabled =
-      !isDisabled || otherProps.isNested ? {} : { opacity: 0.5 };
+      !isDisabled || otherProps.nestingPath ? {} : { opacity: 0.5 };
     return (
       <div
         style={{ ...style, ...styleDisabled }}
-        className={`JSONBSchema flex-row ${className}`}
+        className={`JSONBSchema h-fit flex-row ${className}`}
       >
         {node}
       </div>

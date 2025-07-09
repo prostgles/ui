@@ -62,18 +62,32 @@ export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
         />
       )}
 
-      {dbAccess !== "none" && (
+      {dbAccess.Mode !== "None" && (
         <Chip
           title="Database access"
           leftIcon={{
             path:
-              dbAccess === "execute_sql_commit" ? mdiDatabaseEdit : (
-                mdiDatabaseSearch
-              ),
+              dbAccess.Mode === "execute_sql_commit" ?
+                mdiDatabaseEdit
+              : mdiDatabaseSearch,
           }}
           color="blue"
         >
-          {dbAccess === "execute_sql_commit" ?
+          {dbAccess.Mode === "Custom" ?
+            //@ts-ignore
+            dbAccess.tables
+              .map((t) => {
+                return `${t.tableName}: ${[
+                  "select",
+                  "update",
+                  "insert",
+                  "delete",
+                ]
+                  .filter((v) => t[v])
+                  .join(", ")}`;
+              })
+              .join("\n")
+          : dbAccess.Mode === "execute_sql_commit" ?
             "Execute SQL with rollback"
           : "Execute SQL with commit"}
         </Chip>
@@ -153,6 +167,19 @@ export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
                 server_function_id: t.id,
               };
             }),
+          );
+
+          const dbAccess = data.suggested_database_access;
+          await dbs.llm_chats.update(
+            { id: chatId },
+            {
+              db_data_permissions:
+                dbAccess.Mode === "execute_sql_commit" ?
+                  { Mode: "Run commited SQL" }
+                : dbAccess.Mode === "execute_sql_rollback" ?
+                  { Mode: "Run readonly SQL" }
+                : dbAccess,
+            },
           );
 
           addAlert(

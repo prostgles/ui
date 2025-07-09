@@ -323,16 +323,14 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         jsonbSchema: {
           oneOfType: [
             {
-              type: {
-                title: "Type",
+              Mode: {
                 description:
                   "Cannot interact with any data from the database. This excludes the schema read access which is controlled separately",
                 enum: ["None"],
               },
             },
             {
-              type: {
-                title: "Type",
+              Mode: {
                 enum: ["Run readonly SQL"],
                 description:
                   "Can run readonly SQL queries (if the current user is allowed)",
@@ -340,8 +338,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
               ...commonrunSQLOpts,
             },
             {
-              type: {
-                title: "Type",
+              Mode: {
                 enum: ["Run commited SQL"],
                 description:
                   "Can run SQL queries that will be commited (if the current user is allowed). Use with caution",
@@ -349,8 +346,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
               ...commonrunSQLOpts,
             },
             {
-              type: {
-                title: "Type",
+              Mode: {
                 enum: ["Custom"],
                 description:
                   "Can only access specific tables on behalf of the user",
@@ -361,6 +357,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                 description: "Tables the assistant can access",
                 arrayOfType: {
                   tableName: {
+                    title: "Table name",
                     type: "Lookup[]",
                     lookup: {
                       type: "schema",
@@ -371,16 +368,16 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                   update: { type: "boolean", optional: true },
                   insert: { type: "boolean", optional: true },
                   delete: { type: "boolean", optional: true },
-                  columns: {
-                    optional: true,
-                    type: "Lookup[]",
-                    lookup: {
-                      type: "schema",
-                      object: "column",
-                    },
-                    description:
-                      "Columns the assistant can access in the table",
-                  },
+                  // columns: {
+                  //   optional: true,
+                  //   type: "Lookup[]",
+                  //   lookup: {
+                  //     type: "schema",
+                  //     object: "column",
+                  //   },
+                  //   description:
+                  //     "Columns the assistant can access in the table",
+                  // },
                 },
               },
             },

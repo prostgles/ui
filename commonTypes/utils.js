@@ -56,13 +56,14 @@ export function matchObj(obj1, obj2) {
     }
     return false;
 }
-export function sliceText(text, maxLen, ellipseText = "...", midEllipse = false) {
+export function sliceText(_text, maxLen, ellipseText = "...", midEllipse = false) {
+    const text = _text;
     if (isDefined(text) && text.length > maxLen) {
         if (!midEllipse)
             return `${text.slice(0, maxLen)}${ellipseText}`;
         return `${text.slice(0, maxLen / 2)}${ellipseText}${text.slice(text.length - maxLen / 2 + 3)}`;
     }
-    return text;
+    return _text;
 }
 export const RELOAD_NOTIFICATION = "Prostgles UI accessible at";
 export function throttle(func, timeout) {

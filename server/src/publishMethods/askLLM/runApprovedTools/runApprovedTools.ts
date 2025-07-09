@@ -16,6 +16,9 @@ import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import type { getLLMTools, MCPToolSchemaWithApproveInfo } from "../getLLMTools";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
+import { get } from "node:http";
+import { getTableConfig } from "../../../ConnectionManager/connectionManagerUtils";
+import { getAddTaskTools } from "../prostglesMcpTools";
 
 type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
@@ -127,6 +130,21 @@ export const runApprovedTools = async (
       }
 
       if (tool.type === "prostgles-ui") {
+        if (tool.tool_name === "suggest_tools_and_prompt") {
+          const validation = getJSONBObjectSchemaValidationError(
+            PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
+              "suggest_tools_and_prompt"
+            ].schema.type,
+            toolUseRequest.input,
+            "",
+          );
+          if (validation.error !== undefined) {
+            return asResponse(
+              `Tool use request for "${toolUseRequest.name}" but input is invalid: ${validation.error}`,
+              true,
+            );
+          }
+        }
         return asResponse("Done");
       }
       if (tool.type === "mcp") {
@@ -247,8 +265,8 @@ export const runApprovedTools = async (
           }
 
           if (
-            chatDBPermissions?.type !== "Run commited SQL" &&
-            chatDBPermissions?.type !== "Run readonly SQL"
+            chatDBPermissions?.Mode !== "Run commited SQL" &&
+            chatDBPermissions?.Mode !== "Run readonly SQL"
           ) {
             throw new Error("chatDBPermissions is not defined");
           }
@@ -268,7 +286,7 @@ export const runApprovedTools = async (
                 query,
               ].join(";\n")
             : query;
-          const commit = chatDBPermissions.type === "Run commited SQL";
+          const commit = chatDBPermissions.Mode === "Run commited SQL";
           const { rows } = await sql(
             finalQuery,
             {},
@@ -277,7 +295,7 @@ export const runApprovedTools = async (
           return JSON.stringify(rows);
         }
 
-        if (chatDBPermissions?.type !== "Custom") {
+        if (chatDBPermissions?.Mode !== "Custom") {
           throw new Error("chatDBPermissions is not defined");
         }
 

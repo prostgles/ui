@@ -76,11 +76,12 @@ export const JSONBSchemaPrimitive = ({
       }
       value={value}
       placeholder={noLabels ? schema.title : undefined}
-      className={"JSONBSchemaPrimitive"}
+      className={"JSONBSchemaPrimitive f-0"}
       type={inputType}
       nullable={schema.nullable}
       optional={schema.optional}
       arrayType={arrayType}
+      // variant="row"
       inputProps={schema.type === "integer" ? { step: 1 } : undefined}
       fullOptions={fullOptions}
       multiSelect={!!schema.allowedValues?.length && schema.type.endsWith("[]")}

@@ -159,7 +159,7 @@ export type ProcStats = {
     uptime: number;
 };
 export declare function matchObj(obj1: AnyObject | undefined, obj2: AnyObject | undefined): boolean;
-export declare function sliceText(text: string | undefined, maxLen: number, ellipseText?: string, midEllipse?: boolean): string | undefined;
+export declare function sliceText<T extends string | undefined>(_text: T, maxLen: number, ellipseText?: string, midEllipse?: boolean): T;
 export type ColType = {
     column_name: string;
     escaped_column_name: string;

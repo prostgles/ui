@@ -245,7 +245,3 @@ const getToolUseResult = (
   }
   return;
 };
-
-console.error(
-  "finish this. TIDY prostgles MCP tools for cliend-side only types: suggest_dashboard, add_tools",
-);

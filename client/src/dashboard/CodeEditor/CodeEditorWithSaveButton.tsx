@@ -70,7 +70,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
   const titleNode =
     !label && !headerButtons ?
       null
-    : <FlexRow className={fullScreen ? "" : "bg-color-1"} style={{ zIndex: 1 }}>
+    : <FlexRow className={fullScreen ? "" : "bg-color-1"}>
         {
           <Label className=" px-p25 f-1 " variant="normal">
             {label}

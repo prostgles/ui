@@ -3,6 +3,7 @@ import { getKeys, isObject, omitKeys, pickKeys } from "prostgles-types";
 import React from "react";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { JSONBSchemaObject } from "./JSONBSchemaObject";
+import { classOverride } from "../Flex";
 
 type Schema = Extract<
   { oneOfType: Required<JSONB.OneOf>["oneOfType"] },
@@ -18,10 +19,14 @@ type P = JSONBSchemaCommonProps & {
  */
 export const JSONBSchemaOneOfTypeMatch = (s: JSONB.JSONBSchema): s is Schema =>
   !!s.oneOfType?.length;
+
 export const JSONBSchemaOneOfType = ({
   value,
   schema,
   onChange,
+  nestingPath,
+  style,
+  className,
   ...oProps
 }: P) => {
   const s = schema;
@@ -91,33 +96,39 @@ export const JSONBSchemaOneOfType = ({
     };
   });
 
-  //@ts-ignore
-  const n = (
-    <JSONBSchemaObject
-      schema={{
-        ...omitKeys(s, ["oneOfType"]),
-        type: matchingOneOfSchema,
-      }}
-      value={value as any}
-      onChange={(newValue) => {
-        /**
-         * If matching a different schema then keep only common properties
-         */
-        const newSchemaIdx = getOneOfSchemaIndex(newValue);
-        //@ts-ignore
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (newValue && newSchemaIdx !== matchingOneOfSchemaIdx) {
-          //@ts-ignore
-          onChange(pickKeys(newValue, getKeys(s.oneOfType[newSchemaIdx])));
-        } else {
-          onChange(newValue);
-        }
-      }}
-      {...oProps}
-    />
+  const itemNestingPath = [...(nestingPath ?? []), matchingOneOfSchemaIdx];
+  const itemStyle = oProps.schemaStyles?.find(
+    (ss) => ss.path.join() === itemNestingPath.join(),
   );
-
-  return <div className="JSONBSchemaOneOf flex-row-wrap gap-1">{n}</div>;
+  return (
+    <div className="JSONBSchemaOneOf flex-row-wrap gap-1">
+      <JSONBSchemaObject
+        schema={{
+          ...omitKeys(s, ["oneOfType"]),
+          type: matchingOneOfSchema,
+        }}
+        value={value as any}
+        onChange={(newValue) => {
+          /**
+           * If matching a different schema then keep only common properties
+           */
+          const newSchemaIdx = getOneOfSchemaIndex(newValue);
+          //@ts-ignore
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          if (newValue && newSchemaIdx !== matchingOneOfSchemaIdx) {
+            //@ts-ignore
+            onChange(pickKeys(newValue, getKeys(s.oneOfType[newSchemaIdx])));
+          } else {
+            onChange(newValue);
+          }
+        }}
+        nestingPath={itemNestingPath}
+        className={classOverride(className, itemStyle?.className)}
+        style={{ ...style, ...itemStyle?.style }}
+        {...oProps}
+      />
+    </div>
+  );
 };
 
 export const getFieldObj = (f: JSONB.FieldType): JSONB.FieldTypeObj => {

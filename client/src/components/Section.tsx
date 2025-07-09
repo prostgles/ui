@@ -93,14 +93,14 @@ export const Section = (props: SectionProps) => {
       >
         <Btn
           className={
-            (titleRightContent ? "" : "f-1") +
+            (titleRightContent ? "" : "f-1d") +
             " p-p5 ta-left font-20 bold jc-start mr-1"
           }
           title="Expand section"
+          variant="text"
           disabledInfo={disabledInfo}
           style={{
             width: undefined,
-            flex: 1,
             ...buttonStyle,
           }}
           iconPath={

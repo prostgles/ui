@@ -101,8 +101,24 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                         type: "string",
                     },
                     suggested_database_access: {
-                        description: "If access to the database is needed, an access type can be specified",
-                        enum: ["none", "execute_sql_rollback", "execute_sql_commit"],
+                        description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task.",
+                        oneOfType: [
+                            { Mode: { enum: ["None"] } },
+                            { Mode: { enum: ["execute_sql_rollback"] } },
+                            { Mode: { enum: ["execute_sql_commit"] } },
+                            {
+                                Mode: { enum: ["Custom"] },
+                                tables: {
+                                    arrayOfType: {
+                                        tableName: "string",
+                                        select: "boolean",
+                                        insert: "boolean",
+                                        update: "boolean",
+                                        delete: "boolean",
+                                    },
+                                },
+                            },
+                        ],
                     },
                 },
             },
@@ -132,10 +148,10 @@ export const getMCPToolNameParts = (fullName) => {
 };
 export const getProstglesDBTools = (chat) => {
     const dbAccess = chat.db_data_permissions;
-    if (!dbAccess || dbAccess.type === "None") {
+    if (!dbAccess || dbAccess.Mode === "None") {
         return [];
     }
-    if ((dbAccess === null || dbAccess === void 0 ? void 0 : dbAccess.type) === "Custom") {
+    if ((dbAccess === null || dbAccess === void 0 ? void 0 : dbAccess.Mode) === "Custom") {
         const tableTools = dbAccess.tables.reduce((a, tableRule) => {
             const actions = ["select", "update", "insert", "delete"];
             for (const actionName of actions) {
@@ -168,8 +184,8 @@ export const getProstglesDBTools = (chat) => {
                 auto_approve: Boolean(dbAccess.auto_approve),
                 schema,
             };
-            const isAllowed = dbAccess.type === "Run commited SQL" ||
-                (dbAccess.type === "Run readonly SQL" &&
+            const isAllowed = dbAccess.Mode === "Run commited SQL" ||
+                (dbAccess.Mode === "Run readonly SQL" &&
                     toolName === "execute_sql_with_rollback");
             if (isAllowed) {
                 return tool;

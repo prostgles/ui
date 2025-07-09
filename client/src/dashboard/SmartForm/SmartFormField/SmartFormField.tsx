@@ -235,10 +235,10 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
           renderAsJSON?.component === "JSONBSchema" ?
             <JSONBSchemaA
               // className={renderAsJSON.noLabels ? "" : "m-p5"}
-              noLabels={renderAsJSON.noLabels}
               db={db}
               schema={renderAsJSON.jsonbSchema}
-              tables={renderAsJSON.opts?.lookupTables ?? tables}
+              tables={tables}
+              {...renderAsJSON.opts}
               value={value}
               onChange={onCheckAndChange}
             />

@@ -108,8 +108,33 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly type: "string";
                     };
                     readonly suggested_database_access: {
-                        readonly description: "If access to the database is needed, an access type can be specified";
-                        readonly enum: readonly ["none", "execute_sql_rollback", "execute_sql_commit"];
+                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task.";
+                        readonly oneOfType: readonly [{
+                            readonly Mode: {
+                                readonly enum: readonly ["None"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["execute_sql_rollback"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["execute_sql_commit"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["Custom"];
+                            };
+                            readonly tables: {
+                                readonly arrayOfType: {
+                                    readonly tableName: "string";
+                                    readonly select: "boolean";
+                                    readonly insert: "boolean";
+                                    readonly update: "boolean";
+                                    readonly delete: "boolean";
+                                };
+                            };
+                        }];
                     };
                 };
             };
@@ -244,8 +269,33 @@ export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles
                         readonly type: "string";
                     };
                     readonly suggested_database_access: {
-                        readonly description: "If access to the database is needed, an access type can be specified";
-                        readonly enum: readonly ["none", "execute_sql_rollback", "execute_sql_commit"];
+                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task.";
+                        readonly oneOfType: readonly [{
+                            readonly Mode: {
+                                readonly enum: readonly ["None"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["execute_sql_rollback"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["execute_sql_commit"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["Custom"];
+                            };
+                            readonly tables: {
+                                readonly arrayOfType: {
+                                    readonly tableName: "string";
+                                    readonly select: "boolean";
+                                    readonly insert: "boolean";
+                                    readonly update: "boolean";
+                                    readonly delete: "boolean";
+                                };
+                            };
+                        }];
                     };
                 };
             };

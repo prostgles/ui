@@ -7,6 +7,7 @@ import { Label } from "../Label";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { JSONBSchema } from "./JSONBSchema";
 import { getSchemaFromField } from "./isCompleteJSONB";
+import { classOverride } from "../Flex";
 
 type Schema = JSONB.ObjectType;
 type P = JSONBSchemaCommonProps & {
@@ -22,7 +23,9 @@ export const JSONBSchemaObject = ({
   value: rawValue,
   schema,
   onChange,
-  isNested = false,
+  nestingPath,
+  className,
+  style,
   ...oProps
 }: P) => {
   const value = isObject(rawValue) ? rawValue : undefined;
@@ -31,13 +34,13 @@ export const JSONBSchemaObject = ({
     .map(([k]) => k);
   const [showOptional, setShowOptional] = useState(false);
 
-  if (schema.optional && value === undefined && !showOptional && isNested) {
+  if (schema.optional && value === undefined && !showOptional && nestingPath) {
     return (
       <div
         className={
-          "JSONBSchemaObject flex-col gap-p5 as-end " + (oProps.className ?? "")
+          "JSONBSchemaObject flex-col gap-p5 as-end " + (className ?? "")
         }
-        style={oProps.style}
+        style={style}
       >
         {!oProps.noLabels && <Label variant="normal">{schema.title}</Label>}
         <Btn
@@ -63,10 +66,11 @@ export const JSONBSchemaObject = ({
 
   return (
     <div
-      className={
-        "JSONBSchemaObject flex-row-wrap gap-1 " + (oProps.className ?? "")
-      }
-      style={oProps.style}
+      className={classOverride(
+        "JSONBSchemaObject flex-row-wrap gap-1 ",
+        className,
+      )}
+      style={style}
     >
       {[...requiredPropNames, ...optionalPropNames]
         .filter((k) => showOptional || !optionalProps.includes(k))
@@ -95,12 +99,19 @@ export const JSONBSchemaObject = ({
           //     />
           //   </div>
           // );
+          const itemNestingPath = [...(nestingPath ?? []), propName];
+
+          const itemStyle = oProps.schemaStyles?.find(
+            (ss) => ss.path.join() === itemNestingPath.join(),
+          );
           return (
             <JSONBSchema
               key={propName}
-              value={(value as any)?.[propName] as any}
+              value={(value as any)?.[propName]}
               schema={propSchema as any}
-              isNested={true}
+              nestingPath={itemNestingPath}
+              style={itemStyle?.style}
+              className={itemStyle?.className}
               onChange={
                 ((newVal) => {
                   onChange(

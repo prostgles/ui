@@ -74,18 +74,18 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                     db_data_permissions:
                       req.tool_name === "execute_sql_with_commit" ?
                         {
-                          type: "Run commited SQL",
+                          Mode: "Run commited SQL",
                           auto_approve,
                         }
                       : req.tool_name === "execute_sql_with_rollback" ?
                         {
-                          type: "Run readonly SQL",
+                          Mode: "Run readonly SQL",
                           auto_approve,
                         }
                       : {
                           ...(activeChat.db_data_permissions as Extract<
                             typeof activeChat.db_data_permissions,
-                            { type: "Custom" }
+                            { Mode: "Custom" }
                           >),
                           auto_approve,
                         },

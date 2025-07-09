@@ -40,7 +40,7 @@ export const AskLLMChatOptions = (props: LLMChatOptionsProps) => {
       methods: {},
       rowFilter: [{ fieldName: "id", value: activeChatId }],
       jsonbSchemaWithControls: {
-        variant: "no-labels",
+        noLabels: true,
       },
     } satisfies Pick<
       SmartFormProps,

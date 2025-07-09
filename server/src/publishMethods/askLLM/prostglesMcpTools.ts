@@ -34,6 +34,13 @@ export const executeSQLToolWithCommit = {
   ),
 };
 
+const taskInputSchema = getJSONBSchemaAsJSONSchema(
+  "",
+  "",
+  PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_tools_and_prompt"]
+    .schema,
+);
+
 export const getAddTaskTools = ({
   availableDBTools = [],
   availableMCPTools = [],
@@ -50,13 +57,11 @@ export const getAddTaskTools = ({
 
     Available database tools:
     ${availableDBTools.map((t) => `  - ${t.name}: ${t.description}`).join("\n")}
+
+    If access to the database is needed, an access type can be specified. 
+    Use the most restrictive access type that is needed to complete the task (type custom with specific tables and allowed commands).
   `),
-  input_schema: getJSONBSchemaAsJSONSchema(
-    "",
-    "",
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_tools_and_prompt"]
-      .schema,
-  ),
+  input_schema: taskInputSchema,
 });
 
 export const suggestDashboardsTool = {

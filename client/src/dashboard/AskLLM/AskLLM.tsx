@@ -27,10 +27,6 @@ export const AskLLM = (props: P) => {
   };
   const state = useLLMSetupState(prgl);
 
-  if (state.state === "loading") {
-    return <Loading />;
-  }
-
   return (
     <>
       <Btn
@@ -44,6 +40,7 @@ export const AskLLM = (props: P) => {
         onClick={(e) => {
           setAnchorEl(e.currentTarget);
         }}
+        loading={state.state === "loading"}
         disabledInfo={
           !askLLM ?
             t.AskLLM["AI assistant not available. Talk to the admin"]
