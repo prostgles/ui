@@ -122,52 +122,57 @@ export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
         color="action"
         iconPath={mdiOpenInNew}
         variant="filled"
+        data-command="AskLLMChat.LoadSuggestedToolsAndPrompt"
         onClickPromise={async () => {
-          await dbs.llm_chats_allowed_mcp_tools.delete({
-            chat_id: chatId,
-          });
-          const allowedMcpTools = await dbs.mcp_server_tools.find({
-            $or: data.suggested_mcp_tool_names
-              .map((toolName) => {
-                const nameParts = getMCPToolNameParts(toolName);
-                if (!nameParts) return;
+          if (data.suggested_mcp_tool_names.length) {
+            await dbs.llm_chats_allowed_mcp_tools.delete({
+              chat_id: chatId,
+            });
+            const allowedMcpTools = await dbs.mcp_server_tools.find({
+              $or: data.suggested_mcp_tool_names
+                .map((toolName) => {
+                  const nameParts = getMCPToolNameParts(toolName);
+                  if (!nameParts) return;
+                  return {
+                    server_name: nameParts.serverName,
+                    name: nameParts.toolName,
+                  };
+                })
+                .filter(isDefined),
+            });
+            await dbs.llm_chats_allowed_mcp_tools.insert(
+              allowedMcpTools.map((t) => {
                 return {
-                  server_name: nameParts.serverName,
-                  name: nameParts.toolName,
+                  chat_id: chatId,
+                  tool_id: t.id,
                 };
-              })
-              .filter(isDefined),
-          });
-          await dbs.llm_chats_allowed_mcp_tools.insert(
-            allowedMcpTools.map((t) => {
-              return {
-                chat_id: chatId,
-                tool_id: t.id,
-              };
-            }),
-          );
+              }),
+            );
+          }
 
-          await dbs.llm_chats_allowed_functions.delete({
-            chat_id: chatId,
-          });
-          const allowedFunctions = await dbs.published_methods.find({
-            $or: data.suggested_database_tool_names.map((toolName) => {
-              const name = getMCPToolNameParts(toolName)!.toolName;
-              return {
-                connection_id: connectionId,
-                name,
-              };
-            }),
-          });
-          await dbs.llm_chats_allowed_functions.insert(
-            allowedFunctions.map((t) => {
-              return {
-                connection_id: connectionId,
-                chat_id: chatId,
-                server_function_id: t.id,
-              };
-            }),
-          );
+          if (data.suggested_database_tool_names.length) {
+            await dbs.llm_chats_allowed_functions.delete({
+              chat_id: chatId,
+            });
+            const allowedFunctions = await dbs.published_methods.find({
+              $or: data.suggested_database_tool_names.map((toolName) => {
+                const name = getMCPToolNameParts(toolName)!.toolName;
+                return {
+                  connection_id: connectionId,
+                  name,
+                };
+              }),
+            });
+            await dbs.llm_chats_allowed_functions.insert(
+              allowedFunctions.map((t) => {
+                return {
+                  connection_id: connectionId,
+                  chat_id: chatId,
+                  server_function_id: t.id,
+                };
+              }),
+            );
+          }
 
           const dbAccess = data.suggested_database_access;
           await dbs.llm_chats.update(

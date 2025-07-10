@@ -116,6 +116,8 @@ const fetchMethodDefinitionTypes = async ({
     if (a.type === "Lookup" && (a.lookup as any)) {
       const refT = tables.find((t) => t.name === a.lookup.table);
       if (refT) {
+        // TODO: fix type. Maybe add a LookupDefinition type?
+        //@ts-ignore
         if (a.lookup.isFullRow) {
           type = `{ ${refT.columns.map((c) => `${c.name}: ${c.tsDataType}`).join("; ")} }`;
         } else {

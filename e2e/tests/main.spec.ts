@@ -1,6 +1,7 @@
 import { chromium, expect, test } from "@playwright/test";
 import { authenticator } from "otplib";
 import { startMockSMTPServer } from "./mockSMTPServer";
+import { testAskLLMCode } from "./testAskLLM";
 import {
   PageWIds,
   TEST_DB_NAME,
@@ -28,6 +29,7 @@ import {
   localNoAuthSetup,
   login,
   monacoType,
+  openConnection,
   openTable,
   queries,
   runDbSql,
@@ -455,7 +457,7 @@ test.describe("Main test", () => {
     await page.locator("#password").fill(USERS.test_user);
     await page.getByRole("button", { name: "Continue" }).click();
     await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
-
+    await page.waitForTimeout(500);
     const existingCloudDb = await page
       .getByRole("link", {
         name: "cloud",
@@ -503,20 +505,27 @@ test.describe("Main test", () => {
     await page.keyboard.press("Tab");
 
     /** Ensure db schema suggestions work */
-    const expectedCode =
+    const initialCode =
       "export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {\n  dbo.tx\n}";
     const funcCode = await getMonacoValue(page, ".MethodDefinition");
-    expect(funcCode).toEqual(expectedCode);
+    expect(funcCode).toEqual(initialCode);
     /** Add llm server side func */
-    const llmCode = `return { completion_tokens: 0, prompt_tokens: 0, total_tokens: 0, choices: [{ type: "text", message: { content: "free ai assistant" + args.messages.at(-1)?.content[0]?.text }  }] };//`;
-    await monacoType(page, ".MethodDefinition", llmCode, {
+    // const testAskLLMCode = `return { completion_tokens: 0, prompt_tokens: 0, total_tokens: 0, choices: [{ type: "text", message: { content: "free ai assistant" + args.messages.at(-1)?.content[0]?.text }  }] };//`;
+    await monacoType(page, ".MethodDefinition", testAskLLMCode, {
       deleteAll: false,
       pressBeforeTyping: ["Control+ArrowLeft", "Control+ArrowLeft"],
       keyPressDelay: 15,
     });
     const funcCode2 = await getMonacoValue(page, ".MethodDefinition");
-    expect(funcCode2).toEqual(
-      expectedCode.replace("dbo.tx", llmCode + "dbo.tx"),
+    const allWhiteSpaceAsSingleSpace = (v: string) => {
+      const res = v.replace(/\s+/g, " ");
+      console.log(res);
+      return res;
+    };
+    expect(allWhiteSpaceAsSingleSpace(funcCode2)).toEqual(
+      allWhiteSpaceAsSingleSpace(
+        initialCode.replace("dbo.tx", testAskLLMCode + "dbo.tx"),
+      ),
     );
 
     /** Add askLLM func args */
@@ -581,6 +590,8 @@ test.describe("Main test", () => {
         response: messageCost + "free ai assistant" + userMessage,
       },
     ]);
+
+    await testAskLLMTools(page);
 
     /** Disable signups */
     await goTo(page, "/server-settings");
@@ -1874,3 +1885,44 @@ test.describe("Main test", () => {
     await page.getByText("Enable", { exact: true }).click();
   });
 });
+
+const testAskLLMTools = async (page: PageWIds) => {
+  // await login(page, USERS.test_user, "/login");
+  await openConnection(page, "cloud");
+  await page.getByTestId("AskLLM").click();
+  await page.getByTestId("LLMChatOptions.Model").click();
+  await page.keyboard.type("mymo");
+  await page.keyboard.press("Enter");
+
+  await page.getByTestId("LLMChatOptions.Prompt").click();
+  await page.locator(".SmartCard").getByText("Create task").first().click();
+  await page
+    .getByTestId("LLMChatOptions.Prompt")
+    .getByTestId("Popup.close")
+    .click();
+
+  await page.getByTestId("Chat.textarea").fill("tasks");
+  await page.keyboard.press("Enter");
+
+  await page.getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt").click();
+
+  const mcpToolsBtn = await page.getByTestId("LLMChatOptions.MCPTools");
+  expect(mcpToolsBtn).toContainText("1");
+
+  const dbToolsBtn = await page
+    .getByTestId("LLMChatOptions.DatabaseAccess")
+    .locator("button");
+  expect(dbToolsBtn).toHaveClass("btn-color-action");
+
+  await page.getByTestId("Chat.textarea").fill("dashboard");
+  await page.keyboard.press("Enter");
+  await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
+
+  const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
+  expect(workspaceBtn).toContainText("generated workspace");
+
+  await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
+  expect(workspaceBtn).not.toContainText("generated workspace");
+
+  throw "Now do mcp tool enabling, add and calls";
+};

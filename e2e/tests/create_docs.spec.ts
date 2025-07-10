@@ -15,6 +15,7 @@ import {
   login,
   MINUTE,
   monacoType,
+  openConnection,
   PageWIds,
   runDbsSql,
   USERS,
@@ -67,7 +68,7 @@ test.describe("Create docs and screenshots", () => {
 
   const workers = 2;
   for (let i = 0; i < workers; i++) {
-    test(`Test command search ${i}`, async ({ page: p }) => {
+    test(`Test command search worker: ${i}`, async ({ page: p }) => {
       const page = p as PageWIds;
       if (IS_PIPELINE) {
         // Takes too long. Run locally only
@@ -361,24 +362,6 @@ test.describe("Create docs and screenshots", () => {
     }
   });
 });
-
-const openConnection = async (
-  page: PageWIds,
-  connectionName:
-    | "sample_database"
-    | "cloud"
-    | "crypto"
-    | "food_delivery"
-    | "Prostgles UI state"
-    | "prostgles_video_demo"
-    | "Prostgles UI automated tests database",
-) => {
-  await goTo(page, "/connections");
-  await page
-    .locator(getDataKeyElemSelector(connectionName))
-    .getByTestId("Connection.openConnection")
-    .click();
-};
 
 const prepare = async (page: PageWIds) => {
   await runDbsSql(

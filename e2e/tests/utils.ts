@@ -1,6 +1,6 @@
 import { Locator, Page as PG, expect } from "@playwright/test";
 import * as path from "path";
-import { Command } from "./Testing";
+import { Command, getDataKeyElemSelector } from "./Testing";
 
 type FuncNamesReturningLocatorObj = {
   [prop in keyof PG as PG[prop] extends (...args: any) => any ?
@@ -57,7 +57,7 @@ export const getMonacoEditorBySelector = async (
 ) => {
   const monacoEditor = await page
     .locator(`${parentSelector} .monaco-editor`)
-    .nth(0);
+    .first();
   return monacoEditor;
 };
 
@@ -66,10 +66,16 @@ export const getMonacoValue = async (
   parentSelector: string,
 ) => {
   await page.keyboard.press("Control+A");
-  const text = await page.innerText(
-    `${parentSelector} .monaco-editor .lines-content`,
-  );
-  const normalizedText = text.replace(/\u00A0/g, " "); // Replace char 160 with char 32
+  await page.waitForTimeout(1500);
+  const monacoNode = await getMonacoEditorBySelector(page, parentSelector);
+  const text = await monacoNode.evaluate((node) => {
+    //@ts-ignore
+    return node.parentElement!._getValue() as string;
+  });
+  // const text = await page.evaluate(
+  //   () => window.getSelection()?.toString() ?? "",
+  // );
+  const normalizedText = text?.replace(/\u00A0/g, " "); // Replace char 160 with char 32
   return normalizedText;
 };
 
@@ -820,4 +826,22 @@ export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
   }
   await page.getByTestId("Popup.close").click();
   return result;
+};
+
+export const openConnection = async (
+  page: PageWIds,
+  connectionName:
+    | "sample_database"
+    | "cloud"
+    | "crypto"
+    | "food_delivery"
+    | "Prostgles UI state"
+    | "prostgles_video_demo"
+    | "Prostgles UI automated tests database",
+) => {
+  await goTo(page, "/connections");
+  await page
+    .locator(getDataKeyElemSelector(connectionName))
+    .getByTestId("Connection.openConnection")
+    .click();
 };

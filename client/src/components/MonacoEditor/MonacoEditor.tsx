@@ -11,6 +11,7 @@ import {
   CUSTOM_MONACO_SQL_THEMES,
   defineCustomSQLTheme,
 } from "../../dashboard/SQLEditor/defineCustomSQLTheme";
+import { isPlaywrightTest } from "../../i18n/i18nUtils";
 
 export type MonacoEditorProps = {
   language: string;
@@ -127,7 +128,12 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   useEffect(() => {
     if (!editor) return;
-
+    if (isPlaywrightTest && container.current) {
+      //@ts-ignore
+      container.current._getValue = () => {
+        return editor.getValue();
+      };
+    }
     /** This check necessary to ensure getTokens returns correct data */
     if (loadedLanguage) {
       onMount?.(editor);

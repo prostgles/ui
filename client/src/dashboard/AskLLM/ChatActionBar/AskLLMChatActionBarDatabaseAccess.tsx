@@ -27,7 +27,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
   const allowedFunctions = llm_chats_allowed_functions?.length;
   const dataPermission = activeChat.db_data_permissions;
   const tablePermissionInfo =
-    dataPermission?.type === "Custom" ?
+    dataPermission?.Mode === "Custom" ?
       dataPermission.tables.map(
         (t) =>
           `${t.tableName}: ${["select", "update", "insert", "delete"].filter((v) => t[v])}`,
@@ -45,13 +45,13 @@ export const AskLLMChatActionBarDatabaseAccess = (
           {...btnStyleProps}
           title={[
             `Database access for this chat:\n`,
-            `Schema read access: ${activeChat.db_schema_permissions?.type}`,
-            `Data: \n ${tablePermissionInfo || dataPermission?.type || "None"}`,
+            `Schema read access: ${activeChat.db_schema_permissions?.type ?? "None"}`,
+            `Data: \n ${(tablePermissionInfo || dataPermission?.Mode) ?? "None"}`,
             allowedFunctions ? `Allowed Functions: ${allowedFunctions}` : "",
           ].join("\n")}
           color={
             (
-              (dataPermission && dataPermission.type !== "None") ||
+              (dataPermission && dataPermission.Mode !== "None") ||
               llm_chats_allowed_functions?.length
             ) ?
               "action"

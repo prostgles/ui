@@ -76,6 +76,7 @@ export const LoadSuggestedDashboards = ({ workspaceId, message }: P) => {
           color="action"
           iconPath={mdiOpenInNew}
           variant="filled"
+          data-command="AskLLMChat.LoadSuggestedDashboards"
           disabledInfo={
             !json.prostglesWorkspaces.length ?
               "No workspaces found in the code block."
@@ -112,6 +113,7 @@ export const LoadSuggestedDashboards = ({ workspaceId, message }: P) => {
           variant="faded"
           color="danger"
           title="Delete already loaded workspaces"
+          data-command="AskLLMChat.UnloadSuggestedDashboards"
           onClickPromise={async () => {
             await dbs.workspaces.update(
               { id: { $in: alreadyLoadedWorkspaceIds } },
