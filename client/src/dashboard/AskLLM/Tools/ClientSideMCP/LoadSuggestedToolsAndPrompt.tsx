@@ -187,9 +187,16 @@ export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
             },
           );
 
-          addAlert(
-            `${data.suggested_mcp_tool_names.length} MCP tools and ${data.suggested_database_tool_names} DB Functions added to this chat`,
-          );
+          addAlert({
+            children: (
+              <div>
+                {data.suggested_mcp_tool_names.length}{" "}
+                <strong>MCP tools</strong> and{" "}
+                {data.suggested_database_tool_names.length}{" "}
+                <strong>DB Functions</strong> added to this chat
+              </div>
+            ),
+          });
         }}
       >
         Load task chat

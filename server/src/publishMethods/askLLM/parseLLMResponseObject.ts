@@ -94,24 +94,23 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       .flatMap((c) => {
         const toolCalls =
           c.message.tool_calls?.map((toolCall) => {
-            let input: AnyObject = {};
             if (toolCall.function.arguments) {
               try {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                input = JSON.parse(toolCall.function.arguments);
+                return {
+                  type: "tool_use",
+                  id: toolCall.id,
+                  name: toolCall.function.name,
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  input: JSON.parse(toolCall.function.arguments),
+                } satisfies LLMMessageWithRole["content"][number];
               } catch (_e) {
-                input = {
-                  parsingError: "Could not parse tool arguments as JSON",
-                  toolArguments: toolCall.function.arguments,
-                };
+                const error = new Error(
+                  `Could not parse tool arguments as JSON: ${toolCall.function.arguments}`,
+                );
+                error.name = "ToolArgumentsParsingError";
+                throw error;
               }
             }
-            return {
-              type: "tool_use",
-              id: toolCall.id,
-              name: toolCall.function.name,
-              input,
-            } satisfies LLMMessageWithRole["content"][number];
           }) ?? [];
         return [
           ...toolCalls,

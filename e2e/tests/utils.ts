@@ -801,8 +801,14 @@ export const enableAskLLM = async (
   await page.getByTestId("Popup.close").click();
 };
 
-export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
-  await page.getByTestId("AskLLM").click();
+export const getLLMResponses = async (
+  page: PageWIds,
+  questions: string[],
+  openWindow = true,
+) => {
+  if (openWindow) {
+    await page.getByTestId("AskLLM").click();
+  }
   await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
   await page.waitForTimeout(2e3);
   const result: {
@@ -824,7 +830,9 @@ export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
       isOk: !!response?.includes("Mocked response"),
     });
   }
-  await page.getByTestId("Popup.close").click();
+  if (openWindow) {
+    await page.getByTestId("Popup.close").click();
+  }
   return result;
 };
 
@@ -844,4 +852,16 @@ export const openConnection = async (
     .locator(getDataKeyElemSelector(connectionName))
     .getByTestId("Connection.openConnection")
     .click();
+  await page.waitForTimeout(1000);
+};
+
+export const loginWhenSignupIsEnabled = async (page: PageWIds) => {
+  await goTo(page, "/login");
+  await page.locator("#username").fill(USERS.test_user);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.locator("#password").waitFor({ state: "visible" });
+  await page.locator("#password").fill(USERS.test_user);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+  await page.waitForTimeout(500);
 };

@@ -140,6 +140,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           label: "Deny",
           color: "danger",
           variant: "faded",
+          "data-command": "AskLLMToolApprover.Deny",
           onClick: () => {
             mustApprove.onResponse("deny");
             setMustApprove(undefined);
@@ -150,6 +151,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           label: "Allow once",
           color: "action",
           variant: "filled",
+          "data-command": "AskLLMToolApprover.AllowOnce",
           onClick: () => {
             mustApprove.onResponse("once");
             setMustApprove(undefined);
@@ -159,6 +161,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           label: "Allow always",
           color: "action",
           variant: "filled",
+          "data-command": "AskLLMToolApprover.AllowAlways",
           onClick: () => {
             mustApprove.onResponse("for-chat");
             setMustApprove(undefined);
