@@ -76,3 +76,33 @@ export const LLM_PROMPT_VARIABLES = {
   DASHBOARD_TYPES: "${dashboardTypes}",
   TODAY: "${today}",
 } as const;
+
+export const reachedMaximumNumberOfConsecutiveToolRequests = (
+  messages: DBSSchema["llm_messages"][],
+  limit: number,
+  onlyFailed = false,
+): boolean => {
+  const count =
+    messages
+      .slice()
+      .reverse()
+      .findIndex((m, i, arr) => {
+        return !(
+          isAssistantMessageRequestingToolUse(m) &&
+          (!onlyFailed ||
+            arr[i + 1]?.message.some(
+              (m) => m.type === "tool_result" && m.is_error,
+            )) &&
+          isAssistantMessageRequestingToolUse(arr[i + 2])
+        );
+      }) + 1;
+  if (count >= limit) return true;
+
+  return false;
+};
+
+export const isAssistantMessageRequestingToolUse = (
+  message: DBSSchema["llm_messages"] | undefined,
+): message is DBSSchema["llm_messages"] => {
+  return Boolean(message && getLLMMessageToolUse(message).length);
+};

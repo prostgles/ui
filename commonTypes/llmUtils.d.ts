@@ -39,4 +39,52 @@ export declare const LLM_PROMPT_VARIABLES: {
     readonly DASHBOARD_TYPES: "${dashboardTypes}";
     readonly TODAY: "${today}";
 };
+export declare const reachedMaximumNumberOfConsecutiveToolRequests: (messages: DBSSchema["llm_messages"][], limit: number) => boolean;
+export declare const isAssistantMessageRequestingToolUse: (message: DBSSchema["llm_messages"] | undefined) => message is Required<{
+    chat_id: number;
+    cost?: string | undefined;
+    created?: string | null | undefined;
+    id?: string | undefined;
+    llm_model_id?: number | null | undefined;
+    message: ({
+        type: "text";
+        text: string;
+        reasoning?: string | undefined;
+    } | {
+        type: "text" | "image" | "audio" | "video" | "application";
+        source: {
+            type: "base64";
+            media_type: string;
+            data: string;
+        };
+    } | {
+        type: "tool_result";
+        tool_use_id: string;
+        tool_name: string;
+        content: string | ({
+            type: "text";
+            text: string;
+        } | {
+            type: "image" | "audio";
+            mimeType: string;
+            data: string;
+        } | {
+            type: "resource";
+            resource: {
+                uri: string;
+                mimeType?: string | undefined;
+                text?: string | undefined;
+                blob?: string | undefined;
+            };
+        })[];
+        is_error?: boolean | undefined;
+    } | {
+        type: "tool_use";
+        id: string;
+        name: string;
+        input: any;
+    })[];
+    meta?: any;
+    user_id?: string | null | undefined;
+}>;
 export {};

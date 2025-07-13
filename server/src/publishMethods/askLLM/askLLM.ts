@@ -6,6 +6,7 @@ import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import {
   getLLMMessageText,
   LLM_PROMPT_VARIABLES,
+  reachedMaximumNumberOfConsecutiveToolRequests,
 } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { sliceText } from "../../../../commonTypes/utils";
@@ -131,7 +132,7 @@ export const askLLM = async (args: AskLLMArgs) => {
         {
           name:
             isOnlyImage ? "[Attached image]" : (
-              sliceText(questionText, 25)?.replaceAll("\n", " ")
+              sliceText(questionText, 25).replaceAll("\n", " ")
             ),
         },
       );
@@ -288,13 +289,21 @@ export const askLLM = async (args: AskLLMArgs) => {
       },
     );
 
-    await runApprovedTools(
-      args,
-      chat,
-      llmResponseMessage,
-      lastMessage?.message,
-      toolsWithInfo,
-    );
+    const maxToolCallFails = chat.maximum_consecutive_tool_fails;
+    if (
+      maxToolCallFails &&
+      reachedMaximumNumberOfConsecutiveToolRequests(pastMessages, 5, true)
+    ) {
+      throw `Maximum number (${maxToolCallFails}) of failed consecutive tool requests reached`;
+    } else {
+      await runApprovedTools(
+        args,
+        chat,
+        llmResponseMessage,
+        lastMessage?.message,
+        toolsWithInfo,
+      );
+    }
   } catch (err) {
     console.error(err);
     const isAdmin = user.type === "admin";

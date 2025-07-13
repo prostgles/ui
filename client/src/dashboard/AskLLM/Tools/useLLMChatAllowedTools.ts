@@ -164,5 +164,10 @@ export const useLLMChatAllowedTools = ({
 
   return {
     allowedTools,
+    allToolNames: [
+      ...(allFunctions ?? []).map((tool) => tool.name),
+      ...(allMCPTools ?? []).map((tool) => tool.name),
+      ...dbTools.map((tool) => tool.name),
+    ],
   };
 };

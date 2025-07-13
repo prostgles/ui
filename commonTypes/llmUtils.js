@@ -47,3 +47,18 @@ export const LLM_PROMPT_VARIABLES = {
     DASHBOARD_TYPES: "${dashboardTypes}",
     TODAY: "${today}",
 };
+export const reachedMaximumNumberOfConsecutiveToolRequests = (messages, limit) => {
+    const count = messages
+        .slice()
+        .reverse()
+        .findIndex((m, i, arr) => {
+        return !(isAssistantMessageRequestingToolUse(m) &&
+            isAssistantMessageRequestingToolUse(arr[i + 2]));
+    }) + 1;
+    if (count >= limit)
+        return true;
+    return false;
+};
+export const isAssistantMessageRequestingToolUse = (message) => {
+    return Boolean(message && getLLMMessageToolUse(message).length);
+};

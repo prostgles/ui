@@ -54,7 +54,7 @@ export const ViewMoreSmartCardList = ({
           positioning="left"
           clickCatchStyle={{ opacity: 1 }}
           rootStyle={{
-            maxWidth: "min(100vw, 600px)",
+            maxWidth: "min(100vw, 700px)",
           }}
         >
           <SmartCardList

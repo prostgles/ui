@@ -13,12 +13,8 @@ import {
   type ProstglesMcpTool,
 } from "../../../../commonTypes/prostglesMcp";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import {
-  executeSQLToolWithCommit,
-  executeSQLToolWithRollback,
-  getAddTaskTools,
-  suggestDashboardsTool,
-} from "./prostglesMcpTools";
+import { getAddTaskTools, suggestDashboardsTool } from "./prostglesMcpTools";
+import { getEntries } from "../../../../commonTypes/utils";
 
 type Args = {
   isAdmin: boolean;
@@ -168,6 +164,24 @@ export const getLLMTools = async ({
   const toolList = Object.values(tools);
 
   return toolList;
+};
+
+export const getAllToolNames = async (dbs: DBS): Promise<string[]> => {
+  const mcpTools = await dbs.mcp_server_tools.find();
+  const publishedMethods = await dbs.published_methods.find();
+
+  return [
+    ...mcpTools.map((t) => getMCPFullToolName(t.server_name, t.name)),
+    ...publishedMethods.map((t) =>
+      getProstglesMCPFullToolName("prostgles-db-methods", t.name),
+    ),
+    ...getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]).map(
+      ([toolName]) => getProstglesMCPFullToolName("prostgles-db", toolName),
+    ),
+    ...getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]).map(
+      ([toolName]) => getProstglesMCPFullToolName("prostgles-ui", toolName),
+    ),
+  ];
 };
 
 const getMCPServerTools = async (

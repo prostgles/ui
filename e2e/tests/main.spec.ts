@@ -19,6 +19,7 @@ import {
   forEachLocator,
   getDataKey,
   getLLMResponses,
+  getAskLLMLastMessage,
   getMonacoEditorBySelector,
   getMonacoValue,
   getSearchListItem,
@@ -37,11 +38,13 @@ import {
   runDbsSql,
   runSql,
   selectAndInsertFile,
+  sendAskLLMMessage,
   setTableRule,
   setWspColLayout,
   typeConfirmationCode,
   uploadFile,
 } from "./utils";
+import { getDataKeyElemSelector } from "./Testing";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -579,11 +582,14 @@ test.describe("Main test", () => {
     await openConnection(page, "cloud");
 
     /** Delete existing chat during local testing */
-    await page.getByTestId("AskLLM").click();
-    await page.getByTestId("LLMChatOptions.toggle").click();
-    await page.getByTestId("SmartForm.delete").click();
-    await page.getByTestId("SmartForm.delete.confirm").click();
-    await page.waitForTimeout(1e3);
+    const newChat = async () => {
+      await page.getByTestId("AskLLM").click();
+      await page.getByTestId("LLMChatOptions.toggle").click();
+      await page.getByTestId("SmartForm.delete").click();
+      await page.getByTestId("SmartForm.delete.confirm").click();
+      await page.waitForTimeout(1e3);
+    };
+    await newChat();
     await page.getByTestId("Popup.close").click();
 
     const userMessage = "hey";
@@ -610,11 +616,7 @@ test.describe("Main test", () => {
         .click();
     };
     await setPromptByText("Create task");
-    const sendMsg = async (msg: string) => {
-      await page.getByTestId("Chat.textarea").fill(msg);
-      await page.keyboard.press("Enter");
-    };
-    await sendMsg("tasks");
+    await sendAskLLMMessage(page, "tasks");
 
     await page.getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt").click();
     await page.getByText("OK", { exact: true }).click();
@@ -631,7 +633,7 @@ test.describe("Main test", () => {
 
     await setPromptByText("dashboard");
 
-    await sendMsg("dashboards");
+    await sendAskLLMMessage(page, "dashboards");
     await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
 
     const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
@@ -645,15 +647,69 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLM").click();
-    await sendMsg("mcp");
+    await sendAskLLMMessage(page, "mcp");
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    const mcpToolUse = await getLLMResponses(page, ["mcp"], false);
-    expect(mcpToolUse).toEqual([
-      {
-        isOk: true,
-        response: "mcp tool used",
-      },
-    ]);
+    await page.waitForTimeout(2e3);
+    const mcpToolUse = await getAskLLMLastMessage(page);
+    expect(mcpToolUse).toContain("tool result received");
+
+    await page.waitForTimeout(1e3);
+    await sendAskLLMMessage(page, "mcpplaywright");
+    await page.waitForTimeout(2e3);
+    expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Tool name "playwright--browser_navigate" is invalid`,
+    );
+    expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Tool name "playwright--browser_snapshot" is invalid`,
+    );
+    await page.getByTestId("LLMChatOptions.MCPTools").click();
+
+    const toggleBtn = await page
+      .locator(getDataKeyElemSelector("playwright"))
+      .getByTestId("MCPServerFooterActions.enableToggle");
+
+    await toggleBtn.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+    await toggleBtn.click();
+    await page.waitForTimeout(500);
+    await page.getByText("browser_tab_list").waitFor({ state: "visible" }); // wait for tool list to insert
+    await page.getByTestId("Popup.close").last().click();
+
+    await page.waitForTimeout(2e3);
+    await sendAskLLMMessage(page, "mcpplaywright");
+    expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Tool name "playwright--browser_navigate" is not allowed`,
+    );
+    expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Tool name "playwright--browser_snapshot" is not allowed`,
+    );
+    await page.getByTestId("LLMChatOptions.MCPTools").click();
+    await page
+      .getByTestId("LLMChatOptions.MCPTools")
+      .getByText("browser_navigate", { exact: true })
+      .click({ force: true });
+    await page
+      .getByTestId("LLMChatOptions.MCPTools")
+      .getByText("browser_snapshot", { exact: true })
+      .click({ force: true });
+    await page.getByTestId("Popup.close").last().click();
+    await sendAskLLMMessage(page, "mcpplaywright");
+    await page.waitForTimeout(2e3);
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page.waitForTimeout(200);
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page.waitForTimeout(1e3);
+    const lastToolUseBtn = await page
+      .getByTestId("Chat.messageList")
+      .getByText("browser_snapshot")
+      .last();
+    await lastToolUseBtn.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1e3);
+    await lastToolUseBtn.click();
+    await page.waitForTimeout(1e3);
+    expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Page Title: Prostgles UI`,
+    );
   });
 
   test("Disable signups", async ({ page: p }) => {

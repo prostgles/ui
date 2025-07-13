@@ -15,7 +15,9 @@ import { MediaViewer } from "../../../../components/MediaViewer";
 import { LoadSuggestedDashboards } from "../../Tools/ClientSideMCP/LoadSuggestedDashboards";
 import { LoadSuggestedToolsAndPrompt } from "../../Tools/ClientSideMCP/LoadSuggestedToolsAndPrompt";
 import { getProstglesMCPFullToolName } from "../../../../../../commonTypes/prostglesMcp";
-import { ErrorTrap } from "../../../../components/ErrorComponent";
+import ErrorComponent, {
+  ErrorTrap,
+} from "../../../../components/ErrorComponent";
 
 type ToolUseMessageProps = {
   messages: DBSSchema["llm_messages"][];
@@ -72,13 +74,24 @@ export const ToolUseChatMessage = ({
     : m.name === uiToolNames.taskTools ? "taskTools"
     : undefined;
 
+  const toolCallError =
+    toolUseResult?.toolUseResultMessage.is_error ?
+      toolUseResult.toolUseResultMessage.content
+    : undefined;
   return (
     <ErrorTrap>
       <FlexCol className={"ToolUseMessage gap-p5 "}>
         <Btn
           iconPath={mdiTools}
           style={open ? { width: "100%" } : {}}
-          onClick={() => setOpen(!open)}
+          onClick={({ currentTarget }) => {
+            setOpen(!open);
+            if (!open) {
+              setTimeout(() => {
+                currentTarget.parentElement?.scrollIntoView();
+              }, 100); // wait for the state to update
+            }
+          }}
           variant="faded"
           size="small"
           color={
@@ -104,6 +117,7 @@ export const ToolUseChatMessage = ({
             )
           }
         />
+        {toolCallError && <ErrorComponent error={toolCallError} />}
         {open && (
           <>
             {m.input && !isEmpty(m.input) && (
@@ -119,7 +133,7 @@ export const ToolUseChatMessage = ({
                 loadedSuggestions={undefined}
               />
             )}
-            {toolUseResult && (
+            {!toolCallError && toolUseResult && (
               <ContentRender
                 toolUseResult={toolUseResult}
                 sqlHandler={sqlHandler}

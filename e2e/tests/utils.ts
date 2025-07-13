@@ -800,7 +800,19 @@ export const enableAskLLM = async (
   }
   await page.getByTestId("Popup.close").click();
 };
+export const getAskLLMLastMessage = async (page: PageWIds) => {
+  const response = await page
+    .getByTestId("AskLLM.popup")
+    .locator(".message.incoming")
+    .last()
+    .textContent();
+  return response;
+};
 
+export const sendAskLLMMessage = async (page: PageWIds, msg: string) => {
+  await page.getByTestId("AskLLM.popup").getByTestId("Chat.textarea").fill(msg);
+  await page.keyboard.press("Enter");
+};
 export const getLLMResponses = async (
   page: PageWIds,
   questions: string[],
@@ -817,14 +829,9 @@ export const getLLMResponses = async (
   }[] = [];
 
   for (const question of questions) {
-    await page.getByTestId("AskLLM.popup").locator("textarea").fill(question);
-    await page.getByTestId("AskLLM.popup").getByTestId("Chat.send").click();
+    await sendAskLLMMessage(page, question);
     await page.waitForTimeout(2e3);
-    const response = await page
-      .getByTestId("AskLLM.popup")
-      .locator(".message.incoming")
-      .last()
-      .textContent();
+    const response = await getAskLLMLastMessage(page);
     result.push({
       response,
       isOk: !!response?.includes("Mocked response"),

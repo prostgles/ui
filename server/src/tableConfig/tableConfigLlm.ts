@@ -384,6 +384,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           ],
         },
       },
+      maximum_consecutive_tool_fails: {
+        sqlDefinition: `INTEGER NOT NULL DEFAULT 5`,
+        info: {
+          hint: "Maximum number of consecutive tool call fails before the chat stops automatically approving tool calls. Useful to prevent infinite loops",
+        },
+      },
       ...extraRequestData,
     },
     indexes: {

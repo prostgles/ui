@@ -92,7 +92,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           typeof errorText === "string" ? errorText : JSON.stringify(errorText);
 
         addAlert(
-          "Error when when sending AI Assistant query" + errorTextMessage,
+          "Error when when sending AI Assistant query: " + errorTextMessage,
         );
       });
     },

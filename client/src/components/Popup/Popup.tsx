@@ -1,18 +1,20 @@
-import type { ReactChild } from "react";
 import React from "react";
 import ReactDOM from "react-dom";
 import "./Popup.css";
-
+import { pickKeys } from "prostgles-types";
 import type { Command, TestSelectors } from "../../Testing";
 import RTComp, { type DeltaOf } from "../../dashboard/RTComp";
 import { ClickCatchOverlay } from "../ClickCatchOverlay";
 import ErrorComponent, { ErrorTrap } from "../ErrorComponent";
 import { FlexRow, classOverride } from "../Flex";
-import { FooterButtons, type FooterButton } from "./FooterButtons";
+import {
+  FooterButtons,
+  type FooterButton,
+  type FooterButtonsProps,
+} from "./FooterButtons";
 import { PopupHeader } from "./PopupHeader";
 import { getPopupStyle } from "./getPopupStyle";
 import { popupCheckPosition } from "./popupCheckPosition";
-import { debounce } from "../../dashboard/Map/DeckGLWrapped";
 
 let modalRoot;
 export const getModalRoot = (forPointer = false) => {
@@ -387,7 +389,15 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
               </div>
             )}
           </div>
-          <FooterButtons {...this.props} />
+          <FooterButtons
+            {...pickKeys(this.props, [
+              "footerButtons",
+              "onClose",
+              "footer",
+              "onClose",
+            ] satisfies (keyof FooterButtonsProps)[])}
+            data-command="Popup.footer"
+          />
         </div>
       </>
     );
@@ -396,16 +406,23 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
   }
 }
 
-type FooterProps = {
+type FooterProps = TestSelectors & {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   error?: any;
 };
-export const Footer = ({ children, className, style, error }: FooterProps) => {
+export const Footer = ({
+  children,
+  className,
+  style,
+  error,
+  ...testSelectors
+}: FooterProps) => {
   return (
     <ErrorTrap>
       <footer
+        {...testSelectors}
         style={style}
         className={classOverride(
           "popup-footer bt b-color flex-row-wrap p-1 jc-end " +

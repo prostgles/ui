@@ -32,15 +32,16 @@ export const AskLLMChatOptions = (props: LLMChatOptionsProps) => {
         model: 1,
         db_schema_permissions: 1,
         db_data_permissions: 1,
+        maximum_consecutive_tool_fails: 1,
         extra_body: 1,
         extra_headers: 1,
         created: 1,
         id: 1,
-      } as const,
+      } as const satisfies Partial<Record<keyof DBSSchema["llm_chats"], 1>>,
       methods: {},
       rowFilter: [{ fieldName: "id", value: activeChatId }],
       jsonbSchemaWithControls: {
-        noLabels: true,
+        // noLabels: true,
       },
     } satisfies Pick<
       SmartFormProps,
@@ -59,7 +60,7 @@ export const AskLLMChatOptions = (props: LLMChatOptionsProps) => {
       />
       {anchorEl && (
         <Popup
-          contentStyle={{ padding: 0, maxWidth: "min(100vw, 600px)" }}
+          contentStyle={{ padding: 0, maxWidth: "min(100vw, 700px)" }}
           onClickClose={false}
           onClose={() => setAnchorEl(undefined)}
           anchorEl={chatRootDiv}

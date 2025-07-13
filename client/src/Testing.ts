@@ -246,6 +246,7 @@ export const COMMANDS = {
   "Popup.header": "",
   "Popup.close": "",
   "Popup.content": "",
+  "Popup.footer": "",
   "Popup.toggleFullscreen": "",
   "LinkedColumn.ColumnListMenu": "",
   "AddChartMenu.Map": "",
@@ -436,6 +437,8 @@ export const COMMANDS = {
   CommandSearch: "",
   "Chat.attachedFiles": "",
   "Window.W_QuickMenu.addCrossFilteredTable": "Add cross-filtered table",
+  Alert: "Alert popup",
+  ErrorComponent: "",
 } as const satisfies Record<
   string,
   | string

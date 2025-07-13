@@ -1,4 +1,4 @@
-import { mdiAlertCircleOutline, mdiAlertOutline, mdiClose } from "@mdi/js";
+import { mdiAlertOutline, mdiClose } from "@mdi/js";
 import type { ReactNode } from "react";
 import React from "react";
 import { isObject } from "../../../commonTypes/publishUtils";
@@ -77,6 +77,7 @@ export default class ErrorComponent extends React.Component<P> {
           `ErrorComponent relative p-p5 gap-1 ai-center text-danger p-1 o-auto min-w-0 min-h-0 o-auto variant:${variant} ${colorClass} ${pre ? " ws-pre " : ""}`,
           className,
         )}
+        data-command="ErrorComponent"
         {...testSelectors}
         style={{
           whiteSpace: "pre-line",

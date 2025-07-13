@@ -14,11 +14,12 @@ import {
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
-import type { getLLMTools, MCPToolSchemaWithApproveInfo } from "../getLLMTools";
+import {
+  getAllToolNames,
+  type getLLMTools,
+  type MCPToolSchemaWithApproveInfo,
+} from "../getLLMTools";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
-import { get } from "node:http";
-import { getTableConfig } from "../../../ConnectionManager/connectionManagerUtils";
-import { getAddTaskTools } from "../prostglesMcpTools";
 
 type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
@@ -116,8 +117,10 @@ export const runApprovedTools = async (
       };
       const tool = toolUseRequest.tool;
       if (!tool) {
+        const allToolNames = await getAllToolNames(dbs);
+        const matchedTool = allToolNames.includes(toolUseRequest.name);
         return asResponse(
-          `Tool use request for "${toolUseRequest.name}" but tool name is invalid or not allowed`,
+          `Tool name "${toolUseRequest.name}" ${matchedTool ? "is not allowed" : "is invalid"}`,
           true,
         );
       }
@@ -140,7 +143,7 @@ export const runApprovedTools = async (
           );
           if (validation.error !== undefined) {
             return asResponse(
-              `Tool use request for "${toolUseRequest.name}" but input is invalid: ${validation.error}`,
+              `Input validation error: ${validation.error}`,
               true,
             );
           }
@@ -151,7 +154,7 @@ export const runApprovedTools = async (
         const toolNameParts = getMCPToolNameParts(toolUseRequest.name);
         if (!toolNameParts) {
           return asResponse(
-            `Tool use request for "${toolUseRequest.name}" but tool name is invalid`,
+            `Tool name "${toolUseRequest.name}" is invalid`,
             true,
           );
         }
@@ -197,7 +200,7 @@ export const runApprovedTools = async (
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (tool.type !== "prostgles-db") {
         return asResponse(
-          `Tool use request for "${toolUseRequest.name}" but tool name is invalid`,
+          `Tool name "${toolUseRequest.name}" is invalid`,
           true,
         );
       }
@@ -243,9 +246,7 @@ export const runApprovedTools = async (
           "",
         );
         if (validatedInput.error !== undefined) {
-          throw new Error(
-            `Tool use request for "${toolUseRequest.name}" but input is invalid: ${validatedInput.error}`,
-          );
+          throw new Error(`Input validation error: ${validatedInput.error}`);
         }
         const { data: validatedData } = validatedInput;
 

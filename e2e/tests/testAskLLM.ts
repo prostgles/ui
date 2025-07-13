@@ -45,32 +45,54 @@ const dashboardToolUse = {
   },
 };
 
-const mcpToolUseArguments = stringify({
-  url: "https://localhost:3004",
-});
 const mcpToolUse = {
   id: "mcp-tool-use",
   type: "function",
   function: {
     name: "fetch--fetch",
-    arguments: mcpToolUseArguments,
+    arguments: stringify({
+      url: "http://localhost:3004/login",
+    }),
   },
 };
+const playwrightMCPToolUse = [
+  {
+    id: "mcp-tool-use-playwright1",
+    type: "function",
+    function: {
+      name: "playwright--browser_navigate",
+      arguments: stringify({
+        url: "http://localhost:3004/login",
+      }),
+    },
+  },
+  {
+    id: "mcp-tool-use-playwright2",
+    type: "function",
+    function: {
+      name: "playwright--browser_snapshot",
+      arguments: stringify({
+        url: "http://localhost:3004/login",
+      }),
+    },
+  },
+];
 
 export const testAskLLMCode = `
 const msg = args.messages.at(-1)?.content[0]?.text;
 
-const toolCall = ({
-  tasks: ${stringify(taskToolUse)},
-  dashboards: ${stringify(dashboardToolUse)},
-  mcp: ${stringify(mcpToolUse)},
-})[msg];
+const tool_calls = ({
+  tasks: [${stringify(taskToolUse)}],
+  dashboards: [${stringify(dashboardToolUse)}],
+  mcp: [${stringify(mcpToolUse)}],
+  mcpplaywright: ${stringify(playwrightMCPToolUse)},
+})[msg]?.map(tc => ({ ...tc, id: tc.id + Math.random() + Date.now() })); 
 
 const choicesItem = { 
   type: "text", 
   message: {
-    content: "free ai assistant" + msg,
-    tool_calls: toolCall? [toolCall] : undefined,
+    content: "free ai assistant" + (msg ?? " tool result received"),
+    tool_calls 
   }  
 };
 

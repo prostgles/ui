@@ -518,7 +518,7 @@ export default class FormField extends React.Component<
         clearButton = (
           <Btn
             data-command="FormField.clear"
-            title={`Set ${JSON.stringify(labelAsString)} to null`}
+            title={`Set to ${optional ? "undefined" : "null"}`}
             style={{
               /** To ensure it's centered with the rest of the content */
               height: "100%",

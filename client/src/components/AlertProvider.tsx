@@ -44,6 +44,7 @@ export const AlertProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
       {alertProps && (
         <Popup
+          data-command="Alert"
           clickCatchStyle={{ opacity: 1 }}
           footerButtons={[
             {
