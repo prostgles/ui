@@ -102,6 +102,7 @@ export const ToolUseChatMessage = ({
               `Tool use result for: ${m.name}`
             : `Awaiting tool result: ${m.name}`
           }
+          data-command="ToolUseMessage.toggle"
           loading={!toolUseResult}
           children={
             uiToolName ? undefined : (

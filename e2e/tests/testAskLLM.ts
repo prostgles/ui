@@ -79,28 +79,36 @@ const playwrightMCPToolUse = [
 ];
 
 export const testAskLLMCode = `
-const msg = args.messages.at(-1)?.content[0]?.text;
+
+const lastMsg = args.messages.at(-1);
+const lastMsgText = lastMsg?.content[0]?.text;
+const failedToolResult = typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch"));
+const msg = failedToolResult ? "mcpfail" : lastMsgText;
 
 const tool_calls = ({
   tasks: [${stringify(taskToolUse)}],
   dashboards: [${stringify(dashboardToolUse)}],
   mcp: [${stringify(mcpToolUse)}],
+  mcpfail: [${stringify({ ...mcpToolUse, function: { ...mcpToolUse.function, name: "fetch--invalidfetch" } })}],
   mcpplaywright: ${stringify(playwrightMCPToolUse)},
-})[msg]?.map(tc => ({ ...tc, id: tc.id + Math.random() + Date.now() })); 
+})[msg]?.map(tc => ({ ...tc, id: [tc.id, tc["function"].name, Math.random(), Date.now()].join("_") })); 
+
 
 const choicesItem = { 
   type: "text", 
   message: {
-    content: "free ai assistant" + (msg ?? " tool result received"),
+    content: "free ai assistant" + (msg ?? " tool result received") + (failedToolResult ? "... let's retry the failed tool" : ""),
     tool_calls 
-  }  
+  }
 };
 
 return { 
-  completion_tokens: 0, 
-  prompt_tokens: 0, 
-  total_tokens: 0, 
   choices: [
     choicesItem
   ],
+  usage: {
+    completion_tokens: msg === "cost"? 1e5 : 0, 
+    prompt_tokens: 0, 
+    total_tokens: 0, 
+  },
 };//`;

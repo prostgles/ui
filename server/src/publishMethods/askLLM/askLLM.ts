@@ -5,6 +5,7 @@ import { type DBS } from "../..";
 import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import {
   getLLMMessageText,
+  isAssistantMessageRequestingToolUse,
   LLM_PROMPT_VARIABLES,
   reachedMaximumNumberOfConsecutiveToolRequests,
 } from "../../../../commonTypes/llmUtils";
@@ -200,7 +201,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       is_loading: new Date(),
     },
   );
-  const aiResponseMessage = await dbs.llm_messages.insert(
+  const aiResponseMessagePlaceholder = await dbs.llm_messages.insert(
     {
       user_id: null,
       chat_id: chatId,
@@ -210,6 +211,16 @@ export const askLLM = async (args: AskLLMArgs) => {
     { returning: "*" },
   );
   try {
+    const { maximum_consecutive_tool_fails, max_total_cost_usd } = chat;
+    if (max_total_cost_usd) {
+      const chatCost = pastMessages.reduce(
+        (acc, m) => acc + parseFloat(m.cost),
+        0,
+      );
+      if (chatCost > parseFloat(max_total_cost_usd)) {
+        throw `Maximum total cost of the chat (${max_total_cost_usd}) reached. Current cost: ${chatCost}`;
+      }
+    }
     const promptWithContext = prompt
       .replaceAll(
         LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME,
@@ -246,7 +257,7 @@ export const askLLM = async (args: AskLLMArgs) => {
 
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const {
-      content: llmResponseMessage,
+      content: aiResponseMessage,
       meta,
       cost,
     } = await fetchLLMResponse({
@@ -281,33 +292,39 @@ export const askLLM = async (args: AskLLMArgs) => {
       ],
     });
     await dbs.llm_messages.update(
-      { id: aiResponseMessage.id },
+      { id: aiResponseMessagePlaceholder.id },
       {
-        message: llmResponseMessage,
+        message: aiResponseMessage,
         meta,
         cost,
       },
     );
 
-    const maxToolCallFails = chat.maximum_consecutive_tool_fails;
     if (
-      maxToolCallFails &&
-      reachedMaximumNumberOfConsecutiveToolRequests(pastMessages, 5, true)
+      maximum_consecutive_tool_fails &&
+      args.type === "new-message" &&
+      isAssistantMessageRequestingToolUse({ message: aiResponseMessage }) &&
+      reachedMaximumNumberOfConsecutiveToolRequests(
+        [...pastMessages, { message: userMessage }],
+        maximum_consecutive_tool_fails,
+        true,
+      )
     ) {
-      throw `Maximum number (${maxToolCallFails}) of failed consecutive tool requests reached`;
-    } else {
-      await runApprovedTools(
-        args,
-        chat,
-        llmResponseMessage,
-        lastMessage?.message,
-        toolsWithInfo,
-      );
+      throw `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`;
     }
+
+    await runApprovedTools(
+      args,
+      chat,
+      aiResponseMessage,
+      lastMessage?.message,
+      toolsWithInfo,
+    );
   } catch (err) {
     console.error(err);
     const isAdmin = user.type === "admin";
     const errorObjOrString = getSerialisableError(err);
+    const errorIsString = typeof errorObjOrString === "string";
     const errorTextOrEmpty =
       isObject(errorObjOrString) ?
         JSON.stringify(errorObjOrString, null, 2)
@@ -315,10 +332,10 @@ export const askLLM = async (args: AskLLMArgs) => {
     const errorText = isAdmin ? `${errorTextOrEmpty}` : "";
     const messageText = [
       "🔴 Something went wrong",
-      "```json\n" + errorText + "\n```",
+      errorIsString ? errorText : ["```json", errorText, "```"].join("\n"),
     ].join("\n");
     await dbs.llm_messages.update(
-      { id: aiResponseMessage.id },
+      { id: aiResponseMessagePlaceholder.id },
       {
         message: [{ type: "text", text: messageText }],
       },

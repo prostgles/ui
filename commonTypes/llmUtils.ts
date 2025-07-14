@@ -78,31 +78,35 @@ export const LLM_PROMPT_VARIABLES = {
 } as const;
 
 export const reachedMaximumNumberOfConsecutiveToolRequests = (
-  messages: DBSSchema["llm_messages"][],
+  messages: Pick<DBSSchema["llm_messages"], "message">[],
   limit: number,
   onlyFailed = false,
 ): boolean => {
-  const count =
-    messages
-      .slice()
-      .reverse()
-      .findIndex((m, i, arr) => {
-        return !(
-          isAssistantMessageRequestingToolUse(m) &&
-          (!onlyFailed ||
-            arr[i + 1]?.message.some(
-              (m) => m.type === "tool_result" && m.is_error,
-            )) &&
-          isAssistantMessageRequestingToolUse(arr[i + 2])
-        );
-      }) + 1;
+  const reversedMessages = messages.slice().reverse();
+  let count = 0;
+  for (let i = 0; i < reversedMessages.length; i = i + 2) {
+    const message = reversedMessages[i];
+    const nextMessage = reversedMessages[i + 1];
+    if (!message || !nextMessage) {
+      break; // No more pairs to check
+    }
+    const isToolUseResult = message.message.some(
+      (m) => m.type === "tool_result" && (!onlyFailed || m.is_error),
+    );
+    const isToolUseRequest = isAssistantMessageRequestingToolUse(nextMessage);
+    if (!isToolUseResult || !isToolUseRequest) {
+      break;
+    }
+
+    count++;
+  }
   if (count >= limit) return true;
 
   return false;
 };
 
 export const isAssistantMessageRequestingToolUse = (
-  message: DBSSchema["llm_messages"] | undefined,
+  message: Pick<DBSSchema["llm_messages"], "message"> | undefined,
 ): message is DBSSchema["llm_messages"] => {
   return Boolean(message && getLLMMessageToolUse(message).length);
 };

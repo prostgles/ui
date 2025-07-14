@@ -2,6 +2,7 @@ import { chromium, expect, test } from "@playwright/test";
 import { authenticator } from "otplib";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { testAskLLMCode } from "./testAskLLM";
+import { getDataKeyElemSelector } from "./Testing";
 import {
   PageWIds,
   TEST_DB_NAME,
@@ -16,10 +17,11 @@ import {
   enableAskLLM,
   fileName,
   fillLoginFormAndSubmit,
+  fillSmartForm,
   forEachLocator,
+  getAskLLMLastMessage,
   getDataKey,
   getLLMResponses,
-  getAskLLMLastMessage,
   getMonacoEditorBySelector,
   getMonacoValue,
   getSearchListItem,
@@ -44,7 +46,6 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils";
-import { getDataKeyElemSelector } from "./Testing";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -684,15 +685,19 @@ test.describe("Main test", () => {
       `Tool name "playwright--browser_snapshot" is not allowed`,
     );
     await page.getByTestId("LLMChatOptions.MCPTools").click();
+    await page.waitForTimeout(1000);
     await page
       .getByTestId("LLMChatOptions.MCPTools")
       .getByText("browser_navigate", { exact: true })
       .click({ force: true });
+    await page.waitForTimeout(500);
     await page
       .getByTestId("LLMChatOptions.MCPTools")
       .getByText("browser_snapshot", { exact: true })
       .click({ force: true });
+    await page.waitForTimeout(1000);
     await page.getByTestId("Popup.close").last().click();
+    await page.waitForTimeout(500);
     await sendAskLLMMessage(page, "mcpplaywright");
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
@@ -709,6 +714,33 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     expect(page.getByTestId("Chat.messageList")).toContainText(
       `Page Title: Prostgles UI`,
+    );
+
+    /** Test max consecutive tool call fails */
+    await sendAskLLMMessage(page, "mcpfail");
+    await page.waitForTimeout(2e3);
+    expect(
+      page
+        .getByTestId("Chat.messageList")
+        .getByText(`Tool name "fetch--invalidfetch" is invalid`),
+    ).toHaveCount(5);
+    expect(page.getByTestId("Chat.messageList")).toContainText(
+      `failed consecutive tool requests reached`,
+    );
+
+    /** Test max cost */
+    await page.getByTestId("LLMChatOptions.toggle").click();
+    const maxCost = 5;
+    const costPerMsg = 1.5;
+    await fillSmartForm(page, "llm_chats", {
+      max_total_cost_usd: maxCost.toString(),
+    });
+    await page.getByTestId("Popup.close").last().click();
+    for (let step = 1; step <= Math.ceil(maxCost / costPerMsg); step++) {
+      await sendAskLLMMessage(page, "cost");
+    }
+    expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Maximum number (5) of failed consecutive tool requests reached`,
     );
   });
 

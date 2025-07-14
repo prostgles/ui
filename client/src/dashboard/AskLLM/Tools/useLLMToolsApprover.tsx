@@ -1,9 +1,8 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import React, { useRef } from "react";
+import { useRef } from "react";
 import {
   getLLMMessageToolUse,
   isAssistantMessageRequestingToolUse,
-  reachedMaximumNumberOfConsecutiveToolRequests,
   type LLMMessage,
 } from "../../../../../commonTypes/llmUtils";
 import { useAlert } from "../../../components/AlertProvider";

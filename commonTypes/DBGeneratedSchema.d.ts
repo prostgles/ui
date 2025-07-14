@@ -323,6 +323,7 @@ export type DBGeneratedSchema = {
       id?: number;
       is_loading?: null | string;
       llm_prompt_id?: null | number;
+      max_total_cost_usd?: string;
       maximum_consecutive_tool_fails?: number;
       model?: null | number;
       name?: string;

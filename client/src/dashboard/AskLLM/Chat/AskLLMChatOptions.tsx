@@ -33,6 +33,7 @@ export const AskLLMChatOptions = (props: LLMChatOptionsProps) => {
         db_schema_permissions: 1,
         db_data_permissions: 1,
         maximum_consecutive_tool_fails: 1,
+        max_total_cost_usd: 1,
         extra_body: 1,
         extra_headers: 1,
         created: 1,

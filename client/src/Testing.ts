@@ -439,6 +439,7 @@ export const COMMANDS = {
   "Window.W_QuickMenu.addCrossFilteredTable": "Add cross-filtered table",
   Alert: "Alert popup",
   ErrorComponent: "",
+  "ToolUseMessage.toggle": "",
 } as const satisfies Record<
   string,
   | string

@@ -390,6 +390,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           hint: "Maximum number of consecutive tool call fails before the chat stops automatically approving tool calls. Useful to prevent infinite loops",
         },
       },
+      max_total_cost_usd: {
+        sqlDefinition: `NUMERIC NOT NULL DEFAULT 0`,
+        info: {
+          hint: "Maximum total cost of the chat in USD. If set to 0 then no limit is applied",
+        },
+      },
       ...extraRequestData,
     },
     indexes: {

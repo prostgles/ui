@@ -147,7 +147,7 @@ export const runSql = async (page: PageWIds, query: string) => {
   await page.waitForTimeout(1e3);
 };
 
-export const fillSmartFormAndInsert = async (
+export const fillSmartForm = async (
   page: PageWIds,
   tableName: string,
   values: Record<string, string | Record<string, any> | Record<string, any>[]>,
@@ -206,9 +206,18 @@ export const fillSmartFormAndInsert = async (
       await fillSmartFormAndInsert(page, nestedTableName, valueOrRowOrRows);
     }
   }
+
+  return page.locator(smartFormLocator);
+};
+
+export const fillSmartFormAndInsert = async (
+  page: PageWIds,
+  tableName: string,
+  values: Record<string, string | Record<string, any> | Record<string, any>[]>,
+) => {
+  const form = await fillSmartForm(page, tableName, values);
   await page.waitForTimeout(200);
-  // await page.getByRole("button", { name: "Insert", exact: true }).click();
-  await page.locator(smartFormLocator).getByTestId("SmartForm.insert").click();
+  await form.getByTestId("SmartForm.insert").click();
   await page.waitForTimeout(200);
 };
 
@@ -801,11 +810,18 @@ export const enableAskLLM = async (
   await page.getByTestId("Popup.close").click();
 };
 export const getAskLLMLastMessage = async (page: PageWIds) => {
-  const response = await page
+  const lastIncomingMessage = await page
     .getByTestId("AskLLM.popup")
     .locator(".message.incoming")
-    .last()
-    .textContent();
+    .last();
+
+  /** Await any in progress tool calls */
+  const toolCallBtns = await lastIncomingMessage
+    .getByTestId("ToolUseMessage.toggle")
+    .all();
+  await Promise.all(toolCallBtns.map((btn) => btn.click({ trial: true })));
+
+  const response = await lastIncomingMessage.textContent();
   return response;
 };
 
