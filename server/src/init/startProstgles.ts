@@ -2,7 +2,7 @@ import type { Express } from "express";
 import path from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
+import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
@@ -195,30 +195,7 @@ export const startProstgles = async ({
         addLog(e, null);
       },
       tableConfig,
-      tableConfigMigrations: {
-        silentFail: false,
-        version: 5,
-        onMigrate: async ({ db, oldVersion }) => {
-          console.warn("Migrating from version: ", oldVersion);
-          if (oldVersion === 3) {
-            await db.any(` 
-              UPDATE login_attempts 
-                SET ip_address_remote = COALESCE(ip_address_remote, ''),
-                  user_agent = COALESCE(user_agent, ''),
-                  x_real_ip = COALESCE(x_real_ip, '')
-              WHERE ip_address_remote IS NULL 
-              OR user_agent IS NULL 
-              OR x_real_ip IS NULL
-            `);
-          } else if (oldVersion === 4) {
-            await db.any(` 
-              UPDATE llm_messages
-              SET message = jsonb_build_array(jsonb_build_object('type', 'text', 'text', message)) 
-              WHERE message IS NOT NULL
-            `);
-          }
-        },
-      },
+      tableConfigMigrations,
       publishRawSQL: (params) => {
         const { user } = params;
         return Boolean(user && user.type === "admin");
