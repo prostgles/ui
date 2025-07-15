@@ -439,7 +439,10 @@ const timeChartDemo: DemoScript = async ({
   shouldBeEqual(addTChartBtn.disabled, true);
 
   const setLayerFunc = async (func: "$avg" | "$countAll", layerNumber = 0) => {
-    await click("TimeChartLayerOptions.aggFunc", "", { nth: layerNumber });
+    await click("TimeChartLayerOptions.aggFunc", "", {
+      nth: layerNumber,
+      whenReady: true,
+    });
     await click("TimeChartLayerOptions.aggFunc.select");
     await click(
       "TimeChartLayerOptions.aggFunc.select",

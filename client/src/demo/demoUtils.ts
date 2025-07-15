@@ -110,7 +110,7 @@ export const click = async (
   /** In some cases react has since replaced the node content */
   const latestElem = getElement<HTMLButtonElement>(testId, endSelector, opts);
   const finalElem = latestElem ?? elem;
-  if (opts.whenReady !== false) {
+  if (opts.whenReady) {
     await clickWhenReady(finalElem, opts.timeout);
   } else {
     finalElem.click();
