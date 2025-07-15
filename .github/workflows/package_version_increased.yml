@@ -46,7 +46,7 @@ jobs:
         run: |
           pr_version=$(cat pr_version.txt) 
           base_ref="${{ github.base_ref }}"
-          release_file_path="./releases/v${pr_version}"
+          release_file_path="./releases/v${pr_version}.md"
 
           echo "Checking for release file: ${release_file_path}"
 
