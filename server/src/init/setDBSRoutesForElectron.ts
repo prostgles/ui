@@ -167,6 +167,27 @@ const onPostDBSRequestHandler =
         throw startup;
       }
       electronConfig.setCredentials(validatedCreds);
+      /* Update existing state connection info from the database if changed */
+      if (validatedCreds) {
+        void startup.dbs.connections
+          .findOne({
+            db_name: validatedCreds.db_name,
+            db_user: validatedCreds.db_user,
+            db_pass: { $ne: validatedCreds.db_pass },
+          })
+          .then((stateConnection) => {
+            if (!stateConnection) {
+              return;
+            }
+            return startup.dbs.connections.update(
+              { id: stateConnection.id },
+              {
+                db_pass: validatedCreds.db_pass,
+                db_conn: validatedCreds.db_conn,
+              },
+            );
+          });
+      }
       res.json({ msg: "DBS changed. Restart system" });
       return;
     } catch (err) {

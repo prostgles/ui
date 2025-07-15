@@ -105,7 +105,6 @@ type ChartView = {
   yO: number;
 };
 
-// Finish this
 export type CanvasChartViewDataExtent = {
   /**
    * Left most visible X value

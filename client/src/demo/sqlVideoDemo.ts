@@ -7,7 +7,13 @@ import {
 import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { tout } from "../utils";
 import { closeAllViews } from "./dashboardDemo";
-import { click, getElement, movePointer, waitForElement } from "./demoUtils";
+import {
+  click,
+  clickWhenReady,
+  getElement,
+  movePointer,
+  waitForElement,
+} from "./demoUtils";
 
 export { fixIndent };
 const sqlVideoDemo: DemoScript = async (args) => {
@@ -420,7 +426,7 @@ const timeChartDemo: DemoScript = async ({
   const addTChartBtn = await waitForElement<HTMLButtonElement>(
     "AddChartMenu.Timechart",
   );
-  addTChartBtn.click();
+  await clickWhenReady(addTChartBtn);
 
   const layer = await waitForElement<HTMLButtonElement>(
     "TimeChartLayerOptions.aggFunc",

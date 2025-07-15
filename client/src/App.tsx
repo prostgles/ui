@@ -126,15 +126,18 @@ export const App = () => {
       },
     [state, theme, title],
   );
+
+  const { initState } = state.serverState ?? {};
+  const initStateError = initState?.state === "error" ? initState : undefined;
   if (
     state.serverState?.isElectron &&
     ((state.state !== "loading" && state.state !== "ok") ||
-      !state.serverState.electronCredsProvided)
+      !state.serverState.electronCredsProvided ||
+      initStateError)
   ) {
     return <ElectronSetup serverState={state.serverState} />;
   }
 
-  const { initState } = state.serverState ?? {};
   const unknownErrorMessage =
     "Something went wrong with initialising the server. Check console for more details";
   const error =
@@ -152,7 +155,6 @@ export const App = () => {
     );
   }
 
-  const initStateError = initState?.state === "error" ? initState : undefined;
   if (error || !prglState || !serverState || !extraProps) {
     const hint =
       state.dbsClientError ?

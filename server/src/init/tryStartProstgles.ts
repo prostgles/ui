@@ -3,14 +3,13 @@ import { isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
 import { tout } from "..";
 import type { ProstglesState } from "../../../commonTypes/electronInitTypes";
-import { cleanupTestDatabases } from "./cleanupTestDatabases";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
-import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
+import { cleanupTestDatabases } from "./cleanupTestDatabases";
 import { isRetryableError } from "./isRetryableError";
+import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import {
-  getBackupManager,
   startProstgles,
   type InitExtra,
   type ProstglesInitStateWithDBS,
