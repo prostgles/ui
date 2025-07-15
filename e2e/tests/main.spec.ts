@@ -673,7 +673,9 @@ test.describe("Main test", () => {
     await page.waitForTimeout(500);
     await toggleBtn.click();
     await page.waitForTimeout(500);
-    await page.getByText("browser_tab_list").waitFor({ state: "visible" }); // wait for tool list to insert
+    await page
+      .getByText("browser_tab_list")
+      .waitFor({ state: "visible", timeout: 10e3 }); // wait for tools list to refresh
     await page.getByTestId("Popup.close").last().click();
 
     await page.waitForTimeout(2e3);
