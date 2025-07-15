@@ -714,7 +714,7 @@ test.describe("Main test", () => {
       .getByText("browser_snapshot")
       .last();
     await lastToolUseBtn.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(1e3);
+    await page.waitForTimeout(5e3);
     await lastToolUseBtn.click();
     await page.waitForTimeout(1e3);
     expect(page.getByTestId("Chat.messageList")).toContainText(
