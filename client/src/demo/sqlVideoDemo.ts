@@ -423,6 +423,7 @@ const timeChartDemo: DemoScript = async ({
     ) as date 
   `),
   );
+  await tout(1500);
   const addTChartBtn = await waitForElement<HTMLButtonElement>(
     "AddChartMenu.Timechart",
   );
