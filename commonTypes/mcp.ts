@@ -1125,21 +1125,6 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
       },
     ],
   },
-  // postgres: {
-  //   command: "npx",
-  //   args: [
-  //     "-y",
-  //     "@modelcontextprotocol/server-postgres",
-  //     "${text:postgresql://localhost/mydb}",
-  //   ],
-  //   config_schema: {
-  //     DATABASE_URL: {
-  //       title: "Database URL",
-  //       description: "URL for the PostgreSQL database",
-  //       type: "arg",
-  //     },
-  //   },
-  // },
   playwright: {
     command: "npx",
     args: ["@playwright/mcp@latest"],

@@ -22,7 +22,13 @@ jobs:
           cat package.json | jq -r .version > pr_version.txt
           git fetch origin ${{ github.base_ref }} --depth=1
           git checkout origin/${{ github.base_ref }} -- package.json
+
           cat package.json | jq -r .version > current_version.txt
+          if jq -e '.version' package.json > /dev/null 2>&1; then
+            cat package.json | jq -r .version > current_version.txt
+          else
+            cat ./electron/package.json | jq -r .version > current_version.txt
+          fi
 
       - name: Compare versions
         run: |
