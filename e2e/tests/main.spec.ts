@@ -721,6 +721,7 @@ test.describe("Main test", () => {
       `Page Title: Prostgles UI`,
     );
 
+    await page.waitForTimeout(2e3);
     /** Test max consecutive tool call fails */
     await sendAskLLMMessage(page, "mcpfail");
     await page.waitForTimeout(2e3);
