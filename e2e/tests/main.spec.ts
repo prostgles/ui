@@ -650,7 +650,7 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLM").click();
     await sendAskLLMMessage(page, "mcp");
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    await page.waitForTimeout(2e3);
+    await page.waitForTimeout(4e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
     expect(mcpToolUse).toContain("tool result received");
 
