@@ -1,5 +1,6 @@
 import { mcpGithub } from "./mcpGithub";
 import type { DBSSchemaForInsert } from "./publishUtils";
+import { indexTs, packageJson, tsconfigJson } from "./dockerSandboxMCP";
 
 export type MCPServerInfo = Omit<
   DBSSchemaForInsert["mcp_servers"],
@@ -1482,6 +1483,20 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
         index: 1,
       },
     },
+  },
+  "docker-sandbox": {
+    command: "npm",
+    args: ["start"],
+    source: {
+      type: "code",
+      indexTs,
+      packageJson,
+      tsconfigJson,
+    },
+    env: {
+      NODE_ENV: "production",
+    },
+    info: "Run code in docker containers",
   },
 };
 

@@ -47,14 +47,22 @@ export const LLM_PROMPT_VARIABLES = {
     DASHBOARD_TYPES: "${dashboardTypes}",
     TODAY: "${today}",
 };
-export const reachedMaximumNumberOfConsecutiveToolRequests = (messages, limit) => {
-    const count = messages
-        .slice()
-        .reverse()
-        .findIndex((m, i, arr) => {
-        return !(isAssistantMessageRequestingToolUse(m) &&
-            isAssistantMessageRequestingToolUse(arr[i + 2]));
-    }) + 1;
+export const reachedMaximumNumberOfConsecutiveToolRequests = (messages, limit, onlyFailed = false) => {
+    const reversedMessages = messages.slice().reverse();
+    let count = 0;
+    for (let i = 0; i < reversedMessages.length; i = i + 2) {
+        const message = reversedMessages[i];
+        const nextMessage = reversedMessages[i + 1];
+        if (!message || !nextMessage) {
+            break; // No more pairs to check
+        }
+        const isToolUseResult = message.message.some((m) => m.type === "tool_result" && (!onlyFailed || m.is_error));
+        const isToolUseRequest = isAssistantMessageRequestingToolUse(nextMessage);
+        if (!isToolUseResult || !isToolUseRequest) {
+            break;
+        }
+        count++;
+    }
     if (count >= limit)
         return true;
     return false;

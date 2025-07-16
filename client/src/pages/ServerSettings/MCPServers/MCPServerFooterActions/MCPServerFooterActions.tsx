@@ -49,7 +49,7 @@ export const MCPServerFooterActions = ({
     <FlexRow className="jc-end pl-p5">
       {mcp_server.source && (
         <MCPServersInstall
-          name={mcp_server.name}
+          mcpServer={mcp_server}
           dbs={dbs}
           dbsMethods={dbsMethods}
         />

@@ -39,8 +39,8 @@ export declare const LLM_PROMPT_VARIABLES: {
     readonly DASHBOARD_TYPES: "${dashboardTypes}";
     readonly TODAY: "${today}";
 };
-export declare const reachedMaximumNumberOfConsecutiveToolRequests: (messages: DBSSchema["llm_messages"][], limit: number) => boolean;
-export declare const isAssistantMessageRequestingToolUse: (message: DBSSchema["llm_messages"] | undefined) => message is Required<{
+export declare const reachedMaximumNumberOfConsecutiveToolRequests: (messages: Pick<DBSSchema["llm_messages"], "message">[], limit: number, onlyFailed?: boolean) => boolean;
+export declare const isAssistantMessageRequestingToolUse: (message: Pick<DBSSchema["llm_messages"], "message"> | undefined) => message is Required<{
     chat_id: number;
     cost?: string | undefined;
     created?: string | null | undefined;

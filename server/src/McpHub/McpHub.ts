@@ -30,6 +30,7 @@ import {
 } from "./McpTypes";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import * as path from "path";
 
 export type McpConnection = {
   server: McpServer;
@@ -273,7 +274,10 @@ export const setupMCPServerHub = async (dbs: DBS) => {
     await dbs.mcp_servers.insert(
       Object.entries(DefaultMCPServers).map(([name, server]) => ({
         name,
-        cwd: getMCPDirectory(),
+        cwd:
+          server.source ?
+            path.join(getMCPDirectory(), name)
+          : getMCPDirectory(),
         ...server,
       })),
     );

@@ -1075,21 +1075,6 @@ export const DefaultMCPServers = {
             },
         ],
     },
-    // postgres: {
-    //   command: "npx",
-    //   args: [
-    //     "-y",
-    //     "@modelcontextprotocol/server-postgres",
-    //     "${text:postgresql://localhost/mydb}",
-    //   ],
-    //   config_schema: {
-    //     DATABASE_URL: {
-    //       title: "Database URL",
-    //       description: "URL for the PostgreSQL database",
-    //       type: "arg",
-    //     },
-    //   },
-    // },
     playwright: {
         command: "npx",
         args: ["@playwright/mcp@latest"],
@@ -1440,5 +1425,19 @@ export const DefaultMCPServers = {
                 index: 1,
             },
         },
+    },
+    "docker-sandbox": {
+        command: "npm",
+        args: ["run"],
+        source: {
+            type: "code",
+            indexTs,
+            packageJson,
+            tsconfigJson,
+        },
+        env: {
+            NODE_ENV: "production",
+        },
+        info: "Run code in docker containers",
     },
 };

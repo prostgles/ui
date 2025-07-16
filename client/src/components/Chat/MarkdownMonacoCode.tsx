@@ -120,6 +120,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
   return (
     <FlexCol
       className="MarkdownMonacoCode relative o-dvisible min-w-600 b b-color rounded gap-0 f-0 o-hidden"
+      data-command="MarkdownMonacoCode"
       style={{
         maxWidth: `${CHAT_WIDTH}px`,
       }}

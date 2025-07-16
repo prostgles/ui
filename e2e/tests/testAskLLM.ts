@@ -78,6 +78,17 @@ const playwrightMCPToolUse = [
   },
 ];
 
+const mcpSandboxToolUse = [
+  {
+    function: {
+      name: "docker-sandbox--create_sandbox",
+      arguments: stringify({
+        image: "node:18-alpine",
+      }),
+    },
+  },
+];
+
 export const testAskLLMCode = `
 
 const lastMsg = args.messages.at(-1);
@@ -91,6 +102,7 @@ const tool_calls = ({
   mcp: [${stringify(mcpToolUse)}],
   mcpfail: [${stringify({ ...mcpToolUse, function: { ...mcpToolUse.function, name: "fetch--invalidfetch" } })}],
   mcpplaywright: ${stringify(playwrightMCPToolUse)},
+  mcpsandbox: ${stringify(mcpSandboxToolUse)},
 })[msg]?.map(tc => ({ ...tc, id: [tc.id, tc["function"].name, Math.random(), Date.now()].join("_") })); 
 
 

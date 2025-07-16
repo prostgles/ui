@@ -440,6 +440,8 @@ export const COMMANDS = {
   Alert: "Alert popup",
   ErrorComponent: "",
   "ToolUseMessage.toggle": "",
+  MarkdownMonacoCode: "",
+  "MCPServersInstall.install": "",
 } as const satisfies Record<
   string,
   | string

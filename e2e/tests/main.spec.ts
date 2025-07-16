@@ -585,14 +585,14 @@ test.describe("Main test", () => {
     await openConnection(page, "cloud");
 
     /** Delete existing chat during local testing */
-    const newChat = async () => {
+    const removeActiveChat = async () => {
       await page.getByTestId("AskLLM").click();
       await page.getByTestId("LLMChatOptions.toggle").click();
       await page.getByTestId("SmartForm.delete").click();
       await page.getByTestId("SmartForm.delete.confirm").click();
       await page.waitForTimeout(1e3);
     };
-    await newChat();
+    await removeActiveChat();
     await page.getByTestId("Popup.close").click();
 
     const userMessage = "hey";
@@ -609,6 +609,7 @@ test.describe("Main test", () => {
     await page.getByTestId("LLMChatOptions.Model").click();
     await page.keyboard.type("3-5");
     await page.keyboard.press("Enter");
+    await page.waitForTimeout(1e3); // wait for model to be set
 
     const setPromptByText = async (text: string) => {
       await page.getByTestId("LLMChatOptions.Prompt").click();
@@ -719,10 +720,12 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await lastToolUseBtn.click();
     await page.waitForTimeout(1e3);
-    await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Page Title: Prostgles UI`,
-      { timeout: 15e3 },
-    );
+    await expect(
+      page
+        .getByTestId("Chat.messageList")
+        .getByTestId("MarkdownMonacoCode")
+        .last(),
+    ).toContainText(`Page Title: Prostgles`, { timeout: 15e3 });
 
     await page.waitForTimeout(2e3);
     /** Test max consecutive tool call fails */
@@ -750,6 +753,46 @@ test.describe("Main test", () => {
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Maximum number (5) of failed consecutive tool requests reached`,
+    );
+
+    /* MCP Docker sandbox */
+    await page.getByTestId("AskLLMChat.NewChat").click();
+    await page.waitForTimeout(1e3);
+    /* Prompt persists from the prev chat */
+    await expect(page.getByTestId("LLMChatOptions.Prompt")).toContainText(
+      "Create dashboards",
+    );
+    await page.getByTestId("LLMChatOptions.MCPTools").click();
+    await page
+      .locator(getDataKeyElemSelector("docker-sandbox"))
+      .getByTestId("MCPServersInstall.install")
+      .click();
+    await page.waitForTimeout(1e3);
+    /** Wait until it finishes installing */
+    await page
+      .locator(getDataKeyElemSelector("docker-sandbox"))
+      .getByTestId("MCPServersInstall.install")
+      .click({ trial: true, timeout: 15e3 });
+    await page.waitForTimeout(10e3);
+    await page
+      .locator(getDataKeyElemSelector("docker-sandbox"))
+      .getByTestId("MCPServerFooterActions.enableToggle")
+      .click();
+    await page
+      .locator(getDataKeyElemSelector("docker-sandbox"))
+      .getByTestId("MCPServerFooterActions.refreshTools")
+      .click();
+    await page.getByText("OK", { exact: true }).click();
+    await page
+      .locator(getDataKeyElemSelector("docker-sandbox"))
+      .getByText("create_sandbox", { exact: true })
+      .click();
+    await page.waitForTimeout(1e3);
+    await page.getByTestId("Popup.close").last().click();
+    await sendAskLLMMessage(page, "mcpsandbox");
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `dwadwadwawaddwadwa`,
     );
   });
 
