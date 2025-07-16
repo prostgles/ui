@@ -158,9 +158,9 @@ test.describe("Create docs and screenshots", () => {
       const filePath = path.join(DOCS_DIR, file.fileName);
 
       if (IS_PIPELINE) {
-        const existingFile =
-          fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf-8") : "";
+        const existingFile = fs.readFileSync(filePath, "utf-8");
         if (existingFile !== file.text) {
+          console.error(existingFile, file.text);
           throw new Error(
             `File ${file.fileName} has changed. Please update the docs.`,
           );
