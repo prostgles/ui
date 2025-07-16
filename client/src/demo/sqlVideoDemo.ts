@@ -423,10 +423,10 @@ const timeChartDemo: DemoScript = async ({
     ) as date 
   `),
   );
-  await tout(1500);
   const addTChartBtn = await waitForElement<HTMLButtonElement>(
     "AddChartMenu.Timechart",
   );
+  await tout(1500);
   await clickWhenReady(addTChartBtn);
 
   const layer = await waitForElement<HTMLButtonElement>(
