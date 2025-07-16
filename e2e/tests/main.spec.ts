@@ -126,7 +126,7 @@ test.describe("Main test", () => {
       },
     ]);
     await goTo(newPage);
-    expect(await newPage.textContent("body")).toContain(
+    await expect(await newPage.textContent("body")).toContain(
       "Only 1 session is allowed for the passwordless admin",
     );
     await browser2.close();
@@ -207,7 +207,7 @@ test.describe("Main test", () => {
     );
 
     const userTypeField = await formField.textContent();
-    expect(userTypeField).toEqual(`Username${USERS.test_user}`);
+    await expect(userTypeField).toEqual(`Username${USERS.test_user}`);
     await page.getByTestId("SmartForm.close").waitFor({ state: "visible" });
     await page.getByTestId("SmartForm.close").click();
 
@@ -250,7 +250,9 @@ test.describe("Main test", () => {
     /** The url will be updated automatically and this will page trigger a reload */
     await page.waitForTimeout(1e3);
     const input = await page.getByLabel("Website URL");
-    expect(await input.getAttribute("value")).toEqual("http://localhost:3004");
+    await expect(await input.getAttribute("value")).toEqual(
+      "http://localhost:3004",
+    );
     await page.getByTestId("EmailAuthSetup").locator("button").click();
     await page.getByTestId("EmailAuthSetup.SignupType").click();
     await page.locator(`[data-key="withPassword"]`).click();
@@ -267,17 +269,17 @@ test.describe("Main test", () => {
     await page.getByText("Enabled").click();
     await page.getByText("Save").click();
     const errNode = await page.getByTestId("EmailAuthSetup.error");
-    expect(await errNode.textContent()).toContain(
+    await expect(await errNode.textContent()).toContain(
       // "getaddrinfo ENOTFOUND invalid___prostgles-test-mock", // or EAI_AGAIN
       "getaddrinfo E",
     );
-    expect(await errNode.textContent()).toContain(
+    await expect(await errNode.textContent()).toContain(
       "invalid___prostgles-test-mock",
     );
     await fillHostAndTest("prostgles-test-mock");
     await page.waitForTimeout(1500);
     const errNode1 = await page.getByTestId("EmailAuthSetup.error");
-    expect(await errNode1.count()).toBe(0);
+    await expect(await errNode1.count()).toBe(0);
   });
 
   test("Email password registration", async ({ page: p, browser }) => {
@@ -293,7 +295,7 @@ test.describe("Main test", () => {
     const start = Date.now();
     await newPage.getByRole("button", { name: "Sign in" }).click();
     await newPage.getByTestId("Login.error").waitFor({ state: "visible" });
-    expect(Date.now() - start).toBeGreaterThan(499);
+    await expect(Date.now() - start).toBeGreaterThan(499);
     await newPage.reload();
 
     /** Passwords do not match registration check */
@@ -301,12 +303,12 @@ test.describe("Main test", () => {
     await newPage.locator("#username").fill(USERS.new_user);
     await newPage.locator("#password").fill(USERS.new_user);
     await newPage.getByRole("button", { name: "Sign up" }).click();
-    expect(await newPage.getByTestId("Login.error").textContent()).toContain(
-      "Passwords do not match",
-    );
+    await expect(
+      await newPage.getByTestId("Login.error").textContent(),
+    ).toContain("Passwords do not match");
     await newPage.locator("#new-password").fill(USERS.new_user);
     await newPage.getByRole("button", { name: "Sign up" }).click();
-    expect(
+    await expect(
       await newPage
         .getByTestId("AuthNotifPopup")
         .getByTestId("Popup.content")
@@ -323,11 +325,11 @@ test.describe("Main test", () => {
       { returnType: "row" },
     );
     const code = newUser?.registration?.email_confirmation?.confirmation_code;
-    expect(typeof code).toBe("string");
-    expect(code.length).toBe(6);
+    await expect(typeof code).toBe("string");
+    await expect(code.length).toBe(6);
     await newPage.locator("#email-verification-code").fill(code);
     await newPage.getByRole("button", { name: "Confirm email" }).click();
-    expect(
+    await expect(
       await newPage
         .getByTestId("AuthNotifPopup")
         .getByTestId("Popup.content")
@@ -356,7 +358,7 @@ test.describe("Main test", () => {
     await page.getByText("Save").click();
     await page.waitForTimeout(1500);
     const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
-    expect(errNodeCount).toBe(0);
+    await expect(errNodeCount).toBe(0);
 
     await goTo(page, "/connections");
     await page.getByTestId("App.LanguageSelector").click();
@@ -390,7 +392,7 @@ test.describe("Main test", () => {
     await newPage.locator("#username").fill(USERS.new_user1);
     await newPage.getByRole("button", { name: "Continue" }).click();
 
-    expect(
+    await expect(
       await newPage
         .getByTestId("AuthNotifPopup")
         .getByTestId("Popup.content")
@@ -419,7 +421,7 @@ test.describe("Main test", () => {
     );
     console.log("failedAttempts", failedAttempts);
     const code = newUser?.registration.otp_code;
-    expect(typeof code).toBe("string");
+    await expect(typeof code).toBe("string");
     await goTo(newPage, `/magic-link?code=${code}&email=${USERS.new_user1}`);
 
     await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
@@ -442,7 +444,7 @@ test.describe("Main test", () => {
     const darkBackgroundColor = await page.evaluate(() => {
       return getComputedStyle(document.body).backgroundColor;
     });
-    expect(darkBackgroundColor).toBe("rgb(36, 36, 36)");
+    await expect(darkBackgroundColor).toBe("rgb(36, 36, 36)");
 
     await page.emulateMedia({ colorScheme: "light" });
     await goTo(page);
@@ -450,7 +452,7 @@ test.describe("Main test", () => {
     const lightBackgroundColor = await page.evaluate(() => {
       return getComputedStyle(document.body).backgroundColor;
     });
-    expect(lightBackgroundColor).toBe("rgb(244, 245, 247)");
+    await expect(lightBackgroundColor).toBe("rgb(244, 245, 247)");
   });
 
   test("Setup Free LLM assistant signup", async ({ page: p }) => {
@@ -506,7 +508,7 @@ test.describe("Main test", () => {
     const initialCode =
       "export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {\n  dbo.tx\n}";
     const funcCode = await getMonacoValue(page, ".MethodDefinition");
-    expect(funcCode).toEqual(initialCode);
+    await expect(funcCode).toEqual(initialCode);
 
     /** Add llm server side func */
     await monacoType(page, ".MethodDefinition", testAskLLMCode, {
@@ -519,7 +521,7 @@ test.describe("Main test", () => {
       const res = v.replace(/\s+/g, " ");
       return res;
     };
-    expect(allWhiteSpaceAsSingleSpace(funcCode2)).toEqual(
+    await expect(allWhiteSpaceAsSingleSpace(funcCode2)).toEqual(
       allWhiteSpaceAsSingleSpace(
         initialCode.replace("dbo.tx", testAskLLMCode + "dbo.tx"),
       ),
@@ -569,7 +571,7 @@ test.describe("Main test", () => {
       { returnType: "row" },
     );
     const freeLLMCode = llmUser?.registration.otp_code;
-    expect(typeof freeLLMCode).toBe("string");
+    await expect(typeof freeLLMCode).toBe("string");
     await page.locator("input#otp-code").fill(freeLLMCode);
     await page.getByTestId("ProstglesSignup.continue").click();
     await page.waitForTimeout(1e3);
@@ -596,7 +598,7 @@ test.describe("Main test", () => {
     const userMessage = "hey";
     const responses = await getLLMResponses(page, [userMessage]);
     const messageCost = "$0";
-    expect(responses).toEqual([
+    await expect(responses).toEqual([
       {
         isOk: false,
         response: messageCost + "free ai assistant" + userMessage,
@@ -623,12 +625,12 @@ test.describe("Main test", () => {
     await page.getByText("OK", { exact: true }).click();
 
     const mcpToolsBtn = await page.getByTestId("LLMChatOptions.MCPTools");
-    expect(mcpToolsBtn).toContainText("1");
+    await expect(mcpToolsBtn).toContainText("1");
 
     const dbToolsBtn = await page
       .getByTestId("LLMChatOptions.DatabaseAccess")
       .locator("button");
-    expect(await dbToolsBtn.getAttribute("class")).toContain(
+    await expect(await dbToolsBtn.getAttribute("class")).toContain(
       "btn-color-action",
     );
 
@@ -638,13 +640,13 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
 
     const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
-    expect(workspaceBtn).toContainText("generated workspace");
+    await expect(workspaceBtn).toContainText("generated workspace");
 
     await page.waitForTimeout(1e3);
     await page.getByTestId("AskLLM").click();
 
     await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
-    expect(workspaceBtn).not.toContainText("generated workspace");
+    await expect(workspaceBtn).not.toContainText("generated workspace");
 
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLM").click();
@@ -652,15 +654,15 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(4e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
-    expect(mcpToolUse).toContain("tool result received");
+    await expect(mcpToolUse).toContain("tool result received");
 
     await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, "mcpplaywright");
     await page.waitForTimeout(2e3);
-    expect(page.getByTestId("Chat.messageList")).toContainText(
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is invalid`,
     );
-    expect(page.getByTestId("Chat.messageList")).toContainText(
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_snapshot" is invalid`,
     );
     await page.getByTestId("LLMChatOptions.MCPTools").click();
@@ -683,10 +685,10 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(2e3);
     await sendAskLLMMessage(page, "mcpplaywright");
-    expect(page.getByTestId("Chat.messageList")).toContainText(
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is not allowed`,
     );
-    expect(page.getByTestId("Chat.messageList")).toContainText(
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_snapshot" is not allowed`,
     );
     await page.getByTestId("LLMChatOptions.MCPTools").click();
@@ -717,7 +719,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await lastToolUseBtn.click();
     await page.waitForTimeout(1e3);
-    expect(page.getByTestId("Chat.messageList")).toContainText(
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Page Title: Prostgles UI`,
       { timeout: 15e3 },
     );
@@ -726,12 +728,12 @@ test.describe("Main test", () => {
     /** Test max consecutive tool call fails */
     await sendAskLLMMessage(page, "mcpfail");
     await page.waitForTimeout(2e3);
-    expect(
+    await expect(
       page
         .getByTestId("Chat.messageList")
         .getByText(`Tool name "fetch--invalidfetch" is invalid`),
     ).toHaveCount(5);
-    expect(page.getByTestId("Chat.messageList")).toContainText(
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
       `failed consecutive tool requests reached`,
     );
 
@@ -746,7 +748,7 @@ test.describe("Main test", () => {
     for (let step = 1; step <= Math.ceil(maxCost / costPerMsg); step++) {
       await sendAskLLMMessage(page, "cost");
     }
-    expect(page.getByTestId("Chat.messageList")).toContainText(
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Maximum number (5) of failed consecutive tool requests reached`,
     );
   });
@@ -805,9 +807,9 @@ test.describe("Main test", () => {
       await lpage
         .getByTestId("Login.error")
         .waitFor({ state: "visible", timeout: 15e3 });
-      expect(await lpage.getByTestId("Login.error").textContent()).toContain(
-        errorMessage,
-      );
+      await expect(
+        await lpage.getByTestId("Login.error").textContent(),
+      ).toContain(errorMessage);
     };
     for (let i = 0; i < 5; i++) {
       await page.reload();
@@ -874,7 +876,7 @@ test.describe("Main test", () => {
       {},
       { returnType: "value" },
     );
-    expect(currUser).toEqual(dbName);
+    await expect(currUser).toEqual(dbName);
 
     /** Ensure realtime works and is resilient to schema change */
     const createTableQuery = `CREATE TABLE "table_name" ( id SERIAL PRIMARY KEY, title  VARCHAR(250), gencol TEXT GENERATED ALWAYS AS ( title || id::TEXT) stored);`;
@@ -992,7 +994,7 @@ test.describe("Main test", () => {
       .getByTestId("ProjectConnection.error")
       .waitFor({ state: "visible", timeout: 15e3 });
     const currentUrl = await page.url();
-    expect(currentUrl).toEqual(requestedUrl);
+    await expect(currentUrl).toEqual(requestedUrl);
   });
 
   test("Open redirect returnUrl", async ({ page: p }) => {
@@ -1003,7 +1005,7 @@ test.describe("Main test", () => {
     await goTo(page, requestedUrl);
     await goTo(page, requestedUrl);
     const currentUrl = await page.url();
-    expect(currentUrl.startsWith("http://localhost:3004/")).toBe(true);
+    await expect(currentUrl.startsWith("http://localhost:3004/")).toBe(true);
   });
 
   test("Test 2FA", async ({ page: p }) => {
@@ -1424,7 +1426,7 @@ test.describe("Main test", () => {
       .getByTestId("AskLLM.popup")
       .getByTestId("Chat.send")
       .count();
-    expect(chatSend).toBe(0);
+    await expect(chatSend).toBe(0);
     await page.getByTestId("Popup.close").click();
 
     /** Setup LLM */
@@ -1637,27 +1639,27 @@ test.describe("Main test", () => {
 
     /** Test pagination */
     const pageInput = await usersTable.getByTestId("Pagination.page");
-    expect(await pageInput.inputValue()).toBe("1");
-    expect(await pageInput.getAttribute("min")).toBe("1");
-    expect(await pageInput.getAttribute("max")).toBe("7");
-    expect(
+    await expect(await pageInput.inputValue()).toBe("1");
+    await expect(await pageInput.getAttribute("min")).toBe("1");
+    await expect(await pageInput.getAttribute("max")).toBe("7");
+    await expect(
       await usersTable.getByTestId("Pagination.pageCountInfo").textContent(),
     ).toBe(`7 pages  (100 rows)`);
     await usersTable.getByTestId("Pagination.lastPage").click();
     await pageInput.scrollIntoViewIfNeeded();
-    expect(await pageInput.inputValue()).toBe("7");
+    await expect(await pageInput.inputValue()).toBe("7");
     await usersTable.getByTestId("Pagination.firstPage").click();
-    expect(await pageInput.inputValue()).toBe("1");
+    await expect(await pageInput.inputValue()).toBe("1");
     await usersTable.getByTestId("Pagination.nextPage").click();
-    expect(await pageInput.inputValue()).toBe("2");
+    await expect(await pageInput.inputValue()).toBe("2");
     await usersTable.getByTestId("Pagination.lastPage").click();
     await usersTable.getByTestId("Pagination.pageSize").click();
     await page
       .getByTestId("Pagination.pageSize")
       .locator(getDataKey("50"))
       .click();
-    expect(await pageInput.inputValue()).toBe("2");
-    expect(
+    await expect(await pageInput.inputValue()).toBe("2");
+    await expect(
       await usersTable.getByTestId("Pagination.pageCountInfo").textContent(),
     ).toBe(`2 pages  (100 rows)`);
 
@@ -1845,7 +1847,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     const { draggedText, newTargetText } = await swapFirstTwoRows();
     await page.waitForTimeout(1e3);
-    expect(draggedText).toEqual(newTargetText);
+    await expect(draggedText).toEqual(newTargetText);
     await page.waitForTimeout(2e3);
   });
 
@@ -1928,7 +1930,7 @@ test.describe("Main test", () => {
     await goTo(page, "localhost:3004/connections");
     await page.reload();
     const deletedConnection = await page.locator(connectionSelector);
-    expect(await deletedConnection.count()).toEqual(0);
+    await expect(await deletedConnection.count()).toEqual(0);
   });
 
   test("Set public user access rules", async ({ page: p }) => {
@@ -1979,9 +1981,9 @@ test.describe("Main test", () => {
       "hey",
       "hey",
     ]);
-    expect(response1.isOk).toBe(true);
-    expect(response2.isOk).toBe(true);
-    expect(response3.isOk).toBe(true);
+    await expect(response1.isOk).toBe(true);
+    await expect(response2.isOk).toBe(true);
+    await expect(response3.isOk).toBe(true);
   });
 
   test("Public user ask llm limit", async ({ page: p }) => {
@@ -1994,8 +1996,8 @@ test.describe("Main test", () => {
       .getByTestId("dashboard.menu.tablesSearchList")
       .waitFor({ state: "visible", timeout: 10e3 });
     const [response1, response2] = await getLLMResponses(page, ["hey", "hey"]);
-    expect(response1.isOk).toBe(true);
-    expect(response2.isOk).toBe(false);
+    await expect(response1.isOk).toBe(true);
+    await expect(response2.isOk).toBe(false);
   });
 
   test("MCP Servers", async ({ page: p }) => {
