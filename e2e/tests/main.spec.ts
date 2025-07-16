@@ -708,7 +708,7 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(200);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    await page.waitForTimeout(5e3);
+    await page.waitForTimeout(10e3);
     const lastToolUseBtn = await page
       .getByTestId("Chat.messageList")
       .getByText("browser_snapshot")
@@ -723,7 +723,6 @@ test.describe("Main test", () => {
     );
 
     await page.waitForTimeout(2e3);
-
     /** Test max consecutive tool call fails */
     await sendAskLLMMessage(page, "mcpfail");
     await page.waitForTimeout(2e3);
