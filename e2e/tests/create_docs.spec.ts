@@ -157,37 +157,17 @@ test.describe("Create docs and screenshots", () => {
     for (const file of files) {
       const filePath = path.join(DOCS_DIR, file.fileName);
 
+      const preparedFileContent = getDocWithDarkModeImgTags(file.text);
       if (IS_PIPELINE) {
         const existingFile = fs.readFileSync(filePath, "utf-8");
-        if (existingFile !== file.text) {
-          console.error(existingFile, file.text);
+        if (existingFile !== preparedFileContent) {
+          console.error(existingFile, preparedFileContent);
           throw new Error(
             `File ${file.fileName} has changed. Please update the docs.`,
           );
         }
       } else {
-        let fileContent = file.text;
-        const imgTags = file.text.split("<img");
-        // Must replace all img tags with theme aware src
-        if (imgTags.length > 1) {
-          imgTags.slice(1).forEach((imgTag, index) => {
-            const tagText = "<img" + imgTag.split("/>")[0] + "/>";
-            const src = imgTag.split('src="')[1]?.split('"')[0];
-            fileContent = fileContent.replaceAll(
-              tagText,
-              [
-                `<picture>`,
-                `<source srcset="${src.replace("screenshots/", "screenshots/dark/")}" media="(prefers-color-scheme: dark)">`,
-                tagText.replace(
-                  "/>",
-                  `style="border: 1px solid; margin: 1em 0;" />`,
-                ),
-                `</picture>`,
-              ].join("\n"),
-            );
-          });
-        }
-        fs.writeFileSync(filePath, fileContent, "utf-8");
+        fs.writeFileSync(filePath, preparedFileContent, "utf-8");
       }
       await page.waitForTimeout(100);
     }
@@ -362,6 +342,27 @@ test.describe("Create docs and screenshots", () => {
     }
   });
 });
+
+const getDocWithDarkModeImgTags = (fileContent: string) => {
+  const imgTags = fileContent.split("<img");
+  // Must replace all img tags with theme aware src
+  if (imgTags.length > 1) {
+    imgTags.slice(1).forEach((imgTag, index) => {
+      const tagText = "<img" + imgTag.split("/>")[0] + "/>";
+      const src = imgTag.split('src="')[1]?.split('"')[0];
+      fileContent = fileContent.replaceAll(
+        tagText,
+        [
+          `<picture>`,
+          `<source srcset="${src.replace("screenshots/", "screenshots/dark/")}" media="(prefers-color-scheme: dark)">`,
+          tagText.replace("/>", `style="border: 1px solid; margin: 1em 0;" />`),
+          `</picture>`,
+        ].join("\n"),
+      );
+    });
+  }
+  return fileContent;
+};
 
 const prepare = async (page: PageWIds) => {
   await runDbsSql(

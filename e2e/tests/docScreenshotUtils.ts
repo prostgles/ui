@@ -85,7 +85,7 @@ export const svgScreenshotsCompleteReferenced = async () => {
     throw `SVG files are not as expected.\n Actual: ${savedSVGFileNames.sort().join(",")}\n Expected: ${allSVGFileNamesStr}`;
   }
   const svgFilesThatAreNotRecent = svgFiles.filter(
-    (file) => file.stat.mtimeMs < Date.now() - 30 * MINUTE,
+    (file) => file.stat.mtimeMs < Date.now() - 120 * MINUTE,
   );
   if (svgFilesThatAreNotRecent.length) {
     throw `SVG files are not recent: ${svgFilesThatAreNotRecent

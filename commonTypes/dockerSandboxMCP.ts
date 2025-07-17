@@ -36,7 +36,7 @@ export interface ContainerInfo {
 
 export class DockerSandbox extends EventEmitter {
   private containerId: string | null = null;
-  private containerName: string;
+  private containerName = \`sandbox-\${randomUUID()}\`;
   private config: DockerConfig;
   private isRunning: boolean = false;
   private tempDir: string;
@@ -47,13 +47,12 @@ export class DockerSandbox extends EventEmitter {
       workingDir: '/workspace',
       memory: '512m',
       cpus: '1',
-      timeout: 30000,
+      timeout: 30_000,
       networkMode: 'none',
       readOnly: false,
       user: 'nobody',
       ...config
     };
-    this.containerName = \`sandbox-\${randomUUID()}\`;
     this.tempDir = join('/tmp', this.containerName);
   }
 
