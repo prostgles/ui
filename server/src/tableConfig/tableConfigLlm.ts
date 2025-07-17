@@ -56,6 +56,15 @@ const toolUseContent: JSONB.FieldType = {
               },
             },
           },
+          {
+            type: {
+              type: { enum: ["resource_link"] },
+              uri: "string",
+              name: "string",
+              mimeType: { type: "string", optional: true },
+              description: { type: "string", optional: true },
+            },
+          },
         ],
       },
     },

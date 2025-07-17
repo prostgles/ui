@@ -780,20 +780,15 @@ test.describe("Main test", () => {
       .click();
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByTestId("MCPServerFooterActions.refreshTools")
-      .click();
-    await page.getByText("OK", { exact: true }).click();
-    await page
-      .locator(getDataKeyElemSelector("docker-sandbox"))
       .getByText("create_sandbox", { exact: true })
       .click();
     await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
     await sendAskLLMMessage(page, "mcpsandbox");
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    // await expect(page.getByTestId("Chat.messageList")).toContainText(
-    //   `dwadwadwawaddwadwa`,
-    // );
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `dwadwadwawaddwadwa`,
+    );
   });
 
   test("Disable signups", async ({ page: p }) => {

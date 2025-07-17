@@ -36,6 +36,7 @@ export const connectToMCPServer = (
       /** Clear previous logs and errors */
       await onLog("stderr", "", log);
       await onLog("error", "", log);
+
       // Each MCP server requires its own transport connection and has unique capabilities, configurations, and error handling.
       // Having separate clients also allows proper scoping of resources/tools and independent server management like reconnection.
       const client = new Client(
@@ -59,6 +60,9 @@ export const connectToMCPServer = (
         cwd: config.cwd,
         stderr: "pipe", // necessary for stderr to be available
       });
+      // transport.onmessage = (message) => {
+      //   console.log(`MCP Server ${name} message:`, message);
+      // };
 
       transport.onerror = (error) => {
         const errMsg = `Transport error: ${error.message}`;
@@ -115,7 +119,7 @@ export const connectToMCPServer = (
       connection.server.error = "";
       resolve(connection);
     } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       reject({ error: getSerialisableError(error), log });
     }
   });

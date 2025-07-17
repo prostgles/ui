@@ -215,7 +215,7 @@ const ContentRender = ({
           );
         }
 
-        if ((m as any).type !== "image") {
+        if (m.type !== "image") {
           return <>Unsupported message type: {m.type}</>;
         }
 

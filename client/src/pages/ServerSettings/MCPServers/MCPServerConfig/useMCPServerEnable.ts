@@ -32,17 +32,10 @@ export const useMCPServerEnable = ({
         { name: mcp_server.name },
         { enabled: newEnabled },
       );
-      const toolCount = await dbs.mcp_server_tools.count({
-        server_name: mcp_server.name,
-      });
-      if (!toolCount) {
-        await dbsMethods.reloadMcpServerTools?.(mcp_server.name);
-      }
     }
   }, [
     config_schema,
     dbs,
-    dbsMethods,
     enabled,
     mcp_server.name,
     mcp_server_configs.length,

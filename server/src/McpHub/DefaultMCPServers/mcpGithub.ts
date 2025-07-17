@@ -1,4 +1,4 @@
-import type { MCPServerInfo } from "./mcp";
+import type { MCPServerInfo } from "../../../../commonTypes/mcp";
 
 export const mcpGithub: MCPServerInfo = {
   command: "docker",

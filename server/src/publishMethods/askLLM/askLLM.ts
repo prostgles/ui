@@ -212,13 +212,14 @@ export const askLLM = async (args: AskLLMArgs) => {
   );
   try {
     const { maximum_consecutive_tool_fails, max_total_cost_usd } = chat;
-    if (max_total_cost_usd) {
+    const maxTotalCost = parseFloat(max_total_cost_usd || "0");
+    if (maxTotalCost && maxTotalCost > 0) {
       const chatCost = pastMessages.reduce(
         (acc, m) => acc + parseFloat(m.cost),
         0,
       );
-      if (chatCost > parseFloat(max_total_cost_usd)) {
-        throw `Maximum total cost of the chat (${max_total_cost_usd}) reached. Current cost: ${chatCost}`;
+      if (chatCost > maxTotalCost) {
+        throw `Maximum total cost of the chat (${maxTotalCost}) reached. Current cost: ${chatCost}`;
       }
     }
     const promptWithContext = prompt

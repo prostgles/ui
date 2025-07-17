@@ -1,8 +1,8 @@
 import { isEqual, omitKeys, tryCatchV2 } from "prostgles-types";
-import { DefaultMCPServers } from "../../../commonTypes/mcp";
 import type { McpHub } from "./McpHub";
 import type { McpTool } from "./McpTypes";
 import { fetchMCPToolsList } from "./fetchMCPToolsList";
+import { DefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
 
 /**
  * Check if enabled server tools are not in the mcp schema

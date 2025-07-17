@@ -1,22 +1,28 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import {
   StdioClientTransport,
   StdioServerParameters,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
   CallToolResultSchema,
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as path from "path";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import { isEqual, SubscriptionHandler, tryCatchV2 } from "prostgles-types";
-import { DBS } from "..";
 import {
-  DefaultMCPServers,
-  McpToolCallResponse,
-} from "../../../commonTypes/mcp";
+  getSerialisableError,
+  isEqual,
+  SubscriptionHandler,
+  tryCatchV2,
+} from "prostgles-types";
+import { DBS } from "..";
+import { McpToolCallResponse } from "../../../commonTypes/mcp";
 import { DBSSchema } from "../../../commonTypes/publishUtils";
 import { checkMCPServerTools } from "./checkMCPServerTools";
 import { connectToMCPServer } from "./connectToMCPServer";
+import { DefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
 import { fetchMCPResourcesList } from "./fetchMCPResourcesList";
 import { fetchMCPResourceTemplatesList } from "./fetchMCPResourceTemplatesList";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
@@ -28,9 +34,6 @@ import {
   McpServerEvents,
   ServersConfig,
 } from "./McpTypes";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import * as path from "path";
 
 export type McpConnection = {
   server: McpServer;
@@ -119,7 +122,7 @@ export class McpHub {
           };
           await this.connectToServer(name, config, eventOptions);
         } catch (error) {
-          void onLog("error", JSON.stringify(getErrorAsObject(error)), "");
+          void onLog("error", JSON.stringify(getSerialisableError(error)), "");
           if (isRunningDifferentConfig) {
             console.error(
               `Failed to connect to new MCP server ${name}:`,
@@ -225,6 +228,17 @@ export const startMcpHub = async (
         `McpHub started. Enabled servers (${serverNames.length}): ${serverNames.join()}`,
       );
     }
+    for (const [server_name] of Object.entries(serversConfig)) {
+      const client = mcpHub.connections[server_name]?.client;
+      if (client) {
+        const toolCount = await dbs.mcp_server_tools.count({
+          server_name,
+        });
+        if (!toolCount) {
+          await _reloadMcpServerTools(dbs, server_name, client);
+        }
+      }
+    }
     return mcpHub;
   });
   mcpHubInitializing = false;
@@ -237,15 +251,11 @@ export const startMcpHub = async (
   }
   return result.data;
 };
-
-export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
-  await startMcpHub(dbs);
-  const client = mcpHub.connections[serverName]?.client;
-  if (!client) {
-    throw new Error(
-      `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
-    );
-  }
+export const _reloadMcpServerTools = async (
+  dbs: DBS,
+  serverName: string,
+  client: McpConnection["client"],
+) => {
   const tools = await fetchMCPToolsList(client);
   await dbs.tx(async (tx) => {
     await tx.mcp_server_tools.delete({ server_name: serverName });
@@ -263,6 +273,19 @@ export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
   return tools.length;
 };
 
+export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
+  if (!mcpHubInitializing) {
+    await startMcpHub(dbs);
+  }
+  const client = mcpHub.connections[serverName]?.client;
+  if (!client) {
+    throw new Error(
+      `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
+    );
+  }
+  return _reloadMcpServerTools(dbs, serverName, client);
+};
+
 const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
   globalSettings: undefined,
   servers: undefined,
@@ -271,16 +294,17 @@ const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
 export const setupMCPServerHub = async (dbs: DBS) => {
   const servers = await dbs.mcp_servers.find();
   if (!servers.length) {
-    await dbs.mcp_servers.insert(
-      Object.entries(DefaultMCPServers).map(([name, server]) => ({
+    const defaultServers = Object.entries(DefaultMCPServers).map(
+      ([name, server]) => ({
         name,
         cwd:
           server.source ?
             path.join(getMCPDirectory(), name)
           : getMCPDirectory(),
         ...server,
-      })),
+      }),
     );
+    await dbs.mcp_servers.insert(defaultServers);
   }
   for (const sub of Object.values(mcpSubscriptions)) {
     await sub?.unsubscribe();

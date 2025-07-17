@@ -55,9 +55,12 @@ export const refreshModels = async (dbs: DBS) => {
 
   await dbs.tx(async (dbTx) => {
     const existingModels = await dbTx.llm_models.find();
-    const nonOpenRouterModels = insertData.filter(
-      (m) => m.provider_id !== "OpenRouter",
-    );
+    const nonOpenRouterModels = insertData
+      .filter((m) => m.provider_id !== "OpenRouter")
+      .map((m) => ({
+        ...m,
+        name: m.name.split("/")[1] || m.name,
+      }));
 
     const newModels = [
       ...nonOpenRouterModels,

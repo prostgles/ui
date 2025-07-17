@@ -23,9 +23,11 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
             },
             {
               type: { enum: ["code"] },
-              indexTs: "string",
               packageJson: "string",
               tsconfigJson: "string",
+              files: {
+                record: { values: "string" },
+              },
             },
           ],
         },

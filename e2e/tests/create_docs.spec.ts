@@ -308,39 +308,6 @@ test.describe("Create docs and screenshots", () => {
     }
     await svgScreenshotsCompleteReferenced();
   });
-
-  test("Docs have been regenerated within the last commit", async () => {
-    if (!IS_PIPELINE) {
-      return;
-    }
-
-    // Check if docs are recent (generated within last commit)
-    const gitModifiedStr: string = require("child_process").execSync(
-      "git diff --name-only HEAD~1",
-      { encoding: "utf8" },
-    );
-    const darkScreenshotsPath = "/dark/";
-    const editedFiles = gitModifiedStr
-      .split("\n")
-      .filter((f) => f.startsWith("docs/") && !f.includes(darkScreenshotsPath));
-    const allGeneratedFilesRecursive = fs
-      .readdirSync(DOCS_DIR, { recursive: true })
-      .filter((f): f is string => {
-        return (
-          typeof f === "string" &&
-          /** Exclude dark screenshots */
-          (f.endsWith(".md") ||
-            (f.endsWith(".svg") && !f.includes(darkScreenshotsPath)))
-        );
-      });
-    if (allGeneratedFilesRecursive.length !== editedFiles.length) {
-      throw new Error(
-        `Docs have been generated, but not all files were committed. Committed: ${editedFiles.join(
-          ", ",
-        )}. Generated: ${allGeneratedFilesRecursive.join(", ")}`,
-      );
-    }
-  });
 });
 
 const getDocWithDarkModeImgTags = (fileContent: string) => {

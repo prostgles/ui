@@ -69,14 +69,29 @@ export const saveSVGScreenshots = async (
   await page.waitForTimeout(100);
 };
 
-export const svgScreenshotsCompleteReferenced = async () => {
-  const svgFiles = fs
-    .readdirSync(SVG_SCREENSHOT_DIR)
-    .filter((file) => file.endsWith(".svg"))
+const getFilesFromDir = (dir: string, endWith: string) => {
+  const files = fs
+    .readdirSync(dir)
+    .filter((file) => file.endsWith(endWith))
     .map((fileName) => {
-      const filePath = path.join(SVG_SCREENSHOT_DIR, fileName);
-      return { fileName, filePath, stat: fs.statSync(filePath) };
+      const filePath = path.join(dir, fileName);
+      const content = fs.readFileSync(filePath, { encoding: "utf-8" });
+      return { fileName, filePath, stat: fs.statSync(filePath), content };
     });
+
+  const filesThatAreNotRecent = files.filter(
+    (file) => file.stat.mtimeMs < Date.now() - 120 * MINUTE,
+  );
+  if (filesThatAreNotRecent.length) {
+    throw `${JSON.stringify(endWith)} files are not recent: ${filesThatAreNotRecent
+      .map((file) => file.fileName)
+      .join(", ")}`;
+  }
+  return files;
+};
+
+export const svgScreenshotsCompleteReferenced = async () => {
+  const svgFiles = getFilesFromDir(SVG_SCREENSHOT_DIR, ".svg");
 
   const allSVGFileNames = Object.keys(SVG_SCREENSHOT_NAMES);
   const allSVGFileNamesStr = allSVGFileNames.sort().join(",");
@@ -84,25 +99,7 @@ export const svgScreenshotsCompleteReferenced = async () => {
   if (savedSVGFileNames.sort().join(",") !== allSVGFileNamesStr) {
     throw `SVG files are not as expected.\n Actual: ${savedSVGFileNames.sort().join(",")}\n Expected: ${allSVGFileNamesStr}`;
   }
-  const svgFilesThatAreNotRecent = svgFiles.filter(
-    (file) => file.stat.mtimeMs < Date.now() - 120 * MINUTE,
-  );
-  if (svgFilesThatAreNotRecent.length) {
-    throw `SVG files are not recent: ${svgFilesThatAreNotRecent
-      .map((file) => file.fileName)
-      .join(", ")}`;
-  }
-  const docMarkdownFiles = fs
-    .readdirSync(DOCS_DIR)
-    .filter((file) => file.endsWith(".md"))
-    .map((fileName) => {
-      const filePath = path.join(DOCS_DIR, fileName);
-      return {
-        fileName,
-        filePath,
-        content: fs.readFileSync(filePath, { encoding: "utf-8" }),
-      };
-    });
+  const docMarkdownFiles = getFilesFromDir(DOCS_DIR, ".md");
 
   let usedSrcValues: string[] = [];
   for (const docMarkdownFile of docMarkdownFiles) {

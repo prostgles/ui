@@ -130,17 +130,27 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
                 !currCol?.style || currCol.style.type !== "Conditional" ?
                   undefined
                 : currCol.style;
-              if (!currColStyle) return;
+              if (!currColStyle) {
+                alert("Something went wrong. Try re-creating the chart");
+                return;
+              }
+              const newConditions = currColStyle.conditions.map((c) =>
+                c.condition === s.condition ?
+                  {
+                    ...s,
+                    textColor: newColor,
+                  }
+                : c,
+              );
+              if (!newConditions.some((c) => c.condition === s.condition)) {
+                newConditions.push({
+                  ...s,
+                  textColor: newColor,
+                });
+              }
               setColumnStyle({
                 ...currColStyle,
-                conditions: currColStyle.conditions.map((c) =>
-                  c.condition === s.condition ?
-                    {
-                      ...s,
-                      textColor: newColor,
-                    }
-                  : c,
-                ),
+                conditions: newConditions,
               });
             }}
           />

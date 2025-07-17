@@ -29,6 +29,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
+          fetch-depth: 2 # Fetch at least 2 commits to ensure doc checks work
 
       - name: Install curl inside postgres container for video needed for demo
         run: |

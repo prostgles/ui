@@ -2,10 +2,9 @@ import * as fs from "fs";
 import * as path from "path";
 import { simpleGit, type SimpleGit } from "simple-git";
 import type { DBS } from "..";
-import { DefaultMCPServers } from "../../../commonTypes/mcp";
+import { getEntries } from "../../../commonTypes/utils";
 import { getRootDir } from "../electronConfig";
 import { runShellCommand } from "./runShellCommand";
-import { getEntries } from "../../../commonTypes/utils";
 
 let createdMCPDirectory = "";
 export const getMCPDirectory = () => {
@@ -23,11 +22,15 @@ const getMCPServerInstallationPath = (name: string) => {
 };
 
 export const installMCPServer = async (dbs: DBS, name: string) => {
-  const serverInfo = DefaultMCPServers[name];
+  const serverInfo = await dbs.mcp_servers.findOne({ name });
   if (!serverInfo?.source) {
+    const allServers = await dbs.mcp_servers.find(
+      {},
+      { select: { name: 1 }, returnType: "values" },
+    );
     throw (
       "Server not found. Available servers: " +
-      Object.keys(DefaultMCPServers).join(", ")
+      Object.keys(allServers).join(", ")
     );
   }
   const { source } = serverInfo;
@@ -83,17 +86,17 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
         fs.rmSync(installationPath, { recursive: true });
       }
       fs.mkdirSync(installationPath, { recursive: true });
-      const { packageJson, tsconfigJson, indexTs } = source;
+      const { packageJson, tsconfigJson, files } = source;
       for (const [fileName, content] of getEntries({
         "package.json": packageJson,
         "tsconfig.json": tsconfigJson,
-        "index.ts": indexTs,
       })) {
-        let destination = path.join(installationPath, fileName);
-        if (fileName === "index.ts") {
-          destination = path.join(installationPath, "src", fileName);
-          fs.mkdirSync(path.join(installationPath, "src"), { recursive: true });
-        }
+        const destination = path.join(installationPath, fileName);
+        fs.writeFileSync(destination, content, "utf-8");
+      }
+      for (const [fileName, content] of getEntries(files)) {
+        const destination = path.join(installationPath, "src", fileName);
+        fs.mkdirSync(path.join(installationPath, "src"), { recursive: true });
         fs.writeFileSync(destination, content, "utf-8");
       }
       const npmI = await runShellCommand(
@@ -144,7 +147,7 @@ export const getMCPServersStatus = async (
   if (!folderExists) {
     return { ok: false, message: "No MCP servers installed" };
   }
-  const serverInfo = DefaultMCPServers[serverName];
+  const serverInfo = await dbs.mcp_servers.findOne({ name: serverName });
   if (!serverInfo) {
     throw new Error("Server not found");
   }

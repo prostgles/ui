@@ -26,6 +26,12 @@ export declare const getLLMMessageToolUseResult: ({ message, }: Pick<LLMMessage,
             text?: string | undefined;
             blob?: string | undefined;
         };
+    } | {
+        type: "resource_link";
+        uri: string;
+        name: string;
+        mimeType?: string | undefined;
+        description?: string | undefined;
     })[];
     is_error?: boolean | undefined;
 }[];
@@ -76,6 +82,12 @@ export declare const isAssistantMessageRequestingToolUse: (message: Pick<DBSSche
                 text?: string | undefined;
                 blob?: string | undefined;
             };
+        } | {
+            type: "resource_link";
+            uri: string;
+            name: string;
+            mimeType?: string | undefined;
+            description?: string | undefined;
         })[];
         is_error?: boolean | undefined;
     } | {
