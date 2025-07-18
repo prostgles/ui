@@ -1,9 +1,11 @@
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { getCommandElemSelector, type Command } from "../../Testing";
+import type { AlertContext } from "../../components/AlertProvider";
 import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { waitForElement } from "../../demo/demoUtils";
+import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { isDefined } from "../../utils";
-import type { UIDoc } from "../UIDocs";
+import type { UIDoc, UIDocNonInfo, UIDocPage } from "../UIDocs";
 
 export const focusElement = async (
   testId: Command | "",
@@ -91,4 +93,51 @@ export const getDocPagePath = (
       isObject(pathWopts) ? pathWopts.route : pathWopts,
     ),
   };
+};
+
+export const getUIDocElementsAndAlertIfEmpty = (
+  doc: UIDocNonInfo,
+  addAlert: AlertContext["addAlert"],
+) => {
+  const result = getUIDocElements(doc);
+  if (!result.items.length && !isPlaywrightTest) {
+    addAlert({
+      children: `Could not find a ${JSON.stringify(doc.title)} item.`,
+    });
+  }
+  return result;
+};
+
+export const getUIDocShorterPath = (
+  currentPage: UIDocPage,
+  prevParents: UIDoc[],
+): undefined | UIDoc[] => {
+  const currentPageLinks = currentPage.children.filter(
+    (child) => child.type === "link",
+  );
+  const shortcut = prevParents.slice().map((doc, index) => {
+    if (doc.type === "page" || doc.type === "link") {
+      const matchingLink = currentPageLinks.find((link) => {
+        return (
+          link.path === doc.path &&
+          link.pathItem?.tableName === doc.pathItem?.tableName
+        );
+      });
+      if (!matchingLink) {
+        const isAlreadyOnPage =
+          currentPage.path === doc.path &&
+          currentPage.pathItem?.tableName === doc.pathItem?.tableName;
+        if (!isAlreadyOnPage) {
+          return undefined;
+        }
+        return { matchingLink, index };
+      }
+      return { matchingLink, index };
+    }
+  });
+  const bestShortcut = shortcut.findLast(isDefined);
+  if (bestShortcut) {
+    const { matchingLink, index } = bestShortcut;
+    return [matchingLink, ...prevParents.slice(index + 1)].filter(isDefined);
+  }
 };

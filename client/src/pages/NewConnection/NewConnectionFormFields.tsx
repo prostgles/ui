@@ -11,7 +11,7 @@ import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import CodeExample from "../../dashboard/CodeExample";
-import type { Connection } from "./NewConnnection";
+import type { Connection } from "./NewConnnectionForm";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import ErrorComponent from "../../components/ErrorComponent";
 import { t } from "../../i18n/i18nUtils";

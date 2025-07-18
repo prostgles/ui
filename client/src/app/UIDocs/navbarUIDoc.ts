@@ -31,13 +31,13 @@ export const navbarUIDoc = {
     The navigation adapts to your user role, showing admin-only sections like Users and Server Settings only to authorized users.
 `,
   children: [
-    {
-      type: "link",
-      path: ROUTES.CONNECTIONS,
-      selector: ".prgl-brand-icon",
-      title: "Go to Homepage",
-      description: "Navigate to the home page (connection list). ",
-    },
+    // {
+    //   type: "link",
+    //   path: ROUTES.CONNECTIONS,
+    //   selector: ".prgl-brand-icon",
+    //   title: "Go to Homepage",
+    //   description: "Navigate to the home page (connection list). ",
+    // },
     {
       type: "link",
       path: ROUTES.CONNECTIONS,

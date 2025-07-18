@@ -94,8 +94,7 @@ It will use the first connection details from the group connection.
 
 <h3 id="edit_connection_details"> Edit connection details </h3> 
 
-Modify the details of an existing database connection.
-You can update connection settings, credentials, and other parameters to ensure your connection is configured correctly.
+Connection settings, credentials, and other parameters to ensure your connection is configured correctly.
 
   - **PostgreSQL Installation Instructions**: Instructions for installing PostgreSQL on your system.  
   - **Connection Name**: The name of the connection.  

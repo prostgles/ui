@@ -3,14 +3,12 @@ import type { UIDocContainers } from "../UIDocs";
 
 export const editConnectionUIDoc = {
   type: "page",
-  path: ROUTES.EDIT_CONNECTION,
-  title: "Edit Connection",
+  // path: ROUTES.EDIT_CONNECTION,
+  title: "Add or Edit Connection",
   description:
-    "Modify the details of an existing database connection. Update connection settings, credentials, and more.",
+    "Create a new connection or modify the details of an existing database connection. Update connection settings, credentials, and more.",
   docs: `
-    Modify the details of an existing database connection.
-    You can update connection settings, credentials, and other parameters to ensure your connection is configured correctly.
-    
+    Connection settings, credentials, and other parameters to ensure your connection is configured correctly.
     `,
   children: [
     {
@@ -130,4 +128,4 @@ export const editConnectionUIDoc = {
       description: "Save the changes made to the connection.",
     },
   ],
-} satisfies UIDocContainers;
+} satisfies Omit<UIDocContainers, "path">;

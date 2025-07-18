@@ -1,106 +1,35 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "../../Testing";
+import { useAlert } from "../../components/AlertProvider";
 import { click } from "../../demo/demoUtils";
+import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { isDefined, tout } from "../../utils";
 import {
   flatDocs,
   type UIDoc,
   type UIDocFlat,
-  type UIDocNonInfo,
   type UIDocPage,
 } from "../UIDocs";
-import { getDocPagePath, getUIDocElements } from "./utils";
 import type { CommandSearchHighlight } from "./CommandSearch";
-import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "../../Testing";
-import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import { useAlert, type AlertContext } from "../../components/AlertProvider";
+import { useHighlightDocItem } from "./useHighlightDocItem";
+import {
+  getDocPagePath,
+  getUIDocElements,
+  getUIDocElementsAndAlertIfEmpty,
+  getUIDocShorterPath,
+} from "./utils";
 
-type ItemPosition = "mid" | "last";
-
-const getUIDocElementsAndAlertIfEmpty = (
-  doc: UIDocNonInfo,
-  addAlert: AlertContext["addAlert"],
-) => {
-  const result = getUIDocElements(doc);
-  if (!result.items.length && !isPlaywrightTest) {
-    addAlert({
-      children: `Could not find a ${JSON.stringify(doc.title)} item.`,
-    });
-  }
-  return result;
-};
+export type DocItemHighlightItemPosition = "mid" | "last";
 
 export const useGoToUI = (
   setHighlights: (h: CommandSearchHighlight[]) => void,
 ) => {
   const navigate = useNavigate();
-  const [message, setMessage] = useState<{
-    text: string;
-    left: number;
-    top: number;
-  }>();
 
   const { addAlert } = useAlert();
-  const highlight = useCallback(
-    async (doc: UIDocNonInfo, itemPosition: ItemPosition) => {
-      const { items } = getUIDocElementsAndAlertIfEmpty(doc, addAlert);
-      [...items].at(-1)?.scrollIntoView();
-      await tout(500);
-      const mustChooseOne = items.length > 1 && itemPosition !== "last";
-      const highlights = Array.from(items).map((el) => {
-        const rect = el.getBoundingClientRect();
-        return {
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height,
-          borderRadius: getComputedStyle(el).borderRadius,
-          flickerSlow: itemPosition === "last" || mustChooseOne,
-        };
-      });
-
-      const firstItem = highlights[0];
-      setHighlights(highlights);
-      let waitedForClick = false;
-      if (firstItem && mustChooseOne) {
-        const { left, top } = firstItem;
-        setMessage({ text: "Chose one", left, top: top - 70 });
-        if (isPlaywrightTest) {
-          items[0]?.scrollIntoView();
-          items[0]?.click();
-        } else {
-          await new Promise((resolve) => {
-            window.addEventListener("click", resolve, { once: true });
-            window.addEventListener("keydown", resolve, { once: true });
-          });
-        }
-        waitedForClick = true;
-      }
-      if (!waitedForClick) {
-        await tout(
-          isPlaywrightTest ? 0
-          : itemPosition === "mid" ? 500
-          : 2000,
-        );
-      }
-      setHighlights([]);
-      setMessage(undefined);
-      return Array.from(items);
-    },
-    [addAlert, setHighlights],
-  );
-  const showMultiHighlight = useCallback(
-    async (doc: UIDocNonInfo, duration: ItemPosition) => {
-      const [firstItem] = await highlight(doc, duration);
-      if (!firstItem) {
-        addAlert({
-          children: `No items found in the ${JSON.stringify(doc.title)} list.`,
-        });
-        return;
-      }
-    },
-    [highlight, addAlert],
-  );
+  const { highlight, message, setMessage, showMultiHighlight } =
+    useHighlightDocItem(setHighlights);
 
   const location = useLocation();
   const currentPage = useMemo(() => {
@@ -113,7 +42,7 @@ export const useGoToUI = (
   }, [location.pathname]);
 
   const clickOneOrHighlight = useCallback(
-    async (doc: UIDoc, duration: ItemPosition) => {
+    async (doc: UIDoc, duration: DocItemHighlightItemPosition) => {
       if (doc.type === "info") return;
 
       const { items, selector, selectorCommand } = getUIDocElements(doc);
@@ -171,9 +100,11 @@ export const useGoToUI = (
     async (data: UIDocFlat) => {
       const prevParents = data.parentDocs;
       const shortcut =
-        currentPage ? getShorterPath(currentPage, prevParents) : undefined;
+        currentPage ? getUIDocShorterPath(currentPage, prevParents) : undefined;
       const pathItems = shortcut ?? prevParents;
-      for (const parent of pathItems) {
+      const finalPathItems =
+        data.type === "page" ? [...pathItems, data] : pathItems;
+      for (const parent of finalPathItems) {
         const shouldStop = await goToUI(parent);
         if (!isPlaywrightTest && shouldStop) {
           return;
@@ -194,38 +125,4 @@ export const useGoToUI = (
     setMessage,
     goToUIDocItem,
   };
-};
-
-const getShorterPath = (
-  currentPage: UIDocPage,
-  prevParents: UIDoc[],
-): undefined | UIDoc[] => {
-  const currentPageLinks = currentPage.children.filter(
-    (child) => child.type === "link",
-  );
-  const shortcut = prevParents.slice().map((doc, index) => {
-    if (doc.type === "page" || doc.type === "link") {
-      const matchingLink = currentPageLinks.find((link) => {
-        return (
-          link.path === doc.path &&
-          link.pathItem?.tableName === doc.pathItem?.tableName
-        );
-      });
-      if (!matchingLink) {
-        const isAlreadyOnPage =
-          currentPage.path === doc.path &&
-          currentPage.pathItem?.tableName === doc.pathItem?.tableName;
-        if (!isAlreadyOnPage) {
-          return undefined;
-        }
-        return { matchingLink, index };
-      }
-      return { matchingLink, index };
-    }
-  });
-  const bestShortcut = shortcut.findLast(isDefined);
-  if (bestShortcut) {
-    const { matchingLink, index } = bestShortcut;
-    return [matchingLink, ...prevParents.slice(index + 1)].filter(isDefined);
-  }
 };

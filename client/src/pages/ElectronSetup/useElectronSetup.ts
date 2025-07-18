@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { DEFAULT_ELECTRON_CONNECTION } from "../../../../commonTypes/electronInitTypes";
 import type { AppState } from "../../App";
 import { pageReload } from "../../components/Loading";
-import type { Connection } from "../NewConnection/NewConnnection";
-import { DEFAULT_CONNECTION } from "../NewConnection/NewConnnection";
+import type { Connection } from "../NewConnection/NewConnnectionForm";
+import { DEFAULT_CONNECTION } from "../NewConnection/NewConnnectionForm";
 import type { OS } from "../PostgresInstallationInstructions";
 import { tout } from "./ElectronSetup";
 

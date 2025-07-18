@@ -1,7 +1,6 @@
-<h1 id="new_connection"> New Connection </h1> 
+<h1 id="add_or_edit_connection"> Add or Edit Connection </h1> 
 
-Modify the details of an existing database connection.
-You can update connection settings, credentials, and other parameters to ensure your connection is configured correctly.
+Connection settings, credentials, and other parameters to ensure your connection is configured correctly.
 
 - **PostgreSQL Installation Instructions**: Instructions for installing PostgreSQL on your system.  
 - **Connection Name**: The name of the connection.  

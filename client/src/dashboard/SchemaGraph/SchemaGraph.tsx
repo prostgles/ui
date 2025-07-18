@@ -11,7 +11,7 @@ import {
   SchemaGraphControls,
   useSchemaGraphControls,
 } from "./SchemaGraphControls";
-import type { Connection } from "../../pages/NewConnection/NewConnnection";
+import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 
 export type SchemaGraphProps = Pick<Prgl, "connectionId" | "theme"> & {
   db: DBHandlerClient;

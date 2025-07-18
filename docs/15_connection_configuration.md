@@ -17,7 +17,6 @@ Configure the selected database connection. Set connection details, manage users
 
 <h2 id="connection_details"> Connection details </h2> 
 
-Modify the details of an existing database connection.
-You can update connection settings, credentials, and other parameters to ensure your connection is configured correctly.
+Connection settings, credentials, and other parameters to ensure your connection is configured correctly.
 
 

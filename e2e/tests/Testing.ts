@@ -442,6 +442,7 @@ export const COMMANDS = {
   "ToolUseMessage.toggle": "",
   MarkdownMonacoCode: "",
   "MCPServersInstall.install": "",
+  NewConnectionForm: "",
 } as const satisfies Record<
   string,
   | string

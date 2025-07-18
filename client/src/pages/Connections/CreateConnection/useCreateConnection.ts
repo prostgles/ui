@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import type { CreateConnectionProps } from "./CreateConnection";
 import { useNavigate } from "react-router-dom";
 import { ROUTES, type SampleSchema } from "../../../../../commonTypes/utils";
-import type { Connection } from "../../NewConnection/NewConnnection";
+import type { Connection } from "../../NewConnection/NewConnnectionForm";
 import { asName } from "prostgles-client/dist/prostgles";
 import { isDefined, pickKeys } from "prostgles-types";
 import { useCreatePostgresUser } from "../CreatePostgresUser";

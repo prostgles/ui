@@ -44,6 +44,7 @@ export const CommandSearch = ({ isElectron }: { isElectron: boolean }) => {
         <FlashMessage {...message} onFinished={() => setMessage(undefined)} />
       : showSection && (
           <Popup
+            key={showSection}
             title={
               showSection === "commands" ? undefined : (
                 <NavLink to={"/documentation"}>Documentation</NavLink>

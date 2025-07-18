@@ -30,7 +30,7 @@ import { get } from "../../utils";
 import { getOS } from "../ElectronSetup/ElectronSetup";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
-import { NewConnectionForm } from "./NewConnectionForm";
+import { NewConnectionForm } from "./NewConnectionFormFields";
 import { ROUTES } from "../../../../commonTypes/utils";
 import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
@@ -282,6 +282,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
     return (
       <FlexCol
         className={"min-h-0 " + (contentOnly ? " " : " mx-auto ")}
+        data-command="NewConnectionForm"
         style={{
           maxWidth: "100%",
           maxHeight: "100vh",

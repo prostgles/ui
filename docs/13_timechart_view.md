@@ -24,7 +24,7 @@ You can add filters to the timechart to narrow down the data displayed.
       - **Layer list**: Displays the list of layers currently added to the chart.   
         - **Layer color picker**: Allows setting the color for the layer. The color can be set for each column in the layer.  
         - **Table name**: The name of the table used for the layer. This is the table that contains the data for the layer.  
-        - **Aggregation function**: Allows setting the y-axis options for the layer.  
+        - **Aggregation options**: Allows setting the y-axis options for the layer.  
           - **Aggregation function**: Selects the aggregation function to be used for the layer. The available options are: Sum, Average, Min, Max, Count.  
           - **Aggregation column**: Selects the numeric column to be used for the aggregation function.   
           - **Group by**: Selects the column to group the data by. This is will create a line for each group by value.  

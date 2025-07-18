@@ -150,7 +150,6 @@ export const UIDocs = [
   {
     ...editConnectionUIDoc,
     path: ROUTES.NEW_CONNECTION,
-    title: "New Connection",
   },
   dashboardUIDoc,
   connectionConfigUIDoc,
@@ -213,6 +212,6 @@ export const flatDocs = UIDocs.filter((d) => d.type !== "info")
   .filter(isDefined)
   .flat() as UIDocFlat[];
 
-if (isPlaywrightTest || true) {
+if (isPlaywrightTest) {
   window.toSVG = domToThemeAwareSVG;
 }

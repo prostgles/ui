@@ -6,7 +6,7 @@ import Loading from "./components/Loading";
 import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
 import { t } from "./i18n/i18nUtils";
 import { Connections } from "./pages/Connections/Connections";
-import NewConnnection from "./pages/NewConnection/NewConnnection";
+import NewConnnection from "./pages/NewConnection/NewConnnectionForm";
 import { NotFound } from "./pages/NotFound";
 import { ProjectConnection } from "./pages/ProjectConnection/ProjectConnection";
 

@@ -16,7 +16,7 @@ import { Icon } from "../../components/Icon/Icon";
 import type { TabItem } from "../../components/Tabs";
 import Tabs from "../../components/Tabs";
 import { t } from "../../i18n/i18nUtils";
-import NewConnection from "../../pages/NewConnection/NewConnnection";
+import NewConnection from "../../pages/NewConnection/NewConnnectionForm";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
 import { TopControls } from "../../pages/TopControls";

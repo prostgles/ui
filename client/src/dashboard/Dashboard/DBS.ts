@@ -11,7 +11,7 @@ import type {
   ProcStats,
   SampleSchema,
 } from "../../../../commonTypes/utils";
-import type { Connection } from "../../pages/NewConnection/NewConnnection";
+import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 import type { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
 import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
 import type { Backups } from "./dashboardUtils";

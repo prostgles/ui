@@ -65,7 +65,7 @@ export const timechartUIDoc = {
                 {
                   type: "popup",
                   selectorCommand: "TimeChartLayerOptions.aggFunc",
-                  title: "Aggregation function",
+                  title: "Aggregation options",
                   description:
                     "Allows setting the y-axis options for the layer.",
                   children: [

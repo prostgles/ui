@@ -22,7 +22,6 @@ The top navigation bar provides quick access to all major sections of Prostgles 
 Located at the top of the interface, it allows you to switch between database connections, manage users and server settings, and access your account preferences. 
 The navigation adapts to your user role, showing admin-only sections like Users and Server Settings only to authorized users.
 
-- **Go to Homepage**: Navigate to the home page (connection list).   
 - **Go to Connections**: Manage database connections  
 - **Go to Users**: Manage user accounts (admin only)  
   - **Search Users**: Search for users by name or email.  

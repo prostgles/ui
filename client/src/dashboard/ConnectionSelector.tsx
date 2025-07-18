@@ -2,7 +2,7 @@ import { mdiDatabase } from "@mdi/js";
 import React from "react";
 import Select from "../components/Select/Select";
 import { t } from "../i18n/i18nUtils";
-import type { Connection } from "../pages/NewConnection/NewConnnection";
+import type { Connection } from "../pages/NewConnection/NewConnnectionForm";
 import type { DBS } from "./Dashboard/DBS";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 
