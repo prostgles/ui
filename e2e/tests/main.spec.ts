@@ -607,6 +607,7 @@ test.describe("Main test", () => {
 
     await page.getByTestId("AskLLM").click();
     await page.getByTestId("LLMChatOptions.Model").click();
+    await page.waitForTimeout(500);
     await page.keyboard.type("3-5");
     await page.keyboard.press("Enter");
     await page.waitForTimeout(1e3); // wait for model to be set

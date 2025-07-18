@@ -1,10 +1,10 @@
+import * as fs from "fs";
 import { join } from "path";
 import type { MCPServerInfo } from "../../../../commonTypes/mcp";
-import { getRootDir } from "../../electronConfig";
 import { mcpGithub } from "./mcpGithub";
-import * as fs from "fs";
+import { actualRootDir } from "../../electronConfig";
 
-const dockerSandboxDir = join(getRootDir(), "/packages/docker-sandbox");
+const dockerSandboxDir = join(actualRootDir, "/packages/docker-sandbox");
 
 export const DefaultMCPServers: Record<string, MCPServerInfo> = {
   "duckduckgo-search": {
