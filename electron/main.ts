@@ -45,6 +45,7 @@ type StartParams = {
   openPath: (path: string, isFile?: boolean) => void;
   onReady: (port: number) => void;
 };
+process.env.NODE_ENV = "production";
 const expressApp = require("../ui/server/dist/server/src/electronConfig") as {
   start: (params: StartParams) => Promise<void>;
 };

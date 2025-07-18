@@ -63,14 +63,6 @@ export const fetchLLMResponse = async (
     throw new Error("No response data from LLM");
   }
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log("LLM Response Data:", responseData);
-
-    try {
-      void responseClone.json().then(console.log);
-    } catch (err) {}
-  }
-
   return parseLLMResponseObject({
     provider,
     responseData,

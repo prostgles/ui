@@ -10,6 +10,7 @@ import { AddLLMPromptForm } from "./AddLLMPromptForm";
 import { LLMProviderSetup } from "./LLMProviderSetup";
 import { ProstglesSignup } from "./ProstglesSignup";
 import type { LLMSetupState } from "./useLLMSetupState";
+import { isPlaywrightTest } from "../../../i18n/i18nUtils";
 
 export type SetupLLMCredentialsProps = Pick<
   Prgl,
@@ -27,9 +28,10 @@ export type SetupLLMCredentialsProps = Pick<
       }
   );
 export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
-  const { theme, dbs, dbsTables, dbsMethods, asPopup, onClose, setupState } =
-    props;
-  const [setupType, setSetupType] = React.useState<"free" | "api">();
+  const { dbs, dbsTables, dbsMethods, asPopup, onClose, setupState } = props;
+  const [setupType, setSetupType] = React.useState<"free" | "api" | undefined>(
+    isPlaywrightTest ? undefined : "api",
+  );
   const { state, prompts } = setupState;
   const content =
     state === "loading" ? <Loading delay={1000} />
@@ -49,6 +51,7 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
               color="action"
               onClick={() => setSetupType("free")}
               iconPath={mdiLogin}
+              disabledInfo={isPlaywrightTest ? undefined : "Coming soon"}
             >
               Signup (free)
             </Btn>

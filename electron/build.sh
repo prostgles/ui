@@ -23,6 +23,7 @@ cp -R ./electron/*.json ./ui/electron/
 cp -R ./server/src ./ui/server/
 cp -R ./server/dist ./ui/server/
 cp -R ./server/sample_schemas ./ui/server/
+cp -R ./server/packages ./ui/server/
 cp -R ./commonTypes ./ui/
 cp ./server/tsconfig.json ./ui/server/
 cp ./server/.gitignore ./ui/server/

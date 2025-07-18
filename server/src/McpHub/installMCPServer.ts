@@ -101,7 +101,7 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
       }
       const npmI = await runShellCommand(
         "npm",
-        ["install"],
+        ["install", "--include=dev"],
         { cwd: installationPath },
         (chunk) => {
           void addLog(chunk);

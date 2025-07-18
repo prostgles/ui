@@ -26,10 +26,11 @@ import { MCPServers } from "./MCPServers/MCPServers";
 
 export type ServerSettingsProps = Pick<
   Prgl,
-  "dbsMethods" | "dbs" | "dbsTables" | "auth"
+  "dbsMethods" | "dbs" | "dbsTables" | "auth" | "serverState"
 >;
 export const ServerSettings = (props: ServerSettingsProps) => {
-  const { dbsMethods, dbs, dbsTables } = props;
+  const { dbsMethods, dbs, dbsTables, serverState } = props;
+
   const [testCIDR, setCIDR] = useState<{ cidr?: string }>({});
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
@@ -74,6 +75,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
           <TabsWithDefaultStyle
             items={{
               security: {
+                hide: serverState.isElectron,
                 label: t.ServerSettings["Security"],
                 leftIconPath: mdiSecurity,
                 content: (
@@ -175,11 +177,13 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 ),
               },
               auth: {
+                hide: serverState.isElectron,
                 leftIconPath: mdiAccountKey,
                 label: t.ServerSettings.Authentication,
                 content: <AuthProviderSetup dbs={dbs} dbsTables={dbsTables} />,
               },
               cloud: {
+                hide: serverState.isElectron,
                 leftIconPath: mdiCloudKeyOutline,
                 label: t.ServerSettings["Cloud credentials"],
                 content: (

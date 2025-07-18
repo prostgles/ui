@@ -35,33 +35,31 @@ export const NavBarWrapper = (props: NavBarWrapperProps) => {
         dbsMethods={dbsMethods}
         serverState={serverState}
         user={auth.user}
-        options={
-          serverState.isElectron ?
-            []
-          : [
-              {
-                label: t["App"]["Connections"],
-                to: ROUTES.CONNECTIONS,
-                iconPath: mdiServerNetwork,
-              },
-              {
-                label: t["App"]["Users"],
-                to: ROUTES.USERS,
-                forAdmin: true,
-                iconPath: mdiAccountMultiple,
-              },
-              {
-                label: t["App"]["Server settings"],
-                to: ROUTES.SERVER_SETTINGS,
-                forAdmin: true,
-                iconPath: mdiServerSecurity,
-              },
+        options={[
+          {
+            label: t["App"]["Connections"],
+            to: ROUTES.CONNECTIONS,
+            iconPath: mdiServerNetwork,
+          },
+          serverState.isElectron ? undefined : (
+            {
+              label: t["App"]["Users"],
+              to: ROUTES.USERS,
+              forAdmin: true,
+              iconPath: mdiAccountMultiple,
+            }
+          ),
+          {
+            label: t["App"]["Server settings"],
+            to: ROUTES.SERVER_SETTINGS,
+            forAdmin: true,
+            iconPath: mdiServerSecurity,
+          },
 
-              // { label: "Permissions", to: "/access-management", forAdmin: true },
-            ]
-              .filter(isDefined)
-              .filter((o) => !o.forAdmin || extraProps.user?.type === "admin")
-        }
+          // { label: "Permissions", to: "/access-management", forAdmin: true },
+        ]
+          .filter(isDefined)
+          .filter((o) => !o.forAdmin || extraProps.user?.type === "admin")}
         endContent={
           <FlexRow className={window.isLowWidthScreen ? "ml-2" : ""}>
             <ThemeSelector
