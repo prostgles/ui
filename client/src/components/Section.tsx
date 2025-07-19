@@ -8,7 +8,7 @@ import Popup from "./Popup/Popup";
 import type { Command, TestSelectors } from "../Testing";
 
 type SectionProps = TestSelectors & {
-  title: string;
+  title: React.ReactNode;
   titleRightContent?: React.ReactNode;
   children: React.ReactNode;
   buttonStyle?: React.CSSProperties;
@@ -39,7 +39,7 @@ type SectionProps = TestSelectors & {
       }
   );
 
-export function Section(props: SectionProps) {
+export const Section = (props: SectionProps) => {
   const {
     children,
     title,
@@ -58,16 +58,14 @@ export function Section(props: SectionProps) {
     ...otherProps
   } = props;
   const [open, toggle] = useState(oDef);
-  const [fullscreen, setfullscreen] = useState(false);
-  const toggleFullScreen = () => {
-    setfullscreen((v) => !v);
-  };
+  const [fullscreen, setFullscreen] = useState(false);
 
   const content = (
     <div
       data-command={dataCommand satisfies Command | undefined}
       className={classOverride(
-        "Section flex-col min-h-0 f-0 relative bg-inherit ",
+        "Section flex-col min-h-0 f-0 relative bg-inherit " +
+          (open ? "bb b-color" : ""),
         className,
       )}
       style={
@@ -80,26 +78,29 @@ export function Section(props: SectionProps) {
       <div
         className="Section__Header flex-row ai-center noselect pointer f-0 bb b-color bg-inherit"
         style={
-          !open ? undefined : (
+          !open ?
             {
+              borderBottom: "1px solid var(--b-color)",
+            }
+          : {
               position: "sticky",
               top: 0,
               zIndex: 1,
+              borderBottom: "unset",
               marginBottom: ".5em",
             }
-          )
         }
       >
         <Btn
           className={
-            (titleRightContent ? "" : "f-1") +
+            (titleRightContent ? "" : "f-1d") +
             " p-p5 ta-left font-20 bold jc-start mr-1"
           }
           title="Expand section"
+          variant="text"
           disabledInfo={disabledInfo}
           style={{
             width: undefined,
-            flex: 1,
             ...buttonStyle,
           }}
           iconPath={
@@ -113,15 +114,15 @@ export function Section(props: SectionProps) {
         >
           {title}
         </Btn>
+        {titleRightContent}
         {!disableFullScreen && (
           <Btn
             className={fullscreen ? "" : "show-on-parent-hover"}
             iconPath={mdiFullscreen}
-            onClick={toggleFullScreen}
+            onClick={() => setFullscreen(!fullscreen)}
             color={fullscreen ? "action" : undefined}
           />
         )}
-        {titleRightContent}
       </div>
 
       {(open || fullscreen) && (
@@ -133,8 +134,17 @@ export function Section(props: SectionProps) {
   );
 
   if (fullscreen) {
-    return <Popup positioning="fullscreen">{content}</Popup>;
+    return (
+      <Popup
+        positioning="fullscreen"
+        onClose={() => {
+          setFullscreen(false);
+        }}
+      >
+        {content}
+      </Popup>
+    );
   }
 
   return content;
-}
+};

@@ -1,4 +1,4 @@
-import { tout } from "../pages/ElectronSetup";
+import { tout } from "../pages/ElectronSetup/ElectronSetup";
 import { click, type } from "./demoUtils";
 
 export const fileDemo = async () => {

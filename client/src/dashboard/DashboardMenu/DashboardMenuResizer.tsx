@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import type { DashboardMenuProps } from "./DashboardMenu";
-import { Pan } from "../../components/Table/Table";
 import { useLocalSettings } from "../localSettings";
+import { Pan } from "../../components/Pan";
 
 type P = {
   dashboardMenuRef: HTMLDivElement | null;
@@ -21,6 +21,7 @@ export const DashboardMenuResizer = ({ dashboardMenuRef, workspace }: P) => {
   return (
     <Pan
       key={"wsp"}
+      data-command="dashboard.menu.resize"
       style={{
         position: "absolute",
         right: 0,

@@ -14,15 +14,15 @@ import { CreateTable } from "./CreateTable";
 import type { DashboardMenuProps } from "./DashboardMenu";
 
 const items = [
-  { key: "New", label: "Create table", iconPath: mdiTable },
+  { key: "new table", label: "Create table", iconPath: mdiTable },
   {
-    key: "Import file",
+    key: "import file",
     label: "Import file",
     subLabel: "Supported types: csv/geojson/json",
     iconPath: mdiFileUploadOutline,
   },
   {
-    key: "newMethod",
+    key: "new function",
     label: "Create TS Function",
     subLabel: "(Experimental)",
     iconPath: mdiFunction,
@@ -39,8 +39,8 @@ export const NewTableMenu = (p: DashboardMenuProps) => {
   return (
     <>
       <Select
-        emptyLabel="Create table"
-        data-command="dashboard.menu.createTable"
+        title="Create/Import"
+        data-command="dashboard.menu.create"
         iconPath=""
         btnProps={{
           iconPath: mdiPlus,
@@ -56,7 +56,7 @@ export const NewTableMenu = (p: DashboardMenuProps) => {
           setShow(o);
         }}
       />
-      {show === "New" && (
+      {show === "new table" && (
         <CreateTable
           {...p}
           onClose={() => {
@@ -64,7 +64,7 @@ export const NewTableMenu = (p: DashboardMenuProps) => {
           }}
         />
       )}
-      {show === "Import file" && (
+      {show === "import file" && (
         <FileImporter
           tables={tables}
           db={prgl.db}
@@ -76,7 +76,7 @@ export const NewTableMenu = (p: DashboardMenuProps) => {
           }}
         />
       )}
-      {show === "newMethod" && (
+      {show === "new function" && (
         <NewMethod
           {...prgl}
           access_rule_id={undefined}

@@ -22,6 +22,7 @@ import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 import { t } from "../i18n/i18nUtils";
+import { classOverride } from "../components/Flex";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
@@ -57,7 +58,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
   const showLinks =
     (!show || show.link) &&
     Boolean(
-      (setLinkMenu && w.table_name && table?.joins.length) ||
+      (setLinkMenu && w.table_name && table?.joinsV2.length) ||
         (w.type !== "sql" && !!myLinks.length),
     );
 
@@ -85,10 +86,11 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
   return (
     <>
       <div
-        className={
-          "W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 " +
-          bgColorClass
-        }
+        data-command="Window.W_QuickMenu"
+        className={classOverride(
+          "W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 o-auto no-scroll-bar ",
+          bgColorClass,
+        )}
         style={{ maxWidth: "fit-content", margin: "2px 0" }}
         ref={divRef}
       >
@@ -151,6 +153,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         {showLinks && !window.isMobileDevice && !!setLinkMenu && (
           <Btn
             title={t.W_QuickMenu["Cross filter tables"]}
+            data-command="Window.W_QuickMenu.addCrossFilteredTable"
             className={bgColorClass}
             size="small"
             iconPath={mdiSetLeftCenter}

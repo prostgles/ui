@@ -4,6 +4,7 @@ import type { TestSelectors } from "../../Testing";
 import { Icon } from "../../components/Icon/Icon";
 import type { DBS } from "../Dashboard/DBS";
 import { SmartSelect } from "../SmartSelect";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 
 type P = {
   dbs: DBS;
@@ -41,7 +42,7 @@ export const UserTypeSelect = (props: P) => {
       placeholder="New or existing user type"
       fieldName="id"
       onChange={onChange}
-      tableHandler={dbs.user_types as any}
+      tableHandler={dbs.user_types as TableHandlerClient}
       values={userTypes}
       getLabel={(id) => {
         let subLabel = "",
@@ -55,6 +56,13 @@ export const UserTypeSelect = (props: P) => {
           if (existingRules) {
             disabledInfo = "Need to remove from existing access rule first";
             subLabel = `Already assigned permissions`;
+          } else if (
+            (userTypes.includes("public") && !userTypes.includes(id)) ||
+            (userTypes.length &&
+              !userTypes.includes("public") &&
+              id === "public")
+          ) {
+            disabledInfo = "Cannot mix 'public' with other user types";
           }
         }
 

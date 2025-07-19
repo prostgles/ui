@@ -6,6 +6,7 @@ import type { SubscriptionHandler } from "prostgles-types";
 import SmartTable from "./SmartTable";
 import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";
 import { t } from "../i18n/i18nUtils";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export type Users = {
   created?: Date;
@@ -53,9 +54,8 @@ export default class UserManager extends RTComp<ExtraProps, S> {
     } else {
       content = (
         <SmartTable
-          theme={theme}
           className="w-full"
-          db={dbs as any}
+          db={dbs as DBHandlerClient}
           methods={dbsMethods}
           titlePrefix={t.Users["Prostgles UI users"]}
           tableName="users"

@@ -1,18 +1,17 @@
 import { mdiCog } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
+import { IconPalette } from "../../components/IconPalette/IconPalette";
 import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
 import type {
   DBSchemaTablesWJoins,
   Workspace,
 } from "../Dashboard/dashboardUtils";
-import SmartForm from "../SmartForm/SmartForm";
-import { IconPalette } from "../../components/IconPalette/IconPalette";
+import { SmartForm } from "../SmartForm/SmartForm";
 
-type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods" | "theme"> & {
+type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods"> & {
   w: Workspace;
   dbsTables: DBSchemaTablesWJoins;
 };
@@ -21,7 +20,6 @@ export const WorkspaceSettings = ({
   dbsTables,
   w,
   dbsMethods,
-  theme,
 }: WorkspaceSettingsProps) => {
   return (
     <PopupMenu
@@ -31,6 +29,8 @@ export const WorkspaceSettings = ({
       }}
       clickCatchStyle={{ opacity: 1 }}
       onClickClose={false}
+      positioning="top-center"
+      data-command="WorkspaceSettings"
       button={
         <Btn
           title="Workspace settings"
@@ -65,14 +65,12 @@ export const WorkspaceSettings = ({
       render={(popupClose) => (
         <div className="flex-col gap-p5  min-h-0">
           <SmartForm
-            db={dbs as any}
+            db={dbs as DBHandlerClient}
             showJoinedTables={false}
-            theme={theme}
             label=""
             tableName="workspaces"
             tables={dbsTables}
             methods={dbsMethods}
-            hideChangesOptions={true}
             confirmUpdates={true}
             columns={{
               name: 1,

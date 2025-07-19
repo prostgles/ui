@@ -4,7 +4,7 @@ import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 export const checkLLMLimit = async (
   dbs: DBS,
-  user: DBSSchema["users"],
+  user: Pick<DBSSchema["users"], "id" | "type">,
   allowedUsedLLMCreds: DBSSchema["access_control_allowed_llm"][],
   accessRules: DBSSchema["access_control"][],
 ) => {

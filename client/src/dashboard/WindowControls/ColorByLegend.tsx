@@ -7,7 +7,6 @@ import { isDefined } from "../../utils";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { PALETTE } from "../Dashboard/dashboardUtils";
-import { getSmartGroupFilter } from "../SmartFilter/smartFilterUtils";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import {
@@ -17,6 +16,7 @@ import {
 } from "../W_Table/ColumnMenu/ColumnStyleControls";
 import { updateWCols } from "../W_Table/tableUtils/tableUtils";
 import type { ProstglesTimeChartStateLayer } from "../W_TimeChart/W_TimeChart";
+import { getSmartGroupFilter } from "../../../../commonTypes/filterUtils";
 
 type P = DivProps &
   Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl" | "w"> & {
@@ -130,17 +130,27 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
                 !currCol?.style || currCol.style.type !== "Conditional" ?
                   undefined
                 : currCol.style;
-              if (!currColStyle) return;
+              if (!currColStyle) {
+                alert("Something went wrong. Try re-creating the chart");
+                return;
+              }
+              const newConditions = currColStyle.conditions.map((c) =>
+                c.condition === s.condition ?
+                  {
+                    ...s,
+                    textColor: newColor,
+                  }
+                : c,
+              );
+              if (!newConditions.some((c) => c.condition === s.condition)) {
+                newConditions.push({
+                  ...s,
+                  textColor: newColor,
+                });
+              }
               setColumnStyle({
                 ...currColStyle,
-                conditions: currColStyle.conditions.map((c) =>
-                  c.condition === s.condition ?
-                    {
-                      ...s,
-                      textColor: newColor,
-                    }
-                  : c,
-                ),
+                conditions: newConditions,
               });
             }}
           />

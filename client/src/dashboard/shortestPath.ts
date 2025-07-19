@@ -14,13 +14,15 @@ export type Graph = {
   [key: string]: { [key: string]: number };
 };
 
-export const makeReversibleGraph = (links: [string, string][]): Graph => {
+export const makeReversibleGraph = (
+  links: [string, string, number?][],
+): Graph => {
   const g: Record<string, any> = {};
-  links.map(([id1, id2]) => {
+  links.map(([id1, id2, distance = 1]) => {
     g[id1] = g[id1] || {};
-    g[id1][id2] = 1;
+    g[id1][id2] = distance;
     g[id2] = g[id2] || {};
-    g[id2][id1] = 1;
+    g[id2][id1] = distance;
   });
   return g;
 };

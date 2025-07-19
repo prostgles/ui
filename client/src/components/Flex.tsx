@@ -3,19 +3,30 @@ import type { TestSelectors } from "../Testing";
 
 export type DivProps = React.HTMLAttributes<HTMLDivElement> & TestSelectors;
 
+const classPropsWithSides = ["p", "m"] as const;
+const sides = ["t", "b", "l", "r", "x", "y"] as const;
+const parseClass = (v: string) => (v.includes("-") ? v.split("-")[0] + "-" : v);
+
 type FlexDivProps = DivProps & {
   disabledInfo?: string | false;
 };
 export const classOverride = (defaultClass = "", userClass = "") => {
-  const parseClass = (v: string) =>
-    v.includes("-") ? v.split("-")[0] + "-" : v;
   const userClasses = userClass.split(" ");
   const defaultParts = defaultClass
     .split(" ")
     .filter((defPart) => {
-      return !userClasses.some((userClassPart) =>
-        parseClass(userClassPart).startsWith(parseClass(defPart)),
-      );
+      const defClassProp = parseClass(defPart);
+      return !userClasses.some((userClassPart) => {
+        const userClassProp = parseClass(userClassPart);
+        let userClassProps = [userClassProp];
+        const sidedClassProp = classPropsWithSides.find(
+          (c) => userClassProp === `${c}-`,
+        );
+        if (sidedClassProp) {
+          userClassProps = sides.map((s) => `${sidedClassProp}${s}-`);
+        }
+        return userClassProps.some((uc) => uc.startsWith(defClassProp));
+      });
     })
     .join(" ");
   return userClass + " " + defaultParts;

@@ -1,9 +1,9 @@
 import { getCommandElemSelector } from "../../Testing";
-import { tout } from "../../pages/ElectronSetup";
+import { tout } from "../../utils";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { triggerCharacters } from "../SQLEditor/SQLCompletion/registerSuggestions";
-import type { SQLEditorRef } from "../SQLEditor/SQLEditor";
-import type { SQLHandler } from "prostgles-types";
+import { triggerCharacters } from "../SQLEditor/SQLCompletion/monacoSQLSetup/registerSuggestions";
+import type { SQLEditorRef } from "../SQLEditor/W_SQLEditor";
+import { includes, type SQLHandler } from "prostgles-types";
 
 export type TypeOpts = {
   msPerChar?: number;
@@ -57,7 +57,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
   const getEditor = () => {
     const editor = getEditors()[0];
     if (!editor) throw "Editor not found";
-    const e = ((editor as any).sqlRef as SQLEditorRef).editor;
+    const e = editor.sqlRef!.editor;
     return { editor, e };
   };
 
@@ -115,9 +115,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
       } else {
         getEditor().e.trigger("keyboard", "type", { text: char });
         if (
-          (!triggered &&
-            !triggerMode &&
-            triggerCharacters.includes(char as any)) ||
+          (!triggered && !triggerMode && includes(triggerCharacters, char)) ||
           (!triggered &&
             triggerMode === "firstChar" &&
             char?.match(/^[a-z0-9]+$/i))
@@ -188,9 +186,9 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
   const sqlAction = async (type: "kill-query" | "stop-listen" | "run") => {
     await tout(50);
     const selector =
-      type === "stop-listen" ? "dashboard.window.stopListen"
-      : type === "kill-query" ? "dashboard.window.cancelQuery"
-      : "dashboard.window.runQuery";
+      type === "stop-listen" ? "W_SQLBottomBar.stopListen"
+      : type === "kill-query" ? "W_SQLBottomBar.cancelQuery"
+      : "W_SQLBottomBar.runQuery";
     const button = getEditor().editor.querySelector<HTMLButtonElement>(
       getCommandElemSelector(selector),
     );

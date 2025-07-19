@@ -1,9 +1,9 @@
 import { mdiSortReverseVariant, mdiSortVariant } from "@mdi/js";
+import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import Select from "../../components/Select/Select";
-import type { ValidatedColumnInfo } from "prostgles-types";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 
 type SortByControlProps = Pick<

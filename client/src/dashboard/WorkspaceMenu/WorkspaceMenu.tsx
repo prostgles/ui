@@ -5,13 +5,13 @@ import {
   mdiViewCarousel,
 } from "@mdi/js";
 import React, { useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import PopupMenu from "../../components/PopupMenu";
-import SearchList from "../../components/SearchList/SearchList";
+import { SearchList } from "../../components/SearchList/SearchList";
 import { SvgIcon } from "../../components/SvgIcon";
 import { onWheelScroll } from "../../components/Table/Table";
 import type { Workspace, WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
@@ -20,7 +20,9 @@ import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
-import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../commonTypes/utils";
+import type { Command } from "../../Testing";
+import type { DBS } from "../Dashboard/DBS";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -28,18 +30,30 @@ type P = {
   className?: string;
 };
 
+const WorkspaceIdSearchParam = "workspaceId" as const;
 export const getWorkspacePath = (
   w: Pick<Workspace, "id" | "connection_id">,
 ) => {
-  return [API_PATH_SUFFIXES.DASHBOARD, `${w.connection_id}?workspaceId=${w.id}`]
+  return [
+    ROUTES.CONNECTIONS,
+    `${w.connection_id}?${WorkspaceIdSearchParam}=${w.id}`,
+  ]
     .filter((v) => v)
     .join("/");
 };
 
-export const useSetNewWorkspace = (currentWorkspaceId: string | undefined) => {
+export const useSetActiveWorkspace = (
+  currentWorkspaceId: string | undefined,
+) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const setWorkspace = useCallback(
-    (w: Pick<Workspace, "id" | "connection_id">) => {
+    (w: Pick<Workspace, "id" | "connection_id"> | undefined) => {
+      if (!w) {
+        searchParams.delete(WorkspaceIdSearchParam);
+        setSearchParams(searchParams);
+        return;
+      }
       if (w.id === currentWorkspaceId) {
         return;
       }
@@ -47,10 +61,21 @@ export const useSetNewWorkspace = (currentWorkspaceId: string | undefined) => {
 
       navigate(path);
     },
-    [currentWorkspaceId, navigate],
+    [currentWorkspaceId, navigate, searchParams, setSearchParams],
   );
 
   return { setWorkspace };
+};
+
+/**
+ * The purpose of this is to ensure that we reuse sync'd workspaces
+ */
+export const useWorkspacesSync = (dbs: DBS, connection_id: string) => {
+  const { data: unsortedWorkspaces = [] } = dbs.workspaces.useSync!(
+    { connection_id, deleted: false },
+    { handlesOnData: true, select: "*", patchText: false },
+  );
+  return unsortedWorkspaces;
 };
 
 export const WorkspaceMenu = (props: P) => {
@@ -61,11 +86,8 @@ export const WorkspaceMenu = (props: P) => {
   } = props;
   const listRef = useRef<HTMLDivElement>(null);
 
-  const { data: unsortedWorkspaces = [] } = dbs.workspaces.useSync!(
-    { connection_id: workspace.connection_id, deleted: false },
-    { handlesOnData: true, select: "*", patchText: false },
-  );
-  const { setWorkspace } = useSetNewWorkspace(workspace.id);
+  const unsortedWorkspaces = useWorkspacesSync(dbs, workspace.connection_id);
+  const { setWorkspace } = useSetActiveWorkspace(workspace.id);
   const userId = user?.id;
   const isAdmin = user?.type === "admin";
   const workspaces = useMemo(() => {
@@ -86,7 +108,15 @@ export const WorkspaceMenu = (props: P) => {
         )
     );
   }, [unsortedWorkspaces, userId]);
-
+  const sortedWorkspaces = useMemo(
+    () =>
+      workspaces.sort(
+        (a, b) =>
+          new Date(a.created!).getTime() - new Date(b.created!).getTime() ||
+          a.name.localeCompare(b.name),
+      ),
+    [workspaces],
+  );
   const WorkspaceMenuDropDown = (
     <PopupMenu
       title="Workspaces"
@@ -129,93 +159,90 @@ export const WorkspaceMenu = (props: P) => {
               className={" b-t f-1 min-h-0 "}
               style={{ minHeight: "120px", maxHeight: "30vh" }}
               placeholder={"Workspaces"}
-              items={workspaces
-                .sort((a, b) => +b.last_updated! - +a.last_updated!)
-                .map((w) => ({
-                  key: w.name,
-                  label: w.name,
-                  labelStyle: {},
-                  rowStyle:
-                    workspace.id === w.id ?
-                      {
-                        background: "var(--bg-li-selected)",
-                      }
-                    : {},
-                  contentLeft: (
-                    <div
-                      className="flex-col ai-start f-0 mr-1 text-2"
-                      style={
-                        workspace.id === w.id ?
-                          { color: "var(--active)" }
-                        : undefined
-                      }
-                    >
-                      {w.icon ?
-                        <SvgIcon icon={w.icon} />
-                      : <Icon path={mdiViewCarousel} size={1} />}
-                    </div>
-                  ),
-                  contentRight: (
-                    <div className="flex-row gap-p5 pl-1 show-on-parent-hover">
-                      {w.published && isAdmin && (
-                        <Btn
-                          title="Published"
-                          iconPath={mdiAccountMultiple}
-                          color="action"
-                          asNavLink={true}
-                          href={`/connection-config/${w.connection_id}?section=access_control`}
-                        />
-                      )}
-                      <WorkspaceDeleteBtn
-                        w={w}
-                        dbs={props.prgl.dbs}
-                        activeWorkspaceId={workspace.id}
-                        disabledInfo={
-                          isAdmin || w.isMine ?
-                            undefined
-                          : "You can not delete a published workspace"
-                        }
-                      />
+              items={sortedWorkspaces.map((w) => ({
+                key: w.name,
+                label: w.name,
+                labelStyle: {},
+                rowStyle:
+                  workspace.id === w.id ?
+                    {
+                      background: "var(--bg-li-selected)",
+                    }
+                  : {},
+                contentLeft: (
+                  <div
+                    className="flex-col ai-start f-0 mr-1 text-2"
+                    style={
+                      workspace.id === w.id ?
+                        { color: "var(--active)" }
+                      : undefined
+                    }
+                  >
+                    {w.icon ?
+                      <SvgIcon icon={w.icon} />
+                    : <Icon path={mdiViewCarousel} size={1} />}
+                  </div>
+                ),
+                contentRight: (
+                  <div className="flex-row gap-p5 pl-1 show-on-parent-hover">
+                    {w.published && isAdmin && (
                       <Btn
-                        iconPath={mdiContentCopy}
-                        title="Clone workspace"
-                        data-command="WorkspaceMenu.CloneWorkspace"
-                        onClickPromise={async () => {
-                          await cloneWorkspace(dbs, w.id).then((d) => {
-                            setWorkspace(d.clonedWsp);
-                          });
-                        }}
+                        title="Published"
+                        iconPath={mdiAccountMultiple}
+                        color="action"
+                        asNavLink={true}
+                        href={`/connection-config/${w.connection_id}?section=access_control`}
                       />
-                      {(isAdmin || w.isMine) && (
-                        <>
-                          <WorkspaceSettings
-                            w={w}
-                            theme={props.prgl.theme}
-                            dbs={props.prgl.dbs}
-                            dbsTables={dbsTables}
-                            dbsMethods={dbsMethods}
-                          />
-                        </>
-                      )}
-                    </div>
-                  ),
-                  onPress: (e) => {
-                    if (
-                      w.id === props.workspace.id ||
-                      (e.target as Element | null)?.closest(
-                        ".delete-workspace",
-                      ) ||
-                      (e.target as Element | null)?.closest(
-                        ".workspace-settings",
-                      ) ||
-                      (e.target as Element | null)?.closest(".clickcatchcomp")
-                    )
-                      return;
+                    )}
+                    <WorkspaceDeleteBtn
+                      w={w}
+                      dbs={props.prgl.dbs}
+                      activeWorkspaceId={workspace.id}
+                      disabledInfo={
+                        isAdmin || w.isMine ?
+                          undefined
+                        : "You can not delete a published workspace"
+                      }
+                    />
+                    <Btn
+                      iconPath={mdiContentCopy}
+                      title="Clone workspace"
+                      data-command="WorkspaceMenu.CloneWorkspace"
+                      onClickPromise={async () => {
+                        await cloneWorkspace(dbs, w.id).then((d) => {
+                          setWorkspace(d.clonedWsp);
+                        });
+                      }}
+                    />
+                    {(isAdmin || w.isMine) && (
+                      <>
+                        <WorkspaceSettings
+                          w={w}
+                          dbs={props.prgl.dbs}
+                          dbsTables={dbsTables}
+                          dbsMethods={dbsMethods}
+                        />
+                      </>
+                    )}
+                  </div>
+                ),
+                onPress: (e) => {
+                  if (
+                    w.id === props.workspace.id ||
+                    (e.target as Element | null)?.closest(
+                      ".delete-workspace",
+                    ) ||
+                    (e.target as Element | null)?.closest(
+                      ".workspace-settings",
+                    ) ||
+                    (e.target as Element | null)?.closest(".clickcatchcomp")
+                  )
+                    return;
 
-                    setWorkspace(w);
-                    closePopup();
-                  },
-                }))}
+                  setWorkspace(w);
+                  closePopup();
+                },
+              }))}
             />
           }
         </FlexCol>
@@ -250,8 +277,11 @@ export const WorkspaceMenu = (props: P) => {
       }}
     >
       <ul
-        className={"o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar ai-end"}
+        className={
+          "no-decor o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar ai-end"
+        }
         onWheel={onWheelScroll()}
+        data-command={"WorkspaceMenu.list" satisfies Command}
       >
         {renderedWorkspaces.map((w) => (
           <li

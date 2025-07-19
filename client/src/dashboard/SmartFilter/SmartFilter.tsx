@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { ValidatedColumnInfo, AnyObject } from "prostgles-types";
+import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import React from "react";
 import type {
@@ -14,7 +14,8 @@ import {
 } from "../../../../commonTypes/filterUtils";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
-import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
+import { FlexCol, classOverride } from "../../components/Flex";
+import { InfoRow } from "../../components/InfoRow";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
@@ -25,10 +26,9 @@ import {
   DEFAULT_VALIDATED_COLUMN_INFO,
   type FilterColumn,
 } from "./smartFilterUtils";
-import { InfoRow } from "../../components/InfoRow";
 export * from "./smartFilterUtils";
 
-type Operand = "AND" | "OR";
+export type Operand = "AND" | "OR";
 export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
   db: DBHandlerClient;
   tableName: string;
@@ -37,6 +37,7 @@ export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
   detailedFilter?: SmartGroupFilter;
   operand?: Operand;
   onOperandChange?: (operand: Operand) => any;
+  hideOperand?: boolean;
   className?: string;
   style?: React.CSSProperties;
   filterClassName?: string;
@@ -71,6 +72,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
     extraFilters,
     showNoFilterInfoRow = false,
     itemName,
+    hideOperand,
   } = props;
 
   const tableColumns = tables.find((t) => t.name === tableName)?.columns;
@@ -229,7 +231,11 @@ export const SmartFilter = (props: SmartFilterProps) => {
             />
           );
 
-          if (detailedFilter.length > 1 && di < detailedFilter.length - 1) {
+          if (
+            detailedFilter.length > 1 &&
+            di < detailedFilter.length - 1 &&
+            !hideOperand
+          ) {
             return (
               <React.Fragment key={"o" + di}>
                 {filterNode}

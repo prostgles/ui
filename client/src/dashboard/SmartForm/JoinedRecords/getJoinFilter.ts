@@ -1,18 +1,22 @@
-import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import type {
+  DetailedFilterBase,
+  SimpleFilter,
+  SmartGroupFilter,
+} from "../../../../../commonTypes/filterUtils";
 import { isDefined } from "../../../utils";
-import type { JoinedRecords } from "./JoinedRecords";
 
 export const getJoinFilter = function (
-  this: JoinedRecords,
   path: string[],
+  tableName: string,
+  rowFilter: DetailedFilterBase[] = [],
+  opts?: Pick<SimpleFilter, "minimised" | "disabled">,
 ): SmartGroupFilter {
-  const { tableName, rowFilter = [] } = this.props;
   const f: SmartGroupFilter = rowFilter.map(({ fieldName, type, value }) => {
     const filter = {
       fieldName,
       value,
       type,
-      minimised: true,
+      ...opts,
     };
 
     /** Why hide self joins? */
@@ -24,7 +28,7 @@ export const getJoinFilter = function (
       type: "$existsJoined",
       path: [...path.slice(0, -1), tableName].filter(isDefined),
       filter,
-      minimised: true,
+      ...opts,
     };
   });
   return f;

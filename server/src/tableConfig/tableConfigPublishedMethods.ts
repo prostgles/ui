@@ -12,13 +12,12 @@ const primitiveJsonbType = {
 
 export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
   published_methods: {
-    // dropIfExistsCascade: true,
     columns: {
       id: `SERIAL PRIMARY KEY`,
       name: `TEXT NOT NULL DEFAULT 'Method name'`,
       description: `TEXT NOT NULL DEFAULT 'Method description'`,
       connection_id: {
-        sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL`,
+        sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL ON UPDATE SET NULL`,
         info: { hint: "If null then connection was deleted" },
       },
       arguments: {
@@ -68,9 +67,10 @@ export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
                 lookup: {
                   title: "Table column",
                   lookup: {
-                    type: "data-def",
-                    column: "",
-                    table: "",
+                    type: "schema",
+                    // column: "",
+                    // table: "",
+                    object: "column",
                   },
                 },
               },
@@ -104,11 +104,17 @@ export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
           },
         },
       },
-      run: "TEXT NOT NULL DEFAULT 'export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}'",
+      run: "TEXT NOT NULL DEFAULT 'export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {\n  \n}'",
+      tsconfig: "JSONB",
+      package: "JSONB",
       outputTable: `TEXT`,
     },
     indexes: {
       unique_name: { unique: true, columns: "connection_id, name" },
+      unique_func_per_connection: {
+        unique: true,
+        columns: "id, connection_id",
+      },
     },
   },
 };

@@ -1,8 +1,8 @@
-import { mdiCheckBold } from "@mdi/js";
+import { mdiCheckBold, mdiCheckboxBlankOutline } from "@mdi/js";
 import React from "react";
+import type { TestSelectors } from "../Testing";
 import "./Checkbox.css";
 import { classOverride } from "./Flex";
-import type { TestSelectors } from "../Testing";
 import { Icon } from "./Icon/Icon";
 
 type P = TestSelectors & {
@@ -15,7 +15,9 @@ type P = TestSelectors & {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => any;
   readOnly?: boolean;
   title?: string;
-  variant?: "minimal" | "micro" | "button";
+  variant?: "minimal" | "micro" | "button" | "header";
+  disabledInfo?: string;
+  iconPath?: string;
 };
 
 export default class Checkbox extends React.Component<P, any> {
@@ -33,28 +35,20 @@ export default class Checkbox extends React.Component<P, any> {
       readOnly,
       title,
       variant,
-      // children,
+      disabledInfo,
+      iconPath,
       ...testSel
     } = props;
 
     const isBtn = variant === "button";
     const isMiniOrMicro = variant === "minimal" || variant === "micro";
     const tickColorClass = checked ? " text-action " : "text-2";
-    const tickClass = isMiniOrMicro || isBtn ? tickColorClass : "text-action";
-    const tickStyle =
-      isMiniOrMicro || isBtn ?
-        {}
-      : {
-          opacity: checked ? 1 : 0,
-        };
 
     const defaultInputClass =
-      " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit input-bg-color " +
+      " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit formfield-bg-color " +
       (!variant ? " b b-color " : "") +
-      (variant === "micro" ? ""
-      : variant === "minimal" ? " round "
-      : " focusable ") +
-      (isBtn ? "bg-color-2 b-gray-100 p-p5 no-outline"
+      (variant === "minimal" ? " round " : " ") +
+      (isBtn ? "bg-color-2 b-color p-p5 no-outline"
       : isMiniOrMicro ? "bg-transparent b-unset no-outline"
       : "relative ");
     const checkbox = (
@@ -84,24 +78,39 @@ export default class Checkbox extends React.Component<P, any> {
           type="checkbox"
           checked={checked}
           onChange={
-            !onChange ? undefined : (
+            !onChange || disabledInfo ? undefined : (
               (e) => {
                 onChange(e, e.target.checked);
               }
             )
           }
-          readOnly={readOnly}
+          readOnly={readOnly || Boolean(disabledInfo) || !onChange}
         />
         <Icon
-          path={mdiCheckBold}
+          path={
+            iconPath ??
+            (variant === "header" && !checked ?
+              mdiCheckboxBlankOutline
+            : mdiCheckBold)
+          }
           size={
             variant === "button" ? 1
             : variant === "minimal" ?
               1
             : 0.75
           }
-          className={tickClass}
-          style={tickStyle}
+          className={
+            isMiniOrMicro || isBtn || variant === "header" ?
+              tickColorClass
+            : "text-action"
+          }
+          style={
+            isMiniOrMicro || isBtn || variant === "header" ?
+              {}
+            : {
+                opacity: checked ? 1 : 0,
+              }
+          }
         />
       </div>
     );
@@ -119,16 +128,17 @@ export default class Checkbox extends React.Component<P, any> {
         }}
         htmlFor={id}
         className={classOverride(
-          "Checkbox flex-row-wrap ai-center pointer w-fit h-fit",
+          "Checkbox flex-row-wrap ai-center pointer w-fit h-fit " +
+            (disabledInfo ? " disabled " : ""),
           className,
         )}
-        title={title}
+        title={disabledInfo ?? title}
         {...testSel}
       >
         {checkbox}
         {!label ? null : (
           <div
-            className={`ml-1 noselect f-1 text-ellipsis ${tickColorClass} ${isMiniOrMicro ? "ml-p25" : "ml-p5"}`}
+            className={`ml-1 noselect f-1 text-ellipsis ${variant === "header" ? "text-0" : tickColorClass} ${isMiniOrMicro ? "ml-p25" : "ml-p5"}`}
           >
             {label}
           </div>

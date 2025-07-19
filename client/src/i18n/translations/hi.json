@@ -33,7 +33,11 @@
     "You do not have sufficient privileges to access this": "आपके पास इस तक पहुंचने के लिए पर्याप्त विशेषाधिकार नहीं हैं",
     "Copy to clipboard": "क्लिपबोर्ड पर कॉपी करें",
     "Send": "भेजें",
-    "experimental": "प्रायोगिक"
+    "Toggle fullscreen": "पूर्ण स्क्रीन टॉगल करें",
+    "experimental": "प्रायोगिक",
+    "Stop recording": "रिकॉर्डिंग रोकें",
+    "Speech to text": "वाणी से पाठ",
+    "Record audio": "ऑडियो रिकॉर्ड करें"
   },
   "App": {
     "Connections": "कनेक्शन",
@@ -154,7 +158,7 @@
     "CA Certificate": "CA प्रमाणपत्र",
     "SSL Mode": "SSL मोड",
     "Connection timeout (ms)": "कनेक्शन टाइमआउट (ms)",
-    "Schema list": "स्कीमा सूची",
+    "Schemas": "स्कीमा सूची",
     "More options": "अधिक विकल्प",
     "Must connect to see schemas": "स्कीमा देखने के लिए कनेक्ट होना चाहिए",
     "You are about to create a new database": "आप एक नया डेटाबेस बनाने जा रहे हैं",
@@ -299,10 +303,9 @@
   "AskLLM": {
     "Chat to an AI Assistant to get help with your queries": "अपनी क्वेरी में सहायता प्राप्त करने के लिए AI सहायक से चैट करें",
     "AI assistant not available. Talk to the admin": "AI सहायक उपलब्ध नहीं है। व्यवस्थापक से बात करें",
-    "Ask AI": "AI से पूछें"
+    "AI Assistant": "AI से पूछें"
   },
   "AskLLMChatHeader": {
-    "Ask AI Assistant": "AI सहायक से पूछें",
     "Chat": "बात करना",
     "New chat": "नई चैट",
     "No prompt found": "कोई संकेत नहीं मिला",

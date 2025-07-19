@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Btn from "../../components/Btn";
 import {
   mdiClose,
@@ -104,10 +110,11 @@ export const AddTimeChartFilter = ({
     };
   }, [chartRef, divRef, newFilter, onEnd]);
 
-  const stop = () => {
+  const stop = useCallback(() => {
     onEnd(undefined);
     setNewFilter(undefined);
-  };
+  }, [onEnd]);
+
   const activeRow = useMemo(() => {
     if (!myActiveRow?.timeChart || !chartRef.canv || !chartRef.data) return;
     const { min, max } = myActiveRow.timeChart;
@@ -128,6 +135,7 @@ export const AddTimeChartFilter = ({
     <Btn
       _ref={btnRef}
       title={filter ? "Edit filter" : "Add filter"}
+      data-command="W_TimeChart.AddTimeChartFilter"
       color={newFilter || filter ? "action" : undefined}
       iconPath={filter ? mdiFilterCogOutline : mdiFilter}
       onClick={({ currentTarget }) => {
@@ -158,7 +166,7 @@ export const AddTimeChartFilter = ({
   return (
     <>
       <FlexRow
-        className="AddTimeChartFilter "
+        className="AddTimeChartFilter"
         style={{ position: "absolute", right: 0, top: 0, zIndex: 1 }}
       >
         {newFilter && !newFilter.dates && (

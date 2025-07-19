@@ -33,6 +33,7 @@
   -webkit-transform: translateZ(0);
   -ms-transform: translateZ(0);
   transform: translateZ(0);
+  will-change: transform;
 }
 .loader:before {
   width: 50%;
@@ -60,21 +61,21 @@
 @-webkit-keyframes load3 {
   0% {
     -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
+    transform: translateZ(0) rotate(0deg);
   }
   100% {
     -webkit-transform: rotate(360deg);
-    transform: rotate(360deg);
+    transform: translateZ(0) rotate(360deg);
   }
 }
 @keyframes load3 {
   0% {
     -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
+    transform: translateZ(0) rotate(0deg);
   }
   100% {
     -webkit-transform: rotate(360deg);
-    transform: rotate(360deg);
+    transform: translateZ(0) rotate(360deg);
   }
 }
 
@@ -83,14 +84,15 @@ $duration: 1.4s; */
 
 .spinner {
   animation: rotator 1.4s linear infinite;
+  will-change: transform;
 }
 
 @keyframes rotator {
   0% {
-    transform: rotate(0deg);
+    transform: translateZ(0) rotate(0deg);
   }
   100% {
-    transform: rotate(270deg);
+    transform: translateZ(0) rotate(270deg);
   }
 }
 
@@ -99,6 +101,7 @@ $duration: 1.4s; */
   stroke-dashoffset: 0;
   transform-origin: center;
   stroke: currentColor;
+  will-change: transform;
   animation: dash 1.4s ease-in-out infinite;
 }
 
@@ -132,11 +135,11 @@ $duration: 1.4s; */
   }
   50% {
     stroke-dashoffset: 47.65;
-    transform: rotate(135deg);
+    transform: translateZ(0) rotate(135deg);
   }
   100% {
     stroke-dashoffset: 187;
-    transform: rotate(450deg);
+    transform: translateZ(0) rotate(450deg);
   }
 }
 

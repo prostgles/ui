@@ -1,14 +1,14 @@
-import React from "react";
-import { TimeChart } from "../../../Charts/TimeChart";
-import { MediaViewer } from "../../../../components/MediaViewer";
-import { FlexRowWrap } from "../../../../components/Flex";
 import type { AnyObject } from "prostgles-types";
-import type { ColumnConfig } from "../ColumnMenu";
 import { omitKeys } from "prostgles-types";
+import React from "react";
+import { FlexRowWrap } from "../../../../components/Flex";
+import { MediaViewer } from "../../../../components/MediaViewer";
+import { TimeChart } from "../../../Charts/TimeChart";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
-import { getColWInfo } from "../../tableUtils/getColWInfo";
-import SmartFormField from "../../../SmartForm/SmartFormField/SmartFormField";
+import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { getYLabelFunc } from "../../../W_TimeChart/getTimeChartData";
+import { getColWInfo } from "../../tableUtils/getColWInfo";
+import type { ColumnConfig } from "../ColumnMenu";
 
 const NESTED_LIMIT = 10;
 
@@ -77,13 +77,13 @@ export const NestedColumnRender = ({
     );
   }
   const shownNestedColumns = nestedColumns.filter((c) => c.show);
-  const renderValue = ({ key, value }: { key: string; value: any }) => {
+  const render = ({ key, value }: { key: string; value: any }) => {
     const columnWInfo = nestedColumns.find((c) => c.name === key);
     const datType =
       columnWInfo?.info ?? columnWInfo?.computedConfig?.funcDef.outType;
     const renderedValue =
       columnWInfo ?
-        SmartFormField.renderValue(datType, value, true)
+        <RenderValue column={datType} value={value} />
       : JSON.stringify(value);
     return renderedValue;
   };
@@ -92,7 +92,7 @@ export const NestedColumnRender = ({
   const isSingleValue = shownNestedColumns.length === 1;
   if (isSingleValue && !isMedia && firstValue && !rest.length) {
     const [key, value] = Object.entries(firstValue)[0]!;
-    return <>{renderValue({ key, value })}</>;
+    return <>{render({ key, value })}</>;
   }
   const content = valueList.slice(0, NESTED_LIMIT).map((nestedObj, idx) => {
     if (!nestedObj) return null;
@@ -123,7 +123,7 @@ export const NestedColumnRender = ({
               {displayMode !== "no-headers" && (
                 <div className="text-2 font-12">{key}</div>
               )}
-              <div>{renderValue({ key, value })}</div>
+              <div>{render({ key, value })}</div>
             </div>
           );
         })}

@@ -33,7 +33,11 @@
     "You do not have sufficient privileges to access this": "У вас недостаточно прав для доступа к этому",
     "Copy to clipboard": "Скопировать в буфер обмена",
     "Send": "Отправить",
-    "experimental": "экспериментальный"
+    "Toggle fullscreen": "Переключить полноэкранный режим",
+    "experimental": "экспериментальный",
+    "Stop recording": "Остановить запись",
+    "Speech to text": "Речь в текст",
+    "Record audio": "Записать аудио"
   },
   "App": {
     "Connections": "Подключения",
@@ -154,7 +158,7 @@
     "CA Certificate": "CA сертификат",
     "SSL Mode": "Режим SSL",
     "Connection timeout (ms)": "Таймаут подключения (мс)",
-    "Schema list": "Список схем",
+    "Schemas": "Список схем",
     "More options": "Дополнительные параметры",
     "Must connect to see schemas": "Необходимо подключиться, чтобы увидеть схемы",
     "You are about to create a new database": "Вы собираетесь создать новую базу данных",
@@ -299,10 +303,9 @@
   "AskLLM": {
     "Chat to an AI Assistant to get help with your queries": "Пообщайтесь с ИИ-помощником, чтобы получить помощь с вашими запросами",
     "AI assistant not available. Talk to the admin": "ИИ-помощник недоступен. Обратитесь к администратору",
-    "Ask AI": "Спросить ИИ"
+    "AI Assistant": "Спросить ИИ"
   },
   "AskLLMChatHeader": {
-    "Ask AI Assistant": "Спросить ИИ-помощника",
     "Chat": "Чат",
     "New chat": "Новый чат",
     "No prompt found": "Подсказка не найдена",

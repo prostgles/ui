@@ -24,18 +24,8 @@ export const FileImporterFooter = (props: P) => {
     !importing?.finished || !importing.tableName || !db[importing.tableName];
   return (
     <>
-      <div
-        className={"ai-center flex-row f-1 gap-1"}
-        style={{ justifyContent: "sspace-between" }}
-      >
-        <Btn
-          onClick={onCancel}
-          className="mr-auto"
-          style={{
-            border: "1px solid var(--gray-300)",
-            padding: "8px 16px",
-          }}
-        >
+      <div className={"ai-center flex-row f-1 gap-1"}>
+        <Btn onClick={onCancel} className="mr-auto">
           Cancel
         </Btn>
 
@@ -44,11 +34,9 @@ export const FileImporterFooter = (props: P) => {
             className="ml-auto"
             onClick={onImport}
             disabledInfo={customHeadersError}
-            style={{
-              background: "var(--blue-600)",
-              color: "white",
-              padding: "8px 16px",
-            }}
+            variant="filled"
+            color="action"
+            data-command="FileImporterFooter.import"
           >
             Import
           </Btn>

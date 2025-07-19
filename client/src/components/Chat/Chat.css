@@ -14,6 +14,34 @@
   /* border: 1px solid var(--gray-300); */
 }
 
+
+.chat-container.chat-component .send-wrapper {
+  flex: 0 0 auto;
+  min-width: 0px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5em 0;
+}
+
+.chat-container.chat-component .send-wrapper textarea {
+  flex: 1 1 0%; 
+  resize: none;
+  color: var(--text-1); 
+  border: none; 
+  font-size: 16px;
+  field-sizing: content;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+.chat-container.chat-component .send-wrapper button {
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
 .chat-container.chat-component .send-wrapper svg {
   width: 1.5rem;
   height: 1.5rem;
@@ -34,38 +62,41 @@
   font-size: 16px;
   overflow: auto;
   padding: 1em;
-  scroll-behavior: smooth;
-  /* background-color: white; */
+  scroll-behavior: smooth; 
 }
 
-.chat-container.chat-component .message {
-  padding: 8px 12px;
-  border-radius: 12px;
+.chat-container.chat-component .message { 
   margin-top: 2em;
-  max-width: 70%;
-  color: var(--text-color-1);
-  min-width: 2em;
+  /* max-width: 70%; */
+  color: var(--text-0); 
   flex: 0 0 auto;
-  opacity: 1;
-  /* transition: all 0.5s ease 0s;  */
+  opacity: 1; 
+}
+.chat-container.chat-component .message .content-wrapper {
+  padding: 8px 12px;
+  border-radius: 12px; 
+  min-width: 2em; 
   text-align: start;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 .chat-container.chat-component .message:not(.incoming) {
-  background: var(--bg-color-2);
   margin-left: auto;
+}
+.chat-container.chat-component .message:not(.incoming) .content-wrapper {
+  background: var(--bg-color-2);
 }
 
 .chat-container.chat-component .message.incoming {
-  margin-top: 3px;
+  margin-top: 1em;
   max-width: 100%;
   min-width: 2em;
   margin-left: unset;
 }
 
 /* .chat-container.chat-component .message:not(.incoming) video::-webkit-media-controls-panel, */
-.chat-container.chat-component
+/* .chat-container.chat-component
   .message:not(.incoming)
   audio::-webkit-media-controls-panel {
   background: rgb(5, 149, 252);
@@ -117,7 +148,7 @@
   color: white !important;
   fill: white !important;
   stroke: white !important;
-}
+} */
 
 .chat-container.chat-component .message.media {
   padding: 0;
@@ -130,35 +161,4 @@
 .chat-container.chat-component .message video,
 .chat-container.chat-component .message audio {
   outline: none;
-}
-
-.chat-container.chat-component .send-wrapper {
-  flex: 0 0 auto;
-  min-width: 0px;
-  min-height: 60px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5em 0;
-}
-
-.chat-container.chat-component .send-wrapper textarea {
-  flex: 1 1 0%;
-  margin-left: 1em;
-  resize: none;
-  background: var(--bg-color-2);
-  color: var(--text-color-1);
-  border-radius: 12px;
-  border: none;
-  padding: 10px;
-  font-size: 16px;
-  field-sizing: content;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-}
-
-.chat-container.chat-component .send-wrapper button {
-  flex: 0 0 auto;
-  cursor: pointer;
 }

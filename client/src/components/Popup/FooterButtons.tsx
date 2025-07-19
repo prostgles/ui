@@ -3,6 +3,7 @@ import type { PopupProps } from "./Popup";
 import { Footer } from "./Popup";
 import { isDefined, omitKeys } from "prostgles-types";
 import Btn, { type BtnProps } from "../Btn";
+import type { TestSelectors } from "../../Testing";
 
 export type FooterButton =
   | (
@@ -14,17 +15,18 @@ export type FooterButton =
     )
   | undefined;
 
-type P = Pick<PopupProps, "footerButtons" | "footer" | "onClose"> & {
-  className?: string;
-  style?: React.CSSProperties;
-  error?: any;
-};
+export type FooterButtonsProps = TestSelectors &
+  Pick<PopupProps, "footerButtons" | "footer" | "onClose"> & {
+    className?: string;
+    style?: React.CSSProperties;
+    error?: any;
+  };
 export const FooterButtons = ({
   footerButtons = [],
   footer,
   onClose,
   ...divProps
-}: P) => {
+}: FooterButtonsProps) => {
   const bottomBtns = (
     typeof footerButtons === "function" ?
       footerButtons(onClose)

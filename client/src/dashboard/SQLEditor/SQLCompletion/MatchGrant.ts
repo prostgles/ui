@@ -6,7 +6,7 @@ import {
 } from "./CommonMatchImports";
 import { getParentFunction } from "./MatchSelect";
 import { getExpected } from "./getExpected";
-import { getKind, type SQLMatcher } from "./registerSuggestions";
+import { getKind, type SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
 import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
 

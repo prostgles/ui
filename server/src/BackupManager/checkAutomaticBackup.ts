@@ -9,7 +9,7 @@ export async function checkAutomaticBackup(
 ) {
   const AUTO_INITIATOR = "automatic_backups";
   const dbConf = await this.dbs.database_configs.findOne(
-    getDatabaseConfigFilter(con) as any,
+    getDatabaseConfigFilter(con),
   );
   const bkpConf = dbConf?.backups_config;
   if (!bkpConf?.dump_options) return;
@@ -106,7 +106,7 @@ export async function checkAutomaticBackup(
 
     if (shouldDump) {
       await this.pgDump(con.id, null, {
-        options: { ...bkpConf.dump_options! },
+        options: { ...bkpConf.dump_options },
         destination: bkpConf.cloudConfig ? "Cloud" : "Local",
         credentialID: bkpConf.cloudConfig?.credential_id,
         initiator: AUTO_INITIATOR,

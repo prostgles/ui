@@ -2,26 +2,35 @@ import React from "react";
 import Loading from "../components/Loading";
 import Popup from "../components/Popup/Popup";
 import { Table } from "../components/Table/Table";
-import type { ColumnSort } from "./W_Table/ColumnMenu/ColumnMenu";
+import type {
+  ColumnSort,
+  ColumnSortSQL,
+} from "./W_Table/ColumnMenu/ColumnMenu";
 import type { ProstglesColumn } from "./W_Table/W_Table";
 import RTComp from "./RTComp";
-import { getSmartGroupFilter } from "./SmartFilter/SmartFilter";
-import type {
-  DetailedFilterBase,
-  SmartGroupFilter,
+import {
+  getSmartGroupFilter,
+  type DetailedFilterBase,
+  type SmartGroupFilter,
 } from "../../../commonTypes/filterUtils";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
-import SmartForm from "./SmartForm/SmartForm";
+import { SmartForm, type SmartFormProps } from "./SmartForm/SmartForm";
 import ErrorComponent from "../components/ErrorComponent";
 import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
-import type { AnyObject, SubscriptionHandler } from "prostgles-types";
+import {
+  _PG_numbers,
+  includes,
+  type AnyObject,
+  type SubscriptionHandler,
+} from "prostgles-types";
 import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
 import type { Prgl } from "../App";
 import { quickClone } from "../utils";
 import type { PaginationProps } from "../components/Table/Pagination";
 import { FlexCol } from "../components/Flex";
+import { isNumericColumn } from "./W_SQL/getSQLResultTableColumns";
 
-type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & {
+type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   filter?: SmartGroupFilter;
   tableName: string;
   tableCols?: ProstglesColumn[];
@@ -57,7 +66,7 @@ type S = {
 export default class SmartTable extends RTComp<SmartTableProps, S> {
   state: S = {
     rows: [],
-    page: 1,
+    page: 0,
     pageSize: 25,
     totalRows: 0,
     filteredRows: 0,
@@ -88,26 +97,30 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       const cols = table?.columns ?? [];
       _tableCols = cols
         .filter((c) => c.select)
-        .map((c) => ({
-          key: c.name,
-          sortable: true,
-          subLabel: c.data_type,
-          ...c,
-          /* Align numbers to right for an easier read */
-          headerClassname: c.tsDataType === "number" ? " jc-end  " : " ",
-          className: c.tsDataType === "number" ? " ta-right " : " ",
-          onRender: onRenderColumn({
-            c,
-            table,
-            tables,
-            barchartVals: undefined,
-          }),
-        }));
+        .map((c) => {
+          const isNumeric = isNumericColumn(c);
+          return {
+            key: c.name,
+            sortable: true,
+            subLabel: c.data_type,
+            ...c,
+            /* Align numbers to right for an easier read */
+            headerClassname: isNumeric ? " jc-end  " : " ",
+            className: isNumeric ? " ta-right " : " ",
+            onRender: onRenderColumn({
+              c,
+              table,
+              tables,
+              barchartVals: undefined,
+            }),
+          };
+        });
 
-      if (allowEdit && tableHandler) {
+      if (allowEdit && tableHandler && table) {
         _tableCols.unshift(
           getEditColumn({
-            columns: cols,
+            table,
+            columnConfig: cols,
             tableHandler: tableHandler as any,
             onClickRow: onClickEditRow,
           }),
@@ -184,8 +197,8 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       const filteredRows = await tableHandler.count!(_filter);
       const rows = await tableHandler.find!(_filter, {
         limit: pageSize,
-        orderBy: sort as any,
-        offset: (page - 1) * pageSize,
+        orderBy: sort,
+        offset: page * pageSize,
       });
       this.setState({
         rows,
@@ -214,7 +227,6 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       noDataComponent,
       titlePrefix,
       title,
-      theme,
     } = this.props;
     const {
       filter,
@@ -261,9 +273,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
         {editRowFilter && (
           <SmartForm
             asPopup={true}
-            theme={this.props.theme}
             confirmUpdates={true}
-            hideChangesOptions={true}
             db={db}
             methods={this.props.methods}
             tables={tables}
@@ -279,7 +289,6 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
         )}
 
         <SmartFilterBar
-          theme={theme}
           className="p-1 bg-color-2 min-h-fit"
           rowCount={totalRows}
           db={db}
@@ -294,6 +303,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           onHavingChange={() => {
             console.warn("Having change not implemented");
           }}
+          onSortChange={undefined}
           hideSort={true}
           showInsertUpdateDelete={{
             onSuccess: () => this.getData(),

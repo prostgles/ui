@@ -1,8 +1,7 @@
-import type { AnyObject } from "prostgles-types";
-import { getKeys } from "prostgles-types";
 import React from "react";
+import type { AnyObject } from "prostgles-types";
+import { getKeys, isEmpty } from "prostgles-types";
 import type { DivProps } from "../../components/Flex";
-import { isEmpty } from "prostgles-types";
 
 const SHORT_NAMES = [
   ["years", "y"],
@@ -17,7 +16,7 @@ const SHORT_NAMES = [
 
 type PG_Interval = Partial<Record<(typeof SHORT_NAMES)[number][0], number>>;
 
-export const renderInterval = (
+export const getPGIntervalAsText = (
   v: AnyObject = {},
   shortVersion = false,
   withAgoText?: boolean,

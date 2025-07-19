@@ -16,48 +16,28 @@ import type { Prgl } from "../App";
 import ButtonGroup from "../components/ButtonGroup";
 import Loading from "../components/Loading";
 import Popup from "../components/Popup/Popup";
-import type { SearchListProps } from "../components/SearchList/SearchList";
-import SearchList from "../components/SearchList/SearchList";
+import type {
+  SearchListItem,
+  SearchListProps,
+} from "../components/SearchList/SearchList";
+import { SearchList } from "../components/SearchList/SearchList";
 import Select from "../components/Select/Select";
 import type { TableColumn } from "../components/Table/Table";
 import type { _Dashboard } from "./Dashboard/Dashboard";
 import type { ChartOptions, WindowData } from "./Dashboard/dashboardUtils";
 import { SQL_SNIPPETS } from "./W_SQL/SQLSnippets";
 import RTComp from "./RTComp";
-import type { SQLSuggestion } from "./SQLEditor/SQLEditor";
+import type { SQLSuggestion } from "./SQLEditor/W_SQLEditor";
 import type { AnyObject } from "prostgles-types";
 import { Icon } from "../components/Icon/Icon";
 import { sliceText } from "../../../commonTypes/utils";
+import { FlexCol } from "../components/Flex";
 
 export const SEARCH_TYPES = [
   { key: "views and queries", label: "Tables/Queries" },
   { key: "rows", label: "Data" },
   { key: "commands", label: "SQL Snippets" },
 ] as const;
-
-function triggerCommand(attrPath: string[]) {
-  const elem = document.querySelector<HTMLElement>(
-    `[data-command="${attrPath[0]}"]`,
-  );
-  if (elem) {
-    elem.focus();
-    setTimeout(() => {
-      elem.click();
-      attrPath.shift();
-      if (attrPath.length) {
-        triggerCommand(attrPath);
-      }
-    }, 500);
-  } else {
-    console.error("Could not find command trigger elem", attrPath);
-  }
-}
-
-type COMMAND = {
-  label: string;
-  info: string;
-  trigger: () => void;
-};
 
 export type DBObject = {
   name: string;
@@ -290,7 +270,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
 
             if (term === this.searchTerm && this.searchType === "rows") {
               const { onOpen, onClose } = this.props;
-              const items: SearchListProps["items"] = _matches.map((m, i) => ({
+              const items: SearchListItem[] = _matches.map((m, i) => ({
                 ...m,
                 key: m.$rowhash + i,
                 label: m.table,
@@ -471,7 +451,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
         .concat(
           !objTypesToSearch.includes("actions") ?
             []
-          : (Object.entries(this.props.methods as Record<string, MethodFullDef>)
+          : Object.entries(this.props.methods as Record<string, MethodFullDef>)
               .filter(([k, v]) => isObject(v) && (v as any).run)
               .map(([methodKey, method]) => ({
                 key: methodKey,
@@ -490,7 +470,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
                   this.props.onClose();
                   this.props.onOpenDBObject(undefined, methodKey);
                 },
-              })) as any),
+              })),
         );
     } else if (sType === "commands") {
       items = SQL_SNIPPETS.map((c) => {
@@ -539,35 +519,28 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
 
     const searchListProps = this.getSearchListProps();
 
-    const narrowScreen = window.innerWidth < 600;
-    const margin = narrowScreen ? 0 : "2em";
+    const { isLowWidthScreen } = window;
+    const margin = isLowWidthScreen ? 0 : "2em";
 
-    const selStyle: React.CSSProperties = {
-        marginTop: narrowScreen ? ".5em" : "68px",
-        flex: "none",
-      },
-      selClass = "f-0 " + (narrowScreen ? "" : " px-1 ");
     const searchOptsSelect =
       sType === "commands" ? null
       : sType !== "rows" ?
         <Select
           label="Tables/Queries/Actions"
-          style={selStyle}
-          className={selClass}
           limit={1000}
           options={["tables", "queries", "actions"]}
           value={objTypesToSearch}
           multiSelect={true}
+          btnProps={{ style: { maxWidth: "250px" } }}
           onChange={(objTypesToSearch) => this.setState({ objTypesToSearch })}
         />
       : <Select
           label="Tables"
-          style={selStyle}
-          className={selClass}
           limit={1000}
           options={allTablesToSearch}
           value={tablesToSearch}
           multiSelect={true}
+          btnProps={{ style: { maxWidth: "250px" } }}
           onChange={(tablesToSearch) => this.setState({ tablesToSearch })}
         />;
 
@@ -577,15 +550,12 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
           className="flex-row aai-start w-full min-h-0"
           style={{ width: "hh550px", maxWidth: "88vw", alignSelf: "center" }}
         >
-          {!narrowScreen && searchOptsSelect}
-
-          <div className="flex-col min-w-0 min-h-0 f-1">
+          <FlexCol className="min-w-0 min-h-0 f-1">
             <ButtonGroup
               size="small"
               className="o-auto"
               options={SEARCH_TYPES.map((s) => s.label)}
               value={SEARCH_TYPES.find((s) => s.key === sType)?.label}
-              style={{ marginRight: "40px", marginBottom: "1em" }}
               onChange={(sLabel) => {
                 const sType = SEARCH_TYPES.find((s) => s.label === sLabel)?.key;
                 if (sType) {
@@ -594,17 +564,14 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
               }}
             />
 
-            {narrowScreen && searchOptsSelect}
+            {searchOptsSelect}
 
-            {sType === "commands" ?
-              null
-            : !loading || sType !== "rows" ?
-              <div style={{ width: "34px", height: "34px" }}></div>
-            : <div className={"flex-row f-0 min-h-0 ai-center h-fit "}>
+            {loading && (
+              <div className={"flex-row f-0 min-h-0 ai-center h-fit "}>
                 <Loading sizePx={18} className="f-0 m-p5" show={loading} />
                 <div className="f-1 ta-left font-14">{`Searching ${currentSearchedTable} (${tablesToSearch.indexOf(currentSearchedTable!) + 1}/${tablesToSearch.length})`}</div>
               </div>
-            }
+            )}
             <SearchList
               inputProps={{
                 "data-command": "SearchAll",
@@ -621,7 +588,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
               noSearchLimit={0}
               {...searchListProps}
             />
-          </div>
+          </FlexCol>
         </div>
       </>
     );

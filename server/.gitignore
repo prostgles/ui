@@ -1,6 +1,9 @@
 node_modules
 prostgles_media
+prostgles_storage
 prostgles_backups
 prostgles_certificates
 .electron-auth.json
 **/.electron-auth.json
+.prostgles-desktop-config.json
+**/.prostgles-desktop-config.json

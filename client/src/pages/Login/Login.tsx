@@ -91,7 +91,7 @@ export const Login = ({ auth }: LoginFormProps) => {
           loading={loading}
           onClick={onAuthCall}
           variant="filled"
-          className="mt-1"
+          className="mt-1 jc-center"
           color="action"
           children={
             isOnLogin ?

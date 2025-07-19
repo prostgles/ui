@@ -1,41 +1,9 @@
-import {
-  omitKeys,
-  pickKeys,
-} from "prostgles-server/dist/PubSubManager/PubSubManager";
+import { omitKeys, pickKeys, type ProstglesError } from "prostgles-types";
 import type { Connections, DBS, Users } from ".";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
-import {
-  getSampleSchemas,
-  runConnectionQuery,
-} from "./publishMethods/publishMethods";
-
-const loadSampleSchema = async (
-  dbs: DBS,
-  sampleSchemaName: string,
-  connId: string,
-) => {
-  const schema = (await getSampleSchemas()).find(
-    (s) => s.name === sampleSchemaName,
-  );
-  if (!schema) {
-    throw "Sample schema not found: " + sampleSchemaName;
-  }
-  if (schema.type === "sql") {
-    await runConnectionQuery(connId, schema.file, undefined, { dbs });
-  } else {
-    const { tableConfigTs, onMountTs, onInitSQL } = schema;
-    if (onInitSQL) {
-      await runConnectionQuery(connId, onInitSQL, undefined, { dbs });
-    }
-    await dbs.database_configs.update(
-      { $existsJoined: { connections: { id: connId } } },
-      { table_config_ts: tableConfigTs },
-    );
-    await dbs.connections.update({ id: connId }, { on_mount_ts: onMountTs });
-  }
-};
+import { applySampleSchema } from "./publishMethods/applySampleSchema";
 
 export const upsertConnection = async (
   con: DBGeneratedSchema["connections"]["columns"],
@@ -62,11 +30,10 @@ export const upsertConnection = async (
         { returning: "*", multi: false },
       );
     } else {
-      const dbConf = await dbs.database_configs.insert(
-        pickKeys({ ...c }, ["db_host", "db_name", "db_port"]) as any,
+      await dbs.database_configs.insert(
+        pickKeys({ ...c }, ["db_host", "db_name", "db_port"]),
         {
           removeDisallowedFields: true,
-          returning: "*",
           onConflict: "DoNothing",
         },
       );
@@ -80,7 +47,7 @@ export const upsertConnection = async (
       throw "Could not create connection";
     }
     if (sampleSchemaName) {
-      await loadSampleSchema(dbs, sampleSchemaName, connection.id);
+      await applySampleSchema(dbs, sampleSchemaName, connection.id);
     }
     const database_config = await dbs.database_configs.findOne({
       $existsJoined: { connections: { id: connection.id } },
@@ -89,7 +56,8 @@ export const upsertConnection = async (
       throw "Could not create database_config";
     }
     return { connection, database_config };
-  } catch (e: any) {
+  } catch (_e: any) {
+    const e = _e as ProstglesError | undefined;
     console.error(e);
     if (e && e.code === "23502") {
       throw { err_msg: ` ${e.column} cannot be empty` };

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { getColumnDataColor } from "../dashboard/SmartForm/SmartFormField/SmartFormField";
+import { getColumnDataColor } from "../dashboard/SmartForm/SmartFormField/RenderValue";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { useIsMounted } from "../dashboard/Backup/CredentialSelector";
+import { useIsMounted } from "prostgles-client/dist/react-hooks";
 
 type P = {
   column?: Pick<
@@ -25,7 +25,7 @@ export const ShorterText = ({ value: guid, column, style }: P) => {
               color: getColumnDataColor(
                 column ?? { tsDataType: "string", udt_name: "uuid" },
               ),
-              ...(style ?? {}),
+              ...style,
             }}
             title="Click to copy value"
             onClick={() => {

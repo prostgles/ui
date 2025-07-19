@@ -5,8 +5,7 @@ import type {
 } from "../../../../commonTypes/filterUtils";
 import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
 import RTComp from "../RTComp";
-import { parseValue } from "../SmartForm/SmartFormField/fieldUtils";
-import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
+import { colIs, parseValue } from "../SmartForm/SmartFormField/fieldUtils";
 import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
 import type { BaseFilterProps } from "./SmartFilter";
 import { _PG_numbers } from "prostgles-types";

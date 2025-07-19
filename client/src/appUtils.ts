@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Theme } from "./App";
+import { type DocumentationFile } from "./app/CommandSearch/getDocumentation";
+import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
+import type { UIDoc } from "./app/UIDocs";
 
 type Unsubscribe = {
   unsubscribe: () => void;
@@ -100,6 +103,13 @@ declare global {
     isMediumWidthScreen: boolean;
     isIOSDevice: boolean;
     isMobile: boolean;
+    toSVG: (node: HTMLElement) => Promise<{ light: string; dark: string }>;
+    documentation: DocumentationFile[];
+    flatDocs: UIDoc[];
+  }
+
+  interface HTMLDivElement {
+    sqlRef?: SQLEditorRef;
   }
 }
 

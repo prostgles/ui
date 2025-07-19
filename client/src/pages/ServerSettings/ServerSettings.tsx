@@ -1,11 +1,14 @@
 import {
   mdiAccountKey,
+  mdiAssistant,
   mdiCloudKeyOutline,
   mdiLaptop,
   mdiSecurity,
 } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useState } from "react";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import { getCIDRRangesQuery } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
@@ -14,18 +17,20 @@ import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import { TabsWithDefaultStyle } from "../../components/Tabs";
-import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
-import SmartForm from "../../dashboard/SmartForm/SmartForm";
-import { AuthProviderSetup } from "./AuthProvidersSetup";
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
+import { LLMProviderSetup } from "../../dashboard/AskLLM/Setup/LLMProviderSetup";
+import { SmartCardList } from "../../dashboard/SmartCardList/SmartCardList";
+import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
+import { AuthProviderSetup } from "./AuthProvidersSetup";
+import { MCPServers } from "./MCPServers/MCPServers";
 
-export const ServerSettings = ({
-  theme,
-  dbsMethods,
-  dbs,
-  dbsTables,
-}: Pick<Prgl, "dbsMethods" | "dbs" | "dbsTables" | "auth" | "theme">) => {
+export type ServerSettingsProps = Pick<
+  Prgl,
+  "dbsMethods" | "dbs" | "dbsTables" | "auth" | "serverState"
+>;
+export const ServerSettings = (props: ServerSettingsProps) => {
+  const { dbsMethods, dbs, dbsTables, serverState } = props;
+
   const [testCIDR, setCIDR] = useState<{ cidr?: string }>({});
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
@@ -70,17 +75,30 @@ export const ServerSettings = ({
           <TabsWithDefaultStyle
             items={{
               security: {
+                hide: serverState.isElectron,
                 label: t.ServerSettings["Security"],
                 leftIconPath: mdiSecurity,
                 content: (
-                  <FlexCol style={{ opacity: settingsLoaded ? 1 : 0 }}>
+                  <FlexCol
+                    style={{ opacity: settingsLoaded ? 1 : 0 }}
+                    className="p-1 pt-0"
+                  >
+                    <InfoRow
+                      className="mb-1"
+                      variant="naked"
+                      color="info"
+                      iconPath=""
+                    >
+                      Configure domain access, IP restrictions, session
+                      duration, and login rate limits to enhance security.
+                    </InfoRow>
                     <SmartForm
-                      theme={theme}
-                      className="bg-color-0 shadow "
+                      className="bg-color-0 "
                       label=""
-                      db={dbs as any}
+                      db={dbs as DBHandlerClient}
                       methods={dbsMethods}
                       tableName="global_settings"
+                      contentClassname="px-p25  "
                       columns={
                         {
                           allowed_origin: 1,
@@ -99,8 +117,6 @@ export const ServerSettings = ({
                       }
                       tables={dbsTables}
                       rowFilter={[{} as any]}
-                      hideChangesOptions={true}
-                      showLocalChanges={false}
                       confirmUpdates={true}
                       hideNonUpdateableColumns={true}
                       onLoaded={() => setSettingsLoaded(true)}
@@ -113,7 +129,6 @@ export const ServerSettings = ({
                           setCIDR({ cidr });
                         }}
                         placeholder="127.1.1.1/32"
-                        asColumn={true}
                         hint={
                           t.ServerSettings[
                             "Enter a value to see the allowed IP ranges"
@@ -162,33 +177,61 @@ export const ServerSettings = ({
                 ),
               },
               auth: {
+                hide: serverState.isElectron,
                 leftIconPath: mdiAccountKey,
                 label: t.ServerSettings.Authentication,
                 content: <AuthProviderSetup dbs={dbs} dbsTables={dbsTables} />,
               },
               cloud: {
+                hide: serverState.isElectron,
                 leftIconPath: mdiCloudKeyOutline,
                 label: t.ServerSettings["Cloud credentials"],
                 content: (
-                  <SmartCardList
-                    theme={theme}
-                    db={dbs as any}
-                    methods={dbsMethods}
-                    tableName="credentials"
-                    tables={dbsTables}
-                    filter={{}}
-                    realtime={true}
-                    noDataComponentMode="hide-all"
-                    noDataComponent={
-                      <InfoRow color="info" className="m-1 h-fit">
-                        {
-                          t.ServerSettings[
-                            "No cloud credentials. Credentials can be added for file storage"
-                          ]
-                        }
-                      </InfoRow>
-                    }
-                  />
+                  <FlexCol>
+                    {" "}
+                    <InfoRow
+                      className="mx-1"
+                      variant="naked"
+                      color="info"
+                      iconPath=""
+                    >
+                      Configure AWS S3 cloud credentials for file storage
+                    </InfoRow>
+                    <SmartCardList
+                      db={dbs as DBHandlerClient}
+                      methods={dbsMethods}
+                      tableName="credentials"
+                      tables={dbsTables}
+                      realtime={true}
+                      noDataComponentMode="hide-all"
+                      noDataComponent={
+                        <InfoRow color="info" className="m-1 h-fit">
+                          {
+                            t.ServerSettings[
+                              "No cloud credentials. Credentials can be added for file storage"
+                            ]
+                          }
+                        </InfoRow>
+                      }
+                    />
+                  </FlexCol>
+                ),
+              },
+              mcpServers: {
+                leftIconPath: mdiLaptop,
+                label: "MCP Servers",
+                content: <MCPServers {...props} chatId={undefined} />,
+              },
+              llmProviders: {
+                leftIconPath: mdiAssistant,
+                label: "LLM Providers",
+                content: (
+                  <FlexCol className="p-1 pt-0 min-w-0">
+                    <InfoRow variant="naked" color="info" iconPath="">
+                      Configure LLM provider credentials used in Ask AI chat.
+                    </InfoRow>
+                    <LLMProviderSetup {...props} />
+                  </FlexCol>
                 ),
               },
             }}

@@ -1,14 +1,17 @@
 import type { editor } from "monaco-editor";
-import type { LanguageConfig } from "../CodeEditor";
+import type { CodeEditorProps, LanguageConfig } from "../CodeEditor";
 import { useEffect } from "react";
-import { useIsMounted } from "../../Backup/CredentialSelector";
+import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
 import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+
+export type MonacoEditorImport = typeof import("monaco-editor");
 
 export const useSetMonacoTsLibraries = async (
   editor: editor.IStandaloneCodeEditor | undefined,
   languageObj: LanguageConfig | undefined,
-  monaco: typeof import("monaco-editor") | undefined,
+  monaco: MonacoEditorImport | undefined,
   value: string,
+  onTSLibraryChange: CodeEditorProps["onTSLibraryChange"],
 ) => {
   const getIsMounted = useIsMounted();
   useEffect(() => {
@@ -40,10 +43,11 @@ export const useSetMonacoTsLibraries = async (
     } catch (e) {
       console.error(e);
     }
-  }, [editor, monaco, languageObj]);
+    onTSLibraryChange?.(tsLibraries);
+  }, [editor, monaco, languageObj, onTSLibraryChange]);
 };
 
-const setTSoptions = async (monaco: typeof import("monaco-editor")) => {
+const setTSoptions = async (monaco: MonacoEditorImport) => {
   monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
 
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -58,7 +62,7 @@ const setTSoptions = async (monaco: typeof import("monaco-editor")) => {
     experimentalDecorators: true,
     keyofStringsOnly: true,
     /** Adding this line breaks inbuild functions (setTimeout, etc) */
-    // lib: [ "ES2017", "es2019", "ES2021.String", "ES2020", "ES2022" ] ,
+    // lib: ["ES2017", "es2019", "ES2021.String", "ES2020", "ES2022"],
     esModuleInterop: true,
     allowSyntheticDefaultImports: true,
     declaration: true,

@@ -1,10 +1,10 @@
 import { mdiDelete, mdiPlus } from "@mdi/js";
-import React from "react";
+import React, { useMemo } from "react";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import Select from "../../../components/Select/Select";
-import SmartCardList from "../../SmartCard/SmartCardList";
+import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
 import type { W_TableInfo } from "./getTableMeta";
 
@@ -19,6 +19,65 @@ export const W_TableMenu_Constraints = ({
   prgl,
 }: P) => {
   const tableName = w.table_name;
+
+  const listProps = useMemo(() => {
+    const tableNameProp = {
+      dataAge: prgl.dbKey,
+      sqlQuery: `
+        SELECT conname, pg_get_constraintdef(c.oid) as definition 
+        FROM pg_catalog.pg_constraint c
+        INNER JOIN pg_catalog.pg_class rel
+          ON rel.oid = c.conrelid
+        INNER JOIN pg_catalog.pg_namespace nsp
+          ON nsp.oid = connamespace
+        WHERE nsp.nspname = 'public'
+        AND rel.relname = \${tableName}
+      `,
+      args: { tableName },
+    };
+    const fieldConfigs = [
+      {
+        name: "definition",
+        label: "",
+        render: (definition, row) => (
+          <div className="ws-pre-line">
+            <span className="text-2">
+              ALTER TABLE {tableName}
+              <br></br>
+              ADD CONSTRAINT {row.conname}
+            </span>
+            <br></br>
+            {definition}
+          </div>
+        ),
+      },
+      {
+        name: "conname",
+        label: "",
+        className: "show-on-parent-hover ml-auto",
+        render: (conname) => (
+          <FlexRow className="">
+            <Btn
+              title="Drop constraint..."
+              color="danger"
+              variant="faded"
+              iconPath={mdiDelete}
+              onClick={() => {
+                onSetQuery({
+                  sql: `ALTER TABLE ${JSON.stringify(tableName)} DROP CONSTRAINT ${JSON.stringify(conname)}`,
+                });
+              }}
+            />
+          </FlexRow>
+        ),
+      },
+    ];
+    return {
+      tableName: tableNameProp,
+      fieldConfigs,
+    };
+  }, [onSetQuery, prgl.dbKey, tableName]);
+
   if (!tableMeta || !tableName) return null;
 
   return (
@@ -27,62 +86,11 @@ export const W_TableMenu_Constraints = ({
         Constraints set rules on the type of data that can be stored in columns
       </div>
       <SmartCardList
-        theme={prgl.theme}
-        db={prgl.db as any}
-        tableName={{
-          dataAge: prgl.dbKey,
-          sqlQuery: `
-            SELECT conname, pg_get_constraintdef(c.oid) as definition 
-            FROM pg_catalog.pg_constraint c
-            INNER JOIN pg_catalog.pg_class rel
-              ON rel.oid = c.conrelid
-            INNER JOIN pg_catalog.pg_namespace nsp
-              ON nsp.oid = connamespace
-            WHERE nsp.nspname = 'public'
-            AND rel.relname = \${tableName}
-          `,
-          args: { tableName },
-        }}
+        db={prgl.db}
         methods={prgl.methods}
         tables={prgl.tables}
         noDataComponent={<InfoRow color="info">No constraints</InfoRow>}
-        fieldConfigs={[
-          {
-            name: "definition",
-            label: "",
-            render: (definition, row) => (
-              <div className="ws-pre-line">
-                <span className="text-2">
-                  ALTER TABLE {tableName}
-                  <br></br>
-                  ADD CONSTRAINT {row.conname}
-                </span>
-                <br></br>
-                {definition}
-              </div>
-            ),
-          },
-          {
-            name: "conname",
-            label: "",
-            className: "show-on-parent-hover ml-auto",
-            render: (conname) => (
-              <FlexRow className="">
-                <Btn
-                  title="Drop constraint..."
-                  color="danger"
-                  variant="faded"
-                  iconPath={mdiDelete}
-                  onClick={() => {
-                    onSetQuery({
-                      sql: `ALTER TABLE ${JSON.stringify(tableName)} DROP CONSTRAINT ${JSON.stringify(conname)}`,
-                    });
-                  }}
-                />
-              </FlexRow>
-            ),
-          },
-        ]}
+        {...listProps}
       />
       <Select
         title="Create constraint..."

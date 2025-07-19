@@ -1,6 +1,6 @@
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
-import type { SQLMatcher } from "./registerSuggestions";
+import type { SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
 import { suggestCondition } from "./suggestCondition";
 import { type KWD, withKWDs, suggestKWD } from "./withKWDs";
@@ -39,7 +39,7 @@ export const MatchUpdate: SQLMatcher = {
 
     if (
       isSettingColumns &&
-      !cb.thisLineLC &&
+      !cb.thisLinePrevTokens.length &&
       ![",", "set"].includes(cb.ltoken?.textLC ?? "")
     ) {
       return withKWDs(KWDs.slice(3), args).getSuggestion();

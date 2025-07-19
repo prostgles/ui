@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
+import React from "react";
+import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
 import Btn from "../Btn";
 import type { FullOption, OptionKey, SelectProps, SelectState } from "./Select";
-import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
-import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
-import { generateUniqueID } from "../FileInput/FileInput";
+import { getCommandElemSelector } from "../../Testing";
 
 type P<
   O extends OptionKey,
   Multi extends boolean = false,
   Optional extends boolean = false,
-> = Omit<SelectProps<O, Multi, Optional>, "fullOptions"> & {
+> = Omit<SelectProps<O, Multi, Optional>, "fullOptions" | "onOpen"> & {
   fullOptions: FullOption<string>[];
   multiSelection: any[] | undefined;
   selectStyle: React.CSSProperties;
@@ -17,10 +17,10 @@ type P<
   chipMode: boolean;
   selectClass: string;
   popupAnchor: HTMLElement | null;
-  setState: (newState: SelectState) => void;
+  onPress: (btn: HTMLButtonElement, defaultSearch: string | undefined) => void;
   setRef: (ref: HTMLButtonElement) => void;
-  btnLabel: string;
-  showSelectedIcon: string | undefined;
+  btnLabel: string | undefined;
+  selectedFullOptions: FullOption<string>[];
 };
 export const SelectTriggerButton = <
   O extends OptionKey,
@@ -43,8 +43,7 @@ export const SelectTriggerButton = <
     btnProps,
     disabledInfo,
     optional = false,
-    onOpen,
-    showSelectedIcon,
+    showIconOnly,
     fullOptions,
     multiSelection,
     fixedBtnWidth,
@@ -52,9 +51,10 @@ export const SelectTriggerButton = <
     chipMode,
     selectClass,
     popupAnchor,
-    setState,
+    onPress,
     setRef,
     btnLabel,
+    selectedFullOptions,
   } = props;
 
   const value = multiSelection ?? _value;
@@ -63,6 +63,10 @@ export const SelectTriggerButton = <
     !options.length || (options.length === 1 && value === options[0]);
 
   if (!onChange) return null;
+
+  const showSelectedIcon =
+    showIconOnly ? selectedFullOptions[0]?.iconPath : undefined;
+
   const triggerButton = (
     <Btn
       title={title}
@@ -100,13 +104,7 @@ export const SelectTriggerButton = <
       onClick={
         noOtherOption ? undefined : (
           (e) => {
-            const maxBtnWidth = e.currentTarget.getBoundingClientRect().width;
-            e.currentTarget.focus();
-            onOpen?.(e.currentTarget);
-            setState({
-              popupAnchor: e.currentTarget,
-              fixedBtnWidth: maxBtnWidth,
-            });
+            onPress(e.currentTarget, undefined);
           }
         )
       }
@@ -119,15 +117,26 @@ export const SelectTriggerButton = <
       onKeyDown={
         noOtherOption ? undefined : (
           (e) => {
-            if (e.key.length === 1 && !popupAnchor) {
-              const maxBtnWidth = e.currentTarget.getBoundingClientRect().width;
-              setState({
-                popupAnchor: e.currentTarget,
-                fixedBtnWidth: maxBtnWidth,
-                defaultSearch: e.key,
-              });
-            } else if (["ArrowUp", "ArrowDown"].includes(e.key)) {
-              const increm = e.key === "ArrowUp" ? -1 : 1;
+            const { key, currentTarget } = e;
+            const isFocused = document.activeElement === currentTarget;
+            if (!isFocused) return;
+            const isAlphanumeric = key.match(/^[a-z0-9]$/i);
+            if (isAlphanumeric && !popupAnchor) {
+              onPress(e.currentTarget, key);
+            } else if (["Enter", " "].includes(key) && !popupAnchor) {
+              e.preventDefault();
+              e.stopPropagation();
+              onPress(e.currentTarget, undefined);
+            } else if (["ArrowUp", "ArrowDown"].includes(key)) {
+              const selectOpt = document.querySelector<HTMLUListElement>(
+                getCommandElemSelector("Popup.content") +
+                  " ul > li:first-child",
+              );
+              if (selectOpt) {
+                selectOpt.focus();
+                return;
+              }
+              const increm = key === "ArrowUp" ? -1 : 1;
               let selIdx = options.indexOf(value) + increm;
               if (selIdx < 0) selIdx = options.length - 1;
               else if (selIdx > options.length - 1) selIdx = 0;
@@ -146,23 +155,24 @@ export const SelectTriggerButton = <
             <div
               className={
                 " text-ellipsis " +
-                (value !== undefined ? "text-color-0" : "text-color-1")
+                (value !== undefined ? "text-color-0" : "text-1")
               }
               style={{ lineHeight: "18px" }}
             >
-              {(!labelAsValue ? btnLabel : (
-                SmartFormField.renderValue(
-                  undefined,
-                  btnLabel,
-                  !noOtherOption,
-                  150,
-                )
-              )) ?? emptyLabel}
+              {!labelAsValue ?
+                (btnLabel ?? emptyLabel)
+              : <RenderValue
+                  column={undefined}
+                  value={btnLabel}
+                  showTitle={!noOtherOption}
+                  maxLength={150}
+                />
+              }
             </div>
           </>
 
       }
-    ></Btn>
+    />
   );
 
   const trigger =

@@ -149,6 +149,10 @@ export type DBSSchema = {
   [K in keyof DBGeneratedSchema]: Required<DBGeneratedSchema[K]["columns"]>;
 };
 
+export type DBSSchemaForInsert = {
+  [K in keyof DBGeneratedSchema]: DBGeneratedSchema[K]["columns"];
+};
+
 export type SyncRule = {
   id_fields: string[];
   synced_field: string;
@@ -538,7 +542,7 @@ export const validateDynamicFields = async (
 ): Promise<{ error?: any }> => {
   if (!dynamicFields) return {};
 
-  for await (const [dfIndex, dfRule] of dynamicFields.entries()) {
+  for (const [dfIndex, dfRule] of dynamicFields.entries()) {
     const filter = await parseFullFilter(
       dfRule.filterDetailed,
       context,
@@ -551,7 +555,7 @@ export const validateDynamicFields = async (
     await db.find(filter, { limit: 0 });
 
     /** Ensure dynamicFields filters do not overlap */
-    for await (const [_dfIndex, _dfRule] of dynamicFields.entries()) {
+    for (const [_dfIndex, _dfRule] of dynamicFields.entries()) {
       if (dfIndex !== _dfIndex) {
         const _filter = await parseFullFilter(
           _dfRule.filterDetailed,

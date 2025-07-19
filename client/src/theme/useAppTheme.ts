@@ -1,43 +1,49 @@
 import { useEffect, useState } from "react";
-import type { AppState, Theme } from "../App";
-import { appTheme } from "../App";
+import { appTheme, type AppState, type Theme } from "../App";
+import { useLocalSettings } from "../dashboard/localSettings";
 
 const THEMES = ["light", "dark", "from-system"] as const;
 const THEME_SETTING_NAME = "theme" as const;
 
-export const useAppTheme = (state: Omit<AppState, "title" | "isConnected">) => {
-  const user = state.prglState?.user ?? state.prglState?.auth.user;
-  const userThemeOption = user?.options?.theme as
-    | (typeof THEMES)[number]
-    | undefined;
-  const userTheme = getTheme(userThemeOption);
+export const useAppTheme = (state: Pick<AppState, "serverState" | "user">) => {
+  const userThemeOption = state.user?.options?.theme;
+
+  const { themeOverride } = useLocalSettings();
+  const userTheme = getTheme(themeOverride ?? userThemeOption);
   const [theme, setTheme] = useState(userTheme);
+
   useEffect(() => {
-    /** We persist the theme to localSettings to ensure theme persists after logging out */
-    localStorage.setItem(THEME_SETTING_NAME, theme);
+    if (!themeOverride) return;
+    setTheme(themeOverride);
+  }, [themeOverride]);
+
+  useEffect(() => {
     appTheme.set(theme);
-  }, [theme]);
+    if (!userThemeOption || userThemeOption === "from-system") {
+      localStorage.removeItem(THEME_SETTING_NAME);
+      return;
+    }
+    /** We persist the theme to localSettings to ensure theme persists after logging out */
+    localStorage.setItem(THEME_SETTING_NAME, userThemeOption);
+  }, [theme, userThemeOption]);
 
   useEffect(() => {
     const listener = () => {
-      setTheme(userTheme);
+      setTheme(getTheme(userThemeOption));
     };
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", listener);
 
-    return () =>
-      window
-        .matchMedia("(prefers-color-scheme: dark)")
-        .removeEventListener("change", listener);
-  }, [userTheme]);
+    const matcher = window.matchMedia("(prefers-color-scheme: dark)");
+    matcher.addEventListener("change", listener);
+
+    return () => matcher.removeEventListener("change", listener);
+  }, [userThemeOption]);
 
   useEffect(() => {
-    if (!user?.options?.theme) return;
+    if (!userThemeOption) return;
     if (theme !== userTheme) {
       setTheme(userTheme);
     }
-  }, [user, userTheme, theme]);
+  }, [userThemeOption, userTheme, theme]);
 
   useEffect(() => {
     document.documentElement.classList.remove("dark-theme", "light-theme");

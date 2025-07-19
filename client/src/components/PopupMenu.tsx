@@ -45,31 +45,6 @@ export default function <S extends AnyObject>(
   const open = Boolean(ref);
 
   const popupClose = () => setRef(null);
-  let _content: React.ReactNode = null;
-  if (ref) {
-    _content = (
-      <Popup
-        positioning="inside"
-        {...otherProps}
-        onClose={(e) => {
-          {
-            onClose?.(e);
-            setRef(null);
-          }
-        }}
-        onClickClose={onClickClose ?? !render}
-        content={
-          render ?
-            render(popupClose, state, (newState) =>
-              setState({ ...state, ...(newState as any) }),
-            )
-          : ((content || props.children) as React.ReactChild)
-        }
-        footer={footer?.(popupClose)}
-        anchorEl={refBtn}
-      />
-    );
-  }
 
   return (
     <>
@@ -99,7 +74,28 @@ export default function <S extends AnyObject>(
       >
         {props.button}
       </div>
-      {_content}
+      {ref && (
+        <Popup
+          positioning="inside"
+          {...otherProps}
+          onClose={(e) => {
+            {
+              onClose?.(e);
+              setRef(null);
+            }
+          }}
+          onClickClose={onClickClose ?? !render}
+          content={
+            render ?
+              render(popupClose, state, (newState) =>
+                setState({ ...state, ...newState }),
+              )
+            : content || props.children
+          }
+          footer={footer?.(popupClose)}
+          anchorEl={refBtn}
+        />
+      )}
     </>
   );
 }

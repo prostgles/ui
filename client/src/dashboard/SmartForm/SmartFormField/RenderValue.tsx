@@ -1,16 +1,17 @@
 import React from "react";
-import { ShorterText } from "../../../components/ShorterText";
-import { getColumnDataColor } from "./SmartFormField";
-import { renderInterval } from "../../W_SQL/customRenderers";
-import { dateAsYMD_Time } from "../../Charts";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { _PG_numbers } from "prostgles-types";
-import { isObject, _PG_date } from "prostgles-types";
+import { isObject, _PG_date, _PG_numbers, includes } from "prostgles-types";
+import { ShorterText } from "../../../components/ShorterText";
+import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
+import { dateAsYMD_Time } from "../../Charts";
 import { sliceText } from "../../../../../commonTypes/utils";
 
 type P = {
   column: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType"> | undefined;
   value: any;
+  /**
+   * Defaults to true
+   */
   showTitle?: boolean;
   maxLength?: number;
   maximumFractionDigits?: number;
@@ -35,6 +36,7 @@ export const renderNull = (
 
   return null;
 };
+
 export const RenderValue = ({
   column: c,
   value,
@@ -62,7 +64,8 @@ export const RenderValue = ({
     textAlign: "right",
   } as const;
 
-  if (c?.tsDataType !== "number" && c?.udt_name === "int8") {
+  const { udt_name, tsDataType } = c ?? {};
+  if (tsDataType !== "number" && udt_name === "int8") {
     return (
       <span
         style={{
@@ -77,32 +80,40 @@ export const RenderValue = ({
   }
 
   if (
-    (c?.tsDataType === "number" ||
-      (c && _PG_numbers.includes(c.udt_name as any))) &&
+    // tsDataType === "number" &&
+    udt_name &&
+    includes(_PG_numbers, udt_name) &&
     value !== undefined &&
     value !== null
   ) {
-    const countDecimals = (num: number) => {
-      if (Math.floor(num.valueOf()) === num.valueOf()) return 0;
-      return num.toString().split(".")[1]?.length || 0;
+    const getValue = () => {
+      const isFloat =
+        udt_name === "float4" ||
+        udt_name === "float8" ||
+        udt_name === "numeric";
+      if (!isFloat) return +value;
+      const actualDecimals = countDecimals(+value);
+      const maxDecimals =
+        +value < 1 && +value > -1 ? actualDecimals + 1 : maximumFractionDigits;
+      const slicedValue = getSliced(
+        (+value).toLocaleString(undefined, {
+          minimumFractionDigits: maxDecimals, // Math.min(maxDecimals, actualDecimals),
+        }),
+      );
+      return slicedValue;
     };
-    const maxDecimals =
-      +value < 1 && +value > -1 ?
-        countDecimals(+value) + 1
-      : maximumFractionDigits;
-    const slicedValue = getSliced(
-      (+value).toLocaleString(undefined, {
-        minimumFractionDigits: Math.min(maxDecimals, countDecimals(+value)),
-      }),
-    );
+
     return (
-      <span style={{ color: getColumnDataColor(c), ...numericStyle, ...style }}>
-        {slicedValue}
+      <span
+        title={value}
+        style={{ color: getColumnDataColor(c), ...numericStyle, ...style }}
+      >
+        {getValue()}
       </span>
     );
   }
   if (c?.udt_name === "interval") {
-    return <>{renderInterval(value)}</>;
+    return <>{getPGIntervalAsText(value)}</>;
   }
 
   if (value && ["geography", "geometry"].includes(c?.udt_name ?? "")) {
@@ -183,4 +194,48 @@ export const RenderValue = ({
   }
 
   return <>{getSliced(value)}</>;
+};
+
+const countDecimals = (num: number) => {
+  if (Math.floor(num.valueOf()) === num.valueOf()) return 0;
+  return num.toString().split(".")[1]?.length || 0;
+};
+
+export const getColumnDataColor = (
+  c?: Pick<Partial<ValidatedColumnInfo>, "udt_name" | "tsDataType" | "is_pkey">,
+  fallBackColor?: string,
+) => {
+  if (c?.udt_name === "uuid" || c?.is_pkey) {
+    return "var(--color-uuid)";
+  }
+
+  if (c?.udt_name === "geography" || c?.udt_name === "geometry") {
+    return "var(--color-geo)";
+  }
+
+  if (
+    c?.udt_name === "json" ||
+    c?.udt_name === "jsonb" ||
+    c?.tsDataType === "any"
+  ) {
+    return "var(--color-json)";
+  }
+
+  if (_PG_date.some((v) => v === c?.udt_name)) {
+    return "var(--color-date)";
+  }
+
+  if (c && _PG_numbers.includes(c.udt_name as any)) {
+    return "var(--color-number)";
+  }
+
+  const TS_COL_TYPE_TO_COLOR = {
+    number: "var(--color-number)",
+    boolean: "var(--color-boolean)",
+  } as const;
+
+  return (
+    (c?.tsDataType ? TS_COL_TYPE_TO_COLOR[c.tsDataType] : undefined) ??
+    fallBackColor
+  );
 };

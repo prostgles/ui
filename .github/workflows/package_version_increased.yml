@@ -19,20 +19,44 @@ jobs:
         id: pr-version
         run: |
           sudo apt  install jq
-          cd electron
           cat package.json | jq -r .version > pr_version.txt
           git fetch origin ${{ github.base_ref }} --depth=1
-          git checkout origin/${{ github.base_ref }} -- package.json
+          git checkout origin/${{ github.base_ref }} -- package.json ./electron/package.json
+
           cat package.json | jq -r .version > current_version.txt
+          if jq -e '.version' package.json > /dev/null 2>&1; then
+            cat package.json | jq -r .version > current_version.txt
+          else
+            cat ./electron/package.json | jq -r .version > current_version.txt
+          fi
 
       - name: Compare versions
         run: |
-          cd electron
           current_version=$(cat current_version.txt)
-          pr_version=$(cat pr_version.txt)
+          pr_version=$(cat pr_version.txt) 
           if [ "$(printf '%s\n' "$current_version" "$pr_version" | sort -V | head -n1)" = "$pr_version" ]; then
             echo "Version in package.json is not greater than the version in the base branch: $current_version <= $pr_version"
             exit 1
           else
             echo "Version check passed: $current_version <= $pr_version"
+          fi
+
+      - name: Check Release File and Generate Changelog
+        if: success() # Ensure version comparison passed
+        run: |
+          pr_version=$(cat pr_version.txt) 
+          base_ref="${{ github.base_ref }}"
+          release_file_path="./releases/v${pr_version}.md"
+
+          echo "Checking for release file: ${release_file_path}"
+
+          if [ -f "$release_file_path" ]; then
+            echo "Release file found: ${release_file_path}"
+            echo "::warning::Release notes file for version v${pr_version} already exists. Ensure this is intended."
+          else
+
+            echo "Release file not found for v${pr_version}."
+            echo "Ensure this file exists: ${release_file_path}"
+
+            exit 1
           fi

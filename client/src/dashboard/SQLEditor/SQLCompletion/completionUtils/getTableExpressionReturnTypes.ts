@@ -5,7 +5,7 @@ import {
   getKind,
   type ParsedSQLSuggestion,
   type SQLMatchContext,
-} from "../registerSuggestions";
+} from "../monacoSQLSetup/registerSuggestions";
 import { getTableExpressionReturnType } from "./getQueryReturnType";
 import {
   getTabularExpressions,
@@ -107,7 +107,7 @@ export const getTableExpressionSuggestions = async (
     };
   };
 
-  for await (const e of expressions) {
+  for (const e of expressions) {
     if (e.type === "tableOrView") {
       tablesWithAliasInfo.push({ ...e, s: e.table });
       columnsWithAliasInfo.push(

@@ -1,4 +1,4 @@
-import { getMonaco } from "../SQLEditor/SQLEditor";
+import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import type { W_SQL } from "./W_SQL";
 import { parseError } from "./runSQL";
 import { runSQLErrorHints } from "./runSQLErrorHints";

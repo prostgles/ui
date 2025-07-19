@@ -31,19 +31,20 @@ import type {
 import RTComp from "../../RTComp";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
 import {
-  getColumnDataColor,
+  colIs,
   tsDataTypeFromUdtName,
-} from "../../SmartForm/SmartFormField/SmartFormField";
+} from "../../SmartForm/SmartFormField/fieldUtils";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { getFullColumnConfig, updateWCols } from "../tableUtils/tableUtils";
 import { AddColumnMenu } from "./AddColumnMenu";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { ColumnList } from "./ColumnList";
 import type { ColumnConfig } from "./ColumnMenu";
-import { colIs } from "./ColumnSelect";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { WithPrgl } from "../../../WithPrgl";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
+import { getColumnDataColor } from "../../SmartForm/SmartFormField/RenderValue";
+import type { DBS } from "../../Dashboard/DBS";
 
 type P = {
   db: DBHandlerClient;

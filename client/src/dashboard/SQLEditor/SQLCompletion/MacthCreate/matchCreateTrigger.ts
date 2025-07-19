@@ -1,7 +1,7 @@
 import type {
   ParsedSQLSuggestion,
   SQLMatchContext,
-} from "../registerSuggestions";
+} from "../monacoSQLSetup/registerSuggestions";
 import type { KWD } from "../withKWDs";
 import { withKWDs } from "../withKWDs";
 

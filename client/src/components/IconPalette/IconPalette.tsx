@@ -1,13 +1,13 @@
 import { mdiChevronDown, mdiClose } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/prostgles";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { isDefined } from "../../utils";
 import Btn from "../Btn";
 import type { BtnProps } from "../Btn";
 import { FlexCol, FlexRow } from "../Flex";
 import { FormFieldDebounced } from "../FormField/FormFieldDebounced";
 import Popup from "../Popup/Popup";
-import { ScrollFade } from "../SearchList/ScrollFade";
+import { ScrollFade } from "../ScrollFade/ScrollFade";
 import { Pagination } from "../Table/Pagination";
 import { SvgIcon } from "../SvgIcon";
 
@@ -56,9 +56,12 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
       .sort((a, b) => a.rank - b.rank);
   }, [iconList, searchTerm]);
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm]);
   const displayedItems = useMemo(
-    () => displayedItemsFull.slice((page - 1) * 50, page * 50),
+    () => displayedItemsFull.slice(page * 50, (page + 1) * 50),
     [page, displayedItemsFull],
   );
 
@@ -101,7 +104,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
           onClose={() => setOpen(false)}
         >
           <FlexCol
-            className="f-1 min-s-0 o-auto p-1"
+            className="f-1 min-s-0 o-auto p-1 ai-center"
             style={{
               maxWidth: "min(99vw, 1200px)",
             }}
@@ -111,7 +114,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
               value={searchTerm}
               onChange={(newTerm) => {
                 setSearchTerm(newTerm);
-                setPage(1);
+                setPage(0);
               }}
             />
             <div
@@ -121,7 +124,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
                 background: "var(--text-2)",
               }}
             ></div>
-            <ScrollFade className="text-color-1 min-s-0 o-auto flex-row-wrap gap-1">
+            <ScrollFade className="text-1 min-s-0 o-auto flex-row-wrap gap-1 f-1">
               {displayedItems.map(({ name, node }) => {
                 return (
                   <FlexCol
@@ -146,7 +149,12 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
               totalRows={displayedItemsFull.length}
               pageSize={50}
               page={page}
-              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={() => {
+                console.error("onPageSizeChange disabled for performance");
+              }}
+              onPageChange={(newPage) => {
+                setPage(newPage);
+              }}
             />
           </FlexCol>
         </Popup>

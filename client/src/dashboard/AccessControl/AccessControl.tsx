@@ -11,6 +11,7 @@ import { AccessControlRules } from "./ExistingAccessRules";
 import type { useAccessControlSearchParams } from "./useAccessControlSearchParams";
 import { mdiAccountCog, mdiPlus } from "@mdi/js";
 import { UserSyncConfig } from "./UserSyncConfig";
+import { ROUTES } from "../../../../commonTypes/utils";
 
 type P = ReturnType<typeof useAccessControlSearchParams> & {
   prgl: Prgl;
@@ -101,7 +102,7 @@ export const AccessControl = (props: P) => {
                 iconPath={mdiAccountCog}
                 variant="faded"
                 asNavLink={true}
-                href={"/users"}
+                href={ROUTES.USERS}
               >
                 Manage users
               </Btn>

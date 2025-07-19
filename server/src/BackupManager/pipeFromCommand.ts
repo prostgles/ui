@@ -1,6 +1,6 @@
 import child from "child_process";
-import type internal from "stream";
 import { getKeys } from "prostgles-types";
+import type internal from "stream";
 
 export type EnvVars = Record<string, string> | {};
 export const envToStr = (vars: EnvVars) => {
@@ -11,55 +11,52 @@ export const envToStr = (vars: EnvVars) => {
   );
 };
 
-export function pipeFromCommand(args: {
+export function pipeFromCommand(params: {
   command: string;
   // opts: SpawnOptionsWithoutStdio | string[],
-  opts: string[];
+  args: string[];
   envVars: EnvVars;
   destination: internal.Writable;
-  onEnd: (err: any | undefined, fullLog: string) => void;
+  onEnd: (err: Error | string | undefined, fullLog: string) => void;
   onStdout?: (
-    data: { full: any; chunk: any; pipedLength: number },
+    data: { full: string; chunk: string; pipedLength: number },
     isStdErr?: boolean,
-  ) => void;
-  useExec?: boolean;
+  ) => void | Promise<void>;
   onChunk?: (chunk: any, streamSize: number) => void;
 }) {
   const {
-    useExec = false,
     envVars = {},
     onEnd,
     command,
     destination,
-    opts,
+    args,
     onStdout,
     onChunk,
-  } = args;
+  } = params;
 
-  const execCommand = `${envToStr(envVars)} ${command} ${opts.join(" ")}`;
   const env: NodeJS.ProcessEnv = envVars;
-  const proc =
-    useExec ?
-      child.exec(execCommand)
-    : child.spawn(command, opts as any, { env });
+  const proc = child.spawn(command, args, { env });
   const getUTFText = (v: string) => v.toString(); //.replaceAll(/[^\x00-\x7F]/g, ""); //.replaceAll("\\", "[escaped backslash]");   // .replaceAll("\\u0000", "");
 
   let fullLog = "";
   // const lastSent = Date.now();
   let log: string;
   let streamSize = 0;
-  proc.stderr!.on("data", (data) => {
+  proc.stderr.on("data", (data) => {
     log = getUTFText(data);
     fullLog += log;
     // const now = Date.now();
     // if(lastSent > now - 1000){
 
     /** These are the pg_dump logs */
-    onStdout?.({ full: fullLog, chunk: log, pipedLength: streamSize }, true);
+    void onStdout?.(
+      { full: fullLog, chunk: log, pipedLength: streamSize },
+      true,
+    );
 
     // }
   });
-  proc.stdout!.on("data", (data) => {
+  proc.stdout.on("data", (data) => {
     streamSize += data.length;
 
     /** These is the pg_dump actual data */
@@ -67,17 +64,17 @@ export function pipeFromCommand(args: {
     // onStdout?.({ chunk: getUTFText(data), full: fullLog });
   });
 
-  proc.stdout!.on("error", function (err) {
+  proc.stdout.on("error", function (err) {
     onEnd(err, fullLog);
   });
-  proc.stdin!.on("error", function (err) {
+  proc.stdin.on("error", function (err) {
     onEnd(err, fullLog);
   });
   proc.on("error", function (err) {
     onEnd(err, fullLog);
   });
 
-  proc.stdout!.pipe(destination, { end: false });
+  proc.stdout.pipe(destination, { end: false });
 
   proc.on("exit", function (code, signal) {
     if (code) {

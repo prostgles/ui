@@ -1,5 +1,5 @@
 import React from "react";
-import { FlexCol } from "../Flex";
+import { FlexCol, type DivProps } from "../Flex";
 import { isDefined } from "../../utils";
 
 export const DropZone = ({
@@ -7,28 +7,39 @@ export const DropZone = ({
 }: {
   onChange: (files: File[]) => void;
 }) => {
-  const [isEngaged, setIsEngaged] = React.useState(false);
+  const { isEngaged, ...divHandlers } = useDropZone(onChange);
   return (
     <FlexCol
+      {...divHandlers}
       className={
         "DropZone b b-active rounded w-full flex-col jc-center ai-center f-1" +
         (isEngaged ? " active-shadow " : "")
       }
       style={{ minHeight: "30vh" }}
-      onDragLeave={() => setIsEngaged(false)}
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsEngaged(true);
-      }}
-      onDrop={(ev) => {
-        ev.preventDefault();
-        onChange(getDataTransferFiles(ev));
-      }}
     >
       <div className="noselect text-1">Drop files here...</div>
     </FlexCol>
   );
+};
+
+export const useDropZone = (onDropped: (files: File[]) => void) => {
+  const [isEngaged, setIsEngaged] = React.useState(false);
+
+  const divHandlers: Pick<DivProps, "onDragLeave" | "onDragOver" | "onDrop"> = {
+    onDragLeave: () => setIsEngaged(false),
+    onDragOver: (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsEngaged(true);
+    },
+    onDrop: (ev) => {
+      ev.preventDefault();
+      onDropped(getDataTransferFiles(ev));
+      setIsEngaged(false);
+    },
+  };
+
+  return { isEngaged, ...divHandlers };
 };
 
 export const getDataTransferFiles = (ev: React.DragEvent<HTMLDivElement>) => {

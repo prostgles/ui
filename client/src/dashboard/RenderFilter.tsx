@@ -1,21 +1,21 @@
 import { mdiFilter } from "@mdi/js";
-import React from "react";
+import { pickKeys } from "prostgles-types";
+import React, { useMemo } from "react";
 import type {
   GroupedDetailedFilter,
   SimpleFilter,
 } from "../../../commonTypes/filterUtils";
 import Btn from "../components/Btn";
 import PopupMenu from "../components/PopupMenu";
-import { pickKeys } from "prostgles-types";
 import type {
   ContextDataSchema,
   ForcedFilterControlProps,
   SingleGroupFilter,
 } from "./AccessControl/OptionControllers/FilterControl";
-import { SmartFilter } from "./SmartFilter/SmartFilter";
+import { SmartFilter, type SmartFilterProps } from "./SmartFilter/SmartFilter";
 import type { ColumnConfig } from "./W_Table/ColumnMenu/ColumnMenu";
 
-type RenderFilterProps = {
+export type RenderFilterProps = {
   filter: SingleGroupFilter | undefined;
   onChange: (filter: SingleGroupFilter) => void;
   contextData: ContextDataSchema | undefined;
@@ -23,6 +23,7 @@ type RenderFilterProps = {
   mode?: "micro" | "compact" | "minimised";
   itemName: "filter" | "condition";
   selectedColumns: ColumnConfig[] | undefined;
+  hideOperand?: boolean;
 } & Pick<ForcedFilterControlProps, "db" | "tableName" | "tables">;
 
 export const RenderFilter = (props: RenderFilterProps) => {
@@ -36,16 +37,48 @@ export const RenderFilter = (props: RenderFilterProps) => {
     ...otherProps
   } = props;
   const isAndOrFilter = "$and" in f || "$or" in f;
+  const minimised = mode && mode === "minimised";
+  const { filters, ...filterProps } = useMemo(() => {
+    const isAnd = "$and" in f;
+    const filters = isAnd ? f.$and : f.$or;
+    const simpleFilters = filters.filter(isSimpleFilter);
+    const groupFilters = filters.filter(isNotSimpleFilter);
+    return {
+      filters,
+      filterClassName:
+        /** Where was this needed? Both cases look better with the classes applied */
+        // (minimised ?? filters.some((f) => f.minimised)) ?
+        //   " "
+        // :
+        " rounded  b b-action",
+      operand: isAnd ? "AND" : "OR",
+      detailedFilter: simpleFilters,
+      onOperandChange: (operand) => {
+        onChange(operand === "AND" ? { $and: filters } : { $or: filters });
+      },
+      onChange: (newF) => {
+        const newFilters = [...newF, ...groupFilters];
+        if (isAnd) f.$and = newFilters;
+        else f.$or = newFilters;
+        onChange(f);
+      },
+    } satisfies Pick<
+      SmartFilterProps,
+      | "filterClassName"
+      | "operand"
+      | "detailedFilter"
+      | "onOperandChange"
+      | "onChange"
+    > & {
+      filters: SimpleFilter[];
+    };
+  }, [f, minimised, onChange]);
+
   if (!isAndOrFilter) {
     return <>Unexpected {itemName}. Expecting $and / $or</>;
   }
 
-  const isAnd = "$and" in f;
-  const filters = isAnd ? f.$and : f.$or;
-  const simpleFilters = filters.filter(isSimpleFilter);
-  const groupFilters = filters.filter(isNotSimpleFilter);
-
-  const content = (minimised?: boolean, showAddFilter?: boolean) => (
+  const content = (showAddFilter?: boolean) => (
     <>
       <SmartFilter
         type="where"
@@ -57,28 +90,14 @@ export const RenderFilter = (props: RenderFilterProps) => {
             undefined
           : "row"
         }
-        filterClassName={
-          (minimised ?? filters.some((f) => f.minimised)) ?
-            " "
-          : " rounded  b b-action"
-        }
         {...pickKeys(otherProps, [
           "db",
           "tableName",
           "tables",
           "selectedColumns",
+          "hideOperand",
         ])}
-        operand={isAnd ? "AND" : "OR"}
-        detailedFilter={simpleFilters}
-        onOperandChange={(operand) => {
-          onChange(operand === "AND" ? { $and: filters } : { $or: filters });
-        }}
-        onChange={(newF) => {
-          const newFilters = [...newF, ...groupFilters];
-          if (isAnd) f.$and = newFilters;
-          else f.$or = newFilters;
-          onChange(f);
-        }}
+        {...filterProps}
         hideToggle={true}
         minimised={minimised}
         showAddFilter={showAddFilter}
@@ -93,11 +112,11 @@ export const RenderFilter = (props: RenderFilterProps) => {
   }
 
   if (mode === "compact") {
-    return content(false, true);
+    return content(true);
   }
 
   if (mode === "minimised") {
-    return content(true, false);
+    return content(false);
   }
 
   const filterIsNotEmpty = filters.some((f) => !f.disabled);
@@ -135,7 +154,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
         },
       ]}
     >
-      {content(false, true)}
+      {content(true)}
     </PopupMenu>
   );
 };

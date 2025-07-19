@@ -1,7 +1,8 @@
 import type { EventInfo } from "prostgles-server/dist/Logging";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { pickKeys } from "prostgles-types";
-import { connMgr, type DBS } from ".";
+import { type DBS } from ".";
+import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
 export const loggerTableConfig: TableConfig<{ en: 1 }> = {
   logs: {
@@ -33,8 +34,7 @@ export const setLoggerDBS = (dbs: DBS) => {
 };
 
 const shouldExclude = (e: EventInfo, isStateDb: boolean) => {
-  if (!connMgr.connectionChecker.config.global_setting?.enable_logs)
-    return true;
+  if (!getAuthSetupData().globalSettings?.enable_logs) return true;
   if (
     isStateDb &&
     e.type === "table" &&
@@ -70,12 +70,13 @@ export const addLog = (e: EventInfo, connection_id: string | null) => {
   const batchSize = 20;
   const { dbs } = loggerConfig ?? {};
   if (dbs && logRecords.length > batchSize) {
-    const getSid = (e: EventInfo) => {
+    const getSid = (e: EventInfo): string | null | undefined => {
       if (e.type === "table" || e.type === "sync") {
         const { clientReq } = e.localParams ?? {};
         return (
           clientReq?.socket ? clientReq.socket.__prglCache?.session.sid
-          : clientReq?.httpReq ? clientReq.httpReq.cookies["sid"]
+          : clientReq?.httpReq ?
+            (clientReq.httpReq.cookies as Record<string, string>)["sid"]
           : null
         );
       }
@@ -101,7 +102,7 @@ export const addLog = (e: EventInfo, connection_id: string | null) => {
       : e.type === "method" ? pickKeys(e, ["args"])
       : undefined;
     const batch = logRecords.splice(0, batchSize);
-    dbs.logs.insert(
+    void dbs.logs.insert(
       batch.map(({ connection_id, created, e }) => ({
         connection_id,
         created,

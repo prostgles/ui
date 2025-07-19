@@ -1,4 +1,4 @@
-import { scaleLinear } from "d3-scale";
+import { scaleLinear } from "d3";
 import type { TimeChart, TimeChartLayer } from "./TimeChart";
 import { getCssVariableValue } from "./onRenderTimechart";
 
@@ -10,7 +10,7 @@ export const prepareTimechartData = function (this: TimeChart) {
         coords: [this.ref!.offsetWidth / 2, this.ref!.offsetHeight / 2],
         id: "2111r",
         type: "text",
-        fillStyle: getCssVariableValue("--text-color-1"),
+        fillStyle: getCssVariableValue("--text-1"),
         textAlign: "center",
         font: "18px arial",
         background: {
@@ -30,13 +30,13 @@ export const prepareTimechartData = function (this: TimeChart) {
   }
   if (!layers.length) {
     this.data = undefined;
-    renderMessage("No active layers");
+    renderMessage("No data");
     return;
   }
-  let minDate: number | null = null;
-  let maxDate: number | null = null;
-  let minVal: number | null = null;
-  let maxVal: number | null = null;
+  let minDate = null as number | null;
+  let maxDate = null as number | null;
+  let minVal = null as number | null;
+  let maxVal = null as number | null;
 
   const dates: { x: number; v: number; date: Date }[] = [];
 
@@ -102,7 +102,6 @@ export const prepareTimechartData = function (this: TimeChart) {
     return l;
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (
     minDate === null ||
     maxDate === null ||

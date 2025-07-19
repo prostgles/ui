@@ -1,16 +1,18 @@
 import { mdiMessageBookmarkOutline } from "@mdi/js";
 import React, { useState } from "react";
+import type { Prgl } from "../App";
 import { Success } from "../components/Animations";
 import Btn from "../components/Btn";
 import ErrorComponent from "../components/ErrorComponent";
-import FormField from "../components/FormField/FormField";
-import { useIsMounted } from "./Backup/CredentialSelector";
-import PopupMenu from "../components/PopupMenu";
 import { FlexCol } from "../components/Flex";
-import type { Prgl } from "../App";
+import FormField from "../components/FormField/FormField";
+import PopupMenu from "../components/PopupMenu";
 import { t } from "../i18n/i18nUtils";
+import { tout } from "../utils";
+import { useIsMounted } from "./BackupAndRestore/CredentialSelector";
 
-export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
+export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
+  const { dbsMethods, dbs } = props;
   const getIsMounted = useIsMounted();
   const { sendFeedback } = dbsMethods;
   const [feedback, setFeedBack] = useState<{
@@ -42,6 +44,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
         <Btn
           title={t.Feedback["Leave feedback"]}
           variant="faded"
+          data-command="Feedback"
           iconPath={mdiMessageBookmarkOutline}
         >
           {window.isMediumWidthScreen ? null : t.Feedback.Feedback}
@@ -72,12 +75,11 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
                   setFeedBack({ ...feedback, sending: true });
                   await sendFeedback(feedback);
                   setFeedBack({ ...feedback, success: true });
-                  setTimeout(() => {
-                    if (getIsMounted()) {
-                      setFeedBack({ email: "", details: "" });
-                      pClose?.(e);
-                    }
-                  }, 3000);
+                  await tout(3000);
+                  if (getIsMounted()) {
+                    setFeedBack({ email: "", details: "" });
+                    pClose?.(e);
+                  }
                 } catch (error) {
                   setFeedBack({ ...feedback, error });
                 }
@@ -122,6 +124,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
               <a
                 target="_blank"
                 href="https://github.com/prostgles/ui/issues/new/choose"
+                rel="noreferrer"
               >
                 {t.Feedback["open an issue"]}
               </a>{" "}

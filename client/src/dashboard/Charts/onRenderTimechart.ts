@@ -7,7 +7,6 @@ import type {
   GetShapes,
   MultiLine,
   Rectangle,
-  Shape,
 } from "../Charts/CanvasChart";
 import type { DeepPartial } from "../RTComp";
 import type { TimeChart, TimeChartD, TimeChartProps } from "./TimeChart";

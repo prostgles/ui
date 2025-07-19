@@ -2,17 +2,15 @@ import { mdiHelp, mdiInformationOutline } from "@mdi/js";
 import React from "react";
 import Btn from "./Btn";
 import Checkbox from "./Checkbox";
-import { Icon } from "./Icon/Icon";
-import PopupMenu from "./PopupMenu";
 import { classOverride } from "./Flex";
+import { Icon } from "./Icon/Icon";
 import "./Label.css";
+import PopupMenu from "./PopupMenu";
 
 export type NormalLabelProps = {
-  /**
-   * @default "normal"
-   */
   variant: "normal";
   iconPath?: undefined;
+  leftIcon?: React.ReactNode;
   toggle?: {
     checked?: boolean;
     onChange: (checked: boolean) => void;
@@ -22,10 +20,11 @@ export type NormalLabelProps = {
 export type HeaderLabelProps = {
   variant?: "header";
   iconPath?: string;
+  leftIcon?: undefined;
   toggle?: undefined;
 };
 
-export type LabelProps = React.DetailedHTMLProps<
+type LabelPropsCommon = React.DetailedHTMLProps<
   React.LabelHTMLAttributes<HTMLLabelElement>,
   HTMLLabelElement
 > & {
@@ -33,10 +32,24 @@ export type LabelProps = React.DetailedHTMLProps<
   info?: React.ReactNode;
   popupTitle?: React.ReactNode;
   size?: "small";
-} & (NormalLabelProps | HeaderLabelProps);
+};
+
+export type LabelPropsNormal = LabelPropsCommon & NormalLabelProps;
+export type LabelPropsHeader = LabelPropsCommon & HeaderLabelProps;
+
+export type LabelProps = LabelPropsNormal | LabelPropsHeader;
+// export type LabelProps = React.DetailedHTMLProps<
+//   React.LabelHTMLAttributes<HTMLLabelElement>,
+//   HTMLLabelElement
+// > & {
+//   label?: string;
+//   info?: React.ReactNode;
+//   popupTitle?: React.ReactNode;
+//   size?: "small";
+// } & (NormalLabelProps | HeaderLabelProps);
 
 export const Label = ({
-  info,
+  info = null,
   variant = "header",
   iconPath = mdiHelp,
   label,
@@ -45,50 +58,62 @@ export const Label = ({
   toggle,
   children,
   size,
+  leftIcon,
   ...otherProps
 }: LabelProps) => {
   const isHeader = variant === "header";
-  let IconBtn: React.ReactNode = null;
 
-  if (info) {
-    IconBtn = (
-      <PopupMenu
-        title={popupTitle ?? label ?? "Information"}
-        positioning="beneath-center"
-        clickCatchStyle={{ opacity: 0.3 }}
-        rootStyle={{
-          maxWidth: "500px",
-        }}
-        className={isHeader ? undefined : "show-on-parent-hover"}
-        contentClassName="p-1"
-        button={
-          !isHeader ?
-            <Btn iconPath={mdiHelp} size="small" style={{ margin: "-8px" }} />
-          : <Btn
-              iconPath={iconPath}
-              className="Label_QuestionButton text-2  relative ai-center"
-              title="Click for more information"
-            />
-        }
-      >
-        <div className="flex-row ta-left">
-          <Icon
-            path={mdiInformationOutline}
-            size={1}
-            className="f-0 text-2 mr-1"
+  const ensureInfoBtnKeepsCardLayoutCellsConsistent = Boolean(
+    !isHeader && info,
+  );
+
+  const IconBtn = info && (
+    <PopupMenu
+      title={popupTitle ?? label ?? "Information"}
+      positioning="beneath-center"
+      clickCatchStyle={{ opacity: 0.3 }}
+      rootStyle={{
+        maxWidth: "500px",
+      }}
+      className={isHeader ? undefined : "show-on-parent-hover"}
+      contentClassName="p-1"
+      style={
+        ensureInfoBtnKeepsCardLayoutCellsConsistent ?
+          {
+            position: "absolute",
+            top: "-.5em",
+            right: 0,
+            overflow: "visible",
+          }
+        : {}
+      }
+      button={
+        !isHeader ?
+          <Btn iconPath={mdiHelp} size="micro" />
+        : <Btn
+            iconPath={iconPath}
+            className="Label_QuestionButton text-2  relative ai-center"
+            title="Click for more information"
           />
-          {info}
-        </div>
-      </PopupMenu>
-    );
-  }
+      }
+    >
+      <div className="flex-row ta-left">
+        <Icon
+          path={mdiInformationOutline}
+          size={1}
+          className="f-0 text-2 mr-1"
+        />
+        {info}
+      </div>
+    </PopupMenu>
+  );
 
-  const labelNode = (
+  return (
     <label
       {...otherProps}
       className={classOverride(
-        " Label noselect flex-row ai-center " +
-          (toggle ? " pointer gap-p5 " : " gap-1 ") +
+        `Label variant:${variant} relative noselect flex-row ai-center ` +
+          (toggle ? " pointer gap-p5 " : " gap-p25 ") +
           (otherProps.htmlFor ? " pointer " : " ") +
           "w-fit",
         className,
@@ -104,9 +129,14 @@ export const Label = ({
           : 400,
         color: size === "small" ? "var(--text-1)" : "var(--text-1)",
         ...otherProps.style,
+        ...(ensureInfoBtnKeepsCardLayoutCellsConsistent &&
+          IconBtn && {
+            paddingRight: "2em",
+          }),
       }}
     >
       {isHeader && IconBtn}
+      {leftIcon}
       {label ?? children}
       {toggle && (
         <Checkbox
@@ -118,6 +148,4 @@ export const Label = ({
       {!isHeader && IconBtn}
     </label>
   );
-
-  return labelNode;
 };

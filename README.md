@@ -9,7 +9,7 @@ SQL Editor and internal tool builder for Postgres
 [More](https://prostgles.com/ui)
 
 <p float="left">
-  <img src="https://prostgles.com/static/images/screenshot_crypto.png" width="100%%"/>  
+  <img src="https://prostgles.com/static/images/screenshot_crypto.png" width="100%"/>  
 </p>
 
 ### Features
@@ -34,20 +34,20 @@ SQL Editor and internal tool builder for Postgres
 
 Download the source code:
 
-```sh
+```bash
 git clone https://github.com/prostgles/ui.git
 cd ui
 ```
 
 Docker setup. By default the app will be accessible at [localhost:3004](http://localhost:3004)
 
-```sh
-docker compose up
+```docker-compose.sh
+docker compose up -d
 ```
 
 To use a custom port (3099 for example) and/or a custom binding address (0.0.0.0 for example):
 
-```sh
+```bash
 PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up
 ```
 
@@ -57,7 +57,7 @@ Use this method if you want to use your existing database to store Prostgles met
 
 Download the source code:
 
-```sh
+```bash
 git clone https://github.com/prostgles/ui.git prostgles
 cd prostgles
 ```
@@ -97,7 +97,7 @@ Your server will be running on [localhost:3004](http://localhost:3004).
 
 #### 3. Start app in dev mode (will install npm packages)
 
-    ./start.sh
+    npm run dev
 
 ### Testing
 

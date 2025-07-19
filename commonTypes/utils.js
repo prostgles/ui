@@ -5,7 +5,8 @@ export const HOUR = MINUTE * 60;
 export const DAY = HOUR * 24;
 export const MONTH = DAY * 30;
 export const YEAR = DAY * 365;
-export const QUERY_WATCH_IGNORE = "prostgles internal query that should be excluded from schema watch ";
+export const EXCLUDE_FROM_SCHEMA_WATCH = "prostgles internal query that should be excluded from schema watch ";
+export const STATUS_MONITOR_IGNORE_QUERY = "prostgles-status-monitor-query";
 export const getAgeFromDiff = (millisecondDiff) => {
     const roundFunc = millisecondDiff > 0 ? Math.floor : Math.ceil;
     const years = roundFunc(millisecondDiff / YEAR);
@@ -55,13 +56,14 @@ export function matchObj(obj1, obj2) {
     }
     return false;
 }
-export function sliceText(v, maxLen, ellipseText = "...", midEllipse = false) {
-    if (isDefined(v) && v.length > maxLen) {
+export function sliceText(_text, maxLen, ellipseText = "...", midEllipse = false) {
+    const text = _text;
+    if (isDefined(text) && text.length > maxLen) {
         if (!midEllipse)
-            return `${v.slice(0, maxLen)}${ellipseText}`;
-        return `${v.slice(0, maxLen / 2)}${ellipseText}${v.slice(v.length - maxLen / 2 + 3)}`;
+            return `${text.slice(0, maxLen)}${ellipseText}`;
+        return `${text.slice(0, maxLen / 2)}${ellipseText}${text.slice(text.length - maxLen / 2 + 3)}`;
     }
-    return v;
+    return _text;
 }
 export const RELOAD_NOTIFICATION = "Prostgles UI accessible at";
 export function throttle(func, timeout) {
@@ -122,16 +124,65 @@ export const fixIndent = (_str) => {
 };
 export const getConnectionPaths = ({ id, url_path, }) => {
     return {
-        rest: `${API_PATH_SUFFIXES.REST}/${url_path || id}`,
-        ws: `${API_PATH_SUFFIXES.WS}/${url_path || id}`,
-        dashboard: `${API_PATH_SUFFIXES.DASHBOARD}/${id}`,
-        config: `${API_PATH_SUFFIXES.CONFIG}/${id}`,
+        rest: `${API_ENDPOINTS.REST}/${url_path || id}`,
+        ws: `${API_ENDPOINTS.WS_DB}/${url_path || id}`,
+        dashboard: `${ROUTES.CONNECTIONS}/${id}`,
+        config: `${ROUTES.CONFIG}/${id}`,
     };
 };
-export const API_PATH_SUFFIXES = {
+export const API_ENDPOINTS = {
     REST: "/rest-api",
-    WS: "/ws-api-db",
-    DASHBOARD: "/connections",
-    CONFIG: "/connection-config",
+    WS_DB: "/ws-api-db",
+    WS_DBS: "/ws-api-dbs",
 };
+export const ROUTES = {
+    MAGIC_LINK: "/magic-link",
+    LOGIN: "/login",
+    LOGOUT: "/logout",
+    ACCOUNT: "/account",
+    CONNECTIONS: "/connections",
+    CONFIG: "/connection-config",
+    DOCUMENTATION: "/documentation",
+    SERVER_SETTINGS: "/server-settings",
+    COMPONENT_LIST: "/component-list",
+    EDIT_CONNECTION: "/edit-connection",
+    NEW_CONNECTION: "/new-connection",
+    USERS: "/users",
+    BACKUPS: "/prostgles_backups",
+    STORAGE: "/prostgles_storage",
+};
+const testForDuplicateValues = (obj, name) => {
+    if (new Set(Object.values(obj)).size !== Object.keys(obj).length) {
+        throw new Error(`${name} must not have duplicate values: ${Object.values(obj)}`);
+    }
+};
+testForDuplicateValues(API_ENDPOINTS, "API_ENDPOINTS");
+testForDuplicateValues(ROUTES, "ROUTES");
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
+export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC";
+export const getProperty = (o, k) => {
+    return o[k];
+};
+export function debouncePromise(promiseFuncDef) {
+    let currentPromise;
+    return function (...args) {
+        // If there's no active promise, create a new one
+        if (!currentPromise) {
+            currentPromise = promiseFuncDef(...args).finally(() => {
+                currentPromise = undefined;
+            });
+            return currentPromise;
+        }
+        // Otherwise, wait for the current promise to finish, then run the new one
+        return currentPromise.then(() => promiseFuncDef(...args));
+    };
+}
+export const getCaller = () => {
+    //@ts-ignore
+    // Error.stackTraceLimit = 30;
+    var _a, _b, _c;
+    const error = new Error();
+    const stackLines = (_b = (_a = error.stack) === null || _a === void 0 ? void 0 : _a.split("\n")) !== null && _b !== void 0 ? _b : [];
+    const callerLine = (_c = stackLines[2]) !== null && _c !== void 0 ? _c : "";
+    return stackLines;
+};

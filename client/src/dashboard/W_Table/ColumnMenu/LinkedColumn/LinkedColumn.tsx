@@ -1,7 +1,7 @@
 import { mdiDotsHorizontal } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { appTheme, useReactiveState } from "../../../../App";
+import { appTheme, useReactiveState } from "../../../../appUtils";
 import { ExpandSection } from "../../../../components/ExpandSection";
 import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
 import { FormFieldDebounced } from "../../../../components/FormField/FormFieldDebounced";
@@ -19,6 +19,7 @@ import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
 import { t } from "../../../../i18n/i18nUtils";
+import type { DBS } from "../../../Dashboard/DBS";
 
 export type LinkedColumnProps = {
   tables: DBSchemaTablesWJoins;
@@ -112,6 +113,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
           className="ml-p25"
           href="https://www.postgresql.org/docs/current/tutorial-fk.html"
           target="_blank"
+          rel="noreferrer"
         >
           FOREIGN KEY
         </a>
@@ -243,7 +245,6 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
             {table && currentColumn.nested && (
               <>
                 <SmartFilterBar
-                  theme={theme}
                   innerClassname="mt-1 px-0"
                   filter={currentColumn.nested.detailedFilter}
                   having={currentColumn.nested.detailedHaving}
@@ -256,7 +257,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                   showInsertUpdateDelete={{
                     showupdate: false,
                     showdelete: false,
-                    showinsert: false,
+                    showInsert: false,
                   }}
                   sort={currentColumn.nested.sort}
                   onSortChange={(sort) => updateNested({ sort })}

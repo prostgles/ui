@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { isObject } from "prostgles-types";
+import { isPlaywrightTest } from "../i18n/i18nUtils";
 
 export type LocalSettings = {
   centeredLayout?: {
     enabled: boolean;
     maxWidth: number;
   };
+  themeOverride?: "light" | "dark";
 };
 
 type LocalSettingsListener = (s: LocalSettings) => void;
@@ -16,18 +19,21 @@ const LOCALSTORAGE_KEY = "localSettings" as const;
 const parseLocalSettings = () => {
   const localSettings: LocalSettings = {};
   try {
-    const _localSettingsStr = window.localStorage.getItem(LOCALSTORAGE_KEY);
-    if (_localSettingsStr) {
-      const _localSettings: LocalSettings | undefined =
-        JSON.parse(_localSettingsStr);
-      if (_localSettings) {
-        const _centeredLayout = _localSettings.centeredLayout;
+    const savedSettings = window.localStorage.getItem(LOCALSTORAGE_KEY);
+    if (savedSettings) {
+      const parsedSavedSettings: LocalSettings | undefined =
+        JSON.parse(savedSettings);
+      if (parsedSavedSettings && isObject(parsedSavedSettings)) {
+        const { centeredLayout, themeOverride } = parsedSavedSettings;
         if (
-          _centeredLayout &&
-          typeof ((_centeredLayout as any).enabled ?? false) === "boolean" &&
-          Number.isFinite(_centeredLayout.maxWidth)
+          centeredLayout &&
+          typeof ((centeredLayout as any).enabled ?? false) === "boolean" &&
+          Number.isFinite(centeredLayout.maxWidth)
         ) {
-          localSettings.centeredLayout = _centeredLayout;
+          localSettings.centeredLayout = centeredLayout;
+        }
+        if (themeOverride && ["light", "dark"].includes(themeOverride)) {
+          localSettings.themeOverride = themeOverride;
         }
       }
       return localSettings;
@@ -41,15 +47,15 @@ const parseLocalSettings = () => {
 window.addEventListener(
   "storage",
   function (event) {
-    if (event.storageArea === localStorage) {
-      const s = parseLocalSettings();
-      localSettingsListeners.forEach((l) => l(s));
-    }
+    // if (event.storageArea === localStorage) {
+    const s = parseLocalSettings();
+    localSettingsListeners.forEach((l) => l(s));
+    // }
   },
   false,
 );
 
-const localSettings = {
+export const localSettings = {
   add: (l: LocalSettingsListener) => {
     if (!localSettingsListeners.some((ll) => ll === l)) {
       localSettingsListeners.push(l);

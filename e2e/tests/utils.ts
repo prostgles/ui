@@ -1,6 +1,6 @@
-import { Page as PG, Locator, expect } from "@playwright/test";
-import { Command } from "./Testing";
+import { Locator, Page as PG, expect } from "@playwright/test";
 import * as path from "path";
+import { Command, getDataKeyElemSelector } from "./Testing";
 
 type FuncNamesReturningLocatorObj = {
   [prop in keyof PG as PG[prop] extends (...args: any) => any ?
@@ -57,7 +57,7 @@ export const getMonacoEditorBySelector = async (
 ) => {
   const monacoEditor = await page
     .locator(`${parentSelector} .monaco-editor`)
-    .nth(0);
+    .first();
   return monacoEditor;
 };
 
@@ -66,10 +66,16 @@ export const getMonacoValue = async (
   parentSelector: string,
 ) => {
   await page.keyboard.press("Control+A");
-  const text = await page.innerText(
-    `${parentSelector} .monaco-editor .lines-content`,
-  );
-  const normalizedText = text.replace(/\u00A0/g, " "); // Replace char 160 with char 32
+  await page.waitForTimeout(1500);
+  const monacoNode = await getMonacoEditorBySelector(page, parentSelector);
+  const text = await monacoNode.evaluate((node) => {
+    //@ts-ignore
+    return node.parentElement!._getValue() as string;
+  });
+  // const text = await page.evaluate(
+  //   () => window.getSelection()?.toString() ?? "",
+  // );
+  const normalizedText = text?.replace(/\u00A0/g, " "); // Replace char 160 with char 32
   return normalizedText;
 };
 
@@ -77,7 +83,7 @@ type KeyPress = "Control" | "Shift";
 type InputKey = KeyPress | "Enter" | "Escape" | "Tab" | "Backspace" | "Delete";
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 type ArrowKeyCombinations = `${KeyPress}+${ArrowKey}`;
-type KeyPressOrCombination = InputKey | ArrowKeyCombinations;
+type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
 
 /**
  * Will overwrite all previous content
@@ -88,11 +94,13 @@ export const monacoType = async (
   text: string,
   {
     deleteAll,
+    deleteAllAndFill,
     pressBeforeTyping,
     pressAfterTyping,
     keyPressDelay = 100,
   }: {
     deleteAll?: boolean;
+    deleteAllAndFill?: boolean;
     pressBeforeTyping?: KeyPressOrCombination[];
     pressAfterTyping?: KeyPressOrCombination[];
     keyPressDelay?: number;
@@ -102,7 +110,7 @@ export const monacoType = async (
   await monacoEditor.click();
   await page.waitForTimeout(500);
 
-  if (deleteAll) {
+  if (deleteAll || deleteAllAndFill) {
     await page.keyboard.press("Control+A");
     await page.waitForTimeout(500);
     await page.keyboard.press("Delete");
@@ -118,7 +126,11 @@ export const monacoType = async (
     await page.keyboard.press(key);
     await page.waitForTimeout(50);
   }
-  await page.keyboard.type(text, { delay: keyPressDelay });
+  if (deleteAllAndFill) {
+    await page.keyboard.insertText(text);
+  } else {
+    await page.keyboard.type(text, { delay: keyPressDelay });
+  }
   for (const key of pressAfterTyping ?? []) {
     await page.keyboard.press(key);
     await page.waitForTimeout(50);
@@ -129,40 +141,83 @@ export const monacoType = async (
 export const runSql = async (page: PageWIds, query: string) => {
   await monacoType(page, `.ProstglesSQL`, query);
   await page.waitForTimeout(300);
-  await page.getByTestId("dashboard.window.runQuery").click();
+  await page.getByTestId("W_SQLBottomBar.runQuery").click();
   await page.waitForTimeout(200);
-  await page
-    .getByTestId("dashboard.window.runQuery")
-    .isEnabled({ timeout: 5e3 });
+  await page.getByTestId("W_SQLBottomBar.runQuery").isEnabled({ timeout: 5e3 });
   await page.waitForTimeout(1e3);
 };
 
-export const fillSmartFormAndInsert = async (
+export const fillSmartForm = async (
   page: PageWIds,
   tableName: string,
-  values: Record<string, string>,
+  values: Record<string, string | Record<string, any> | Record<string, any>[]>,
 ) => {
-  for (const [key, value] of Object.entries(values)) {
+  const smartFormLocator = `${getTestId("SmartForm")}${getDataKey(tableName)}`;
+  for (const [key, valueOrRowOrRows] of Object.entries(values)) {
     const unescapedSelector = `${tableName}-${key}`;
     const escapedSelector = await page.evaluate(
       (unescapedSelector) => CSS.escape(unescapedSelector),
       unescapedSelector,
     );
-    const elem = await page.locator("input#" + escapedSelector);
-    await elem.fill(value);
-    const selectElem = await page.locator(
-      `[data-key=${JSON.stringify(key)}] .FormField_Select`,
-    );
-    if (await selectElem.isVisible()) {
-      await selectElem.click();
-      await page
-        .getByTestId("SearchList.List")
-        .locator(`[data-key=${JSON.stringify(value)}]`)
-        .click();
+    if (typeof valueOrRowOrRows === "string") {
+      const value = valueOrRowOrRows;
+      const elem = await page.locator("input#" + escapedSelector);
+      await elem.fill(value);
+      const selectElem = await page.locator(
+        `[data-key=${JSON.stringify(key)}] .FormField_Select`,
+      );
+      if (await selectElem.isVisible()) {
+        await selectElem.click();
+        await page
+          .getByTestId("SearchList.List")
+          .locator(`[data-key=${JSON.stringify(value)}]`)
+          .click();
+      }
+      /** Joined records */
+    } else if (Array.isArray(valueOrRowOrRows)) {
+      const nestedTableName = key;
+
+      // const tabItem = await page.locator(
+      //   `${smartFormLocator} ${getTestId("JoinedRecords")} ${getDataKey(nestedTableName)}`,
+      // );
+      // const isActive = await tabItem.getAttribute("aria-current");
+      // if (isActive !== "true") {
+      //   await tabItem.click();
+      // }
+      for (const nestedRow of valueOrRowOrRows) {
+        await page
+          .locator(
+            `${getTestId("JoinedRecords.AddRow")}${getDataKey(nestedTableName)}`,
+          )
+          .click();
+        await fillSmartFormAndInsert(page, nestedTableName, nestedRow);
+      }
+
+      /** Nested insert into fkey */
+    } else if (typeof valueOrRowOrRows === "object") {
+      const nestedInsertBtn = await page
+        .locator(
+          `${getTestId("SmartFormField")}${getDataKey(key)} ${getTestId("SmartFormFieldOptions.NestedInsert")}`,
+        )
+        .first();
+      const nestedTableName = await nestedInsertBtn.getAttribute("data-key");
+      if (!nestedTableName) throw `nestedTableName not found for ${key}`;
+      await nestedInsertBtn.click();
+      await fillSmartFormAndInsert(page, nestedTableName, valueOrRowOrRows);
     }
   }
+
+  return page.locator(smartFormLocator);
+};
+
+export const fillSmartFormAndInsert = async (
+  page: PageWIds,
+  tableName: string,
+  values: Record<string, string | Record<string, any> | Record<string, any>[]>,
+) => {
+  const form = await fillSmartForm(page, tableName, values);
   await page.waitForTimeout(200);
-  await page.getByRole("button", { name: "Insert", exact: true }).click();
+  await form.getByTestId("SmartForm.insert").click();
   await page.waitForTimeout(200);
 };
 
@@ -289,9 +344,22 @@ export const closeWorkspaceWindows = async (page: PageWIds) => {
   await page.waitForTimeout(100);
 };
 
-const getDataKey = (key: string) => `[data-key=${JSON.stringify(key)}]`;
-const getTestId = (testid: Command) =>
+export const getDataKey = (key: string) => `[data-key=${JSON.stringify(key)}]`;
+export const getTestId = (testid: Command) =>
   `[data-command=${JSON.stringify(testid)}]`;
+export const getSelector = ({
+  testid,
+  dataKey,
+}: {
+  testid: Command | undefined;
+  dataKey: string | undefined;
+}) =>
+  [
+    testid && `[data-command=${JSON.stringify(testid)}]`,
+    dataKey && `[data-key=${JSON.stringify(dataKey)}]`,
+  ]
+    .filter(Boolean)
+    .join("");
 
 type FFilter = { fieldName: string; value: string }[];
 type FData = Record<string, string>;
@@ -508,7 +576,7 @@ export const openTable = async (page: PageWIds, namePartStart: string) => {
   expect(table).toBeVisible();
   await page.waitForTimeout(1000);
 };
-const MINUTE = 60e3;
+export const MINUTE = 60e3;
 export const createDatabase = async (
   dbName: string,
   page: PageWIds,
@@ -674,7 +742,7 @@ export const createAccessRule = async (
 
   /** Setting user type to default */
   await page.getByTestId("config.ac.edit.user").click();
-  await page.getByRole("listitem").getByText(userType).click();
+  await page.getByRole("option").getByText(userType).click();
   await page.getByRole("button", { name: "Done", exact: true }).click();
 
   /** Setting AC Type to custom */
@@ -706,16 +774,30 @@ export const enableAskLLM = async (
   await page.getByTestId("AskLLMAccessControl").click();
   if (!credsProvided) {
     await page.getByTestId("SetupLLMCredentials.api").click();
-    await page.getByTestId("AddLLMCredentialForm").click();
-    await page.getByTestId("AddLLMCredentialForm.Provider").click();
-    await page
-      .getByTestId("AddLLMCredentialForm.Provider")
-      .locator(`[data-key="Custom"]`)
-      .click();
-    // await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
-    await page.locator(`#endpoint`).fill("http://localhost:3004/mocked-llm");
-    await page.getByTestId("AddLLMCredentialForm.Save").click();
-    await page.waitForTimeout(1e3);
+    // await page.getByTestId("AddLLMCredentialForm").click();
+    await page.getByTestId("dashboard.window.rowInsertTop").click();
+    // await page.getByTestId("AddLLMCredentialForm.Provider").click();
+
+    // await page
+    //   .getByTestId("AddLLMCredentialForm.Provider")
+    //   .locator(`[data-key="Custom"]`)
+    //   .click();
+    await runDbsSql(page, "DELETE FROM llm_providers WHERE id = 'Custom' ");
+    await fillSmartFormAndInsert(page, "llm_credentials", {
+      name: "my credential",
+      api_key: "nothing",
+      provider_id: {
+        id: "Custom",
+        api_url: "http://localhost:3004/mocked-llm",
+        llm_models: [
+          {
+            name: "mymodel",
+          },
+        ],
+      },
+    });
+    // await page.locator(`#endpoint`).fill("http://localhost:3004/mocked-llm");
+    // await page.getByTestId("AddLLMCredentialForm.Save").click();
   }
   await page.getByTestId("AskLLMAccessControl.AllowAll").click();
   await page.waitForTimeout(1e3);
@@ -727,9 +809,34 @@ export const enableAskLLM = async (
   }
   await page.getByTestId("Popup.close").click();
 };
+export const getAskLLMLastMessage = async (page: PageWIds) => {
+  const lastIncomingMessage = await page
+    .getByTestId("AskLLM.popup")
+    .locator(".message.incoming")
+    .last();
 
-export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
-  await page.getByTestId("AskLLM").click();
+  /** Await any in progress tool calls */
+  const toolCallBtns = await lastIncomingMessage
+    .getByTestId("ToolUseMessage.toggle")
+    .all();
+  await Promise.all(toolCallBtns.map((btn) => btn.click({ trial: true })));
+
+  const response = await lastIncomingMessage.textContent();
+  return response;
+};
+
+export const sendAskLLMMessage = async (page: PageWIds, msg: string) => {
+  await page.getByTestId("AskLLM.popup").getByTestId("Chat.textarea").fill(msg);
+  await page.keyboard.press("Enter");
+};
+export const getLLMResponses = async (
+  page: PageWIds,
+  questions: string[],
+  openWindow = true,
+) => {
+  if (openWindow) {
+    await page.getByTestId("AskLLM").click();
+  }
   await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
   await page.waitForTimeout(2e3);
   const result: {
@@ -737,20 +844,47 @@ export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
     isOk: boolean;
   }[] = [];
 
-  for await (const question of questions) {
-    await page.getByTestId("AskLLM.popup").locator("textarea").fill(question);
-    await page.getByTestId("AskLLM.popup").getByTestId("Chat.send").click();
+  for (const question of questions) {
+    await sendAskLLMMessage(page, question);
     await page.waitForTimeout(2e3);
-    const response = await page
-      .getByTestId("AskLLM.popup")
-      .locator(".message.incoming")
-      .last()
-      .textContent();
+    const response = await getAskLLMLastMessage(page);
     result.push({
       response,
       isOk: !!response?.includes("Mocked response"),
     });
   }
-  await page.getByTestId("Popup.close").click();
+  if (openWindow) {
+    await page.getByTestId("Popup.close").click();
+  }
   return result;
+};
+
+export const openConnection = async (
+  page: PageWIds,
+  connectionName:
+    | "sample_database"
+    | "cloud"
+    | "crypto"
+    | "food_delivery"
+    | "Prostgles UI state"
+    | "prostgles_video_demo"
+    | "Prostgles UI automated tests database",
+) => {
+  await goTo(page, "/connections");
+  await page
+    .locator(getDataKeyElemSelector(connectionName))
+    .getByTestId("Connection.openConnection")
+    .click();
+  await page.waitForTimeout(1000);
+};
+
+export const loginWhenSignupIsEnabled = async (page: PageWIds) => {
+  await goTo(page, "/login");
+  await page.locator("#username").fill(USERS.test_user);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.locator("#password").waitFor({ state: "visible" });
+  await page.locator("#password").fill(USERS.test_user);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+  await page.waitForTimeout(500);
 };

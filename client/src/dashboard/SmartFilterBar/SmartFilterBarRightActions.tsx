@@ -4,19 +4,21 @@ import {
   mdiDelete,
   mdiPencilOutline,
 } from "@mdi/js";
-import type { AnyObject } from "prostgles-types";
+import { isObject, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
-import { getFinalFilterInfo } from "../../../../commonTypes/filterUtils";
+import {
+  getFinalFilterInfo,
+  getSmartGroupFilter,
+} from "../../../../commonTypes/filterUtils";
 import Btn from "../../components/Btn";
 import { ExpandSection } from "../../components/ExpandSection";
 import { Footer } from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { pluralise } from "../../pages/Connections/Connection";
-import { CodeConfirmation } from "../Backup/CodeConfirmation";
-import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
+import { CodeConfirmation } from "../BackupAndRestore/CodeConfirmation";
 import { InsertButton } from "../SmartForm/InsertButton";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 import { SmartFilterBarSort } from "./SmartFilterBarSort";
 
@@ -29,7 +31,6 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
     showInsertUpdateDelete = {},
     rowCount,
     methods: dbMethods,
-    theme,
     fixedData,
   } = props;
 
@@ -49,7 +50,6 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
 
   const commonBtnProps = {
     variant: "outline",
-    // size: "small",
     className: "shadow w-fit h-fit bg-color-0",
   } as const;
 
@@ -58,18 +58,18 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
 
   const {
     showdelete = true,
-    showinsert = true,
+    showInsert = true,
     showupdate = true,
   } = showInsertUpdateDelete;
   const hideUpdateDelete = [showdelete, showupdate].every((v) => v === false);
   const canUpdateOrDelete =
     !hideUpdateDelete && (tableHandler?.delete || tableHandler?.update);
 
-  if (hideSort && rightContent && !showdelete && !showinsert && !showupdate)
+  if (hideSort && rightContent && !showdelete && !showInsert && !showupdate)
     return <></>;
 
   return (
-    <div className="ml-auto pl-1 flex-row ai-center">
+    <div className="SmartFilterBarRightActions ml-auto pl-1 flex-row ai-center">
       {!hideSort && <SmartFilterBarSort {...props} table={table} />}
       {rightContent}
 
@@ -155,7 +155,6 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                 render={(pClose) => (
                   <>
                     <SmartForm
-                      theme={theme}
                       label={`Update ${rowCount} rows`}
                       db={db}
                       rowFilter={[]}
@@ -197,10 +196,12 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
           </ExpandSection>
         )}
 
-        {showinsert && (
+        {showInsert && (
           <InsertButton
-            theme={theme}
-            buttonProps={commonBtnProps}
+            buttonProps={{
+              ...commonBtnProps,
+              ...(isObject(showInsert) && showInsert),
+            }}
             db={db}
             methods={dbMethods}
             tables={tables}

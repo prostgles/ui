@@ -1,7 +1,7 @@
 /**
  * https://github.com/electron-userland/electron-builder/issues/5064
  */
-export const contentOfThisFile = `export type LayoutItem = {
+export const dashboardTypes = `export type LayoutItem = {
   /**
    * UUID of the window
    */

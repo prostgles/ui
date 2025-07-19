@@ -1,6 +1,6 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, SQLHandler } from "prostgles-types";
-import { getKeys, tryCatch } from "prostgles-types";
+import { getKeys } from "prostgles-types";
 import { isDefined, omitKeys, pickKeys } from "prostgles-types";
 import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
 import {
@@ -8,8 +8,8 @@ import {
   PRIORITISED_OPERATORS,
   getPGObjects,
 } from "./SQLCompletion/getPGObjects";
-import type { ParsedSQLSuggestion } from "./SQLCompletion/registerSuggestions";
-import type { SQLSuggestion } from "./SQLEditor";
+import type { ParsedSQLSuggestion } from "./SQLCompletion/monacoSQLSetup/registerSuggestions";
+import type { SQLSuggestion } from "./W_SQLEditor";
 import { SQL_SNIPPETS } from "./SQL_SNIPPETS";
 import { tryCatchV2 } from "../WindowControls/TimeChartLayerOptions";
 
@@ -37,10 +37,12 @@ export const asListObject = (
     boldStyle,
   );
 
-export async function getSqlSuggestions(db: DB): Promise<{
+export const getSqlSuggestions = async (
+  db: DB,
+): Promise<{
   suggestions: SQLSuggestion[];
   settingSuggestions: SQLSuggestion[];
-}> {
+}> => {
   let suggestions: SQLSuggestion[] = [];
 
   try {
@@ -295,7 +297,12 @@ export async function getSqlSuggestions(db: DB): Promise<{
       const documentation =
         t.is_view ?
           `**Definition:**  \n\n${asSQL(t.view_definition || "")}`
-        : (!t.tableStats ? "" : (
+        : `${t.comment ? `\n**Comment:** \n\n ${t.comment}` : ""}\n\n**Columns (${cols.length}):**  \n${asSQL(cols.map((c) => c.definition).join(",  \n"))} \n` +
+          `\n**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map((c) => c.definition + ";").join("\n"))} \n` +
+          `**Indexes (${tIndexes.length}):** \n ${asSQL(tIndexes.map((d) => d.indexdef + ";").join("\n"))}  \n` +
+          `**Triggers (${tableTriggers.length}):** \n ${asSQL(tableTriggers.map((d) => d.trigger_name + ";").join("\n"))}  \n` +
+          `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map((p) => p.definition + ";").join("\n\n"))} \n` +
+          (!t.tableStats ? "" : (
             `\n ${asListObject({
               oid: t.tableStats.relid,
               Size: t.tableStats.table_size,
@@ -306,12 +313,7 @@ export async function getSqlSuggestions(db: DB): Promise<{
               "Seq Scans": t.tableStats.seq_scans,
               "Idx Scans": t.tableStats.idx_scans,
             })}\n`
-          )) +
-          `${t.comment ? `\n**Comment:** \n\n ${t.comment}` : ""}\n\n**Columns (${cols.length}):**  \n${asSQL(cols.map((c) => c.definition).join(",  \n"))} \n` +
-          `\n**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map((c) => c.definition + ";").join("\n"))} \n` +
-          `**Indexes (${tIndexes.length}):** \n ${asSQL(tIndexes.map((d) => d.indexdef + ";").join("\n"))}  \n` +
-          `**Triggers (${tableTriggers.length}):** \n ${asSQL(tableTriggers.map((d) => d.trigger_name + ";").join("\n"))}  \n` +
-          `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map((p) => p.definition + ";").join("\n\n"))}`;
+          ));
       suggestions.push({
         type,
         label: { label: t.name, description: t.schema },
@@ -711,7 +713,7 @@ export async function getSqlSuggestions(db: DB): Promise<{
       suggestions: [],
     };
   }
-}
+};
 
 export const getColumnSuggestionLabel = (
   c: { udt_name: string; data_type: string; name: string },

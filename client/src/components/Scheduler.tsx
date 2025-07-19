@@ -93,7 +93,7 @@
 //           }}
 //         >
 //           <div>{format(d, "dd MMM", { locale } )}</div>
-//           <div className="capitalize text-xl font-medium" >{format(d, "EEE", { locale } )}</div>
+//           <div className=" text-xl font-medium" >{format(d, "EEE", { locale } )}</div>
 //           <div className="">{getDayItems(d).length} </div>
 //         </button>
 //       ))}

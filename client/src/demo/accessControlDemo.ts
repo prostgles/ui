@@ -1,4 +1,4 @@
-import { tout } from "../pages/ElectronSetup";
+import { tout } from "../pages/ElectronSetup/ElectronSetup";
 import type { Command } from "../Testing";
 import { click, getElement } from "./demoUtils";
 import { videoDemoAccessControlScripts } from "./videoDemoAccessControlScripts";
@@ -12,9 +12,10 @@ export const accessControlDemo = async () => {
     existingRule.click();
     await tout(200);
     await click("config.ac.removeRule");
+    await click("Btn.ClickConfirmation.Confirm");
   }
 
-  for await (const { selector, timestamp } of videoDemoAccessControlScripts) {
+  for (const { selector, timestamp } of videoDemoAccessControlScripts) {
     await click("", selector);
     console.log(selector);
     await tout(450);

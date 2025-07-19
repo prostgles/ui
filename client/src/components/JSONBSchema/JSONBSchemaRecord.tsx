@@ -27,7 +27,7 @@ export const JSONBSchemaRecord = ({
         getKeys(value).map((propName) => {
           const ps = schema.record.values ?? { type: "any" };
           const propSchema = {
-            title: propName,
+            title: "Value",
             ...(typeof ps === "string" ? { type: ps } : ps),
           };
           return (
@@ -67,7 +67,7 @@ export const JSONBSchemaRecord = ({
         onClick={() => {
           onChange({
             ...(value ?? {}),
-            new_property: {},
+            new_property: undefined,
           });
         }}
       >

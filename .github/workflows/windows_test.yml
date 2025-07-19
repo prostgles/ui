@@ -38,7 +38,7 @@ jobs:
           npx playwright install
       - name: Run test
         run: |
-          bash ./e2e/test.sh
+          npm test
 
       - uses: actions/upload-artifact@v4
         if: always()

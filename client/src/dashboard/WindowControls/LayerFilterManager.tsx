@@ -1,10 +1,7 @@
-import { mdiFilter } from "@mdi/js";
+import type { DBSSchema } from "@common/publishUtils";
 import React from "react";
-import Btn from "../../components/Btn";
-import PopupMenu from "../../components/PopupMenu";
 import { RenderFilter } from "../RenderFilter";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
-import type { DBSSchema } from "@common/publishUtils";
 
 export const LayerFilterManager = (
   props: MapLayerManagerProps & { linkId: string },

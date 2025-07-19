@@ -92,17 +92,20 @@ test("renders the first page", async () => {
   await page.waitForTimeout(1000);
   await screenshot();
   await page.getByTestId("PostgresInstallationInstructions.Close").click();
-  await page.getByTestId("ElectronSetup.Next").click();
+  // await page.getByTestId("ElectronSetup.Next").click();
 
   /** State db connection details */
   await page.waitForTimeout(1000);
+  await screenshot();
+  await page.getByText("Manual setup").click();
+  await page.waitForTimeout(200);
   await screenshot();
   await page.getByLabel("user").fill("usr");
   await page.getByLabel("password").fill("psw");
   await page.getByLabel("database").fill("prostgles_desktop_db");
 
   /** Ensure overflow does not obscure done button */
-  await page.getByTestId("MoreOptionsToggle").click();
+  await page.getByTestId("NewConnectionForm.MoreOptionsToggle").click();
   const doneBtn = await page.getByTestId("ElectronSetup.Done");
   await expect(doneBtn).toBeVisible();
   await screenshot();
@@ -110,22 +113,18 @@ test("renders the first page", async () => {
   await page.waitForTimeout(1000);
 
   await screenshot();
-  // let passed = false;
-  // setInterval(() => {
-  //   if(passed) return;
-  //   screenshot();
-  // }, 2e3);
+
   await page
     .getByTestId("ConnectionServer.add")
     .waitFor({ state: "visible", timeout: 60e3 });
   await screenshot();
-  await page.locator("a.LEFT-CONNECTIONINFO").click();
+  await page.getByTestId("Connection.openConnection").click();
   await screenshot();
   await page
     .getByTestId("dashboard.goToConnConfig")
-    .waitFor({ state: "visible", timeout: 2e3 });
+    .waitFor({ state: "visible", timeout: 4e3 });
   await screenshot();
-  // await page.reload();
+
   await page
     .getByTestId("dashboard.goToConnConfig")
     .waitFor({ state: "visible", timeout: 2e3 });
@@ -141,7 +140,9 @@ test("renders the first page", async () => {
   await page.getByTestId("dashboard.goToConnections").click();
   await createDatabase("crypto", page, true);
   await screenshot();
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(5e3);
+  await screenshot();
+  await page.waitForTimeout(5e3);
   await screenshot();
   await page.getByTestId("dashboard.goToConnConfig").click();
   await screenshot();
@@ -200,9 +201,7 @@ export const createDatabase = async (
   await page.getByTestId("ConnectionServer.add.confirm").click();
   /* Wait until db is created */
   const databaseCreationTime = (fromTemplates ? 4 : 1) * MINUTE;
-  const workspaceCreationAndLoatTime = 3 * MINUTE;
   await page
     .getByTestId("ConnectionServer.add.confirm")
     .waitFor({ state: "detached", timeout: databaseCreationTime });
-  // await page.getByTestId("dashboard.menu").waitFor({ state: "visible", timeout: workspaceCreationAndLoatTime });
 };

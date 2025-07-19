@@ -11,7 +11,7 @@ import { Label } from "../../../../components/Label";
 import { FooterButtons } from "../../../../components/Popup/FooterButtons";
 import type { FooterButton } from "../../../../components/Popup/FooterButtons";
 import Popup from "../../../../components/Popup/Popup";
-import SearchList from "../../../../components/SearchList/SearchList";
+import { SearchList } from "../../../../components/SearchList/SearchList";
 import Select from "../../../../components/Select/Select";
 import { isEmpty } from "../../../../utils";
 import type {
@@ -253,7 +253,6 @@ export class AddComputedColMenu extends RTComp<
           <>
             <FormField
               className="mt-1"
-              asColumn={true}
               value={args?.$template_string ?? ""}
               label="Template string"
               hint={
@@ -343,7 +342,6 @@ export class AddComputedColMenu extends RTComp<
               label="Name"
               type="text"
               className="mt-1"
-              asColumn={true}
               value={name}
               onChange={(name) => {
                 this.setState({ name });

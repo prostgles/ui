@@ -1,5 +1,7 @@
 import { ContextDataObject, ContextValue } from "./publishUtils";
 
+type AnyObject = Record<string, any>;
+
 export const isDefined = <T>(v: T | undefined | void): v is T =>
   v !== undefined && v !== null;
 
@@ -367,6 +369,48 @@ export const getFinalFilter = (
   }
 
   return getFilter(detailedFilter, opts?.columns);
+};
+
+export const simplifyFilter = (f: AnyObject | undefined) => {
+  let result = f;
+  if (result) {
+    while (
+      (result &&
+        "$and" in result &&
+        Array.isArray(result.$and) &&
+        result.$and.length < 2) ||
+      (result &&
+        "$or" in result &&
+        Array.isArray(result.$or) &&
+        result.$or.length < 2)
+    ) {
+      if (result.$and) result = result.$and?.[0] ?? {};
+      if (result?.$or) result = result.$or?.[0] ?? {};
+    }
+    result ??= {};
+  }
+
+  return result;
+};
+
+export const getSmartGroupFilter = (
+  detailedFilter: SmartGroupFilter = [],
+  extraFilters?: { detailed?: SmartGroupFilter; filters?: AnyObject[] },
+  operand?: "and" | "or",
+): AnyObject => {
+  let input = detailedFilter;
+  if (extraFilters?.detailed) {
+    input = [...detailedFilter, ...extraFilters.detailed];
+  }
+  let output = input.map((f) => getFinalFilter(f));
+  if (extraFilters?.filters) {
+    output = output.concat(extraFilters.filters);
+  }
+  const result = simplifyFilter({
+    [`$${operand || "and"}`]: output.filter(isDefined),
+  });
+
+  return result ?? {};
 };
 
 export type GroupedDetailedFilter =

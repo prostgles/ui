@@ -5,24 +5,25 @@ import type { SearchAllProps } from "../SearchAll";
 
 import type {
   MissingBinsOption,
-  TimechartRenderStyle,
+  ShowBinLabelsMode,
   StatType,
   TimeChartBinSize,
+  TimechartRenderStyle,
   TooltipPosition,
-  ShowBinLabelsMode,
 } from "../W_TimeChart/W_TimeChartMenu";
 
-import type { SQLSuggestion } from "../SQLEditor/SQLEditor";
+import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
 
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
 import type { OmitDistributive } from "../../../../commonTypes/utils";
 import type { Extent, MapExtentBehavior } from "../Map/DeckGLMap";
 import type {
   ColumnConfig,
   ColumnSort,
+  ColumnSortSQL,
 } from "../W_Table/ColumnMenu/ColumnMenu";
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 const getRandomElement = <Arr>(
   items: Arr[],
 ): { elem: Arr | undefined; index: number } => {
@@ -144,7 +145,7 @@ export type Query = {
   id: string;
   tableName: string;
   filter?: any;
-  sort?: ColumnSort;
+  sort?: ColumnSortSQL;
   geo?: {
     field: string;
     filterField: string;
@@ -198,6 +199,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
       disabledArgs?: string[];
       hiddenArgs?: string[];
       showCode?: boolean;
+      showLogs?: boolean;
     }
   : CType extends "card" ?
 
@@ -425,8 +427,23 @@ export type Join = {
   on: [string, string][];
 };
 export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][] };
-export type DBSchemaTableWJoins = DBSchemaTable & {
+
+export type DBSchemaTableColumn = ValidatedColumnInfo & {
+  icon: string | undefined;
+  label: string;
+};
+
+type TableOptions = NonNullable<
+  NonNullable<DBSSchema["connections"]["table_options"]>[string]
+>;
+export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
+  label: string;
+  // icon: string | undefined;
   joins: Join[];
   joinsV2: JoinV2[];
-};
+  columns: DBSchemaTableColumn[];
+  // card: NonNullable<
+  //   NonNullable<DBSSchema["connections"]["table_options"]>[string]
+  // >["card"];
+} & Omit<TableOptions, "label" | "columns">;
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];

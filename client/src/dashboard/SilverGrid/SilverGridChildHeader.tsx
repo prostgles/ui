@@ -31,11 +31,8 @@ const CloseButton = ({
   if (!onClose || !tabId) return null;
   return (
     <Btn
-      className="SilverGridChild_CloseButton show-on-parent-hover"
-      style={{
-        width: "22px",
-        height: "22px",
-      }}
+      className="SilverGridChild_CloseButton show-on-parent-hover f-0"
+      size="micro"
       iconProps={{
         size: 0.75,
         path: mdiClose,
@@ -95,9 +92,11 @@ export const SilverGridChildHeader = (props: P) => {
         </div>
       )}
 
-      <div
-        className=" flex-row f-1 min-w-0 ws-nowrap ai-center text-ellipsiss ml-p25 o-auto  no-scroll-bar"
-        style={{ gap: "2px" }}
+      <FlexRow
+        className="SilverGridChildHeader_tabs flex-row f-1 min-w-0 ws-nowrap ai-end text-ellipsiss ml-p25 o-auto  no-scroll-bar"
+        style={{
+          gap: "2px",
+        }}
         onWheel={(e) => {
           e.currentTarget.scrollLeft += e.deltaY;
         }}
@@ -148,7 +147,12 @@ export const SilverGridChildHeader = (props: P) => {
               style={{
                 height: `${height}px`,
                 lineHeight: `${lineHeight + 2}px`,
+                /** Prevent total collapse when there is not enough space */
+                minWidth: "80px",
+                justifyContent: "space-between",
                 marginTop: "2px",
+                /** Used to prevent unexpected scroll of tab headers */
+                overflowY: "hidden",
                 maxWidth: "max(300px, 40%)",
               }}
             >
@@ -162,7 +166,7 @@ export const SilverGridChildHeader = (props: P) => {
             </FlexRow>
           );
         })}
-      </div>
+      </FlexRow>
 
       {!hideButtons.minimize && (
         <Btn

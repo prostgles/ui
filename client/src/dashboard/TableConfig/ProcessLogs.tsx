@@ -5,17 +5,17 @@ import { getAgeFromDiff } from "../../../../commonTypes/utils";
 import type { Prgl } from "../../App";
 import Chip from "../../components/Chip";
 import { FlexCol, FlexRow } from "../../components/Flex";
-import Loading from "../../components/Loading";
-import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
-import { renderInterval } from "../W_SQL/customRenderers";
-import type { editor } from "../W_SQL/monacoEditorTypes";
 import { Label } from "../../components/Label";
+import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
+import { getPGIntervalAsText } from "../W_SQL/customRenderers";
+import type { editor } from "../W_SQL/monacoEditorTypes";
 
 type P = Pick<Prgl, "dbsMethods" | "connectionId" | "dbs"> & {
   type: "tableConfig" | "onMount" | "methods";
   noMaxHeight?: boolean;
 };
-export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
+export const ProcessLogs = (props: P) => {
+  const { dbsMethods, connectionId, dbs, type } = props;
   const { data: conn } = dbs.connections.useSubscribeOne({ id: connectionId });
   const { data: dbConf } = dbs.database_configs.useSubscribeOne({
     $existsJoined: { connections: { id: connectionId } } as any,
@@ -70,7 +70,6 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
     type === "tableConfig" ? dbConfLogs?.table_config_logs
     : type === "onMount" ? dbConfLogs?.on_mount_logs
     : dbConfLogs?.on_run_logs;
-  const isLoading = !procStats && !isDisabled;
 
   /* Fix bug where logs are not rendered */
   useEffect(() => {
@@ -93,42 +92,37 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
     [],
   );
 
-  const options = { readOnly: true };
-
   return (
     <FlexCol className="f-1 relative">
-      {isLoading && <Loading variant="cover" delay={250} />}
-
       <CodeEditorWithSaveButton
         key={editorKey}
         label={
-          <FlexRow>
-            <Label variant="normal">{isDisabled ? "Log history" : "Log"}</Label>
-            {!isDisabled && (
-              <>
+          <FlexRow className="px-p5">
+            {isDisabled || !procStats ?
+              <div>Process not started.</div>
+            : <>
                 <Chip variant="naked" label="PID">
-                  {procStats?.pid ?? "?"}
+                  {procStats.pid}
                 </Chip>
                 <Chip variant="naked" label="Cpu">
-                  {(procStats?.cpu ?? 0).toFixed(1)}%
+                  {procStats.cpu.toFixed(1)}%
                 </Chip>
                 <Chip variant="naked" label="Mem">
-                  {Math.round((procStats?.mem ?? 0) / 1e6).toLocaleString() +
-                    " MB"}
+                  {Math.round(procStats.mem / 1e6).toLocaleString() + " MB"}
                 </Chip>
                 <Chip variant="naked" label="Uptime">
-                  {!procStats ?
-                    " "
-                  : renderInterval(
-                      getAgeFromDiff(Math.round(procStats.uptime) * 1e3),
-                      true,
-                      undefined,
-                      true,
-                    )
-                  }
+                  {getPGIntervalAsText(
+                    getAgeFromDiff(Math.round(procStats.uptime) * 1e3),
+                    true,
+                    undefined,
+                    true,
+                  )}
                 </Chip>
               </>
-            )}
+            }
+            <Label variant="normal">
+              {isDisabled || !procStats ? "Log history:" : "Logs:"}
+            </Label>
           </FlexRow>
         }
         onMount={onMonacoEditorMount}
@@ -140,3 +134,5 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
     </FlexCol>
   );
 };
+
+const options = { readOnly: true };

@@ -142,7 +142,6 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
         })
         .catch((initError) => {
           console.error(initError);
-          // this.setState({ initError })
         });
     }
   }
@@ -244,7 +243,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
           ),
         },
 
-        "Data Refresh": {
+        "Data refresh": {
           leftIconPath: mdiSyncCircle,
           style:
             (w.options.refresh?.type || "None") === "None" ?
@@ -292,7 +291,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
             content: <W_TableMenu_AccessRules {...commonProps} />,
           },
 
-          "Current Query": {
+          "Current query": {
             leftIconPath: mdiScript,
             content: <W_TableMenu_CurrentQuery {...commonProps} />,
           },

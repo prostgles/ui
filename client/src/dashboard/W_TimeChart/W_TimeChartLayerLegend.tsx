@@ -43,7 +43,7 @@ export const W_TimeChartLayerLegend = ({
       {activeLayerQueries.map(
         ({ _id, linkId, dateColumn, groupByColumn, link }) => {
           return (
-            <FlexRow key={_id} className="gap-0">
+            <FlexRow key={_id} className="W_TimeChartLayerLegend_Item gap-0">
               {!groupByColumn && (
                 <LayerColorPicker
                   btnProps={{ size: "micro" }}

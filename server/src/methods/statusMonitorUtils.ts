@@ -1,11 +1,10 @@
 import type { DB } from "prostgles-server/dist/Prostgles";
 import {
-  QUERY_WATCH_IGNORE,
+  EXCLUDE_FROM_SCHEMA_WATCH,
+  STATUS_MONITOR_IGNORE_QUERY,
   type ServerStatus,
 } from "../../../commonTypes/utils";
 import { getCDB } from "../ConnectionManager/ConnectionManager";
-
-export const IGNORE_QUERY = "prostgles-status-monitor-query";
 
 export const execPSQLBash = (
   db: DB,
@@ -15,10 +14,10 @@ export const execPSQLBash = (
   const tblName = JSON.stringify(`prostgles_shell_${connId}`);
 
   return db
-    .any(
+    .any<{ shell: string }>(
       `
-    /* ${QUERY_WATCH_IGNORE}  */
-    /* ${IGNORE_QUERY} */
+    /* ${STATUS_MONITOR_IGNORE_QUERY} */
+    /* ${EXCLUDE_FROM_SCHEMA_WATCH}  */
     --DROP TABLE IF EXISTS ${tblName};
     CREATE TEMP TABLE IF NOT EXISTS ${tblName} (
       shell text
@@ -29,7 +28,7 @@ export const execPSQLBash = (
     `,
       { command },
     )
-    .then((vals) => vals.map((v) => Object.values(v)[0])) as any;
+    .then((vals) => vals.map(({ shell }) => shell));
 };
 
 export const getServerStatus = async (
@@ -70,7 +69,7 @@ export const getServerStatus = async (
   } catch (e) {
     /** Set from mhz array */
     const mhzNumArr = cpu_cores_mhz_arr.map((v) => +v).filter((v) => v);
-    if (mhzNumArr.length && mhzNumArr.every((v) => Number.isFinite)) {
+    if (mhzNumArr.length && mhzNumArr.every((v) => Number.isFinite(v))) {
       cpu_mhz = [
         "CPU min MHz: " + Math.max(...mhzNumArr),
         "CPU max MHz: " + Math.max(...mhzNumArr),
@@ -140,7 +139,7 @@ export const killPID = async (
   const { db } = await getCDB(connId);
   return db.any(
     `
-    /* ${IGNORE_QUERY} */
+    /* ${STATUS_MONITOR_IGNORE_QUERY} */
     SELECT pid, query, pg_${type}_backend(pid) 
     FROM pg_catalog.pg_stat_activity
     WHERE md5(pid || query) = \${id_query_hash} `,

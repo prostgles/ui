@@ -1,6 +1,6 @@
 import { getCurrentCodeBlock } from "../completionUtils/getCodeBlock";
 import { getMatch } from "../getMatch";
-import type { SQLMatchContext } from "../registerSuggestions";
+import type { SQLMatchContext } from "../monacoSQLSetup/registerSuggestions";
 import type { KWD } from "../withKWDs";
 import { withKWDs } from "../withKWDs";
 

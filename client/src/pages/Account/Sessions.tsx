@@ -10,26 +10,25 @@ import {
   mdiMicrosoftEdge,
   mdiMicrosoftWindows,
 } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import type { DivProps } from "../../components/Flex";
 import { classOverride, FlexRow } from "../../components/Flex";
+import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
-import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
+import { SmartCardList } from "../../dashboard/SmartCardList/SmartCardList";
 import {
+  getPGIntervalAsText,
   StyledInterval,
-  renderInterval,
 } from "../../dashboard/W_SQL/customRenderers";
-import { Icon } from "../../components/Icon/Icon";
 import { t } from "../../i18n/i18nUtils";
+import type { FieldConfig } from "../../dashboard/SmartCard/SmartCard";
 
-type SessionsProps = Pick<
-  Prgl,
-  "dbs" | "dbsTables" | "user" | "dbsMethods" | "theme"
-> & {
+type SessionsProps = Pick<Prgl, "dbs" | "dbsTables" | "user" | "dbsMethods"> & {
   displayType: "web_session" | "api_token";
   className?: string;
 };
@@ -52,45 +51,28 @@ export const Sessions = ({
   displayType,
   className = "",
   dbsMethods,
-  theme,
 }: SessionsProps) => {
-  if (!user) return null;
-
   const tokenMode = displayType === "api_token";
   const sessionLabel =
     tokenMode ? t.Sessions["API tokens"] : t.Sessions["Sessions"];
 
-  return (
-    <SmartCardList
-      title={tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`}
-      db={dbs as any}
-      theme={theme}
-      methods={dbsMethods}
-      tableName="sessions"
-      tables={dbsTables}
-      filter={getActiveTokensFilter(displayType, user.id) as AnyObject}
-      realtime={true}
-      style={{
+  const listProps = useMemo(
+    () => ({
+      title: tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`,
+      filter: getActiveTokensFilter(displayType, user?.id) as AnyObject,
+      style: {
         maxHeight: "40vh",
-      }}
-      className={"min-h-0 f-1 " + className}
-      noDataComponent={
-        <InfoRow color="info" style={{ alignItems: "center" }}>
-          {t.Sessions["No active "]}
-          {sessionLabel}
-        </InfoRow>
-      }
-      noDataComponentMode="hide-all"
-      orderBy={{
-        id_num: false,
-      }}
-      limit={10}
-      showEdit={false}
-      fieldConfigs={[
+      },
+      orderBy: {
+        key: "id_num",
+        asc: false,
+      },
+      fieldConfigs: [
         { name: "is_connected", hide: true },
         {
           name: "active",
           label: " ",
+          renderMode: "valueNode",
           render: (v) => (
             <StatusDotCircleIcon
               className="my-p5"
@@ -102,6 +84,7 @@ export const Sessions = ({
         {
           name: "user_agent",
           hide: displayType === "api_token",
+          renderMode: "valueNode",
           render: (v, row) => {
             const os = (
               v.match(/Windows|Linux|Mac|Android|iOS/i)?.[0] ?? ""
@@ -164,28 +147,29 @@ export const Sessions = ({
           name: "last_usedd",
           select: { $ageNow: ["last_used", null, "second"] },
           label: t.Sessions["Last used"],
-          renderValue: (value) => <StyledInterval value={value} />,
+          render: (value) => <StyledInterval value={value} />,
         },
         { name: "ip_address", hide: displayType === "api_token" },
         {
           name: "createdd",
           select: { $ageNow: ["created", null, "second"] },
           label: t.Sessions.Created,
-          renderValue: (v) => renderInterval(v, true, true),
+          render: (v) => getPGIntervalAsText(v, true, true),
         },
         {
           name: "expiress",
           select: { $ageNow: ["expires", null, "hour"] },
           label: t.Sessions.Expires,
           hideIf: (_, row) => !row.active,
-          renderValue: (v) => {
-            return renderInterval(v, true, true);
+          render: (v) => {
+            return getPGIntervalAsText(v, true, true);
           },
         },
         {
           name: "id_num",
           label: " ",
           style: { marginLeft: "auto" },
+          renderMode: "valueNode",
           render: (v) =>
             !!v && (
               <Btn
@@ -200,7 +184,30 @@ export const Sessions = ({
               />
             ),
         },
-      ]}
+      ] satisfies FieldConfig[],
+    }),
+    [dbs.sessions, displayType, sessionLabel, tokenMode, user?.id],
+  );
+  if (!user) return null;
+
+  return (
+    <SmartCardList
+      className={"min-h-0 f-1 " + className}
+      db={dbs as DBHandlerClient}
+      methods={dbsMethods}
+      tableName="sessions"
+      tables={dbsTables}
+      realtime={true}
+      showEdit={false}
+      limit={10}
+      noDataComponentMode="hide-all"
+      noDataComponent={
+        <InfoRow color="info" style={{ alignItems: "center" }}>
+          {t.Sessions["No active "]}
+          {sessionLabel}
+        </InfoRow>
+      }
+      {...listProps}
     />
   );
 };
