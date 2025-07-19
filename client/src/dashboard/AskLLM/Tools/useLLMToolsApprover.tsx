@@ -56,20 +56,8 @@ export const useLLMToolsApprover = ({
           return toolUseRequest.name === tool.name;
         });
 
-        // if (!matchedTool) {
-        //   const msg =
-        //     allToolNames.includes(toolUseRequest.name) ?
-        //       "is not allowed for this chat"
-        //     : "was not found";
-        //   addAlert({
-        //     children: (
-        //       <>
-        //         Tool <strong>{toolUseRequest.name}</strong> {msg}
-        //       </>
-        //     ),
-        //   });
-        // }
         if (!matchedTool || matchedTool.auto_approve) {
+          // Handled by the backend
           return;
         }
         return {

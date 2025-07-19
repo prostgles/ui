@@ -45,10 +45,11 @@ export const AutomaticBackups = ({
 }: P) => {
   const [dumpOpts, setDumpOpts] = useState<PGDumpParams>(DEFAULT_DUMP_OPTS);
 
-  const { data: database_config } = dbs.database_configs.useSubscribeOne(
-    { $existsJoined: { connections: { id: connection_id } } },
-    {},
-  );
+  const { data: database_config, isLoading } =
+    dbs.database_configs.useSubscribeOne(
+      { $existsJoined: { connections: { id: connection_id } } },
+      {},
+    );
 
   const setBackupConf = (
     newBackupConfig: Partial<DBSSchema["database_configs"]["backups_config"]>,
@@ -84,6 +85,7 @@ export const AutomaticBackups = ({
           color={noSpaceForAutomaticLocalBackups ? "danger" : "action"}
           className="mr-1"
           data-command="config.bkp.AutomaticBackups"
+          loading={isLoading}
         >
           {bkpConf?.enabled ?
             `Automatic backups: ${bkpConf.frequency}`

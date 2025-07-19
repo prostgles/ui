@@ -8,7 +8,6 @@ const APP_DIR = path.resolve(__dirname, "../src");
 const MONACO_DIR = path.resolve(__dirname, "../node_modules/monaco-editor");
 const { SaveMdiIcons } = require("../setup-icons");
 const PRODUCTION = process.env.NODE_ENV === "production";
-const CircularDependencyPlugin = require("circular-dependency-plugin");
 
 const getLoader = () => {
   const babel = {
@@ -111,7 +110,7 @@ module.exports = {
     ],
   },
   plugins: [
-    // new CircularDependencyPlugin({
+    // new require("circular-dependency-plugin")({
     //   // exclude detection of files based on a RegExp
     //   exclude: /a\.js|node_modules/,
     //   // include specific files based on a RegExp
