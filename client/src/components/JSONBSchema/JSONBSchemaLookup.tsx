@@ -18,6 +18,7 @@ type P = JSONBSchemaCommonProps & {
 
 export const JSONBSchemaLookupMatch = (s: JSONB.JSONBSchema): s is Schema =>
   isObject(s.lookup);
+
 export const JSONBSchemaLookup = ({
   value: rawValue,
   schema,
@@ -48,9 +49,9 @@ export const JSONBSchemaLookup = ({
       (t) => !tableFilter || t.name === tableFilter,
     );
     const delimiter = `||_prgl$_||?!#$@#@$@$#"4$`;
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const needsCol =
       lookup.type === "data-def" ||
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       (lookup.type === "schema" && lookup.object === "column");
     const fullOptions =
       needsCol ?
@@ -80,7 +81,7 @@ export const JSONBSchemaLookup = ({
 
     const selector = (
       <Select
-        label={schema.title}
+        label={oProps.noLabels ? undefined : schema.title}
         value={selectedValue}
         optional={schema.optional}
         fullOptions={fullOptions}
@@ -195,7 +196,7 @@ export const JSONBSchemaLookup = ({
 
   return (
     <SmartSearch
-      label={schema.title}
+      label={oProps.noLabels ? undefined : schema.title}
       // error={paramError?.[argName]}
       // disabledInfo={} // Must disallow changing the fixedRowArgument
       variant="search-no-shadow"

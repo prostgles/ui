@@ -1,24 +1,17 @@
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { isDefined } from "prostgles-types";
-import type {
-  ConnectionStatus,
-  IOStats,
-  PG_STAT_ACTIVITY,
-  ServerStatus,
-} from "../../../commonTypes/utils";
-import { getPidStatsFromProc } from "./getPidStatsFromProc";
-import {
-  IGNORE_QUERY,
-  execPSQLBash,
-  getServerStatus,
-} from "./statusMonitorUtils";
-import { bytesToSize } from "../BackupManager/utils";
+import { getSerialisableError, isDefined } from "prostgles-types";
 import type { DBS } from "..";
 import {
-  getCDB,
-  getSuperUserCDB,
-} from "../ConnectionManager/ConnectionManager";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
+  STATUS_MONITOR_IGNORE_QUERY,
+  type ConnectionStatus,
+  type IOStats,
+  type PG_STAT_DATABASE,
+  type ServerStatus,
+} from "../../../commonTypes/utils";
+import { bytesToSize } from "../BackupManager/utils";
+import { getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
+import { getPidStatsFromProc } from "./getPidStatsFromProc";
+import { execPSQLBash, getServerStatus } from "./statusMonitorUtils";
 
 type PS_ProcInfo = {
   pid: number;
@@ -35,7 +28,7 @@ export type ServerLoadStats = {
 };
 
 const parsePidStats = (
-  procInfo: Record<keyof PS_ProcInfo, any>,
+  procInfo: Record<keyof PS_ProcInfo, string>,
 ): PS_ProcInfo | undefined => {
   const pid = +procInfo.pid;
   const cpu = +procInfo.cpu;
@@ -90,7 +83,7 @@ const ioStatMethods = {
     });
 
     const deviceRows = ioInfo.filter(
-      (r) => r.minorNumber === 0 && !r.deviceName?.startsWith("loop"),
+      (r) => r.minorNumber === 0 && !r.deviceName.startsWith("loop"),
     );
     return deviceRows;
   },
@@ -105,10 +98,22 @@ const pidStatsMethods = {
       : undefined;
     const pidStats: PS_ProcInfo[] = pidRows
       .map((shell) => {
-        const [pid, usr, pr, ni, virt, res, shr, s, cpu, mem, time, cmd = ""] =
-          shell.trim().replace(/  +/g, " ").split(" ");
+        const [
+          pid = "-1",
+          usr,
+          pr,
+          ni,
+          virt,
+          res,
+          shr,
+          s,
+          cpu = "-1",
+          mem = "-1",
+          time,
+          cmd = "",
+        ] = shell.trim().replace(/  +/g, " ").split(" ");
         const mhz =
-          pidStatsWithMhz?.pidStats.find((p) => p.pid! == (pid as any))?.mhz ||
+          pidStatsWithMhz?.pidStats.find((p) => p.pid == (pid as any))?.mhz ||
           "";
         return parsePidStats({ pid, cpu, mem, cmd, mhz });
       })
@@ -122,7 +127,7 @@ const pidStatsMethods = {
     const pidStats: PS_ProcInfo[] = psRes
       .slice(1)
       .map((line) => {
-        const [pid, cpu, mem, psr, ...cmd] = line
+        const [pid = "-1", cpu = "-1", mem = "-1", psr, ...cmd] = line
           .trim()
           .replace(/  +/g, " ")
           .split(" ");
@@ -130,7 +135,7 @@ const pidStatsMethods = {
           pid,
           cpu,
           mem,
-          mhz: freqs[+psr!],
+          mhz: (freqs[+psr!] ?? "-1").toString(),
           cmd: cmd.join(" "),
         });
       })
@@ -185,7 +190,7 @@ const getPidStatsMode = async (
 
   let mode: PidStatMode | undefined;
   const available: PidStatProgs[] = [];
-  for await (const [program, method] of Object.entries(pidStatsMethods) as [
+  for (const [program, method] of Object.entries(pidStatsMethods) as [
     PidStatProgs,
     (typeof pidStatsMethods)[keyof typeof pidStatsMethods],
   ][]) {
@@ -195,7 +200,7 @@ const getPidStatsMode = async (
         mode ??= program;
         available.push(program);
       } else {
-      /** TODO - ensure ps & proc output same values as top for cpu */
+        /** TODO - ensure ps & proc output same values as top for cpu */
         const [which] = await execPSQLBash(db, connId, `which ${program}`);
         if (which) {
           await method(db, connId);
@@ -204,7 +209,7 @@ const getPidStatsMode = async (
         }
       }
     } catch (e) {
-      getPidStatsErrors[program] = getErrorAsObject(e);
+      getPidStatsErrors[program] = getSerialisableError(e);
     }
   }
 
@@ -231,20 +236,31 @@ export const getPidStats = async (
       Promise.resolve({
         mode: "off",
         ioMode: "off",
-        getPidStatsErrors: { proc: getErrorAsObject(error) },
+        getPidStatsErrors: { proc: getSerialisableError(error) },
       } as const),
   );
-  const { mode } = connectionBashStatus[connId] ?? {};
-  if (!mode || mode === "off") return undefined;
+  const { mode } = connectionBashStatus[connId];
+  if (mode === "off") return undefined;
   return pidStatsMethods[mode](db, connId);
 };
 
 export const getStatus = async (connId: string, dbs: DBS) => {
+  const dbConf = await dbs.database_configs.findOne({
+    $existsJoined: { connections: { id: connId } },
+  });
+  if (!dbConf) {
+    throw new Error(`Connection with id ${connId} not found`);
+  }
   const { db: cdb } = await getSuperUserCDB(connId, dbs);
+  const { maxConnections } = await cdb.one<{ maxConnections: number }>(`
+    SELECT setting::numeric as "maxConnections"
+    FROM pg_catalog.pg_settings
+    WHERE name = 'max_connections'
+  `);
   const result: ConnectionStatus = {
-    queries: (await cdb.any(
+    queries: await cdb.any(
       `
-      /* ${IGNORE_QUERY} */
+      /* ${STATUS_MONITOR_IGNORE_QUERY} */
       SELECT 
         datid, datname, pid, usesysid, usename, application_name, client_addr, 
         client_hostname, client_port, backend_start, xact_start, query_start, 
@@ -253,33 +269,27 @@ export const getStatus = async (connId: string, dbs: DBS) => {
         pg_blocking_pids(pid) as blocked_by,
         COALESCE(cardinality(pg_blocking_pids(pid)), 0) blocked_by_num,
         md5(pid || query) as id_query_hash
-      FROM pg_catalog.pg_stat_activity
-      WHERE pid <> pg_backend_pid() -- query NOT ILIKE '%' || \${queryName} || '%'
+      FROM pg_catalog.pg_stat_activity 
     `,
-      { queryName: IGNORE_QUERY },
-    )) as PG_STAT_ACTIVITY[],
+    ),
     blockedQueries: [],
     topQueries: [],
-    getPidStatsErrors: connectionBashStatus[connId]?.getPidStatsErrors,
+    getPidStatsErrors: connectionBashStatus[connId]
+      ?.getPidStatsErrors as Partial<Record<string, any>>,
     noBash: connectionBashStatus[connId]?.mode === "off",
-    connections: (await cdb.any(`
-      /* ${IGNORE_QUERY} */
+    connections: await cdb.any<PG_STAT_DATABASE>(`
+      /* ${STATUS_MONITOR_IGNORE_QUERY} */
       SELECT *
       FROM pg_stat_database
       WHERE numbackends > 0;
-    `)) as any,
-    ...((await cdb.one(`
-      SELECT setting::numeric as "maxConnections"
-      FROM pg_catalog.pg_settings
-      WHERE name = 'max_connections'
-    `)) as any),
+    `),
+    maxConnections,
   };
 
   let procInfo: ServerLoadStats | undefined;
   try {
     procInfo = await getPidStats(cdb, connId);
     result.serverStatus = procInfo?.serverStatus;
-    // result.getPidStatsErrors ??= procInfo?.getPidStatsErrors;
   } catch (err) {
     console.error(err);
   }
@@ -288,32 +298,30 @@ export const getStatus = async (connId: string, dbs: DBS) => {
     procInfo.serverStatus.ioInfo = await ioStatMethods.diskstats(cdb, connId);
   }
 
-  await dbs.tx!(async (tx) => {
-    await tx.stats.delete({ connection_id: connId });
+  const database_id = dbConf.id;
+  const sampled_at = new Date().toISOString();
+  await dbs.tx(async (tx) => {
+    await tx.stats.delete({ database_id });
     await tx.stats.insert(
-      result.queries.map((q) => ({
-        ...q,
-        connection_id: connId,
-      })),
-      { onConflict: "DoNothing" },
-    );
+      result.queries.map((q) => {
+        const pidInfo = procInfo?.pidStats.find((p) => p.pid === q.pid);
 
-    if (!procInfo) return;
-
-    await tx.stats.updateBatch(
-      procInfo.pidStats.map(({ pid, ...otherFields }) => {
-        return [
-          { pid, connection_id: connId },
-          {
-            ...otherFields,
-            memPretty: bytesToSize(
-              (+otherFields.mem / 100) *
-                procInfo!.serverStatus.total_memoryKb *
+        return {
+          ...q,
+          ...pidInfo,
+          sampled_at,
+          memPretty:
+            pidInfo &&
+            procInfo &&
+            bytesToSize(
+              (+pidInfo.mem / 100) *
+                procInfo.serverStatus.total_memoryKb *
                 1024,
             ),
-          },
-        ];
+          database_id,
+        };
       }),
+      { onConflict: "DoNothing" },
     );
   });
 

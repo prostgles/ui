@@ -1,3 +1,4 @@
+import { asName } from "prostgles-client/dist/prostgles";
 import {
   getFinalFilter,
   parseContextVal,
@@ -101,10 +102,10 @@ export const getComparablePGPolicy = async ({
       ].join("\n")
     : "";
 
-  const policyName = JSON.stringify(
+  const policyName = asName(
     `prostgles_${table.name}_${finalAction}_${userTypes.sort().join("_")}`,
   );
-  const tableName = JSON.stringify(table.name);
+  const tableName = asName(table.name);
   let policy = [
     `DROP POLICY IF EXISTS ${policyName} ON ${tableName};`,
     `CREATE POLICY ${policyName}`,
@@ -123,5 +124,5 @@ export const getComparablePGPolicy = async ({
 };
 
 export const getTableEnableRLSStatement = (tableName: string) => {
-  return `ALTER TABLE ${JSON.stringify(tableName)} ENABLE ROW LEVEL SECURITY;`;
+  return `ALTER TABLE ${asName(tableName)} ENABLE ROW LEVEL SECURITY;`;
 };

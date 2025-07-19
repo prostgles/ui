@@ -44,7 +44,6 @@ export const ProgressBar = ({ message, value, totalValue, variant }: P) => {
     ></div>
   );
 
-  // const text = !status.loading?.loaded? "Preparing..." : `Uploaded ${bytesToSize(status.loading.loaded ?? 0)}`;
   return (
     <div className="ProgressBar flex-col gap-p25">
       {progressBar}

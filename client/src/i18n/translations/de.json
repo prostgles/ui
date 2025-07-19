@@ -33,7 +33,11 @@
     "You do not have sufficient privileges to access this": "Du hast nicht die erforderlichen Berechtigungen, um darauf zuzugreifen",
     "Copy to clipboard": "In die Zwischenablage kopieren",
     "Send": "Senden",
-    "experimental": "experimentell"
+    "Toggle fullscreen": "Vollbild umschalten",
+    "experimental": "experimentell",
+    "Stop recording": "Aufnahme stoppen",
+    "Speech to text": "Sprache zu Text",
+    "Record audio": "Audio aufnehmen"
   },
   "App": {
     "Connections": "Verbindungen",
@@ -148,7 +152,7 @@
     "CA Certificate": "CA-Zertifikat",
     "SSL Mode": "SSL-Modus",
     "Connection timeout (ms)": "Verbindungszeitüberschreitung (ms)",
-    "Schema list": "Schemaliste",
+    "Schemas": "Schemaliste",
     "More options": "Weitere Optionen",
     "Must connect to see schemas": "Muss verbunden sein, um Schemas zu sehen",
     "You are about to create a new database": "Du bist dabei, eine neue Datenbank zu erstellen",
@@ -292,10 +296,9 @@
   "AskLLM": {
     "Chat to an AI Assistant to get help with your queries": "Chatte mit einem KI-Assistenten, um Hilfe bei deinen Anfragen zu erhalten",
     "AI assistant not available. Talk to the admin": "KI-Assistent nicht verfügbar. Wende dich an den Administrator",
-    "Ask AI": "KI fragen"
+    "AI Assistant": "KI fragen"
   },
   "AskLLMChatHeader": {
-    "Ask AI Assistant": "KI-Assistent fragen",
     "Chat": "Chat",
     "New chat": "Neuer Chat",
     "No prompt found": "Keine Eingabeaufforderung gefunden",
@@ -427,7 +430,7 @@
     "CA Certificate": "CA-Zertifikat",
     "SSL Mode": "SSL-Modus",
     "Connection timeout (ms)": "Verbindungszeitüberschreitung (ms)",
-    "Schema list": "Schemaliste",
+    "Schemas": "Schemaliste",
     "More options": "Weitere Optionen",
     "Must connect to see schemas": "Muss verbunden sein, um Schemas zu sehen",
     "You are about to create a new database": "Sie sind dabei, eine neue Datenbank zu erstellen",

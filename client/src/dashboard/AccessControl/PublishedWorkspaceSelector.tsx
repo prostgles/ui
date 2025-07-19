@@ -1,21 +1,20 @@
 import { mdiViewQuilt } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import React from "react";
+import React, { useEffect } from "react";
+import { FlexCol } from "../../components/Flex";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { isDefined } from "../../utils";
-import { useIsMounted } from "../Backup/CredentialSelector";
+import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
 import type { DBS } from "../Dashboard/DBS";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type {
   DBSchemaTablesWJoins,
   WindowData,
 } from "../Dashboard/dashboardUtils";
-import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
 import type { DeepPartial } from "../RTComp";
 import { SmartSelect } from "../SmartSelect";
 import type { AccessRule } from "./AccessControl";
 import { SectionHeader } from "./AccessControlRuleEditor";
-import { FlexCol } from "../../components/Flex";
 
 type P = Pick<CommonWindowProps, "prgl"> & {
   dbsPermissions: DeepPartial<AccessRule["dbsPermissions"]>;
@@ -46,45 +45,47 @@ export const PublishedWorkspaceSelector = ({
   );
   const getIsMounted = useIsMounted();
 
-  useEffectAsync(async () => {
-    let wspErrors: string | undefined = undefined;
-    const workspaceIds =
-      dbsPermissions?.viewPublishedWorkspaces?.workspaceIds ?? [];
-    if (workspaceIds.length) {
-      const wsps = await dbs.workspaces.find({ "id.$in": workspaceIds });
-      if (!getIsMounted()) return;
-      const missingWorkspaceIds = workspaceIds.filter(
-        (wid) => !wsps.some((w) => w.id === wid),
-      );
-      if (missingWorkspaceIds.length) {
-        onSetError(
-          `${missingWorkspaceIds.length} Published workspaces not found: \n  ${missingWorkspaceIds.join("\n ")}`,
+  useEffect(() => {
+    (async () => {
+      let wspErrors: string | undefined = undefined;
+      const workspaceIds =
+        dbsPermissions?.viewPublishedWorkspaces?.workspaceIds ?? [];
+      if (workspaceIds.length) {
+        const wsps = await dbs.workspaces.find({ "id.$in": workspaceIds });
+        if (!getIsMounted()) return;
+        const missingWorkspaceIds = workspaceIds.filter(
+          (wid) => !wsps.some((w) => w.id === wid),
         );
-        return;
+        if (missingWorkspaceIds.length) {
+          onSetError(
+            `${missingWorkspaceIds.length} Published workspaces not found: \n  ${missingWorkspaceIds.join("\n ")}`,
+          );
+          return;
+        }
+        const { msg } = await getWorkspaceTables(
+          dbs,
+          workspaceIds,
+          dbPermissions,
+          tables,
+        );
+        if (!getIsMounted()) return;
+        if (msg) {
+          wspErrors = msg;
+        }
       }
-      const { msg } = await getWorkspaceTables(
-        dbs,
-        workspaceIds,
-        dbPermissions,
-        tables,
-      );
-      if (!getIsMounted()) return;
-      if (msg) {
-        wspErrors = msg;
+
+      if (
+        !wspErrors &&
+        !dbsPermissions?.createWorkspaces &&
+        !dbsPermissions?.viewPublishedWorkspaces?.workspaceIds?.length
+      ) {
+        wspErrors =
+          "Must allow 'Create workspaces' or select at least one workspace within 'Access published workspaces' ";
       }
-    }
 
-    if (
-      !wspErrors &&
-      !dbsPermissions?.createWorkspaces &&
-      !dbsPermissions?.viewPublishedWorkspaces?.workspaceIds?.length
-    ) {
-      wspErrors =
-        "Must allow 'Create workspaces' or select at least one workspace within 'Access published workspaces' ";
-    }
-
-    onSetError(wspErrors);
-  }, [dbPermissions, dbsPermissions]);
+      onSetError(wspErrors);
+    })();
+  }, [dbPermissions, dbs, dbsPermissions, getIsMounted, onSetError, tables]);
 
   /**
    * A user must be allowed to:

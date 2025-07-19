@@ -22,26 +22,35 @@ import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/Synced
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import type { ColumnConfig, ColumnSort } from "./ColumnMenu/ColumnMenu";
+import type {
+  ColumnConfig,
+  ColumnSort,
+  ColumnSortSQL,
+} from "./ColumnMenu/ColumnMenu";
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
+import { isDefined, isEqual, pickKeys } from "prostgles-types";
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
 import { matchObj } from "../../../../commonTypes/utils";
+import type { Command } from "../../Testing";
 import { createReactiveState } from "../../appUtils";
+import { ClickCatchOverlayZIndex } from "../../components/ClickCatchOverlay";
 import { Icon } from "../../components/Icon/Icon";
 import type { PaginationProps } from "../../components/Table/Pagination";
-import { isDefined, pickKeys } from "prostgles-types";
+import { t } from "../../i18n/i18nUtils";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import Window from "../Window";
-import { CardView } from "./CardView";
+import { CardView } from "./CardView/CardView";
 import { NodeCountChecker } from "./NodeCountChecker";
 import type { RowPanelProps } from "./RowCard";
 import { RowCard } from "./RowCard";
 import { W_TableMenu } from "./TableMenu/W_TableMenu";
+import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
 import { TooManyColumnsWarning } from "./TooManyColumnsWarning";
+import { W_Table_Content } from "./W_Table_Content";
 import { getTableData } from "./getTableData";
 import type {
   OnClickEditRow,
@@ -56,18 +65,13 @@ import {
   getSortColumn,
   updateWCols,
 } from "./tableUtils/tableUtils";
-import { W_Table_Content } from "./W_Table_Content";
-import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
-import { isEqual } from "prostgles-types";
-import type { Command } from "../../Testing";
-import { t } from "../../i18n/i18nUtils";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
   childWindow: React.ReactNode | undefined;
   onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => any | void;
-  onClickRow?: TableProps["onRowClick"];
+  onClickRow?: TableProps<ColumnSort>["onRowClick"];
   filter?: any;
   joinFilter?: AnyObject;
   externalFilters: AnyObject[];
@@ -121,8 +125,8 @@ export type ProstglesColumn = TableColumn & { computed?: boolean } & Pick<
 export type W_TableState = {
   rowCount: number;
   rowsLoaded: number;
-  table?: (TableProps & Query) | any;
-  sort?: ColumnSort[];
+  table?: (TableProps<ColumnSort> & Query) | any;
+  sort?: ColumnSortSQL[];
   loading: boolean;
 
   rows?: AnyObject[];
@@ -147,7 +151,7 @@ export type W_TableState = {
         fixedUpdateData?: AnyObject;
       };
   rowDelta?: any;
-  onRowClick?: TableProps["onRowClick"];
+  onRowClick?: TableProps<ColumnSort>["onRowClick"];
 
   filterPopup?: boolean;
 
@@ -184,7 +188,6 @@ export default class W_Table extends RTComp<
   ref?: HTMLElement;
   refRowCount?: HTMLElement;
 
-  rowPanelData: any;
   state: W_TableState = {
     barchartVals: {},
     rowsLoaded: 0,
@@ -204,7 +207,7 @@ export default class W_Table extends RTComp<
     joinFilterStr: undefined,
   };
   d: ProstglesTableD = {
-    page: 1,
+    page: 0,
     pageSize:
       closest(Math.round((1.2 * window.innerHeight) / 55) || 25, PAGE_SIZES) ??
       25,
@@ -350,7 +353,7 @@ export default class W_Table extends RTComp<
         (key) => delta.w?.options && key in delta.w.options,
       )
     ) {
-      ns = ns || ({} as any);
+      ns = ns || {};
     }
 
     /** This is done to prevent errors due to renamed/altered columns */
@@ -371,8 +374,8 @@ export default class W_Table extends RTComp<
     }
 
     /** This is done to prevent empty result due to page offset */
-    if ((delta.w?.filter || delta.w?.having) && this.d.page !== 1) {
-      this.setData({ page: 1 });
+    if ((delta.w?.filter || delta.w?.having) && this.d.page !== 0) {
+      this.setData({ page: 0 });
     }
 
     /** Trigger count on hideCount toggle */
@@ -406,7 +409,7 @@ export default class W_Table extends RTComp<
         (changedOpts.length &&
           rerenderOPTS.some((k) => changedOpts.includes(k))))
     ) {
-      ns ??= {} as any;
+      ns ??= {};
     }
 
     if (ns) {
@@ -445,7 +448,7 @@ export default class W_Table extends RTComp<
     const { pageSize, page } = this.d;
     return {
       limit: pageSize,
-      offset: this.props.joinFilter ? 0 : (page - 1) * pageSize,
+      offset: this.props.joinFilter ? 0 : page * pageSize,
     };
   }
 
@@ -528,15 +531,7 @@ export default class W_Table extends RTComp<
     );
 
     const { w } = this.d;
-    if (!w) {
-      if (
-        this.props.w.table_name &&
-        !this.props.prgl.db[this.props.w.table_name]
-      ) {
-        return showTableNotFound(this.props.w.table_name);
-      }
-      return null;
-    }
+    const tableName = w?.table_name ?? this.props.w.table_name;
     const {
       setLinkMenu,
       joinFilter,
@@ -547,6 +542,13 @@ export default class W_Table extends RTComp<
       childWindow,
     } = this.props;
     const { tables, db, dbs } = prgl;
+    const tableHandler = db[tableName];
+    if (!w) {
+      if (tableName && !tableHandler) {
+        return showTableNotFound(tableName);
+      }
+      return null;
+    }
     const activeRowStyle: React.CSSProperties =
       this.activeRowStr === JSON.stringify(joinFilter || {}) ?
         { background: activeRowColor }
@@ -583,9 +585,9 @@ export default class W_Table extends RTComp<
     const cardOpts =
       w.options.viewAs?.type === "card" ? w.options.viewAs : undefined;
     let content: React.ReactNode = null;
-    if (w.table_name && !db[w.table_name]) {
-      content = showTableNotFound(w.table_name);
-    } else if (loading || (w.table_name && !db[w.table_name])) {
+    if (tableName && !tableHandler) {
+      content = showTableNotFound(tableName);
+    } else if (loading || (tableName && !tableHandler)) {
       content = FirstLoadCover;
     } else {
       if (!rows) {
@@ -603,8 +605,6 @@ export default class W_Table extends RTComp<
         columnMenuState: this.columnMenuState,
       });
 
-      const { table_name: tableName } = w;
-
       let activeRowIndex = -1;
       if (activeRow?.row_filter) {
         activeRowIndex = rows.findIndex((r) =>
@@ -612,7 +612,6 @@ export default class W_Table extends RTComp<
         );
       }
 
-      const tableHandler = db[tableName];
       const canInsert = Boolean(tableHandler?.insert);
       const pkeys = cols
         .map((c) => (c.show && c.info?.is_pkey ? c.info.name : undefined))
@@ -635,9 +634,11 @@ export default class W_Table extends RTComp<
               suggestions={this.props.suggestions}
               w={w}
             />
-            {cols.length > 50 && !this.state.tooManyColumnsWarningWasShown && (
+            {!this.state.tooManyColumnsWarningWasShown && (
               <TooManyColumnsWarning
                 w={w}
+                numberOfCols={cols.length}
+                numberOfRows={rows.length}
                 onHide={() => {
                   this.setState({ tooManyColumnsWarningWasShown: true });
                 }}
@@ -692,6 +693,8 @@ export default class W_Table extends RTComp<
                   state={this.state}
                   props={this.props}
                   w={this.d.w}
+                  cardOpts={cardOpts}
+                  tableHandler={tableHandler!}
                   paginationProps={{ ...this.getPaginationProps() }}
                   onEditClickRow={this.onClickEditRow}
                   onDataChanged={() => {
@@ -742,7 +745,7 @@ export default class W_Table extends RTComp<
                       <Btn
                         iconPath={mdiPlus}
                         data-command="dashboard.window.rowInsert"
-                        data-key={w.table_name}
+                        data-key={tableName}
                         title={t.W_Table["Insert row"]}
                         className="shadow w-fit h-fit mt-1"
                         color="action"
@@ -751,7 +754,8 @@ export default class W_Table extends RTComp<
                           position: "sticky",
                           left: "15px",
                           bottom: "15px",
-                          zIndex: 1,
+                          /** Below the filter search clickcatch */
+                          zIndex: ClickCatchOverlayZIndex - 1,
                         }}
                         onClick={async () => {
                           this.rowPanelRState.set({ type: "insert" });

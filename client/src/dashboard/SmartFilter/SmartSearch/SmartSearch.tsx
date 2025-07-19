@@ -10,7 +10,7 @@ import type {
   SearchListItem,
   SearchListProps,
 } from "../../../components/SearchList/SearchList";
-import SearchList from "../../../components/SearchList/SearchList";
+import { SearchList } from "../../../components/SearchList/SearchList";
 import type { DashboardState } from "../../Dashboard/Dashboard";
 import RTComp from "../../RTComp";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
@@ -201,18 +201,7 @@ export class SmartSearch extends RTComp<P, S> {
         matchCase={
           this.props.searchOptions?.hideMatchCase ? { hide: true } : undefined
         }
-        onNoResultsContent={
-          noResultsComponent ? () => noResultsComponent : undefined
-        }
-        // onPressEnter={onPressEnter || ((term) => {
-
-        //   let result: SmartGroupFilter = [{
-        //     fieldName: "*",
-        //     type: "$term_highlight",
-        //     value: term
-        //   }];
-        //   this.props.onChange(result, { columnValue: term, term });
-        // })}
+        noResultsContent={noResultsComponent}
       />
     );
 

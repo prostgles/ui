@@ -36,6 +36,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
     headerButtons,
     ...codeEditorProps
   } = props;
+  const isReadonly = !onSave && !autoSave;
   const localValueRef = useRef<string | null | undefined>(value);
   const propsValueRef = useRef<string | null | undefined>(value);
   propsValueRef.current = value;
@@ -49,7 +50,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
     ) {
       localValueRef.current = value;
     }
-  }, [value]);
+  }, [value, isReadonly]);
 
   const [didChange, setDidChange] = React.useState(false);
 
@@ -58,6 +59,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
     try {
       await onSave(localValueRef.current ?? "");
       setError(undefined);
+      setDidChange(false);
     } catch (err) {
       setError(err);
     }
@@ -65,20 +67,23 @@ export const CodeEditorWithSaveButton = (props: P) => {
 
   const onClickSave = !onSave || autoSave ? undefined : onSaveMonaco;
 
-  const titleNode = (
-    <FlexRow className={fullScreen ? "" : "bg-color-1"} style={{ zIndex: 1 }}>
-      <Label className=" px-p25 f-1 " variant="normal">
-        {label}
-      </Label>
-      <FlexRow className="gap-0">
-        {headerButtons}
-        <Btn
-          iconPath={mdiFullscreen}
-          onClick={() => setFullScreen(!fullScreen)}
-        />
-      </FlexRow>
-    </FlexRow>
-  );
+  const titleNode =
+    !label && !headerButtons ?
+      null
+    : <FlexRow className={fullScreen ? "" : "bg-color-1"}>
+        {
+          <Label className=" px-p25 f-1 " variant="normal">
+            {label}
+          </Label>
+        }
+        <FlexRow className="gap-0">
+          {headerButtons}
+          <Btn
+            iconPath={mdiFullscreen}
+            onClick={() => setFullScreen(!fullScreen)}
+          />
+        </FlexRow>
+      </FlexRow>;
 
   const footerNode = didChange && onClickSave && (
     <FooterButtons
@@ -91,13 +96,15 @@ export const CodeEditorWithSaveButton = (props: P) => {
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 122222,
+        /** Must appear above minimap but beneath completion suggestions */
+        zIndex: 5,
         background: "#dfdfdf5c",
         backdropFilter: "blur(1px)",
       }}
       footerButtons={[
         {
           label: "Cancel",
+          className: "mr-auto",
           onClick: () => {
             localValueRef.current = value;
             setDidChange(false);
@@ -146,16 +153,22 @@ export const CodeEditorWithSaveButton = (props: P) => {
           "relative f-1 gap-0 ",
           `${fullScreen ? "min-h-0" : ""}`,
         )}
+        style={
+          codePlaceholder && !value && !localValueRef.current ?
+            {
+              opacity: 0.5,
+            }
+          : {}
+        }
       >
         <CodeEditor
           className={codeEditorClassName}
-          // style={{
-          //   minHeight: "300px",
-          //   // ...(!localValue ? { opacity: 0.7 } : {}),
-          // }}
           {...codeEditorProps}
-          // value={localValue || (codePlaceholder ?? "")}
-          value={localValueRef.current || value || (codePlaceholder ?? "")}
+          value={
+            (isReadonly ? value : localValueRef.current) ||
+            value ||
+            (codePlaceholder ?? "")
+          }
           onChange={onChange}
           onSave={onClickSave}
         />

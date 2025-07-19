@@ -8,12 +8,14 @@ import React from "react";
 import Btn from "../Btn";
 import { FlexCol, FlexRow } from "../Flex";
 import { POPUP_CLASSES, type PopupProps } from "./Popup";
+import { t } from "../../i18n/i18nUtils";
 
 type PopupHeaderProps = PopupProps & {
   collapsed: boolean;
   fullScreen: boolean | undefined;
   onToggleFullscreen: VoidFunction;
   toggleContent: VoidFunction;
+  rootDiv: HTMLDivElement | undefined;
 };
 export const PopupHeader = ({
   subTitle,
@@ -27,6 +29,7 @@ export const PopupHeader = ({
   collapsed,
   fullScreen,
   toggleContent,
+  rootDiv,
 }: PopupHeaderProps) => {
   const showTitle = !!title;
   if (title && !onClose) {
@@ -35,10 +38,12 @@ export const PopupHeader = ({
     );
   }
   if (!showTitle) return null;
-
+  const titleContent =
+    typeof title === "function" ? rootDiv && title(rootDiv) : title;
   return (
     <header
-      className={`${POPUP_CLASSES.title} ${positioning === "right-panel" ? "ml-2" : "pl-1"} py-p5 pr-p5 flex-row ai-center bb b-color gap-1`}
+      className={`${POPUP_CLASSES.title} ${positioning === "right-panel" ? "pl-2" : "pl-1"} py-p5 pr-p5 flex-row ai-center bb b-color gap-1`}
+      data-command="Popup.header"
     >
       {collapsible && (
         <Btn
@@ -48,6 +53,7 @@ export const PopupHeader = ({
             !collapsed ? mdiUnfoldLessHorizontal : mdiUnfoldMoreHorizontal
           }
           title="Collapse/Expand content"
+          variant="icon"
         />
       )}
       <FlexCol
@@ -61,11 +67,12 @@ export const PopupHeader = ({
         <h4
           className="m-0"
           style={{
+            justifyItems: "start",
             ...(collapsible ? { paddingLeft: 0 } : {}),
           }}
           title={typeof title === "string" ? title : undefined}
         >
-          {title}
+          {titleContent}
         </h4>
         {subTitle && (
           <h6
@@ -79,21 +86,27 @@ export const PopupHeader = ({
       </FlexCol>
       <FlexRow className="Popup-header-actions gap-0">
         {headerRightContent}
+
         {showFullscreenToggle && (
           <Btn
             className="f-0"
+            variant="icon"
             iconPath={mdiFullscreen}
             color={fullScreen ? "action" : undefined}
             onClick={onToggleFullscreen}
+            title={t.common["Toggle fullscreen"]}
+            data-command="Popup.toggleFullscreen"
           />
         )}
         <Btn
           data-command="Popup.close"
+          variant="icon"
           data-close-popup={true}
           className="f-0"
           style={{ margin: "1px" }}
           iconPath={mdiClose}
           onClick={onClose}
+          title={t.common.Close}
         />
       </FlexRow>
     </header>

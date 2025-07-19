@@ -1,9 +1,10 @@
 import React from "react";
 import type { BtnProps } from "./Btn";
 import Btn from "./Btn";
-import type { MenuListitem } from "./MenuList";
+import type { MenuListitem } from "./MenuListItem";
 import { MenuList } from "./MenuList";
 import PopupMenu from "./PopupMenu";
+import type { Command, TestSelectors } from "../Testing";
 
 type PopupMenuListProps = (
   | { btnProps: BtnProps<void> }
@@ -11,6 +12,7 @@ type PopupMenuListProps = (
 ) & {
   items: MenuListitem[];
   listStyle?: React.CSSProperties;
+  "data-command": Command;
 };
 export const PopupMenuList = (props: PopupMenuListProps) => {
   const theButton =

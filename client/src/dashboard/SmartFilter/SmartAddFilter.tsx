@@ -12,10 +12,10 @@ import type {
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import Popup from "../../components/Popup/Popup";
-import SearchList from "../../components/SearchList/SearchList";
+import { SearchList } from "../../components/SearchList/SearchList";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { JoinV2 } from "../Dashboard/dashboardUtils";
-import { getColumnDataColor } from "../SmartForm/SmartFormField/SmartFormField";
+import { getColumnDataColor } from "../SmartForm/SmartFormField/RenderValue";
 import { AddJoinFilter } from "./AddJoinFilter";
 import { getFilterableCols } from "./SmartSearch/SmartSearch";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
@@ -26,6 +26,7 @@ import { FlexRow } from "../../components/Flex";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { getJoinPathLabel } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getDefaultAgeFilter } from "./AgeFilter";
+import { includes } from "prostgles-types";
 
 export type SmartAddFilterProps = {
   db: DBHandlerClient;
@@ -172,18 +173,17 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
 
       const type =
         isGeo ? "$ST_DWithin"
-        : _PG_numbers.includes(c.udt_name as any) && !c.is_pkey ? "$between"
+        : includes(_PG_numbers, c.udt_name) && !c.is_pkey ? "$between"
         : (defaultType ??
           (joinPath ? "not null"
           : isCategorical(c) ? "$in"
           : "$between"));
       const innerFilter: SimpleFilter =
-        _PG_date.includes(c.udt_name as any) ?
+        includes(_PG_date, c.udt_name) ?
           getDefaultAgeFilter(fieldName, "$ageNow")
         : {
             fieldName,
             type,
-            value: [],
             disabled: true,
             complexFilter:
               c.computedConfig ?

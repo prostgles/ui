@@ -7,8 +7,9 @@ import { Label } from "./Label";
 import type { FullOption } from "./Select/Select";
 import Select from "./Select/Select";
 import { pickKeys } from "prostgles-types";
+import type { TestSelectors } from "../Testing";
 
-type P<Option extends string = never> = {
+type P<Option extends string = never> = TestSelectors & {
   onChange: (val: Option, e: any) => void;
   value?: Option;
   style?: object;
@@ -18,13 +19,15 @@ type P<Option extends string = never> = {
   size?: "small";
   label?: string | LabelProps;
 } & (
-  | {
-      options: readonly Option[];
-    }
-  | {
-      fullOptions: readonly FullOption<Option>[];
-    }
-);
+    | {
+        options: readonly Option[];
+        fullOptions?: never;
+      }
+    | {
+        options?: never;
+        fullOptions: readonly FullOption<Option>[];
+      }
+  );
 
 export default class ButtonGroup<Option extends string> extends React.Component<
   P<Option>,
@@ -40,13 +43,14 @@ export default class ButtonGroup<Option extends string> extends React.Component<
       size,
       variant,
       label,
+      fullOptions: _fullOptions,
+      options: _options,
+      ...testSelectors
     } = this.props;
     const br = ".375rem";
 
     const fullOptions: readonly FullOption[] =
-      "fullOptions" in this.props ?
-        this.props.fullOptions
-      : this.props.options.map((key) => ({ key, label: key }));
+      _fullOptions ?? _options.map((key) => ({ key, label: key }));
     const getStyle = (i: number, isActive = false) => {
       const nb: React.CSSProperties = {
         borderTopLeftRadius: 0,
@@ -79,6 +83,7 @@ export default class ButtonGroup<Option extends string> extends React.Component<
     if (variant === "select") {
       return (
         <Select
+          {...testSelectors}
           btnProps={{ color: "default", variant: "faded" }}
           className="shadow"
           fullOptions={fullOptions}
@@ -112,7 +117,11 @@ export default class ButtonGroup<Option extends string> extends React.Component<
     );
 
     return (
-      <FlexCol style={{ gap: ".5em", ...style }} className={className}>
+      <FlexCol
+        {...testSelectors}
+        style={{ gap: ".5em", ...style }}
+        className={className}
+      >
         {label !== undefined && (
           <Label
             label={typeof label === "string" ? label : undefined}

@@ -33,7 +33,11 @@
     "You do not have sufficient privileges to access this": "No tienes suficientes privilegios para acceder a esto",
     "Copy to clipboard": "Copiar al portapapeles",
     "Send": "Enviar",
-    "experimental": "experimental"
+    "Toggle fullscreen": "Alternar pantalla completa",
+    "experimental": "experimental",
+    "Stop recording": "Detener grabación",
+    "Speech to text": "Conversión de voz a texto",
+    "Record audio": "Grabar audio"
   },
   "App": {
     "Connections": "Conexiones",
@@ -152,7 +156,7 @@
     "CA Certificate": "Certificado CA",
     "SSL Mode": "Modo SSL",
     "Connection timeout (ms)": "Tiempo de espera de conexión (ms)",
-    "Schema list": "Lista de esquemas",
+    "Schemas": "Lista de esquemas",
     "More options": "Más opciones",
     "Must connect to see schemas": "Debes conectarte para ver los esquemas",
     "You are about to create a new database": "Estás a punto de crear una nueva base de datos",
@@ -297,10 +301,9 @@
   "AskLLM": {
     "Chat to an AI Assistant to get help with your queries": "Chatea con un asistente de IA para obtener ayuda con tus consultas",
     "AI assistant not available. Talk to the admin": "Asistente de IA no disponible. Habla con el administrador",
-    "Ask AI": "Preguntar a la IA"
+    "AI Assistant": "Preguntar a la IA"
   },
   "AskLLMChatHeader": {
-    "Ask AI Assistant": "Preguntar al asistente de IA",
     "Chat": "Chat",
     "New chat": "Nuevo chat",
     "No prompt found": "No se encontró ningún prompt",

@@ -23,7 +23,7 @@ export type ConnectionTableConfig =
 export const FileTableConfigControls = ({
   prgl,
 }: FileTableConfigControlsProps) => {
-  const { tables, db, dbs, dbsTables, dbsMethods, connectionId, theme } = prgl;
+  const { tables, db, dbs, dbsTables, dbsMethods } = prgl;
   const {
     connection,
     database_config,
@@ -48,7 +48,6 @@ export const FileTableConfigControls = ({
         dbs={dbs}
         dbsTables={dbsTables}
         dbProject={db}
-        theme={theme}
       />
 
       <FileStorageReferencedTablesConfig

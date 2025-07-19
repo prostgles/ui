@@ -1,5 +1,4 @@
-import { omitKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
-import { asName } from "prostgles-types";
+import { asName, omitKeys } from "prostgles-types";
 import type { Readable } from "stream";
 import { throttle } from "../../../commonTypes/utils";
 import type BackupManager from "./BackupManager";
@@ -27,7 +26,7 @@ export async function pgRestore(
   const setError = async (err: any) => {
     const currBkp = await this.dbs.backups.findOne({ id: bkpId });
     if (currBkp) {
-      this.dbs.backups.update(
+      void this.dbs.backups.update(
         { id: bkpId },
         {
           restore_status: {
@@ -45,7 +44,7 @@ export async function pgRestore(
     try {
       await this.dbs.sql(`CREATE DATABASE ${asName(o.newDbName)}`);
     } catch (err) {
-      setError(err);
+      void setError(err);
     }
   }
 
@@ -117,7 +116,7 @@ export async function pgRestore(
         bkpStream.emit("error", "Backup file not found");
       } else {
         const finished = chunkSum >= +(bkp.sizeInBytes ?? bkp.dbSizeInBytes);
-        this.dbs.backups.update(
+        void this.dbs.backups.update(
           { id: bkpId },
           {
             restore_status:
@@ -140,7 +139,7 @@ export async function pgRestore(
         if (finished) {
           const dummyViewToReloadSchema =
             "prostgles_dummy_view_to_reload_schema";
-          this.connMgr
+          void this.connMgr
             .getConnection(con.id)
             .prgl._db.any(
               `
@@ -148,7 +147,7 @@ export async function pgRestore(
           `,
             )
             .then(() => {
-              this.connMgr.getConnection(con.id).prgl._db.any(`
+              void this.connMgr.getConnection(con.id).prgl._db.any(`
               DROP VIEW ${dummyViewToReloadSchema};
             `);
             });
@@ -156,7 +155,7 @@ export async function pgRestore(
       }
     }, 1000);
 
-    bkpStream.on("data", async (chunk) => {
+    bkpStream.on("data", (chunk) => {
       chunkSum += chunk.length;
       // console.log(chunk.toString(), { chunk })
       throttledUpdate();
@@ -171,9 +170,9 @@ export async function pgRestore(
         if (err) {
           console.error("pipeToCommand ERR:", err);
           bkpStream.destroy();
-          setError(err);
+          void setError(err);
         } else {
-          this.dbs.backups.update(
+          void this.dbs.backups.update(
             { id: bkpId },
             {
               restore_end: new Date(),
@@ -200,15 +199,14 @@ export async function pgRestore(
             currBkp.restore_logs,
             currBkp.restore_start as any,
           );
-          this.dbs.backups.update(
+          void this.dbs.backups.update(
             { id: bkpId },
             { restore_end: new Date(), restore_logs, last_updated: new Date() },
           );
         }
       },
-      false,
     );
   } catch (err) {
-    setError(err);
+    void setError(err);
   }
 }

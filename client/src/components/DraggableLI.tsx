@@ -50,7 +50,9 @@ export const DraggableLI = <T extends any[]>({
             const p = elem.parentElement as ListParent;
             // Lock parent size to prevent jitter
 
-            if (!p) throw "Not possible";
+            if (!p) {
+              throw "Not possible 54";
+            }
 
             p._initialSize ??= {
               width: p.style.width,
@@ -132,10 +134,14 @@ export const DraggableLI = <T extends any[]>({
             const elem = e.currentTarget;
             const p = elem.parentElement as ListParent;
 
-            if (!p) throw "Not possible";
+            if (!p) {
+              throw "Not possible 138";
+            }
 
             const tIdx = p._targetIdx;
-            if (typeof p._targetIdx !== "number") throw "Not possible";
+            if (typeof p._targetIdx !== "number") {
+              throw "Not possible 143";
+            }
             const res = items.slice(0) as typeof items;
 
             const moveItem = (from, to) => {
@@ -159,7 +165,9 @@ export const DraggableLI = <T extends any[]>({
               elem.style.display = "flex";
               // elem.style.opacity = "1";
 
-              if (!p._initialSize) throw "Not possible";
+              if (!p._initialSize) {
+                throw "Not possible 169";
+              }
               p.style.width = p._initialSize.width;
               p.style.height = p._initialSize.height;
               p._initialSize = undefined;

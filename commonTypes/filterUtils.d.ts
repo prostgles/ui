@@ -1,4 +1,5 @@
 import { ContextDataObject, ContextValue } from "./publishUtils";
+type AnyObject = Record<string, any>;
 export declare const isDefined: <T>(v: void | T | undefined) => v is T;
 export declare const CORE_FILTER_TYPES: readonly [{
     readonly key: "=";
@@ -133,6 +134,11 @@ type GetFinalFilterOpts = {
     columns?: string[];
 };
 export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: ContextDataObject, opts?: GetFinalFilterOpts) => Record<string, any> | undefined;
+export declare const simplifyFilter: (f: AnyObject | undefined) => AnyObject | undefined;
+export declare const getSmartGroupFilter: (detailedFilter?: SmartGroupFilter, extraFilters?: {
+    detailed?: SmartGroupFilter;
+    filters?: AnyObject[];
+}, operand?: "and" | "or") => AnyObject;
 export type GroupedDetailedFilter = {
     $and: (SimpleFilter | GroupedDetailedFilter)[];
 } | {

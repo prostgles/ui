@@ -1,6 +1,6 @@
 import { isObject } from "../../../../../commonTypes/publishUtils";
 import { withKWDs } from "./withKWDs";
-import { getKind, type SQLMatcher } from "./registerSuggestions";
+import { getKind, type SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
 import { getParentFunction } from "./MatchSelect";
 import { getExpected } from "./getExpected";
 import { suggestSnippets } from "./CommonMatchImports";

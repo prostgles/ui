@@ -268,7 +268,7 @@ export class LinkMenu extends RTComp<P, S> {
       )
       .map((w) => w.table_name!);
     const canJoin = tables.some(
-      (t) => t.name === w.table_name && t.joins.length,
+      (t) => t.name === w.table_name && t.joinsV2.length,
     );
 
     return (

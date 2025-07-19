@@ -1,14 +1,16 @@
-import React from "react";
-import type { W_SQLProps, W_SQLState } from "./W_SQL";
-import { CSVRender } from "./CSVRender";
-import { CodeEditor } from "../CodeEditor/CodeEditor";
-import { Table } from "../../components/Table/Table";
-import type { WindowData } from "../Dashboard/dashboardUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { onRenderColumn } from "../W_Table/tableUtils/onRenderColumn";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import React, { useMemo, useState } from "react";
+import type { PaginationProps } from "../../components/Table/Pagination";
+import { Table } from "../../components/Table/Table";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
+import type { WindowData } from "../Dashboard/dashboardUtils";
+import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
+import { TooManyColumnsWarning } from "../W_Table/TooManyColumnsWarning";
+import { CSVRender } from "./CSVRender";
+import { getSQLResultTableColumns } from "./getSQLResultTableColumns";
+import type { W_SQLProps, W_SQLState } from "./W_SQL";
 
-type W_SQLResultsProps = Pick<
+export type W_SQLResultsProps = Pick<
   W_SQLState,
   | "sqlResult"
   | "rows"
@@ -24,9 +26,9 @@ type W_SQLResultsProps = Pick<
   Pick<W_SQLProps, "childWindow" | "tables"> & {
     w: SyncDataItem<Required<WindowData<"sql">>, true>;
     onResize: (newCols: W_SQLState["cols"]) => void;
-    onSort: (newSort: ColumnSort[]) => any;
-    onPageChange: (newPage: number) => any;
-    onPageSizeChange: (newPageSize: W_SQLState["pageSize"]) => any;
+    onSort: (newSort: ColumnSortSQL[]) => void;
+    onPageChange: (newPage: number) => void;
+    onPageSizeChange: (newPageSize: W_SQLState["pageSize"]) => void;
   };
 
 export const W_SQLResults = (props: W_SQLResultsProps) => {
@@ -50,6 +52,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     onPageSizeChange,
   } = props;
   const o: WindowData<"sql">["options"] = w.options;
+  const { renderMode = "table", maxCharsPerCell } = w.sql_options;
   const {
     commandResult = undefined,
     rowCount = undefined,
@@ -60,10 +63,32 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     ((o.hideTable && !notices && !notifEventSub) ||
       (!rows.length && !sqlResult && activeQuery?.state !== "running"));
 
-  if (activeQuery?.state === "running" && !rows.length) {
-    return null;
-  }
-  const { renderMode = "table", maxCharsPerCell } = w.sql_options;
+  const isExplainResult = (info?.command || "").toLowerCase() === "explain";
+  const [tooManyColumnsWarningWasShown, setTooManyColumnsWarningWasShown] =
+    useState(false);
+
+  const tableColumns = useMemo(() => {
+    return getSQLResultTableColumns({
+      cols,
+      tables,
+      maxCharsPerCell,
+      onResize,
+    });
+  }, [cols, tables, maxCharsPerCell, onResize]);
+  // if (activeQuery?.state === "running" && !rows.length) {
+  //   return null;
+  // }
+
+  const pagination = useMemo(() => {
+    if (!isSelect) return;
+    return {
+      page,
+      pageSize,
+      totalRows: rowCount,
+      onPageChange,
+      onPageSizeChange,
+    } satisfies PaginationProps;
+  }, [isSelect, onPageChange, onPageSizeChange, page, pageSize, rowCount]);
 
   const paginatedRows =
     renderMode === "table" ?
@@ -71,6 +96,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     : rows;
   return (
     <div
+      data-command="W_SQLResults"
       className={
         "W_SQLResults flex-col oy-auto relative bt b-color " +
         (commandResult ? " f-0 " : " f-1 ") +
@@ -101,58 +127,37 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
             2,
           )}
         />
-      : <Table
-          maxCharsPerCell={maxCharsPerCell || 1000}
-          sort={sort}
-          onSort={onSort}
-          showSubLabel={true}
-          cols={cols.map((c, i) => ({
-            ...c,
-            key: i,
-            label: c.name,
-            filter: false,
-            /* Align numbers to right for an easier read */
-            headerClassname: c.tsDataType === "number" ? " jc-end  " : " ",
-            className: c.tsDataType === "number" ? " ta-right " : " ",
-            onRender: onRenderColumn({
-              c: { ...c, name: i.toString(), format: undefined },
-              table: undefined,
-              tables,
-              barchartVals: undefined,
-              maxCellChars: maxCharsPerCell || 1000,
-              maximumFractionDigits: 12,
-            }),
-            onResize: async (width) => {
-              const newCols = cols.map((_c) => {
-                if (_c.key === c.key) {
-                  _c.width = width;
-                }
-                return _c;
-              });
-              onResize(newCols);
-            },
-          }))}
-          rows={paginatedRows}
-          style={{ flex: 1, boxShadow: "unset" }}
-          tableStyle={{
-            borderRadius: "unset",
-            border: "unset",
-            ...((info?.command || "").toLowerCase() === "explain" ?
-              { whiteSpace: "pre" }
-            : {}),
-          }}
-          pagination={
-            !isSelect ? undefined : (
-              {
-                page,
-                pageSize,
-                totalRows: rowCount,
-                onPageChange,
-                onPageSizeChange,
-              }
-            )
-          }
-        />
+      : <>
+          {!tooManyColumnsWarningWasShown && (
+            <TooManyColumnsWarning
+              w={w}
+              numberOfCols={cols.length}
+              numberOfRows={rows.length}
+              onHide={() => {
+                setTooManyColumnsWarningWasShown(true);
+              }}
+            />
+          )}
+
+          <Table
+            maxCharsPerCell={maxCharsPerCell || 1000}
+            sort={sort}
+            onSort={onSort}
+            enableExperimentalVirtualisation={true}
+            showSubLabel={true}
+            cols={tableColumns}
+            rows={paginatedRows}
+            style={{ flex: 1, boxShadow: "unset" }}
+            tableStyle={{
+              borderRadius: "unset",
+              border: "unset",
+              ...(isExplainResult && {
+                whiteSpace: "pre",
+              }),
+            }}
+            pagination={pagination}
+          />
+        </>
       }
     </div>
   );

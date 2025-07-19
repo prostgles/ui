@@ -47,6 +47,7 @@ export const DashboardMenuHeader = ({
       </Btn>
       <Btn
         iconPath={mdiSearchWeb}
+        data-command="dashboard.menu.quickSearch"
         title={t.DashboardMenuHeader["Show quick search menu (CTRL + P)"]}
         className="ml-auto"
         onClick={() => {

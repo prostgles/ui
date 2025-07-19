@@ -9,6 +9,7 @@ import { DISPLAY_FORMATS } from "../ColumnMenu/ColumnDisplayFormat/columnFormatU
 import type { ColumnConfigWInfo, MinMaxVals } from "../W_Table";
 import { StyledTableColumn } from "./StyledTableColumn";
 import type { ProstglesTableColumn } from "./getTableCols";
+import { ROUTES } from "../../../../../commonTypes/utils";
 
 export type RenderedColumn = ColumnConfigWInfo &
   Pick<ValidatedColumnInfo, "tsDataType" | "udt_name" | "name"> &
@@ -84,7 +85,7 @@ export const onRenderColumn = ({
           .find((p, i, arr) => arr[i - 1] === "connections");
         if (c.info?.file) {
           if (!value && c.format?.type === "Media") return null;
-          value = `/prostgles_media/${connectionId}/${row[c.name]}`;
+          value = `${ROUTES.STORAGE}/${connectionId}/${row[c.name]}`;
         }
         return formatRender.render(value, row, c, c.format!, maxCellChars);
       }

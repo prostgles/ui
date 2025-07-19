@@ -10,34 +10,37 @@ import React from "react";
 import Btn from "../../components/Btn";
 import { FlexRow } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
-import { StatusMonitor } from "../../dashboard/StatusMonitor";
+import { StatusMonitor } from "../../dashboard/StatusMonitor/StatusMonitor";
 import { StatusDotCircleIcon } from "../Account/Sessions";
 import type { ConnectionProps } from "./Connection";
 import { t } from "../../i18n/i18nUtils";
+import { ROUTES } from "../../../../commonTypes/utils";
 
 export const ConnectionActionBar = (props: ConnectionProps) => {
-  const { dbsMethods, c, dbs, isAdmin } = props;
+  const { dbsMethods, connection, dbs, isAdmin } = props;
 
   const { isMobile } = window;
 
-  const disconectButton = dbsMethods.disconnect && !c.is_state_db && (
+  const disconectButton = dbsMethods.disconnect && !connection.is_state_db && (
     <Btn
       title={t.ConnectionActionBar["Connected. Click to disconnect"]}
       disabledInfo={
-        !c.isConnected ? t.ConnectionActionBar["Not connected"] : undefined
+        !connection.isConnected ?
+          t.ConnectionActionBar["Not connected"]
+        : undefined
       }
+      data-command="Connection.disconnect"
       disabledVariant="no-fade"
-      color={c.isConnected ? "green" : undefined}
-      className={c.isConnected ? "" : "show-on-trigger-hover"}
+      color={connection.isConnected ? "green" : undefined}
+      className={connection.isConnected ? "" : "show-on-trigger-hover"}
       onClickPromise={async () => {
-        await dbsMethods.disconnect!(c.id);
+        await dbsMethods.disconnect!(connection.id);
       }}
       style={{
-        // opacity: c.isConnected? undefined : 0,
         padding: "14px",
       }}
     >
-      <StatusDotCircleIcon color={c.isConnected ? "green" : "gray"} />
+      <StatusDotCircleIcon color={connection.isConnected ? "green" : "gray"} />
     </Btn>
   );
 
@@ -45,12 +48,13 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
     <>
       <Btn
         title={t.ConnectionActionBar["Close all windows"]}
+        data-command="Connection.closeAllWindows"
         titleAsLabel={isMobile}
         iconPath={mdiLadybug}
         onClickPromise={async () => {
           // const wsp = await dbs.workspaces.findOne({ connection_id: c.id });
           const closed = await dbs.windows.update(
-            { $existsJoined: { workspaces: { connection_id: c.id } } },
+            { $existsJoined: { workspaces: { connection_id: connection.id } } },
             { closed: true },
             { returning: "*" },
           );
@@ -69,6 +73,8 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
         <PopupMenu
           positioning="fullscreen"
           onClickClose={false}
+          title={t.ConnectionConfig["Status monitor"]}
+          data-command="Connection.statusMonitor"
           button={
             <Btn
               title={t.ConnectionConfig["Status monitor"]}
@@ -80,17 +86,18 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
         >
           <StatusMonitor
             {...props}
-            connectionId={c.id}
+            connectionId={connection.id}
             getStatus={dbsMethods.getStatus}
             runConnectionQuery={dbsMethods.runConnectionQuery}
           />
         </PopupMenu>
       )}
 
-      {isAdmin && !c.is_state_db && (
+      {isAdmin && (
         <Btn
-          href={"/connection-config/" + c.id}
+          href={ROUTES.CONFIG + "/" + connection.id}
           title={t.common["Configure"]}
+          data-command="Connection.configure"
           titleAsLabel={isMobile}
           className=" "
           iconPath={mdiCog}
@@ -102,7 +109,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       {isAdmin && (
         <Btn
           data-command="Connection.edit"
-          href={"/edit-connection/" + c.id}
+          href={ROUTES.EDIT_CONNECTION + "/" + connection.id}
           title={t.ConnectionActionBar["Edit connection"]}
           titleAsLabel={isMobile}
           className="  "
@@ -119,7 +126,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       <PopupMenu
         button={
           <Btn
-            size="medium"
+            size="default"
             iconPath={mdiDotsHorizontal}
             style={{
               padding: "11px",

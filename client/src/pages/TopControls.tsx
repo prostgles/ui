@@ -7,7 +7,10 @@ import Btn from "../components/Btn";
 import { FlexRow } from "../components/Flex";
 import { ConnectionSelector } from "../dashboard/ConnectionSelector";
 import { getIsPinnedMenu } from "../dashboard/Dashboard/Dashboard";
-import type { WorkspaceSyncItem } from "../dashboard/Dashboard/dashboardUtils";
+import type {
+  LoadedSuggestions,
+  WorkspaceSyncItem,
+} from "../dashboard/Dashboard/dashboardUtils";
 import { Feedback } from "../dashboard/Feedback";
 import { WorkspaceMenu } from "../dashboard/WorkspaceMenu/WorkspaceMenu";
 import { AppVideoDemo } from "../demo/AppVideoDemo";
@@ -17,11 +20,12 @@ import type {
   FullExtraProps,
 } from "./ProjectConnection/ProjectConnection";
 import { AskLLM } from "../dashboard/AskLLM/AskLLM";
-import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
+import { ROUTES } from "../../../commonTypes/utils";
 import { t } from "../i18n/i18nUtils";
 
 type TopControlsProps = {
   prgl: Prgl;
+  loadedSuggestions: LoadedSuggestions | undefined;
 } & (
   | {
       location: "workspace";
@@ -32,15 +36,15 @@ type TopControlsProps = {
   | { location: "config" }
 );
 export const TopControls = (props: TopControlsProps) => {
-  const { prgl, location } = props;
-  const { connectionId, connection: c } = prgl;
+  const { prgl, location, loadedSuggestions } = props;
+  const { connectionId } = prgl;
   const menuBtnProps: DashboardMenuBtnProps<any> =
     props.location === "config" ?
       {
         ...dataCommand("config.goToConnDashboard"),
         title: t.TopControls["Go to workspace"],
         asNavLink: true,
-        href: `${API_PATH_SUFFIXES.DASHBOARD}/${connectionId}`,
+        href: `${ROUTES.CONNECTIONS}/${connectionId}`,
       }
     : {
         ...dataCommand("dashboard.menu"),
@@ -87,6 +91,7 @@ export const TopControls = (props: TopControlsProps) => {
             {prgl.dbsMethods.askLLM && (
               <AskLLM
                 {...prgl}
+                loadedSuggestions={loadedSuggestions}
                 workspaceId={
                   props.location === "workspace" ?
                     props.workspace.id
@@ -94,12 +99,12 @@ export const TopControls = (props: TopControlsProps) => {
                 }
               />
             )}
-            <Feedback dbsMethods={prgl.dbsMethods} />
+            <Feedback dbsMethods={prgl.dbsMethods} dbs={prgl.dbs} />
 
             <Btn
               data-command="dashboard.goToConnections"
               title={t.TopControls["Go to Connections"]}
-              href={API_PATH_SUFFIXES.DASHBOARD}
+              href={ROUTES.CONNECTIONS}
               variant="faded"
               asNavLink={true}
               iconPath={mdiArrowLeft}
@@ -140,15 +145,10 @@ export const ConnectionConfigBtn = ({
         iconPath={mdiDatabaseCog}
         href={
           isOnWorkspace ?
-            `${API_PATH_SUFFIXES.CONFIG}/${connection.id}`
-          : `${API_PATH_SUFFIXES.DASHBOARD}/${connection.id}`
+            `${ROUTES.CONFIG}/${connection.id}`
+          : `${ROUTES.CONNECTIONS}/${connection.id}`
         }
         asNavLink={true}
-        disabledInfo={
-          connection.is_state_db ?
-            t.TopControls["Not allowed for state database"]
-          : undefined
-        }
         children={
           isOnWorkspace ? null : t.TopControls["Connection configuration"]
         }

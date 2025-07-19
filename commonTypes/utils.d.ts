@@ -14,7 +14,8 @@ export type AGE = {
     seconds?: number;
     milliseconds?: number;
 };
-export declare const QUERY_WATCH_IGNORE = "prostgles internal query that should be excluded from schema watch ";
+export declare const EXCLUDE_FROM_SCHEMA_WATCH = "prostgles internal query that should be excluded from schema watch ";
+export declare const STATUS_MONITOR_IGNORE_QUERY = "prostgles-status-monitor-query";
 export declare const getAgeFromDiff: (millisecondDiff: number) => {
     years: number;
     months: number;
@@ -139,7 +140,8 @@ export type SampleSchema = {
 } & ({
     type: "sql";
     file: string;
-} | {
+} | SampleSchemaDir);
+export type SampleSchemaDir = {
     type: "dir";
     tableConfigTs: string;
     onMountTs: string;
@@ -147,7 +149,9 @@ export type SampleSchema = {
     workspaceConfig: {
         workspaces: DBSSchema["workspaces"][];
     } | undefined;
-});
+    connection: Pick<DBSSchema["connections"], "db_schema_filter" | "info" | "table_options"> | undefined;
+    databaseConfig: Pick<DBSSchema["database_configs"], "table_schema_positions" | "table_schema_transform"> | undefined;
+};
 export type ProcStats = {
     pid: number;
     cpu: number;
@@ -155,7 +159,7 @@ export type ProcStats = {
     uptime: number;
 };
 export declare function matchObj(obj1: AnyObject | undefined, obj2: AnyObject | undefined): boolean;
-export declare function sliceText(v: string | undefined, maxLen: number, ellipseText?: string, midEllipse?: boolean): string | undefined;
+export declare function sliceText<T extends string | undefined>(_text: T, maxLen: number, ellipseText?: string, midEllipse?: boolean): T;
 export type ColType = {
     column_name: string;
     escaped_column_name: string;
@@ -181,11 +185,31 @@ export declare const getConnectionPaths: ({ id, url_path, }: {
     dashboard: string;
     config: string;
 };
-export declare const API_PATH_SUFFIXES: {
+export declare const API_ENDPOINTS: {
     readonly REST: "/rest-api";
-    readonly WS: "/ws-api-db";
-    readonly DASHBOARD: "/connections";
+    readonly WS_DB: "/ws-api-db";
+    readonly WS_DBS: "/ws-api-dbs";
+};
+export declare const ROUTES: {
+    readonly MAGIC_LINK: "/magic-link";
+    readonly LOGIN: "/login";
+    readonly LOGOUT: "/logout";
+    readonly ACCOUNT: "/account";
+    readonly CONNECTIONS: "/connections";
     readonly CONFIG: "/connection-config";
+    readonly DOCUMENTATION: "/documentation";
+    readonly SERVER_SETTINGS: "/server-settings";
+    readonly COMPONENT_LIST: "/component-list";
+    readonly EDIT_CONNECTION: "/edit-connection";
+    readonly NEW_CONNECTION: "/new-connection";
+    readonly USERS: "/users";
+    readonly BACKUPS: "/prostgles_backups";
+    readonly STORAGE: "/prostgles_storage";
 };
 export declare const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
+export declare const FORKED_PROC_ENV_NAME: "IS_FORKED_PROC";
+type ValueOf<T> = T[keyof T];
+export declare const getProperty: <O extends AnyObject, K extends string | (keyof O & string)>(o: O, k: K) => ValueOf<O> | undefined;
+export declare function debouncePromise<Args extends any[], T>(promiseFuncDef: (...pArgs: Args) => Promise<T>): (...args: Args) => Promise<T>;
+export declare const getCaller: () => string[];
 export {};

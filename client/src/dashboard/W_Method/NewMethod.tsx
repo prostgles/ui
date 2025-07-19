@@ -12,7 +12,7 @@ export type Method = DBSSchema["published_methods"] & {
 
 type P = Pick<
   Prgl,
-  "dbs" | "db" | "tables" | "dbsTables" | "dbsMethods" | "theme" | "dbKey"
+  "dbs" | "db" | "tables" | "dbsTables" | "dbsMethods" | "dbKey"
 > & {
   /** If undefined then it's a new method */
   methodId: number | undefined;
@@ -22,7 +22,6 @@ type P = Pick<
 };
 export const NewMethod = ({
   dbKey,
-  theme,
   db,
   dbs,
   methodId,
@@ -36,7 +35,7 @@ export const NewMethod = ({
   const [newMethod, setNewMethod] = useState<Partial<Omit<Method, "id">>>({
     name: "my_new_func",
     arguments: [],
-    run: "export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}",
+    run: "export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {\n  \n}",
     connection_id: connectionId,
     description: "",
     outputTable: null,
@@ -67,6 +66,7 @@ export const NewMethod = ({
         {
           onClickClose: true,
           label: "Close",
+          className: "mr-auto",
         },
         {
           label: !isNewMethod ? "Update function" : "Add function",
@@ -86,7 +86,6 @@ export const NewMethod = ({
                 },
                 { returning: { id: 1 } },
               );
-
               if (access_rule_id) {
                 await dbs.access_control_methods.insert({
                   access_control_id: access_rule_id,
@@ -110,7 +109,6 @@ export const NewMethod = ({
         tables={tables}
         dbsTables={dbsTables}
         db={db}
-        theme={theme}
         onChange={setNewMethod}
       />
     </Popup>

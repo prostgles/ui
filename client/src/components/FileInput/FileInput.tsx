@@ -45,7 +45,7 @@ type S = {
   id?: string;
   isOverflowing?: boolean;
 };
-export default class FileInput extends RTComp<
+export class FileInput extends RTComp<
   {
     id?: string;
     className?: string;
@@ -204,7 +204,7 @@ export default class FileInput extends RTComp<
 
           {!onDelete ? null : (
             <Btn
-              className={"shadow  b b-color-2"}
+              className={"shadow  b b-color"}
               style={{
                 position: "absolute",
                 top: "10px",
@@ -229,7 +229,7 @@ export default class FileInput extends RTComp<
           {focused ?
             null
           : !name ?
-            <a href={url} target="_blank" className="p-5 f-0">
+            <a href={url} target="_blank" className="p-5 f-0" rel="noreferrer">
               {url}
             </a>
           : <div
@@ -363,7 +363,7 @@ export default class FileInput extends RTComp<
       : <label
           htmlFor={id}
           className="FileInput_AddBtn f-1 flex-row ws-nowrap ai-center bg-color-0 pointer rounded text-active b b-active py-p25 pl-p5 pr-1 gap-p25"
-          data-command={"FileBtn" satisfies Command}
+          data-command={"FileBtn"}
         >
           <Icon path={mdiPlus} size={1} title="Add files" className=" " />
           <div>{inputText}</div>

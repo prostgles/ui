@@ -3,7 +3,7 @@ import type { AnyObject } from "prostgles-types";
 import React from "react";
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 import type { RowSiblingData } from "./tableUtils/getEditColumn";
 import { getRowSiblingData } from "./tableUtils/getEditColumn";
 import type { ReactiveState } from "../../appUtils";
@@ -50,11 +50,8 @@ export const RowCard = ({
 
   return (
     <SmartForm
-      theme={prgl.theme}
-      connection={prgl.connection}
       asPopup={true}
       confirmUpdates={true}
-      hideChangesOptions={true}
       db={prgl.db}
       methods={prgl.methods}
       tables={prgl.tables}
@@ -77,13 +74,14 @@ export const RowCard = ({
               // alert("Reached end");
               return;
             }
-            const cols = prgl.tables.find((t) => t.name === tableName)?.columns;
-            if (!cols) return;
+            const table = prgl.tables.find((t) => t.name === tableName);
+            if (!table) return;
 
             const siblingData = await getRowSiblingData(
               rows,
               newRowIndex,
-              cols,
+              table,
+              undefined,
               tableHandler,
             );
             const newRowPanel: RowPanelProps = {

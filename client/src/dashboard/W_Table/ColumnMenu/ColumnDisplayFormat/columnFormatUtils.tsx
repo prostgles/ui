@@ -5,14 +5,14 @@ import type {
   ValidatedColumnInfo,
 } from "prostgles-types";
 import React from "react";
-import { MediaViewer, ContentTypes } from "../../../../components/MediaViewer";
-import { QRCodeImage } from "../../../../components/QRCodeImage";
-import SmartFormField from "../../../SmartForm/SmartFormField/SmartFormField";
-import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
 import sanitizeHtml from "sanitize-html";
-import type { ColumnConfig } from "../ColumnMenu";
-import { StyledInterval } from "../../../W_SQL/customRenderers";
 import { getAge } from "../../../../../../commonTypes/utils";
+import { ContentTypes, MediaViewer } from "../../../../components/MediaViewer";
+import { QRCodeImage } from "../../../../components/QRCodeImage";
+import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
+import { StyledInterval } from "../../../W_SQL/customRenderers";
+import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
+import type { ColumnConfig } from "../ColumnMenu";
 
 const CurrencySchema = {
   type: {
@@ -264,6 +264,7 @@ const HREFRender: FormattedColRender<any>["render"] = (v, r, c) => (
       : "") + removeQuotes(v)
     }
     target="_blank"
+    rel="noreferrer"
   >
     {removeQuotes(v)}
   </a>
@@ -325,7 +326,7 @@ export const DISPLAY_FORMATS = [
       // Using "90px" because default max row height is 100px
       return v?.toString().trim().length ?
           <QRCodeImage url={v} size={90} variant="table-cell" />
-        : SmartFormField.renderValue(c, v, undefined, maxCellChars);
+        : <RenderValue column={c} value={v} maxLength={maxCellChars} />;
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "QR Code" }>>,
   {
@@ -356,9 +357,11 @@ export const DISPLAY_FORMATS = [
     render: (v) => {
       if (v && (+v).toString() == v) {
         try {
-          return SmartFormField.renderValue(
-            { tsDataType: "string", udt_name: "timestamp" },
-            new Date().toISOString(),
+          return (
+            <RenderValue
+              column={{ tsDataType: "string", udt_name: "timestamp" }}
+              value={new Date().toISOString()}
+            />
           );
         } catch (e) {
           console.error("Failed to render field as a unix timestamp");

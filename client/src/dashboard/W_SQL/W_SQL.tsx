@@ -25,8 +25,8 @@ import Popup from "../../components/Popup/Popup";
 import type { DeltaOf } from "../RTComp";
 import RTComp from "../RTComp";
 import { getFuncs } from "../SQLEditor/SQLCompletion/getPGObjects";
-import type { MonacoError, SQLEditorRef } from "../SQLEditor/SQLEditor";
-import { SQLEditor } from "../SQLEditor/SQLEditor";
+import type { MonacoError, SQLEditorRef } from "../SQLEditor/W_SQLEditor";
+import { W_SQLEditor } from "../SQLEditor/W_SQLEditor";
 
 import type {
   SingleSyncHandles,
@@ -35,7 +35,7 @@ import type {
 import type { DBEventHandles, ValidatedColumnInfo } from "prostgles-types/lib";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
 import { createReactiveState } from "../../appUtils";
@@ -51,6 +51,7 @@ import { W_SQLResults } from "./W_SQLResults";
 import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
 import type { CodeBlock } from "../SQLEditor/SQLCompletion/completionUtils/getCodeBlock";
 import { type ChartableSQL, getChartableSQL } from "./getChartableSQL";
+import type { TestSelectors } from "../../Testing";
 
 export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"sql">;
@@ -106,8 +107,8 @@ export type W_SQL_ActiveQuery = {
 type SQLResultCols = Required<W_SQLProps>["w"]["options"]["sqlResultCols"];
 
 export type W_SQLState = {
-  table?: TableProps & Query;
-  sort: ColumnSort[];
+  table?: TableProps<ColumnSortSQL> & Query;
+  sort: ColumnSortSQL[];
   loading: boolean;
   currentCodeBlockChartColumns?: ChartableSQL;
   isSelect: boolean;
@@ -161,7 +162,7 @@ export type W_SQLState = {
 
   queryEnded?: number;
   page: number;
-  pageSize: PageSize;
+  pageSize: number;
   loadingSuggestions: boolean;
 };
 
@@ -176,7 +177,6 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
   refResize?: HTMLElement;
   ref?: HTMLElement & { sqlRef?: SQLEditorRef | undefined };
 
-  rowPanelData: any;
   state: W_SQLState = {
     sql: "",
     loading: false,
@@ -257,27 +257,6 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     }
   }
 
-  /**
-   * To reduce the number of unnecessary data requests let's save the query signature and allow new queries only if different
-   */
-  currentDataRequestSignature = "";
-  static getDataRequestSignature(
-    args:
-      | {
-          select?: AnyObject;
-          filter?: AnyObject;
-          orderBy?: AnyObject;
-          limit?: number;
-          offset?: number;
-        }
-      | { sql: string },
-  ) {
-    if ("sql" in args) return args.sql;
-
-    const { filter, select, limit, offset } = args;
-    return JSON.stringify({ filter, select, limit, offset });
-  }
-
   dataSub?: any;
   dataSubFilter?: any;
   dataAge?: number = 0;
@@ -338,7 +317,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     });
   };
   hashedSQL?: string;
-  sort?: ColumnSort[];
+  sort?: ColumnSortSQL[];
   runSQL = runSQL.bind(this);
 
   sqlRef?: SQLEditorRef;
@@ -406,7 +385,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 );
               }}
             >
-              Ok, don't show again
+              Ok, don&apos;t show again
             </Btn>
           </div>
         </div>
@@ -448,7 +427,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             className={`min-h-0 min-w-0 flex-col relative ${hideCodeEditor ? "f-0" : "f-1"}`}
           >
             {error && <ErrorComponent error={error} className="m-2" />}
-            <SQLEditor
+            <W_SQLEditor
               value={this.d.w?.sql ?? ""}
               style={hideCodeEditor ? { display: "none" } : {}}
               sql={db.sql!}
@@ -570,7 +549,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
           />
         </div>
 
-        {!popup ? null : (
+        {popup && (
           <Popup
             rootStyle={popup.style}
             anchorEl={popup.anchorEl}
@@ -620,7 +599,11 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
 }
 
 // Function to download data to a file
-export function download(data, filename: string, type: string) {
+export function download(
+  data,
+  filename: string,
+  type: BlobPropertyBag["type"],
+) {
   const file = new Blob([data], { type });
   const navigator = window.navigator as any;
   if (navigator.msSaveOrOpenBlob) {
@@ -641,12 +624,17 @@ export function download(data, filename: string, type: string) {
   }
 }
 
-type CounterProps = {
+type CounterProps = TestSelectors & {
   from: Date;
   className?: string;
   title?: string;
 };
-export const Counter = ({ from, className, title }: CounterProps) => {
+export const Counter = ({
+  from,
+  className,
+  title,
+  ...testingProps
+}: CounterProps) => {
   const [{ seconds, minutes }, setElapsed] = React.useState({
     seconds: 0,
     minutes: 0,
@@ -668,7 +656,7 @@ export const Counter = ({ from, className, title }: CounterProps) => {
   }, [from, setElapsed, getIsMounted]);
 
   return (
-    <div title={title} className={"text-2 " + className}>
+    <div title={title} className={"text-2 " + className} {...testingProps}>
       {[minutes, seconds].map((v) => `${v}`.padStart(2, "0")).join(":")}
     </div>
   );

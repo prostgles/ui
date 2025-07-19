@@ -1,6 +1,6 @@
 import { getParentFunction } from "./MatchSelect";
 import { getExpected } from "./getExpected";
-import type { SQLMatcher } from "./registerSuggestions";
+import type { SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
 import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
 

@@ -6,3 +6,9 @@
 .box:hover {
   clip-path: circle(25%);
 }
+
+
+.popup-component-root.positioning_tooltip {
+  pointer-events: none ;
+  touch-action: none;
+}

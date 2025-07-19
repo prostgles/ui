@@ -17,6 +17,7 @@ export const STARTING_KWDS = [
   "REVOKE",
   "GRANT",
   "VACUUM",
+  "ANALYZE",
   "EXPLAIN",
   "COPY",
   "REINDEX",
@@ -394,15 +395,24 @@ EXPLAIN SELECT * FROM weather;
 EXPLAIN ANALYZE SELECT * FROM weather;
 \`\`\`
 `;
+      } else if (label === "ANALYZE") {
+        priority = 14;
+
+        info = `
+Collects statistics about the contents of tables in the database, and stores the results in the pg_statistic system catalog. Subsequently, the query planner uses these statistics to help determine the most efficient execution plans for queries.
+https://www.postgresql.org/docs/current/sql-analyze.html
+\`\`\`sql
+ANALYZE (VERBOSE) my_table;
+\`\`\``;
       } else if (label === "VACUUM") {
         priority = 11;
 
-        info = `Garbage-collect and optionally analyze a database
+        info = `
+Garbage-collect and optionally analyze a database
 https://www.postgresql.org/docs/current/sql-vacuum.html
 \`\`\`sql
 VACUUM (VERBOSE, ANALYZE) my_database;
-\`\`\`
-`;
+\`\`\``;
       } else if (label === "GRANT") {
         priority = 9;
 

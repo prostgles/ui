@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import PopupMenu from "../../components/PopupMenu";
-import type { ProstglesColumn } from "../W_SQL/W_SQL";
 import { mdiFilter, mdiStopCircleOutline } from "@mdi/js";
-import Btn from "../../components/Btn";
+import React from "react";
 import type { ConnectionStatus } from "../../../../commonTypes/utils";
-import type { StatusMonitorProps } from "../StatusMonitor";
+import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
+import PopupMenu from "../../components/PopupMenu";
 import { Table } from "../../components/Table/Table";
+import type { ProstglesColumn } from "../W_SQL/W_SQL";
+import type { StatusMonitorProps } from "./StatusMonitor";
 
 type P = Pick<StatusMonitorProps, "dbsMethods" | "connectionId"> & {
   c: ConnectionStatus;

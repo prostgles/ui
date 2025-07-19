@@ -8,6 +8,7 @@ import {
   Tray,
   shell,
   nativeImage,
+  type SafeStorage,
 } from "electron";
 import * as path from "path";
 import * as fs from "fs";
@@ -20,9 +21,9 @@ let localCreds: any;
  * Safe storage encryption works only with a launched browser (electron.launch without "--no-sandbox") and launch without xvfb-run
  * but this does not work within containers
  */
-const safeStorage =
+const safeStorage: SafeStorageHandles =
   process.env.TEST_MODE === "true" ?
-    {
+    ({
       encryptString: (str: string) => {
         localCreds = str;
         console.log("encryptString", { str });
@@ -32,10 +33,22 @@ const safeStorage =
         console.log("decryptString", { str, localCreds });
         return localCreds;
       },
-    }
+    } as unknown as SafeStorageHandles)
   : ss;
 
-const expressApp = require("../ui/server/dist/server/src/electronConfig");
+type SafeStorageHandles = Pick<SafeStorage, "encryptString" | "decryptString">;
+
+type StartParams = {
+  safeStorage: SafeStorageHandles;
+  rootDir: string;
+  electronSid: string;
+  openPath: (path: string, isFile?: boolean) => void;
+  onReady: (port: number) => void;
+};
+process.env.NODE_ENV = "production";
+const expressApp = require("../ui/server/dist/server/src/electronConfig") as {
+  start: (params: StartParams) => Promise<void>;
+};
 const iconPath = path.join(__dirname, "/../images/icon.ico");
 
 // const protocolHandler = getProtocolHandler({
@@ -85,33 +98,30 @@ function initApp() {
     console.log("Electron app ready, starting express server...");
     console.log(
       "State db auth file: " +
-        path.resolve(`${app.getPath("userData")}/.electron-auth.json`),
+        path.resolve(
+          `${app.getPath("userData")}/.prostgles-desktop-config.json`,
+        ),
     );
 
-    let port: number;
     expressApp
-      .start(
+      .start({
         safeStorage,
-        {
-          rootDir: app.getPath("userData"),
-          port: 0,
-          electronSid,
-          onSidWasSet: () => {
-            console.log("Express server ready, onSidWasSet, reloading...");
-            tryOpenBrowser(port ?? 0, electronSid, 0);
-          },
-          openPath: (path: string, isFile?: boolean) => {
-            // Show the given file in a file manager. If possible, select the file.
-            if (isFile) {
-              shell.showItemInFolder(path);
-            } else {
-              shell.openPath(path);
-            }
-          },
+        rootDir: app.getPath("userData"),
+        electronSid,
+        // onSidWasSet: () => {
+        //   console.log("Express server ready, onSidWasSet, reloading...");
+        //   tryOpenBrowser(port ?? 0, electronSid, 0);
+        // },
+        openPath: (path: string, isFile?: boolean) => {
+          // Show the given file in a file manager. If possible, select the file.
+          if (isFile) {
+            shell.showItemInFolder(path);
+          } else {
+            shell.openPath(path);
+          }
         },
-        (actualPort: number) => {
+        onReady: (actualPort: number) => {
           console.log("Express server started on port " + actualPort);
-          port = actualPort;
           tryOpenBrowser(actualPort, electronSid);
           // try {
           //   new Tray(nativeImage.createFromPath(iconPath));
@@ -127,7 +137,7 @@ function initApp() {
           //   }
           // })
         },
-      )
+      })
       .catch((err: any) => {
         console.error("Failed to start expressApp.start", err);
       });
@@ -137,7 +147,9 @@ function initApp() {
   // for applications and their menu bar to stay active until the user quits
   // explicitly with Cmd + Q.
   app.on("window-all-closed", function () {
-    if (process.platform !== "darwin") app.quit();
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
   });
 
   /* protocolHandler.setOpenUrlListener(); */

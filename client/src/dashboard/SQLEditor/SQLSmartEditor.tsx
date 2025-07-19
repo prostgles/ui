@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
 import Popup from "../../components/Popup/Popup";
-import { useIsMounted } from "../Backup/CredentialSelector";
+import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
 import type { DashboardState } from "../Dashboard/Dashboard";
-import { SQLEditor } from "./SQLEditor";
+import { W_SQLEditor } from "./W_SQLEditor";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
@@ -77,7 +77,7 @@ export const SQLSmartEditor = ({
   const content = (
     <FlexCol className="f-1 min-h-0 gap-p5 mt-1">
       {contentTop}
-      <SQLEditor
+      <W_SQLEditor
         suggestions={suggestions}
         className="f-1 b b-color rounded o-hidden"
         autoFocus={false}

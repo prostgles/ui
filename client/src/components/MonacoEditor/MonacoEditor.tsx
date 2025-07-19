@@ -1,22 +1,26 @@
-import {
-  useAsyncEffectQueue,
-  usePromise,
-} from "prostgles-client/dist/react-hooks";
-import { getKeys, isEqual, pickKeys } from "prostgles-types";
-import React, { useEffect, useMemo } from "react";
-import { appTheme, useReactiveState } from "../../App";
+import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
+import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
-import { hackyFixOptionmatchOnWordStartOnly } from "../../dashboard/SQLEditor/SQLCompletion/registerSuggestions";
-import {
-  customLightThemeMonaco,
-  getMonaco,
-} from "../../dashboard/SQLEditor/SQLEditor";
-import type { editor } from "../../dashboard/W_SQL/monacoEditorTypes";
+
+import { getMonaco, LANG } from "../../dashboard/SQLEditor/W_SQLEditor";
+import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
+import {
+  CUSTOM_MONACO_SQL_THEMES,
+  defineCustomSQLTheme,
+} from "../../dashboard/SQLEditor/defineCustomSQLTheme";
+import { isPlaywrightTest } from "../../i18n/i18nUtils";
+
 export type MonacoEditorProps = {
   language: string;
   value: string;
-  onChange?: (value: string) => void;
+  onChange?: (
+    value: string,
+    editor: editor.IStandaloneCodeEditor,
+    monaco: undefined | Monaco,
+  ) => void;
   className?: string;
   /**
    * @default true
@@ -28,12 +32,32 @@ export type MonacoEditorProps = {
   loadedSuggestions: LoadedSuggestions | undefined;
 };
 
+let monacoPromise: Promise<Monaco> | undefined;
+let monacoResolved: Monaco | undefined;
+const useMonacoSingleton = () => {
+  const [monaco, setMonaco] = useState(monacoResolved);
+  useEffect(() => {
+    if (!monacoResolved) {
+      (async () => {
+        monacoPromise ??= getMonaco();
+        monacoResolved = await monacoPromise;
+        await defineCustomSQLTheme();
+        setMonaco(monacoResolved);
+      })();
+    }
+  }, []);
+
+  return { monaco };
+};
+
 export const MonacoEditor = (props: MonacoEditorProps) => {
   const { loadedSuggestions } = props;
 
-  const loadedLanguage = usePromise(async () => {
-    await loadPSQLLanguage(loadedSuggestions);
-    return true;
+  const [loadedLanguage, setLoadedLanguage] = useState(false);
+  useEffect(() => {
+    loadPSQLLanguage(loadedSuggestions).then(() => {
+      setLoadedLanguage(true);
+    });
   }, [loadedSuggestions]);
 
   const [editor, setEditor] = React.useState<editor.IStandaloneCodeEditor>();
@@ -51,21 +75,26 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const valueRef = React.useRef(value);
 
+  const monacoRef = useRef<Monaco>();
+
   const fullOptions = useMemo(() => {
+    const themeFromOptions = options?.theme;
     const theme =
-      options?.theme && options.theme !== "vs" ? options.theme
-      : _appTheme === "dark" ? "vs-dark"
-      : (customLightThemeMonaco as any);
+      themeFromOptions && themeFromOptions !== "vs" ?
+        themeFromOptions
+      : CUSTOM_MONACO_SQL_THEMES[_appTheme];
     return {
       ...options,
       theme,
     };
   }, [_appTheme, options]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useAsyncEffectQueue(async () => {
-    if (!container.current) return;
-    const monaco = await getMonaco();
+  const { monaco } = useMonacoSingleton();
+
+  useEffectDeep(() => {
+    if (!container.current || !monaco) return;
+
+    monacoRef.current = monaco;
     const editorOptions: editor.IStandaloneEditorConstructionOptions = {
       value: valueRef.current,
       language,
@@ -79,16 +108,32 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       newEditor,
       expandSuggestionDocs,
     );
-
+    /** Remove these keybindings from monaco */
+    monaco.editor.addKeybindingRules([
+      {
+        keybinding:
+          monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyR,
+        command: null,
+      },
+      {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK,
+        command: null,
+      },
+    ]);
     setEditor(newEditor);
     return () => {
       newEditor.dispose();
     };
-  }, [language, container, fullOptions, expandSuggestionDocs]);
+  }, [monaco, language, container, fullOptions, expandSuggestionDocs]);
 
   useEffect(() => {
     if (!editor) return;
-
+    if (isPlaywrightTest && container.current) {
+      //@ts-ignore
+      container.current._getValue = () => {
+        return editor.getValue();
+      };
+    }
     /** This check necessary to ensure getTokens returns correct data */
     if (loadedLanguage) {
       onMount?.(editor);
@@ -98,11 +143,40 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   useEffect(() => {
     if (!editor) return;
 
+    editor.addAction({
+      id: "googleSearch",
+      label: "Search with Google",
+      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
+      contextMenuGroupId: "navigation",
+      run: (editor) => {
+        window.open(
+          "https://www.google.com/search?q=" + getSelectedText(editor),
+        );
+      },
+    });
+
+    if (language !== LANG) return;
+    editor.addAction({
+      id: "googleSearchPG",
+      label: "Search with Google Postgres",
+      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
+      contextMenuGroupId: "navigation",
+      run: (editor) => {
+        window.open(
+          "https://www.google.com/search?q=postgres+" + getSelectedText(editor),
+        );
+      },
+    });
+  }, [editor, language]);
+
+  useEffect(() => {
+    if (!editor) return;
+
     if (onChange) {
       editor.onDidChangeModelContent(() => {
         const newValue = editor.getValue();
         if (valueRef.current === newValue) return;
-        onChange(newValue);
+        onChange(newValue, editor, monacoRef.current);
       });
     }
   }, [editor, onChange]);
@@ -148,6 +222,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       key={`${!!language.length}`}
       ref={container}
       style={monacoStyle}
+      data-command="MonacoEditor"
       className={`MonacoEditor  ${className}`}
     />
   );
@@ -190,4 +265,37 @@ const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (
       // suggestWidget._persistedSize.store({width: 200, height: 256});
     }
   }
+};
+
+const hackyFixOptionmatchOnWordStartOnly = (
+  editor: editor.IStandaloneCodeEditor,
+) => {
+  try {
+    const indexOfConfig = 118; // 119 for version 0.52.0
+    // ensure typing name matches relname
+    // suggestModel.js:420
+    //@ts-ignore
+    const confObj = editor._configuration?.options?._values?.[indexOfConfig];
+    if (!isObject(confObj)) {
+      console.error(
+        "new monaco version might have broken hackyFixOptionmatchOnWordStartOnly again",
+      );
+    }
+    if (confObj && "matchOnWordStartOnly" in confObj) {
+      //@ts-ignore
+      editor._configuration.options._values[
+        indexOfConfig
+      ].matchOnWordStartOnly = false;
+    }
+  } catch (e) {}
+};
+
+export const getSelectedText = (
+  editor: editor.ICodeEditor | editor.IStandaloneCodeEditor | undefined,
+): string => {
+  if (!editor) return "";
+  const model = editor.getModel();
+  const selection = editor.getSelection();
+  if (!model || !selection) return "";
+  return model.getValueInRange(selection);
 };

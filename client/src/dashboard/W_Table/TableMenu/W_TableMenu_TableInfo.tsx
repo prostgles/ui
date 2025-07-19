@@ -22,7 +22,10 @@ export const W_TableMenu_TableInfo = ({
 
   return (
     <FlexCol className="f-1 ai-start o-auto ">
-      <div className="f-1 flex-row mr-1 ai-center">
+      <div
+        data-command="W_TableMenu_TableInfo.name"
+        className=" flex-row mr-1 ai-center"
+      >
         <Chip className=" " variant="header" label={"Name"} value={tableName} />
         <Btn
           iconPath={mdiPencil}
@@ -34,7 +37,10 @@ export const W_TableMenu_TableInfo = ({
           }}
         />
       </div>
-      <div className="f-1  flex-row mr-1 ai-center">
+      <div
+        data-command="W_TableMenu_TableInfo.comment"
+        className=" flex-row mr-1 ai-center"
+      >
         <Chip
           className=" "
           variant="header"
@@ -56,22 +62,28 @@ export const W_TableMenu_TableInfo = ({
           className="f-1"
           variant="header"
           label={"OID"}
+          data-command="W_TableMenu_TableInfo.oid"
           value={w.table_oid}
         />
         <Chip
+          data-command="W_TableMenu_TableInfo.type"
           className="f-1"
           variant="header"
           label={"Type"}
           value={tableMeta.type}
         />
         <Chip
+          data-command="W_TableMenu_TableInfo.owner"
           className="f-1 "
           variant="header"
           label={"Owner"}
           value={tableMeta.relowner_name}
         />
       </FlexRowWrap>
-      <FlexRowWrap className="w-full">
+      <FlexRowWrap
+        className="w-full"
+        data-command="W_TableMenu_TableInfo.sizeInfo"
+      >
         <Chip
           className="f-1"
           variant="header"
@@ -98,7 +110,11 @@ export const W_TableMenu_TableInfo = ({
         />
       </FlexRowWrap>
       {tableMeta.viewDefinition && (
-        <FlexCol className="w-full" style={{ height: "400px" }}>
+        <FlexCol
+          data-command="W_TableMenu_TableInfo.viewDefinition"
+          className="w-full"
+          style={{ height: "400px" }}
+        >
           <div className="bold p-0 w-fit mt-1">View definition</div>
           <CodeExample
             language="sql"
@@ -112,6 +128,7 @@ export const W_TableMenu_TableInfo = ({
           <>
             <Btn
               className="mr-1"
+              data-command="W_TableMenu_TableInfo.vacuum"
               iconPath={mdiDatabaseRefreshOutline}
               variant="outline"
               onClick={() => {
@@ -125,6 +142,7 @@ export const W_TableMenu_TableInfo = ({
             </Btn>
             <Btn
               className="mr-1"
+              data-command="W_TableMenu_TableInfo.vacuumFull"
               iconPath={mdiDatabaseRefreshOutline}
               variant="outline"
               onClick={() => {
@@ -141,11 +159,12 @@ export const W_TableMenu_TableInfo = ({
 
         <Btn
           iconPath={mdiDeleteOutline}
+          data-command="W_TableMenu_TableInfo.drop"
           color="danger"
           variant="faded"
           onClick={() => {
             onSetQuery({
-              sql: `DROP ${tableMeta.type.toUpperCase()} ${asName(tableName)} \n"remove this line to confirm"`,
+              sql: `DROP ${tableMeta.type.toUpperCase()} ${tableName} \n"remove this line to confirm"`,
               title: `${tableMeta.type} will be deleted from the database`,
               onSuccess: () => {
                 prgl.dbs.windows.update(

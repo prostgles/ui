@@ -1,8 +1,8 @@
+import { ConnectionString } from "connection-string";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBSConnectionInfo } from "../electronConfig";
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type ConnectionInsert = DBGeneratedSchema["connections"]["columns"];
-import { ConnectionString } from "connection-string";
-import type { DBSConnectionInfo } from "../electronConfig";
 
 type ConnectionDefaults = Pick<
   DBSConnectionInfo,
@@ -23,13 +23,13 @@ type ValidatedConnectionDetails = Required<ConnectionDefaults> & {
 };
 
 export type ConnectionInfo = Partial<
-  DBSConnectionInfo & Connections & ConnectionInsert
+  DBSConnectionInfo | Connections | ConnectionInsert
 >;
 
 export const validateConnection = <C extends ConnectionInfo>(
   rawConnection: C,
 ): C & ValidatedConnectionDetails => {
-  const result = { ...rawConnection } as C;
+  const result = { ...rawConnection };
 
   if (rawConnection.type === "Connection URI") {
     const db_conn =
@@ -42,7 +42,21 @@ export const validateConnection = <C extends ConnectionInfo>(
 
     const cs = new ConnectionString(db_conn);
     const params = cs.params ?? {};
-    const { sslmode, host, port, dbname, user, password } = params;
+    const {
+      sslmode,
+      host,
+      port = "5432",
+      dbname,
+      user,
+      password,
+    } = params as {
+      sslmode?: ConnectionDefaults["db_ssl"];
+      host?: string;
+      port?: string;
+      dbname?: string;
+      user?: string;
+      password?: string;
+    };
 
     const { db_host, db_port, db_user, db_name, db_ssl } = getDefaults({
       db_host: cs.hosts?.[0]?.name || host,
@@ -52,7 +66,7 @@ export const validateConnection = <C extends ConnectionInfo>(
       db_ssl: sslmode,
     });
 
-    const validated: ValidatedConnectionDetails = {
+    const validated = {
       ...rawConnection,
       db_conn,
       db_host,
@@ -63,7 +77,7 @@ export const validateConnection = <C extends ConnectionInfo>(
       db_pass: cs.password ?? password,
     };
 
-    return validated as any;
+    return validated;
   } else if (rawConnection.type === "Standard" || rawConnection.db_host) {
     const { db_host, db_port, db_user, db_name, db_ssl, db_pass } = {
       ...getDefaults(rawConnection),
@@ -82,7 +96,7 @@ export const validateConnection = <C extends ConnectionInfo>(
     cs.params = { sslmode: rawConnection.db_ssl ?? "prefer" };
     const db_conn = cs.toString();
 
-    const validated: ValidatedConnectionDetails = {
+    const validated = {
       ...rawConnection,
       db_host,
       db_port,
@@ -90,10 +104,10 @@ export const validateConnection = <C extends ConnectionInfo>(
       db_name,
       db_ssl,
       db_conn,
-      db_pass: rawConnection.db_pass ?? undefined,
+      db_pass: rawConnection.db_pass ?? "",
     };
 
-    return validated as any;
+    return validated;
   } else {
     throw "Not supported";
   }

@@ -5,7 +5,7 @@ import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
 import Popup from "../../components/Popup/Popup";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { CodeChecker } from "../Backup/CodeConfirmation";
+import { CodeChecker } from "../BackupAndRestore/CodeConfirmation";
 import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
 import type { FileStorageControlsProps } from "./FileStorageControls";
 

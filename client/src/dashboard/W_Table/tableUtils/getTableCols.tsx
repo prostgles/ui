@@ -221,14 +221,15 @@ export const getTableCols = ({
   const tableHandler = db[tableName];
 
   /* Can update table. Add update button */
-  if (tableHandler && !hideEditRow && !w.options.hideEditRow) {
+  if (table && tableHandler && !hideEditRow && !w.options.hideEditRow) {
     const _columns = (columns ?? []).filter(
       (c) =>
         !w.columns?.length ||
         w.columns.some((wc) => wc.name === c.name && wc.show !== false),
     );
     const editColumn = getEditColumn({
-      columns: _columns,
+      table,
+      columnConfig: _columns,
       tableHandler,
       addColumnProps: {
         w,

@@ -56,11 +56,12 @@ export class DeckWrapped {
   currHover?: PickingInfo;
   currHoverRState = createReactiveState(this.currHover);
   private transitioning = false;
-
+  node: HTMLDivElement;
   deck: Deck<OrthographicView[] | MapView[]>;
   constructor(node: HTMLDivElement, opts: DeckWrappedOpts, lib: DeckGlLib) {
     this.lib = lib;
     this.opts = opts;
+    this.node = node;
     const { type, initialViewState } = this.opts;
 
     this.deck = new lib.Deck({
@@ -198,9 +199,13 @@ export class DeckWrapped {
     return [b.slice(0, 2) as any, b.slice(2) as any];
   };
 
-  render(props: DeckProps) {
+  render(props: DeckProps<OrthographicView[] | MapView[]>) {
     if (!this.deck.isInitialized) {
       return;
+    }
+    const canvas = this.node.querySelector("canvas");
+    if (canvas) {
+      canvas._deckgl = this.deck;
     }
     const currViews = this.deck.getViews().map((l) => l.constructor.name);
     const curr2D = currViews.includes("OrthographicView");
@@ -220,7 +225,7 @@ export class DeckWrapped {
         layers: props.layers,
       } as any);
     } else {
-      this.deck.setProps(props as any);
+      this.deck.setProps(props);
     }
   }
 }

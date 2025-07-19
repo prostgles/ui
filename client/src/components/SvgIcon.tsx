@@ -1,8 +1,26 @@
-import { useIsMounted } from "prostgles-client/dist/prostgles";
+import { useIsMounted, usePromise } from "prostgles-client/dist/prostgles";
 import React, { useEffect } from "react";
 import sanitizeHtml from "sanitize-html";
+import { classOverride, type DivProps } from "./Flex";
 
 export const cachedSvgs = new Map<string, string>();
+
+export const fetchNamedSVG = async (iconName: string) => {
+  const iconNameContainsOnlyLettersAndMaybeEndWithDigits =
+    /^[a-zA-Z]+(\d+)?$/.test(iconName);
+  if (!iconNameContainsOnlyLettersAndMaybeEndWithDigits) {
+    console.error(
+      `Icon name "${iconName}" iconNameContainsOnlyLettersAndMaybeEndWithDigits`,
+    );
+    return;
+  }
+  const iconPath = `/icons/${iconName}.svg`;
+  const cached = cachedSvgs.get(iconPath);
+  if (cached) {
+    return cached;
+  }
+  return fetchIconAndCache(iconPath);
+};
 
 export const SvgIcon = ({
   icon,
@@ -19,18 +37,7 @@ export const SvgIcon = ({
   const iconPath = `/icons/${icon}.svg`;
   const [svg, setSvg] = React.useState(cachedSvgs.get(iconPath));
   useEffect(() => {
-    const iconNameContainsOnlyLetters = /^[a-zA-Z]+$/.test(icon);
-    if (!iconNameContainsOnlyLetters) {
-      console.error(`Icon name "${icon}" must contain only letters`);
-      return;
-    }
-    const cached = cachedSvgs.get(iconPath);
-    if (cached) {
-      setSvg(cached);
-      return;
-    }
-    fetchIcon(iconPath).then((fetchedSvg) => {
-      cachedSvgs.set(iconPath, fetchedSvg);
+    fetchIconAndCache(iconPath).then((fetchedSvg) => {
       if (!getIsMounted()) return;
       setSvg(fetchedSvg);
     });
@@ -50,7 +57,7 @@ export const SvgIcon = ({
   );
 };
 
-const fetchIcon = (iconPath: string) => {
+const fetchIconAndCache = (iconPath: string) => {
   return fetch(iconPath)
     .then((res) => res.text())
     .then((svgRaw) => {
@@ -73,8 +80,59 @@ const fetchIcon = (iconPath: string) => {
 export const getIcon = async (icon: string) => {
   const iconPath = `/icons/${icon}.svg`;
   if (!cachedSvgs.has(iconPath)) {
-    const res = await fetchIcon(iconPath);
+    const res = await fetchIconAndCache(iconPath);
     return res;
   }
   return cachedSvgs.get(iconPath)!;
+};
+
+type SvgIconFromURLProps = DivProps & {
+  url: string;
+  /**
+   * @default "mask"
+   * mask = uses currentColor
+   * background = maintains original colours
+   */
+  mode?: "background" | "mask" | "auto";
+};
+export const SvgIconFromURL = ({
+  url,
+  className,
+  style,
+  mode: propsMode = "auto",
+  ...divProps
+}: SvgIconFromURLProps) => {
+  const modeOverride = usePromise(async () => {
+    if (propsMode !== "auto") return;
+    const res = await fetch(url);
+    const contentType = res.headers.get("content-type");
+    if (contentType?.includes("image/svg+xml")) {
+      const svg = await res.text();
+      if (svg.includes("currentColor")) {
+        return "mask";
+      }
+    }
+    return "background";
+  }, [propsMode, url]);
+  const mode = propsMode === "auto" ? modeOverride : propsMode;
+
+  return (
+    <div
+      {...divProps}
+      className={classOverride("SvgIconFromURL", className)}
+      style={{
+        ...style,
+        ...(mode === "mask" ?
+          {
+            backgroundColor: "currentColor",
+            maskImage: `url(${JSON.stringify(url)})`,
+            maskSize: "cover",
+          }
+        : {
+            backgroundImage: `url(${JSON.stringify(url)})`,
+            backgroundSize: "cover",
+          }),
+      }}
+    />
+  );
 };

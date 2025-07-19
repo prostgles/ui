@@ -341,6 +341,7 @@ export class W_TimeChart extends RTComp<
         {errorPopup}
         <Btn
           title="Reset extent"
+          data-command="W_TimeChart.resetExtent"
           style={{
             opacity: this.state.visibleDataExtent ? 1 : 0,
           }}

@@ -1,12 +1,11 @@
 import type { JSONB, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
+import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
 import type { FormFieldProps } from "../FormField/FormField";
 import FormField from "../FormField/FormField";
 import type { FullOption } from "../Select/Select";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { isCompleteJSONB } from "./isCompleteJSONB";
-import { type } from "os";
 
 type Schema = JSONB.BasicType | JSONB.EnumType;
 type P = JSONBSchemaCommonProps & {
@@ -28,6 +27,7 @@ export const JSONBSchemaPrimitive = ({
   schema,
   onChange,
   showErrors,
+  noLabels,
 }: P) => {
   let fullOptions: FullOption[] | undefined = undefined;
   if (schema.enum?.length || schema.allowedValues?.length) {
@@ -35,76 +35,6 @@ export const JSONBSchemaPrimitive = ({
       key,
     }));
   }
-
-  const schemaTypeToColType: Record<
-    Required<typeof schema>["type"],
-    Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">
-  > = {
-    Date: {
-      tsDataType: "string",
-      udt_name: "date",
-    },
-    "Date[]": {
-      tsDataType: "string",
-      udt_name: "date",
-    },
-    boolean: {
-      tsDataType: "boolean",
-      udt_name: "bool",
-    },
-    "boolean[]": {
-      tsDataType: "boolean[]",
-      udt_name: "bool",
-    },
-    integer: {
-      tsDataType: "number",
-      udt_name: "int4",
-    },
-    "integer[]": {
-      tsDataType: "number[]",
-      udt_name: "int4",
-    },
-    time: {
-      tsDataType: "string",
-      udt_name: "time",
-    },
-    "time[]": {
-      tsDataType: "string[]",
-      udt_name: "time",
-    },
-    timestamp: {
-      tsDataType: "string",
-      udt_name: "timestamp",
-    },
-    "timestamp[]": {
-      tsDataType: "string[]",
-      udt_name: "timestamp",
-    },
-    string: {
-      tsDataType: "string",
-      udt_name: "text",
-    },
-    "string[]": {
-      tsDataType: "string[]",
-      udt_name: "text",
-    },
-    number: {
-      tsDataType: "number",
-      udt_name: "numeric",
-    },
-    "number[]": {
-      tsDataType: "number[]",
-      udt_name: "numeric",
-    },
-    any: {
-      tsDataType: "any",
-      udt_name: "text",
-    },
-    "any[]": {
-      tsDataType: "any",
-      udt_name: "text",
-    },
-  };
 
   const transformedType = {
     ...(schemaTypeToColType[schema.type as any] ?? {
@@ -124,7 +54,7 @@ export const JSONBSchemaPrimitive = ({
     };
   }
 
-  const inputType = SmartFormField.getInputType({
+  const inputType = getInputType({
     ...transformedType,
     name: schema.title ?? "text",
   });
@@ -135,13 +65,23 @@ export const JSONBSchemaPrimitive = ({
   return (
     <FormField
       name={schema.title}
-      label={{ children: schema.title, info: schema.description }}
+      label={
+        /**
+         * Hacky. TODO: find a better approach showing JSONB controls within a form with existing top label and bottom hint.
+         * Should the main column label be removed?!
+         */
+        noLabels && schema.type !== "boolean" ?
+          undefined
+        : { children: schema.title, info: schema.description }
+      }
       value={value}
-      className={"JSONBSchemaPrimitive"}
+      placeholder={noLabels ? schema.title : undefined}
+      className={"JSONBSchemaPrimitive f-0"}
       type={inputType}
       nullable={schema.nullable}
       optional={schema.optional}
       arrayType={arrayType}
+      // variant="row"
       inputProps={schema.type === "integer" ? { step: 1 } : undefined}
       fullOptions={fullOptions}
       multiSelect={!!schema.allowedValues?.length && schema.type.endsWith("[]")}
@@ -164,6 +104,76 @@ export const JSONBSchemaPrimitive = ({
       error={error}
     />
   );
+};
+
+const schemaTypeToColType: Record<
+  Required<Schema>["type"],
+  Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">
+> = {
+  Date: {
+    tsDataType: "string",
+    udt_name: "date",
+  },
+  "Date[]": {
+    tsDataType: "string",
+    udt_name: "date",
+  },
+  boolean: {
+    tsDataType: "boolean",
+    udt_name: "bool",
+  },
+  "boolean[]": {
+    tsDataType: "boolean[]",
+    udt_name: "bool",
+  },
+  integer: {
+    tsDataType: "number",
+    udt_name: "int4",
+  },
+  "integer[]": {
+    tsDataType: "number[]",
+    udt_name: "int4",
+  },
+  time: {
+    tsDataType: "string",
+    udt_name: "time",
+  },
+  "time[]": {
+    tsDataType: "string[]",
+    udt_name: "time",
+  },
+  timestamp: {
+    tsDataType: "string",
+    udt_name: "timestamp",
+  },
+  "timestamp[]": {
+    tsDataType: "string[]",
+    udt_name: "timestamp",
+  },
+  string: {
+    tsDataType: "string",
+    udt_name: "text",
+  },
+  "string[]": {
+    tsDataType: "string[]",
+    udt_name: "text",
+  },
+  number: {
+    tsDataType: "number",
+    udt_name: "numeric",
+  },
+  "number[]": {
+    tsDataType: "number[]",
+    udt_name: "numeric",
+  },
+  any: {
+    tsDataType: "any",
+    udt_name: "text",
+  },
+  "any[]": {
+    tsDataType: "any",
+    udt_name: "text",
+  },
 };
 
 const parseNumber = (str: string) =>

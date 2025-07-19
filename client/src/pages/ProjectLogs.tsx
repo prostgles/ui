@@ -1,5 +1,3 @@
-export default { ____________d: 1 };
-
 // import React from 'react';
 // import FormField from '../components/FormField/FormField';
 // import Checkbox from '../components/Checkbox';

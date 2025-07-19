@@ -133,7 +133,6 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
               type="checkbox"
               label="Null empty text"
               className="mt-1"
-              asColumn={true}
               value={sort.nullEmpty}
               onChange={(e) => {
                 updateSort({ ...sort, nullEmpty: e });

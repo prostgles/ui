@@ -1,6 +1,6 @@
 import type { SQLHandler } from "prostgles-types";
 import { isObject } from "../../../../../commonTypes/publishUtils";
-import { QUERY_WATCH_IGNORE } from "../../../../../commonTypes/utils";
+import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../commonTypes/utils";
 import { suggestSnippets } from "./CommonMatchImports";
 import { ENCODINGS } from "./PSQL";
 import {
@@ -8,7 +8,7 @@ import {
   type GetKind,
   type ParsedSQLSuggestion,
   type SQLMatcher,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
@@ -292,7 +292,7 @@ export const suggestDirsAndFiles = async (
 
               if (ext?.toLowerCase() === "csv") {
                 const q = `
-                /* ${QUERY_WATCH_IGNORE}  */
+                /* ${EXCLUDE_FROM_SCHEMA_WATCH}  */
                 DROP TABLE IF EXISTS prostgles.temp_dir_suggestions; 
                 CREATE table prostgles.temp_dir_suggestions(val text); 
                 COPY prostgles.temp_dir_suggestions (val) FROM PROGRAM \${command}; 

@@ -101,6 +101,7 @@ export const FunctionSelector = ({
 const infoTypes = {
   string: { udt_name: "text", tsDataType: "string" },
   number: { udt_name: "numeric", tsDataType: "number" },
+  bigint: { udt_name: "int8", tsDataType: "string" },
   date: { udt_name: "date", tsDataType: "string" },
   interval: { udt_name: "interval", tsDataType: "any" },
   geo: { udt_name: "geography", tsDataType: "any" },
@@ -407,7 +408,7 @@ export const CountAllFunc: FuncDef & { name: string } = {
   label: "Count of all rows",
   subLabel: "",
   tsDataTypeCol: undefined,
-  outType: infoTypes.number,
+  outType: infoTypes.bigint,
   isAggregate: true,
 };
 
@@ -418,7 +419,7 @@ const aggFunctions = [
     name: "COUNT",
     label: "Count of rows for which the column value is not null",
     tsDataTypeCol: "any",
-    outType: infoTypes.number,
+    outType: infoTypes.bigint,
   },
 
   {

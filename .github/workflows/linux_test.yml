@@ -29,6 +29,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
+          fetch-depth: 2 # Fetch at least 2 commits to ensure doc checks work
 
       - name: Install curl inside postgres container for video needed for demo
         run: |
@@ -55,16 +56,13 @@ jobs:
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - && \
           sudo apt-get update && \
           sudo apt-get -y install postgresql-client-16
-
-      # buggy
-      # - name: Run electron test
-      #   run: |
-      #     sudo apt-get install xvfb -y &&
-      #     cd electron && npm run test-linux
+          # Install uv tool for MCP tools
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          npm cache clean --force
 
       - name: Run test
         run: |
-          ./e2e/test.sh
+          npm test
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -74,7 +72,7 @@ jobs:
             e2e/electron-report/
             e2e/playwright-report/
           retention-days: 10
-  test_macos:
+  test_desktop_on_macos:
     runs-on: macos-latest
     timeout-minutes: 15
     steps:

@@ -4,7 +4,7 @@ import { getParentFunction } from "./MatchSelect";
 import type {
   ParsedSQLSuggestion,
   SQLMatcherResultArgs,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
 
 export const suggestFuncArgs = async ({

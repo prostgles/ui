@@ -11,7 +11,7 @@ import { InfoRow } from "../../components/InfoRow";
 import Select from "../../components/Select/Select";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { pickKeys } from "prostgles-types";
-import { CredentialSelector } from "../Backup/CredentialSelector";
+import { CredentialSelector } from "../BackupAndRestore/CredentialSelector";
 import { FileStorageDelete } from "./FileStorageDelete";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 
@@ -26,7 +26,7 @@ const STORAGE_TYPES = [
 
 export type FileStorageControlsProps = Pick<
   FullExtraProps,
-  "dbsMethods" | "dbTables" | "dbs" | "dbsTables" | "dbProject" | "theme"
+  "dbsMethods" | "dbTables" | "dbs" | "dbsTables" | "dbProject"
 > & {
   connection: DBSSchema["connections"];
   database_config: DBSSchema["database_configs"];
@@ -40,7 +40,6 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
     dbTables,
     dbs,
     dbsTables,
-    theme,
     dbsMethods,
     dbProject,
     database_config,
@@ -206,7 +205,6 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
         {storageType === "S3" ?
           <div className="flex-row-wrap gap-2 h-fit">
             <CredentialSelector
-              theme={theme}
               dbs={dbs}
               dbsMethods={dbsMethods}
               dbsTables={dbsTables}

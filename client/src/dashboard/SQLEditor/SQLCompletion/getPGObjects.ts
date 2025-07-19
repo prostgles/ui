@@ -3,7 +3,7 @@ import { tryCatch } from "prostgles-types";
 import type { TopKeyword } from "./KEYWORDS";
 import { TOP_KEYWORDS, asSQL } from "./KEYWORDS";
 import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
-import { QUERY_WATCH_IGNORE } from "../../../../../commonTypes/utils";
+import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../commonTypes/utils";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
 
 export type PGDatabase = {
@@ -19,6 +19,13 @@ export type PGDatabase = {
   IsCurrent: boolean;
   escaped_identifier: string;
 };
+
+export type CASCADE =
+  | "CASCADE"
+  | "RESTRICT"
+  | "SET NULL"
+  | "SET DEFAULT"
+  | "NO ACTION";
 export type PGConstraint = {
   conname: string;
   definition: string;
@@ -31,7 +38,10 @@ export type PGConstraint = {
   schema: string;
   escaped_identifier: string;
   contype: "c" | "f" | "p" | "u" | "e";
+  on_update_action: CASCADE | null;
+  on_delete_action: CASCADE | null;
   table_oid: number;
+  ftable_oid: number | null;
 };
 
 export type PG_Role = {
@@ -604,6 +614,7 @@ export async function getDataTypes(db: DB): Promise<PG_DataType[]> {
   WHERE (t.typrelid = 0 OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid))
     AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type el WHERE el.oid = t.typelem AND el.typarray = t.oid)
     AND pg_catalog.pg_type_is_visible(t.oid)
+    AND t.typname <> 'internal'
   ORDER BY 1, 2; 
 
   `;
@@ -914,8 +925,25 @@ export const PG_OBJECT_QUERIES = {
       format('%I', rel.relname) as escaped_table_name,
       frel.relname as ftable_name,
       CASE WHEN frel.relname IS NOT NULL THEN format('%I', frel.relname) END as escaped_ftable_name,
-      nspname as schema,
-      c.conrelid as table_oid
+      nspname as schema, 
+      CASE c.confdeltype
+          WHEN 'a' THEN 'NO ACTION'
+          WHEN 'r' THEN 'RESTRICT'
+          WHEN 'c' THEN 'CASCADE'
+          WHEN 'n' THEN 'SET NULL'
+          WHEN 'd' THEN 'SET DEFAULT'
+          ELSE NULL -- Should only be relevant for FKs
+      END as on_delete_action,
+      CASE c.confupdtype
+          WHEN 'a' THEN 'NO ACTION'
+          WHEN 'r' THEN 'RESTRICT'
+          WHEN 'c' THEN 'CASCADE'
+          WHEN 'n' THEN 'SET NULL'
+          WHEN 'd' THEN 'SET DEFAULT'
+          ELSE NULL -- Should only be relevant for FKs
+      END as on_update_action ,
+      c.conrelid as table_oid,
+      c.confrelid as ftable_oid
       FROM pg_catalog.pg_constraint c
       INNER JOIN pg_catalog.pg_class rel
         ON rel.oid = c.conrelid
@@ -1082,7 +1110,7 @@ export const PG_OBJECT_QUERIES = {
       )::text[]`;
 
       return `
-      /*  ${QUERY_WATCH_IGNORE} */
+      /*  ${EXCLUDE_FROM_SCHEMA_WATCH} */
       ${searchSchemaQuery}
       SELECT *, 
         concat_ws( 

@@ -1,23 +1,20 @@
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import path from "path";
-import { FileManager } from "prostgles-server/dist/FileManager/FileManager";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import { FileManager } from "prostgles-server/dist/FileManager/FileManager";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 
-import { getRootDir } from "../electronConfig";
-import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
-import { getConnectionDetails } from "../connectionUtils/getConnectionDetails";
-import { BACKUP_FOLDERNAME } from "./BackupManager";
-import type { EnvVars } from "./pipeFromCommand";
-import { getAge } from "../../../commonTypes/utils";
 import type { Connections, DBS } from "..";
+import { getAge, ROUTES } from "../../../commonTypes/utils";
 import { getCloudClient } from "../cloudClients/cloudClients";
+import { getConnectionDetails } from "../connectionUtils/getConnectionDetails";
+import { getRootDir } from "../electronConfig";
 
 export const getConnectionUri = (c: Connections) =>
   c.db_conn ||
   `postgres://${c.db_user}:${c.db_pass || ""}@${c.db_host || "localhost"}:${c.db_port || "5432"}/${c.db_name}`;
 
 export async function getFileMgr(dbs: DBS, credId: number | null) {
-  const localFolderPath = path.resolve(getRootDir() + "/" + BACKUP_FOLDERNAME);
+  const localFolderPath = path.resolve(getRootDir() + ROUTES.BACKUPS);
 
   let cred;
   if (credId) {

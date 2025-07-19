@@ -6,7 +6,7 @@ import type {
 } from "prostgles-types";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 import type { W_SQL_ActiveQuery, W_SQLState } from "./W_SQL";
 import type { W_SQL } from "./W_SQL";
 import { SQL_NOT_ALLOWED } from "./W_SQL";
@@ -14,7 +14,7 @@ import { parseSQLError } from "./parseSQLError";
 import { getFieldsWithActions, parseSqlResultCols } from "./parseSqlResultCols";
 import { parseExplainResult } from "./parseExplainResult";
 
-export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
+export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
   const { activeQuery } = this.state;
   if (activeQuery?.state === "running") {
     alert("Must stop active query first");

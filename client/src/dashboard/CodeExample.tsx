@@ -9,7 +9,7 @@ const CodeExample = ({ header, ...props }: P) => {
   return (
     <div
       className={
-        "flex-col gap-p1 f-1 b b-color-2 rounded o-hidden " +
+        "flex-col gap-p1 f-1 b b-color rounded o-hidden " +
         (props.className || "")
       }
     >

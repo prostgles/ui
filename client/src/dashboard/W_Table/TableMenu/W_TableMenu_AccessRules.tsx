@@ -21,7 +21,7 @@ export const W_TableMenu_AccessRules = ({
   const { accessRules } = tableMeta;
   return (
     <FlexCol>
-      <ul className="flex-col gap-1">
+      <ul className="no-decor flex-col gap-1">
         {accessRules.map((r) => {
           const dbRule = r.dbPermissions;
           const tableRule =

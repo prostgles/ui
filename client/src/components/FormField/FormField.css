@@ -43,17 +43,9 @@
 }
 .form-field
   .input-wrapper
-  > :first-child:not(textarea, .ChipArrayEditor, .Checkbox) {
+  > :first-child:not(textarea, .ChipArrayEditor, .Checkbox, .JSONBSchema) {
   border-radius: 0 !important;
   color: var(--text-0);
-}
-
-.dark-theme
-  .form-field
-  .input-wrapper
-  > :first-child:not(.ChipArrayEditor, .Checkbox) {
-  color: var(--text-0);
-  background-color: var(--input-bg-color);
 }
 
 /* .form-field input:focus, */
@@ -76,8 +68,7 @@
 } */
 
 .form-field label.main-label {
-  flex: 1;
-  line-height: 2em;
+  flex: 1; 
   min-width: 80px;
 }
 

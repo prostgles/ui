@@ -6,6 +6,7 @@ export type LayoutItem = {
   type: "item";
   title?: string;
   tableName: string | null;
+  viewType: "table" | "map" | "timechart" | "sql";
   /**
    * Flex size of the item
    */
@@ -201,7 +202,7 @@ export type WorkspaceInsertModel = {
 /**
  * https://github.com/electron-userland/electron-builder/issues/5064
  */
-export const contentOfThisFile = `export type LayoutItem = {
+export const dashboardTypes = `export type LayoutItem = {
   /**
    * UUID of the window
    */

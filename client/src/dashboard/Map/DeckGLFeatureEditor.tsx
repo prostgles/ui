@@ -1,20 +1,20 @@
 import { mdiPencil, mdiPlus } from "@mdi/js";
+import { scaleLinear } from "d3";
+import type { GeoJsonLayer } from "deck.gl";
+import type { Feature } from "geojson";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
 import Select from "../../components/Select/Select";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
-import SmartForm from "../SmartForm/SmartForm";
+import { isDefined } from "../../utils";
+import { SmartForm } from "../SmartForm/SmartForm";
 import type { LayerTable, W_MapProps } from "../W_Map/W_Map";
 import type { GeoJSONFeature, GeoJsonLayerProps } from "./DeckGLMap";
 import type { DeckGlLibs, DeckWrapped } from "./DeckGLWrapped";
 import type { AllDrawModes } from "./mapDrawUtils";
 import { DrawModes, geometryToGeoEWKT } from "./mapDrawUtils";
-import type { Feature } from "geojson";
-import type { GeoJsonLayer } from "deck.gl";
-import { isDefined } from "../../utils";
-import { scaleLinear } from "d3-scale";
 
 export type DeckGLFeatureEditorProps = {
   deckW: DeckWrapped;
@@ -289,11 +289,14 @@ export const DeckGLFeatureEditor = ({
     renderShapes(undefined);
   }, [editMode?.geometry, renderShapes]);
 
-  const wasUpdated =
-    (isUpdate &&
-      JSON.stringify(editMode.initialGeometry) !==
-        JSON.stringify(editMode.geometry)) ||
-    editMode?.geometry;
+  const wasUpdated = useMemo(() => {
+    return (
+      (isUpdate &&
+        JSON.stringify(editMode.initialGeometry) !==
+          JSON.stringify(editMode.geometry)) ||
+      editMode?.geometry
+    );
+  }, [editMode?.geometry, editMode?.initialGeometry, isUpdate]);
 
   const layerTables: LayerTable[] = (
     layerQueries?.filter((l) => "tableName" in l) as LayerTable[]
@@ -301,29 +304,35 @@ export const DeckGLFeatureEditor = ({
     .map((l) => ({ ...l, rootTable: l.path?.at(-1) ?? l.tableName }))
     .filter((l) => dbProject[l.tableName]?.update);
 
+  const closeEditMode = useCallback(() => {
+    clearEditMode(true);
+  }, [clearEditMode]);
+
+  const editModeFilter = useMemo(() => {
+    const filter =
+      editMode?.$rowhash ?
+        [{ fieldName: "$rowhash", value: editMode.$rowhash }]
+      : undefined;
+    return filter;
+  }, [editMode?.$rowhash]);
+
   if (!layerTables.length) {
     return null;
   }
 
   if (editMode) {
     if (editMode.finished && editMode.geometry) {
-      const filter =
-        editMode.$rowhash ?
-          [{ fieldName: "$rowhash", value: editMode.$rowhash }]
-        : undefined;
       return (
         <SmartForm
-          theme={edit.theme}
           asPopup={true}
           tableName={editMode.tableName}
-          rowFilter={filter}
+          rowFilter={editModeFilter}
           db={dbProject}
           tables={dbTables}
           methods={dbMethods}
           defaultData={defaultData}
-          onSuccess={() => clearEditMode(true)}
+          onSuccess={closeEditMode}
           onClose={clearEditMode}
-          hideChangesOptions={true}
           confirmUpdates={true}
         />
       );
@@ -476,6 +485,7 @@ export const DeckGLFeatureEditor = ({
   if (firstTable) {
     return (
       <Select
+        data-command="DeckGLFeatureEditor"
         title="Select shape type"
         fullOptions={Object.entries(DrawModes).map(
           ([key, { label, iconPath }]) => ({

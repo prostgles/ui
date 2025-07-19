@@ -61,7 +61,7 @@ export const W_MapMenu = (props: ProstglesMapMenuProps) => {
       compactMode={window.isMobileDevice ? "hide-inactive" : undefined}
       contentClass="p-1"
       items={{
-        "Data Refresh": {
+        "Data refresh": {
           leftIconPath: mdiSyncCircle,
           style:
             (w.options.refresh?.type || "None") === "None" ?

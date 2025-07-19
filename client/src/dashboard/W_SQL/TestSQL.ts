@@ -1,4 +1,5 @@
-import { tout } from "../../pages/ElectronSetup";
+import { tryCatchV2 } from "prostgles-types";
+import { tout } from "../../pages/ElectronSetup/ElectronSetup";
 import {
   TopHeaderClassName,
   type WindowSyncItem,
@@ -8,7 +9,6 @@ import { mainTestScripts } from "./demoScripts/mainTestScripts";
 import { testBugs } from "./demoScripts/testBugs";
 import { testMiscAndBugs } from "./demoScripts/testMiscAndBugs";
 import { getDemoUtils } from "./getDemoUtils";
-import { tryCatch } from "prostgles-types";
 
 export const VIDEO_DEMO_DB_NAME = "prostgles_video_demo";
 export const TestSQL = async (w: WindowSyncItem<"sql">) => {
@@ -34,16 +34,16 @@ export const TestSQL = async (w: WindowSyncItem<"sql">) => {
 };
 
 export const startWakeLock = async () => {
-  const wakeLock = tryCatch(async () => {
+  const { data: wakeLock } = await tryCatchV2(async () => {
     const wakeLock = await navigator.wakeLock.request("screen");
-    return { wakeLock };
+    return wakeLock;
   });
 
   return {
     stopWakeLock: async () => {
       try {
         const res = await wakeLock;
-        res.wakeLock?.release();
+        res?.release();
       } catch (e) {
         console.error(e);
       }

@@ -73,6 +73,7 @@ export const getFieldsWithActions = (fields: any[], isSelect: boolean) =>
     ...f,
     idx,
     key: f.name,
+    label: f.name,
     subLabel: f.dataType,
     sortable: isSelect && !["xml", "json"].includes(f.dataType),
   }));

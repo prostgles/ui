@@ -2,6 +2,7 @@ const { resolve } = require("path");
 const { merge } = require("webpack-merge");
 const commonConfig = require("./common");
 const OnDevCompiled = require("./OnDevCompiled");
+const { DefinePlugin } = require("webpack");
 
 module.exports = merge(commonConfig, {
   mode: "development",
@@ -18,5 +19,10 @@ module.exports = merge(commonConfig, {
     },
   },
   devtool: "cheap-module-source-map",
-  plugins: [new OnDevCompiled({ options: true })],
+  plugins: [
+    new OnDevCompiled({ options: true }),
+    new DefinePlugin({
+      __REACT_DEVTOOLS_GLOBAL_HOOK__: "({ isDisabled: true })",
+    }),
+  ],
 });

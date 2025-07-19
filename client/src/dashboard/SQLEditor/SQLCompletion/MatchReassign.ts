@@ -1,4 +1,4 @@
-import type { SQLMatcher } from "./registerSuggestions";
+import type { SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
 import { withKWDs } from "./withKWDs";
 
 const KWDS = [

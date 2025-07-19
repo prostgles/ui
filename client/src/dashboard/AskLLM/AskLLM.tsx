@@ -2,30 +2,30 @@ import { mdiAssistant } from "@mdi/js";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
-import { AskLLMChat } from "./AskLLMChat";
-import { SetupLLMCredentials } from "./SetupLLMCredentials";
-import { useLLMSetupState } from "./useLLMSetupState";
+import { AskLLMChat } from "./Chat/AskLLMChat";
+import { SetupLLMCredentials } from "./Setup/SetupLLMCredentials";
+import { useLLMSetupState } from "./Setup/useLLMSetupState";
 import Loading from "../../components/Loading";
 import { t } from "../../i18n/i18nUtils";
+import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 
 export const CHAT_WIDTH = 800;
 
-type P = Prgl & { workspaceId: string | undefined };
+type P = Prgl & {
+  workspaceId: string | undefined;
+  loadedSuggestions: LoadedSuggestions | undefined;
+};
 
 export const AskLLM = (props: P) => {
-  const { workspaceId, ...prgl } = props;
+  const { workspaceId, loadedSuggestions, ...prgl } = props;
   const { dbsMethods } = prgl;
-  const { askLLM } = dbsMethods;
+  const { askLLM, callMCPServerTool } = dbsMethods;
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const onClose = () => {
     setAnchorEl(null);
   };
   const state = useLLMSetupState(prgl);
-
-  if (state.state === "loading") {
-    return <Loading />;
-  }
 
   return (
     <>
@@ -40,13 +40,14 @@ export const AskLLM = (props: P) => {
         onClick={(e) => {
           setAnchorEl(e.currentTarget);
         }}
+        loading={state.state === "loading"}
         disabledInfo={
           !askLLM ?
             t.AskLLM["AI assistant not available. Talk to the admin"]
           : undefined
         }
       >
-        {window.isMediumWidthScreen ? null : t.AskLLM["Ask AI"]}
+        {window.isMediumWidthScreen ? null : t.AskLLM["AI Assistant"]}
       </Btn>
 
       {!anchorEl || !askLLM ?
@@ -59,7 +60,9 @@ export const AskLLM = (props: P) => {
           onClose={onClose}
         />
       : <AskLLMChat
+          loadedSuggestions={loadedSuggestions}
           prgl={prgl}
+          callMCPServerTool={callMCPServerTool}
           askLLM={askLLM}
           workspaceId={workspaceId}
           setupState={state}

@@ -7,12 +7,6 @@ import type { DBPermissionEditorProps } from "./PCustomTables";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 
-export const getPRunSQLErrors = (rule: EditedAccessRule) => {
-  if (rule.dbPermissions.type === "Run SQL" && !rule.dbPermissions.allowSQL) {
-    return `Must tick "Run SQL" checkbox`;
-  }
-};
-
 export const PRunSQL = ({
   dbPermissions,
   onChange,

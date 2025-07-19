@@ -1,7 +1,7 @@
 import { isDefined } from "prostgles-types";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getCurrentNestingOffsetLimits } from "./completionUtils/getCodeBlock";
-import type { SQLSuggestion } from "../SQLEditor";
+import type { SQLSuggestion } from "../W_SQLEditor";
 import type { MinimalSnippet } from "./CommonMatchImports";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
@@ -10,7 +10,7 @@ import {
   type GetKind,
   type ParsedSQLSuggestion,
   type SQLMatchContext,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import { suggestFuncArgs } from "./suggestFuncArgs";
 import { suggestColumnLike } from "./suggestColumnLike";
 

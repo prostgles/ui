@@ -1,35 +1,25 @@
 import React from "react";
 import "./FormField.css";
 
-import ErrorComponent from "../ErrorComponent";
+import { mdiClose, mdiFullscreen } from "@mdi/js";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import { isDefined } from "prostgles-types";
+import { ChipArrayEditor } from "../../dashboard/SmartForm/ChipArrayEditor";
+import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
+import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
+import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
+import type { TestSelectors } from "../../Testing";
+import Btn, { FileBtn } from "../Btn";
+import Checkbox from "../Checkbox";
+import { generateUniqueID } from "../FileInput/FileInput";
+import { classOverride } from "../Flex";
+import { Label, type LabelPropsNormal } from "../Label";
+import List from "../List";
+import Popup from "../Popup/Popup";
 import type { FullOption } from "../Select/Select";
 import Select from "../Select/Select";
-import Btn, { FileBtn } from "../Btn";
-import List from "../List";
-import Checkbox from "../Checkbox";
-import { mdiAlertCircleOutline, mdiClose, mdiFullscreen } from "@mdi/js";
-import { InfoRow } from "../InfoRow";
-import type {
-  CodeEditorJsonSchema,
-  CodeEditorProps,
-} from "../../dashboard/CodeEditor/CodeEditor";
-import { CodeEditor } from "../../dashboard/CodeEditor/CodeEditor";
-import { generateUniqueID } from "../FileInput/FileInput";
+import { FormFieldSkeleton } from "./FormFieldSkeleton";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
-import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
-import { ChipArrayEditor } from "../../dashboard/SmartForm/ChipArrayEditor";
-import type { ValidatedColumnInfo } from "prostgles-types";
-import { isDefined, isObject } from "prostgles-types";
-import type { LabelProps } from "../Label";
-import { Label } from "../Label";
-import type { TestSelectors } from "../../Testing";
-import { classOverride } from "../Flex";
-import { Icon } from "../Icon/Icon";
-import Popup from "../Popup/Popup";
-import { FormFieldCodeEditor } from "./FormFieldCodeEditor";
-
-const INPUT_HINT_WRAPPER_CLASS = "input-hint-wrapper";
-const INPUT_WRAPPER_CLASS = "input-wrapper";
 
 export type FormFieldProps = TestSelectors & {
   onChange?: (val: string | number | any, e?: any) => void;
@@ -37,7 +27,8 @@ export type FormFieldProps = TestSelectors & {
   error?: any;
   type?: string;
   className?: string;
-  label?: string | Omit<Extract<LabelProps, { variant: "normal" }>, "variant">;
+  label?: string | Omit<LabelPropsNormal, "variant">;
+  labelAsString?: string;
   id?: string;
   readOnly?: boolean;
   /**
@@ -58,13 +49,8 @@ export type FormFieldProps = TestSelectors & {
   options?: readonly (string | number | null)[];
   fullOptions?: readonly FullOption[];
   autoComplete?: string;
-  asColumn?: boolean;
   accept?: string;
   asTextArea?: boolean;
-  asJSON?: {
-    schemas?: CodeEditorJsonSchema[];
-    options?: Omit<CodeEditorProps, "language" | "value">;
-  };
   rightContentAlwaysShow?: boolean;
   rightIcons?: React.ReactNode;
   rightContent?: React.ReactNode;
@@ -87,12 +73,15 @@ export type FormFieldProps = TestSelectors & {
   >;
   hideClearButton?: boolean;
   maxWidth?: React.CSSProperties["maxWidth"];
-  labelClass?: string;
   labelStyle?: React.CSSProperties;
 
   disabledInfo?: string;
-
+  asJSON?: AsJSON["component"];
   arrayType?: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
+  leftIcon?: React.ReactNode;
+  showFullScreenToggle?: boolean;
+
+  variant?: "row";
 };
 
 type FormFieldState = {
@@ -115,10 +104,10 @@ export default class FormField extends React.Component<
   setResizer = () => {
     const { asTextArea, autoResize = true } = this.props;
     if (this.rootDiv && asTextArea && autoResize && !this.textArea) {
-      const ta = this.rootDiv.querySelector("textarea");
-      if (ta) {
-        this.textArea = ta;
-        ta.addEventListener("input", this.resize, false);
+      const textArea = this.rootDiv.querySelector("textarea");
+      if (textArea) {
+        this.textArea = textArea;
+        textArea.addEventListener("input", this.resize, false);
         setTimeout(() => {
           this.resize();
         }, 10);
@@ -252,10 +241,8 @@ export default class FormField extends React.Component<
       style = {},
       inputStyle = {},
       asTextArea = false,
-      asJSON,
       accept,
       onInput,
-      asColumn = true,
       rightIcons = null,
       rightContent = null,
       title,
@@ -263,6 +250,7 @@ export default class FormField extends React.Component<
       optional = false,
       multiSelect,
       labelAsValue,
+      labelAsString,
       options = this.state.options,
       fullOptions,
       name = this.props.type,
@@ -270,11 +258,14 @@ export default class FormField extends React.Component<
       hideClearButton = false,
       maxWidth = "400px",
       rawValue: rval,
-      labelClass = "",
       labelStyle = {},
       disabledInfo,
       arrayType,
       rightContentAlwaysShow,
+      asJSON,
+      variant,
+      showFullScreenToggle,
+      leftIcon,
     } = this.props;
 
     this.id ??= this.props.id ?? generateUniqueID();
@@ -285,7 +276,7 @@ export default class FormField extends React.Component<
         <ChipArrayEditor
           elemTsType={arrayType.tsDataType}
           elemUdtName={arrayType.udt_name}
-          inputType={SmartFormField.getInputType({
+          inputType={getInputType({
             name: name ?? "text",
             ...arrayType,
           }).toLowerCase()}
@@ -327,7 +318,7 @@ export default class FormField extends React.Component<
     if (readOnly) valProp = { value };
     if (defaultValue) valProp = { defaultValue };
 
-    let inptClass = " font-semibold ";
+    let inptClass = " font-semibold formfield-bg-color ";
     if (type !== "checkbox") {
       wrapperStyle = {
         ...wrapperStyle,
@@ -474,16 +465,6 @@ export default class FormField extends React.Component<
 
     const inputNode =
       inputContent ? inputContent
-      : asJSON ?
-        <FormFieldCodeEditor
-          asJSON={asJSON}
-          value={value}
-          disabledInfo={disabledInfo}
-          onChange={onChange}
-          className={inputProps.className}
-          style={inputProps.style}
-          readOnly={readOnly}
-        />
       : type === "file" ? <FileBtn {...(inputProps as any)} />
       : type === "checkbox" ? <Checkbox {...(inputProps as any)} />
       : readOnly ?
@@ -491,7 +472,7 @@ export default class FormField extends React.Component<
           className="pr-p5 py-p5 font-16 ta-left o-auto"
           style={{ fontWeight: 500, maxHeight: "30vh" }}
         >
-          {SmartFormField.renderValue(undefined, rawValue)}
+          <RenderValue column={undefined} value={rawValue} />
         </div>
       : asTextArea ?
         <textarea
@@ -505,10 +486,7 @@ export default class FormField extends React.Component<
           style={inputFinalStyle}
         />;
 
-    let rightIcons1, rightIcons2;
-    if (rightIcons) {
-      rightIcons1 = rightIcons;
-    }
+    let clearButton: React.ReactNode = null;
     if (
       !readOnly &&
       !disabledInfo &&
@@ -517,7 +495,7 @@ export default class FormField extends React.Component<
       !hideClearButton
     ) {
       if (nullable && optional) {
-        rightIcons2 = (
+        clearButton = (
           <Select
             btnProps={{
               iconPath: mdiClose,
@@ -537,32 +515,36 @@ export default class FormField extends React.Component<
         (rawValue !== undefined && optional) ||
         (rawValue !== null && nullable)
       ) {
-        rightIcons2 = (
+        clearButton = (
           <Btn
             data-command="FormField.clear"
-            title="Set to null"
+            title={`Set to ${optional ? "undefined" : "null"}`}
             style={{
               /** To ensure it's centered with the rest of the content */
               height: "100%",
-              // background: "var(--input-bg-color)",
+              ...(type === "checkbox" ? { padding: "0" } : {}), // paddingLeft: 0
             }}
             iconPath={mdiClose}
             onClick={(e) => {
               onChange(optional ? undefined : null, e);
             }}
+            size="small"
             className="rounded-r"
           />
         );
       }
     }
 
-    const labelString = isObject(label) ? label.label : label;
     const isEditableSelect = !readOnly && Array.isArray(options ?? fullOptions);
 
-    if (this.state.fullScreen && asJSON) {
+    if (this.state.fullScreen && showFullScreenToggle) {
       return (
         <Popup
-          title={typeof label === "string" ? label : undefined}
+          title={
+            typeof label === "string" ? label : (
+              <Label variant="normal" {...label} />
+            )
+          }
           positioning="fullscreen"
           onClose={() => {
             this.setState({ fullScreen: false });
@@ -574,228 +556,140 @@ export default class FormField extends React.Component<
     }
 
     return (
-      <div
-        className={`form-field trigger-hover min-w-0 ${className} ${disabledInfo ? "disabled" : ""}`}
-        data-command={isEditableSelect ? undefined : this.props["data-command"]}
-        data-label={labelString}
-        data-key={this.props["data-key"]}
-        style={style}
+      <FormFieldSkeleton
+        id={id}
+        title={title}
         ref={(e) => {
           if (e) this.rootDiv = e;
         }}
+        leftIcon={leftIcon}
+        data-command={isEditableSelect ? undefined : this.props["data-command"]}
+        data-key={this.props["data-key"]}
+        className={className}
+        disabledInfo={disabledInfo}
+        style={style}
         onBlur={() => {
           if (suggestions) {
             this.setState({ suggestions: undefined });
           }
         }}
-        title={disabledInfo}
         onKeyDown={(e) => onFormFieldKeyDown.bind(this)(e, selectSuggestion)}
-      >
-        <div
-          className={`trigger-hover ${(type !== "checkbox" && !asColumn ? " ai-center " : " ") + (!asColumn ? " flex-row-wrap " : " flex-col ")}`}
-          title={title}
-          style={{
-            ...(asJSON && { minWidth: "min(400px, 90vw)" }),
-            ...(disabledInfo && { pointerEvents: "none" }),
-          }}
-        >
-          {!!label && isObject(label) ?
-            <Label
-              className="mb-p25"
-              {...label}
-              htmlFor={id}
-              variant="normal"
-              style={{ zIndex: 1 }}
+        hintWrapperStyle={{
+          flex: 1,
+          ...(variant === "row" && { flexDirection: "row" }),
+          ...(asJSON && { minWidth: "min(400px, 90vw)" }),
+        }}
+        label={label}
+        labelStyle={labelStyle}
+        labelRightContent={
+          showFullScreenToggle && (
+            <Btn
+              title="Click to toggle full screen"
+              className="show-on-trigger-hover"
+              iconPath={mdiFullscreen}
+              size="small"
+              style={{ padding: "0" }}
+              onClick={() => {
+                this.setState({ fullScreen: !this.state.fullScreen });
+              }}
             />
-          : <label
-              htmlFor={id}
-              className={
-                "main-label ta-left noselect text-1 flex-row ai-center " +
-                (id ? " pointer " : " ") +
-                labelClass
-              }
-              style={{
-                flex: 0.5,
-                justifyContent: "space-between",
-                ...labelStyle,
-              }}
-            >
-              {label}
-              {asJSON && (
-                <Btn
-                  title="Click to toggle full screen"
-                  className="show-on-trigger-hover"
-                  iconPath={mdiFullscreen}
-                  onClick={() => {
-                    this.setState({ fullScreen: !this.state.fullScreen });
-                  }}
-                />
-              )}
-            </label>
-          }
-
-          <div className={" flex-row f-1 ai-center min-w-0 gap-p25 "}>
-            <div
-              className={`${INPUT_HINT_WRAPPER_CLASS} ${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect ? "" : "f-1"}`}
-              style={{
-                maxWidth: "100%",
-              }}
-            >
-              <div
-                className={
-                  INPUT_WRAPPER_CLASS +
-                  (type === "checkbox" ? " ai-center " : "") +
-                  (type === "checkbox" ? " " : " focus-border  ") +
-                  " h-fit flex-row relative  f-0 " +
-                  (options || fullOptions ? "w-fit" : "w-full") +
-                  (error ? " error " : "")
+          )
+        }
+        errorWrapperClassname={`${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect || (inputContent && asJSON !== "codeEditor" && type !== "checkbox") ? "" : "f-1"}`}
+        inputWrapperClassname={
+          (type === "checkbox" ? " ai-center " : "") +
+          (type === "checkbox" || asJSON === "JSONBSchema" || arrayEditor ?
+            " focus-border-unset "
+          : " ") +
+          ((
+            options ||
+            fullOptions ||
+            asJSON === "JSONBSchema" ||
+            type === "checkbox"
+          ) ?
+            "w-fit"
+          : "w-full")
+        }
+        inputWrapperStyle={{
+          ...wrapperStyle,
+          maxWidth: asTextArea ? "100%" : maxWidth,
+          ...(asJSON === "codeEditor" && { minHeight: "42px" }),
+          ...(((readOnly && asJSON !== "codeEditor") ||
+            asJSON === "JSONBSchema") && {
+            border: "unset",
+            boxShadow: "unset",
+            /**
+             * To ensure focus-border on select controls is visible
+             */
+            overflow: asJSON === "JSONBSchema" ? "visible" : undefined,
+          }),
+          ...this.props.wrapperStyle,
+        }}
+        rightIconsShowBorder={Boolean(
+          type !== "checkbox" && !asTextArea && !inputContent,
+        )}
+        error={error}
+        warning={numLockAlert ? "NumLock is off" : undefined}
+        rightIcons={Boolean(rightIcons) && <>{rightIcons}</>}
+        hint={hint}
+        rightContent={
+          Boolean(rightContent || clearButton) && (
+            <>
+              {clearButton}
+              {rightContent}
+            </>
+          )
+        }
+        rightContentAlwaysShow={rightContentAlwaysShow}
+      >
+        {isEditableSelect ?
+          <Select
+            className="FormField_Select noselect f-1 formfield-bg-color"
+            style={{
+              fontSize: "16px",
+              fontWeight: 500,
+              paddingLeft: "6px",
+            }}
+            data-command={this.props["data-command"]}
+            variant="div"
+            fullOptions={options?.map((key) => ({ key })) ?? fullOptions ?? []}
+            onChange={
+              !onChange ? undefined : (
+                (val) => {
+                  onChange(val);
                 }
-                ref={(e) => {
-                  if (e) this.refWrapper = e;
-                }}
-                style={{
-                  ...wrapperStyle,
-                  ...(type !== "checkbox" && {
-                    backgroundColor: "var(--input-bg-color)",
-                  }),
-                  maxWidth: asTextArea ? "100%" : maxWidth,
-                  ...(asJSON && { minHeight: "42px" }),
-                  ...(readOnly &&
-                    !asJSON && { border: "unset", boxShadow: "unset" }),
-                  ...this.props.wrapperStyle,
-                }}
-              >
-                {isEditableSelect ?
-                  <Select
-                    className="FormField_Select noselect f-1 bg-color-0"
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: 500,
-                      paddingLeft: "6px",
-                    }}
-                    data-command={this.props["data-command"]}
-                    variant="div"
-                    fullOptions={
-                      options?.map((key) => ({ key })) ?? fullOptions ?? []
-                    }
-                    onChange={
-                      !onChange ? undefined : (
-                        (val) => {
-                          onChange(val);
-                        }
-                      )
-                    }
-                    value={rawValue}
-                    required={required}
-                    multiSelect={multiSelect}
-                    labelAsValue={labelAsValue}
-                    btnProps={{
-                      id,
-                    }}
-                  />
-                : inputNode}
-                {!this.props.onSuggest || !suggestions ? null : (
-                  <List
-                    anchorRef={this.refWrapper}
-                    selectedValue={suggestions[activeSuggestionIdx]}
-                    items={suggestions.map((key) => ({
-                      key,
-                      node:
-                        (key as any) === null ? <i>NULL</i>
-                        : key.trim() === "" ? <i>Empty</i>
-                        : null,
-                      onPress: (e) => {
-                        selectSuggestion(key);
-                      },
-                    }))}
-                    onClose={() => {
-                      this.setState({ suggestions: undefined });
-                    }}
-                  />
-                )}
-
-                {Boolean(rightIcons1 || rightIcons2) && (
-                  <div
-                    className={
-                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} flex-row ai-start jc-center ` +
-                      (type !== "checkbox" && !asTextArea && !inputContent ?
-                        "  bl b-color "
-                      : " ")
-                    }
-                    style={{
-                      right: "2px",
-                      top: 0,
-                      bottom: 0,
-                    }}
-                  >
-                    {rightIcons1}
-                    {rightIcons2}
-                  </div>
-                )}
-                {!!error &&
-                  !type.toLowerCase().includes("date") && ( // do not show for date types because it occludes the picker drop down trigger
-                    <Icon
-                      className="text-danger absolute bg-color-0"
-                      path={mdiAlertCircleOutline}
-                      style={{
-                        width: "1.5rem",
-                        top: "2px",
-                        bottom: "2px",
-                        height: "calc(100% - 4px)",
-                        right: "6px",
-                        pointerEvents: "none",
-                      }}
-                    />
-                  )}
-              </div>
-
-              {(hint || error || numLockAlert) && (
-                <div className={"flex-col jc-center "}>
-                  {numLockAlert && (
-                    <InfoRow
-                      variant="naked"
-                      className="font-10"
-                      iconSize={0.75}
-                    >
-                      NumLock is off
-                    </InfoRow>
-                  )}
-                  {error ?
-                    <ErrorComponent
-                      error={error}
-                      style={{ padding: 0 }}
-                      findMsg={true}
-                    />
-                  : null}
-                </div>
-              )}
-            </div>
-            {!rightContent ? null : (
-              <div
-                className={`RightContent  ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} f-0 `}
-                style={{ alignSelf: "start" }}
-              >
-                {rightContent}
-              </div>
-            )}
-          </div>
-          {hint && (
-            <p
-              className="ta-left text-2 m-0 text-sm noselect ws-pre-line"
-              onClick={(e) => {
-                const input = e.currentTarget
-                  .closest(`.${INPUT_HINT_WRAPPER_CLASS}`)
-                  ?.querySelector<HTMLInputElement>(
-                    `.${INPUT_WRAPPER_CLASS} > *`,
-                  );
-                input?.click();
-              }}
-            >
-              {hint}
-            </p>
-          )}
-        </div>
-      </div>
+              )
+            }
+            asRow={variant === "row"}
+            value={rawValue}
+            required={required}
+            multiSelect={multiSelect}
+            labelAsValue={labelAsValue}
+            btnProps={{
+              id,
+            }}
+          />
+        : inputNode}
+        {!this.props.onSuggest || !suggestions ? null : (
+          <List
+            anchorRef={this.refWrapper}
+            selectedValue={suggestions[activeSuggestionIdx]}
+            items={suggestions.map((key) => ({
+              key,
+              node:
+                (key as any) === null ? <i>NULL</i>
+                : key.trim() === "" ? <i>Empty</i>
+                : null,
+              onPress: (e) => {
+                selectSuggestion(key);
+              },
+            }))}
+            onClose={() => {
+              this.setState({ suggestions: undefined });
+            }}
+          />
+        )}
+      </FormFieldSkeleton>
     );
   }
 }

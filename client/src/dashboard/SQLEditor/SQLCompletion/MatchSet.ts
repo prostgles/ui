@@ -2,7 +2,11 @@ import { omitKeys } from "prostgles-types";
 import { asListObject } from "../SQLEditorSuggestions";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
-import { getKind, KNDS, type SQLMatcher } from "./registerSuggestions";
+import {
+  getKind,
+  KNDS as KindMap,
+  type SQLMatcher,
+} from "./monacoSQLSetup/registerSuggestions";
 import type { KWD } from "./withKWDs";
 import { suggestKWD, withKWDs } from "./withKWDs";
 import type { SQLHandler } from "prostgles-types";
@@ -82,14 +86,14 @@ export const MatchSet: SQLMatcher = {
               label:
                 settingInfo.setting_pretty?.min_val ??
                 getVal(settingInfo.min_val),
-              kind: KNDS.Value,
+              kind: KindMap.Value,
               docs: "Minimum value" + `\n\n${docs}`,
             },
             {
               label:
                 settingInfo.setting_pretty?.max_val ??
                 getVal(settingInfo.max_val),
-              kind: KNDS.Value,
+              kind: KindMap.Value,
               docs: "Maximum value" + `\n\n${docs}`,
             },
           ]

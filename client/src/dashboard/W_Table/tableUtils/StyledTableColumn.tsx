@@ -40,7 +40,6 @@ export const StyledTableColumn = ({
         textColor={c.style.textColor}
         value={value}
         message={kFormatter(value)}
-        // message={SmartFormField.renderValue(c, row[c.name], undefined, maxCellChars)}
       />
     );
   } else if (c.style?.type !== "None") {
@@ -110,8 +109,8 @@ export const StyledCell = ({
         style={{
           ...(style.chipColor && {
             backgroundColor: style.chipColor,
-            padding: "6px 8px",
-            borderRadius: "26px",
+            padding: "4px 8px",
+            borderRadius: "12px",
             width: "fit-content",
             whiteSpace: "nowrap",
           }),

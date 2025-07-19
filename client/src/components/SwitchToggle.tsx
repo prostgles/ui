@@ -80,8 +80,13 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
             type="checkbox"
             checked={checked}
             disabled={!!disabledInfo}
-            onChange={(e) =>
-              disabledInfo ? undefined : onChange(e.target.checked, e)
+            {...(!labelProps ? testSelectors : {})}
+            onChange={
+              disabledInfo ? undefined : (
+                (e) => {
+                  return onChange(e.target.checked, e);
+                }
+              )
             }
           />
           <span className={"Switch-thumb "}></span>

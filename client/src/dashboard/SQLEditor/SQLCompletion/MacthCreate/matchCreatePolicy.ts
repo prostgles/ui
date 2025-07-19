@@ -1,7 +1,10 @@
 import { POLICY_FOR, suggestSnippets } from "../CommonMatchImports";
 import { getExpected } from "../getExpected";
 import { asSQL } from "../KEYWORDS";
-import type { SQLMatchContext, SQLMatcher } from "../registerSuggestions";
+import type {
+  SQLMatchContext,
+  SQLMatcher,
+} from "../monacoSQLSetup/registerSuggestions";
 import { type KWD, suggestKWD, withKWDs } from "../withKWDs";
 
 export const matchCreatePolicy: SQLMatcher["result"] = async ({

@@ -1,7 +1,6 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, DBSchemaTable } from "prostgles-types";
-import { getKeys } from "prostgles-types";
-import { pickKeys } from "prostgles-types";
+import { getKeys, pickKeys } from "prostgles-types";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
   Join,
@@ -9,11 +8,12 @@ import type {
   WindowData,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
-import type { ColumnConfig, ColumnSort } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfig, ColumnSortSQL } from "../ColumnMenu/ColumnMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { getColWInfo } from "./getColWInfo";
 import { getColWidth } from "./getColWidth";
 import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
+import type { DBS } from "../../Dashboard/DBS";
 
 export const getFullColumnConfig = (
   tables: CommonWindowProps["tables"],
@@ -153,7 +153,7 @@ export const updateWCols = (
 };
 
 export const getSortColumn = (
-  sort: ColumnSort,
+  sort: ColumnSortSQL,
   columns: ColumnConfig[],
 ): ColumnConfig | undefined => {
   return columns.find((c) => {
@@ -174,12 +174,12 @@ export const getSortColumn = (
 export const getSort = (
   tables: CommonWindowProps["tables"],
   w: Pick<WindowSyncItem<"table">, "sort" | "columns" | "table_name">,
-): ColumnSort[] => {
+): ColumnSortSQL[] => {
   const { sort } = w;
 
   if (!sort) return [];
 
-  let _sort: ColumnSort[] = sort.map((s) => ({ ...s }));
+  let _sort: ColumnSortSQL[] = sort.map((s) => ({ ...s }));
 
   const cols = tables.find((t) => t.name === w.table_name)?.columns;
   if (!cols) return [];
@@ -310,27 +310,6 @@ export const getJoinedTables = (
   };
 };
 
-export const simplifyFilter = (f: AnyObject | undefined) => {
-  let result = f;
-  if (result) {
-    while (
-      (result &&
-        "$and" in result &&
-        Array.isArray(result.$and) &&
-        result.$and.length < 2) ||
-      (result &&
-        "$or" in result &&
-        Array.isArray(result.$or) &&
-        result.$or.length < 2)
-    ) {
-      if (result.$and) result = result.$and?.[0] ?? {};
-      if (result?.$or) result = result.$or?.[0] ?? {};
-    }
-    result ??= {};
-  }
-
-  return result;
-};
 // static getCellStyle(
 //   row: AnyObject,
 //   wcol: ColumnConfig,

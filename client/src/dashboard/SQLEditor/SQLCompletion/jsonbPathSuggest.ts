@@ -2,7 +2,10 @@ import { isObject } from "prostgles-types";
 import { suggestSnippets } from "./CommonMatchImports";
 import { asSQL } from "./KEYWORDS";
 import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
-import { type SQLMatcherResultArgs, getKind } from "./registerSuggestions";
+import {
+  type SQLMatcherResultArgs,
+  getKind,
+} from "./monacoSQLSetup/registerSuggestions";
 import { isDefined } from "../../../utils";
 export const jsonbPathSuggest = async ({
   cb,

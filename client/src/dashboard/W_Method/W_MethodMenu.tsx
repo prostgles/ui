@@ -1,11 +1,10 @@
-import { mdiCog, mdiFormatListCheckbox, mdiPencil } from "@mdi/js";
+import { mdiFormatListCheckbox, mdiPencil } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
-import { JSONBSchemaA } from "../../components/JSONBSchema/JSONBSchema";
 import { pageReload } from "../../components/Loading";
-import SearchList from "../../components/SearchList/SearchList";
+import { SearchList } from "../../components/SearchList/SearchList";
 import Tabs from "../../components/Tabs";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import type { W_MethodProps } from "./W_Method";
@@ -28,11 +27,6 @@ export const W_MethodMenu = (
   const isAdmin = user?.type === "admin";
   const { hiddenArgs = [] } = w.options;
 
-  const functionCol = useMemo(() => {
-    return dbsTables
-      .find((t) => t.name === "windows")
-      ?.columns.find((c) => c.name === "function_options");
-  }, []);
   if (!method || isEmpty(method)) return null;
 
   return (
@@ -43,25 +37,6 @@ export const W_MethodMenu = (
       // defaultActiveKey={isAdmin? "edit" : undefined}
       defaultActiveKey={"args"}
       items={{
-        display: {
-          label: "Display",
-          leftIconPath: mdiCog,
-          content: (
-            <div className="flex-col o-auto f-1 min-s-0 p-1 gap-1">
-              {functionCol?.jsonbSchema && (
-                <JSONBSchemaA
-                  schema={functionCol.jsonbSchema}
-                  db={props.prgl.db}
-                  tables={props.tables}
-                  onChange={(v) => {
-                    w.$update({ function_options: v });
-                  }}
-                  value={w.function_options}
-                />
-              )}
-            </div>
-          ),
-        },
         args: {
           label: "Arguments",
           leftIconPath: mdiFormatListCheckbox,
@@ -119,7 +94,6 @@ export const W_MethodMenu = (
                 connectionId={connectionId}
                 dbsMethods={props.prgl.dbsMethods}
                 method={{ ...(editedMethod ?? method) }}
-                theme={props.prgl.theme}
                 dbsTables={props.prgl.dbsTables}
                 tables={props.tables}
                 onChange={(v) => setEditedMethod(v as any)}

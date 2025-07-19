@@ -1,6 +1,10 @@
 import type { Coords, Point } from "../Charts";
 import type { PanListeners } from "../setPan";
 import { setPan } from "../setPan";
+import { createHiPPICanvas } from "./createHiPPICanvas";
+import { drawMonotoneXCurve } from "./drawMonotoneXCurve";
+import { allLowerCase, type ShapeV2 } from "./drawShapes/drawShapes";
+import { roundRect } from "./roundRect";
 import type { XYFunc } from "./TimeChart";
 
 export type StrokeProps = {
@@ -10,13 +14,13 @@ export type StrokeProps = {
 export type FillProps = {
   fillStyle: CanvasGradient | string | CanvasPattern;
 };
-export type ShapeBase = {
+export type ShapeBase<T = void> = {
   id: string | number;
   elevation?: number;
-  data?: any;
-};
+  opacity?: number;
+} & (T extends void ? { data?: T } : { data: T });
 
-export type Circle = ShapeBase &
+export type Circle<T = any> = ShapeBase<T> &
   StrokeProps &
   FillProps & {
     type: "circle";
@@ -24,7 +28,7 @@ export type Circle = ShapeBase &
     coords: Point;
   };
 
-export type Rectangle = ShapeBase &
+export type Rectangle<T = any, C = void> = ShapeBase<T> &
   StrokeProps &
   FillProps & {
     type: "rectangle";
@@ -32,9 +36,10 @@ export type Rectangle = ShapeBase &
     h: number;
     borderRadius?: number;
     coords: Point;
+    children?: Exclude<ShapeV2<C>, LinkLine>[];
   };
 
-export type ChartedText = ShapeBase &
+export type ChartedText<T = any> = ShapeBase<T> &
   FillProps & {
     type: "text";
     text: string;
@@ -48,22 +53,42 @@ export type ChartedText = ShapeBase &
       };
   };
 
-export type MultiLine = ShapeBase &
+export type MultiLine<T = any> = ShapeBase<T> &
   StrokeProps & {
     type: "multiline";
     coords: Point[];
     variant?: "smooth";
   };
-export type Polygon = ShapeBase &
+export type LinkLine<T = any> = ShapeBase<T> &
+  StrokeProps & {
+    type: "linkline";
+    sourceId: string | number;
+    targetId: string | number;
+    sourceYOffset: number;
+    targetYOffset: number;
+    variant?: "smooth";
+  };
+export type Image<T = any> = ShapeBase<T> & {
+  type: "image";
+  coords: Point;
+  w: number;
+  h: number;
+  image: CanvasImageSource;
+};
+
+export type Polygon<T = any> = ShapeBase<T> &
   StrokeProps &
   FillProps & {
     type: "polygon";
     coords: Point[];
   };
 
-export type Shape = Rectangle | Circle | ChartedText | MultiLine | Polygon;
-
-//     style={{ maxHeight: "300px"}}
+export type Shape<T = any> =
+  | Rectangle<T>
+  | Circle<T>
+  | ChartedText<T>
+  | MultiLine<T>
+  | Polygon<T>;
 
 export type TextMeasurement = {
   width: number;
@@ -80,7 +105,6 @@ type ChartView = {
   yO: number;
 };
 
-// Finish this
 export type CanvasChartViewDataExtent = {
   /**
    * Left most visible X value
@@ -577,95 +601,16 @@ export class CanvasChart {
         // })
       } else throw "Unexpected shape type: " + (s as any).type;
     });
-  }
-}
 
-/** Used in making canvas less blurry on mobile */
-function createHiPPICanvas(cv: HTMLCanvasElement, _w: number, _h: number) {
-  const ratio = window.devicePixelRatio;
-  // if(ratio > 1){
-  const w = Math.max(30, _w);
-  const h = Math.max(30, _h);
-  const width = w * ratio;
-  const height = h * ratio;
-  cv.width = width;
-  cv.height = height;
-  cv.style.width = w + "px";
-  cv.style.height = h + "px";
-  if (ratio > 1) {
-    cv.getContext("2d")?.scale(ratio, ratio);
-  }
-  // }
-  return { cv, width, height };
-}
-
-/** Big lower case text appears lower than needed */
-function allLowerCase(str) {
-  return !!(str && str.toLowerCase() === str);
-}
-
-/**
- * Draws a rounded rectangle using the current state of the canvas.
- * If you omit the last three params, it will draw a rectangle
- * outline with a 5 pixel border radius
- * @param {CanvasRenderingContext2D} ctx
- * @param {Number} x The top left x coordinate
- * @param {Number} y The top left y coordinate
- * @param {Number} width The width of the rectangle
- * @param {Number} height The height of the rectangle
- * @param {Number} [radius = 5] The corner radius; It can also be an object
- *                 to specify different radii for corners
- * @param {Number} [radius.tl = 0] Top left
- * @param {Number} [radius.tr = 0] Top right
- * @param {Number} [radius.br = 0] Bottom right
- * @param {Number} [radius.bl = 0] Bottom left
- * @param {Boolean} [fill = false] Whether to fill the rectangle.
- * @param {Boolean} [stroke = true] Whether to stroke the rectangle.
- */
-function roundRect(
-  ctx,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number | { tl: number; tr: number; bl: number; br: number },
-) {
-  // if (typeof stroke === 'undefined') {
-  //   stroke = true;
-  // }
-  if (typeof radius === "undefined") {
-    radius = 5;
-  }
-  if (typeof radius === "number") {
-    radius = { tl: radius, tr: radius, br: radius, bl: radius };
-  } else {
-    const defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 };
-    for (const side in defaultRadius) {
-      radius[side] = radius[side] || defaultRadius[side];
+    const { canvas } = this.opts ?? {};
+    if (canvas) {
+      canvas._drawn = {
+        shapes,
+        scale: 1,
+        translate: { x: 0, y: 0 },
+      };
     }
   }
-  ctx.beginPath();
-  ctx.moveTo(x + radius.tl, y);
-  ctx.lineTo(x + width - radius.tr, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
-  ctx.lineTo(x + width, y + height - radius.br);
-  ctx.quadraticCurveTo(
-    x + width,
-    y + height,
-    x + width - radius.br,
-    y + height,
-  );
-  ctx.lineTo(x + radius.bl, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
-  ctx.lineTo(x, y + radius.tl);
-  ctx.quadraticCurveTo(x, y, x + radius.tl, y);
-  ctx.closePath();
-  // if (fill) {
-  //   ctx.fill();
-  // }
-  // if (stroke) {
-  //   ctx.stroke();
-  // }
 }
 
 const PIXEL_STEP = 10;
@@ -738,23 +683,4 @@ function normalizeWheel(event): {
     pixelX: pX,
     pixelY: pY,
   };
-}
-
-function drawMonotoneXCurve(ctx: CanvasRenderingContext2D, line: Point[]) {
-  ctx.beginPath();
-
-  for (let i = 0; i < line.length - 2; i++) {
-    if (!i) {
-      ctx.moveTo(line[i]![0], line[i]![1]);
-    } else {
-      const xc = (line[i]![0] + line[i + 1]![0]) / 2;
-      const yc = (line[i]![1] + line[i + 1]![1]) / 2;
-      ctx.quadraticCurveTo(line[i]![0], line[i]![1], xc, yc);
-    }
-  }
-
-  // For the last two points, use a straight line
-  ctx.lineTo(line[line.length - 2]![0], line[line.length - 2]![1]);
-  ctx.lineTo(line[line.length - 1]![0], line[line.length - 1]![1]);
-  ctx.stroke();
 }

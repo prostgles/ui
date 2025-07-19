@@ -1,0 +1,11 @@
+.flicker {
+  animation: flicker .5s infinite ;
+}
+.flicker-slow {
+  animation: flicker 1.5s infinite ;
+}
+@keyframes flicker {
+  0% { opacity: .75; }
+  50% { opacity: 0.1; }
+  100% { opacity: .75; }
+}

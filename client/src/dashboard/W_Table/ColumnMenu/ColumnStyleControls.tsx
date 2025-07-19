@@ -1,25 +1,21 @@
-import type { ValidatedColumnInfo } from "prostgles-types/lib";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { _PG_numbers } from "prostgles-types";
+import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import React from "react";
-import {
-  appTheme,
-  useReactiveState,
-  type Prgl,
-  type Theme,
-} from "../../../App";
+import { type Prgl, type Theme } from "../../../App";
+import { appTheme, useReactiveState } from "../../../appUtils";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
+import { MINI_BARCHART_COLOR } from "../../../components/ProgressBar";
 import Select from "../../../components/Select/Select";
 import { ColorPicker } from "./ColorPicker";
-import type { CONDITION_OPERATORS } from "./ColumnDisplayFormat/ConditionalCellStyleControls";
-import { ConditionalCellStyleControls } from "./ColumnDisplayFormat/ConditionalCellStyleControls";
-import type { ColumnConfig } from "./ColumnMenu";
 import {
   ChipStylePalette,
   chipColorsFadedBorder,
 } from "./ColumnDisplayFormat/ChipStylePalette";
-import { MINI_BARCHART_COLOR } from "../../../components/ProgressBar";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { ConditionalCellIconStyleControls } from "./ColumnDisplayFormat/ConditionalCellIconStyleControls";
+import type { CONDITION_OPERATORS } from "./ColumnDisplayFormat/ConditionalCellStyleControls";
+import { ConditionalCellStyleControls } from "./ColumnDisplayFormat/ConditionalCellStyleControls";
+import type { ColumnConfig } from "./ColumnMenu";
 
 export type ColumnValue = string | number | Date | null | undefined | boolean;
 

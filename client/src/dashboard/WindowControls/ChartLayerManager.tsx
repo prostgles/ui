@@ -61,7 +61,7 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
   const sortedLayerQueries = useSortedLayerQueries({ layerQueries, myLinks });
   const content = (
     <FlexCol className="gap-p5">
-      <div className="flex-col gap-1">
+      <FlexCol className="ChartLayerManager_LayerList">
         {sortedLayerQueries.map((lqRaw) => {
           const lq = lqRaw as LayerQuery | ProstglesTimeChartLayer;
           const thisLink = myLinks.find((l) => l.id === lq.linkId);
@@ -128,7 +128,7 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
                     lTypeInfo.type === "Table" ?
                       isLocal ?
                         "Local table"
-                      : `Linked table: ${[{ table: lTypeInfo.lq.tableName }, ...(lTypeInfo.path ?? [])].map((p) => p.table).join(" -> ")} (${column})`
+                      : `${lTypeInfo.path?.length ? "Linked table" : "Table"}: ${[{ table: lTypeInfo.lq.tableName }, ...(lTypeInfo.path ?? [])].map((p) => p.table).join(" -> ")} (${column})`
 
                     : "SQL Script"
                   }
@@ -154,6 +154,7 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
 
               <Btn
                 title="Toggle layer on/off"
+                data-command="ChartLayerManager.toggleLayer"
                 className={`ml-auto ${thisLink.disabled ? "" : "show-on-parent-hover"} `}
                 iconPath={thisLink.disabled ? mdiEyeOff : mdiEye}
                 color={"action"}
@@ -166,6 +167,7 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
               <Btn
                 color="danger"
                 title="Remove layer"
+                data-command="ChartLayerManager.removeLayer"
                 className="show-on-parent-hover"
                 onClickPromise={async () => {
                   if (thisLink.options.type === "table") return;
@@ -190,9 +192,8 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
             </FlexRowWrap>
           );
         })}
-
-        <AddChartLayer {...props} />
-      </div>
+      </FlexCol>
+      <AddChartLayer {...props} />
       {props.type === "map" && (
         <FlexCol className="mt-2">
           <MapBasemapOptions {...props} asPopup={{ prgl: props.prgl }} />

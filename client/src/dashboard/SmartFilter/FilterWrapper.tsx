@@ -22,7 +22,6 @@ import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
 import Select from "../../components/Select/Select";
 import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";
 import RTComp from "../RTComp";
-import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
 import { JOIN_FILTER_TYPES } from "./AddJoinFilter";
 import { AgeFilterTypes, getDefaultAgeFilter } from "./AgeFilter";
 import { GeoFilterTypes, getDefaultGeoFilter } from "./GeoFilter";
@@ -33,6 +32,8 @@ import {
 } from "./smartFilterUtils";
 import "./FilterWrapper.css";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
+import type { DBS } from "../Dashboard/DBS";
 
 export type FilterWrapperProps = {
   db: DBHandlerClient;
@@ -297,7 +298,7 @@ export class FilterWrapper extends RTComp<
         >
           <FlexRowWrap
             style={rowVariant ? { flex: "none" } : {}}
-            className="FilterWrapper__TypeLabelContainer gap-dp5 f-1 font-medium noselect pointer noselect  ai-center"
+            className="FilterWrapper__TypeLabelContainer gap-0 f-1 font-medium noselect pointer noselect  ai-center"
           >
             <FlexRow className="FilterWrapper__LabelContainer gap-0">
               {disabledToggle}

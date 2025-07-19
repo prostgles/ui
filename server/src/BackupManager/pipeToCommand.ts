@@ -1,46 +1,44 @@
 import child from "child_process";
 import type internal from "stream";
 import type { EnvVars } from "./pipeFromCommand";
-import { envToStr } from "./pipeFromCommand";
 
 export const pipeToCommand = (
   command: string,
-  opts: string[],
+  args: string[],
   envVars: EnvVars = {},
   source: internal.Readable,
-  onEnd: (err?: any) => void,
-  onStdout?: (data: { full: any; chunk: any }, isStdErr?: boolean) => void,
-  useExec = false,
+  onEnd: (err?: any) => void | Promise<void>,
+  onStdout?: (
+    data: { full: any; chunk: any },
+    isStdErr?: boolean,
+  ) => void | Promise<void>,
 ) => {
-  const execCommand = `${envToStr(envVars)} ${command} ${opts.join(" ")}`;
   const env: NodeJS.ProcessEnv = envVars;
-  const proc =
-    useExec ?
-      child.exec(execCommand)
-    : child.spawn(command, opts as any, { env });
+  const proc = child.spawn(command, args, { env });
+
   let log: string;
   let fullLog = "";
-  proc.stderr!.on("data", (data) => {
+  proc.stderr.on("data", (data: Buffer) => {
     log = data.toString();
     fullLog += log;
-    onStdout?.({ full: fullLog, chunk: log }, true);
+    void onStdout?.({ full: fullLog, chunk: log }, true);
   });
-  proc.stdout!.on("data", (data) => {
+  proc.stdout.on("data", (data: Buffer) => {
     const log = data.toString();
     fullLog += log;
-    onStdout?.({ full: fullLog, chunk: log });
+    void onStdout?.({ full: fullLog, chunk: log });
   });
-  proc.stdout!.on("error", function (err) {
-    onEnd(err);
+  proc.stdout.on("error", function (err) {
+    void onEnd(err);
   });
-  proc.stdin!.on("error", function (err) {
-    onEnd(err);
+  proc.stdin.on("error", function (err) {
+    void onEnd(err);
   });
   proc.on("error", function (err) {
-    onEnd(err);
+    void onEnd(err);
   });
 
-  source.pipe(proc.stdin!);
+  source.pipe(proc.stdin);
 
   proc.on("exit", function (code, signal) {
     const err = fullLog
@@ -61,7 +59,7 @@ export const pipeToCommand = (
       source.destroy();
     }
 
-    onEnd(isMaybeError ? (err ?? "Error") : undefined);
+    void onEnd(isMaybeError ? (err ?? "Error") : undefined);
   });
 
   return proc;

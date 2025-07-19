@@ -1,18 +1,20 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject } from "prostgles-types/lib";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
+import type { InstalledPrograms } from "../../../../commonTypes/electronInitTypes";
+import type { LLMMessage } from "../../../../commonTypes/llmUtils";
+import type { McpToolCallResponse } from "../../../../commonTypes/mcp";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type {
-  ColType,
   ConnectionStatus,
   PGDumpParams,
   ProcStats,
   SampleSchema,
 } from "../../../../commonTypes/utils";
-import type { Connection } from "../../pages/NewConnection/NewConnnection";
+import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 import type { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
 import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
 import type { Backups } from "./dashboardUtils";
-import type { AnyObject } from "prostgles-types/lib";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 export type DBSMethods = Partial<{
   sendFeedback: (feedback: {
@@ -23,7 +25,13 @@ export type DBSMethods = Partial<{
     email: string,
     otpCode: string,
   ) => Promise<{ token: string; host: string; hasError?: boolean; error: any }>;
-  askLLM: (query: string, schema: string, chatId: number) => Promise<AnyObject>;
+  askLLM: (
+    connectionId: string,
+    userMessage: LLMMessage["message"],
+    schema: string,
+    chatId: number,
+    type: "new-message" | "approve-tool-use",
+  ) => Promise<AnyObject>;
   pgDump: (
     conId: string,
     credId: number | null | undefined,
@@ -84,9 +92,8 @@ export type DBSMethods = Partial<{
     username: string;
     password: string;
   }) => Promise<void>;
-  getAPITSDefinitions: () => {
-    name: string;
-    path: string;
+  getNodeTypes: () => {
+    filePath: string;
     content: string;
   }[];
   getConnectionDBTypes: (
@@ -128,13 +135,27 @@ export type DBSMethods = Partial<{
     onMountRunner: ProcStats | undefined;
     tableConfigRunner: ProcStats | undefined;
   }>;
-  getPsqlVersions: () => Promise<{
-    psql: string;
-    pg_dump: string;
-    pg_restore: string;
-    os: "" | "Linux" | "Mac" | "Windows";
-  }>;
+  getInstalledPsqlVersions: () => Promise<InstalledPrograms>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
+  installMCPServer: (serverName: string) => Promise<void>;
+  getMCPServersStatus: (serverName: string) => Promise<{
+    ok: boolean;
+    error?: string;
+    message: string;
+  }>;
+  callMCPServerTool: (
+    chat_id: number,
+    serverName: string,
+    toolName: string,
+    args: any,
+  ) => Promise<McpToolCallResponse>;
+  reloadMcpServerTools: (serverName: string) => Promise<number>;
+  getMcpHostInfo: () => Promise<{
+    os: string;
+    npmVersion: string;
+    uvxVersion: string;
+  }>;
+  refreshModels: () => Promise<void>;
 }>;
 
 const AdminTableNames = ["connections", "global_settings"] as const;

@@ -20,7 +20,10 @@ export const MapOpacityMenu = ({ w, className }: P) => {
   };
 
   return (
-    <div className={classOverride("p-1 shadow bg-color-0 rounded", className)}>
+    <div
+      data-command="MapOpacityMenu"
+      className={classOverride("p-1 shadow bg-color-0 rounded", className)}
+    >
       <Slider
         label={`Basemap opacity ${basemapOpacity.toFixed(1)}`}
         min={0}

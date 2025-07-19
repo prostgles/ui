@@ -1,22 +1,26 @@
-import type { ChildProcess } from "child_process";
+import type { ChildProcess, ForkOptions } from "child_process";
 import { fork } from "child_process";
+import * as path from "path";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
-import type { AnyObject } from "prostgles-types";
-import { isObject } from "prostgles-types";
+import { type AnyObject, isObject } from "prostgles-types";
 import type { DBS } from "..";
-import type { ProcStats } from "../../../commonTypes/utils";
+import {
+  FORKED_PROC_ENV_NAME,
+  type ProcStats,
+} from "../../../commonTypes/utils";
 import { getError } from "./forkedProcess";
-import { OnReadyParamsBasic } from "prostgles-server/dist/initProstgles";
+import { getInitiatedPostgresqlPIDs } from "./getInitiatedPostgresqlPIDs";
+import pidusage from "pidusage";
 
 type ForkedProcMessageCommon = {
   id: string;
 };
 
-type InitOpts = Omit<ProstglesInitOptions, "onReady">;
+type PrglInitOptions = Omit<ProstglesInitOptions, "onReady">;
 
 type ForkedProcMessageStart = ForkedProcMessageCommon & {
   type: "start";
-  initArgs: InitOpts;
+  prglInitOpts: PrglInitOptions;
 };
 type ForkedProcRunArgs =
   | {
@@ -28,14 +32,21 @@ type ForkedProcRunArgs =
   | {
       type: "onMount";
       code: string;
-    }
-  | {
-      type: "procStats";
     };
 type ForkedProcMessageRun = ForkedProcMessageCommon & ForkedProcRunArgs;
+type ForkedProcMCPResult = ForkedProcMessageCommon & {
+  type: "mcpResult";
+  callId: number;
+  error: any;
+  result: any;
+};
 
-export type ForkedProcMessage = ForkedProcMessageStart | ForkedProcMessageRun;
+export type ForkedProcMessage =
+  | ForkedProcMessageStart
+  | ForkedProcMessageRun
+  | ForkedProcMCPResult;
 export type ForkedProcMessageError = {
+  lastMsgId: string;
   type: "error";
   error: any;
 };
@@ -46,20 +57,24 @@ export type ForkedProcMessageResult =
       error?: any;
     }
   | ForkedProcMessageError;
-
-export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC" as const;
+// | {
+//     id: string;
+//     callId: number;
+//     type: "toolCall";
+//     serverName: string;
+//     toolName: string;
+//     args?: any;
+//   };
 
 type Opts = {
-  initArgs: InitOpts;
+  prglInitOpts: PrglInitOptions;
   dbs: DBS;
   dbConfId: number;
+  forkOpts?: Pick<ForkOptions, "cwd">;
   pass_process_env_vars_to_server_side_functions: boolean;
 } & (
   | {
       type: "run";
-    }
-  | {
-      type: "procStats";
     }
   | {
       type: "onMount";
@@ -72,6 +87,9 @@ type Opts = {
     }
 );
 
+/**
+ * This class is used to run onMount/method TS code in a forked process.
+ */
 export class ForkedPrglProcRunner {
   currentRunId = 1;
   opts: Opts;
@@ -87,6 +105,12 @@ export class ForkedPrglProcRunner {
   stderr: any[] = [];
   logs: any[] = [];
 
+  private constructor(proc: ChildProcess, opts: Opts) {
+    this.proc = proc;
+    this.opts = opts;
+    this.initProc();
+  }
+
   databaseNotFound = false;
   destroyed = false;
   destroy = (databaseNotFound = false) => {
@@ -95,12 +119,6 @@ export class ForkedPrglProcRunner {
     this.proc.kill("SIGKILL");
   };
 
-  private constructor(proc: ChildProcess, opts: Opts) {
-    this.proc = proc;
-    this.opts = opts;
-    this.initProc();
-  }
-
   isRestarting = false;
   restartProc = debounce((error: any) => {
     if (this.isRestarting || this.databaseNotFound || this.destroyed) return;
@@ -108,26 +126,30 @@ export class ForkedPrglProcRunner {
     this.isRestarting = true;
     console.error(`${logName} restartProc. error:`, error);
     Object.entries(this.runQueue).forEach(([id, { cb }]) => {
-      cb("Forked process error");
+      cb(
+        "Forked process error. Check logs: \n" + this.logs.slice(-3).join("\n"),
+      );
       delete this.runQueue[id];
     });
     console.log(`${logName} restarting ...`);
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     setTimeout(async () => {
       console.log(`${logName} restarted`);
-      const newProc = await ForkedPrglProcRunner.createProc(
-        this.opts.initArgs,
-        this.opts.pass_process_env_vars_to_server_side_functions,
-      );
+      const newProc = await ForkedPrglProcRunner.createProc(this.opts);
       this.proc = newProc;
       this.initProc();
       if (this.opts.type === "onMount") {
-        this.run({ type: "onMount", code: this.opts.on_mount_ts_compiled });
+        void this.run({
+          type: "onMount",
+          code: this.opts.on_mount_ts_compiled,
+        });
       }
       this.isRestarting = false;
     }, 1e3);
   }, 400);
+
   private initProc = () => {
-    const updateLogs = (dataOrError: any) => {
+    const updateLogs = (dataOrError: Buffer | Error) => {
       const stringMessage =
         Buffer.isBuffer(dataOrError) ? dataOrError.toString()
         : isObject(dataOrError) ? JSON.stringify(dataOrError, null, 2) + "\n"
@@ -136,6 +158,7 @@ export class ForkedPrglProcRunner {
       this.logs = this.logs.slice(-500);
       const { type } = this.opts;
       const logs = this.logs.map((v) => v.toString()).join("");
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.opts.dbs.database_config_logs.update(
         { id: this.opts.dbConfId },
         {
@@ -150,6 +173,30 @@ export class ForkedPrglProcRunner {
     });
     this.proc.on("message", (msg: ForkedProcMessageResult) => {
       if ("type" in msg) {
+        // if (msg.type === "toolCall") {
+        //   const { id, callId, serverName, toolName, args } = msg;
+        //   (async () => {
+        //     const result = await tryCatchV2(
+        //       async () =>
+        //         await callMCPServerTool(
+        //           this.opts.dbs,
+        //           serverName,
+        //           toolName,
+        //           args,
+        //         ),
+        //     );
+
+        //     this.proc.send({
+        //       callId,
+        //       result: result.data,
+        //       error: getErrorAsObject(result.error),
+        //       type: "mcpResult",
+        //       id,
+        //     } satisfies ForkedProcMCPResult);
+        //   })();
+        //   return;
+        // }
+
         console.error("ForkedPrglProc error ", msg.error);
         updateLogs(getError(msg.error));
         /** Database was dropped */
@@ -184,7 +231,7 @@ export class ForkedPrglProcRunner {
       this.restartProc(error);
     });
 
-    this.opts.dbs.database_config_logs.insert(
+    void this.opts.dbs.database_config_logs.insert(
       { id: this.opts.dbConfId },
       { onConflict: "DoNothing" },
     );
@@ -195,50 +242,51 @@ export class ForkedPrglProcRunner {
     this.proc.stderr?.on("error", updateLogs);
   };
 
-  private static createProc = (
-    initOpts: InitOpts,
-    pass_process_env_vars_to_server_side_functions: boolean,
-  ): Promise<ChildProcess> => {
+  private static createProc = ({
+    prglInitOpts,
+    pass_process_env_vars_to_server_side_functions,
+    forkOpts,
+  }: Opts): Promise<ChildProcess> => {
     return new Promise((resolve, reject) => {
-      const proc = fork(__dirname + "/forkedProcess.js", {
+      const forkedPath = path.join(__dirname, "forkedProcess.js");
+      const proc = fork(forkedPath, {
+        ...forkOpts,
+        /** Prevent inheriting execArgv */
         execArgv: [],
+        // execArgv: console.error("REMOVE") || ["--inspect-brk"],
         silent: true,
         env: {
-          ...(pass_process_env_vars_to_server_side_functions ?
-            process.env
-          : {}),
+          ...(pass_process_env_vars_to_server_side_functions && process.env),
           [FORKED_PROC_ENV_NAME]: "true",
         },
       });
       proc.on("error", reject);
-      const onStart = (message: ForkedProcMessageResult) => {
+      const onMessage = (message: ForkedProcMessageResult) => {
         proc.off("error", reject);
-        if (message.error || !("id" in message) || message.id !== "1") {
-          reject(message.error ?? "Something is wrong with the forked process");
+        const error = "error" in message && message.error;
+        if (error || !("id" in message) || message.id !== "1") {
+          reject(error ?? "Something is wrong with the forked process");
         } else {
           resolve(proc);
         }
-        proc.off("message", onStart);
+        proc.off("message", onMessage);
       };
-      proc.on("message", onStart);
+      proc.on("message", onMessage);
 
       proc.send({
         id: "1",
         type: "start",
-        initArgs: initOpts,
+        prglInitOpts,
       } satisfies ForkedProcMessageStart);
     });
   };
 
   static create = async (opts: Opts): Promise<ForkedPrglProcRunner> => {
-    const proc = await ForkedPrglProcRunner.createProc(
-      opts.initArgs,
-      opts.pass_process_env_vars_to_server_side_functions,
-    );
+    const proc = await ForkedPrglProcRunner.createProc(opts);
     return new ForkedPrglProcRunner(proc, opts);
   };
 
-  run = async (runProps: ForkedProcRunArgs) => {
+  run = async <T>(runProps: ForkedProcRunArgs): Promise<T> => {
     this.currentRunId++;
     const id = this.currentRunId.toString();
     return new Promise((resolve, reject) => {
@@ -262,7 +310,17 @@ export class ForkedPrglProcRunner {
   };
 
   getProcStats = async (): Promise<ProcStats> => {
-    return this.run({ type: "procStats" }).then((v) => v as ProcStats);
+    const { pid } = this.proc;
+    if (!pid) {
+      throw new Error("Process PID is not available");
+    }
+    const res = await pidusage(pid);
+    return {
+      cpu: res.cpu,
+      mem: res.memory,
+      pid: res.pid,
+      uptime: res.elapsed / 1000, // Convert milliseconds to seconds
+    };
   };
 }
 
