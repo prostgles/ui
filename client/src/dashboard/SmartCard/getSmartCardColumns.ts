@@ -1,16 +1,11 @@
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import type { SmartCardListProps } from "./SmartCardList";
+import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 
-type Args = Pick<
-  SmartCardListProps<AnyObject>,
-  "tableName" | "tables" | "db" | "columns"
->;
+type Args = Pick<SmartCardListProps<AnyObject>, "tableName" | "db">;
 export const getSmartCardColumns = async ({
   tableName,
   db,
-  columns,
 }: Args): Promise<ValidatedColumnInfo[] | undefined> => {
-  if (columns) return columns;
   if (typeof tableName === "string") {
     const tableHandler = db[tableName];
     return tableHandler?.getColumns?.();

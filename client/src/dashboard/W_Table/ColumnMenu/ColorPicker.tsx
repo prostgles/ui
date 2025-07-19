@@ -1,31 +1,27 @@
+import { mdiPalette } from "@mdi/js";
 import React from "react";
-import Btn from "../../../components/Btn";
+import { isObject } from "../../../../../commonTypes/publishUtils";
 import type { BtnProps } from "../../../components/Btn";
-import {
-  FlexCol,
-  FlexRow,
-  FlexRowWrap,
-  classOverride,
-} from "../../../components/Flex";
+import Btn from "../../../components/Btn";
+import { FlexRow, FlexRowWrap, classOverride } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
+import { type LabelProps } from "../../../components/Label";
 import Popup from "../../../components/Popup/Popup";
-import { Label, type LabelProps } from "../../../components/Label";
-import { isObject } from "../../../../../commonTypes/publishUtils";
-import { mdiPalette } from "@mdi/js";
+import type { Command } from "../../../Testing";
 
 export type RGBA = [number, number, number, number];
-const COLOR_PALETTE = [
-  "#F79800",
-  "#ff004a",
-  "#CB11F0",
-  "#7430F0",
-  "#ffffff",
-  "#174CFA",
-  "#0AA1FA",
-  "#36E00B",
-  "rgb(143 143 143)",
-];
+export const COLOR_PALETTE = [
+  "#0AA1FA", // blue
+  "#36E00B", // green
+  "#F79800", // orange
+  "#ff004a", // red
+  "#CB11F0", // purple
+  "#7430F0", // purple
+  "#ffffff", // white
+  "#174CFA", // blue
+  "rgb(143 143 143)", // gray
+] as const;
 
 type S = {
   anchorEl: Element | null;
@@ -42,6 +38,7 @@ export class ColorPicker extends React.Component<
     required?: boolean;
     title?: string;
     variant?: "legend";
+    "data-command"?: Command;
   },
   S
 > {
@@ -105,6 +102,7 @@ export class ColorPicker extends React.Component<
 
     return (
       <FlexRow
+        data-command={this.props["data-command"]}
         className={classOverride("gap-p5 ai-center ", className)}
         style={style}
       >
@@ -128,15 +126,20 @@ export class ColorPicker extends React.Component<
           >
             <FlexRowWrap>
               {COLOR_PALETTE.map((c, ci) => (
-                <div
+                <Btn
                   key={ci}
-                  className={"round pointer mr-1 mb-1 shadow"}
-                  style={{ width: "24px", height: "24px", backgroundColor: c }}
+                  className={"pointer shadow"}
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    backgroundColor: c,
+                    borderRadius: "1000%",
+                  }}
                   onClick={(e) => {
                     onChange(asHex(c), asRGB(c), asRGB(c, "255"));
                     this.setState({ anchorEl: null });
                   }}
-                ></div>
+                />
               ))}
             </FlexRowWrap>
             <FlexRow>
@@ -248,7 +251,7 @@ export const asRGB = (color: string, maxOpacity?: "1" | "255"): RGBA => {
   return [r, g, b, a];
 };
 
-function rgba2hex(orig: string) {
+export function rgba2hex(orig: string) {
   let a;
   const rgb = orig
     .replace(/\s/g, "")

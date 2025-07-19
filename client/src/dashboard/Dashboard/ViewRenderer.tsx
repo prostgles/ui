@@ -191,6 +191,7 @@ export class ViewRenderer extends RTComp<
         key,
         "data-key": w.id,
         "data-table-name": w.table_name,
+        "data-view-type": w.type,
         "data-title": WNDOW.getTitle(w),
         w,
         childWindows,

@@ -1,10 +1,10 @@
 import { isDefined } from "prostgles-types";
-import { SUGGESTION_TYPE_DOCS } from "../SQLEditor";
+import { SUGGESTION_TYPE_DOCS } from "../W_SQLEditor";
 import type { MinimalSnippet } from "./CommonMatchImports";
 import { PG_OBJECTS, suggestSnippets } from "./CommonMatchImports";
 import { cleanExpectFull } from "./getExpected";
-import type { SQLMatcher } from "./registerSuggestions";
-import { getKind } from "./registerSuggestions";
+import type { SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
+import { getKind } from "./monacoSQLSetup/registerSuggestions";
 import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
 

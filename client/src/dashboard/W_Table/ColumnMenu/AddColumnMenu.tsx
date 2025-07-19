@@ -21,9 +21,10 @@ import type {
 import { CreateFileColumn } from "../../FileTableControls/CreateFileColumn";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { CreateColumn } from "./AlterColumn/CreateColumn";
+import { t } from "../../../i18n/i18nUtils";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
-import { t } from "../../../i18n/i18nUtils";
+import type { DBS } from "../../Dashboard/DBS";
 
 const options = [
   {

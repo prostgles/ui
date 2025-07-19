@@ -1,70 +1,88 @@
-import {
-  useIsMounted,
-  type DBHandlerClient,
-} from "prostgles-client/dist/prostgles";
+import { mdiClose } from "@mdi/js";
+import { useIsMounted, useMemoDeep } from "prostgles-client/dist/prostgles";
 import {
   isDefined,
-  isEmpty,
-  type AnyObject,
+  isObject,
+  pickKeys,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { sliceText } from "../../../../../commonTypes/utils";
+import Btn from "../../../components/Btn";
+import { FileInput } from "../../../components/FileInput/FileInput";
+import { FlexRow, FlexRowWrap } from "../../../components/Flex";
 import Select, { type FullOption } from "../../../components/Select/Select";
-import { renderNull } from "./RenderValue";
-import type { SmartFormFieldProps } from "./SmartFormField";
+import {
+  type ColumnData,
+  NewRowDataHandler,
+} from "../SmartFormNewRowDataHandler";
+import { RenderValue } from "./RenderValue";
+import type { SmartColumnInfo, SmartFormFieldProps } from "./SmartFormField";
+import { type SmartFormFieldLinkedDataInsertState } from "./SmartFormFieldLinkedData";
+import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
 
-type P = Pick<
+export type SmartFormFieldForeignKeyProps = Pick<
   SmartFormFieldProps,
-  "rawValue" | "db" | "tables" | "row" | "tableName"
-> & {
-  column: ValidatedColumnInfo & {
-    references: NonNullable<ValidatedColumnInfo["references"]>;
+  "value" | "db" | "tables" | "row" | "table"
+> &
+  SmartFormFieldLinkedDataInsertState & {
+    column: SmartColumnInfo & {
+      references: NonNullable<ValidatedColumnInfo["references"]>;
+    };
+    onChange: (newValue: ColumnData) => Promise<void> | void;
+    readOnly: boolean;
+    newRowDataHandler: NewRowDataHandler;
   };
-  onChange: (newValue: string | number | null) => Promise<void>;
-  readOnly: boolean;
-};
-export const SmartFormFieldForeignKey = ({
-  column,
-  db,
-  onChange,
-  tables,
-  tableName,
-  rawValue,
-  row,
-  readOnly,
-}: P) => {
+
+export const SmartFormFieldForeignKey = (
+  props: SmartFormFieldForeignKeyProps,
+) => {
+  const {
+    column,
+    db,
+    onChange,
+    tables,
+    value,
+    row,
+    readOnly,
+    newRowDataHandler,
+    table,
+    setShowNestedInsertForm,
+  } = props;
+
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
   const getuseIsMounted = useIsMounted();
+  const newValue = newRowDataHandler.getNewRow()[column.name];
+
+  const rowWithFkeyVals = useMemo(() => {
+    if (!row) return;
+    const fkeyColNames = column.references.flatMap((r) => r.cols);
+    return pickKeys(row, fkeyColNames);
+  }, [row, column]);
+
+  const rowWithFkeyValsMemo = useMemoDeep(
+    () => rowWithFkeyVals,
+    [rowWithFkeyVals],
+  );
   const onSearchOptions = useCallback(
     async (term: string) => {
-      const options = await fetchOptions({
+      const options = await fetchForeignKeyOptions({
         column,
         db,
-        tableName,
+        table,
         tables,
-        row,
+        row: rowWithFkeyValsMemo,
         term,
       });
       if (!getuseIsMounted()) return;
       setFullOptions(options);
     },
-    [column, db, tableName, tables, row, getuseIsMounted],
+    [column, db, table, tables, rowWithFkeyValsMemo, getuseIsMounted],
   );
 
   useEffect(() => {
-    if (fullOptions) return;
     onSearchOptions("");
-  }, [
-    column,
-    db,
-    onChange,
-    tables,
-    tableName,
-    rawValue,
-    row,
-    fullOptions,
-    onSearchOptions,
-  ]);
+  }, [value, onSearchOptions]);
 
   const valueStyle = {
     fontSize: "16px",
@@ -72,23 +90,27 @@ export const SmartFormFieldForeignKey = ({
     paddingLeft: "6px 0",
   };
 
-  const selectedOption = fullOptions?.find((o) => o.key === rawValue);
-  const valueNode = (
-    <div className="text-ellipsis max-w-fit" style={valueStyle}>
-      {renderNull(rawValue, {}, true) ?? rawValue}
-    </div>
-  );
+  const selectedOption = fullOptions?.find((o) => o.key === value);
 
-  const paddingValue = isDefined(selectedOption?.subLabel) ? "6px" : "12px";
+  const paddingValue = 0;
+  const isNullOrEmpty = value === null || value === undefined;
   const displayValue = (
-    <div
-      className={"flex-col gap-p5 min-w-0"}
+    <FlexRowWrap
+      className={"gap-p5 min-w-0"}
       style={{
-        padding: readOnly ? `${paddingValue} 0` : paddingValue,
-        // border: "1px solid var(--b-default)"
+        /** Empty values too tall */
+        padding: isNullOrEmpty && !readOnly ? 0 : `${paddingValue} 0`,
       }}
     >
-      {valueNode}
+      {selectedOption?.leftContent}
+      <div className="text-ellipsis max-w-fit" style={valueStyle}>
+        <RenderValue
+          value={value}
+          column={column}
+          showTitle={false}
+          maxLength={30}
+        />
+      </div>
       {isDefined(selectedOption?.subLabel) && (
         <div
           className="SmartFormFieldForeignKey.subLabel ta-left text-ellipsis"
@@ -102,177 +124,106 @@ export const SmartFormFieldForeignKey = ({
           {selectedOption.subLabel}
         </div>
       )}
-    </div>
+    </FlexRowWrap>
   );
 
   if (readOnly) {
     return displayValue;
   }
 
+  const referencedInsertData =
+    newValue?.type === "nested-column" ? newValue.value : undefined;
+
+  if (referencedInsertData) {
+    if (column.file) {
+      const media =
+        newValue?.type === "nested-file-column" && newValue.value ?
+          [newValue.value]
+        : [];
+      return (
+        <FileInput
+          className={
+            "mt-p5 f-0 formfield-bg-color " +
+            (table.info.isFileTable ? "mt-2" : "")
+          }
+          label={column.label}
+          media={media}
+          minSize={470}
+          maxFileCount={1}
+          onAdd={([value]) => {
+            onChange({
+              type: "nested-file-column",
+              value,
+            });
+          }}
+          onDelete={async (mediaItem) => {
+            onChange({
+              type: "nested-file-column",
+              value: undefined,
+            });
+          }}
+        />
+      );
+    }
+
+    const referencedInsertDataObj =
+      referencedInsertData instanceof NewRowDataHandler ?
+        referencedInsertData.getRow()
+      : referencedInsertData;
+    const newDataText = sliceText(
+      Object.entries(referencedInsertDataObj ?? {})
+        .map(([k, v]) =>
+          isObject(v) ? `{ ${k} }`
+          : Array.isArray(v) ? `[{ ${k} }]`
+          : v?.toString(),
+        )
+        .join(", "),
+      60,
+    );
+
+    return (
+      <FlexRow
+        className="gap-0 f-1"
+        style={{ justifyContent: "space-between" }}
+      >
+        <Btn
+          className="formfield-bg-color"
+          color="action"
+          title="View insert data"
+          onClick={() => {
+            setShowNestedInsertForm(true);
+          }}
+        >
+          {newDataText}
+        </Btn>
+        <Btn
+          title="Remove nested insert"
+          iconPath={mdiClose}
+          onClick={() => {
+            onChange({ type: "nested-column", value: undefined });
+          }}
+        />
+      </FlexRow>
+    );
+  }
+
   return (
     <Select
-      className="SmartFormFieldForeignKey FormField_Select noselect bg-color-0"
+      className="SmartFormFieldForeignKey FormField_Select noselect formfield-bg-color"
       variant="div"
       fullOptions={fullOptions ?? []}
       onSearch={onSearchOptions}
-      onChange={onChange}
-      value={rawValue}
+      onChange={(newVal) => onChange({ type: "column", value: newVal })}
+      value={value}
       labelAsValue={true}
       btnProps={{
         children: displayValue,
         style: {
-          padding: "0",
           justifyContent: "space-between",
           flex: 1,
+          paddingLeft: "6px",
         },
       }}
     />
   );
 };
-
-const isTextColumn = (col: ValidatedColumnInfo) =>
-  !col.is_nullable &&
-  (["text", "varchar", "citext", "char"] as const).some(
-    (textType) => textType === col.udt_name,
-  );
-
-/**
- * When a non-text column is referencing another table,
- * we want to try and show the most representative text column of that table
- * to make it easier for the user to understand what record/data they refer to
- */
-const getBestTextColumn = (column: P["column"], tables: P["tables"]) => {
-  const fTableName = column.references[0]?.ftable;
-  const fTable = tables.find((t) => t.name === fTableName);
-  if (isTextColumn(column) || !fTable) return;
-
-  const fTableTextColumns = fTable.columns
-    .filter(isTextColumn)
-    .map((c) => {
-      const shortestUnique = fTable.info.uniqueColumnGroups
-        ?.filter((g) => g.includes(c.name))
-        .sort((a, b) => a.length - b.length)[0];
-      return {
-        ...c,
-        shortestUnique,
-        shortestUniqueLength: shortestUnique?.length ?? 100,
-      };
-    })
-    .sort((a, b) => a.shortestUniqueLength - b.shortestUniqueLength);
-
-  return fTableTextColumns[0]?.name;
-};
-
-const fetchOptions = async ({
-  column,
-  tableName,
-  db,
-  tables,
-  row,
-  term,
-}: Pick<P, "column" | "db" | "row" | "tableName" | "tables"> & {
-  term: string;
-}): Promise<FullOption[]> => {
-  const fKey = column.references[0];
-  if (!tableName || !fKey) return [];
-  const { ftable, fcols, cols } = fKey;
-
-  const tableHandler = db[tableName];
-  const fTableHandler = db[ftable];
-  if (!tableHandler?.find || !fTableHandler?.find) return [];
-
-  const mainColumn = column.name;
-  const textColumn = getBestTextColumn(column, tables);
-
-  const fMainColumn = fcols[cols.indexOf(mainColumn)];
-  if (fMainColumn) {
-    const fullForeignTableFilter = {};
-    const foreignTableFilter = {};
-    if (row) {
-      cols.forEach((col, i) => {
-        const fCol = fcols[i];
-        if (fCol) {
-          fullForeignTableFilter[fCol] = row[col];
-          if (col !== column.name) {
-            foreignTableFilter[fCol] = row[col];
-          }
-        }
-      });
-    }
-
-    const result = await fetchSearchResults({
-      mainColumn: fMainColumn,
-      textColumn,
-      db,
-      tableName: ftable,
-      term,
-      filter: foreignTableFilter,
-    });
-
-    /** We must add current value */
-    if (row && !result.some((o) => o.key === row[mainColumn])) {
-      const [currentValue] = await fetchSearchResults({
-        mainColumn: fMainColumn,
-        textColumn,
-        db,
-        tableName: ftable,
-        term: "",
-        filter: fullForeignTableFilter,
-      });
-      if (currentValue) {
-        result.unshift(currentValue);
-      }
-    }
-
-    return result;
-  }
-
-  return fetchSearchResults({
-    mainColumn,
-    textColumn: undefined,
-    db,
-    tableName,
-    term,
-    filter: undefined,
-  });
-};
-
-type Args = {
-  term: string;
-  mainColumn: string;
-  textColumn: string | undefined;
-  tableName: string;
-  filter: AnyObject | undefined;
-  db: DBHandlerClient;
-};
-const fetchSearchResults = async ({
-  mainColumn,
-  textColumn,
-  db,
-  filter,
-  tableName,
-  term,
-}: Args): Promise<FullOption[]> => {
-  const tableHandler = db[tableName];
-  if (!tableHandler?.find) return [];
-  const columns = [mainColumn, textColumn].filter(isDefined);
-
-  const termFilter =
-    term ?
-      { $or: columns.map((col) => ({ [col]: { $ilike: `%${term}%` } })) }
-    : {};
-  const finalFilter = {
-    $and: [filter, termFilter].filter((v) => !isEmpty(v)),
-  };
-
-  const res = await tableHandler.find(finalFilter, {
-    select: columns,
-    limit: OPTIONS_LIMIT,
-  });
-  return res.map((row) => ({
-    key: row[mainColumn],
-    subLabel: textColumn && row[textColumn],
-  }));
-};
-
-export const OPTIONS_LIMIT = 20;

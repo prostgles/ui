@@ -1,6 +1,6 @@
 import { isDefined, pickKeys } from "prostgles-types";
 import { asSQL } from "./KEYWORDS";
-import type { ParsedSQLSuggestion } from "./registerSuggestions";
+import type { ParsedSQLSuggestion } from "./monacoSQLSetup/registerSuggestions";
 import type { KWD } from "./withKWDs";
 
 export const PG_COLUMN_CONSTRAINTS = [

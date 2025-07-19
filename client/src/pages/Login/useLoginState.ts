@@ -2,12 +2,13 @@ import {
   authRequest,
   type PasswordLogin,
   type PasswordRegister,
-} from "prostgles-client/dist/Auth";
+} from "prostgles-client/dist/getAuthHandler";
 import type { AuthResponse } from "prostgles-types";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../../commonTypes/OAuthUtils";
 import type { LoginFormProps } from "./Login";
+import { ROUTES } from "../../../../commonTypes/utils";
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordLogin;
@@ -39,21 +40,21 @@ const loginStates = [
 ] as const satisfies FormStates[];
 
 export const useLoginState = ({ auth }: LoginFormProps) => {
-  const [loading, setIsLoading] = React.useState(false);
-  const [state, setState] = React.useState<FormStates>("login");
-  const [username, setUsername] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [emailVerificationCode, setEmailVerificationCode] = React.useState("");
-  const [totpToken, setTotpToken] = React.useState("");
-  const [totpRecoveryCode, setTotpRecoveryCode] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [loading, setIsLoading] = useState(false);
+  const [state, setState] = useState<FormStates>("login");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailVerificationCode, setEmailVerificationCode] = useState("");
+  const [totpToken, setTotpToken] = useState("");
+  const [totpRecoveryCode, setTotpRecoveryCode] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [usernamesWithPassword, setUsernamesWithPassword] = useState<string[]>(
     [],
   );
-  const [error, _setError] = React.useState("");
+  const [error, _setError] = useState("");
   const [result, setResult] =
-    React.useState<Extract<FormData, { type: typeof state }>["result"]>();
-  const [authResponse, setAuthResponse] = React.useState<{
+    useState<Extract<FormData, { type: typeof state }>["result"]>();
+  const [authResponse, setAuthResponse] = useState<{
     success: boolean;
     message: string;
   }>();
@@ -128,7 +129,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         emailVerificationCode,
         setEmailVerificationCode,
         onCall: () =>
-          authRequest(`/magic-link`, {
+          authRequest(ROUTES.MAGIC_LINK, {
             email: username,
             code: emailVerificationCode,
           }),

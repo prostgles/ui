@@ -53,6 +53,7 @@ export const LayerColorPicker = ({
 
   return (
     <ColorPicker
+      data-command="LayerColorPicker"
       style={{ flex: "none" }}
       btnProps={btnProps}
       title={title}

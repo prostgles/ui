@@ -1,7 +1,6 @@
 import React from "react";
 import type { TableProps, TableState } from "./Table";
-import { Pan, TableRootClassname, onWheelScroll } from "./Table";
-import type { AnyObject } from "prostgles-types";
+import { TableRootClassname, onWheelScroll } from "./Table";
 import { isObject } from "prostgles-types";
 import { vibrateFeedback } from "../../dashboard/Dashboard/dashboardUtils";
 import { quickClone } from "../../utils";
@@ -15,18 +14,18 @@ import type { PopupProps } from "../Popup/Popup";
 import Popup from "../Popup/Popup";
 import { classOverride } from "../Flex";
 import { getSortColumn } from "../../dashboard/W_Table/tableUtils/tableUtils";
+import type {
+  ColumnSort,
+  ColumnSortSQL,
+} from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import { Pan } from "../Pan";
 
-type TableHeaderProps = Pick<
-  TableProps,
-  | "cols"
-  | "sort"
-  | "onSort"
-  | "whiteHeader"
-  | "onColumnReorder"
-  | "showSubLabel"
+type TableHeaderProps<Sort extends ColumnSort | ColumnSortSQL> = Pick<
+  TableProps<Sort>,
+  "cols" | "sort" | "onSort" | "onColumnReorder" | "showSubLabel"
 > & {
   setDraggedCol: (newCol: TableState["draggedCol"]) => void;
-  rootRef?: HTMLDivElement | null;
+  rootRef: React.RefObject<HTMLDivElement>;
 } & Pick<TableState, "draggedCol">;
 
 export type TableHeaderState = Pick<TableState, "draggedCol"> & {
@@ -35,27 +34,20 @@ export type TableHeaderState = Pick<TableState, "draggedCol"> & {
     anchorEl: HTMLElement;
   } & ColumnSortMenuProps;
 };
-export class TableHeader extends React.Component<
-  TableHeaderProps,
-  TableHeaderState
-> {
+export class TableHeader<
+  Sort extends ColumnSort | ColumnSortSQL,
+> extends React.Component<TableHeaderProps<Sort>, TableHeaderState> {
   state: Readonly<TableHeaderState> = {
     draggedCol: undefined,
   };
 
   render(): React.ReactNode {
-    const {
-      cols,
-      sort: s = [],
-      onColumnReorder,
-      onSort,
-      whiteHeader = false,
-    } = this.props;
+    const { cols, sort: s = [], onColumnReorder, onSort } = this.props;
     const setDraggedCol = (draggedCol: TableHeaderState["draggedCol"]) =>
       this.setState({ draggedCol });
     const { draggedCol, showNestedSortOptions, popup } = this.state;
 
-    let sort: Required<TableProps>["sort"] = [];
+    let sort: Required<TableProps<Sort>>["sort"] = [];
     if (Array.isArray(s)) {
       sort = s.map((s) => ({ ...s }));
     }
@@ -92,6 +84,7 @@ export class TableHeader extends React.Component<
           </Popup>
         )}
         <div
+          data-command="TableHeader"
           role="row"
           className="noselect f-0 flex-row shadow bg-color-1"
           onWheel={onWheelScroll(TableRootClassname)}
@@ -102,14 +95,22 @@ export class TableHeader extends React.Component<
               "flex-col h-full min-w-0 px-p5 py-p5 text-left font-14 relative " +
               " font-medium text-0 tracking-wider to-ellipsis jc-center " +
               (onSort && col.sortable ? " pointer " : "") +
-              // (whiteHeader? " " : " bg-color-1  ") +
-              (col.onContextMenu ? " contextmenu " : "") +
               (col.width ? " f-0 " : " f-1 ");
+
+            const contextMenuStyles =
+              !col.onContextMenu ? undefined : (
+                ({
+                  /* disable selection/Copy of UIWebView */
+                  WebkitUserSelect: "none",
+                  /* disable the IOS popup when long-press on a link */
+                  WebkitTouchCallout: "none",
+                } satisfies React.CSSProperties)
+              );
 
             return (
               <div
                 key={iCol}
-                className={classOverride(className, "br b-gray-100")}
+                className={classOverride(className, "br b-color-1")}
                 {...(col.onContextMenu ? iosContextMenuPolyfill() : {})}
                 onContextMenu={
                   !col.onContextMenu ? undefined : (
@@ -130,7 +131,10 @@ export class TableHeader extends React.Component<
                   )
                 }
                 role="columnheader"
-                style={{ ...getDraggedTableColStyle(col, iCol, draggedCol) }} //  borderRight: "1px solid var(--gray-100)"
+                style={{
+                  ...getDraggedTableColStyle(col, iCol, draggedCol),
+                  ...contextMenuStyles,
+                }}
                 draggable={true}
                 onDragStart={(e) => {
                   e.dataTransfer.setData("text/plain", col.name + "");
@@ -218,7 +222,9 @@ export class TableHeader extends React.Component<
                             ) ?? [];
                           const onlyOneActiveColumn = col1 && !col2;
                           if (onlyOneActiveColumn) {
-                            newSort = getDefaultSort(`${col.key}.${col1.name}`); // { key: `${col.key}.${onlyOneActiveColumn.name}`, asc: true };
+                            newSort = getDefaultSort(
+                              `${col.key}.${col1.name}`,
+                            ) as Sort; // { key: `${col.key}.${onlyOneActiveColumn.name}`, asc: true };
                           } else {
                             this.setState({
                               showNestedSortOptions: {
@@ -229,7 +235,7 @@ export class TableHeader extends React.Component<
                             return;
                           }
                         } else {
-                          newSort = getDefaultSort(col.key as string);
+                          newSort = getDefaultSort(col.key as string) as Sort;
                         }
                       } else if (newSort.asc) newSort.asc = false;
                       else newSort = undefined;
@@ -278,6 +284,7 @@ export class TableHeader extends React.Component<
                 {iCol <= cols.length - 1 ?
                   <Pan
                     className="resize-handle noselect"
+                    data-command="TableHeader.resizeHandle"
                     style={{
                       position: "absolute",
                       right: 0,
@@ -285,19 +292,20 @@ export class TableHeader extends React.Component<
                       bottom: 0,
                       width: "30px",
                       cursor: "ew-resize",
-                      zIndex: 1,
                       marginRight: iCol === cols.length - 1 ? 0 : "-15px",
                     }}
                     onDoubleTap={(_, __, node) => {
                       const tableBody = node.closest(`.table-component`);
-                      const colh: HTMLDivElement | null = node.closest(
+                      const headerCell: HTMLDivElement | null = node.closest(
                         `[role="columnheader"]`,
                       );
-                      if (colh && col.onResize && tableBody) {
+                      if (headerCell && col.onResize && tableBody) {
                         const [firstNode, ...otherRowNodes] =
                           tableBody.querySelectorAll<HTMLElement>(
                             `div[role="rowgroup"] [role="row"] > *:nth-child(${iCol + 1})`,
                           );
+
+                        console.log({ firstNode, otherRowNodes });
                         if (firstNode) {
                           const font = window.getComputedStyle(firstNode).font;
                           const max = [firstNode, ...otherRowNodes].reduce(
@@ -330,20 +338,19 @@ export class TableHeader extends React.Component<
                       }
                     }}
                     onPan={(opts, ev) => {
-                      const colh: HTMLDivElement | null = opts.node.closest(
-                        `[role="columnheader"]`,
-                      );
-                      if (colh) {
+                      const headerCell: HTMLDivElement | null =
+                        opts.node.closest(`[role="columnheader"]`);
+                      if (headerCell) {
                         const { xDiff } = opts;
                         const w_px = Math.max(
                           30,
                           (opts.node as any)._w + xDiff,
                         );
-                        colh.style.width = `${w_px}px`;
-                        colh.style.flex = "none";
+                        headerCell.style.width = `${w_px}px`;
+                        headerCell.style.flex = "none";
 
                         const tableBody =
-                          this.props.rootRef?.querySelector(
+                          this.props.rootRef.current?.querySelector(
                             `[role="rowgroup"]`,
                           );
                         const rowCols =

@@ -42,7 +42,7 @@ export const FileTableAccessControlInfo = (
         <FlexCol className="gap-p5">
           <div>
             Access to the files is controlled through:
-            <ul className="pl-1">
+            <ul className="no-decor pl-1">
               <li>- access rules for the columns referencing this table</li>
               <li>- access rules for this table</li>
             </ul>
@@ -61,7 +61,7 @@ export const FileTableAccessControlInfo = (
                 : "that will be referenced by"}{" "}
                 the permitted records from following tables and columns:
               </div>
-              <ul className="pl-1">
+              <ul className="no-decor pl-1">
                 {ruleCols.map((t) => (
                   <li key={t.tableName} className="bold">
                     {t.tableName} ({t.cols})

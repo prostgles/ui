@@ -1,6 +1,9 @@
 import { suggestSnippets } from "../CommonMatchImports";
 import { getExpected } from "../getExpected";
-import { getKind, type SQLMatchContext } from "../registerSuggestions";
+import {
+  getKind,
+  type SQLMatchContext,
+} from "../monacoSQLSetup/registerSuggestions";
 import type { KWD } from "../withKWDs";
 import { suggestKWD, withKWDs } from "../withKWDs";
 

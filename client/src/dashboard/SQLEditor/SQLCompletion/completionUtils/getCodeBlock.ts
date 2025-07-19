@@ -5,7 +5,7 @@ import { getPrevTokensNoParantheses } from "../getPrevTokensNoParantheses";
 import type { TokenInfo } from "./getTokens";
 import { getTokens } from "./getTokens";
 import { isDefined } from "../../../../utils";
-import { getMonaco } from "../../SQLEditor";
+import { getMonaco } from "../../W_SQLEditor";
 import { checkIfInsideDollarFunctionDefinition } from "./checkIfInsideDollarFunctionDefinition";
 import { checkIfUnfinishedParenthesis } from "./checkIfUnfinishedParenthesis";
 

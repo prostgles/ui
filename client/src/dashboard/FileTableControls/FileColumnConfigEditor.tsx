@@ -10,7 +10,7 @@ import ButtonGroup from "../../components/ButtonGroup";
 import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
-import SearchList from "../../components/SearchList/SearchList";
+import { SearchList } from "../../components/SearchList/SearchList";
 import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 
 const CONTENT_MODES = [
@@ -144,7 +144,6 @@ export const FileColumnConfigEditor = ({
   return (
     <FlexCol className="f-1 min-h-0 gap-2">
       <FormField
-        asColumn={true}
         type="number"
         label="Maximum file size in megabytes"
         value={colConfig.maxFileSizeMB ?? 1}

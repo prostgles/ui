@@ -1,11 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { classOverride } from "../../components/Flex";
 import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
 import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
-import { getMonaco } from "../SQLEditor/SQLEditor";
+import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import { type editor, type Uri } from "../W_SQL/monacoEditorTypes";
 import { registerLogLang } from "./registerLogLang";
 import { setMonacoErrorMarkers } from "./utils/setMonacoErrorMarkers";
@@ -114,10 +120,13 @@ export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   className?: string;
   markers?: editor.IMarkerData[];
   onMount?: (editor: editor.IStandaloneCodeEditor) => void;
+  onTSLibraryChange?: (tsLibraries: TSLibrary[]) => void;
+  contentTop?: React.ReactNode;
 };
 
-const getSelectedText = (editor) =>
-  editor.getModel().getValueInRange(editor.getSelection());
+const getSelectedText = (
+  editor: editor.IStandaloneCodeEditor | editor.ICodeEditor,
+) => editor.getModel()?.getValueInRange(editor.getSelection()!);
 
 export const CodeEditor = (props: CodeEditorProps) => {
   const {
@@ -131,7 +140,10 @@ export const CodeEditor = (props: CodeEditorProps) => {
     style,
     className = "",
     error,
+    onTSLibraryChange,
+    contentTop,
   } = props;
+
   const language =
     isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
 
@@ -148,23 +160,13 @@ export const CodeEditor = (props: CodeEditorProps) => {
   }, [languageOrConf]);
 
   useSetMonacoJsonSchemas(editor, value, languageObj);
-  useSetMonacoTsLibraries(editor, languageObj, monaco, value);
-
-  useEffect(() => {
-    if (!editor) return;
-    /* Set google search contextmenu option */
-    editor.addAction({
-      id: "googleSearch",
-      label: "Search with Google",
-      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
-      contextMenuGroupId: "navigation",
-      run: (editor) => {
-        window.open(
-          "https://www.google.com/search?q=" + getSelectedText(editor),
-        );
-      },
-    });
-  }, [editor]);
+  useSetMonacoTsLibraries(
+    editor,
+    languageObj,
+    monaco,
+    value,
+    onTSLibraryChange,
+  );
 
   useEffect(() => {
     if (monaco && language === "log") {
@@ -209,6 +211,8 @@ export const CodeEditor = (props: CodeEditorProps) => {
     [onMount],
   );
 
+  const latestValueRef = useRef(value);
+  latestValueRef.current = value;
   const onFocus = useCallback(() => {
     const allCodeEditors = document.querySelectorAll(".CodeEditor");
     if (allCodeEditors.length === 1) {
@@ -217,7 +221,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
     }
 
     /** This is needed to ensure jsonschema works. Otherwise only the first editor schema will work */
-    setMonacoEditorJsonSchemas(editor, value, languageObj);
+    setMonacoEditorJsonSchemas(editor, latestValueRef.current, languageObj);
   }, [editor, languageObj]);
 
   const monacoOptions = useMemo(() => {
@@ -242,13 +246,13 @@ export const CodeEditor = (props: CodeEditorProps) => {
   return (
     <div
       className={classOverride(
-        "CodeEditor f-1 min-h-0 min-w-0 flex-col relative b b-color-2 relative",
+        "CodeEditor f-1 min-h-0 min-w-0 flex-col relative b b-color relative",
         className,
       )}
       style={style}
       onFocus={onFocus}
     >
-      {/* {!isReady && <Loading variant="cover" />} */}
+      {contentTop}
       <MonacoEditor
         className="f-1 min-h-0"
         language={language}

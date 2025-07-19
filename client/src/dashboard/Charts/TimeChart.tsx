@@ -1,6 +1,6 @@
 type ChartDate = { v: number; x: number; date: Date };
 
-import type { ScaleLinear } from "d3-scale";
+import type { ScaleLinear } from "d3";
 import type { ValidatedColumnInfo } from "prostgles-types";
 
 import React from "react";

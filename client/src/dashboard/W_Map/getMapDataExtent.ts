@@ -19,7 +19,7 @@ export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
       maxLat,
       maxLng,
       _xyExtent: { e: string } | AnyObject | undefined;
-    for await (const layer of layerQueries) {
+    for (const layer of layerQueries) {
       if (layer.type === "osm") {
         return undefined;
       } else if ("tableName" in layer) {

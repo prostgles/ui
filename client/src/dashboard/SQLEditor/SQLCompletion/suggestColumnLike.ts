@@ -5,7 +5,7 @@ import {
   getKind,
   type ParsedSQLSuggestion,
   type SQLMatcherResultArgs,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import { suggestFuncArgs } from "./suggestFuncArgs";
 
 type Args = Pick<

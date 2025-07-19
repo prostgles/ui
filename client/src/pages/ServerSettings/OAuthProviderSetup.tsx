@@ -1,12 +1,16 @@
-import { mdiContentCopy, mdiLock } from "@mdi/js";
+import { mdiLock } from "@mdi/js";
 import { isEqual } from "prostgles-types";
-import React, { useEffect, useState } from "react";
-import Btn from "../../components/Btn";
+import React, { useState } from "react";
+import { OAuthProviderOptions } from "../../../../commonTypes/OAuthUtils";
+import { CopyToClipboardBtn } from "../../components/CopyToClipboardBtn";
 import ErrorComponent from "../../components/ErrorComponent";
 import FormField from "../../components/FormField/FormField";
+import { Icon } from "../../components/Icon/Icon";
 import { FooterButtons } from "../../components/Popup/FooterButtons";
 import { Section } from "../../components/Section";
 import { SwitchToggle } from "../../components/SwitchToggle";
+import { t } from "../../i18n/i18nUtils";
+import { tout } from "../ElectronSetup/ElectronSetup";
 import {
   FacebookIcon,
   GithubIcon,
@@ -14,10 +18,6 @@ import {
   MicrosoftIcon,
 } from "../Login/SocialIcons";
 import type { AuthProviderProps } from "./AuthProvidersSetup";
-import { OAuthProviderOptions } from "../../../../commonTypes/OAuthUtils";
-import { tout } from "../ElectronSetup";
-import { Icon } from "../../components/Icon/Icon";
-import { t } from "../../i18n/i18nUtils";
 
 type P = AuthProviderProps & {
   provider: keyof Omit<
@@ -208,15 +208,7 @@ export const OAuthProviderSetup = ({
         label={t.OAuthProviderSetup["Return URL"]}
         readOnly={true}
         value={returnURL}
-        rightIcons={
-          <Btn
-            title={t.common["Copy to clipboard"]}
-            iconPath={mdiContentCopy}
-            onClickPromise={async () => {
-              navigator.clipboard.writeText(returnURL);
-            }}
-          />
-        }
+        rightIcons={<CopyToClipboardBtn content={returnURL} />}
       />
       {error && <ErrorComponent error={error} />}
       {didChange && (

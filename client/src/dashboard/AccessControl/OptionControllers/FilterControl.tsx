@@ -2,9 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/prostgles";
 import { quickClone } from "../../../utils";
-import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
 import Select from "../../../components/Select/Select";
-import type { SimpleFilter } from "../../../../../commonTypes/filterUtils";
+import {
+  getSmartGroupFilter,
+  type SimpleFilter,
+} from "../../../../../commonTypes/filterUtils";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
 import {
   omitKeys,
@@ -20,6 +22,7 @@ import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderFilter } from "../../RenderFilter";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import { appTheme, useReactiveState } from "../../../App";
+import type { DBS } from "../../Dashboard/DBS";
 
 export type ContextDataSchema = {
   name: string;
@@ -136,7 +139,6 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
           }
           render={(pClose) => (
             <SmartTable
-              theme={theme}
               title={({ filteredRows, totalRows }) => (
                 <div className="flex-row ai-center gap-p25 ws-pre jc-center bg-color-2 p-1">
                   <div className="bold">

@@ -1,6 +1,6 @@
 import { getExpected } from "./getExpected";
-import type { SQLMatcher } from "./registerSuggestions";
-import { getKind } from "./registerSuggestions";
+import type { SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
+import { getKind } from "./monacoSQLSetup/registerSuggestions";
 import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
 

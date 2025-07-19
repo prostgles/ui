@@ -1,5 +1,5 @@
 import type { editor } from "monaco-editor";
-import { getMonaco } from "./SQLEditor";
+import { getMonaco } from "./W_SQLEditor";
 import {
   type TokenInfo,
   getTokens,

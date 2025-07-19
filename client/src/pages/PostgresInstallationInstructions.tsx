@@ -8,7 +8,7 @@ import React from "react";
 import Btn from "../components/Btn";
 import { ExpandSection } from "../components/ExpandSection";
 import PopupMenu from "../components/PopupMenu";
-import { DEFAULT_ELECTRON_CONNECTION } from "./ElectronSetup";
+import { DEFAULT_ELECTRON_CONNECTION } from "../../../commonTypes/electronInitTypes";
 
 const OPERATING_SYSTEMS = [
   { key: "linux", label: "Linux", icon: mdiLinux },
@@ -19,7 +19,7 @@ export type OS = (typeof OPERATING_SYSTEMS)[number]["key"];
 
 type P = {
   os: OS;
-  placement: "state-db" | "add-connection";
+  placement: "state-db" | "add-connection" | "state-db-quick-setup";
   className?: string;
 };
 export const PostgresInstallationInstructions = ({
@@ -27,11 +27,14 @@ export const PostgresInstallationInstructions = ({
   className = "",
   placement,
 }: P) => {
+  const { db_user, db_name } = DEFAULT_ELECTRON_CONNECTION;
+
   return (
     <PopupMenu
       title="Postgres server installation"
       positioning="center"
       className={className}
+      contentClassName=""
       clickCatchStyle={{ opacity: 0.5 }}
       rootStyle={{ maxWidth: "750px" }}
       data-command="PostgresInstallationInstructions"
@@ -48,7 +51,7 @@ export const PostgresInstallationInstructions = ({
         <div className="flex-col p-2 font-18 gap-2 ta-left">
           <div>
             <h3>Postgres installation instructions:</h3>
-            <ul className="flex-row gap-1 jc-start">
+            <ul className="no-decor flex-row gap-1 jc-start">
               {OPERATING_SYSTEMS.map(({ key, label, icon }) => (
                 <li key={key}>
                   <Btn
@@ -66,40 +69,35 @@ export const PostgresInstallationInstructions = ({
           </div>
 
           <div>
-            <h3>Postgres new user & database creation:</h3>
-            {placement === "add-connection" ?
-              <p>Scripts to create a user and database</p>
-            : <p>
-                It is recommended to create a new user{" "}
-                <strong>{DEFAULT_ELECTRON_CONNECTION.db_user}</strong> and a new
-                database <strong>{DEFAULT_ELECTRON_CONNECTION.db_name}</strong>.
-                Use a strong password to prevent security issues
-              </p>
-            }
+            {placement === "state-db-quick-setup" ?
+              <h3>Postgres user creation:</h3>
+            : <h3>Postgres user & database creation:</h3>}
+
             <ExpandSection label="Linux/MacOs" expanded={os !== "windows"}>
               <code className="bg-terminal text-white p-1 flex-col ta-left">
-                sudo -u postgres createuser -P --superuser{" "}
-                {DEFAULT_ELECTRON_CONNECTION.db_user}
+                sudo -u postgres createuser -P --superuser {db_user}
               </code>
-              <code className="bg-terminal text-white p-1 flex-col ta-left">
-                sudo -u postgres createdb {DEFAULT_ELECTRON_CONNECTION.db_name}{" "}
-                -O {DEFAULT_ELECTRON_CONNECTION.db_user}
-              </code>
+              {placement !== "state-db-quick-setup" && (
+                <code className="bg-terminal text-white p-1 flex-col ta-left">
+                  sudo -u postgres createdb {db_name} -O {db_user}
+                </code>
+              )}
             </ExpandSection>
             <ExpandSection label="Windows" expanded={os === "windows"}>
               <p>
-                PowerShell command. Change "15" to your actual postgres version
-                number
+                PowerShell command. Change &quot;15&quot; to your actual
+                postgres version number
               </p>
               <code className="bg-terminal text-white p-1 flex-col ta-left">
-                & 'C:\Program Files\PostgreSQL\15\bin\createuser.exe' -U
-                postgres -P --superuser {DEFAULT_ELECTRON_CONNECTION.db_user}
+                & &apos;C:\Program Files\PostgreSQL\15\bin\createuser.exe&apos;
+                -U postgres -P --superuser {db_user}
               </code>
-              <code className="bg-terminal text-white p-1 flex-col ta-left">
-                & 'C:\Program Files\PostgreSQL\15\bin\createdb.exe' -U postgres
-                -O {DEFAULT_ELECTRON_CONNECTION.db_user}{" "}
-                {DEFAULT_ELECTRON_CONNECTION.db_name}
-              </code>
+              {placement !== "state-db-quick-setup" && (
+                <code className="bg-terminal text-white p-1 flex-col ta-left">
+                  & &apos;C:\Program Files\PostgreSQL\15\bin\createdb.exe&apos;
+                  -U postgres -O {db_user} {db_name}
+                </code>
+              )}
             </ExpandSection>
           </div>
         </div>

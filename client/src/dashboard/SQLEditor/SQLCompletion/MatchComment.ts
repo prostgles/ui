@@ -1,6 +1,6 @@
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
-import type { SQLMatcher } from "./registerSuggestions";
+import type { SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
 
 export const MatchComment: SQLMatcher = {
   match: (cb) => cb.tokens[0]?.textLC === "comment",

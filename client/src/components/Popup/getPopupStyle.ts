@@ -15,13 +15,6 @@ export const getPopupStyle = ({
   collapsed,
   fullScreen,
 }: Args) => {
-  let rStyle = {};
-  if (positioning === "tooltip") {
-    rStyle = {
-      pointerEvents: "none",
-      touchAction: "none",
-    };
-  }
   let style: React.CSSProperties = {
     maxWidth: "100vw",
     maxHeight: "100vh",
@@ -32,7 +25,6 @@ export const getPopupStyle = ({
     zIndex: POPUP_ZINDEX,
     padding: 0,
     borderRadius: ".5em",
-    ...rStyle,
     ...stateStyle,
     ...rootStyle,
   };

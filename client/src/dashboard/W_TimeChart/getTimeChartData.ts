@@ -23,6 +23,7 @@ import {
   type TimeChartLayerWithBin,
   type TimeChartLayerWithBinOrError,
 } from "./getTimeChartLayersWithBins";
+import type { DBS } from "../Dashboard/DBS";
 
 export const getTimeLayerDataSignature = (
   l: ProstglesTimeChartLayer,

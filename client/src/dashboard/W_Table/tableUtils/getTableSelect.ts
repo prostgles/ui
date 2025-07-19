@@ -1,10 +1,10 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import { isDefined } from "prostgles-types";
+import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 import { isEmpty } from "../../../utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
-import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
 import { getTimeChartSelectParams } from "../../W_TimeChart/getTimeChartData";
 import {
   getDesiredTimeChartBinSize,

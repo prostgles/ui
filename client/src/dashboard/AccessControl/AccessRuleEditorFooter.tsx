@@ -55,8 +55,12 @@ export const AccessRuleEditorFooter = (props: P) => {
   const error = wspError || localError || ruleErrorMessage;
 
   return (
-    <FlexCol>
-      <ErrorComponent error={error} variant="outlined" />
+    <FlexCol className="AccessRuleEditorFooter">
+      <ErrorComponent
+        error={error}
+        variant="outlined"
+        autoScrollIntoView={false}
+      />
       {newRule && onChange && type !== "create" && (
         <ButtonBar
           error={localError}
@@ -64,17 +68,23 @@ export const AccessRuleEditorFooter = (props: P) => {
             [
               {
                 children: "Cancel",
+                className: "mr-auto",
+                variant: "faded",
                 "data-command": "config.ac.cancel",
                 onClick: onCancel,
-                variant: "faded",
               },
               selectedRuleId ?
                 ({
                   children: "Remove rule",
-                  className: "ml-auto w-fit",
+                  className: "w-fit",
                   variant: "faded",
                   "data-command": "config.ac.removeRule",
                   color: "danger",
+                  clickConfirmation: {
+                    color: "danger",
+                    message: "Are you sure you want to remove this rule?",
+                    buttonText: "Remove rule",
+                  },
                   onClickPromise: async () => {
                     try {
                       await dbs.access_control_user_types.delete({

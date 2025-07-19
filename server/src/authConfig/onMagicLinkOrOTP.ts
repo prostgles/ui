@@ -1,6 +1,6 @@
 import type { LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import { makeSession, type SUser } from "./getAuth";
+import { makeSession, type SUser } from "./sessionUtils";
 import type { AuthResponse } from "prostgles-types";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 import type { Users } from "..";
@@ -57,6 +57,9 @@ export const onMagicLinkOrOTP: Required<
     if (!user) {
       return withError("no-match", "User from Magic link not found");
     }
+    if (user.status !== "active") {
+      return withError("inactive-account", "Account is inactive");
+    }
 
     /**
      * This is done to prevent multiple logins with the same magic link
@@ -95,18 +98,31 @@ export const onMagicLinkOrOTP: Required<
         return withError("no-match", "Invalid confirmation code");
       }
 
-      await dbs.users.update(
-        { id: user.id },
-        {
-          registration: {
-            type: "password-w-email-confirmation",
-            email_confirmation: {
-              status: "confirmed",
-              date: new Date().toISOString(),
+      const userId = user.id;
+      await dbs.tx(async (dbsTx) => {
+        const latestUser = await dbsTx.users.findOne({ id: userId });
+        if (
+          latestUser?.registration?.type !== "password-w-email-confirmation" ||
+          latestUser.registration.email_confirmation.status !== "pending"
+        ) {
+          throw new Error("Email confirmation already completed");
+        }
+        await dbsTx.users.update(
+          { id: userId },
+          {
+            registration: {
+              $merge: [
+                {
+                  email_confirmation: {
+                    status: "confirmed",
+                    date: new Date().toISOString(),
+                  },
+                },
+              ],
             },
           },
-        },
-      );
+        );
+      });
 
       await rateLimitedAttempt.onSuccess();
       return {
@@ -119,10 +135,6 @@ export const onMagicLinkOrOTP: Required<
       if (!data.code || user.registration.otp_code !== data.code) {
         return withError("invalid-magic-link", "Invalid code");
       }
-      if (user.registration.used_on) {
-        await rateLimitedAttempt.onSuccess();
-        return withError("used-magic-link", "Magic link already used");
-      }
       if (
         new Date(user.registration.date).getTime() + 5 * MINUTE <
         Date.now()
@@ -130,6 +142,14 @@ export const onMagicLinkOrOTP: Required<
         await rateLimitedAttempt.onSuccess();
         return withError("expired-magic-link", "Code expired");
       }
+      if (user.registration.used_on) {
+        await rateLimitedAttempt.onSuccess();
+        return withError("used-magic-link", "Magic link already used");
+      }
+      await dbs.users.update(
+        { id: user.id },
+        { registration: { $merge: [{ used_on: new Date().toISOString() }] } },
+      );
     }
   }
   const session = await makeSession(

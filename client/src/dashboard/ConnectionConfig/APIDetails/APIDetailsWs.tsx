@@ -80,7 +80,7 @@ export const APIDetailsWs = ({
   projectPath,
 }: APIDetailsProps & { token?: string }) => {
   const dbSchemaTypes = usePromise(async () => {
-    if (dbsMethods.getAPITSDefinitions && connection.id) {
+    if (connection.id) {
       const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.(
         connection.id,
       );

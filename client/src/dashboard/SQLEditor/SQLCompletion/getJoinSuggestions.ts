@@ -2,8 +2,8 @@ import { isDefined } from "../../../utils";
 import { suggestSnippets } from "./CommonMatchImports";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import type { RawExpect } from "./getExpected";
-import type { ParsedSQLSuggestion } from "./registerSuggestions";
-import { getKind } from "./registerSuggestions";
+import type { ParsedSQLSuggestion } from "./monacoSQLSetup/registerSuggestions";
+import { getKind } from "./monacoSQLSetup/registerSuggestions";
 
 type Args = {
   ss: ParsedSQLSuggestion[];

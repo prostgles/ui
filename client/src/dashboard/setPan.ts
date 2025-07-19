@@ -11,7 +11,13 @@ export type PanEvent = {
   yDiff: number;
   xTravel: number;
   yTravel: number;
+  /**
+   * x position within the element.
+   */
   xNode: number;
+  /**
+   * y position within the element.
+   */
   yNode: number;
   xNodeStart: number;
   yNodeStart: number;
@@ -35,7 +41,11 @@ export type PanListeners = {
     e: React.PointerEvent<HTMLDivElement>,
     node: HTMLDivElement,
   ) => void;
-
+  onPointerMove?: (
+    pev: Pick<PanEvent, "xNode" | "yNode">,
+    e: React.PointerEvent<HTMLDivElement>,
+    node: HTMLDivElement,
+  ) => void;
   onPanStart?: (pe: PanEvent, e: React.PointerEvent<HTMLDivElement>) => void;
   onPan: (pe: PanEvent, e: React.PointerEvent<HTMLDivElement>) => void;
   onPanEnd?: (pe: PanEvent, e: React.PointerEvent<HTMLDivElement>) => void;
@@ -58,46 +68,33 @@ export type PanListeners = {
   }) => void;
 };
 
-let panEventsAreSet = false;
-let panEvents: {
-  node: HTMLDivElement;
-  events: PanListeners;
-  handlers: {
-    _onPress: (ev: React.PointerEvent<HTMLDivElement>) => void;
-    _onRelease: (ev: React.PointerEvent<HTMLDivElement>) => void;
-    onMove: (ev: React.PointerEvent<HTMLDivElement>) => void;
-  };
-}[] = [];
-let _pointerdown: PanEvent | null = null;
-let _panning: PanEvent | null = null;
-let lastMove: React.PointerEvent<HTMLDivElement> | undefined;
-let currEv: (typeof panEvents)[number] | undefined;
-let lastRelease:
-  | {
-      duration: number;
-      ended: number;
-    }
-  | undefined;
-let lastPress:
-  | {
-      ev: React.PointerEvent<HTMLDivElement>;
-      started: number;
-      onSinglePinch?: boolean;
-    }
-  | undefined;
 export function setPan(node: HTMLDivElement, evs: PanListeners) {
-  // const {
-  //   onPanStart, onPan, onPanEnd,
-  //   threshold = 15,
-  //   doubleTapThreshold = 100,
-  //   tapThreshold = 30,
-  //   onPress, onRelease, onDoubleTap,
-  //   onPinch, onSinglePinch
-  // } = evs;
-
-  // let pressEvents: Record<string, PointerEvent> = {};
-  // let moveEvents: Record<string, PointerEvent> = {};
-
+  let panEvents: {
+    node: HTMLDivElement;
+    events: PanListeners;
+    handlers: {
+      _onPress: (ev: React.PointerEvent<HTMLDivElement>) => void;
+      _onRelease: (ev: React.PointerEvent<HTMLDivElement>) => void;
+      onMove: (ev: React.PointerEvent<HTMLDivElement>) => void;
+    };
+  }[] = [];
+  let _pointerdown: PanEvent | null = null;
+  let _panning: PanEvent | null = null;
+  let lastMove: React.PointerEvent<HTMLDivElement> | undefined;
+  let currEv: (typeof panEvents)[number] | undefined;
+  let lastRelease:
+    | {
+        duration: number;
+        ended: number;
+      }
+    | undefined;
+  let lastPress:
+    | {
+        ev: React.PointerEvent<HTMLDivElement>;
+        started: number;
+        onSinglePinch?: boolean;
+      }
+    | undefined;
   const _onPress = (ev: React.PointerEvent<HTMLDivElement>) => {
       currEv = panEvents.find((p) => p.node.contains(ev.target as any));
       if (!currEv) return;
@@ -185,7 +182,19 @@ export function setPan(node: HTMLDivElement, evs: PanListeners) {
       _pointerdown = null;
     },
     onMove = (ev: React.PointerEvent<HTMLDivElement>) => {
-      if (!currEv || !lastPress) return;
+      if (!currEv || !lastPress) {
+        if (evs.onPointerMove && node.contains(ev.target as any)) {
+          const rect = node.getBoundingClientRect();
+          const { clientX: x, clientY: y } = ev;
+          const [xOffset, yOffset] = [rect.x, rect.y];
+          evs.onPointerMove(
+            { xNode: x - xOffset, yNode: y - yOffset },
+            ev,
+            node,
+          );
+        }
+        return;
+      }
 
       /** onSinglePinch */
       const {
@@ -300,22 +309,19 @@ export function setPan(node: HTMLDivElement, evs: PanListeners) {
 
   /* Required for pointerup to fire */
   node.style.touchAction = "none";
+  window.document.body.style.touchAction = "none";
 
-  if (!panEventsAreSet) {
-    panEventsAreSet = true;
+  /* Prevent chrome back/forward nav */
+  window.document.documentElement.style.overscrollBehavior = "none";
 
-    window.document.body.style.touchAction = "none";
+  const onReleaseCleanup = addEvent(
+    window.document.body,
+    "pointerup",
+    _onRelease,
+  );
+  const onMoveCleanup = addEvent(window.document.body, "pointermove", onMove);
 
-    /* Prevent chrome back/forward nav */
-    (window.document.documentElement.style as any).overscrollBehavior = "none";
-
-    // addEvent(window.document.body, "pointerdown", _onPress);
-    addEvent(window.document.body, "pointerup", _onRelease);
-    // addEvent(window.document.body, "pointerleave", _onRelease);
-    addEvent(window.document.body, "pointermove", onMove);
-  }
-
-  const ev = addEvent(node, "pointerdown", _onPress);
+  const onPointerDownCleanup = addEvent(node, "pointerdown", _onPress);
   panEvents.push({
     node,
     events: evs,
@@ -323,7 +329,9 @@ export function setPan(node: HTMLDivElement, evs: PanListeners) {
   });
 
   return function () {
-    ev();
+    onPointerDownCleanup();
+    onReleaseCleanup();
+    onMoveCleanup();
     panEvents = panEvents.filter(
       (pev) => pev.events.onPan !== evs.onPan && pev.node !== node,
     );
@@ -339,7 +347,7 @@ export function addEvent(node: HTMLElement, type, func) {
     }
   };
   node.removeEventListener(type, wrappedEvent);
-  node.addEventListener(type, wrappedEvent, { passive: false });
+  node.addEventListener(type, wrappedEvent, { passive: false, capture: false });
   return function () {
     node.removeEventListener(type, wrappedEvent);
   };

@@ -19,7 +19,7 @@ export const ButtonBar = ({ buttons, className = "", error, style }: P) => {
       style={style}
     >
       <ErrorComponent error={error} />
-      <div className={"flex-row-wrap py-1 mt-2 gap-2 "}>
+      <div className={"flex-row-wrap py-1 gap-2 "}>
         {buttons.map((btnProps, i) => (
           <Btn key={i} {...btnProps} />
         ))}

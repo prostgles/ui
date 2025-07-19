@@ -27,7 +27,7 @@ export default class Stepper extends React.Component<MyProps, any> {
     return (
       <nav>
         <ul
-          className="flex ai-center"
+          className="no-decor flex ai-center"
           style={{ listStyle: "none", padding: 0 }}
         >
           {steps.map((s, i) => (

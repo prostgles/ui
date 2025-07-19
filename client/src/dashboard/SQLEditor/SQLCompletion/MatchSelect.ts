@@ -15,7 +15,7 @@ import {
   getKind,
   type ParsedSQLSuggestion,
   type SQLMatcher,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
 import { suggestTableLike } from "./suggestTableLike";
 import type { KWD } from "./withKWDs";
@@ -346,18 +346,30 @@ export const MatchSelect: SQLMatcher = {
     const COND_KWDS = ["WHERE", "HAVING"] as const;
     const conditionIsComplete =
       ltoken &&
-      ltoken.type !== "operator.sql" &&
+      (ltoken.type !== "operator.sql" || ltoken.textLC === "null") && // for some reason null is an operator
       !COND_KWDS.includes(ltoken.textLC as any);
 
+    const extraOptions: MinimalSnippet[] = [];
+    if (prevKWD?.kwd === "WHERE") {
+      extraOptions.push({ label: "AND", kind: getKind("keyword") });
+      extraOptions.push({ label: "OR", kind: getKind("keyword") });
+    }
+    const remainingKWDSOptions: MinimalSnippet[] = remainingKWDS.map((k) => ({
+      label: k.kwd,
+      kind: getKind("keyword"),
+      docs: k.docs,
+      sortText: k.sortText,
+    }));
+    const remainingKWDSWithAndOr = [...remainingKWDSOptions, ...extraOptions];
     if (
-      remainingKWDS.length &&
+      remainingKWDSWithAndOr.length &&
       !isMaybeTypingSchemaDotTable &&
       (!cb.text.trim() ||
         (SELKWDS.includes(prevKWD?.kwd as any) && selectIsComplete) ||
         (prevKWD?.kwd === "INTO" && ltokenIsIdentifier) ||
         (prevKWD?.kwd === "FROM" && ltokenIsIdentifier) ||
         (prevKWD?.kwd.endsWith("JOIN") && ltokenIsIdentifier) ||
-        (prevKWD?.kwd === "WHERE" && conditionIsComplete) || // !cb.thisLinePrevTokens.length ||
+        (prevKWD?.kwd === "WHERE" && conditionIsComplete) ||
         (prevKWD?.kwd === "LIMIT" && ltoken?.type === "number.sql") ||
         (prevKWD?.kwd === "OFFSET" && ltoken?.type === "number.sql") ||
         ((prevKWD?.kwd === "GROUP BY" || prevKWD?.kwd === "ORDER BY") &&
@@ -366,18 +378,7 @@ export const MatchSelect: SQLMatcher = {
           (cb.currToken?.text.length ?? 0) <= 1) ||
         (prevKWD?.kwd === "ON" && !thisLinePrevTokens.length))
     ) {
-      const extraOptions: MinimalSnippet[] = [];
-      if (prevKWD?.kwd === "WHERE") {
-        extraOptions.push({ label: "AND", kind: getKind("keyword") });
-        extraOptions.push({ label: "OR", kind: getKind("keyword") });
-      }
-      const options: MinimalSnippet[] = remainingKWDS.map((k) => ({
-        label: k.kwd,
-        kind: getKind("keyword"),
-        docs: k.docs,
-        sortText: k.sortText,
-      }));
-      return suggestSnippets([...options, ...extraOptions]);
+      return suggestSnippets(remainingKWDSWithAndOr);
     }
 
     if (!thisLineLC && prevKWD?.kwd === "FROM" && ltoken?.textLC !== "from") {

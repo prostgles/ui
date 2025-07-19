@@ -2,7 +2,8 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { Users } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { getActiveSession } from "./getActiveSession";
-import { makeSession, parseAsBasicSession } from "./getAuth";
+import { makeSession, parseAsBasicSession } from "./sessionUtils";
+import { DAY } from "../../../commonTypes/utils";
 
 type CreateSessionArgs = {
   user: Users;
@@ -32,7 +33,6 @@ export const createSession = async ({
   }
   if (!activeSession) {
     const globalSettings = await db.global_settings.findOne();
-    const DAY = 24 * 60 * 60 * 1000;
     const expires =
       Date.now() + (globalSettings?.session_max_age_days ?? 1) * DAY;
     return await makeSession(

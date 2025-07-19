@@ -1,28 +1,28 @@
-import React, { useEffect, useMemo, useState } from "react";
-import SearchList from "../../../components/SearchList/SearchList";
-import type { ColumnConfig } from "./ColumnMenu";
+import { mdiDelete, mdiFunction, mdiLink, mdiPencil } from "@mdi/js";
 import {
   useMemoDeep,
   type DBHandlerClient,
 } from "prostgles-client/dist/prostgles";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import { omitKeys } from "prostgles-types";
+import React, { useState } from "react";
+import type { Prgl } from "../../../App";
+import Btn from "../../../components/Btn";
 import { FlexRow } from "../../../components/Flex";
 import PopupMenu from "../../../components/PopupMenu";
-import { AlterColumn } from "./AlterColumn/AlterColumn";
-import Btn from "../../../components/Btn";
-import { mdiDelete, mdiFunction, mdiLink, mdiPencil } from "@mdi/js";
-import { getColumnListItem } from "./ColumnsMenu";
-import type { ColumnConfigWInfo } from "../W_Table";
-import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
+import { SearchList } from "../../../components/SearchList/SearchList";
 import type {
   DBSchemaTablesWJoins,
   LoadedSuggestions,
   WindowData,
 } from "../../Dashboard/dashboardUtils";
-import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { ColumnConfigWInfo } from "../W_Table";
+import { AlterColumn } from "./AlterColumn/AlterColumn";
+import type { ColumnConfig } from "./ColumnMenu";
+import { getColumnListItem } from "./ColumnsMenu";
+import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { SummariseColumn } from "./SummariseColumns";
-import type { ValidatedColumnInfo } from "prostgles-types";
-import { omitKeys } from "prostgles-types";
-import type { Prgl } from "../../../App";
 
 type P = {
   columns: ColumnConfigWInfo[];
@@ -115,6 +115,8 @@ export const ColumnList = ({
                     <PopupMenu
                       positioning="center"
                       title={`Alter ${c.name}`}
+                      clickCatchStyle={{ opacity: 1 }}
+                      data-command="W_TableMenu_ColumnList.alter"
                       button={
                         <Btn
                           iconPath={mdiPencil}
@@ -124,6 +126,7 @@ export const ColumnList = ({
                         />
                       }
                       onClickClose={false}
+                      contentClassName="p-1"
                     >
                       <AlterColumn {...mainMenuProps} field={c.name} />
                     </PopupMenu>
@@ -131,6 +134,7 @@ export const ColumnList = ({
                   {c.nested && (
                     <PopupMenu
                       title="Edit Linked Field"
+                      data-command="W_TableMenu_ColumnList.linkedColumnOptions"
                       button={
                         <Btn
                           color="action"
@@ -157,6 +161,7 @@ export const ColumnList = ({
                   )}
                   {!!computedRemove && (
                     <Btn
+                      data-command="W_TableMenu_ColumnList.removeComputedColumn"
                       className="mr-1"
                       color="danger"
                       title={computedRemove}

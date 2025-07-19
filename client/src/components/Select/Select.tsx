@@ -1,5 +1,5 @@
-import { mdiMenuDown } from "@mdi/js";
 import React from "react";
+import { mdiMenuDown } from "@mdi/js";
 import type { TestSelectors } from "../../Testing";
 import RTComp from "../../dashboard/RTComp";
 import type { BtnProps } from "../Btn";
@@ -10,8 +10,8 @@ import { Icon } from "../Icon/Icon";
 import type { LabelProps } from "../Label";
 import { Label } from "../Label";
 import Popup from "../Popup/Popup";
-import type { SearchListItem } from "../SearchList/SearchList";
-import SearchList from "../SearchList/SearchList";
+import type { SearchListItem, SearchListProps } from "../SearchList/SearchList";
+import { SearchList } from "../SearchList/SearchList";
 import "./Select.css";
 import { SelectTriggerButton } from "./SelectTriggerButton";
 import { sliceText } from "../../../../commonTypes/utils";
@@ -23,12 +23,22 @@ export type FullOption<O extends OptionKey = string> = Pick<
   "ranking"
 > & {
   key: O;
-  label?: string;
+  label?: string | React.ReactElement;
   subLabel?: string;
   checked?: boolean;
   disabledInfo?: string;
-  iconPath?: string;
-} & TestSelectors;
+  rightContent?: React.ReactNode;
+} & TestSelectors &
+  (
+    | {
+        iconPath?: string;
+        leftContent?: undefined;
+      }
+    | {
+        iconPath?: undefined;
+        leftContent?: React.ReactNode;
+      }
+  );
 
 type E =
   | React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -38,6 +48,8 @@ type E =
   | React.KeyboardEvent<HTMLButtonElement>
   | React.ChangeEvent<HTMLInputElement>
   | React.ChangeEvent<HTMLSelectElement>
+  | React.KeyboardEvent
+  | React.ChangeEvent
   | KeyboardEvent;
 
 // type P<O extends FullOption, Multi extends boolean = false> = {
@@ -69,7 +81,7 @@ export type SelectProps<
   showSelectedSublabel?: boolean;
   showIconOnly?: boolean;
   title?: string;
-  variant?: "search-list-only" | "div" | "pill" | "chips" | "chips-lg";
+  variant?: "search-list-only" | "div" | "chips" | "chips-lg";
   multiSelect?: Multi;
   labelAsValue?: boolean;
   emptyLabel?: string;
@@ -91,6 +103,7 @@ export type SelectProps<
   disabledInfo?: string;
   optional?: Optional;
   nullable?: boolean;
+  endOfResultsContent?: SearchListProps["endOfResultsContent"];
 } & (
     | {
         options: readonly O[];
@@ -139,6 +152,7 @@ export default class Select<
       variant = "div",
       onSearch,
       noSearchLimit = 15,
+      endOfResultsContent,
       multiSelect,
       asRow,
       limit,
@@ -147,18 +161,9 @@ export default class Select<
       disabledInfo,
       optional = false,
       showSelectedSublabel = false,
-      showIconOnly,
     } = this.props;
 
     const value = this.state.multiSelection ?? _value;
-
-    const DropDownIcon = (
-      <Icon
-        path={mdiMenuDown}
-        size={1}
-        style={{ color: "#cacaca", pointerEvents: "none", touchAction: "none" }}
-      />
-    );
 
     let fullOptions: FullOption[] = [];
 
@@ -248,31 +253,7 @@ export default class Select<
     };
 
     let select: React.ReactNode = null;
-    if (variant === "pill") {
-      select = (
-        <div
-          style={selectStyle}
-          className={classOverride(
-            "flex-row rounded o-hidden b b-color bg-color-2",
-            selectClass,
-          )}
-        >
-          {fullOptions.map((o, i) => (
-            <Btn
-              key={o.key}
-              color={value === o.key ? "action" : "default"}
-              variant={value === o.key ? "filled" : undefined}
-              style={{ borderRadius: 0 }}
-              onClick={(e) => {
-                toggleOne(o.key, e);
-              }}
-            >
-              {o.label ?? o.key}
-            </Btn>
-          ))}
-        </div>
-      );
-    } else if (
+    if (
       variant === "div" ||
       variant === "search-list-only" ||
       onSearch ||
@@ -281,6 +262,7 @@ export default class Select<
       const { popupAnchor, defaultSearch, fixedBtnWidth } = this.state;
 
       const closeDropDown = (e: E) => {
+        this.props.onSearch?.("");
         if (this.state.multiSelection && _onChange) {
           _onChange(this.state.multiSelection as any, e, undefined);
         }
@@ -290,6 +272,7 @@ export default class Select<
           fixedBtnWidth: undefined,
           defaultSearch: "",
         });
+        /** Maintain the same form element focused for convenience */
         setTimeout(() => {
           if (document.activeElement !== document.body) {
             this.btnRef?.focus();
@@ -297,7 +280,7 @@ export default class Select<
         }, 2);
       };
 
-      let btnLabel = "Select...";
+      let btnLabel: string | undefined = "Select...";
       if (Array.isArray(value)) {
         if (value.length) {
           selectedFullOptions = fullOptions.filter((o) =>
@@ -328,9 +311,7 @@ export default class Select<
           setRef={(r) => {
             this.btnRef = r;
           }}
-          showSelectedIcon={
-            showIconOnly ? selectedFullOptions[0]?.iconPath : undefined
-          }
+          selectedFullOptions={selectedFullOptions}
           onChange={onChange}
           optional={optional}
           selectClass={selectClass}
@@ -340,8 +321,14 @@ export default class Select<
           selectStyle={selectStyle}
           multiSelection={this.state.multiSelection}
           popupAnchor={popupAnchor}
-          setState={(newState) => {
-            this.setState(newState);
+          onPress={(btn, defaultSearch) => {
+            const maxBtnWidth = btn.getBoundingClientRect().width;
+            this.props.onOpen?.(btn);
+            this.setState({
+              popupAnchor: btn,
+              defaultSearch,
+              fixedBtnWidth: maxBtnWidth,
+            });
           }}
           btnLabel={btnLabel}
         />
@@ -366,7 +353,7 @@ export default class Select<
                 key={key}
                 color="blue"
                 style={
-                  variant.endsWith("-lg") ?
+                  variant === "chips-lg" ?
                     {
                       fontSize: "18px",
                     }
@@ -395,6 +382,7 @@ export default class Select<
           data-key={this.props["data-key"]}
           autoFocus={true}
           // noSearch={!onSearch && options.length < 15}
+          endOfResultsContent={endOfResultsContent}
           onSearch={onSearch}
           onMultiToggle={
             multiSelect ?
@@ -418,6 +406,8 @@ export default class Select<
               disabledInfo,
               ranking,
               iconPath,
+              leftContent,
+              rightContent,
               ...selectorProps
             }) => {
               return {
@@ -426,9 +416,11 @@ export default class Select<
                 subLabel,
                 ranking,
                 contentLeft:
-                  iconPath ?
+                  leftContent ? leftContent
+                  : iconPath ?
                     <Icon size={1} path={iconPath} className="text-1 mr-p5" />
                   : undefined,
+                contentRight: rightContent,
                 styles: {
                   subLabel: {
                     whiteSpace: "pre-wrap",
@@ -457,7 +449,7 @@ export default class Select<
       select = (
         <>
           {chips || trigger}
-          {popupAnchor ?
+          {popupAnchor && (
             <Popup
               rootStyle={{
                 padding: 0,
@@ -473,7 +465,7 @@ export default class Select<
             >
               {searchList}
             </Popup>
-          : null}
+          )}
         </>
       );
     } else {
@@ -510,13 +502,20 @@ export default class Select<
               </option>
             ))}
           </select>
-          {DropDownIcon}
+          <Icon
+            path={mdiMenuDown}
+            size={1}
+            className="text-2"
+            style={{
+              pointerEvents: "none",
+              touchAction: "none",
+            }}
+          />
         </div>
       );
     }
 
     const [selectedFullOption] = selectedFullOptions;
-
     if (!label) return select;
     else {
       return (

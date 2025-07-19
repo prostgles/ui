@@ -12,10 +12,15 @@
   margin-bottom: 0;
 }
 
-.Marked ul,
+/** Used to ensure the li marker does not appear above li item */
+.Marked {
+  white-space: normal;
+}
+
+/* .Marked ul,
 .Marked ol {
   line-height: 1em;
-}
+} */
 
 .Marked ol {
   list-style: none;

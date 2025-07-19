@@ -14,6 +14,7 @@ import { MenuList } from "../components/MenuList";
 import { isDefined } from "prostgles-types";
 import { Icon } from "../components/Icon/Icon";
 import { t } from "../i18n/i18nUtils";
+import { ROUTES } from "../../../commonTypes/utils";
 
 type P = {
   forNavBar?: boolean;
@@ -30,7 +31,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
         className={
           "text-0 ml-auto flex-row ai-center gap-p5  bb font-16 min-w-0"
         }
-        to={"/login"}
+        to={ROUTES.LOGIN}
       >
         <Icon className="f-0" path={mdiLogin} size={1} />
         <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">
@@ -53,7 +54,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
           className={
             "text-0 ml-auto flex-row ai-center gap-p5  bb font-16 min-w-0"
           }
-          to={"/account"}
+          to={ROUTES.ACCOUNT}
         >
           <Icon className="f-0" path={iconPath} size={1} />
           <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">
@@ -65,14 +66,14 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
           <>
             <form
               id="logout-form"
-              action="/logout"
+              action={ROUTES.LOGOUT}
               method="POST"
               style={{ display: "none" }}
             ></form>
             <a
               key={"logout"}
+              data-command="NavBar.logout"
               href="#"
-              // href="/logout"
               onClick={() => {
                 (
                   document.getElementById(
@@ -105,7 +106,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
             color: "var(--gray-100)",
             background: "var(--gray-700)",
           }}
-          size="medium"
+          size="default"
           title={user.username || "Account"}
           className=" flex-col text-white b g-gray-700"
         >
@@ -124,7 +125,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
             leftIconPath:
               user.type === "admin" ? mdiAccountStarOutline : mdiAccountOutline,
             onPress: () => {
-              navigate("/account");
+              navigate(ROUTES.ACCOUNT);
             },
           },
           cannotLogout ? undefined : (
@@ -132,7 +133,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
               label: t.common["Logout"],
               leftIconPath: mdiLogout,
               onPress: () => {
-                window.location.href = "/logout";
+                window.location.href = ROUTES.LOGOUT;
               },
             }
           ),

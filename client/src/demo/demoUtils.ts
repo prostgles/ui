@@ -1,5 +1,5 @@
 import { type Command, getCommandElemSelector } from "../Testing";
-import { tout } from "../pages/ElectronSetup";
+import { tout } from "../pages/ElectronSetup/ElectronSetup";
 
 let pointer: HTMLDivElement | null = null;
 
@@ -36,6 +36,7 @@ export const getElement = <T extends Element>(
 type ClickOpts = GetElemOpts & {
   timeout?: number;
   noTimeToWait?: boolean;
+  whenReady?: boolean;
 };
 
 export const waitForElement = async <T extends Element>(
@@ -58,6 +59,22 @@ export const waitForElement = async <T extends Element>(
     throw `Could not find ${[testId, endSelector].filter(Boolean).join(" ")} element to click`;
   }
   return elem;
+};
+
+export const clickWhenReady = async (elem: HTMLElement, timeout = 5e3) => {
+  if (elem instanceof HTMLButtonElement && elem.disabled) {
+    let timeoutLeft = timeout;
+    while (elem.disabled && timeoutLeft > 0) {
+      await tout(100);
+      timeoutLeft -= 100;
+    }
+    if (elem.disabled) {
+      throw `Element ${elem} is still disabled after ${timeout}ms`;
+    }
+  }
+  elem.scrollIntoView({ behavior: "smooth" });
+  await tout(150);
+  elem.click();
 };
 
 export const goToElem = async <ElemType = HTMLElement>(
@@ -92,8 +109,14 @@ export const click = async (
   const elem = await goToElem(testId, endSelector, opts);
   /** In some cases react has since replaced the node content */
   const latestElem = getElement<HTMLButtonElement>(testId, endSelector, opts);
-  (latestElem ?? elem).click();
+  const finalElem = latestElem ?? elem;
+  if (opts.whenReady) {
+    await clickWhenReady(finalElem, opts.timeout);
+  } else {
+    finalElem.click();
+  }
 };
+// window._click = click;
 
 export const type = async (
   value: string,

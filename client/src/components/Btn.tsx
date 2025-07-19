@@ -1,19 +1,20 @@
-import React, { useState } from "react";
-import { omitKeys } from "prostgles-types";
-import Loading from "./Loading";
-import "./Btn.css";
-import RTComp from "../dashboard/RTComp";
-import ErrorComponent from "./ErrorComponent";
-import { generateUniqueID } from "./FileInput/FileInput";
-import { NavLink } from "react-router-dom";
 import { mdiAlert, mdiCheck, mdiUpload } from "@mdi/js";
+import { omitKeys } from "prostgles-types";
+import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
+import RTComp from "../dashboard/RTComp";
+import type { TestSelectors } from "../Testing";
+import { tout } from "../utils";
+import "./Btn.css";
+import Chip from "./Chip";
+import { parsedError } from "./ErrorComponent";
+import { generateUniqueID } from "./FileInput/FileInput";
+import { classOverride } from "./Flex";
 import type { IconProps } from "./Icon/Icon";
 import { Icon } from "./Icon/Icon";
-import Chip from "./Chip";
-import { classOverride } from "./Flex";
-import type { TestSelectors } from "../Testing";
-import { tout } from "../pages/ElectronSetup";
 import { Label, type LabelProps } from "./Label";
+import Loading from "./Loading";
+import Popup from "./Popup/Popup";
 
 type ClickMessage = (
   | { err: any }
@@ -50,11 +51,7 @@ type BtnCustomProps = (
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
 
-  /**
-   * If provided will override existing top classname
-   */
-  exactClassName?: string;
-  size?: "large" | "medium" | "small" | "micro";
+  size?: "large" | "default" | "small" | "micro";
   variant?: "outline" | "filled" | "faded" | "icon" | "text" | "default";
   color?:
     | "danger"
@@ -72,6 +69,15 @@ type BtnCustomProps = (
    * If true then title will be used as children
    */
   titleAsLabel?: boolean;
+
+  /**
+   * If provided then will display a confirmation dialog before running any onClick function
+   */
+  clickConfirmation?: {
+    color: "danger" | "action" | "warn";
+    message: React.ReactNode;
+    buttonText: string;
+  };
 } & (
     | {
         onClickMessage?: (
@@ -79,21 +85,24 @@ type BtnCustomProps = (
           showMessage: ClickMessageArgs,
         ) => void;
         onClickPromise?: undefined;
+        onClickPromiseMode?: undefined;
       }
     | {
         onClickMessage?: undefined;
         onClickPromise?: (
           e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
         ) => Promise<void>;
+        onClickPromiseMode?: "noTickIcon";
         /**
          * Will display it instead of the error message
          */
         onClickPromiseMessage?: React.ReactNode;
       }
   );
+type KeysOfUnion<T> = T extends T ? keyof T : never;
 
 type OmmitedKeys =
-  | keyof BtnCustomProps
+  | KeysOfUnion<BtnCustomProps>
   | "children"
   | "ref"
   | "onClick"
@@ -113,17 +122,19 @@ const CUSTOM_ATTRS: OmmitedKeys[] = [
   "ref",
   "style",
   "size",
-  "exactClassName",
   "iconProps",
   "iconNode",
   "iconPosition",
   "iconClassname",
-  "onClickMessage" as any,
-  "onClickPromise" as any,
-  "onClickPromiseMessage" as any,
+  "onClickMessage",
+  "onClickPromise",
+  "onClickPromiseMessage",
+  "onClickPromiseMode",
   "asNavLink" as any,
   "iconStyle",
   "titleAsLabel",
+  "clickConfirmation",
+  "label",
 ];
 
 export type BtnProps<HREF extends string | void = void> = TestSelectors &
@@ -147,6 +158,7 @@ type BtnState = {
     msg: React.ReactNode;
     replace?: boolean;
   };
+  showClickConfirmation?: boolean;
 };
 
 export default class Btn<HREF extends string | void = void> extends RTComp<
@@ -172,12 +184,16 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       this.setState({
         clickMessage: {
           type: "err",
-          msg: ErrorComponent.parsedError(msg.err, true),
+          msg: parsedError(msg.err, true),
         },
       });
     } else if ("ok" in msg) {
       this.setState({
-        clickMessage: { type: "ok", msg: msg.ok, replace: msg.replace },
+        clickMessage: {
+          type: "ok",
+          msg: msg.ok,
+          replace: msg.replace,
+        },
       });
     } else if ("loading" in msg) {
       if (!msg.loading) {
@@ -189,7 +205,9 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
             this.mounted &&
             JSON.stringify(this.latestMsg) === JSON.stringify(msg)
           ) {
-            this.setState({ clickMessage: { type: "loading", msg: "" } });
+            this.setState({
+              clickMessage: { type: "loading", msg: "" },
+            });
           }
         }, msg.delay ?? 750);
       }
@@ -207,12 +225,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     );
   };
 
-  setPromise = async (promise: Promise<any>) => {
+  setPromise = async (
+    promise: ReturnType<Required<BtnProps>["onClickPromise"]>,
+  ) => {
     this.clickMessage({ loading: 1, delay: 0 });
     const minDuration = 500;
     const startTime = Date.now();
     try {
-      await promise;
+      const res = await promise;
       const endTime = Date.now();
       const duration = endTime - startTime;
       if (!this.mounted) return;
@@ -241,16 +261,17 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       disabledVariant = "",
       title,
       fadeIn,
-      exactClassName,
       variant = "default",
       iconProps,
       iconNode,
       iconClassname = "",
       titleAsLabel,
       label,
+      clickConfirmation,
+      onClickPromiseMode,
       ...otherProps
     } = this.props;
-    const { clickMessage } = this.state;
+    const { clickMessage, showClickConfirmation } = this.state;
     let extraStyle: React.CSSProperties = {};
 
     const color =
@@ -265,59 +286,54 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     if (clickMessage?.replace) return clickMessage.msg;
 
     const isDisabled = disabledInfo || loading;
-    let _className = exactClassName || "";
-    const { size = window.isLowWidthScreen ? "small" : "large" } = this.props;
+    let _className = "";
+    const { size = window.isLowWidthScreen ? "small" : "default" } = this.props;
 
-    if (!exactClassName) {
-      const hasBgClassname = (className + "").includes("bg-");
-      _className =
-        " f-0 flex-row gap-p5 ai-center  " +
-        ("href" in this.props ? " button-css " : "  ") +
-        (variant === "outline" ? " b " : "");
+    const hasBgClassname = (className + "").includes("bg-");
+    _className =
+      " f-0 flex-row gap-p5 ai-center  " +
+      ("href" in this.props ? " button-css " : "  ") +
+      (variant === "outline" ? " b " : "");
 
-      if (children) {
-        if (variant === "outline") {
-          if (!hasBgClassname)
-            _className =
-              _className.replace("bg-transparent", "") + " bg-color-0 ";
-          extraStyle = {
-            borderColor: "currentcolor",
-          };
-        }
-
-        if (size === "micro") {
-          extraStyle.padding = iconPath || loading ? `2px 6px` : "2px 4px";
-        }
-
-        if (size === "small") {
-          extraStyle.padding = iconPath || loading ? `2px 8px` : "2px 8px";
-        }
-
-        if (size === "medium") {
-          extraStyle.padding = iconPath || loading ? `6px 10px` : "10px";
-        }
-        if (size === "large") {
-          extraStyle.padding = iconPath || loading ? `8px 12px` : "12px";
-        }
-
-        if (variant === "text") {
-          extraStyle.paddingLeft = 0;
-        }
-
-        /** Is icon Btn */
-      } else {
+    if (children && !iconNode && !iconPath && !loading) {
+      if (variant === "outline") {
+        if (!hasBgClassname)
+          _className =
+            _className.replace("bg-transparent", "") + " bg-color-0 ";
         extraStyle = {
-          padding:
-            size === "micro" ? "2px"
-            : size === "small" ? "4px"
-            : size === "medium" ? "6px"
-            : "8px",
+          borderColor: "currentcolor",
         };
-
-        if (variant === "icon" || variant === "outline") {
-          extraStyle.padding = "0.5em";
-        }
       }
+
+      if (size === "micro") {
+        extraStyle.padding = "5px";
+      }
+
+      if (size === "small") {
+        extraStyle.padding = "6px 8px";
+      }
+
+      if (size === "default") {
+        extraStyle.padding = "12px 14px";
+      }
+      if (size === "large") {
+        extraStyle.padding = "12px";
+      }
+
+      if (variant === "text") {
+        extraStyle.paddingLeft = 0;
+      }
+    } else {
+      const padding =
+        size === "micro" ? "4px"
+        : size === "small" ? "6px"
+        : size === "default" ? "8px"
+        : "10px";
+      const sidePadding = children ? `calc(${padding} * 1.5)` : padding;
+      /** Must add right padding to icon and text button */
+      extraStyle = {
+        padding: `${padding} ${sidePadding}`,
+      };
     }
 
     _className +=
@@ -329,15 +345,15 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     const loadingSize = {
       large: 22,
-      medium: 18,
-      small: 12,
+      default: 20,
+      small: 14,
       micro: 12,
     }[size];
     const loadingMargin = {
       large: 1,
-      medium: 3,
-      small: 4,
-      micro: 3,
+      default: 1,
+      small: 0,
+      micro: 2,
     }[size];
     const childrenContent =
       children === undefined || children === null || children === "" ? null
@@ -359,11 +375,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
             <Icon
               path={
                 clickMessage?.type === "err" ? mdiAlert
-                : clickMessage?.type === "ok" ?
+                : (
+                  clickMessage?.type === "ok" &&
+                  onClickPromiseMode !== "noTickIcon"
+                ) ?
                   mdiCheck
                 : (iconPath ?? iconProps!.path)
               }
-              size={size === "micro" ? 0.75 : 1}
+              sizeName={size}
               className={iconClassname + " f-0 "}
               style={iconStyle}
               {...iconProps}
@@ -386,16 +405,28 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     type PropsOf<E> = React.HTMLAttributes<E> & { ref?: React.Ref<E> };
 
-    let onClick = this.props.onClick as any;
-    if ("onClickPromise" in this.props && this.props.onClickPromise) {
+    const needsConfirmation = () => {
+      if (clickConfirmation && !showClickConfirmation) {
+        this.setState({ showClickConfirmation: true });
+        return true;
+      }
+      return false;
+    };
+    let onClick = this.props.onClick;
+    if (this.props.onClickPromise) {
       const { onClickPromise } = this.props;
       onClick = (e) => {
-        this.setPromise(onClickPromise(e));
+        !needsConfirmation() && this.setPromise(onClickPromise(e));
       };
-    } else if ("onClickMessage" in this.props && this.props.onClickMessage) {
+    } else if (this.props.onClickMessage) {
       const { onClickMessage } = this.props;
       onClick = (e) => {
-        onClickMessage(e, this.clickMessage);
+        !needsConfirmation() && onClickMessage(e, this.clickMessage);
+      };
+    } else if (this.props.onClick) {
+      onClick = (e) => {
+        if (needsConfirmation()) return;
+        this.props.onClick?.(e);
       };
     }
 
@@ -406,7 +437,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     const FontSizeMap: Record<Required<BtnCustomProps>["size"], string> = {
       large: "16px",
-      medium: "16px",
+      default: "16px",
       small: "14px",
       micro: "12px",
     };
@@ -433,7 +464,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
         onMouseDown: (e) => e.preventDefault(),
         className: `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
         ref: this.props._ref as any,
-        ...{ "data-id": otherProps["data-id"] as any },
+        ...{ "data-id": otherProps["data-id"] },
       };
 
     const withLabel = (content: React.ReactNode) => {
@@ -480,12 +511,41 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     }
 
     return withLabel(
-      <button
-        {...(finalProps as PropsOf<HTMLButtonElement>)}
-        disabled={disabledInfo ? true : undefined}
-      >
-        {content}
-      </button>,
+      <>
+        <button
+          {...(finalProps as PropsOf<HTMLButtonElement>)}
+          disabled={disabledInfo ? true : undefined}
+        >
+          {content}
+        </button>
+        {clickConfirmation && showClickConfirmation && (
+          <Popup
+            data-command="Btn.ClickConfirmation"
+            onClickClose={false}
+            onClose={() => this.setState({ showClickConfirmation: false })}
+            clickCatchStyle={{ opacity: 1 }}
+            footerButtons={[
+              {
+                label: "Cancel",
+                onClickClose: true,
+              },
+              {
+                label: clickConfirmation.buttonText,
+                color: clickConfirmation.color,
+                "data-command": "Btn.ClickConfirmation.Confirm",
+                variant: "filled",
+                className: "ml-auto",
+                onClick: (e) => {
+                  this.setState({ showClickConfirmation: false });
+                  onClick?.(e);
+                },
+              },
+            ]}
+          >
+            {clickConfirmation.message}
+          </Popup>
+        )}
+      </>,
     );
   }
 }
@@ -512,25 +572,6 @@ export const FileBtn = React.forwardRef<
     ref,
   ) => {
     const [files, setFiles] = useState<FileList | null>(null);
-
-    // return (<label htmlFor={id} className={"text-1p5 f-1 flex-row pointer gap-p25 ai-center px-p5 py-p25 " + className} style={style}>
-    //   {iconPath && <Icon path={iconPath} size={1} title="Add files" className="  "/>}
-    //   {children}
-    //   <Btn></Btn>
-    //   <div className="flex-row-wrap gap-p5">
-    //     {!files?.length? "No file chosen" : Array.from(files).map(f => <Chip>{f.name}</Chip>)}
-    //   </div>
-    //   <input id={id}
-    //     ref={ref}
-    //     style={{ width: 0, height: 0 }}
-    //     {...inputProps}
-    //     onChange={e => {
-    //       setFiles(e.target.files);
-    //       onChange?.(e);
-    //     }}
-    //     type="file"
-    //   />
-    // </label>)
 
     return (
       <div className={"flex-row  gap-p25 ai-center " + className} style={style}>

@@ -23,7 +23,8 @@
     "strictNullChecks": true,
     "checkJs": true,
     "paths": {
-      "@common/*": ["../commonTypes/*"]
+      "@common/*": ["../commonTypes/*"],
+      "@docs/*": ["../docs/*"]
     }
   },
   "include": ["src"],

@@ -75,7 +75,7 @@ export const InMapControls = ({
             padding: "4px",
           }}
         >
-          <a href={tileAttribution.url} target="_blank">
+          <a href={tileAttribution.url} target="_blank" rel="noreferrer">
             {tileAttribution.title}
           </a>
         </div>
@@ -88,6 +88,7 @@ export const InMapControls = ({
         {topLeftContent}
 
         <Btn
+          data-command="InMapControls.showCursorCoords"
           title="Show cursor coords"
           iconPath={mdiTargetVariant}
           color={showCursorCoords ? "action" : undefined}
@@ -116,6 +117,7 @@ export const InMapControls = ({
               }}
             />
             <Btn
+              data-command="InMapControls.goToDataBounds"
               title="Zoom to data"
               iconPath={mdiImageFilterCenterFocus}
               onClick={fitBounds}

@@ -1,5 +1,5 @@
 import { type Command, getCommandElemSelector } from "../../Testing";
-import { tout } from "../../pages/ElectronSetup";
+import { tout } from "../../pages/ElectronSetup/ElectronSetup";
 
 const clickCommand = async (cmd: Command, delay = 500) => {
   await tout(delay);

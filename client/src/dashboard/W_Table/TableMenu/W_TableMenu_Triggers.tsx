@@ -1,12 +1,12 @@
 import { mdiDelete, mdiPencil, mdiPlus } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import { asName } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import { SwitchToggle } from "../../../components/SwitchToggle";
-import SmartCardList from "../../SmartCard/SmartCardList";
+import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
 import type { W_TableInfo } from "./getTableMeta";
 
@@ -16,6 +16,98 @@ type P = W_TableMenuProps & {
 };
 export const W_TableMenu_Triggers = ({ tableMeta, onSetQuery, w, prgl }: P) => {
   const tableName = w.table_name;
+
+  const listProps = useMemo(
+    () => ({
+      tableName: {
+        dataAge: prgl.dbKey,
+        sqlQuery: ` 
+        SELECT event_object_table
+          ,trigger_name
+          ,event_manipulation
+          ,action_statement
+          ,action_timing
+          ,pg_get_triggerdef(oid) as trigger_def
+          ,tgenabled = 'D' as disabled
+          ,CASE WHEN pg_catalog.starts_with(action_statement, 'EXECUTE FUNCTION ') THEN pg_get_functiondef(RIGHT(action_statement, -17 )::regprocedure) ELSE '' END as function_def
+        FROM  information_schema.triggers t
+        LEFT JOIN pg_catalog.pg_trigger pt
+        ON t.trigger_name = pt.tgname
+        WHERE event_object_table = \${tableName}
+        ORDER BY event_object_table, event_manipulation
+      `,
+        args: { tableName },
+      },
+      fieldConfigs: [
+        {
+          name: "event_object_table",
+          label: "",
+          render: (_, t: AnyObject) => (
+            <FlexRow>
+              <div className="ws-pre-line">
+                {t.trigger_def
+                  .replace(" BEFORE ", "\nBEFORE ")
+                  .replace(" AFTER ", "\nAFTER ")
+                  .replace(" ON ", "\nON ")
+                  .replace(" REFERENCING ", "\nREFERENCING ")
+                  .replace(" FOR ", "\nFOR ")
+                  .replace(" EXECUTE ", "\nEXECUTE ")}
+              </div>
+            </FlexRow>
+          ),
+        },
+        {
+          name: "trigger_name",
+          label: "",
+          className: "ml-auto show-on-parent-hover ",
+          render: (_, t: AnyObject) => (
+            <FlexRow className="">
+              <Btn
+                iconPath={mdiPencil}
+                title="Edit trigger function"
+                color="action"
+                variant="faded"
+                onClick={() => {
+                  onSetQuery({
+                    sql: t.function_def,
+                  });
+                }}
+              />
+
+              <Btn
+                title="Drop trigger"
+                iconPath={mdiDelete}
+                color="danger"
+                variant="faded"
+                onClick={() => {
+                  onSetQuery({
+                    sql: `DROP TRIGGER ${asName(t.trigger_name)} ON ${asName(tableName)} ;`,
+                  });
+                }}
+              />
+            </FlexRow>
+          ),
+        },
+        {
+          name: "disabled",
+          label: "",
+          render: (_, t) => (
+            <SwitchToggle
+              title={t.disabled ? "Disabled" : "Enabled"}
+              checked={!t.disabled}
+              onChange={(checked) => {
+                onSetQuery({
+                  sql: `ALTER TABLE ${asName(tableName)} \n${!checked ? "DISABLE" : "ENABLE"} TRIGGER ${JSON.stringify(t.trigger_name)};`,
+                });
+              }}
+            />
+          ),
+        },
+      ],
+    }),
+    [onSetQuery, prgl.dbKey, tableName],
+  );
+
   if (!tableMeta || !tableName) return null;
 
   return (
@@ -64,96 +156,11 @@ export const W_TableMenu_Triggers = ({ tableMeta, onSetQuery, w, prgl }: P) => {
       )}
 
       <SmartCardList
-        db={prgl.db as any}
-        theme={prgl.theme}
-        tableName={{
-          dataAge: prgl.dbKey,
-          sqlQuery: ` 
-            SELECT event_object_table
-              ,trigger_name
-              ,event_manipulation
-              ,action_statement
-              ,action_timing
-              ,pg_get_triggerdef(oid) as trigger_def
-              ,tgenabled = 'D' as disabled
-              ,CASE WHEN pg_catalog.starts_with(action_statement, 'EXECUTE FUNCTION ') THEN pg_get_functiondef(RIGHT(action_statement, -17 )::regprocedure) ELSE '' END as function_def
-            FROM  information_schema.triggers t
-            LEFT JOIN pg_catalog.pg_trigger pt
-            ON t.trigger_name = pt.tgname
-            WHERE event_object_table = \${tableName}
-            ORDER BY event_object_table, event_manipulation
-          `,
-          args: { tableName },
-        }}
+        db={prgl.db}
         methods={prgl.methods}
         tables={prgl.tables}
         noDataComponent={<InfoRow color="info">No triggers</InfoRow>}
-        fieldConfigs={[
-          {
-            name: "event_object_table",
-            label: "",
-            render: (_, t: AnyObject) => (
-              <FlexRow>
-                <div className="ws-pre-line">
-                  {t.trigger_def
-                    .replace(" BEFORE ", "\nBEFORE ")
-                    .replace(" AFTER ", "\nAFTER ")
-                    .replace(" ON ", "\nON ")
-                    .replace(" REFERENCING ", "\nREFERENCING ")
-                    .replace(" FOR ", "\nFOR ")
-                    .replace(" EXECUTE ", "\nEXECUTE ")}
-                </div>
-              </FlexRow>
-            ),
-          },
-          {
-            name: "trigger_name",
-            label: "",
-            className: "ml-auto show-on-parent-hover ",
-            render: (_, t: AnyObject) => (
-              <FlexRow className="">
-                <Btn
-                  iconPath={mdiPencil}
-                  title="Edit trigger function"
-                  color="action"
-                  variant="faded"
-                  onClick={() => {
-                    onSetQuery({
-                      sql: t.function_def,
-                    });
-                  }}
-                />
-
-                <Btn
-                  title="Drop trigger"
-                  iconPath={mdiDelete}
-                  color="danger"
-                  variant="faded"
-                  onClick={() => {
-                    onSetQuery({
-                      sql: `DROP TRIGGER ${asName(t.trigger_name)} ON ${asName(tableName)} ;`,
-                    });
-                  }}
-                />
-              </FlexRow>
-            ),
-          },
-          {
-            name: "disabled",
-            label: "",
-            render: (_, t) => (
-              <SwitchToggle
-                title={t.disabled ? "Disabled" : "Enabled"}
-                checked={!t.disabled}
-                onChange={(checked) => {
-                  onSetQuery({
-                    sql: `ALTER TABLE ${asName(tableName)} \n${!checked ? "DISABLE" : "ENABLE"} TRIGGER ${JSON.stringify(t.trigger_name)};`,
-                  });
-                }}
-              />
-            ),
-          },
-        ]}
+        {...listProps}
       />
       <Btn
         iconPath={mdiPlus}

@@ -1,12 +1,8 @@
-import { mdiPencil } from "@mdi/js";
 import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 import React, { useState } from "react";
-import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
-import Popup from "../../../components/Popup/Popup";
-import SearchList from "../../../components/SearchList/SearchList";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import { SearchList } from "../../../components/SearchList/SearchList";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { JoinV2 } from "../../Dashboard/dashboardUtils";
 import { getJoinTree, type JoinTree } from "./getJoinTree";

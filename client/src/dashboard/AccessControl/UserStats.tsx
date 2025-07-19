@@ -5,6 +5,7 @@ import type { ExtraProps } from "../../App";
 import Btn from "../../components/Btn";
 import PopupMenu from "../../components/PopupMenu";
 import SmartTable from "../SmartTable";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 type UserStatsProps = Pick<
   ExtraProps,
@@ -63,9 +64,8 @@ export const UserStats = ({
           style={{ minWidth: "250px" }}
         >
           <SmartTable
-            theme={theme}
             key={"selectedRuleId"}
-            db={dbs as any}
+            db={dbs as DBHandlerClient}
             methods={dbsMethods}
             filter={[
               { fieldName: "type", type: "$in", value: [], disabled: true },

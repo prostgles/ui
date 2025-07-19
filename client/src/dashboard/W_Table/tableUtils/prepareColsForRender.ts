@@ -1,4 +1,5 @@
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import { isNumericColumn } from "../../W_SQL/getSQLResultTableColumns";
 import type { ColumnConfigWInfo } from "../W_Table";
 import type { ProstglesTableColumn } from "./getTableCols";
 
@@ -34,16 +35,17 @@ export const prepareColsForRender = (
       /* Align numbers to right for an easier read */
       headerClassname:
         (
-          c.tsDataType === "number" ||
+          isNumericColumn(c) ||
           c.nested?.columns.filter(
             (nc) =>
               nc.show &&
-              nc.computedConfig?.funcDef.outType.tsDataType === "number",
+              nc.computedConfig?.funcDef.outType &&
+              isNumericColumn(nc.computedConfig.funcDef.outType),
           ).length === 1
         ) ?
           " jc-end  "
         : " ",
-      className: c.tsDataType === "number" ? " ta-right " : " ",
+      className: isNumericColumn(c) ? " ta-right " : " ",
       onResize: async (width) => {
         const wcols = getWCols();
         const currentCols = wcols;
@@ -56,10 +58,10 @@ export const prepareColsForRender = (
               console.error(e);
             }
           }
-          return _c;
+          return { ..._c };
         });
         w.$update({
-          columns: newCols,
+          columns: JSON.parse(JSON.stringify(newCols)),
         });
       },
     }));

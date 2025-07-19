@@ -60,7 +60,7 @@ export const AddJoinFilter = ({
 
   const title = path ? "Cancel" : "Join to...";
   return (
-    <FlexCol className="gap-0">
+    <FlexCol className="gap-0 f-1" data-command="AddJoinFilter">
       {path && (
         <div className="flex-col f-1 o-auto br b-color">
           <Label className="px-1 py-p5 w-full bg-color-2">

@@ -1,36 +1,15 @@
 import { mdiMenu } from "@mdi/js";
-import type { AnyObject } from "prostgles-types";
-import React from "react";
-import { Icon } from "./Icon/Icon";
-import "./List.css";
-import PopupMenu from "./PopupMenu";
+import React, { useMemo } from "react";
 import type { Command, TestSelectors } from "../Testing";
 import { classOverride } from "./Flex";
+import { Icon } from "./Icon/Icon";
+import "./List.css";
+import { MenuListItem, type MenuListitem } from "./MenuListItem";
+import PopupMenu from "./PopupMenu";
+import Select from "./Select/Select";
+import { useScrollFade } from "./ScrollFade/ScrollFade";
 
-export type MenuListitem = {
-  key?: string;
-  label: React.ReactNode;
-  contentRight?: React.ReactNode;
-  leftIconPath?: string;
-  disabledText?: string;
-  title?: string;
-  onPress?: (
-    e:
-      | React.MouseEvent<HTMLLIElement, MouseEvent>
-      | React.KeyboardEvent<HTMLLIElement>,
-  ) => void;
-  style?: React.CSSProperties;
-  iconStyle?: React.CSSProperties;
-  labelStyle?: React.CSSProperties;
-  hide?: boolean;
-  listProps?:
-    | React.DetailedHTMLProps<
-        React.LiHTMLAttributes<HTMLLIElement>,
-        HTMLLIElement
-      >
-    | AnyObject;
-};
-type P = TestSelectors & {
+export type MenuListProps = TestSelectors & {
   items: MenuListitem[];
   style?: React.CSSProperties;
   className?: string;
@@ -40,127 +19,33 @@ type P = TestSelectors & {
   activeKey?: string;
 };
 
-type S = {
-  activeIndex?: number;
-  collapsed: boolean;
-};
+export const MenuList = (props: MenuListProps) => {
+  const {
+    className = "",
+    style = {},
+    items = [],
+    compactMode,
+    variant,
+  } = props;
 
-export class MenuList extends React.Component<P, S> {
-  state: S = {
-    collapsed: false,
-  };
+  const visibleItems = useMemo(() => {
+    return items.filter((d) => !d.hide);
+  }, [items]);
 
-  renderItem = (d: MenuListitem, i: number, noClick = false) => {
-    const canPress = !!(d.onPress && !d.disabledText && !noClick);
+  const refList = React.useRef<HTMLUListElement>(null);
+  const { localVariant } = useMemo(() => {
+    const isDropDown = variant === "dropdown";
+    const localVariant = variant && !isDropDown ? variant : "vertical";
+    return { localVariant };
+  }, [variant]);
 
-    const { activeKey, variant } = this.props;
-    const variantStyle: React.CSSProperties =
-      variant === "horizontal-tabs" ?
-        {
-          borderRadius: 0,
-          fontSize: "16px",
-          fontWeight: "bold",
-          cursor: "pointer",
-          borderColor: "var(--b-default)",
-          borderBottomStyle: "solid",
-          borderBottomWidth: "4px",
-          flex: 1,
-          color: "var(--text-0)",
-          ...(activeKey === (d.key ?? d.label) && {
-            borderColor: "var(--active)",
-            backgroundColor: "var(--bg-color-0)",
-          }),
-        }
-      : {};
-
-    const labelVariantStyle: React.CSSProperties =
-      variant === "horizontal-tabs" ?
-        {
-          justifyContent: "center",
-        }
-      : {};
-
-    return (
-      <li
-        {...d.listProps}
-        key={i}
-        data-key={d.key}
-        role="listitem"
-        tabIndex={canPress ? 0 : undefined}
-        title={d.disabledText || d.title}
-        style={{
-          ...variantStyle,
-          ...(d.style || {}),
-          ...(d.disabledText ? { cursor: "not-allowed", opacity: 0.5 } : {}),
-        }}
-        className={`flex-row  p-p5  bg-li ${!d.disabledText && d.onPress ? " pointer " : " "} ${d.key === activeKey ? " selected " : ""}`}
-        onClick={
-          canPress ?
-            (e) => {
-              d.onPress?.(e);
-            }
-          : undefined
-        }
-        onKeyUp={
-          canPress ?
-            (e) => {
-              if (e.key === "Enter") d.onPress?.(e);
-            }
-          : undefined
-        }
-      >
-        <label
-          className="mr-p5 f-1 flex-row ai-center noselect"
-          style={{ ...labelVariantStyle, cursor: "inherit" }}
-        >
-          {!!d.leftIconPath && (
-            <Icon
-              className="mr-p5 f-0"
-              path={d.leftIconPath}
-              size={1}
-              style={d.iconStyle}
-            />
-          )}
-          {d.label ?
-            <div
-              className={this.isCompactMode ? "display-on-trigger-hover" : ""}
-              style={d.labelStyle}
-            >
-              {d.label}
-            </div>
-          : d.label}{" "}
-          {d.contentRight || null}
-        </label>
-      </li>
+  const { isCompactMode, rootStyle } = useMemo(() => {
+    const isCompactMode = Boolean(
+      compactMode && window.isMediumWidthScreen && localVariant === "vertical",
     );
-  };
 
-  get variantOptions() {
-    const isDropDown = this.props.variant === "dropdown";
-    const variant =
-      this.props.variant && !isDropDown ? this.props.variant : "vertical";
-    return { variant, isDropDown };
-  }
-  get isCompactMode() {
-    return (
-      this.props.compactMode &&
-      window.isMediumWidthScreen &&
-      this.variantOptions.variant === "vertical"
-    );
-  }
-
-  refList?: HTMLUListElement;
-  render() {
-    const {
-      className = "",
-      style = {},
-      items = [],
-      activeKey = this.props.items[0]?.key,
-    } = this.props;
-
-    const { variant, isDropDown } = this.variantOptions;
     const variantStyle: React.CSSProperties =
-      variant === "horizontal-tabs" ?
+      localVariant === "horizontal-tabs" ?
         {
           borderRadius: 0,
           fontSize: "20px",
@@ -168,90 +53,183 @@ export class MenuList extends React.Component<P, S> {
           cursor: "pointer",
         }
       : {};
+    const rootStyle: React.CSSProperties = {
+      maxHeight: "99vh",
+      padding: 0,
+      ...variantStyle,
+      ...style,
+    };
+    return { isCompactMode, rootStyle };
+  }, [compactMode, localVariant, style]);
 
-    const itemList = (
+  const { onKeyDownFocusSiblings } = useMemo(() => {
+    const onKeyDownFocusSiblings: React.KeyboardEventHandler<HTMLDivElement> = (
+      e,
+    ) => {
+      if (!refList.current) return;
+      const lastChild = refList.current.lastChild as HTMLLIElement,
+        firstChild = refList.current.firstChild as HTMLLIElement,
+        previousElementSibling = document.activeElement
+          ?.previousElementSibling as HTMLElement,
+        nextElementSibling = document.activeElement
+          ?.nextElementSibling as HTMLElement;
+
+      switch (e.key) {
+        case "ArrowUp":
+          if (document.activeElement === firstChild) {
+            lastChild.focus();
+          } else if (refList.current.childElementCount) {
+            previousElementSibling.focus();
+          }
+          break;
+        case "ArrowDown":
+          if (document.activeElement === lastChild) {
+            firstChild.focus();
+          } else if (refList.current.childElementCount) {
+            nextElementSibling.focus();
+          }
+          break;
+      }
+    };
+    return { onKeyDownFocusSiblings };
+  }, []);
+
+  const isVertical = localVariant === "vertical";
+  const overflows = useScrollFade({ ref: refList });
+  const showSelect = !isVertical && overflows.x;
+
+  return (
+    <MenuListPopupWrapper
+      {...props}
+      isCompactMode={isCompactMode}
+      visibleItems={visibleItems}
+    >
       <div
         className={classOverride(
-          "MenuList list-comp rounded " +
-            (variant === "vertical" ? " f-1 max-w-fit min-w-fit " : ""),
+          "MenuList relative list-comp rounded " +
+            (isVertical ? " f-1 max-w-fit min-w-fit " : "flex-row"),
           className,
         )}
-        data-command={
-          this.props["data-command"] ?? ("MenuList" satisfies Command)
-        }
-        style={{ maxHeight: "99vh", padding: 0, ...variantStyle, ...style }}
-        onKeyDown={(e) => {
-          if (!this.refList) return;
-          const lastChild = this.refList.lastChild as HTMLLIElement,
-            firstChild = this.refList.firstChild as HTMLLIElement,
-            previousElementSibling = document.activeElement
-              ?.previousElementSibling as HTMLElement,
-            nextElementSibling = document.activeElement
-              ?.nextElementSibling as HTMLElement;
-
-          switch (e.key) {
-            case "ArrowUp":
-              if (document.activeElement === firstChild) {
-                lastChild.focus();
-              } else if (this.refList.childElementCount) {
-                previousElementSibling.focus();
-              }
-              break;
-            case "ArrowDown":
-              if (document.activeElement === lastChild) {
-                firstChild.focus();
-              } else if (this.refList.childElementCount) {
-                nextElementSibling.focus();
-              }
-              break;
-          }
-        }}
+        data-command={props["data-command"] ?? "MenuList"}
+        style={rootStyle}
+        onKeyDown={onKeyDownFocusSiblings}
       >
         <ul
-          className={`f-1 o-auto min-h-0 min-w-0 ${this.isCompactMode ? "trigger-hover" : ""} ${variant === "vertical" ? " flex-col ws-nowrap " : "flex-row "}`}
+          className={`no-decor relative f-1 o-auto min-h-0 min-w-0 ${isCompactMode ? "trigger-hover" : ""} ${isVertical ? " flex-col ws-nowrap " : "flex-row no-scroll-bar oy-hidden "}`}
           role="list"
-          ref={(r) => {
-            if (r) this.refList = r;
-          }}
+          ref={refList}
           style={{ padding: 0 }}
-        >
-          {items
-            .filter((d) => !d.hide)
-            .map((d, i) => {
-              return this.renderItem(d, i);
-            })}
-        </ul>
-      </div>
-    );
-
-    if (isDropDown) {
-      const activeItem =
-        items.find((d) => activeKey === (d.key ?? d.label)) ?? items[0]!;
-
-      return (
-        <PopupMenu
-          style={{ width: "100%" }}
-          positioning="beneath-left"
-          button={
-            <button
-              className="MenuList__button"
-              style={{ width: "100%", borderRadius: 0 }}
-            >
-              <div className="flex-row ai-center">
-                {this.renderItem(activeItem, 0, true)}
-                <Icon path={mdiMenu} className="f-0 ml-auto" size={1} />
-              </div>
-            </button>
+          onWheel={
+            isVertical ? undefined : (
+              (e) => {
+                if (e.shiftKey) return;
+                // e.currentTarget.scrollLeft += e.deltaY;
+                e.currentTarget.scrollBy({
+                  left: e.deltaY,
+                  behavior: "smooth",
+                });
+              }
+            )
           }
-          onClickClose={true}
-          contentStyle={{ padding: 0 }}
-          render={(popupClose) => {
-            return itemList;
-          }}
-        />
-      );
-    }
+        >
+          {visibleItems.map((d, i) => {
+            return (
+              <MenuListItem
+                key={d.key ?? i}
+                item={d}
+                {...props}
+                isCompactMode={isCompactMode}
+                noClick={false}
+              />
+            );
+          })}
+        </ul>
+        {showSelect && (
+          <Select
+            fullOptions={visibleItems.map(({ key, label }, i) => ({
+              key: key ?? i,
+              label: textContent(label),
+            }))}
+            value={props.activeKey}
+            btnProps={{
+              color: "white",
+              children: "",
+              variant: "icon",
+            }}
+            onChange={(key, e) => {
+              const item = visibleItems.find((d, i) => (d.key ?? i) === key);
+              refList.current
+                ?.querySelector(`[data-key="${key}"]`)
+                ?.scrollIntoView({ behavior: "smooth" });
+              item?.onPress?.(e as any);
+            }}
+          />
+        )}
+      </div>
+    </MenuListPopupWrapper>
+  );
+};
 
-    return itemList;
+const MenuListPopupWrapper = ({
+  children,
+  isCompactMode,
+  visibleItems,
+  ...props
+}: MenuListProps & {
+  children: React.ReactNode;
+  isCompactMode: boolean;
+  visibleItems: MenuListitem[];
+}) => {
+  const { activeKey, variant } = props;
+  const activeItem = useMemo(() => {
+    const activeItem =
+      visibleItems.find((d) => activeKey === (d.key ?? d.label)) ??
+      visibleItems[0]!;
+    return activeItem;
+  }, [visibleItems, activeKey]);
+
+  if (variant !== "dropdown") {
+    return children;
   }
+
+  return (
+    <PopupMenu
+      style={{ width: "100%" }}
+      positioning="beneath-left"
+      button={
+        <button
+          className="MenuList__button"
+          style={{ width: "100%", borderRadius: 0 }}
+        >
+          <div className="flex-row ai-center">
+            <MenuListItem
+              item={activeItem}
+              {...props}
+              isCompactMode={isCompactMode}
+              noClick={true}
+            />
+            <Icon path={mdiMenu} className="f-0 ml-auto" size={1} />
+          </div>
+        </button>
+      }
+      onClickClose={true}
+      contentStyle={{ padding: 0 }}
+    >
+      {children}
+    </PopupMenu>
+  );
+};
+
+function textContent(elem: React.ReactElement | string): string {
+  if (!elem) {
+    return "";
+  }
+  if (typeof elem === "string") {
+    return elem;
+  }
+  const children = elem.props && elem.props.children;
+  if (children instanceof Array) {
+    return children.map(textContent).join(" ");
+  }
+  return textContent(children);
 }

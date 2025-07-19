@@ -5,23 +5,21 @@ import type {
   ForkedProcMessageError,
   ForkedProcMessageResult,
 } from "./ForkedPrglProcRunner";
-import { FORKED_PROC_ENV_NAME } from "./ForkedPrglProcRunner";
-import type { ProcStats } from "../../../commonTypes/utils";
+import {
+  FORKED_PROC_ENV_NAME,
+  type ProcStats,
+} from "../../../commonTypes/utils";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 export const getError = (rawError: any) => {
-  return rawError instanceof Error ?
-      Object.fromEntries(
-        Object.getOwnPropertyNames(rawError).map((key) => [
-          key,
-          (rawError as any)[key],
-        ]),
-      )
-    : rawError;
+  return rawError instanceof Error ? getErrorAsObject(rawError) : rawError;
 };
 const initForkedProc = () => {
   let _prglParams: OnReadyParamsBasic | undefined;
   let prglParams: OnReadyParamsBasic | undefined;
 
+  const lastToolCallId = 0;
+  const toolCalls: Record<number, { cb: (err: any, res: any) => void }> = {};
   const setProxy = (params: OnReadyParamsBasic) => {
     _prglParams = params as any;
     prglParams ??= new Proxy(params, {
@@ -31,10 +29,12 @@ const initForkedProc = () => {
     });
   };
 
+  let lastMsgId = "";
   const sendError = (error: any) => {
     process.send?.({
+      lastMsgId,
       type: "error",
-      error: getError(error),
+      error: getErrorAsObject(error),
     } satisfies ForkedProcMessageError);
   };
   process.on("unhandledRejection", (reason: any, p) => {
@@ -49,8 +49,10 @@ const initForkedProc = () => {
   if (!process.send) {
     console.error("No process.send");
   }
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   process.on("message", async (msg: ForkedProcMessage) => {
     try {
+      if ("id" in msg) lastMsgId = msg.id;
       const cb = (error?: any, result?: any) => {
         process.send!({
           id: msg.id,
@@ -58,19 +60,12 @@ const initForkedProc = () => {
           result,
         } satisfies ForkedProcMessageResult);
       };
-      if (msg.type === "procStats") {
-        cb(undefined, {
-          pid: process.pid,
-          cpu: await getCpuPercentage(),
-          mem: process.memoryUsage().heapUsed,
-          uptime: process.uptime(),
-        } satisfies ProcStats);
-      } else if (msg.type === "start") {
+      if (msg.type === "start") {
         if (prglParams) throw "Already started";
 
         //@ts-ignore
         await prostgles({
-          ...msg.initArgs,
+          ...msg.prglInitOpts,
           watchSchema: "*",
           transactions: true,
           onReady: (params) => {
@@ -87,13 +82,37 @@ const initForkedProc = () => {
         if (!prglParams) throw "prgl not ready";
 
         try {
-          if (msg.type === "run") {
-            const { code, validatedArgs, user } = msg;
+          if (msg.type === "mcpResult") {
+            const { callId, error, result } = msg;
+            toolCalls[callId]?.cb(error, result);
+            delete toolCalls[callId];
+          } else if (msg.type === "run") {
+            const { code, validatedArgs, user, id } = msg;
             const { run } = eval(code + "\n\n exports;");
-
+            // const callMCPServerTool = async (
+            //   serverName: string,
+            //   toolName: string,
+            //   args?: any,
+            // ) => {
+            //   return new Promise((resolve, reject) => {
+            //     const callId = lastToolCallId++;
+            //     toolCalls[callId] = {
+            //       cb: (err, res) => (err ? reject(err) : resolve(res)),
+            //     };
+            //     process.send?.({
+            //       id,
+            //       callId,
+            //       type: "toolCall",
+            //       serverName,
+            //       toolName,
+            //       args,
+            //     } satisfies ForkedProcMessageResult);
+            //   });
+            // };
             const methodResult = await run(validatedArgs, {
               ...prglParams,
               user,
+              // callMCPServerTool,
             });
             cb(undefined, methodResult);
           } else {
@@ -104,7 +123,7 @@ const initForkedProc = () => {
             cb(undefined, methodResult);
           }
         } catch (rawError: any) {
-          const error = getError(rawError);
+          const error = getErrorAsObject(rawError);
           console.error("forkedProcess error", error);
           cb(error);
         }
@@ -118,27 +137,23 @@ const initForkedProc = () => {
 
 if (process.env[FORKED_PROC_ENV_NAME]) {
   initForkedProc();
+  checkForImportBug();
 }
 
-export const getCpuPercentage = async () => {
-  const interval = 1000;
-  const getTotal = (prevUsage?: NodeJS.CpuUsage) => {
-    const { system, user } = process.cpuUsage(prevUsage);
-    const total = system + user;
-    return { total, system, user };
-  };
-  const start = getTotal();
-  await tout(interval);
-  const end = getTotal(start);
-  const delta = end.total / 1000;
-  const percentage = 100 * (delta / interval);
-  return percentage;
-};
-
-const tout = (timeout: number) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, timeout);
-  });
-};
+function checkForImportBug() {
+  const ESMFiles = module.children.map((m) => ({
+    type: "ESM" as const,
+    filename: m.filename,
+  }));
+  const mainProcess = ESMFiles.find((f) =>
+    f.filename
+      .replaceAll("\\", "/")
+      .endsWith("ui/server/dist/server/src/index.js"),
+  );
+  if (mainProcess) {
+    throw new Error(
+      "Forked process should not import main process file. It will trigger this bug: listen EADDRINUSE: address already in use 127.0.0.1:3004",
+    );
+  }
+  return ESMFiles;
+}

@@ -1,5 +1,5 @@
 import { isObject, omitKeys } from "prostgles-types";
-import { getMonaco } from "../../SQLEditor/SQLEditor";
+import { getMonaco } from "../../SQLEditor/W_SQLEditor";
 import type { CodeEditorProps, MonacoJSONSchema } from "../CodeEditor";
 
 export const getMonacoJsonSchemas = async (

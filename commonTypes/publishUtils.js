@@ -1,10 +1,3 @@
-var __asyncValues = (this && this.__asyncValues) || function (o) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var m = o[Symbol.asyncIterator], i;
-    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-};
 import { getFinalFilter, isDefined, } from "./filterUtils";
 const OBJ_DEF_TYPES = [
     "boolean",
@@ -202,53 +195,28 @@ export const getTableRulesErrors = async (rules, tableColumns, contextData) => {
     return result;
 };
 export const validateDynamicFields = async (dynamicFields, db, context, columns) => {
-    var _a, e_1, _b, _c, _d, e_2, _e, _f;
     if (!dynamicFields)
         return {};
-    try {
-        for (var _g = true, _h = __asyncValues(dynamicFields.entries()), _j; _j = await _h.next(), _a = _j.done, !_a; _g = true) {
-            _c = _j.value;
-            _g = false;
-            const [dfIndex, dfRule] = _c;
-            const filter = await parseFullFilter(dfRule.filterDetailed, context, columns);
-            if (!filter)
-                throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
-            await db.find(filter, { limit: 0 });
-            try {
-                /** Ensure dynamicFields filters do not overlap */
-                for (var _k = true, _l = (e_2 = void 0, __asyncValues(dynamicFields.entries())), _m; _m = await _l.next(), _d = _m.done, !_d; _k = true) {
-                    _f = _m.value;
-                    _k = false;
-                    const [_dfIndex, _dfRule] = _f;
-                    if (dfIndex !== _dfIndex) {
-                        const _filter = await parseFullFilter(_dfRule.filterDetailed, context, columns);
-                        if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
-                            const error = `dynamicFields.filter cannot overlap each other. \n
+    for (const [dfIndex, dfRule] of dynamicFields.entries()) {
+        const filter = await parseFullFilter(dfRule.filterDetailed, context, columns);
+        if (!filter)
+            throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
+        await db.find(filter, { limit: 0 });
+        /** Ensure dynamicFields filters do not overlap */
+        for (const [_dfIndex, _dfRule] of dynamicFields.entries()) {
+            if (dfIndex !== _dfIndex) {
+                const _filter = await parseFullFilter(_dfRule.filterDetailed, context, columns);
+                if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
+                    const error = `dynamicFields.filter cannot overlap each other. \n
           Overlapping dynamicFields rules:
               ${JSON.stringify(dfRule)} 
               AND
               ${JSON.stringify(_dfRule)} 
           `;
-                            return { error };
-                        }
-                    }
+                    return { error };
                 }
             }
-            catch (e_2_1) { e_2 = { error: e_2_1 }; }
-            finally {
-                try {
-                    if (!_k && !_d && (_e = _l.return)) await _e.call(_l);
-                }
-                finally { if (e_2) throw e_2.error; }
-            }
         }
-    }
-    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-    finally {
-        try {
-            if (!_g && !_a && (_b = _h.return)) await _b.call(_h);
-        }
-        finally { if (e_1) throw e_1.error; }
     }
     return {};
 };

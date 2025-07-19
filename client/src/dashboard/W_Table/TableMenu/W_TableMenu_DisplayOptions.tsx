@@ -36,11 +36,13 @@ export const W_TableMenu_DisplayOptions = ({
             { id: connection.id },
             {
               table_options: {
-                ...(connection.table_options ?? {}),
-                [w.table_name]: {
-                  ...connection.table_options?.[w.table_name],
-                  icon: icon ?? undefined,
-                },
+                $merge: [
+                  {
+                    [w.table_name]: {
+                      icon: icon ?? undefined,
+                    },
+                  },
+                ],
               },
             },
           );

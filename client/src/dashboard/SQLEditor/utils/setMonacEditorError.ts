@@ -1,12 +1,13 @@
 import type { editor, IRange } from "monaco-editor";
-import type { MonacoError } from "../SQLEditor";
+import type { MonacoError } from "../W_SQLEditor";
 import type { CodeBlock } from "../SQLCompletion/completionUtils/getCodeBlock";
 import { scrollToLineIfNeeded } from "./scrollToLineIfNeeded";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { MonacoEditorImport } from "../../CodeEditor/utils/useSetMonacoTsLibraries";
 
 export const setMonacEditorError = async (
   editor: editor.IStandaloneCodeEditor,
-  monaco: typeof import("monaco-editor"),
+  monaco: MonacoEditorImport,
   getCurrentCodeBlock: () => Promise<CodeBlock> | undefined,
   errorMessageDisplay: WindowData["sql_options"]["errorMessageDisplay"],
   error: MonacoError | undefined,

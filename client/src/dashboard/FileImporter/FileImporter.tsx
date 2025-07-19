@@ -1,5 +1,6 @@
-import { mdiAlertCircleOutline, mdiClose, mdiFormatText } from "@mdi/js";
+import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject } from "prostgles-types";
 import React from "react";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
@@ -8,48 +9,21 @@ import Loading from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { Table } from "../../components/Table/Table";
+import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import RTComp from "../RTComp";
 import type { ProstglesColumn } from "../W_SQL/W_SQL";
 import { getFileText } from "../W_SQL/W_SQLMenu";
-import RTComp from "../RTComp";
+import { ApplySuggestedDataTypes } from "./checkCSVColumnDataTypes";
 import { FileImporterFooter } from "./FileImporterFooter";
 import { importFile, type ImportProgress } from "./importFile";
 import { setFile } from "./setFile";
 const streamColumnDataTypes = ["TEXT", "JSON", "JSONB"] as const;
-import type { AnyObject } from "prostgles-types";
-import { bytesToSize } from "../Backup/BackupsControls";
-import { FlexCol } from "../../components/Flex";
-import SearchList from "../../components/SearchList/SearchList";
-import { ApplySuggestedDataTypes } from "./checkCSVColumnDataTypes";
 
 type Papa = typeof import("papaparse");
 export const getPapa = () =>
   import(/* webpackChunkName: "papaparse" */ "papaparse");
-const camel_to_snake = (str) => {
-  // str[0].toLowerCase() + str.slice(1, str.length).replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-
-  let res = "";
-  const _s = str.trim();
-  const arr = _s.split("");
-  arr.map((k, i) => {
-    if (
-      i &&
-      res.slice(-1) !== "_" &&
-      (!arr[i - 1].match(/[A-Z]/) || k.match(/[\W_]+/))
-    ) {
-      res += "_";
-    }
-
-    if (!k.match(/[\W_]+/)) {
-      res += k.toLowerCase();
-    }
-  });
-
-  return res;
-};
-
-const fix_name = (str) => camel_to_snake(str); //.replace(/[\W_]+/g," ").trim().replace(/\s\s+/g, ' ').replace(/[\W_]+/g,"_"));
 
 export type FileImporterProps = {
   db: DBHandlerClient;
@@ -404,7 +378,6 @@ export default class FileImporter extends RTComp<
           ) ?
             null
           : <FormField
-              asColumn={true}
               className="mb-1 "
               label="File (csv/txt/json/geojson)"
               type="file"
@@ -420,7 +393,6 @@ export default class FileImporter extends RTComp<
           {selectedFile && (
             <>
               <FormField
-                asColumn={true}
                 key={"new-table-name"}
                 readOnly={readonlyName}
                 className="mb-1 "
@@ -443,7 +415,7 @@ export default class FileImporter extends RTComp<
                         this.setState({
                           destination: {
                             ...destination,
-                            newTableName: fix_name(tblName),
+                            newTableName: toSnakeCase(tblName ?? ""),
                           },
                         })
                       }
@@ -456,7 +428,6 @@ export default class FileImporter extends RTComp<
               {!importing?.finished && (
                 <>
                   <FormField
-                    asColumn={true}
                     readOnly={readonlyName}
                     className="mb-1 "
                     label="Drop table if exists"
@@ -467,7 +438,6 @@ export default class FileImporter extends RTComp<
                     }}
                   />
                   <FormField
-                    asColumn={true}
                     readOnly={readonlyName}
                     className="mb-1 "
                     label="Try to infer and apply column data types"
@@ -480,7 +450,6 @@ export default class FileImporter extends RTComp<
 
                   {selectedFile.type !== "csv" && (
                     <FormField
-                      asColumn={true}
                       className="mb-1 "
                       label="Insert as"
                       value={insertAs}
@@ -493,7 +462,6 @@ export default class FileImporter extends RTComp<
 
                   {selectedFile.type === "geojson" && (
                     <FormField
-                      asColumn={true}
                       type="text"
                       className="mb-1 "
                       label="SRID"
@@ -700,6 +668,26 @@ export const getCSVFirstChunk = (
   });
 };
 
+const toSnakeCase = (str: string) => {
+  let res = "";
+  const _s = str.trim();
+  const arr = _s.split("");
+  arr.map((k, i) => {
+    if (
+      i &&
+      res.slice(-1) !== "_" &&
+      (!arr[i - 1]!.match(/[A-Z]/) || k.match(/[\W_]+/))
+    ) {
+      res += "_";
+    }
+
+    if (!k.match(/[\W_]+/)) {
+      res += k.toLowerCase();
+    }
+  });
+
+  return res;
+};
 // rowsToJson = (_results: any) => {
 //   const { config, headerType, customHeaders = "" } = this.state;
 

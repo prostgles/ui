@@ -41,18 +41,17 @@ export const CloseSaveSQLPopup = ({
             color: "action",
             variant: "filled",
             iconPath: mdiContentSave,
+            disabledInfo:
+              !namePopupWindow.name ? "Cannot have an empty name" : undefined,
             onClickPromise: async () => {
-              if (!namePopupWindow.name) alert("Cannot have an empty name");
-              else {
-                await namePopupWindow.$update(
-                  {
-                    closed: true,
-                    deleted: false,
-                    options: { sqlWasSaved: true },
-                  },
-                  { deepMerge: true },
-                );
-              }
+              await namePopupWindow.$update(
+                {
+                  closed: true,
+                  deleted: false,
+                  options: { sqlWasSaved: true },
+                },
+                { deepMerge: true },
+              );
               setTimeout(() => {
                 onClose();
               }, 500);
@@ -63,7 +62,6 @@ export const CloseSaveSQLPopup = ({
           <div className="flex-col">
             <FormField
               type="text"
-              asColumn={true}
               label="Name"
               defaultValue={namePopupWindow.name}
               required={true}

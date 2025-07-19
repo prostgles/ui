@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import "./Animations.css";
 import type { TestSelectors } from "../Testing";
 import { classOverride } from "./Flex";
-import { useIsMounted } from "../dashboard/Backup/CredentialSelector";
+import { useIsMounted } from "../dashboard/BackupAndRestore/CredentialSelector";
 
 export type DivProps = React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,

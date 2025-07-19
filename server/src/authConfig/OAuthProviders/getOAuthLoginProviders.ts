@@ -1,8 +1,9 @@
 import type { LoginWithOAuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { AuthProviders } from "../getAuth";
 import { getFailedTooManyTimes } from "../startRateLimitedLoginAttempt";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
+
+type AuthProviders = DBSSchema["global_settings"]["auth_providers"];
 
 export const getOAuthLoginProviders = (
   auth_providers: AuthProviders | undefined,

@@ -7,7 +7,6 @@ module.exports = {
     project: ["./tsconfig.json"],
     // "tsconfigRootDir": __dirname,
   },
-
   // "ingorePatterns": "**/*.d.ts, **/*.js",
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],

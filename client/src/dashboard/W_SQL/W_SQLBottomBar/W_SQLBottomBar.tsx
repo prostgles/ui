@@ -29,9 +29,9 @@ import { Counter, SQL_NOT_ALLOWED } from "../W_SQL";
 import { W_SQLBottomBarProcStats } from "./W_SQLBottomBarProcStats";
 import { t } from "../../../i18n/i18nUtils";
 
-export const includes = <T extends string, ArrV extends T>(
+export const includes = <T extends string | undefined, ArrV extends T>(
   v: T | undefined,
-  arr: ArrV[],
+  arr: ArrV[] | readonly ArrV[],
 ): v is ArrV => arr.includes(v as ArrV);
 
 export type W_SQLBottomBarProps = {
@@ -129,6 +129,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
       className={
         "W_SQLBottomBar relative oy-hidden flex-row text-2 ai-center text-sm o-auto "
       }
+      data-command="W_SQLBottomBar"
       style={{
         borderTop: "1px solid #0000000d",
         /** Ensure big error messages don't obscure the sql editor */
@@ -167,11 +168,11 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
       {queryIsRunning ?
         <>
           <Btn
-            size="medium"
+            size="default"
             color="action"
             iconPath={mdiStopCircleOutline}
             title={t.W_SQLBottomBar["Cancel this query (Esc)"]}
-            {...dataCommand("dashboard.window.cancelQuery")}
+            {...dataCommand("W_SQLBottomBar.cancelQuery")}
             loading={activeQuery.stopped?.type === "cancel"}
             onClick={() => {
               stopQuery(false);
@@ -180,9 +181,9 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             Cancel
           </Btn>
           <Btn
-            size="medium"
+            size="default"
             title={t.W_SQLBottomBar["Terminate this query"]}
-            {...dataCommand("dashboard.window.terminateQuery")}
+            {...dataCommand("W_SQLBottomBar.terminateQuery")}
             color="danger"
             iconPath={mdiCancel}
             loading={activeQuery.stopped?.type === "terminate"}
@@ -193,6 +194,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             Terminate
           </Btn>
           <Counter
+            data-command="W_SQLBottomBar.queryDuration"
             title={t.W_SQLBottomBar["Query running time"]}
             className="p-p5 mr-1 noselect"
             from={activeQuery.started}
@@ -205,10 +207,10 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
           {notifEventSub ?
             <Btn
               title={t.W_SQLBottomBar["Stop LISTEN"]}
-              size="medium"
+              size="default"
               color="action"
               iconPath={mdiStopCircleOutline}
-              {...dataCommand("dashboard.window.stopListen")}
+              {...dataCommand("W_SQLBottomBar.stopListen")}
               onClick={async () => {
                 await notifEventSub.removeListener();
                 onChangeState({ notifEventSub: undefined });
@@ -222,6 +224,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               <Btn
                 color={loopMode.enabled ? "action" : undefined}
                 iconPath={mdiCancel}
+                data-command="W_SQLBottomBar.stopLoopQuery"
                 onClick={() =>
                   setLoopMode({ ...loopMode, show: false, enabled: false })
                 }
@@ -243,12 +246,12 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               <label>{t.W_SQLBottomBar.seconds}</label>
             </FlexRow>
           : <Btn
-              {...dataCommand("dashboard.window.runQuery")}
+              data-command="W_SQLBottomBar.runQuery"
               className="ml-p25"
               color="action"
               title={t.W_SQLBottomBar["Run query (CTRL+E, ALT+E)"]}
               disabledInfo={!db.sql ? SQL_NOT_ALLOWED : undefined}
-              size="medium"
+              size="default"
               iconPath={mdiPlay}
               onClick={(e) => {
                 runSQL();
@@ -283,7 +286,10 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
       >
         {activeQuery && activeQuery.state !== "error" && cols && (
           <>
-            <FlexCol className="RowCount gap-p25 text-1">
+            <FlexCol
+              data-command="W_SQLBottomBar.rowCount"
+              className="RowCount gap-p25 text-1"
+            >
               {fetchedRowCount.toLocaleString()} rows
               {isDefined(totalRowCount) && totalRowCount > fetchedRowCount && (
                 <div className="text-warning">
@@ -348,6 +354,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             maxHeight: "min(100%, 300px)",
           }}
           onClear={clearActiveQueryError}
+          data-command="W_SQLBottomBar.sqlError"
         />
       )}
 
@@ -359,6 +366,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               (limitWasReached ? "text-warning" : "")
             }
             style={{ marginRight: "1em" }}
+            data-command="W_SQLBottomBar.limit"
             title={t.W_SQLBottomBar["Clear value to show all rows"]}
           >
             <label className="mr-p5">{t.W_SQLBottomBar.Limit}</label>
@@ -369,7 +377,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               min={1}
               max={1000}
               step={1}
-              className="text-0 b b-color-2 bg-color-2 rounded p-p25"
+              className="text-0 b b-color bg-color-2 rounded p-p25"
               defaultValue={w.limit ?? ""}
               onChange={({ target: { value } }) => {
                 const limit = value.length ? +value : -1;
@@ -383,6 +391,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
           </div>
           <Btn
             title={t.W_SQLBottomBar["Show/Hide table"]}
+            data-command="W_SQLBottomBar.toggleTable"
             iconPath={mdiTable}
             className="mr-1"
             onClick={(e) => {
@@ -406,6 +415,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
           />
           <Btn
             title={t.W_SQLBottomBar["Show/Hide code editor"]}
+            data-command="W_SQLBottomBar.toggleCodeEditor"
             iconPath={mdiChevronDown}
             style={{
               transform: `rotate(${hideCodeEditor ? 0 : 180}deg)`,
@@ -415,6 +425,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
           />
           <Btn
             title={t.W_SQLBottomBar["Show/Hide notices"]}
+            data-command="W_SQLBottomBar.toggleNotices"
             iconPath={mdiAlertOutline}
             color={noticeSub ? "action" : undefined}
             className="mr-1"

@@ -99,6 +99,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
             items: children.map((c, i) => ({
               id: c.props["data-key"] || i.toString(),
               tableName: c.props["data-table-name"],
+              viewType: c.props["data-view-type"],
               title: c.props["data-title"],
               type: "item",
               size: 20,
@@ -160,6 +161,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
                     id: c.props["data-key"] || i,
                     title: c.props["data-title"],
                     tableName: c.props["data-table-name"],
+                    viewType: c.props["data-view-type"],
                     type: "item",
                     size: totalSize / orphans.length,
                   }) satisfies LayoutItem,
@@ -185,6 +187,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
                       id: c.props["data-key"] || i,
                       title: c.props["data-title"],
                       tableName: c.props["data-table-name"],
+                      viewType: c.props["data-view-type"],
                       type: "item",
                       size: 50 / orphans.length,
                     }) satisfies LayoutItem,

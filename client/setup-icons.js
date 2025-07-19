@@ -9,7 +9,6 @@ const saveMdiIcons = () => {
   if (fs.existsSync(iconsDestinationFolder)) {
     const contents = fs.readdirSync(iconsDestinationFolder);
     if (contents.length >= iconEntries.length) {
-      console.log(`Already saved ${contents.length} icons`);
       return;
     }
     fs.rm(iconsDestinationFolder, { recursive: true }, console.log);

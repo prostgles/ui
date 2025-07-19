@@ -1,11 +1,14 @@
-import { tout } from "../pages/ElectronSetup";
+import { tout } from "../pages/ElectronSetup/ElectronSetup";
+import { getCommandElemSelector, getDataKeyElemSelector } from "../Testing";
 import { click, getElement } from "./demoUtils";
 
 export const backupDemo = async () => {
   await click("dashboard.goToConnections");
   await click(
     "",
-    `[data-key=${JSON.stringify("prostgles_video_demo")}] a.LEFT-CONNECTIONINFO`,
+    getDataKeyElemSelector("prostgles_video_demo") +
+      " " +
+      getCommandElemSelector("Connection.openConnection"),
   );
   await click("dashboard.goToConnConfig");
   await tout(1e3);

@@ -46,7 +46,11 @@ export const translations = {
     "You do not have sufficient privileges to access this": undefined,
     "Copy to clipboard": undefined,
     Send: undefined,
+    "Stop recording": undefined,
+    "Speech to text": undefined,
+    "Record audio": undefined,
     experimental: undefined,
+    "Toggle fullscreen": undefined,
   },
   App: {
     Connections: undefined,
@@ -182,7 +186,7 @@ export const translations = {
     "CA Certificate": undefined,
     "SSL Mode": undefined,
     "Connection timeout (ms)": undefined,
-    "Schema list": undefined,
+    Schemas: undefined,
     "More options": undefined,
     "Must connect to see schemas": undefined,
     "You are about to create a new database": undefined,
@@ -342,10 +346,9 @@ export const translations = {
   AskLLM: {
     "Chat to an AI Assistant to get help with your queries": undefined,
     "AI assistant not available. Talk to the admin": undefined,
-    "Ask AI": undefined,
+    "AI Assistant": undefined,
   },
   AskLLMChatHeader: {
-    "Ask AI Assistant": undefined,
     Chat: undefined,
     "New chat": undefined,
     "No prompt found": undefined,

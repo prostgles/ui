@@ -1,8 +1,8 @@
 import React, { useCallback } from "react";
-import { Pan } from "../../components/Table/Table";
 import { useLocalSettings } from "../localSettings";
 import { debounce } from "../Map/DeckGLWrapped";
 import { CENTERED_WIDTH_CSS_VAR } from "./Dashboard";
+import { Pan } from "../../components/Pan";
 
 export const DashboardCenteredLayoutResizer = () => {
   const localSettings = useLocalSettings();
@@ -25,6 +25,7 @@ export const DashboardCenteredLayoutResizer = () => {
   return (
     <Pan
       key={"wsp-centered-resize"}
+      data-command="dashboard.centered-layout.resize"
       style={{
         height: "100%",
         width: "25px",

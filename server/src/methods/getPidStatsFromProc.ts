@@ -84,7 +84,7 @@ export const getPidStatsFromProc = async (
     pidStats: pidStats.map((s) => ({
       pid: s.pid!,
       cmd: s.name!,
-      cpu: s.cpu_usage!,
+      cpu: s.cpu_usage,
       mem: s.mem_usage!,
       mhz: s.mhz.toString(),
     })),

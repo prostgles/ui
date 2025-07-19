@@ -49,7 +49,7 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
     } = params;
     const conn = {
       application_name,
-      host: cs.hosts![0]!.name!,
+      host: cs.hosts![0]!.name ?? c.db_host, // fallback to db_host for pg_dump state_db
       port: cs.hosts![0]!.port!,
       user: cs.user!,
       password: cs.password!,
@@ -63,11 +63,11 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
   }
   const conn = {
     application_name: default_application_name,
-    database: c.db_name!,
-    user: c.db_user!,
+    database: c.db_name,
+    user: c.db_user,
     password: c.db_pass!,
-    host: c.db_host!,
-    port: c.db_port!,
+    host: c.db_host,
+    port: c.db_port,
     ssl: getSSLOpts(c.db_ssl) ?? false,
     ...(Number.isFinite(c.db_connection_timeout) && {
       connectionTimeoutMillis: Math.ceil(c.db_connection_timeout!),

@@ -7,7 +7,7 @@ import {
   type ParsedSQLSuggestion,
   type SQLMatchContext,
   type SQLMatcherResultType,
-} from "../registerSuggestions";
+} from "../monacoSQLSetup/registerSuggestions";
 import { suggestColumnLike } from "../suggestColumnLike";
 import { suggestCondition } from "../suggestCondition";
 import {

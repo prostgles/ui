@@ -18,8 +18,9 @@ export type AGE = {
   milliseconds?: number;
 };
 
-export const QUERY_WATCH_IGNORE =
+export const EXCLUDE_FROM_SCHEMA_WATCH =
   "prostgles internal query that should be excluded from schema watch ";
+export const STATUS_MONITOR_IGNORE_QUERY = "prostgles-status-monitor-query";
 
 export const getAgeFromDiff = (millisecondDiff: number) => {
   const roundFunc = millisecondDiff > 0 ? Math.floor : Math.ceil;
@@ -195,14 +196,27 @@ export type SampleSchema = {
       type: "sql";
       file: string;
     }
-  | {
-      type: "dir";
-      tableConfigTs: string;
-      onMountTs: string;
-      onInitSQL: string;
-      workspaceConfig: { workspaces: DBSSchema["workspaces"][] } | undefined;
-    }
+  | SampleSchemaDir
 );
+export type SampleSchemaDir = {
+  type: "dir";
+  tableConfigTs: string;
+  onMountTs: string;
+  onInitSQL: string;
+  workspaceConfig: { workspaces: DBSSchema["workspaces"][] } | undefined;
+  connection:
+    | Pick<
+        DBSSchema["connections"],
+        "db_schema_filter" | "info" | "table_options"
+      >
+    | undefined;
+  databaseConfig:
+    | Pick<
+        DBSSchema["database_configs"],
+        "table_schema_positions" | "table_schema_transform"
+      >
+    | undefined;
+};
 
 export type ProcStats = {
   pid: number;
@@ -221,18 +235,19 @@ export function matchObj(
   return false;
 }
 
-export function sliceText(
-  v: string | undefined,
+export function sliceText<T extends string | undefined>(
+  _text: T,
   maxLen: number,
   ellipseText = "...",
   midEllipse = false,
-) {
-  if (isDefined(v) && v.length > maxLen) {
-    if (!midEllipse) return `${v.slice(0, maxLen)}${ellipseText}`;
-    return `${v.slice(0, maxLen / 2)}${ellipseText}${v.slice(v.length - maxLen / 2 + 3)}`;
+): T {
+  const text = _text as string;
+  if (isDefined(text) && text.length > maxLen) {
+    if (!midEllipse) return `${text.slice(0, maxLen)}${ellipseText}` as T;
+    return `${text.slice(0, maxLen / 2)}${ellipseText}${text.slice(text.length - maxLen / 2 + 3)}` as T;
   }
 
-  return v;
+  return _text;
 }
 
 export type ColType = {
@@ -317,18 +332,86 @@ export const getConnectionPaths = ({
   url_path: string | null;
 }) => {
   return {
-    rest: `${API_PATH_SUFFIXES.REST}/${url_path || id}`,
-    ws: `${API_PATH_SUFFIXES.WS}/${url_path || id}`,
-    dashboard: `${API_PATH_SUFFIXES.DASHBOARD}/${id}`,
-    config: `${API_PATH_SUFFIXES.CONFIG}/${id}`,
+    rest: `${API_ENDPOINTS.REST}/${url_path || id}`,
+    ws: `${API_ENDPOINTS.WS_DB}/${url_path || id}`,
+    dashboard: `${ROUTES.CONNECTIONS}/${id}`,
+    config: `${ROUTES.CONFIG}/${id}`,
   };
 };
 
-export const API_PATH_SUFFIXES = {
+export const API_ENDPOINTS = {
   REST: "/rest-api",
-  WS: "/ws-api-db",
-  DASHBOARD: "/connections",
-  CONFIG: "/connection-config",
+  WS_DB: "/ws-api-db",
+  WS_DBS: "/ws-api-dbs",
 } as const;
 
+export const ROUTES = {
+  MAGIC_LINK: "/magic-link",
+  LOGIN: "/login",
+  LOGOUT: "/logout",
+  ACCOUNT: "/account",
+  CONNECTIONS: "/connections",
+  CONFIG: "/connection-config",
+  DOCUMENTATION: "/documentation",
+  SERVER_SETTINGS: "/server-settings",
+  COMPONENT_LIST: "/component-list",
+  EDIT_CONNECTION: "/edit-connection",
+  NEW_CONNECTION: "/new-connection",
+  USERS: "/users",
+  BACKUPS: "/prostgles_backups",
+  STORAGE: "/prostgles_storage",
+} as const;
+
+const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {
+  if (new Set(Object.values(obj)).size !== Object.keys(obj).length) {
+    throw new Error(
+      `${name} must not have duplicate values: ${Object.values(obj)}`,
+    );
+  }
+};
+testForDuplicateValues(API_ENDPOINTS, "API_ENDPOINTS");
+testForDuplicateValues(ROUTES, "ROUTES");
+
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
+
+export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC" as const;
+
+type ValueOf<T> = T[keyof T];
+export const getProperty = <
+  O extends AnyObject,
+  K extends (keyof O & string) | string,
+>(
+  o: O,
+  k: K,
+): ValueOf<O> | undefined => {
+  return o[k] as ValueOf<O> | undefined;
+};
+
+export function debouncePromise<Args extends any[], T>(
+  promiseFuncDef: (...pArgs: Args) => Promise<T>,
+): (...args: Args) => Promise<T> {
+  let currentPromise: Promise<any> | undefined;
+
+  return function (...args: Args): Promise<T> {
+    // If there's no active promise, create a new one
+    if (!currentPromise) {
+      currentPromise = promiseFuncDef(...args).finally(() => {
+        currentPromise = undefined;
+      });
+      return currentPromise;
+    }
+
+    // Otherwise, wait for the current promise to finish, then run the new one
+    return currentPromise.then(() => promiseFuncDef(...args));
+  };
+}
+
+export const getCaller = () => {
+  //@ts-ignore
+  // Error.stackTraceLimit = 30;
+
+  const error = new Error();
+  const stackLines = error.stack?.split("\n") ?? [];
+  const callerLine = stackLines[2] ?? "";
+  return stackLines;
+};

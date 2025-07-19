@@ -1,18 +1,20 @@
-import type { ReactChild } from "react";
 import React from "react";
 import ReactDOM from "react-dom";
 import "./Popup.css";
-
+import { pickKeys } from "prostgles-types";
 import type { Command, TestSelectors } from "../../Testing";
 import RTComp, { type DeltaOf } from "../../dashboard/RTComp";
 import { ClickCatchOverlay } from "../ClickCatchOverlay";
 import ErrorComponent, { ErrorTrap } from "../ErrorComponent";
 import { FlexRow, classOverride } from "../Flex";
-import { FooterButtons, type FooterButton } from "./FooterButtons";
+import {
+  FooterButtons,
+  type FooterButton,
+  type FooterButtonsProps,
+} from "./FooterButtons";
 import { PopupHeader } from "./PopupHeader";
 import { getPopupStyle } from "./getPopupStyle";
 import { popupCheckPosition } from "./popupCheckPosition";
-import { debounce } from "../../dashboard/Map/DeckGLWrapped";
 
 let modalRoot;
 export const getModalRoot = (forPointer = false) => {
@@ -51,7 +53,7 @@ export type PopupProps = TestSelectors & {
       | React.MouseEvent<HTMLDivElement, MouseEvent>
       | React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => void;
-  title?: React.ReactNode;
+  title?: React.ReactNode | ((rootDiv: HTMLDivElement) => React.ReactNode);
   subTitle?: string;
   headerRightContent?: React.ReactNode;
   content?: React.ReactNode;
@@ -90,6 +92,7 @@ export type PopupProps = TestSelectors & {
     | "inside-top-center"
     | "above-center"
     | "as-is"
+    | "left"
     | "right-panel";
   focusTrap?: boolean;
   /**
@@ -105,6 +108,10 @@ export type PopupProps = TestSelectors & {
     getStyle?: (fullscreen: boolean) => React.CSSProperties;
   };
   persistInitialSize?: boolean;
+  /**
+   * Callback for when the popup content finished resizing
+   */
+  onContentFinishedResizing?: VoidFunction;
 };
 
 const FOCUSABLE_ELEMS_SELECTOR =
@@ -241,6 +248,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     /** Used for "center-fixed-top-left" positioning */
     xMin: number;
     yMin: number;
+    opacity: number;
   };
   /**
    * Used to prevent size change jiggle and things moving
@@ -248,6 +256,16 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
   prevSize?: {
     width: number;
     height: number;
+  };
+
+  /**
+   * Allow the content to grow within the first 250ms before setting opacity to 1
+   */
+  mountedAt = Date.now();
+  checkPositionOpacity = {
+    started: Date.now(),
+    done: false,
+    timeout: undefined as ReturnType<typeof setTimeout> | undefined,
   };
   checkPosition = popupCheckPosition.bind(this);
   prevStateStyles: PopupState["stateStyle"][] = [];
@@ -292,7 +310,8 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
 
     const result = (
       <>
-        {onClose && (
+        {/* Used to improve UX for onWaitForContentFinish */}
+        {onClose && style.opacity !== 0 && (
           <ClickCatchOverlay
             style={{
               position: "fixed",
@@ -300,13 +319,13 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
               zIndex: POPUP_ZINDEX,
               ...clickCatchStyle,
             }}
-            className="ClickCatchOverlay absolute inset-0 flex-col"
+            className="flex-col"
             onClick={onClose}
           />
         )}
 
         <div
-          className={`${POPUP_CLASSES.root} positioning:${positioning} card m-auto bg-popup${positioning === "right-panel" ? "-content" : ""} flex-col shadow-xl  o-hidden`}
+          className={`${POPUP_CLASSES.root} positioning_${positioning} card m-auto bg-popup${positioning === "right-panel" ? "-content" : ""} flex-col shadow-xl  o-hidden`}
           data-command={this.props["data-command"]}
           ref={(r) => {
             if (r) {
@@ -343,6 +362,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
           >
             <PopupHeader
               {...this.props}
+              rootDiv={this.ref}
               onToggleFullscreen={() => {
                 const newFullScreen = !fullScreen;
                 if (!newFullScreen) {
@@ -369,7 +389,15 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
               </div>
             )}
           </div>
-          <FooterButtons {...this.props} />
+          <FooterButtons
+            {...pickKeys(this.props, [
+              "footerButtons",
+              "onClose",
+              "footer",
+              "onClose",
+            ] satisfies (keyof FooterButtonsProps)[])}
+            data-command="Popup.footer"
+          />
         </div>
       </>
     );
@@ -378,16 +406,23 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
   }
 }
 
-type FooterProps = {
+type FooterProps = TestSelectors & {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   error?: any;
 };
-export const Footer = ({ children, className, style, error }: FooterProps) => {
+export const Footer = ({
+  children,
+  className,
+  style,
+  error,
+  ...testSelectors
+}: FooterProps) => {
   return (
     <ErrorTrap>
       <footer
+        {...testSelectors}
         style={style}
         className={classOverride(
           "popup-footer bt b-color flex-row-wrap p-1 jc-end " +
@@ -402,7 +437,7 @@ export const Footer = ({ children, className, style, error }: FooterProps) => {
           error={error}
           style={{ maxHeight: "150px", minHeight: 0, overflow: "auto" }}
         />
-        <FlexRow>{children}</FlexRow>
+        <FlexRow className="f-1">{children}</FlexRow>
       </footer>
     </ErrorTrap>
   );
