@@ -38,15 +38,6 @@ export type LabelPropsNormal = LabelPropsCommon & NormalLabelProps;
 export type LabelPropsHeader = LabelPropsCommon & HeaderLabelProps;
 
 export type LabelProps = LabelPropsNormal | LabelPropsHeader;
-// export type LabelProps = React.DetailedHTMLProps<
-//   React.LabelHTMLAttributes<HTMLLabelElement>,
-//   HTMLLabelElement
-// > & {
-//   label?: string;
-//   info?: React.ReactNode;
-//   popupTitle?: React.ReactNode;
-//   size?: "small";
-// } & (NormalLabelProps | HeaderLabelProps);
 
 export const Label = ({
   info = null,

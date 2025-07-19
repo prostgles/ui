@@ -646,14 +646,6 @@ export async function getDataTypes(db: DB): Promise<PG_DataType[]> {
       priority: priority > -1 ? (priority + "").padStart(2, "0") : "z",
     };
   });
-
-  // const tableNames = Object.keys(db).filter(t => db[t].getColumns);
-  // return (await db.sql(
-  //   "select typname as name, typtype, typtype NOT IN ('p', 'd', 'c') AS for_cols from pg_type " +
-  //   (tableNames.length? "WHERE typname NOT IN ($1:csv) " : ""),
-  //   [tableNames.concat(tableNames.map(t => "_" + t))],
-  //   { returnType: "rows" }
-  // )) as any;
 }
 
 export type PG_Setting = {
