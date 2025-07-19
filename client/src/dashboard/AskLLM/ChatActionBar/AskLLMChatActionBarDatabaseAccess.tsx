@@ -91,67 +91,6 @@ export const AskLLMChatActionBarDatabaseAccess = (
           ],
         }}
       />
-      {/* <SmartCardList<DBSSchema["published_methods"]>
-        db={dbs as DBHandlerClient}
-        showTopBar={{
-          insert: {
-            buttonProps: {},
-            fixedData: {
-              connection_id: prgl.connectionId,
-            },
-          },
-        }}
-        tableName="published_methods"
-        methods={dbsMethods}
-        tables={dbsTables}
-        excludeNulls={true}
-        realtime={true}
-        filter={{
-          connection_id: prgl.connectionId,
-        }}
-        fieldConfigs={[
-          {
-            name: "id",
-            hide: true,
-          },
-          {
-            name: "name",
-            render: (name, { id }) => {
-              const checked = llm_chats_allowed_functions?.some(
-                (f) => f.server_function_id === id,
-              );
-              return (
-                <Checkbox
-                  variant="header"
-                  label={name}
-                  checked={llm_chats_allowed_functions?.some(
-                    (f) => f.server_function_id === id,
-                  )}
-                  onChange={() => {
-                    if (checked) {
-                      dbs.llm_chats_allowed_functions.delete({
-                        chat_id: activeChatId,
-                        server_function_id: id,
-                        connection_id: prgl.connectionId,
-                      });
-                    } else {
-                      dbs.llm_chats_allowed_functions.insert({
-                        chat_id: activeChatId,
-                        server_function_id: id,
-                        connection_id: prgl.connectionId,
-                      });
-                    }
-                  }}
-                />
-              );
-            },
-            renderMode: "full",
-          },
-          {
-            name: "description",
-          },
-        ]}
-      /> */}
     </PopupMenu>
   );
 };

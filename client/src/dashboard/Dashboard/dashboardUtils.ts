@@ -438,12 +438,8 @@ type TableOptions = NonNullable<
 >;
 export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
   label: string;
-  // icon: string | undefined;
   joins: Join[];
   joinsV2: JoinV2[];
   columns: DBSchemaTableColumn[];
-  // card: NonNullable<
-  //   NonNullable<DBSSchema["connections"]["table_options"]>[string]
-  // >["card"];
 } & Omit<TableOptions, "label" | "columns">;
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];

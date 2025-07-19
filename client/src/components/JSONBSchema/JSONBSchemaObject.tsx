@@ -80,25 +80,7 @@ export const JSONBSchemaObject = ({
             title: propName,
             ...(typeof ps === "string" ? { type: ps } : ps),
           };
-          // return (
-          //   <div key={propName} className="flex-row gap-1">
-          //     <JSONBSchema
-          //       value={(value as any)?.[propName] as any}
-          //       schema={propSchema as any}
-          //       isNested={true}
-          //       onChange={
-          //         ((newVal) => {
-          //           onChange(
-          //             (newVal === undefined ?
-          //               omitKeys(value ?? {}, [propName])
-          //             : { ...value, [propName]: newVal }) as any,
-          //           );
-          //         }) as any
-          //       }
-          //       {...oProps}
-          //     />
-          //   </div>
-          // );
+
           const itemNestingPath = [...(nestingPath ?? []), propName];
 
           const itemStyle = oProps.schemaStyles?.find(
