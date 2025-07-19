@@ -15,7 +15,7 @@ type P = JSONBSchemaCommonProps & {
 };
 
 /**
- * Can  render oneOfType only if there are common properties across objects
+ * Can render oneOfType only if there are common properties across objects
  */
 export const JSONBSchemaOneOfTypeMatch = (s: JSONB.JSONBSchema): s is Schema =>
   !!s.oneOfType?.length;

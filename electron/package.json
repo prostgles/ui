@@ -1,6 +1,6 @@
 {
   "name": "prostgles-desktop",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "homepage": "https://prostgles.com/desktop",
   "description": "Realtime Dashboard and SQL editor for PostgreSQL",
   "author": "Prostgles LTD  <office@prostgles.com>",
@@ -42,10 +42,10 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.47.0",
-    "electron": "^35.1.0",
-    "electron-builder": "^24.13.3",
+    "electron": "^37.2.3",
+    "electron-builder": "^26.0.12",
     "electron-squirrel-startup": "^1.0.1",
-    "tsc-watch": "^6.2.0",
+    "tsc-watch": "^7.1.1",
     "typescript": "^5.0.3"
   },
   "dependencies": {
