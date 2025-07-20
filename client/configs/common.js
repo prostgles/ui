@@ -53,6 +53,15 @@ const getLoader = () => {
 
 */
 
+let timeout;
+const debouncedProgressHandler = (percentage, message, ...args) => {
+  clearTimeout(timeout);
+
+  timeout = setTimeout(() => {
+    console.log(percentage.toFixed(1), message, ...args);
+  }, 200);
+};
+
 module.exports = {
   target: ["web", "es2020"],
   resolve: {
@@ -146,6 +155,7 @@ module.exports = {
       // handler(percentage, message, ...args) {
       //   console.log(percentage, message, args);
       // },
+      handler: debouncedProgressHandler,
       modules: true,
       modulesCount: 5000,
       profile: false,

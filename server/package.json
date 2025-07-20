@@ -46,7 +46,7 @@
     "@types/smtp-server": "^3.5.10",
     "@types/ws": "^8.5.3",
     "dts-bundle-generator": "^9.0.0",
-    "eslint": "^9.25.1",
+    "eslint": "^9.31.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-security": "^3.0.1",
     "tsc-watch": "^6.2.1",
