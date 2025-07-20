@@ -42,7 +42,7 @@ jobs:
             echo "Release file found: ${release_file_path}"
           else
 
-            echo "Release file not found for v${pr_version}."
+            echo "Release file not found for v${pr_version}"
             echo "Ensure this file exists: ${release_file_path}"
 
             exit 1
