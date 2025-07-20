@@ -9,6 +9,7 @@ import {
   shell,
   nativeImage,
   type SafeStorage,
+  nativeTheme,
 } from "electron";
 import * as path from "path";
 import * as fs from "fs";
@@ -167,12 +168,25 @@ const createWindow = () => {
   const startupHeight = Math.min(desiredHeight, height);
   const x = Math.round(primaryDisplay.bounds.x + (width - startupWidth) / 2);
   const y = Math.round(primaryDisplay.bounds.y + (height - startupHeight) / 2);
+  const getCurrentTheme = () => {
+    return nativeTheme.shouldUseDarkColors ? "dark" : "light";
+  };
+  const COLORS = {
+    white: "#ffffff",
+    black: "#000000",
+  };
   mainWindow = new BrowserWindow({
     x,
     y,
     width: startupWidth,
     height: startupHeight,
     icon: iconPath,
+    // titleBarStyle: "hiddenInset",
+    // titleBarOverlay: {
+    //   color: getCurrentTheme() === "light" ? COLORS.white : COLORS.black,
+    //   symbolColor: getCurrentTheme() === "light" ? COLORS.black : COLORS.white,
+    //   height: 30,
+    // },
   });
   mainWindow.setMenuBarVisibility(false);
 };
@@ -278,7 +292,6 @@ function getLoadingHtml() {
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <meta name="theme-color" content="#000000" />
     <meta
       name="description"
       content=" "

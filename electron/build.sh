@@ -1,7 +1,7 @@
 
 #!/bin/bash
 
-npm version "$(../scripts/get_version.sh ../package.json)" --no-git-tag-version
+npm version "$(../scripts/get_version.sh ../package.json)" --force --no-git-tag-version
 
 rm -rf ./ui
 rm -rf ./dist
@@ -23,7 +23,6 @@ cp -R ./.github ./ui/
 cp -R ./electron/*.json ./ui/electron/
 
 cp -R ./server/src ./ui/server/
-cp -R ./server/dist ./ui/server/
 cp -R ./server/sample_schemas ./ui/server/
 cp -R ./server/packages ./ui/server/
 cp -R ./commonTypes ./ui/

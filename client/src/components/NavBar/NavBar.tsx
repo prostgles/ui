@@ -87,8 +87,7 @@ export const NavBar = (props: P) => {
 
           <div
             className={
-              "flex-col " +
-              (serverState?.isElectron ? "f-0 ml-auto jc-center" : "f-1")
+              "flex-col f-1" 
             }
           >
             <div
