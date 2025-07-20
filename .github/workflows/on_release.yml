@@ -1,5 +1,8 @@
 name: On Release
-on: push
+on:
+  push:
+    tags:
+      - "v*"
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -7,7 +10,6 @@ jobs:
   build_docker_images:
     timeout-minutes: 20
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     strategy:
       fail-fast: false # Optional: Prevent other matrix jobs from being cancelled if one fails
       matrix:
@@ -21,14 +23,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install jq and extract version
+      - name: Extract version
         id: extract_version
         run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-          VERSION=$(cat package.json | jq -r .version)
+          VERSION=$(./scripts/get_version.sh)
           echo "version=v$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: v$VERSION"
+
+      - name: Ensure release file exists
+        run: |
+          pr_version=$(./scripts/get_version.sh) 
+          base_ref="${{ github.base_ref }}"
+          release_file_path="./releases/v${pr_version}.md"
+
+          echo "Checking for release file: ${release_file_path}"
+
+          if [ -f "$release_file_path" ]; then
+            echo "Release file found: ${release_file_path}"
+          else
+
+            echo "Release file not found for v${pr_version}."
+            echo "Ensure this file exists: ${release_file_path}"
+
+            exit 1
+          fi
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -56,7 +74,6 @@ jobs:
   build_linux:
     timeout-minutes: 20
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -80,7 +97,6 @@ jobs:
   build_windows:
     timeout-minutes: 20
     runs-on: windows-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -103,7 +119,6 @@ jobs:
   build_macos:
     timeout-minutes: 20
     runs-on: macos-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3

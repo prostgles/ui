@@ -19,15 +19,15 @@ jobs:
         id: pr-version
         run: |
           sudo apt  install jq
-          cat package.json | jq -r .version > pr_version.txt
+          ./scripts/get_version.sh > pr_version.txt
           git fetch origin ${{ github.base_ref }} --depth=1
           git checkout origin/${{ github.base_ref }} -- package.json ./electron/package.json
 
-          cat package.json | jq -r .version > current_version.txt
-          if jq -e '.version' package.json > /dev/null 2>&1; then
-            cat package.json | jq -r .version > current_version.txt
+          ./scripts/get_version.sh > current_version.txt
+          if ./scripts/get_version.sh > /dev/null 2>&1; then
+            ./scripts/get_version.sh > current_version.txt
           else
-            cat ./electron/package.json | jq -r .version > current_version.txt
+            ./scripts/get_version.sh ""./electron/package.json" > current_version.txt
           fi
 
       - name: Compare versions
@@ -41,21 +41,20 @@ jobs:
             echo "Version check passed: $current_version <= $pr_version"
           fi
 
-      - name: Check Release File and Generate Changelog
+      - name: Ensure Changelog exists
         if: success() # Ensure version comparison passed
         run: |
           pr_version=$(cat pr_version.txt) 
           base_ref="${{ github.base_ref }}"
-          release_file_path="./releases/v${pr_version}.md"
+          release_file_path="./changelog/v${pr_version}.md"
 
-          echo "Checking for release file: ${release_file_path}"
+          echo "Checking for changelog file: ${release_file_path}"
 
           if [ -f "$release_file_path" ]; then
-            echo "Release file found: ${release_file_path}"
-            echo "::warning::Release notes file for version v${pr_version} already exists. Ensure this is intended."
+            echo "Changelog file found: ${release_file_path}"
           else
 
-            echo "Release file not found for v${pr_version}."
+            echo "Changelog file not found for v${pr_version}."
             echo "Ensure this file exists: ${release_file_path}"
 
             exit 1
