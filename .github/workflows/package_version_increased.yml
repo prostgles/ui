@@ -22,13 +22,7 @@ jobs:
           ./scripts/get_version.sh > pr_version.txt
           git fetch origin ${{ github.base_ref }} --depth=1
           git checkout origin/${{ github.base_ref }} -- package.json ./electron/package.json
-
           ./scripts/get_version.sh > current_version.txt
-          if ./scripts/get_version.sh > /dev/null 2>&1; then
-            ./scripts/get_version.sh > current_version.txt
-          else
-            ./scripts/get_version.sh ""./electron/package.json" > current_version.txt
-          fi
 
       - name: Compare versions
         run: |

@@ -1,6 +1,8 @@
 
 #!/bin/bash
 
+npm version "$(../scripts/get_version.sh ../package.json)" --no-git-tag-version
+
 rm -rf ./ui
 rm -rf ./dist
 mkdir -p ./dist
