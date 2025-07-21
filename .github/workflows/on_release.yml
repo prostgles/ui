@@ -80,6 +80,7 @@ jobs:
   build_linux:
     timeout-minutes: 20
     runs-on: ubuntu-latest
+    if: success()
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -103,6 +104,7 @@ jobs:
   build_windows:
     timeout-minutes: 20
     runs-on: windows-latest
+    if: success()
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -125,6 +127,7 @@ jobs:
   build_macos:
     timeout-minutes: 20
     runs-on: macos-latest
+    if: success()
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
