@@ -1,19 +1,18 @@
 const unhandled = require("electron-unhandled");
 unhandled();
+import * as crypto from "crypto";
 import {
   app,
-  screen,
   BrowserWindow,
+  nativeImage,
+  screen,
+  shell,
   safeStorage as ss,
   Tray,
-  shell,
-  nativeImage,
   type SafeStorage,
-  nativeTheme,
 } from "electron";
-import * as path from "path";
 import * as fs from "fs";
-import * as crypto from "crypto";
+import * as path from "path";
 // import { getProtocolHandler } from "./getProtocolHandler";
 
 let localCreds: any;
@@ -168,25 +167,13 @@ const createWindow = () => {
   const startupHeight = Math.min(desiredHeight, height);
   const x = Math.round(primaryDisplay.bounds.x + (width - startupWidth) / 2);
   const y = Math.round(primaryDisplay.bounds.y + (height - startupHeight) / 2);
-  const getCurrentTheme = () => {
-    return nativeTheme.shouldUseDarkColors ? "dark" : "light";
-  };
-  const COLORS = {
-    white: "#ffffff",
-    black: "#000000",
-  };
+
   mainWindow = new BrowserWindow({
     x,
     y,
     width: startupWidth,
     height: startupHeight,
     icon: iconPath,
-    // titleBarStyle: "hiddenInset",
-    // titleBarOverlay: {
-    //   color: getCurrentTheme() === "light" ? COLORS.white : COLORS.black,
-    //   symbolColor: getCurrentTheme() === "light" ? COLORS.black : COLORS.white,
-    //   height: 30,
-    // },
   });
   mainWindow.setMenuBarVisibility(false);
 };
