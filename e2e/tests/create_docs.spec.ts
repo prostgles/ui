@@ -16,14 +16,16 @@ import {
   MINUTE,
   monacoType,
   openConnection,
+  openTable,
   PageWIds,
+  restoreFromBackup,
   runDbsSql,
   USERS,
 } from "./utils";
 
 test.use({
   viewport: {
-    width: 800,
+    width: 900,
     height: 600,
   },
   trace: "retain-on-failure",
@@ -37,102 +39,18 @@ const IS_PIPELINE = process.env.CI === "true";
 test.describe("Create docs and screenshots", () => {
   test.describe.configure({
     retries: 0,
-    mode: "parallel",
-    timeout: 35 * MINUTE,
+    mode: "serial",
+    timeout: 15 * MINUTE,
   });
 
-  let flatDocs: any[];
-  test.beforeEach(async ({ page: p }) => {
+  test(`Restore databases`, async ({ page: p }) => {
     const page = p as PageWIds;
-    page.on("console", console.log);
-    page.on("pageerror", console.error);
-
-    if (!flatDocs) {
-      if (IS_PIPELINE) {
-        // Takes too long. Run locally only
-        return;
-      }
-      await goTo(page, "/");
-      await page.waitForTimeout(500);
-      flatDocs = await page.evaluate(() => {
-        //@ts-ignore
-        return window.flatDocs;
-      });
-      if (!flatDocs || !flatDocs.length) {
-        throw new Error("No docs found in the command search");
-      }
-    }
-
-    await page.waitForTimeout(100);
+    await login(page, USERS.test_user, "/login");
+    await openConnection(page, "prostgles_video_demo");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.bkp").click();
+    await restoreFromBackup(page, "Demo");
   });
-
-  const workers = 2;
-  for (let i = 0; i < workers; i++) {
-    test(`Test command search worker: ${i}`, async ({ page: p }) => {
-      const page = p as PageWIds;
-      if (IS_PIPELINE) {
-        // Takes too long. Run locally only
-        return;
-      }
-      await login(page, USERS.test_user, "/login");
-
-      const workerFlatDocsBatchSize = Math.ceil(flatDocs.length / workers);
-      const startIndex = i * workerFlatDocsBatchSize;
-      const workerFlatDocs = flatDocs.slice(
-        startIndex,
-        startIndex + workerFlatDocsBatchSize,
-      ) as {
-        title: string;
-        parentTitles: string[];
-      }[];
-      console.log(
-        `Worker ${i} has ${workerFlatDocs.length} docs to test`,
-        flatDocs.length,
-      );
-      await page.waitForTimeout(500);
-
-      if (!workerFlatDocs.length) {
-        throw new Error("No docs found in the command search");
-      }
-
-      const batchSize = 50;
-      do {
-        const batchItems = workerFlatDocs.splice(0, batchSize);
-        await page.reload();
-        await page.waitForTimeout(1500);
-        console.log(`Remaining docs: ${workerFlatDocs.length}`);
-        for (const [indx, doc] of batchItems.entries()) {
-          if (doc.title === "Logout") {
-            continue; // Skip logout as it will close the session
-          }
-
-          console.log(doc.parentTitles.join(" > ") + " -", doc.title);
-          await page.keyboard.press("Control+KeyK", { delay: 100 });
-          await page
-            .getByTestId("CommandSearch")
-            .locator("input")
-            .fill(doc.title);
-          await page.waitForTimeout(200);
-          await page.keyboard.press("Enter");
-          await page.waitForTimeout(200);
-
-          await expect(page.locator("body")).toHaveAttribute(
-            COMMAND_SEARCH_ATTRIBUTE_NAME,
-            doc.title,
-            { timeout: 15_000 },
-          );
-          await page.evaluate((COMMAND_SEARCH_ATTRIBUTE_NAME) => {
-            document.body.removeAttribute(COMMAND_SEARCH_ATTRIBUTE_NAME);
-          }, COMMAND_SEARCH_ATTRIBUTE_NAME);
-
-          /** Close any popups */
-          await page.keyboard.press("Escape", { delay: 100 });
-          await page.keyboard.press("Escape", { delay: 100 });
-          await page.waitForTimeout(100);
-        }
-      } while (workerFlatDocs.length > 0);
-    });
-  }
 
   test("Create docs", async ({ page: p }) => {
     const page = p as PageWIds;
@@ -217,15 +135,47 @@ test.describe("Create docs and screenshots", () => {
       const openMenuIfClosed = async () => {
         await page.waitForTimeout(1500);
         const menuBtn = await page.getByTestId("dashboard.menu");
-        if (await menuBtn.count()) {
+        if ((await menuBtn.count()) && (await menuBtn.isEnabled())) {
           menuBtn.click();
         }
       };
+      const hideMenuIfOpen = async () => {
+        await page.waitForTimeout(1500);
+        const toggleBtn = await page.getByTestId(
+          "DashboardMenuHeader.togglePinned",
+        );
+        if ((await toggleBtn.count()) && (await toggleBtn.isEnabled())) {
+          toggleBtn.click();
+        }
+      };
       await saveSVGScreenshots(page, async (fileName) => {
+        await page.reload();
+        await page.waitForTimeout(1000);
         if (fileName === "schema_diagram") {
           await open("prostgles_video_demo");
           await openMenuIfClosed();
           await page.getByTestId("SchemaGraph").click();
+        } else if (fileName === "table") {
+          await open("prostgles_video_demo");
+
+          const userDashboard = await page.getByText("Users dashboard");
+          if (await userDashboard.count()) {
+            await userDashboard.click();
+          } else {
+            await page.getByTestId("WorkspaceMenuDropDown").click();
+            await page
+              .getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn")
+              .click();
+            await page
+              .getByTestId("WorkspaceAddBtn")
+              .locator("input")
+              .fill("Users dashboard");
+            await page.getByTestId("WorkspaceAddBtn.Create").click();
+            await page.waitForTimeout(1500);
+            await openMenuIfClosed();
+            await openTable(page, "users");
+            await hideMenuIfOpen();
+          }
         } else if (fileName === "sql_editor") {
           await open("prostgles_video_demo");
           await page.waitForTimeout(1500);
@@ -233,12 +183,7 @@ test.describe("Create docs and screenshots", () => {
             await openMenuIfClosed();
             await page.getByTestId("dashboard.menu.sqlEditor").click();
           }
-          const togglePinned = await page.getByTestId(
-            "DashboardMenuHeader.togglePinned",
-          );
-          if (await togglePinned.count()) {
-            await togglePinned.click();
-          }
+          await hideMenuIfOpen();
 
           const query = `SELECT * FROM chat_m`;
           await monacoType(page, `.ProstglesSQL`, query, { deleteAll: true });
@@ -265,9 +210,7 @@ test.describe("Create docs and screenshots", () => {
           if (fileName === "timechart" && (await btn.count())) {
             await btn.click();
           }
-        } else if (fileName === "new_connection") {
-          await goTo(page, "/connections");
-          await page.getByTestId("Connections.new").click();
+          await hideMenuIfOpen();
         } else if (fileName === "ai_assistant") {
           await open("prostgles_video_demo");
           await page.getByTestId("AskLLM").click();
@@ -277,12 +220,22 @@ test.describe("Create docs and screenshots", () => {
           await page.getByTestId("config.files").click();
         } else if (fileName === "file_importer") {
           await open("prostgles_video_demo");
-          await page.getByTestId("dashboard.menu").click();
+          await openMenuIfClosed();
           await page.getByTestId("dashboard.menu.create").click();
           await page
             .getByTestId("dashboard.menu.create")
-            .locator(getDataKeyElemSelector("new table"))
+            .locator(getDataKeyElemSelector("import file"))
             .click();
+          const csvContent = `Name,Email,Age,Department
+Alice Wilson,alice@example.com,28,Engineering
+Charlie Brown,charlie@example.com,32,Marketing
+Diana Prince,diana@example.com,29,Sales
+Edward Norton,edward@example.com,31,HR`;
+          await page.getByTestId("FileBtn").setInputFiles({
+            name: "contacts.csv",
+            mimeType: "text/plain",
+            buffer: Buffer.from(csvContent),
+          });
         } else if (fileName === "access_control") {
           await open("prostgles_video_demo");
           await page.getByTestId("dashboard.goToConnConfig").click();
@@ -293,10 +246,16 @@ test.describe("Create docs and screenshots", () => {
           await goTo(page, "/connections");
           await page.getByTestId("ConnectionServer.add").click();
           await page.locator(getDataKeyElemSelector("existing")).click();
+          await page
+            .getByTestId("ConnectionServer.add.existingDatabase")
+            .click();
         } else if (fileName === "connection_config") {
           await open("prostgles_video_demo");
           await page.getByTestId("dashboard.goToConnConfig").click();
-        } else if (fileName === "command_search") {
+        } else if (fileName === "new_connection") {
+          await goTo(page, "/connections");
+          await page.getByTestId("Connections.new").click();
+        } else if (fileName === "command_palette") {
           await page.keyboard.press("Control+KeyK");
           await page
             .getByTestId("Popup.content")

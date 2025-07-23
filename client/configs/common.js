@@ -152,9 +152,6 @@ module.exports = {
     new webpack.ProgressPlugin({
       activeModules: true,
       entries: true,
-      // handler(percentage, message, ...args) {
-      //   console.log(percentage, message, args);
-      // },
       handler: debouncedProgressHandler,
       modules: true,
       modulesCount: 5000,

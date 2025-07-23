@@ -11,7 +11,7 @@ import {
   type UIDocFlat,
   type UIDocPage,
 } from "../UIDocs";
-import type { CommandSearchHighlight } from "./CommandSearch";
+import type { CommandSearchHighlight } from "./CommandPalette";
 import { useHighlightDocItem } from "./useHighlightDocItem";
 import {
   getDocPagePath,

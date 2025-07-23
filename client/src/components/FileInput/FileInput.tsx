@@ -365,7 +365,12 @@ export class FileInput extends RTComp<
           className="FileInput_AddBtn f-1 flex-row ws-nowrap ai-center bg-color-0 pointer rounded text-active b b-active py-p25 pl-p5 pr-1 gap-p25"
           data-command={"FileBtn"}
         >
-          <Icon path={mdiPlus} size={1} title="Add files" className=" " />
+          <Icon
+            path={mdiPlus}
+            sizeName={"default"}
+            title="Add files"
+            className=" "
+          />
           <div>{inputText}</div>
           <input
             id={id}

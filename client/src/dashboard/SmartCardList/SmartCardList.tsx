@@ -21,6 +21,7 @@ import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
 import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
 import type { InsertButtonProps } from "../SmartForm/InsertButton";
+import type { TestSelectors } from "../../Testing";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -103,7 +104,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   orderByfields?: string[];
   showEdit?: boolean;
   onSetData?: (items: AnyObject[]) => void;
-};
+} & Pick<TestSelectors, "data-command">;
 
 export const SmartCardList = <T extends AnyObject>(
   props: SmartCardListProps<T>,
@@ -127,6 +128,7 @@ export const SmartCardList = <T extends AnyObject>(
     enableListAnimations = false,
     getActions,
     limit = 25,
+    "data-command": dataCommand = "SmartCardList",
   } = props;
 
   const paginationState = usePagination(limit);
@@ -163,7 +165,7 @@ export const SmartCardList = <T extends AnyObject>(
         "SmartCardList o-auto gap-p5 relative max-w-full",
         className,
       )}
-      data-command="SmartCardList"
+      data-command={dataCommand}
       style={smartCardListStyle}
     >
       {loading && <Loading variant="cover" />}

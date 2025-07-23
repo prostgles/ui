@@ -152,6 +152,8 @@ export const connectionsUIDoc = {
                 It will use the first connection details from the group connection. 
 
                 <img src="/screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" />
+
+                After selecting the database, you can choose to create a new owner or user for the connection should you need to.
               `),
               children: [
                 {

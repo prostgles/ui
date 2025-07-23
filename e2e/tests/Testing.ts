@@ -22,6 +22,7 @@ export const COMMANDS = {
   "config.bkp": "",
   "config.tableConfig": "",
   "config.bkp.create": "",
+  "config.bkp.create.name": "Backup name input field",
   "config.bkp.create.start": "",
   "config.bkp.AutomaticBackups": "",
   "config.bkp.AutomaticBackups.toggle": "",
@@ -434,7 +435,7 @@ export const COMMANDS = {
   NavBar: "",
   "NavBar.mobileMenuToggle": "",
   "NavBar.logout": "",
-  CommandSearch: "",
+  CommandPalette: "",
   "Chat.attachedFiles": "",
   "Window.W_QuickMenu.addCrossFilteredTable": "Add cross-filtered table",
   Alert: "Alert popup",
@@ -443,6 +444,7 @@ export const COMMANDS = {
   MarkdownMonacoCode: "",
   "MCPServersInstall.install": "",
   NewConnectionForm: "",
+  "BackupsControls.Completed": "Completed backups list",
 } as const satisfies Record<
   string,
   | string

@@ -6,7 +6,7 @@ import type { Command } from "../Testing";
 import { isDefined } from "../utils";
 import { domToThemeAwareSVG } from "./domToSVG/domToThemeAwareSVG";
 import { accountUIDoc } from "./UIDocs/accountUIDoc";
-import { commandSearchUIDoc } from "./UIDocs/commandSearchUIDoc";
+import { commandPaletteUIDoc } from "./UIDocs/commandPaletteUIDoc";
 import { dashboardUIDoc } from "./UIDocs/connection/dashboardUIDoc";
 import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
 import { desktopInstallationUIDoc } from "./UIDocs/desktopInstallation";
@@ -155,7 +155,7 @@ export const UIDocs = [
   connectionConfigUIDoc,
   serverSettingsUIDoc,
   accountUIDoc,
-  commandSearchUIDoc,
+  commandPaletteUIDoc,
 ] satisfies (UIDocContainers | UIDocNavbar | UIDocElement)[];
 
 export type UIDoc = UIDocContainers | UIDocElement | UIDocNavbar;

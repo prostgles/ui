@@ -1,5 +1,12 @@
 import { test } from "@playwright/test";
-import { PageWIds, USERS, createDatabase, goTo, login } from "./utils";
+import {
+  PageWIds,
+  USERS,
+  createDatabase,
+  goTo,
+  login,
+  openConnection,
+} from "./utils";
 const viewPortSize = { width: 1920, height: 1080 };
 // const viewPortSize = { width: 800, height: 1080 };
 test.use({
@@ -68,5 +75,16 @@ test.describe("Demo video", () => {
     // await page.getByTestId("App.colorScheme").click();
     // await page.getByTestId("App.colorScheme").locator(`[data-key=dark]`).click();
     // await startDemo();
+  });
+
+  test(`Backup databases`, async ({ page: p }) => {
+    const page = p as PageWIds;
+    await login(page, USERS.test_user, "/login");
+    await openConnection(page, "prostgles_video_demo");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.bkp").click();
+    await page.getByTestId("config.bkp.create").click();
+    await page.getByTestId("config.bkp.create.name").fill("Demo");
+    await page.getByTestId("config.bkp.create.start").click();
   });
 });

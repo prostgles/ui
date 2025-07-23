@@ -563,6 +563,7 @@ export const openTable = async (page: PageWIds, namePartStart: string) => {
   const table = await page.locator(
     `[data-table-name^=${JSON.stringify(namePartStart)}]`,
   );
+  // debugging
   if (!table.isVisible()) {
     const v_triggers = await runDbsSql(
       page,
@@ -887,4 +888,24 @@ export const loginWhenSignupIsEnabled = async (page: PageWIds) => {
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
   await page.waitForTimeout(500);
+};
+
+const backupNames = "Demo";
+export const restoreFromBackup = async (
+  page: PageWIds,
+  backupFileName?: typeof backupNames,
+) => {
+  const backupListItems = await page
+    .getByTestId("BackupsControls.Completed")
+    .locator(".SmartCard");
+  await backupListItems.first().waitFor({ state: "visible" });
+  const backupItem =
+    backupFileName ?
+      backupListItems.filter({ hasText: `Backup name${backupFileName}` })
+    : backupListItems;
+  await backupItem
+    .getByRole("button", { name: "Restore...", exact: true })
+    .click();
+  await typeConfirmationCode(page);
+  await page.getByRole("button", { name: "Restore", exact: true }).click();
 };

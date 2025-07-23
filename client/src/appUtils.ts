@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Theme } from "./App";
-import { type DocumentationFile } from "./app/CommandSearch/getDocumentation";
+import { type DocumentationFile } from "./app/CommandPalette/getDocumentation";
 import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
 import type { UIDoc } from "./app/UIDocs";
 
