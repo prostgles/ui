@@ -4,7 +4,7 @@ import { isDefined } from "prostgles-types";
 import { getUIDocElementsAndAlertIfEmpty } from "./utils";
 import type { UIDocNonInfo } from "../UIDocs";
 import { tout } from "../../utils";
-import type { CommandSearchHighlight } from "./CommandSearch";
+import type { CommandSearchHighlight } from "./CommandPalette";
 import { isInParentViewport } from "../domToSVG/isElementVisible";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import type { DocItemHighlightItemPosition } from "./useGoToUI";

@@ -6,7 +6,7 @@ const SVG_SCREENSHOT_NAMES = {
   sql_editor: 1,
   schema_diagram: 1,
   new_connection: 1,
-  command_search: 1,
+  command_palette: 1,
   connections: 1,
   dashboard: 1,
   table: 1,
@@ -62,7 +62,7 @@ export const saveSVGScreenshots = async (
   const svgFiles = Object.keys(SVG_SCREENSHOT_NAMES);
   for (const fileName of svgFiles) {
     await onBefore(fileName as ScreenshotName);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await saveSVGScreenshot(page, fileName as ScreenshotName);
     console.log(`Saved SVG screenshot: ${fileName}.svg`);
   }

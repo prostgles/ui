@@ -36,6 +36,7 @@ import {
   openConnection,
   openTable,
   queries,
+  restoreFromBackup,
   runDbSql,
   runDbsSql,
   runSql,
@@ -76,7 +77,7 @@ test.describe("Main test", () => {
   const deleteAllBackups = async (page: PageWIds) => {
     await page.getByTestId("config.bkp").click();
     await page
-      .getByTestId("SmartCardList")
+      .getByTestId("BackupsControls.Completed")
       .waitFor({ state: "visible", timeout: 15e3 });
     const canDelete = await page.getByRole("button", { name: "Delete all..." });
     if (await canDelete.count()) {
@@ -1389,9 +1390,7 @@ test.describe("Main test", () => {
     /** Restore db */
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();
-    await page.getByRole("button", { name: "Restore...", exact: true }).click();
-    await typeConfirmationCode(page);
-    await page.getByRole("button", { name: "Restore", exact: true }).click();
+    await restoreFromBackup(page);
 
     /** Go to dashboard. Deleted row should be there */
     await page.waitForTimeout(2200);

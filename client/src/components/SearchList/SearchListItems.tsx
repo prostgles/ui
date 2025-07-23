@@ -4,7 +4,6 @@ import { ClickCatchOverlay } from "../ClickCatchOverlay";
 import { DraggableLI } from "../DraggableLI";
 import { classOverride } from "../Flex";
 import { POPUP_CLASSES } from "../Popup/Popup";
-import { useScrollFade } from "../ScrollFade/ScrollFade";
 import type {
   ParsedListItem,
   SearchListItem,
@@ -51,12 +50,6 @@ export const SearchListItems = React.forwardRef<
   const inputWrapper = inputWrapperRef.current;
   const notAllItemsShown =
     renderedItems.length && renderedItems.length < items.length && !searchTerm;
-
-  const ulRef = React.useRef<HTMLUListElement>(null);
-
-  useScrollFade({
-    ref: ulRef,
-  });
 
   return (
     <div

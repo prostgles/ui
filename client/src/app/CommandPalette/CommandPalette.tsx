@@ -6,13 +6,13 @@ import { SearchList } from "../../components/SearchList/SearchList";
 import { flatDocs } from "../UIDocs";
 import { Documentation } from "./Documentation";
 import { useGoToUI } from "./useGoToUI";
-import "./CommandSearch.css";
+import "./CommandPalette.css";
 import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
  */
-export const CommandSearch = ({ isElectron }: { isElectron: boolean }) => {
+export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
   const { showSection, setShowSection } = useOnKeyDown();
   const [highlights, setHighlights] = useState<CommandSearchHighlight[]>([]);
   const { message, setMessage, goToUIDocItem } = useGoToUI(setHighlights);
@@ -35,7 +35,7 @@ export const CommandSearch = ({ isElectron }: { isElectron: boolean }) => {
             touchAction: "none",
           }}
           className={
-            "CommandSearch_Highlighter " +
+            "CommandPalette_Highlighter " +
             (h.flickerSlow ? "flicker-slow" : "flicker")
           }
         />
@@ -50,7 +50,7 @@ export const CommandSearch = ({ isElectron }: { isElectron: boolean }) => {
                 <NavLink to={"/documentation"}>Documentation</NavLink>
               )
             }
-            data-command="CommandSearch"
+            data-command="CommandPalette"
             clickCatchStyle={{ opacity: 1 }}
             positioning={showSection === "commands" ? "top-center" : "center"}
             onClose={() => setShowSection(undefined)}

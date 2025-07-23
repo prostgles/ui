@@ -141,9 +141,7 @@ export const Account = (props: AccountProps) => {
                 {item.label}
               </h2>
               <div
-                className={
-                  " f-1 o-auto flex-row " + (window.isLowWidthScreen ? "" : " ")
-                }
+                className={" f-1 o-auto flex-row "}
                 style={{ alignSelf: "stretch" }}
               >
                 {item.content}

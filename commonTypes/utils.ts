@@ -78,6 +78,7 @@ export type PGDumpParams = {
   credentialID?: DBSSchema["backups"]["credential_id"];
   destination: (typeof DESTINATIONS)[number]["key"];
   initiator?: string;
+  name?: string;
 };
 
 export type DeepWriteable<T> = {

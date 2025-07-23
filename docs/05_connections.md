@@ -85,6 +85,8 @@ It will use the first connection details from the group connection.
 <img src="/screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
+After selecting the database, you can choose to create a new owner or user for the connection should you need to.
+
   - **Select Database**: Choose a database from the server.  
   - **Create database owner**: If checked, a new owner will be created for the database. Useful for ensuring the database is owned by a non-superuser account.  
   - **New Owner Name**: The name of the new owner.  

@@ -10,7 +10,7 @@ import {
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import { isEmpty, type AnyObject } from "prostgles-types";
+import { type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { PGDumpParams } from "../../../../commonTypes/utils";
 import { ROUTES, sliceText } from "../../../../commonTypes/utils";
@@ -18,25 +18,22 @@ import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
 import ButtonGroup from "../../components/ButtonGroup";
-import Chip from "../../components/Chip";
-import { parsedError } from "../../components/ErrorComponent";
+import FormField from "../../components/FormField/FormField";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
-import { ProgressBar } from "../../components/ProgressBar";
-import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { Backups } from "../Dashboard/dashboardUtils";
-import type { FieldConfig, FieldConfigRender } from "../SmartCard/SmartCard";
+import type { FieldConfig } from "../SmartCard/SmartCard";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { StyledInterval } from "../W_SQL/customRenderers";
 import { AutomaticBackups } from "./AutomaticBackups";
+import { BackupsInProgress } from "./BackupsInProgress";
 import { CodeConfirmation } from "./CodeConfirmation";
 import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
-import { Restore } from "./Restore/Restore";
-import { BackupsInProgress } from "./BackupsInProgress";
 import { RenderBackupLogs } from "./RenderBackupLogs";
 import { RenderBackupStatus } from "./RenderBackupStatus";
+import { Restore } from "./Restore/Restore";
 
 const BACKUP_FILTER_OPTS = [
   { key: "This connection" },
@@ -120,12 +117,12 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
       </InfoRow>
       <div className="flex-row-wrap ai-center gap-p5">
         <PopupMenu
+          data-command="config.bkp.create"
           button={
             <Btn
               variant="filled"
               color="action"
               iconPath={mdiDatabasePlusOutline}
-              {...dataCommand("config.bkp.create")}
             >
               Create backup
             </Btn>
@@ -161,6 +158,17 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
           ]}
           render={(popupClose) => (
             <div className="flex-col gap-1 f-1 min-s-0 bg-inherit">
+              <FormField
+                label={"Name"}
+                hint="Optional, will be used to identify the backup"
+                value={dumpOpts.name}
+                inputProps={{
+                  "data-command": "config.bkp.create.name",
+                }}
+                onChange={(name) => {
+                  setDumpOpts((o) => ({ ...o, name }));
+                }}
+              />
               <DumpOptions
                 connectionId={connection_id}
                 dbsMethods={dbsMethods}
@@ -265,6 +273,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
       <BackupsInProgress {...prgl} backupFilter={backupFilter} />
 
       <SmartCardList
+        data-command="BackupsControls.Completed"
         btnColor="gray"
         title={
           <div className="mt-1 flex-col gap-1">
@@ -298,11 +307,41 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
             render: (v) => (
               <div title={v}>
                 {v === "automatic_backups" ?
-                  <Icon path={mdiRefreshAuto} size={1} />
+                  <Icon path={mdiRefreshAuto} />
                 : v === "manual_backup" ?
                   <Icon path={mdiGestureTapButton} />
                 : v}
               </div>
+            ),
+          },
+          {
+            name: "name",
+            hideIf: (name) => !name,
+            label: "Backup name",
+            render: (v, row) => (
+              <span title={v} className="text-ellipsis">
+                {sliceText(v, 30)}
+              </span>
+            ),
+          },
+          {
+            name: "created",
+            label: "Created",
+            select: { $ageNow: ["created", null, "second"] },
+            render: (value) => <StyledInterval value={value} />,
+          },
+          {
+            name: "dbSizeInBytes",
+            label: "DB size",
+            render: (val) => bytesToSize(val),
+          },
+          {
+            name: "dump_command",
+            label: "Dump command",
+            render: (val) => (
+              <span title={val} className="text-ellipsis">
+                {sliceText(val, 50)}
+              </span>
             ),
           },
           {

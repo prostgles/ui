@@ -25,7 +25,7 @@ import type { ProstglesState } from "../../commonTypes/electronInitTypes";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { fixIndent, ROUTES } from "../../commonTypes/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
-import { CommandSearch } from "./app/CommandSearch/CommandSearch";
+import { CommandPalette } from "./app/CommandPalette/CommandPalette";
 import { FlexCol } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import { NavBarWrapper } from "./components/NavBar/NavBarWrapper";
@@ -38,7 +38,7 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { useAppState } from "./useAppState/useAppState";
 import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
-import { Documentation } from "./app/CommandSearch/Documentation";
+import { Documentation } from "./app/CommandPalette/Documentation";
 import { ScrollFade } from "./components/ScrollFade/ScrollFade";
 import { AlertProvider } from "./components/AlertProvider";
 
@@ -180,7 +180,7 @@ export const App = () => {
   return (
     <AlertProvider>
       <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
-        <CommandSearch isElectron={isElectron} />
+        <CommandPalette isElectron={isElectron} />
         <XRealIpSpoofableAlert {...state} />
         {demoStarted && <MousePointer />}
         {isDisconnected && (
