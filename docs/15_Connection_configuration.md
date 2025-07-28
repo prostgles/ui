@@ -2,7 +2,7 @@
 
 Configure the selected database connection. Set connection details, manage users, and customize settings.
 <picture>
-<source srcset="/screenshots/dark/connection_config.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/connection_config.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/connection_config.svg" alt="Connection configuration" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 

@@ -5,7 +5,7 @@ It can generate SQL queries, explain database schemas, analyze data patterns, an
 MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
 
 <picture>
-<source srcset="/screenshots/dark/ai_assistant.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/ai_assistant.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/ai_assistant.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 

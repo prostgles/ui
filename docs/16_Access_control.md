@@ -4,7 +4,7 @@
   
 Manage user permissions and access rules for this database connection.
 <picture>
-<source srcset="/screenshots/dark/access_control.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/access_control.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/access_control.svg" alt="Access control" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 

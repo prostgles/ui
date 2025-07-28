@@ -59,6 +59,10 @@ export const saveSVGScreenshots = async (
   page: PageWIds,
   onBefore: (name: ScreenshotName) => Promise<void>,
 ) => {
+  /** Delete existing markdown docs */
+  if (fs.existsSync(SCREENSHOTS_PATH)) {
+    fs.rmSync(SCREENSHOTS_PATH, { recursive: true, force: true });
+  }
   const svgFiles = Object.keys(SVG_SCREENSHOT_NAMES);
   for (const fileName of svgFiles) {
     await onBefore(fileName as ScreenshotName);

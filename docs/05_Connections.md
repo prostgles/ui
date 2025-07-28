@@ -4,7 +4,7 @@ The Connections page is the main page and serves as the central hub within Prost
 From here, you can establish new connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
 
 <picture>
-<source srcset="/screenshots/dark/connections.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/connections.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/connections.svg" alt="Connections page screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
@@ -20,7 +20,7 @@ Use the **New Connection** button to add a new database connection.
 This will open a form where you can enter the connection details such as host, port, database name, user, and password.
 
 <picture>
-<source srcset="/screenshots/dark/new_connection.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/new_connection.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/new_connection.svg" alt="New connection form screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
@@ -46,7 +46,7 @@ This will open a form where you can enter the connection details such as host, p
 The connection list displays all your database connections grouped by database host, port and user.
 
 <picture>
-<source srcset="/screenshots/dark/connections.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/connections.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/connections.svg" alt="Connections list screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
@@ -81,7 +81,7 @@ Allows you to connect to an existing database in the selected server.
 It will use the first connection details from the group connection. 
 
 <picture>
-<source srcset="/screenshots/dark/connect_existing_database.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/connect_existing_database.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 

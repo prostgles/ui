@@ -60,7 +60,7 @@ test.describe("Create docs and screenshots", () => {
     if (!IS_PIPELINE) {
       /** Delete existing markdown docs */
       if (fs.existsSync(DOCS_DIR)) {
-        fs.rmSync(DOCS_DIR, { recursive: true, force: true });
+        fs.rmSync(DOCS_DIR, { force: true, recursive: true });
       }
       fs.mkdirSync(DOCS_DIR, { recursive: true });
     }
@@ -92,7 +92,7 @@ test.describe("Create docs and screenshots", () => {
 
     /** Ensure all scripts exist in the readme to ensure we don't show non-tested scripts */
     const uiInstallationFile = fs.readFileSync(
-      path.join(DOCS_DIR, "02_installation.md"),
+      path.join(DOCS_DIR, "02_Installation.md"),
       "utf-8",
     );
     const mainReadmeFile = fs.readFileSync(
@@ -280,7 +280,7 @@ const getDocWithDarkModeImgTags = (fileContent: string) => {
         tagText,
         [
           `<picture>`,
-          `<source srcset="${src.replace("screenshots/", "screenshots/dark/")}" media="(prefers-color-scheme: dark)">`,
+          `<source srcset="${src.replace("screenshots/", "screenshots/dark/")}" media="(prefers-color-scheme: dark)" />`,
           tagText.replace("/>", `style="border: 1px solid; margin: 1em 0;" />`),
           `</picture>`,
         ].join("\n"),

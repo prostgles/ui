@@ -119,7 +119,7 @@ export const getDocumentationFiles = (isElectron: boolean) => {
     const pushFile = (title: string, text: string) => {
       const index = documentationPages.length + 1;
       documentationPages.push({
-        fileName: `${index.toString().padStart(2, "0")}_${toSnakeCase(title)}.md`,
+        fileName: `${index.toString().padStart(2, "0")}_${title.replaceAll(" ", "_")}.md`,
         text,
       });
     };

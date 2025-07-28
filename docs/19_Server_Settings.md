@@ -2,7 +2,7 @@
 
 Manage server settings to enhance security, configure authentication methods, and set up LLM providers.
 <picture>
-<source srcset="/screenshots/dark/server_settings.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/server_settings.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/server_settings.svg" alt="Server Settings" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
