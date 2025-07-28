@@ -3,7 +3,7 @@
 The SQL editor is a powerful tool for executing SQL queries against your database. It supports syntax highlighting, auto-completion, and various options for managing queries.
 
 <picture>
-<source srcset="/screenshots/dark/sql_editor.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/sql_editor.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/sql_editor.svg" alt="SQL editor screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 

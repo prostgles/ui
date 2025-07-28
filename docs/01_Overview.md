@@ -3,7 +3,7 @@
 Prostgles UI is a powerful and user-friendly interface designed for creating internal tools as well as managing and exploring PostgreSQL databases.
 
 <picture>
-<source srcset="/screenshots/dark/dashboard.svg" media="(prefers-color-scheme: dark)">
+<source srcset="/screenshots/dark/dashboard.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/dashboard.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
