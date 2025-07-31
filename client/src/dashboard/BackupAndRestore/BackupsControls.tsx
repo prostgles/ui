@@ -71,6 +71,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
 
   const restoreLogsFConf: FieldConfig<Backups> = {
     name: "restore_logs",
+    hideIf: (logs) => !logs,
     render: (logs, row) => (
       <RenderBackupLogs
         logs={logs}
@@ -338,17 +339,12 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
           {
             name: "dump_command",
             label: "Dump command",
+            hide: true,
             render: (val) => (
               <span title={val} className="text-ellipsis">
                 {sliceText(val, 50)}
               </span>
             ),
-          },
-          {
-            name: "uploaded_",
-            label: "Created",
-            select: { $ageNow: ["created", null, "second"] },
-            render: (value) => <StyledInterval value={value} />,
           },
           // "connection_id",
           // "credential_id",
@@ -384,6 +380,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
           {
             name: "restored_",
             label: "Last restored",
+            hideIf: (v) => !v,
             select: { $ageNow: ["restore_end", null, "second"] },
             render: (value) => <StyledInterval value={value} />,
           },

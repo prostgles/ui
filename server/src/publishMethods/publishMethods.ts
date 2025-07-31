@@ -122,20 +122,14 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       /** Terminate all sessions */
       await dbs.sessions.delete({});
     },
-    getConnectionDBTypes: (conId: string) => {
-      /** Maybe state connection */
-      // const con = await dbs.connections.findOne({ id: conId, is_state_db: true });
+    getConnectionDBTypes: (conId: string | undefined) => {
       if (!statePrgl) throw "statePrgl missing";
-      // if(con){
-      //   return statePrgl.getTSSchema()
-      // }
-      const dbsSchema = statePrgl.getTSSchema();
+      /** No connection id = state connection */
+      if (!conId) {
+        return statePrgl.getTSSchema();
+      }
       const c = connMgr.getConnection(conId);
-      const dbSchema = c.prgl.getTSSchema();
-      return {
-        dbsSchema,
-        dbSchema,
-      };
+      return c.prgl.getTSSchema();
     },
     getMyIP: async () => {
       if (!socket) throw "Socket missing";

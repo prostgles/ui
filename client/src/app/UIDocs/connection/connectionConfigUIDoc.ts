@@ -2,6 +2,7 @@ import { fixIndent, ROUTES } from "../../../../../commonTypes/utils";
 import type { UIDocContainers } from "../../UIDocs";
 import { editConnectionUIDoc } from "../editConnectionUIDoc";
 import { accessControlUIDoc } from "./config/accessControlUIDoc";
+import { apiUIDoc } from "./config/apiUIDoc";
 import { backupAndRestoreUIDoc } from "./config/backupAndRestoreUIDoc";
 import { fileStorageUIDoc } from "./config/fileStorageUIDoc";
 
@@ -41,13 +42,7 @@ export const connectionConfigUIDoc = {
     accessControlUIDoc,
     fileStorageUIDoc,
     backupAndRestoreUIDoc,
-    {
-      type: "tab",
-      selectorCommand: "config.api",
-      title: "API",
-      description: "Configure API access settings and view API documentation.",
-      children: [],
-    },
+    apiUIDoc,
     {
       type: "tab",
       selectorCommand: "config.tableConfig",

@@ -923,10 +923,12 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
                 oneOfType: [
                   {
                     type: { enum: ["fixed"] },
+                    display: { enum: ["icon", "icon+circle"], optional: true },
                     iconPath: "string",
                   },
                   {
                     type: { enum: ["conditional"] },
+                    display: { enum: ["icon", "icon+circle"], optional: true },
                     columnName: "string",
                     conditions: {
                       arrayOfType: {

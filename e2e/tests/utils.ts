@@ -909,3 +909,28 @@ export const restoreFromBackup = async (
   await typeConfirmationCode(page);
   await page.getByRole("button", { name: "Restore", exact: true }).click();
 };
+
+export const getDashboardUtils = (page: PageWIds) => {
+  const _open = openConnection.bind(null, page);
+  const openMenuIfClosed = async () => {
+    await page.waitForTimeout(1500);
+    const menuBtn = await page.getByTestId("dashboard.menu");
+    if ((await menuBtn.count()) && (await menuBtn.isEnabled())) {
+      menuBtn.click();
+    }
+  };
+  const hideMenuIfOpen = async () => {
+    await page.waitForTimeout(1500);
+    const toggleBtn = await page.getByTestId(
+      "DashboardMenuHeader.togglePinned",
+    );
+    if ((await toggleBtn.count()) && (await toggleBtn.isEnabled())) {
+      toggleBtn.click();
+    }
+  };
+  return {
+    openConnection: _open,
+    openMenuIfClosed,
+    hideMenuIfOpen,
+  };
+};

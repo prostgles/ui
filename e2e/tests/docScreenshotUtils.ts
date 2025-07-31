@@ -1,27 +1,157 @@
 import * as fs from "fs";
 import * as path from "path";
-import { MINUTE, type PageWIds } from "./utils";
+import {
+  getDashboardUtils,
+  goTo,
+  MINUTE,
+  monacoType,
+  openTable,
+  type PageWIds,
+} from "./utils";
+import { getDataKeyElemSelector } from "./Testing";
 
-const SVG_SCREENSHOT_NAMES = {
-  sql_editor: 1,
-  schema_diagram: 1,
-  new_connection: 1,
-  command_palette: 1,
-  connections: 1,
-  dashboard: 1,
-  table: 1,
-  smart_filter_bar: 1,
-  map: 1,
-  timechart: 1,
-  ai_assistant: 1,
-  file_storage: 1,
-  file_importer: 1,
-  backup_and_restore: 1,
-  access_control: 1,
-  server_settings: 1,
-  connect_existing_database: 1,
-  connection_config: 1,
-} as const;
+type OnBeforeScreenshot = (
+  page: PageWIds,
+  utils: ReturnType<typeof getDashboardUtils>,
+) => Promise<void>;
+const SVG_SCREENSHOT_DETAILS = {
+  ai_assistant: {
+    "01": async (page, { openConnection }) => {
+      await openConnection("prostgles_video_demo");
+      await page.getByTestId("AskLLM").click();
+    },
+  },
+  sql_editor: async (
+    page,
+    { openMenuIfClosed, hideMenuIfOpen, openConnection },
+  ) => {
+    await openConnection("prostgles_video_demo");
+    await page.waitForTimeout(1500);
+    if (!(await page.getByTestId("MonacoEditor").count())) {
+      await openMenuIfClosed();
+      await page.getByTestId("dashboard.menu.sqlEditor").click();
+    }
+    await hideMenuIfOpen();
+
+    const query = `SELECT * FROM chat_m`;
+    await monacoType(page, `.ProstglesSQL`, query, { deleteAll: true });
+    await page.waitForTimeout(500);
+    await page.reload();
+    await page.waitForTimeout(1500);
+    await monacoType(page, `.ProstglesSQL`, `t`, { deleteAll: false });
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Control+Space");
+    await page.waitForTimeout(500);
+  },
+  schema_diagram: async (page, { openMenuIfClosed, openConnection }) => {
+    await openConnection("prostgles_video_demo");
+    await openMenuIfClosed();
+    await page.getByTestId("SchemaGraph").click();
+  },
+  new_connection: async (page) => {
+    await goTo(page, "/connections");
+    await page.getByTestId("Connections.new").click();
+  },
+  command_palette: async (page) => {
+    await page.keyboard.press("Control+KeyK");
+    await page.getByTestId("Popup.content").locator("input").fill("access con");
+    await page.waitForTimeout(500);
+  },
+  connections: async (page) => {
+    await goTo(page, "/connections");
+  },
+  dashboard: async (page, { openConnection, hideMenuIfOpen }) => {
+    await openConnection("crypto");
+    await hideMenuIfOpen();
+  },
+  table: async (page, { hideMenuIfOpen, openConnection, openMenuIfClosed }) => {
+    await openConnection("prostgles_video_demo");
+
+    const userDashboard = await page.getByText("Users dashboard");
+    if (await userDashboard.count()) {
+      await userDashboard.click();
+    } else {
+      await page.getByTestId("WorkspaceMenuDropDown").click();
+      await page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn").click();
+      await page
+        .getByTestId("WorkspaceAddBtn")
+        .locator("input")
+        .fill("Users dashboard");
+      await page.getByTestId("WorkspaceAddBtn.Create").click();
+      await page.waitForTimeout(1500);
+      await openMenuIfClosed();
+      await openTable(page, "users");
+      await hideMenuIfOpen();
+    }
+  },
+  smart_filter_bar: async (page, { openConnection }) => {
+    await openConnection("prostgles_video_demo");
+  },
+  map: async (page, { openConnection }) => {
+    await openConnection("food_delivery");
+  },
+  timechart: async (page, { openConnection, hideMenuIfOpen }) => {
+    await openConnection("crypto");
+    const btn = await page.getByTestId("dashboard.window.detachChart");
+    if (await btn.count()) {
+      await btn.click();
+    }
+    await hideMenuIfOpen();
+  },
+  file_storage: async (page, { openConnection }) => {
+    await openConnection("prostgles_video_demo");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.files").click();
+  },
+  file_importer: async (page, { openConnection, openMenuIfClosed }) => {
+    await openConnection("prostgles_video_demo");
+    await openMenuIfClosed();
+    await page.getByTestId("dashboard.menu.create").click();
+    await page
+      .getByTestId("dashboard.menu.create")
+      .locator(getDataKeyElemSelector("import file"))
+      .click();
+    const csvContent = `Name,Email,Age,Department
+    Alice Wilson,alice@example.com,28,Engineering
+    Charlie Brown,charlie@example.com,32,Marketing
+    Diana Prince,diana@example.com,29,Sales
+    Edward Norton,edward@example.com,31,HR`;
+    await page.getByTestId("FileBtn").setInputFiles({
+      name: "contacts.csv",
+      mimeType: "text/plain",
+      buffer: Buffer.from(csvContent),
+    });
+  },
+  backup_and_restore: async (page, { openConnection }) => {
+    await openConnection("prostgles_video_demo");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.bkp").click();
+    // await page.getByTestId("config.bkp.create").click();
+    // await page.getByTestId("config.bkp.create.start").click();
+  },
+  access_control: async (page, { openConnection }) => {
+    await openConnection("prostgles_video_demo");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.ac").click();
+    await page.mouse.move(0, 0);
+  },
+  server_settings: async (page) => {
+    await goTo(page, "/server-settings");
+  },
+  connect_existing_database: async (page) => {
+    await goTo(page, "/connections");
+    await page.getByTestId("ConnectionServer.add").click();
+    await page.locator(getDataKeyElemSelector("existing")).click();
+    await page.getByTestId("ConnectionServer.add.existingDatabase").click();
+  },
+  connection_config: async (page, { openConnection }) => {
+    await openConnection("prostgles_video_demo");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+  },
+} satisfies Record<
+  string,
+  OnBeforeScreenshot | Record<string, OnBeforeScreenshot>
+>;
 
 export const DOCS_DIR = path.join(__dirname, "../../docs/");
 
@@ -29,13 +159,13 @@ const SCREENSHOTS_PATH = "/screenshots";
 
 export const SVG_SCREENSHOT_DIR = path.join(DOCS_DIR, SCREENSHOTS_PATH);
 
-type ScreenshotName = keyof typeof SVG_SCREENSHOT_NAMES;
+type ScreenshotName = keyof typeof SVG_SCREENSHOT_DETAILS;
 
 export const themes = [
   { name: "light", dir: SVG_SCREENSHOT_DIR },
   { name: "dark", dir: path.join(SVG_SCREENSHOT_DIR, "dark") },
 ] as const;
-const saveSVGScreenshot = async (page: PageWIds, fileName: ScreenshotName) => {
+const saveSVGScreenshot = async (page: PageWIds, fileName: string) => {
   const svgStrings: { light: string; dark: string } = await page.evaluate(
     () => {
       //@ts-ignore
@@ -55,20 +185,34 @@ const saveSVGScreenshot = async (page: PageWIds, fileName: ScreenshotName) => {
   }
 };
 
-export const saveSVGScreenshots = async (
-  page: PageWIds,
-  onBefore: (name: ScreenshotName) => Promise<void>,
-) => {
+export const saveSVGScreenshots = async (page: PageWIds) => {
   /** Delete existing markdown docs */
   if (fs.existsSync(SCREENSHOTS_PATH)) {
     fs.rmSync(SCREENSHOTS_PATH, { recursive: true, force: true });
   }
-  const svgFiles = Object.keys(SVG_SCREENSHOT_NAMES);
-  for (const fileName of svgFiles) {
-    await onBefore(fileName as ScreenshotName);
-    await page.waitForTimeout(1000);
-    await saveSVGScreenshot(page, fileName as ScreenshotName);
+
+  const onSave = async (fileName: string) => {
+    await page.waitForTimeout(600);
+    await saveSVGScreenshot(page, fileName);
     console.log(`Saved SVG screenshot: ${fileName}.svg`);
+  };
+
+  const utils = getDashboardUtils(page);
+  for (const [fileName, onBeforeOrSteps] of Object.entries(
+    SVG_SCREENSHOT_DETAILS,
+  )) {
+    await page.reload();
+    await page.waitForTimeout(1000);
+    if (typeof onBeforeOrSteps === "function") {
+      await onBeforeOrSteps(page, utils);
+      await onSave(fileName);
+    } else {
+      for (const [stepName, onBefore] of Object.entries(onBeforeOrSteps)) {
+        await (onBefore as OnBeforeScreenshot)(page, utils);
+        await onSave(fileName + `_${stepName}`);
+      }
+    }
+    await page.waitForTimeout(1000);
   }
   await page.waitForTimeout(100);
 };
@@ -97,7 +241,7 @@ const getFilesFromDir = (dir: string, endWith: string) => {
 export const svgScreenshotsCompleteReferenced = async () => {
   const svgFiles = getFilesFromDir(SVG_SCREENSHOT_DIR, ".svg");
 
-  const allSVGFileNames = Object.keys(SVG_SCREENSHOT_NAMES);
+  const allSVGFileNames = Object.keys(SVG_SCREENSHOT_DETAILS);
   const allSVGFileNamesStr = allSVGFileNames.sort().join(",");
   const savedSVGFileNames = svgFiles.map((file) => file.fileName.slice(0, -4));
   if (savedSVGFileNames.sort().join(",") !== allSVGFileNamesStr) {

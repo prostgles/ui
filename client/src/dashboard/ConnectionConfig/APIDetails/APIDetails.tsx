@@ -6,6 +6,7 @@ import { getActiveTokensFilter } from "../../../pages/Account/Sessions";
 import { APIDetailsHttp } from "./APIDetailsHttp";
 import { APIDetailsTokens } from "./APIDetailsTokens";
 import { APIDetailsWs } from "./APIDetailsWs";
+import { AllowedOriginCheck } from "./AllowedOriginCheck";
 
 export type APIDetailsProps = PrglState & {
   connection: Prgl["connection"];
@@ -18,7 +19,7 @@ export const APIDetails = (props: APIDetailsProps) => {
 
   const electronSession = tokens?.find((t) => t.user_agent === "electron");
   const token = electronSession?.id ?? newToken;
-  const { dbsTables } = props;
+  const { dbsTables, dbs } = props;
   const { table, urlPathCol } = useMemo(() => {
     const table = dbsTables.find((t) => t.name === "connections");
     const urlPathCol = table?.columns.find((c) => c.name === "url_path");
@@ -45,6 +46,8 @@ export const APIDetails = (props: APIDetailsProps) => {
           }}
         />
       )}
+
+      {!!(dbs as any).global_settings && <AllowedOriginCheck dbs={dbs} />}
       <APIDetailsWs {...props} token={token} />
       <APIDetailsHttp {...props} token={token} />
       <APIDetailsTokens

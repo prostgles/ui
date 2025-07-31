@@ -45,8 +45,16 @@ export const APIDetailsHttp = ({
           {dbConfig.rest_api_enabled && (
             <PopupMenu
               title={t.APIDetailsWs.Examples}
+              data-command="APIDetailsHttp.Examples"
               button={
-                <Btn variant="filled" iconPath={mdiCodeBraces} color="action">
+                <Btn
+                  variant="filled"
+                  iconPath={mdiCodeBraces}
+                  color="action"
+                  disabledInfo={
+                    token ? undefined : "Must generate an access token first"
+                  }
+                >
                   {t.APIDetailsWs.Examples}
                 </Btn>
               }

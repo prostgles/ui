@@ -4,7 +4,7 @@ import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "../../Testing";
 import { useAlert } from "../../components/AlertProvider";
 import { click } from "../../demo/demoUtils";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import { isDefined, tout } from "../../utils";
+import { tout } from "../../utils";
 import {
   flatDocs,
   type UIDoc,
@@ -19,6 +19,7 @@ import {
   getUIDocElementsAndAlertIfEmpty,
   getUIDocShorterPath,
 } from "./utils";
+import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 export type DocItemHighlightItemPosition = "mid" | "last";
 
@@ -102,8 +103,8 @@ export const useGoToUI = (
       const shortcut =
         currentPage ? getUIDocShorterPath(currentPage, prevParents) : undefined;
       const pathItems = shortcut ?? prevParents;
-      const finalPathItems =
-        data.type === "page" ? [...pathItems, data] : pathItems;
+      const isLinkOrPage = includes(data.type, ["link", "page"]);
+      const finalPathItems = isLinkOrPage ? [...pathItems, data] : pathItems;
       for (const parent of finalPathItems) {
         const shouldStop = await goToUI(parent);
         if (!isPlaywrightTest && shouldStop) {
@@ -111,7 +112,9 @@ export const useGoToUI = (
         }
         await tout(200);
       }
-      await highlight(data, "last");
+      if (!isLinkOrPage) {
+        await highlight(data, "last");
+      }
       window.document.body.setAttribute(
         COMMAND_SEARCH_ATTRIBUTE_NAME,
         data.title,
