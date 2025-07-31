@@ -445,6 +445,14 @@ export const COMMANDS = {
   "MCPServersInstall.install": "",
   NewConnectionForm: "",
   "BackupsControls.Completed": "Completed backups list",
+  "AllowedOriginCheck.FormField": "",
+  "APIDetailsWs.Examples": "",
+  "APIDetailsHttp.Examples": "",
+  AllowedOriginCheck: "",
+  "APIDetailsTokens.CreateToken": "",
+  "APIDetailsTokens.CreateToken.daysUntilExpiration": "",
+  "APIDetailsTokens.CreateToken.generate": "",
+  APIDetailsTokens: "",
 } as const satisfies Record<
   string,
   | string

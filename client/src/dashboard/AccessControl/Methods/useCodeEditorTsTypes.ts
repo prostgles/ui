@@ -67,7 +67,7 @@ export const useCodeEditorTsTypes = (
         },
         {
           filePath: "file:///DBGeneratedSchema.ts",
-          content: `declare global {   ${dbSchemaTypes.dbSchema} }; export {}`,
+          content: `declare global {   ${dbSchemaTypes} }; export {}`,
         },
         {
           filePath: "file:///node_modules/@types/ProstglesOnMount/index.d.ts",

@@ -440,6 +440,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
             lineWidth: 1222,
             pickable: true,
             stroked: true,
+            display: undefined,
           },
         ]
       : []),

@@ -11,7 +11,7 @@ Configure the selected database connection. Set connection details, manage users
 - <a href="#access_control">Access control</a>: Manage user permissions and access rules for this database connection.  
 - <a href="#file_storage">File storage</a>: Configure file upload and storage settings for this connection.  
 - <a href="#backup_and_restore">Backup and Restore</a>: Manage database backups and restore operations.  
-- **API**: Configure API access settings and view API documentation.  
+- <a href="#api">API</a>: Configure API access settings and view API documentation.  
 - **Table config**: Advanced table configuration using TypeScript (experimental feature).  
 - **Server-side functions**: Configure and manage server-side functions (experimental feature).  
 

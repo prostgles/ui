@@ -97,8 +97,8 @@ export type DBSMethods = Partial<{
     content: string;
   }[];
   getConnectionDBTypes: (
-    conId: string,
-  ) => { dbsSchema: string; dbSchema: string } | undefined;
+    conId: string | undefined,
+  ) => Promise<string | undefined>;
   getStatus: (conId: string) => Promise<ConnectionStatus>;
   killPID: (
     connId: string,

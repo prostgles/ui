@@ -103,6 +103,23 @@ export const MapLayerStyling = ({
               });
             }}
           />
+          {opts.mapIcons && (
+            <Select
+              label={"Display"}
+              fullOptions={[{ key: "Circle and Icon" }, { key: "Icon" }]}
+              value={
+                opts.mapIcons.display === "icon" ? "Icon" : "Circle and Icon"
+              }
+              onChange={(v) => {
+                updateLink({
+                  mapIcons: {
+                    ...opts.mapIcons!,
+                    display: v === "Icon" ? "icon" : "icon+circle",
+                  },
+                });
+              }}
+            />
+          )}
           {table && (
             <Select
               label={"Labels"}

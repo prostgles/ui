@@ -155,6 +155,8 @@ export const MenuList = (props: MenuListProps) => {
               color: "white",
               children: "",
               variant: "icon",
+              className: "h-full",
+              size: "default",
             }}
             onChange={(key, e) => {
               const item = visibleItems.find((d, i) => (d.key ?? i) === key);

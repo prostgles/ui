@@ -23,7 +23,7 @@ export const APIDetailsTokens = ({
   setToken: (value: string) => void;
 }) => {
   return (
-    <FlexCol>
+    <FlexCol data-command="APIDetailsTokens">
       <h4 className="m-0 p-0">
         {t.APIDetailsTokens[`Access tokens (`]({ tokenCount })}
       </h4>
@@ -44,6 +44,7 @@ export const APIDetailsTokens = ({
         />
         <PopupMenu
           title={t.APIDetailsTokens["Create access token"]}
+          data-command="APIDetailsTokens.CreateToken"
           button={
             <FlexRow>
               <Btn color="action" variant="filled" iconPath={mdiPlus}>
@@ -56,11 +57,12 @@ export const APIDetailsTokens = ({
           clickCatchStyle={{ opacity: 0.5 }}
           render={(pClose, state, setState) => {
             return (
-              <div className="flex-col gap-1">
+              <FlexCol>
                 {!token ?
                   <FormField
                     label={t.APIDetailsTokens["Expires in"]}
                     value={state.days}
+                    data-command="APIDetailsTokens.CreateToken.daysUntilExpiration"
                     type="number"
                     inputProps={{
                       step: 1,
@@ -73,7 +75,7 @@ export const APIDetailsTokens = ({
                       setState({ days });
                     }}
                     rightIcons={
-                      <FlexRow className="h-full px-1">
+                      <FlexRow className="h-full px-1 py-p75">
                         {t.APIDetailsTokens.Days}
                       </FlexRow>
                     }
@@ -92,7 +94,7 @@ export const APIDetailsTokens = ({
                       token={token}
                     />
                     <TokenCopy
-                      label={t.APIDetailsTokens["HTTP API (base64)"]}
+                      label={t.APIDetailsTokens["HTTP API (base64 encoded)"]}
                       token={btoa(token)}
                     />
                   </FlexCol>
@@ -101,6 +103,7 @@ export const APIDetailsTokens = ({
                   variant="filled"
                   color="action"
                   className="ml-auto"
+                  data-command="APIDetailsTokens.CreateToken.generate"
                   disabledInfo={
                     token ?
                       t.APIDetailsTokens[
@@ -115,7 +118,7 @@ export const APIDetailsTokens = ({
                 >
                   {t.common.Generate}
                 </Btn>
-              </div>
+              </FlexCol>
             );
           }}
         />
@@ -128,8 +131,11 @@ const TokenCopy = ({ token, label }: { token: string; label: string }) => {
   return (
     <div className="flex-col gap-p5 my-1 ta-start">
       <div className="text-1">{label}</div>
-      <div className="b b-color flex-row ai-center rounded w-fit">
-        <div className="p-p5 w-fit ">{token}</div>
+      <div
+        className="b b-color flex-row ai-center rounded w-fit"
+        style={{ maxWidth: "400px" }}
+      >
+        <div className="p-p5 w-fit w-min-0 text-ellipsis">{token}</div>
         <CopyToClipboardBtn variant="faded" color="action" content={token} />
       </div>
     </div>

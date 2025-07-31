@@ -15,11 +15,12 @@ export const RenderBackupLogs = ({
 }) => (
   <PopupMenu
     showFullscreenToggle={{}}
+    clickCatchStyle={{ opacity: 1 }}
     title="Logs"
     button={
       !logs ?
         <div></div>
-      : <Btn className="w-full" variant="outline" size="small">
+      : <Btn className="w-full" size="small">
           {completed ?
             "..."
           : sliceText(
