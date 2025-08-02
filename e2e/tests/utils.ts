@@ -934,3 +934,19 @@ export const getDashboardUtils = (page: PageWIds) => {
     hideMenuIfOpen,
   };
 };
+
+export const setPromptByText = async (page: PageWIds, text: string) => {
+  await page.getByTestId("LLMChatOptions.Prompt").click();
+  await page.locator(".SmartCard").getByText(text).first().click();
+  await page
+    .getByTestId("LLMChatOptions.Prompt")
+    .getByTestId("Popup.close")
+    .click();
+};
+export const setModelByText = async (page: PageWIds, text: string) => {
+  await page.getByTestId("LLMChatOptions.Model").click();
+  await page.waitForTimeout(500);
+  await page.keyboard.type(text);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(1e3); // wait for model to be set
+};

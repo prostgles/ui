@@ -42,6 +42,8 @@ import {
   runSql,
   selectAndInsertFile,
   sendAskLLMMessage,
+  setModelByText,
+  setPromptByText,
   setTableRule,
   setWspColLayout,
   typeConfirmationCode,
@@ -607,21 +609,9 @@ test.describe("Main test", () => {
     ]);
 
     await page.getByTestId("AskLLM").click();
-    await page.getByTestId("LLMChatOptions.Model").click();
-    await page.waitForTimeout(500);
-    await page.keyboard.type("3-5");
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(1e3); // wait for model to be set
+    await setModelByText(page, "son");
 
-    const setPromptByText = async (text: string) => {
-      await page.getByTestId("LLMChatOptions.Prompt").click();
-      await page.locator(".SmartCard").getByText(text).first().click();
-      await page
-        .getByTestId("LLMChatOptions.Prompt")
-        .getByTestId("Popup.close")
-        .click();
-    };
-    await setPromptByText("Create task");
+    await setPromptByText(page, "Create task");
     await sendAskLLMMessage(page, "tasks");
 
     await page.getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt").click();

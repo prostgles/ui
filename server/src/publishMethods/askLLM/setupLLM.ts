@@ -350,9 +350,15 @@ export const setupLLM = async (dbs: DBS) => {
         logo_url: "/v2.svg",
         llm_models: [
           {
-            name: "claude-3-5-sonnet-20241022",
-            pricing_info: { input: 3, output: 15 },
-            chat_suitability_rank: "2",
+            name: "anthropic/claude-sonnet-4",
+            pricing_info: {
+              input: 3,
+              output: 15,
+              cachedInput: 1,
+              cachedOutput: 0.08,
+            },
+            model_created: "2024-10-22 12:00:00",
+            chat_suitability_rank: "1",
           },
         ],
       },
