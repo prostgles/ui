@@ -8,7 +8,7 @@ export const FunctionLabel = ({
   arguments: args,
 }: DBSSchema["published_methods"]) => {
   return (
-    <FlexCol className="gap-p5">
+    <FlexCol className="gap-p5 m-auto">
       <FlexRow className="gap-p25">
         <div>{name}</div>
         <div className="text-2">

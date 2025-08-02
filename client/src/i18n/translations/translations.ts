@@ -273,14 +273,6 @@ export const translations = {
     API: undefined,
   },
   APIDetailsWs: {
-    [`Allowed origin controls which domains can make cross-origin requests to this app by setting the Access-Control-Allow-Origin header.
-
-• Use 'null' to allow requests from local HTML files (file:// protocol)
-• Use '*' to allow all domains (recommended for testing only)
-• Use specific URLs (e.g., 'https://example.com') for production environments
-
-⚠️ Security Note: Using '*' in production can expose your API to unauthorized access from any website.`]:
-      undefined,
     "Allowed origin": undefined,
     "Allowed origin is required": undefined,
     "Allowed origin not set": undefined,

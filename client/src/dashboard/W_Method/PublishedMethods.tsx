@@ -17,6 +17,7 @@ import { ProcessLogs } from "../TableConfig/ProcessLogs";
 import { NewMethod } from "./NewMethod";
 import { FunctionLabel } from "./FunctionLabel";
 import type { DBS } from "../Dashboard/DBS";
+import type { FieldConfig } from "../SmartCard/SmartCard";
 
 type P = {
   className?: string;
@@ -128,12 +129,12 @@ const useSmartCardListProps = ({
     const rowProps = {
       className: "trigger-hover",
     };
-    const fieldConfigs = [
+    const fieldConfigs: FieldConfig<DBSSchema["published_methods"]>[] = [
       { name: "description", hide: true },
       { name: "arguments", hide: true },
       {
         name: "name",
-        label: " ",
+        renderMode: "full",
         render: (v, row: DBSSchema["published_methods"]) =>
           !editedRule ?
             <FunctionLabel {...row} />
@@ -163,7 +164,7 @@ const useSmartCardListProps = ({
                 });
               }}
             />,
-      },
+      } satisfies FieldConfig<DBSSchema["published_methods"]>,
       {
         name: "id",
         label: " ",

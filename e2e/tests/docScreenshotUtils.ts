@@ -6,6 +6,8 @@ import {
   MINUTE,
   monacoType,
   openTable,
+  setModelByText,
+  setPromptByText,
   type PageWIds,
 } from "./utils";
 import { getDataKeyElemSelector } from "./Testing";
@@ -19,6 +21,13 @@ const SVG_SCREENSHOT_DETAILS = {
     "01": async (page, { openConnection }) => {
       await openConnection("prostgles_video_demo");
       await page.getByTestId("AskLLM").click();
+      await setModelByText(page, "pros");
+      await setPromptByText(page, "dashboard");
+    },
+    "02": async (page) => {
+      await page.getByTestId("Chat.textarea").fill("dashboards");
+      await page.getByTestId("Chat.send").click();
+      await page.waitForTimeout(2500);
     },
   },
   sql_editor: async (
@@ -102,6 +111,7 @@ const SVG_SCREENSHOT_DETAILS = {
     await openConnection("prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.files").click();
+    await page.mouse.move(0, 0);
   },
   file_importer: async (page, { openConnection, openMenuIfClosed }) => {
     await openConnection("prostgles_video_demo");
@@ -126,6 +136,7 @@ const SVG_SCREENSHOT_DETAILS = {
     await openConnection("prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();
+    await page.mouse.move(0, 0);
     // await page.getByTestId("config.bkp.create").click();
     // await page.getByTestId("config.bkp.create.start").click();
   },
@@ -159,17 +170,17 @@ const SCREENSHOTS_PATH = "/screenshots";
 
 export const SVG_SCREENSHOT_DIR = path.join(DOCS_DIR, SCREENSHOTS_PATH);
 
-type ScreenshotName = keyof typeof SVG_SCREENSHOT_DETAILS;
-
 export const themes = [
   { name: "light", dir: SVG_SCREENSHOT_DIR },
   { name: "dark", dir: path.join(SVG_SCREENSHOT_DIR, "dark") },
 ] as const;
+
 const saveSVGScreenshot = async (page: PageWIds, fileName: string) => {
   const svgStrings: { light: string; dark: string } = await page.evaluate(
-    () => {
+    async () => {
       //@ts-ignore
-      return window.toSVG(document.body);
+      const result = await window.toSVG(document.body);
+      return result;
     },
   );
 
@@ -187,8 +198,8 @@ const saveSVGScreenshot = async (page: PageWIds, fileName: string) => {
 
 export const saveSVGScreenshots = async (page: PageWIds) => {
   /** Delete existing markdown docs */
-  if (fs.existsSync(SCREENSHOTS_PATH)) {
-    fs.rmSync(SCREENSHOTS_PATH, { recursive: true, force: true });
+  if (fs.existsSync(SVG_SCREENSHOT_DIR)) {
+    fs.rmSync(SVG_SCREENSHOT_DIR, { recursive: true, force: true });
   }
 
   const onSave = async (fileName: string) => {
@@ -212,7 +223,6 @@ export const saveSVGScreenshots = async (page: PageWIds) => {
         await onSave(fileName + `_${stepName}`);
       }
     }
-    await page.waitForTimeout(1000);
   }
   await page.waitForTimeout(100);
 };
@@ -241,7 +251,12 @@ const getFilesFromDir = (dir: string, endWith: string) => {
 export const svgScreenshotsCompleteReferenced = async () => {
   const svgFiles = getFilesFromDir(SVG_SCREENSHOT_DIR, ".svg");
 
-  const allSVGFileNames = Object.keys(SVG_SCREENSHOT_DETAILS);
+  const allSVGFileNames = Object.entries(SVG_SCREENSHOT_DETAILS).flatMap(
+    ([key, val]) =>
+      typeof val === "function" ?
+        [key]
+      : Object.keys(val).map((v) => `${key}_${v}`),
+  );
   const allSVGFileNamesStr = allSVGFileNames.sort().join(",");
   const savedSVGFileNames = svgFiles.map((file) => file.fileName.slice(0, -4));
   if (savedSVGFileNames.sort().join(",") !== allSVGFileNamesStr) {

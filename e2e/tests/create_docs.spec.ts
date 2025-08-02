@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 import {
@@ -7,16 +7,9 @@ import {
   svgScreenshotsCompleteReferenced,
 } from "./docScreenshotUtils";
 import {
-  COMMAND_SEARCH_ATTRIBUTE_NAME,
-  getDataKeyElemSelector,
-} from "./Testing";
-import {
-  goTo,
   login,
   MINUTE,
-  monacoType,
   openConnection,
-  openTable,
   PageWIds,
   restoreFromBackup,
   runDbsSql,
@@ -47,6 +40,37 @@ test.describe("Create docs and screenshots", () => {
     const page = p as PageWIds;
     await login(page, USERS.test_user, "/login");
     await openConnection(page, "prostgles_video_demo");
+    await runDbsSql(page, "TRUNCATE llm_chats CASCADE");
+    await runDbsSql(
+      page,
+      `
+      DELETE FROM llm_credentials WHERE provider_id = 'Prostgles';
+      UPDATE llm_providers 
+      SET api_url = 'http://localhost:3004/rest-api/cloud/methods/askLLM'
+      WHERE id = 'Prostgles'
+       `,
+    );
+    const activeSession = await runDbsSql(
+      page,
+      `SELECT *
+        FROM sessions
+        WHERE user_id = (SELECT id FROM users WHERE username = 'test_user')
+        AND active = true
+        ORDER BY id_num DESC
+        LIMIT 1`,
+      {},
+      { returnType: "rows" },
+    );
+    if (!activeSession.length) {
+      throw new Error("No active session found for test_user");
+    }
+    await runDbsSql(
+      page,
+      `INSERT INTO llm_credentials(provider_id, api_key, user_id)
+      VALUES('Prostgles', \${api_key} , \${user_id} )
+      `,
+      { api_key: btoa(activeSession[0].id), user_id: activeSession[0].user_id },
+    );
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();
     await restoreFromBackup(page, "Demo");

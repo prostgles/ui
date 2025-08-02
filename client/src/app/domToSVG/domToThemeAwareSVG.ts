@@ -209,7 +209,8 @@ export const domToThemeAwareSVG = async (node: HTMLElement) => {
   const svgString = xmlSerializer.serializeToString(svgLight);
   document.body.removeChild(svgDark);
   await setThemeForSVGScreenshot(undefined);
-  // console.log(svgString);
+  document.body.removeChild(svgLight);
+
   return {
     light: svgString,
     dark: xmlSerializer.serializeToString(svgDark),
