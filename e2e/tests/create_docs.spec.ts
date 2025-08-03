@@ -39,7 +39,9 @@ test.describe("Create docs and screenshots", () => {
   test(`Restore databases`, async ({ page: p }) => {
     const page = p as PageWIds;
     await login(page, USERS.test_user, "/login");
-    await openConnection(page, "prostgles_video_demo");
+    const aiDemoDBName = "prostgles_video_demo" as const;
+    await openConnection(page, "cloud");
+    await openConnection(page, aiDemoDBName);
     await runDbsSql(page, "TRUNCATE llm_chats CASCADE");
     await runDbsSql(
       page,
@@ -47,7 +49,14 @@ test.describe("Create docs and screenshots", () => {
       DELETE FROM llm_credentials WHERE provider_id = 'Prostgles';
       UPDATE llm_providers 
       SET api_url = 'http://localhost:3004/rest-api/cloud/methods/askLLM'
-      WHERE id = 'Prostgles'
+      WHERE id = 'Prostgles';
+/*
+      UPDATE published_methods
+      SET connection_id = (
+        SELECT id FROM connections WHERE "name" = '${aiDemoDBName}'
+      )
+      WHERE name = 'askLLM';
+*/
        `,
     );
     const activeSession = await runDbsSql(

@@ -627,7 +627,7 @@ test.describe("Main test", () => {
       "btn-color-action",
     );
 
-    await setPromptByText("dashboard");
+    await setPromptByText(page, "dashboard");
 
     await sendAskLLMMessage(page, "dashboards");
     await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();

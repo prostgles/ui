@@ -27,12 +27,6 @@ export const setThemeForSVGScreenshot = async (theme: undefined | "dark") => {
     }
   }
   localSettings.get().$set({ themeOverride: theme });
-  if (theme === "dark") {
-    localStorage.setItem("theme", theme);
-  } else {
-    localStorage.removeItem("theme");
-  }
-  window.dispatchEvent(new Event("storage"));
   await tout(3000);
   for (const cb of resetUICallbacks) {
     await cb();
