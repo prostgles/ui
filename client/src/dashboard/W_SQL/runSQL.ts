@@ -177,7 +177,9 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
           handler.stop();
         } else {
           console.error(this.state.activeQuery, sql, packet);
-          alert("Something went wrong: No running query found");
+          alert(
+            "Something went wrong: No running query found but received data packet",
+          );
         }
         return;
       }
