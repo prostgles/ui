@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
-import { mdiAttachment, mdiSend } from "@mdi/js";
+import { mdiAttachment, mdiSend, mdiStopCircle } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
@@ -29,6 +29,7 @@ export type ChatProps = {
   style?: React.CSSProperties;
   className?: string;
   onSend: (msg?: string, files?: File[]) => Promise<any | void>;
+  onStopSending?: () => void;
   messages: Message[];
   allowedMessageTypes?: Partial<{
     speech: { tts: boolean; audio: boolean };
@@ -47,6 +48,7 @@ export const Chat = (props: ChatProps) => {
     style = {},
     messages,
     onSend,
+    onStopSending,
     disabledInfo,
     allowedMessageTypes = {
       file: false,
@@ -170,12 +172,13 @@ export const Chat = (props: ChatProps) => {
         data-command="Chat.sendWrapper"
         className={
           "send-wrapper relative " +
-          (sendingMsg || disabledInfo ? "no-interaction not-allowed" : "")
+          (disabledInfo ? "no-interaction not-allowed" : "")
         }
       >
         <FlexCol
           className={
             "f-1 rounded ml-1 p-p5 " +
+            (sendingMsg ? "no-interaction not-allowed" : "") +
             (isEngaged ? "active-shadow bg-action" : "bg-color-2 ")
           }
           {...divHandlers}
@@ -255,17 +258,24 @@ export const Chat = (props: ChatProps) => {
               />
             )}
           </FlexRow>
-          <Btn
-            iconPath={mdiSend}
-            loading={sendingMsg}
-            title={t.common.Send}
-            data-command="Chat.send"
-            disabledInfo={disabledInfo}
-            onClick={async (e) => {
-              if (!ref.current) return;
-              sendMsg();
-            }}
-          />
+          {sendingMsg && onStopSending ?
+            <Btn
+              onClick={onStopSending}
+              title={t.common.Stop}
+              iconPath={mdiStopCircle}
+            />
+          : <Btn
+              iconPath={mdiSend}
+              loading={sendingMsg}
+              title={t.common.Send}
+              data-command="Chat.send"
+              disabledInfo={disabledInfo}
+              onClick={async (e) => {
+                if (!ref.current) return;
+                sendMsg();
+              }}
+            />
+          }
         </FlexCol>
       </div>
     </div>

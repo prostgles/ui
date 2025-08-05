@@ -49,7 +49,7 @@ class DockerSandboxMCPServer {
         tools: TOOLS,
       };
     });
-
+    //@ts-ignore
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
@@ -66,8 +66,12 @@ class DockerSandboxMCPServer {
         if (name === "get_sandbox_info") {
           return await this.getSandboxInfo(args);
         }
-        if (name === "copy_file_to_sandbox") {
-          return await this.copyFileToSandbox(args);
+        if (name === "copy_files_to_sandbox") {
+          //@ts-ignore
+          return await this.copyFilesToSandbox(args);
+        }
+        if (name === "patch_sandbox") {
+          return await this.patchSandbox(args);
         }
         if (name === "get_sandbox_logs") {
           return await this.getSandboxLogs(args);
@@ -285,8 +289,11 @@ class DockerSandboxMCPServer {
     }
   }
 
-  private async copyFileToSandbox(args: any) {
-    const { sandboxId, content, containerPath } = args;
+  private async copyFilesToSandbox(args: {
+    sandboxId: string;
+    files: { content: string; containerPath: string }[];
+  }) {
+    const { sandboxId, files } = args;
     const activeSandbox = this.activeSandboxes.get(sandboxId);
 
     if (!activeSandbox) {
@@ -296,18 +303,197 @@ class DockerSandboxMCPServer {
       );
     }
 
+    if (!files.length) {
+      throw new McpError(ErrorCode.InvalidRequest, "No files provided to copy");
+    }
+
     activeSandbox.lastUsed = new Date();
 
     try {
-      // Create temporary file
-      const tempFile = `/tmp/mcp-${Date.now()}-${randomUUID()}.tmp`;
-      const fs = await import("fs/promises");
-      await fs.writeFile(tempFile, content);
+      for (const { content, containerPath } of files) {
+        // Create temporary file
+        const tempFile = `/tmp/mcp-${Date.now()}-${randomUUID()}.tmp`;
+        const fs = await import("fs/promises");
+        await fs.writeFile(tempFile, content);
 
-      await activeSandbox.sandbox.copyToContainer(tempFile, containerPath);
+        await activeSandbox.sandbox.copyToContainer(tempFile, containerPath);
 
-      // Clean up temp file
-      await fs.unlink(tempFile);
+        // Clean up temp file
+        await fs.unlink(tempFile);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `File copied to ${containerPath}`,
+                  sandboxId,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      }
+    } catch (error) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to copy file: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  private async patchSandbox(args: any) {
+    const { sandboxId, patches, createMissing } = args;
+    const activeSandbox = this.activeSandboxes.get(sandboxId);
+
+    if (!activeSandbox) {
+      throw new McpError(
+        ErrorCode.InvalidRequest,
+        `Sandbox ${sandboxId} not found`,
+      );
+    }
+
+    if (!patches || !Array.isArray(patches) || patches.length === 0) {
+      throw new McpError(ErrorCode.InvalidRequest, "No patches provided");
+    }
+
+    activeSandbox.lastUsed = new Date();
+
+    try {
+      const results = [];
+
+      for (const patch of patches) {
+        const {
+          filePath,
+          content,
+          operation = "replace",
+          lineNumber,
+          backup,
+        } = patch as {
+          filePath: string;
+          content: string | undefined;
+          operation?: "replace" | "append" | "prepend" | "insert";
+          lineNumber?: number;
+          backup?: boolean;
+        };
+
+        if (!filePath || content === undefined) {
+          throw new McpError(
+            ErrorCode.InvalidRequest,
+            "Each patch must have filePath and content",
+          );
+        }
+
+        // Check if file exists
+        const checkFileExists = `test -f "${filePath}" && echo "exists" || echo "not_exists"`;
+        const fileExistsResult = await activeSandbox.sandbox.runCode(
+          checkFileExists,
+          "bash",
+          { timeout: 5000 },
+        );
+
+        const fileExists = fileExistsResult.stdout.trim() === "exists";
+
+        if (!fileExists && !createMissing) {
+          throw new McpError(
+            ErrorCode.InvalidRequest,
+            `File ${filePath} does not exist and createMissing is false`,
+          );
+        }
+
+        // Create backup if requested
+        if (backup && fileExists) {
+          const backupPath = `${filePath}.backup.${Date.now()}`;
+          const backupCommand = `cp "${filePath}" "${backupPath}"`;
+          await activeSandbox.sandbox.runCode(backupCommand, "bash", {
+            timeout: 5000,
+          });
+        }
+
+        let patchCommand = "";
+
+        if (operation === "replace") {
+          // Create directory if it doesn't exist
+          const dir = filePath.substring(0, filePath.lastIndexOf("/"));
+          if (dir) {
+            patchCommand = `mkdir -p "${dir}" && `;
+          }
+          // Escape content for shell
+          const escapedContent = content.replace(/'/g, "'\\''");
+          patchCommand += `printf '%s' '${escapedContent}' > "${filePath}"`;
+        } else if (operation === "append") {
+          if (!fileExists && createMissing) {
+            const dir = filePath.substring(0, filePath.lastIndexOf("/"));
+            if (dir) {
+              patchCommand = `mkdir -p "${dir}" && `;
+            }
+            patchCommand += `touch "${filePath}" && `;
+          }
+          const escapedAppendContent = content.replace(/'/g, "'\\''");
+          patchCommand += `printf '%s' '${escapedAppendContent}' >> "${filePath}"`;
+        } else if (operation === "prepend") {
+          if (!fileExists && createMissing) {
+            const dir = filePath.substring(0, filePath.lastIndexOf("/"));
+            if (dir) {
+              patchCommand = `mkdir -p "${dir}" && `;
+            }
+            const escapedPrependContent = content.replace(/'/g, "'\\''");
+            patchCommand += `printf '%s' '${escapedPrependContent}' > "${filePath}"`;
+          } else {
+            const tempFile = `/tmp/patch_prepend_${Date.now()}`;
+            const escapedPrependContent = content.replace(/'/g, "'\\''");
+            patchCommand = `printf '%s' '${escapedPrependContent}' > "${tempFile}" && cat "${filePath}" >> "${tempFile}" && mv "${tempFile}" "${filePath}"`;
+          }
+        } else if ((operation as string) === "insert") {
+          if (!lineNumber) {
+            throw new McpError(
+              ErrorCode.InvalidRequest,
+              "lineNumber is required for insert operation",
+            );
+          }
+          if (!fileExists && createMissing) {
+            const dir = filePath.substring(0, filePath.lastIndexOf("/"));
+            if (dir) {
+              patchCommand = `mkdir -p "${dir}" && `;
+            }
+            patchCommand += `touch "${filePath}" && `;
+          }
+          const tempFile = `/tmp/patch_insert_${Date.now()}`;
+          const escapedInsertContent = content.replace(/'/g, "'\\''");
+          patchCommand += `head -n $((${lineNumber}-1)) "${filePath}" > "${tempFile}" && printf '%s' '${escapedInsertContent}' >> "${tempFile}" && tail -n +${lineNumber} "${filePath}" >> "${tempFile}" && mv "${tempFile}" "${filePath}"`;
+        } else {
+          throw new McpError(
+            ErrorCode.InvalidRequest,
+            `Unsupported operation: ${operation}`,
+          );
+        }
+
+        const result = await activeSandbox.sandbox.runCode(
+          patchCommand,
+          "bash",
+          {
+            timeout: 10000,
+          },
+        );
+
+        results.push({
+          filePath,
+          operation,
+          success: result.exitCode === 0,
+          stdout: result.stdout,
+          stderr: result.stderr,
+        });
+
+        if (result.exitCode !== 0) {
+          throw new McpError(
+            ErrorCode.InternalError,
+            `Failed to patch ${filePath}: ${result.stderr}`,
+          );
+        }
+      }
 
       return {
         content: [
@@ -316,7 +502,8 @@ class DockerSandboxMCPServer {
             text: JSON.stringify(
               {
                 success: true,
-                message: `File copied to ${containerPath}`,
+                message: `Successfully applied ${patches.length} patch(es)`,
+                results,
                 sandboxId,
               },
               null,
@@ -328,11 +515,10 @@ class DockerSandboxMCPServer {
     } catch (error) {
       throw new McpError(
         ErrorCode.InternalError,
-        `Failed to copy file: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to patch sandbox: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
-
   private async getSandboxLogs(args: any) {
     const { sandboxId, tail, since } = args;
     const activeSandbox = this.activeSandboxes.get(sandboxId);

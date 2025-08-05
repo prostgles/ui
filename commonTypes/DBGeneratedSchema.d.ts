@@ -322,12 +322,15 @@ export type DBGeneratedSchema = {
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
-      is_loading?: null | string;
       llm_prompt_id?: null | number;
       max_total_cost_usd?: string;
       maximum_consecutive_tool_fails?: number;
       model?: null | number;
       name?: string;
+      status?: 
+       | null
+       |  {  state: 'stopped'; }
+       |  {  state: 'loading';  since: string; }
       user_id: string;
     };
   };

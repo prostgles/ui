@@ -99,7 +99,7 @@ export const TOOLS = [
     },
   },
   {
-    name: "copy_file_to_sandbox",
+    name: "copy_files_to_sandbox",
     description: "Copy a file to a sandbox container",
     inputSchema: {
       type: "object",
@@ -108,16 +108,77 @@ export const TOOLS = [
           type: "string",
           description: "ID of the sandbox container",
         },
-        content: {
-          type: "string",
-          description: "File content to copy",
-        },
-        containerPath: {
-          type: "string",
-          description: "Path in the container where to save the file",
+        files: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              content: {
+                type: "string",
+                description: "File content to copy",
+              },
+              containerPath: {
+                type: "string",
+                description: "Path in the container where to save the file",
+              },
+            },
+            required: ["containerPath", "content"],
+          },
         },
       },
-      required: ["sandboxId", "content", "containerPath"],
+      required: ["sandboxId", "files"],
+    },
+  },
+  {
+    name: "patch_sandbox",
+    description: "Patch a sandbox container with new code",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sandboxId: {
+          type: "string",
+          description: "ID of the sandbox container to patch",
+        },
+        patches: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              filePath: {
+                type: "string",
+                description: "Path to the file to patch in the container",
+              },
+              content: {
+                type: "string",
+                description: "New content to replace or add to the file",
+              },
+              operation: {
+                type: "string",
+                enum: ["replace", "append", "prepend", "insert"],
+                description: "Type of patch operation to perform",
+                default: "replace",
+              },
+              lineNumber: {
+                type: "number",
+                description: "Line number for insert operation (1-based)",
+              },
+              backup: {
+                type: "boolean",
+                description: "Create backup of original file before patching",
+                default: false,
+              },
+            },
+            required: ["filePath", "content"],
+          },
+          description: "Array of patch operations to apply",
+        },
+        createMissing: {
+          type: "boolean",
+          description: "Create file if it doesn't exist",
+          default: true,
+        },
+      },
+      required: ["sandboxId", "patches"],
     },
   },
   {

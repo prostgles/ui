@@ -125,8 +125,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   /* Prevents flickering when popup is opened */
   if (!messages) return;
   const chatIsLoading =
-    activeChat?.is_loading &&
-    new Date(activeChat.is_loading) > new Date(Date.now() - 1 * MINUTE);
+    activeChat?.status?.state === "loading" &&
+    new Date(activeChat.status.since) > new Date(Date.now() - 1 * MINUTE);
   return (
     <Popup
       data-command="AskLLM.popup"
