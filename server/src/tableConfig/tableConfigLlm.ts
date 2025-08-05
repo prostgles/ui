@@ -278,9 +278,20 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         sqlDefinition: `TIMESTAMPTZ`,
         info: { hint: "If set then chat is disabled until this time" },
       },
-      is_loading: {
-        sqlDefinition: `TIMESTAMPTZ`,
-        info: { hint: "Timestamp since started waiting for LLM response" },
+      status: {
+        nullable: true,
+        jsonbSchema: {
+          oneOf: [
+            { type: { state: { enum: ["stopped"] } } },
+            {
+              type: {
+                state: { enum: ["loading"] },
+                /** Timestamp since started waiting for LLM response */
+                since: "Date",
+              },
+            },
+          ],
+        },
       },
       db_schema_permissions: {
         label: "Schema read access",

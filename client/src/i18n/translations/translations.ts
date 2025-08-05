@@ -4,9 +4,10 @@ import type { TranslationGroup } from "../i18nUtils";
 export const LANGUAGES = [
   { key: "en", label: "English" },
   { key: "es", label: "Español" },
-  { key: "zh", label: "简体中文" },
-  { key: "ru", label: "Русский" },
+  { key: "fr", label: "Français" },
   { key: "de", label: "Deutsch" },
+  { key: "ru", label: "Русский" },
+  { key: "zh", label: "简体中文" },
   { key: "hi", label: "हिंदी" },
 ] as const;
 
@@ -47,6 +48,7 @@ export const translations = {
     "You do not have sufficient privileges to access this": undefined,
     "Copy to clipboard": undefined,
     Send: undefined,
+    Stop: undefined,
     "Stop recording": undefined,
     "Speech to text": undefined,
     "Record audio": undefined,

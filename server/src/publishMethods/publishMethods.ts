@@ -14,7 +14,7 @@ export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import type { AnyObject } from "prostgles-types";
+import type { AnyObject, UserLike } from "prostgles-types";
 import { asName, isEmpty, pickKeys } from "prostgles-types";
 import type { LLMMessage } from "../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
@@ -53,10 +53,12 @@ import { askLLM } from "./askLLM/askLLM";
 import { refreshModels } from "./askLLM/refreshModels";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
+import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 
-export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
-  params,
-) => {
+export const publishMethods: PublishMethods<
+  DBGeneratedSchema,
+  SessionUser<Users, Users>
+> = async (params) => {
   const { dbo: dbs, clientReq, db: _dbs, user } = params;
   const { socket } = clientReq;
   const bkpManager = await initBackupManager(_dbs, dbs);
@@ -591,6 +593,18 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
         });
       },
     }),
+    stopAskLLM: async (chatId: number) => {
+      if (!chatId) throw "Chat ID is required";
+      const chat = await dbs.llm_chats.findOne({ id: chatId });
+      if (!chat) throw "Chat not found";
+      if (chat.user_id !== user.id && user.type !== "admin") {
+        throw "You are not allowed to stop this chat";
+      }
+      await dbs.llm_chats.update(
+        { id: chatId },
+        { status: { state: "stopped" } },
+      );
+    },
     sendFeedback: async ({
       details,
       email,

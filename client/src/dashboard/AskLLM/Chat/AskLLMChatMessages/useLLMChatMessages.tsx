@@ -5,10 +5,13 @@ import {
   filterArrInverse,
 } from "../../../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import Btn from "../../../../components/Btn";
 import type { Message } from "../../../../components/Chat/Chat";
 import { Marked } from "../../../../components/Chat/Marked";
 import Chip from "../../../../components/Chip";
 import { CopyToClipboardBtn } from "../../../../components/CopyToClipboardBtn";
+import ErrorComponent from "../../../../components/ErrorComponent";
+import Expander from "../../../../components/Expander";
 import { FlexCol, FlexRow } from "../../../../components/Flex";
 import Loading from "../../../../components/Loading";
 import { MediaViewer } from "../../../../components/MediaViewer";
@@ -18,10 +21,6 @@ import { isDefined } from "../../../../utils";
 import { Counter } from "../../../W_SQL/W_SQL";
 import type { UseLLMChatProps } from "../useLLMChat";
 import { ToolUseChatMessage } from "./ToolUseChatMessage";
-import { ExpandSection } from "../../../../components/ExpandSection";
-import Expander from "../../../../components/Expander";
-import Btn from "../../../../components/Btn";
-import ErrorComponent from "../../../../components/ErrorComponent";
 
 type P = UseLLMChatProps & {
   activeChat: DBSSchema["llm_chats"] | undefined;
@@ -29,13 +28,15 @@ type P = UseLLMChatProps & {
 
 export const useLLMChatMessages = (props: P) => {
   const { dbs, user, activeChat, db, loadedSuggestions, workspaceId } = props;
-  const { is_loading } = activeChat ?? {};
+  const { status } = activeChat ?? {};
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChat?.id },
     { orderBy: { created: 1 } },
     { skip: !activeChat?.id },
   );
 
+  const isLoadingSince = status?.state === "loading" ? status.since : null;
+  // new
   const sqlHandler = db.sql;
 
   const actualMessages: Message[] | undefined = useMemo(
@@ -121,7 +122,7 @@ export const useLLMChatMessages = (props: P) => {
                 textMessages.map((m) => m.text).join("\n")
               : undefined;
 
-            const isLoading = Boolean(isLastMessage && is_loading);
+            const isLoading = Boolean(isLastMessage && isLoadingSince);
             const costNum = cost ? parseFloat(cost) : 0;
             return {
               id,
@@ -191,7 +192,7 @@ export const useLLMChatMessages = (props: P) => {
                   {isLoading && (
                     <>
                       <Loading />
-                      <Counter from={new Date(is_loading!)} />
+                      <Counter from={new Date(isLoadingSince!)} />
                     </>
                   )}
                   {meta?.stop_reason?.toLowerCase() === "max_tokens" && (
@@ -210,7 +211,7 @@ export const useLLMChatMessages = (props: P) => {
         .filter(isDefined),
     [
       llmMessages,
-      is_loading,
+      isLoadingSince,
       user?.id,
       sqlHandler,
       loadedSuggestions,

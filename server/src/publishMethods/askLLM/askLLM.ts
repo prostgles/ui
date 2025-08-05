@@ -198,7 +198,7 @@ export const askLLM = async (args: AskLLMArgs) => {
   await dbs.llm_chats.update(
     { id: chatId },
     {
-      is_loading: new Date(),
+      status: { state: "loading", since: new Date().toISOString() },
     },
   );
   const aiResponseMessagePlaceholder = await dbs.llm_messages.insert(
@@ -314,13 +314,18 @@ export const askLLM = async (args: AskLLMArgs) => {
       throw `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`;
     }
 
-    await runApprovedTools(
-      args,
-      chat,
-      aiResponseMessage,
-      lastMessage?.message,
-      toolsWithInfo,
-    );
+    chat = await getChat();
+    if (!chat) throw "Chat not found after LLM response";
+
+    if (chat.status?.state !== "stopped") {
+      await runApprovedTools(
+        args,
+        chat,
+        aiResponseMessage,
+        lastMessage?.message,
+        toolsWithInfo,
+      );
+    }
   } catch (err) {
     console.error(err);
     const isAdmin = user.type === "admin";
@@ -346,7 +351,7 @@ export const askLLM = async (args: AskLLMArgs) => {
   await dbs.llm_chats.update(
     { id: chatId },
     {
-      is_loading: null,
+      status: null,
     },
   );
 };
