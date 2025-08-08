@@ -1,14 +1,12 @@
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { getConnectionDetails } from "./getConnectionDetails";
-import { type ConnectionInfo, validateConnection } from "./validateConnection";
+import { validateConnection, type ConnectionInfo } from "./validateConnection";
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
 import pgPromise from "pg-promise";
 import type pg from "pg-promise/typescript/pg-subset";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import type { DB } from "prostgles-server/dist/initProstgles";
 import { getIsSuperUser, type DBorTx } from "prostgles-server/dist/Prostgles";
-import { pickKeys, tryCatchV2 } from "prostgles-types";
+import { getSerialisableError, isObject, tryCatchV2 } from "prostgles-types";
 const pgpNoWarnings = pgPromise({ noWarnings: true });
 const pgp = pgPromise();
 
@@ -57,27 +55,25 @@ export const testDBConnection = (
         if (expectSuperUser) {
           const usessuper = await getIsSuperUser(c as unknown as DBorTx);
           if (!usessuper) {
-            reject("Provided user must be a superuser");
+            reject(new Error("Provided user must be a superuser"));
             return;
           }
         }
         await check?.(c);
 
         const { data: prostglesSchemaVersion } = await tryCatchV2(async () => {
-          const prostglesSchemaVersion = (
-            await c.oneOrNone("SELECT version FROM prostgles.versions")
-          ).version as string;
-          return prostglesSchemaVersion;
+          const { version } = await c.one<{ version: string }>(
+            "SELECT version FROM prostgles.versions",
+          );
+          return version;
         });
         const { data: canCreateDb } = await tryCatchV2(async () => {
-          const canCreateDb = (
-            await c.oneOrNone(`
+          const { can_create_db } = await c.one<{ can_create_db: boolean }>(`
             SELECT rolcreatedb OR rolsuper as can_create_db
             FROM pg_catalog.pg_roles
             WHERE rolname = "current_user"();
-          `)
-          ).can_create_db as boolean;
-          return canCreateDb;
+          `);
+          return can_create_db;
         });
 
         resolve({
@@ -89,7 +85,8 @@ export const testDBConnection = (
         await c.done();
       })
       .catch((err) => {
-        let errRes = err instanceof Error ? err.message : JSON.stringify(err);
+        console.error("Error connecting to database", con.db_host, err);
+        const errRes = err instanceof Error ? err.message : JSON.stringify(err);
         if (errRes === NO_SSL_SUPPORT_ERROR && _c.db_ssl === "prefer") {
           return resolve(
             testDBConnection(
@@ -103,25 +100,44 @@ export const testDBConnection = (
             ).then((res) => ({ ...res, isSSLModeFallBack: true })),
           );
         }
-        const localHosts = ["host.docker.internal", "localhost", "127.0.0.1"];
+        const localHosts = [
+          "host.docker.internal",
+          "localhost",
+          "127.0.0.1",
+          "172.17.0.1",
+        ];
+
+        let prostgles_error_hint = "";
         if (process.env.IS_DOCKER && localHosts.includes(con.db_host)) {
-          errRes += [
-            `\nHint: to connect to a localhost database from docker you need to:\n `,
-            `Use "172.17.0.1" instead of "localhost" in the above connection details`,
-            `OR follow the steps below:`,
-            `1) Uncomment extra_hosts in docker-compose.yml:  `,
+          prostgles_error_hint = [
+            `\nTo connect to a localhost database from docker you need to:\n `,
+            `1) If using docker-compose.yml, uncomment extra_hosts:  `,
             `  extra_hosts:`,
             `    - "host.docker.internal:host-gateway"`,
-            `2) Ensure the target database postgresql.conf contains:`,
+            `2) Ensure the target database postgresql.conf contains either:`,
+            `  listen_addresses = 'localhost,172.17.0.1'`,
+            `  OR a more permissive setting like:`,
             `  listen_addresses = '*'`,
             `3) Ensure the target database pg_hba.conf contains:`,
-            `  host  all   all   0.0.0.0/0  md5`,
+            `  host  all   all   172.17.0.0/16  md5`,
             `4) Restart the postgresql server to apply the changes.`,
             `5) Ensure the user you connect with has an encrypted password. `,
-            `6) Use "host.docker.internal" instead of "localhost" in the above connection details`,
+            `6) Use "172.17.0.1" or "host.docker.internal" instead of "localhost" in the above connection details`,
           ].join("\n");
         }
-        reject(pickKeys(getErrorAsObject(err), ["message", "code"]));
+        const serialisableError = getSerialisableError(err);
+        const removeUndefined = (obj: Record<string, unknown>) => {
+          return Object.fromEntries(
+            Object.entries(obj).filter(([_, v]) => v !== undefined),
+          );
+        };
+        reject(
+          removeUndefined(
+            isObject(serialisableError) ?
+              { ...serialisableError, prostgles_error_hint }
+            : { error: serialisableError, prostgles_error_hint },
+          ),
+        );
       });
   });
 };

@@ -1,49 +1,16 @@
+import { createContainerJSONSchema } from "./createContainer";
+
+// throw JSON.stringify(
+//   getJSONBSchemaAsJSONSchema("", "", createContainerSchema),
+//   null,
+//   2,
+// );
+
 export const TOOLS = [
   {
-    name: "create_sandbox",
-    description: "Create a new Docker sandbox container",
-    inputSchema: {
-      type: "object",
-      properties: {
-        image: {
-          type: "string",
-          description:
-            "Docker image to use (e.g., 'python:3.9-slim', 'node:18-alpine')",
-        },
-        language: {
-          type: "string",
-          enum: ["python", "javascript", "node", "bash", "java", "go"],
-          description: "Primary language for the sandbox",
-        },
-        memory: {
-          type: "string",
-          description: "Memory limit (e.g., '512m', '1g')",
-          default: "512m",
-        },
-        cpus: {
-          type: "string",
-          description: "CPU limit (e.g., '0.5', '1')",
-          default: "1",
-        },
-        timeout: {
-          type: "number",
-          description: "Default timeout for operations in milliseconds",
-          default: 30000,
-        },
-        networkMode: {
-          type: "string",
-          enum: ["none", "bridge", "host"],
-          description: "Network mode for the container",
-          default: "none",
-        },
-        environment: {
-          type: "object",
-          description: "Environment variables to set in the container",
-          additionalProperties: { type: "string" },
-        },
-      },
-      required: ["image"],
-    },
+    name: "create_container",
+    description: createContainerJSONSchema.description,
+    inputSchema: createContainerJSONSchema,
   },
   {
     name: "execute_code",
@@ -96,37 +63,6 @@ export const TOOLS = [
         },
       },
       required: ["sandboxId"],
-    },
-  },
-  {
-    name: "copy_files_to_sandbox",
-    description: "Copy a file to a sandbox container",
-    inputSchema: {
-      type: "object",
-      properties: {
-        sandboxId: {
-          type: "string",
-          description: "ID of the sandbox container",
-        },
-        files: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              content: {
-                type: "string",
-                description: "File content to copy",
-              },
-              containerPath: {
-                type: "string",
-                description: "Path in the container where to save the file",
-              },
-            },
-            required: ["containerPath", "content"],
-          },
-        },
-      },
-      required: ["sandboxId", "files"],
     },
   },
   {

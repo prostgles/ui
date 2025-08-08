@@ -1,12 +1,12 @@
 import { spawn } from "child_process";
 import { randomUUID } from "crypto";
 import { EventEmitter } from "events";
-import { promises as fs } from "fs";
-import { join } from "path";
+import { existsSync, promises as fs, mkdirSync } from "fs";
+import { tmpdir } from "os";
+import { dirname, join } from "path";
 const LABEL = "prostgles-docker-sandbox";
 
 export interface DockerConfig {
-  image: string;
   workingDir?: string;
   memory?: string;
   cpus?: string;
@@ -16,14 +16,10 @@ export interface DockerConfig {
   user?: string;
   environment?: Record<string, string>;
   volumes?: Array<{ host: string; container: string; readOnly?: boolean }>;
-}
-
-export interface ExecutionResult {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-  timedOut: boolean;
-  executionTime: number;
+  files: {
+    content: string;
+    name: string;
+  }[];
 }
 
 export interface ContainerInfo {
@@ -35,10 +31,10 @@ export interface ContainerInfo {
 
 export class DockerSandbox extends EventEmitter {
   private containerId: string | null = null;
-  private containerName = `sandbox-${randomUUID()}`;
+  private name = `prostgles-docker-mcp-sandbox-${randomUUID()}`;
   private config: DockerConfig;
-  private isRunning: boolean = false;
-  private tempDir: string;
+  private isRunning = false;
+  private localDir: string;
 
   constructor(config: DockerConfig) {
     super();
@@ -52,7 +48,7 @@ export class DockerSandbox extends EventEmitter {
       user: "nobody",
       ...config,
     };
-    this.tempDir = join("/tmp", this.containerName);
+    this.localDir = join(tmpdir(), this.name);
   }
 
   /**
@@ -65,8 +61,38 @@ export class DockerSandbox extends EventEmitter {
 
     try {
       // Create temporary directory for file sharing
-      await fs.mkdir(this.tempDir, { recursive: true });
+      await fs.mkdir(this.localDir, { recursive: true });
+      const dockerFile = this.config.files.find(
+        (file) => file.name === "Dockerfile",
+      );
+      if (!dockerFile) {
+        throw new Error("Dockerfile is required in the files array");
+      }
+      for (const { content, name } of this.config.files) {
+        // Create temporary file
+        const tempFile = join(this.localDir, name);
+        const dir = dirname(tempFile);
+        if (!existsSync(dir)) {
+          mkdirSync(dir, { recursive: true });
+        }
+        const fs = await import("fs/promises");
+        await fs.writeFile(tempFile, content);
+      }
 
+      const buildResult = await this.executeDockerCommand([
+        "build",
+        "-t",
+        this.name,
+        "-f",
+        join(this.localDir, dockerFile.name),
+        this.localDir,
+      ]);
+
+      if (buildResult.exitCode !== 0) {
+        throw new Error(
+          `Failed to build the container image: ${buildResult.stderr}`,
+        );
+      }
       // Build docker run command
       const dockerArgs = this.buildDockerArgs();
 
@@ -74,13 +100,15 @@ export class DockerSandbox extends EventEmitter {
       const result = await this.executeDockerCommand([
         "run",
         "-d",
+        "-i",
+        this.name,
         ...dockerArgs,
       ]);
 
       if (result.exitCode !== 0) {
         throw new Error(`Failed to start container: ${result.stderr}`);
       }
-
+      console.error(result);
       this.containerId = result.stdout.trim();
       this.isRunning = true;
 
@@ -92,72 +120,6 @@ export class DockerSandbox extends EventEmitter {
       await this.cleanup();
       throw error;
     }
-  }
-
-  /**
-   * Execute a command inside the container
-   */
-  async executeDockerCommand(
-    args: string[] = [],
-    options: {
-      timeout?: number;
-      workingDir?: string;
-      user?: string;
-      environment?: Record<string, string>;
-    } = {},
-  ): Promise<ExecutionResult> {
-    const startTime = Date.now();
-    const timeout = options.timeout || this.config.timeout!;
-
-    return new Promise((resolve) => {
-      const child = spawn("docker", args, {
-        stdio: ["pipe", "pipe", "pipe"],
-        env: { ...process.env, ...options.environment },
-      });
-
-      let stdout = "";
-      let stderr = "";
-      let timedOut = false;
-
-      // Set up timeout
-      const timeoutId = setTimeout(() => {
-        timedOut = true;
-        child.kill("SIGKILL");
-      }, timeout);
-
-      // Collect output
-      child.stdout.on("data", (data: Buffer) => {
-        stdout += data.toString();
-      });
-
-      child.stderr.on("data", (data: Buffer) => {
-        stderr += data.toString();
-      });
-
-      child.on("close", (code) => {
-        clearTimeout(timeoutId);
-        const executionTime = Date.now() - startTime;
-
-        resolve({
-          stdout,
-          stderr,
-          exitCode: code || 0,
-          timedOut,
-          executionTime,
-        });
-      });
-
-      child.on("error", (error) => {
-        clearTimeout(timeoutId);
-        resolve({
-          stdout,
-          stderr: stderr + error.message,
-          exitCode: -1,
-          timedOut,
-          executionTime: Date.now() - startTime,
-        });
-      });
-    });
   }
 
   /**
@@ -177,7 +139,7 @@ export class DockerSandbox extends EventEmitter {
 
     const fileExtension = getFileExtension(language);
     const fileName = `code_${Date.now()}-${randomUUID()}.${fileExtension}`;
-    const filePath = join(this.tempDir, fileName);
+    const filePath = join(this.localDir, fileName);
 
     try {
       // Write code to file
@@ -223,74 +185,48 @@ export class DockerSandbox extends EventEmitter {
   /**
    * Copy file to container
    */
-  async copyToContainer(
-    localPath: string,
-    containerPath: string,
-  ): Promise<void> {
+  async copyToContainer(files: DockerConfig["files"]): Promise<void> {
     if (!this.containerId) {
       throw new Error("Container is not running");
     }
+    for (const { content, name } of files) {
+      // Create temporary file
+      const tempFile = `/tmp/mcp-${Date.now()}-${randomUUID()}.tmp`;
+      const fs = await import("fs/promises");
+      await fs.writeFile(tempFile, content);
 
-    const result = await this.executeDockerCommand([
-      "cp",
-      localPath,
-      `${this.containerId}:${containerPath}`,
-    ]);
+      const result = await this.executeDockerCommand([
+        "cp",
+        tempFile,
+        `${this.containerId}:${name}`,
+      ]);
 
-    if (result.exitCode !== 0) {
-      throw new Error(`Failed to copy file to container: ${result.stderr}`);
+      // Clean up temp file
+      await fs.unlink(tempFile);
+
+      if (result.exitCode !== 0) {
+        throw new Error(`Failed to copy file to container: ${result.stderr}`);
+      }
     }
   }
 
   /**
    * Copy file from container
    */
-  async copyFromContainer(
-    containerPath: string,
-    localPath: string,
-  ): Promise<void> {
+  async copyFromContainer(name: string, localPath: string): Promise<void> {
     if (!this.containerId) {
       throw new Error("Container is not running");
     }
 
     const result = await this.executeDockerCommand([
       "cp",
-      `${this.containerId}:${containerPath}`,
+      `${this.containerId}:${name}`,
       localPath,
     ]);
 
     if (result.exitCode !== 0) {
       throw new Error(`Failed to copy file from container: ${result.stderr}`);
     }
-  }
-
-  /**
-   * Get container information
-   */
-  async getContainerInfo(): Promise<ContainerInfo | null> {
-    if (!this.containerId) {
-      return null;
-    }
-
-    const result = await this.executeDockerCommand([
-      "inspect",
-      "--format",
-      "{{.State.Status}}|{{.Config.Image}}|{{.Created}}",
-      this.containerId,
-    ]);
-
-    if (result.exitCode !== 0) {
-      return null;
-    }
-
-    const [status, image, created] = result.stdout.trim().split("|");
-
-    return {
-      id: this.containerId,
-      status: status as ContainerInfo["status"],
-      image,
-      createdAt: new Date(created),
-    };
   }
 
   /**
@@ -351,7 +287,14 @@ export class DockerSandbox extends EventEmitter {
    */
   static async isDockerAvailable(): Promise<boolean> {
     try {
-      const sandbox = new DockerSandbox({ image: "hello-world" });
+      const sandbox = new DockerSandbox({
+        files: [
+          {
+            name: "/workspace/Dockerfile",
+            content: 'FROM hello-world\nCMD ["echo", "Hello from Docker!"]',
+          },
+        ],
+      });
       const result = await sandbox.executeDockerCommand(["--version"]);
       return result.exitCode === 0;
     } catch {
@@ -363,16 +306,7 @@ export class DockerSandbox extends EventEmitter {
    * Build Docker run arguments
    */
   private buildDockerArgs(): string[] {
-    const args = [
-      "--name",
-      this.containerName,
-      "--label",
-      LABEL,
-      "--rm",
-      "--interactive",
-      "--tty",
-      "--detach",
-    ];
+    const args = ["--rm", "--interactive", "--tty", "--detach"];
 
     // Resource limits
     if (this.config.memory) {
@@ -413,7 +347,7 @@ export class DockerSandbox extends EventEmitter {
     // Volumes
     args.push(
       "-v",
-      `${this.tempDir}:${this.config.workingDir || "/workspace"}`,
+      `${this.localDir}:${this.config.workingDir || "/workspace"}`,
     );
 
     if (this.config.volumes) {
@@ -425,16 +359,20 @@ export class DockerSandbox extends EventEmitter {
         args.push("-v", volumeStr);
       });
     }
+    args.push("--label", LABEL, "--name", this.name);
 
     // Security options
     args.push("--security-opt", "no-new-privileges");
     args.push("--cap-drop", "ALL");
 
-    // Image
-    args.push(this.config.image);
-
-    // Keep container running
+    // Command to run - either custom startup command or default keep-alive
+    // if (this.config.startupCommand) {
+    //   // Split the startup command properly
+    //   args.push("sh", "-c", this.config.startupCommand);
+    // } else {
+    // Keep container running with default command
     args.push("tail", "-f", "/dev/null");
+    // }
 
     return args;
   }
@@ -475,11 +413,16 @@ export class DockerSandbox extends EventEmitter {
     while (attempts < maxAttempts) {
       try {
         const info = await this.getContainerInfo();
+        console.error(info);
         if (info && info.status === "running") {
           return;
         }
       } catch (error) {
         // Continue waiting
+        console.error(
+          `Attempt ${attempts + 1}: Container not ready yet`,
+          error,
+        );
       }
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -497,7 +440,7 @@ export class DockerSandbox extends EventEmitter {
     this.containerId = null;
 
     try {
-      await fs.rmdir(this.tempDir, { recursive: true });
+      await fs.rm(this.localDir, { recursive: true });
     } catch (error) {
       // Ignore cleanup errors
       console.error(`Failed to clean up temp directory: ${error}`);

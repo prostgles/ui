@@ -772,7 +772,7 @@ test.describe("Main test", () => {
       .click();
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByText("create_sandbox", { exact: true })
+      .getByText("create_container", { exact: true })
       .click();
     await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
