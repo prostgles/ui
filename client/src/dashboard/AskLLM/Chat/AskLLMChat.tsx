@@ -124,9 +124,10 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
 
   /* Prevents flickering when popup is opened */
   if (!messages) return;
+  const status = activeChat?.status;
   const chatIsLoading =
-    activeChat?.status?.state === "loading" &&
-    new Date(activeChat.status.since) > new Date(Date.now() - 1 * MINUTE);
+    status?.state === "loading" &&
+    new Date(status.since) > new Date(Date.now() - 1 * MINUTE);
   return (
     <Popup
       data-command="AskLLM.popup"
@@ -189,6 +190,16 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               file: true,
             }}
             onSend={sendMessage}
+            onStopSending={
+              status?.state !== "loading" ?
+                undefined
+              : () => {
+                  dbs.llm_chats.update(
+                    { id: activeChatId },
+                    { status: { state: "stopped" } },
+                  );
+                }
+            }
             actionBar={
               isAdmin && (
                 <AskLLMChatActionBar

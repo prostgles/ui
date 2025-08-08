@@ -10,7 +10,6 @@ import {
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import {
   getSerialisableError,
   isEqual,

@@ -54,8 +54,15 @@ class DockerSandboxMCPServer {
       const { name, arguments: args } = request.params;
 
       try {
-        if (name === "create_sandbox") {
-          return await this.createSandbox(args as unknown as DockerConfig);
+        if (name === "create_container") {
+          const { sandboxId, ...sandbox } = await this.createSandbox(
+            args as unknown as DockerConfig,
+          );
+          await this.copyFilesToContainer({
+            sandboxId,
+            files: (args as any).files,
+          });
+          return sandbox;
         }
         if (name === "execute_code") {
           return await this.executeCode(args);
@@ -65,10 +72,6 @@ class DockerSandboxMCPServer {
         }
         if (name === "get_sandbox_info") {
           return await this.getSandboxInfo(args);
-        }
-        if (name === "copy_files_to_sandbox") {
-          //@ts-ignore
-          return await this.copyFilesToSandbox(args);
         }
         if (name === "patch_sandbox") {
           return await this.patchSandbox(args);
@@ -112,12 +115,12 @@ class DockerSandboxMCPServer {
     }
 
     const config: DockerConfig = {
-      image: args.image,
       memory: args.memory || "512m",
       cpus: args.cpus || "1",
       timeout: args.timeout || 30000,
       networkMode: args.networkMode || "none",
       environment: args.environment || {},
+      files: args.files,
     };
 
     const sandbox = new DockerSandbox(config);
@@ -137,6 +140,7 @@ class DockerSandboxMCPServer {
       this.activeSandboxes.set(sandboxId, activeSandbox);
 
       return {
+        sandboxId,
         content: [
           {
             type: "text",
@@ -146,7 +150,6 @@ class DockerSandboxMCPServer {
                 sandboxId,
                 message: "Sandbox created successfully",
                 config: {
-                  image: config.image,
                   memory: config.memory,
                   cpus: config.cpus,
                   networkMode: config.networkMode,
@@ -220,7 +223,6 @@ class DockerSandboxMCPServer {
     const sandboxes = Array.from(this.activeSandboxes.values()).map(
       (sandbox) => ({
         id: sandbox.id,
-        image: sandbox.config.image,
         createdAt: sandbox.createdAt,
         lastUsed: sandbox.lastUsed,
         memory: sandbox.config.memory,
@@ -289,9 +291,9 @@ class DockerSandboxMCPServer {
     }
   }
 
-  private async copyFilesToSandbox(args: {
+  private async copyFilesToContainer(args: {
     sandboxId: string;
-    files: { content: string; containerPath: string }[];
+    files: { content: string; name: string }[];
   }) {
     const { sandboxId, files } = args;
     const activeSandbox = this.activeSandboxes.get(sandboxId);
@@ -308,36 +310,24 @@ class DockerSandboxMCPServer {
     }
 
     activeSandbox.lastUsed = new Date();
-
     try {
-      for (const { content, containerPath } of files) {
-        // Create temporary file
-        const tempFile = `/tmp/mcp-${Date.now()}-${randomUUID()}.tmp`;
-        const fs = await import("fs/promises");
-        await fs.writeFile(tempFile, content);
-
-        await activeSandbox.sandbox.copyToContainer(tempFile, containerPath);
-
-        // Clean up temp file
-        await fs.unlink(tempFile);
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(
-                {
-                  success: true,
-                  message: `File copied to ${containerPath}`,
-                  sandboxId,
-                },
-                null,
-                2,
-              ),
-            },
-          ],
-        };
-      }
+      await activeSandbox.sandbox.copyToContainer(files);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                success: true,
+                message: `File copied to ${files.map((f) => f.name).join(", ")}`,
+                sandboxId,
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+      };
     } catch (error) {
       throw new McpError(
         ErrorCode.InternalError,
@@ -643,7 +633,7 @@ class DockerSandboxMCPServer {
   private async runQuickCode(
     args: DockerConfig & { code: string; language: string },
   ) {
-    const { code, language, image, timeout, memory, environment } = args;
+    const { code, language, timeout, memory, environment } = args;
 
     // Default images for common languages
     const defaultImages: Record<string, string> = {
@@ -656,12 +646,12 @@ class DockerSandboxMCPServer {
     };
 
     const config: DockerConfig = {
-      image: image || defaultImages[language] || "ubuntu:20.04",
       memory: memory || "512m",
       cpus: "1",
       timeout: timeout || 30000,
       networkMode: "none",
       environment: environment || {},
+      files: [],
     };
 
     const sandbox = new DockerSandbox(config);
@@ -688,7 +678,6 @@ class DockerSandboxMCPServer {
                   executionTime: result.executionTime,
                 },
                 language,
-                image: config.image,
               },
               null,
               2,

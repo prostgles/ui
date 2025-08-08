@@ -81,7 +81,7 @@ const playwrightMCPToolUse = [
 const mcpSandboxToolUse = [
   {
     function: {
-      name: "docker-sandbox--create_sandbox",
+      name: "docker-sandbox--create_container",
       arguments: stringify({
         image: "node:18-alpine",
       }),

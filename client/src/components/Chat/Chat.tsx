@@ -29,7 +29,7 @@ export type ChatProps = {
   style?: React.CSSProperties;
   className?: string;
   onSend: (msg?: string, files?: File[]) => Promise<any | void>;
-  onStopSending?: () => void;
+  onStopSending: undefined | (() => void);
   messages: Message[];
   allowedMessageTypes?: Partial<{
     speech: { tts: boolean; audio: boolean };
@@ -258,7 +258,7 @@ export const Chat = (props: ChatProps) => {
               />
             )}
           </FlexRow>
-          {sendingMsg && onStopSending ?
+          {onStopSending ?
             <Btn
               onClick={onStopSending}
               title={t.common.Stop}

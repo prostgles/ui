@@ -122,7 +122,7 @@ export const start = async (params: {
   electronConfig.electronSid = params.electronSid;
   electronConfig.safeStorage = params.safeStorage;
   const { startServer } = await import("./index");
-  void startServer(params.port ?? 0, async ({ port: actualPort }) => {
+  void startServer(async ({ port: actualPort }) => {
     // const [token] = prostglesTokens;
     // if (token) {
     //   console.log("Setting prostgles tokens");

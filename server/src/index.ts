@@ -234,7 +234,6 @@ type OnServerReadyResult = {
 };
 
 export const startServer = async (
-  initialPort: number | undefined,
   onReady?: (result: OnServerReadyResult) => void | Promise<void>,
 ) => {
   const actualPort = await new Promise<number>((resolve) => {
@@ -253,7 +252,11 @@ export const startServer = async (
     });
   });
 
-  await waitForInitialisation();
+  const startupResult = await waitForInitialisation();
+  if (startupResult.state === "error") {
+    console.error("Failed to start prostgles", startupResult);
+    throw new Error("Failed to start prostgles");
+  }
   void onReady?.({ port: actualPort });
 };
 
@@ -262,7 +265,7 @@ export const startServer = async (
  * Otherwise it will be started from electron/main.ts
  */
 if (require.main === module) {
-  void startServer(PORT, (result) => {
+  void startServer((result) => {
     console.log("Server started", result);
   });
 }
