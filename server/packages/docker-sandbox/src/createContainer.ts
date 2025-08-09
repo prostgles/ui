@@ -24,7 +24,7 @@ export const createContainer = async (
 ): Promise<CreateContainerResult> => {
   let localDir = "";
   try {
-    const { files, timeout = 30_000 } = params;
+    const { files } = params;
     const name = `prostgles-docker-mcp-sandbox-${Date.now()}-${randomUUID()}`;
     localDir = join(tmpdir(), name);
 
@@ -34,6 +34,13 @@ export const createContainer = async (
     if (!dockerFile) {
       throw new Error("Dockerfile is required in the files array");
     }
+    if (dockerFile.content.toLowerCase().includes("expose")) {
+      throw new Error("Dockerfile should not contain EXPOSE instruction");
+    }
+    if (dockerFile.content.toLowerCase().includes("volume")) {
+      throw new Error("Dockerfile should not contain VOLUME instruction");
+    }
+
     for (const { content, name } of files) {
       const tempFile = join(localDir, name);
       const dir = dirname(tempFile);
@@ -78,14 +85,17 @@ export const createContainer = async (
       ...params,
     });
 
+    /** Cleanup */
+    if (runResult.state === "timed-out") {
+      await executeDockerCommand(["kill", name], { timeout: 60_000 });
+    }
+    await executeDockerCommand(["image", "rm", name], { timeout: 60_000 });
+
     const containerId = runResult.stdout.trim();
 
     return {
       command: ["docker", ...runArgs].join(" "),
       state: runResult.state === "close" ? "finished" : runResult.state,
-      // runResult.stderr ? "error"
-      // : runResult.exitCode === 0 ? "finished"
-      // : "timed-out",
       containerId,
       ...config,
       stdout: runResult.stdout,

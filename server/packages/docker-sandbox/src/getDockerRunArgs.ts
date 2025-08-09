@@ -4,7 +4,6 @@ const LABEL = "prostgles-docker-sandbox";
 
 type LocalDockerParams = {
   user?: string;
-  readOnly?: boolean;
   workingDir?: string;
   volumes?: Array<{
     host: string;
@@ -20,7 +19,6 @@ export const getDockerRunArgs = ({
   memory = "512m",
   networkMode = "none",
   user = "nobody",
-  readOnly = false,
   workingDir = "/workspace",
   environment = {},
   volumes,
@@ -46,15 +44,7 @@ export const getDockerRunArgs = ({
     runArgs.push("--user", user);
   }
 
-  // Read-only filesystem
-  if (readOnly) {
-    runArgs.push("--read-only");
-  }
-
-  // Working directory
-  // if (workingDir) {
-  //   runArgs.push("--workdir", workingDir);
-  // }
+  runArgs.push("--read-only");
 
   // Environment variables
   Object.entries(environment).forEach(([key, value]) => {
@@ -83,6 +73,6 @@ export const getDockerRunArgs = ({
 
   return {
     runArgs,
-    config: { user, readOnly, workingDir, volumes, localDir, name },
+    config: { user, workingDir, volumes, localDir, name },
   };
 };
