@@ -18,7 +18,7 @@ interface ActiveSandbox {
   lastUsed: Date;
 }
 
-class DockerSandboxMCPServer {
+export class DockerSandboxMCPServer {
   private server: Server;
   private activeSandboxes: Map<string, ActiveSandbox> = new Map();
   private readonly MAX_SANDBOXES = 10;
@@ -99,7 +99,7 @@ class DockerSandboxMCPServer {
     });
   }
 
-  private async createSandbox(args: unknown) {
+  async createSandbox(args: unknown) {
     assertJSONBObjectAgainstSchema(createContainerSchema.type, args, "");
     if (this.activeSandboxes.size >= this.MAX_SANDBOXES) {
       throw new McpError(
@@ -704,19 +704,22 @@ class DockerSandboxMCPServer {
   }
 }
 
-const stopProcess = (signal: "SIGINT" | "SIGTERM") => {
-  console.error(`Received ${signal}, shutting down gracefully...`);
-  process.exit(0);
-};
+// Do not start if inside test
+if (require.main === module) {
+  const stopProcess = (signal: "SIGINT" | "SIGTERM") => {
+    console.error(`Received ${signal}, shutting down gracefully...`);
+    process.exit(0);
+  };
 
-// Handle graceful shutdown
-process.on("SIGINT", () => {
-  void stopProcess("SIGINT");
-});
+  // Handle graceful shutdown
+  process.on("SIGINT", () => {
+    void stopProcess("SIGINT");
+  });
 
-process.on("SIGTERM", () => {
-  void stopProcess("SIGTERM");
-});
+  process.on("SIGTERM", () => {
+    void stopProcess("SIGTERM");
+  });
 
-const server = new DockerSandboxMCPServer();
-server.run().catch(console.error);
+  const server = new DockerSandboxMCPServer();
+  server.run().catch(console.error);
+}

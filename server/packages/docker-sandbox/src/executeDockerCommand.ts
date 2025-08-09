@@ -58,8 +58,8 @@ export const executeDockerCommand = async (
 
     const timeoutId = setTimeout(() => {
       timedOut = true;
-      onEnd({ type: "timed-out", error: new Error("Execution timed out") });
       child.kill("SIGKILL");
+      onEnd({ type: "timed-out", error: new Error("Execution timed out") });
     }, timeout);
 
     child.stdout.on("data", (data: Buffer) => {
@@ -68,7 +68,6 @@ export const executeDockerCommand = async (
 
     child.stderr.on("data", (data: Buffer) => {
       stderr += data.toString();
-      // onEnd({ type: "error", error: new Error(data.toString()) });
     });
 
     child.on("close", (code) => {
@@ -78,7 +77,6 @@ export const executeDockerCommand = async (
       } else {
         onEnd({ type: "close", code: 0 });
       }
-      // onEnd({ type: code !== 0? "error" : "close", code });
     });
 
     child.on("error", (error) => {

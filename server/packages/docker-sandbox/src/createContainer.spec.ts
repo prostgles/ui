@@ -1,9 +1,9 @@
+import { strict } from "assert";
 import { test } from "node:test";
 import {
   createContainer,
   type CreateContainerParams,
 } from "./createContainer.js";
-import { strict } from "assert";
 
 const getFilesFromObject = (obj: Record<string, string>) =>
   Object.entries(obj).map(([name, content]) => ({ name, content }));
@@ -53,6 +53,7 @@ void test("createContainer run timeout", async () => {
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(config);
   strict.equal(sandbox.state, "timed-out");
+  strict.equal(sandbox.stdout.includes("Will attempt to fetch from"), true);
 });
 
 void test("createContainer stdout response", async () => {
@@ -70,6 +71,20 @@ void test("createContainer stdout response", async () => {
   strict.equal(sandbox.stderr, "");
 });
 
+void test("createContainer host network", async () => {
+  const expectedOutput = "Hello from index.js";
+  const config = {
+    files: getFilesFromObject(filesObject),
+    timeout: 5_000,
+    networkMode: "host",
+  } satisfies CreateContainerParams;
+  const sandbox = await createContainer(config);
+  console.log(sandbox);
+  strict.equal(sandbox.state, "finished");
+  strict.equal(sandbox.stdout, expectedOutput + "\n");
+  strict.equal(sandbox.stderr, "");
+});
+
 void test("createContainer stderr response", async () => {
   const expectedOutput = "Hello from index.js";
   const config = {
@@ -80,7 +95,6 @@ void test("createContainer stderr response", async () => {
     timeout: 3_000,
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(config);
-  console.log("Sandbox result:", sandbox);
   strict.equal(sandbox.state, "finished");
   strict.equal(sandbox.stdout, "");
   strict.equal(sandbox.stderr, expectedOutput + "\n");
@@ -97,12 +111,12 @@ const packageJson = {
 
 const indexJsContent = `
 const axios = require('axios');
-const HOST_URL = 'http://host.docker.internal:3004';
+const HOST_URL = 'http://127.0.0.1:3004';
 async function fetchFromHost() {  
   try { 
     console.log(\`Attempting to fetch from \${HOST_URL}\`);
     const response = await axios.get(HOST_URL, {
-      timeout: 10000 // 10 second timeout    
+      timeout: 3_000  
     });    
     console.log('Response status:', response.status); console.log('Response data:', response.data);  
   } catch (error) {    
