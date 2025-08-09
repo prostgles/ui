@@ -1,25 +1,33 @@
 import { randomUUID } from "crypto";
-import { existsSync, mkdirSync, writeFileSync } from "fs";
-import { rm } from "fs/promises";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
 import { executeDockerCommand } from "./executeDockerCommand";
-import { getDockerCLIArgs } from "./getDockerCLIArgs";
-import { waitForContainer } from "./waitForContainer";
-import { getContainerLogs } from "./getContainerLogs";
-import { getContainerInfo } from "./getContainerInfo";
+import { getDockerRunArgs } from "./getDockerRunArgs";
 
 export type CreateContainerParams = JSONB.GetSchemaType<
   typeof createContainerSchema
 >;
-export const createContainer = async (params: CreateContainerParams) => {
-  const { files } = params;
-  const name = `prostgles-docker-mcp-sandbox-${Date.now()}-${randomUUID()}`;
-  const localDir = join(tmpdir(), name);
 
+type CreateContainerResult = {
+  state: "finished" | "error" | "build-error" | "timed-out";
+  command: string;
+  containerId: string;
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+};
+
+export const createContainer = async (
+  params: CreateContainerParams,
+): Promise<CreateContainerResult> => {
+  let localDir = "";
   try {
-    // Create temporary directory for file sharing
+    const { files, timeout = 30_000 } = params;
+    const name = `prostgles-docker-mcp-sandbox-${Date.now()}-${randomUUID()}`;
+    localDir = join(tmpdir(), name);
+
     mkdirSync(localDir, { recursive: true });
 
     const dockerFile = files.find(({ name }) => name === "Dockerfile");
@@ -35,72 +43,59 @@ export const createContainer = async (params: CreateContainerParams) => {
       writeFileSync(tempFile, content);
     }
 
-    const buildResult = await executeDockerCommand([
+    const buildArgs = [
       "build",
       "-t",
       name,
       "-f",
       join(localDir, dockerFile.name),
       localDir,
-    ]);
+    ];
+    const buildResult = await executeDockerCommand(buildArgs, {
+      timeout: 300_000,
+    });
 
     if (buildResult.exitCode !== 0) {
-      throw new Error(
-        `Failed to build the container image: ${buildResult.stderr}`,
-      );
+      return {
+        state: "build-error",
+        command: ["docker", ...buildArgs].join(" "),
+        containerId: "",
+        stdout: buildResult.stdout,
+        stderr: buildResult.stderr,
+        exitCode: buildResult.exitCode,
+      };
     }
 
-    const { args: dockerArgs, config } = getDockerCLIArgs({
+    const { runArgs, config } = getDockerRunArgs({
       ...params,
       name,
       localDir,
     });
 
-    const result = await executeDockerCommand([
-      "run",
-      "-d",
-      "-i",
-      name,
-      ...dockerArgs,
-    ]);
+    const runResult = await executeDockerCommand(runArgs, {
+      timeout: 30_000,
+      ...config,
+      ...params,
+    });
 
-    if (result.exitCode !== 0) {
-      throw new Error(`Failed to start container: ${result.stderr}`);
-    }
-    console.error(result);
-    const containerId = result.stdout.trim();
-    // const isRunning = true;
+    const containerId = runResult.stdout.trim();
 
-    // this.emit("started", { containerId });
-
-    // Wait for container to be ready
-    await waitForContainer(containerId);
-    const logs = await getContainerLogs(containerId);
-    const info = await getContainerInfo(containerId);
     return {
+      command: ["docker", ...runArgs].join(" "),
+      state: runResult.state === "close" ? "finished" : runResult.state,
+      // runResult.stderr ? "error"
+      // : runResult.exitCode === 0 ? "finished"
+      // : "timed-out",
       containerId,
-      localDir,
-      isRunning: true,
-      name,
-      config,
-      stdout: result.stdout,
-      stderr: result.stderr,
-      exitCode: result.exitCode,
-      logs,
-      info,
+      ...config,
+      stdout: runResult.stdout,
+      stderr: runResult.stderr,
+      exitCode: runResult.exitCode,
     };
-  } catch (error) {
-    await cleanup(localDir);
-    throw error;
-  }
-};
-
-const cleanup = async (localDir: string) => {
-  try {
-    await rm(localDir, { recursive: true });
-  } catch (error: any) {
-    // Ignore cleanup errors
-    console.error(`Failed to clean up temp directory: ${error}`);
+  } finally {
+    if (localDir) {
+      rmSync(localDir, { recursive: true });
+    }
   }
 };
 

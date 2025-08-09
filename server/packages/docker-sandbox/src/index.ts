@@ -130,7 +130,7 @@ class DockerSandboxMCPServer {
                 success: true,
                 sandboxId,
                 message: "Sandbox created successfully",
-                config: containerResult.config,
+                result: containerResult,
               },
               null,
               2,

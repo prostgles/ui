@@ -3,16 +3,19 @@ import { getContainerInfo } from "./getContainerInfo";
 /**
  * Wait for container to be ready
  */
-export const waitForContainer = async (containerId: string): Promise<void> => {
+export const waitForContainer = async (containerId: string) => {
   const maxAttempts = 30;
   let attempts = 0;
-
+  let latestInfo: Awaited<ReturnType<typeof getContainerInfo>>;
   while (attempts < maxAttempts) {
     try {
-      const info = await getContainerInfo(containerId);
-      console.error(info);
-      if (info && (info.status === "running" || info.status === "exited")) {
-        return;
+      latestInfo = await getContainerInfo(containerId);
+      console.error(latestInfo);
+      if (
+        latestInfo &&
+        (latestInfo.status === "running" || latestInfo.status === "exited")
+      ) {
+        return latestInfo;
       }
     } catch (error) {
       // Continue waiting
