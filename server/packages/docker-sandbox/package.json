@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.1",
-    "prostgles-server": "^4.2.323"
+    "prostgles-types": "^4.0.177"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

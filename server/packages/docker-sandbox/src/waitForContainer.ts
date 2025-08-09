@@ -11,7 +11,7 @@ export const waitForContainer = async (containerId: string): Promise<void> => {
     try {
       const info = await getContainerInfo(containerId);
       console.error(info);
-      if (info && info.status === "running") {
+      if (info && (info.status === "running" || info.status === "exited")) {
         return;
       }
     } catch (error) {

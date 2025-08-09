@@ -30,7 +30,7 @@ const FieldFilterSchema = {
   ],
 } satisfies JSONB.FieldType;
 
-const tableConfigSchema: JSONB.JSONBSchema<JSONB.FieldTypeObj> = {
+const tableConfigSchema: JSONB.JSONBSchema = {
   record: {
     values: {
       oneOfType: [

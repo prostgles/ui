@@ -1,5 +1,5 @@
 import { mdiFileDocumentEditOutline } from "@mdi/js";
-import { getKeys, isObject } from "prostgles-types";
+import { getKeys, isObject, type AnyObject } from "prostgles-types";
 import React from "react";
 import type {
   ContextDataObject,

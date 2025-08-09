@@ -7,6 +7,8 @@ import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
 import { executeDockerCommand } from "./executeDockerCommand";
 import { getDockerCLIArgs } from "./getDockerCLIArgs";
 import { waitForContainer } from "./waitForContainer";
+import { getContainerLogs } from "./getContainerLogs";
+import { getContainerInfo } from "./getContainerInfo";
 
 export type CreateContainerParams = JSONB.GetSchemaType<
   typeof createContainerSchema
@@ -25,7 +27,6 @@ export const createContainer = async (params: CreateContainerParams) => {
       throw new Error("Dockerfile is required in the files array");
     }
     for (const { content, name } of files) {
-      // Create temporary file
       const tempFile = join(localDir, name);
       const dir = dirname(tempFile);
       if (!existsSync(dir)) {
@@ -49,9 +50,12 @@ export const createContainer = async (params: CreateContainerParams) => {
       );
     }
 
-    const dockerArgs = getDockerCLIArgs({ ...params, name, localDir });
+    const { args: dockerArgs, config } = getDockerCLIArgs({
+      ...params,
+      name,
+      localDir,
+    });
 
-    // Start container
     const result = await executeDockerCommand([
       "run",
       "-d",
@@ -71,6 +75,20 @@ export const createContainer = async (params: CreateContainerParams) => {
 
     // Wait for container to be ready
     await waitForContainer(containerId);
+    const logs = await getContainerLogs(containerId);
+    const info = await getContainerInfo(containerId);
+    return {
+      containerId,
+      localDir,
+      isRunning: true,
+      name,
+      config,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+      logs,
+      info,
+    };
   } catch (error) {
     await cleanup(localDir);
     throw error;

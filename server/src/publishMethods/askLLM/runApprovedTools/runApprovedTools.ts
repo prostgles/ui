@@ -1,5 +1,5 @@
-import { getJSONBObjectSchemaValidationError } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 import {
+  getJSONBObjectSchemaValidationError,
   getSerialisableError,
   isDefined,
   type JSONB,

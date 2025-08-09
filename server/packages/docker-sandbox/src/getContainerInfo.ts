@@ -2,7 +2,7 @@ import { executeDockerCommand } from "./executeDockerCommand";
 
 export interface ContainerInfo {
   id: string;
-  status: "created" | "running" | "stopped" | "error";
+  status: "created" | "running" | "stopped" | "error" | "exited";
   image: string;
   createdAt: Date;
 }

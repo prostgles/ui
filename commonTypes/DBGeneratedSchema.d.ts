@@ -11,9 +11,9 @@ export type DBGeneratedSchema = {
       created?: null | string;
       database_id: number;
       dbPermissions: 
-       |  {  type: 'Run SQL';  allowSQL?: boolean; }
-       |  {  type: 'All views/tables';  allowAllTables: ("select" | "insert" | "update" | "delete")[]; }
-       |  {  type: 'Custom';  customTables: (  {  tableName: string;  select?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  subscribe?: {  throttle?: number; };  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; };  update?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  checkFilterDetailed?: any;  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  dynamicFields?: (  {  filterDetailed: any;  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; } )[]; };  insert?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  checkFilterDetailed?: any; };  delete?: | boolean |  {  filterFields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any; };  sync?: {  id_fields: string[];  synced_field: string;  throttle?: number;  allow_delete?: boolean; }; } )[]; }
+       |  {  type: "Run SQL";  allowSQL?: boolean; }
+       |  {  type: "All views/tables";  allowAllTables: ("select" | "insert" | "update" | "delete")[]; }
+       |  {  type: "Custom";  customTables: (  {  tableName: string;  select?: | boolean |  {  fields: | string[] | "*" | "" |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  subscribe?: {  throttle?: number; };  filterFields?: | string[] | "*" | "" |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | "*" | "" |  Record<string, 1 | true> |  Record<string, 0 | false>; };  update?: | boolean |  {  fields: | string[] | "*" | "" |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  checkFilterDetailed?: any;  filterFields?: | string[] | "*" | "" |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | "*" | "" |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  dynamicFields?: (  {  filterDetailed: any;  fields: | string[] | "*" | "" |  Record<string, 1 | true> |  Record<string, 0 | false>; } )[]; };  insert?: | boolean |  {  fields: | string[] | "*" | "" |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  checkFilterDetailed?: any; };  delete?: | boolean |  {  filterFields: | string[] | "*" | "" |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any; };  sync?: {  id_fields: string[];  synced_field: string;  throttle?: number;  allow_delete?: boolean; }; } )[]; }
       dbsPermissions?: null | {    createWorkspaces?: boolean;   viewPublishedWorkspaces?: {  workspaceIds: string[]; };  };
       id?: number;
       llm_daily_limit?: number;
@@ -119,12 +119,12 @@ export type DBGeneratedSchema = {
       local_filepath?: null | string;
       name?: null | string;
       options: 
-       |  {  command: 'pg_dumpall';  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
-       |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean;  excludeSchema?: string;  schemaOnly?: boolean; }
+       |  {  command: "pg_dumpall";  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
+       |  {  command: "pg_dump";  format: "p" | "t" | "c";  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean;  excludeSchema?: string;  schemaOnly?: boolean; }
       restore_command?: null | string;
       restore_end?: null | string;
       restore_logs?: null | string;
-      restore_options?: {    command: 'pg_restore' | 'psql';   format: 'p' | 't' | 'c';   clean: boolean;   excludeSchema?: string;   newDbName?: string;   create?: boolean;   dataOnly?: boolean;   noOwner?: boolean;   numberOfJobs?: number;   ifExists?: boolean;   keepLogs?: boolean;  };
+      restore_options?: {    command: "pg_restore" | "psql";   format: "p" | "t" | "c";   clean: boolean;   excludeSchema?: string;   newDbName?: string;   create?: boolean;   dataOnly?: boolean;   noOwner?: boolean;   numberOfJobs?: number;   ifExists?: boolean;   keepLogs?: boolean;  };
       restore_start?: null | string;
       restore_status?: 
        | null
@@ -228,19 +228,19 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      backups_config?: null | {    enabled?: boolean;   cloudConfig: null |  {  credential_id?: null | number; };   frequency: 'daily' | 'monthly' | 'weekly' | 'hourly';   hour?: number;   dayOfWeek?: number;   dayOfMonth?: number;   keepLast?: number;   err?: null | string;   dump_options: |  {  command: 'pg_dumpall';  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
- |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean;  excludeSchema?: string;  schemaOnly?: boolean; };  };
+      backups_config?: null | {    enabled?: boolean;   cloudConfig: null |  {  credential_id?: null | number; };   frequency: "daily" | "monthly" | "weekly" | "hourly";   hour?: number;   dayOfWeek?: number;   dayOfMonth?: number;   keepLast?: number;   err?: null | string;   dump_options: |  {  command: "pg_dumpall";  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
+ |  {  command: "pg_dump";  format: "p" | "t" | "c";  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean;  excludeSchema?: string;  schemaOnly?: boolean; };  };
       db_host: string;
       db_name: string;
       db_port: number;
-      file_table_config?: null | {    fileTable?: string;   storageType: |  {  type: 'local'; }
- |  {  type: 'S3';  credential_id: number; };   referencedTables?: any;   delayedDelete?: {  deleteAfterNDays: number;  checkIntervalHours?: number; };  };
+      file_table_config?: null | {    fileTable?: string;   storageType: |  {  type: "local"; }
+ |  {  type: "S3";  credential_id: number; };   referencedTables?: any;   delayedDelete?: {  deleteAfterNDays: number;  checkIntervalHours?: number; };  };
       id?: number;
       rest_api_enabled?: null | boolean;
       sync_users?: null | boolean;
       table_config?: null | Record<string, 
  |  {  isLookupTable: {  values: Record<string, string>; }; }
- |  {  columns: Record<string,  | string |  {  hint?: string;  nullable?: boolean;  isText?: boolean;  trimmed?: boolean;  defaultValue?: any; } |  {  jsonbSchema: |  {  type: 'string' | 'number' | 'boolean' | 'Date' | 'time' | 'timestamp' | 'string[]' | 'number[]' | 'boolean[]' | 'Date[]' | 'time[]' | 'timestamp[]';  optional?: boolean;  description?: string; } |  {  type: 'Lookup' | 'Lookup[]';  optional?: boolean;  description?: string; } |  {  type: 'object';  optional?: boolean;  description?: string; }; }>; }>
+ |  {  columns: Record<string,  | string |  {  hint?: string;  nullable?: boolean;  isText?: boolean;  trimmed?: boolean;  defaultValue?: any; } |  {  jsonbSchema: |  {  type: "string" | "number" | "boolean" | "Date" | "time" | "timestamp" | "string[]" | "number[]" | "boolean[]" | "Date[]" | "time[]" | "timestamp[]";  optional?: boolean;  description?: string; } |  {  type: "Lookup" | "Lookup[]";  optional?: boolean;  description?: string; } |  {  type: "object";  optional?: boolean;  description?: string; }; }>; }>
       table_config_ts?: null | string;
       table_config_ts_disabled?: null | boolean;
       table_schema_positions?: null | Partial<Record<string,  {  x: number;  y: number; }>>
@@ -257,11 +257,11 @@ export type DBGeneratedSchema = {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
-      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: 'withMagicLink';  enabled?: boolean;  smtp: |  {  type: 'smtp';  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
- |  {  signupType: 'withPassword';  enabled?: boolean;  minPasswordLength?: number;  smtp: |  {  type: 'smtp';  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: 'login' | 'none' | 'consent' | 'select_account' | 'create';  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };   customOAuth?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  displayName: string;  displayIconPath?: string;  authorizationURL: string;  tokenURL: string;  authOpts?: {  scope: string[]; }; };  };
+      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: "withMagicLink";  enabled?: boolean;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
+ |  {  signupType: "withPassword";  enabled?: boolean;  minPasswordLength?: number;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: "login" | "none" | "consent" | "select_account" | "create";  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };   customOAuth?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  displayName: string;  displayIconPath?: string;  authorizationURL: string;  tokenURL: string;  authOpts?: {  scope: string[]; }; };  };
       enable_logs?: boolean;
       id?: number;
-      login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x-real-ip' | 'remote_ip' | 'ip';  };
+      login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: "x-real-ip" | "remote_ip" | "ip";  };
       login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
       mcp_servers_disabled?: boolean;
@@ -288,9 +288,9 @@ export type DBGeneratedSchema = {
       id?: string;
       last_updated: string;
       options: 
-       |  {  type: 'table';  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
-       |  {  type: 'map';  dataSource?: |  {  type: 'sql';  sql: string;  withStatement: string; } |  {  type: 'table';  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: 'local-table';  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  osmLayerQuery?: string;  mapIcons?: |  {  type: 'fixed';  display?: 'icon' | 'icon+circle';  iconPath: string; } |  {  type: 'conditional';  display?: 'icon' | 'icon+circle';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
-       |  {  type: 'timechart';  dataSource?: |  {  type: 'sql';  sql: string;  withStatement: string; } |  {  type: 'table';  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: 'local-table';  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  groupByColumn?: string;  otherColumns?: (  {  name: string;  label?: string;  udt_name: string; } )[];  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
+       |  {  type: "table";  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
+       |  {  type: "map";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  osmLayerQuery?: string;  mapIcons?: |  {  type: "fixed";  display?: "icon" | "icon+circle";  iconPath: string; } |  {  type: "conditional";  display?: "icon" | "icon+circle";  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: "fixed";  colorArr: number[]; } |  {  type: "scale";  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: "conditional";  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
+       |  {  type: "timechart";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  groupByColumn?: string;  otherColumns?: (  {  name: string;  label?: string;  udt_name: string; } )[];  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: "$min" | "$max" | "$countAll" | "$avg" | "$sum";  numericColumn: string; }; } )[]; }
       user_id: string;
       w1_id: string;
       w2_id: string;
@@ -308,18 +308,18 @@ export type DBGeneratedSchema = {
       created?: null | string;
       db_data_permissions?: 
        | null
-       |  {  Mode: 'None'; }
-       |  {  Mode: 'Run readonly SQL';  query_timeout?: number;  auto_approve?: boolean; }
-       |  {  Mode: 'Run commited SQL';  query_timeout?: number;  auto_approve?: boolean; }
-       |  {  Mode: 'Custom';  auto_approve?: boolean;  tables: (  {  tableName: string;  select?: boolean;  update?: boolean;  insert?: boolean;  delete?: boolean; } )[]; }
+       |  {  Mode: "None"; }
+       |  {  Mode: "Run readonly SQL";  query_timeout?: number;  auto_approve?: boolean; }
+       |  {  Mode: "Run commited SQL";  query_timeout?: number;  auto_approve?: boolean; }
+       |  {  Mode: "Custom";  auto_approve?: boolean;  tables: (  {  tableName: string;  select?: boolean;  update?: boolean;  insert?: boolean;  delete?: boolean; } )[]; }
       db_schema_permissions?: 
        | null
-       |  {  type: 'None'; }
-       |  {  type: 'Full'; }
-       |  {  type: 'Custom';  tables: string; }
+       |  {  type: "None"; }
+       |  {  type: "Full"; }
+       |  {  type: "Custom";  tables: string; }
       disabled_message?: null | string;
       disabled_until?: null | string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
       llm_prompt_id?: null | number;
@@ -329,8 +329,8 @@ export type DBGeneratedSchema = {
       name?: string;
       status?: 
        | null
-       |  {  state: 'stopped'; }
-       |  {  state: 'loading';  since: string; }
+       |  {  state: "stopped"; }
+       |  {  state: "loading";  since: string; }
       user_id: string;
     };
   };
@@ -368,7 +368,7 @@ export type DBGeneratedSchema = {
     columns: {
       api_key?: string;
       created?: null | string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
       is_default?: boolean;
@@ -390,10 +390,10 @@ export type DBGeneratedSchema = {
       id?: string;
       llm_model_id?: null | number;
       message:  ( 
- |  {  type: 'text';  text: string;  reasoning?: string; }
- |  {  type: 'image' | 'audio' | 'video' | 'application' | 'text';  source: {  type: 'base64';  media_type: string;  data: string; }; }
- |  {  type: 'tool_result';  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: 'text';  text: string; } |  {  type: 'image' | 'audio';  mimeType: string;  data: string; } |  {  type: 'resource';  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } |  {  type: 'resource_link';  uri: string;  name: string;  mimeType?: string;  description?: string; } )[];  is_error?: boolean; }
- |  {  type: 'tool_use';  id: string;  name: string;  input: any; } )[]
+ |  {  type: "text";  text: string;  reasoning?: string; }
+ |  {  type: "image" | "audio" | "video" | "application" | "text";  source: {  type: "base64";  media_type: string;  data: string; }; }
+ |  {  type: "tool_result";  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: "text";  text: string; } |  {  type: "image" | "audio";  mimeType: string;  data: string; } |  {  type: "resource";  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } |  {  type: "resource_link";  uri: string;  name: string;  mimeType?: string;  description?: string; } )[];  is_error?: boolean; }
+ |  {  type: "tool_use";  id: string;  name: string;  input: any; } )[]
       meta?: null | any;
       user_id?: null | string;
     };
@@ -409,7 +409,7 @@ export type DBGeneratedSchema = {
  | string;  };
       chat_suitability_rank?: null | string;
       context_length?: number;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
       mcp_tool_support?: null | boolean;
@@ -431,7 +431,7 @@ export type DBGeneratedSchema = {
       description?: null | string;
       id?: number;
       name?: string;
-      options?: null | {    prompt_type?: 'dashboards' | 'tasks';  };
+      options?: null | {    prompt_type?: "dashboards" | "tasks";  };
       prompt?: string;
       user_id?: null | string;
     };
@@ -446,7 +446,7 @@ export type DBGeneratedSchema = {
       api_docs_url?: null | string;
       api_pricing_url?: null | string;
       api_url: string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id: string;
       logo_url?: null | string;
@@ -587,8 +587,8 @@ export type DBGeneratedSchema = {
       args?: null | string[];
       command: "npx" | "npm" | "uvx" | "uv" | "docker"
       config_schema?: null | Record<string, 
- |  {  type: 'env';  title?: string;  optional?: boolean;  description?: string; }
- |  {  type: 'arg';  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
+ |  {  type: "env";  title?: string;  optional?: boolean;  description?: string; }
+ |  {  type: "arg";  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
       created?: null | string;
       cwd?: null | string;
       enabled?: boolean;
@@ -599,8 +599,8 @@ export type DBGeneratedSchema = {
       name: string;
       source?: 
        | null
-       |  {  type: 'github';  name: string;  repoUrl: string;  installationCommands?: (  {  command: string;  args?: string[]; } )[]; }
-       |  {  type: 'code';  packageJson: string;  tsconfigJson: string;  files: Record<string, string>; }
+       |  {  type: "github";  name: string;  repoUrl: string;  installationCommands?: (  {  command: string;  args?: string[]; } )[]; }
+       |  {  type: "code";  packageJson: string;  tsconfigJson: string;  files: Record<string, string>; }
       stderr?: null | string;
     };
   };
@@ -612,9 +612,9 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       arguments?:  ( 
- |  {  name: string;  type: 'any' | 'string' | 'number' | 'boolean' | 'Date' | 'time' | 'timestamp' | 'string[]' | 'number[]' | 'boolean[]' | 'Date[]' | 'time[]' | 'timestamp[]';  defaultValue?: string;  optional?: boolean;  allowedValues?: string[]; }
- |  {  name: string;  type: 'Lookup' | 'Lookup[]';  defaultValue?: any;  optional?: boolean;  lookup: { "table": string; "column": string; }; }
- |  {  name: string;  type: 'JsonbSchema';  defaultValue?: any;  optional?: boolean;  schema: |  {  type: 'boolean' | 'number' | 'integer' | 'string' | 'Date' | 'time' | 'timestamp' | 'any' | 'boolean[]' | 'number[]' | 'integer[]' | 'string[]' | 'Date[]' | 'time[]' | 'timestamp[]' | 'any[]';  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; } |  {  type: 'object' | 'object[]';  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any;  properties: Record<string,  {  type: 'boolean' | 'number' | 'integer' | 'string' | 'Date' | 'time' | 'timestamp' | 'any' | 'boolean[]' | 'number[]' | 'integer[]' | 'string[]' | 'Date[]' | 'time[]' | 'timestamp[]' | 'any[]';  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; }>; }; } )[]
+ |  {  name: string;  type: "any" | "string" | "number" | "boolean" | "Date" | "time" | "timestamp" | "string[]" | "number[]" | "boolean[]" | "Date[]" | "time[]" | "timestamp[]";  defaultValue?: string;  optional?: boolean;  allowedValues?: string[]; }
+ |  {  name: string;  type: "Lookup" | "Lookup[]";  defaultValue?: any;  optional?: boolean;  lookup: { "table": string; "column": string; }; }
+ |  {  name: string;  type: "JsonbSchema";  defaultValue?: any;  optional?: boolean;  schema: |  {  type: "boolean" | "number" | "integer" | "string" | "Date" | "time" | "timestamp" | "any" | "boolean[]" | "number[]" | "integer[]" | "string[]" | "Date[]" | "time[]" | "timestamp[]" | "any[]";  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; } |  {  type: "object" | "object[]";  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any;  properties: Record<string,  {  type: "boolean" | "number" | "integer" | "string" | "Date" | "time" | "timestamp" | "any" | "boolean[]" | "number[]" | "integer[]" | "string[]" | "Date[]" | "time[]" | "timestamp[]" | "any[]";  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; }>; }; } )[]
       connection_id?: null | string;
       description?: string;
       id?: number;
@@ -748,14 +748,14 @@ export type DBGeneratedSchema = {
       id?: string;
       last_updated?: null | string;
       name?: null | string;
-      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: 'dark' | 'light' | 'from-system';  };
+      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";  };
       password: string;
       passwordless_admin?: null | boolean;
       registration?: 
        | null
-       |  {  type: 'password-w-email-confirmation';  email_confirmation: |  {  status: 'confirmed';  date: string; } |  {  status: 'pending';  confirmation_code: string;  date: string; }; }
-       |  {  type: 'magic-link';  otp_code: string;  date: string;  used_on?: string; }
-       |  {  type: 'OAuth';  provider: 'google' | 'facebook' | 'github' | 'microsoft' | 'customOAuth';  user_id: string;  profile: any; }
+       |  {  type: "password-w-email-confirmation";  email_confirmation: |  {  status: "confirmed";  date: string; } |  {  status: "pending";  confirmation_code: string;  date: string; }; }
+       |  {  type: "magic-link";  otp_code: string;  date: string;  used_on?: string; }
+       |  {  type: "OAuth";  provider: "google" | "facebook" | "github" | "microsoft" | "customOAuth";  user_id: string;  profile: any; }
       status?: string;
       type?: string;
       username: string;
@@ -788,7 +788,7 @@ export type DBGeneratedSchema = {
       show_menu?: null | boolean;
       sort?: null | any;
       sql?: string;
-      sql_options?: {    executeOptions?: 'full' | 'block' | 'smallest-block';   errorMessageDisplay?: 'tooltip' | 'bottom' | 'both';   tabSize?: number;   lineNumbers?: 'on' | 'off';   renderMode?: 'table' | 'csv' | 'JSON';   minimap?: {  enabled: boolean; };   acceptSuggestionOnEnter?: 'on' | 'smart' | 'off';   expandSuggestionDocs?: boolean;   maxCharsPerCell?: number;   theme?: 'vs' | 'vs-dark' | 'hc-black' | 'hc-light';   showRunningQueryStats?: boolean;  };
+      sql_options?: {    executeOptions?: "full" | "block" | "smallest-block";   errorMessageDisplay?: "tooltip" | "bottom" | "both";   tabSize?: number;   lineNumbers?: "on" | "off";   renderMode?: "table" | "csv" | "JSON";   minimap?: {  enabled: boolean; };   acceptSuggestionOnEnter?: "on" | "smart" | "off";   expandSuggestionDocs?: boolean;   maxCharsPerCell?: number;   theme?: "vs" | "vs-dark" | "hc-black" | "hc-light";   showRunningQueryStats?: boolean;  };
       table_name?: null | string;
       table_oid?: null | number;
       type?: null | "map" | "sql" | "table" | "timechart" | "card" | "method"
@@ -825,7 +825,7 @@ export type DBGeneratedSchema = {
       last_used?: string;
       layout?: null | any;
       name?: string;
-      options?: {    hideCounts?: boolean;   tableListEndInfo?: 'none' | 'count' | 'size';   tableListSortBy?: 'name' | 'extraInfo';   showAllMyQueries?: boolean;   defaultLayoutType?: 'row' | 'tab' | 'col';   pinnedMenu?: boolean;   pinnedMenuWidth?: number;  };
+      options?: {    hideCounts?: boolean;   tableListEndInfo?: "none" | "count" | "size";   tableListSortBy?: "name" | "extraInfo";   showAllMyQueries?: boolean;   defaultLayoutType?: "row" | "tab" | "col";   pinnedMenu?: boolean;   pinnedMenuWidth?: number;  };
       parent_workspace_id?: null | string;
       publish_mode?: null | string;
       published?: boolean;

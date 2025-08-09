@@ -87,8 +87,11 @@ export const getDockerCLIArgs = ({
   //   args.push("sh", "-c", startupCommand);
   // } else {
   // Keep container running with default command
-  args.push("tail", "-f", "/dev/null");
+  // args.push("tail", "-f", "/dev/null");
   // }
 
-  return args;
+  return {
+    args,
+    config: { user, readOnly, workingDir, volumes, localDir, name },
+  };
 };

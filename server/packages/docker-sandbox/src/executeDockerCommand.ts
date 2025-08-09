@@ -1,6 +1,7 @@
 import { spawn } from "child_process";
 
 export interface ExecutionResult {
+  command: string;
   stdout: string;
   stderr: string;
   exitCode: number;
@@ -30,7 +31,7 @@ export const executeDockerCommand = async (
       stdio: ["pipe", "pipe", "pipe"],
       env: { ...process.env, ...options.environment },
     });
-
+    const command = `docker ${args.join(" ")}`;
     let stdout = "";
     let stderr = "";
     let timedOut = false;
@@ -55,6 +56,7 @@ export const executeDockerCommand = async (
       const executionTime = Date.now() - startTime;
 
       resolve({
+        command,
         stdout,
         stderr,
         exitCode: code || 0,
@@ -66,6 +68,7 @@ export const executeDockerCommand = async (
     child.on("error", (error) => {
       clearTimeout(timeoutId);
       resolve({
+        command,
         stdout,
         stderr: stderr + error.message,
         exitCode: -1,
