@@ -3,29 +3,139 @@ import {
   createContainer,
   type CreateContainerParams,
 } from "./createContainer.js";
+import { strict } from "assert";
 
-void test("DockerSandbox", async () => {
+const getFilesFromObject = (obj: Record<string, string>) =>
+  Object.entries(obj).map(([name, content]) => ({ name, content }));
+
+void test("createContainer build error", async () => {
   const config = {
-    files: [
-      {
-        content:
-          '{\n  "name": "fetch-app",\n  "version": "1.0.0",\n  "description": "Basic Node.js app that fetches from host port 3004",\n  "main": "index.js",\n  "scripts": {\n    "start": "node index.js"\n  },\n  "dependencies": {\n    "axios": "^1.6.0"\n  }\n}',
-        name: "package.json",
-      },
-      {
-        content:
-          "const axios = require('axios');\n\nconst HOST_URL = 'http://host.docker.internal:3004';\n\nasync function fetchFromHost() {\n  try {\n    console.log(`Attempting to fetch from ${HOST_URL}`);\n    const response = await axios.get(HOST_URL, {\n      timeout: 10000 // 10 second timeout\n    });\n    console.log('Response status:', response.status);\n    console.log('Response data:', response.data);\n  } catch (error) {\n    if (error.code === 'ECONNREFUSED') {\n      console.log('Connection refused - make sure service is running on host port 3004');\n    } else if (error.code === 'ETIMEDOUT') {\n      console.log('Request timed out');\n    } else {\n      console.log('Error fetching from host:', error.message);\n    }\n  }\n}\n\n// Fetch immediately\nfetchFromHost();\n\n// Then fetch every 30 seconds\nsetInterval(fetchFromHost, 30000);\n\nconsole.log('Fetch app started. Will attempt to fetch from host:3004 every 30 seconds...');",
-        name: "index.js",
-      },
-      {
-        name: "Dockerfile",
-        content:
-          'FROM node:18-alpine\nWORKDIR /workspace\nCOPY . .\nRUN npm install  \nCMD ["node", "index.js"]',
-      },
-    ],
+    files: getFilesFromObject({
+      ...filesObject,
+      Dockerfile: Dockerfile.replace(
+        "WORKDIR",
+        "WORKDIR_INVALID", // Introduce an error
+      ),
+    }),
     networkMode: "bridge",
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(config);
-  console.log("Sandbox logs:", sandbox.stdout.toString());
-  console.log("Sandbox logs:", sandbox.stderr.toString());
+  strict.equal(sandbox.state, "build-error");
+  strict.equal(sandbox.stderr.includes("| >>> WORKDIR_INVALID"), true);
 });
+
+void test("createContainer run error", async () => {
+  const config = {
+    files: getFilesFromObject({
+      ...filesObject,
+      "index.js": indexJsContent.replace(
+        `require`,
+        `requireInvalid`, // Introduce an error
+      ),
+    }),
+    networkMode: "bridge",
+  } satisfies CreateContainerParams;
+  const sandbox = await createContainer(config);
+  strict.equal(sandbox.state, "error");
+  strict.equal(sandbox.stderr.includes("requireInvalid is not defined"), true);
+});
+
+void test("createContainer run timeout", async () => {
+  const config = {
+    files: getFilesFromObject({
+      ...filesObject,
+      "index.js": indexJsContent.replace(
+        `try { `,
+        `try { \nawait new Promise(resolve => setTimeout(resolve, 120_000));\n `,
+      ),
+    }),
+    timeout: 3_000,
+  } satisfies CreateContainerParams;
+  const sandbox = await createContainer(config);
+  strict.equal(sandbox.state, "timed-out");
+});
+
+void test("createContainer stdout response", async () => {
+  const expectedOutput = "Hello from index.js";
+  const config = {
+    files: getFilesFromObject({
+      ...filesObject,
+      "index.js": `console.log('${expectedOutput}');`,
+    }),
+    timeout: 3_000,
+  } satisfies CreateContainerParams;
+  const sandbox = await createContainer(config);
+  strict.equal(sandbox.state, "finished");
+  strict.equal(sandbox.stdout, expectedOutput + "\n");
+  strict.equal(sandbox.stderr, "");
+});
+
+void test("createContainer stderr response", async () => {
+  const expectedOutput = "Hello from index.js";
+  const config = {
+    files: getFilesFromObject({
+      ...filesObject,
+      "index.js": `console.error('${expectedOutput}');`,
+    }),
+    timeout: 3_000,
+  } satisfies CreateContainerParams;
+  const sandbox = await createContainer(config);
+  console.log("Sandbox result:", sandbox);
+  strict.equal(sandbox.state, "finished");
+  strict.equal(sandbox.stdout, "");
+  strict.equal(sandbox.stderr, expectedOutput + "\n");
+});
+
+const packageJson = {
+  name: "fetch-app",
+  version: "1.0.0",
+  description: "Basic Node.js app that fetches from host port 3004",
+  main: "index.js",
+  scripts: { start: "node index.js" },
+  dependencies: { axios: "^1.6.0" },
+};
+
+const indexJsContent = `
+const axios = require('axios');
+const HOST_URL = 'http://host.docker.internal:3004';
+async function fetchFromHost() {  
+  try { 
+    console.log(\`Attempting to fetch from \${HOST_URL}\`);
+    const response = await axios.get(HOST_URL, {
+      timeout: 10000 // 10 second timeout    
+    });    
+    console.log('Response status:', response.status); console.log('Response data:', response.data);  
+  } catch (error) {    
+    if (error.code === 'ECONNREFUSED') {
+      console.log('Connection refused - make sure service is running on host port 3004');    
+    } else if (error.code === 'ETIMEDOUT') {
+      console.log('Request timed out');
+    } else {
+      console.log('Error fetching from host:', error.message);
+    }
+  }
+}
+fetchFromHost();
+setInterval(fetchFromHost, 30000);
+console.log('Fetch app started. Will attempt to fetch from host:3004 every 30 seconds...');
+`;
+
+const Dockerfile = `
+FROM node:18-alpine
+
+WORKDIR /workspace
+
+COPY package*.json ./
+
+RUN npm install  
+
+COPY . .
+
+CMD ["node", "index.js"]
+`;
+
+const filesObject = {
+  "package.json": JSON.stringify(packageJson, null, 2),
+  "index.js": indexJsContent,
+  Dockerfile: Dockerfile,
+};

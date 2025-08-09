@@ -6,7 +6,19 @@ npx tsc
 cd ../server
 npx tsc
 
-cd ..
+
+cd ./packages
+for dir in */; do
+  echo "Running server/packages test from $dir"
+  cd "$dir" || continue
+  npm i && npm test && rm -rf ./node_modules
+  
+  cd ..
+done 
+
+cd ../..
+
+echo ">>> Running e2e tests"
 
 rm -f ./client/configs/last_compiled.txt
 PRGL_TEST=true npm run dev &
