@@ -1,3 +1,4 @@
+import { filterArr } from "../../../../commonTypes/llmUtils";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { getCommandElemSelector, type Command } from "../../Testing";
 import type { AlertContext } from "../../components/AlertProvider";
@@ -112,9 +113,9 @@ export const getUIDocShorterPath = (
   currentPage: UIDocPage,
   prevParents: UIDoc[],
 ): undefined | UIDoc[] => {
-  const currentPageLinks = currentPage.children.filter(
-    (child) => child.type === "link",
-  );
+  const currentPageLinks = filterArr(currentPage.children, {
+    type: "link",
+  } as const);
   const shortcut = prevParents.slice().map((doc, index) => {
     if (doc.type === "page" || doc.type === "link") {
       const matchingLink = currentPageLinks.find((link) => {

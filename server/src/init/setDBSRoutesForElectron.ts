@@ -1,8 +1,12 @@
 import { randomBytes } from "crypto";
 import type { Express, RequestHandler } from "express";
 import { removeExpressRoute } from "prostgles-server/dist/Auth/AuthHandler";
-import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
-import { getSerialisableError, pickKeys, tryCatchV2 } from "prostgles-types";
+import {
+  assertJSONBObjectAgainstSchema,
+  getSerialisableError,
+  pickKeys,
+  tryCatchV2,
+} from "prostgles-types";
 import type { Server } from "socket.io";
 import { DEFAULT_ELECTRON_CONNECTION } from "../../../commonTypes/electronInitTypes";
 import { testDBConnection } from "../connectionUtils/testDBConnection";

@@ -1,8 +1,11 @@
 import { test } from "node:test";
-import { DockerSandbox, type DockerConfig } from "./DockerSandbox.js";
+import {
+  createContainer,
+  type CreateContainerParams,
+} from "./createContainer.js";
 
-void test("DockerSandbox", async (t) => {
-  const config: DockerConfig & { files: any } = {
+void test("DockerSandbox", async () => {
+  const config = {
     files: [
       {
         content:
@@ -21,10 +24,8 @@ void test("DockerSandbox", async (t) => {
       },
     ],
     networkMode: "bridge",
-  } as const;
-  const sandbox = new DockerSandbox(config);
-  await sandbox.start();
-  const logs = await sandbox.getLogs();
-  console.log("Sandbox logs:", logs);
-  await sandbox.stop();
+  } satisfies CreateContainerParams;
+  const sandbox = await createContainer(config);
+  console.log("Sandbox logs:", sandbox.stdout.toString());
+  console.log("Sandbox logs:", sandbox.stderr.toString());
 });

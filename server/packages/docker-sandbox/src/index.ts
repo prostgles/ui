@@ -8,13 +8,12 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import { DockerConfig, DockerSandbox } from "./DockerSandbox.js";
+import { assertJSONBObjectAgainstSchema } from "prostgles-types";
 import { TOOLS } from "./TOOLS.js";
+import { createContainer, createContainerSchema } from "./createContainer.js";
 
 interface ActiveSandbox {
   id: string;
-  sandbox: DockerSandbox;
-  config: DockerConfig;
   createdAt: Date;
   lastUsed: Date;
 }
@@ -40,7 +39,7 @@ class DockerSandboxMCPServer {
     );
 
     this.setupToolHandlers();
-    this.setupCleanupInterval();
+    // this.setupCleanupInterval();
   }
 
   private setupToolHandlers(): void {
@@ -55,44 +54,38 @@ class DockerSandboxMCPServer {
 
       try {
         if (name === "create_container") {
-          const { sandboxId, ...sandbox } = await this.createSandbox(
-            args as unknown as DockerConfig,
-          );
-          await this.copyFilesToContainer({
-            sandboxId,
-            files: (args as any).files,
-          });
+          const { sandboxId, ...sandbox } = await this.createSandbox(args);
           return sandbox;
         }
-        if (name === "execute_code") {
-          return await this.executeCode(args);
-        }
-        if (name === "list_sandboxes") {
-          return this.listSandboxes();
-        }
-        if (name === "get_sandbox_info") {
-          return await this.getSandboxInfo(args);
-        }
-        if (name === "patch_sandbox") {
-          return await this.patchSandbox(args);
-        }
-        if (name === "get_sandbox_logs") {
-          return await this.getSandboxLogs(args);
-        }
-        if (name === "stop_sandbox") {
-          return await this.stopSandbox(args);
-        }
-        if (name === "check_docker_availability") {
-          return await this.checkDockerAvailability();
-        }
-        if (name === "run_quick_code") {
-          return await this.runQuickCode(
-            args as unknown as DockerConfig & {
-              code: string;
-              language: string;
-            },
-          );
-        }
+        // if (name === "execute_code") {
+        //   return await this.executeCode(args);
+        // }
+        // if (name === "list_sandboxes") {
+        //   return this.listSandboxes();
+        // }
+        // if (name === "get_sandbox_info") {
+        //   return await this.getSandboxInfo(args);
+        // }
+        // if (name === "patch_sandbox") {
+        //   return await this.patchSandbox(args);
+        // }
+        // if (name === "get_sandbox_logs") {
+        //   return await this.getSandboxLogs(args);
+        // }
+        // if (name === "stop_sandbox") {
+        //   return await this.stopSandbox(args);
+        // }
+        // if (name === "check_docker_availability") {
+        //   return await this.checkDockerAvailability();
+        // }
+        // if (name === "run_quick_code") {
+        //   return await this.runQuickCode(
+        //     args as unknown as DockerConfig & {
+        //       code: string;
+        //       language: string;
+        //     },
+        //   );
+        // }
         throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       } catch (error) {
         if (error instanceof McpError) {
@@ -106,7 +99,8 @@ class DockerSandboxMCPServer {
     });
   }
 
-  private async createSandbox(args: DockerConfig) {
+  private async createSandbox(args: unknown) {
+    assertJSONBObjectAgainstSchema(createContainerSchema.type, args, "");
     if (this.activeSandboxes.size >= this.MAX_SANDBOXES) {
       throw new McpError(
         ErrorCode.InvalidRequest,
@@ -114,25 +108,12 @@ class DockerSandboxMCPServer {
       );
     }
 
-    const config: DockerConfig = {
-      memory: args.memory || "512m",
-      cpus: args.cpus || "1",
-      timeout: args.timeout || 30000,
-      networkMode: args.networkMode || "none",
-      environment: args.environment || {},
-      files: args.files,
-    };
-
-    const sandbox = new DockerSandbox(config);
-    const sandboxId = `sandbox-${Date.now()}-${randomUUID()}`;
-
     try {
-      await sandbox.start();
+      const containerResult = await createContainer(args);
+      const sandboxId = `sandbox-${Date.now()}-${randomUUID()}`;
 
       const activeSandbox: ActiveSandbox = {
         id: sandboxId,
-        sandbox,
-        config,
         createdAt: new Date(),
         lastUsed: new Date(),
       };
@@ -149,11 +130,7 @@ class DockerSandboxMCPServer {
                 success: true,
                 sandboxId,
                 message: "Sandbox created successfully",
-                config: {
-                  memory: config.memory,
-                  cpus: config.cpus,
-                  networkMode: config.networkMode,
-                },
+                config: containerResult.config,
               },
               null,
               2,
@@ -169,577 +146,566 @@ class DockerSandboxMCPServer {
     }
   }
 
-  private async executeCode(args: any) {
-    const { sandboxId, code, language, timeout, stdin } = args;
-    const activeSandbox = this.activeSandboxes.get(sandboxId);
+  // private async executeCode(args: any) {
+  //   const { sandboxId, code, language, timeout, stdin } = args;
+  //   const activeSandbox = this.activeSandboxes.get(sandboxId);
 
-    if (!activeSandbox) {
-      throw new McpError(
-        ErrorCode.InvalidRequest,
-        `Sandbox ${sandboxId} not found`,
-      );
-    }
+  //   if (!activeSandbox) {
+  //     throw new McpError(
+  //       ErrorCode.InvalidRequest,
+  //       `Sandbox ${sandboxId} not found`,
+  //     );
+  //   }
 
-    activeSandbox.lastUsed = new Date();
+  //   activeSandbox.lastUsed = new Date();
 
-    try {
-      const result = await activeSandbox.sandbox.runCode(code, language, {
-        timeout,
-        stdin,
-      });
+  //   try {
+  //     const result = await activeSandbox.sandbox.runCode(code, language, {
+  //       timeout,
+  //       stdin,
+  //     });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: true,
-                result: {
-                  stdout: result.stdout,
-                  stderr: result.stderr,
-                  exitCode: result.exitCode,
-                  timedOut: result.timedOut,
-                  executionTime: result.executionTime,
-                },
-                sandboxId,
-                language,
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to execute code: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(
+  //             {
+  //               success: true,
+  //               result: {
+  //                 stdout: result.stdout,
+  //                 stderr: result.stderr,
+  //                 exitCode: result.exitCode,
+  //                 timedOut: result.timedOut,
+  //                 executionTime: result.executionTime,
+  //               },
+  //               sandboxId,
+  //               language,
+  //             },
+  //             null,
+  //             2,
+  //           ),
+  //         },
+  //       ],
+  //     };
+  //   } catch (error) {
+  //     throw new McpError(
+  //       ErrorCode.InternalError,
+  //       `Failed to execute code: ${error instanceof Error ? error.message : String(error)}`,
+  //     );
+  //   }
+  // }
 
-  private listSandboxes() {
-    const sandboxes = Array.from(this.activeSandboxes.values()).map(
-      (sandbox) => ({
-        id: sandbox.id,
-        createdAt: sandbox.createdAt,
-        lastUsed: sandbox.lastUsed,
-        memory: sandbox.config.memory,
-        cpus: sandbox.config.cpus,
-      }),
-    );
+  // private listSandboxes() {
+  //   const sandboxes = Array.from(this.activeSandboxes.values()).map(
+  //     (sandbox) => ({
+  //       id: sandbox.id,
+  //       createdAt: sandbox.createdAt,
+  //       lastUsed: sandbox.lastUsed,
+  //       memory: sandbox.config.memory,
+  //       cpus: sandbox.config.cpus,
+  //     }),
+  //   );
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(
-            {
-              success: true,
-              sandboxes,
-              total: sandboxes.length,
-            },
-            null,
-            2,
-          ),
-        },
-      ],
-    };
-  }
+  //   return {
+  //     content: [
+  //       {
+  //         type: "text",
+  //         text: JSON.stringify(
+  //           {
+  //             success: true,
+  //             sandboxes,
+  //             total: sandboxes.length,
+  //           },
+  //           null,
+  //           2,
+  //         ),
+  //       },
+  //     ],
+  //   };
+  // }
 
-  private async getSandboxInfo(args: any) {
-    const { sandboxId } = args;
-    const activeSandbox = this.activeSandboxes.get(sandboxId);
+  // private async getSandboxInfo(args: any) {
+  //   const { sandboxId } = args;
+  //   const activeSandbox = this.activeSandboxes.get(sandboxId);
 
-    if (!activeSandbox) {
-      throw new McpError(
-        ErrorCode.InvalidRequest,
-        `Sandbox ${sandboxId} not found`,
-      );
-    }
+  //   if (!activeSandbox) {
+  //     throw new McpError(
+  //       ErrorCode.InvalidRequest,
+  //       `Sandbox ${sandboxId} not found`,
+  //     );
+  //   }
 
-    try {
-      const containerInfo = await activeSandbox.sandbox.getContainerInfo();
+  //   try {
+  //     const containerInfo = await activeSandbox.sandbox.getContainerInfo();
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: true,
-                sandbox: {
-                  id: activeSandbox.id,
-                  config: activeSandbox.config,
-                  createdAt: activeSandbox.createdAt,
-                  lastUsed: activeSandbox.lastUsed,
-                  containerInfo,
-                },
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to get sandbox info: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(
+  //             {
+  //               success: true,
+  //               sandbox: {
+  //                 id: activeSandbox.id,
+  //                 config: activeSandbox.config,
+  //                 createdAt: activeSandbox.createdAt,
+  //                 lastUsed: activeSandbox.lastUsed,
+  //                 containerInfo,
+  //               },
+  //             },
+  //             null,
+  //             2,
+  //           ),
+  //         },
+  //       ],
+  //     };
+  //   } catch (error) {
+  //     throw new McpError(
+  //       ErrorCode.InternalError,
+  //       `Failed to get sandbox info: ${error instanceof Error ? error.message : String(error)}`,
+  //     );
+  //   }
+  // }
 
-  private async copyFilesToContainer(args: {
-    sandboxId: string;
-    files: { content: string; name: string }[];
-  }) {
-    const { sandboxId, files } = args;
-    const activeSandbox = this.activeSandboxes.get(sandboxId);
+  // private async copyFilesToContainer(args: {
+  //   sandboxId: string;
+  //   files: { content: string; name: string }[];
+  // }) {
+  //   const { sandboxId, files } = args;
+  //   const activeSandbox = this.activeSandboxes.get(sandboxId);
 
-    if (!activeSandbox) {
-      throw new McpError(
-        ErrorCode.InvalidRequest,
-        `Sandbox ${sandboxId} not found`,
-      );
-    }
+  //   if (!activeSandbox) {
+  //     throw new McpError(
+  //       ErrorCode.InvalidRequest,
+  //       `Sandbox ${sandboxId} not found`,
+  //     );
+  //   }
 
-    if (!files.length) {
-      throw new McpError(ErrorCode.InvalidRequest, "No files provided to copy");
-    }
+  //   if (!files.length) {
+  //     throw new McpError(ErrorCode.InvalidRequest, "No files provided to copy");
+  //   }
 
-    activeSandbox.lastUsed = new Date();
-    try {
-      await activeSandbox.sandbox.copyToContainer(files);
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: true,
-                message: `File copied to ${files.map((f) => f.name).join(", ")}`,
-                sandboxId,
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to copy file: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-  private async patchSandbox(args: any) {
-    const { sandboxId, patches, createMissing } = args;
-    const activeSandbox = this.activeSandboxes.get(sandboxId);
+  //   activeSandbox.lastUsed = new Date();
+  //   try {
+  //     await activeSandbox.sandbox.copyToContainer(files);
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(
+  //             {
+  //               success: true,
+  //               message: `File copied to ${files.map((f) => f.name).join(", ")}`,
+  //               sandboxId,
+  //             },
+  //             null,
+  //             2,
+  //           ),
+  //         },
+  //       ],
+  //     };
+  //   } catch (error) {
+  //     throw new McpError(
+  //       ErrorCode.InternalError,
+  //       `Failed to copy file: ${error instanceof Error ? error.message : String(error)}`,
+  //     );
+  //   }
+  // }
+  // private async patchSandbox(args: any) {
+  //   const { sandboxId, patches, createMissing } = args;
+  //   const activeSandbox = this.activeSandboxes.get(sandboxId);
 
-    if (!activeSandbox) {
-      throw new McpError(
-        ErrorCode.InvalidRequest,
-        `Sandbox ${sandboxId} not found`,
-      );
-    }
+  //   if (!activeSandbox) {
+  //     throw new McpError(
+  //       ErrorCode.InvalidRequest,
+  //       `Sandbox ${sandboxId} not found`,
+  //     );
+  //   }
 
-    if (!patches || !Array.isArray(patches) || patches.length === 0) {
-      throw new McpError(ErrorCode.InvalidRequest, "No patches provided");
-    }
+  //   if (!patches || !Array.isArray(patches) || patches.length === 0) {
+  //     throw new McpError(ErrorCode.InvalidRequest, "No patches provided");
+  //   }
 
-    activeSandbox.lastUsed = new Date();
+  //   activeSandbox.lastUsed = new Date();
 
-    try {
-      const results = [];
+  //   try {
+  //     const results = [];
 
-      for (const patch of patches) {
-        const {
-          filePath,
-          content,
-          operation = "replace",
-          lineNumber,
-          backup,
-        } = patch as {
-          filePath: string;
-          content: string | undefined;
-          operation?: "replace" | "append" | "prepend" | "insert";
-          lineNumber?: number;
-          backup?: boolean;
-        };
+  //     for (const patch of patches) {
+  //       const {
+  //         filePath,
+  //         content,
+  //         operation = "replace",
+  //         lineNumber,
+  //         backup,
+  //       } = patch as {
+  //         filePath: string;
+  //         content: string | undefined;
+  //         operation?: "replace" | "append" | "prepend" | "insert";
+  //         lineNumber?: number;
+  //         backup?: boolean;
+  //       };
 
-        if (!filePath || content === undefined) {
-          throw new McpError(
-            ErrorCode.InvalidRequest,
-            "Each patch must have filePath and content",
-          );
-        }
+  //       if (!filePath || content === undefined) {
+  //         throw new McpError(
+  //           ErrorCode.InvalidRequest,
+  //           "Each patch must have filePath and content",
+  //         );
+  //       }
 
-        // Check if file exists
-        const checkFileExists = `test -f "${filePath}" && echo "exists" || echo "not_exists"`;
-        const fileExistsResult = await activeSandbox.sandbox.runCode(
-          checkFileExists,
-          "bash",
-          { timeout: 5000 },
-        );
+  //       // Check if file exists
+  //       const checkFileExists = `test -f "${filePath}" && echo "exists" || echo "not_exists"`;
+  //       const fileExistsResult = await activeSandbox.sandbox.runCode(
+  //         checkFileExists,
+  //         "bash",
+  //         { timeout: 5000 },
+  //       );
 
-        const fileExists = fileExistsResult.stdout.trim() === "exists";
+  //       const fileExists = fileExistsResult.stdout.trim() === "exists";
 
-        if (!fileExists && !createMissing) {
-          throw new McpError(
-            ErrorCode.InvalidRequest,
-            `File ${filePath} does not exist and createMissing is false`,
-          );
-        }
+  //       if (!fileExists && !createMissing) {
+  //         throw new McpError(
+  //           ErrorCode.InvalidRequest,
+  //           `File ${filePath} does not exist and createMissing is false`,
+  //         );
+  //       }
 
-        // Create backup if requested
-        if (backup && fileExists) {
-          const backupPath = `${filePath}.backup.${Date.now()}`;
-          const backupCommand = `cp "${filePath}" "${backupPath}"`;
-          await activeSandbox.sandbox.runCode(backupCommand, "bash", {
-            timeout: 5000,
-          });
-        }
+  //       // Create backup if requested
+  //       if (backup && fileExists) {
+  //         const backupPath = `${filePath}.backup.${Date.now()}`;
+  //         const backupCommand = `cp "${filePath}" "${backupPath}"`;
+  //         await activeSandbox.sandbox.runCode(backupCommand, "bash", {
+  //           timeout: 5000,
+  //         });
+  //       }
 
-        let patchCommand = "";
+  //       let patchCommand = "";
 
-        if (operation === "replace") {
-          // Create directory if it doesn't exist
-          const dir = filePath.substring(0, filePath.lastIndexOf("/"));
-          if (dir) {
-            patchCommand = `mkdir -p "${dir}" && `;
-          }
-          // Escape content for shell
-          const escapedContent = content.replace(/'/g, "'\\''");
-          patchCommand += `printf '%s' '${escapedContent}' > "${filePath}"`;
-        } else if (operation === "append") {
-          if (!fileExists && createMissing) {
-            const dir = filePath.substring(0, filePath.lastIndexOf("/"));
-            if (dir) {
-              patchCommand = `mkdir -p "${dir}" && `;
-            }
-            patchCommand += `touch "${filePath}" && `;
-          }
-          const escapedAppendContent = content.replace(/'/g, "'\\''");
-          patchCommand += `printf '%s' '${escapedAppendContent}' >> "${filePath}"`;
-        } else if (operation === "prepend") {
-          if (!fileExists && createMissing) {
-            const dir = filePath.substring(0, filePath.lastIndexOf("/"));
-            if (dir) {
-              patchCommand = `mkdir -p "${dir}" && `;
-            }
-            const escapedPrependContent = content.replace(/'/g, "'\\''");
-            patchCommand += `printf '%s' '${escapedPrependContent}' > "${filePath}"`;
-          } else {
-            const tempFile = `/tmp/patch_prepend_${Date.now()}`;
-            const escapedPrependContent = content.replace(/'/g, "'\\''");
-            patchCommand = `printf '%s' '${escapedPrependContent}' > "${tempFile}" && cat "${filePath}" >> "${tempFile}" && mv "${tempFile}" "${filePath}"`;
-          }
-        } else if ((operation as string) === "insert") {
-          if (!lineNumber) {
-            throw new McpError(
-              ErrorCode.InvalidRequest,
-              "lineNumber is required for insert operation",
-            );
-          }
-          if (!fileExists && createMissing) {
-            const dir = filePath.substring(0, filePath.lastIndexOf("/"));
-            if (dir) {
-              patchCommand = `mkdir -p "${dir}" && `;
-            }
-            patchCommand += `touch "${filePath}" && `;
-          }
-          const tempFile = `/tmp/patch_insert_${Date.now()}`;
-          const escapedInsertContent = content.replace(/'/g, "'\\''");
-          patchCommand += `head -n $((${lineNumber}-1)) "${filePath}" > "${tempFile}" && printf '%s' '${escapedInsertContent}' >> "${tempFile}" && tail -n +${lineNumber} "${filePath}" >> "${tempFile}" && mv "${tempFile}" "${filePath}"`;
-        } else {
-          throw new McpError(
-            ErrorCode.InvalidRequest,
-            `Unsupported operation: ${operation}`,
-          );
-        }
+  //       if (operation === "replace") {
+  //         // Create directory if it doesn't exist
+  //         const dir = filePath.substring(0, filePath.lastIndexOf("/"));
+  //         if (dir) {
+  //           patchCommand = `mkdir -p "${dir}" && `;
+  //         }
+  //         // Escape content for shell
+  //         const escapedContent = content.replace(/'/g, "'\\''");
+  //         patchCommand += `printf '%s' '${escapedContent}' > "${filePath}"`;
+  //       } else if (operation === "append") {
+  //         if (!fileExists && createMissing) {
+  //           const dir = filePath.substring(0, filePath.lastIndexOf("/"));
+  //           if (dir) {
+  //             patchCommand = `mkdir -p "${dir}" && `;
+  //           }
+  //           patchCommand += `touch "${filePath}" && `;
+  //         }
+  //         const escapedAppendContent = content.replace(/'/g, "'\\''");
+  //         patchCommand += `printf '%s' '${escapedAppendContent}' >> "${filePath}"`;
+  //       } else if (operation === "prepend") {
+  //         if (!fileExists && createMissing) {
+  //           const dir = filePath.substring(0, filePath.lastIndexOf("/"));
+  //           if (dir) {
+  //             patchCommand = `mkdir -p "${dir}" && `;
+  //           }
+  //           const escapedPrependContent = content.replace(/'/g, "'\\''");
+  //           patchCommand += `printf '%s' '${escapedPrependContent}' > "${filePath}"`;
+  //         } else {
+  //           const tempFile = `/tmp/patch_prepend_${Date.now()}`;
+  //           const escapedPrependContent = content.replace(/'/g, "'\\''");
+  //           patchCommand = `printf '%s' '${escapedPrependContent}' > "${tempFile}" && cat "${filePath}" >> "${tempFile}" && mv "${tempFile}" "${filePath}"`;
+  //         }
+  //       } else if ((operation as string) === "insert") {
+  //         if (!lineNumber) {
+  //           throw new McpError(
+  //             ErrorCode.InvalidRequest,
+  //             "lineNumber is required for insert operation",
+  //           );
+  //         }
+  //         if (!fileExists && createMissing) {
+  //           const dir = filePath.substring(0, filePath.lastIndexOf("/"));
+  //           if (dir) {
+  //             patchCommand = `mkdir -p "${dir}" && `;
+  //           }
+  //           patchCommand += `touch "${filePath}" && `;
+  //         }
+  //         const tempFile = `/tmp/patch_insert_${Date.now()}`;
+  //         const escapedInsertContent = content.replace(/'/g, "'\\''");
+  //         patchCommand += `head -n $((${lineNumber}-1)) "${filePath}" > "${tempFile}" && printf '%s' '${escapedInsertContent}' >> "${tempFile}" && tail -n +${lineNumber} "${filePath}" >> "${tempFile}" && mv "${tempFile}" "${filePath}"`;
+  //       } else {
+  //         throw new McpError(
+  //           ErrorCode.InvalidRequest,
+  //           `Unsupported operation: ${operation}`,
+  //         );
+  //       }
 
-        const result = await activeSandbox.sandbox.runCode(
-          patchCommand,
-          "bash",
-          {
-            timeout: 10000,
-          },
-        );
+  //       const result = await activeSandbox.sandbox.runCode(
+  //         patchCommand,
+  //         "bash",
+  //         {
+  //           timeout: 10000,
+  //         },
+  //       );
 
-        results.push({
-          filePath,
-          operation,
-          success: result.exitCode === 0,
-          stdout: result.stdout,
-          stderr: result.stderr,
-        });
+  //       results.push({
+  //         filePath,
+  //         operation,
+  //         success: result.exitCode === 0,
+  //         stdout: result.stdout,
+  //         stderr: result.stderr,
+  //       });
 
-        if (result.exitCode !== 0) {
-          throw new McpError(
-            ErrorCode.InternalError,
-            `Failed to patch ${filePath}: ${result.stderr}`,
-          );
-        }
-      }
+  //       if (result.exitCode !== 0) {
+  //         throw new McpError(
+  //           ErrorCode.InternalError,
+  //           `Failed to patch ${filePath}: ${result.stderr}`,
+  //         );
+  //       }
+  //     }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: true,
-                message: `Successfully applied ${patches.length} patch(es)`,
-                results,
-                sandboxId,
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to patch sandbox: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-  private async getSandboxLogs(args: any) {
-    const { sandboxId, tail, since } = args;
-    const activeSandbox = this.activeSandboxes.get(sandboxId);
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(
+  //             {
+  //               success: true,
+  //               message: `Successfully applied ${patches.length} patch(es)`,
+  //               results,
+  //               sandboxId,
+  //             },
+  //             null,
+  //             2,
+  //           ),
+  //         },
+  //       ],
+  //     };
+  //   } catch (error) {
+  //     throw new McpError(
+  //       ErrorCode.InternalError,
+  //       `Failed to patch sandbox: ${error instanceof Error ? error.message : String(error)}`,
+  //     );
+  //   }
+  // }
+  // private async getSandboxLogs(args: any) {
+  //   const { sandboxId, tail, since } = args;
+  //   const activeSandbox = this.activeSandboxes.get(sandboxId);
 
-    if (!activeSandbox) {
-      throw new McpError(
-        ErrorCode.InvalidRequest,
-        `Sandbox ${sandboxId} not found`,
-      );
-    }
+  //   if (!activeSandbox) {
+  //     throw new McpError(
+  //       ErrorCode.InvalidRequest,
+  //       `Sandbox ${sandboxId} not found`,
+  //     );
+  //   }
 
-    try {
-      const logs = await activeSandbox.sandbox.getLogs({ tail, since });
+  //   try {
+  //     const logs = await activeSandbox.sandbox.getLogs({ tail, since });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: true,
-                logs,
-                sandboxId,
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to get logs: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(
+  //             {
+  //               success: true,
+  //               logs,
+  //               sandboxId,
+  //             },
+  //             null,
+  //             2,
+  //           ),
+  //         },
+  //       ],
+  //     };
+  //   } catch (error) {
+  //     throw new McpError(
+  //       ErrorCode.InternalError,
+  //       `Failed to get logs: ${error instanceof Error ? error.message : String(error)}`,
+  //     );
+  //   }
+  // }
 
-  private async stopSandbox(args: any) {
-    const { sandboxId } = args;
-    const activeSandbox = this.activeSandboxes.get(sandboxId);
+  // private async stopSandbox(args: any) {
+  //   const { sandboxId } = args;
+  //   const activeSandbox = this.activeSandboxes.get(sandboxId);
 
-    if (!activeSandbox) {
-      throw new McpError(
-        ErrorCode.InvalidRequest,
-        `Sandbox ${sandboxId} not found`,
-      );
-    }
+  //   if (!activeSandbox) {
+  //     throw new McpError(
+  //       ErrorCode.InvalidRequest,
+  //       `Sandbox ${sandboxId} not found`,
+  //     );
+  //   }
 
-    try {
-      await activeSandbox.sandbox.stop();
-      this.activeSandboxes.delete(sandboxId);
+  //   try {
+  //     await activeSandbox.sandbox.stop();
+  //     this.activeSandboxes.delete(sandboxId);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: true,
-                message: `Sandbox ${sandboxId} stopped successfully`,
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      // Remove from active sandboxes even if stop failed
-      this.activeSandboxes.delete(sandboxId);
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to stop sandbox: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(
+  //             {
+  //               success: true,
+  //               message: `Sandbox ${sandboxId} stopped successfully`,
+  //             },
+  //             null,
+  //             2,
+  //           ),
+  //         },
+  //       ],
+  //     };
+  //   } catch (error) {
+  //     // Remove from active sandboxes even if stop failed
+  //     this.activeSandboxes.delete(sandboxId);
+  //     throw new McpError(
+  //       ErrorCode.InternalError,
+  //       `Failed to stop sandbox: ${error instanceof Error ? error.message : String(error)}`,
+  //     );
+  //   }
+  // }
 
-  private async checkDockerAvailability() {
-    try {
-      const isAvailable = await DockerSandbox.isDockerAvailable();
+  // private async checkDockerAvailability() {
+  //   try {
+  //     const isAvailable = await DockerSandbox.isDockerAvailable();
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: true,
-                dockerAvailable: isAvailable,
-                message:
-                  isAvailable ?
-                    "Docker is available"
-                  : "Docker is not available",
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: false,
-                dockerAvailable: false,
-                error: error instanceof Error ? error.message : String(error),
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    }
-  }
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(
+  //             {
+  //               success: true,
+  //               dockerAvailable: isAvailable,
+  //               message:
+  //                 isAvailable ?
+  //                   "Docker is available"
+  //                 : "Docker is not available",
+  //             },
+  //             null,
+  //             2,
+  //           ),
+  //         },
+  //       ],
+  //     };
+  //   } catch (error) {
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(
+  //             {
+  //               success: false,
+  //               dockerAvailable: false,
+  //               error: error instanceof Error ? error.message : String(error),
+  //             },
+  //             null,
+  //             2,
+  //           ),
+  //         },
+  //       ],
+  //     };
+  //   }
+  // }
 
-  private async runQuickCode(
-    args: DockerConfig & { code: string; language: string },
-  ) {
-    const { code, language, timeout, memory, environment } = args;
+  // private async runQuickCode(
+  //   args: DockerConfig & { code: string; language: string },
+  // ) {
+  //   const { code, language, timeout, memory, environment } = args;
 
-    // Default images for common languages
-    const defaultImages: Record<string, string> = {
-      python: "python:3.9-slim",
-      javascript: "node:18-alpine",
-      node: "node:18-alpine",
-      bash: "ubuntu:20.04",
-      java: "openjdk:11-jre-slim",
-      go: "golang:1.19-alpine",
-    };
+  //   // Default images for common languages
+  //   const defaultImages: Record<string, string> = {
+  //     python: "python:3.9-slim",
+  //     javascript: "node:18-alpine",
+  //     node: "node:18-alpine",
+  //     bash: "ubuntu:20.04",
+  //     java: "openjdk:11-jre-slim",
+  //     go: "golang:1.19-alpine",
+  //   };
 
-    const config: DockerConfig = {
-      memory: memory || "512m",
-      cpus: "1",
-      timeout: timeout || 30000,
-      networkMode: "none",
-      environment: environment || {},
-      files: [],
-    };
+  //   const config: DockerConfig = {
+  //     memory: memory || "512m",
+  //     cpus: "1",
+  //     timeout: timeout || 30000,
+  //     networkMode: "none",
+  //     environment: environment || {},
+  //     files: [],
+  //   };
 
-    const sandbox = new DockerSandbox(config);
+  //   const sandbox = new DockerSandbox(config);
 
-    try {
-      await sandbox.start();
+  //   try {
+  //     await sandbox.start();
 
-      const result = await sandbox.runCode(code, language, {
-        timeout: timeout || 30000,
-      });
+  //     const result = await sandbox.runCode(code, language, {
+  //       timeout: timeout || 30000,
+  //     });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: true,
-                result: {
-                  stdout: result.stdout,
-                  stderr: result.stderr,
-                  exitCode: result.exitCode,
-                  timedOut: result.timedOut,
-                  executionTime: result.executionTime,
-                },
-                language,
-              },
-              null,
-              2,
-            ),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to execute quick code: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    } finally {
-      // Always clean up the temporary sandbox
-      try {
-        await sandbox.stop();
-      } catch (error) {
-        // Ignore cleanup errors
-      }
-    }
-  }
+  //     return {
+  //       content: [
+  //         {
+  //           type: "text",
+  //           text: JSON.stringify(
+  //             {
+  //               success: true,
+  //               result: {
+  //                 stdout: result.stdout,
+  //                 stderr: result.stderr,
+  //                 exitCode: result.exitCode,
+  //                 timedOut: result.timedOut,
+  //                 executionTime: result.executionTime,
+  //               },
+  //               language,
+  //             },
+  //             null,
+  //             2,
+  //           ),
+  //         },
+  //       ],
+  //     };
+  //   } catch (error) {
+  //     throw new McpError(
+  //       ErrorCode.InternalError,
+  //       `Failed to execute quick code: ${error instanceof Error ? error.message : String(error)}`,
+  //     );
+  //   } finally {
+  //     // Always clean up the temporary sandbox
+  //     try {
+  //       await sandbox.stop();
+  //     } catch (error) {
+  //       // Ignore cleanup errors
+  //     }
+  //   }
+  // }
 
-  private setupCleanupInterval(): void {
-    setInterval(
-      () => {
-        const now = new Date();
+  // private setupCleanupInterval(): void {
+  //   setInterval(
+  //     () => {
+  //       const now = new Date();
 
-        for (const [sandboxId, activeSandbox] of this.activeSandboxes) {
-          const timeSinceLastUse =
-            now.getTime() - activeSandbox.lastUsed.getTime();
+  //       for (const [sandboxId, activeSandbox] of this.activeSandboxes) {
+  //         const timeSinceLastUse =
+  //           now.getTime() - activeSandbox.lastUsed.getTime();
 
-          if (timeSinceLastUse > this.SANDBOX_TIMEOUT) {
-            console.log(`Cleaning up inactive sandbox: ${sandboxId}`);
-            activeSandbox.sandbox.stop().catch(console.error);
-            this.activeSandboxes.delete(sandboxId);
-          }
-        }
-      },
-      5 * 60 * 1000,
-    ); // Check every 5 minutes
-  }
+  //         if (timeSinceLastUse > this.SANDBOX_TIMEOUT) {
+  //           console.log(`Cleaning up inactive sandbox: ${sandboxId}`);
+  //           activeSandbox.sandbox.stop().catch(console.error);
+  //           this.activeSandboxes.delete(sandboxId);
+  //         }
+  //       }
+  //     },
+  //     5 * 60 * 1000,
+  //   ); // Check every 5 minutes
+  // }
 
   async run(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error("Docker Sandbox MCP server running on stdio");
   }
-
-  async shutdown(): Promise<void> {
-    // Stop all active sandboxes
-    const stopPromises = Array.from(this.activeSandboxes.values()).map(
-      (activeSandbox) => activeSandbox.sandbox.stop(),
-    );
-
-    await Promise.allSettled(stopPromises);
-    this.activeSandboxes.clear();
-  }
 }
 
-const stopProcess = async (signal: "SIGINT" | "SIGTERM") => {
+const stopProcess = (signal: "SIGINT" | "SIGTERM") => {
   console.error(`Received ${signal}, shutting down gracefully...`);
-  await server.shutdown();
   process.exit(0);
 };
 

@@ -110,7 +110,7 @@ export const testDBConnection = (
         let prostgles_error_hint = "";
         if (process.env.IS_DOCKER && localHosts.includes(con.db_host)) {
           prostgles_error_hint = [
-            `\nTo connect to a localhost database from docker you need to:\n `,
+            `\nTo connect to a localhost database from docker you need to either use "host" netoworking mode or:\n `,
             `1) If using docker-compose.yml, uncomment extra_hosts:  `,
             `  extra_hosts:`,
             `    - "host.docker.internal:host-gateway"`,

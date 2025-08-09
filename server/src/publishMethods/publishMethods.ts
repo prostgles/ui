@@ -12,10 +12,14 @@ export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
 import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
-import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject, UserLike } from "prostgles-types";
-import { asName, isEmpty, pickKeys } from "prostgles-types";
+import {
+  asName,
+  assertJSONBObjectAgainstSchema,
+  isEmpty,
+  pickKeys,
+} from "prostgles-types";
 import type { LLMMessage } from "../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { getPasswordHash } from "../authConfig/authUtils";

@@ -22,11 +22,11 @@ export type AsJSON = {
 } & (
   | {
       component: "codeEditor";
-      jsonbSchema?: JSONB.JSONBSchema<JSONB.FieldTypeObj>;
+      jsonbSchema?: JSONB.JSONBSchema;
     }
   | {
       component: "JSONBSchema";
-      jsonbSchema: JSONB.JSONBSchema<JSONB.FieldTypeObj>;
+      jsonbSchema: JSONB.JSONBSchema;
       opts: Exclude<SmartFormFieldProps["jsonbSchemaWithControls"], boolean>;
     }
 );
