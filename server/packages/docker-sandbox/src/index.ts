@@ -10,19 +10,21 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { assertJSONBObjectAgainstSchema } from "prostgles-types";
 import { TOOLS } from "./TOOLS.js";
-import { createContainer, createContainerSchema } from "./createContainer.js";
+import { createContainer } from "./createContainer.js";
+import { createContainerSchema } from "./createContainer.schema.js";
 
 interface ActiveSandbox {
   id: string;
   createdAt: Date;
   lastUsed: Date;
+  userId: string;
+  chatId: number;
 }
 
 export class DockerSandboxMCPServer {
   private server: Server;
   private activeSandboxes: Map<string, ActiveSandbox> = new Map();
   private readonly MAX_SANDBOXES = 10;
-  private readonly SANDBOX_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
   constructor() {
     this.server = new Server(
@@ -48,7 +50,7 @@ export class DockerSandboxMCPServer {
         tools: TOOLS,
       };
     });
-    //@ts-ignore
+
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
@@ -116,6 +118,8 @@ export class DockerSandboxMCPServer {
         id: sandboxId,
         createdAt: new Date(),
         lastUsed: new Date(),
+        userId: args.meta.userId,
+        chatId: args.meta.chatId,
       };
 
       this.activeSandboxes.set(sandboxId, activeSandbox);
