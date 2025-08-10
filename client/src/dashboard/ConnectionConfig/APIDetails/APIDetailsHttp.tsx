@@ -8,6 +8,7 @@ import CodeExample from "../../CodeExample";
 import type { APIDetailsProps } from "./APIDetails";
 import { getConnectionPaths } from "../../../../../commonTypes/utils";
 import { t } from "../../../i18n/i18nUtils";
+import { download } from "../../W_SQL/W_SQL";
 
 export const APIDetailsHttp = ({
   dbs,
@@ -18,7 +19,7 @@ export const APIDetailsHttp = ({
     $existsJoined: { connections: { id: connection.id } },
   });
   const restPath = `${window.location.origin}${getConnectionPaths(connection).rest}`;
-
+  const restExample = getRestExample(restPath, token);
   return (
     <FlexCol>
       <h4 className="m-0 p-0">HTTP API</h4>
@@ -70,9 +71,21 @@ export const APIDetailsHttp = ({
                 <CodeExample
                   language="javascript"
                   style={{ minHeight: "400px" }}
-                  value={getRestExample(restPath, token)}
+                  value={restExample}
                 />
               }
+              footerButtons={[
+                {
+                  label: t.common.Close,
+                  onClickClose: true,
+                },
+                {
+                  label: "Download",
+                  onClick: () => {
+                    download(restExample, "index.js", "text/javascript");
+                  },
+                },
+              ]}
             />
           )}
         </FlexCol>

@@ -2,18 +2,13 @@ import { randomUUID } from "crypto";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
-import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
+import type { CreateContainerParams } from "./createContainer.schema";
 import { executeDockerCommand } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
-
-export type CreateContainerParams = JSONB.GetSchemaType<
-  typeof createContainerSchema
->;
 
 type CreateContainerResult = {
   state: "finished" | "error" | "build-error" | "timed-out";
   command: string;
-  containerId: string;
   stdout: string;
   stderr: string;
   exitCode: number;
@@ -36,9 +31,6 @@ export const createContainer = async (
     }
     if (dockerFile.content.toLowerCase().includes("expose")) {
       throw new Error("Dockerfile should not contain EXPOSE instruction");
-    }
-    if (dockerFile.content.toLowerCase().includes("volume")) {
-      throw new Error("Dockerfile should not contain VOLUME instruction");
     }
 
     for (const { content, name } of files) {
@@ -66,7 +58,6 @@ export const createContainer = async (
       return {
         state: "build-error",
         command: ["docker", ...buildArgs].join(" "),
-        containerId: "",
         stdout: buildResult.stdout,
         stderr: buildResult.stderr,
         exitCode: buildResult.exitCode,
@@ -91,12 +82,9 @@ export const createContainer = async (
     }
     await executeDockerCommand(["image", "rm", name], { timeout: 60_000 });
 
-    const containerId = runResult.stdout.trim();
-
     return {
       command: ["docker", ...runArgs].join(" "),
       state: runResult.state === "close" ? "finished" : runResult.state,
-      containerId,
       ...config,
       stdout: runResult.stdout,
       stderr: runResult.stderr,
@@ -108,55 +96,3 @@ export const createContainer = async (
     }
   }
 };
-
-const filesSchema = {
-  description: "Files to copy into the container. Must include a Dockerfile",
-  arrayOfType: {
-    name: { type: "string", description: "File name. E.g.: 'index.ts' " },
-    content: {
-      type: "string",
-      description:
-        "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ",
-    },
-  },
-} as const satisfies JSONB.JSONBSchema;
-
-export const createContainerSchema = {
-  description: "Create a new Docker sandbox container",
-  type: {
-    files: filesSchema,
-    timeout: {
-      type: "number",
-      optional: true,
-      description:
-        "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ",
-      // default: 30000,
-    },
-    networkMode: {
-      enum: ["none", "bridge", "host"],
-      description: "Network mode for the container. Defaults to 'none'",
-      // default: "none",
-      optional: true,
-    },
-    environment: {
-      description: "Environment variables to set in the container",
-      record: { values: "string", partial: true },
-      optional: true,
-    },
-    memory: {
-      type: "string",
-      description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m",
-      optional: true,
-      // default: "512m",
-    },
-    cpus: {
-      type: "string",
-      description: "CPU limit (e.g., '0.5', '1'). Defaults to 1",
-      optional: true,
-      // default: "1",
-    },
-  },
-} as const satisfies JSONB.JSONBSchema;
-const { $id, $schema, ...createContainerJSONSchema } =
-  getJSONBSchemaAsJSONSchema("", "", createContainerSchema);
-export { createContainerJSONSchema };

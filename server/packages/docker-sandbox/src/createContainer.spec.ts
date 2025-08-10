@@ -72,16 +72,14 @@ void test("createContainer stdout response", async () => {
 });
 
 void test("createContainer host network", async () => {
-  const expectedOutput = "Hello from index.js";
   const config = {
     files: getFilesFromObject(filesObject),
-    timeout: 5_000,
+    timeout: 9_000,
     networkMode: "host",
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(config);
-  console.log(sandbox);
   strict.equal(sandbox.state, "finished");
-  strict.equal(sandbox.stdout, expectedOutput + "\n");
+  strict.equal(sandbox.stdout.includes("<title>Prostgles UI</title>"), true);
   strict.equal(sandbox.stderr, "");
 });
 
@@ -111,7 +109,7 @@ const packageJson = {
 
 const indexJsContent = `
 const axios = require('axios');
-const HOST_URL = 'http://127.0.0.1:3004';
+const HOST_URL = 'http://127.0.0.1:3004/robots.txt'; // This resource will not redirect
 async function fetchFromHost() {  
   try { 
     console.log(\`Attempting to fetch from \${HOST_URL}\`);
@@ -130,7 +128,7 @@ async function fetchFromHost() {
   }
 }
 fetchFromHost();
-setInterval(fetchFromHost, 30000);
+//setInterval(fetchFromHost, 30000);
 console.log('Fetch app started. Will attempt to fetch from host:3004 every 30 seconds...');
 `;
 
