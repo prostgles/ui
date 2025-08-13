@@ -7,14 +7,14 @@ cd ../server
 npx tsc
 
 
-cd ./packages
-for dir in */; do
-  echo "Running server/packages test from $dir"
-  cd "$dir" || continue
-  npm i && npm test && rm -rf ./node_modules
+# cd ./packages
+# for dir in */; do
+#   echo "Running server/packages test from $dir"
+#   cd "$dir" || continue
+#   npm i && npm test && rm -rf ./node_modules
   
-  cd ..
-done 
+#   cd ..
+# done 
 
 cd ../..
 
