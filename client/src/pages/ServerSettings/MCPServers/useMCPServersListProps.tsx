@@ -92,12 +92,17 @@ export const useMCPServersListProps = (
             );
           },
         },
-        ...["installed", "config_schema", "enabled", "source", "command"].map(
-          (name) => ({
-            name,
-            hide: true,
-          }),
-        ),
+        ...[
+          "installed",
+          "config_schema",
+          "enabled",
+          "source",
+          "command",
+          "icon_path",
+        ].map((name) => ({
+          name,
+          hide: true,
+        })),
       ] satisfies FieldConfig<MCPServerWithToolAndConfigs>[],
     [chatId, dbs, dbsMethods, llm_chats_allowed_mcp_tools, selectedTool?.name],
   );

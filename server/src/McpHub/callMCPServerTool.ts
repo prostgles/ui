@@ -7,6 +7,8 @@ import type { DBS } from "..";
 import type { McpToolCallResponse } from "../../../commonTypes/mcp";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { startMcpHub } from "./McpHub";
+import { ProstglesLocalMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
+import { getDockerMCP } from "../DockerManager/DockerManager";
 
 export const callMCPServerTool = async (
   user: Pick<DBSSchema["users"], "id">,
@@ -48,6 +50,25 @@ export const callMCPServerTool = async (
     });
     if (!chatAllowedMCPTool) {
       throw new Error("Tool invalid or not allowed for this chat");
+    }
+
+    if (ProstglesLocalMCPServers.includes(serverName)) {
+      if (serverName === "docker-sandbox") {
+        const dockerMCP = await getDockerMCP(dbs, chat);
+        if (toolName === "create_container") {
+          const result = await dockerMCP.tools.createContainer(toolArguments, {
+            chatId: chat.id,
+            userId: user.id,
+          });
+          return result;
+        }
+        throw new Error(
+          `MCP server ${serverName}.${toolName} not implemented for tool ${toolName}`,
+        );
+      }
+      throw new Error(
+        `MCP server ${serverName} ProstglesLocalMCPServers not implemented`,
+      );
     }
     // if (
     //   chatAllowedMCPTool.allowed_inputs?.length &&

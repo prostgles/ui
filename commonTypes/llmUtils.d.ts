@@ -38,6 +38,7 @@ export declare const getLLMMessageToolUseResult: ({ message, }: Pick<LLMMessage,
 type FilterMatch<T, U> = T extends U ? T : never;
 type FilterUnMatch<T, U> = T extends U ? never : T;
 export declare const filterArr: <T, U extends Partial<T>>(arr: T[] | readonly T[], pattern: U) => FilterMatch<T, U>[];
+export declare const findArr: <T, U extends Partial<T>>(arr: T[] | readonly T[], pattern: U) => FilterMatch<T, U> | undefined;
 export declare const filterArrInverse: <T, U extends Partial<T>>(arr: T[], pattern: U) => FilterUnMatch<T, U>[];
 export declare const LLM_PROMPT_VARIABLES: {
     readonly PROSTGLES_SOFTWARE_NAME: "${prostglesSoftwareName}";

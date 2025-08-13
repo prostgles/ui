@@ -20,6 +20,7 @@ import type { FullOption } from "../Select/Select";
 import Select from "../Select/Select";
 import { FormFieldSkeleton } from "./FormFieldSkeleton";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
+import { scrollIntoViewIfNeeded } from "src/utils";
 
 export type FormFieldProps = TestSelectors & {
   onChange?: (val: string | number | any, e?: any) => void;
@@ -155,14 +156,10 @@ export default class FormField extends React.Component<
     const err = this.props.error,
       preverr = prevProps.error;
     if (this.rootDiv && (err || preverr) && err !== preverr) {
-      if ((this.rootDiv as any).scrollIntoViewIfNeeded) {
-        (this.rootDiv as any).scrollIntoViewIfNeeded({
-          block: "end",
-          behavior: "smooth",
-        });
-      } else {
-        this.rootDiv.scrollIntoView({ block: "end", behavior: "smooth" });
-      }
+      scrollIntoViewIfNeeded(this.rootDiv, {
+        block: "end",
+        behavior: "smooth",
+      });
     }
     this.setResizer();
     if (prevProps.value !== this.props.value) {

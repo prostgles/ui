@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
@@ -15,25 +14,25 @@ type CreateContainerResult = {
 };
 
 export const createContainer = async (
+  name: string,
   params: CreateContainerParams,
 ): Promise<CreateContainerResult> => {
   let localDir = "";
   try {
     const { files } = params;
-    const name = `prostgles-docker-mcp-sandbox-${Date.now()}-${randomUUID()}`;
     localDir = join(tmpdir(), name);
 
     mkdirSync(localDir, { recursive: true });
-
-    const dockerFile = files.find(({ name }) => name === "Dockerfile");
+    const dockerFileName = "Dockerfile";
+    const dockerFile = files[dockerFileName];
     if (!dockerFile) {
       throw new Error("Dockerfile is required in the files array");
     }
-    if (dockerFile.content.toLowerCase().includes("expose")) {
+    if (dockerFile.toLowerCase().includes("expose")) {
       throw new Error("Dockerfile should not contain EXPOSE instruction");
     }
 
-    for (const { content, name } of files) {
+    for (const [name, content] of Object.entries(files)) {
       const tempFile = join(localDir, name);
       const dir = dirname(tempFile);
       if (!existsSync(dir)) {
@@ -47,7 +46,7 @@ export const createContainer = async (
       "-t",
       name,
       "-f",
-      join(localDir, dockerFile.name),
+      join(localDir, dockerFileName),
       localDir,
     ];
     const buildResult = await executeDockerCommand(buildArgs, {

@@ -127,7 +127,6 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         : `Allow function to run?`
       }
       onClose={() => {
-        mustApprove.onResponse("deny");
         setMustApprove(undefined);
       }}
       clickCatchStyle={{ opacity: 1 }}

@@ -172,6 +172,7 @@ export const getPublishLLM = (
         fields: {
           args: 1,
           env: 1,
+          icon_path: 1,
           enabled: 1,
         },
       },

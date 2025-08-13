@@ -132,11 +132,16 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     <Popup
       data-command="AskLLM.popup"
       showFullscreenToggle={{
-        getStyle: (isFullscreen: boolean) =>
+        getContentStyle: (isFullscreen) =>
+          isFullscreen && !window.isLowWidthScreen ?
+            { alignItems: "center" }
+          : {},
+        getStyle: (isFullscreen) =>
           isFullscreen ?
             {}
           : {
-              width: `${CHAT_WIDTH}px`,
+              // width: `${CHAT_WIDTH}px`,
+              minWidth: "0",
               maxWidth: `${CHAT_WIDTH}px`,
             },
       }}
@@ -156,7 +161,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       onClickClose={false}
       onClose={onClose}
       anchorEl={anchorEl}
-      contentClassName="p-0 f-1 ai-center"
+      contentClassName="p-0 f-1"
       rootStyle={{
         flex: 1,
       }}
@@ -170,18 +175,14 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           className="min-h-0 f-1"
           style={{
             whiteSpace: "pre-line",
-            width: `${CHAT_WIDTH}px`,
+            // width: `${CHAT_WIDTH}px`,
             maxWidth: `${CHAT_WIDTH}px`,
           }}
         >
           <Chat
             style={chatStyle}
             messages={messages}
-            disabledInfo={
-              chatIsLoading ?
-                "Waiting for response"
-              : (activeChat.disabled_message ?? undefined)
-            }
+            disabledInfo={activeChat.disabled_message ?? undefined}
             allowedMessageTypes={{
               speech: {
                 audio: true,
@@ -190,6 +191,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               file: true,
             }}
             onSend={sendMessage}
+            isLoading={chatIsLoading}
             onStopSending={
               status?.state !== "loading" ?
                 undefined

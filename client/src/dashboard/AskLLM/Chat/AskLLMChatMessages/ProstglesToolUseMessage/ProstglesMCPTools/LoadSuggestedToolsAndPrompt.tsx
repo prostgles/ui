@@ -1,5 +1,4 @@
 import {
-  mdiDatabase,
   mdiDatabaseEdit,
   mdiDatabaseSearch,
   mdiLanguageTypescript,
@@ -12,26 +11,21 @@ import React, { useState } from "react";
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../../../commonTypes/prostglesMcp";
-import { type DBSSchema } from "../../../../../../commonTypes/publishUtils";
-import { sliceText } from "../../../../../../commonTypes/utils";
-import { useAlert } from "../../../../components/AlertProvider";
-import Btn from "../../../../components/Btn";
-import { Marked } from "../../../../components/Chat/Marked";
-import Chip from "../../../../components/Chip";
-import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
-import { usePrgl } from "../../../../pages/ProjectConnection/PrglContextProvider";
-import { isDefined } from "../../../../utils";
+} from "../../../../../../../../commonTypes/prostglesMcp";
+import { sliceText } from "../../../../../../../../commonTypes/utils";
+import { useAlert } from "../../../../../../components/AlertProvider";
+import Btn from "../../../../../../components/Btn";
+import { Marked } from "../../../../../../components/Chat/Marked";
+import Chip from "../../../../../../components/Chip";
+import { FlexCol, FlexRowWrap } from "../../../../../../components/Flex";
+import { usePrgl } from "../../../../../../pages/ProjectConnection/PrglContextProvider";
+import { isDefined } from "../../../../../../utils";
+import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 
-type P = {
-  chatId: number;
-  message: Extract<
-    DBSSchema["llm_messages"]["message"][number],
-    { type: "tool_use" }
-  >;
-};
-
-export const LoadSuggestedToolsAndPrompt = ({ chatId, message }: P) => {
+export const LoadSuggestedToolsAndPrompt = ({
+  chatId,
+  message,
+}: ProstglesMCPToolsProps) => {
   const { dbs, connectionId } = usePrgl();
   const data = message.input as JSONB.GetObjectType<
     (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]

@@ -58,6 +58,18 @@ export const filterArr = <T, U extends Partial<T>>(
   }) as FilterMatch<T, U>[];
 };
 
+export const findArr = <T, U extends Partial<T>>(
+  arr: T[] | readonly T[],
+  pattern: U,
+): FilterMatch<T, U> | undefined => {
+  const patternEntries = Object.entries(pattern);
+  return arr.find((item) => {
+    return patternEntries.every(
+      ([key, value]) => item[key as keyof T] === value,
+    );
+  }) as FilterMatch<T, U> | undefined;
+};
+
 export const filterArrInverse = <T, U extends Partial<T>>(
   arr: T[],
   pattern: U,

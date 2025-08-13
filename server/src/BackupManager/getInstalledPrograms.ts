@@ -2,21 +2,27 @@ import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type { InstalledPrograms } from "../../../commonTypes/electronInitTypes";
+import {
+  programList,
+  type InstalledPrograms,
+} from "../../../commonTypes/electronInitTypes";
 import type { WithUndef } from "../../../commonTypes/utils";
 import { isDefined } from "prostgles-types";
+import { EOL } from "os";
 
 let installedPrograms: WithUndef<InstalledPrograms> | undefined = {
   psql: undefined,
   pg_dump: undefined,
   pg_restore: undefined,
+  docker: undefined,
   filePath: undefined,
   os: undefined,
 };
 
 const getDataDirectory = async (db: DB) => {
-  const dataDir = (await db.oneOrNone("SHOW data_directory"))
-    ?.data_directory as string;
+  const dataDir = (
+    await db.one<{ data_directory: string }>("SHOW data_directory")
+  ).data_directory;
   const binDir =
     dataDir.endsWith("data") ? dataDir.slice(0, -4) + "bin/" : undefined;
   return {
@@ -54,9 +60,7 @@ const getWindowsPsqlBinPath = async (db: DB) => {
     }
 
     try {
-      const psqlPath = execSync("where psql")
-        .toString()
-        .split(require("os").EOL)[0];
+      const psqlPath = execSync("where psql").toString().split(EOL)[0];
       if (psqlPath) {
         filePath = path.resolve(psqlPath + "/../") + "/";
         if (fs.existsSync(`${filePath}psql.exe`)) {
@@ -96,6 +100,7 @@ export const getInstalledPsqlVersions = async (
         pg_restore: execSync(
           JSON.stringify(`${filePath}pg_restore${ext}`) + ` --version`,
         ).toString(),
+        docker: execSync("docker --version").toString(),
       };
 
       /** Linux/MacOS */
@@ -146,21 +151,14 @@ export const getInstalledPsqlVersions = async (
             psql: execSync(`${filePath}psql --version`).toString(),
             pg_dump: execSync(`${filePath}pg_dump --version`).toString(),
             pg_restore: execSync(`${filePath}pg_restore --version`).toString(),
+            docker: execSync("docker --version").toString(),
           };
         }
       } else {
         installedPrograms = {
           os,
           filePath,
-          psql:
-            execSync("which psql").toString() &&
-            execSync("psql --version").toString(),
-          pg_dump:
-            execSync("which pg_dump").toString() &&
-            execSync("pg_dump --version").toString(),
-          pg_restore:
-            execSync("which pg_restore").toString() &&
-            execSync("pg_restore --version").toString(),
+          ...getLinuxInstalledPrograms(programList),
         };
       }
     }
@@ -178,8 +176,8 @@ export const getInstalledPsqlVersions = async (
     installedPrograms = undefined;
   }
 
-  const { pg_dump, pg_restore, psql } = installedPrograms ?? {};
-  if (!psql || !pg_dump || !pg_restore) {
+  const { pg_dump, pg_restore, psql, docker } = installedPrograms ?? {};
+  if (!psql || !pg_dump || !pg_restore || !docker) {
     return undefined;
   }
 
@@ -188,6 +186,23 @@ export const getInstalledPsqlVersions = async (
     pg_dump,
     pg_restore,
     filePath,
+    docker,
     os,
   };
+};
+
+const getLinuxInstalledPrograms = <ProgramList extends readonly string[]>(
+  programs: ProgramList,
+): Record<ProgramList[number], string> => {
+  const getInstalledVersion = (program: string) =>
+    execSync("which " + program).toString() &&
+    execSync(program + " --version").toString();
+
+  return programs.reduce(
+    (acc, program) => {
+      acc[program as ProgramList[number]] = getInstalledVersion(program);
+      return acc;
+    },
+    {} as Record<ProgramList[number], string>,
+  );
 };

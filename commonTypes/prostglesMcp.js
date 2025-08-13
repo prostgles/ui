@@ -8,6 +8,16 @@ const runSQLSchema = {
         },
     },
 };
+const filesSchema = {
+    description: 'Files to copy into the container. Must include a Dockerfile. Example { "index.ts": "import type { JSONB } from "prostgles-types";" }',
+    record: {
+        partial: true,
+        values: {
+            type: "string",
+            description: "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ",
+        },
+    },
+};
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     "prostgles-db-methods": { [""]: "" },
     "prostgles-db": {
@@ -134,6 +144,54 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             },
         },
     },
+    "docker-sandbox": {
+        create_container: {
+            schema: {
+                description: "Create a new Docker sandbox container",
+                type: {
+                    files: filesSchema,
+                    timeout: {
+                        type: "number",
+                        optional: true,
+                        description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ",
+                        // default: 30000,
+                    },
+                    networkMode: {
+                        enum: ["none", "bridge", "host"],
+                        description: "Network mode for the container. Defaults to 'none'",
+                        // default: "none",
+                        optional: true,
+                    },
+                    environment: {
+                        description: "Environment variables to set in the container",
+                        record: { values: "string", partial: true },
+                        optional: true,
+                    },
+                    memory: {
+                        type: "string",
+                        description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m",
+                        optional: true,
+                        // default: "512m",
+                    },
+                    cpus: {
+                        type: "string",
+                        description: "CPU limit (e.g., '0.5', '1'). Defaults to 1",
+                        optional: true,
+                        // default: "1",
+                    },
+                },
+            },
+            outputSchema: {
+                type: {
+                    name: "string",
+                    command: "string",
+                    stdout: "string",
+                    stderr: "string",
+                    exitCode: "number",
+                },
+            },
+        },
+    },
 };
 const MCP_TOOL_NAME_SEPARATOR = "--";
 export const getMCPFullToolName = (server_name, name) => {
@@ -147,28 +205,27 @@ export const getMCPToolNameParts = (fullName) => {
     }
 };
 export const getProstglesDBTools = (chat) => {
-    const dbAccess = chat.db_data_permissions;
-    if (!dbAccess || dbAccess.Mode === "None") {
+    const chatDBAccess = chat.db_data_permissions;
+    if (!chatDBAccess || chatDBAccess.Mode === "None") {
         return [];
     }
-    if ((dbAccess === null || dbAccess === void 0 ? void 0 : dbAccess.Mode) === "Custom") {
-        const tableTools = dbAccess.tables.reduce((a, tableRule) => {
-            const actions = ["select", "update", "insert", "delete"];
-            for (const actionName of actions) {
-                if (tableRule[actionName] && !a[actionName]) {
-                    a[actionName] = {
+    if ((chatDBAccess === null || chatDBAccess === void 0 ? void 0 : chatDBAccess.Mode) === "Custom") {
+        const tableTools = chatDBAccess.tables.reduce((allowedTableTools, chatTableRule) => {
+            for (const actionName of COMMANDS) {
+                if (chatTableRule[actionName] && !allowedTableTools[actionName]) {
+                    allowedTableTools[actionName] = {
                         name: getProstglesMCPFullToolName("prostgles-db", actionName),
                         type: "prostgles-db",
                         tool_name: actionName,
                         description: PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][actionName]
                             .description,
-                        auto_approve: Boolean(dbAccess.auto_approve),
+                        auto_approve: Boolean(chatDBAccess.auto_approve),
                         schema: PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][actionName]
                             .schema,
                     };
                 }
             }
-            return a;
+            return allowedTableTools;
         }, {});
         return Object.values(tableTools);
     }
@@ -181,11 +238,11 @@ export const getProstglesDBTools = (chat) => {
                 type: "prostgles-db",
                 tool_name: toolName,
                 description,
-                auto_approve: Boolean(dbAccess.auto_approve),
+                auto_approve: Boolean(chatDBAccess.auto_approve),
                 schema,
             };
-            const isAllowed = dbAccess.Mode === "Run commited SQL" ||
-                (dbAccess.Mode === "Run readonly SQL" &&
+            const isAllowed = chatDBAccess.Mode === "Run commited SQL" ||
+                (chatDBAccess.Mode === "Run readonly SQL" &&
                     toolName === "execute_sql_with_rollback");
             if (isAllowed) {
                 return tool;
@@ -195,3 +252,4 @@ export const getProstglesDBTools = (chat) => {
         .filter(isDefined);
     return sqlTools;
 };
+const COMMANDS = ["select", "update", "insert", "delete"];

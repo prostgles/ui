@@ -27,7 +27,15 @@ type P = UseLLMChatProps & {
 };
 
 export const useLLMChatMessages = (props: P) => {
-  const { dbs, user, activeChat, db, loadedSuggestions, workspaceId } = props;
+  const {
+    dbs,
+    user,
+    activeChat,
+    db,
+    loadedSuggestions,
+    workspaceId,
+    mcpServerIcons,
+  } = props;
   const { status } = activeChat ?? {};
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChat?.id },
@@ -36,7 +44,6 @@ export const useLLMChatMessages = (props: P) => {
   );
 
   const isLoadingSince = status?.state === "loading" ? status.since : null;
-  // new
   const sqlHandler = db.sql;
 
   const actualMessages: Message[] | undefined = useMemo(
@@ -110,6 +117,7 @@ export const useLLMChatMessages = (props: P) => {
                   sqlHandler={sqlHandler}
                   loadedSuggestions={loadedSuggestions}
                   workspaceId={workspaceId}
+                  mcpServerIcons={mcpServerIcons}
                 />
               );
             });
@@ -148,10 +156,6 @@ export const useLLMChatMessages = (props: P) => {
                         key: "allToBottom",
                         label: "Delete this and all following messages",
                       },
-                      // {
-                      //   key: "regenerate",
-                      //   label: "Delete and re-generate from this message",
-                      // },
                     ]}
                     btnProps={{
                       size: "micro",
@@ -218,6 +222,7 @@ export const useLLMChatMessages = (props: P) => {
       workspaceId,
       dbs.llm_messages,
       activeChat?.id,
+      mcpServerIcons,
     ],
   );
 

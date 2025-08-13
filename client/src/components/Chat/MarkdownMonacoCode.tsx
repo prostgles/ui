@@ -17,7 +17,10 @@ import Btn from "../Btn";
 import { CopyToClipboardBtn } from "../CopyToClipboardBtn";
 import ErrorComponent from "../ErrorComponent";
 import { FlexCol, FlexRow } from "../Flex";
-import { MonacoEditor } from "../MonacoEditor/MonacoEditor";
+import {
+  MONACO_READONLY_DEFAULT_OPTIONS,
+  MonacoEditor,
+} from "../MonacoEditor/MonacoEditor";
 import Popup from "../Popup/Popup";
 import { Table } from "../Table/Table";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
@@ -56,14 +59,8 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
 
   const monacoOptions = useMemo(() => {
     return {
-      minimap: { enabled: false },
+      ...MONACO_READONLY_DEFAULT_OPTIONS,
       lineNumbers: fullscreen ? "on" : "off",
-      tabSize: 2,
-      padding: { top: 10 },
-      scrollBeyondLastLine: false,
-      automaticLayout: true,
-      lineHeight: 19,
-      readOnly: true,
     } satisfies editor.IStandaloneEditorConstructionOptions;
   }, [fullscreen]);
 
@@ -119,7 +116,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
   );
   return (
     <FlexCol
-      className="MarkdownMonacoCode relative o-dvisible min-w-600 b b-color rounded gap-0 f-0 o-hidden"
+      className="MarkdownMonacoCode min-w-600 relative o-dvisible b b-color rounded gap-0 f-0 o-hidden"
       data-command="MarkdownMonacoCode"
       style={{
         maxWidth: `${CHAT_WIDTH}px`,

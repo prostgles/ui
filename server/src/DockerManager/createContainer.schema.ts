@@ -9,22 +9,15 @@ export type CreateContainerParams = JSONB.GetSchemaType<
 >;
 
 const filesSchema = {
-  description: "Files to copy into the container. Must include a Dockerfile",
-  arrayOfType: {
-    name: { type: "string", description: "File name. E.g.: 'index.ts' " },
-    content: {
+  description:
+    'Files to copy into the container. Must include a Dockerfile. Example { "index.ts": "import type { JSONB } from "prostgles-types";" }',
+  record: {
+    partial: true,
+    values: {
       type: "string",
       description:
         "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ",
     },
-  },
-} as const satisfies JSONB.JSONBSchema;
-
-const meta = {
-  description: "Used internally by prostgles",
-  type: {
-    userId: "string",
-    chatId: "number",
   },
 } as const satisfies JSONB.JSONBSchema;
 
@@ -62,7 +55,6 @@ export const createContainerSchema = {
       optional: true,
       // default: "1",
     },
-    meta,
   },
 } as const satisfies JSONB.JSONBSchema;
 

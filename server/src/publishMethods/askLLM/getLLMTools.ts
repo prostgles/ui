@@ -15,6 +15,7 @@ import {
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { getAddTaskTools, suggestDashboardsTool } from "./prostglesMcpTools";
 import { getEntries } from "../../../../commonTypes/utils";
+import { getDockerMCP } from "../../DockerManager/DockerManager";
 
 type Args = {
   isAdmin: boolean;
@@ -74,7 +75,12 @@ export const getLLMTools = async ({
     (tool) => {
       return {
         ...tool,
-        input_schema: getJSONBSchemaAsJSONSchema("", "", tool.schema),
+        input_schema: getJSONBSchemaAsJSONSchema(
+          "",
+          "",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          tool.schema,
+        ),
       };
     },
   );
@@ -104,19 +110,29 @@ export const getLLMTools = async ({
     },
   });
   const tools: Record<string, MCPToolSchemaWithApproveInfo> = {};
-
+  const dockerMCP = await getDockerMCP(dbs, chat);
   /** Check for name collisions */
   [
     ...mcpTools
-      .map(({ id, ...t }) => {
+      .map(({ id, ...tool }) => {
         const info = llm_chats_allowed_mcp_tools.find(
           ({ tool_id }) => tool_id === id,
         );
+        const createContainerTool = dockerMCP.toolSchemas[0]!;
         if (!info) return;
         return {
           type: "mcp" as const,
-          ...t,
+          ...tool,
           ...info,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          input_schema:
+            tool.name === "docker-sandbox--create_container" ?
+              createContainerTool.inputSchema
+            : tool.input_schema,
+          description:
+            tool.name === "docker-sandbox--create_container" ?
+              createContainerTool.description
+            : tool.description,
           auto_approve: Boolean(info.auto_approve),
         };
       })

@@ -24,7 +24,9 @@
     "checkJs": true,
     "paths": {
       "@common/*": ["../commonTypes/*"],
-      "@docs/*": ["../docs/*"]
+      "@docs/*": ["../docs/*"],
+      "@components/*": ["src/components/*"],
+      "@pages/*": ["src/papges/*"],
     }
   },
   "include": ["src"],

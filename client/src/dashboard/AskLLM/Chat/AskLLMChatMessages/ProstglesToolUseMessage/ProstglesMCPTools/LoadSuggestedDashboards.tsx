@@ -1,33 +1,26 @@
 import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";
 import type { JSONB } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../../../../commonTypes/prostglesMcp";
-import {
-  isObject,
-  type DBSSchema,
-} from "../../../../../../commonTypes/publishUtils";
-import { useAlert } from "../../../../components/AlertProvider";
-import Btn from "../../../../components/Btn";
-import Chip from "../../../../components/Chip";
-import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
-import { pageReload } from "../../../../components/Loading";
-import { usePrgl } from "../../../../pages/ProjectConnection/PrglContextProvider";
-import { isDefined } from "../../../../utils";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../../../../../../commonTypes/prostglesMcp";
+import { isObject } from "@common/publishUtils";
+import { useAlert } from "@components/AlertProvider";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { pageReload } from "@components/Loading";
+import { usePrgl } from "../../../../../../pages/ProjectConnection/PrglContextProvider";
+import { isDefined } from "../../../../../../utils";
 import {
   useSetActiveWorkspace,
   useWorkspacesSync,
-} from "../../../WorkspaceMenu/WorkspaceMenu";
-import { loadGeneratedWorkspaces } from "../loadGeneratedWorkspaces";
+} from "../../../../../WorkspaceMenu/WorkspaceMenu";
+import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces";
+import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 
-type P = {
-  workspaceId: string | undefined;
-  message: Extract<
-    DBSSchema["llm_messages"]["message"][number],
-    { type: "tool_use" }
-  >;
-};
-
-export const LoadSuggestedDashboards = ({ workspaceId, message }: P) => {
+export const LoadSuggestedDashboards = ({
+  workspaceId,
+  message,
+}: ProstglesMCPToolsProps) => {
   const { setWorkspace } = useSetActiveWorkspace(workspaceId);
   const { dbs, connectionId } = usePrgl();
 

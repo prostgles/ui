@@ -1,6 +1,26 @@
-# docker-compose.yml
-
 name: prostgles
+
+# Define reusable blocks
+x-ui-environment: &ui-environment
+  POSTGRES_HOST: db
+  POSTGRES_DB: ${POSTGRES_DB}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  PROSTGLES_UI_HOST: "0.0.0.0"
+
+x-ui-base: &ui-base
+  image: prostgles/ui:latest
+  restart: unless-stopped
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment:
+    <<: *ui-environment
+  depends_on:
+    db:
+      condition: service_healthy
+  command: node /usr/src/app/server/dist/server/src/index.js
+
 services:
   db:
     image: prostgles/ui-db:latest
@@ -9,17 +29,14 @@ services:
     build:
       context: .
       dockerfile: DB-Dockerfile 
-
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
     command: >
       postgres 
       -c shared_preload_libraries=pg_stat_statements  
       -c max_connections=200
-
     volumes:
       - db:/var/lib/postgresql/data
     healthcheck:
@@ -31,37 +48,37 @@ services:
       timeout: 3s
       retries: 5
 
+  # Default UI service (base profile)
   ui:
-    image: prostgles/ui:latest
+    # profiles: ["base"]
+    <<: *ui-base
     container_name: prostgles-ui
-    restart: unless-stopped
-
-    build:
-      context: .
-      dockerfile: Dockerfile
-
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_HOST: db
-      PROSTGLES_UI_HOST: "0.0.0.0"
-
-    depends_on:
-      db:
-        condition: service_healthy
-
-    ## Used to allow connecting to a database from the host
-    # extra_hosts:
-    #   - "host.docker.internal:host-gateway"
-
-    ## DEBUG -> Ensure NODE_ENV above is not set to 'production'
-    # command: node --inspect=0.0.0.0:9229 /usr/src/app/server/dist/server/src/index.js
-    command: node /usr/src/app/server/dist/server/src/index.js
     ports:
-      - "${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT-3004}:3004"
-      # DEBUG
-      # - '${PRGL_DOCKER_IP:-127.0.0.1}:9229:9229'
+      - "${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT:-3004}:3004"
+
+  # Debug profile - extends base with Node.js inspector
+  ui-debug:
+    profiles: ["debug"]
+    <<: *ui-base
+    container_name: prostgles-ui-debug
+    command: node --inspect=0.0.0.0:9229 /usr/src/app/server/dist/server/src/index.js
+    ports:
+      - "${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT:-3004}:3004"
+      - "${PRGL_DOCKER_IP:-127.0.0.1}:9229:9229"
+
+  # Docker MCP profile - extends base with Docker capabilities
+  ui-docker-mcp:
+    profiles: ["docker-mcp"]
+    <<: *ui-base
+    container_name: prostgles-ui-docker-mcp
+    environment:
+      <<: *ui-environment
+      DOCKER_HOST: unix:///var/run/docker.sock
+    ports:
+      - "${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT:-3004}:3004"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker:ro
 
 volumes:
   db:

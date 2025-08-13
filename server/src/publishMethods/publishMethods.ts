@@ -11,9 +11,10 @@ import { connMgr } from "../index";
 export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
+import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import type { AnyObject, UserLike } from "prostgles-types";
+import type { AnyObject } from "prostgles-types";
 import {
   asName,
   assertJSONBObjectAgainstSchema,
@@ -57,7 +58,6 @@ import { askLLM } from "./askLLM/askLLM";
 import { refreshModels } from "./askLLM/refreshModels";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
-import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 
 export const publishMethods: PublishMethods<
   DBGeneratedSchema,
@@ -541,15 +541,16 @@ export const publishMethods: PublishMethods<
       return res;
     },
     getNodeTypes,
-    installMCPServer: async (name) => {
+    installMCPServer: async (name: string) => {
       return installMCPServer(dbs, name);
     },
-    getMCPServersStatus: (serverName) => getMCPServersStatus(dbs, serverName),
+    getMCPServersStatus: (serverName: string) =>
+      getMCPServersStatus(dbs, serverName),
     callMCPServerTool: async (
       chatId: number,
       serverName: string,
       toolName: string,
-      args: any,
+      args: Record<string, unknown> | undefined,
     ) => {
       const res = await callMCPServerTool(
         user,

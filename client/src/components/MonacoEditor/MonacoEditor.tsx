@@ -12,6 +12,7 @@ import {
   defineCustomSQLTheme,
 } from "../../dashboard/SQLEditor/defineCustomSQLTheme";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
+import { KeyCode, KeyMod } from "monaco-editor";
 
 export type MonacoEditorProps = {
   language: string;
@@ -154,6 +155,15 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
         );
       },
     });
+    // editor.addAction({
+    //   id: "savedwa",
+    //   label: "Save (Ctrl + S)",
+    //   keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
+    //   contextMenuGroupId: "navigation",
+    //   run: (editor) => {
+    //     alert("Save action triggered");
+    //   },
+    // });
 
     if (language !== LANG) return;
     editor.addAction({
@@ -299,3 +309,14 @@ export const getSelectedText = (
   if (!model || !selection) return "";
   return model.getValueInRange(selection);
 };
+
+export const MONACO_READONLY_DEFAULT_OPTIONS = {
+  minimap: { enabled: false },
+  lineNumbers: "off",
+  tabSize: 2,
+  padding: { top: 10 },
+  scrollBeyondLastLine: false,
+  automaticLayout: true,
+  lineHeight: 19,
+  readOnly: true,
+} satisfies editor.IStandaloneEditorConstructionOptions;

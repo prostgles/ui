@@ -34,13 +34,18 @@ export type ProstglesState<
 };
 
 type OS = "Windows" | "Linux" | "Mac" | "";
+export const programList = [
+  /** Used for dump/restore */
+  "psql",
+  "pg_dump",
+  "pg_restore",
+  /** Used for docker-mcp */
+  "docker",
+] as const;
 export type InstalledPrograms = {
   os: OS;
   filePath: string;
-  psql: string;
-  pg_dump: string;
-  pg_restore: string;
-};
+} & Record<(typeof programList)[number], string>;
 
 export const DEFAULT_ELECTRON_CONNECTION = {
   type: "Standard",
