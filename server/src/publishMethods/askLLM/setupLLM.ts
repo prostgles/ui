@@ -14,7 +14,7 @@ export const setupLLM = async (dbs: DBS) => {
     await dbs.llm_prompts.insert([
       {
         name: "Chat",
-        description: "Basic chat",
+        description: "Default chat. Includes schema (if allowed)",
         user_id,
         prompt: [
           firstLine,
@@ -27,7 +27,8 @@ export const setupLLM = async (dbs: DBS) => {
       },
       {
         name: "Create dashboards",
-        description: "Create dashboards. Claude Sonnet recommended",
+        description:
+          "Includes database schema and dashboard view structure. Claude Sonnet recommended",
         user_id,
         options: {
           prompt_type: "dashboards",
@@ -48,7 +49,8 @@ export const setupLLM = async (dbs: DBS) => {
       },
       {
         name: "Create task",
-        description: "Create tasks. Claude Sonnet recommended",
+        description:
+          "Includes database schema and full tools list. Will suggest database access type and tools required to completed the task. Claude Sonnet recommended",
         user_id,
         options: {
           prompt_type: "tasks",

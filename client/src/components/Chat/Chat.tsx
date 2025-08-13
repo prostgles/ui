@@ -36,6 +36,7 @@ export type ChatProps = {
     file: boolean;
   }>;
   disabledInfo?: string;
+  isLoading: boolean;
   actionBar?: React.ReactNode;
 };
 
@@ -54,6 +55,7 @@ export const Chat = (props: ChatProps) => {
       file: false,
     },
     actionBar,
+    isLoading,
   } = props;
   const speech = speechFeatureFlagEnabled && allowedMessageTypes.speech;
 
@@ -129,6 +131,7 @@ export const Chat = (props: ChatProps) => {
     }
     setSendingMsg(false);
   }, [getCurrentMessage, onSend, setCurrentMessage, files]);
+  const chatIsLoading = isLoading || sendingMsg;
 
   const filesAsBase64 = usePromise(async () => {
     if (!files.length) return [];
@@ -178,7 +181,7 @@ export const Chat = (props: ChatProps) => {
         <FlexCol
           className={
             "f-1 rounded ml-1 p-p5 " +
-            (sendingMsg ? "no-interaction not-allowed" : "") +
+            (chatIsLoading ? "no-interaction not-allowed" : "") +
             (isEngaged ? "active-shadow bg-action" : "bg-color-2 ")
           }
           {...divHandlers}

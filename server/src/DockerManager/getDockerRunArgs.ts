@@ -1,4 +1,4 @@
-import type { CreateContainerParams } from "./createContainer";
+import type { CreateContainerParams } from "./createContainer.schema";
 
 const LABEL = "prostgles-docker-sandbox";
 

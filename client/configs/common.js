@@ -1,4 +1,6 @@
 const { resolve } = require("path");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
+
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
@@ -66,6 +68,11 @@ module.exports = {
   target: ["web", "es2020"],
   resolve: {
     extensions: [".js", ".jsx", ".ts", ".tsx"],
+    plugins: [
+      new TsconfigPathsPlugin({
+        /* options: see below */
+      }),
+    ],
   },
   context: resolve(__dirname, "../src"),
   module: {
@@ -147,7 +154,16 @@ module.exports = {
       chunkFilename: "static/css/[name].[contenthash:8].chunk.css",
     }),
     new MonacoWebpackPlugin({
-      languages: ["typescript", "javascript", "sql", "pgsql", "json"],
+      languages: [
+        "typescript",
+        "javascript",
+        "sql",
+        "pgsql",
+        "json",
+        /** Used by DockerSandboxCreateContainer */
+        "dockerfile",
+        "python",
+      ],
     }),
     new webpack.ProgressPlugin({
       activeModules: true,

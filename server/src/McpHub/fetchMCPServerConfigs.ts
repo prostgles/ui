@@ -8,12 +8,9 @@ export const fetchMCPServerConfigs = async (
   testConfig?: Pick<DBSSchema["mcp_server_configs"], "server_name" | "config">,
 ): Promise<ServersConfig> => {
   const mcpServers = await dbs.mcp_servers.find(
-    {
-      $or: [
-        { enabled: true },
-        testConfig && { name: testConfig.server_name },
-      ].filter(isDefined),
-    },
+    testConfig ?
+      { name: testConfig.server_name }
+    : { enabled: true, command: { $ne: "prostgles-local" } },
     { select: { "*": 1, mcp_server_configs: "*" } },
   );
   const globalSettings = await dbs.global_settings.findOne();
@@ -24,6 +21,7 @@ export const fetchMCPServerConfigs = async (
   const serversConfig: ServersConfig = Object.fromEntries(
     mcpServers.map((server) => {
       const { config_schema } = server;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const mcp_server_configs: DBSSchema["mcp_server_configs"][] =
         server.mcp_server_configs ?? [];
       const config =
@@ -45,6 +43,7 @@ export const fetchMCPServerConfigs = async (
         Object.entries(config_schema).forEach(
           ([key, configItem], itemIndex) => {
             if (configItem.type === "env") {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               env[key] = config?.[key];
             } else {
               const dollarArgIndexes = args
@@ -52,6 +51,7 @@ export const fetchMCPServerConfigs = async (
                 .filter(isDefined);
               const argIndex = dollarArgIndexes[configItem.index ?? itemIndex];
               if (argIndex) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 args[argIndex] = config?.[key];
               } else {
                 console.error(

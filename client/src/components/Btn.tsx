@@ -1,14 +1,12 @@
-import { mdiAlert, mdiCheck, mdiUpload } from "@mdi/js";
+import { mdiAlert, mdiCheck } from "@mdi/js";
 import { omitKeys } from "prostgles-types";
-import React, { useState } from "react";
+import React from "react";
 import { NavLink } from "react-router-dom";
 import RTComp from "../dashboard/RTComp";
 import type { TestSelectors } from "../Testing";
 import { tout } from "../utils";
 import "./Btn.css";
-import Chip from "./Chip";
 import { parsedError } from "./ErrorComponent";
-import { generateUniqueID } from "./FileInput/FileInput";
 import { classOverride } from "./Flex";
 import type { IconProps } from "./Icon/Icon";
 import { Icon } from "./Icon/Icon";
@@ -46,7 +44,7 @@ type BtnCustomProps = (
    * If provided then the button is disabled and will display a tooltip with this message
    */
   disabledInfo?: string;
-  disabledVariant?: "no-fade";
+  disabledVariant?: "no-fade" | "ignore-loading";
   loading?: boolean;
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
@@ -285,7 +283,8 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     if (clickMessage?.replace) return clickMessage.msg;
 
-    const isDisabled = disabledInfo || loading;
+    const isDisabled =
+      disabledInfo || (loading && disabledVariant !== "ignore-loading");
     let _className = "";
     const { size = window.isLowWidthScreen ? "small" : "default" } = this.props;
 
@@ -339,7 +338,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     _className +=
       (fadeIn ? " fade-in " : "") +
       (iconPath && !children ? "  " : "rounded") + // round
-      (isDisabled ? ` disabled ${disabledVariant} ` : " ");
+      (isDisabled ? ` disabled ${disabledVariant ? "no-fade" : ""} ` : " ");
 
     _className = classOverride(_className, className);
 
@@ -360,7 +359,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       : loading ?
         <div
           className="min-w-0 ws-nowrap text-ellipsis f-0 o-hidden"
-          style={{ opacity: 0.5 }}
+          style={{ opacity: disabledVariant !== "ignore-loading" ? 0.5 : 1 }}
         >
           {children}
         </div>
@@ -446,11 +445,10 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       {
         ...omitKeys(this.props, CUSTOM_ATTRS as any),
         onClick:
-          disabledInfo ?
+          isDisabled ?
             !window.isMobileDevice ?
               undefined
             : () => alert(disabledInfo)
-          : loading ? undefined
           : onClick,
         title: disabledInfo || title,
         style: {

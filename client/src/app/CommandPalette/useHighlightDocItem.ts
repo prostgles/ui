@@ -3,7 +3,7 @@ import { useAlert } from "../../components/AlertProvider";
 import { isDefined } from "prostgles-types";
 import { getUIDocElementsAndAlertIfEmpty } from "./utils";
 import type { UIDocNonInfo } from "../UIDocs";
-import { tout } from "../../utils";
+import { scrollIntoViewIfNeeded, tout } from "../../utils";
 import type { CommandSearchHighlight } from "./CommandPalette";
 import { isInParentViewport } from "../domToSVG/isElementVisible";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
@@ -22,7 +22,7 @@ export const useHighlightDocItem = (
     async (doc: UIDocNonInfo, itemPosition: DocItemHighlightItemPosition) => {
       const { items } = getUIDocElementsAndAlertIfEmpty(doc, addAlert);
       const firstElem = items[0];
-      firstElem?.scrollIntoView({ block: "nearest" }); // same as scrollIntoViewIfNeeded
+      firstElem && scrollIntoViewIfNeeded(firstElem);
       await tout(500);
       const mustChooseOne = items.length > 1 && itemPosition !== "last";
       const highlights = Array.from(items)

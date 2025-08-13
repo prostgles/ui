@@ -150,6 +150,62 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
         };
     };
+    readonly "docker-sandbox": {
+        readonly create_container: {
+            readonly schema: {
+                readonly description: "Create a new Docker sandbox container";
+                readonly type: {
+                    readonly files: {
+                        readonly description: "Files to copy into the container. Must include a Dockerfile. Example { \"index.ts\": \"import type { JSONB } from \"prostgles-types\";\" }";
+                        readonly record: {
+                            readonly partial: true;
+                            readonly values: {
+                                readonly type: "string";
+                                readonly description: "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ";
+                            };
+                        };
+                    };
+                    readonly timeout: {
+                        readonly type: "number";
+                        readonly optional: true;
+                        readonly description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ";
+                    };
+                    readonly networkMode: {
+                        readonly enum: readonly ["none", "bridge", "host"];
+                        readonly description: "Network mode for the container. Defaults to 'none'";
+                        readonly optional: true;
+                    };
+                    readonly environment: {
+                        readonly description: "Environment variables to set in the container";
+                        readonly record: {
+                            readonly values: "string";
+                            readonly partial: true;
+                        };
+                        readonly optional: true;
+                    };
+                    readonly memory: {
+                        readonly type: "string";
+                        readonly description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m";
+                        readonly optional: true;
+                    };
+                    readonly cpus: {
+                        readonly type: "string";
+                        readonly description: "CPU limit (e.g., '0.5', '1'). Defaults to 1";
+                        readonly optional: true;
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly type: {
+                    readonly name: "string";
+                    readonly command: "string";
+                    readonly stdout: "string";
+                    readonly stderr: "string";
+                    readonly exitCode: "number";
+                };
+            };
+        };
+    };
 };
 type ProstglesMcpTools = typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
 export type ProstglesMcpTool = {
@@ -160,7 +216,7 @@ export type ProstglesMcpTool = {
 }[keyof ProstglesMcpTools];
 declare const MCP_TOOL_NAME_SEPARATOR = "--";
 export declare const getMCPFullToolName: <Name extends string, ServerName extends string>(server_name: ServerName, name: Name) => `${ServerName}--${Name}`;
-export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles-db-methods" | "prostgles-db" | "prostgles-ui", Name extends keyof {
+export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles-db-methods" | "prostgles-db" | "prostgles-ui" | "docker-sandbox", Name extends keyof {
     readonly "prostgles-db-methods": {
         readonly [x: string]: "";
     };
@@ -307,6 +363,62 @@ export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles
                         readonly description: "Workspace to create. Must satisfy the typescript WorkspaceInsertModel type";
                         readonly arrayOf: "any";
                     };
+                };
+            };
+        };
+    };
+    readonly "docker-sandbox": {
+        readonly create_container: {
+            readonly schema: {
+                readonly description: "Create a new Docker sandbox container";
+                readonly type: {
+                    readonly files: {
+                        readonly description: "Files to copy into the container. Must include a Dockerfile. Example { \"index.ts\": \"import type { JSONB } from \"prostgles-types\";\" }";
+                        readonly record: {
+                            readonly partial: true;
+                            readonly values: {
+                                readonly type: "string";
+                                readonly description: "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ";
+                            };
+                        };
+                    };
+                    readonly timeout: {
+                        readonly type: "number";
+                        readonly optional: true;
+                        readonly description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ";
+                    };
+                    readonly networkMode: {
+                        readonly enum: readonly ["none", "bridge", "host"];
+                        readonly description: "Network mode for the container. Defaults to 'none'";
+                        readonly optional: true;
+                    };
+                    readonly environment: {
+                        readonly description: "Environment variables to set in the container";
+                        readonly record: {
+                            readonly values: "string";
+                            readonly partial: true;
+                        };
+                        readonly optional: true;
+                    };
+                    readonly memory: {
+                        readonly type: "string";
+                        readonly description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m";
+                        readonly optional: true;
+                    };
+                    readonly cpus: {
+                        readonly type: "string";
+                        readonly description: "CPU limit (e.g., '0.5', '1'). Defaults to 1";
+                        readonly optional: true;
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly type: {
+                    readonly name: "string";
+                    readonly command: "string";
+                    readonly stdout: "string";
+                    readonly stderr: "string";
+                    readonly exitCode: "number";
                 };
             };
         };

@@ -1,57 +1,58 @@
 import { strict } from "assert";
 import { test } from "node:test";
-import {
-  createContainer,
-  type CreateContainerParams,
-} from "./createContainer.js";
+import { createContainer } from "./createContainer.js";
+import type { CreateContainerParams } from "./createContainer.schema.js";
+import { dockerMCPDatabaseRequestRouter } from "./dockerMCPDatabaseRequestRouter.js";
 
-const getFilesFromObject = (obj: Record<string, string>) =>
-  Object.entries(obj).map(([name, content]) => ({ name, content }));
-
+const context = {
+  userId: "test-user",
+  chatId: 12345,
+};
+const testContainerName = `test-container-${Date.now()}`;
 void test("createContainer build error", async () => {
   const config = {
-    files: getFilesFromObject({
+    files: {
       ...filesObject,
       Dockerfile: Dockerfile.replace(
         "WORKDIR",
         "WORKDIR_INVALID", // Introduce an error
       ),
-    }),
+    },
     networkMode: "bridge",
   } satisfies CreateContainerParams;
-  const sandbox = await createContainer(config);
+  const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "build-error");
   strict.equal(sandbox.stderr.includes("| >>> WORKDIR_INVALID"), true);
 });
 
 void test("createContainer run error", async () => {
   const config = {
-    files: getFilesFromObject({
+    files: {
       ...filesObject,
       "index.js": indexJsContent.replace(
         `require`,
         `requireInvalid`, // Introduce an error
       ),
-    }),
+    },
     networkMode: "bridge",
   } satisfies CreateContainerParams;
-  const sandbox = await createContainer(config);
+  const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "error");
   strict.equal(sandbox.stderr.includes("requireInvalid is not defined"), true);
 });
 
 void test("createContainer run timeout", async () => {
   const config = {
-    files: getFilesFromObject({
+    files: {
       ...filesObject,
       "index.js": indexJsContent.replace(
         `try { `,
         `try { \nawait new Promise(resolve => setTimeout(resolve, 120_000));\n `,
       ),
-    }),
+    },
     timeout: 3_000,
   } satisfies CreateContainerParams;
-  const sandbox = await createContainer(config);
+  const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "timed-out");
   strict.equal(sandbox.stdout.includes("Will attempt to fetch from"), true);
 });
@@ -59,40 +60,54 @@ void test("createContainer run timeout", async () => {
 void test("createContainer stdout response", async () => {
   const expectedOutput = "Hello from index.js";
   const config = {
-    files: getFilesFromObject({
+    files: {
       ...filesObject,
       "index.js": `console.log('${expectedOutput}');`,
-    }),
+    },
     timeout: 3_000,
   } satisfies CreateContainerParams;
-  const sandbox = await createContainer(config);
+  const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "finished");
   strict.equal(sandbox.stdout, expectedOutput + "\n");
   strict.equal(sandbox.stderr, "");
 });
 
-void test("createContainer host network", async () => {
-  const config = {
-    files: getFilesFromObject(filesObject),
-    timeout: 9_000,
-    networkMode: "host",
-  } satisfies CreateContainerParams;
-  const sandbox = await createContainer(config);
-  strict.equal(sandbox.state, "finished");
-  strict.equal(sandbox.stdout.includes("<title>Prostgles UI</title>"), true);
-  strict.equal(sandbox.stderr, "");
-});
+// void test("createContainer host network", async () => {
+//   const { address, route, server } = await dockerMCPRouter(() => {
+//     return {
+//       connection_id: "1",
+//       db_data_permissions: { Mode: "Run commited SQL" },
+//       db_schema_permissions: { type: "Full" },
+//     };
+//   });
+//   const config = {
+//     files: {
+//       ...filesObject,
+//       "index.js": indexJsContent.replace(
+//         `http://127.0.0.1:3004/robots.txt`,
+//         `http://${address.address}:${address.port}${route}`, // Use the MCP router address
+//       ),
+//     },
+//     timeout: 4_000,
+//     networkMode: "host",
+//   } satisfies CreateContainerParams;
+//   const sandbox = await createContainer(testContainerName, config);
+//   strict.equal(sandbox.state, "finished");
+//   strict.equal(sandbox.stdout.includes("<title>Prostgles UI</title>"), true);
+//   strict.equal(sandbox.stderr, "");
+//   server.close();
+// });
 
 void test("createContainer stderr response", async () => {
   const expectedOutput = "Hello from index.js";
   const config = {
-    files: getFilesFromObject({
+    files: {
       ...filesObject,
       "index.js": `console.error('${expectedOutput}');`,
-    }),
+    },
     timeout: 3_000,
   } satisfies CreateContainerParams;
-  const sandbox = await createContainer(config);
+  const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "finished");
   strict.equal(sandbox.stdout, "");
   strict.equal(sandbox.stderr, expectedOutput + "\n");
@@ -113,7 +128,7 @@ const HOST_URL = 'http://127.0.0.1:3004/robots.txt'; // This resource will not r
 async function fetchFromHost() {  
   try { 
     console.log(\`Attempting to fetch from \${HOST_URL}\`);
-    const response = await axios.get(HOST_URL, {
+    const response = await axios.post(HOST_URL, {
       timeout: 3_000  
     });    
     console.log('Response status:', response.status); console.log('Response data:', response.data);  

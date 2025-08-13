@@ -66,6 +66,7 @@ export const MenuList = (props: MenuListProps) => {
     const onKeyDownFocusSiblings: React.KeyboardEventHandler<HTMLDivElement> = (
       e,
     ) => {
+      const { key } = e;
       if (!refList.current) return;
       const lastChild = refList.current.lastChild as HTMLLIElement,
         firstChild = refList.current.firstChild as HTMLLIElement,
@@ -74,21 +75,20 @@ export const MenuList = (props: MenuListProps) => {
         nextElementSibling = document.activeElement
           ?.nextElementSibling as HTMLElement;
 
-      switch (e.key) {
-        case "ArrowUp":
-          if (document.activeElement === firstChild) {
-            lastChild.focus();
-          } else if (refList.current.childElementCount) {
-            previousElementSibling.focus();
-          }
-          break;
-        case "ArrowDown":
-          if (document.activeElement === lastChild) {
-            firstChild.focus();
-          } else if (refList.current.childElementCount) {
-            nextElementSibling.focus();
-          }
-          break;
+      if (key === "ArrowUp") {
+        if (document.activeElement === firstChild) {
+          lastChild.focus();
+        } else if (refList.current.childElementCount) {
+          previousElementSibling.focus();
+        }
+        e.preventDefault();
+      } else if (key === "ArrowDown") {
+        if (document.activeElement === lastChild) {
+          firstChild.focus();
+        } else if (refList.current.childElementCount) {
+          nextElementSibling.focus();
+        }
+        e.preventDefault();
       }
     };
     return { onKeyDownFocusSiblings };

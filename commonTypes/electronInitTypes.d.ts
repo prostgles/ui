@@ -25,13 +25,11 @@ export type ProstglesState<T extends Record<string, unknown> = Record<string, un
     initState: ProstglesInitState<T>;
 };
 type OS = "Windows" | "Linux" | "Mac" | "";
+export declare const programList: readonly ["psql", "pg_dump", "pg_restore", "docker"];
 export type InstalledPrograms = {
     os: OS;
     filePath: string;
-    psql: string;
-    pg_dump: string;
-    pg_restore: string;
-};
+} & Record<(typeof programList)[number], string>;
 export declare const DEFAULT_ELECTRON_CONNECTION: {
     readonly type: "Standard";
     readonly db_host: "localhost";

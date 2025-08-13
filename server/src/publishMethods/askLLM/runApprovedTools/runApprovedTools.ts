@@ -385,7 +385,10 @@ export const runApprovedTools = async (
   if (nonEmptyToolResults.length) {
     await askLLM({
       ...args,
-      type: "new-message",
+      type:
+        toolUseRequests.every((t) => t.state === "denied") ?
+          "tool-use-result-all-denied"
+        : "tool-use-result",
       userMessage: nonEmptyToolResults,
     });
   }

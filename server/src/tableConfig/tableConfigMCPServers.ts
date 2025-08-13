@@ -5,6 +5,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     columns: {
       name: `TEXT PRIMARY KEY`,
       info: `TEXT`,
+      icon_path: `TEXT`,
       source: {
         nullable: true,
         jsonbSchema: {
@@ -32,7 +33,9 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
           ],
         },
       },
-      command: { enum: ["npx", "npm", "uvx", "uv", "docker"] },
+      command: {
+        enum: ["npx", "npm", "uvx", "uv", "docker", "prostgles-local"],
+      },
       config_schema: {
         jsonbSchema: {
           record: {

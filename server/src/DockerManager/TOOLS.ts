@@ -1,4 +1,4 @@
-import { createContainerJSONSchema } from "./createContainer";
+import { createContainerJSONSchema } from "./createContainer.schema";
 
 // throw JSON.stringify(
 //   getJSONBSchemaAsJSONSchema("", "", createContainerSchema),

@@ -1,13 +1,13 @@
-import * as fs from "fs";
 import { join } from "path";
 import type { MCPServerInfo } from "../../../../commonTypes/mcp";
-import { mcpGithub } from "./mcpGithub";
 import { actualRootDir } from "../../electronConfig";
+import { mcpGithub } from "./mcpGithub";
 
 const dockerSandboxDir = join(actualRootDir, "/packages/docker-sandbox");
 
 export const DefaultMCPServers: Record<string, MCPServerInfo> = {
   "duckduckgo-search": {
+    icon_path: "Web",
     command: "uvx",
     args: ["duckduckgo-mcp-server"],
     mcp_server_tools: [
@@ -53,6 +53,7 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
     ],
   },
   "brave-search": {
+    icon_path: "Web",
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-brave-search"],
     env: {
@@ -115,6 +116,7 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
     ],
   },
   fetch: {
+    icon_path: "Web",
     command: "uvx",
     args: ["mcp-server-fetch"],
     mcp_server_tools: [
@@ -164,6 +166,7 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
     ],
   },
   filesystem: {
+    icon_path: "FolderOutline",
     command: "npx",
     args: [
       "-y",
@@ -393,6 +396,7 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
     ],
   },
   git: {
+    icon_path: "Git",
     command: "uvx",
     args: ["mcp-server-git", "--repository", "${path:path/to/git/repo}"],
     config_schema: {
@@ -404,6 +408,7 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
     },
   },
   gitlab: {
+    icon_path: "Gitlab",
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-gitlab"],
     env: {
@@ -718,6 +723,7 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
   },
   github: mcpGithub,
   "google-maps": {
+    icon_path: "GoogleMaps",
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-google-maps"],
     env: {
@@ -1121,10 +1127,12 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
     ],
   },
   playwright: {
+    icon_path: "Web",
     command: "npx",
     args: ["@playwright/mcp@latest"],
   },
   puppeteer: {
+    icon_path: "Web",
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-puppeteer"],
     env_from_main_process: ["DISPLAY"],
@@ -1278,6 +1286,7 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
     ],
   },
   slack: {
+    icon_path: "Slack",
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-slack"],
     env: {
@@ -1478,35 +1487,45 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
       },
     },
   },
+  // "docker-sandbox": {
+  //   command: "npm",
+  //   args: ["start", "--silent"],
+  //   source: {
+  //     type: "code",
+  //     files: fs.readdirSync(join(dockerSandboxDir, "/src")).reduce(
+  //       (acc, file) => {
+  //         if (file.endsWith(".ts")) {
+  //           acc[file] = fs.readFileSync(
+  //             join(dockerSandboxDir, "/src/", file),
+  //             "utf-8",
+  //           );
+  //         }
+  //         return acc;
+  //       },
+  //       {} as Record<string, string>,
+  //     ),
+  //     packageJson: fs.readFileSync(
+  //       join(dockerSandboxDir, "/package.json"),
+  //       "utf-8",
+  //     ),
+  //     tsconfigJson: fs.readFileSync(
+  //       join(dockerSandboxDir, "/tsconfig.json"),
+  //       "utf-8",
+  //     ),
+  //   },
+  //   env: {
+  //     NODE_ENV: "production",
+  //   },
+  //   info: "Run code in docker containers",
+  // },
   "docker-sandbox": {
-    command: "npm",
-    args: ["start", "--silent"],
-    source: {
-      type: "code",
-      files: fs.readdirSync(join(dockerSandboxDir, "/src")).reduce(
-        (acc, file) => {
-          if (file.endsWith(".ts")) {
-            acc[file] = fs.readFileSync(
-              join(dockerSandboxDir, "/src/", file),
-              "utf-8",
-            );
-          }
-          return acc;
-        },
-        {} as Record<string, string>,
-      ),
-      packageJson: fs.readFileSync(
-        join(dockerSandboxDir, "/package.json"),
-        "utf-8",
-      ),
-      tsconfigJson: fs.readFileSync(
-        join(dockerSandboxDir, "/tsconfig.json"),
-        "utf-8",
-      ),
-    },
-    env: {
-      NODE_ENV: "production",
-    },
-    info: "Run code in docker containers",
+    icon_path: "Docker",
+    command: "prostgles-local",
+    args: [],
+    mcp_server_tools: [],
   },
 };
+
+export const ProstglesLocalMCPServers = Object.keys(DefaultMCPServers).filter(
+  (server) => DefaultMCPServers[server]?.command === "prostgles-local",
+);

@@ -27,5 +27,5 @@ export const AskLLMChatActionBar = (
 export const btnStyleProps = {
   variant: "icon",
   size: "small",
-  style: { opacity: 0.75 },
+  style: { opacity: 0.75, flex: 1, maxWidth: "fit-content", minWidth: "0" },
 } as const;

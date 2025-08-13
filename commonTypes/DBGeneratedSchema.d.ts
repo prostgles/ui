@@ -585,7 +585,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       args?: null | string[];
-      command: "npx" | "npm" | "uvx" | "uv" | "docker"
+      command: "npx" | "npm" | "uvx" | "uv" | "docker" | "prostgles-local"
       config_schema?: null | Record<string, 
  |  {  type: "env";  title?: string;  optional?: boolean;  description?: string; }
  |  {  type: "arg";  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
@@ -594,6 +594,7 @@ export type DBGeneratedSchema = {
       enabled?: boolean;
       env?: null | Record<string, string>
       env_from_main_process?: null | string[];
+      icon_path?: null | string;
       info?: null | string;
       installed?: null | string;
       name: string;

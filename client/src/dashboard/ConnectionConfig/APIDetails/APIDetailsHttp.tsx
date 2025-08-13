@@ -81,6 +81,9 @@ export const APIDetailsHttp = ({
                 },
                 {
                   label: "Download",
+                  variant: "filled",
+                  className: "ml-auto",
+                  color: "action",
                   onClick: () => {
                     download(restExample, "index.js", "text/javascript");
                   },

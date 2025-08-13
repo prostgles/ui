@@ -35,6 +35,12 @@ export const filterArr = (arr, pattern) => {
         return patternEntries.every(([key, value]) => item[key] === value);
     });
 };
+export const findArr = (arr, pattern) => {
+    const patternEntries = Object.entries(pattern);
+    return arr.find((item) => {
+        return patternEntries.every(([key, value]) => item[key] === value);
+    });
+};
 export const filterArrInverse = (arr, pattern) => {
     const patternEntries = Object.entries(pattern);
     return arr.filter((item) => {

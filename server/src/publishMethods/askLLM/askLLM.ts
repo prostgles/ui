@@ -47,7 +47,11 @@ export type AskLLMArgs = {
   allowedLLMCreds: DBSSchema["access_control_allowed_llm"][] | undefined;
   accessRules: DBSSchema["access_control"][] | undefined;
   clientReq: AuthClientRequest;
-  type: "new-message" | "approve-tool-use";
+  type:
+    | "new-message"
+    | "approve-tool-use"
+    | "tool-use-result"
+    | "tool-use-result-all-denied";
 };
 
 export const askLLM = async (args: AskLLMArgs) => {
@@ -62,41 +66,15 @@ export const askLLM = async (args: AskLLMArgs) => {
     userMessage,
     type,
   } = args;
-  if (!userMessage.length) throw "Message is empty";
-  if (!Number.isInteger(chatId)) throw "chatId must be an integer";
-  const getChat = () => dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
-  let chat = await getChat();
-  if (!chat) throw "Chat not found";
-  const { llm_prompt_id } = chat;
-  if (!chat.model) {
-    const preferredChatModel = await getBestLLMChatModel(dbs, {
-      $existsJoined: {
-        "llm_providers.llm_credentials": {},
-      },
-    } as Filter);
-    await dbs.llm_chats.update(
-      { id: chatId },
-      { model: preferredChatModel.id },
-    );
-    chat = await getChat();
-  }
-  if (!chat?.model) throw "Chat model not found";
-  const llm_credential = await dbs.llm_credentials.findOne({
-    $existsJoined: {
-      "llm_providers.llm_models": {
-        id: chat.model,
-      },
-    },
-  } as Filter);
-  if (!llm_prompt_id) throw "Chat missing prompt";
-  if (!llm_credential) throw "LLM credentials missing";
-  const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
-  if (!promptObj) throw "Prompt not found";
-  const { prompt } = promptObj;
-  const pastMessages = await dbs.llm_messages.find(
-    { chat_id: chatId },
-    { orderBy: { created: 1 } },
-  );
+  const {
+    chat,
+    prompt,
+    pastMessages,
+    promptObj,
+    getChat,
+    llm_credential,
+    llm_prompt_id,
+  } = await getValidatedAskLLMChatOptions(args);
 
   const toolsWithInfo = await getLLMTools({
     isAdmin: user.type === "admin",
@@ -114,31 +92,7 @@ export const askLLM = async (args: AskLLMArgs) => {
   });
 
   const lastMessage = pastMessages.at(-1);
-  if (type === "new-message") {
-    await dbs.llm_messages.insert({
-      user_id: user.id,
-      chat_id: chatId,
-      message: userMessage,
-      llm_model_id: chat.model,
-    });
-
-    /** Update chat name based on first user message */
-    const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
-    if (isFirstUserMessage) {
-      const questionText = getLLMMessageText({ message: userMessage });
-      const isOnlyImage =
-        !questionText && userMessage.some((m) => m.type === "image");
-      void dbs.llm_chats.update(
-        { id: chatId },
-        {
-          name:
-            isOnlyImage ? "[Attached image]" : (
-              sliceText(questionText, 25).replaceAll("\n", " ")
-            ),
-        },
-      );
-    }
-  } else {
+  if (type === "approve-tool-use") {
     return runApprovedTools(
       args,
       chat,
@@ -146,6 +100,40 @@ export const askLLM = async (args: AskLLMArgs) => {
       lastMessage?.message,
       toolsWithInfo,
     );
+  }
+
+  await dbs.llm_messages.insert({
+    user_id: user.id,
+    chat_id: chatId,
+    message: userMessage,
+    llm_model_id: chat.model,
+  });
+
+  /** Update chat name based on first user message */
+  const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
+  if (isFirstUserMessage) {
+    const questionText = getLLMMessageText({ message: userMessage });
+    const isOnlyImage =
+      !questionText && userMessage.some((m) => m.type === "image");
+    void dbs.llm_chats.update(
+      { id: chatId },
+      {
+        name:
+          isOnlyImage ? "[Attached image]" : (
+            sliceText(questionText, 25).replaceAll("\n", " ")
+          ),
+      },
+    );
+  }
+
+  if (type === "tool-use-result-all-denied") {
+    // await dbs.llm_chats.update(
+    //   { id: chatId },
+    //   {
+    //     status: { state: "stopped" },
+    //   },
+    // );
+    return;
   }
 
   const allowedUsedCreds = allowedLLMCreds?.filter(
@@ -314,13 +302,13 @@ export const askLLM = async (args: AskLLMArgs) => {
       throw `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`;
     }
 
-    chat = await getChat();
-    if (!chat) throw "Chat not found after LLM response";
+    const latestChat = await getChat();
+    if (!latestChat) throw "Chat not found after LLM response";
 
-    if (chat.status?.state !== "stopped") {
+    if (latestChat.status?.state !== "stopped") {
       await runApprovedTools(
         args,
-        chat,
+        latestChat,
         aiResponseMessage,
         lastMessage?.message,
         toolsWithInfo,
@@ -354,4 +342,58 @@ export const askLLM = async (args: AskLLMArgs) => {
       status: null,
     },
   );
+};
+
+const getValidatedAskLLMChatOptions = async ({
+  userMessage,
+  type,
+  chatId,
+  dbs,
+  user,
+}: AskLLMArgs) => {
+  if (!userMessage.length && type === "new-message") throw "Message is empty";
+  if (!Number.isInteger(chatId)) throw "chatId must be an integer";
+  const getChat = () => dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
+  let maybeChat = await getChat();
+  if (!maybeChat) throw "Chat not found";
+  const { llm_prompt_id } = maybeChat;
+  if (!maybeChat.model) {
+    const preferredChatModel = await getBestLLMChatModel(dbs, {
+      $existsJoined: {
+        "llm_providers.llm_credentials": {},
+      },
+    } as Filter);
+    await dbs.llm_chats.update(
+      { id: chatId },
+      { model: preferredChatModel.id },
+    );
+    maybeChat = await getChat();
+  }
+  if (!maybeChat?.model) throw "Chat model not found";
+  const chat = { ...maybeChat, model: maybeChat.model };
+  const llm_credential = await dbs.llm_credentials.findOne({
+    $existsJoined: {
+      "llm_providers.llm_models": {
+        id: chat.model,
+      },
+    },
+  } as Filter);
+  if (!llm_prompt_id) throw "Chat missing prompt";
+  if (!llm_credential) throw "LLM credentials missing";
+  const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
+  if (!promptObj) throw "Prompt not found";
+  const { prompt } = promptObj;
+  const pastMessages = await dbs.llm_messages.find(
+    { chat_id: chatId },
+    { orderBy: { created: 1 } },
+  );
+  return {
+    prompt,
+    promptObj,
+    pastMessages,
+    chat,
+    llm_credential,
+    llm_prompt_id,
+    getChat,
+  };
 };
