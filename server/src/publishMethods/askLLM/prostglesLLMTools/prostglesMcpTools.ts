@@ -1,10 +1,10 @@
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
+import { dashboardTypes } from "../../../../../commonTypes/DashboardTypes";
 import {
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../commonTypes/prostglesMcp";
-import { fixIndent } from "../../../../commonTypes/utils";
+} from "../../../../../commonTypes/prostglesMcp";
+import { fixIndent } from "../../../../../commonTypes/utils";
 
 export const executeSQLToolWithRollback = {
   name: getProstglesMCPFullToolName(
@@ -83,9 +83,3 @@ export const suggestDashboardsTool = {
       .schema,
   ),
 };
-
-export const PROSTGLES_MCP_TOOLS = [
-  executeSQLToolWithRollback,
-  suggestDashboardsTool,
-  getAddTaskTools(),
-] as const;

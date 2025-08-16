@@ -9,16 +9,26 @@ import {
 import { connMgr } from "..";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../commonTypes/prostglesMcp";
+import { isPortFree } from "./isPortFree";
 
 const route = "/db";
+const PREFERRED_PORT = 3009;
+const HOST = "172.17.0.1";
 
 type ChatPermissions = Pick<
   DBSSchema["llm_chats"],
   "db_data_permissions" | "connection_id"
 >;
 
-export const dockerMCPDatabaseRequestRouter = (
-  getChat: (ip: string) => ChatPermissions | undefined,
+type AuhtContext = {
+  sid_token: string;
+  chat: ChatPermissions;
+};
+
+export type GetAuthContext = (ip: string) => AuhtContext | undefined;
+
+export const dockerMCPDatabaseRequestRouter = async (
+  getChat: GetAuthContext,
 ) => {
   const app = express();
 
@@ -26,30 +36,34 @@ export const dockerMCPDatabaseRequestRouter = (
   app.use(urlencoded({ extended: true, limit: "1000mb" }));
   app.post(route, (req, res) => requestHandler(req, res, getChat));
   const http = _http.createServer(app);
+  const usePreferredPort = await isPortFree(PREFERRED_PORT);
 
-  /** Bind to 172.17.0.1 to an available port */
   return new Promise<{
     app: express.Express;
     server: _http.Server;
     address: AddressInfo;
     route: string;
   }>((resolve, reject) => {
-    const server = http.listen(undefined, "172.17.0.1", () => {
-      const address = server.address();
-      console.log("Docker MCP Router listening on", address);
-      if (!isObject(address)) {
-        reject(new Error("Server address is not an object"));
-      } else {
-        resolve({ app, server, address, route });
-      }
-    });
+    const server = http.listen(
+      usePreferredPort ? PREFERRED_PORT : undefined,
+      HOST,
+      () => {
+        const address = server.address();
+        console.log("Docker MCP Router listening on", address);
+        if (!isObject(address)) {
+          reject(new Error("Server address is not an object"));
+        } else {
+          resolve({ app, server, address, route });
+        }
+      },
+    );
   });
 };
 
 const requestHandler = (
   req: Request,
   res: Response,
-  getChat: (ip: string) => ChatPermissions | undefined,
+  getChat: GetAuthContext,
 ) => {
   void (async () => {
     try {
@@ -60,13 +74,14 @@ const requestHandler = (
           .status(400)
           .send("Invalid IP address. Only local requests are allowed.");
       }
-      const containerChat = getChat(ip);
-      if (!containerChat) {
+      const authContext = getChat(ip);
+      if (!authContext) {
         return res
           .status(404)
           .send("Container and/or Chat not found for the given IP address.");
       }
-      const dbPermissions = containerChat.db_data_permissions;
+      const { chat, sid_token } = authContext;
+      const dbPermissions = chat.db_data_permissions;
       if (!dbPermissions || dbPermissions.Mode === "None") {
         return res
           .status(403)
@@ -85,28 +100,28 @@ const requestHandler = (
         );
         const { tableName, command } = args;
       }
-      const { connection_id } = containerChat;
+      const { connection_id } = chat;
       if (!isDefined(connection_id)) {
         return res.status(400).send("No connection ID found for this chat.");
       }
       const connection = connMgr.getConnection(connection_id);
 
-      // req.cookies.sid = "";
+      req.cookies ??= {};
+      req.cookies.sid_token = sid_token;
       const { clientDb } = await connection.prgl.getClientDBHandlers({
         res,
         httpReq: req,
       });
 
       try {
-        const args = req.body;
         assertJSONBObjectAgainstSchema(
           PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][
             "execute_sql_with_rollback"
           ].schema.type,
-          args,
+          req.body,
           "sql request",
         );
-        const { sql } = args;
+        const { sql } = req.body;
         const result = await clientDb.sql(sql);
         return res.json(result);
       } catch (error) {

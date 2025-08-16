@@ -60,7 +60,10 @@ export const Marked = (props: MarkedProps) => {
   return (
     <FlexCol
       {...divProps}
-      className={classOverride("Marked min-w-0 max-w-full", divProps.className)}
+      className={classOverride(
+        "Marked o-auto min-w-0 max-w-full",
+        divProps.className,
+      )}
     >
       <Markdown
         components={{

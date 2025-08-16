@@ -441,6 +441,7 @@ export const COMMANDS = {
   Alert: "Alert popup",
   ErrorComponent: "",
   "ToolUseMessage.toggle": "",
+  "ToolUseMessage.Popup": "",
   MarkdownMonacoCode: "",
   "MCPServersInstall.install": "",
   NewConnectionForm: "",

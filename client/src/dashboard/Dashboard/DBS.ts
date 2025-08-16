@@ -157,6 +157,22 @@ export type DBSMethods = Partial<{
     uvxVersion: string;
   }>;
   refreshModels: () => Promise<void>;
+  getLLMAllowedChatTools: (chatId: number) => Promise<
+    | {
+        type:
+          | "mcp"
+          | "prostgles-db-methods"
+          | "prostgles-db"
+          | "prostgles-ui"
+          | "docker-sandbox";
+        name: string;
+        description: string;
+        input_schema: any;
+        tool_name: string;
+        auto_approve: boolean;
+      }[]
+    | undefined
+  >;
 }>;
 
 const AdminTableNames = ["connections", "global_settings"] as const;

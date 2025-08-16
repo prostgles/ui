@@ -83,7 +83,18 @@ const mcpSandboxToolUse = [
     function: {
       name: "docker-sandbox--create_container",
       arguments: stringify({
-        image: "node:18-alpine",
+        files: {
+          Dockerfile: `FROM node:20 \nWORKDIR /app \nCOPY . . \nRUN npm install \nCMD ["npm", "start"]`,
+          "package.json": JSON.stringify({
+            name: "test-app",
+            version: "1.0.0",
+            scripts: {
+              start: "node index.js",
+            },
+          }),
+          "index.js": `console.log("Hello from the sandbox!");`,
+        },
+        timeout: 30_000,
       }),
     },
   },

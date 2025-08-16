@@ -1,4 +1,3 @@
-import type { DBSSchema } from "./publishUtils";
 export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     readonly "prostgles-db-methods": {
         readonly [x: string]: "";
@@ -199,8 +198,14 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 readonly type: {
                     readonly name: "string";
                     readonly command: "string";
-                    readonly stdout: "string";
-                    readonly stderr: "string";
+                    readonly log: {
+                        readonly arrayOfType: {
+                            readonly type: {
+                                readonly enum: readonly ["stdout", "stderr", "error"];
+                            };
+                            readonly text: "string";
+                        };
+                    };
                     readonly exitCode: "number";
                 };
             };
@@ -416,8 +421,14 @@ export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles
                 readonly type: {
                     readonly name: "string";
                     readonly command: "string";
-                    readonly stdout: "string";
-                    readonly stderr: "string";
+                    readonly log: {
+                        readonly arrayOfType: {
+                            readonly type: {
+                                readonly enum: readonly ["stdout", "stderr", "error"];
+                            };
+                            readonly text: "string";
+                        };
+                    };
                     readonly exitCode: "number";
                 };
             };
@@ -428,13 +439,4 @@ export declare const getMCPToolNameParts: (fullName: string) => {
     serverName: string;
     toolName: string;
 } | undefined;
-type DBTool = Extract<ProstglesMcpTool, {
-    type: "prostgles-db";
-}> & {
-    name: string;
-    description: string;
-    auto_approve: boolean;
-    schema: any;
-};
-export declare const getProstglesDBTools: (chat: DBSSchema["llm_chats"]) => DBTool[];
 export {};

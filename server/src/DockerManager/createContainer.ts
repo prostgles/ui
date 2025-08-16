@@ -2,14 +2,13 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import type { CreateContainerParams } from "./createContainer.schema";
-import { executeDockerCommand } from "./executeDockerCommand";
+import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
 
 type CreateContainerResult = {
   state: "finished" | "error" | "build-error" | "timed-out";
   command: string;
-  stdout: string;
-  stderr: string;
+  log: ProcessLog[];
   exitCode: number;
 };
 
@@ -57,8 +56,7 @@ export const createContainer = async (
       return {
         state: "build-error",
         command: ["docker", ...buildArgs].join(" "),
-        stdout: buildResult.stdout,
-        stderr: buildResult.stderr,
+        log: buildResult.log,
         exitCode: buildResult.exitCode,
       };
     }
@@ -85,8 +83,7 @@ export const createContainer = async (
       command: ["docker", ...runArgs].join(" "),
       state: runResult.state === "close" ? "finished" : runResult.state,
       ...config,
-      stdout: runResult.stdout,
-      stderr: runResult.stderr,
+      log: runResult.log,
       exitCode: runResult.exitCode,
     };
   } finally {

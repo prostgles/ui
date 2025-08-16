@@ -7,6 +7,7 @@ import type {
 } from "./LLMResponseTypes";
 import { getLLMUsageCost } from "./getLLMUsageCost";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { MCPToolSchema } from "./getLLMTools";
 
 export type LLMResponseParser<T = AnyObject> = (args: {
   provider: string;

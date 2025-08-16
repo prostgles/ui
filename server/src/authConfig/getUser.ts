@@ -3,7 +3,6 @@ import type {
   AuthConfig,
   BasicSession,
 } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DB } from "prostgles-server/dist/initProstgles";
 import { omitKeys } from "prostgles-types";
 import type { DBS } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";

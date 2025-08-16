@@ -4,6 +4,7 @@ import { getSerialisableError, isObject, omitKeys } from "prostgles-types";
 import { type DBS } from "../..";
 import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import {
+  filterArr,
   getLLMMessageText,
   isAssistantMessageRequestingToolUse,
   LLM_PROMPT_VARIABLES,
@@ -14,7 +15,7 @@ import { sliceText } from "../../../../commonTypes/utils";
 import { getElectronConfig } from "../../electronConfig";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
-import { getLLMTools, type MCPToolSchema } from "./getLLMTools";
+import { getLLMAllowedChatTools } from "./getLLMTools";
 
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import {
@@ -47,11 +48,7 @@ export type AskLLMArgs = {
   allowedLLMCreds: DBSSchema["access_control_allowed_llm"][] | undefined;
   accessRules: DBSSchema["access_control"][] | undefined;
   clientReq: AuthClientRequest;
-  type:
-    | "new-message"
-    | "approve-tool-use"
-    | "tool-use-result"
-    | "tool-use-result-all-denied";
+  type: "new-message" | "approve-tool-use" | "tool-use-result";
 };
 
 export const askLLM = async (args: AskLLMArgs) => {
@@ -66,6 +63,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     userMessage,
     type,
   } = args;
+
   const {
     chat,
     prompt,
@@ -76,29 +74,39 @@ export const askLLM = async (args: AskLLMArgs) => {
     llm_prompt_id,
   } = await getValidatedAskLLMChatOptions(args);
 
-  const toolsWithInfo = await getLLMTools({
-    isAdmin: user.type === "admin",
+  const toolsWithInfo = await getLLMAllowedChatTools({
+    userType: user.type,
     dbs,
     chat,
     connectionId,
     prompt: promptObj,
   });
-  const tools = toolsWithInfo?.map(({ name, description, input_schema }) => {
-    return {
-      name,
-      description,
-      input_schema: omitKeys(input_schema, ["$id"]),
-    } satisfies MCPToolSchema;
-  });
+  const tools = toolsWithInfo?.map(
+    ({ name, description, input_schema, auto_approve }) => {
+      return {
+        name,
+        description,
+        input_schema: omitKeys(input_schema, ["$id"]),
+        auto_approve,
+      };
+    },
+  );
 
   const lastMessage = pastMessages.at(-1);
   if (type === "approve-tool-use") {
+    if (!lastMessage) {
+      throw new Error("Last message not found for tool use approval");
+    }
+    const toolUseMessages = filterArr(lastMessage.message, {
+      type: "tool_use",
+    } as const);
+
     return runApprovedTools(
+      toolsWithInfo,
       args,
       chat,
+      toolUseMessages,
       userMessage,
-      lastMessage?.message,
-      toolsWithInfo,
     );
   }
 
@@ -124,16 +132,6 @@ export const askLLM = async (args: AskLLMArgs) => {
           ),
       },
     );
-  }
-
-  if (type === "tool-use-result-all-denied") {
-    // await dbs.llm_chats.update(
-    //   { id: chatId },
-    //   {
-    //     status: { state: "stopped" },
-    //   },
-    // );
-    return;
   }
 
   const allowedUsedCreds = allowedLLMCreds?.filter(
@@ -291,7 +289,7 @@ export const askLLM = async (args: AskLLMArgs) => {
 
     if (
       maximum_consecutive_tool_fails &&
-      args.type === "new-message" &&
+      args.type !== "approve-tool-use" &&
       isAssistantMessageRequestingToolUse({ message: aiResponseMessage }) &&
       reachedMaximumNumberOfConsecutiveToolRequests(
         [...pastMessages, { message: userMessage }],
@@ -305,13 +303,16 @@ export const askLLM = async (args: AskLLMArgs) => {
     const latestChat = await getChat();
     if (!latestChat) throw "Chat not found after LLM response";
 
-    if (latestChat.status?.state !== "stopped") {
+    const newToolUseMessages = filterArr(aiResponseMessage, {
+      type: "tool_use",
+    } as const);
+    if (latestChat.status?.state !== "stopped" && newToolUseMessages.length) {
       await runApprovedTools(
+        toolsWithInfo,
         args,
         latestChat,
-        aiResponseMessage,
-        lastMessage?.message,
-        toolsWithInfo,
+        newToolUseMessages,
+        undefined,
       );
     }
   } catch (err) {

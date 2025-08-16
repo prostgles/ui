@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
@@ -9,8 +9,11 @@ import Popup from "../../../components/Popup/Popup";
 import { isEmpty } from "../../../utils";
 import { CodeEditor } from "../../CodeEditor/CodeEditor";
 import type { DBS } from "../../Dashboard/DBS";
-import { type ApproveRequest } from "./useLLMChatAllowedTools";
-import { useLLMToolsApprover } from "./useLLMToolsApprover";
+import {
+  useLLMToolsApprover,
+  type ApproveRequest,
+} from "./useLLMToolsApprover";
+import { getMCPToolNameParts } from "@common/prostglesMcp";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
@@ -112,18 +115,22 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       activeChat,
     ],
   );
+  const serverName = useMemo(
+    () =>
+      mustApprove?.name && getMCPToolNameParts(mustApprove.name)?.serverName,
+    [mustApprove?.name],
+  );
 
   useLLMToolsApprover({ ...props, requestApproval: onRequestToolUse });
 
   if (!mustApprove) return null;
 
   const { input, description } = mustApprove;
-
   return (
     <Popup
       title={
         mustApprove.type === "mcp" ?
-          `Allow tool from ${mustApprove.server_name} to run?`
+          `Allow tool from ${serverName} to run?`
         : `Allow function to run?`
       }
       onClose={() => {
