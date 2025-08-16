@@ -22,7 +22,7 @@ import {
   sidKeyName,
   type SUser,
 } from "./sessionUtils";
-import { type AuthSetupData } from "./subscribeToAuthSetupChanges";
+import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
 
 let globalSettings: AuthSetupData["globalSettings"] | undefined;
 

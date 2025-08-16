@@ -166,19 +166,34 @@ export const getPublishLLM = (
         forcedFilter: userOwnsRelatedChat,
       },
     },
-    mcp_servers: isAdmin && {
-      select: "*",
-      update: {
-        fields: {
-          args: 1,
-          env: 1,
-          icon_path: 1,
-          enabled: 1,
+    mcp_servers:
+      isAdmin ?
+        {
+          select: "*",
+          update: {
+            fields: {
+              args: 1,
+              env: 1,
+              icon_path: 1,
+              enabled: 1,
+            },
+          },
+          insert: "*",
+          delete: "*",
+        }
+      : {
+          select: {
+            fields: "*",
+            forcedFilter: {
+              $exists: {
+                users: {
+                  id: user_id,
+                  type: "admin",
+                },
+              },
+            },
+          },
         },
-      },
-      insert: "*",
-      delete: "*",
-    },
     mcp_server_tools:
       isAdmin ? "*" : (
         {

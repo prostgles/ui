@@ -1,4 +1,6 @@
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { randomUUID } from "crypto";
+import { pickKeys } from "prostgles-types";
 import { type DBS } from "..";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { createContainer } from "./createContainer";
@@ -6,9 +8,13 @@ import {
   createContainerJSONSchema,
   type CreateContainerParams,
 } from "./createContainer.schema";
-import { dockerMCPDatabaseRequestRouter } from "./dockerMCPDatabaseRequestRouter";
+import {
+  dockerMCPDatabaseRequestRouter,
+  type GetAuthContext,
+} from "./dockerMCPDatabaseRequestRouter";
 import { getContainerIPs } from "./getContainerIPs";
 import { getDockerMCPTools } from "./getDockerMCPTools";
+import { upsertSession } from "../authConfig/upsertSession";
 
 export type CreateContainerContext = {
   userId: string;
@@ -17,10 +23,10 @@ export type CreateContainerContext = {
 
 const containers: Record<
   string,
-  CreateContainerContext & { chat: DBSSchema["llm_chats"] }
+  CreateContainerContext & { chat: DBSSchema["llm_chats"]; sid_token: string }
 > = {};
 
-const getContainerFromIP = (ip: string): DBSSchema["llm_chats"] | undefined => {
+const getContainerFromIP: GetAuthContext = (ip: string) => {
   const containerName = getContainerIPs(containers).find(
     (c) => c.ip === ip,
   )?.name;
@@ -29,7 +35,7 @@ const getContainerFromIP = (ip: string): DBSSchema["llm_chats"] | undefined => {
   if (!containerName || !containerInfo) {
     return;
   }
-  return containerInfo.chat;
+  return pickKeys(containerInfo, ["chat", "sid_token"]);
 };
 
 let mcpRequestRouter:
@@ -46,10 +52,24 @@ export const getDockerManager = async (dbs: DBS) => {
   ) => {
     const name = `${DOCKER_CONTAINER_NAME_PREFIX}-${Date.now()}-${randomUUID()}`;
     const chat = await dbs.llm_chats.findOne({ id: context.chatId });
+    const user = await dbs.users.findOne({ id: context.userId });
     if (!chat) {
       throw new Error(`Chat with id ${context.chatId} not found`);
     }
-    containers[name] = { ...context, chat };
+    if (!user) {
+      throw new Error(`User with id ${context.userId} not found`);
+    }
+    const tokenForMCP = await upsertSession({
+      db: dbs,
+      ip: "127.0.0.1",
+      user,
+      user_agent: "docker-mcp",
+    });
+    const sid_token = tokenForMCP.sid;
+    if (!sid_token) {
+      throw new Error("Failed to create session for Docker MCP");
+    }
+    containers[name] = { ...context, chat, sid_token };
     const containerResult = await createContainer(name, args).catch((error) => {
       console.error("Error creating container:", error);
     });
@@ -92,9 +112,13 @@ export const getDockerMCP = async (
     },
   ];
   return {
+    serverName:
+      "docker-sandbox" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS,
     toolSchemas,
     tools,
   };
 };
+getDockerMCP.serverName =
+  "docker-sandbox" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
 
 export const DOCKER_CONTAINER_NAME_PREFIX = "prostgles-docker-mcp-sandbox";

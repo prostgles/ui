@@ -5,7 +5,7 @@ import type {
 } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
-import { createSession } from "../createSession";
+import { upsertSession } from "../upsertSession";
 import type { SUser } from "../sessionUtils";
 import { startRateLimitedLoginAttempt } from "../startRateLimitedLoginAttempt";
 
@@ -46,7 +46,7 @@ export const loginWithProvider = async (
 
   const matchingUser = await db.users.findOne({ auth_provider, username });
   if (matchingUser) {
-    const session = await createSession({
+    const session = await upsertSession({
       user: matchingUser,
       ip,
       user_agent,
@@ -80,7 +80,7 @@ export const loginWithProvider = async (
         console.error(e);
         return Promise.reject("Could not create user");
       });
-    const session = await createSession({
+    const session = await upsertSession({
       user: newUser,
       ip,
       db,

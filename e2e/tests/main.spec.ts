@@ -587,6 +587,13 @@ test.describe("Main test", () => {
 
     await openConnection(page, "cloud");
 
+    await runDbsSql(
+      page,
+      `
+      UPDATE mcp_servers SET enabled = false WHERE name IN ('playwright', 'docker-sandbox');
+      DELETE FROM mcp_server_tools WHERE server_name = 'playwright' `,
+    );
+
     /** Delete existing chat during local testing */
     const removeActiveChat = async () => {
       await page.getByTestId("AskLLM").click();
@@ -595,7 +602,9 @@ test.describe("Main test", () => {
       await page.getByTestId("SmartForm.delete.confirm").click();
       await page.waitForTimeout(1e3);
     };
+    await page.waitForTimeout(1e3);
     await removeActiveChat();
+
     await page.getByTestId("Popup.close").click();
 
     const userMessage = "hey";
@@ -645,7 +654,7 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLM").click();
     await sendAskLLMMessage(page, "mcp");
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    await page.waitForTimeout(4e3);
+    await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
     await expect(mcpToolUse).toContain("tool result received");
 
@@ -653,10 +662,10 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, "mcpplaywright");
     await page.waitForTimeout(2e3);
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Tool name "playwright--browser_navigate" is invalid`,
+      `Tool name "playwright--browser_navigate" is invalid. Try enabling and reloading the tools`,
     );
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Tool name "playwright--browser_snapshot" is invalid`,
+      `Tool name "playwright--browser_snapshot" is invalid. Try enabling and reloading the tools`,
     );
     await page.getByTestId("LLMChatOptions.MCPTools").click();
 
@@ -712,12 +721,11 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await lastToolUseBtn.click();
     await page.waitForTimeout(1e3);
-    await expect(
-      page
-        .getByTestId("Chat.messageList")
-        .getByTestId("MarkdownMonacoCode")
-        .last(),
-    ).toContainText(`Page Title: Prostgles`, { timeout: 15e3 });
+    await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
+      `Page Title: Prostgles`,
+      { timeout: 15e3 },
+    );
+    await page.getByTestId("Popup.close").last().click();
 
     await page.waitForTimeout(2e3);
     /** Test max consecutive tool call fails */
@@ -754,22 +762,20 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("LLMChatOptions.Prompt")).toContainText(
       "Create dashboards",
     );
+
     await page.getByTestId("LLMChatOptions.MCPTools").click();
-    await page
-      .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByTestId("MCPServersInstall.install")
-      .click();
-    await page.waitForTimeout(1e3);
-    /** Wait until it finishes installing */
-    await page
-      .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByTestId("MCPServersInstall.install")
-      .click({ trial: true, timeout: 15e3 });
-    await page.waitForTimeout(10e3);
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
       .getByTestId("MCPServerFooterActions.enableToggle")
       .click();
+    await page
+      .locator(getDataKeyElemSelector("docker-sandbox"))
+      .getByTestId("MCPServerFooterActions.refreshTools")
+      .click();
+    await expect(page.getByTestId("Popup.content").last()).toContainText(
+      `Reloaded 1 tool for "docker-sandbox" server`,
+    );
+    await page.getByText("OK", { exact: true }).click();
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
       .getByText("create_container", { exact: true })
@@ -778,9 +784,14 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
     await sendAskLLMMessage(page, "mcpsandbox");
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    // await expect(page.getByTestId("Chat.messageList")).toContainText(
-    //   `dwadwadwawaddwadwa`,
-    // );
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "free ai assistant tool result received",
+      { timeout: 40e3 },
+    );
+    await page.getByTestId("ToolUseMessage.toggle").click();
+    await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(
+      "Hello from the sandbox!",
+    );
   });
 
   test("Disable signups", async ({ page: p }) => {

@@ -20,7 +20,7 @@ export type FetchLLMResponseArgs = {
   llm_model: DBSSchema["llm_models"];
   llm_provider: DBSSchema["llm_providers"];
   llm_credential: DBSSchema["llm_credentials"];
-  tools: undefined | MCPToolSchema[];
+  tools: undefined | (MCPToolSchema & { auto_approve: boolean })[];
   messages: LLMMessageWithRole[];
 };
 

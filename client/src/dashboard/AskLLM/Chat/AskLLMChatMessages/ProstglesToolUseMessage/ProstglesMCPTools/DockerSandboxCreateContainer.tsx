@@ -59,9 +59,9 @@ export const DockerSandboxCreateContainer = ({
 
   return (
     <FlexCol className="DockerSandboxCreateContainer b b-color ai-start gap-0 f-1">
-      <FlexRow className="bg-color-1 p-p5 ws-nowrap min-w-0 max-w-600 bb b-color max-w-full">
+      <FlexRow className="bg-color-1 p-p5 ws-nowrap min-w-0 max-w-600 bb b-color w-full max-w-full">
         <div
-          className="text-ellipsis min-w-0 ws-nowrap f-1"
+          className="text-ellipsis min-w-0 ws-nowrap f-1 ta-start"
           title={`${resultObj?.command ?? ""}\n\n${JSON.stringify(omitKeys(data, ["files"]))}`}
         >
           {sliceText(resultObj?.command, 100) ??
@@ -145,7 +145,7 @@ export const DockerSandboxCreateContainer = ({
         language="text"
         className="f-1"
         style={{ width: "100%", minHeight: 100 }}
-        value={resultObj?.stdout ?? ""}
+        value={resultObj?.log.map((l) => l.text).join("") ?? ""}
         loadedSuggestions={undefined}
         options={MONACO_READONLY_DEFAULT_OPTIONS}
       />

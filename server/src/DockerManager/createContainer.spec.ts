@@ -2,7 +2,6 @@ import { strict } from "assert";
 import { test } from "node:test";
 import { createContainer } from "./createContainer.js";
 import type { CreateContainerParams } from "./createContainer.schema.js";
-import { dockerMCPDatabaseRequestRouter } from "./dockerMCPDatabaseRequestRouter.js";
 
 const context = {
   userId: "test-user",
@@ -22,7 +21,11 @@ void test("createContainer build error", async () => {
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "build-error");
-  strict.equal(sandbox.stderr.includes("| >>> WORKDIR_INVALID"), true);
+  const stderr = sandbox.log
+    .filter((l) => l.type === "stderr")
+    .map((l) => l.text)
+    .join("");
+  strict.equal(stderr.includes("| >>> WORKDIR_INVALID"), true);
 });
 
 void test("createContainer run error", async () => {
@@ -38,7 +41,11 @@ void test("createContainer run error", async () => {
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "error");
-  strict.equal(sandbox.stderr.includes("requireInvalid is not defined"), true);
+  const stderr = sandbox.log
+    .filter((l) => l.type === "stderr")
+    .map((l) => l.text)
+    .join("");
+  strict.equal(stderr.includes("requireInvalid is not defined"), true);
 });
 
 void test("createContainer run timeout", async () => {
@@ -54,7 +61,15 @@ void test("createContainer run timeout", async () => {
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "timed-out");
-  strict.equal(sandbox.stdout.includes("Will attempt to fetch from"), true);
+  const stdout = sandbox.log
+    .filter((l) => l.type === "stdout")
+    .map((l) => l.text)
+    .join("");
+  strict.equal(
+    stdout.includes("Fetch app started. Will attempt to fetch from"),
+    true,
+  );
+  strict.equal(stdout.includes("Will attempt to fetch from"), true);
 });
 
 void test("createContainer stdout response", async () => {
@@ -68,8 +83,16 @@ void test("createContainer stdout response", async () => {
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "finished");
-  strict.equal(sandbox.stdout, expectedOutput + "\n");
-  strict.equal(sandbox.stderr, "");
+  const stdout = sandbox.log
+    .filter((l) => l.type === "stdout")
+    .map((l) => l.text)
+    .join("");
+  const stderr = sandbox.log
+    .filter((l) => l.type === "stderr")
+    .map((l) => l.text)
+    .join("");
+  strict.equal(stdout, expectedOutput + "\n");
+  strict.equal(stderr, "");
 });
 
 // void test("createContainer host network", async () => {
@@ -109,8 +132,16 @@ void test("createContainer stderr response", async () => {
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(testContainerName, config);
   strict.equal(sandbox.state, "finished");
-  strict.equal(sandbox.stdout, "");
-  strict.equal(sandbox.stderr, expectedOutput + "\n");
+  const stdout = sandbox.log
+    .filter((l) => l.type === "stdout")
+    .map((l) => l.text)
+    .join("");
+  const stderr = sandbox.log
+    .filter((l) => l.type === "stderr")
+    .map((l) => l.text)
+    .join("");
+  strict.equal(stdout, "");
+  strict.equal(stderr, expectedOutput + "\n");
 });
 
 const packageJson = {

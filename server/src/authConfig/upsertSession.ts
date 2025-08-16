@@ -11,7 +11,7 @@ type CreateSessionArgs = {
   db: DBOFullyTyped<DBGeneratedSchema>;
   user_agent: string | undefined;
 };
-export const createSession = async ({
+export const upsertSession = async ({
   db,
   ip,
   user,

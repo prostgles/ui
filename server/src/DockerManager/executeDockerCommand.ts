@@ -1,13 +1,16 @@
 import { spawn } from "child_process";
 
+export type ProcessLog = {
+  type: "stdout" | "stderr" | "error";
+  text: string;
+};
 export interface ExecutionResult {
   state: "close" | "error" | "timed-out";
   command: string;
-  stdout: string;
-  stderr: string;
   exitCode: number;
   timedOut: boolean;
   executionTime: number;
+  log: ProcessLog[];
 }
 
 /**
@@ -29,10 +32,10 @@ export const executeDockerCommand = async (
       env: { ...process.env, ...options.environment },
     });
     const command = `docker ${args.join(" ")}`;
-    let stdout = "";
-    let stderr = "";
     let timedOut = false;
     let ended = false;
+
+    const log: ProcessLog[] = [];
 
     const onEnd = (
       reason:
@@ -43,16 +46,19 @@ export const executeDockerCommand = async (
       ended = true;
       clearTimeout(timeoutId);
       const executionTime = Date.now() - startTime;
-
+      if (reason.type === "error") {
+        log.push({
+          type: "error",
+          text: reason.error.message,
+        });
+      }
       resolve({
         state: reason.type,
         command,
-        stdout,
-        stderr:
-          reason.type === "error" ? stderr + reason.error.message : stderr,
         exitCode: reason.type === "close" ? reason.code || 0 : -1,
         timedOut,
         executionTime,
+        log,
       });
     };
 
@@ -63,16 +69,20 @@ export const executeDockerCommand = async (
     }, timeout);
 
     child.stdout.on("data", (data: Buffer) => {
-      stdout += data.toString();
+      log.push({ type: "stdout", text: data.toString() });
     });
 
     child.stderr.on("data", (data: Buffer) => {
-      stderr += data.toString();
+      log.push({ type: "stderr", text: data.toString() });
     });
 
     child.on("close", (code) => {
       if (timedOut) return;
       if (code !== 0) {
+        const stderr = log
+          .filter((l) => l.type === "stderr")
+          .map((l) => l.text)
+          .join("");
         onEnd({ type: "error", error: new Error(stderr) });
       } else {
         onEnd({ type: "close", code: 0 });

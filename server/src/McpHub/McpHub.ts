@@ -35,6 +35,7 @@ import {
   McpServer,
   McpServerEvents,
   ServersConfig,
+  type McpTool,
 } from "./McpTypes";
 import { getDockerMCP } from "../DockerManager/DockerManager";
 
@@ -254,15 +255,24 @@ export const startMcpHub = async (
   }
   return result.data;
 };
+
 export const _reloadMcpServerTools = async (
   dbs: DBS,
   serverName: string,
-  client: McpConnection["client"],
+  client: McpConnection["client"] | undefined,
 ) => {
-  const tools =
-    ProstglesLocalMCPServers.includes(serverName) ?
-      (await getDockerMCP(dbs, undefined)).toolSchemas
-    : await fetchMCPToolsList(client);
+  let tools: McpTool[] = [];
+  if (ProstglesLocalMCPServers.includes(serverName)) {
+    tools = (await getDockerMCP(dbs, undefined)).toolSchemas;
+  } else {
+    if (!client) {
+      throw new Error(
+        `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
+      );
+    }
+    tools = await fetchMCPToolsList(client);
+  }
+
   await dbs.tx(async (tx) => {
     await tx.mcp_server_tools.delete({ server_name: serverName });
     tools.length &&
@@ -283,11 +293,6 @@ export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
     await startMcpHub(dbs);
   }
   const client = mcpHub.connections[serverName]?.client;
-  if (!client) {
-    throw new Error(
-      `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
-    );
-  }
   return _reloadMcpServerTools(dbs, serverName, client);
 };
 

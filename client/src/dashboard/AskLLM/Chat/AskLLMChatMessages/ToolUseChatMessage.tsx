@@ -3,14 +3,13 @@ import Btn from "@components/Btn";
 import { type MarkdownMonacoCodeProps } from "@components/Chat/MarkdownMonacoCode";
 import { FlexCol } from "@components/Flex";
 import { mdiTools } from "@mdi/js";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 
 import { getMCPToolNameParts } from "@common/prostglesMcp";
-import { ErrorTrap } from "@components/ErrorComponent";
+import ErrorComponent, { ErrorTrap } from "@components/ErrorComponent";
 import Popup from "@components/Popup/Popup";
 import { SvgIcon } from "@components/SvgIcon";
 import type { UseLLMChatProps } from "src/dashboard/AskLLM/Chat/useLLMChat";
-import { scrollIntoViewIfNeeded } from "src/utils";
 import { ProstglesMCPToolsWithUI } from "./ProstglesToolUseMessage/ProstglesToolUseMessage";
 import { ToolUseChatMessageBtnTextSummary } from "./ToolUseChatMessageBtnTextSummary";
 import {
@@ -33,7 +32,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
     mcpServerIcons,
     workspaceId,
   } = props;
-  const [open, setOpen] = React.useState(false);
+  const [toolDataAnchorEl, setToolDataAnchorEl] = useState<HTMLButtonElement>();
 
   const fullMessage = messages[messageIndex];
   const m = fullMessage?.message[toolUseMessageIndex];
@@ -41,7 +40,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
   const iconName = useMemo(() => {
     const serverName =
       m?.type !== "tool_use" ? "" : getMCPToolNameParts(m.name)?.serverName;
-    return serverName && mcpServerIcons.get(serverName);
+    return serverName && mcpServerIcons?.get(serverName);
   }, [mcpServerIcons, m]);
 
   if (!fullMessage || m?.type !== "tool_use") {
@@ -52,6 +51,11 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
     messages.slice(toolUseMessageIndex),
     m,
   );
+
+  const toolCallError =
+    toolUseResult?.toolUseResultMessage.is_error ?
+      toolUseResult.toolUseResultMessage.content
+    : undefined;
 
   const ProstglesTool = ProstglesMCPToolsWithUI[m.name];
   const ProstglesToolComponent = ProstglesTool?.component;
@@ -70,17 +74,12 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
           iconPath={!iconName ? mdiTools : undefined}
           iconNode={
             !iconName ? undefined : (
-              <SvgIcon icon={iconName} style={{ margin: "-4px" }} />
+              <SvgIcon icon={iconName} style={{ margin: "-4px" }} size={20} />
             )
           }
           disabledVariant="ignore-loading"
           onClick={({ currentTarget }) => {
-            setOpen(!open);
-            if (!open) {
-              setTimeout(() => {
-                scrollIntoViewIfNeeded(currentTarget.parentElement!);
-              }, 100);
-            }
+            setToolDataAnchorEl(currentTarget);
           }}
           variant="faded"
           size="small"
@@ -112,13 +111,17 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
             toolUseResult={toolUseResult}
           />
         )}
-        {open && (
+        {toolDataAnchorEl && (
           <Popup
+            data-command="ToolUseMessage.Popup"
             title={m.name}
             clickCatchStyle={{ opacity: 1 }}
+            anchorEl={toolDataAnchorEl}
+            positioning="above-center"
             showFullscreenToggle={{}}
-            onClose={() => setOpen(false)}
-            contentClassName="p-1 flex-col gap-1"
+            onClose={() => setToolDataAnchorEl(undefined)}
+            rootChildClassname="f-1"
+            contentClassName="p-1 flex-col gap-1 f-1"
           >
             {ProstglesToolComponent && !ProstglesTool.inline ?
               <ProstglesToolComponent
@@ -127,9 +130,11 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
                 chatId={fullMessage.chat_id}
                 toolUseResult={toolUseResult}
               />
-            : <ToolUseChatMessageResult {...props} open={open} />}
+            : <ToolUseChatMessageResult {...props} />}
           </Popup>
         )}
+
+        {toolCallError && <ErrorComponent error={toolCallError} />}
       </FlexCol>
     </ErrorTrap>
   );

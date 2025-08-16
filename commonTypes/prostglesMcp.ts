@@ -1,7 +1,3 @@
-import { isDefined } from "./filterUtils";
-import type { DBSSchema } from "./publishUtils";
-import { getEntries } from "./utils";
-
 const runSQLSchema = {
   type: {
     sql: {
@@ -204,8 +200,12 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         type: {
           name: "string",
           command: "string",
-          stdout: "string",
-          stderr: "string",
+          log: {
+            arrayOfType: {
+              type: { enum: ["stdout", "stderr", "error"] },
+              text: "string",
+            },
+          },
           exitCode: "number",
         },
       },
@@ -246,70 +246,3 @@ export const getMCPToolNameParts = (fullName: string) => {
     return { serverName, toolName };
   }
 };
-
-type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
-  name: string;
-  description: string;
-  auto_approve: boolean;
-  schema: any;
-};
-export const getProstglesDBTools = (chat: DBSSchema["llm_chats"]): DBTool[] => {
-  const chatDBAccess = chat.db_data_permissions;
-  if (!chatDBAccess || chatDBAccess.Mode === "None") {
-    return [];
-  }
-  if (chatDBAccess?.Mode === "Custom") {
-    const tableTools = chatDBAccess.tables.reduce(
-      (allowedTableTools, chatTableRule) => {
-        for (const actionName of COMMANDS) {
-          if (chatTableRule[actionName] && !allowedTableTools[actionName]) {
-            allowedTableTools[actionName] = {
-              name: getProstglesMCPFullToolName("prostgles-db", actionName),
-              type: "prostgles-db",
-              tool_name: actionName,
-              description:
-                PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][actionName]
-                  .description,
-              auto_approve: Boolean(chatDBAccess.auto_approve),
-              schema:
-                PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"][actionName]
-                  .schema,
-            };
-          }
-        }
-
-        return allowedTableTools;
-      },
-      {} as Record<(typeof COMMANDS)[number], DBTool>,
-    );
-    return Object.values(tableTools);
-  }
-
-  const sqlTools = getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"])
-    .map(([toolName, { description, schema }]) => {
-      if (
-        toolName === "execute_sql_with_rollback" ||
-        toolName === "execute_sql_with_commit"
-      ) {
-        const tool: DBTool = {
-          name: getProstglesMCPFullToolName("prostgles-db", toolName),
-          type: "prostgles-db",
-          tool_name: toolName,
-          description,
-          auto_approve: Boolean(chatDBAccess.auto_approve),
-          schema,
-        };
-        const isAllowed =
-          chatDBAccess.Mode === "Run commited SQL" ||
-          (chatDBAccess.Mode === "Run readonly SQL" &&
-            toolName === "execute_sql_with_rollback");
-        if (isAllowed) {
-          return tool;
-        }
-      }
-    })
-    .filter(isDefined);
-
-  return sqlTools;
-};
-const COMMANDS = ["select", "update", "insert", "delete"] as const;

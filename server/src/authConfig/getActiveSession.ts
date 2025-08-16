@@ -15,14 +15,6 @@ type AuthType =
       filter: { user_id: string; type: "web"; user_agent: string };
     };
 
-export const getActiveSessionFilter = (
-  filter: AuthType["filter"] | { user_id: string },
-) => ({
-  ...filter,
-  "expires.>": Date.now(),
-  active: true,
-});
-
 export const getActiveSession = async (
   db: DBS,
   authType: AuthType,
@@ -74,3 +66,11 @@ export const getActiveSession = async (
 
   return { validSession, failedTooManyTimes, expiredSession };
 };
+
+export const getActiveSessionFilter = (
+  filter: AuthType["filter"] | { user_id: string },
+) => ({
+  ...filter,
+  "expires.>": Date.now(),
+  active: true,
+});

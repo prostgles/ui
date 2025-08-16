@@ -114,17 +114,18 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
     },
     [codeString, sqlHandler],
   );
+  const titleOrLanguage = title ?? language;
   return (
     <FlexCol
       className="MarkdownMonacoCode min-w-600 relative o-dvisible b b-color rounded gap-0 f-0 o-hidden"
       data-command="MarkdownMonacoCode"
-      style={{
-        maxWidth: `${CHAT_WIDTH}px`,
-      }}
+      // style={{
+      //   maxWidth: `${CHAT_WIDTH}px`,
+      // }}
     >
       <FlexRow className="bg-color-2 p-p25">
         <div className="text-sm text-color-4 f-1 px-1 ta-start">
-          {title ?? language}
+          {titleOrLanguage}
         </div>
         {codeHeader && codeHeader({ language, codeString })}
         {sqlResult && sqlResult.state !== "loading" ?
@@ -213,7 +214,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
       <FullscreenWrapper
         key={codeString}
         isFullscreen={fullscreen}
-        title={language}
+        title={titleOrLanguage}
         onExit={onExit}
       >
         {sqlResult?.state === "ok-command-result" ?
@@ -256,6 +257,7 @@ const FullscreenWrapper = (props: {
       title={title}
       positioning="fullscreen"
       onClickClose={false}
+      contentClassName="p-1"
       onClose={onExit}
       contentStyle={{
         overflow: "visible",

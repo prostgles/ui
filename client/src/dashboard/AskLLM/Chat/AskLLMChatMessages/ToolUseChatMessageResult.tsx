@@ -8,10 +8,7 @@ import {
 } from "../../../../components/Chat/MarkdownMonacoCode";
 import { MediaViewer } from "../../../../components/MediaViewer";
 
-import ErrorComponent, {
-  ErrorTrap,
-} from "../../../../components/ErrorComponent";
-import { ProstglesMCPToolsWithUI } from "./ProstglesToolUseMessage/ProstglesToolUseMessage";
+import { ErrorTrap } from "../../../../components/ErrorComponent";
 import type {
   ToolResultMessage,
   ToolUseMessage,
@@ -24,9 +21,7 @@ export const ToolUseChatMessageResult = ({
   messageIndex,
   sqlHandler,
   loadedSuggestions,
-  workspaceId,
-  open,
-}: ToolUseMessageProps & { open: boolean }) => {
+}: ToolUseMessageProps) => {
   const fullMessage = messages[messageIndex];
   const m = fullMessage?.message[toolUseMessageIndex];
 
@@ -38,38 +33,27 @@ export const ToolUseChatMessageResult = ({
     messages.slice(toolUseMessageIndex),
     m,
   );
-
-  const toolCallError =
-    toolUseResult?.toolUseResultMessage.is_error ?
-      toolUseResult.toolUseResultMessage.content
-    : undefined;
   return (
     <ErrorTrap>
-      {toolCallError && <ErrorComponent error={toolCallError} />}
-
-      {open && (
-        <>
-          {m.input && !isEmpty(m.input) && (
-            <MarkdownMonacoCode
-              key={`${m.type}-input`}
-              title="Arguments:"
-              codeString={
-                tryCatchV2(() => JSON.stringify(m.input, null, 2)).data ?? ""
-              }
-              language="json"
-              codeHeader={undefined}
-              sqlHandler={undefined}
-              loadedSuggestions={undefined}
-            />
-          )}
-          {!toolCallError && toolUseResult && (
-            <ContentRender
-              toolUseResult={toolUseResult}
-              sqlHandler={sqlHandler}
-              loadedSuggestions={loadedSuggestions}
-            />
-          )}
-        </>
+      {m.input && !isEmpty(m.input) && (
+        <MarkdownMonacoCode
+          key={`${m.type}-input`}
+          title="Arguments:"
+          codeString={
+            tryCatchV2(() => JSON.stringify(m.input, null, 2)).data ?? ""
+          }
+          language="json"
+          codeHeader={undefined}
+          sqlHandler={undefined}
+          loadedSuggestions={undefined}
+        />
+      )}
+      {toolUseResult && (
+        <ContentRender
+          toolUseResult={toolUseResult}
+          sqlHandler={sqlHandler}
+          loadedSuggestions={loadedSuggestions}
+        />
       )}
     </ErrorTrap>
   );

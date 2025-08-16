@@ -8,7 +8,7 @@ import type { Users } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { log } from "../index";
 import { getPasswordHash } from "./authUtils";
-import { createSession } from "./createSession";
+import { upsertSession } from "./upsertSession";
 import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
 import { getRandomSixDigitCode } from "./emailProvider/onEmailRegistration";
 import type { SUser } from "./sessionUtils";
@@ -183,7 +183,7 @@ export const getLogin = async (
 
     await onSuccess();
 
-    const session = await createSession({
+    const session = await upsertSession({
       user: matchingUser,
       ip,
       db: dbs,

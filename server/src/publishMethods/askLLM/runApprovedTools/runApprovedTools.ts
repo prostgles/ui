@@ -1,12 +1,10 @@
 import {
   getJSONBObjectSchemaValidationError,
   getSerialisableError,
-  isDefined,
   type JSONB,
   type TableHandler,
 } from "prostgles-types";
 import { connMgr } from "../../..";
-import { filterArr } from "../../../../../commonTypes/llmUtils";
 import {
   getMCPToolNameParts,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
@@ -16,12 +14,12 @@ import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import {
   getAllToolNames,
-  type getLLMTools,
+  type getLLMAllowedChatTools,
   type MCPToolSchemaWithApproveInfo,
 } from "../getLLMTools";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
 
-type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
+export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
   | (ToolUseMessage & {
       tool: MCPToolSchemaWithApproveInfo;
@@ -42,30 +40,27 @@ type ToolUseMessageWithInfo =
 type ToolResultMessage = Extract<LLMMessage[number], { type: "tool_result" }>;
 
 export const runApprovedTools = async (
-  args: Omit<AskLLMArgs, "userMessage">,
+  allowedTools: Awaited<ReturnType<typeof getLLMAllowedChatTools>>,
+  args: Omit<AskLLMArgs, "userMessage" | "type">,
   chat: DBSSchema["llm_chats"],
-  aiResponseOrUserApprovals: LLMMessage,
-  lastMessage: LLMMessage | undefined,
-  allowedTools: Awaited<ReturnType<typeof getLLMTools>>,
+  toolUseRequestMessages: ToolUseMessage[],
+  userApprovals: LLMMessage | undefined,
 ) => {
-  const { user, chatId, dbs, type } = args;
-  const toolUseRequestMessages =
-    args.type == "approve-tool-use" ? lastMessage : aiResponseOrUserApprovals;
-  if (!toolUseRequestMessages) {
-    throw new Error("Last message is required for tool approval");
+  const { user, chatId, dbs } = args;
+  if (!toolUseRequestMessages.length) {
+    return;
   }
+
   /**
    * Here we expect the user to return a list of approved tools. Anything not in this list that is not auto-approved means denied.
    */
-  if (type === "approve-tool-use") {
+  if (userApprovals) {
     validateLastMessageToolUseRequests({
-      lastMessage: toolUseRequestMessages,
-      userToolUseApprovals: aiResponseOrUserApprovals,
+      toolUseMessages: toolUseRequestMessages,
+      userToolUseApprovals: userApprovals,
     });
   }
-  const toolUseRequests = filterArr(toolUseRequestMessages, {
-    type: "tool_use",
-  } as const).map((toolUse) => {
+  const toolUseRequests = toolUseRequestMessages.map((toolUse) => {
     const tool = allowedTools?.find((t) => t.name === toolUse.name);
     if (!tool) {
       return {
@@ -74,21 +69,17 @@ export const runApprovedTools = async (
         state: "tool-missing",
       } satisfies ToolUseMessageWithInfo;
     }
-    const wasApprovedByUser =
-      type === "approve-tool-use" &&
-      aiResponseOrUserApprovals.some(
-        (m) =>
-          m.type === "tool_use" &&
-          m.id === toolUse.id &&
-          m.name === toolUse.name,
-      );
+    const wasApprovedByUser = userApprovals?.some(
+      (m) =>
+        m.type === "tool_use" && m.id === toolUse.id && m.name === toolUse.name,
+    );
     return {
       ...toolUse,
       tool,
       state:
         tool.auto_approve || tool.type === "prostgles-ui" || wasApprovedByUser ?
           "approved"
-        : type === "approve-tool-use" ? "denied"
+        : userApprovals ? "denied"
         : "needs-approval",
     } satisfies ToolUseMessageWithInfo;
   });
@@ -98,7 +89,12 @@ export const runApprovedTools = async (
     return;
   }
 
-  const toolResults: (ToolResultMessage | undefined)[] = await Promise.all(
+  /** User denied all tool use requests */
+  if (toolUseRequests.some((tr) => tr.state === "denied")) {
+    return;
+  }
+
+  const toolResults: ToolResultMessage[] = await Promise.all(
     toolUseRequests.map(async (toolUseRequest) => {
       const toolUseInfo = {
         type: "tool_result",
@@ -119,8 +115,22 @@ export const runApprovedTools = async (
       if (!tool) {
         const allToolNames = await getAllToolNames(dbs);
         const matchedTool = allToolNames.includes(toolUseRequest.name);
+        const { serverName } = getMCPToolNameParts(toolUseRequest.name) ?? {};
+        const matchedMCPServer =
+          matchedTool || !serverName ? undefined : (
+            await dbs.mcp_servers.findOne({
+              name: serverName,
+            })
+          );
         return asResponse(
-          `Tool name "${toolUseRequest.name}" ${matchedTool ? "is not allowed" : "is invalid"}`,
+          `Tool name "${toolUseRequest.name}" ${
+            matchedTool ?
+              "is not allowed. Must enable it for this chat"
+            : "is invalid." +
+              (matchedMCPServer ?
+                ` Try enabling and reloading the tools for ${JSON.stringify(serverName)} MCP Server`
+              : "")
+          }`,
           true,
         );
       }
@@ -197,7 +207,6 @@ export const runApprovedTools = async (
         return asResponse(content, is_error);
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (tool.type !== "prostgles-db") {
         return asResponse(
           `Tool name "${toolUseRequest.name}" is invalid`,
@@ -380,16 +389,11 @@ export const runApprovedTools = async (
     }),
   );
 
-  const nonEmptyToolResults = toolResults.filter(isDefined);
-
-  if (nonEmptyToolResults.length) {
+  if (toolResults.length) {
     await askLLM({
       ...args,
-      type:
-        toolUseRequests.every((t) => t.state === "denied") ?
-          "tool-use-result-all-denied"
-        : "tool-use-result",
-      userMessage: nonEmptyToolResults,
+      type: "tool-use-result",
+      userMessage: toolResults,
     });
   }
 };

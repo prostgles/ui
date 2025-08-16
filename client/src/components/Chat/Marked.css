@@ -15,6 +15,8 @@
 /** Used to ensure the li marker does not appear above li item */
 .Marked {
   white-space: normal;
+  /* Allows long words to break and wrap onto the next line */
+  word-break: break-all;
 }
 
 /* .Marked ul,
@@ -31,4 +33,4 @@
 .Marked ol > li {
   line-height: 0;
 }
-  */ 
+  */
