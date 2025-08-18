@@ -72,7 +72,7 @@ export default class Chip extends React.Component<ChipProps> {
           ...this.props.style,
         }}
         className={classOverride(
-          `chip-component flex-row ws-pre-wrap ai-center chip lg ${color} variant-${variant}  ${asHeader ? "text-ellipsis" : ""}`,
+          `chip-component flex-row ws-pre-wrap ai-center chip lg ${color} variant-${variant} ${variant === "default" ? "gap-p25" : ""} ${asHeader ? "text-ellipsis" : ""}`,
           className,
         )}
       >

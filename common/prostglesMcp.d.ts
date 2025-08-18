@@ -236,6 +236,8 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         };
                     };
                     readonly exitCode: "number";
+                    readonly runDuration: "number";
+                    readonly buildDuration: "number";
                 };
             };
         };
@@ -488,6 +490,8 @@ export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles
                         };
                     };
                     readonly exitCode: "number";
+                    readonly runDuration: "number";
+                    readonly buildDuration: "number";
                 };
             };
         };

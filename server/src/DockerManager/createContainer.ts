@@ -4,13 +4,15 @@ import { dirname, join } from "path";
 import type { CreateContainerParams } from "./createContainer.schema";
 import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
+import type { JSONB } from "prostgles-types";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 
 type CreateContainerResult = {
   state: "finished" | "error" | "build-error" | "timed-out";
-  command: string;
   log: ProcessLog[];
-  exitCode: number;
-};
+} & JSONB.GetObjectType<
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["outputSchema"]["type"]
+>;
 
 export const createContainer = async (
   name: string,
@@ -48,15 +50,20 @@ export const createContainer = async (
       join(localDir, dockerFileName),
       localDir,
     ];
+    const startTime = Date.now();
     const buildResult = await executeDockerCommand(buildArgs, {
       timeout: 300_000,
     });
+    const buildDuration = Date.now() - startTime;
 
     if (buildResult.exitCode !== 0) {
       return {
+        name,
         state: "build-error",
         command: ["docker", ...buildArgs].join(" "),
         log: buildResult.log,
+        buildDuration,
+        runDuration: -1,
         exitCode: buildResult.exitCode,
       };
     }
@@ -67,6 +74,7 @@ export const createContainer = async (
       localDir,
     });
 
+    const runStartTime = Date.now();
     const runResult = await executeDockerCommand(runArgs, {
       timeout: 30_000,
       ...config,
@@ -85,6 +93,8 @@ export const createContainer = async (
       ...config,
       log: runResult.log,
       exitCode: runResult.exitCode,
+      runDuration: Date.now() - runStartTime,
+      buildDuration: Date.now() - startTime,
     };
   } finally {
     if (localDir) {

@@ -14,8 +14,10 @@ export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
   schema: JSONB.ObjectType;
 };
 
-export const getProstglesDBTools = (chat: ChatPermissions): DBTool[] => {
-  const chatDBAccess = chat.db_data_permissions;
+export const getProstglesDBTools = (
+  chat: ChatPermissions | undefined,
+): DBTool[] => {
+  const chatDBAccess = chat?.db_data_permissions;
   if (!chatDBAccess || chatDBAccess.Mode === "None") {
     return [];
   }

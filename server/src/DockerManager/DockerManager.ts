@@ -1,8 +1,14 @@
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../common/prostglesMcp";
 import { randomUUID } from "crypto";
-import { pickKeys } from "prostgles-types";
+import {
+  getJSONBSchemaAsJSONSchema,
+  omitKeys,
+  pickKeys,
+} from "prostgles-types";
 import { type DBS } from "..";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../common/prostglesMcp";
 import type { DBSSchema } from "../../../common/publishUtils";
+import { upsertSession } from "../authConfig/upsertSession";
+import { getProstglesDBTools } from "../publishMethods/askLLM/prostglesLLMTools/getProstglesDBTools";
 import { createContainer } from "./createContainer";
 import {
   createContainerJSONSchema,
@@ -14,7 +20,6 @@ import {
 } from "./dockerMCPDatabaseRequestRouter";
 import { getContainerIPs } from "./getContainerIPs";
 import { getDockerMCPTools } from "./getDockerMCPTools";
-import { upsertSession } from "../authConfig/upsertSession";
 
 export type CreateContainerContext = {
   userId: string;
@@ -89,18 +94,24 @@ export const getDockerMCP = async (
   chat: DBSSchema["llm_chats"] | undefined,
 ) => {
   const { tools, dockerManager } = await getDockerMCPTools(dbs);
-  const mode = chat?.db_data_permissions?.Mode;
-  const customRequests = `{ "tableName": string; "command": "select" | "insert" | "update" | "delete"; "data": any }`;
-  const sqlRequests = `{ "sql": string }`;
+  const dbTools = getProstglesDBTools(chat);
+  const apiUrl = `${dockerManager.address.address}:${dockerManager.address.port}/${dockerManager.route}`;
   const databaseQueryDescription =
-    !mode || mode === "None" ?
+    !dbTools.length ?
       "Access to the database is not allowed. If user wants to run queries, they need to set the Mode to Custom or SQL."
     : [
-        `To run queries against the database you need to POST`,
-        `to ${dockerManager.address.address}:${dockerManager.address.port}/${dockerManager.route} with the following JSON body:`,
-
-        mode === "Custom" ? customRequests : sqlRequests,
-      ].join(" ");
+        `To run queries against the database you need to POST JSON body parameters to ${apiUrl}/:endpoint`,
+        `The following endpoints are available:`,
+        ...dbTools.map((t) => {
+          const argTSSchema = JSON.stringify(
+            omitKeys(getJSONBSchemaAsJSONSchema("", "", t.schema), [
+              "$id",
+              "$schema",
+            ]),
+          );
+          return `/${t.tool_name} - ${t.description}. JSON body input schema: ${argTSSchema}`;
+        }),
+      ].join("\n");
   const { description } = createContainerJSONSchema;
   if (!description)
     throw new Error("createContainerJSONSchema must have a description");

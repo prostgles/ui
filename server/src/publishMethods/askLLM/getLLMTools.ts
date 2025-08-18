@@ -79,21 +79,15 @@ export const getLLMAllowedChatTools = async ({
       const info = llm_chats_allowed_mcp_tools.find(
         ({ tool_id }) => tool_id === id,
       );
-      const createContainerTool = dockerMCP.toolSchemas[0]!;
+      const toolInfo = dockerMCP.toolSchemas.find((t) => t.name === tool.name);
       if (!info) return;
       return {
         type: "mcp" as const,
         ...tool,
         ...info,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        input_schema:
-          tool.name === "docker-sandbox--create_container" ?
-            createContainerTool.inputSchema
-          : tool.input_schema,
-        description:
-          tool.name === "docker-sandbox--create_container" ?
-            createContainerTool.description
-          : tool.description,
+        input_schema: toolInfo?.inputSchema ?? tool.input_schema,
+        description: toolInfo?.description ?? tool.description,
         auto_approve: Boolean(info.auto_approve),
       };
     })

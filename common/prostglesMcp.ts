@@ -219,6 +219,8 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             },
           },
           exitCode: "number",
+          runDuration: "number",
+          buildDuration: "number",
         },
       },
     },

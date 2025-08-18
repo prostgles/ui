@@ -33,6 +33,7 @@ import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { useAlert } from "@components/AlertProvider";
 import ErrorComponent from "@components/ErrorComponent";
 import type { ToolResultMessage } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ToolUseChatMessage";
+import Chip from "@components/Chip";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["schema"]["type"]
@@ -67,6 +68,15 @@ export const DockerSandboxCreateContainer = ({
           {sliceText(resultObj?.command, 100) ??
             "Docker Sandbox Create Container"}
         </div>
+        <Chip label="Network mode">{data.networkMode ?? "none"}</Chip>
+        <Chip label="Duration">
+          {getMillisecondsAsInterval(
+            (resultObj?.buildDuration ?? 0) + (resultObj?.runDuration ?? 0),
+          )}
+        </Chip>
+        <Chip label="Timeout">
+          {getMillisecondsAsInterval(data.timeout ?? 30_000)}
+        </Chip>
         {callMCPServerTool && toolResult && (
           <Btn
             variant="faded"
@@ -137,9 +147,7 @@ export const DockerSandboxCreateContainer = ({
           />
         </FlexRow>
       </FlexRow>
-      <div className="bt b-color px-1 py-p25 bg-color-2 w-full ta-start">
-        Logs
-      </div>
+      <div className="bt b-color p-p5 bg-color-2 w-full ta-start">Logs</div>
       <MonacoEditor
         key={"logs"}
         language="text"
@@ -197,4 +205,20 @@ const extensionToInfo: Record<string, { label: string; iconPath?: string }> = {
   md: { iconPath: mdiLanguageMarkdown, label: "markdown" },
   sql: { label: "sql" },
   Dockerfile: { iconPath: mdiDocker, label: "dockerfile" },
+};
+
+const getMillisecondsAsInterval = (ms: number) => {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const result = {
+    h: hours,
+    m: minutes % 60,
+    s: seconds % 60,
+    ms: ms % 1000,
+  };
+  return Object.entries(result)
+    .filter(([n, v]) => v)
+    .map(([n, v]) => `${v}${n}`)
+    .join(" ");
 };
