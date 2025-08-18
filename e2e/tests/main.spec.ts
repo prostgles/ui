@@ -591,7 +591,8 @@ test.describe("Main test", () => {
       page,
       `
       UPDATE mcp_servers SET enabled = false WHERE name IN ('playwright', 'docker-sandbox');
-      DELETE FROM mcp_server_tools WHERE server_name = 'playwright' `,
+      DELETE FROM mcp_server_tools WHERE server_name IN ('playwright', 'docker-sandbox');
+      `,
     );
 
     /** Delete existing chat during local testing */
@@ -782,16 +783,45 @@ test.describe("Main test", () => {
       .click();
     await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
-    await sendAskLLMMessage(page, "mcpsandbox");
-    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    await expect(page.getByTestId("Chat.messageList")).toContainText(
-      "free ai assistant tool result received",
-      { timeout: 40e3 },
+
+    const dockerRunAndExpect = async (result: string) => {
+      await sendAskLLMMessage(page, "mcpsandbox");
+      await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+      await expect(page.getByTestId("Chat.messageList")).toContainText(
+        "free ai assistant tool result received",
+        { timeout: 40e3 },
+      );
+      await page.getByTestId("ToolUseMessage.toggle").last().click();
+      await page.getByTestId("Popup.toggleFullscreen").last().click();
+      await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(
+        result,
+      );
+      await page.getByTestId("Popup.close").last().click();
+    };
+    await dockerRunAndExpect(`Tool "execute_sql_with_rollback" not found`);
+
+    await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
+
+    await runDbSql(
+      page,
+      `CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE, 
+      created_at TIMESTAMP DEFAULT NOW()
+      );
+      INSERT INTO users (username) VALUES ('fresh_user') ON CONFLICT DO NOTHING;
+      `,
     );
-    await page.getByTestId("ToolUseMessage.toggle").click();
-    await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(
-      "Hello from the sandbox!",
-    );
+    await page
+      .getByTestId("Popup.content")
+      .last()
+      .getByLabel("Mode", { exact: true })
+      .click();
+
+    await page.getByRole("option", { name: "Run readonly SQL" }).click();
+    await page.getByTestId("Popup.close").last().click();
+    await page.waitForTimeout(4e3); // wait for askLLM publish method forked process to restart after schema change
+    await dockerRunAndExpect(`username: 'fresh_user'`);
   });
 
   test("Disable signups", async ({ page: p }) => {

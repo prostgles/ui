@@ -91,9 +91,19 @@ const mcpSandboxToolUse = [
             scripts: {
               start: "node index.js",
             },
+            depenencies: {
+              "node-fetch": "^3.3.0",
+            },
           }),
-          "index.js": `console.log("Hello from the sandbox!");`,
+          "index.js": `
+          fetch(
+            "http://172.17.0.1:3009/db/execute_sql_with_rollback", 
+            { headers: { "Content-Type": "application/json" }, 
+            method: "POST", 
+            body: JSON.stringify({ sql: "SELECT * FROM users" }) 
+          }).then(res => res.json()).then(console.log).catch(console.error);`,
         },
+        networkMode: "bridge",
         timeout: 30_000,
       }),
     },

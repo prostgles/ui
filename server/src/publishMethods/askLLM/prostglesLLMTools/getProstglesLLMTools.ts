@@ -63,12 +63,7 @@ export const getProstglesLLMTools = async ({
     (tool) => {
       return {
         ...tool,
-        input_schema: getJSONBSchemaAsJSONSchema(
-          "",
-          "",
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          tool.schema,
-        ),
+        input_schema: getJSONBSchemaAsJSONSchema("", "", tool.schema),
       };
     },
   );
