@@ -4,7 +4,7 @@ import type {
   LoginSignupConfig,
 } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
 import { upsertSession } from "../upsertSession";
 import type { SUser } from "../sessionUtils";
 import { startRateLimitedLoginAttempt } from "../startRateLimitedLoginAttempt";

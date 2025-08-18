@@ -1,5 +1,5 @@
 import React from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import { FlexRow } from "../../../components/Flex";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { AskLLMChatActionBarDatabaseAccess } from "./AskLLMChatActionBarDatabaseAccess";

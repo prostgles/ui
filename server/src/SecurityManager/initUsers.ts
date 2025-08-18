@@ -1,11 +1,11 @@
 import type { DB } from "prostgles-server/dist/initProstgles";
 import { PRGL_PASSWORD, PRGL_USERNAME } from "../envVars";
 import type { DBS, Users } from "..";
-import { PASSWORDLESS_ADMIN_USERNAME } from "../../../commonTypes/OAuthUtils";
+import { PASSWORDLESS_ADMIN_USERNAME } from "../../../common/OAuthUtils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getElectronConfig } from "../electronConfig";
 import { makeSession } from "../authConfig/sessionUtils";
-import { YEAR } from "../../../commonTypes/utils";
+import { YEAR } from "../../../common/utils";
 
 const EMPTY_PASSWORD = "";
 

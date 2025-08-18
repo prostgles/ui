@@ -1,6 +1,6 @@
 import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 import React, { useState } from "react";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../components/Flex";

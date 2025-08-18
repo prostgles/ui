@@ -1,5 +1,5 @@
 import React from "react";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../../commonTypes/electronInitTypes";
+import { DEFAULT_ELECTRON_CONNECTION } from "../../../../common/electronInitTypes";
 import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import Tabs from "../../components/Tabs";

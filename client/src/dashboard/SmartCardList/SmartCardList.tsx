@@ -19,7 +19,7 @@ import type { SmartFormProps } from "../SmartForm/SmartForm";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
-import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { SmartGroupFilter } from "../../../../common/filterUtils";
 import type { InsertButtonProps } from "../SmartForm/InsertButton";
 import type { TestSelectors } from "../../Testing";
 

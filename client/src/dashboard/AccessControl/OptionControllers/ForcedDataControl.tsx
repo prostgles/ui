@@ -1,6 +1,6 @@
 // import { mdiDatabaseImportOutline, mdiPencil, mdiPlus } from "@mdi/js";
 // import React, { useState } from "react";
-// import type { ForcedData, UpdateRule } from "../../../../../commonTypes/publishUtils";
+// import type { ForcedData, UpdateRule } from "../../../../../common/publishUtils";
 // import Btn from "../../../components/Btn";
 // import { generateUniqueID } from "../../../components/FileInput/FileInput";
 // import { FlexCol, FlexRow } from "../../../components/Flex";

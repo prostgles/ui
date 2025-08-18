@@ -2,7 +2,7 @@ import React from "react";
 import type {
   JOINED_FILTER_TYPES,
   JoinedFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import type { DBSchemaTablesWJoins, JoinV2 } from "../Dashboard/dashboardUtils";
 import {
   JoinPathSelector,

@@ -1,5 +1,5 @@
 import { getKeys, isEqual } from "prostgles-types";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../common/publishUtils";
 import { tout, type DBS } from "../index";
 import {
   activePasswordlessAdminFilter,

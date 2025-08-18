@@ -1,6 +1,6 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { SearchAllProps } from "../SearchAll";
 
 import type {
@@ -15,9 +15,9 @@ import type {
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
 
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
-import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
-import type { OmitDistributive } from "../../../../commonTypes/utils";
+import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
+import type { SmartGroupFilter } from "../../../../common/filterUtils";
+import type { OmitDistributive } from "../../../../common/utils";
 import type { Extent, MapExtentBehavior } from "../Map/DeckGLMap";
 import type {
   ColumnConfig,

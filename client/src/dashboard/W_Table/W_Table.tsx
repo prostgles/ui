@@ -30,8 +30,8 @@ import type {
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
 import { isDefined, isEqual, pickKeys } from "prostgles-types";
-import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
-import { matchObj } from "../../../../commonTypes/utils";
+import type { DetailedFilterBase } from "../../../../common/filterUtils";
+import { matchObj } from "../../../../common/utils";
 import type { Command } from "../../Testing";
 import { createReactiveState } from "../../appUtils";
 import { ClickCatchOverlayZIndex } from "../../components/ClickCatchOverlay";

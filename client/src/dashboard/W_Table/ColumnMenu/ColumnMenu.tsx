@@ -35,7 +35,7 @@ import type { ParsedJoinPath } from "prostgles-types";
 import type {
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../../commonTypes/filterUtils";
+} from "../../../../../common/filterUtils";
 import { useReactiveState } from "../../../appUtils";
 import Popup from "../../../components/Popup/Popup";
 import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";

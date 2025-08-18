@@ -1,8 +1,8 @@
 import { mdiCheck, mdiCircleOutline, mdiViewCarousel } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
-import { dashboardTypes } from "../../../../../commonTypes/DashboardTypes";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import { dashboardTypes } from "../../../../../common/DashboardTypes";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import Btn from "../../../components/Btn";
 import { FlexCol } from "../../../components/Flex";
 import { MonacoEditor } from "../../../components/MonacoEditor/MonacoEditor";
@@ -12,7 +12,7 @@ import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveBut
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { btnStyleProps } from "./AskLLMChatActionBar";
-import { LLM_PROMPT_VARIABLES } from "../../../../../commonTypes/llmUtils";
+import { LLM_PROMPT_VARIABLES } from "../../../../../common/llmUtils";
 
 export const AskLLMChatActionBarPromptSelector = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {

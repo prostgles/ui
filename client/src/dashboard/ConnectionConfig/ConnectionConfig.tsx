@@ -9,7 +9,7 @@ import {
   mdiTableEdit,
 } from "@mdi/js";
 import React, { useMemo } from "react";
-import type { CONNECTION_CONFIG_SECTIONS } from "../../../../commonTypes/utils";
+import type { CONNECTION_CONFIG_SECTIONS } from "../../../../common/utils";
 import { dataCommand } from "../../Testing";
 import { FlexRow } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";

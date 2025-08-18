@@ -1,5 +1,5 @@
 import React from "react";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { Prgl, PrglCore } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";

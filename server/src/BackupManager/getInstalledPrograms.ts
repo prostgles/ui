@@ -5,8 +5,8 @@ import type { DB } from "prostgles-server/dist/Prostgles";
 import {
   programList,
   type InstalledPrograms,
-} from "../../../commonTypes/electronInitTypes";
-import type { WithUndef } from "../../../commonTypes/utils";
+} from "../../../common/electronInitTypes";
+import type { WithUndef } from "../../../common/utils";
 import { isDefined } from "prostgles-types";
 import { EOL } from "os";
 

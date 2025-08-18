@@ -11,8 +11,8 @@ import React, { useState } from "react";
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../../../../../commonTypes/prostglesMcp";
-import { sliceText } from "../../../../../../../../commonTypes/utils";
+} from "../../../../../../../../common/prostglesMcp";
+import { sliceText } from "../../../../../../../../common/utils";
 import { useAlert } from "../../../../../../components/AlertProvider";
 import Btn from "../../../../../../components/Btn";
 import { Marked } from "../../../../../../components/Chat/Marked";

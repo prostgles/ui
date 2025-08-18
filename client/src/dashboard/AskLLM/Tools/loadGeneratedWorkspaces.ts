@@ -1,9 +1,9 @@
-import type { WorkspaceInsertModel } from "../../../../../commonTypes/DashboardTypes";
+import type { WorkspaceInsertModel } from "../../../../../common/DashboardTypes";
 import {
   isObject,
   type DBSSchema,
   type DBSSchemaForInsert,
-} from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
 import type { Prgl } from "../../../App";
 import { isDefined, omitKeys } from "prostgles-types";
 import { CHIP_COLOR_NAMES } from "../../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";

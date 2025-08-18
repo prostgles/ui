@@ -21,9 +21,9 @@ import {
   type MethodHandler,
 } from "prostgles-client/dist/prostgles";
 import { type Socket } from "socket.io-client";
-import type { ProstglesState } from "../../commonTypes/electronInitTypes";
-import type { DBSSchema } from "../../commonTypes/publishUtils";
-import { fixIndent, ROUTES } from "../../commonTypes/utils";
+import type { ProstglesState } from "../../common/electronInitTypes";
+import type { DBSSchema } from "../../common/publishUtils";
+import { fixIndent, ROUTES } from "../../common/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
 import { CommandPalette } from "./app/CommandPalette/CommandPalette";
 import { FlexCol } from "./components/Flex";

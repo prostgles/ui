@@ -1,10 +1,7 @@
 import { mdiBrain, mdiDelete } from "@mdi/js";
 import React, { useMemo } from "react";
-import {
-  filterArr,
-  filterArrInverse,
-} from "../../../../../../commonTypes/llmUtils";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import { filterArr, filterArrInverse } from "../../../../../../common/llmUtils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
 import Btn from "../../../../components/Btn";
 import type { Message } from "../../../../components/Chat/Chat";
 import { Marked } from "../../../../components/Chat/Marked";

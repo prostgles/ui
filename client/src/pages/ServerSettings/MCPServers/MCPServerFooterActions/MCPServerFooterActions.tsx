@@ -1,6 +1,6 @@
 import { mdiReload } from "@mdi/js";
 import React from "react";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
 import { useAlert } from "../../../../components/AlertProvider";
 import Btn from "../../../../components/Btn";
 import { FlexRow } from "../../../../components/Flex";

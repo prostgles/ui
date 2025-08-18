@@ -12,7 +12,7 @@ import {
   getSmartGroupFilter,
   type DetailedFilterBase,
   type SmartGroupFilter,
-} from "../../../commonTypes/filterUtils";
+} from "../../../common/filterUtils";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
 import { SmartForm, type SmartFormProps } from "./SmartForm/SmartForm";
 import ErrorComponent from "../components/ErrorComponent";

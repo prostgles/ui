@@ -11,6 +11,16 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly type: "string";
                         readonly description: "SQL query to execute";
                     };
+                    readonly query_timeout: {
+                        readonly type: "number";
+                        readonly optional: true;
+                        readonly description: "Maximum time in milliseconds the query will be allowed to run. Defaults to 30000.";
+                    };
+                    readonly query_params: {
+                        readonly optional: true;
+                        readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema.";
+                        readonly type: "any";
+                    };
                 };
             };
         };
@@ -22,6 +32,16 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly type: "string";
                         readonly description: "SQL query to execute";
                     };
+                    readonly query_timeout: {
+                        readonly type: "number";
+                        readonly optional: true;
+                        readonly description: "Maximum time in milliseconds the query will be allowed to run. Defaults to 30000.";
+                    };
+                    readonly query_params: {
+                        readonly optional: true;
+                        readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema.";
+                        readonly type: "any";
+                    };
                 };
             };
         };
@@ -29,13 +49,16 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Selects rows from a table.";
             readonly schema: {
                 readonly type: {
+                    readonly limit: "integer";
+                    readonly filter: {
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
+                    };
                     readonly tableName: {
                         readonly type: "string";
                         readonly description: "Table to select from";
-                    };
-                    readonly filter: {
-                        readonly type: "any";
-                        readonly description: "Filter to select rows. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
                     };
                 };
             };
@@ -59,17 +82,21 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Updates rows in a table.";
             readonly schema: {
                 readonly type: {
+                    readonly data: {
+                        readonly description: "Data to insert into the table. Must satisfy the table schema.";
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                    };
+                    readonly filter: {
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
+                    };
                     readonly tableName: {
                         readonly type: "string";
                         readonly description: "Table to insert into";
-                    };
-                    readonly filter: {
-                        readonly type: "any";
-                        readonly description: "Filter to select rows to update. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
-                    };
-                    readonly data: {
-                        readonly description: "Data to insert into the table. Must satisfy the table schema.";
-                        readonly record: {};
                     };
                 };
             };
@@ -78,13 +105,15 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Deletes rows from a table.";
             readonly schema: {
                 readonly type: {
+                    readonly filter: {
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
+                    };
                     readonly tableName: {
                         readonly type: "string";
                         readonly description: "Table to delete from";
-                    };
-                    readonly filter: {
-                        readonly type: "any";
-                        readonly description: "Filter to select rows to delete. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
                     };
                 };
             };
@@ -234,6 +263,16 @@ export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles
                         readonly type: "string";
                         readonly description: "SQL query to execute";
                     };
+                    readonly query_timeout: {
+                        readonly type: "number";
+                        readonly optional: true;
+                        readonly description: "Maximum time in milliseconds the query will be allowed to run. Defaults to 30000.";
+                    };
+                    readonly query_params: {
+                        readonly optional: true;
+                        readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema.";
+                        readonly type: "any";
+                    };
                 };
             };
         };
@@ -245,6 +284,16 @@ export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles
                         readonly type: "string";
                         readonly description: "SQL query to execute";
                     };
+                    readonly query_timeout: {
+                        readonly type: "number";
+                        readonly optional: true;
+                        readonly description: "Maximum time in milliseconds the query will be allowed to run. Defaults to 30000.";
+                    };
+                    readonly query_params: {
+                        readonly optional: true;
+                        readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema.";
+                        readonly type: "any";
+                    };
                 };
             };
         };
@@ -252,13 +301,16 @@ export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles
             readonly description: "Selects rows from a table.";
             readonly schema: {
                 readonly type: {
+                    readonly limit: "integer";
+                    readonly filter: {
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
+                    };
                     readonly tableName: {
                         readonly type: "string";
                         readonly description: "Table to select from";
-                    };
-                    readonly filter: {
-                        readonly type: "any";
-                        readonly description: "Filter to select rows. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
                     };
                 };
             };
@@ -282,17 +334,21 @@ export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles
             readonly description: "Updates rows in a table.";
             readonly schema: {
                 readonly type: {
+                    readonly data: {
+                        readonly description: "Data to insert into the table. Must satisfy the table schema.";
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                    };
+                    readonly filter: {
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
+                    };
                     readonly tableName: {
                         readonly type: "string";
                         readonly description: "Table to insert into";
-                    };
-                    readonly filter: {
-                        readonly type: "any";
-                        readonly description: "Filter to select rows to update. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
-                    };
-                    readonly data: {
-                        readonly description: "Data to insert into the table. Must satisfy the table schema.";
-                        readonly record: {};
                     };
                 };
             };
@@ -301,13 +357,15 @@ export declare const getProstglesMCPFullToolName: <ServerName extends "prostgles
             readonly description: "Deletes rows from a table.";
             readonly schema: {
                 readonly type: {
+                    readonly filter: {
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
+                    };
                     readonly tableName: {
                         readonly type: "string";
                         readonly description: "Table to delete from";
-                    };
-                    readonly filter: {
-                        readonly type: "any";
-                        readonly description: "Filter to select rows to delete. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
                     };
                 };
             };

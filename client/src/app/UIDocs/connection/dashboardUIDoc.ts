@@ -1,4 +1,4 @@
-import { fixIndent, ROUTES } from "../../../../../commonTypes/utils";
+import { fixIndent, ROUTES } from "../../../../../common/utils";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocContainers } from "../../UIDocs";
 import { AIAssistantUIDoc } from "./AIAssistantUIDoc";

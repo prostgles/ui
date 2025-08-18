@@ -14,7 +14,7 @@ rm -rf ./ui/*
 mkdir -p ./ui/server/src
 mkdir -p ./ui/server/dist
 mkdir -p ./ui/server/connection_dbo
-mkdir -p ./ui/commonTypes
+mkdir -p ./ui/common
 mkdir -p ./ui/client
 mkdir -p ./ui/electron
 
@@ -25,7 +25,7 @@ cp -R ./electron/*.json ./ui/electron/
 cp -R ./server/src ./ui/server/
 cp -R ./server/sample_schemas ./ui/server/
 cp -R ./server/packages ./ui/server/
-cp -R ./commonTypes ./ui/
+cp -R ./common ./ui/
 cp ./server/tsconfig.json ./ui/server/
 cp ./server/.gitignore ./ui/server/
 cp ./server/tslint.json ./ui/server/ 

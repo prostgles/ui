@@ -4,7 +4,7 @@ import Chip from "./Chip";
 import { FlexCol } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import Popup from "./Popup/Popup";
-import { sliceText } from "../../../commonTypes/utils";
+import { sliceText } from "../../../common/utils";
 
 export const ContentTypes = ["image", "video", "audio"] as const;
 type ValidContentType = (typeof ContentTypes)[number];

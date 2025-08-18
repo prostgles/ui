@@ -1,8 +1,5 @@
 import React from "react";
-import type {
-  FilterType,
-  SimpleFilter,
-} from "../../../../commonTypes/filterUtils";
+import type { FilterType, SimpleFilter } from "../../../../common/filterUtils";
 import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
 import RTComp from "../RTComp";
 import { colIs, parseValue } from "../SmartForm/SmartFormField/fieldUtils";

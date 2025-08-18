@@ -1,4 +1,4 @@
-import type { ColType } from "../../../../../../commonTypes/utils";
+import type { ColType } from "../../../../../../common/utils";
 import type { SQLHandler } from "prostgles-types";
 import { asName, tryCatch, tryCatchV2 } from "prostgles-types";
 

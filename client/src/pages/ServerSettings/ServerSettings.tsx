@@ -8,8 +8,8 @@ import {
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useState } from "react";
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
-import { getCIDRRangesQuery } from "../../../../commonTypes/publishUtils";
+import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
+import { getCIDRRangesQuery } from "../../../../common/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";

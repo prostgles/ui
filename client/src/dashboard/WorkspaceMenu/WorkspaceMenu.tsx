@@ -20,7 +20,7 @@ import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import type { Command } from "../../Testing";
 import type { DBS } from "../Dashboard/DBS";
 

@@ -7,7 +7,7 @@ import {
   type IOStats,
   type PG_STAT_DATABASE,
   type ServerStatus,
-} from "../../../commonTypes/utils";
+} from "../../../common/utils";
 import { bytesToSize } from "../BackupManager/utils";
 import { getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
 import { getPidStatsFromProc } from "./getPidStatsFromProc";

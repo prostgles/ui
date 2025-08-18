@@ -1,7 +1,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useMemo } from "react";
 
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import type { Prgl } from "../../../App";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
@@ -13,7 +13,7 @@ import {
   useLLMToolsApprover,
   type ApproveRequest,
 } from "./useLLMToolsApprover";
-import { getMCPToolNameParts } from "@common/prostglesMcp";
+import { getMCPToolNameParts } from "../../../../../common/prostglesMcp";
 
 export type AskLLMToolsProps = {
   dbs: DBS;

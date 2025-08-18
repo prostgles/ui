@@ -1,7 +1,7 @@
 import { isEmpty, tryCatchV2 } from "prostgles-types";
 import React, { useMemo } from "react";
-import { filterArr } from "../../../../../../commonTypes/llmUtils";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import { filterArr } from "../../../../../../common/llmUtils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
 import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,

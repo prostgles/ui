@@ -7,7 +7,7 @@ import React, {
 } from "react";
 
 import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import { classOverride } from "../../components/Flex";
 import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
 import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";

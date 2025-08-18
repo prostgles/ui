@@ -1,7 +1,7 @@
 import React from "react";
 import PopupMenu from "../../components/PopupMenu";
 import Btn from "../../components/Btn";
-import { sliceText } from "../../../../commonTypes/utils";
+import { sliceText } from "../../../../common/utils";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 
 export const RenderBackupLogs = ({

@@ -1,6 +1,6 @@
 import { type AnyObject } from "prostgles-types";
 import React, { useEffect } from "react";
-import { type DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
+import { type DetailedFilterBase } from "../../../../../common/filterUtils";
 import type { Prgl } from "../../../App";
 import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
 import Loading from "../../../components/Loading";

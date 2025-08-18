@@ -5,7 +5,7 @@ import {
 } from "../../dashboard/CodeEditor/CodeEditor";
 import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 import type { FormFieldProps } from "./FormField";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 
 type P = Pick<FormFieldProps, "value" | "onChange" | "readOnly"> & {
   className?: string;

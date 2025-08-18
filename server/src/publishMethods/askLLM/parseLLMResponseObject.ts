@@ -6,7 +6,7 @@ import type {
   OpenAIChatCompletionResponse,
 } from "./LLMResponseTypes";
 import { getLLMUsageCost } from "./getLLMUsageCost";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { MCPToolSchema } from "./getLLMTools";
 
 export type LLMResponseParser<T = AnyObject> = (args: {

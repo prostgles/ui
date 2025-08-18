@@ -10,8 +10,8 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import type { MethodFullDef } from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import React from "react";
-import type { SimpleFilter } from "../../../commonTypes/filterUtils";
-import { isObject } from "../../../commonTypes/publishUtils";
+import type { SimpleFilter } from "../../../common/filterUtils";
+import { isObject } from "../../../common/publishUtils";
 import type { Prgl } from "../App";
 import ButtonGroup from "../components/ButtonGroup";
 import Loading from "../components/Loading";
@@ -30,7 +30,7 @@ import RTComp from "./RTComp";
 import type { SQLSuggestion } from "./SQLEditor/W_SQLEditor";
 import type { AnyObject } from "prostgles-types";
 import { Icon } from "../components/Icon/Icon";
-import { sliceText } from "../../../commonTypes/utils";
+import { sliceText } from "../../../common/utils";
 import { FlexCol } from "../components/Flex";
 
 export const SEARCH_TYPES = [

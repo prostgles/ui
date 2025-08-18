@@ -5,10 +5,7 @@ import type {
   ForkedProcMessageError,
   ForkedProcMessageResult,
 } from "./ForkedPrglProcRunner";
-import {
-  FORKED_PROC_ENV_NAME,
-  type ProcStats,
-} from "../../../commonTypes/utils";
+import { FORKED_PROC_ENV_NAME, type ProcStats } from "../../../common/utils";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 export const getError = (rawError: any) => {

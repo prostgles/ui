@@ -1,6 +1,6 @@
-import { findArr } from "@common/llmUtils";
-import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import { sliceText } from "@common/utils";
+import { findArr } from "../../../../../../../../common/llmUtils";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../../../../../../common/prostglesMcp";
+import { sliceText } from "../../../../../../../../common/utils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { MenuList } from "@components/MenuList";

@@ -4,6 +4,17 @@ const runSQLSchema = {
             type: "string",
             description: "SQL query to execute",
         },
+        query_timeout: {
+            type: "number",
+            optional: true,
+            description: "Maximum time in milliseconds the query will be allowed to run. Defaults to 30000.",
+            // default: 30000,
+        },
+        query_params: {
+            optional: true,
+            description: "Query parameters to use in the SQL query. Must satisfy the query schema.",
+            type: "any",
+        },
     },
 };
 const filesSchema = {
@@ -14,6 +25,12 @@ const filesSchema = {
             type: "string",
             description: "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ",
         },
+    },
+};
+const filterSchema = {
+    filter: {
+        record: { values: "any" },
+        description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }",
     },
 };
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
@@ -30,16 +47,10 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         select: {
             description: "Selects rows from a table.",
             schema: {
-                type: {
-                    tableName: {
+                type: Object.assign(Object.assign({ tableName: {
                         type: "string",
                         description: "Table to select from",
-                    },
-                    filter: {
-                        type: "any",
-                        description: "Filter to select rows. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }",
-                    },
-                },
+                    } }, filterSchema), { limit: "integer" }),
             },
         },
         insert: {
@@ -60,35 +71,24 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         update: {
             description: "Updates rows in a table.",
             schema: {
-                type: {
-                    tableName: {
+                type: Object.assign(Object.assign({ tableName: {
                         type: "string",
                         description: "Table to insert into",
-                    },
-                    filter: {
-                        type: "any",
-                        description: "Filter to select rows to update. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }",
-                    },
-                    data: {
+                    } }, filterSchema), { data: {
                         description: "Data to insert into the table. Must satisfy the table schema.",
-                        record: {},
-                    },
-                },
+                        record: {
+                            values: "any",
+                        },
+                    } }),
             },
         },
         delete: {
             description: "Deletes rows from a table.",
             schema: {
-                type: {
-                    tableName: {
+                type: Object.assign({ tableName: {
                         type: "string",
                         description: "Table to delete from",
-                    },
-                    filter: {
-                        type: "any",
-                        description: "Filter to select rows to delete. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }",
-                    },
-                },
+                    } }, filterSchema),
             },
         },
     },

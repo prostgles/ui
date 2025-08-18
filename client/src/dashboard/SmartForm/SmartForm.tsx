@@ -1,7 +1,7 @@
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
 import React, { useCallback } from "react";
-import { type DetailedFilterBase } from "../../../../commonTypes/filterUtils";
+import { type DetailedFilterBase } from "../../../../common/filterUtils";
 import type { Prgl } from "../../App";
 import { SuccessMessage } from "../../components/Animations";
 import ErrorComponent from "../../components/ErrorComponent";

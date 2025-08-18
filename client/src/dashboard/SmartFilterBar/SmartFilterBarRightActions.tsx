@@ -6,11 +6,11 @@ import {
 } from "@mdi/js";
 import { isObject, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { SmartGroupFilter } from "../../../../common/filterUtils";
 import {
   getFinalFilterInfo,
   getSmartGroupFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import Btn from "../../components/Btn";
 import { ExpandSection } from "../../components/ExpandSection";
 import { Footer } from "../../components/Popup/Popup";

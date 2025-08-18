@@ -14,7 +14,7 @@ import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../appUtils";
 import Btn from "../../components/Btn";
@@ -46,7 +46,7 @@ import type {
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;

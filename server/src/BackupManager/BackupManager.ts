@@ -1,6 +1,6 @@
 import path from "path";
 import { PassThrough } from "stream";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
 import { getInstalledPsqlVersions } from "./getInstalledPrograms";
 import { pgDump } from "./pgDump";
 import { pgRestore } from "./pgRestore";
@@ -20,8 +20,8 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { FilterItem, SubscriptionHandler } from "prostgles-types";
-import type { InstalledPrograms } from "../../../commonTypes/electronInitTypes";
-import { ROUTES } from "../../../commonTypes/utils";
+import type { InstalledPrograms } from "../../../common/electronInitTypes";
+import { ROUTES } from "../../../common/utils";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import { getRootDir } from "../electronConfig";

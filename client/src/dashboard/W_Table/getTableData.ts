@@ -9,7 +9,7 @@ import { getTableSelect } from "./tableUtils/getTableSelect";
 import {
   getSmartGroupFilter,
   simplifyFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 
 export const getTableFilter = (
   w: WindowData<"table">,

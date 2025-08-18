@@ -7,7 +7,7 @@ import type {
 import { getDraggedTableColStyle } from "./TableHeader";
 import { classOverride } from "../Flex";
 import Btn from "../Btn";
-import { sliceText } from "../../../../commonTypes/utils";
+import { sliceText } from "../../../../common/utils";
 
 export type TableRowProps<Sort extends ColumnSort | ColumnSortSQL> = {
   row: any;

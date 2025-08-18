@@ -1,6 +1,6 @@
 import { _PG_date } from "prostgles-types";
 import React, { useMemo } from "react";
-import { matchObj } from "../../../../../commonTypes/utils";
+import { matchObj } from "../../../../../common/utils";
 import { FlexRowWrap } from "../../../components/Flex";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";

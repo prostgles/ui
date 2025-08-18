@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import type { Prgl } from "../../../App";
 import type { DBS } from "../../../dashboard/Dashboard/DBS";
 import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";

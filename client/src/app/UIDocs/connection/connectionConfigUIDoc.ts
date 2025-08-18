@@ -1,4 +1,4 @@
-import { fixIndent, ROUTES } from "../../../../../commonTypes/utils";
+import { fixIndent, ROUTES } from "../../../../../common/utils";
 import type { UIDocContainers } from "../../UIDocs";
 import { editConnectionUIDoc } from "../editConnectionUIDoc";
 import { accessControlUIDoc } from "./config/accessControlUIDoc";

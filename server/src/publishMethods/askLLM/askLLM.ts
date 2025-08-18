@@ -2,16 +2,16 @@ import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import { getSerialisableError, isObject, omitKeys } from "prostgles-types";
 import { type DBS } from "../..";
-import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
+import { dashboardTypes } from "../../../../common/DashboardTypes";
 import {
   filterArr,
   getLLMMessageText,
   isAssistantMessageRequestingToolUse,
   LLM_PROMPT_VARIABLES,
   reachedMaximumNumberOfConsecutiveToolRequests,
-} from "../../../../commonTypes/llmUtils";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { sliceText } from "../../../../commonTypes/utils";
+} from "../../../../common/llmUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
+import { sliceText } from "../../../../common/utils";
 import { getElectronConfig } from "../../electronConfig";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
@@ -21,7 +21,7 @@ import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../commonTypes/prostglesMcp";
+} from "../../../../common/prostglesMcp";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
 export const getBestLLMChatModel = async (

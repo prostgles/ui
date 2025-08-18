@@ -11,7 +11,7 @@ import type {
 import type { ExtraProps, Prgl, PrglState } from "../../App";
 
 import { useParams, useSearchParams } from "react-router-dom";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionConfig";
 import { ProjectConnectionError } from "./ProjectConnectionError";
 import { useProjectDb } from "./useProjectDb";

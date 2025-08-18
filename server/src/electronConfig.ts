@@ -1,7 +1,7 @@
 /* eslint-disable security/detect-non-literal-fs-filename */
 import * as fs from "fs";
 import * as path from "path";
-import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../common/DBGeneratedSchema";
 
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<

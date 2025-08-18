@@ -1,6 +1,6 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { JSONB } from "prostgles-types";
-import { CONNECTION_CONFIG_SECTIONS } from "../../../commonTypes/utils";
+import { CONNECTION_CONFIG_SECTIONS } from "../../../common/utils";
 import { loggerTableConfig } from "../Logger";
 import { tableConfigConnections } from "./tableConfigConnections";
 import { tableConfigGlobalSettings } from "./tableConfigGlobalSettings";

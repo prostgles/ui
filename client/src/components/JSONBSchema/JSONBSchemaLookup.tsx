@@ -8,7 +8,7 @@ import Select from "../Select/Select";
 import { isCompleteJSONB } from "./isCompleteJSONB";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { JSONBSchema } from "./JSONBSchema";
-import { getFinalFilter } from "../../../../commonTypes/filterUtils";
+import { getFinalFilter } from "../../../../common/filterUtils";
 
 type Schema = JSONB.Lookup;
 type P = JSONBSchemaCommonProps & {

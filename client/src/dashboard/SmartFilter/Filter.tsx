@@ -1,12 +1,12 @@
 import { mdiCog, mdiFormatLetterMatches } from "@mdi/js";
 import { isDefined, isEqual, omitKeys } from "prostgles-types";
 import React from "react";
-import type { SimpleFilter } from "../../../../commonTypes/filterUtils";
+import type { SimpleFilter } from "../../../../common/filterUtils";
 import {
   FTS_FILTER_TYPES,
   TEXT_FILTER_TYPES,
   getFinalFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";

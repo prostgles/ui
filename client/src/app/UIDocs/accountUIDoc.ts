@@ -1,4 +1,4 @@
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import { getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers } from "../UIDocs";
 

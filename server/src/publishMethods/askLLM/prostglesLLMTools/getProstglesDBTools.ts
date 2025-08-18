@@ -1,19 +1,20 @@
+import { isDefined, type JSONB } from "prostgles-types";
+import type { ChatPermissions } from "src/DockerManager/dockerMCPDatabaseRequestRouter";
 import {
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
   type ProstglesMcpTool,
-} from "../../../../../commonTypes/prostglesMcp";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
-import { getEntries } from "../../../../../commonTypes/utils";
-import { isDefined } from "prostgles-types";
+} from "../../../../../common/prostglesMcp";
+import { getEntries } from "../../../../../common/utils";
 
-type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
+export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
   name: string;
   description: string;
   auto_approve: boolean;
-  schema: any;
+  schema: JSONB.ObjectType;
 };
-export const getProstglesDBTools = (chat: DBSSchema["llm_chats"]): DBTool[] => {
+
+export const getProstglesDBTools = (chat: ChatPermissions): DBTool[] => {
   const chatDBAccess = chat.db_data_permissions;
   if (!chatDBAccess || chatDBAccess.Mode === "None") {
     return [];

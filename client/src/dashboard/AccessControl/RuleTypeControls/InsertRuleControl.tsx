@@ -4,7 +4,7 @@ import React from "react";
 import type {
   InsertRule,
   TableRules,
-} from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
 import ErrorComponent from "../../../components/ErrorComponent";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
 import type {

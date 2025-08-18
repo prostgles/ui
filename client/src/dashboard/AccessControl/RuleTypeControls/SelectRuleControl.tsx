@@ -11,7 +11,7 @@ import ErrorComponent from "../../../components/ErrorComponent";
 import type {
   SelectRule,
   TableRules,
-} from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
 import { ExpandSection } from "../../../components/ExpandSection";
 import { FlexCol } from "../../../components/Flex";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";

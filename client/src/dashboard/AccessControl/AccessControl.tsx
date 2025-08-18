@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow } from "../../components/Flex";
@@ -11,7 +11,7 @@ import { AccessControlRules } from "./ExistingAccessRules";
 import type { useAccessControlSearchParams } from "./useAccessControlSearchParams";
 import { mdiAccountCog, mdiPlus } from "@mdi/js";
 import { UserSyncConfig } from "./UserSyncConfig";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 
 type P = ReturnType<typeof useAccessControlSearchParams> & {
   prgl: Prgl;

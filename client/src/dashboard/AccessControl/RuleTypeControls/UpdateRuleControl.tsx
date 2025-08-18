@@ -5,8 +5,8 @@ import type {
   ContextDataObject,
   TableRules,
   UpdateRule,
-} from "../../../../../commonTypes/publishUtils";
-import { parseFieldFilter } from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
+import { parseFieldFilter } from "../../../../../common/publishUtils";
 import ErrorComponent from "../../../components/ErrorComponent";
 
 import { DynamicFields } from "../OptionControllers/DynamicFields";

@@ -5,8 +5,8 @@
 //   getProstglesDBTools,
 //   getProstglesMCPFullToolName,
 //   type ProstglesMcpTool,
-// } from "../../../../../commonTypes/prostglesMcp";
-// import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+// } from "../../../../../common/prostglesMcp";
+// import type { DBSSchema } from "../../../../../common/publishUtils";
 // import { isDefined } from "../../../utils";
 // import type { AskLLMToolsProps } from "./AskLLMToolApprover";
 // export type ApproveRequest =

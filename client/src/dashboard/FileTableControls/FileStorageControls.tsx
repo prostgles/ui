@@ -1,7 +1,7 @@
 import { mdiContentSaveCogOutline } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
 import ErrorComponent from "../../components/ErrorComponent";

@@ -14,7 +14,7 @@ import { MenuList } from "../components/MenuList";
 import { isDefined } from "prostgles-types";
 import { Icon } from "../components/Icon/Icon";
 import { t } from "../i18n/i18nUtils";
-import { ROUTES } from "../../../commonTypes/utils";
+import { ROUTES } from "../../../common/utils";
 
 type P = {
   forNavBar?: boolean;

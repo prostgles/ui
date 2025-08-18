@@ -3,9 +3,9 @@ import {
   type UseProstglesClientProps,
 } from "prostgles-client/dist/prostgles";
 import { useEffect, useMemo } from "react";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import type { ProstglesState } from "../../../commonTypes/electronInitTypes";
-import { API_ENDPOINTS, ROUTES } from "../../../commonTypes/utils";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { ProstglesState } from "../../../common/electronInitTypes";
+import { API_ENDPOINTS, ROUTES } from "../../../common/utils";
 import type { ClientUser } from "../App";
 import { pageReload } from "../components/Loading";
 import { isPlaywrightTest } from "../i18n/i18nUtils";

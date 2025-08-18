@@ -1,11 +1,11 @@
-import type { DBSSchema } from "@common/publishUtils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
 import Btn from "@components/Btn";
 import { type MarkdownMonacoCodeProps } from "@components/Chat/MarkdownMonacoCode";
 import { FlexCol } from "@components/Flex";
 import { mdiTools } from "@mdi/js";
 import React, { useMemo, useState } from "react";
 
-import { getMCPToolNameParts } from "@common/prostglesMcp";
+import { getMCPToolNameParts } from "../../../../../../common/prostglesMcp";
 import ErrorComponent, { ErrorTrap } from "@components/ErrorComponent";
 import Popup from "@components/Popup/Popup";
 import { SvgIcon } from "@components/SvgIcon";
@@ -40,7 +40,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
   const iconName = useMemo(() => {
     const serverName =
       m?.type !== "tool_use" ? "" : getMCPToolNameParts(m.name)?.serverName;
-    return serverName && mcpServerIcons?.get(serverName);
+    return serverName && mcpServerIcons.get(serverName);
   }, [mcpServerIcons, m]);
 
   if (!fullMessage || m?.type !== "tool_use") {

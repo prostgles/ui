@@ -1,6 +1,6 @@
 import { omitKeys } from "prostgles-types";
 import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { Prgl } from "../../App";
 import { pageReload } from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";

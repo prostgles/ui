@@ -1,6 +1,6 @@
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import type { DBS } from "../..";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 
 export const checkLLMLimit = async (
   dbs: DBS,

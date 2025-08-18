@@ -1,6 +1,6 @@
 import type { Route } from "react-router-dom";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { ROUTES } from "../../../commonTypes/utils";
+import type { DBSSchema } from "../../../common/publishUtils";
+import { ROUTES } from "../../../common/utils";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import type { Command } from "../Testing";
 import { isDefined } from "../utils";

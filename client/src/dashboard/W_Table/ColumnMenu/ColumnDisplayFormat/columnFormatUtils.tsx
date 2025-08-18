@@ -6,7 +6,7 @@ import type {
 } from "prostgles-types";
 import React from "react";
 import sanitizeHtml from "sanitize-html";
-import { getAge } from "../../../../../../commonTypes/utils";
+import { getAge } from "../../../../../../common/utils";
 import { ContentTypes, MediaViewer } from "../../../../components/MediaViewer";
 import { QRCodeImage } from "../../../../components/QRCodeImage";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";

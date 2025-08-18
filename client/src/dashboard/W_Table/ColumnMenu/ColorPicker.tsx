@@ -1,6 +1,6 @@
 import { mdiPalette } from "@mdi/js";
 import React from "react";
-import { isObject } from "../../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../../common/publishUtils";
 import type { BtnProps } from "../../../components/Btn";
 import Btn from "../../../components/Btn";
 import { FlexRow, FlexRowWrap, classOverride } from "../../../components/Flex";

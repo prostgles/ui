@@ -4,7 +4,7 @@ import "./SmartSearch.css";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { isObject } from "prostgles-types";
-import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import type { SmartGroupFilter } from "../../../../../common/filterUtils";
 import ErrorComponent from "../../../components/ErrorComponent";
 import type {
   SearchListItem,

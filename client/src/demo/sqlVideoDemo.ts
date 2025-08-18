@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../commonTypes/utils";
+import { fixIndent } from "../../../common/utils";
 import {
   getDemoUtils,
   type DemoScript,

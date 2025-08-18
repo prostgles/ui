@@ -13,13 +13,13 @@ import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { SubscriptionHandler } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBSSchema } from "../../../common/publishUtils";
 import {
   API_ENDPOINTS,
   ROUTES,
   getConnectionPaths,
-} from "../../../commonTypes/utils";
+} from "../../../common/utils";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { AuthSetupDataListener } from "../authConfig/subscribeToAuthSetupChanges";
 import { getDbConnection } from "../connectionUtils/testDBConnection";

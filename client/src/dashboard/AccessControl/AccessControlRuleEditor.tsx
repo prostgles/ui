@@ -13,7 +13,7 @@ import type {
   ContextDataObject,
   DBSSchema,
   TableRulesErrors,
-} from "../../../../commonTypes/publishUtils";
+} from "../../../../common/publishUtils";
 import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
 import ButtonGroup from "../../components/ButtonGroup";

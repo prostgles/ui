@@ -16,7 +16,7 @@ import {
 } from "../W_Table/ColumnMenu/ColumnStyleControls";
 import { updateWCols } from "../W_Table/tableUtils/tableUtils";
 import type { ProstglesTimeChartStateLayer } from "../W_TimeChart/W_TimeChart";
-import { getSmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import { getSmartGroupFilter } from "../../../../common/filterUtils";
 
 type P = DivProps &
   Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl" | "w"> & {

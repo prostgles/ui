@@ -1,10 +1,10 @@
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import { dashboardTypes } from "../../../../../commonTypes/DashboardTypes";
+import { dashboardTypes } from "../../../../../common/DashboardTypes";
 import {
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../../commonTypes/prostglesMcp";
-import { fixIndent } from "../../../../../commonTypes/utils";
+} from "../../../../../common/prostglesMcp";
+import { fixIndent } from "../../../../../common/utils";
 
 export const executeSQLToolWithRollback = {
   name: getProstglesMCPFullToolName(

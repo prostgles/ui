@@ -13,12 +13,12 @@ import type {
   LayoutItem,
   LayoutConfig,
   LayoutGroup,
-} from "@common/DashboardTypes";
+} from "../../../../common/DashboardTypes";
 export type {
   LayoutItem,
   LayoutConfig,
   LayoutGroup,
-} from "@common/DashboardTypes";
+} from "../../../../common/DashboardTypes";
 
 export type CustomHeaderClassNames = {
   close: string;

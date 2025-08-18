@@ -1,5 +1,5 @@
-import { filterArr } from "../../../../commonTypes/llmUtils";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { filterArr } from "../../../../common/llmUtils";
+import { isObject } from "../../../../common/publishUtils";
 import { getCommandElemSelector, type Command } from "../../Testing";
 import type { AlertContext } from "../../components/AlertProvider";
 import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";

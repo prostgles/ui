@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import type { LLMMessage } from "../../../../../commonTypes/llmUtils";
+import type { LLMMessage } from "../../../../../common/llmUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import { Chat, type ChatProps } from "../../../components/Chat/Chat";
@@ -12,9 +12,9 @@ import { AskLLMToolApprover } from "../Tools/AskLLMToolApprover";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import { isDefined } from "../../../utils";
-import { MINUTE } from "../../../../../commonTypes/utils";
+import { MINUTE } from "../../../../../common/utils";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import { useAlert } from "../../../components/AlertProvider";
 

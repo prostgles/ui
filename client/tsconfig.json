@@ -23,7 +23,7 @@
     "strictNullChecks": true,
     "checkJs": true,
     "paths": {
-      "@common/*": ["../commonTypes/*"],
+      "@common/*": ["../common/*"],
       "@docs/*": ["../docs/*"],
       "@components/*": ["src/components/*"],
       "@pages/*": ["src/papges/*"],

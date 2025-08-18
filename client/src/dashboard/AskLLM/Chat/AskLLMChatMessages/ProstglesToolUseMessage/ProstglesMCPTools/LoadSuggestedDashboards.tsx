@@ -1,8 +1,8 @@
 import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";
 import type { JSONB } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../../../../../../commonTypes/prostglesMcp";
-import { isObject } from "@common/publishUtils";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../../../../../../common/prostglesMcp";
+import { isObject } from "../../../../../../../../common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";

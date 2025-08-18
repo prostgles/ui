@@ -1,6 +1,6 @@
 import { mdiPlus } from "@mdi/js";
 import React from "react";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import type { PrglState } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow } from "../../components/Flex";

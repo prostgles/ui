@@ -31,7 +31,7 @@ import type { HoveredObject } from "./onMapHover";
 import { onMapHover } from "./onMapHover";
 import { fetchMapLayerData } from "./fetchMapLayerData";
 import { SmartForm } from "../SmartForm/SmartForm";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import { getMapFilter } from "./getMapData";
 
 export type LayerBase = {

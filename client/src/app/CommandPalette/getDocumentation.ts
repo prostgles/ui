@@ -1,4 +1,4 @@
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import { fixIndent } from "../../demo/sqlVideoDemo";
 import { COMMANDS } from "../../Testing";
 import { flatDocs, UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";

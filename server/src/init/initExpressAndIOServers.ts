@@ -7,7 +7,7 @@ import helmet from "helmet";
 import _http from "http";
 import path from "path";
 import { Server } from "socket.io";
-import { API_ENDPOINTS } from "../../../commonTypes/utils";
+import { API_ENDPOINTS } from "../../../common/utils";
 import { withOrigin } from "../authConfig/getAuth";
 import { sidKeyName } from "../authConfig/sessionUtils";
 import { actualRootDir } from "../electronConfig";

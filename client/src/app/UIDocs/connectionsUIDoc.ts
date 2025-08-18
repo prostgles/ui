@@ -1,4 +1,4 @@
-import { fixIndent, ROUTES } from "../../../../commonTypes/utils";
+import { fixIndent, ROUTES } from "../../../../common/utils";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers, UIDocElement } from "../UIDocs";
 import { connectionConfigUIDoc } from "./connection/connectionConfigUIDoc";

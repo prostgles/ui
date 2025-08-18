@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getEntries } from "../../../../commonTypes/utils";
+import { getEntries } from "../../../../common/utils";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
 import { FlexRow, FlexRowWrap } from "../../components/Flex";

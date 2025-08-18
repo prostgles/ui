@@ -4,8 +4,8 @@ import React from "react";
 import type {
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../commonTypes/filterUtils";
-import { isJoinedFilter } from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
+import { isJoinedFilter } from "../../../../common/filterUtils";
 import ErrorComponent from "../../components/ErrorComponent";
 import { SmartSearch } from "../SmartFilter/SmartSearch/SmartSearch";
 import type { SmartFilterBarProps } from "./SmartFilterBar";

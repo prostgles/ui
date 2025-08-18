@@ -1,6 +1,6 @@
 import React from "react";
-import type { PGDumpParams } from "../../../../commonTypes/utils";
-import { DESTINATIONS } from "../../../../commonTypes/utils";
+import type { PGDumpParams } from "../../../../common/utils";
+import { DESTINATIONS } from "../../../../common/utils";
 import Select from "../../components/Select/Select";
 import { CredentialSelector } from "./CredentialSelector";
 import type { DumpOptionsProps } from "./DumpOptions";

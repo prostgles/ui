@@ -1,6 +1,6 @@
 import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
 import { useRef } from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { isDefined } from "../../../utils";
 import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";

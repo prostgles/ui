@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
 import type { Prgl } from "../../../../App";
 import { useMCPServerConfig } from "./MCPServerConfig";

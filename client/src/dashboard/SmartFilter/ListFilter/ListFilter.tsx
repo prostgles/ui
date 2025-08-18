@@ -2,7 +2,7 @@ import type { Primitive } from "d3";
 import type { AnyObject } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import React from "react";
-import type { FilterType } from "../../../../../commonTypes/filterUtils";
+import type { FilterType } from "../../../../../common/filterUtils";
 import { FlexRow } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
 import type { SearchListItem } from "../../../components/SearchList/SearchList";

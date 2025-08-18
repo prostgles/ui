@@ -1,7 +1,7 @@
 import type { ChildProcess } from "child_process";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { isDefined, omitKeys, pickKeys } from "prostgles-types";
-import type { DumpOpts, PGDumpParams } from "../../../commonTypes/utils";
+import type { DumpOpts, PGDumpParams } from "../../../common/utils";
 import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
 import { envToStr, pipeFromCommand } from "./pipeFromCommand";

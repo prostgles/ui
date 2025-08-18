@@ -1,7 +1,7 @@
 import { mdiFormatListCheckbox, mdiPencil } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import React, { useState } from "react";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import Btn from "../../components/Btn";
 import { pageReload } from "../../components/Loading";
 import { SearchList } from "../../components/SearchList/SearchList";

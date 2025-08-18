@@ -3,9 +3,9 @@ import {
   getFinalFilterInfo,
   type JoinedFilter,
   TEXT_FILTER_TYPES,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import type { FilterWrapperProps } from "./FilterWrapper";
-import { sliceText } from "../../../../commonTypes/utils";
+import { sliceText } from "../../../../common/utils";
 import "./MinimisedFilter.css";
 import { Icon } from "../../components/Icon/Icon";
 import { mdiSetCenter } from "@mdi/js";

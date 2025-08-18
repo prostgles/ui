@@ -1,6 +1,6 @@
 import type { SQLHandler } from "prostgles-types";
-import { isObject } from "../../../../../commonTypes/publishUtils";
-import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../commonTypes/utils";
+import { isObject } from "../../../../../common/publishUtils";
+import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../common/utils";
 import { suggestSnippets } from "./CommonMatchImports";
 import { ENCODINGS } from "./PSQL";
 import {

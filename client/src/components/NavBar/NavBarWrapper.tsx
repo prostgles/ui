@@ -11,7 +11,7 @@ import {
   mdiServerSecurity,
 } from "@mdi/js";
 import { NavBar } from "./NavBar";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import { FlexRow } from "../Flex";
 import { ThemeSelector, type ThemeOption } from "../../theme/ThemeSelector";
 import { LanguageSelector } from "../../i18n/LanguageSelector";

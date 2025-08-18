@@ -1,6 +1,6 @@
 import type { SQLHandler } from "prostgles-types";
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import { parseError } from "./runSQL";
 
 export const runSQLErrorHints = async (

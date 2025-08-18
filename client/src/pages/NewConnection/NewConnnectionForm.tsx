@@ -8,9 +8,9 @@ import {
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
+import type { DBSSchema } from "../../../../common/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import type { ExtraProps } from "../../App";
 import Btn from "../../components/Btn";
 import ErrorComponent, {
@@ -31,7 +31,7 @@ import { getOS } from "../ElectronSetup/ElectronSetup";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionFormFields";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 export const getSqlErrorText = (e: any) => {

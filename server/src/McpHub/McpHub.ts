@@ -17,8 +17,8 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import { DBS } from "..";
-import { McpToolCallResponse } from "../../../commonTypes/mcp";
-import { DBSSchema } from "../../../commonTypes/publishUtils";
+import { McpToolCallResponse } from "../../../common/mcp";
+import { DBSSchema } from "../../../common/publishUtils";
 import { checkMCPServerTools } from "./checkMCPServerTools";
 import { connectToMCPServer } from "./connectToMCPServer";
 import {

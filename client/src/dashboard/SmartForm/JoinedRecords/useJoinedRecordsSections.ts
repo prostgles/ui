@@ -7,7 +7,7 @@ import { useMemo, useRef, useState } from "react";
 import {
   getSmartGroupFilter,
   type SmartGroupFilter,
-} from "../../../../../commonTypes/filterUtils";
+} from "../../../../../common/filterUtils";
 import { isDefined } from "../../../utils";
 import { getJoinFilter } from "./getJoinFilter";
 import type { JoinedRecordsProps } from "./JoinedRecords";

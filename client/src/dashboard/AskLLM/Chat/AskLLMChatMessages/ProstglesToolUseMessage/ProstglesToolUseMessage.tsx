@@ -1,5 +1,5 @@
-import type { DBSSchema } from "@common/publishUtils";
-import { getProstglesMCPFullToolName } from "../../../../../../../commonTypes/prostglesMcp";
+import type { DBSSchema } from "../../../../../../../common/publishUtils";
+import { getProstglesMCPFullToolName } from "../../../../../../../common/prostglesMcp";
 import type { ToolResultMessage, ToolUseMessage } from "../ToolUseChatMessage";
 import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";

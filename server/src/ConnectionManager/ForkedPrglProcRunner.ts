@@ -4,10 +4,7 @@ import * as path from "path";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import { type AnyObject, isObject } from "prostgles-types";
 import type { DBS } from "..";
-import {
-  FORKED_PROC_ENV_NAME,
-  type ProcStats,
-} from "../../../commonTypes/utils";
+import { FORKED_PROC_ENV_NAME, type ProcStats } from "../../../common/utils";
 import { getError } from "./forkedProcess";
 import { getInitiatedPostgresqlPIDs } from "./getInitiatedPostgresqlPIDs";
 import pidusage from "pidusage";

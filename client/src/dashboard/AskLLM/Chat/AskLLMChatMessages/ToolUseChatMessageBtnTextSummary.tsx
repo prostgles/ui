@@ -1,7 +1,7 @@
 import { isObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
-import { sliceText } from "../../../../../../commonTypes/utils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
+import { sliceText } from "../../../../../../common/utils";
 
 export const ToolUseChatMessageBtnTextSummary = ({
   m,

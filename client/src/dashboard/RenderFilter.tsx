@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import type {
   GroupedDetailedFilter,
   SimpleFilter,
-} from "../../../commonTypes/filterUtils";
+} from "../../../common/filterUtils";
 import Btn from "../components/Btn";
 import PopupMenu from "../components/PopupMenu";
 import type {

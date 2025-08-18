@@ -3,7 +3,7 @@ import { tryCatch } from "prostgles-types";
 import type { TopKeyword } from "./KEYWORDS";
 import { TOP_KEYWORDS, asSQL } from "./KEYWORDS";
 import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
-import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../commonTypes/utils";
+import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../common/utils";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
 
 export type PGDatabase = {

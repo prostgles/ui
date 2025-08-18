@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import type { TestSelectors } from "../../Testing";
 import { classOverride, type DivProps } from "../Flex";
 import { useResizeObserver } from "./useResizeObserver";
-import { fixIndent, getEntries } from "../../../../commonTypes/utils";
+import { fixIndent, getEntries } from "../../../../common/utils";
 import { isDefined } from "../../utils";
 import { isEqual } from "prostgles-types";
 

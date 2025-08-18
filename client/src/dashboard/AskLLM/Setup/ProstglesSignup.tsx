@@ -5,7 +5,7 @@ import ErrorComponent from "../../../components/ErrorComponent";
 import { FlexCol } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import type { SetupLLMCredentialsProps } from "./SetupLLMCredentials";
-import { isObject } from "../../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../../common/publishUtils";
 import { ERR_CODE_MESSAGES } from "../../../pages/Login/useLoginState";
 
 export const ProstglesSignup = ({

@@ -2,7 +2,7 @@ import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
 import { JSONBSchema } from "../../../../components/JSONBSchema/JSONBSchema";
 import type { ColumnConfigWInfo } from "../../W_Table";
-import type { DeepWriteable } from "../../../../../../commonTypes/utils";
+import type { DeepWriteable } from "../../../../../../common/utils";
 import type { ColumnFormat } from "./columnFormatUtils";
 import { ColumnFormatSchema, getFormatOptions } from "./columnFormatUtils";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";

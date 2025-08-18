@@ -8,7 +8,7 @@ import { Footer } from "../../../components/Popup/Popup";
 import { type SmartFormProps } from "../SmartForm";
 import type { SmartFormState } from "../useSmartForm";
 import { type SmartFormActionsState } from "./useSmartFormActions";
-import { getEntries } from "../../../../../commonTypes/utils";
+import { getEntries } from "../../../../../common/utils";
 
 type P = SmartFormState &
   SmartFormActionsState &

@@ -8,7 +8,7 @@ import {
   type AnyObject,
   getKeys,
 } from "prostgles-types";
-import { sliceText } from "../../../../../commonTypes/utils";
+import { sliceText } from "../../../../../common/utils";
 import Popup from "../../../components/Popup/Popup";
 import { FlexRow } from "../../../components/Flex";
 import { SvgIcon } from "../../../components/SvgIcon";

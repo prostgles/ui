@@ -1,8 +1,8 @@
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../common/prostglesMcp";
 import { randomUUID } from "crypto";
 import { pickKeys } from "prostgles-types";
 import { type DBS } from "..";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../common/publishUtils";
 import { createContainer } from "./createContainer";
 import {
   createContainerJSONSchema,

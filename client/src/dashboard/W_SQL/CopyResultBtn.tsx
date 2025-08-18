@@ -14,10 +14,10 @@ import { Label } from "../../components/Label";
 import { PopupMenuList } from "../../components/PopupMenuList";
 import { download } from "./W_SQL";
 import type { Unpromise } from "./W_SQLMenu";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { getPapa } from "../FileImporter/FileImporter";
-import { sliceText } from "../../../../commonTypes/utils";
+import { sliceText } from "../../../../common/utils";
 import { isDefined } from "../../utils";
 
 const getValidPGColumnNames = async (

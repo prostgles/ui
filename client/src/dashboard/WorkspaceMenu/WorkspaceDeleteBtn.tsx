@@ -6,7 +6,7 @@ import ErrorComponent from "../../components/ErrorComponent";
 import { pageReload } from "../../components/Loading";
 import PopupMenu from "../../components/PopupMenu";
 import type { Workspace } from "../Dashboard/dashboardUtils";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 
 type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> &
   Pick<BtnProps, "disabledInfo"> & {
