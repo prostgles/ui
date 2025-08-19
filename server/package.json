@@ -30,7 +30,7 @@
     "helmet": "^7.1.0",
     "otplib": "^12.0.1",
     "pidusage": "^4.0.1",
-    "prostgles-server": "^4.2.327",
+    "prostgles-server": "^4.2.329",
     "prostgles-types": "^4.0.89",
     "qrcode": "^1.5.1",
     "simple-git": "^3.27.0",

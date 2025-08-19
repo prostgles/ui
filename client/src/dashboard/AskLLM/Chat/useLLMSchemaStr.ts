@@ -68,7 +68,12 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
           .sort((a, b) => a.ordinal_position - b.ordinal_position)
           .map((c) => {
             return [
-              `  ${JSON.stringify(c.name)} ${c.udt_name}`,
+              `  ${JSON.stringify(c.name)} ${c.udt_name}${
+                c.character_maximum_length ? `(${c.character_maximum_length})`
+                : c.numeric_precision ?
+                  `(${c.numeric_precision}${c.numeric_scale ? `, ${c.numeric_scale}` : ""})`
+                : ""
+              }`,
               !c.is_pkey && !c.is_nullable ? "NOT NULL" : "",
               !c.is_pkey && c.has_default ? `DEFAULT ${c.column_default}` : "",
             ]
