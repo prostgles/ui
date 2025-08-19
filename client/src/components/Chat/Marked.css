@@ -16,7 +16,7 @@
 .Marked {
   white-space: normal;
   /* Allows long words to break and wrap onto the next line */
-  word-break: break-all;
+  word-break: break-word;
 }
 
 /* .Marked ul,

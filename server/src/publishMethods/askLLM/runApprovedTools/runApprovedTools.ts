@@ -90,11 +90,6 @@ export const runApprovedTools = async (
     return;
   }
 
-  /** User denied all tool use requests */
-  if (toolUseRequests.some((tr) => tr.state === "denied")) {
-    return;
-  }
-
   const toolResults: ToolResultMessage[] = await Promise.all(
     toolUseRequests.map(async (toolUseRequest) => {
       const toolUseInfo = {
@@ -230,10 +225,11 @@ export const runApprovedTools = async (
     }),
   );
 
+  const denied = toolUseRequests.some((tr) => tr.state === "denied");
   if (toolResults.length) {
     await askLLM({
       ...args,
-      type: "tool-use-result",
+      type: denied ? "tool-use-result-with-denied" : "tool-use-result",
       userMessage: toolResults,
     });
   }

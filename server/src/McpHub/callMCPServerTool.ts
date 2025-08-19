@@ -84,7 +84,7 @@ export const callMCPServerTool = async (
   });
 
   await dbs.mcp_server_tool_calls.insert({
-    duration: { milliseconds: result.duration },
+    duration: `${result.duration}ms` as {},
     called: start,
     mcp_server_name: serverName,
     mcp_tool_name: toolName,

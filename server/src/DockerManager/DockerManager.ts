@@ -95,7 +95,10 @@ export const getDockerMCP = async (
 ) => {
   const { tools, dockerManager } = await getDockerMCPTools(dbs);
   const dbTools = getProstglesDBTools(chat);
-  const apiUrl = `${dockerManager.address.address}:${dockerManager.address.port}/${dockerManager.route}`;
+  const isDocker = !!process.env.IS_DOCKER;
+  const externalHost =
+    isDocker ? "prostgles-ui-docker-mcp" : dockerManager.address.address;
+  const apiUrl = `${externalHost}:${dockerManager.address.port}/${dockerManager.route}`;
   const databaseQueryDescription =
     !dbTools.length ?
       "Access to the database is not allowed. If user wants to run queries, they need to set the Mode to Custom or SQL."
@@ -111,6 +114,9 @@ export const getDockerMCP = async (
           );
           return `/${t.tool_name} - ${t.description}. JSON body input schema: ${argTSSchema}`;
         }),
+        isDocker ?
+          "DO NOT USE WORKHOST to connect to prostgles-ui-docker-mcp. Just specify network mode 'bridge' and it will work."
+        : "",
       ].join("\n");
   const { description } = createContainerJSONSchema;
   if (!description)

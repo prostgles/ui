@@ -5,7 +5,10 @@ import { dashboardTypes } from "../../../../../common/DashboardTypes";
 import type { DBSSchema } from "../../../../../common/publishUtils";
 import Btn from "../../../components/Btn";
 import { FlexCol } from "../../../components/Flex";
-import { MonacoEditor } from "../../../components/MonacoEditor/MonacoEditor";
+import {
+  MONACO_READONLY_DEFAULT_OPTIONS,
+  MonacoEditor,
+} from "../../../components/MonacoEditor/MonacoEditor";
 import PopupMenu from "../../../components/PopupMenu";
 import Tabs from "../../../components/Tabs";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
@@ -142,6 +145,7 @@ export const AskLLMChatActionBarPromptSelector = (
                 <MonacoEditor
                   value={promptContent}
                   language="text"
+                  options={MONACO_READONLY_DEFAULT_OPTIONS}
                   loadedSuggestions={undefined}
                 />
               ),

@@ -5,10 +5,11 @@ import { getSerialisableError, isObject } from "prostgles-types";
 import type { DBSSchema } from "../../../common/publishUtils";
 import { isPortFree } from "./isPortFree";
 import { runProstglesDBTool } from "../publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
+import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
 
 const route = "/db/:command";
 const PREFERRED_PORT = 3009;
-const HOST = "172.17.0.1";
+const HOST = process.env.DOCKER_HOST ? "0.0.0.0" : "172.17.0.1";
 
 export type ChatPermissions = Pick<
   DBSSchema["llm_chats"],
@@ -22,6 +23,9 @@ type AuhtContext = {
 
 export type GetAuthContext = (ip: string) => AuhtContext | undefined;
 
+/**
+ * A separate server is used because we need to bind it to 0.0.0.0 to ensure docker containers can access it.
+ */
 export const dockerMCPDatabaseRequestRouter = async (
   getChat: GetAuthContext,
 ) => {
@@ -53,6 +57,21 @@ export const dockerMCPDatabaseRequestRouter = async (
       },
     );
   });
+  // const { app, http } = connMgr;
+
+  // app.post(route, (req, res) => requestHandler(req, res, getChat));
+  // await tout(100);
+  // const address = http.address();
+  // if (!isObject(address)) {
+  //   throw new Error("Server address is not an object");
+  // }
+  // return {
+  //   app,
+  //   route,
+
+  //   // server: http.serce;
+  //   address,
+  // };
 };
 
 const requestHandler = (
@@ -63,17 +82,14 @@ const requestHandler = (
   const { command } = req.params;
   try {
     const ip = req.ip || req.socket.remoteAddress || "";
-    const [p1, p2, p3] = ip.split(".");
-    if (p1 !== "172" || p2 !== "17" || p3 !== "0") {
-      return res
-        .status(400)
-        .send("Invalid IP address. Only local requests are allowed.");
-    }
+
     const authContext = getChat(ip);
     if (!authContext) {
       return res
-        .status(404)
-        .send("Container and/or Chat not found for the given IP address.");
+        .status(HTTP_FAIL_CODES.UNAUTHORIZED)
+        .send(
+          "Container and/or Chat not found for the given IP address: " + ip,
+        );
     }
     const { chat, sid_token } = authContext;
     req.cookies ??= {};

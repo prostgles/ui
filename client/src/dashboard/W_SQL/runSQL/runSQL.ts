@@ -4,15 +4,19 @@ import type {
   SQLResultInfo,
   SocketSQLStreamHandlers,
 } from "prostgles-types";
-import type { WindowData } from "../Dashboard/dashboardUtils";
-import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
-import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
-import type { W_SQL_ActiveQuery, W_SQLState } from "./W_SQL";
-import type { W_SQL } from "./W_SQL";
-import { SQL_NOT_ALLOWED } from "./W_SQL";
-import { parseSQLError } from "./parseSQLError";
-import { getFieldsWithActions, parseSqlResultCols } from "./parseSqlResultCols";
-import { parseExplainResult } from "./parseExplainResult";
+import type { WindowData } from "../../Dashboard/dashboardUtils";
+import { STARTING_KEYWORDS } from "../../SQLEditor/SQLCompletion/CommonMatchImports";
+import type { ColumnSortSQL } from "../../W_Table/ColumnMenu/ColumnMenu";
+import type { W_SQL_ActiveQuery, W_SQLState } from "../W_SQL";
+import type { W_SQL } from "../W_SQL";
+import { SQL_NOT_ALLOWED } from "../W_SQL";
+import { parseSQLError } from "../parseSQLError";
+import {
+  getFieldsWithActions,
+  parseSqlResultCols,
+} from "../parseSqlResultCols";
+import { parseExplainResult } from "../parseExplainResult";
+import { getQueryTotalRowCount } from "./getQueryTotalRowCount";
 
 export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
   const { activeQuery } = this.state;
@@ -334,12 +338,28 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
               cols,
               activeQuery,
             });
-            activeQuery.totalRowCount = await getTotalRowCount(
-              db.sql!,
-              activeQuery,
-              limit,
-              isSelect,
-            );
+
+            if (limit && rowCount && limit > rowCount) {
+              activeQuery.totalRowCount = rowCount;
+            } else {
+              getQueryTotalRowCount(db.sql!, activeQuery, limit, isSelect).then(
+                (fetchedTotalRowCount) => {
+                  if (
+                    isFinite(fetchedTotalRowCount) &&
+                    activeQuery.hashedSQL ===
+                      this.state.activeQuery?.hashedSQL &&
+                    this.state.activeQuery.state === "ended"
+                  ) {
+                    this.setState({
+                      activeQuery: {
+                        ...this.state.activeQuery,
+                        totalRowCount: fetchedTotalRowCount,
+                      },
+                    });
+                  }
+                },
+              );
+            }
 
             this.setState({
               queryEnded: Date.now(),
@@ -382,42 +402,6 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
   }
 }
 
-const getTotalRowCount = async (
-  sql: SQLHandler,
-  query: Extract<W_SQL_ActiveQuery, { state: "ended" }>,
-  limit: number | string | null,
-  isSelect: boolean,
-) => {
-  if (
-    (query.info?.command !== "SELECT" && !isSelect) ||
-    !limit ||
-    query.rowCount < Number(limit)
-  ) {
-    return undefined;
-  }
-  const { rows } = await sql(
-    ` 
-      SET LOCAL statement_timeout TO 2000;
-      SELECT count(*) as count 
-      FROM (
-        ${query.trimmedSql}
-      ) t; 
-    `,
-    {},
-    { returnType: "default-with-rollback" },
-  ).catch((e) => {
-    console.error("Failed to get total count", e);
-    return { rows: [] };
-  });
-
-  const count = rows[0]?.count;
-  const countNum = Number(count);
-  if (Number.isFinite(countNum)) {
-    return countNum;
-  }
-  return undefined;
-};
-
 export const parseError = (err: any) => {
   if (typeof err === "string") {
     return { message: err };
@@ -443,3 +427,5 @@ function hashFnv32a(str, asString, seed?) {
   }
   return hval >>> 0;
 }
+
+const isFinite = (v: any): v is number => Number.isFinite(v);

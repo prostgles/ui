@@ -43,7 +43,7 @@ import { Icon } from "../../components/Icon/Icon";
 import type { CommonWindowProps, DashboardState } from "../Dashboard/Dashboard";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import Window from "../Window";
-import { runSQL } from "./runSQL";
+import { runSQL } from "./runSQL/runSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
 import { W_SQLBottomBar } from "./W_SQLBottomBar/W_SQLBottomBar";
 import { ProstglesSQLMenu } from "./W_SQLMenu";

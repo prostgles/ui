@@ -1,4 +1,9 @@
-import { type AnyObject, isDefined, omitKeys } from "prostgles-types";
+import {
+  type AnyObject,
+  getSerialisableError,
+  isDefined,
+  omitKeys,
+} from "prostgles-types";
 import type { LLMMessageWithRole } from "./fetchLLMResponse";
 import type {
   AnthropicChatCompletionResponse,
@@ -106,7 +111,8 @@ export const parseLLMResponseObject: LLMResponseParser = ({
                 } satisfies LLMMessageWithRole["content"][number];
               } catch (_e) {
                 const error = new Error(
-                  `Could not parse tool arguments as JSON: ${toolCall.function.arguments}`,
+                  `Could not parse tool arguments as JSON: ${toolCall.function.arguments}. ` +
+                    JSON.stringify(getSerialisableError(_e)),
                 );
                 error.name = "ToolArgumentsParsingError";
                 throw error;

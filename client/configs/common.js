@@ -55,13 +55,18 @@ const getLoader = () => {
 
 */
 
+let compiled = false;
 let timeout;
 const debouncedProgressHandler = (percentage, message, ...args) => {
+  if (compiled) {
+    return;
+  }
   clearTimeout(timeout);
 
   timeout = setTimeout(() => {
     console.log(percentage.toFixed(1), message, ...args);
   }, 200);
+  compiled = compiled || percentage === 1;
 };
 
 module.exports = {

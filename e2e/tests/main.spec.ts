@@ -654,6 +654,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLM").click();
     await sendAskLLMMessage(page, "mcp");
+    await page.waitForTimeout(1e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);

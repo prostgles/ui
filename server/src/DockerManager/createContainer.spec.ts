@@ -3,10 +3,6 @@ import { test } from "node:test";
 import { createContainer } from "./createContainer.js";
 import type { CreateContainerParams } from "./createContainer.schema.js";
 
-const context = {
-  userId: "test-user",
-  chatId: 12345,
-};
 const testContainerName = `test-container-${Date.now()}`;
 void test("createContainer build error", async () => {
   const config = {

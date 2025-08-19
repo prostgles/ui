@@ -1,11 +1,11 @@
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
+import type { JSONB } from "prostgles-types";
 import type { CreateContainerParams } from "./createContainer.schema";
 import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
-import type { JSONB } from "prostgles-types";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 
 type CreateContainerResult = {
   state: "finished" | "error" | "build-error" | "timed-out";
@@ -20,7 +20,7 @@ export const createContainer = async (
 ): Promise<CreateContainerResult> => {
   let localDir = "";
   try {
-    const { files } = params;
+    const { files, networkMode } = params;
     localDir = join(tmpdir(), name);
 
     mkdirSync(localDir, { recursive: true });

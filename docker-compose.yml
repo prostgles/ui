@@ -48,9 +48,9 @@ services:
       timeout: 3s
       retries: 5
 
-  # Default UI service (base profile)
+  # Default UI service (default profile)
   ui:
-    # profiles: ["base"]
+    profiles: ["default"]
     <<: *ui-base
     container_name: prostgles-ui
     ports:
@@ -76,9 +76,15 @@ services:
       DOCKER_HOST: unix:///var/run/docker.sock
     ports:
       - "${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT:-3004}:3004"
+      - "${PRGL_DOCKER_IP:-127.0.0.1}:3009:3009"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker:ro
 
 volumes:
   db:
+# Used for docker mcp
+networks:
+  default:
+    name: prostgles-bridge-net
+    driver: bridge

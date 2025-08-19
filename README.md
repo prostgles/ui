@@ -86,7 +86,7 @@ Your server will be running on [localhost:3004](http://localhost:3004).
 #### 1. Install dependencies:
 
 - [NodeJS](https://nodejs.org/en/download)
-- [Postgres](https://www.postgresql.org/download/): For full features **postgresql-15-postgis-3** is recommended
+- [Postgres](https://www.postgresql.org/download/): For full features **postgresql-17-postgis-3.4** is recommended
 
 #### 2. Create a database and user update `.env`. All prostgles state and metadata will be stored in this database
 

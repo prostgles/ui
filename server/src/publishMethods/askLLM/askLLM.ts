@@ -48,7 +48,11 @@ export type AskLLMArgs = {
   allowedLLMCreds: DBSSchema["access_control_allowed_llm"][] | undefined;
   accessRules: DBSSchema["access_control"][] | undefined;
   clientReq: AuthClientRequest;
-  type: "new-message" | "approve-tool-use" | "tool-use-result";
+  type:
+    | "new-message"
+    | "approve-tool-use"
+    | "tool-use-result"
+    | "tool-use-result-with-denied";
 };
 
 export const askLLM = async (args: AskLLMArgs) => {
@@ -110,12 +114,53 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
   }
 
+  /** If user stopped chat must add tool use responses to prevent errors */
+  const toolUseRequestMessages = filterArr(lastMessage?.message ?? [], {
+    type: "tool_use",
+  } as const);
+  if (
+    chat.status?.state === "stopped" &&
+    toolUseRequestMessages.length &&
+    args.type === "new-message"
+  ) {
+    await dbs.llm_messages.insert({
+      user_id: user.id,
+      chat_id: chatId,
+      message: toolUseRequestMessages.map((m) => ({
+        type: "tool_result" as const,
+        tool_name: m.name,
+        tool_use_id: m.id,
+        content: "Tool use requests were stopped by the user",
+        is_error: true,
+      })),
+      llm_model_id: chat.model,
+    });
+  }
+
+  if (args.type === "tool-use-result") {
+    if (
+      !toolUseRequestMessages.some((toolUse) =>
+        userMessage.some(
+          (toolResult) =>
+            toolResult.type === "tool_result" &&
+            toolResult.tool_use_id === toolUse.id,
+        ),
+      )
+    ) {
+      // Chat might have since been stopped and other user messages were added
+      return;
+    }
+  }
+
   await dbs.llm_messages.insert({
     user_id: user.id,
     chat_id: chatId,
     message: userMessage,
     llm_model_id: chat.model,
   });
+  if (type === "tool-use-result-with-denied") {
+    return;
+  }
 
   /** Update chat name based on first user message */
   const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);

@@ -1,5 +1,7 @@
+import { execSync } from "child_process";
 import type { CreateContainerParams } from "./createContainer.schema";
 
+const CUSTOM_BRIDGE_NETWORK_NAME = "prostgles-bridge-net";
 const LABEL = "prostgles-docker-sandbox";
 
 type LocalDockerParams = {
@@ -13,6 +15,8 @@ type LocalDockerParams = {
   localDir: string;
   name: string;
 };
+
+const isDocker = !!process.env.IS_DOCKER;
 
 export const getDockerRunArgs = ({
   cpus = "1",
@@ -37,7 +41,11 @@ export const getDockerRunArgs = ({
   }
 
   // Network settings
-  runArgs.push("--network", networkMode);
+  if (networkMode === "bridge" && isDocker) {
+    runArgs.push("--network", CUSTOM_BRIDGE_NETWORK_NAME);
+  } else {
+    runArgs.push("--network", networkMode);
+  }
 
   // User
   if (user) {

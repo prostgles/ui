@@ -376,12 +376,21 @@ export class _Dashboard extends RTComp<
       workspaceId,
       prgl: { dbs },
     } = this.props;
-    if (workspaceId) {
+    if (
+      workspaceId &&
+      !this.d.windows.some(
+        (w) => w.workspace_id === workspaceId && !w.closed,
+      ) &&
+      !this.checkedIfNoOpenWindows
+    ) {
       this.checkedIfNoOpenWindows = true;
-      const hasOpenWindows = await dbs.windows.findOne({
-        workspace_id: workspaceId,
-        closed: false,
-      });
+      const hasOpenWindows = await dbs.windows.findOne(
+        {
+          workspace_id: workspaceId,
+          closed: false,
+        },
+        { select: "" },
+      );
       if (!hasOpenWindows) {
         const menuBtn = document.querySelector<HTMLButtonElement>(
           `[data-command="menu"]`,

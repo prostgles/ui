@@ -1,6 +1,6 @@
 import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import type { W_SQL } from "./W_SQL";
-import { parseError } from "./runSQL";
+import { parseError } from "./runSQL/runSQL";
 import { runSQLErrorHints } from "./runSQLErrorHints";
 
 export const parseSQLError = async function (
