@@ -16,8 +16,7 @@ type LocalDockerParams = {
   name: string;
 };
 
-const { IS_DOCKER, CI } = process.env;
-const isDocker = Boolean(IS_DOCKER || CI);
+const isDocker = Boolean(process.env.IS_DOCKER);
 
 export const getDockerRunArgs = ({
   cpus = "1",

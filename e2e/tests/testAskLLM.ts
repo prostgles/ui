@@ -77,8 +77,7 @@ const playwrightMCPToolUse = [
     },
   },
 ];
-const { IS_DOCKER, CI } = process.env;
-const isDocker = Boolean(IS_DOCKER || CI);
+const isDocker = Boolean(process.env.IS_DOCKER);
 const mcpSandboxToolUse = [
   {
     function: {
