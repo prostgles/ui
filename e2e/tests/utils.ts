@@ -820,7 +820,12 @@ export const getAskLLMLastMessage = async (page: PageWIds) => {
   const toolCallBtns = await lastIncomingMessage
     .getByTestId("ToolUseMessage.toggle")
     .all();
-  await Promise.all(toolCallBtns.map((btn) => btn.click({ trial: true })));
+
+  await Promise.all(
+    toolCallBtns.map((btn) =>
+      btn.locator(".Loading").waitFor({ state: "detached" }),
+    ),
+  );
 
   const response = await lastIncomingMessage.textContent();
   return response;
