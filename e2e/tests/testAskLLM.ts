@@ -77,7 +77,7 @@ const playwrightMCPToolUse = [
     },
   },
 ];
-
+const isDocker = Boolean(process.env.DOCKER_HOST || process.env.CI);
 const mcpSandboxToolUse = [
   {
     function: {
@@ -97,7 +97,7 @@ const mcpSandboxToolUse = [
           }),
           "index.js": `
           fetch(
-            "http://172.17.0.1:3009/db/execute_sql_with_rollback", 
+            "http://${isDocker ? "prostgles-ui-docker-mcp" : "172.17.0.1"}:3009/db/execute_sql_with_rollback", 
             { headers: { "Content-Type": "application/json" }, 
             method: "POST", 
             body: JSON.stringify({ sql: "SELECT * FROM users" }) 

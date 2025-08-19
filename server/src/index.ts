@@ -31,6 +31,7 @@ import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 const { app, http, io } = initExpressAndIOServers();
 
 export const connMgr = new ConnectionManager(http, app);
+export const isDocker = Boolean(process.env.DOCKER_HOST || process.env.CI);
 
 const isTestingElectron = require.main?.filename.endsWith("testElectron.js");
 const electronConfig = getElectronConfig();

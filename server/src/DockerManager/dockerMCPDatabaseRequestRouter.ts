@@ -6,10 +6,11 @@ import type { DBSSchema } from "../../../common/publishUtils";
 import { isPortFree } from "./isPortFree";
 import { runProstglesDBTool } from "../publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
 import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
+import { isDocker } from "src";
 
 const route = "/db/:command";
 const PREFERRED_PORT = 3009;
-const HOST = process.env.DOCKER_HOST ? "0.0.0.0" : "172.17.0.1";
+const HOST = isDocker ? "0.0.0.0" : "172.17.0.1";
 
 export type ChatPermissions = Pick<
   DBSSchema["llm_chats"],
