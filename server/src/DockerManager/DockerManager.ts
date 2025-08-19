@@ -95,7 +95,8 @@ export const getDockerMCP = async (
 ) => {
   const { tools, dockerManager } = await getDockerMCPTools(dbs);
   const dbTools = getProstglesDBTools(chat);
-  const isDocker = !!process.env.IS_DOCKER;
+  const { IS_DOCKER, CI } = process.env;
+  const isDocker = Boolean(IS_DOCKER || CI);
   const externalHost =
     isDocker ? "prostgles-ui-docker-mcp" : dockerManager.address.address;
   const apiUrl = `${externalHost}:${dockerManager.address.port}/${dockerManager.route}`;
