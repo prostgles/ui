@@ -63,9 +63,20 @@ export const fetchLLMResponse = async (
     throw new Error("No response data from LLM");
   }
 
-  return parseLLMResponseObject({
-    provider,
-    responseData,
-    model: llm_model,
-  });
+  try {
+    return parseLLMResponseObject({
+      provider,
+      responseData,
+      model: llm_model,
+    });
+  } catch (e) {
+    console.error(
+      `Error parsing LLM response from ${provider} for model ${model}`,
+      getSerialisableError(e),
+      responseData,
+    );
+    throw new Error(
+      `Error parsing LLM response from ${provider} for model ${model}: ${JSON.stringify(getSerialisableError(e))}`,
+    );
+  }
 };

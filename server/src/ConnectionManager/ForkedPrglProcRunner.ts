@@ -1,13 +1,12 @@
 import type { ChildProcess, ForkOptions } from "child_process";
 import { fork } from "child_process";
 import * as path from "path";
+import pidusage from "pidusage";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import { type AnyObject, isObject } from "prostgles-types";
 import type { DBS } from "..";
 import { FORKED_PROC_ENV_NAME, type ProcStats } from "../../../common/utils";
 import { getError } from "./forkedProcess";
-import { getInitiatedPostgresqlPIDs } from "./getInitiatedPostgresqlPIDs";
-import pidusage from "pidusage";
 
 type ForkedProcMessageCommon = {
   id: string;
@@ -146,7 +145,9 @@ export class ForkedPrglProcRunner {
   }, 400);
 
   private initProc = () => {
-    const updateLogs = (dataOrError: Buffer | Error) => {
+    const updateLogs = (
+      dataOrError: Buffer | Error | string | any[] | AnyObject,
+    ) => {
       const stringMessage =
         Buffer.isBuffer(dataOrError) ? dataOrError.toString()
         : isObject(dataOrError) ? JSON.stringify(dataOrError, null, 2) + "\n"

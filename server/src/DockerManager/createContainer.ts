@@ -20,7 +20,7 @@ export const createContainer = async (
 ): Promise<CreateContainerResult> => {
   let localDir = "";
   try {
-    const { files, networkMode } = params;
+    const { files } = params;
     localDir = join(tmpdir(), name);
 
     mkdirSync(localDir, { recursive: true });

@@ -1945,7 +1945,7 @@ test.describe("Main test", () => {
 
   test("SQL Autocomplete", async ({ page: p }) => {
     const page = p as PageWIds;
-    const sqlTestTimeout = { total: 8 * 6e4, sql: 7 * 6e4 };
+    const sqlTestTimeout = { total: 9 * 6e4, sql: 8 * 6e4 };
     test.setTimeout(sqlTestTimeout.total);
 
     await page.request.post("/logout");

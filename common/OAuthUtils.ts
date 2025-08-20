@@ -280,3 +280,5 @@ try {
   // console.trace(e);
   throw e;
 }
+
+export const ELECTRON_USER_AGENT = "electron";

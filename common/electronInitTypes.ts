@@ -45,7 +45,7 @@ export const programList = [
 export type InstalledPrograms = {
   os: OS;
   filePath: string;
-} & Record<(typeof programList)[number], string>;
+} & Record<(typeof programList)[number], string | undefined>;
 
 export const DEFAULT_ELECTRON_CONNECTION = {
   type: "Standard",

@@ -1,15 +1,15 @@
 import prostgles from "prostgles-server";
 import type { OnReadyParamsBasic } from "prostgles-server/dist/initProstgles";
+import { getSerialisableError } from "prostgles-types";
+import { FORKED_PROC_ENV_NAME } from "../../../common/utils";
 import type {
   ForkedProcMessage,
   ForkedProcMessageError,
   ForkedProcMessageResult,
 } from "./ForkedPrglProcRunner";
-import { FORKED_PROC_ENV_NAME, type ProcStats } from "../../../common/utils";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 export const getError = (rawError: any) => {
-  return rawError instanceof Error ? getErrorAsObject(rawError) : rawError;
+  return getSerialisableError(rawError) || "Unknown error";
 };
 const initForkedProc = () => {
   let _prglParams: OnReadyParamsBasic | undefined;
@@ -18,7 +18,7 @@ const initForkedProc = () => {
   const lastToolCallId = 0;
   const toolCalls: Record<number, { cb: (err: any, res: any) => void }> = {};
   const setProxy = (params: OnReadyParamsBasic) => {
-    _prglParams = params as any;
+    _prglParams = params;
     prglParams ??= new Proxy(params, {
       get(target, prop: keyof OnReadyParamsBasic, receiver) {
         return _prglParams![prop];
@@ -31,7 +31,7 @@ const initForkedProc = () => {
     process.send?.({
       lastMsgId,
       type: "error",
-      error: getErrorAsObject(error),
+      error: getSerialisableError(error),
     } satisfies ForkedProcMessageError);
   };
   process.on("unhandledRejection", (reason: any, p) => {
@@ -120,7 +120,7 @@ const initForkedProc = () => {
             cb(undefined, methodResult);
           }
         } catch (rawError: any) {
-          const error = getErrorAsObject(rawError);
+          const error = getSerialisableError(rawError);
           console.error("forkedProcess error", error);
           cb(error);
         }

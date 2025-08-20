@@ -6,6 +6,7 @@ import {
   getPasswordlessAdmin,
 } from "../SecurityManager/initUsers";
 import { tableConfig } from "../tableConfig/tableConfig";
+import { ELECTRON_USER_AGENT } from "../../../common/OAuthUtils";
 
 export type AuthSetupData = {
   globalSettings: DBSSchema["global_settings"] | undefined;
@@ -74,19 +75,27 @@ export const subscribeToAuthSetupChanges = async (
       });
     },
   );
-
+  /** This is used to avoid docker-mcp session that changes frequently and causes page restart when running a docker mcp */
+  const userAgentFilter = {
+    user_agent: ELECTRON_USER_AGENT,
+  };
   const passwordlessAdminSub = await dbs.users.subscribeOne(
     activePasswordlessAdminFilter,
     {
       select: {
         "*": 1,
-        sessions: "*",
+        sessions: {
+          $leftJoin: "sessions",
+          select: "*",
+          filter: userAgentFilter,
+        },
         activeSessions: {
           $leftJoin: "sessions",
           select: "*",
           filter: {
             "expires.>": Date.now(),
             active: true,
+            ...userAgentFilter,
           },
         },
       },

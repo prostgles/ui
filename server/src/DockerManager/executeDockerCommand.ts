@@ -29,7 +29,8 @@ export const executeDockerCommand = async (
   return new Promise((resolve) => {
     const child = spawn("docker", args, {
       stdio: ["pipe", "pipe", "pipe"],
-      env: { ...process.env, ...options.environment },
+      // env: { ...process.env, ...options.environment },
+      env: { ...options.environment },
     });
     const command = `docker ${args.join(" ")}`;
     let timedOut = false;
@@ -60,6 +61,10 @@ export const executeDockerCommand = async (
         executionTime,
         log,
       });
+
+      if (!child.killed) {
+        child.kill();
+      }
     };
 
     const timeoutId = setTimeout(() => {

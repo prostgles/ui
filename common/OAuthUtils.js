@@ -224,3 +224,4 @@ catch (e) {
     // console.trace(e);
     throw e;
 }
+export const ELECTRON_USER_AGENT = "electron";

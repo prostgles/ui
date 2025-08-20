@@ -29,7 +29,7 @@ export declare const programList: readonly ["psql", "pg_dump", "pg_restore", "do
 export type InstalledPrograms = {
     os: OS;
     filePath: string;
-} & Record<(typeof programList)[number], string>;
+} & Record<(typeof programList)[number], string | undefined>;
 export declare const DEFAULT_ELECTRON_CONNECTION: {
     readonly type: "Standard";
     readonly db_host: "localhost";

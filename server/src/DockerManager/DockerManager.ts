@@ -49,7 +49,7 @@ let mcpRequestRouter:
 
 export const getDockerManager = async (dbs: DBS) => {
   mcpRequestRouter ??= dockerMCPDatabaseRequestRouter(getContainerFromIP);
-  const { address, route } = await mcpRequestRouter;
+  const { address, api_url } = await mcpRequestRouter;
 
   const createContainerInChat = async (
     args: CreateContainerParams,
@@ -85,7 +85,7 @@ export const getDockerManager = async (dbs: DBS) => {
   return {
     createContainerInChat,
     address,
-    route,
+    api_url,
   };
 };
 
@@ -96,15 +96,13 @@ export const getDockerMCP = async (
   const { tools, dockerManager } = await getDockerMCPTools(dbs);
   const dbTools = getProstglesDBTools(chat);
   const isDocker = Boolean(process.env.IS_DOCKER);
-  const externalHost =
-    isDocker ? "prostgles-ui-docker-mcp" : dockerManager.address.address;
-  const apiUrl = `${externalHost}:${dockerManager.address.port}/${dockerManager.route}`;
+
   const databaseQueryDescription =
     !dbTools.length ?
       "Access to the database is not allowed. If user wants to run queries, they need to set the Mode to Custom or SQL."
     : [
-        `To run queries against the database you need to POST JSON body parameters to ${apiUrl}/:endpoint`,
-        `The following endpoints are available:`,
+        `To run queries against the database you need to POST JSON body parameters to ${dockerManager.api_url}`,
+        `The following endpoints are available:\n\n`,
         ...dbTools.map((t) => {
           const argTSSchema = JSON.stringify(
             omitKeys(getJSONBSchemaAsJSONSchema("", "", t.schema), [

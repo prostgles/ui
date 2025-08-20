@@ -81,4 +81,5 @@ export declare const getVerificationEmailFromTemplate: ({ url, code, template, }
     subject: string;
     body: string;
 };
+export declare const ELECTRON_USER_AGENT = "electron";
 export {};

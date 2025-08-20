@@ -5,14 +5,14 @@ import {
   type JSONB,
   type TableHandler,
 } from "prostgles-types";
-import { connMgr } from "../../../index";
 import type { ChatPermissions } from "../../../DockerManager/dockerMCPDatabaseRequestRouter";
-import { getProstglesDBTools, type DBTool } from "./getProstglesDBTools";
+import { connMgr } from "../../../index";
+import { getProstglesDBTools } from "./getProstglesDBTools";
 export const runProstglesDBTool = async (
   chat: ChatPermissions,
   clientReq: AuthClientRequest,
   args: unknown,
-  name: DBTool["tool_name"],
+  name: string,
 ) => {
   const tools = getProstglesDBTools(chat);
   const tool = tools.find((t) => t.tool_name === name);

@@ -1,18 +1,17 @@
 import express, { json, Request, Response, urlencoded } from "express";
 import _http from "http";
 import type { AddressInfo } from "net";
-import { getSerialisableError, isObject } from "prostgles-types";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { isPortFree } from "./isPortFree";
-import { runProstglesDBTool } from "../publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
 import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
+import { getSerialisableError, isObject } from "prostgles-types";
 import { isDocker } from "..";
+import type { DBSSchema } from "../../../common/publishUtils";
 import { getProstglesState } from "../init/tryStartProstgles";
+import { runProstglesDBTool } from "../publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
+import { getDockerGatewayIP } from "./getDockerGatewayIP";
+import { isPortFree } from "./isPortFree";
 
-const route = "/db/:command";
 const PREFERRED_PORT = 3009;
-const HOST =
-  isDocker || getProstglesState().isElectron ? "0.0.0.0" : "172.17.0.1";
+const ROUTE = "/db/:endpoint";
 
 export type ChatPermissions = Pick<
   DBSSchema["llm_chats"],
@@ -27,7 +26,7 @@ type AuhtContext = {
 export type GetAuthContext = (ip: string) => AuhtContext | undefined;
 
 /**
- * A separate server is used because we need to bind it to 0.0.0.0 to ensure docker containers can access it.
+ * A separate server is used to improve security because we need to bind it to 0.0.0.0 to ensure docker containers can access it.
  */
 export const dockerMCPDatabaseRequestRouter = async (
   getChat: GetAuthContext,
@@ -36,26 +35,35 @@ export const dockerMCPDatabaseRequestRouter = async (
 
   app.use(json({ limit: "1000mb" }));
   app.use(urlencoded({ extended: true, limit: "1000mb" }));
-  app.post(route, (req, res) => requestHandler(req, res, getChat));
+  app.post(ROUTE, (req, res) => requestHandler(req, res, getChat));
   const http = _http.createServer(app);
   const usePreferredPort = await isPortFree(PREFERRED_PORT);
+
+  const dockerGatewayIP = getDockerGatewayIP();
+  const host =
+    isDocker || getProstglesState().isElectron ? "0.0.0.0" : dockerGatewayIP;
 
   return new Promise<{
     app: express.Express;
     server: _http.Server;
     address: AddressInfo;
-    route: string;
+    api_url: string;
   }>((resolve, reject) => {
     const server = http.listen(
       usePreferredPort ? PREFERRED_PORT : undefined,
-      HOST,
+      host,
       () => {
         const address = server.address();
         console.log("Docker MCP Router listening on", address);
         if (!isObject(address)) {
           reject(new Error("Server address is not an object"));
         } else {
-          resolve({ app, server, address, route });
+          const actualPort = address.port;
+          const api_url =
+            isDocker ?
+              `http://prostgles-ui-docker-mcp:${actualPort}${ROUTE}`
+            : `http://${dockerGatewayIP}:${actualPort}${ROUTE}`;
+          resolve({ app, server, address, api_url });
         }
       },
     );
@@ -82,7 +90,7 @@ const requestHandler = (
   res: Response,
   getChat: GetAuthContext,
 ) => {
-  const { command } = req.params;
+  const { endpoint = "" } = req.params;
   try {
     const ip = req.ip || req.socket.remoteAddress || "";
 
@@ -97,13 +105,7 @@ const requestHandler = (
     const { chat, sid_token } = authContext;
     req.cookies ??= {};
     req.cookies.sid_token = sid_token;
-    runProstglesDBTool(
-      chat,
-      { httpReq: req, res },
-      req.body,
-      //@ts-ignore
-      command,
-    )
+    runProstglesDBTool(chat, { httpReq: req, res }, req.body, endpoint)
       .then((result) => {
         res.json(result);
       })

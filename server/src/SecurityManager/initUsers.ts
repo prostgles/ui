@@ -1,7 +1,10 @@
 import type { DB } from "prostgles-server/dist/initProstgles";
 import { PRGL_PASSWORD, PRGL_USERNAME } from "../envVars";
 import type { DBS, Users } from "..";
-import { PASSWORDLESS_ADMIN_USERNAME } from "../../../common/OAuthUtils";
+import {
+  ELECTRON_USER_AGENT,
+  PASSWORDLESS_ADMIN_USERNAME,
+} from "../../../common/OAuthUtils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getElectronConfig } from "../electronConfig";
 import { makeSession } from "../authConfig/sessionUtils";
@@ -96,7 +99,7 @@ export const initUsers = async (db: DBS, _db: DB) => {
       user,
       {
         ip_address: "::1",
-        user_agent: "electron",
+        user_agent: ELECTRON_USER_AGENT,
         type: "web",
         sid: electron.sidConfig.electronSid,
       },
