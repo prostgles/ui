@@ -50,9 +50,9 @@ services:
 
   # Default UI service (default profile)
   ui:
-    profiles: ["default"]
+    profiles: ["default", ""]
     <<: *ui-base
-    container_name: prostgles-ui
+    container_name: prostgles-ui-default
     ports:
       - "${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT:-3004}:3004"
 

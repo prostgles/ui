@@ -17,7 +17,7 @@ export const UIInstallation = {
     Start the application:
 
     \`\`\`docker-compose.sh
-    docker compose up -d
+    docker compose up -d --build
     \`\`\` 
     
     Once running, the app will be accessible at [localhost:3004](http://localhost:3004)

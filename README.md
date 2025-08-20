@@ -42,13 +42,19 @@ cd ui
 Docker setup. By default the app will be accessible at [localhost:3004](http://localhost:3004)
 
 ```docker-compose.sh
-docker compose --profile=default up -d
+docker compose up -d --build
 ```
 
 To use a custom port (3099 for example) and/or a custom binding address (0.0.0.0 for example):
 
 ```bash
-PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose --profile=default up
+PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up --build
+```
+
+To use with docker mcp experimental feature:
+
+```bash
+docker compose --profile=docker-mcp up --build
 ```
 
 ### Installation - use existing PostgreSQL instance

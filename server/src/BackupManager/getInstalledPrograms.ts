@@ -79,16 +79,11 @@ const tryExecSync = (command: string): string | undefined => {
   try {
     return execSync(command).toString();
   } catch (e: any) {
-    if (e.toString) {
-      console.warn(e.toString());
+    if (command.startsWith("which ")) {
+      console.warn(e.message);
+    } else {
+      console.warn("Error executing command:", command, e);
     }
-    if (e.stdout) {
-      console.warn(e.stdout.toString());
-    }
-    if (e.stderr) {
-      console.warn(e.stderr.toString());
-    }
-    console.warn(e);
   }
 };
 export const getInstalledPsqlVersions = async (
