@@ -114,7 +114,7 @@ test.describe("Create docs and screenshots", () => {
         if (existingFile !== preparedFileContent) {
           console.error(existingFile, preparedFileContent);
           throw new Error(
-            `File ${file.fileName} has changed. Please update the docs.`,
+            `File ${file.fileName} has changed. Please update the docs. Existing ${existingFile} Expected ${preparedFileContent}`,
           );
         }
       } else {
