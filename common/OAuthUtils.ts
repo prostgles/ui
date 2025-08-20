@@ -282,3 +282,4 @@ try {
 }
 
 export const ELECTRON_USER_AGENT = "electron";
+export const DOCKER_USER_AGENT = "docker-mcp";

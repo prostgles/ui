@@ -20,6 +20,7 @@ import {
 } from "./dockerMCPDatabaseRequestRouter";
 import { getContainerIPs } from "./getContainerIPs";
 import { getDockerMCPTools } from "./getDockerMCPTools";
+import { DOCKER_USER_AGENT } from "../../../common/OAuthUtils";
 
 export type CreateContainerContext = {
   userId: string;
@@ -68,7 +69,7 @@ export const getDockerManager = async (dbs: DBS) => {
       db: dbs,
       ip: "127.0.0.1",
       user,
-      user_agent: "docker-mcp",
+      user_agent: DOCKER_USER_AGENT,
     });
     const sid_token = tokenForMCP.sid;
     if (!sid_token) {
