@@ -25,7 +25,7 @@ export declare const getAgeFromDiff: (millisecondDiff: number) => {
     seconds: number;
     milliseconds: number;
 };
-export declare const getAge: <ReturnALL extends boolean = false>(date1: number, date2: number, returnAll?: ReturnALL | undefined) => ReturnALL extends true ? Required<AGE> : AGE;
+export declare const getAge: <ReturnALL extends boolean = false>(date1: number, date2: number, returnAll?: ReturnALL) => ReturnALL extends true ? Required<AGE> : AGE;
 export declare const DESTINATIONS: readonly [{
     readonly key: "Local";
     readonly subLabel: "Saved locally (server in address bar)";
@@ -210,7 +210,7 @@ export declare const ROUTES: {
 export declare const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 export declare const FORKED_PROC_ENV_NAME: "IS_FORKED_PROC";
 type ValueOf<T> = T[keyof T];
-export declare const getProperty: <O extends AnyObject, K extends string | (keyof O & string)>(o: O, k: K) => ValueOf<O> | undefined;
+export declare const getProperty: <O extends AnyObject, K extends (keyof O & string) | string>(o: O, k: K) => ValueOf<O> | undefined;
 export declare function debouncePromise<Args extends any[], T>(promiseFuncDef: (...pArgs: Args) => Promise<T>): (...args: Args) => Promise<T>;
 export declare const getCaller: () => string[];
 export {};

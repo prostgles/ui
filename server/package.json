@@ -8,8 +8,8 @@
     "test": "npm run build && node --test dist/server/src/**/*.spec.js",
     "rollup": "rollup -c",
     "lint": "eslint . --ext .ts --quiet --fix",
-    "dev": "cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' && npm i && concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --trace-warnings --inspect dist/server/src/index.js\"",
-    "dev:electron": "cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' && npm i && concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --trace-warnings --inspect dist/server/src/testElectron.js\""
+    "dev": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' && concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --trace-warnings --inspect dist/server/src/index.js\"",
+    "dev:electron": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' && concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --trace-warnings --inspect dist/server/src/testElectron.js\""
   },
   "author": "",
   "license": "",

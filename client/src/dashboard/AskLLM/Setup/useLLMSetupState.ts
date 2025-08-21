@@ -23,6 +23,7 @@ export const useLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
         iconMap.set(s.name, s.icon_path);
       }
     });
+    iconMap.set("prostgles-db", "Database");
     return iconMap;
   }, [mcpServers]);
 

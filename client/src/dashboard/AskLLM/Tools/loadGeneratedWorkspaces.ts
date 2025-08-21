@@ -40,7 +40,7 @@ export const loadGeneratedWorkspaces = async (
               conditions: c.styling.conditions.map((cond) => {
                 // "textColor": "#ffffff",
                 // "textColorDarkMode": "#2386d5",
-                // "chipColor": "#673AB7"\
+                // "chipColor": "#673AB7"
                 const style =
                   Object.entries(CHIP_COLOR_NAMES).find(
                     ([k]) => k === cond.chipColor,

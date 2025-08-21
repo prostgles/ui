@@ -11,13 +11,13 @@ import React, { useState } from "react";
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../../../../../common/prostglesMcp";
-import { sliceText } from "../../../../../../../../common/utils";
-import { useAlert } from "../../../../../../components/AlertProvider";
-import Btn from "../../../../../../components/Btn";
-import { Marked } from "../../../../../../components/Chat/Marked";
-import Chip from "../../../../../../components/Chip";
-import { FlexCol, FlexRowWrap } from "../../../../../../components/Flex";
+} from "@common/prostglesMcp";
+import { sliceText } from "@common/utils";
+import { useAlert } from "@components/AlertProvider";
+import Btn from "@components/Btn";
+import { Marked } from "@components/Chat/Marked";
+import Chip from "@components/Chip";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { usePrgl } from "../../../../../../pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../../../../utils";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
