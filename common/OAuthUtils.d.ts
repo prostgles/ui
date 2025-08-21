@@ -82,4 +82,5 @@ export declare const getVerificationEmailFromTemplate: ({ url, code, template, }
     body: string;
 };
 export declare const ELECTRON_USER_AGENT = "electron";
+export declare const DOCKER_USER_AGENT = "docker-mcp";
 export {};

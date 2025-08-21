@@ -31,7 +31,6 @@ cp ./server/tslint.json ./ui/server/
 cp ./server/licenses.json ./ui/server/
 cp ./server/package.json ./ui/server/
 cp ./server/package-lock.json ./ui/server/
-cp ./server/build.sh ./ui/server/
 
 cd ./ui/server/
 npm run build

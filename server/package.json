@@ -3,14 +3,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build-start": "npm i && tsc && npm prune --omit=dev",
-    "build": "bash ./build.sh",
+    "build": "npm i && cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias && npm prune --omit=dev",
     "start": "npm run build && node dist/server/src/index.js",
     "test": "npm run build && node --test dist/server/src/**/*.spec.js",
     "rollup": "rollup -c",
     "lint": "eslint . --ext .ts --quiet --fix",
-    "dev": "export NODE_ENV='development' && NODE_OPTIONS='--max-old-space-size=4048' && npm i && tsc-watch --onSuccess \"node --trace-warnings --inspect dist/server/src/index.js\" --onFailure \"echo 'exiting'\"",
-    "dev:electron": "export NODE_ENV='development' && NODE_OPTIONS='--max-old-space-size=4048' && npm i && tsc-watch --onSuccess \"node --trace-warnings --inspect dist/server/src/testElectron.js\" --onFailure \"echo 'exiting'\""
+    "dev": "cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' && npm i && concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --trace-warnings --inspect dist/server/src/index.js\"",
+    "dev:electron": "cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' && npm i && concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --trace-warnings --inspect dist/server/src/testElectron.js\""
   },
   "author": "",
   "license": "",
@@ -45,10 +44,13 @@
     "@types/node": "^22.15.2",
     "@types/smtp-server": "^3.5.10",
     "@types/ws": "^8.5.3",
+    "concurrently": "^9.2.0",
+    "cross-env": "^10.0.0",
     "dts-bundle-generator": "^9.0.0",
     "eslint": "^9.31.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-security": "^3.0.1",
+    "tsc-alias": "^1.8.16",
     "tsc-watch": "^6.2.1",
     "typescript-eslint": "^8.31.0"
   }
