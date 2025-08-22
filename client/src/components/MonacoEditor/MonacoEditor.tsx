@@ -134,6 +134,8 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       container.current._getValue = () => {
         return editor.getValue();
       };
+      //@ts-ignore
+      container.current.editorRef = editor;
     }
     /** This check necessary to ensure getTokens returns correct data */
     if (loadedLanguage) {

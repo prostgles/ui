@@ -161,7 +161,7 @@
     "More options": "Más opciones",
     "Must connect to see schemas": "Debes conectarte para ver los esquemas",
     "You are about to create a new database": "Estás a punto de crear una nueva base de datos",
-    "You are about to clone the current database": "Estás a punto de clonar la base de datos actual",
+    "You are about to clone the current database": "Está a punto de clonar la base de datos actual {{currDb}} en {{newDb}}. ¡Esto cerrará todas las conexiones existentes a la base de datos actual!",
     "Create database": "Crear base de datos",
     "Connection type": "Tipo de conexión",
     "Connection name": "Nombre de la conexión",

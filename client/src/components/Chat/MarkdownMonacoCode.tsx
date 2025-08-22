@@ -16,7 +16,7 @@ import { SuccessMessage } from "../Animations";
 import Btn from "../Btn";
 import { CopyToClipboardBtn } from "../CopyToClipboardBtn";
 import ErrorComponent from "../ErrorComponent";
-import { FlexCol, FlexRow } from "../Flex";
+import { classOverride, FlexCol, FlexRow } from "../Flex";
 import {
   MONACO_READONLY_DEFAULT_OPTIONS,
   MonacoEditor,
@@ -38,6 +38,7 @@ type SQLResult =
 
 export type MarkdownMonacoCodeProps = {
   title?: string;
+  className?: string;
   language: string;
   codeString: string;
   codeHeader:
@@ -54,6 +55,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
     title,
     sqlHandler,
     loadedSuggestions,
+    className,
   } = props;
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -117,11 +119,11 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
   const titleOrLanguage = title ?? language;
   return (
     <FlexCol
-      className="MarkdownMonacoCode min-w-600 relative o-dvisible b b-color rounded gap-0 f-0 o-hidden"
+      className={classOverride(
+        "MarkdownMonacoCode min-w-600 relative o-dvisible b b-color rounded gap-0 f-0 o-hidden ",
+        className,
+      )}
       data-command="MarkdownMonacoCode"
-      // style={{
-      //   maxWidth: `${CHAT_WIDTH}px`,
-      // }}
     >
       <FlexRow className="bg-color-2 p-p25">
         <div className="text-sm text-color-4 f-1 px-1 ta-start">
@@ -229,7 +231,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
           />
         : <MonacoEditor
             key={codeString}
-            className={fullscreen ? "f-1" : ""}
+            className={fullscreen ? "f-1" : "f-1"}
             loadedSuggestions={loadedSuggestions}
             value={codeString}
             language={LANGUAGE_FALLBACK[language] ?? language}

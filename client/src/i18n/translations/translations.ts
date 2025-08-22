@@ -1,4 +1,3 @@
-import { fixIndent } from "../../demo/sqlVideoDemo";
 import type { TranslationGroup } from "../i18nUtils";
 
 export const LANGUAGES = [

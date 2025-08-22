@@ -258,3 +258,4 @@ export declare const getMCPToolNameParts: (fullName: string) => {
     toolName: string;
 } | undefined;
 export {};
+//# sourceMappingURL=prostglesMcp.d.ts.map

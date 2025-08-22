@@ -316,7 +316,7 @@ export type DBGeneratedSchema = {
        | null
        |  {  type: "None"; }
        |  {  type: "Full"; }
-       |  {  type: "Custom";  tables: string; }
+       |  {  type: "Custom";  tables: string[]; }
       disabled_message?: null | string;
       disabled_until?: null | string;
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   stream?: boolean;  };

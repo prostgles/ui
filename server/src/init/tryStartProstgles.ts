@@ -14,6 +14,7 @@ import {
   type InitExtra,
   type ProstglesInitStateWithDBS,
 } from "./startProstgles";
+import { testDashboardTypesContent } from "./testDashboardTypesContent";
 
 type StartArguments = {
   app: Express;
@@ -175,3 +176,7 @@ export const getProstglesState = (): ProstglesState<InitExtra> => {
     electronCredsProvided: Boolean(eConfig?.hasCredentials()),
   };
 };
+
+if (process.env.NODE_ENV !== "production") {
+  testDashboardTypesContent();
+}

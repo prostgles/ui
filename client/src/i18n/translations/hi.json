@@ -163,7 +163,7 @@
     "More options": "अधिक विकल्प",
     "Must connect to see schemas": "स्कीमा देखने के लिए कनेक्ट होना चाहिए",
     "You are about to create a new database": "आप एक नया डेटाबेस बनाने जा रहे हैं",
-    "You are about to clone the current database": "आप वर्तमान डेटाबेस को क्लोन करने जा रहे हैं",
+    "You are about to clone the current database": "आप वर्तमान डेटाबेस {{currDb}} को {{newDb}} में क्लोन करने वाले हैं। इससे वर्तमान डेटाबेस के सभी मौजूदा कनेक्शन बंद हो जाएंगे!",
     "Create database": "डेटाबेस बनाएं",
     "Connection type": "कनेक्शन प्रकार",
     "Connection name": "कनेक्शन का नाम",

@@ -20,7 +20,10 @@
 		"paths": {
 			"@common/*": [
 				"../common/*"
-			], 
+			],
+			"@src/*": [
+				"src/*"
+			],
 		},
 	},
 	"exclude": [

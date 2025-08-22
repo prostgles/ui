@@ -435,10 +435,7 @@
     "More options": "Weitere Optionen",
     "Must connect to see schemas": "Muss verbunden sein, um Schemas zu sehen",
     "You are about to create a new database": "Sie sind dabei, eine neue Datenbank zu erstellen",
-    "You are about to clone the current database": {
-      "text": "Sie sind dabei, die aktuelle Datenbank {{currDb}} in {{newDb}} zu klonen. Dies wird alle bestehenden Verbindungen zur aktuellen Datenbank schließen!",
-      "argNames": ["currDb", "newDb"]
-    },
+    "You are about to clone the current database": "Sie sind dabei, die aktuelle Datenbank {{currDb}} in {{newDb}} zu klonen. Dies wird alle bestehenden Verbindungen zur aktuellen Datenbank schließen!",
     "Create database": "Datenbank erstellen",
     "Connection type": "Verbindungstyp",
     "Connection name": "Verbindungsname",

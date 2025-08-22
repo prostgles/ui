@@ -163,7 +163,7 @@
     "More options": "Дополнительные параметры",
     "Must connect to see schemas": "Необходимо подключиться, чтобы увидеть схемы",
     "You are about to create a new database": "Вы собираетесь создать новую базу данных",
-    "You are about to clone the current database": "Вы собираетесь клонировать текущую базу данных",
+    "You are about to clone the current database": "Вы собираетесь клонировать текущую базу данных {{currDb}} в {{newDb}}. Это закроет все существующие подключения к текущей базе данных!",
     "Create database": "Создать базу данных",
     "Connection type": "Тип подключения",
     "Connection name": "Имя подключения",

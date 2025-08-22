@@ -79,13 +79,22 @@ export const JSONBSchemaLookup = ({
         [rawValue.table, rawValue.column].join(delimiter)
       : rawValue;
 
+    // TODO: this must be fixed through LookupTable, LookupTable[], LookupTableColumn etc
+    if (schema.type === "Lookup[]" && !lookup.isArray) {
+      return (
+        <ErrorComponent
+          error={"Schema type is Lookup[] but lookup.isArray is not true"}
+        />
+      );
+    }
+    const multiSelect = lookup.isArray;
     const selector = (
       <Select
         label={oProps.noLabels ? undefined : schema.title}
         value={selectedValue}
         optional={schema.optional}
         fullOptions={fullOptions}
-        multiSelect={lookup.isArray}
+        multiSelect={multiSelect}
         onChange={(opts) => {
           if (needsCol) {
             const [table, column] =

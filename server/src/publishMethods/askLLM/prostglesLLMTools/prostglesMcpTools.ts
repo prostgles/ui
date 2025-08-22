@@ -1,10 +1,10 @@
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import { dashboardTypes } from "../../../../../common/DashboardTypes";
+import { dashboardTypesContent } from "@common/dashboardTypesContent";
 import {
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../../common/prostglesMcp";
-import { fixIndent } from "../../../../../common/utils";
+} from "@common/prostglesMcp";
+import { fixIndent } from "@common/utils";
 
 export const executeSQLToolWithRollback = {
   name: getProstglesMCPFullToolName(
@@ -21,6 +21,7 @@ export const executeSQLToolWithRollback = {
       .schema,
   ),
 };
+
 export const executeSQLToolWithCommit = {
   name: getProstglesMCPFullToolName("prostgles-db", "execute_sql_with_commit"),
   description:
@@ -71,10 +72,11 @@ export const suggestDashboardsTool = {
 
     "",
     "Using dashboard structure below create workspaces with useful views my current schema.",
-    "Return a json of this format: { prostglesWorkspaces: WorkspaceInsertModel[] }",
-    "Return valid json, markdown compatible and in a clearly delimited section with a json code block.",
+    "Return a json of this format: `{ prostglesWorkspaces: WorkspaceInsertModel[] }`",
     "",
-    dashboardTypes,
+    "```typescript",
+    dashboardTypesContent,
+    "```",
   ].join("\n"),
   input_schema: getJSONBSchemaAsJSONSchema(
     "",

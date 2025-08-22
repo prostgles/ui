@@ -324,10 +324,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                   "Specific tables and their columns and constraints",
               },
               tables: {
+                title: "Tables",
                 type: "Lookup[]",
                 lookup: {
                   type: "schema",
                   object: "table",
+                  isArray: true,
                 },
               },
             },

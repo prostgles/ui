@@ -2,16 +2,17 @@ import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import { getSerialisableError, isObject, omitKeys } from "prostgles-types";
 import { type DBS } from "../..";
-import { dashboardTypes } from "../../../../common/DashboardTypes";
+import { dashboardTypesContent } from "@common/dashboardTypesContent";
 import {
   filterArr,
+  filterArrInverse,
   getLLMMessageText,
   isAssistantMessageRequestingToolUse,
   LLM_PROMPT_VARIABLES,
   reachedMaximumNumberOfConsecutiveToolRequests,
-} from "../../../../common/llmUtils";
-import type { DBSSchema } from "../../../../common/publishUtils";
-import { sliceText } from "../../../../common/utils";
+} from "@common/llmUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import { sliceText } from "@common/utils";
 import { getElectronConfig } from "../../electronConfig";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
@@ -21,7 +22,7 @@ import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../common/prostglesMcp";
+} from "@common/prostglesMcp";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
 export const getBestLLMChatModel = async (
@@ -264,7 +265,7 @@ export const askLLM = async (args: AskLLMArgs) => {
         schema ||
           "Schema is empty: there are no tables or views in the database",
       )
-      .replace(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypes);
+      .replace(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypesContent);
 
     const modelData = (await dbs.llm_models.findOne(
       { id: chat.model },
@@ -289,7 +290,7 @@ export const askLLM = async (args: AskLLMArgs) => {
 
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const {
-      content: aiResponseMessage,
+      content: aiResponseMessageRaw,
       meta,
       cost,
     } = await fetchLLMResponse({
@@ -323,6 +324,25 @@ export const askLLM = async (args: AskLLMArgs) => {
         } satisfies LLMMessageWithRole,
       ],
     });
+
+    /** Move prostgles-ui tool_use messages to the end for better UX (because no tool result is expected) */
+    const prostglesUIToolUse = filterArr(aiResponseMessageRaw, {
+      type: "tool_use",
+    } as const).filter(
+      (m) =>
+        getMCPToolNameParts(m.name)?.serverName ===
+        ("prostgles-ui" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS),
+    );
+    const aiResponseMessage =
+      !prostglesUIToolUse.length ? aiResponseMessageRaw : (
+        [
+          ...filterArrInverse(aiResponseMessageRaw, {
+            type: "tool_use",
+          } as const),
+          ...prostglesUIToolUse,
+        ]
+      );
+
     await dbs.llm_messages.update(
       { id: aiResponseMessagePlaceholder.id },
       {

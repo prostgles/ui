@@ -12,6 +12,10 @@ MCP Servers can be used to extend the AI capabilities with custom tools and inte
 <source srcset="/screenshots/dark/ai_assistant_02.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/ai_assistant_02.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
+<picture>
+<source srcset="/screenshots/dark/ai_assistant_03.svg" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/ai_assistant_03.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
+</picture>
 
 Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
 

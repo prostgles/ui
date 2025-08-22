@@ -42,6 +42,7 @@ export const ToolUseChatMessageResult = ({
           codeString={
             tryCatchV2(() => JSON.stringify(m.input, null, 2)).data ?? ""
           }
+          className="f-1"
           language="json"
           codeHeader={undefined}
           sqlHandler={undefined}
@@ -100,6 +101,7 @@ const ContentRender = ({
                   "Error:"
                 : "Output:"
               }
+              className="f-1"
               codeString={value}
               language={language}
               codeHeader={undefined}

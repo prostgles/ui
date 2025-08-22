@@ -52,12 +52,20 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
   }, [db, connection.db_schema_filter]);
 
   const dbSchemaForPrompt = useMemo(() => {
-    if (!tableConstraints || !cachedSchemaPermissions) return "";
+    if (
+      !tableConstraints ||
+      !cachedSchemaPermissions ||
+      cachedSchemaPermissions.type === "None"
+    )
+      return "";
     const allowedTables =
-      cachedSchemaPermissions.type === "Full" ? tables : tables;
-    // .filter((t) => {
-    //     return cachedSchemaPermissions.tables?.some((l) => l.hehe === t.name);
-    //   });
+      cachedSchemaPermissions.type === "Full" ?
+        tables
+      : tables.filter((t) => {
+          return cachedSchemaPermissions.tables.some(
+            (allowedTableName) => allowedTableName === t.name,
+          );
+        });
     const res = allowedTables
       .map((t) => {
         const constraints = tableConstraints.filter(

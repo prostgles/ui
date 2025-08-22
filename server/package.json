@@ -8,8 +8,8 @@
     "test": "npm run build && node --test dist/server/src/**/*.spec.js",
     "rollup": "rollup -c",
     "lint": "eslint . --ext .ts --quiet --fix",
-    "dev": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' && concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --trace-warnings --inspect dist/server/src/index.js\"",
-    "dev:electron": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' && concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --trace-warnings --inspect dist/server/src/testElectron.js\""
+    "dev": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"nodemon --trace-warnings --inspect dist/server/src/index.js\"",
+    "dev:electron": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' && concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"nodemon --trace-warnings --inspect dist/server/src/testElectron.js\""
   },
   "author": "",
   "license": "",
@@ -24,7 +24,6 @@
     "connection-string": "^4.4.0",
     "cookie-parser": "^1.4.5",
     "dotenv": "^10.0.0",
-    "engine.io": "^6.5.5",
     "express": "^4.21.2",
     "helmet": "^7.1.0",
     "otplib": "^12.0.1",
@@ -46,12 +45,11 @@
     "@types/ws": "^8.5.3",
     "concurrently": "^9.2.0",
     "cross-env": "^10.0.0",
-    "dts-bundle-generator": "^9.0.0",
     "eslint": "^9.31.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-security": "^3.0.1",
+    "nodemon": "^3.1.10",
     "tsc-alias": "^1.8.16",
-    "tsc-watch": "^6.2.1",
     "typescript-eslint": "^8.31.0"
   }
 }

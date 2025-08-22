@@ -1,21 +1,21 @@
 import { mdiCheck, mdiCircleOutline, mdiViewCarousel } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
-import { dashboardTypes } from "../../../../../common/DashboardTypes";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
+import { dashboardTypesContent } from "@common/dashboardTypesContent";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
 import {
   MONACO_READONLY_DEFAULT_OPTIONS,
   MonacoEditor,
-} from "../../../components/MonacoEditor/MonacoEditor";
-import PopupMenu from "../../../components/PopupMenu";
-import Tabs from "../../../components/Tabs";
+} from "@components/MonacoEditor/MonacoEditor";
+import PopupMenu from "@components/PopupMenu";
+import Tabs from "@components/Tabs";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { btnStyleProps } from "./AskLLMChatActionBar";
-import { LLM_PROMPT_VARIABLES } from "../../../../../common/llmUtils";
+import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
 
 export const AskLLMChatActionBarPromptSelector = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -35,7 +35,7 @@ export const AskLLMChatActionBarPromptSelector = (
     if (!prompt) return "";
     return prompt.prompt
       .replaceAll(LLM_PROMPT_VARIABLES.SCHEMA, dbSchemaForPrompt)
-      .replaceAll(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypes);
+      .replaceAll(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypesContent);
   }, [dbSchemaForPrompt, prompt]);
   return (
     <PopupMenu
@@ -45,7 +45,8 @@ export const AskLLMChatActionBarPromptSelector = (
       showFullscreenToggle={{}}
       clickCatchStyle={{ opacity: 1 }}
       onClickClose={false}
-      contentClassName="p-2 flex-col gap-1"
+      contentClassName="p-2 flex-col gap-1 f-1"
+      rootChildClassname="f-1"
       button={
         <Btn
           title="Prompt"
@@ -117,7 +118,7 @@ export const AskLLMChatActionBarPromptSelector = (
       {prompt && (
         <Tabs
           defaultActiveKey="editable"
-          contentClass="py-1"
+          contentClass="py-1 f-1"
           items={{
             editable: {
               label: "Edit prompt",
@@ -145,6 +146,7 @@ export const AskLLMChatActionBarPromptSelector = (
                 <MonacoEditor
                   value={promptContent}
                   language="text"
+                  className="h-full"
                   options={MONACO_READONLY_DEFAULT_OPTIONS}
                   loadedSuggestions={undefined}
                 />

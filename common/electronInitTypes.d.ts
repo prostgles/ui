@@ -38,3 +38,4 @@ export declare const DEFAULT_ELECTRON_CONNECTION: {
     readonly db_name: "prostgles_desktop_db";
 };
 export {};
+//# sourceMappingURL=electronInitTypes.d.ts.map

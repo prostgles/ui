@@ -28,3 +28,4 @@ export type McpToolCallResponse = {
     }>;
     isError?: boolean;
 };
+//# sourceMappingURL=mcp.d.ts.map

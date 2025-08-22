@@ -49,3 +49,4 @@ export declare const LLM_PROMPT_VARIABLES: {
 export declare const reachedMaximumNumberOfConsecutiveToolRequests: (messages: Pick<DBSSchema["llm_messages"], "message">[], limit: number, onlyFailed?: boolean) => boolean;
 export declare const isAssistantMessageRequestingToolUse: (message: Pick<DBSSchema["llm_messages"], "message"> | undefined) => message is DBSSchema["llm_messages"];
 export {};
+//# sourceMappingURL=llmUtils.d.ts.map

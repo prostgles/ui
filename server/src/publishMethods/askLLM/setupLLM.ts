@@ -41,10 +41,11 @@ export const setupLLM = async (dbs: DBS) => {
           LLM_PROMPT_VARIABLES.SCHEMA,
           "",
           "Using dashboard structure below create workspaces with useful views my current schema.",
-          "Return a json of this format: { prostglesWorkspaces: WorkspaceInsertModel[] }",
-          "Return valid json, markdown compatible and in a clearly delimited section with a json code block.",
+          "Return a json of this format: `{ prostglesWorkspaces: WorkspaceInsertModel[] }`",
           "",
+          "```typescript",
           LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,
+          "```",
         ].join("\n"),
       },
       {

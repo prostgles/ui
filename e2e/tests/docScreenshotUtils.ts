@@ -29,6 +29,11 @@ const SVG_SCREENSHOT_DETAILS = {
       await page.getByTestId("Chat.send").click();
       await page.waitForTimeout(2500);
     },
+    "03": async (page) => {
+      await page.getByTestId("Chat.textarea").fill("mcp");
+      await page.getByTestId("Chat.send").click();
+      await page.waitForTimeout(2500);
+    },
   },
   sql_editor: async (
     page,

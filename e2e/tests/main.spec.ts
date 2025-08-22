@@ -514,10 +514,10 @@ test.describe("Main test", () => {
     await expect(funcCode).toEqual(initialCode);
 
     /** Add llm server side func */
-    await monacoType(page, ".MethodDefinition", testAskLLMCode, {
-      deleteAll: false,
-      pressBeforeTyping: ["Control+ArrowLeft", "Control+ArrowLeft"],
-      keyPressDelay: 15,
+    const fullCode = initialCode.replace("dbo.tx", testAskLLMCode + "dbo.tx");
+    await monacoType(page, ".MethodDefinition", fullCode, {
+      deleteAll: true,
+      keyPressDelay: 0,
     });
     const funcCode2 = await getMonacoValue(page, ".MethodDefinition");
     const allWhiteSpaceAsSingleSpace = (v: string) => {
@@ -525,9 +525,7 @@ test.describe("Main test", () => {
       return res;
     };
     await expect(allWhiteSpaceAsSingleSpace(funcCode2)).toEqual(
-      allWhiteSpaceAsSingleSpace(
-        initialCode.replace("dbo.tx", testAskLLMCode + "dbo.tx"),
-      ),
+      allWhiteSpaceAsSingleSpace(fullCode),
     );
 
     /** Add askLLM func args */
@@ -622,7 +620,7 @@ test.describe("Main test", () => {
     await setModelByText(page, "son");
 
     await setPromptByText(page, "Create task");
-    await sendAskLLMMessage(page, "tasks");
+    await sendAskLLMMessage(page, " tasks ");
 
     await page.getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt").click();
     await page.getByText("OK", { exact: true }).click();
@@ -639,21 +637,24 @@ test.describe("Main test", () => {
 
     await setPromptByText(page, "dashboard");
 
-    await sendAskLLMMessage(page, "dashboards");
+    await sendAskLLMMessage(
+      page,
+      "I need some useful dashboards to track performance",
+    );
     await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
 
     const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
-    await expect(workspaceBtn).toContainText("generated workspace");
+    await expect(workspaceBtn).toContainText("Customer Insights");
 
     await page.waitForTimeout(1e3);
     await page.getByTestId("AskLLM").click();
 
     await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
-    await expect(workspaceBtn).not.toContainText("generated workspace");
+    await expect(workspaceBtn).not.toContainText("Customer Insights");
 
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLM").click();
-    await sendAskLLMMessage(page, "mcp");
+    await sendAskLLMMessage(page, " mcp ");
     await page.waitForTimeout(1e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(1e3);
@@ -661,7 +662,7 @@ test.describe("Main test", () => {
     await expect(mcpToolUse).toContain("tool result received");
 
     await page.waitForTimeout(1e3);
-    await sendAskLLMMessage(page, "mcpplaywright");
+    await sendAskLLMMessage(page, " mcpplaywright ");
     await page.waitForTimeout(2e3);
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is invalid. Try enabling and reloading the tools`,
@@ -688,7 +689,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
 
     await page.waitForTimeout(2e3);
-    await sendAskLLMMessage(page, "mcpplaywright");
+    await sendAskLLMMessage(page, " mcpplaywright ");
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is not allowed`,
     );
@@ -709,7 +710,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1000);
     await page.getByTestId("Popup.close").last().click();
     await page.waitForTimeout(500);
-    await sendAskLLMMessage(page, "mcpplaywright");
+    await sendAskLLMMessage(page, " mcpplaywright ");
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(200);
@@ -731,7 +732,7 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(2e3);
     /** Test max consecutive tool call fails */
-    await sendAskLLMMessage(page, "mcpfail");
+    await sendAskLLMMessage(page, " mcpfail ");
     await page.waitForTimeout(2e3);
     await expect(
       page
@@ -751,7 +752,7 @@ test.describe("Main test", () => {
     });
     await page.getByTestId("Popup.close").last().click();
     for (let step = 1; step <= Math.ceil(maxCost / costPerMsg); step++) {
-      await sendAskLLMMessage(page, "cost");
+      await sendAskLLMMessage(page, " cost ");
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Maximum number (5) of failed consecutive tool requests reached`,
@@ -786,7 +787,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
 
     const dockerRunAndExpect = async (result: string) => {
-      await sendAskLLMMessage(page, "mcpsandbox");
+      await sendAskLLMMessage(page, " mcpsandbox ");
       await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "free ai assistant tool result received",

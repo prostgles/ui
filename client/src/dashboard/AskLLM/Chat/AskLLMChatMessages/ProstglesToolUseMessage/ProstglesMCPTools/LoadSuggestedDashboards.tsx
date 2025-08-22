@@ -6,7 +6,7 @@ import { isObject } from "../../../../../../../../common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
-import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { pageReload } from "@components/Loading";
 import { usePrgl } from "../../../../../../pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../../../../utils";
@@ -16,6 +16,8 @@ import {
 } from "../../../../../WorkspaceMenu/WorkspaceMenu";
 import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
+import type { WorkspaceInsertModel } from "@common/DashboardTypes";
+import { SvgIcon } from "@components/SvgIcon";
 
 export const LoadSuggestedDashboards = ({
   workspaceId,
@@ -50,17 +52,22 @@ export const LoadSuggestedDashboards = ({
       </FlexCol>
     );
   }
+  const prostglesWorkspaces =
+    json.prostglesWorkspaces as WorkspaceInsertModel[];
   return (
     <FlexCol>
       <FlexRowWrap>
-        {json.prostglesWorkspaces.map((w, i) => (
+        {prostglesWorkspaces.map((w, i) => (
           <Chip
             key={i}
             color="blue"
-            leftIcon={{ path: mdiViewCarousel }}
+            leftIcon={w.icon ? undefined : { path: mdiViewCarousel }}
             style={{ borderRadius: "8px" }}
           >
-            {w.name}
+            <FlexRow className="gap-p5">
+              {w.icon && <SvgIcon icon={w.icon} />}
+              {w.name}
+            </FlexRow>
           </Chip>
         ))}
       </FlexRowWrap>
@@ -76,7 +83,7 @@ export const LoadSuggestedDashboards = ({
             : undefined
           }
           onClick={() => {
-            loadGeneratedWorkspaces(json.prostglesWorkspaces, message.id, {
+            loadGeneratedWorkspaces(prostglesWorkspaces, message.id, {
               dbs,
               connectionId,
             })
@@ -89,7 +96,7 @@ export const LoadSuggestedDashboards = ({
               .catch((error) => {
                 if (isObject(error) && error.code === "23505") {
                   addAlert(
-                    `Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${json.prostglesWorkspaces.map((w) => w.name).join(", ")}`,
+                    `Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${prostglesWorkspaces.map((w) => w.name).join(", ")}`,
                   );
                 } else {
                   addAlert(

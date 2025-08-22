@@ -126,7 +126,15 @@ export const monacoType = async (
     await page.keyboard.press(key);
     await page.waitForTimeout(50);
   }
-  if (deleteAllAndFill) {
+  if (!keyPressDelay) {
+    await monacoEditor.evaluate((node, text) => {
+      //@ts-ignore
+      console.log(node.parentElement!.editorRef);
+      //@ts-ignore
+      node.parentElement.editorRef.setValue(text);
+    }, text);
+    // await monacoEditor.fill(text, { force: true });
+  } else if (deleteAllAndFill) {
     await page.keyboard.insertText(text);
   } else {
     await page.keyboard.type(text, { delay: keyPressDelay });

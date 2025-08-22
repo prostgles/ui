@@ -19,6 +19,7 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitAny": false,
     "declaration": true,
+    "declarationMap": true,
     "ignoreDeprecations": "5.0",
     "strictNullChecks": true,
     "checkJs": true,

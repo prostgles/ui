@@ -159,7 +159,7 @@
     "More options": "更多选项",
     "Must connect to see schemas": "必须连接才能查看模式",
     "You are about to create a new database": "您将要创建一个新的数据库",
-    "You are about to clone the current database": "您将要克隆当前数据库",
+    "You are about to clone the current database": "您即将把当前数据库 {{currDb}} 克隆到 {{newDb}}。这将关闭与当前数据库的所有现有连接！",
     "Create database": "创建数据库",
     "Connection type": "连接类型",
     "Connection name": "连接名称",

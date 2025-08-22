@@ -2,8 +2,8 @@ import type { ReactElement } from "react";
 import React from "react";
 import RTComp from "../RTComp";
 
-import Btn from "../../components/Btn";
-import { classOverride, FlexRow } from "../../components/Flex";
+import Btn from "@components/Btn";
+import { classOverride, FlexRow } from "@components/Flex";
 import { SilverGridChild } from "./SilverGridChild";
 import { SilverGridResizer } from "./SilverGridResizer";
 import type { TreeLayout } from "./TreeBuilder";
@@ -13,12 +13,13 @@ import type {
   LayoutItem,
   LayoutConfig,
   LayoutGroup,
-} from "../../../../common/DashboardTypes";
+} from "@common/DashboardTypes";
+
 export type {
   LayoutItem,
   LayoutConfig,
   LayoutGroup,
-} from "../../../../common/DashboardTypes";
+} from "@common/DashboardTypes";
 
 export type CustomHeaderClassNames = {
   close: string;

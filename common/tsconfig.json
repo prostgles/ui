@@ -15,7 +15,8 @@
     "noImplicitAny": false,
     "declaration": true,
     "noUncheckedIndexedAccess": true,
-    "ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "5.0",
+    "declarationMap": true
   },
   "exclude": ["node_modules"]
 }

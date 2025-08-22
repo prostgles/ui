@@ -84,3 +84,4 @@ export declare const getVerificationEmailFromTemplate: ({ url, code, template, }
 export declare const ELECTRON_USER_AGENT = "electron";
 export declare const DOCKER_USER_AGENT = "docker-mcp";
 export {};
+//# sourceMappingURL=OAuthUtils.d.ts.map
