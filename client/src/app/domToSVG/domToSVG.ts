@@ -50,6 +50,7 @@ export const domToSVG = async (node: HTMLElement) => {
     .map(([_selector, declaration]) => declaration)
     .join("\n");
 
+  setBackdropFilters(svg);
   await wrapAllSVGText(svg);
 
   const xmlSerializer = new XMLSerializer();
@@ -63,3 +64,17 @@ declare global {
     setAttribute(name: string, value: any): void;
   }
 }
+
+const setBackdropFilters = (svg: SVGGElement) => {
+  const gElements = svg.querySelectorAll("g");
+  gElements.forEach((g) => {
+    const prevContent = g.parentElement?.parentElement?.previousSibling;
+    if (
+      g._whatToRender?.backdropFilter &&
+      prevContent &&
+      prevContent instanceof SVGGElement
+    ) {
+      prevContent.style.filter = g._whatToRender.backdropFilter;
+    }
+  });
+};

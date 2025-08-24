@@ -56,7 +56,10 @@ export const parseLLMResponseObject: LLMResponseParser = ({
     });
     return {
       content,
-      meta,
+      meta: {
+        ...meta,
+        finishReason: candidates[0]?.finishReason,
+      },
       cost: getLLMUsageCost(model, { type: "Gemini", meta }),
     };
   }
@@ -132,7 +135,10 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       .filter(isDefined);
     return {
       content,
-      meta,
+      meta: {
+        ...meta,
+        finish_reason: choices[0]?.finish_reason,
+      },
       cost: getLLMUsageCost(model, { type: "OpenAI", meta }),
     };
   } else {

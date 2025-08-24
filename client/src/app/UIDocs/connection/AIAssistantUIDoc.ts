@@ -16,6 +16,8 @@ export const AIAssistantUIDoc = {
     <img src="/screenshots/ai_assistant_01.svg" alt="AI assistant popup screenshot" />
     <img src="/screenshots/ai_assistant_02.svg" alt="AI assistant popup screenshot" />
     <img src="/screenshots/ai_assistant_03.svg" alt="AI assistant popup screenshot" />
+    <img src="/screenshots/ai_assistant_04.svg" alt="AI assistant popup screenshot" />
+    <img src="/screenshots/ai_assistant_05.svg" alt="AI assistant popup screenshot" />
  
     Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
 

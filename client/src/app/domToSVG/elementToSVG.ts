@@ -30,11 +30,8 @@ export const elementToSVG = async (
   parentSvg: SVGElement | SVGGElement,
   context: SVGContext,
 ) => {
-  const { elemInfo, ...whatToRender } = await getWhatToRenderOnSVG(
-    element,
-    context,
-    parentSvg,
-  );
+  const _whatToRender = await getWhatToRenderOnSVG(element, context, parentSvg);
+  const { elemInfo, ...whatToRender } = _whatToRender;
   const { x, y, width, height, style, isVisible } = elemInfo;
 
   if (!isVisible) {
@@ -43,6 +40,7 @@ export const elementToSVG = async (
 
   const g = document.createElementNS(SVG_NAMESPACE, "g");
   g._domElement = element;
+  g._whatToRender = _whatToRender;
 
   if (style.opacity !== "1") {
     g.setAttribute("opacity", style.opacity.toString());
@@ -97,6 +95,7 @@ export const elementToSVG = async (
       bboxCode;
     return;
   }
+
   if (whatToRender.image?.type === "fontIcon") {
     await fontIconToSVG(g, whatToRender.image, context, elemInfo);
   } else if (whatToRender.image?.type === "img") {
@@ -136,5 +135,6 @@ const getChildrenSortedByZIndex = (element: HTMLElement): HTMLElement[] => {
 declare global {
   interface SVGGElement {
     _domElement?: HTMLElement;
+    _whatToRender?: Awaited<ReturnType<typeof getWhatToRenderOnSVG>>;
   }
 }

@@ -1,21 +1,26 @@
-import { mdiCheck, mdiCircleOutline, mdiViewCarousel } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useMemo } from "react";
 import { dashboardTypesContent } from "@common/dashboardTypesContent";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
+import { Marked } from "@components/Chat/Marked";
 import { FlexCol } from "@components/Flex";
-import {
-  MONACO_READONLY_DEFAULT_OPTIONS,
-  MonacoEditor,
-} from "@components/MonacoEditor/MonacoEditor";
 import PopupMenu from "@components/PopupMenu";
-import Tabs from "@components/Tabs";
+import {
+  mdiCheck,
+  mdiCircleOutline,
+  mdiEye,
+  mdiFileEyeOutline,
+  mdiScriptText,
+  mdiViewCarousel,
+} from "@mdi/js";
+import {
+  usePromise,
+  type DBHandlerClient,
+} from "prostgles-client/dist/prostgles";
+import React, { useMemo } from "react";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { btnStyleProps } from "./AskLLMChatActionBar";
-import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
 
 export const AskLLMChatActionBarPromptSelector = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -26,17 +31,21 @@ export const AskLLMChatActionBarPromptSelector = (
   const { prgl, setupState, activeChat, dbSchemaForPrompt } = props;
   const activeChatId = activeChat.id;
   const { prompts } = setupState;
-  const { dbs } = prgl;
+  const { dbs, dbsMethods } = prgl;
   const prompt = useMemo(
     () => prompts.find(({ id }) => id === activeChat.llm_prompt_id),
     [prompts, activeChat.llm_prompt_id],
   );
-  const promptContent = useMemo(() => {
+  const promptContent = usePromise(async () => {
     if (!prompt) return "";
-    return prompt.prompt
-      .replaceAll(LLM_PROMPT_VARIABLES.SCHEMA, dbSchemaForPrompt)
-      .replaceAll(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypesContent);
-  }, [dbSchemaForPrompt, prompt]);
+    return (
+      dbsMethods.getFullPrompt?.({
+        prompt: prompt.prompt,
+        schema: dbSchemaForPrompt,
+        dashboardTypesContent,
+      }) || prompt.prompt
+    );
+  }, [dbSchemaForPrompt, dbsMethods, prompt]);
   return (
     <PopupMenu
       title="Prompt Selector"
@@ -116,42 +125,34 @@ export const AskLLMChatActionBarPromptSelector = (
         tables={prgl.dbsTables}
       />
       {prompt && (
-        <Tabs
-          defaultActiveKey="editable"
-          contentClass="py-1 f-1"
-          items={{
-            editable: {
-              label: "Edit prompt",
-              content: (
-                <CodeEditorWithSaveButton
-                  key={prompt.id}
-                  value={prompt.prompt}
-                  label=""
-                  language={"text"}
-                  onSave={async (v) => {
-                    await dbs.llm_prompts.update(
-                      { id: prompt.id },
-                      {
-                        prompt: v,
-                      },
-                    );
-                  }}
-                />
-              ),
-            },
-            preview: {
-              label: "Preview",
-              iconPath: mdiCircleOutline,
-              content: (
-                <MonacoEditor
-                  value={promptContent}
-                  language="text"
-                  className="h-full"
-                  options={MONACO_READONLY_DEFAULT_OPTIONS}
-                  loadedSuggestions={undefined}
-                />
-              ),
-            },
+        <CodeEditorWithSaveButton
+          key={prompt.id}
+          value={prompt.prompt}
+          label={<div className="ml-1">Prompt template</div>}
+          headerButtons={
+            <PopupMenu
+              title="Prompt preview"
+              subTitle="Preview of the prompt with context variables filled in"
+              positioning="top-center"
+              button={<Btn iconPath={mdiFileEyeOutline} title="Preview" />}
+              contentClassName="p-2 max-w-800"
+            >
+              <Marked
+                content={promptContent || ""}
+                loadedSuggestions={undefined}
+                codeHeader={undefined}
+                sqlHandler={undefined}
+              />
+            </PopupMenu>
+          }
+          language={"text"}
+          onSave={async (v) => {
+            await dbs.llm_prompts.update(
+              { id: prompt.id },
+              {
+                prompt: v,
+              },
+            );
           }}
         />
       )}

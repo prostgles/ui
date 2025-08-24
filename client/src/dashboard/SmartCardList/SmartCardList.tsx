@@ -22,6 +22,7 @@ import { useSmartCardListState } from "./useSmartCardListState";
 import type { SmartGroupFilter } from "../../../../common/filterUtils";
 import type { InsertButtonProps } from "../SmartForm/InsertButton";
 import type { TestSelectors } from "../../Testing";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -160,9 +161,9 @@ export const SmartCardList = <T extends AnyObject>(
   }
 
   return (
-    <FlexCol
+    <ScrollFade
       className={classOverride(
-        "SmartCardList o-auto gap-p5 relative max-w-full",
+        "SmartCardList o-auto flex-col gap-p5 relative max-w-full",
         className,
       )}
       data-command={dataCommand}
@@ -217,7 +218,7 @@ export const SmartCardList = <T extends AnyObject>(
       </MaybeFlipMove>
       <Pagination {...paginationState} totalRows={totalRows} />
       {footer}
-    </FlexCol>
+    </ScrollFade>
   );
 };
 

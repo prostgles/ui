@@ -50,14 +50,14 @@ test.describe("Create docs and screenshots", () => {
       UPDATE llm_providers 
       SET api_url = 'http://localhost:3004/rest-api/cloud/methods/askLLM'
       WHERE id = 'Prostgles';
-/*
-      UPDATE published_methods
-      SET connection_id = (
-        SELECT id FROM connections WHERE "name" = '${aiDemoDBName}'
-      )
-      WHERE name = 'askLLM';
-*/
-       `,
+      /*
+        UPDATE published_methods
+        SET connection_id = (
+          SELECT id FROM connections WHERE "name" = '${aiDemoDBName}'
+        )
+        WHERE name = 'askLLM';
+      */
+     `,
     );
     const activeSession = await runDbsSql(
       page,

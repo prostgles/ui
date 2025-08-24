@@ -89,6 +89,10 @@ export const LLM_PROMPT_VARIABLES = {
   TODAY: "${today}",
 } as const;
 
+export const wrapCode = (language: "sql" | "typescript", code: string) => {
+  return "```" + language + "\n" + code + "\n```";
+};
+
 export const reachedMaximumNumberOfConsecutiveToolRequests = (
   messages: Pick<DBSSchema["llm_messages"], "message">[],
   limit: number,

@@ -1,4 +1,5 @@
-import { prostglesUIDashboardSample } from "prostglesUIDashboardSample";
+import { prostglesUIDashboardSample } from "sampleToolUseData";
+import { dockerWeatherToolUse } from "sampleToolUseData";
 
 const stringify = (obj: any) => JSON.stringify(obj, null, 2);
 
@@ -151,6 +152,20 @@ const toolResponses: Record<string, ToolUse> = {
   },
   mcpplaywright: playwrightMCPToolUse,
   mcpsandbox: mcpSandboxToolUse,
+  weather: {
+    content:
+      "I'll create a container with a script that fetches real historical weather data from a free API source.",
+    tool: [
+      {
+        id: "weather-tool-use",
+        type: "function",
+        function: {
+          name: "docker-sandbox--create_container",
+          arguments: stringify(dockerWeatherToolUse),
+        },
+      },
+    ],
+  },
 };
 
 export const testAskLLMCode = `

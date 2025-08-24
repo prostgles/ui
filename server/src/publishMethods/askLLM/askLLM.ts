@@ -10,6 +10,7 @@ import {
   isAssistantMessageRequestingToolUse,
   LLM_PROMPT_VARIABLES,
   reachedMaximumNumberOfConsecutiveToolRequests,
+  wrapCode,
 } from "@common/llmUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
@@ -24,6 +25,7 @@ import {
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
+import { getFullPrompt } from "./getFullPrompt";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -254,18 +256,27 @@ export const askLLM = async (args: AskLLMArgs) => {
         throw `Maximum total cost of the chat (${maxTotalCost}) reached. Current cost: ${chatCost}`;
       }
     }
-    const promptWithContext = prompt
-      .replaceAll(
-        LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME,
-        getElectronConfig()?.isElectron ? "Prostgles Desktop" : "Prostgles UI",
-      )
-      .replace(LLM_PROMPT_VARIABLES.TODAY, new Date().toISOString())
-      .replace(
-        LLM_PROMPT_VARIABLES.SCHEMA,
-        schema ||
-          "Schema is empty: there are no tables or views in the database",
-      )
-      .replace(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypesContent);
+    const promptWithContext = getFullPrompt({
+      prompt,
+      schema,
+      dashboardTypesContent,
+    });
+    // prompt
+    //   .replaceAll(
+    //     LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME,
+    //     getElectronConfig()?.isElectron ? "Prostgles Desktop" : "Prostgles UI",
+    //   )
+    //   .replace(LLM_PROMPT_VARIABLES.TODAY, new Date().toISOString())
+    //   .replace(
+    //     LLM_PROMPT_VARIABLES.SCHEMA,
+    //     schema ?
+    //       wrapCode("sql", schema)
+    //     : "Schema is empty: there are no tables or views in the database",
+    //   )
+    //   .replace(
+    //     LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,
+    //     wrapCode("typescript", dashboardTypesContent),
+    //   );
 
     const modelData = (await dbs.llm_models.findOne(
       { id: chat.model },

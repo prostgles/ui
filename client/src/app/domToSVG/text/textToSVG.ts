@@ -71,9 +71,11 @@ export const textToSVG = (
   }
   textNode.setAttribute("text-anchor", "start");
 
-  // Ensures overflowing text is wrapped correctly
-  textNode.textContent =
-    textNodeStyle.whiteSpace === "pre" ? content.trimEnd() : content.trim();
+  // Where was this necessary?!
+  //  - Ensures overflowing text is wrapped correctly
+  // textNode.textContent =
+  //   textNodeStyle.whiteSpace === "pre" ? content.trimEnd() : content.trim();
+  textNode.textContent = content.trimEnd();
 
   g.appendChild(textNode);
 };

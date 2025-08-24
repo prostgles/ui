@@ -454,6 +454,7 @@ export const COMMANDS = {
   "APIDetailsTokens.CreateToken.daysUntilExpiration": "",
   "APIDetailsTokens.CreateToken.generate": "",
   APIDetailsTokens: "",
+  "AskLLM.DeleteMessage": "",
 } as const satisfies Record<
   string,
   | string

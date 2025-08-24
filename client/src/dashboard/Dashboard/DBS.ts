@@ -32,6 +32,15 @@ export type DBSMethods = Partial<{
     chatId: number,
     type: "new-message" | "approve-tool-use",
   ) => Promise<AnyObject>;
+  getFullPrompt: ({
+    prompt,
+    schema,
+    dashboardTypesContent,
+  }: {
+    prompt: string;
+    schema: string;
+    dashboardTypesContent: string;
+  }) => Promise<string>;
   stopAskLLM: (chatId: number) => Promise<void>;
   pgDump: (
     conId: string,

@@ -1,5 +1,5 @@
 import { isDefined } from "../../utils";
-import { getBackgroundColor } from "./bgAndBorderToSVG";
+import { getBackdropFilter, getBackgroundColor } from "./bgAndBorderToSVG";
 import type { SVGContext } from "./elementToSVG";
 import { getFontIconElement } from "./fontIconToSVG";
 import { getTextForSVG } from "./text/getTextForSVG";
@@ -55,6 +55,7 @@ export const getWhatToRenderOnSVG = async (
     background === parentBackground &&
     (parentSvg as SVGGElement)._domElement === element.parentElement;
 
+  const backdropFilter = getBackdropFilter(style);
   const childAffectingStyles: Partial<CSSStyleDeclaration> = {};
   if (style.opacity !== "1") {
     childAffectingStyles.opacity = style.opacity;
@@ -90,6 +91,7 @@ export const getWhatToRenderOnSVG = async (
     elemInfo,
     attributeData,
     background: backgroundSameAsRenderedParent ? undefined : background,
+    backdropFilter,
     border: getBorderForSVG(style),
     childAffectingStyles,
     image,

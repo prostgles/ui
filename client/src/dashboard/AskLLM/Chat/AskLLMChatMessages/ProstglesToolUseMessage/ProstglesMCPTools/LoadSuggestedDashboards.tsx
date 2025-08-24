@@ -64,7 +64,7 @@ export const LoadSuggestedDashboards = ({
             leftIcon={w.icon ? undefined : { path: mdiViewCarousel }}
             style={{ borderRadius: "8px" }}
           >
-            <FlexRow className="gap-p5">
+            <FlexRow className="gap-p5 pr-p25">
               {w.icon && <SvgIcon icon={w.icon} />}
               {w.name}
             </FlexRow>

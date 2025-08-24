@@ -25,13 +25,42 @@ const SVG_SCREENSHOT_DETAILS = {
       await setPromptByText(page, "dashboard");
     },
     "02": async (page) => {
-      await page.getByTestId("Chat.textarea").fill("dashboards");
+      await page
+        .getByTestId("Chat.textarea")
+        .fill("I need some dashboards with useful insights and metrics");
       await page.getByTestId("Chat.send").click();
       await page.waitForTimeout(2500);
     },
     "03": async (page) => {
-      await page.getByTestId("Chat.textarea").fill("mcp");
+      await page.getByTestId("AskLLM.DeleteMessage").first().click();
+      await page.locator(getDataKeyElemSelector("allToBottom")).click();
+      await setPromptByText(page, "chat");
+      await page.getByTestId("Chat.textarea").fill(" mcpplaywright ");
       await page.getByTestId("Chat.send").click();
+      await page.waitForTimeout(2500);
+    },
+    "04": async (page) => {
+      await page.getByTestId("AskLLM.DeleteMessage").first().click();
+      await page.locator(getDataKeyElemSelector("allToBottom")).click();
+      await setPromptByText(page, "create task");
+      await page
+        .getByTestId("Chat.textarea")
+        .fill("The task involves importing data from scanned documents");
+      await page.getByTestId("Chat.send").click();
+      await page.waitForTimeout(2500);
+    },
+    "05": async (page) => {
+      await page.getByTestId("AskLLM.DeleteMessage").first().click();
+      await page.locator(getDataKeyElemSelector("allToBottom")).click();
+      await setPromptByText(page, "chat");
+      await page
+        .getByTestId("Chat.textarea")
+        .fill(
+          "Upload some historical weather data for London for the last 4 years",
+        );
+      await page.getByTestId("Chat.send").click();
+      await page.waitForTimeout(2500);
+      await page.getByTestId("ToolUseMessage.toggle").last().click();
       await page.waitForTimeout(2500);
     },
   },
@@ -159,6 +188,10 @@ const SVG_SCREENSHOT_DETAILS = {
     await page.getByTestId("ConnectionServer.add").click();
     await page.locator(getDataKeyElemSelector("existing")).click();
     await page.getByTestId("ConnectionServer.add.existingDatabase").click();
+    await page
+      .getByTestId("ConnectionServer.add.existingDatabase")
+      .locator(getDataKeyElemSelector("postgres"))
+      .click();
   },
   connection_config: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");

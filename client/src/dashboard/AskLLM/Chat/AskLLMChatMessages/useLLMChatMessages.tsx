@@ -144,6 +144,7 @@ export const useLLMChatMessages = (props: P) => {
                   )}
                   <Select
                     title={t.common.Delete + "..."}
+                    data-command="AskLLM.DeleteMessage"
                     fullOptions={[
                       {
                         key: "thisMessage",
@@ -230,6 +231,10 @@ export const useLLMChatMessages = (props: P) => {
       activeChat.disabled_message
     ) ?
       activeChat.disabled_message
+    : llmMessages?.at(-1)?.meta?.finish_reason === "length" ?
+      <ErrorComponent
+        error={"finish_reason = 'length'. Increase max_tokens and try again"}
+      />
     : undefined;
 
   const messages: Message[] = (

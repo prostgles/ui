@@ -34,10 +34,16 @@ import { useAlert } from "@components/AlertProvider";
 import ErrorComponent from "@components/ErrorComponent";
 import type { ToolResultMessage } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ToolUseChatMessage";
 import Chip from "@components/Chip";
+import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["schema"]["type"]
 >;
+
+const monacoOptions = {
+  ...MONACO_READONLY_DEFAULT_OPTIONS,
+  lineNumbers: "on",
+} as const;
 
 export const DockerSandboxCreateContainer = ({
   message,
@@ -77,6 +83,10 @@ export const DockerSandboxCreateContainer = ({
         <Chip label="Timeout">
           {getMillisecondsAsInterval(data.timeout ?? 30_000)}
         </Chip>
+        <CopyToClipboardBtn
+          size="small"
+          content={JSON.stringify(message.input)}
+        />
         {callMCPServerTool && toolResult && (
           <Btn
             variant="faded"
@@ -143,7 +153,7 @@ export const DockerSandboxCreateContainer = ({
             loadedSuggestions={undefined}
             value={activeContent}
             style={{ width: "min(600px, 100%)", minHeight: 100 }}
-            options={MONACO_READONLY_DEFAULT_OPTIONS}
+            options={monacoOptions}
           />
         </FlexRow>
       </FlexRow>
@@ -151,7 +161,7 @@ export const DockerSandboxCreateContainer = ({
       <MonacoEditor
         key={"logs"}
         language="text"
-        className="f-1"
+        className="f-p5"
         style={{ width: "100%", minHeight: 100 }}
         value={resultObj?.log.map((l) => l.text).join("") ?? ""}
         loadedSuggestions={undefined}

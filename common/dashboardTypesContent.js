@@ -199,7 +199,8 @@ export type WindowInsertModel =
 export type WorkspaceInsertModel = {
   name: string;
   /**
-   * MDI icon name for the workspace that will be shown near the workspace name.
+   * MDI camel case icon name for the workspace that will be shown near the workspace name.
+   * example: "AccountCancel", "BriefcaseOutline", "CalendarQuestion"
    * Should ideally be specified when an existing icon gives a good visual description of the workspace.
    */
   icon?: string;

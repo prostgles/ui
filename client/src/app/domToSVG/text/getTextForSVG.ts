@@ -28,7 +28,15 @@ export const getTextForSVG = (
   }
   if (isInputNode(element)) {
     const inputRect = element.getBoundingClientRect();
-    const textContent = element.value || element.placeholder;
+    let textContent = element.value || element.placeholder;
+    if (
+      (element.type === "date" || element.type === "datetime-local") &&
+      element.value
+    ) {
+      try {
+        textContent = new Date(element.value).toLocaleString();
+      } catch {}
+    }
     const isPlaceholder = !element.value;
     if (!textContent) return;
     const paddingLeft = parseFloat(style.paddingLeft) || 0;

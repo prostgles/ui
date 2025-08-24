@@ -53,6 +53,9 @@ export const LLM_PROMPT_VARIABLES = {
     DASHBOARD_TYPES: "${dashboardTypes}",
     TODAY: "${today}",
 };
+export const wrapCode = (language, code) => {
+    return "```" + language + "\n" + code + "\n```";
+};
 export const reachedMaximumNumberOfConsecutiveToolRequests = (messages, limit, onlyFailed = false) => {
     const reversedMessages = messages.slice().reverse();
     let count = 0;

@@ -59,6 +59,7 @@ import { refreshModels } from "./askLLM/refreshModels";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
 import { getLLMAllowedChatTools } from "./askLLM/getLLMTools";
+import { getFullPrompt } from "./askLLM/getFullPrompt";
 
 export const publishMethods: PublishMethods<
   DBGeneratedSchema,
@@ -599,6 +600,7 @@ export const publishMethods: PublishMethods<
         });
       },
     }),
+    getFullPrompt,
     stopAskLLM: async (chatId: number) => {
       if (!chatId) throw "Chat ID is required";
       const chat = await dbs.llm_chats.findOne({ id: chatId });
@@ -634,7 +636,7 @@ export const publishMethods: PublishMethods<
       }
 
       if (!socket) throw "Socket missing";
-      const ip_address = (socket as any).conn.remoteAddress;
+      const ip_address = (socket as any).conn.remoteAddress as string;
       const session = await dbs.sessions.insert(
         {
           expires: Date.now() + days * 24 * 3600 * 1000,

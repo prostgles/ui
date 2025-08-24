@@ -1,14 +1,4 @@
-import { parse } from "path";
-import {
-  rgba2hex,
-  rgbToHex,
-} from "../../dashboard/W_Table/ColumnMenu/ColorPicker";
-import { isDefined } from "../../utils";
-import {
-  addSpecificBorders,
-  getBackgroundColor,
-  roundedRectPath,
-} from "./bgAndBorderToSVG";
+import { addSpecificBorders, roundedRectPath } from "./bgAndBorderToSVG";
 import { SVG_NAMESPACE } from "./domToSVG";
 import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
 import type { SVGContext, SVGNodeLayout } from "./elementToSVG";
@@ -23,9 +13,10 @@ export const rectangleToSVG = (
   {
     border,
     background,
+    backdropFilter,
   }: Pick<
     Awaited<ReturnType<typeof getWhatToRenderOnSVG>>,
-    "background" | "border"
+    "background" | "border" | "backdropFilter"
   >,
   bboxCode: string,
   context: SVGContext,
@@ -35,7 +26,7 @@ export const rectangleToSVG = (
     style.backdropFilter &&
     style.mask &&
     style.mask.includes("linear-gradient");
-  if (!border && !background && !shadow && !scrollMask) {
+  if (!border && !background && !shadow && !scrollMask && !backdropFilter) {
     return;
   }
 

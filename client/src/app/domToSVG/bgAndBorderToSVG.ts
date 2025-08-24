@@ -110,6 +110,12 @@ export function getBackgroundColor(style: CSSStyleDeclaration) {
     : undefined;
 }
 
+export const getBackdropFilter = (style: CSSStyleDeclaration) => {
+  return style.backdropFilter && style.backdropFilter !== "none" ?
+      style.backdropFilter
+    : undefined;
+};
+
 /**
  * Build a <path> "d" attribute for a rectangle with arbitrary corner radii.
  * Accounts for border width and ensures crisp edges by using whole numbers
