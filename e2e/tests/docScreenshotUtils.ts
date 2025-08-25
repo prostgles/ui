@@ -24,14 +24,14 @@ const SVG_SCREENSHOT_DETAILS = {
       await setModelByText(page, "pros");
       await setPromptByText(page, "dashboard");
     },
-    "02": async (page) => {
+    dashboards_02: async (page) => {
       await page
         .getByTestId("Chat.textarea")
         .fill("I need some dashboards with useful insights and metrics");
       await page.getByTestId("Chat.send").click();
       await page.waitForTimeout(2500);
     },
-    "03": async (page) => {
+    mcp_03: async (page) => {
       await page.getByTestId("AskLLM.DeleteMessage").first().click();
       await page.locator(getDataKeyElemSelector("allToBottom")).click();
       await setPromptByText(page, "chat");
@@ -39,7 +39,7 @@ const SVG_SCREENSHOT_DETAILS = {
       await page.getByTestId("Chat.send").click();
       await page.waitForTimeout(2500);
     },
-    "04": async (page) => {
+    tasks_04: async (page) => {
       await page.getByTestId("AskLLM.DeleteMessage").first().click();
       await page.locator(getDataKeyElemSelector("allToBottom")).click();
       await setPromptByText(page, "create task");
@@ -49,10 +49,17 @@ const SVG_SCREENSHOT_DETAILS = {
       await page.getByTestId("Chat.send").click();
       await page.waitForTimeout(2500);
     },
-    "05": async (page) => {
+    docker_05: async (page) => {
       await page.getByTestId("AskLLM.DeleteMessage").first().click();
       await page.locator(getDataKeyElemSelector("allToBottom")).click();
       await setPromptByText(page, "chat");
+      await page.getByTestId("LLMChatOptions.MCPTools").click();
+      await page
+        .getByTestId("MCPServerTools")
+        .getByText("create_container")
+        .click();
+      await page.getByText("Auto-approve: OFF").click();
+      await page.getByTestId("Popup.close").last().click();
       await page
         .getByTestId("Chat.textarea")
         .fill(

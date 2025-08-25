@@ -684,7 +684,7 @@ test.describe("Main test", () => {
       .locator(getDataKeyElemSelector("playwright"))
       .getByTestId("MCPServerFooterActions.refreshTools");
     await page
-      .getByText("browser_tab_list")
+      .getByText("browser_tabs")
       .waitFor({ state: "visible", timeout: 10e3 }); // wait for tools list to refresh
     await page.getByTestId("Popup.close").last().click();
 

@@ -6,7 +6,7 @@
     "d3": "^7.9.0",
     "deck.gl": "^9.1.14",
     "loaders.gl": "^0.3.5",
-    "monaco-editor": "^0.50.0",
+    "monaco-editor": "^0.52.2",
     "papaparse": "^5.4.1",
     "prostgles-client": "^4.0.251",
     "qrcode": "^1.5.1",

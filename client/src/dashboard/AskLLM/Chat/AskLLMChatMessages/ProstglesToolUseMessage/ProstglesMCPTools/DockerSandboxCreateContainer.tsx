@@ -42,7 +42,9 @@ export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
 
 const monacoOptions = {
   ...MONACO_READONLY_DEFAULT_OPTIONS,
+  readOnly: false,
   lineNumbers: "on",
+  automaticLayout: false,
 } as const;
 
 export const DockerSandboxCreateContainer = ({
@@ -52,7 +54,15 @@ export const DockerSandboxCreateContainer = ({
 }: ProstglesMCPToolsProps) => {
   const toolUseResult = toolResult?.toolUseResultMessage;
   const { addAlert } = useAlert();
-  const data = message.input as DockerSandboxCreateContainerData;
+  const initialData = message.input as DockerSandboxCreateContainerData;
+  const [editedFiles, setEditedFiles] = useState<Record<string, string>>();
+  const data = {
+    ...initialData,
+    files: {
+      ...initialData.files,
+      ...editedFiles,
+    },
+  };
   const { resultObj } = useToolUseResultData(toolUseResult);
   const [activeFilePath, setActiveFilePath] = useState(
     Object.keys(data.files)[0],
@@ -129,7 +139,7 @@ export const DockerSandboxCreateContainer = ({
           </Btn>
         )}
       </FlexRow>
-      <FlexRow className="min-w-0 ai-start gap-0 w-full max-w-full f-1">
+      <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">
         <MenuList
           activeKey={activeFilePath}
           items={Object.keys(data.files).map((filePath) => {
@@ -147,14 +157,22 @@ export const DockerSandboxCreateContainer = ({
           style={{ alignSelf: "stretch", fontSize: 14 }}
         />
         <FlexRow className="o-auto f-1 w-full h-full">
-          <MonacoEditor
-            className="f-1 h-full"
-            language={extensionToInfo[extension]?.label ?? "plaintext"}
-            loadedSuggestions={undefined}
-            value={activeContent}
-            style={{ width: "min(600px, 100%)", minHeight: 100 }}
-            options={monacoOptions}
-          />
+          {activeFilePath && (
+            <MonacoEditor
+              className="f-1 h-full"
+              language={extensionToInfo[extension]?.label ?? "plaintext"}
+              loadedSuggestions={undefined}
+              value={activeContent}
+              style={{ width: "min(600px, 100%)", minHeight: 200 }}
+              onChange={(newValue) => {
+                setEditedFiles((prev) => ({
+                  ...prev,
+                  [activeFilePath]: newValue,
+                }));
+              }}
+              options={monacoOptions}
+            />
+          )}
         </FlexRow>
       </FlexRow>
       <div className="bt b-color p-p5 bg-color-2 w-full ta-start">Logs</div>

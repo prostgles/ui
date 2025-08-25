@@ -1,18 +1,17 @@
-import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
 
-import { getMonaco, LANG } from "../../dashboard/SQLEditor/W_SQLEditor";
-import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
-import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 import {
   CUSTOM_MONACO_SQL_THEMES,
   defineCustomSQLTheme,
 } from "../../dashboard/SQLEditor/defineCustomSQLTheme";
+import { getMonaco, LANG } from "../../dashboard/SQLEditor/W_SQLEditor";
+import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
+import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import { KeyCode, KeyMod } from "monaco-editor";
 
 export type MonacoEditorProps = {
   language: string;
@@ -283,7 +282,7 @@ const hackyFixOptionmatchOnWordStartOnly = (
   editor: editor.IStandaloneCodeEditor,
 ) => {
   try {
-    const indexOfConfig = 118; // 119 for version 0.52.0
+    const indexOfConfig = 119; // 118 for v50 and 119 for version 0.52.0
     // ensure typing name matches relname
     // suggestModel.js:420
     //@ts-ignore
