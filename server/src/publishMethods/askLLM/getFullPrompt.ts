@@ -15,7 +15,10 @@ export const getFullPrompt = ({
       LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME,
       getElectronConfig()?.isElectron ? "Prostgles Desktop" : "Prostgles UI",
     )
-    .replace(LLM_PROMPT_VARIABLES.TODAY, new Date().toISOString())
+    .replace(
+      LLM_PROMPT_VARIABLES.TODAY,
+      new Date().toISOString().split("T")[0]!,
+    )
     .replace(
       LLM_PROMPT_VARIABLES.SCHEMA,
       schema ?

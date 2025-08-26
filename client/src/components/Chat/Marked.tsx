@@ -6,6 +6,7 @@ import {
   type MarkdownMonacoCodeProps,
 } from "./MarkdownMonacoCode";
 import "./Marked.css";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export type MarkedProps = DivProps &
   Pick<
@@ -45,6 +46,7 @@ export const Marked = (props: MarkedProps) => {
       }
       return (
         <MarkdownMonacoCode
+          className="my-1"
           key={codeString}
           codeHeader={codeHeader}
           language={language}
@@ -58,10 +60,10 @@ export const Marked = (props: MarkedProps) => {
   );
 
   return (
-    <FlexCol
+    <ScrollFade
       {...divProps}
       className={classOverride(
-        "Marked o-auto min-w-0 max-w-full",
+        "Marked flex-col o-auto min-w-0 max-w-full",
         divProps.className,
       )}
     >
@@ -69,10 +71,18 @@ export const Marked = (props: MarkedProps) => {
         components={{
           pre: React.Fragment as any,
           code: CodeComponent,
+          a: (props) => (
+            <a
+              {...props}
+              className="link"
+              target={props.href?.startsWith("#") ? undefined : "_blank"}
+              rel={props.href?.startsWith("#") ? undefined : "noreferrer"}
+            />
+          ),
         }}
       >
         {content}
       </Markdown>
-    </FlexCol>
+    </ScrollFade>
   );
 };

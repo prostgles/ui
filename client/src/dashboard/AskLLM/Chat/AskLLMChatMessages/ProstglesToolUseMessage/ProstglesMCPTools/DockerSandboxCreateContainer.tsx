@@ -44,7 +44,6 @@ const monacoOptions = {
   ...MONACO_READONLY_DEFAULT_OPTIONS,
   readOnly: false,
   lineNumbers: "on",
-  automaticLayout: false,
 } as const;
 
 export const DockerSandboxCreateContainer = ({

@@ -111,7 +111,7 @@ export const getDockerMCP = async (
               "$schema",
             ]),
           );
-          return `/${t.tool_name} - ${t.description}. JSON body input schema: ${argTSSchema}`;
+          return ` - /${t.tool_name} - ${t.description}. JSON body input schema: ${argTSSchema}  `;
         }),
         isDocker ?
           "DO NOT USE WORKHOST to connect to prostgles-ui-docker-mcp. Just specify network mode 'bridge' and it will work."

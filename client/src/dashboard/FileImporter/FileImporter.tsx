@@ -491,7 +491,8 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
 
                   <div className="flex-row gap-1 jc-center">
                     <div className="f-0 mb-1 noselect bold">
-                      File size: {bytesToSize(selectedFile.file.size)}
+                      {selectedFile.file.name}:{" "}
+                      {bytesToSize(selectedFile.file.size)}
                     </div>
                     <div className="f-0 mb-1 noselect">
                       Preview ({selectedFile.preview?.allRows?.length} rows)

@@ -1,4 +1,7 @@
-import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
+import {
+  getJSONBSchemaAsJSONSchema,
+  getJSONBSchemaTSTypes,
+} from "prostgles-types";
 import { dashboardTypesContent } from "@common/dashboardTypesContent";
 import {
   getProstglesMCPFullToolName,
@@ -35,13 +38,6 @@ export const executeSQLToolWithCommit = {
   ),
 };
 
-const taskInputSchema = getJSONBSchemaAsJSONSchema(
-  "",
-  "",
-  PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_tools_and_prompt"]
-    .schema,
-);
-
 export const getAddTaskTools = ({
   availableDBTools = [],
   availableMCPTools = [],
@@ -61,8 +57,29 @@ export const getAddTaskTools = ({
 
     If access to the database is needed, an access type can be specified. 
     Use the most restrictive access type that is needed to complete the task (type custom with specific tables and allowed commands).
+
+    This tool input_schema must satisfy this typescript type:
+    \`\`\`typescript
+    ${getJSONBSchemaTSTypes(
+      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
+        "suggest_tools_and_prompt"
+      ].schema,
+      {},
+      undefined,
+      [],
+    )}
+    \`\`\`
   `),
-  input_schema: taskInputSchema,
+  input_schema: {
+    description: getJSONBSchemaTSTypes(
+      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
+        "suggest_tools_and_prompt"
+      ].schema,
+      {},
+      undefined,
+      [],
+    ),
+  },
 });
 
 export const suggestDashboardsTool = {

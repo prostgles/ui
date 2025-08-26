@@ -5,6 +5,7 @@ import {
   click,
   getElement,
   movePointer,
+  openConnection,
   type,
   waitForElement,
 } from "./demoUtils";
@@ -33,9 +34,11 @@ export const dashboardDemo = async () => {
 
   await click("dashboard.goToConnections");
   await tout(500);
-  document
-    .querySelector<HTMLAnchorElement>("[data-key^=food_delivery] a")!
-    .click();
+  // document
+  //   .querySelector<HTMLAnchorElement>("[data-key^=food_delivery] a")!
+  //   .click();
+
+  await openConnection("food_delivery");
 
   await closeAllViews();
 

@@ -1,31 +1,28 @@
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
-import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
-import { getSerialisableError, isObject, omitKeys } from "prostgles-types";
-import { type DBS } from "../..";
 import { dashboardTypesContent } from "@common/dashboardTypesContent";
 import {
   filterArr,
   filterArrInverse,
   getLLMMessageText,
   isAssistantMessageRequestingToolUse,
-  LLM_PROMPT_VARIABLES,
   reachedMaximumNumberOfConsecutiveToolRequests,
-  wrapCode,
 } from "@common/llmUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
-import { getElectronConfig } from "../../electronConfig";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
+import { getSerialisableError, isObject, omitKeys } from "prostgles-types";
+import { type DBS } from "../..";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
 import { getLLMAllowedChatTools } from "./getLLMTools";
 
-import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
-import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getFullPrompt } from "./getFullPrompt";
+import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -118,41 +115,41 @@ export const askLLM = async (args: AskLLMArgs) => {
   }
 
   /** If user stopped chat must add tool use responses to prevent errors */
-  const toolUseRequestMessages = filterArr(lastMessage?.message ?? [], {
-    type: "tool_use",
-  } as const);
-  if (
-    chat.status?.state === "stopped" &&
-    toolUseRequestMessages.length &&
-    args.type === "new-message"
-  ) {
+  const awaitingToolUseResult = pastMessages.flatMap(({ message }, index) => {
+    const result = filterArr(message, {
+      type: "tool_use",
+    } as const).filter(
+      (toolUse) =>
+        !pastMessages
+          .slice(index + 1)
+          .some((maybeResponse) =>
+            maybeResponse.message.some(
+              (n) => n.type === "tool_result" && n.tool_use_id === toolUse.id,
+            ),
+          ),
+    );
+    return result;
+  });
+  if (awaitingToolUseResult.length && args.type === "new-message") {
     await dbs.llm_messages.insert({
       user_id: user.id,
       chat_id: chatId,
-      message: toolUseRequestMessages.map((m) => ({
+      message: awaitingToolUseResult.map((m) => ({
         type: "tool_result" as const,
         tool_name: m.name,
         tool_use_id: m.id,
-        content: "Tool use requests were stopped by the user",
-        is_error: true,
+        content:
+          chat.status?.state === "stopped" ?
+            "Tool use requests were stopped by the user"
+          : "Tool use requests were interrupted by the user",
       })),
       llm_model_id: chat.model,
     });
   }
 
-  if (args.type === "tool-use-result") {
-    if (
-      !toolUseRequestMessages.some((toolUse) =>
-        userMessage.some(
-          (toolResult) =>
-            toolResult.type === "tool_result" &&
-            toolResult.tool_use_id === toolUse.id,
-        ),
-      )
-    ) {
-      // Chat might have since been stopped and other user messages were added
-      return;
-    }
+  if (args.type === "tool-use-result" && !awaitingToolUseResult.length) {
+    // Chat might have since been stopped and other user messages were added
+    return;
   }
 
   await dbs.llm_messages.insert({
@@ -261,22 +258,6 @@ export const askLLM = async (args: AskLLMArgs) => {
       schema,
       dashboardTypesContent,
     });
-    // prompt
-    //   .replaceAll(
-    //     LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME,
-    //     getElectronConfig()?.isElectron ? "Prostgles Desktop" : "Prostgles UI",
-    //   )
-    //   .replace(LLM_PROMPT_VARIABLES.TODAY, new Date().toISOString())
-    //   .replace(
-    //     LLM_PROMPT_VARIABLES.SCHEMA,
-    //     schema ?
-    //       wrapCode("sql", schema)
-    //     : "Schema is empty: there are no tables or views in the database",
-    //   )
-    //   .replace(
-    //     LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,
-    //     wrapCode("typescript", dashboardTypesContent),
-    //   );
 
     const modelData = (await dbs.llm_models.findOne(
       { id: chat.model },

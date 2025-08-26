@@ -4,8 +4,8 @@ import {
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
   type ProstglesMcpTool,
-} from "../../../../../common/prostglesMcp";
-import { getEntries } from "../../../../../common/utils";
+} from "@common/prostglesMcp";
+import { getEntries } from "@common/utils";
 
 export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
   name: string;

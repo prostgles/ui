@@ -1,15 +1,9 @@
 import { tout } from "../pages/ElectronSetup/ElectronSetup";
-import { getCommandElemSelector, getDataKeyElemSelector } from "../Testing";
-import { click, getElement } from "./demoUtils";
+import { click, getElement, openConnection } from "./demoUtils";
 
 export const backupDemo = async () => {
   await click("dashboard.goToConnections");
-  await click(
-    "",
-    getDataKeyElemSelector("prostgles_video_demo") +
-      " " +
-      getCommandElemSelector("Connection.openConnection"),
-  );
+  await openConnection("prostgles_video_demo");
   await click("dashboard.goToConnConfig");
   await tout(1e3);
   if (getElement("BackupControls.Restore")) {

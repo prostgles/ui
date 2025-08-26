@@ -37,6 +37,42 @@ export const useDrawSchemaShapes = (
   const positionRef = useRef({ x: 0, y: 0 });
   const scaleRef = useRef(1);
 
+  const animationRef = useRef<{
+    progress: number;
+    startedAt: number;
+    duration: number;
+    startPos?: [number, number];
+  }>({ progress: 0, startedAt: 0, duration: 400 });
+
+  const getShapes = useCallback(() => {
+    if (animationRef.current.progress < 1 && shapesRef.current.length) {
+      animationRef.current.startPos ??= shapesRef.current.find(
+        (s) => s.type === "rectangle",
+      )?.coords ?? [0, 0];
+      const res = shapesRef.current.slice(0).map((s) =>
+        s.type === "rectangle" ?
+          {
+            ...s,
+            coords: interpolatePosition(
+              animationRef.current.startPos!,
+              s.coords,
+              animationRef.current.progress,
+            ),
+          }
+        : s,
+      );
+      animationRef.current.startedAt =
+        animationRef.current.startedAt || Date.now();
+      animationRef.current.progress = Math.min(
+        1,
+        (Date.now() - animationRef.current.startedAt) /
+          animationRef.current.duration,
+      );
+      return res;
+    }
+    return shapesRef.current;
+  }, [shapesRef]);
+
   const onRenderShapes = useCallback(
     (hoveredRectangle?: Rectangle) => {
       const render = () => {
@@ -47,7 +83,7 @@ export const useDrawSchemaShapes = (
         if (!ctx) {
           return;
         }
-        const shapes = shapesRef.current;
+        const shapes = getShapes(); // shapesRef.current;
         const { width: w, height: h } =
           canvasRef.current.getBoundingClientRect();
         ctx.canvas.width = w;
@@ -102,10 +138,13 @@ export const useDrawSchemaShapes = (
           translate: positionRef.current,
         };
         canvas._drawn = _drawn;
+        if (animationRef.current.progress < 1) {
+          requestAnimationFrame(() => onRenderShapes());
+        }
       };
       requestAnimationFrame(render);
     },
-    [canvasRef, shapesRef, columnColorMode],
+    [canvasRef, getShapes, columnColorMode],
   );
 
   const prevdbConf = useRef(dbConf);
@@ -153,6 +192,16 @@ export const useDrawSchemaShapes = (
 
   return { onRenderShapes, positionRef, scaleRef, setScaleAndPosition };
 };
+
+const interpolatePosition = (
+  [startX, startY]: [number, number],
+  [endX, endY]: [number, number],
+  progress: number,
+) =>
+  [
+    startX + (endX - startX) * progress,
+    startY + (endY - startY) * progress,
+  ] satisfies [number, number];
 
 declare global {
   interface HTMLCanvasElement {

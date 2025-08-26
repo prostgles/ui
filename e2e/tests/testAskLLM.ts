@@ -140,7 +140,7 @@ const mcpSandboxToolUse: ToolUse = {
 };
 
 const toolResponses: Record<string, ToolUse> = {
-  tasks: taskToolUse,
+  task: taskToolUse,
   dashboards: dashboardToolUse,
   mcp: mcpToolUse,
   mcpfail: {

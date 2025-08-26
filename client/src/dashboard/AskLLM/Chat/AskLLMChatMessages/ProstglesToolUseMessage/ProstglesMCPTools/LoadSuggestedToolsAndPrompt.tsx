@@ -81,16 +81,16 @@ export const LoadSuggestedToolsAndPrompt = ({
                   .join(", ")}`;
               })
               .join("\n")
-          : dbAccess.Mode === "execute_sql_commit" ?
+          : dbAccess.Mode === "execute_sql_rollback" ?
             "Execute SQL with rollback"
           : "Execute SQL with commit"}
         </Chip>
       )}
       <FlexRowWrap>
-        {data.suggested_mcp_tool_names.map((toolName) => {
+        {data.suggested_mcp_tool_names.map((toolName, idx) => {
           return (
             <Chip
-              key={toolName}
+              key={toolName + idx}
               title="MCP Tool"
               color="blue"
               leftIcon={{ path: mdiTools }}
@@ -99,10 +99,10 @@ export const LoadSuggestedToolsAndPrompt = ({
             </Chip>
           );
         })}
-        {data.suggested_database_tool_names.map((funcName) => {
+        {data.suggested_database_tool_names?.map((funcName, idx) => {
           return (
             <Chip
-              key={funcName}
+              key={funcName + idx}
               color="blue"
               title="Database Function"
               leftIcon={{ path: mdiLanguageTypescript }}
@@ -144,7 +144,7 @@ export const LoadSuggestedToolsAndPrompt = ({
             );
           }
 
-          if (data.suggested_database_tool_names.length) {
+          if (data.suggested_database_tool_names?.length) {
             await dbs.llm_chats_allowed_functions.delete({
               chat_id: chatId,
             });
@@ -186,7 +186,7 @@ export const LoadSuggestedToolsAndPrompt = ({
               <div>
                 {data.suggested_mcp_tool_names.length}{" "}
                 <strong>MCP tools</strong> and{" "}
-                {data.suggested_database_tool_names.length}{" "}
+                {data.suggested_database_tool_names?.length ?? 0}{" "}
                 <strong>DB Functions</strong> added to this chat
               </div>
             ),

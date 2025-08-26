@@ -36,7 +36,7 @@ The menu is designed to be user-friendly and provides quick access to essential 
   - **Tables and views**: List of tables and views from the current database. Click to open a table or view. By default only the tables from the public schema are shown. Schema list from the connection settings controls which schemas are shown.  
   - **Server-side functions**: List of server-side functions for the current database. Click to open a function.  
   - <a href="#create/import">Create/Import</a>: Opens the menu for creating new tables, server-side functions or importing csv/json files.  
-  - <a href="#schema_graph">Schema graph</a>: Opens the schema graph for visualizing the relationships between tables and views in the current database.  
+  - <a href="#schema_diagram">Schema diagram</a>: Opens the schema diagram for visualizing the relationships between tables and views in the current database.  
 
 <h3 id="create/import"> Create/Import </h3> 
 

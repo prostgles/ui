@@ -8,8 +8,10 @@ export const setupLLM = async (dbs: DBS) => {
     const adminUser = await dbs.users.findOne({ passwordless_admin: true });
     const user_id = adminUser?.id;
     const firstLine = [
-      `You are an assistant for a PostgreSQL based software called ${LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME}.`,
+      `You are an assistant for a software called ${LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME}.`,
+      `It allows managing and exploring data within Postgres databases as well as creating internal tools. \n`,
       `Today is ${LLM_PROMPT_VARIABLES.TODAY}.`,
+      `DO NOT USE HARDCODED SAMPLE DATA UNLESS THE USER ASKS FOR IT.`,
     ].join("\n");
     await dbs.llm_prompts.insert([
       {

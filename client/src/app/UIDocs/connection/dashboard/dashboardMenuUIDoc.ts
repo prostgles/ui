@@ -195,15 +195,15 @@ export const dashboardMenuUIDoc = {
     {
       type: "popup",
       selectorCommand: "SchemaGraph",
-      title: "Schema graph",
+      title: "Schema diagram",
       description:
-        "Opens the schema graph for visualizing the relationships between tables and views in the current database.",
+        "Opens the schema diagram for visualizing the relationships between tables and views in the current database.",
       docs: fixIndent(`
-        The schema graph provides a visual representation of the relationships between tables and views in the current database.
-        It allows you to explore the schema structure, view table relationships, and manage the layout of the schema graph.
-        You can filter tables and columns based on their relationship types, reset the layout, and close the schema graph to return to the dashboard menu.
+        The schema diagram provides a visual representation of the relationships between tables and views in the current database.
+        It allows you to explore the schema structure, view table relationships, and manage the layout of the schema diagram.
+        You can filter tables and columns based on their relationship types, reset the layout, and close the schema diagram to return to the dashboard menu.
         
-        <img src="/screenshots/schema_diagram.svg" alt="Schema graph screenshot" />
+        <img src="/screenshots/schema_diagram.svg" alt="Schema diagram screenshot" />
       `),
       asSeparateFile: true,
       children: [
@@ -211,7 +211,7 @@ export const dashboardMenuUIDoc = {
           type: "section",
           title: "Top controls",
           description:
-            "Controls for managing the schema graph view and layout.",
+            "Controls for managing the schema diagram view and layout.",
           selectorCommand: "SchemaGraph.TopControls",
           children: [
             {
@@ -240,14 +240,14 @@ export const dashboardMenuUIDoc = {
               selectorCommand: "SchemaGraph.TopControls.resetLayout",
               title: "Reset layout",
               description:
-                "Moving tables is persisted the state database. Clicking this resets the schema graph layout to its initial state.",
+                "Moving tables is persisted the state database. Clicking this resets the schema diagram layout to its initial state.",
             },
             {
               type: "button",
               selectorCommand: "Popup.close",
-              title: "Close schema graph",
+              title: "Close schema diagram",
               description:
-                "Closes the schema graph and returns to the dashboard menu.",
+                "Closes the schema diagram and returns to the dashboard menu.",
             },
           ],
         },

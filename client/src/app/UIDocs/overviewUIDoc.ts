@@ -9,6 +9,13 @@ export const overviewUIDoc = {
 
     <img src="/screenshots/dashboard.svg" alt="Prostgles UI Overview" width="100%" />
 
+    <img src="/screenshots/db_schema_diagram.svg" alt="Prostgles UI Overview" width="100%" />
+    <img src="/screenshots/postgis_map.svg" alt="Prostgles UI Overview" width="100%" />
+    <img src="/screenshots/llm_chat_sql_querying.svg" alt="Prostgles UI Overview" width="100%" />
+    <img src="/screenshots/llm_chat_ocr.svg" alt="Prostgles UI Overview" width="100%" />
+    <img src="/screenshots/llm_chat_data_upload.svg" alt="Prostgles UI Overview" width="100%" />
+
+
     ## Features
     - SQL Editor with syntax highlighting and auto-completion
     - Real-time dashboards with charts

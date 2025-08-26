@@ -130,13 +130,14 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly suggested_database_tool_names: {
                         readonly description: "List of database tools that can be used to complete the task";
                         readonly arrayOf: "string";
+                        readonly optional: true;
                     };
                     readonly suggested_prompt: {
-                        readonly description: "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task";
+                        readonly description: "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.";
                         readonly type: "string";
                     };
                     readonly suggested_database_access: {
-                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task.";
+                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.";
                         readonly oneOfType: readonly [{
                             readonly Mode: {
                                 readonly enum: readonly ["None"];
@@ -181,7 +182,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     readonly "docker-sandbox": {
         readonly create_container: {
             readonly schema: {
-                readonly description: "Create a new Docker sandbox container";
+                readonly description: "Creates a docker container";
                 readonly type: {
                     readonly files: {
                         readonly description: "Files to copy into the container. Must include a Dockerfile. Example { \"index.ts\": \"import type { JSONB } from \"prostgles-types\";\" }";

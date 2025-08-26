@@ -6,7 +6,7 @@ import { colIs, parseValue } from "../SmartForm/SmartFormField/fieldUtils";
 import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
 import type { BaseFilterProps } from "./SmartFilter";
 import { _PG_numbers } from "prostgles-types";
-import { FlexRowWrap } from "../../components/Flex";
+import { FlexRowWrap } from "@components/Flex";
 
 type NumberOrDateFilterProps = BaseFilterProps & {
   type: "number" | "date";
@@ -94,11 +94,18 @@ export class NumberOrDateFilter extends RTComp<
       _val = filter?.value,
     } = val;
 
+    const isDate = colIs(column, "_PG_date");
+    if (isDate) {
+      min = new Date(min);
+      max = new Date(max);
+      _val = new Date(_val);
+    }
+
     /** Change the other value if needed */
     if (
       min?.toString().length &&
       max?.toString().length &&
-      typeof +min === typeof +max &&
+      typeof min === typeof max &&
       +min > +max
     ) {
       if ("min" in val) {
@@ -106,13 +113,6 @@ export class NumberOrDateFilter extends RTComp<
       } else {
         min = +max;
       }
-    }
-
-    const isDate = colIs(column, "_PG_date");
-    if (isDate) {
-      min = new Date(min);
-      max = new Date(max);
-      _val = new Date(_val);
     }
 
     const type: SimpleFilter["type"] = this.props.filter?.type ?? "$between";

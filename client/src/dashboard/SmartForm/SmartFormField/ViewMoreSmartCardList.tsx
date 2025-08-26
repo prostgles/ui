@@ -52,9 +52,10 @@ export const ViewMoreSmartCardList = ({
           anchorEl={anchorEl}
           onClickClose={false}
           positioning="left"
+          showFullscreenToggle={{}}
           clickCatchStyle={{ opacity: 1 }}
-          rootStyle={{
-            maxWidth: "min(100vw, 700px)",
+          rootChildStyle={{
+            maxWidth: "min(100vw, 800px)",
           }}
         >
           <SmartCardList

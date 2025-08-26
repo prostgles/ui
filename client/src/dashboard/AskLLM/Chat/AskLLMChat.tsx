@@ -175,7 +175,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           className="min-h-0 f-1"
           style={{
             whiteSpace: "pre-line",
-            // width: `${CHAT_WIDTH}px`,
             maxWidth: `${CHAT_WIDTH}px`,
           }}
         >

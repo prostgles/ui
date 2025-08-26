@@ -380,7 +380,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                 arrayOfType: {
                   tableName: {
                     title: "Table name",
-                    type: "Lookup[]",
+                    type: "Lookup",
                     lookup: {
                       type: "schema",
                       object: "table",

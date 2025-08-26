@@ -103,13 +103,14 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     suggested_database_tool_names: {
                         description: "List of database tools that can be used to complete the task",
                         arrayOf: "string",
+                        optional: true,
                     },
                     suggested_prompt: {
-                        description: "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task",
+                        description: "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.",
                         type: "string",
                     },
                     suggested_database_access: {
-                        description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task.",
+                        description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.",
                         oneOfType: [
                             { Mode: { enum: ["None"] } },
                             { Mode: { enum: ["execute_sql_rollback"] } },
@@ -145,7 +146,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     "docker-sandbox": {
         create_container: {
             schema: {
-                description: "Create a new Docker sandbox container",
+                description: "Creates a docker container",
                 type: {
                     files: filesSchema,
                     timeout: {

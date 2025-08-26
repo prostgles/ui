@@ -1,20 +1,20 @@
-<h1 id="schema_graph"> Schema graph </h1> 
+<h1 id="schema_diagram"> Schema diagram </h1> 
 
-The schema graph provides a visual representation of the relationships between tables and views in the current database.
-It allows you to explore the schema structure, view table relationships, and manage the layout of the schema graph.
-You can filter tables and columns based on their relationship types, reset the layout, and close the schema graph to return to the dashboard menu.
+The schema diagram provides a visual representation of the relationships between tables and views in the current database.
+It allows you to explore the schema structure, view table relationships, and manage the layout of the schema diagram.
+You can filter tables and columns based on their relationship types, reset the layout, and close the schema diagram to return to the dashboard menu.
 
 <picture>
 <source srcset="/screenshots/dark/schema_diagram.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/schema_diagram.svg" alt="Schema graph screenshot" style="border: 1px solid; margin: 1em 0;" />
+<img src="/screenshots/schema_diagram.svg" alt="Schema diagram screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
-  - **Top controls**: Controls for managing the schema graph view and layout.  
+  - **Top controls**: Controls for managing the schema diagram view and layout.  
     - **Table relationship filter**: Display tables based on their relationship type. Options include: all, linked (with relationships), orphaned (without relationships).  
     - **Column relationship filter**: Display columns based on their relationship type. Options include: all, references (with relationships), none (no columns/only table names will be shown).  
     - **Link colour mode**: Colour links by: default (fixed colour), root table (the colour of the table the relationship tree originates from), on-delete/on-update (colour based on constraint referential action).  
-    - **Reset layout**: Moving tables is persisted the state database. Clicking this resets the schema graph layout to its initial state.  
-    - **Close schema graph**: Closes the schema graph and returns to the dashboard menu.  
+    - **Reset layout**: Moving tables is persisted the state database. Clicking this resets the schema diagram layout to its initial state.  
+    - **Close schema diagram**: Closes the schema diagram and returns to the dashboard menu.  
 
 <h2 id="workspaces_menu"> Workspaces menu </h2> 
 

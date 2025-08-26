@@ -59,6 +59,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
 
   const ProstglesTool = ProstglesMCPToolsWithUI[m.name];
   const ProstglesToolComponent = ProstglesTool?.component;
+  const needsResult = !ProstglesTool?.inline;
 
   return (
     <ErrorTrap>
@@ -87,12 +88,12 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
             toolUseResult?.toolUseResultMessage.is_error ? "danger" : undefined
           }
           title={
-            toolUseResult ?
+            toolUseResult || !needsResult ?
               `Tool use result for: ${m.name}`
             : `Awaiting tool result: ${m.name}`
           }
           data-command="ToolUseMessage.toggle"
-          loading={!toolUseResult}
+          loading={!toolUseResult && needsResult}
           children={
             ProstglesTool?.inline ? undefined : (
               <>
@@ -103,14 +104,17 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
             )
           }
         />
-        {ProstglesTool?.inline && ProstglesToolComponent && (
-          <ProstglesToolComponent
-            workspaceId={workspaceId}
-            message={m}
-            chatId={fullMessage.chat_id}
-            toolUseResult={toolUseResult}
-          />
-        )}
+        <FlexCol>
+          {ProstglesTool?.inline && ProstglesToolComponent && (
+            <ProstglesToolComponent
+              workspaceId={workspaceId}
+              message={m}
+              chatId={fullMessage.chat_id}
+              toolUseResult={toolUseResult}
+            />
+          )}
+          {toolCallError && <ErrorComponent error={toolCallError} />}
+        </FlexCol>
         {toolDataAnchorEl && (
           <Popup
             data-command="ToolUseMessage.Popup"
@@ -133,8 +137,6 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
             : <ToolUseChatMessageResult {...props} />}
           </Popup>
         )}
-
-        {toolCallError && <ErrorComponent error={toolCallError} />}
       </FlexCol>
     </ErrorTrap>
   );

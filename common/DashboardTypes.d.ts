@@ -5,6 +5,10 @@ export type LayoutItem = {
     id: string;
     type: "item";
     title?: string;
+    /**
+     * Table name after quote_ident() has been applied.
+     * This means that any table names with uppercase letters or special characters will be quoted.
+     */
     tableName: string | null;
     viewType: "table" | "map" | "timechart" | "sql";
     /**

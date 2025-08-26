@@ -1,7 +1,6 @@
 import { fixIndent, ROUTES } from "../../../../common/utils";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers, UIDocElement } from "../UIDocs";
-import { connectionConfigUIDoc } from "./connection/connectionConfigUIDoc";
 import { editConnectionUIDoc } from "./editConnectionUIDoc";
 
 const newOwnerOrUserOptions = [

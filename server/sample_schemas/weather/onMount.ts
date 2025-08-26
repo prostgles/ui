@@ -1,5 +1,6 @@
 export const onMount: ProstglesOnMount = async ({ dbo }) => {
   if (!dbo.cities) {
+    console.warn("Creating tables...");
     await dbo.sql(`
       CREATE EXTENSION IF NOT EXISTS postgis;
 
@@ -61,12 +62,19 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
 
       CREATE INDEX weather_forecasts_city_id_idx ON weather_forecasts(city_id);
     `);
+    console.warn("Created sample schema 'weather'");
   }
 
   const addForecasts = async () => {
     if (!dbo.weather_forecasts) return;
     const citiesCount = await dbo.cities.count();
+    console.log("Cities in DB:", citiesCount);
     if (!+citiesCount) {
+      console.log("Adding cities and airports...");
+      await dbo.sql(`
+        TRUNCATE weather_forecasts RESTART IDENTITY CASCADE;
+        TRUNCATE airports RESTART IDENTITY CASCADE; 
+      `);
       const airports = await fetchAirports();
       await dbo.airports.insert(airports);
 
@@ -96,9 +104,12 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
       lastAdded &&
       new Date().getTime() - new Date(lastAdded.forecast_time).getTime() < DAY
     ) {
+      console.log("Forecasts are up to date, skipping update");
       return;
     }
+    console.log("Adding forecasts for", cities.length, "cities");
     for (const city of cities) {
+      console.log("Fetched weather for", city.name_en || city.name);
       const weather = await getWeatherForCity(city.latitude, city.longitude);
       const forecasts = weather.properties.timeseries.map((entry) => ({
         city_id: city.id,

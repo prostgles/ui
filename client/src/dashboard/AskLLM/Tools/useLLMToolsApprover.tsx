@@ -90,7 +90,7 @@ export type ApproveRequest =
       "id" | "name" | "description" | "server_name"
     > & {
       type: "mcp";
-      tool_name: string;
+      // tool_name: string;
       auto_approve: boolean;
     })
   | (ProstglesMcpTool & {

@@ -620,7 +620,7 @@ test.describe("Main test", () => {
     await setModelByText(page, "son");
 
     await setPromptByText(page, "Create task");
-    await sendAskLLMMessage(page, " tasks ");
+    await sendAskLLMMessage(page, " task ");
 
     await page.getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt").click();
     await page.getByText("OK", { exact: true }).click();

@@ -136,8 +136,12 @@ export const AskLLMChatActionBarPromptSelector = (
               positioning="top-center"
               button={<Btn iconPath={mdiFileEyeOutline} title="Preview" />}
               contentClassName="p-2 max-w-800"
+              showFullscreenToggle={{}}
+              rootChildClassname="f-1"
+              onClickClose={false}
             >
               <Marked
+                className="f-1 m-auto"
                 content={promptContent || ""}
                 loadedSuggestions={undefined}
                 codeHeader={undefined}

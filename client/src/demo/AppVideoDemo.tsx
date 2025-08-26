@@ -12,6 +12,8 @@ import { backupDemo } from "./backupDemo";
 import { dashboardDemo } from "./dashboardDemo";
 import { fileDemo } from "./fileDemo";
 import { sqlDemo } from "./sqlVideoDemo";
+import { schemaDiagramDemo } from "./schemaDiagramDemo";
+import { AIAssistantDemo } from "./AIAssistantDemo";
 
 const loadTest = async () => {
   const dbs: DBS = (window as any).dbs;
@@ -19,6 +21,8 @@ const loadTest = async () => {
 };
 
 const VIDEO_DEMO_SCRIPTS = {
+  AIAssistantDemo,
+  schemaDiagramDemo,
   backupDemo,
   fileDemo,
   accessControlDemo,
@@ -61,12 +65,18 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
       await VIDEO_DEMO_SCRIPTS[name]();
     } else {
       const {
+        AIAssistantDemo,
+        schemaDiagramDemo,
         sqlDemo,
         accessControlDemo,
         backupDemo,
         fileDemo,
         dashboardDemo,
       } = VIDEO_DEMO_SCRIPTS;
+      startVideoDemo("AI Assistant");
+      await AIAssistantDemo();
+      startVideoDemo("Schema Diagram");
+      await schemaDiagramDemo();
       startVideoDemo("SQL");
       await sqlDemo();
       startVideoDemo("Access Control");

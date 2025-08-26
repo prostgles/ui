@@ -1,5 +1,9 @@
 import { scrollIntoViewIfNeeded } from "src/utils";
-import { type Command, getCommandElemSelector } from "../Testing";
+import {
+  type Command,
+  getCommandElemSelector,
+  getDataKeyElemSelector,
+} from "../Testing";
 import { tout } from "../pages/ElectronSetup/ElectronSetup";
 
 let pointer: HTMLDivElement | null = null;
@@ -11,6 +15,18 @@ export const movePointer = async (x: number, y: number) => {
     pointer.style.left = x + "px";
     pointer.style.top = y + "px";
     await tout(500);
+    const targetEl = document.elementFromPoint(x, y);
+    if (targetEl) {
+      const evt = new PointerEvent("pointermove", {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        view: window,
+      });
+
+      targetEl.dispatchEvent(evt);
+    }
   }
 };
 type GetElemOpts = {
@@ -116,6 +132,14 @@ export const click = async (
   } else {
     finalElem.click();
   }
+};
+export const openConnection = async (name: string) => {
+  await click(
+    "",
+    getDataKeyElemSelector(name) +
+      " " +
+      getCommandElemSelector("Connection.openConnection"),
+  );
 };
 // window._click = click;
 
