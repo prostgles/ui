@@ -412,7 +412,7 @@ export const CountAllFunc: FuncDef & { name: string } = {
   isAggregate: true,
 };
 
-const aggFunctions = [
+export const aggFunctions = [
   CountAllFunc,
   {
     key: "$count",

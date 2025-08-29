@@ -18,6 +18,7 @@ import { isDefined } from "../../../../utils";
 import { Counter } from "../../../W_SQL/W_SQL";
 import type { UseLLMChatProps } from "../useLLMChat";
 import { ToolUseChatMessage } from "./ToolUseChatMessage";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 
 type P = UseLLMChatProps & {
   activeChat: DBSSchema["llm_chats"] | undefined;
@@ -224,6 +225,7 @@ export const useLLMChatMessages = (props: P) => {
     ],
   );
 
+  const lastMessage = llmMessages?.at(-1);
   const disabled_message =
     (
       activeChat?.disabled_until &&
@@ -231,10 +233,26 @@ export const useLLMChatMessages = (props: P) => {
       activeChat.disabled_message
     ) ?
       activeChat.disabled_message
-    : llmMessages?.at(-1)?.meta?.finish_reason === "length" ?
-      <ErrorComponent
-        error={"finish_reason = 'length'. Increase max_tokens and try again"}
-      />
+    : lastMessage?.meta?.finish_reason === "length" ?
+      <FlexCol>
+        <ErrorComponent
+          error={"finish_reason = 'length'. Increase max_tokens and try again"}
+        />
+        <FormFieldDebounced
+          label={"Max tokens"}
+          value={
+            activeChat?.extra_body?.max_tokens ||
+            lastMessage.meta?.max_tokens ||
+            6000
+          }
+          onChange={(max_tokens) => {
+            dbs.llm_chats.update(
+              { id: activeChat!.id },
+              { extra_body: { max_tokens: Number(max_tokens) } },
+            );
+          }}
+        />
+      </FlexCol>
     : undefined;
 
   const messages: Message[] = (

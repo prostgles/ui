@@ -1,7 +1,9 @@
 export const isDefined = (v) => v !== undefined && v !== null;
 export const CORE_FILTER_TYPES = [
     { key: "=", label: "=" },
+    { key: "$eq", label: "=" },
     { key: "<>", label: "!=" },
+    { key: "$ne", label: "!=" },
     { key: "$in", label: "IN" },
     { key: "$nin", label: "NOT IN" },
     { key: "not null", label: "IS NOT NULL" },
@@ -52,6 +54,10 @@ export const NUMERIC_FILTER_TYPES = [
     { key: ">=", label: ">=" },
     { key: "<", label: "<" },
     { key: "<=", label: "<=" },
+    { key: "$gt", label: ">" },
+    { key: "$gte", label: ">=" },
+    { key: "$lt", label: "<" },
+    { key: "$lte", label: "<=" },
 ];
 export const DATE_FILTER_TYPES = [
     { key: "$age", label: "Age at start of day" },
@@ -71,7 +77,7 @@ export const getFinalFilterInfo = (fullFilter, context, depth = 0, opts) => {
     var _a;
     const forPg = (opts === null || opts === void 0 ? void 0 : opts.for) === "pg";
     const filterToString = (filter) => {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         if (!Object.keys(filter).length) {
             return undefined;
         }
@@ -104,9 +110,11 @@ export const getFinalFilterInfo = (fullFilter, context, depth = 0, opts) => {
             }
             return `${fields} contain ${matchCase ? "(case sensitive)" : ""} ${value}`;
         }
-        const [fieldName, operator = "="] = fieldNameAndOperator.split(".$");
+        const [fieldName, operatorRaw = "="] = fieldNameAndOperator.split(".$");
+        const operator = ((_c = CORE_FILTER_TYPES.find(({ key }) => key === `$${operatorRaw}`)) === null || _c === void 0 ? void 0 : _c.label) ||
+            operatorRaw;
         const value = f[fieldNameAndOperator];
-        if ("fieldName" in filter && ((_c = filter.contextValue) === null || _c === void 0 ? void 0 : _c.objectName) === "user") {
+        if ("fieldName" in filter && ((_d = filter.contextValue) === null || _d === void 0 ? void 0 : _d.objectName) === "user") {
             return `${fieldName}::TEXT ${operator} ${value}`;
         }
         const valueStr = ["number", "boolean"].includes(typeof value) ? value

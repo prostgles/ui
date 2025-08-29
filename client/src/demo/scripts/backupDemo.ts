@@ -1,5 +1,5 @@
-import { tout } from "../pages/ElectronSetup/ElectronSetup";
-import { click, getElement, openConnection } from "./demoUtils";
+import { tout } from "../../pages/ElectronSetup/ElectronSetup";
+import { click, getElement, openConnection } from "../demoUtils";
 
 export const backupDemo = async () => {
   await click("dashboard.goToConnections");

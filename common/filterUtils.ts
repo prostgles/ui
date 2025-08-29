@@ -7,7 +7,9 @@ export const isDefined = <T>(v: T | undefined | void): v is T =>
 
 export const CORE_FILTER_TYPES = [
   { key: "=", label: "=" },
+  { key: "$eq", label: "=" },
   { key: "<>", label: "!=" },
+  { key: "$ne", label: "!=" },
   { key: "$in", label: "IN" },
   { key: "$nin", label: "NOT IN" },
   { key: "not null", label: "IS NOT NULL" },
@@ -65,6 +67,10 @@ export const NUMERIC_FILTER_TYPES = [
   { key: ">=", label: ">=" },
   { key: "<", label: "<" },
   { key: "<=", label: "<=" },
+  { key: "$gt", label: ">" },
+  { key: "$gte", label: ">=" },
+  { key: "$lt", label: "<" },
+  { key: "$lte", label: "<=" },
 ] as const;
 
 export const DATE_FILTER_TYPES = [
@@ -174,7 +180,10 @@ export const getFinalFilterInfo = (
       }
       return `${fields} contain ${matchCase ? "(case sensitive)" : ""} ${value}`;
     }
-    const [fieldName, operator = "="] = fieldNameAndOperator.split(".$");
+    const [fieldName, operatorRaw = "="] = fieldNameAndOperator.split(".$");
+    const operator =
+      CORE_FILTER_TYPES.find(({ key }) => key === `$${operatorRaw}`)?.label ||
+      operatorRaw;
     const value = f[fieldNameAndOperator];
     if ("fieldName" in filter && filter.contextValue?.objectName === "user") {
       return `${fieldName}::TEXT ${operator} ${value}`;

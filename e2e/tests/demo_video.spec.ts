@@ -6,6 +6,8 @@ import {
   goTo,
   login,
   openConnection,
+  runDbsSql,
+  setupProstglesLLMProvider,
 } from "./utils";
 // const viewPortSize = { width: 1920, height: 1080 };
 const viewPortSize = { width: 1280, height: 1080 };
@@ -34,7 +36,7 @@ test.describe("Demo video", () => {
     // // await page.getByTestId("App.colorScheme").locator(`[data-key=light]`).click();
     // await page.getByTestId("App.colorScheme").locator(`[data-key=dark]`).click();
     const getVideoDemoConnection = async () => {
-      // await page.getByRole("link", { name: "Connections" }).click();
+      // await goTo(page, "/connections");
       const videoDemoConnection = await page.getByRole("link", {
         name: "prostgles_video_demo",
         exact: true,
@@ -51,6 +53,8 @@ test.describe("Demo video", () => {
       await createDatabase("food_delivery", page, true);
     }
 
+    await setupProstglesLLMProvider(page);
+
     const startDemo = async (theme: "dark" | "light") => {
       await goTo(page, "/connections");
       await page.getByTestId("App.colorScheme").click();
@@ -59,18 +63,6 @@ test.describe("Demo video", () => {
         .locator(`[data-key=${theme}]`)
         .click();
       await page.waitForTimeout(1000);
-      await openConnection(page, "food_delivery");
-      await page.getByTestId("SchemaGraph").click();
-
-      await page.mouse.move(780, 290);
-      await page.mouse.move(780, 295);
-      await page.waitForTimeout(1000);
-      await page.mouse.move(810, 690);
-      await page.mouse.move(810, 695);
-      await page.waitForTimeout(1000);
-      // const graphSelector = getCommandElemSelector("Popup.content") + " canvas";
-
-      await page.mouse.move(200, 500);
       const videoDemoConnection = await getVideoDemoConnection();
 
       await videoDemoConnection.click();

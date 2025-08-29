@@ -1,5 +1,5 @@
 import { isObject } from "../../../../common/publishUtils";
-import { fixIndent } from "../../demo/sqlVideoDemo";
+import { fixIndent } from "../../demo/scripts/sqlVideoDemo";
 import { COMMANDS } from "../../Testing";
 import { flatDocs, UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";
 

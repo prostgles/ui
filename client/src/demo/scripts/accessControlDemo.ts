@@ -1,6 +1,6 @@
-import { tout } from "../pages/ElectronSetup/ElectronSetup";
-import type { Command } from "../Testing";
-import { click, getElement } from "./demoUtils";
+import { tout } from "../../pages/ElectronSetup/ElectronSetup";
+import type { Command } from "../../Testing";
+import { click, getElement } from "../demoUtils";
 import { videoDemoAccessControlScripts } from "./videoDemoAccessControlScripts";
 
 export const accessControlDemo = async () => {

@@ -63,8 +63,8 @@ export const SearchListItems = React.forwardRef<
       {isSearch && !!renderedItems.length && <ClickCatchOverlay />}
       <ul
         className={
-          "no-decor f-1 max-h-fit o-auto min-h-0 min-w-0 ul-search-list o-auto  no-scroll-bar " +
-          (isSearch ? " no-scroll-bar shadow bg-color-0 " : "")
+          "no-decor f-1 max-h-fit o-auto min-h-0 min-w-0 ul-search-list o-auto rounded-b  no-scroll-bar " +
+          (isSearch ? "  shadow bg-color-0 " : "")
         }
         role="listbox"
         ref={ref}

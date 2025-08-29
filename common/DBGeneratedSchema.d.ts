@@ -319,7 +319,8 @@ export type DBGeneratedSchema = {
        |  {  type: "Custom";  tables: string[]; }
       disabled_message?: null | string;
       disabled_until?: null | string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   stream?: boolean;  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   reasoning?: |  {  effort: "high" | "medium" | "low"; }
+ |  {  max_tokens?: number; };   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
       llm_prompt_id?: null | number;
@@ -368,7 +369,8 @@ export type DBGeneratedSchema = {
     columns: {
       api_key?: string;
       created?: null | string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   stream?: boolean;  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   reasoning?: |  {  effort: "high" | "medium" | "low"; }
+ |  {  max_tokens?: number; };   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
       is_default?: boolean;
@@ -409,7 +411,8 @@ export type DBGeneratedSchema = {
  | string;  };
       chat_suitability_rank?: null | string;
       context_length?: number;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   stream?: boolean;  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   reasoning?: |  {  effort: "high" | "medium" | "low"; }
+ |  {  max_tokens?: number; };   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
       mcp_tool_support?: null | boolean;
@@ -446,7 +449,8 @@ export type DBGeneratedSchema = {
       api_docs_url?: null | string;
       api_pricing_url?: null | string;
       api_url: string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   stream?: boolean;  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   reasoning?: |  {  effort: "high" | "medium" | "low"; }
+ |  {  max_tokens?: number; };   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id: string;
       logo_url?: null | string;
@@ -792,9 +796,22 @@ export type DBGeneratedSchema = {
       sql_options?: {    executeOptions?: "full" | "block" | "smallest-block";   errorMessageDisplay?: "tooltip" | "bottom" | "both";   tabSize?: number;   lineNumbers?: "on" | "off";   renderMode?: "table" | "csv" | "JSON";   minimap?: {  enabled: boolean; };   acceptSuggestionOnEnter?: "on" | "smart" | "off";   expandSuggestionDocs?: boolean;   maxCharsPerCell?: number;   theme?: "vs" | "vs-dark" | "hc-black" | "hc-light";   showRunningQueryStats?: boolean;  };
       table_name?: null | string;
       table_oid?: null | number;
+      title?: null | string;
       type?: null | "map" | "sql" | "table" | "timechart" | "card" | "method"
       user_id: string;
       workspace_id?: null | string;
+    };
+  };
+  workspace_layout_modes: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      description?: null | string;
+      en?: null | string;
+      id: string;
     };
   };
   workspace_publish_modes: {
@@ -825,10 +842,10 @@ export type DBGeneratedSchema = {
       last_updated: string;
       last_used?: string;
       layout?: null | any;
+      layout_mode?: null | "fixed" | "editable"
       name?: string;
       options?: {    hideCounts?: boolean;   tableListEndInfo?: "none" | "count" | "size";   tableListSortBy?: "name" | "extraInfo";   showAllMyQueries?: boolean;   defaultLayoutType?: "row" | "tab" | "col";   pinnedMenu?: boolean;   pinnedMenuWidth?: number;  };
       parent_workspace_id?: null | string;
-      publish_mode?: null | string;
       published?: boolean;
       source?: null | {    tool_use_id: string;  };
       url_path?: null | string;

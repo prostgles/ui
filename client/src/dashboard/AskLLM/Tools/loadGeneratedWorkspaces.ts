@@ -7,11 +7,13 @@ import {
 import type { Prgl } from "../../../App";
 import { isDefined, omitKeys } from "prostgles-types";
 import { CHIP_COLOR_NAMES } from "../../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
+import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
+import { aggFunctions } from "src/dashboard/W_Table/ColumnMenu/FunctionSelector";
 
 export const loadGeneratedWorkspaces = async (
   basicWorkspaces: WorkspaceInsertModel[],
   tool_use_id: string,
-  { dbs, connectionId }: Pick<Prgl, "dbs" | "connectionId">,
+  { dbs, connectionId, tables }: Pick<Prgl, "dbs" | "connectionId" | "tables">,
 ) => {
   const viewIdToIndex: Record<string, number> = {};
   const workspaces = basicWorkspaces.map((bw, i) => {
@@ -23,11 +25,13 @@ export const loadGeneratedWorkspaces = async (
       if (bw.type === "map") {
         return {
           type: "map",
+          title: bw.title,
           table_name: bw.table_name,
         };
       } else if (bw.type === "timechart") {
         return {
           type: "timechart",
+          title: bw.title,
           table_name: bw.table_name,
         };
       } else if (bw.type === "table") {
@@ -56,11 +60,16 @@ export const loadGeneratedWorkspaces = async (
             },
           };
         });
-        const { sort, filter } = bw;
+        const { sort, filter, filterOperand, quickFilterGroups } = bw;
         return {
           type: "table",
+          title: bw.title,
           columns,
           filter,
+          options: {
+            filterOperand,
+            quickFilterGroups,
+          } satisfies WindowData<"table">["options"],
           sort: sort
             ?.map((s) => {
               const nestedCol = columns?.find(
@@ -76,12 +85,83 @@ export const loadGeneratedWorkspaces = async (
             })
             .filter(isDefined),
           table_name: bw.table_name,
-        };
+        } satisfies Omit<
+          DBSSchemaForInsert["windows"],
+          "last_updated" | "user_id"
+        >;
+      } else if (bw.type === "barchart") {
+        const {
+          filter,
+          filterOperand,
+          quickFilterGroups,
+          table_name,
+          x_axis,
+          y_axis_column,
+          title,
+        } = bw;
+
+        const funcDef = aggFunctions.find(
+          (f) =>
+            f.key ===
+            (x_axis === "count(*)" ? "$countAll" : "$" + x_axis.aggregation),
+        )!;
+        const xColName =
+          x_axis === "count(*)" ? "Count" : (
+            `${funcDef.label}(${x_axis.column})`
+          );
+
+        const columns: WindowData<"table">["columns"] = [
+          {
+            name: y_axis_column,
+            show: true,
+          },
+          {
+            name: xColName,
+            show: true,
+            computedConfig: {
+              column: x_axis === "count(*)" ? undefined : x_axis.column,
+              funcDef: {
+                ...funcDef,
+                subLabel: "",
+              },
+            },
+            style: {
+              type: "Barchart",
+              barColor: "#0081A7",
+              textColor: "",
+            },
+          },
+        ];
+        const otherColumns = tables.find((t) => t.name === table_name)?.columns;
+        otherColumns?.forEach((col) => {
+          if (col.name !== y_axis_column) {
+            columns.push({
+              name: col.name,
+              show: false,
+            });
+          }
+        });
+        return {
+          type: "table",
+          title,
+          table_name,
+          columns,
+          filter,
+          options: {
+            filterOperand,
+            quickFilterGroups,
+            hideEditRow: true,
+          } satisfies WindowData<"table">["options"],
+          sort: [{ key: "xColName", asc: false }],
+        } satisfies Omit<
+          DBSSchemaForInsert["windows"],
+          "last_updated" | "user_id"
+        >;
       }
       return omitKeys(
         {
           ...bw,
-          name: bw.id || "Query",
+          name: bw.name || "Query",
         },
         ["id"],
       );
@@ -95,6 +175,7 @@ export const loadGeneratedWorkspaces = async (
       source: {
         tool_use_id,
       },
+      layout_mode: "fixed",
     } satisfies DBSSchemaForInsert["workspaces"] & {
       windows: Omit<
         DBSSchemaForInsert["windows"],
@@ -138,7 +219,7 @@ export const loadGeneratedWorkspaces = async (
                 {
                   type: "table",
                   table_name: w.table_name,
-                  workspace_id: insertedWorkspace.id!,
+                  workspace_id: insertedWorkspace.id,
                   last_updated: undefined as any,
                   user_id: undefined as any,
                 },

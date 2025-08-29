@@ -230,7 +230,7 @@ export class _Dashboard extends RTComp<
         if (
           wsp.published &&
           wsp.user_id !== this.props.prgl.user?.id &&
-          wsp.publish_mode !== "fixed"
+          wsp.layout_mode !== "fixed"
         ) {
           let myClonedWsp = await workspaces.findOne({
             parent_workspace_id: wsp.id,
@@ -489,7 +489,7 @@ export class _Dashboard extends RTComp<
     const pinnedMenu = getIsPinnedMenu(workspace);
     const isReadonlyWorkspace =
       workspace.published && workspace.user_id !== prgl.user?.id;
-    const isFixed = isReadonlyWorkspace && workspace.publish_mode === "fixed";
+    const isFixed = isReadonlyWorkspace && workspace.layout_mode === "fixed";
     const dashboardMenu = (
       <DashboardMenu
         menuAnchorState={this.menuAnchorState}
@@ -647,6 +647,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
   myLinks: LinkSyncItem[];
   onAddChart: OnAddChart | undefined;
   active_row: ActiveRow | undefined;
+  workspace: WorkspaceSyncItem;
 } & Pick<ViewRendererProps, "searchParams" | "setSearchParams">;
 
 export const getTables = (
@@ -713,7 +714,7 @@ const cloneEditableWorkpsaces = async ({
     : await dbs.workspaces.find({
         published: true,
         user_id: { $ne: user_id! },
-        publish_mode: { $isDistinctFrom: "fixed" },
+        layout_mode: { $isDistinctFrom: "fixed" },
         $notExistsJoined: {
           workspaces: {
             user_id,

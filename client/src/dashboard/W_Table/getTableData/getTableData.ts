@@ -1,56 +1,11 @@
 import type { AnyObject } from "prostgles-types";
-import { isDefined, isEmpty, omitKeys, pickKeys } from "prostgles-types";
-import type { DeltaOf, DeltaOfData } from "../RTComp";
-import type { ProstglesTableD, W_TableProps, W_TableState } from "./W_Table";
-import W_Table from "./W_Table";
-import { getSort } from "./tableUtils/tableUtils";
-import type { WindowData } from "../Dashboard/dashboardUtils";
-import { getTableSelect } from "./tableUtils/getTableSelect";
-import {
-  getSmartGroupFilter,
-  simplifyFilter,
-} from "../../../../common/filterUtils";
-
-export const getTableFilter = (
-  w: WindowData<"table">,
-  {
-    externalFilters,
-    joinFilter,
-  }: Pick<W_TableProps, "joinFilter" | "externalFilters">,
-) => {
-  const { filter: rawFilter, having: rawHaving } = w;
-
-  let filter: AnyObject = {};
-  let having: AnyObject = {};
-  /* Parse and Remove bad filters */
-  if (w.table_name) {
-    filter = getSmartGroupFilter(
-      rawFilter || [],
-      undefined,
-      w.options?.filterOperand === "OR" ? "or" : undefined,
-    );
-    having = getSmartGroupFilter(
-      rawHaving || [],
-      undefined,
-      w.options?.havingOperand === "OR" ? "or" : undefined,
-    );
-  }
-
-  return {
-    filter:
-      simplifyFilter({
-        $and: [
-          !isEmpty(filter) ? filter : undefined,
-          joinFilter,
-          ...externalFilters,
-        ].filter(isDefined),
-      }) ?? {},
-    having:
-      simplifyFilter({
-        $and: [having].filter(isDefined),
-      }) ?? {},
-  };
-};
+import { omitKeys, pickKeys } from "prostgles-types";
+import type { DeltaOf, DeltaOfData } from "../../RTComp";
+import type { ProstglesTableD, W_TableProps, W_TableState } from "../W_Table";
+import W_Table from "../W_Table";
+import { getTableSelect } from "../tableUtils/getTableSelect";
+import { getSort } from "../tableUtils/tableUtils";
+import { getTableFilter } from "./getTableFilter";
 
 export async function getTableData(
   this: W_Table,
@@ -82,6 +37,7 @@ export async function getTableData(
     } else if (
       !rows ||
       delta.w?.options?.refresh ||
+      delta.w?.options?.quickFilterGroups ||
       delta.dataAge ||
       [
         "pageSize",
@@ -100,11 +56,11 @@ export async function getTableData(
       ].some((k) => k in delta || (delta.w && k in delta.w))
     ) {
       const tableFilterHaving = getTableFilter(w, this.props);
-      const { filter: _f, having: _h } = tableFilterHaving;
+      const { filter, having } = tableFilterHaving;
       const {
         select: selectWithoutData,
         barchartVals: barchartValsWithoutData,
-      } = await getTableSelect(w, tables, db, _f, true);
+      } = await getTableSelect(w, tables, db, filter, true);
       const strFilter = JSON.stringify(tableFilterHaving);
 
       const clearSub = () => {
@@ -131,7 +87,7 @@ export async function getTableData(
             /** Already getting data on first run */
             let isInitialRun = true;
             this.dataSub = await tableHandler.subscribe?.(
-              _f,
+              filter,
               {
                 select: selectWithoutData,
                 limit: 0,
@@ -193,8 +149,8 @@ export async function getTableData(
           limit,
           offset,
           joinFilter,
-          filter: _f,
-          having: _h,
+          filter: filter,
+          having: having,
         },
         dataAge,
         [cardOpts],
@@ -212,7 +168,7 @@ export async function getTableData(
           w,
           tables,
           db,
-          _f,
+          filter,
         );
         if (barchartVals) {
           ns = ns || ({} as any);
@@ -228,17 +184,17 @@ export async function getTableData(
             orderBy: orderBy as any,
             limit,
             offset,
-            having: _h,
+            having: having,
           };
           let rowCount: number | undefined;
           try {
             rowCount = await tableHandler.count?.(
-              _f,
+              filter,
               pickKeys(findParams, ["select", "having"]),
             );
           } catch (error: any) {
             console.error("Error getting rowCount", error, error.query);
-            console.error("Error getting rowCount params", _f, findParams);
+            console.error("Error getting rowCount params", filter, findParams);
             throw error;
           }
           let initialRows: AnyObject[] = [];
@@ -256,7 +212,7 @@ export async function getTableData(
             const groups =
               rowCount == 0 ?
                 []
-              : await tableHandler.find(_f, {
+              : await tableHandler.find(filter, {
                   select: { [cardOpts.cardGroupBy]: 1 },
                   groupBy: true,
                   returnType: "values",
@@ -265,7 +221,7 @@ export async function getTableData(
               await Promise.all(
                 groups.map((groupByValue) =>
                   tableHandler.find!(
-                    { $and: [_f, { [groupByColumn]: groupByValue }] },
+                    { $and: [filter, { [groupByColumn]: groupByValue }] },
                     groupByFindParams,
                   ),
                 ),
@@ -273,7 +229,7 @@ export async function getTableData(
             ).flat();
           } else {
             initialRows =
-              rowCount == 0 ? [] : await tableHandler.find(_f, findParams);
+              rowCount == 0 ? [] : await tableHandler.find(filter, findParams);
           }
 
           this.activeRowStr = JSON.stringify(joinFilter || {});
@@ -282,10 +238,12 @@ export async function getTableData(
             ...r,
           }));
 
-          const newName =
-            showCounts ?
-              `${w.table_name} ${(rowCount ?? "??").toLocaleString()}`
-            : w.table_name;
+          const nameTemplate =
+            w.title || `${w.table_name} ${showCounts ? "${rowCount}" : ""}`;
+          const newName = nameTemplate.replace(
+            "${rowCount}",
+            (showCounts ? (rowCount ?? "") : "").toLocaleString(),
+          );
           if (newName !== w.name) {
             w.$update({ name: newName });
           }

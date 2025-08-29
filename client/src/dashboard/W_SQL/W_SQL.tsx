@@ -341,6 +341,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       prgl: { db, dbs, dbsTables, user },
       myLinks,
       childWindow,
+      workspace,
     } = this.props;
 
     if (loading || !w) return <Loading className="m-auto" />;
@@ -569,6 +570,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     return (
       <Window
         w={w}
+        layoutMode={workspace.layout_mode ?? "editable"}
         quickMenuProps={{
           dbs,
           prgl: this.props.prgl,

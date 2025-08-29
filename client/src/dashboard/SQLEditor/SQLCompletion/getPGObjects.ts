@@ -4,7 +4,7 @@ import type { TopKeyword } from "./KEYWORDS";
 import { TOP_KEYWORDS, asSQL } from "./KEYWORDS";
 import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
 import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../common/utils";
-import { fixIndent } from "../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 
 export type PGDatabase = {
   Name: string;

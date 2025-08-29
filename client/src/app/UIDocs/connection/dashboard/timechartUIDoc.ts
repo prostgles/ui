@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../getCommonViewHeaderUIDoc";

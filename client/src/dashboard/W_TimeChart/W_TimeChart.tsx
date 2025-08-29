@@ -274,8 +274,7 @@ export class W_TimeChart extends RTComp<
       addingFilter = false,
     } = this.state;
 
-    const { onClickRow, myActiveRow, activeRowColor } = this.props;
-
+    const { onClickRow, myActiveRow, activeRowColor, workspace } = this.props;
     const { w } = this.d;
     if (!w) return <Loading className="m-auto f-1" />;
 
@@ -483,7 +482,11 @@ export class W_TimeChart extends RTComp<
     );
 
     return (
-      <Window w={w} getMenu={this.getMenu}>
+      <Window
+        w={w}
+        getMenu={this.getMenu}
+        layoutMode={workspace.layout_mode ?? "editable"}
+      >
         {content}
       </Window>
     );

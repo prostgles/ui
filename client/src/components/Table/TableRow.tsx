@@ -83,7 +83,7 @@ export const TableRow = <Sort extends ColumnSort | ColumnSortSQL>({
           col.onRender ? null : parseCell(row[col.key], maxCharsPerCell);
 
         const cellClassName = classOverride(
-          `text-sm leading-5 flex-col text-0 o-auto no-scroll-bar ta-left br b-color-1 ` + //  ws-no-wrap  o-hidden to-ellipsis
+          `text-sm leading-5 flex-col text-0 o-auto no-scroll-bar ta-left ${col.noRightBorder ? "" : "br"} b-color-1 ` + //  ws-no-wrap  o-hidden to-ellipsis
             `${iRow < _rows.length - 1 ? "bt" : "bt bb"} ` +
             (col.blur ? " blur " : " ") +
             (col.width ? " f-0 " : " f-1 ") +

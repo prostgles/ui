@@ -4,12 +4,22 @@ import {
   movePointer,
   openConnection,
   waitForElement,
-} from "./demoUtils";
+} from "../demoUtils";
 
 export const AIAssistantDemo = async () => {
   await click("dashboard.goToConnections");
   await openConnection("food_delivery");
   await click("AskLLM");
+
+  await click("LLMChatOptions.Model");
+  const modelSearch = await waitForElement<HTMLTextAreaElement>(
+    "SearchList",
+    "input",
+    { nth: -1 },
+  );
+  await naturalType("prost", modelSearch);
+  pressEnter(modelSearch);
+
   const el = await waitForElement<HTMLTextAreaElement>(
     "AskLLM.popup",
     "textarea",

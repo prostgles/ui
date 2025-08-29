@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 

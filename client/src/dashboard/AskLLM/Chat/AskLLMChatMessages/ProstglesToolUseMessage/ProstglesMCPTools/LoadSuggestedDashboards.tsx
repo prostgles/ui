@@ -1,8 +1,8 @@
 import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";
 import type { JSONB } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../../../../../../common/prostglesMcp";
-import { isObject } from "../../../../../../../../common/publishUtils";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { isObject } from "@common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
@@ -24,7 +24,7 @@ export const LoadSuggestedDashboards = ({
   message,
 }: ProstglesMCPToolsProps) => {
   const { setWorkspace } = useSetActiveWorkspace(workspaceId);
-  const { dbs, connectionId } = usePrgl();
+  const { dbs, connectionId, tables } = usePrgl();
 
   const workspaces = useWorkspacesSync(dbs, connectionId);
   const alreadyLoadedWorkspaceIds = useMemo(() => {
@@ -86,6 +86,7 @@ export const LoadSuggestedDashboards = ({
             loadGeneratedWorkspaces(prostglesWorkspaces, message.id, {
               dbs,
               connectionId,
+              tables,
             })
               .then((insertedWorkspaces) => {
                 const [first] = insertedWorkspaces;

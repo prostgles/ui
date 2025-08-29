@@ -182,7 +182,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     readonly "docker-sandbox": {
         readonly create_container: {
             readonly schema: {
-                readonly description: "Creates a docker container";
+                readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.";
                 readonly type: {
                     readonly files: {
                         readonly description: "Files to copy into the container. Must include a Dockerfile. Example { \"index.ts\": \"import type { JSONB } from \"prostgles-types\";\" }";

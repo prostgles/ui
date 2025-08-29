@@ -963,3 +963,47 @@ export const setModelByText = async (page: PageWIds, text: string) => {
   await page.keyboard.press("Enter");
   await page.waitForTimeout(1e3); // wait for model to be set
 };
+
+export const setupProstglesLLMProvider = async (page: PageWIds) => {
+  const aiDemoDBName = "prostgles_video_demo" as const;
+  await openConnection(page, "cloud");
+  await openConnection(page, aiDemoDBName);
+  await runDbsSql(page, "TRUNCATE llm_chats CASCADE");
+  await runDbsSql(
+    page,
+    `
+      DELETE FROM llm_credentials WHERE provider_id = 'Prostgles';
+      UPDATE llm_providers 
+      SET api_url = 'http://localhost:3004/rest-api/cloud/methods/askLLM'
+      WHERE id = 'Prostgles';
+      /*
+        UPDATE published_methods
+        SET connection_id = (
+          SELECT id FROM connections WHERE "name" = '${aiDemoDBName}'
+        )
+        WHERE name = 'askLLM';
+      */
+     `,
+  );
+  const activeSession = await runDbsSql(
+    page,
+    `SELECT *
+        FROM sessions
+        WHERE user_id = (SELECT id FROM users WHERE username = 'test_user')
+        AND active = true
+        ORDER BY id_num DESC
+        LIMIT 1`,
+    {},
+    { returnType: "rows" },
+  );
+  if (!activeSession.length) {
+    throw new Error("No active session found for test_user");
+  }
+  await runDbsSql(
+    page,
+    `INSERT INTO llm_credentials(provider_id, api_key, user_id)
+      VALUES('Prostgles', \${api_key} , \${user_id} )
+      `,
+    { api_key: btoa(activeSession[0].id), user_id: activeSession[0].user_id },
+  );
+};

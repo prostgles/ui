@@ -1,6 +1,6 @@
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import { MediaViewer } from "../../../components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import type { NestedTimeChartMeta } from "../ColumnMenu/ColumnDisplayFormat/NestedColumnRender";
@@ -9,7 +9,7 @@ import { DISPLAY_FORMATS } from "../ColumnMenu/ColumnDisplayFormat/columnFormatU
 import type { ColumnConfigWInfo, MinMaxVals } from "../W_Table";
 import { StyledTableColumn } from "./StyledTableColumn";
 import type { ProstglesTableColumn } from "./getTableCols";
-import { ROUTES } from "../../../../../common/utils";
+import { ROUTES } from "@common/utils";
 
 export type RenderedColumn = ColumnConfigWInfo &
   Pick<ValidatedColumnInfo, "tsDataType" | "udt_name" | "name"> &

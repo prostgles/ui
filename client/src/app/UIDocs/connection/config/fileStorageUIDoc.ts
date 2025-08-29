@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
 import type { UIDoc } from "../../../UIDocs";
 
 export const fileStorageUIDoc = {

@@ -133,9 +133,11 @@ export const click = async (
     finalElem.click();
   }
 };
-export const openConnection = async (name: string) => {
+export const openConnection = async (
+  name: "prostgles_video_demo" | "food_delivery",
+) => {
   await click(
-    "",
+    "Connections",
     getDataKeyElemSelector(name) +
       " " +
       getCommandElemSelector("Connection.openConnection"),

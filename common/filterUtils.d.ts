@@ -5,7 +5,13 @@ export declare const CORE_FILTER_TYPES: readonly [{
     readonly key: "=";
     readonly label: "=";
 }, {
+    readonly key: "$eq";
+    readonly label: "=";
+}, {
     readonly key: "<>";
+    readonly label: "!=";
+}, {
+    readonly key: "$ne";
     readonly label: "!=";
 }, {
     readonly key: "$in";
@@ -69,6 +75,18 @@ export declare const NUMERIC_FILTER_TYPES: readonly [{
     readonly label: "<";
 }, {
     readonly key: "<=";
+    readonly label: "<=";
+}, {
+    readonly key: "$gt";
+    readonly label: ">";
+}, {
+    readonly key: "$gte";
+    readonly label: ">=";
+}, {
+    readonly key: "$lt";
+    readonly label: "<";
+}, {
+    readonly key: "$lte";
     readonly label: "<=";
 }];
 export declare const DATE_FILTER_TYPES: readonly [{

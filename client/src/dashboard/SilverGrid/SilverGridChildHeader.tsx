@@ -72,30 +72,44 @@ export const SilverGridChildHeader = (props: P) => {
   const isFixed = layoutMode === "fixed";
   const hideButtons: typeof _hideButtons =
     isFixed ?
-      { minimize: true, fullScreen: true, close: true, pan: true, resize: true }
+      {
+        minimize: true,
+        fullScreen: false,
+        close: true,
+        pan: true,
+        resize: true,
+      }
     : _hideButtons;
   const { state: theme } = useReactiveState(appTheme);
   const bgClass = theme === "dark" ? "bg-color-0" : "bg-color-3";
   const bgActiveClass = theme === "dark" ? "bg-color-2" : "bg-color-0";
+  const btnClass = `f-0 ${isFixed && !fullscreen ? "show-on-parent-hover" : ""}`;
 
   return (
-    <div className="silver-grid-item-header flex-row  bg-color-1 pointer f-0 noselect relative ai-center shadow">
-      {!isFixed && (
-        <div
-          className="silver-grid-item-header--icon flex-row f-0 o-hidden f-1 ai-center"
-          style={{
-            maxWidth: "fit-content",
-            minWidth: "42px",
-          }}
-        >
-          {headerIcon}
-        </div>
-      )}
+    <div
+      className="silver-grid-item-header flex-row  bg-color-0 bb b-color-0 pointer f-0 noselect relative ai-center shadow"
+      style={
+        isFixed ?
+          {
+            paddingRight: ".25em",
+          }
+        : {}
+      }
+    >
+      <div
+        className="silver-grid-item-header--icon flex-row f-0 o-hidden f-1 ai-center"
+        style={{
+          maxWidth: "fit-content",
+          minWidth: "42px",
+        }}
+      >
+        {headerIcon}
+      </div>
 
       <FlexRow
         className="SilverGridChildHeader_tabs flex-row f-1 min-w-0 ws-nowrap ai-end text-ellipsiss ml-p25 o-auto  no-scroll-bar"
         style={{
-          gap: "2px",
+          gap: "1px",
         }}
         onWheel={(e) => {
           e.currentTarget.scrollLeft += e.deltaY;
@@ -114,7 +128,7 @@ export const SilverGridChildHeader = (props: P) => {
                   onClickSibling?.(tab.id!);
                 }}
                 style={{
-                  height: "37px",
+                  height: `${height - 3}px`,
                   marginTop: "4px",
                   lineHeight: "21px",
                   maxWidth: "40%",
@@ -130,7 +144,9 @@ export const SilverGridChildHeader = (props: P) => {
                 >
                   {title}
                 </div>
-                <CloseButton {...props} tabId={tabId} />
+                {isFixed ?
+                  <div style={{ width: "1em" }} />
+                : <CloseButton {...props} tabId={tabId} />}
               </FlexRow>
             );
           }
@@ -162,7 +178,9 @@ export const SilverGridChildHeader = (props: P) => {
               >
                 {tab.title}
               </div>
-              {!isFixed && <CloseButton {...props} tabId={tab.id} />}
+              {isFixed ?
+                <div style={{ width: "1em" }} />
+              : <CloseButton {...props} tabId={tab.id} />}
             </FlexRow>
           );
         })}
@@ -171,7 +189,7 @@ export const SilverGridChildHeader = (props: P) => {
       {!hideButtons.minimize && (
         <Btn
           {...dataCommand("dashboard.window.collapse")}
-          className="f-0"
+          className={btnClass}
           iconPath={
             !minimized ? mdiUnfoldLessHorizontal : mdiUnfoldMoreHorizontal
           }
@@ -191,7 +209,7 @@ export const SilverGridChildHeader = (props: P) => {
         <Btn
           {...dataCommand("dashboard.window.fullscreen")}
           title="Toggle view fullscreen mode"
-          className="f-0"
+          className={btnClass}
           iconPath={!fullscreen ? mdiFullscreen : mdiFullscreenExit}
           onClick={onClickFullscreen}
         />
@@ -200,7 +218,7 @@ export const SilverGridChildHeader = (props: P) => {
         <Btn
           {...dataCommand("dashboard.window.close")}
           title="Close view"
-          className="f-0"
+          className={btnClass}
           iconPath={mdiClose}
           onClick={(e) => onClickClose(e)}
         />

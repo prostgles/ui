@@ -689,16 +689,17 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
 
   ...tableConfigBackups,
 
-  workspace_publish_modes: {
+  workspace_layout_modes: {
     isLookupTable: {
       values: {
         fixed: {
           en: "Fixed",
-          description: "The workspace layout is fixed",
+          description: "The workspace layout is fixed. Only admins can edit",
         },
         editable: {
           en: "Editable",
-          description: "The workspace will be cloned layout for each user",
+          description:
+            "The workspace will be cloned for each user to allow editing",
         },
       },
     },
@@ -764,7 +765,10 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
           hint: "If true then this workspace can be shared with other users through Access Control",
         },
       },
-      publish_mode: `TEXT REFERENCES workspace_publish_modes `,
+      layout_mode: {
+        nullable: true,
+        references: { tableName: "workspace_layout_modes" },
+      },
       source: {
         nullable: true,
         jsonbSchemaType: {
@@ -801,6 +805,12 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       sql: `TEXT NOT NULL DEFAULT ''`,
       selected_sql: `TEXT NOT NULL DEFAULT ''`,
       name: `TEXT`,
+      title: {
+        sqlDefinition: `TEXT`,
+        info: {
+          hint: "Override name. Accepts ${rowCount} variable",
+        },
+      }, // Hacky way to set a fixed title
       limit: `INTEGER DEFAULT 1000 CHECK("limit" > -1 AND "limit" < 100000)`,
       closed: `BOOLEAN DEFAULT FALSE`,
       deleted: `BOOLEAN DEFAULT FALSE CHECK(NOT (type = 'sql' AND deleted = TRUE AND (options->>'sqlWasSaved')::boolean = true))`,

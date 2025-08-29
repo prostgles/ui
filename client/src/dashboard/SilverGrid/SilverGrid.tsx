@@ -27,6 +27,7 @@ export type CustomHeaderClassNames = {
   fullscreen: string;
   move: string;
 };
+
 export type ReactSilverGridNode = ReactElement<{
   "data-table-name": string | null;
   "data-type": "title" | "header-icons" | "content";
@@ -65,6 +66,7 @@ export type SilverGridProps = {
    */
   defaultLayoutType?: LayoutGroup["type"];
 };
+
 type S = {
   layout?: LayoutConfig;
   targetStyle: React.CSSProperties;
@@ -280,7 +282,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           (c) =>
             c.props["data-key"] == layout.id &&
             c.props["data-type"] === "header-icons",
-        ) || headerIcons.find((c) => c.props["data-key"] == layout!.id);
+        ) || headerIcons.find((c) => c.props["data-key"] == layout.id);
 
       return (
         <SilverGridChild
@@ -401,7 +403,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
               <SilverGridResizer
                 key={"resizer" + i}
                 layoutMode={layoutMode}
-                type={layout!.type as "col" | "row"}
+                type={layout.type as "col" | "row"}
                 onChange={(prevSize, nextSize) => {
                   this.treeLayout?.update([prevSize, nextSize]);
                 }}
@@ -419,7 +421,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
         ref={(r) => {
           if (r) {
             this.ref = r;
-            if (_ref) _ref(r);
+            _ref?.(r);
           }
         }}
         key={key}

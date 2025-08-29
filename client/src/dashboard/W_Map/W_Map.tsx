@@ -716,7 +716,11 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     );
 
     return (
-      <Window w={w} getMenu={this.getMenu}>
+      <Window
+        w={w}
+        getMenu={this.getMenu}
+        layoutMode={this.props.workspace.layout_mode ?? "editable"}
+      >
         {content}
       </Window>
     );

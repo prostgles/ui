@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { tryCatchV2 } from "../../dashboard/WindowControls/TimeChartLayerOptions";
-import { fixIndent } from "../../demo/sqlVideoDemo";
+import { fixIndent } from "../../demo/scripts/sqlVideoDemo";
 
 export const useChatOnPaste = ({
   onAddFiles,

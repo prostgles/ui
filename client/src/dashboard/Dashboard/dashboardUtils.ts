@@ -172,7 +172,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
       hideCount?: boolean;
       maxRowHeight?: number;
       maxCellChars?: number;
-      // viewAsCard?: boolean;
+      quickFilterGroups?: QuickFilterGroups;
       viewAs?:
         | { type: "table" }
         | { type: "json" }
@@ -443,3 +443,16 @@ export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
   columns: DBSchemaTableColumn[];
 } & Omit<TableOptions, "label" | "columns">;
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];
+
+/**
+ * Predefined quick filters that the user can toggle on/off
+ * These are shown in the filter bar under "Quick Filters"
+ */
+export type QuickFilterGroups = {
+  [groupName: string]: {
+    toggledFilterName?: string;
+    filters: {
+      [filterName: string]: {};
+    };
+  };
+};

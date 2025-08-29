@@ -91,6 +91,25 @@ const extraRequestData = {
         optional: true,
       },
       think: { type: "boolean", optional: true },
+      /* OpenRouter */
+      reasoning: {
+        optional: true,
+        oneOfType: [
+          {
+            effort: {
+              enum: ["high", "medium", "low"],
+              description: 'Can be "high", "medium", or "low" (OpenAI-style)',
+            },
+          },
+          {
+            max_tokens: {
+              type: "integer",
+              optional: true,
+              description: "Specific token limit (Anthropic-style)",
+            },
+          },
+        ],
+      },
       stream: { type: "boolean", optional: true },
     },
   },

@@ -1,14 +1,14 @@
+import { mdiSetCenter } from "@mdi/js";
+import { includes } from "prostgles-types";
 import React from "react";
 import {
   getFinalFilterInfo,
-  type JoinedFilter,
   TEXT_FILTER_TYPES,
 } from "../../../../common/filterUtils";
-import type { FilterWrapperProps } from "./FilterWrapper";
 import { sliceText } from "../../../../common/utils";
-import "./MinimisedFilter.css";
 import { Icon } from "../../components/Icon/Icon";
-import { mdiSetCenter } from "@mdi/js";
+import type { FilterWrapperProps } from "./FilterWrapper";
+import "./MinimisedFilter.css";
 
 type P = FilterWrapperProps &
   Pick<FilterWrapperProps, "rootFilter"> & {
@@ -82,7 +82,7 @@ export const MinimisedFilter = ({
       }
     }
 
-    if (!v && ["$in", "$nin"].includes(filter.type as any)) {
+    if (!v && includes(["$in", "$nin"], filter.type)) {
       return `( )`;
     }
 

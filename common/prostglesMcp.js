@@ -146,7 +146,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     "docker-sandbox": {
         create_container: {
             schema: {
-                description: "Creates a docker container",
+                description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.",
                 type: {
                     files: filesSchema,
                     timeout: {

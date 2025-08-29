@@ -66,7 +66,10 @@ export const JSONBSchemaLookup = ({
               subLabel: c.udt_name,
             }));
         })
-      : matchingTables.map((t) => ({ key: t.name }));
+      : matchingTables.map((t) => ({
+          key: t.name,
+          subLabel: t.columns.map((c) => c.name).join(", "),
+        }));
 
     const setLookupMerged = (l: Partial<typeof lookup>) => {
       const newLookup = { ...(isObject(rawValue) ? rawValue : {}), ...l };

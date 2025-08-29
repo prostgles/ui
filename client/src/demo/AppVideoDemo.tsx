@@ -7,13 +7,13 @@ import Popup from "../components/Popup/Popup";
 import type { DBS } from "../dashboard/Dashboard/DBS";
 import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { getKeys } from "../utils";
-import { accessControlDemo } from "./accessControlDemo";
-import { backupDemo } from "./backupDemo";
-import { dashboardDemo } from "./dashboardDemo";
-import { fileDemo } from "./fileDemo";
-import { sqlDemo } from "./sqlVideoDemo";
-import { schemaDiagramDemo } from "./schemaDiagramDemo";
-import { AIAssistantDemo } from "./AIAssistantDemo";
+import { accessControlDemo } from "./scripts/accessControlDemo";
+import { backupDemo } from "./scripts/backupDemo";
+import { dashboardDemo } from "./scripts/dashboardDemo";
+import { fileDemo } from "./scripts/fileDemo";
+import { sqlDemo } from "./scripts/sqlVideoDemo";
+import { schemaDiagramDemo } from "./scripts/schemaDiagramDemo";
+import { AIAssistantDemo } from "./scripts/AIAssistantDemo";
 
 const loadTest = async () => {
   const dbs: DBS = (window as any).dbs;

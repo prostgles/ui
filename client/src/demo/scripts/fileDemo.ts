@@ -1,5 +1,5 @@
-import { tout } from "../pages/ElectronSetup/ElectronSetup";
-import { click, type } from "./demoUtils";
+import { tout } from "../../pages/ElectronSetup/ElectronSetup";
+import { click, type } from "../demoUtils";
 
 export const fileDemo = async () => {
   await tout(2e3);

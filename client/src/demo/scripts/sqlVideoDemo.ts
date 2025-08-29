@@ -1,19 +1,19 @@
-import { fixIndent } from "../../../common/utils";
+import { fixIndent } from "@common/utils";
 import {
   getDemoUtils,
   type DemoScript,
   type TypeAutoOpts,
-} from "../dashboard/W_SQL/getDemoUtils";
-import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
-import { tout } from "../utils";
+} from "../../dashboard/W_SQL/getDemoUtils";
+import { VIDEO_DEMO_DB_NAME } from "../../dashboard/W_SQL/TestSQL";
+import { tout } from "../../utils";
 import { closeAllViews } from "./dashboardDemo";
 import {
   click,
   clickWhenReady,
-  getElement,
   movePointer,
+  openConnection,
   waitForElement,
-} from "./demoUtils";
+} from "../demoUtils";
 
 export { fixIndent };
 const sqlVideoDemo: DemoScript = async (args) => {
@@ -370,6 +370,10 @@ const sqlVideoDemo: DemoScript = async (args) => {
 // };
 
 export const sqlDemo = async () => {
+  await click("dashboard.goToConnections");
+  await tout(500);
+  await openConnection("prostgles_video_demo");
+  await tout(500);
   await closeAllViews();
   await click("dashboard.menu");
   await click("dashboard.menu.sqlEditor");

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { isObject } from "../../../../common/publishUtils";
 import Checkbox from "../Checkbox";
 import ErrorComponent from "../ErrorComponent";
@@ -75,6 +75,16 @@ export const SearchListContent = <M extends boolean = false>(
 
   const noList = isSearch ? searchClosed : !renderedItems.length && !searchTerm;
 
+  const wrapperStyleFinal = useMemo(() => {
+    if (searchClosed) return wrapperStyle;
+    return {
+      ...{
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+      },
+      ...wrapperStyle,
+    };
+  }, [wrapperStyle, searchClosed]);
   useSearchListOnClick({
     isSearch,
     dataSignature,
@@ -161,7 +171,7 @@ export const SearchListContent = <M extends boolean = false>(
                 onSetTerm(searchTerm || "", {});
               }
             }}
-            wrapperStyle={wrapperStyle}
+            wrapperStyle={wrapperStyleFinal}
             className={SEARCH_LIST_INPUT_CLASSNAME}
             {...inputProps}
             placeholder={placeholder}

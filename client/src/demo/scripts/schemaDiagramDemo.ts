@@ -1,5 +1,5 @@
 import { tout } from "src/utils";
-import { click, movePointer, openConnection } from "./demoUtils";
+import { click, movePointer, openConnection } from "../demoUtils";
 
 export const schemaDiagramDemo = async () => {
   await click("dashboard.goToConnections");
@@ -10,5 +10,4 @@ export const schemaDiagramDemo = async () => {
   await movePointer(816, 756);
   await tout(1000);
   await click("Popup.close");
-  await click("dashboard.goToConnections");
 };

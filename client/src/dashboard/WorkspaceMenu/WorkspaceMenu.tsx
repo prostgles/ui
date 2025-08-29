@@ -104,7 +104,7 @@ export const WorkspaceMenu = (props: P) => {
         }))
         /** Exclude editable original workspaces */
         .filter(
-          (wsp) => wsp.isMine || !wsp.published || wsp.publish_mode === "fixed",
+          (wsp) => wsp.isMine || !wsp.published || wsp.layout_mode === "fixed",
         )
     );
   }, [unsortedWorkspaces, userId]);

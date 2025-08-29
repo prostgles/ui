@@ -3,14 +3,14 @@ export type LayoutItem = {
    * UUID of the window
    */
   id: string;
-  type: "item";
   title?: string;
+  type: "item";
   /**
    * Table name after quote_ident() has been applied.
    * This means that any table names with uppercase letters or special characters will be quoted.
    */
   tableName: string | null;
-  viewType: "table" | "map" | "timechart" | "sql";
+  viewType: "table" | "map" | "timechart" | "sql" | "barchart";
   /**
    * Flex size of the item
    */
@@ -71,23 +71,85 @@ type LinkedData = {
    */
   path: {
     /**
-     * Join columns: key = parent table column name, value = child table column name
+     * Join columns.
+     * property = root table (or previous table) column name
+     * value = linked table column name
+     * @example
+     * path: {
+     *   on: [{ user_id: "id" }]
+     *   table: "users"
+     * }
      */
     on: Record<string, string>[];
     /**
-     * Table name.
+     * Linked table name
      */
     table: string;
   }[];
 } & (LinkedDataChart | LinkedDataTable);
 
-type TableWindowInsertModel = {
+type ColumnFilter = {
+  /**
+   * Column name
+   */
+  fieldName: string;
+} & (
+  | {
+      type: "$in";
+      value: string[];
+    }
+  | {
+      /** Not in */
+      type: "$nin";
+      value: string[];
+    }
+  | {
+      type: "$eq" | "$ne" | "$lt" | "$lte" | "$gt" | "$gte";
+      value: string;
+    }
+);
+
+export type Filter =
+  | ColumnFilter
+  | {
+      $and: ColumnFilter[];
+    }
+  | {
+      $or: ColumnFilter[];
+    };
+
+type Filtering = {
+  filter?: ColumnFilter[];
+  /** Defaults to AND */
+  filterOperand?: "AND" | "OR";
+
+  /**
+   * Predefined quick filters that the user can toggle on/off
+   * These are shown in the filter bar under "Quick Filters"
+   */
+  quickFilterGroups?: {
+    [groupName: string]: {
+      toggledFilterName?: string;
+      filters: {
+        [filterName: string]: Filter;
+      };
+    };
+  };
+};
+
+export type TableWindowInsertModel = Filtering & {
   id: string;
   type: "table";
+  /**
+   * Optional title that will be shown in the window header (Defaults to table_name).
+   * Supports template variable ${rowCount} which will be replaced with the actual number of rows in the table.
+   */
+  title?: string;
   table_name: string;
   columns?: {
     /**
-     * Column name.
+     * Column name as it appears in the database.
+     * For nested columns this can be anything. Use the table name or a more descriptive name.
      */
     name: string;
     /**
@@ -121,21 +183,6 @@ type TableWindowInsertModel = {
      */
     nested?: LinkedData;
   }[];
-  filter?: ({
-    /**
-     * Column name
-     */
-    fieldName: string;
-  } & (
-    | {
-        type: "$in";
-        value: string[];
-      }
-    | {
-        type: "$eq" | "$ne" | "$lt" | "$lte" | "$gt" | "$gte";
-        value: string;
-      }
-  ))[];
 
   /**
    * Sort order when of type 'table'
@@ -158,6 +205,7 @@ type TableWindowInsertModel = {
 type MapWindowInsertModel = {
   id: string;
   type: "map";
+  title?: string;
   table_name: string;
   /**
    * Column name with GEOGRAPHY/GEOMETRY data
@@ -181,6 +229,7 @@ type SqlWindowInsertModel = {
 type TimechartWindowInsertModel = {
   id: string;
   type: "timechart";
+  title?: string;
   table_name: string;
   date_column: string;
   y_axis:
@@ -191,11 +240,26 @@ type TimechartWindowInsertModel = {
       };
 };
 
+type BarchartWindowInsertModel = Filtering & {
+  id: string;
+  type: "barchart";
+  title?: string;
+  table_name: string;
+  x_axis:
+    | "count(*)"
+    | {
+        column: string;
+        aggregation: "sum" | "avg" | "min" | "max" | "count";
+      };
+  y_axis_column: string;
+};
+
 export type WindowInsertModel =
   | MapWindowInsertModel
   | SqlWindowInsertModel
   | TableWindowInsertModel
-  | TimechartWindowInsertModel;
+  | TimechartWindowInsertModel
+  | BarchartWindowInsertModel;
 
 export type WorkspaceInsertModel = {
   name: string;
