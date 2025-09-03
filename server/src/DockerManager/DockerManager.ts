@@ -1,20 +1,15 @@
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { randomUUID } from "crypto";
 import { pickKeys } from "prostgles-types";
 import { type DBS } from "..";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import { upsertSession } from "../authConfig/upsertSession";
 import { createContainer } from "./createContainer";
-import {
-  createContainerJSONSchema,
-  type CreateContainerParams,
-} from "./createContainer.schema";
+import { type CreateContainerParams } from "./createContainer.schema";
 import {
   dockerMCPDatabaseRequestRouter,
   type GetAuthContext,
 } from "./dockerMCPDatabaseRequestRouter";
 import { getContainerIPs } from "./getContainerIPs";
-import { getDockerMCPTools } from "./getDockerMCPTools";
-import { upsertSession } from "../authConfig/upsertSession";
 
 export type CreateContainerContext = {
   userId: string;
@@ -83,42 +78,5 @@ export const getDockerManager = async (dbs: DBS) => {
     route,
   };
 };
-
-export const getDockerMCP = async (
-  dbs: DBS,
-  chat: DBSSchema["llm_chats"] | undefined,
-) => {
-  const { tools, dockerManager } = await getDockerMCPTools(dbs);
-  const mode = chat?.db_data_permissions?.Mode;
-  const customRequests = `{ "tableName": string; "command": "select" | "insert" | "update" | "delete"; "data": any }`;
-  const sqlRequests = `{ "sql": string }`;
-  const databaseQueryDescription =
-    !mode || mode === "None" ?
-      "Access to the database is not allowed. If user wants to run queries, they need to set the Mode to Custom or SQL."
-    : [
-        `To run queries against the database you need to POST`,
-        `to ${dockerManager.address.address}:${dockerManager.address.port}/${dockerManager.route} with the following JSON body:`,
-
-        mode === "Custom" ? customRequests : sqlRequests,
-      ].join(" ");
-  const { description } = createContainerJSONSchema;
-  if (!description)
-    throw new Error("createContainerJSONSchema must have a description");
-  const toolSchemas = [
-    {
-      name: "create_container",
-      description: `${description}. ${databaseQueryDescription}`,
-      inputSchema: createContainerJSONSchema,
-    },
-  ];
-  return {
-    serverName:
-      "docker-sandbox" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS,
-    toolSchemas,
-    tools,
-  };
-};
-getDockerMCP.serverName =
-  "docker-sandbox" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
 
 export const DOCKER_CONTAINER_NAME_PREFIX = "prostgles-docker-mcp-sandbox";

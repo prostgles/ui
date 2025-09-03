@@ -37,7 +37,10 @@ import {
   ServersConfig,
   type McpTool,
 } from "./McpTypes";
-import { getDockerMCP } from "../DockerManager/DockerManager";
+import {
+  getDockerMCP,
+  getDockerMCPToolSchemas,
+} from "../DockerManager/getDockerMCP";
 
 export type McpConnection = {
   server: McpServer;
@@ -304,19 +307,16 @@ const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
 export const setupMCPServerHub = async (dbs: DBS) => {
   const servers = await dbs.mcp_servers.find();
   if (!servers.length) {
-    const dockerMCP = await getDockerMCP(dbs, undefined);
     const defaultServers = Object.entries(DefaultMCPServers).map(
       ([name, { mcp_server_tools = [], ...server }]) => {
+        const mcpDirectory = getMCPDirectory();
         return {
           name,
-          cwd:
-            server.source ?
-              path.join(getMCPDirectory(), name)
-            : getMCPDirectory(),
+          cwd: server.source ? path.join(mcpDirectory, name) : mcpDirectory,
           ...server,
           mcp_server_tools:
-            name === "docker-sandbox" ?
-              dockerMCP.toolSchemas
+            name === getDockerMCP.serverName ?
+              getDockerMCPToolSchemas(undefined, undefined)
             : mcp_server_tools,
         };
       },

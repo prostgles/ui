@@ -10,8 +10,9 @@ import { connMgr } from "..";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../commonTypes/prostglesMcp";
 import { isPortFree } from "./isPortFree";
+import { execSync } from "child_process";
 
-const route = "/db";
+export const DOCKER_MCP_ENDPOINT = "/db";
 const PREFERRED_PORT = 3009;
 const HOST = "172.17.0.1";
 
@@ -30,11 +31,15 @@ export type GetAuthContext = (ip: string) => AuhtContext | undefined;
 export const dockerMCPDatabaseRequestRouter = async (
   getChat: GetAuthContext,
 ) => {
+  const dockerVersion = execSync("docker --version").toString();
+  if (!dockerVersion) throw new Error("Docker not installed");
   const app = express();
 
   app.use(json({ limit: "1000mb" }));
   app.use(urlencoded({ extended: true, limit: "1000mb" }));
-  app.post(route, (req, res) => requestHandler(req, res, getChat));
+  app.post(DOCKER_MCP_ENDPOINT, (req, res) =>
+    requestHandler(req, res, getChat),
+  );
   const http = _http.createServer(app);
   const usePreferredPort = await isPortFree(PREFERRED_PORT);
 
@@ -53,7 +58,7 @@ export const dockerMCPDatabaseRequestRouter = async (
         if (!isObject(address)) {
           reject(new Error("Server address is not an object"));
         } else {
-          resolve({ app, server, address, route });
+          resolve({ app, server, address, route: DOCKER_MCP_ENDPOINT });
         }
       },
     );

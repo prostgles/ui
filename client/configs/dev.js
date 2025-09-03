@@ -25,4 +25,7 @@ module.exports = merge(commonConfig, {
       __REACT_DEVTOOLS_GLOBAL_HOOK__: "({ isDisabled: true })",
     }),
   ],
+  watchOptions: {
+    ignored: ["node_modules"],
+  },
 });

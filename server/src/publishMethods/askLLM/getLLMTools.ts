@@ -13,7 +13,7 @@ import {
 } from "../../../../commonTypes/prostglesMcp";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { getEntries } from "../../../../commonTypes/utils";
-import { getDockerMCP } from "../../DockerManager/DockerManager";
+import { getDockerMCP } from "../../DockerManager/getDockerMCP";
 import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
 
 export type GetLLMToolsArgs = {
@@ -79,8 +79,8 @@ export const getLLMAllowedChatTools = async ({
       const info = llm_chats_allowed_mcp_tools.find(
         ({ tool_id }) => tool_id === id,
       );
-      const createContainerTool = dockerMCP.toolSchemas[0]!;
       if (!info) return;
+      const createContainerTool = dockerMCP.toolSchemas[0]!;
       return {
         type: "mcp" as const,
         ...tool,
