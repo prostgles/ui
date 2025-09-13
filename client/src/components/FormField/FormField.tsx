@@ -589,7 +589,7 @@ export default class FormField extends React.Component<
               title="Click to toggle full screen"
               className="show-on-trigger-hover"
               iconPath={mdiFullscreen}
-              size="small"
+              size="micro"
               style={{ padding: "0" }}
               onClick={() => {
                 this.setState({ fullScreen: !this.state.fullScreen });

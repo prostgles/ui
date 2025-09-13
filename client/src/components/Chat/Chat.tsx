@@ -239,6 +239,7 @@ export const Chat = (props: ChatProps) => {
           <FlexRow className="gap-0">
             {allowedMessageTypes.file && (
               <label
+                data-command="Chat.addFiles"
                 className="pointer button bg-transparent bg-active-hover"
                 style={{ background: "transparent", padding: ".5em" }}
               >

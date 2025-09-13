@@ -26,7 +26,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { fixIndent, ROUTES } from "@common/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
 import { CommandPalette } from "./app/CommandPalette/CommandPalette";
-import { FlexCol } from "./components/Flex";
+import { FlexCol, FlexRow } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import { NavBarWrapper } from "./components/NavBar/NavBarWrapper";
 import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
@@ -41,6 +41,7 @@ import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
 import { Documentation } from "./app/CommandPalette/Documentation";
 import { ScrollFade } from "./components/ScrollFade/ScrollFade";
 import { AlertProvider } from "./components/AlertProvider";
+import { PostgresInstallationInstructions } from "./pages/PostgresInstallationInstructions";
 
 export type ClientUser = {
   sid: string;
@@ -162,12 +163,17 @@ export const App = () => {
       : initStateError?.errorType && errorHints[initStateError.errorType];
     return (
       <FlexCol className="m-auto ai-center jc-center max-w-700 p-2">
-        <ErrorComponent
-          error={error}
-          variant="outlined"
-          className="p-2"
-          withIcon={true}
-        />
+        <FlexRow>
+          <ErrorComponent
+            error={error}
+            variant="outlined"
+            className="p-2"
+            withIcon={true}
+          />
+          {initStateError?.errorType === "connection" && (
+            <PostgresInstallationInstructions placement="state-db" os="linux" />
+          )}
+        </FlexRow>
         {hint && (
           <InfoRow color="warning" variant="naked">
             {hint}

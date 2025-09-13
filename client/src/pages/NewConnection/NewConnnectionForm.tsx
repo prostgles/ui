@@ -27,7 +27,7 @@ import RTComp from "../../dashboard/RTComp";
 import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRecords";
 import { t } from "../../i18n/i18nUtils";
 import { get } from "../../utils";
-import { getOS } from "../ElectronSetup/ElectronSetup";
+import { getBrowserOS } from "../ElectronSetup/ElectronSetup";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionFormFields";
@@ -324,7 +324,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
             )}
             {mode === "insert" && (
               <PostgresInstallationInstructions
-                os={getOS()}
+                os={getBrowserOS()}
                 placement="add-connection"
               />
             )}

@@ -9,9 +9,11 @@ import { getProstglesState } from "../init/tryStartProstgles";
 import { runProstglesDBTool } from "../publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
 import { getDockerGatewayIP } from "./getDockerGatewayIP";
 import { isPortFree } from "./isPortFree";
+import { execSync } from "child_process";
 
 const PREFERRED_PORT = 3009;
-const ROUTE = "/db/:endpoint";
+export const DOCKER_MCP_ENDPOINT = "/db";
+const ROUTE = `${DOCKER_MCP_ENDPOINT}/:endpoint`;
 
 export type ChatPermissions = Pick<
   DBSSchema["llm_chats"],
@@ -31,6 +33,8 @@ export type GetAuthContext = (ip: string) => AuhtContext | undefined;
 export const dockerMCPDatabaseRequestRouter = async (
   getChat: GetAuthContext,
 ) => {
+  const dockerVersion = execSync("docker --version").toString();
+  if (!dockerVersion) throw new Error("Docker not installed");
   const app = express();
 
   app.use(json({ limit: "1000mb" }));

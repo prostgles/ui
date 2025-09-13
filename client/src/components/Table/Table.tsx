@@ -47,7 +47,7 @@ export type TableColumn = {
   className?: string;
   blur?: boolean;
   hidden?: boolean;
-  noRightBorder: boolean;
+  noRightBorder?: boolean;
   /** If it's a joined column then a string array of sortable columns */
   sortable: boolean | ColumnSortMenuProps;
   onClick?: (

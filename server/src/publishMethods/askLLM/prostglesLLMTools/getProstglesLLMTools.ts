@@ -10,7 +10,7 @@ import {
   getMCPToolNameParts,
   getProstglesMCPFullToolName,
 } from "../../../../../common/prostglesMcp";
-import { getDockerMCP } from "../../../DockerManager/DockerManager";
+import { getDockerMCP } from "../../../DockerManager/getDockerMCP";
 
 import type {
   GetLLMToolsArgs,

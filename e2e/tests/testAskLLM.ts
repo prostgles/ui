@@ -4,20 +4,21 @@ import { dockerWeatherToolUse } from "sampleToolUseData";
 const stringify = (obj: any) => JSON.stringify(obj, null, 2);
 
 const taskToolArguments = stringify({
-  suggested_prompt: "generated prompt",
+  suggested_prompt:
+    "Given the receipt image, extract the text and insert it into the receipts table.",
   suggested_database_access: {
     Mode: "Custom",
     tables: [
       {
-        tableName: "mytable",
+        tableName: "receipts",
         select: true,
-        insert: false,
+        insert: true,
         delete: false,
         update: true,
       },
     ],
   },
-  suggested_database_tool_names: ["prostgles-db-methods--askLLM"],
+  suggested_database_tool_names: [],
   suggested_mcp_tool_names: ["fetch--fetch"],
 });
 
@@ -162,6 +163,46 @@ const toolResponses: Record<string, ToolUse> = {
         function: {
           name: "docker-sandbox--create_container",
           arguments: stringify(dockerWeatherToolUse),
+        },
+      },
+    ],
+  },
+  last: {
+    content:
+      "To get the information you need, I'll run a SQL query against your database to fetch the relevant data.",
+    tool: [
+      {
+        id: "sql-tool-use",
+        type: "function",
+        function: {
+          name: "prostgles-db--execute_sql_with_rollback",
+          arguments: stringify({
+            sql: "SELECT * FROM orders WHERE created_at >= NOW() - INTERVAL '30 days';",
+          }),
+        },
+      },
+    ],
+  },
+  receipt: {
+    content:
+      "Great! I've extracted the text from the receipt image. Now, I'll insert the relevant details into the receipts table in your database.",
+    tool: [
+      {
+        id: "db-tool-use",
+        type: "function",
+        function: {
+          name: "prostgles-db--insert",
+          arguments: stringify({
+            tableName: "receipts",
+            data: {
+              extracted_text: "Item1 $10.00\nItem2 $15.00\nTotal $25.00",
+              amount: 450,
+              currency: "USD",
+              company: "Grand Ocean Hotel",
+              date: "2025-09-12",
+              created_at: new Date().toISOString(),
+            },
+          }),
         },
       },
     ],

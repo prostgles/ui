@@ -8,24 +8,20 @@ Prostgles UI is a user-friendly interface for exploring PostgreSQL databases and
 </picture>
 
 <picture>
-<source srcset="/screenshots/dark/db_schema_diagram.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/db_schema_diagram.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
+<source srcset="/screenshots/dark/schema_diagram.svg" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/schema_diagram.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 <picture>
 <source srcset="/screenshots/dark/postgis_map.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/postgis_map.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 <picture>
-<source srcset="/screenshots/dark/llm_chat_sql_querying.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/llm_chat_sql_querying.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
+<source srcset="/screenshots/dark/ai_assistant_sql_querying.svg" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/ai_assistant_sql_querying.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 <picture>
-<source srcset="/screenshots/dark/llm_chat_ocr.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/llm_chat_ocr.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-<picture>
-<source srcset="/screenshots/dark/llm_chat_data_upload.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/llm_chat_data_upload.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
+<source srcset="/screenshots/dark/ai_assistant_ocr_data_upload.svg" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/ai_assistant_ocr_data_upload.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
 

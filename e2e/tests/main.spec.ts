@@ -593,6 +593,19 @@ test.describe("Main test", () => {
       `,
     );
 
+    await runDbsSql(
+      page,
+      `
+        CREATE TABLE IF NOT EXISTS receipts (
+          id SERIAL PRIMARY KEY,
+          company_name TEXT,
+          amount NUMERIC,
+          currency TEXT,
+          date TIMESTAMP,
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+      `,
+    );
     /** Delete existing chat during local testing */
     const removeActiveChat = async () => {
       await page.getByTestId("AskLLM").click();

@@ -340,8 +340,6 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       (iconPath && !children ? "  " : "rounded") + // round
       (isDisabled ? ` disabled ${disabledVariant ? "no-fade" : ""} ` : " ");
 
-    _className = classOverride(_className, className);
-
     const loadingSize = {
       large: 22,
       default: 20,
@@ -460,7 +458,10 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
           fontSize: FontSizeMap[size],
         },
         onMouseDown: (e) => e.preventDefault(),
-        className: `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
+        className: classOverride(
+          `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
+          className,
+        ),
         ref: this.props._ref as any,
         ...{ "data-id": otherProps["data-id"] },
       };

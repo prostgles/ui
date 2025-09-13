@@ -19,6 +19,10 @@ import {
 import { DBS } from "..";
 import { McpToolCallResponse } from "../../../common/mcp";
 import { DBSSchema } from "../../../common/publishUtils";
+import {
+  getDockerMCP,
+  getDockerMCPToolSchemas,
+} from "../DockerManager/getDockerMCP";
 import { checkMCPServerTools } from "./checkMCPServerTools";
 import { connectToMCPServer } from "./connectToMCPServer";
 import {
@@ -37,7 +41,6 @@ import {
   ServersConfig,
   type McpTool,
 } from "./McpTypes";
-import { getDockerMCP } from "../DockerManager/DockerManager";
 
 export type McpConnection = {
   server: McpServer;
@@ -304,7 +307,7 @@ const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
 export const setupMCPServerHub = async (dbs: DBS) => {
   const servers = await dbs.mcp_servers.find();
   if (!servers.length) {
-    const dockerMCP = await getDockerMCP(dbs, undefined);
+    const dockerMCPTools = await getDockerMCPToolSchemas(dbs, undefined);
     const defaultServers = Object.entries(DefaultMCPServers).map(
       ([name, { mcp_server_tools = [], ...server }]) => {
         return {
@@ -315,9 +318,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
             : getMCPDirectory(),
           ...server,
           mcp_server_tools:
-            name === "docker-sandbox" ?
-              dockerMCP.toolSchemas
-            : mcp_server_tools,
+            name === "docker-sandbox" ? dockerMCPTools : mcp_server_tools,
         };
       },
     );

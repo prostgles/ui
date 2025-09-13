@@ -87,7 +87,7 @@ export const AskLLMChatActionBarPromptSelector = (
               const isActive = activeChat.llm_prompt_id === id;
               return (
                 <Btn
-                  className={"p-0 text-0 ta-start"}
+                  className={"p-0 text-0 ta-start max-w-full ws-pre-wrap"}
                   style={{ padding: 0 }}
                   variant="text"
                   iconPath={isActive ? mdiCheck : mdiCircleOutline}

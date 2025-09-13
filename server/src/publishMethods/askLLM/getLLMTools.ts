@@ -13,7 +13,7 @@ import {
 } from "../../../../common/prostglesMcp";
 import type { DBSSchema } from "../../../../common/publishUtils";
 import { getEntries } from "../../../../common/utils";
-import { getDockerMCP } from "../../DockerManager/DockerManager";
+import { getDockerMCP } from "../../DockerManager/getDockerMCP";
 import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
 
 export type GetLLMToolsArgs = {

@@ -8,7 +8,7 @@ import type { McpToolCallResponse } from "../../../common/mcp";
 import type { DBSSchema } from "../../../common/publishUtils";
 import { startMcpHub } from "./McpHub";
 import { ProstglesLocalMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
-import { getDockerMCP } from "../DockerManager/DockerManager";
+import { getDockerMCP } from "../DockerManager/getDockerMCP";
 
 export const callMCPServerTool = async (
   user: Pick<DBSSchema["users"], "id">,

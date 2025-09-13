@@ -13,7 +13,7 @@ type ElectronSetup = {
   serverState: AppState["serverState"];
 };
 
-export const getOS = () => {
+export const getBrowserOS = () => {
   const { platform } = window.navigator;
   const os: OS =
     platform.startsWith("Mac") ? "macosx"

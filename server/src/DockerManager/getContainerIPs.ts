@@ -1,6 +1,6 @@
 import { execSync } from "child_process";
 import { getKeys, isDefined } from "prostgles-types";
-import { DOCKER_CONTAINER_NAME_PREFIX } from "./DockerManager";
+import { DOCKER_CONTAINER_NAME_PREFIX } from "./getDockerMCP";
 
 const containerIpCache = {
   containerNames: "",
