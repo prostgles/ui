@@ -22,18 +22,18 @@ export declare const getLLMMessageToolUseResult: ({ message, }: Pick<LLMMessage,
         type: "resource";
         resource: {
             uri: string;
-            mimeType?: string | undefined;
-            text?: string | undefined;
-            blob?: string | undefined;
+            mimeType?: string;
+            text?: string;
+            blob?: string;
         };
     } | {
         type: "resource_link";
         uri: string;
         name: string;
-        mimeType?: string | undefined;
-        description?: string | undefined;
+        mimeType?: string;
+        description?: string;
     })[];
-    is_error?: boolean | undefined;
+    is_error?: boolean;
 }[];
 type FilterMatch<T, U> = T extends U ? T : never;
 type FilterUnMatch<T, U> = T extends U ? never : T;
@@ -47,57 +47,5 @@ export declare const LLM_PROMPT_VARIABLES: {
     readonly TODAY: "${today}";
 };
 export declare const reachedMaximumNumberOfConsecutiveToolRequests: (messages: Pick<DBSSchema["llm_messages"], "message">[], limit: number, onlyFailed?: boolean) => boolean;
-export declare const isAssistantMessageRequestingToolUse: (message: Pick<DBSSchema["llm_messages"], "message"> | undefined) => message is Required<{
-    chat_id: number;
-    cost?: string | undefined;
-    created?: string | null | undefined;
-    id?: string | undefined;
-    llm_model_id?: number | null | undefined;
-    message: ({
-        type: "text";
-        text: string;
-        reasoning?: string | undefined;
-    } | {
-        type: "text" | "image" | "audio" | "video" | "application";
-        source: {
-            type: "base64";
-            media_type: string;
-            data: string;
-        };
-    } | {
-        type: "tool_result";
-        tool_use_id: string;
-        tool_name: string;
-        content: string | ({
-            type: "text";
-            text: string;
-        } | {
-            type: "image" | "audio";
-            mimeType: string;
-            data: string;
-        } | {
-            type: "resource";
-            resource: {
-                uri: string;
-                mimeType?: string | undefined;
-                text?: string | undefined;
-                blob?: string | undefined;
-            };
-        } | {
-            type: "resource_link";
-            uri: string;
-            name: string;
-            mimeType?: string | undefined;
-            description?: string | undefined;
-        })[];
-        is_error?: boolean | undefined;
-    } | {
-        type: "tool_use";
-        id: string;
-        name: string;
-        input: any;
-    })[];
-    meta?: any;
-    user_id?: string | null | undefined;
-}>;
+export declare const isAssistantMessageRequestingToolUse: (message: Pick<DBSSchema["llm_messages"], "message"> | undefined) => message is DBSSchema["llm_messages"];
 export {};

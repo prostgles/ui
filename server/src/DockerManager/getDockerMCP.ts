@@ -1,4 +1,4 @@
-import { assertJSONBObjectAgainstSchema } from "prostgles-types";
+import { assertJSONBObjectAgainstSchema, tryCatchV2 } from "prostgles-types";
 import type { DBS } from "..";
 import { getDockerManager, type CreateContainerContext } from "./DockerManager";
 import {
@@ -15,7 +15,7 @@ export const getDockerMCP = async (
   dbs: DBS,
   chat: DBSSchema["llm_chats"] | undefined,
 ) => {
-  const dockerManager = await getDockerManager(dbs);
+  const { data: dockerManager } = await tryCatchV2(() => getDockerManager(dbs));
   const tools = {
     createContainer: async (args: unknown, context: CreateContainerContext) => {
       assertJSONBObjectAgainstSchema(
@@ -24,7 +24,7 @@ export const getDockerMCP = async (
         "createContainer args",
       );
       try {
-        const containerResult = await dockerManager.createContainerInChat(
+        const containerResult = await dockerManager?.createContainerInChat(
           args,
           context,
         );
@@ -58,7 +58,7 @@ export const getDockerMCP = async (
       }
     },
   };
-  const toolSchemas = getDockerMCPToolSchemas(dockerManager.address, chat);
+  const toolSchemas = getDockerMCPToolSchemas(dockerManager?.address, chat);
 
   return {
     serverName:

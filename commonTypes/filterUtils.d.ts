@@ -1,6 +1,6 @@
 import { ContextDataObject, ContextValue } from "./publishUtils";
 type AnyObject = Record<string, any>;
-export declare const isDefined: <T>(v: void | T | undefined) => v is T;
+export declare const isDefined: <T>(v: T | undefined | void) => v is T;
 export declare const CORE_FILTER_TYPES: readonly [{
     readonly key: "=";
     readonly label: "=";

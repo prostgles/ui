@@ -186,7 +186,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   }
 
   const cantUpdate = readOnly && action === "update";
-
   const ftableIcon =
     column.icon ?? foreignDataState?.insertAndSearchState?.ftableInfo?.icon;
 
