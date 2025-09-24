@@ -17,8 +17,8 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import { DBS } from "..";
-import { McpToolCallResponse } from "../../../common/mcp";
-import { DBSSchema } from "../../../common/publishUtils";
+import { McpToolCallResponse } from "@common/mcp";
+import { DBSSchema } from "@common/publishUtils";
 import {
   getDockerMCP,
   getDockerMCPToolSchemas,
