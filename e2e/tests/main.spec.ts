@@ -592,20 +592,22 @@ test.describe("Main test", () => {
       DELETE FROM mcp_server_tools WHERE server_name IN ('playwright', 'docker-sandbox');
       `,
     );
-
-    await runDbsSql(
+    await runDbSql(
       page,
       `
-        CREATE TABLE IF NOT EXISTS receipts (
-          id SERIAL PRIMARY KEY,
-          company_name TEXT,
-          amount NUMERIC,
-          currency TEXT,
-          date TIMESTAMP,
-          created_at TIMESTAMP DEFAULT NOW()
-        );
+      CREATE TABLE IF NOT EXISTS receipts (
+        id SERIAL PRIMARY KEY,
+        company_name TEXT,
+        amount NUMERIC,
+        currency TEXT,
+        date TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
       `,
     );
+    /* Wait for schema change */
+    await page.waitForTimeout(2e3);
+
     /** Delete existing chat during local testing */
     const removeActiveChat = async () => {
       await page.getByTestId("AskLLM").click();
@@ -614,7 +616,7 @@ test.describe("Main test", () => {
       await page.getByTestId("SmartForm.delete.confirm").click();
       await page.waitForTimeout(1e3);
     };
-    await page.waitForTimeout(1e3);
+
     await removeActiveChat();
 
     await page.getByTestId("Popup.close").click();

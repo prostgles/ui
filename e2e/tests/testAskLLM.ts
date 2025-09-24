@@ -194,14 +194,16 @@ const toolResponses: Record<string, ToolUse> = {
           name: "prostgles-db--insert",
           arguments: stringify({
             tableName: "receipts",
-            data: {
-              extracted_text: "Item1 $10.00\nItem2 $15.00\nTotal $25.00",
-              amount: 450,
-              currency: "USD",
-              company: "Grand Ocean Hotel",
-              date: "2025-09-12",
-              created_at: new Date().toISOString(),
-            },
+            data: [
+              {
+                extracted_text: "Item1 $10.00\nItem2 $15.00\nTotal $25.00",
+                amount: 450,
+                currency: "USD",
+                company: "Grand Ocean Hotel",
+                date: "2025-09-12",
+                created_at: new Date().toISOString(),
+              },
+            ],
           }),
         },
       },

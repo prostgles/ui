@@ -51,6 +51,24 @@ const SVG_SCREENSHOT_DETAILS = {
         .fill("The task involves importing data from scanned documents");
       await page.getByTestId("Chat.send").click();
       await page.waitForTimeout(2500);
+      await page
+        .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
+        .last()
+        .click();
+      await page.getByTestId("Alert").getByText("OK").click();
+    },
+    ocr: async (page) => {
+      const { filePath } = await createReceipt(page);
+      await page
+        .getByTestId("Chat.textarea")
+        .fill(`Extract data from this receipt ${filePath}`);
+      await page.getByTestId("Chat.addFiles").setInputFiles(filePath);
+      await page.getByTestId("Chat.send").click();
+      await page.waitForTimeout(2500);
+      await expect(page.getByTestId("Popup.content").last()).toContainText(
+        "Grand Ocean Hotel",
+      );
+      await page.getByText("Allow once").click();
     },
     docker_05: async (page) => {
       await page.getByTestId("AskLLM.DeleteMessage").first().click();
@@ -103,21 +121,6 @@ const SVG_SCREENSHOT_DETAILS = {
       ).toContainText("SELECT * FROM orders");
       await page.getByTestId("Popup.close").last().click();
     },
-    ocr: async (page) => {
-      const { filePath } = await createReceipt(page);
-      await page
-        .getByTestId("Chat.textarea")
-        .fill(`Extract data from ${filePath}`);
-      await page.getByTestId("Chat.addFiles").setInputFiles(filePath);
-      await page.getByTestId("Chat.send").click();
-      await page.waitForTimeout(2500);
-      await expect(
-        page
-          .getByTestId("Chat.messageList")
-          .last()
-          .locator(".ProstglesMarkdown"),
-      ).toContainText("Grand Ocean Hotel");
-    },
   },
   sql_editor: async (
     page,
@@ -149,7 +152,10 @@ const SVG_SCREENSHOT_DETAILS = {
   postgis_map: async (page) => {
     await openConnection(page, "food_delivery");
     await page.waitForTimeout(1500);
-    await page.getByTestId("dashboard.window.fullscreen").click();
+    await page
+      .locator(`[data-table-name="users"]`)
+      .getByTestId("dashboard.window.fullscreen")
+      .click();
   },
   new_connection: async (page) => {
     await goTo(page, "/connections");
@@ -379,6 +385,6 @@ export const svgScreenshotsCompleteReferenced = async () => {
 
   const usedSrcValuesStr = usedSrcValues.sort().join(",");
   if (allSVGFileNamesStr !== usedSrcValuesStr) {
-    throw `SVG files from docs are not as expected: \nActual: ${usedSrcValuesStr} \n Expected: ${allSVGFileNamesStr}`;
+    throw `SVG image src tags from docs do not match the saved svg files: \nSrc: ${usedSrcValuesStr} \n Files: ${allSVGFileNamesStr}`;
   }
 };

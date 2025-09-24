@@ -814,18 +814,6 @@ export type DBGeneratedSchema = {
       id: string;
     };
   };
-  workspace_publish_modes: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      description?: null | string;
-      en?: null | string;
-      id: string;
-    };
-  };
   workspaces: {
     is_view: false;
     select: true;
