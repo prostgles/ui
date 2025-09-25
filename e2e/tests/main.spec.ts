@@ -809,11 +809,12 @@ test.describe("Main test", () => {
         "create a container that runs",
         { timeout: 40e3 },
       );
+      await page.waitForTimeout(3e3);
       await page.getByTestId("ToolUseMessage.toggle").last().click();
       await page.getByTestId("Popup.toggleFullscreen").last().click();
-      await page.waitForTimeout(2e3);
       await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(
         result,
+        { timeout: 10e3 },
       );
       await page.getByTestId("Popup.close").last().click();
     };

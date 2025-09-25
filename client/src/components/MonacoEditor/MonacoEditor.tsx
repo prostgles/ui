@@ -12,8 +12,9 @@ import { getMonaco, LANG } from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
+import type { TestSelectors } from "src/Testing";
 
-export type MonacoEditorProps = {
+export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
   language: string;
   value: string;
   onChange?: (
@@ -233,7 +234,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       key={`${!!language.length}`}
       ref={container}
       style={monacoStyle}
-      data-command="MonacoEditor"
+      data-command={props["data-command"] ?? "MonacoEditor"}
       className={`MonacoEditor  ${className}`}
     />
   );

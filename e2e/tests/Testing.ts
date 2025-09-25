@@ -456,6 +456,7 @@ export const COMMANDS = {
   "APIDetailsTokens.CreateToken.generate": "",
   APIDetailsTokens: "",
   "AskLLM.DeleteMessage": "",
+  "DockerSandboxCreateContainer.Logs": "",
 } as const satisfies Record<
   string,
   | string

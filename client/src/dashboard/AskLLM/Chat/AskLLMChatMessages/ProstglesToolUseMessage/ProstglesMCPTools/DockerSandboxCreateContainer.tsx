@@ -179,6 +179,7 @@ export const DockerSandboxCreateContainer = ({
         key={"logs"}
         language="text"
         className="f-p5"
+        data-command="DockerSandboxCreateContainer.Logs"
         style={{ width: "100%", minHeight: 100 }}
         value={resultObj?.log.map((l) => l.text).join("") ?? ""}
         loadedSuggestions={undefined}
