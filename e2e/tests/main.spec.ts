@@ -557,7 +557,7 @@ test.describe("Main test", () => {
     await goTo(page, "/connections");
     await page.getByRole("link", { name: "Prostgles UI state" }).click();
     await page.getByTestId("AskLLM").click();
-    await page.getByTestId("SetupLLMCredentials.free").click();
+    await page.getByTestId("SetupLLMCredentials.free").click({ timeout: 10e3 });
     await page.locator("input#email").fill(USERS.free_llm_user1);
     await page.getByTestId("ProstglesSignup.continue").click();
     await page.waitForTimeout(1e3);
