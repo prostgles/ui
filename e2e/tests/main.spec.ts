@@ -811,6 +811,7 @@ test.describe("Main test", () => {
       );
       await page.getByTestId("ToolUseMessage.toggle").last().click();
       await page.getByTestId("Popup.toggleFullscreen").last().click();
+      await page.waitForTimeout(2e3);
       await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(
         result,
       );
@@ -823,11 +824,12 @@ test.describe("Main test", () => {
     await runDbSql(
       page,
       `CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      username TEXT NOT NULL UNIQUE, 
-      created_at TIMESTAMP DEFAULT NOW()
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL UNIQUE, 
+        created_at TIMESTAMP DEFAULT NOW()
       );
-      INSERT INTO users (username) VALUES ('fresh_user') ON CONFLICT DO NOTHING;
+      INSERT INTO users (username) 
+      VALUES ('fresh_user') ON CONFLICT DO NOTHING;
       `,
     );
     await page
