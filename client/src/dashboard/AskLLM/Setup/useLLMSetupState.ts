@@ -39,14 +39,19 @@ export const useLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
   const firstPromptId = prompts?.[0]?.id;
 
   if (isAdmin) {
-    if (!globalSettings?.data) {
+    if (!globalSettings?.data || !credentials || !prompts) {
       return {
         state: "loading" as const,
         prompts,
       };
     }
 
-    if (!defaultCredential || !credentials || !prompts || !firstPromptId) {
+    if (
+      !defaultCredential ||
+      !credentials.length ||
+      !prompts.length ||
+      !firstPromptId
+    ) {
       return {
         state: "mustSetup" as const,
         prompts,

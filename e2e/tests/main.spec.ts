@@ -790,6 +790,7 @@ test.describe("Main test", () => {
       .locator(getDataKeyElemSelector("docker-sandbox"))
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
+    await page.waitForTimeout(2e3);
     await expect(page.getByTestId("Popup.content").last()).toContainText(
       `Reloaded 1 tool for "docker-sandbox" server`,
     );
