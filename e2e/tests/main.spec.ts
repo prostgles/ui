@@ -810,6 +810,11 @@ test.describe("Main test", () => {
         { timeout: 40e3 },
       );
       await page.waitForTimeout(3e3);
+      await page
+        .getByTestId("ToolUseMessage.toggle")
+        .last()
+        .locator(".Loading")
+        .waitFor({ state: "detached" });
       await page.getByTestId("ToolUseMessage.toggle").last().click();
       await page.getByTestId("Popup.toggleFullscreen").last().click();
       await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(
