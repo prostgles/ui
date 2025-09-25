@@ -674,7 +674,7 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
-    await expect(mcpToolUse).toContain("tool result received");
+    await expect(mcpToolUse).toContain("fetch--fetch url");
 
     await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " mcpplaywright ");
@@ -806,7 +806,7 @@ test.describe("Main test", () => {
       await sendAskLLMMessage(page, " mcpsandbox ");
       await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
       await expect(page.getByTestId("Chat.messageList")).toContainText(
-        "free ai assistant tool result received",
+        "create a container that runs",
         { timeout: 40e3 },
       );
       await page.getByTestId("ToolUseMessage.toggle").last().click();

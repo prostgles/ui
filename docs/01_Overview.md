@@ -1,6 +1,6 @@
 <h1 id="overview"> Overview </h1> 
 
-Prostgles UI is a user-friendly interface for exploring PostgreSQL databases and creating internal tools.
+Prostgles UI is a user-friendly way for interacting with PostgreSQL, creating dashboards and internal tools.
 
 <picture>
 <source srcset="/screenshots/dark/dashboard.svg" media="(prefers-color-scheme: dark)" />

@@ -16,7 +16,7 @@ It supports computed columns, linked fields, and various actions for managing th
     - **View title. Drag to re-arrange layout**: The name of the table/view together with the number of records matching the current filters.   
     - **Collapse the view**: Collapses the view, minimizing it to temporarily save space on the dashboard.   
     - **Fullscreen**: Expands the view to fill the entire screen.  
-    - **Close view**: Closes the view.  
+    - **Remove view**: Removes the view from the dashboard.  
     - <a href="#table_menu">Table menu</a>: Opens the table menu, allowing users to manage the table view.  
   - <a href="#table_toolbar">Table Toolbar</a>: Filtering and data add/edit interface for database tables and views.  
   - **Table**: The main table view displaying the data from the database. It allows users to interact with the data, including sorting, filtering, and editing.  

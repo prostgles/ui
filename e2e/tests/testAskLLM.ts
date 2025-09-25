@@ -3,7 +3,7 @@ import { dockerWeatherToolUse } from "sampleToolUseData";
 
 const stringify = (obj: any) => JSON.stringify(obj, null, 2);
 
-const taskToolArguments = stringify({
+const taskToolArguments = {
   suggested_prompt:
     "Given the receipt image, extract the text and insert it into the receipts table.",
   suggested_database_access: {
@@ -20,7 +20,7 @@ const taskToolArguments = stringify({
   },
   suggested_database_tool_names: [],
   suggested_mcp_tool_names: ["fetch--fetch"],
-});
+};
 
 type ToolUse = {
   content?: string;
@@ -43,7 +43,7 @@ const taskToolUse: ToolUse = {
       type: "function",
       function: {
         name: "prostgles-ui--suggest_tools_and_prompt",
-        arguments: taskToolArguments,
+        arguments: stringify(taskToolArguments),
       },
     },
   ],
@@ -105,6 +105,7 @@ const playwrightMCPToolUse: ToolUse = {
 };
 const isDocker = Boolean(process.env.IS_DOCKER);
 const mcpSandboxToolUse: ToolUse = {
+  content: `I'll create a container that runs a simple Node.js application.`,
   tool: [
     {
       id: "mcp-tool-use-sandbox1",
@@ -215,14 +216,14 @@ export const testAskLLMCode = `
 
 const lastMsg = args.messages.at(-1);
 const lastMsgText = lastMsg?.content[0]?.text;
-const failedToolResult = typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch"));
+const failedToolResult = typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch");
 const msg = failedToolResult ? " mcpfail " : lastMsgText;
 
 const toolResponses = ${stringify(toolResponses)};
 const toolResponseKey = Object.keys(toolResponses).find(k => msg && msg.includes(" " + k + " ")); 
 const toolResponse = toolResponses[toolResponseKey];
 
-const defaultContent = "free ai assistant" + (msg ?? " tool result received") + (failedToolResult ? "... let's retry the failed tool" : "");
+const defaultContent = !msg && !failedToolResult? undefined : ("free ai assistant" + (msg ?? " empty message") + (failedToolResult ? "... let's retry the failed tool" : ""));
 const content = toolResponse?.content ?? defaultContent;
 const tool_calls = toolResponse?.tool.map(tc => ({ ...tc, id: [tc.id, tc["function"].name, Math.random(), Date.now()].join("_") })); 
 

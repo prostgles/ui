@@ -14,7 +14,7 @@ The SQL editor is a powerful tool for executing SQL queries against your databas
     - **View title. Drag to re-arrange layout**: SQL editor query name, editable in the menu.  
     - **Collapse the view**: Collapses the view, minimizing it to temporarily save space on the dashboard.   
     - **Fullscreen**: Expands the view to fill the entire screen.  
-    - **Close view**: Closes the SQL editor. If there are unsaved changes, a confirmation dialog will appear.  
+    - **Remove view**: Removes the SQL editor from the dashboard. If there are unsaved changes, a confirmation dialog will appear.  
     - <a href="#sql_editor_menu">SQL editor menu</a>: The SQL editor menu provides access to various options and settings for the SQL editor.  
   - **SQL editor component**: The main component for the SQL editor. It contains the SQL editor and statement action buttons. Being bsed on Monaco editor, it supports syntax highlighting, auto-completion and other editing functionality like multi-cursor editing.  
     - **SQL editor input**: The input field for writing SQL queries. It supports syntax highlighting and auto-completion.  

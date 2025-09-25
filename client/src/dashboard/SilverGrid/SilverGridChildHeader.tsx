@@ -217,10 +217,15 @@ export const SilverGridChildHeader = (props: P) => {
       {onClose && !hideButtons.close && (
         <Btn
           {...dataCommand("dashboard.window.close")}
-          title="Close view"
+          title="Remove view"
           className={btnClass}
           iconPath={mdiClose}
           onClick={(e) => onClickClose(e)}
+          disabledInfo={
+            fullscreen && !hideButtons.fullScreen ?
+              "Must exit fullscreen first"
+            : undefined
+          }
         />
       )}
     </div>

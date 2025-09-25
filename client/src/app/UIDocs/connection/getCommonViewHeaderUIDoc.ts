@@ -91,11 +91,11 @@ export const getCommonViewHeaderUIDoc = (
       {
         selectorCommand: "dashboard.window.close",
         type: "button",
-        title: "Close view",
+        title: "Remove view",
         description:
           viewType === "sql" ?
-            "Closes the SQL editor. If there are unsaved changes, a confirmation dialog will appear."
-          : "Closes the view.",
+            "Removes the SQL editor from the dashboard. If there are unsaved changes, a confirmation dialog will appear."
+          : "Removes the view from the dashboard.",
       },
       viewType !== "chart" ? undefined : (
         {

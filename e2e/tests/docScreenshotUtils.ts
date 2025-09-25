@@ -154,8 +154,10 @@ const SVG_SCREENSHOT_DETAILS = {
     await page.waitForTimeout(1500);
     await page
       .locator(`[data-table-name="users"]`)
-      .getByTestId("dashboard.window.fullscreen")
+      .getByTestId("dashboard.window.detachChart")
       .click();
+    await page.locator(`[data-view-type="map"]`).click();
+    await page.waitForTimeout(1500);
   },
   new_connection: async (page) => {
     await goTo(page, "/connections");

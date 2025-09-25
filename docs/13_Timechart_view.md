@@ -12,7 +12,7 @@ You can add filters to the timechart to narrow down the data displayed.
     - **View title. Drag to re-arrange layout**: Shows the table/view name together with the number of records matching the current filters.  
     - **Collapse the view**: Collapses the view, minimizing it to temporarily save space on the dashboard.   
     - **Fullscreen**: Expands the view to fill the entire screen.  
-    - **Close view**: Closes the view.  
+    - **Remove view**: Removes the view from the dashboard.  
     - **Chart toolbar**: Toolbar for the chart view if not detached. By default, newly charts added will appear over the originating table/sql editor view. They can be detached to a separate window.  
       - **Chart menu**: Menu for the chart view.  
       - **Collapse chart**: Collapses the chart window, minimizing it to save space on the dashboard. It can then be restored by clicking the chart icon in the SQL editor top left quick actions section.  
