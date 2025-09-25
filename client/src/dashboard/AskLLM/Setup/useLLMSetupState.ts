@@ -46,12 +46,7 @@ export const useLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
       };
     }
 
-    if (
-      !defaultCredential ||
-      !credentials.length ||
-      !prompts.length ||
-      !firstPromptId
-    ) {
+    if (!defaultCredential || !firstPromptId) {
       return {
         state: "mustSetup" as const,
         prompts,
