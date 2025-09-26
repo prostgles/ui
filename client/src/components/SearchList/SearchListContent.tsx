@@ -173,6 +173,7 @@ export const SearchListContent = <M extends boolean = false>(
             }}
             wrapperStyle={wrapperStyleFinal}
             className={SEARCH_LIST_INPUT_CLASSNAME}
+            data-command="SearchList.Input"
             {...inputProps}
             placeholder={placeholder}
             title={"Search"}

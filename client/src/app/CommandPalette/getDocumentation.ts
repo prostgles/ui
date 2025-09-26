@@ -1,7 +1,7 @@
-import { isObject } from "../../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import { fixIndent } from "../../demo/scripts/sqlVideoDemo";
 import { COMMANDS } from "../../Testing";
-import { flatDocs, UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";
+import { UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";
 
 type SeparatePage = { doc: UIDoc; parentDocs: UIDoc[]; depth: number };
 
@@ -15,23 +15,24 @@ const asList = (
   const listItemDepth = depth - (separatePageDepth ?? 1);
 
   const separatePages: SeparatePage[] = [];
+  const appendToDocsItems: UIDoc[] = [];
 
   const listContent: string = children
     .map((child) => {
-      const willSeparatelyRender = child.docs;
-      if (willSeparatelyRender) {
+      const moveToNewPage = Boolean(child.docs);
+      if (moveToNewPage) {
         separatePages.push({ doc: child, depth, parentDocs });
       }
 
       const listTitle =
-        willSeparatelyRender ?
+        moveToNewPage ?
           `<a href=${JSON.stringify(`#${toSnakeCase(child.title)}`)}>${child.title}</a>`
         : `**${child.title}**`;
       const listItem = `${"  ".repeat(listItemDepth)}- ${listTitle}: ${child.description}  `;
-      if (willSeparatelyRender) {
+      if (moveToNewPage) {
         return listItem;
       }
-      const items = getItemChildren(child, isElectron);
+      const items = getChildren(child, isElectron);
       if (items.length) {
         const nestedList = asList(
           items,
@@ -62,12 +63,13 @@ const getUIDocAsMarkdown = (
   content: string;
   doc: UIDoc;
 }[] => {
-  const depth = doc.asSeparateFile ? 0 : Math.min(3, parentDocs.length);
+  const { docOptions } = doc;
+  const depth = docOptions ? 0 : Math.min(3, parentDocs.length);
   if (isElectron && doc.uiVersionOnly) {
     return [];
   }
   const { listContent: childrenContent, separatePages } = asList(
-    getItemChildren(doc, isElectron),
+    getChildren(doc, isElectron),
     [...parentDocs, doc],
     separatePageDepth,
     isElectron,
@@ -89,10 +91,14 @@ const getUIDocAsMarkdown = (
   }
 
   const hDepth = depth + 1;
+  const childrenTitle =
+    doc.childrenTitle ?? (doc.type === "navbar" ? "Navbar items" : undefined);
+
   const content = [
     `<h${hDepth} id=${JSON.stringify(toSnakeCase(doc.title))}> ${doc.title} </h${hDepth}> \n`,
     doc.uiVersionOnly ? `>  Not available on Desktop version\n  ` : "",
     `${doc.docs ? fixIndent(doc.docs) : doc.description}\n`,
+    childrenTitle ? `### ${childrenTitle}:` : "",
     childrenContent,
   ]
     .filter(Boolean)
@@ -132,9 +138,9 @@ export const getDocumentationFiles = (isElectron: boolean) => {
       if (!currDocItem) {
         continue;
       }
-      if (!lastFile || currDocItem.doc.asSeparateFile) {
-        const title =
-          currDocItem.doc.asSeparateFile ? currDocItem.doc.title : doc.title;
+      const asSeparateFile = currDocItem.doc.docOptions === "asSeparateFile";
+      if (!lastFile || asSeparateFile) {
+        const title = asSeparateFile ? currDocItem.doc.title : doc.title;
         pushFile(title, currDocItem.content + "\n\n");
       } else {
         lastFile.text += currDocItem.content + "\n\n";
@@ -148,7 +154,7 @@ export const getDocumentationFiles = (isElectron: boolean) => {
 const toSnakeCase = (str: string) =>
   str.toLowerCase().trim().replaceAll(/ /g, "_");
 
-const getItemChildren = (doc: UIDoc, isElectron: boolean) => {
+const getChildren = (doc: UIDoc, isElectron: boolean) => {
   const items =
     "children" in doc ? doc.children
     : "itemContent" in doc ? doc.itemContent
@@ -162,4 +168,3 @@ const getItemChildren = (doc: UIDoc, isElectron: boolean) => {
 };
 
 window.documentation = getDocumentationFiles(false);
-window.flatDocs = flatDocs;

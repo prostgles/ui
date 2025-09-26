@@ -23,7 +23,7 @@ export const AIAssistantUIDoc = {
 
     *Note: AI providers are configured by administrators in Server Settings > LLM Providers*
   `),
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
   children: [
     {
       type: "section",

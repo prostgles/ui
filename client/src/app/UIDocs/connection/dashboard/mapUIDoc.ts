@@ -12,7 +12,7 @@ export const mapUIDoc = {
   title: "Map view",
   description:
     "Displays a map visualization based on the Table/SQL query results.",
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
   docs: fixIndent(`
     The map view allows you to visualize geographical data from your database.
     It requires the [PostGIS](https://postgis.net/) extension to be installed on your PostgreSQL database.

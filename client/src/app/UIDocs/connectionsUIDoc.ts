@@ -1,4 +1,5 @@
-import { fixIndent, ROUTES } from "../../../../common/utils";
+import { mdiDatabasePlusOutline, mdiFilter, mdiServerNetwork } from "@mdi/js";
+import { ROUTES } from "@common/utils";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers, UIDocElement } from "../UIDocs";
 import { editConnectionUIDoc } from "./editConnectionUIDoc";
@@ -40,27 +41,32 @@ export const connectionsUIDoc = {
   type: "page",
   path: ROUTES.CONNECTIONS,
   title: "Connections",
+  iconPath: mdiServerNetwork,
   description:
     "Manage your database connections. View, add, or edit connections to your databases.",
-  docs: fixIndent(`
-    The Connections page is the main page and serves as the central hub within Prostgles UI for managing all your PostgreSQL database connections. 
+  docs: `
+    The Connections page serves as the central hub within Prostgles UI for managing all your PostgreSQL database connections. 
     From here, you can establish new connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
 
-    <img src="/screenshots/connections.svg" alt="Connections page screenshot" />
-`),
+    <img src="/screenshots/connections.svg" alt="Connections page screenshot" />  
+      
+`,
+  childrenTitle: "Connection controls",
   children: [
     {
       type: "link",
-      title: "Go to New Connection form",
+      title: "New connection",
+      iconPath: mdiDatabasePlusOutline,
       description: "Opens the form to add a new database connection.",
       selectorCommand: "Connections.new",
       path: ROUTES.NEW_CONNECTION,
-      docs: fixIndent(`
+      docs: `
         Use the **New Connection** button to add a new database connection.
         This will open a form where you can enter the connection details such as host, port, database name, user, and password.
         
         <img src="/screenshots/new_connection.svg" alt="New connection form screenshot" />
-      `),
+      `,
+      childrenTitle: "New connection form fields",
       pageContent: editConnectionUIDoc.children,
     },
     {
@@ -69,6 +75,7 @@ export const connectionsUIDoc = {
       description:
         "Customize how the list of connections is displayed (e.g., show/hide state database, show database names).",
       selectorCommand: "ConnectionsOptions",
+      iconPath: mdiFilter,
       children: [
         {
           type: "input",
@@ -92,18 +99,30 @@ export const connectionsUIDoc = {
       type: "list",
       title: "Connection list",
       description: "Controls to open and manage your database connections.",
-      docs: fixIndent(`
+      docs: `
         The connection list displays all your database connections grouped by database host, port and user.
         
         <img src="/screenshots/connections.svg" alt="Connections list screenshot" />
-        `),
+        `,
       selector: getCommandElemSelector("Connections") + " .Connections_list",
       itemSelector: ".Connection",
+      childrenTitle: "Connection actions",
       itemContent: [
+        {
+          type: "link",
+          selectorCommand: "Connection.openConnection",
+          path: ROUTES.CONNECTIONS,
+          title: "Open Connection",
+          description:
+            "Opens the selected database connection on the default workspace.",
+          pathItem: {
+            tableName: "connections",
+          },
+        },
         {
           type: "popup",
           selectorCommand: "ConnectionServer.add",
-          title: "Add",
+          title: "Add new database",
           description: "Adds a new connection to the selected server. ",
           children: [
             {
@@ -111,12 +130,13 @@ export const connectionsUIDoc = {
               selectorCommand: "ConnectionServer.add.newDatabase",
               title: "Create new database",
               description: "Create a new database within the server.",
-              docs: fixIndent(`
+              docs: `
                 Allows you to create a new database in the selected server.
                 It will use the first connection details from the group connection.
                 If no adequate account is found (no superuser or rolcreatedb), it will be greyed out with with an appropriate explanation tooltip text.
 
-              `),
+              `,
+              childrenTitle: "New database options",
               children: [
                 {
                   type: "input",
@@ -146,14 +166,14 @@ export const connectionsUIDoc = {
               selector: getDataKeyElemSelector("Select existing database"),
               title: "Connect to an existing database",
               description: "Selects a database from the server to connect to. ",
-              docs: fixIndent(`
+              docs: `
                 Allows you to connect to an existing database in the selected server.
                 It will use the first connection details from the group connection. 
 
                 <img src="/screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" />
 
                 After selecting the database, you can choose to create a new owner or user for the connection should you need to.
-              `),
+              `,
               children: [
                 {
                   type: "select",
@@ -172,17 +192,6 @@ export const connectionsUIDoc = {
               ],
             },
           ],
-        },
-        {
-          type: "link",
-          selectorCommand: "Connection.openConnection",
-          path: ROUTES.CONNECTIONS,
-          title: "Open Connection",
-          description:
-            "Opens the selected database connection on the default workspace.",
-          pathItem: {
-            tableName: "connections",
-          },
         },
         {
           type: "button",

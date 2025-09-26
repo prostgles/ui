@@ -31,5 +31,5 @@ export const overviewUIDoc = {
     It has a subset of the core features from Prostgles UI for data exploration and database management. 
     User Management and other multi-user focused features are not available in the desktop version.
   `,
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
 } as const satisfies UIDoc;

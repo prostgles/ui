@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Theme } from "./App";
 import { type DocumentationFile } from "./app/CommandPalette/getDocumentation";
+import type { UIDocFlat } from "./app/UIDocs";
 import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
-import type { UIDoc } from "./app/UIDocs";
 
 type Unsubscribe = {
   unsubscribe: () => void;
@@ -105,7 +105,7 @@ declare global {
     isMobile: boolean;
     toSVG: (node: HTMLElement) => Promise<{ light: string; dark: string }>;
     documentation: DocumentationFile[];
-    flatDocs: UIDoc[];
+    flatUIDocs: UIDocFlat[];
   }
 
   interface HTMLDivElement {

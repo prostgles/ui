@@ -17,7 +17,7 @@ export const sqlEditorUIDoc = {
 
     <img src="/screenshots/sql_editor.svg" alt="SQL editor screenshot" />
   `),
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
   children: [
     getCommonViewHeaderUIDoc(
       "SQL editor query name, editable in the menu.",

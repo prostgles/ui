@@ -1,3 +1,4 @@
+import { mdiChartLine, mdiDatabaseCogOutline } from "@mdi/js";
 import { fixIndent, ROUTES } from "../../../../../common/utils";
 import type { UIDocContainers } from "../../UIDocs";
 import { editConnectionUIDoc } from "../editConnectionUIDoc";
@@ -9,6 +10,7 @@ import { fileStorageUIDoc } from "./config/fileStorageUIDoc";
 export const connectionConfigUIDoc = {
   type: "page",
   path: ROUTES.CONFIG,
+  iconPath: mdiDatabaseCogOutline,
   pathItem: {
     tableName: "connections",
     selectorCommand: "Connection.configure",
@@ -29,12 +31,14 @@ export const connectionConfigUIDoc = {
       description:
         "Edit connection parameters such as host, port, database name, and other connection settings.",
       docs: editConnectionUIDoc.docs,
+      iconPath: mdiDatabaseCogOutline,
       children: [],
     },
     {
       type: "tab",
       selectorCommand: "config.status",
       title: "Status monitor",
+      iconPath: mdiChartLine,
       description:
         "View real-time connection status, running queries, and system resource usage.",
       children: [],

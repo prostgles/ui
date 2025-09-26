@@ -14,7 +14,7 @@ export const timechartUIDoc = {
     You can add filters to the timechart to narrow down the data displayed.
     <img src="/screenshots/timechart.svg" alt="Timechart view screenshot" />
   `),
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
   children: [
     getCommonViewHeaderUIDoc(
       "Shows the table/view name together with the number of records matching the current filters.",

@@ -11,12 +11,12 @@ export const dashboardMenuUIDoc = {
   title: "Dashboard menu",
   description:
     "Main menu for navigating and managing the database tables and views.",
-  docs: fixIndent(`
+  docs: `
     The dashboard menu provides access to various tools and features for managing your database tables and views.
     It includes options for executing SQL queries, searching for tables and views, managing saved queries, and configuring dashboard settings.
     You can also pin the menu to keep it open, resize it, and access server-side functions.
     The menu is designed to be user-friendly and provides quick access to essential features for efficient database management.
-    `),
+    `,
   children: [
     {
       type: "button",
@@ -98,8 +98,8 @@ export const dashboardMenuUIDoc = {
       title: "Create/Import",
       description:
         "Opens the menu for creating new tables, server-side functions or importing csv/json files.",
-      docs: fixIndent(`
-        Create new tables, server-side functions or import files into the current database.`),
+      docs: `
+        Create new tables, server-side functions or import files into the current database.`,
       children: [
         {
           type: "popup",
@@ -107,16 +107,7 @@ export const dashboardMenuUIDoc = {
           title: "Create new table",
           description:
             "Opens the form to create a new table in the current database.",
-          children: [
-            {
-              type: "input",
-              inputType: "text",
-              selectorCommand: "dashboard.menu.createTable.tableName",
-              title: "Table name",
-              description:
-                "Input field for entering the name of the new table. Must be unique within the database.",
-            },
-          ],
+          children: [],
         },
         {
           type: "popup",
@@ -124,13 +115,14 @@ export const dashboardMenuUIDoc = {
           title: "Import file",
           description:
             "Opens the form to import a file into the current database.",
-          docs: fixIndent(`
+          docs: `
             Import files into the current database. Supported file types include CSV, GeoJSON, and JSON.
             The import process allows you to specify the table name, infer column data types, and choose how to insert JSON/GeoJSON data into the table.  
             
             <img src="/screenshots/file_importer.svg" alt="File Importer screenshot" />
-          `),
-          asSeparateFile: true,
+          `,
+          docOptions: "asSeparateFile",
+          childrenTitle: "Import file options",
           children: [
             {
               type: "input",
@@ -198,58 +190,50 @@ export const dashboardMenuUIDoc = {
       title: "Schema diagram",
       description:
         "Opens the schema diagram for visualizing the relationships between tables and views in the current database.",
-      docs: fixIndent(`
+      docs: `
         The schema diagram provides a visual representation of the relationships between tables and views in the current database.
         It allows you to explore the schema structure, view table relationships, and manage the layout of the schema diagram.
         You can filter tables and columns based on their relationship types, reset the layout, and close the schema diagram to return to the dashboard menu.
         
         <img src="/screenshots/schema_diagram.svg" alt="Schema diagram screenshot" />
-      `),
-      asSeparateFile: true,
+      `,
+      docOptions: "asSeparateFile",
+      childrenTitle: "Top controls",
       children: [
         {
-          type: "section",
-          title: "Top controls",
+          type: "select",
+          selectorCommand: "SchemaGraph.TopControls.tableRelationsFilter",
+          title: "Table relationship filter",
           description:
-            "Controls for managing the schema diagram view and layout.",
-          selectorCommand: "SchemaGraph.TopControls",
-          children: [
-            {
-              type: "select",
-              selectorCommand: "SchemaGraph.TopControls.tableRelationsFilter",
-              title: "Table relationship filter",
-              description:
-                "Display tables based on their relationship type. Options include: all, linked (with relationships), orphaned (without relationships).",
-            },
-            {
-              type: "select",
-              selectorCommand: "SchemaGraph.TopControls.columnRelationsFilter",
-              title: "Column relationship filter",
-              description:
-                "Display columns based on their relationship type. Options include: all, references (with relationships), none (no columns/only table names will be shown).",
-            },
-            {
-              type: "select",
-              title: "Link colour mode",
-              selectorCommand: "SchemaGraph.TopControls.linkColorMode",
-              description:
-                "Colour links by: default (fixed colour), root table (the colour of the table the relationship tree originates from), on-delete/on-update (colour based on constraint referential action).",
-            },
-            {
-              type: "button",
-              selectorCommand: "SchemaGraph.TopControls.resetLayout",
-              title: "Reset layout",
-              description:
-                "Moving tables is persisted the state database. Clicking this resets the schema diagram layout to its initial state.",
-            },
-            {
-              type: "button",
-              selectorCommand: "Popup.close",
-              title: "Close schema diagram",
-              description:
-                "Closes the schema diagram and returns to the dashboard menu.",
-            },
-          ],
+            "Display tables based on their relationship type. Options include: all, linked (with relationships), orphaned (without relationships).",
+        },
+        {
+          type: "select",
+          selectorCommand: "SchemaGraph.TopControls.columnRelationsFilter",
+          title: "Column relationship filter",
+          description:
+            "Display columns based on their relationship type. Options include: all, references (with relationships), none (no columns/only table names will be shown).",
+        },
+        {
+          type: "select",
+          title: "Link colour mode",
+          selectorCommand: "SchemaGraph.TopControls.linkColorMode",
+          description:
+            "Colour links by: default (fixed colour), root table (the colour of the table the relationship tree originates from), on-delete/on-update (colour based on constraint referential action).",
+        },
+        {
+          type: "button",
+          selectorCommand: "SchemaGraph.TopControls.resetLayout",
+          title: "Reset layout",
+          description:
+            "Moving tables is persisted the state database. Clicking this resets the schema diagram layout to its initial state.",
+        },
+        {
+          type: "button",
+          selectorCommand: "Popup.close",
+          title: "Close schema diagram",
+          description:
+            "Closes the schema diagram and returns to the dashboard menu.",
         },
       ],
     },

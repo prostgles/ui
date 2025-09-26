@@ -1,3 +1,4 @@
+import { mdiAccountMultiple } from "@mdi/js";
 import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
 import type { UIDoc } from "../../../UIDocs";
 
@@ -6,13 +7,14 @@ export const accessControlUIDoc = {
   selectorCommand: "config.ac",
   uiVersionOnly: true,
   title: "Access control",
+  iconPath: mdiAccountMultiple,
   description:
     "Manage user permissions and access rules for this database connection.",
   docs: fixIndent(`
     Manage user permissions and access rules for this database connection.
     <img src="/screenshots/access_control.svg" alt="Access control" />
   `),
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
   children: [
     {
       type: "button",

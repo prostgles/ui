@@ -19,7 +19,7 @@ import { Setup2FA } from "./Setup2FA";
 type AccountProps = ExtraProps;
 
 export const Account = (props: AccountProps) => {
-  const { dbs, dbsTables, dbsMethods, user, auth } = props;
+  const { dbs, dbsTables, dbsMethods, user } = props;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: dbsConnection } = dbs.connections.useFindOne({

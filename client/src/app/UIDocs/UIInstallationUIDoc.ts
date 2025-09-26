@@ -5,7 +5,9 @@ export const UIInstallation = {
   type: "info",
   description: "A guide to help you get started with the application.",
   docs: `
-    The recommended way to run Prostgles UI is by using the Docker:
+    The quickest way to start is with Docker. 
+    If you don't have Docker installed, please follow the official 
+    <a href="https://docs.docker.com/engine/install/" target="_blank">Docker installation guide</a>
  
     Download the source code:
 
@@ -20,7 +22,7 @@ export const UIInstallation = {
     docker compose up -d --build
     \`\`\` 
     
-    Once running, the app will be accessible at [localhost:3004](http://localhost:3004)
+    Once running, Prostgles UI will be available at [localhost:3004](http://localhost:3004)
 
     ### Initial Setup & Authentication
 

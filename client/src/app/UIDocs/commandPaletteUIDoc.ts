@@ -1,8 +1,9 @@
+import { getCommandElemSelector } from "src/Testing";
 import type { UIDocContainers } from "../UIDocs";
 
 export const commandPaletteUIDoc = {
   type: "hotkey-popup",
-  hotkey: "Ctrl+K",
+  hotkey: ["Ctrl", "K"],
   title: "Command Palette",
   description: "Go to command/action quickly",
   docs: `
@@ -18,14 +19,20 @@ export const commandPaletteUIDoc = {
       inputType: "text",
       title: "Search commands input",
       description: "Type to search for commands and actions",
-      selectorCommand: "SearchAll",
+      selector:
+        getCommandElemSelector("CommandPalette") +
+        " " +
+        getCommandElemSelector("SearchList.Input"),
     },
     {
       type: "list",
       title: "Search results",
       description:
         "List of matching commands and actions. Press Enter to execute/go to the selected command.",
-      selectorCommand: "SearchList.List",
+      selector:
+        getCommandElemSelector("CommandPalette") +
+        " " +
+        getCommandElemSelector("SearchList.List"),
       itemSelector: "[data-key]",
       itemContent: [],
     },

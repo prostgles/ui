@@ -6,7 +6,7 @@ import { click } from "../../demo/demoUtils";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { tout } from "../../utils";
 import {
-  flatDocs,
+  flatUIDocs,
   type UIDoc,
   type UIDocFlat,
   type UIDocPage,
@@ -34,7 +34,7 @@ export const useGoToUI = (
 
   const location = useLocation();
   const currentPage = useMemo(() => {
-    return flatDocs.find((doc) => {
+    return flatUIDocs.find((doc) => {
       if (doc.type === "page") {
         const matchInfo = getDocPagePath(doc, location.pathname);
         return matchInfo.isExactMatch;
@@ -68,7 +68,20 @@ export const useGoToUI = (
       ];
       if (doc.type === "info") return;
 
-      if (doc.type === "page" || doc.type === "navbar") {
+      if (doc.type === "hotkey-popup") {
+        const [maybeCtrl, charKey] = doc.hotkey;
+        const ctrlKEvent = new KeyboardEvent("keydown", {
+          key: charKey.toLowerCase(),
+          code: "Key" + charKey,
+          ctrlKey: maybeCtrl === "Ctrl",
+          altKey: maybeCtrl === "Alt",
+          shiftKey: maybeCtrl === "Shift",
+          bubbles: true,
+        });
+
+        // Dispatch it on the document
+        document.dispatchEvent(ctrlKEvent);
+      } else if (doc.type === "page" || doc.type === "navbar") {
         const { isExactMatch, paths } = getDocPagePath(doc, location.pathname);
         if (!isExactMatch) {
           navigate(paths[0]!);
@@ -104,7 +117,10 @@ export const useGoToUI = (
         currentPage ? getUIDocShorterPath(currentPage, prevParents) : undefined;
       const pathItems = shortcut ?? prevParents;
       const isLinkOrPage = includes(data.type, ["link", "page"]);
-      const finalPathItems = isLinkOrPage ? [...pathItems, data] : pathItems;
+      const finalPathItems =
+        data.type === "hotkey-popup" ? [data]
+        : isLinkOrPage ? [...pathItems, data]
+        : pathItems;
       for (const parent of finalPathItems) {
         const shouldStop = await goToUI(parent);
         if (!isPlaywrightTest && shouldStop) {

@@ -1,8 +1,10 @@
+import { mdiApplicationBracesOutline } from "@mdi/js";
 import type { UIDocElement } from "../../../UIDocs";
 
 export const apiUIDoc = {
   type: "tab",
   selectorCommand: "config.api",
+  iconPath: mdiApplicationBracesOutline,
   title: "API",
   description: "Configure API access settings and view API documentation.",
   docs: `
@@ -13,7 +15,7 @@ export const apiUIDoc = {
   You can also manage API tokens for authentication and access control.
   
   You can set the URL path for the API, manage allowed origins for CORS requests, and create or view API tokens for accessing the API. The API supports both WebSocket and HTTP protocols.`,
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
   children: [
     {
       type: "input",

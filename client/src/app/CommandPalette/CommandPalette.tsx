@@ -1,13 +1,32 @@
+import { Icon } from "@components/Icon/Icon";
+import {
+  mdiArrowSplitVertical,
+  mdiButtonPointer,
+  mdiCardTextOutline,
+  mdiChartLine,
+  mdiCheckboxOutline,
+  mdiFileUploadOutline,
+  mdiFormatListBulleted,
+  mdiFormSelect,
+  mdiFormTextbox,
+  mdiGrid,
+  mdiKeyboard,
+  mdiLink,
+  mdiListBoxOutline,
+  mdiMenu,
+  mdiNumeric,
+  mdiTextLong,
+} from "@mdi/js";
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FlashMessage } from "../../components/FlashMessage";
 import Popup from "../../components/Popup/Popup";
+import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 import { SearchList } from "../../components/SearchList/SearchList";
-import { flatDocs } from "../UIDocs";
+import { flatUIDocs, type UIDoc, type UIDocInputElement } from "../UIDocs";
+import "./CommandPalette.css";
 import { Documentation } from "./Documentation";
 import { useGoToUI } from "./useGoToUI";
-import "./CommandPalette.css";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
@@ -73,12 +92,28 @@ export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
                 placeholder="Search actions..."
                 autoFocus={true}
                 limit={100}
-                items={flatDocs.map((data) => {
+                items={flatUIDocs.map((data) => {
+                  const iconKey =
+                    data.type === "input" ?
+                      `${data.type}-${data.inputType}`
+                    : data.type;
+                  const iconPath = data.iconPath ?? UIDocTypeToIcon[iconKey];
+                  if (!iconPath) {
+                    console.warn("No icon for UIDoc type", iconKey, data);
+                  }
                   return {
                     key: data.title,
                     parentLabels: data.parentTitles,
                     label: data.title,
                     subLabel: data.description,
+                    contentLeft:
+                      iconPath ?
+                        <Icon
+                          path={iconPath}
+                          title={data.type}
+                          className="text-1 mr-p5"
+                        />
+                      : undefined,
                     onPress: async () => {
                       setShowSection(undefined);
                       await goToUIDocItem(data);
@@ -130,4 +165,34 @@ const useOnKeyDown = () => {
     };
   }, [showSection]);
   return { showSection, setShowSection };
+};
+
+const UIDocTypeToIcon: Partial<
+  Record<
+    `${UIDocInputElement["type"]}-${UIDocInputElement["inputType"]}`,
+    string
+  > &
+    Record<Exclude<UIDoc["type"], "input">, string>
+> = {
+  link: mdiLink,
+  button: mdiButtonPointer,
+  popup: mdiButtonPointer,
+  select: mdiButtonPointer,
+  "input-text": mdiFormTextbox,
+  "input-checkbox": mdiCheckboxOutline,
+  "input-file": mdiFileUploadOutline,
+  "input-number": mdiNumeric,
+  "input-select": mdiFormSelect,
+  smartform: mdiListBoxOutline,
+  "smartform-popup": mdiListBoxOutline,
+  list: mdiFormatListBulleted,
+  section: mdiCardTextOutline,
+  tab: mdiCardTextOutline,
+  "accordion-item": mdiCardTextOutline,
+  "drag-handle": mdiArrowSplitVertical,
+  "hotkey-popup": mdiKeyboard,
+  navbar: mdiMenu,
+  text: mdiTextLong,
+  canvas: mdiChartLine,
+  // page: mdiGrid,
 };
