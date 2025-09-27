@@ -834,7 +834,7 @@ export const getAskLLMLastMessage = async (page: PageWIds) => {
       btn.locator(".Loading").waitFor({ state: "detached" }),
     ),
   );
-
+  await page.waitForTimeout(1500);
   const response = await lastIncomingMessage.textContent();
   return response;
 };

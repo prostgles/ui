@@ -22,24 +22,24 @@ test.describe("Test command palette", () => {
     timeout: 15 * MINUTE,
   });
 
-  let flatDocs: any[];
+  let flatUIDocs: any[];
   test.beforeEach(async ({ page: p }) => {
     const page = p as PageWIds;
     page.on("console", console.log);
     page.on("pageerror", console.error);
 
-    if (!flatDocs) {
+    if (!flatUIDocs) {
       if (IS_PIPELINE) {
         // Takes too long. Run locally only
         return;
       }
       await goTo(page, "/");
       await page.waitForTimeout(500);
-      flatDocs = await page.evaluate(() => {
+      flatUIDocs = await page.evaluate(() => {
         //@ts-ignore
-        return window.flatDocs;
+        return window.flatUIDocs;
       });
-      if (!flatDocs || !flatDocs.length) {
+      if (!flatUIDocs || !flatUIDocs.length) {
         throw new Error("No docs found in the command search");
       }
     }
@@ -57,9 +57,9 @@ test.describe("Test command palette", () => {
       }
       await login(page, USERS.test_user, "/login");
 
-      const workerFlatDocsBatchSize = Math.ceil(flatDocs.length / workers);
+      const workerFlatDocsBatchSize = Math.ceil(flatUIDocs.length / workers);
       const startIndex = i * workerFlatDocsBatchSize;
-      const workerFlatDocs = flatDocs.slice(
+      const workerFlatDocs = flatUIDocs.slice(
         startIndex,
         startIndex + workerFlatDocsBatchSize,
       ) as {
@@ -68,7 +68,7 @@ test.describe("Test command palette", () => {
       }[];
       console.log(
         `Worker ${i} has ${workerFlatDocs.length} docs to test`,
-        flatDocs.length,
+        flatUIDocs.length,
       );
       await page.waitForTimeout(500);
 
