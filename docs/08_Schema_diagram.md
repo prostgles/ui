@@ -9,12 +9,12 @@ You can filter tables and columns based on their relationship types, reset the l
 <img src="/screenshots/schema_diagram.svg" alt="Schema diagram screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
-  - **Top controls**: Controls for managing the schema diagram view and layout.  
-    - **Table relationship filter**: Display tables based on their relationship type. Options include: all, linked (with relationships), orphaned (without relationships).  
-    - **Column relationship filter**: Display columns based on their relationship type. Options include: all, references (with relationships), none (no columns/only table names will be shown).  
-    - **Link colour mode**: Colour links by: default (fixed colour), root table (the colour of the table the relationship tree originates from), on-delete/on-update (colour based on constraint referential action).  
-    - **Reset layout**: Moving tables is persisted the state database. Clicking this resets the schema diagram layout to its initial state.  
-    - **Close schema diagram**: Closes the schema diagram and returns to the dashboard menu.  
+### Top controls:
+  - **Table relationship filter**: Display tables based on their relationship type. Options include: all, linked (with relationships), orphaned (without relationships).  
+  - **Column relationship filter**: Display columns based on their relationship type. Options include: all, references (with relationships), none (no columns/only table names will be shown).  
+  - **Link colour mode**: Colour links by: default (fixed colour), root table (the colour of the table the relationship tree originates from), on-delete/on-update (colour based on constraint referential action).  
+  - **Reset layout**: Moving tables is persisted the state database. Clicking this resets the schema diagram layout to its initial state.  
+  - **Close schema diagram**: Closes the schema diagram and returns to the dashboard menu.  
 
 <h2 id="workspaces_menu"> Workspaces menu </h2> 
 

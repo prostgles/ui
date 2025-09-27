@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import "./Documentation.css";
 
 import { getDocumentationFiles } from "./getDocumentation";
 
@@ -17,6 +18,7 @@ export const Documentation = ({ isElectron }: P) => {
   );
   return (
     <div
+      className="Documentation"
       style={{
         width: "min(100vw, 850px)",
         alignSelf: "center",

@@ -155,6 +155,7 @@ export const COMMANDS = {
 
   "SearchList.toggleAll": "",
   "SearchList.List": "",
+  "SearchList.Input": "",
 
   FieldFilterControl: "",
   "FieldFilterControl.type": "",

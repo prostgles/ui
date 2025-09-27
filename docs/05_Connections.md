@@ -1,6 +1,6 @@
 <h1 id="connections"> Connections </h1> 
 
-The Connections page is the main page and serves as the central hub within Prostgles UI for managing all your PostgreSQL database connections. 
+The Connections page serves as the central hub within Prostgles UI for managing all your PostgreSQL database connections. 
 From here, you can establish new connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
 
 <picture>
@@ -8,13 +8,14 @@ From here, you can establish new connections, modify existing ones, and gain an 
 <img src="/screenshots/connections.svg" alt="Connections page screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
-- <a href="#go_to_new_connection_form">Go to New Connection form</a>: Opens the form to add a new database connection.  
+### Connection controls:
+- <a href="#new_connection">New connection</a>: Opens the form to add a new database connection.  
 - **Display options**: Customize how the list of connections is displayed (e.g., show/hide state database, show database names).  
   - **Show state connection**: If checked, displays the internal 'Prostgles UI state' connection which stores application metadata and dashboard data.  
   - **Show database names**: If checked, displays the specific database name along with the connection name.  
 - <a href="#connection_list">Connection list</a>: Controls to open and manage your database connections.  
 
-<h2 id="go_to_new_connection_form"> Go to New Connection form </h2> 
+<h2 id="new_connection"> New connection </h2> 
 
 Use the **New Connection** button to add a new database connection.
 This will open a form where you can enter the connection details such as host, port, database name, user, and password.
@@ -24,6 +25,7 @@ This will open a form where you can enter the connection details such as host, p
 <img src="/screenshots/new_connection.svg" alt="New connection form screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
+### New connection form fields:
   - **PostgreSQL Installation Instructions**: Instructions for installing PostgreSQL on your system.  
   - **Connection Name**: The name of the connection.  
   - **Connection Type**: Allows you change the connection details format: standard or connection string.  
@@ -50,10 +52,11 @@ The connection list displays all your database connections grouped by database h
 <img src="/screenshots/connections.svg" alt="Connections list screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
-  - **Add**: Adds a new connection to the selected server.   
+### Connection actions:
+  - **Open Connection**: Opens the selected database connection on the default workspace.  
+  - **Add new database**: Adds a new connection to the selected server.   
     - <a href="#create_new_database">Create new database</a>: Create a new database within the server.  
     - <a href="#connect_to_an_existing_database">Connect to an existing database</a>: Selects a database from the server to connect to.   
-  - **Open Connection**: Opens the selected database connection on the default workspace.  
   - **Debug: Close All Windows**: Force-closes all windows/tabs for this connection. Use if the workspace becomes unresponsive or encounters a bug.  
   - **Status monitor**: View real-time statistics, running queries, and system resource usage (CPU, RAM, Disk) for this connection.  
   - **Connection configuration**: Access and modify settings for this connection, such as access control, file storage, backup/restore options, and server-side functions.  
@@ -67,6 +70,7 @@ Allows you to create a new database in the selected server.
 It will use the first connection details from the group connection.
 If no adequate account is found (no superuser or rolcreatedb), it will be greyed out with with an appropriate explanation tooltip text.
 
+### New database options:
   - **Database Name**: The name of the new database.  
   - **Sample Schemas**: Select a sample schema to create the database with.  
   - **Create database owner**: If checked, a new owner will be created for the database. Useful for ensuring the database is owned by a non-superuser account.  

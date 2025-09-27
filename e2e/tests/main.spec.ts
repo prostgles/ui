@@ -12,6 +12,7 @@ import {
   createAccessRule,
   createAccessRuleForTestDB,
   createDatabase,
+  deleteExistingLLMChat,
   disablePwdlessAdminAndCreateUser,
   dropConnectionAndDatabase,
   enableAskLLM,
@@ -608,16 +609,7 @@ test.describe("Main test", () => {
     /* Wait for schema change */
     await page.waitForTimeout(2e3);
 
-    /** Delete existing chat during local testing */
-    const removeActiveChat = async () => {
-      await page.getByTestId("AskLLM").click();
-      await page.getByTestId("LLMChatOptions.toggle").click();
-      await page.getByTestId("SmartForm.delete").click();
-      await page.getByTestId("SmartForm.delete.confirm").click();
-      await page.waitForTimeout(1e3);
-    };
-
-    await removeActiveChat();
+    await deleteExistingLLMChat(page);
 
     await page.getByTestId("Popup.close").click();
 
@@ -739,6 +731,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await lastToolUseBtn.click();
     await page.waitForTimeout(1e3);
+    /** Can be flaky */
     await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
       `Page Title: Prostgles`,
       { timeout: 15e3 },

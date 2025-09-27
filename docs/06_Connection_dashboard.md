@@ -1,4 +1,4 @@
-<h1 id="dashboard"> Dashboard </h1> 
+<h1 id="connection_dashboard"> Connection dashboard </h1> 
 
 Main interface for interacting with a selected database connection. 
 Browse data, execute SQL queries, manage database objects, and access various tools.
@@ -8,8 +8,9 @@ Browse data, execute SQL queries, manage database objects, and access various to
 <img src="/screenshots/dashboard.svg" alt="Connection dashboard" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
+### Dashboard elements:
 - <a href="#dashboard_menu">Dashboard menu</a>: Main menu for navigating and managing the database tables and views.  
-- **Toggle dashboard menu**: Opens or closes the dashboard menu unless the menu is pinned.  
+- **Dashboard menu toggle**: Opens or closes the dashboard menu unless the menu is pinned.  
 - **Go to configuration**: Opens the configuration page for the selected connection.  
 - **Change connection**: Changes the current connection.  
 - **Workspaces**: List of available workspaces for the selected connection. Each workspace represents a separate environment for data analysis  
@@ -43,7 +44,6 @@ The menu is designed to be user-friendly and provides quick access to essential 
 Create new tables, server-side functions or import files into the current database.
 
   - **Create new table**: Opens the form to create a new table in the current database.  
-    - **Table name**: Input field for entering the name of the new table. Must be unique within the database.  
   - <a href="#import_file">Import file</a>: Opens the form to import a file into the current database.  
   - **Create TS Function**: Opens the form to create a new server-side TypeScript function for the current database.  
 

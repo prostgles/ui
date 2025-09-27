@@ -8,6 +8,7 @@ The import process allows you to specify the table name, infer column data types
 <img src="/screenshots/file_importer.svg" alt="File Importer screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
+### Import file options:
   - **Import file**: Input field for selecting a file to import. Supported types: csv/geojson/json.  
   - **Table name**: New/existing table name into which data is to be imported.  
   - **Try to infer and apply column data types**: Checkbox for inferring and applying column data types during import. If checked, the system will attempt to determine the appropriate data types for each column based on the imported file. If unchecked, TEXT data type will be used for all columns.  

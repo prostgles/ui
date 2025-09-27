@@ -1,5 +1,6 @@
+import { addFragmentViewBoxes } from "./addFragmentViewBoxes";
 import { elementToSVG, type SVGContext } from "./elementToSVG";
-import { wrapAllSVGText } from "./text/textToSVG";
+import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
@@ -10,7 +11,6 @@ export const domToSVG = async (node: HTMLElement) => {
   // Get dimensions and position
   const nodeBBox = node.getBoundingClientRect();
 
-  // Set SVG attributes
   svg.setAttribute("width", nodeBBox.width.toString());
   svg.setAttribute("height", nodeBBox.height.toString());
   svg.setAttribute("viewBox", `0 0 ${nodeBBox.width} ${nodeBBox.height}`);
@@ -51,7 +51,10 @@ export const domToSVG = async (node: HTMLElement) => {
     .join("\n");
 
   setBackdropFilters(svg);
+  const { remove } = renderSvg(svg);
   await wrapAllSVGText(svg);
+  await addFragmentViewBoxes(svg, 10);
+  await remove();
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);

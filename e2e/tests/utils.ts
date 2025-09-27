@@ -1007,3 +1007,12 @@ export const setupProstglesLLMProvider = async (page: PageWIds) => {
     { api_key: btoa(activeSession[0].id), user_id: activeSession[0].user_id },
   );
 };
+
+/** Delete existing chat during local testing */
+export const deleteExistingLLMChat = async (page: PageWIds) => {
+  await page.getByTestId("AskLLM").click();
+  await page.getByTestId("LLMChatOptions.toggle").click();
+  await page.getByTestId("SmartForm.delete").click();
+  await page.getByTestId("SmartForm.delete.confirm").click();
+  await page.waitForTimeout(1e3);
+};

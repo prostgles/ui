@@ -22,6 +22,7 @@ export const connectionConfigUIDoc = {
   docs: fixIndent(`
     Configure the selected database connection. Set connection details, manage users, and customize settings.
     <img src="/screenshots/connection_config.svg" alt="Connection configuration" />
+    <img src="/screenshots/connection_config_expanded.svg" alt="Connection configuration" />
   `),
   children: [
     {

@@ -275,6 +275,6 @@ export const flatUIDocs = filterArrInverse(UIDocs, { type: "info" } as const)
   .flat() as UIDocFlat[];
 window.flatUIDocs = flatUIDocs;
 
-if (isPlaywrightTest) {
+if (isPlaywrightTest || true) {
   window.toSVG = domToThemeAwareSVG;
 }

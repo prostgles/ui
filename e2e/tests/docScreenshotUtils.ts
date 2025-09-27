@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import {
+  deleteExistingLLMChat,
   getDashboardUtils,
   goTo,
   MINUTE,
@@ -22,12 +23,24 @@ type OnBeforeScreenshot = (
 const SVG_SCREENSHOT_DETAILS = {
   ai_assistant: {
     "01": async (page, { openConnection }) => {
+      /**
+       * This is required to initialize the askLLM function
+       */
+      await openConnection("cloud");
       await openConnection("prostgles_video_demo");
-      await page.getByTestId("AskLLM").click();
+      await deleteExistingLLMChat(page);
+      // await page.getByTestId("AskLLM").click();
       await setModelByText(page, "pros");
       await setPromptByText(page, "dashboard");
     },
     dashboards_02: async (page) => {
+      const firstMessage = await page
+        .getByTestId("AskLLM.DeleteMessage")
+        .first();
+      if (await firstMessage.count()) {
+        await firstMessage.click();
+        await page.locator(getDataKeyElemSelector("allToBottom")).click();
+      }
       await page
         .getByTestId("Chat.textarea")
         .fill("I need some dashboards with useful insights and metrics");
@@ -152,10 +165,14 @@ const SVG_SCREENSHOT_DETAILS = {
   postgis_map: async (page) => {
     await openConnection(page, "food_delivery");
     await page.waitForTimeout(1500);
-    await page
+    const chartDetachBtn = await page
       .locator(`[data-table-name="users"]`)
-      .getByTestId("dashboard.window.detachChart")
-      .click();
+      .getByTestId("dashboard.window.detachChart");
+
+    if (await chartDetachBtn.count()) {
+      chartDetachBtn.click();
+    }
+
     await page
       .locator(`[data-view-type="map"]`)
       .getByTestId("dashboard.window.fullscreen")
@@ -267,6 +284,11 @@ const SVG_SCREENSHOT_DETAILS = {
   connection_config: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
+  },
+  connection_config_expanded: async (page, { openConnection }) => {
+    await openConnection("prostgles_video_demo");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.files").click();
   },
 } satisfies Record<
   string,

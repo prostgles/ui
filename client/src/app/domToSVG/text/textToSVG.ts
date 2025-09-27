@@ -190,18 +190,8 @@ const unnestRedundantGElements = (svg: SVGElement) => {
 };
 
 export const wrapAllSVGText = async (svg: SVGElement) => {
-  /** Must render svg to ensure the text length calcs work */
-  const topStyle = {
-    position: "absolute",
-    top: "0",
-    left: "0",
-    zIndex: "9999",
-  } as const;
   if (!svg.isConnected) {
-    Object.entries(topStyle).forEach(([key, value]) => {
-      svg.style[key] = value;
-    });
-    document.body.appendChild(svg);
+    throw new Error("SVG must be in the DOM for bbox calculations");
   }
 
   unnestRedundantGElements(svg);
@@ -219,10 +209,30 @@ export const wrapAllSVGText = async (svg: SVGElement) => {
         text.textContent || "",
       );
     });
+};
 
-  if (svg.isConnected) {
-    await tout(1000);
-    svg.removeAttribute("style");
-    svg.remove();
+export const renderSvg = (svg: SVGElement) => {
+  /** Must render svg to ensure the text length calcs work */
+  const topStyle = {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    zIndex: "9999",
+  } as const;
+  if (!svg.isConnected) {
+    Object.entries(topStyle).forEach(([key, value]) => {
+      svg.style[key] = value;
+    });
+    document.body.appendChild(svg);
   }
+
+  return {
+    remove: async () => {
+      if (svg.isConnected) {
+        await tout(1000);
+        svg.removeAttribute("style");
+        svg.remove();
+      }
+    },
+  };
 };
