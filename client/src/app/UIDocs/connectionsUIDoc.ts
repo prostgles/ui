@@ -1,5 +1,5 @@
-import { mdiDatabasePlusOutline, mdiFilter, mdiServerNetwork } from "@mdi/js";
 import { ROUTES } from "@common/utils";
+import { mdiDatabasePlusOutline, mdiFilter, mdiServerNetwork } from "@mdi/js";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers, UIDocElement } from "../UIDocs";
 import { editConnectionUIDoc } from "./editConnectionUIDoc";
@@ -62,11 +62,16 @@ export const connectionsUIDoc = {
       path: ROUTES.NEW_CONNECTION,
       docs: `
         Use the **New Connection** button to add a new database connection.
+        
+        <img src="/screenshots/connections.svg#Connections_new" alt="New connection button" style="max-width: 200px;" />
+
         This will open a form where you can enter the connection details such as host, port, database name, user, and password.
         
+        <img src="/screenshots/new_connection.svgif.svg" alt="New connection form screenshot" />
         <img src="/screenshots/new_connection.svg" alt="New connection form screenshot" />
       `,
       childrenTitle: "New connection form fields",
+      docOptions: { title: "Adding a connection" },
       pageContent: editConnectionUIDoc.children,
     },
     {
@@ -76,6 +81,7 @@ export const connectionsUIDoc = {
         "Customize how the list of connections is displayed (e.g., show/hide state database, show database names).",
       selectorCommand: "ConnectionsOptions",
       iconPath: mdiFilter,
+      docOptions: "hideChildren",
       children: [
         {
           type: "input",
@@ -112,9 +118,9 @@ export const connectionsUIDoc = {
           type: "link",
           selectorCommand: "Connection.openConnection",
           path: ROUTES.CONNECTIONS,
-          title: "Open Connection",
+          title: "Open connection",
           description:
-            "Opens the selected database connection on the default workspace.",
+            "Opens the selected connection dashboard on the default workspace.",
           pathItem: {
             tableName: "connections",
           },

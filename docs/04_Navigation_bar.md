@@ -25,11 +25,6 @@ You can create multiple workspaces to organize your views by project, team, task
 ### Navbar items:
 - **Connections**: Manage database connections  
 - **Users**: Manage user accounts (admin only)  
-  - **Search Users**: Search for users by name or email.  
-  - **Create User**: Create a new user account.  
-  - **User List**: List of all users in the system.  
-    - **Edit User**: Edit user details.  
-  - **Go to Last Page**: Navigate to the last page of the user list.  
 - **Server Settings**: Configure server settings (admin only)  
 - **Account**: Manage your account  
 - **Logout**: Logout of your account  

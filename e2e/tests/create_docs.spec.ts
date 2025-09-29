@@ -1,12 +1,14 @@
 import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { saveSVGifs } from "saveSVGifs";
 import {
   DOCS_DIR,
   saveSVGScreenshots,
   svgScreenshotsCompleteReferenced,
-} from "./docScreenshotUtils";
+} from "./saveSVGScreenshots";
 import {
+  goTo,
   login,
   MINUTE,
   openConnection,
@@ -38,7 +40,9 @@ test.describe("Create docs and screenshots", () => {
 
   test(`Restore databases`, async ({ page: p }) => {
     const page = p as PageWIds;
+
     await login(page, USERS.test_user, "/login");
+    // await saveSVGifs(page); // For debugging
     await openConnection(page, "prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();
@@ -126,6 +130,7 @@ test.describe("Create docs and screenshots", () => {
 
       await prepare(page);
       await saveSVGScreenshots(page);
+      await saveSVGifs(page);
     }
     await svgScreenshotsCompleteReferenced();
   });

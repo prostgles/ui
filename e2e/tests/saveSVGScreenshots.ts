@@ -1,5 +1,8 @@
+import { expect } from "@playwright/test";
+import { createReceipt } from "createReceipt";
 import * as fs from "fs";
 import * as path from "path";
+import { getDataKeyElemSelector } from "./Testing";
 import {
   deleteExistingLLMChat,
   getDashboardUtils,
@@ -12,9 +15,7 @@ import {
   setPromptByText,
   type PageWIds,
 } from "./utils";
-import { getDataKeyElemSelector } from "./Testing";
-import { expect } from "@playwright/test";
-import { createReceipt } from "createReceipt";
+import { SVGIFS } from "saveSVGifs";
 
 type OnBeforeScreenshot = (
   page: PageWIds,
@@ -358,7 +359,11 @@ export const saveSVGScreenshots = async (page: PageWIds) => {
   await page.waitForTimeout(100);
 };
 
-const getFilesFromDir = (dir: string, endWith: string) => {
+export const getFilesFromDir = (
+  dir: string,
+  endWith: string,
+  checkAge = true,
+) => {
   const files = fs
     .readdirSync(dir)
     .filter((file) => file.endsWith(endWith))
@@ -368,13 +373,15 @@ const getFilesFromDir = (dir: string, endWith: string) => {
       return { fileName, filePath, stat: fs.statSync(filePath), content };
     });
 
-  const filesThatAreNotRecent = files.filter(
-    (file) => file.stat.mtimeMs < Date.now() - 120 * MINUTE,
-  );
-  if (filesThatAreNotRecent.length) {
-    throw `${JSON.stringify(endWith)} files are not recent: ${filesThatAreNotRecent
-      .map((file) => file.fileName)
-      .join(", ")}`;
+  if (checkAge) {
+    const filesThatAreNotRecent = files.filter(
+      (file) => file.stat.mtimeMs < Date.now() - 120 * MINUTE,
+    );
+    if (filesThatAreNotRecent.length) {
+      throw `${JSON.stringify(endWith)} files are not recent: ${filesThatAreNotRecent
+        .map((file) => file.fileName)
+        .join(", ")}`;
+    }
   }
   return files;
 };
@@ -382,12 +389,14 @@ const getFilesFromDir = (dir: string, endWith: string) => {
 export const svgScreenshotsCompleteReferenced = async () => {
   const svgFiles = getFilesFromDir(SVG_SCREENSHOT_DIR, ".svg");
 
-  const allSVGFileNames = Object.entries(SVG_SCREENSHOT_DETAILS).flatMap(
+  const svgFileNames = Object.entries(SVG_SCREENSHOT_DETAILS).flatMap(
     ([key, val]) =>
       typeof val === "function" ?
         [key]
       : Object.keys(val).map((v) => `${key}_${v}`),
   );
+  const svgifFileNames = Object.keys(SVGIFS).map((v) => `${v}.svgif`);
+  const allSVGFileNames = [...svgFileNames, ...svgifFileNames];
   const allSVGFileNamesStr = allSVGFileNames.sort().join(",");
   const savedSVGFileNames = svgFiles.map((file) => file.fileName.slice(0, -4));
   if (savedSVGFileNames.sort().join(",") !== allSVGFileNamesStr) {
@@ -395,7 +404,7 @@ export const svgScreenshotsCompleteReferenced = async () => {
   }
   const docMarkdownFiles = getFilesFromDir(DOCS_DIR, ".md");
 
-  let usedSrcValues: string[] = [];
+  const usedSrcValuesWithExtension: Set<string> = new Set();
   for (const docMarkdownFile of docMarkdownFiles) {
     const content = docMarkdownFile.content;
     content
@@ -403,15 +412,40 @@ export const svgScreenshotsCompleteReferenced = async () => {
       .slice(1)
       .map((v) => v.split(`"`)[0])
       .forEach((src) => {
-        if (!usedSrcValues.includes(src)) {
-          usedSrcValues.push(src.slice(SCREENSHOTS_PATH.length + 1, -4));
+        if (!usedSrcValuesWithExtension.has(src)) {
+          usedSrcValuesWithExtension.add(
+            src.slice(SCREENSHOTS_PATH.length + 1),
+          );
         }
       });
   }
-  usedSrcValues = Array.from(new Set(usedSrcValues));
+
+  const usedSrcValuesWithInfo = Array.from(usedSrcValuesWithExtension).map(
+    (src) => ({
+      srcWithFragment: src.includes("#") ? src : undefined,
+      src: src.split("#")[0].slice(0, -4),
+    }),
+  );
+  const usedSrcValues = Array.from(
+    new Set(usedSrcValuesWithInfo.map((v) => v.src)),
+  );
 
   const usedSrcValuesStr = usedSrcValues.sort().join(",");
   if (allSVGFileNamesStr !== usedSrcValuesStr) {
-    throw `SVG image src tags from docs do not match the saved svg files: \nSrc: ${usedSrcValuesStr} \n Files: ${allSVGFileNamesStr}`;
+    throw `SVG image src tags from docs do not match the saved svg files: \n\nSrc: ${usedSrcValuesStr} \n Svg files: ${allSVGFileNamesStr}`;
+  }
+
+  // Ensure fragments are valid
+  for (const { srcWithFragment } of usedSrcValuesWithInfo) {
+    const [src, fragment] = srcWithFragment?.split("#") ?? [];
+    if (src && fragment) {
+      const svgFile = svgFiles.find((f) => f.fileName === src);
+      if (!svgFile) {
+        throw `SVG file not found: ${src}`;
+      }
+      if (!svgFile.content.includes(`<view id="${fragment}"`)) {
+        throw `SVG file ${src} does not contain fragment id: ${fragment}`;
+      }
+    }
   }
 };

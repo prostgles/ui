@@ -15,7 +15,6 @@ const asList = (
   const listItemDepth = depth - (separatePageDepth ?? 1);
 
   const separatePages: SeparatePage[] = [];
-  const appendToDocsItems: UIDoc[] = [];
 
   const listContent: string = children
     .map((child) => {
@@ -94,8 +93,9 @@ const getUIDocAsMarkdown = (
   const childrenTitle =
     doc.childrenTitle ?? (doc.type === "navbar" ? "Navbar items" : undefined);
 
+  const displayTitle = isObject(docOptions) ? docOptions.title : doc.title;
   const content = [
-    `<h${hDepth} id=${JSON.stringify(toSnakeCase(doc.title))}> ${doc.title} </h${hDepth}> \n`,
+    `<h${hDepth} id=${JSON.stringify(toSnakeCase(doc.title))}> ${displayTitle} </h${hDepth}> \n`,
     doc.uiVersionOnly ? `>  Not available on Desktop version\n  ` : "",
     `${doc.docs ? fixIndent(doc.docs) : doc.description}\n`,
     childrenTitle ? `### ${childrenTitle}:` : "",
@@ -155,6 +155,7 @@ const toSnakeCase = (str: string) =>
   str.toLowerCase().trim().replaceAll(/ /g, "_");
 
 const getChildren = (doc: UIDoc, isElectron: boolean) => {
+  if (doc.docOptions === "hideChildren") return [];
   const items =
     "children" in doc ? doc.children
     : "itemContent" in doc ? doc.itemContent

@@ -219,20 +219,19 @@ export const renderSvg = (svg: SVGElement) => {
     left: "0",
     zIndex: "9999",
   } as const;
-  if (!svg.isConnected) {
-    Object.entries(topStyle).forEach(([key, value]) => {
-      svg.style[key] = value;
-    });
-    document.body.appendChild(svg);
-  }
+  // if (!svg.isConnected) {
+  Object.entries(topStyle).forEach(([key, value]) => {
+    svg.style[key] = value;
+  });
+  document.body.appendChild(svg);
+  // }
 
   return {
-    remove: async () => {
-      if (svg.isConnected) {
-        await tout(1000);
-        svg.removeAttribute("style");
-        svg.remove();
-      }
+    remove: () => {
+      // if (svg.isConnected) {
+      svg.removeAttribute("style");
+      svg.remove();
+      // }
     },
   };
 };

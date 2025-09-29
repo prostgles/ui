@@ -53,6 +53,7 @@ export const navbarUIDoc = {
       selector: '[href="/users"]',
       title: "Users",
       description: "Manage user accounts (admin only)",
+      docOptions: "hideChildren",
       pageContent: [
         {
           type: "input",

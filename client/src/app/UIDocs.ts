@@ -16,6 +16,7 @@ import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
 import { overviewUIDoc } from "./UIDocs/overviewUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 import { UIInstallation } from "./UIDocs/UIInstallationUIDoc";
+import { getSVGif } from "./domToSVG/SVGif/getSVGif";
 
 /**
  * The purpose of UIDocs is to provide structured metadata about the UI elements.
@@ -52,10 +53,18 @@ type UIDocCommon = {
   childrenTitle?: string;
 
   docOptions?: /**
-   * If "asSeparateFile" AND docs is defined, this will be saved as a separate file in the documentation.
-   * By default, a single file is generated for each root UIDoc with child items with docs appended to the bottom.
+   * If docs is defined, then it will be rendered as a separate header in the documentation with this title.
    */
-  "asSeparateFile" | { title: string };
+  | { title: string }
+    /**
+     * If "asSeparateFile" AND docs is defined, this will be saved as a separate file in the documentation.
+     * By default, a single file is generated for each root UIDoc with child items with docs appended to the bottom.
+     */
+    | "asSeparateFile"
+    /**
+     * Hides children from documentation. Meant to be used when the children content is obvious/documented on the parent.
+     */
+    | "hideChildren";
 
   /** If true then this is not available for Prostgles Desktop */
   uiVersionOnly?: true;
@@ -162,37 +171,7 @@ export type UIDocContainers =
   | UIDocPage
   | UIDocBase<{
       type: "hotkey-popup";
-      hotkey: [
-        "Ctrl" | "Alt" | "Shift",
-        (
-          | "A"
-          | "B"
-          | "C"
-          | "D"
-          | "E"
-          | "F"
-          | "G"
-          | "H"
-          | "I"
-          | "J"
-          | "K"
-          | "L"
-          | "M"
-          | "N"
-          | "O"
-          | "P"
-          | "Q"
-          | "R"
-          | "S"
-          | "T"
-          | "U"
-          | "V"
-          | "W"
-          | "X"
-          | "Y"
-          | "Z"
-        ),
-      ];
+      hotkey: ["Ctrl" | "Alt" | "Shift", "A" | "K"];
       children: UIDocElement[];
     }>;
 
@@ -277,4 +256,5 @@ window.flatUIDocs = flatUIDocs;
 
 if (isPlaywrightTest) {
   window.toSVG = domToThemeAwareSVG;
+  window.getSVGif = getSVGif;
 }

@@ -7,6 +7,8 @@ export const overviewUIDoc = {
   docs: `
     Prostgles UI is a user-friendly way for interacting with PostgreSQL, creating dashboards and internal tools.
 
+    
+    <img src="/screenshots/dashboard.svgif.svg" alt="Prostgles UI Overview" width="100%" />
     <img src="/screenshots/dashboard.svg" alt="Prostgles UI Overview" width="100%" />
 
     <img src="/screenshots/schema_diagram.svg" alt="Prostgles UI Overview" width="100%" />

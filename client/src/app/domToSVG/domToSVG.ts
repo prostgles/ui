@@ -1,3 +1,4 @@
+import { tout } from "src/utils";
 import { addFragmentViewBoxes } from "./addFragmentViewBoxes";
 import { elementToSVG, type SVGContext } from "./elementToSVG";
 import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
@@ -54,7 +55,8 @@ export const domToSVG = async (node: HTMLElement) => {
   const { remove } = renderSvg(svg);
   await wrapAllSVGText(svg);
   await addFragmentViewBoxes(svg, 10);
-  await remove();
+  await tout(1000);
+  remove();
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);

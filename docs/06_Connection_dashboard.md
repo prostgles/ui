@@ -4,6 +4,10 @@ Main interface for interacting with a selected database connection.
 Browse data, execute SQL queries, manage database objects, and access various tools.
 
 <picture>
+<source srcset="/screenshots/dark/dashboard.svgif.svg" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/dashboard.svgif.svg" alt="Connection dashboard" style="border: 1px solid; margin: 1em 0;" />
+</picture>
+<picture>
 <source srcset="/screenshots/dark/dashboard.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/dashboard.svg" alt="Connection dashboard" style="border: 1px solid; margin: 1em 0;" />
 </picture>

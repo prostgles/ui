@@ -3,6 +3,8 @@ import type { Theme } from "./App";
 import { type DocumentationFile } from "./app/CommandPalette/getDocumentation";
 import type { UIDocFlat } from "./app/UIDocs";
 import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
+import type { getSVGif } from "./app/domToSVG/SVGif/getSVGif";
+import type { domToThemeAwareSVG } from "./app/domToSVG/domToThemeAwareSVG";
 
 type Unsubscribe = {
   unsubscribe: () => void;
@@ -103,7 +105,8 @@ declare global {
     isMediumWidthScreen: boolean;
     isIOSDevice: boolean;
     isMobile: boolean;
-    toSVG: (node: HTMLElement) => Promise<{ light: string; dark: string }>;
+    toSVG: typeof domToThemeAwareSVG;
+    getSVGif: typeof getSVGif;
     documentation: DocumentationFile[];
     flatUIDocs: UIDocFlat[];
   }

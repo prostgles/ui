@@ -11,15 +11,23 @@ From here, you can establish new connections, modify existing ones, and gain an 
 ### Connection controls:
 - <a href="#new_connection">New connection</a>: Opens the form to add a new database connection.  
 - **Display options**: Customize how the list of connections is displayed (e.g., show/hide state database, show database names).  
-  - **Show state connection**: If checked, displays the internal 'Prostgles UI state' connection which stores application metadata and dashboard data.  
-  - **Show database names**: If checked, displays the specific database name along with the connection name.  
 - <a href="#connection_list">Connection list</a>: Controls to open and manage your database connections.  
 
-<h2 id="new_connection"> New connection </h2> 
+<h1 id="new_connection"> Adding a connection </h1> 
 
 Use the **New Connection** button to add a new database connection.
+
+<picture>
+<source srcset="/screenshots/dark/connections.svg#Connections_new" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/connections.svg#Connections_new" alt="New connection button" style="max-width: 200px;" style="border: 1px solid; margin: 1em 0;" />
+</picture>
+
 This will open a form where you can enter the connection details such as host, port, database name, user, and password.
 
+<picture>
+<source srcset="/screenshots/dark/new_connection.svgif.svg" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/new_connection.svgif.svg" alt="New connection form screenshot" style="border: 1px solid; margin: 1em 0;" />
+</picture>
 <picture>
 <source srcset="/screenshots/dark/new_connection.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/new_connection.svg" alt="New connection form screenshot" style="border: 1px solid; margin: 1em 0;" />
@@ -53,7 +61,7 @@ The connection list displays all your database connections grouped by database h
 </picture>
 
 ### Connection actions:
-  - **Open Connection**: Opens the selected database connection on the default workspace.  
+  - **Open connection**: Opens the selected connection dashboard on the default workspace.  
   - **Add new database**: Adds a new connection to the selected server.   
     - <a href="#create_new_database">Create new database</a>: Create a new database within the server.  
     - <a href="#connect_to_an_existing_database">Connect to an existing database</a>: Selects a database from the server to connect to.   
