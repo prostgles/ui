@@ -60,7 +60,13 @@ export const getSVGifAnimations = (
     for (const animation of animations) {
       if (animation.type === "wait") {
       } else {
-        const { lingerMs = 500, duration, elementSelector, type } = animation;
+        const {
+          lingerMs = 500,
+          waitBeforeClick = 300,
+          duration,
+          elementSelector,
+          type,
+        } = animation;
         const element = svgDom.querySelector<SVGGElement>(
           animation.elementSelector,
         );
@@ -72,19 +78,17 @@ export const getSVGifAnimations = (
         const cx = bbox.x + bbox.width / 2;
         const cy = bbox.y + bbox.height / 2;
 
+        const clickEndTime = currentPrevDuration + duration - waitBeforeClick;
         cursorKeyframes.push(
           ...[
             `${getPercent(
               currentPrevDuration,
             )}% { opacity: 0; transform: translate(${width / 2}px, ${height}px); }`,
             `${getPercent(
-              currentPrevDuration + duration,
+              clickEndTime,
             )}% { opacity: 1; transform: translate(${cx}px, ${cy}px); }`,
             `${getPercent(
-              Math.min(
-                totalDuration,
-                currentPrevDuration + duration + lingerMs,
-              ),
+              Math.min(totalDuration, clickEndTime + lingerMs),
             )}% { opacity: 0; transform: translate(${cx}px, ${cy}px); }`,
           ],
         );

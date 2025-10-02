@@ -42,8 +42,7 @@ test.describe("Create docs and screenshots", () => {
     const page = p as PageWIds;
 
     await login(page, USERS.test_user, "/login");
-    await saveSVGifs(page);
-    throw "hehe"; // For debugging
+    // await saveSVGifs(page); throw "hehe"; // For debugging
     await openConnection(page, "prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();

@@ -12,6 +12,14 @@ export type SVGifAnimation =
       elementSelector: string;
       duration: number;
       type: "click" | "zoomTo";
+
+      /**
+       * Time to wait before clicking after reaching the final position
+       * */
+      waitBeforeClick?: number;
+      /**
+       * Time to stay on the final position after clicking
+       */
       lingerMs?: number;
     }
   | {

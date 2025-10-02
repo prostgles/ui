@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { getDataKeyElemSelector } from "./Testing";
 import {
+  closeWorkspaceWindows,
   deleteExistingLLMChat,
   getDashboardUtils,
   goTo,
@@ -195,6 +196,41 @@ const SVG_SCREENSHOT_DETAILS = {
   dashboard: async (page, { openConnection, hideMenuIfOpen }) => {
     await openConnection("crypto");
     await hideMenuIfOpen();
+  },
+  empty_dashboard: async (page, { openConnection }) => {
+    await openConnection("cloud");
+    await page.getByTestId("WorkspaceMenu.list").getByText("default").click();
+    await closeWorkspaceWindows(page);
+    await page.waitForTimeout(500);
+  },
+  empty_sql_editor: async (page, { openMenuIfClosed }) => {
+    await openMenuIfClosed();
+    await page.getByTestId("dashboard.menu.sqlEditor").click();
+    await page.waitForTimeout(500);
+  },
+  sql_editor_01: async (page) => {
+    await monacoType(page, `.ProstglesSQL`, "se", {
+      deleteAll: true,
+    });
+    await page.waitForTimeout(500);
+    await monacoType(page, `.ProstglesSQL`, `l`, { deleteAll: false });
+    await page.reload();
+  },
+  sql_editor_02: async (page) => {
+    await monacoType(page, `.ProstglesSQL`, "SELECT * FROM u", {
+      deleteAll: true,
+    });
+    await page.waitForTimeout(500);
+    await monacoType(page, `.ProstglesSQL`, `s`, { deleteAll: false });
+    await page.reload();
+  },
+  sql_editor_03: async (page) => {
+    await monacoType(page, `.ProstglesSQL`, "SELECT * FROM user ", {
+      deleteAll: true,
+    });
+    await page.waitForTimeout(500);
+    await monacoType(page, `.ProstglesSQL`, `w`, { deleteAll: false });
+    await page.reload();
   },
   table: async (page, { hideMenuIfOpen, openConnection, openMenuIfClosed }) => {
     await openConnection("prostgles_video_demo");

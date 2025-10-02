@@ -97,4 +97,61 @@ export const SVGIFS = {
       ],
     },
   ],
+  sql_editor: [
+    {
+      svgFileName: "/screenshots/empty_dashboard.svg",
+      animations: [
+        {
+          duration: 500,
+          type: "wait",
+        },
+        {
+          elementSelector: '[data-command="dashboard.menu.sqlEditor"]',
+          duration: 1000,
+          type: "click",
+        },
+      ],
+    },
+    {
+      svgFileName: "/screenshots/empty_sql_editor.svg",
+      animations: [
+        {
+          duration: 1000,
+          type: "wait",
+        },
+        {
+          elementSelector: '[data-command="MonacoEditor"]',
+          duration: 1000,
+          type: "click",
+        },
+      ],
+    },
+    {
+      svgFileName: "/screenshots/sql_editor_01.svg",
+      animations: [
+        {
+          duration: 1000,
+          type: "wait",
+        },
+      ],
+    },
+    {
+      svgFileName: "/screenshots/sql_editor_02.svg",
+      animations: [
+        {
+          duration: 1000,
+          type: "wait",
+        },
+      ],
+    },
+    {
+      svgFileName: "/screenshots/sql_editor_03.svg",
+      animations: [
+        {
+          duration: 1000,
+          type: "wait",
+        },
+      ],
+    },
+  ],
 };
