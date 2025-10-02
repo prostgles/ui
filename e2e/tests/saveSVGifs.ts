@@ -56,15 +56,16 @@ export const SVGIFS = {
           duration: 1000,
           type: "click",
         },
-        {
-          duration: 1000,
-          type: "wait",
-        },
       ],
     },
     {
       svgFileName: "/screenshots/new_connection.svg",
-      animations: [],
+      animations: [
+        {
+          duration: 2000,
+          type: "wait",
+        },
+      ],
     },
   ],
   dashboard: [
@@ -72,7 +73,7 @@ export const SVGIFS = {
       svgFileName: "/screenshots/connections.svg",
       animations: [
         {
-          duration: 1000,
+          duration: 500,
           type: "wait",
         },
         {
@@ -88,7 +89,12 @@ export const SVGIFS = {
     },
     {
       svgFileName: "/screenshots/dashboard.svg",
-      animations: [],
+      animations: [
+        {
+          duration: 3000,
+          type: "wait",
+        },
+      ],
     },
   ],
 };
