@@ -39,7 +39,8 @@ git clone https://github.com/prostgles/ui.git
 cd ui
 ```
 
-Docker setup. By default the app will be accessible at [localhost:3004](http://localhost:3004)
+Docker setup. By default the app will be accessible at [localhost:3004](http://localhost:3004).
+Omit "--build" to use our published images.
 
 ```docker-compose.sh
 docker compose up -d --build

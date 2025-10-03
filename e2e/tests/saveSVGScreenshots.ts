@@ -203,34 +203,35 @@ const SVG_SCREENSHOT_DETAILS = {
     await closeWorkspaceWindows(page);
     await page.waitForTimeout(500);
   },
-  empty_sql_editor: async (page, { openMenuIfClosed }) => {
+  empty_sql_editor: async (page, { openMenuIfClosed, hideMenuIfOpen }) => {
     await openMenuIfClosed();
     await page.getByTestId("dashboard.menu.sqlEditor").click();
     await page.waitForTimeout(500);
+    await hideMenuIfOpen();
   },
   sql_editor_01: async (page) => {
     await monacoType(page, `.ProstglesSQL`, "se", {
       deleteAll: true,
     });
     await page.waitForTimeout(500);
-    await monacoType(page, `.ProstglesSQL`, `l`, { deleteAll: false });
     await page.reload();
+    await monacoType(page, `.ProstglesSQL`, `l`, { deleteAll: false });
   },
   sql_editor_02: async (page) => {
     await monacoType(page, `.ProstglesSQL`, "SELECT * FROM u", {
       deleteAll: true,
     });
     await page.waitForTimeout(500);
-    await monacoType(page, `.ProstglesSQL`, `s`, { deleteAll: false });
     await page.reload();
+    await monacoType(page, `.ProstglesSQL`, `s`, { deleteAll: false });
   },
   sql_editor_03: async (page) => {
     await monacoType(page, `.ProstglesSQL`, "SELECT * FROM user ", {
       deleteAll: true,
     });
     await page.waitForTimeout(500);
-    await monacoType(page, `.ProstglesSQL`, `w`, { deleteAll: false });
     await page.reload();
+    await monacoType(page, `.ProstglesSQL`, `w`, { deleteAll: false });
   },
   table: async (page, { hideMenuIfOpen, openConnection, openMenuIfClosed }) => {
     await openConnection("prostgles_video_demo");

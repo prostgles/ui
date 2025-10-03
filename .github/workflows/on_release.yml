@@ -48,6 +48,23 @@ jobs:
             exit 1
           fi
 
+      - name: Ensure docker-compose.yml image tags are updated
+        run: |
+          pr_version=$(./scripts/get_version.sh) 
+          expected_tag="v${pr_version}"
+          docker_compose_file="./docker-compose.yml"
+
+          echo "Checking docker-compose.yml for correct image tags..."
+
+          if grep -q "image: prostgles/ui:${expected_tag}" "$docker_compose_file" && \
+             grep -q "image: prostgles/ui-db:${expected_tag}" "$docker_compose_file"; then
+            echo "docker-compose.yml uses the correct image tags: ${expected_tag}"
+          else
+            echo "docker-compose.yml does not use the correct image tags."
+            echo "Expected tags: prostgles/ui:${expected_tag} and prostgles/ui-db:${expected_tag}"
+            exit 1
+          fi
+
       - name: Create Release with Notes
         uses: softprops/action-gh-release@v2
         with:
