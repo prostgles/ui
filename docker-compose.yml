@@ -7,10 +7,9 @@ x-ui-environment: &ui-environment
   POSTGRES_USER: ${POSTGRES_USER}
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
   PROSTGLES_UI_HOST: "0.0.0.0"
-  UI_VERSION: "v2.2.2"
 
 x-ui-base: &ui-base
-  image: "prostgles/ui:${UI_VERSION}"
+  image: prostgles/ui:v2.2.2
   restart: unless-stopped
   build:
     context: .
@@ -24,7 +23,7 @@ x-ui-base: &ui-base
 
 services:
   db:
-    image: "prostgles/ui-db:${UI_VERSION}"
+    image: prostgles/ui-db:v2.2.2
     container_name: prostgles-ui-db
     restart: unless-stopped
     build:
