@@ -1,10 +1,10 @@
 import { isDefined } from "prostgles-types";
+import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { SVG_NAMESPACE } from "./domToSVG";
 import type { SVGContext } from "./elementToSVG";
-import type { getWhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
+import type { WhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
 import { isElementNode } from "./isElementVisible";
 import { getRectanglePath } from "./rectangleToSVG";
-import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 export const addOverflowClipPath = (
   element: HTMLElement,
@@ -22,10 +22,7 @@ export const addOverflowClipPath = (
     height: number;
   },
   context: SVGContext,
-  whatToRender: Pick<
-    Awaited<ReturnType<typeof getWhatToRenderOnSVG>>,
-    "border" | "background"
-  >,
+  whatToRender: Pick<WhatToRenderOnSVG, "border" | "background">,
 ) => {
   /**
    * If overflow is set to hidden, we need to add a clip path to the group
@@ -109,12 +106,28 @@ const mustAddClipPath = (element: HTMLElement, style: CSSStyleDeclaration) => {
   if (!element.children.length && element.childNodes.length) {
     return true;
   }
-  const hasNormalFlowChildren = Array.from(element.children).some(
-    (child) =>
-      isElementNode(child) &&
-      !includes(getComputedStyle(child).position, ["absolute", "fixed"]),
-  );
-  return hasNormalFlowChildren;
+
+  /**
+   * Ensures the sql tooltip is not overflowing out of the sql editor
+  if (element.className.includes("monaco-scrollable-element")) {
+    debugger;
+  }
+   */
+  const isRelativeOrAbsolute = includes(style.position, [
+    "relative",
+    "absolute",
+  ]);
+
+  const isBoundingChildren = Array.from(element.children).some((child) => {
+    if (!isElementNode(child)) {
+      return false;
+    }
+    const childStyle = getComputedStyle(child);
+    if (childStyle.position === "absolute") return isRelativeOrAbsolute;
+    if (childStyle.position !== "fixed") return true;
+  });
+  return isBoundingChildren;
+  /* To expensive and not accurate enough */
   // return Array.from(element.children).some(
   //   (child) => isElementVisible(child).isVisible,
   // );

@@ -5,7 +5,7 @@ export const isSVGElement = (element: Element): element is SVGElement => {
   return element instanceof SVGElement;
 };
 
-export const getForeignObject = (
+export const getForeignObject = async (
   element: Element,
   style: CSSStyleDeclaration,
   bbox: DOMRect,
@@ -21,10 +21,22 @@ export const getForeignObject = (
     foreignObject.style.padding = style.padding;
     foreignObject.style.margin = style.margin;
     foreignObject.style.color = style.color;
+    /** Ensure the icon buttons icons are centered */
+    foreignObject.style.display = "grid";
+    foreignObject.style.placeItems = "center";
     foreignObject.setAttribute("x", `${x}`);
     foreignObject.setAttribute("y", `${y}`);
     foreignObject.setAttribute("width", `${bbox.width}`);
     foreignObject.setAttribute("height", `${bbox.height}`);
+    const wrapper = document.createElement("div");
+    wrapper.style.width = "100%";
+    wrapper.style.height = "100%";
+    wrapper.style.boxSizing = "border-box";
+    wrapper.style.display = "flex";
+    wrapper.style.alignItems = "center";
+    wrapper.style.justifyContent = "center";
+    foreignObject.appendChild(wrapper);
+
     return foreignObject;
   };
 
@@ -45,7 +57,7 @@ export const getForeignObject = (
           const foreignObject = getForeignObject();
 
           // Append the SVG content
-          foreignObject.appendChild(svgElement);
+          foreignObject.firstChild!.appendChild(svgElement);
           resolve(foreignObject);
         })
         .catch((error) => {
@@ -58,7 +70,8 @@ export const getForeignObject = (
     const foreignObject = getForeignObject();
 
     const svgClone = element.cloneNode(true) as SVGElement;
-    foreignObject.appendChild(svgClone);
+    element.style.boxSizing = "content-box";
+    foreignObject.firstChild!.appendChild(svgClone);
     return foreignObject;
   }
 };

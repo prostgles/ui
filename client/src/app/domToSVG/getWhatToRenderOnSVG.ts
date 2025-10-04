@@ -5,9 +5,12 @@ import { getFontIconElement } from "./fontIconToSVG";
 import { getTextForSVG } from "./text/getTextForSVG";
 import { isElementVisible, isImgNode } from "./isElementVisible";
 import { getForeignObject } from "./getForeignObject";
+import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 const attributesToKeep = ["data-command", "data-key", "data-label"] as const;
-
+export type WhatToRenderOnSVG = Awaited<
+  ReturnType<typeof getWhatToRenderOnSVG>
+>;
 export const getWhatToRenderOnSVG = async (
   element: HTMLElement,
   context: SVGContext,
@@ -57,7 +60,10 @@ export const getWhatToRenderOnSVG = async (
 
   const backdropFilter = getBackdropFilter(style);
   const childAffectingStyles: Partial<CSSStyleDeclaration> = {};
-  if (style.opacity !== "1") {
+  if (
+    style.opacity !== "1" ||
+    includes(style.position, ["fixed", "absolute", "relative"])
+  ) {
     childAffectingStyles.opacity = style.opacity;
   }
 

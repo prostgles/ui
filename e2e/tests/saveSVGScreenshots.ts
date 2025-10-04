@@ -23,6 +23,82 @@ type OnBeforeScreenshot = (
   utils: ReturnType<typeof getDashboardUtils>,
 ) => Promise<void>;
 const SVG_SCREENSHOT_DETAILS = {
+  sql_editor: async (
+    page,
+    { openMenuIfClosed, hideMenuIfOpen, openConnection },
+  ) => {
+    await openConnection("prostgles_video_demo");
+    await page.waitForTimeout(1500);
+    if (!(await page.getByTestId("MonacoEditor").count())) {
+      await openMenuIfClosed();
+      await page.getByTestId("dashboard.menu.sqlEditor").click();
+    }
+    await hideMenuIfOpen();
+
+    const query = `SELECT * FROM chat_m`;
+    await monacoType(page, `.ProstglesSQL`, query, { deleteAll: true });
+    await page.waitForTimeout(500);
+    await page.reload(); // This reload is needed to ensure the suggestions moves to right
+    await page.waitForTimeout(1500);
+    await monacoType(page, `.ProstglesSQL`, `t`, { deleteAll: false });
+    await page.keyboard.press("Backspace");
+    await page.keyboard.press("Control+Space");
+    await page.waitForTimeout(500);
+  },
+  empty_dashboard: async (page, { openConnection, openMenuIfClosed }) => {
+    await openConnection("prostgles_video_demo");
+    await page.getByTestId("WorkspaceMenu.list").getByText("default").click();
+    await closeWorkspaceWindows(page);
+    await openMenuIfClosed();
+    await page.waitForTimeout(500);
+  },
+  empty_sql_editor: async (page, { openMenuIfClosed, hideMenuIfOpen }) => {
+    await openMenuIfClosed();
+    await page.getByTestId("dashboard.menu.sqlEditor").click();
+    await page.waitForTimeout(500);
+    await hideMenuIfOpen();
+  },
+  sql_editor_01: async (page) => {
+    await monacoType(page, `.ProstglesSQL`, "se", {
+      deleteAllAndFill: true,
+    });
+  },
+  sql_editor_02: async (page) => {
+    await monacoType(page, `.ProstglesSQL`, "SELECT *\nFROM mess", {
+      deleteAllAndFill: true,
+    });
+  },
+  sql_editor_03: async (page) => {
+    await monacoType(
+      page,
+      `.ProstglesSQL`,
+      "SELECT * \nFROM messages m\nJOIN us",
+      {
+        deleteAllAndFill: true,
+      },
+    );
+  },
+  sql_editor_04: async (page) => {
+    await monacoType(
+      page,
+      `.ProstglesSQL`,
+      "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ",
+      {
+        deleteAllAndFill: true,
+      },
+    );
+  },
+  sql_editor_05: async (page) => {
+    await monacoType(
+      page,
+      `.ProstglesSQL`,
+      "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ->>'timeZone' = ''",
+      {
+        deleteAllAndFill: true,
+        pressAfterTyping: ["ArrowLeft", "Control+Space"],
+      },
+    );
+  },
   ai_assistant: {
     "01": async (page, { openConnection }) => {
       /**
@@ -137,28 +213,6 @@ const SVG_SCREENSHOT_DETAILS = {
       await page.getByTestId("Popup.close").last().click();
     },
   },
-  sql_editor: async (
-    page,
-    { openMenuIfClosed, hideMenuIfOpen, openConnection },
-  ) => {
-    await openConnection("prostgles_video_demo");
-    await page.waitForTimeout(1500);
-    if (!(await page.getByTestId("MonacoEditor").count())) {
-      await openMenuIfClosed();
-      await page.getByTestId("dashboard.menu.sqlEditor").click();
-    }
-    await hideMenuIfOpen();
-
-    const query = `SELECT * FROM chat_m`;
-    await monacoType(page, `.ProstglesSQL`, query, { deleteAll: true });
-    await page.waitForTimeout(500);
-    await page.reload();
-    await page.waitForTimeout(1500);
-    await monacoType(page, `.ProstglesSQL`, `t`, { deleteAll: false });
-    await page.keyboard.press("Backspace");
-    await page.keyboard.press("Control+Space");
-    await page.waitForTimeout(500);
-  },
   schema_diagram: async (page, { openMenuIfClosed, openConnection }) => {
     await openConnection("prostgles_video_demo");
     await openMenuIfClosed();
@@ -196,42 +250,6 @@ const SVG_SCREENSHOT_DETAILS = {
   dashboard: async (page, { openConnection, hideMenuIfOpen }) => {
     await openConnection("crypto");
     await hideMenuIfOpen();
-  },
-  empty_dashboard: async (page, { openConnection }) => {
-    await openConnection("cloud");
-    await page.getByTestId("WorkspaceMenu.list").getByText("default").click();
-    await closeWorkspaceWindows(page);
-    await page.waitForTimeout(500);
-  },
-  empty_sql_editor: async (page, { openMenuIfClosed, hideMenuIfOpen }) => {
-    await openMenuIfClosed();
-    await page.getByTestId("dashboard.menu.sqlEditor").click();
-    await page.waitForTimeout(500);
-    await hideMenuIfOpen();
-  },
-  sql_editor_01: async (page) => {
-    await monacoType(page, `.ProstglesSQL`, "se", {
-      deleteAll: true,
-    });
-    await page.waitForTimeout(500);
-    await page.reload();
-    await monacoType(page, `.ProstglesSQL`, `l`, { deleteAll: false });
-  },
-  sql_editor_02: async (page) => {
-    await monacoType(page, `.ProstglesSQL`, "SELECT * FROM u", {
-      deleteAll: true,
-    });
-    await page.waitForTimeout(500);
-    await page.reload();
-    await monacoType(page, `.ProstglesSQL`, `s`, { deleteAll: false });
-  },
-  sql_editor_03: async (page) => {
-    await monacoType(page, `.ProstglesSQL`, "SELECT * FROM user ", {
-      deleteAll: true,
-    });
-    await page.waitForTimeout(500);
-    await page.reload();
-    await monacoType(page, `.ProstglesSQL`, `w`, { deleteAll: false });
   },
   table: async (page, { hideMenuIfOpen, openConnection, openMenuIfClosed }) => {
     await openConnection("prostgles_video_demo");
@@ -307,7 +325,9 @@ const SVG_SCREENSHOT_DETAILS = {
     await page.mouse.move(0, 0);
   },
   server_settings: async (page) => {
+    await page.reload();
     await goTo(page, "/server-settings");
+    await page.waitForTimeout(1500);
   },
   connect_existing_database: async (page) => {
     await goTo(page, "/connections");

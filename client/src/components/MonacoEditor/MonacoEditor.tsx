@@ -1,4 +1,4 @@
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep, useMemoDeep } from "prostgles-client/dist/react-hooks";
 import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
@@ -13,6 +13,7 @@ import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import type { TestSelectors } from "src/Testing";
+import { useWhyDidYouUpdate } from "./useWhyDidYouUpdate";
 
 export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
   language: string;
@@ -78,7 +79,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const monacoRef = useRef<Monaco>();
 
-  const fullOptions = useMemo(() => {
+  const fullOptions = useMemoDeep(() => {
     const themeFromOptions = options?.theme;
     const theme =
       themeFromOptions && themeFromOptions !== "vs" ?
@@ -125,7 +126,13 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     return () => {
       newEditor.dispose();
     };
-  }, [monaco, language, container, fullOptions, expandSuggestionDocs]);
+  }, [
+    monaco,
+    language,
+    /* we deal with fullOptions updates later on to ensure the theme switch doesn't reset monaco text */
+    container,
+    expandSuggestionDocs,
+  ]);
 
   useEffect(() => {
     if (!editor) return;
@@ -235,7 +242,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       ref={container}
       style={monacoStyle}
       data-command={props["data-command"] ?? "MonacoEditor"}
-      className={`MonacoEditor  ${className}`}
+      className={`MonacoEditor  ${className} ${!loadedLanguage ? "disabled" : ""}`}
     />
   );
 };

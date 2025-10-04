@@ -31,6 +31,7 @@ export const elementToSVG = async (
   context: SVGContext,
 ) => {
   const _whatToRender = await getWhatToRenderOnSVG(element, context, parentSvg);
+
   const { elemInfo, ...whatToRender } = _whatToRender;
   const { x, y, width, height, style, isVisible } = elemInfo;
 

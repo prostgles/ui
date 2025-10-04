@@ -1,7 +1,8 @@
-import { tout } from "src/utils";
+import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { addFragmentViewBoxes } from "./addFragmentViewBoxes";
 import { elementToSVG, type SVGContext } from "./elementToSVG";
 import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
+import { tout } from "src/utils";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
@@ -55,6 +56,7 @@ export const domToSVG = async (node: HTMLElement) => {
   const { remove } = renderSvg(svg);
   await wrapAllSVGText(svg);
   await addFragmentViewBoxes(svg, 10);
+  repositionAbsoluteAndFixed(svg);
   await tout(1000);
   remove();
 
@@ -62,6 +64,42 @@ export const domToSVG = async (node: HTMLElement) => {
   const svgString = xmlSerializer.serializeToString(svg);
   // recordDomChanges(node);
   return { svgString, svg };
+};
+
+const repositionAbsoluteAndFixed = (svg: SVGGElement) => {
+  const [gBody, ...other] = Array.from(
+    svg.querySelectorAll<SVGGElement>(":scope > g"),
+  );
+  if (!gBody || other.length || gBody._domElement !== document.body) {
+    throw new Error("Unexpected SVG structure");
+  }
+  const gElements = Array.from(svg.querySelectorAll("g"));
+  gElements.forEach((g) => {
+    const style = g._domElement && getComputedStyle(g._domElement);
+    if (style?.position === "fixed") {
+      gBody.appendChild(g);
+    }
+    if (style?.position === "absolute") {
+      const closestParent = getClosestRelativeOrAbsoluteParent(g) || gBody;
+      const closestParentOrGBody =
+        gBody.contains(closestParent) ? closestParent : gBody;
+      closestParentOrGBody.appendChild(g);
+    }
+  });
+};
+
+const getClosestRelativeOrAbsoluteParent = (g: SVGGElement) => {
+  let parentG = g.parentElement;
+  while (parentG && parentG instanceof SVGGElement && parentG._domElement) {
+    const position = getComputedStyle(parentG._domElement).position;
+    if (
+      includes(position, ["relative", "absolute"]) &&
+      parentG._domElement !== g._domElement
+    ) {
+      return parentG;
+    }
+    parentG = parentG.parentElement;
+  }
 };
 
 declare global {

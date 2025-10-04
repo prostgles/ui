@@ -80,9 +80,16 @@ export const getMonacoValue = async (
 };
 
 type KeyPress = "Control" | "Shift";
-type InputKey = KeyPress | "Enter" | "Escape" | "Tab" | "Backspace" | "Delete";
+type InputKey =
+  | KeyPress
+  | "Enter"
+  | "Escape"
+  | "Tab"
+  | "Backspace"
+  | "Delete"
+  | "Space";
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
-type ArrowKeyCombinations = `${KeyPress}+${ArrowKey}`;
+type ArrowKeyCombinations = `${KeyPress}+${ArrowKey | InputKey}`;
 type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
 
 /**

@@ -26,6 +26,14 @@ Prostgles UI is a user-friendly way for interacting with PostgreSQL, creating da
 <source srcset="/screenshots/dark/sql_editor_03.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/sql_editor_03.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
 </picture>
+<picture>
+<source srcset="/screenshots/dark/sql_editor_04.svg" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/sql_editor_04.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
+</picture>
+<picture>
+<source srcset="/screenshots/dark/sql_editor_05.svg" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/sql_editor_05.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
+</picture>
 
 
 <picture>

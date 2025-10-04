@@ -130,6 +130,16 @@ test.describe("Create docs and screenshots", () => {
 
       await prepare(page);
       await saveSVGScreenshots(page);
+      // await saveSVGifs(page);
+    }
+    // await svgScreenshotsCompleteReferenced();
+  });
+
+  test("Create svgifs", async ({ page: p }) => {
+    const page = p as PageWIds;
+
+    await login(page, USERS.test_user, "/login");
+    if (!IS_PIPELINE) {
       await saveSVGifs(page);
     }
     await svgScreenshotsCompleteReferenced();

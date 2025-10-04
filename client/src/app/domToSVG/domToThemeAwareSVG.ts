@@ -239,6 +239,9 @@ document.body.addEventListener("keydown", (e) => {
     domToThemeAwareSVG(document.body, "light");
   } else if (e.key === "F4") {
     domToThemeAwareSVG(document.body, "both");
+  } else if (e.key === "F6") {
+    // eslint-disable-next-line no-debugger
+    debugger;
   }
 });
 

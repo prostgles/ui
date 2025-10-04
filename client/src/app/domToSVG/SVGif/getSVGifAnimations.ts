@@ -7,7 +7,7 @@ import type { parseSVGWithViewBox, SVGifScene } from "./getSVGif";
  */
 export const getSVGifAnimations = (
   { height, width }: { width: number; height: number },
-  svg: SVGElement,
+  g: SVGGElement,
   parsedScenes: (ReturnType<typeof parseSVGWithViewBox> & SVGifScene)[],
 ) => {
   const cursorKeyframes = [`0% { opacity: 0; }`];
@@ -41,7 +41,7 @@ export const getSVGifAnimations = (
     }
     const sceneId = `scene-${sceneIndex}`;
     const renderedSceneSVG = renderSvg(svgDom);
-    appendSvgToSvg({ id: sceneId, svgFile }, svg);
+    appendSvgToSvg({ id: sceneId, svgFile }, g);
 
     const sceneKeyframes: string[] = [];
     if (prevSceneAnim) {
@@ -75,6 +75,13 @@ export const getSVGifAnimations = (
         }
 
         const bbox = element.getBBox();
+
+        /* Clamp width and height to be within visible bounds */
+        bbox.x = Math.max(0, Math.min(bbox.x, width));
+        bbox.y = Math.max(0, Math.min(bbox.y, height));
+        bbox.width = Math.max(0, Math.min(bbox.width, width - bbox.x));
+        bbox.height = Math.max(0, Math.min(bbox.height, height - bbox.y));
+
         const cx = bbox.x + bbox.width / 2;
         const cy = bbox.y + bbox.height / 2;
 
@@ -117,7 +124,7 @@ export const getSVGifAnimations = (
 
 const appendSvgToSvg = (
   { svgFile, id }: { svgFile: string; id: string },
-  svg: SVGElement,
+  g: SVGGElement,
 ) => {
   const img = document.createElementNS(SVG_NAMESPACE, "image");
   img.setAttribute("id", id);
@@ -129,5 +136,5 @@ const appendSvgToSvg = (
   img.setAttribute("width", "100%");
   img.setAttribute("height", "100%");
   img.setAttribute("style", "opacity: 0;");
-  svg.appendChild(img);
+  g.appendChild(img);
 };

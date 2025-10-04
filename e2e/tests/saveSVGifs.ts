@@ -130,7 +130,7 @@ export const SVGIFS = {
       svgFileName: "/screenshots/sql_editor_01.svg",
       animations: [
         {
-          duration: 1000,
+          duration: 3000,
           type: "wait",
         },
       ],
@@ -139,7 +139,7 @@ export const SVGIFS = {
       svgFileName: "/screenshots/sql_editor_02.svg",
       animations: [
         {
-          duration: 1000,
+          duration: 3000,
           type: "wait",
         },
       ],
@@ -148,7 +148,25 @@ export const SVGIFS = {
       svgFileName: "/screenshots/sql_editor_03.svg",
       animations: [
         {
-          duration: 1000,
+          duration: 3000,
+          type: "wait",
+        },
+      ],
+    },
+    {
+      svgFileName: "/screenshots/sql_editor_04.svg",
+      animations: [
+        {
+          duration: 3000,
+          type: "wait",
+        },
+      ],
+    },
+    {
+      svgFileName: "/screenshots/sql_editor_05.svg",
+      animations: [
+        {
+          duration: 3000,
           type: "wait",
         },
       ],

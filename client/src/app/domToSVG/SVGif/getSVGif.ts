@@ -40,8 +40,6 @@ export const getSVGif = async (
   if (!firstScene) {
     throw "No scenes provided";
   }
-  const svg = document.createElementNS(SVG_NAMESPACE, "svg");
-  svg.setAttribute("xmlns", SVG_NAMESPACE);
 
   const pointerId = "pointer";
   const pointerCircle = document.createElementNS(SVG_NAMESPACE, "circle");
@@ -49,11 +47,18 @@ export const getSVGif = async (
   pointerCircle.setAttribute("opacity", "0");
   pointerCircle.setAttribute("id", pointerId);
 
-  const style = document.createElementNS(SVG_NAMESPACE, "style");
-
   const { viewBox, width, height } = firstScene;
+  const svg = document.createElementNS(SVG_NAMESPACE, "svg");
+  svg.setAttribute("xmlns", SVG_NAMESPACE);
+  svg.setAttribute("viewBox", viewBox);
+  const style = document.createElementNS(SVG_NAMESPACE, "style");
+  svg.appendChild(style);
+  const g = document.createElementNS(SVG_NAMESPACE, "g");
+  g.setAttribute("id", "all-scenes");
+  svg.appendChild(g);
+
   const { cursorKeyframes, sceneAnimations, totalDuration } =
-    getSVGifAnimations({ width, height }, svg, parsedScenes);
+    getSVGifAnimations({ width, height }, g, parsedScenes);
 
   const cursorAnimationName = `cursor-move`;
   const getAnimationProperty = (
@@ -135,20 +140,24 @@ export const getSVGif = async (
         fill: #ffffff36;
         filter: drop-shadow(0 0 2px #ffffffaa);
       }
-    } 
+    }
+
+    /* Pause only while SVG is pressed */
+    g.paused * {
+      animation-play-state: paused;
+    }
   `;
 
-  if (!viewBox) {
-    throw "No viewBox found";
-  }
+  const setPause = document.createElementNS(SVG_NAMESPACE, "set");
+  setPause.setAttribute("attributeName", "class");
+  setPause.setAttribute("to", "paused");
+  setPause.setAttribute("begin", "mousedown");
+  setPause.setAttribute("end", "mouseup");
 
-  svg.setAttribute("viewBox", viewBox);
-  svg.appendChild(pointerCircle);
-  svg.appendChild(animationProgressBar);
-
+  g.appendChild(pointerCircle);
+  g.appendChild(animationProgressBar);
+  g.appendChild(setPause);
   document.body.appendChild(svg);
-
-  svg.appendChild(style);
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
   return svgString;

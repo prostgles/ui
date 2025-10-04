@@ -6,7 +6,7 @@
   "scripts": {
     "setup": "cp ../client/src/Testing.ts ./tests",
     "test": "npm run setup && playwright test main.spec.ts && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts && playwright test create_docs.spec.ts && playwright test command_palette.spec.ts",
-    "create-docs": "npm run setup && npx playwright test create_docs.spec.ts",
+    "create-docs": "npm run setup && npx playwright test create_docs.spec.ts ",
     "test-local": "bash test-local.sh",
     "test-debug": "npm run setup && playwright test --debug"
   },
