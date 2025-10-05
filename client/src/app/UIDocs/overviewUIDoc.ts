@@ -15,6 +15,8 @@ export const overviewUIDoc = {
     <img src="/screenshots/sql_editor_03.svg" alt="Prostgles UI Overview" width="100%" />
     <img src="/screenshots/sql_editor_04.svg" alt="Prostgles UI Overview" width="100%" />
     <img src="/screenshots/sql_editor_05.svg" alt="Prostgles UI Overview" width="100%" />
+    <img src="/screenshots/sql_editor_06.svg" alt="Prostgles UI Overview" width="100%" />
+    <img src="/screenshots/sql_editor_07.svg" alt="Prostgles UI Overview" width="100%" />
 
     
     <img src="/screenshots/dashboard.svgif.svg" alt="Prostgles UI Overview" width="100%" />

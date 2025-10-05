@@ -123,50 +123,14 @@ export const SVGIFS = {
         },
       ],
     },
-    {
-      svgFileName: "/screenshots/sql_editor_01.svg",
+    [1, 2, 3, 4, 5, 6, 7, 8].map((i) => ({
+      svgFileName: `/screenshots/sql_editor_${i.toString().padStart(2, "0")}.svg`,
       animations: [
         {
           duration: 3000,
           type: "wait",
         },
       ],
-    },
-    {
-      svgFileName: "/screenshots/sql_editor_02.svg",
-      animations: [
-        {
-          duration: 3000,
-          type: "wait",
-        },
-      ],
-    },
-    {
-      svgFileName: "/screenshots/sql_editor_03.svg",
-      animations: [
-        {
-          duration: 3000,
-          type: "wait",
-        },
-      ],
-    },
-    {
-      svgFileName: "/screenshots/sql_editor_04.svg",
-      animations: [
-        {
-          duration: 3000,
-          type: "wait",
-        },
-      ],
-    },
-    {
-      svgFileName: "/screenshots/sql_editor_05.svg",
-      animations: [
-        {
-          duration: 3000,
-          type: "wait",
-        },
-      ],
-    },
+    })),
   ],
 };

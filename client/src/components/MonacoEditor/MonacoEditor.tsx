@@ -181,8 +181,12 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
 
   useEffect(() => {
     if (!editor) return;
+    /** For some reason getRawOptions() returns stale theme from time to time */
+    const theme =
+      //@ts-ignore
+      editor._themeService?.getColorTheme().themeName ?? fullOptions.theme;
     const currentEditorOptions = pickKeys(
-      editor.getRawOptions(),
+      { ...editor.getRawOptions(), theme },
       getKeys(fullOptions as editor.IEditorOptions),
     );
     if (isEqual(currentEditorOptions, fullOptions)) return;

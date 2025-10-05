@@ -98,6 +98,31 @@ export const SVG_SCREENSHOT_DETAILS = {
       },
     );
   },
+  sql_editor_06: async (page) => {
+    await monacoType(
+      page,
+      `.ProstglesSQL`,
+      "CREATE INDEX idx_messages_sent ON messages USING ",
+      {
+        deleteAllAndFill: true,
+      },
+    );
+  },
+  sql_editor_07: async (page) => {
+    await monacoType(page, `.ProstglesSQL`, "EXPLAIN ( ", {
+      deleteAllAndFill: true,
+    });
+  },
+  sql_editor_08: async (page) => {
+    await monacoType(
+      page,
+      `.ProstglesSQL`,
+      "WITH recent_messages AS (\n  SELECT * FROM messages\n  WHERE \"timestamp\" > NOW() - INTERVAL '7 days'\n)\nSELECT * FROM ",
+      {
+        deleteAllAndFill: true,
+      },
+    );
+  },
   ai_assistant: {
     "01": async (page, { openConnection }) => {
       /**
