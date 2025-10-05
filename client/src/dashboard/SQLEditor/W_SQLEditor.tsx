@@ -177,7 +177,6 @@ import Btn from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";
 import { FlexCol } from "../../components/Flex";
 import {
-  getSelectedText,
   MonacoEditor,
   type MonacoEditorProps,
 } from "../../components/MonacoEditor/MonacoEditor";
@@ -213,6 +212,7 @@ import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
 import { scrollToLineIfNeeded } from "./utils/scrollToLineIfNeeded";
 import { setMonacEditorError } from "./utils/setMonacEditorError";
+import { getSelectedText } from "@components/MonacoEditor/useMonacoEditorAddActions";
 
 export type SQLEditorRef = {
   editor: editor.IStandaloneCodeEditor;

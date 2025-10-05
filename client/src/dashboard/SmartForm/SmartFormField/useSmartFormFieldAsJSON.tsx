@@ -4,12 +4,12 @@ import {
   isObject,
   type JSONB,
 } from "prostgles-types";
+import { useMemo } from "react";
 import type {
   CodeEditorJsonSchema,
   CodeEditorProps,
 } from "../../CodeEditor/CodeEditor";
 import type { SmartFormFieldProps } from "./SmartFormField";
-import { useMemo } from "react";
 
 type P = Pick<
   SmartFormFieldProps,
@@ -38,12 +38,8 @@ export type AsJSON = {
  * - geography type
  * then render it using JSONBSchemaA or CodeEditor
  */
-export const useSmartFormFieldAsJSON = ({
-  column,
-  tableName,
-  jsonbSchemaWithControls,
-  value,
-}: P): AsJSON | undefined => {
+export const useSmartFormFieldAsJSON = (props: P): AsJSON | undefined => {
+  const { column, tableName, jsonbSchemaWithControls, value } = props;
   const valueIsNonEmptyObject = useMemo(
     () => isObject(value) && !isEmpty(value),
     [value],

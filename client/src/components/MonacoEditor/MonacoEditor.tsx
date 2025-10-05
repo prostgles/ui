@@ -1,5 +1,11 @@
 import { useEffectDeep, useMemoDeep } from "prostgles-client/dist/react-hooks";
-import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
+import {
+  getKeys,
+  isEqual,
+  isObject,
+  omitKeys,
+  pickKeys,
+} from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
@@ -14,6 +20,7 @@ import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import type { TestSelectors } from "src/Testing";
 import { useWhyDidYouUpdate } from "./useWhyDidYouUpdate";
+import { useMonacoEditorAddActions } from "./useMonacoEditorAddActions";
 
 export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
   language: string;
@@ -52,6 +59,10 @@ const useMonacoSingleton = () => {
   return { monaco };
 };
 
+/** This wrapping check necessary to ensure:
+ * - getTokens returns correct data
+ * - opening json schema formfield does not cause cancelled promise errors (/server-settings)
+ * */
 export const MonacoEditor = (props: MonacoEditorProps) => {
   const { loadedSuggestions } = props;
 
@@ -62,6 +73,13 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     });
   }, [loadedSuggestions]);
 
+  if (!loadedLanguage) {
+    return <div> </div>;
+  }
+  return <MonacoEditorWithoutLanguage {...props} />;
+};
+
+const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
   const [editor, setEditor] = React.useState<editor.IStandaloneCodeEditor>();
   const container = React.useRef<HTMLDivElement>(null);
   const { state: _appTheme } = useReactiveState(appTheme);
@@ -144,49 +162,10 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       //@ts-ignore
       container.current.editorRef = editor;
     }
-    /** This check necessary to ensure getTokens returns correct data */
-    if (loadedLanguage) {
-      onMount?.(editor);
-    }
-  }, [editor, onMount, loadedLanguage]);
+    onMount?.(editor);
+  }, [editor, onMount]);
 
-  useEffect(() => {
-    if (!editor) return;
-
-    editor.addAction({
-      id: "googleSearch",
-      label: "Search with Google",
-      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
-      contextMenuGroupId: "navigation",
-      run: (editor) => {
-        window.open(
-          "https://www.google.com/search?q=" + getSelectedText(editor),
-        );
-      },
-    });
-    // editor.addAction({
-    //   id: "savedwa",
-    //   label: "Save (Ctrl + S)",
-    //   keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
-    //   contextMenuGroupId: "navigation",
-    //   run: (editor) => {
-    //     alert("Save action triggered");
-    //   },
-    // });
-
-    if (language !== LANG) return;
-    editor.addAction({
-      id: "googleSearchPG",
-      label: "Search with Google Postgres",
-      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
-      contextMenuGroupId: "navigation",
-      run: (editor) => {
-        window.open(
-          "https://www.google.com/search?q=postgres+" + getSelectedText(editor),
-        );
-      },
-    });
-  }, [editor, language]);
+  useMonacoEditorAddActions(editor, language);
 
   useEffect(() => {
     if (!editor) return;
@@ -204,7 +183,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     if (!editor) return;
     const currentEditorOptions = pickKeys(
       editor.getRawOptions(),
-      getKeys(fullOptions) as any,
+      getKeys(fullOptions as editor.IEditorOptions),
     );
     if (isEqual(currentEditorOptions, fullOptions)) return;
     editor.updateOptions(fullOptions);
@@ -242,7 +221,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       ref={container}
       style={monacoStyle}
       data-command={props["data-command"] ?? "MonacoEditor"}
-      className={`MonacoEditor  ${className} ${!loadedLanguage ? "disabled" : ""}`}
+      className={`MonacoEditor  ${className}`}
     />
   );
 };
@@ -290,7 +269,12 @@ const hackyFixOptionmatchOnWordStartOnly = (
   editor: editor.IStandaloneCodeEditor,
 ) => {
   try {
-    const indexOfConfig = 119; // 118 for v50 and 119 for version 0.52.0
+    /* 
+      118 for 0.50 
+      119 for 0.52.0
+      133 for 0.53 
+    */
+    const indexOfConfig = 133;
     // ensure typing name matches relname
     // suggestModel.js:420
     //@ts-ignore
@@ -307,16 +291,6 @@ const hackyFixOptionmatchOnWordStartOnly = (
       ].matchOnWordStartOnly = false;
     }
   } catch (e) {}
-};
-
-export const getSelectedText = (
-  editor: editor.ICodeEditor | editor.IStandaloneCodeEditor | undefined,
-): string => {
-  if (!editor) return "";
-  const model = editor.getModel();
-  const selection = editor.getSelection();
-  if (!model || !selection) return "";
-  return model.getValueInRange(selection);
 };
 
 export const MONACO_READONLY_DEFAULT_OPTIONS = {

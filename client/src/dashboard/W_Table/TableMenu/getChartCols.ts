@@ -64,7 +64,7 @@ export const getChartCols = (
     });
 
   const allJoins = getAllJoins({
-    tableName: w.table_name!,
+    tableName: w.table_name,
     tables,
     value: undefined,
   });
@@ -105,7 +105,6 @@ export const getChartCols = (
       c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text",
   }));
 
-  //@ts-ignore
   const windowDateCols: ChartColumn[] = cols.filter(isDateCol).map((c) => ({
     ...c,
     type: "normal",

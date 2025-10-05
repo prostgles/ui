@@ -1,11 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-import {
-  DOCS_DIR,
-  getFilesFromDir,
-  SVG_SCREENSHOT_DIR,
-} from "./saveSVGScreenshots";
 import { goTo, type PageWIds } from "utils";
+import { SVG_SCREENSHOT_DIR } from "./constants";
+import { getFilesFromDir } from "./getFilesFromDir";
 
 export const saveSVGifs = async (page: PageWIds) => {
   await goTo(page, "/account");
@@ -34,7 +31,7 @@ export const saveSVGifs = async (page: PageWIds) => {
   );
 
   svgifs.forEach(({ fileName, content }) => {
-    const savePath = path.join(DOCS_DIR, "screenshots");
+    const savePath = SVG_SCREENSHOT_DIR;
     if (!fs.existsSync(savePath)) {
       fs.mkdirSync(savePath, { recursive: true });
     }

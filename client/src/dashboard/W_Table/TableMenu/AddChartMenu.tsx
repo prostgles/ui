@@ -61,7 +61,7 @@ export const AddChartMenu = (props: P) => {
       : { type: "sql", chartableSQL, w },
     );
     return res;
-  }, [chartableSQL, tables, w]);
+  }, [chartableSQL, tables, w, type]);
 
   const { geoCols, dateCols, sql, withStatement = "" } = chartCols;
 

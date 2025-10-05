@@ -1,14 +1,9 @@
 import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
-import { saveSVGifs } from "saveSVGifs";
+import { saveSVGifs } from "screenshotUtils/saveSVGifs";
+import { saveSVGs } from "./screenshotUtils/saveSVGs";
 import {
-  DOCS_DIR,
-  saveSVGScreenshots,
-  svgScreenshotsCompleteReferenced,
-} from "./saveSVGScreenshots";
-import {
-  goTo,
   login,
   MINUTE,
   openConnection,
@@ -17,6 +12,8 @@ import {
   runDbsSql,
   USERS,
 } from "./utils";
+import { DOCS_DIR } from "screenshotUtils/constants";
+import { svgScreenshotsCompleteReferenced } from "screenshotUtils/svgScreenshotsCompleteReferenced";
 
 test.use({
   viewport: {
@@ -129,7 +126,7 @@ test.describe("Create docs and screenshots", () => {
       await page.waitForTimeout(1100);
 
       await prepare(page);
-      await saveSVGScreenshots(page);
+      await saveSVGs(page);
       // await saveSVGifs(page);
     }
     // await svgScreenshotsCompleteReferenced();
