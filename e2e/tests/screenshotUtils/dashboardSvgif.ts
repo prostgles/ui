@@ -1,0 +1,42 @@
+import {
+  closeWorkspaceWindows,
+  getDataKey,
+  goTo,
+  setOrAddWorkspace,
+} from "utils";
+import type { OnBeforeScreenshot } from "./utils/saveSVGs";
+
+export const dashboardSvgif: OnBeforeScreenshot = async (
+  page,
+  { openConnection, hideMenuIfOpen, openMenuIfClosed },
+  addScene,
+) => {
+  await goTo(page, "/connections");
+  await openConnection("crypto");
+  await setOrAddWorkspace(page, "Crypto dashboard");
+  await closeWorkspaceWindows(page);
+
+  await goTo(page, "/connections");
+  await addScene({
+    animations: [
+      {
+        type: "wait",
+        duration: 1000,
+      },
+      {
+        type: "click",
+        elementSelector: '[data-command="Connection.openConnection"]',
+        duration: 1000,
+      },
+    ],
+  });
+  await openConnection("crypto");
+  await setOrAddWorkspace(page, "Crypto dashboard");
+  await hideMenuIfOpen();
+  await addScene({ svgFileName: "empty" });
+
+  await openMenuIfClosed();
+  await page.locator(getDataKey("futures")).click();
+  await hideMenuIfOpen();
+  await addScene({ svgFileName: "table" });
+};

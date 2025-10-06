@@ -1,4 +1,3 @@
-// import { SVGIFS } from "screenshotUtils/saveSVGifs";
 import { getFilesFromDir } from "./getFilesFromDir";
 import {
   DOCS_DIR,
@@ -17,7 +16,6 @@ const getSavedSVGFiles = () => {
         [key]
       : Object.keys(val).map((v) => `${key}_${v}`),
   );
-  // const svgifFileNames = Object.keys(SVGIFS).map((v) => `${v}.svgif`);
 
   return { savedSVGFiles, svgFileNames };
 };

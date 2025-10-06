@@ -264,7 +264,10 @@ export const insertRow = async (
 };
 
 export const goTo = async (page: PageWIds, url = "localhost:3004") => {
-  const resp = await page.goto(url, { waitUntil: "networkidle" });
+  const resp = await page.goto(url, {
+    waitUntil: "networkidle",
+    timeout: 30e3,
+  });
   if (resp && resp.status() >= 400) {
     console.error(`page.goto failed:`, await resp.text());
   }
@@ -963,6 +966,7 @@ export const setPromptByText = async (page: PageWIds, text: string) => {
     .getByTestId("Popup.close")
     .click();
 };
+
 export const setModelByText = async (page: PageWIds, text: string) => {
   await page.getByTestId("LLMChatOptions.Model").click();
   await page.waitForTimeout(500);
@@ -1021,5 +1025,24 @@ export const deleteExistingLLMChat = async (page: PageWIds) => {
   await page.getByTestId("LLMChatOptions.toggle").click();
   await page.getByTestId("SmartForm.delete").click();
   await page.getByTestId("SmartForm.delete.confirm").click();
+  await page.waitForTimeout(1e3);
+};
+
+export const setOrAddWorkspace = async (
+  page: PageWIds,
+  workspaceName: string,
+) => {
+  const toggleBtn = await page
+    .getByTestId("WorkspaceMenu.list")
+    .getByText(workspaceName, { exact: true });
+
+  if (await toggleBtn.count()) {
+    await toggleBtn.click();
+  } else {
+    await page.getByTestId("WorkspaceMenuDropDown").click();
+    await page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn").click();
+    await page.getByLabel("New workspace name").fill(workspaceName);
+    await page.getByTestId("WorkspaceAddBtn.Create").click();
+  }
   await page.waitForTimeout(1e3);
 };

@@ -1,8 +1,7 @@
 import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
-import { saveSVGifs } from "screenshotUtils/saveSVGifs";
-import { saveSVGs } from "./screenshotUtils/saveSVGs";
+import { saveSVGs } from "./screenshotUtils/utils/saveSVGs";
 import {
   login,
   MINUTE,
@@ -12,8 +11,8 @@ import {
   runDbsSql,
   USERS,
 } from "./utils";
-import { DOCS_DIR } from "screenshotUtils/constants";
-import { svgScreenshotsCompleteReferenced } from "screenshotUtils/svgScreenshotsCompleteReferenced";
+import { DOCS_DIR } from "screenshotUtils/utils/constants";
+import { svgScreenshotsCompleteReferenced } from "screenshotUtils/utils/svgScreenshotsCompleteReferenced";
 
 test.use({
   viewport: {

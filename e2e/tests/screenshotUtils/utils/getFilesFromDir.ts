@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { MINUTE } from "../utils";
+import { MINUTE } from "../../utils";
 
 export const getFilesFromDir = (
   dir: string,

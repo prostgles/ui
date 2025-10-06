@@ -1,6 +1,6 @@
 import * as path from "path";
 
-export const DOCS_DIR = path.join(__dirname, "../../../docs/");
+export const DOCS_DIR = path.join(__dirname, "../../../../docs/");
 if (!DOCS_DIR.endsWith("ui/docs/")) {
   throw new Error("DOCS_DIR is not set correctly: " + DOCS_DIR);
 }

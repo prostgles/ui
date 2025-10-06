@@ -1,24 +1,20 @@
-import { expect } from "@playwright/test";
-import { createReceipt } from "createReceipt";
 import * as fs from "fs";
 import * as path from "path";
-import { getDataKeyElemSelector } from "../Testing";
+import { getDataKeyElemSelector } from "../../Testing";
 import {
-  closeWorkspaceWindows,
-  deleteExistingLLMChat,
   getDashboardUtils,
   goTo,
-  monacoType,
   openConnection,
   openTable,
-  setModelByText,
-  setPromptByText,
   type PageWIds,
-} from "../utils";
+} from "../../utils";
+import { aiAssistantSVG } from "./../aiAssistantSvgif";
 import { SVG_SCREENSHOT_DIR, type SVGifScene } from "./constants";
 import { saveSVGifs } from "./saveSVGifs";
+import { sqlEditorSVG } from "./../sqlEditorSvgif";
+import { dashboardSvgif } from "screenshotUtils/dashboardSvgif";
 
-type OnBeforeScreenshot = (
+export type OnBeforeScreenshot = (
   page: PageWIds,
   utils: ReturnType<typeof getDashboardUtils>,
   addSVGifScene: (scene?: Partial<SVGifScene>) => Promise<void>,
@@ -46,192 +42,8 @@ export const SVG_SCREENSHOT_DETAILS = {
   //   await page.keyboard.press("Control+Space");
   //   await page.waitForTimeout(500);
   // },
-  sql_editor: async (
-    page,
-    { openConnection, openMenuIfClosed, hideMenuIfOpen },
-    addScene,
-  ) => {
-    await openConnection("prostgles_video_demo");
-    await page.getByTestId("WorkspaceMenu.list").getByText("default").click();
-    await closeWorkspaceWindows(page);
-    await openMenuIfClosed();
-    await page.waitForTimeout(500);
-    await addScene({ svgFileName: "empty_dashboard" });
-    await openMenuIfClosed();
-    await page.getByTestId("dashboard.menu.sqlEditor").click();
-    await page.waitForTimeout(500);
-    await hideMenuIfOpen();
-    await addScene({ svgFileName: "empty" });
-    await monacoType(page, `.ProstglesSQL`, "se", {
-      deleteAllAndFill: true,
-    });
-    await addScene({ svgFileName: "keywords" });
-    await monacoType(page, `.ProstglesSQL`, "SELECT *\nFROM mess", {
-      deleteAllAndFill: true,
-    });
-    await addScene({ svgFileName: "tables" });
-    await monacoType(
-      page,
-      `.ProstglesSQL`,
-      "SELECT * \nFROM messages m\nJOIN us",
-      {
-        deleteAllAndFill: true,
-      },
-    );
-    await addScene({ svgFileName: "joins" });
-    await monacoType(
-      page,
-      `.ProstglesSQL`,
-      "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ",
-      {
-        deleteAllAndFill: true,
-      },
-    );
-    await addScene({ svgFileName: "jsonb_properties" });
-    await monacoType(
-      page,
-      `.ProstglesSQL`,
-      "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ->>'timeZone' = ''",
-      {
-        deleteAllAndFill: true,
-        pressAfterTyping: ["ArrowLeft", "Control+Space"],
-      },
-    );
-    await addScene({ svgFileName: "values" });
-    await monacoType(
-      page,
-      `.ProstglesSQL`,
-      "CREATE INDEX idx_messages_sent ON messages USING ",
-      {
-        deleteAllAndFill: true,
-      },
-    );
-    await addScene({ svgFileName: "index_types" });
-    await monacoType(page, `.ProstglesSQL`, "EXPLAIN ( ", {
-      deleteAllAndFill: true,
-    });
-    await addScene({ svgFileName: "explain_options" });
-    await monacoType(
-      page,
-      `.ProstglesSQL`,
-      "WITH recent_messages AS (\n  SELECT * FROM messages\n  WHERE \"timestamp\" > NOW() - INTERVAL '7 days'\n)\nSELECT * FROM ",
-      {
-        deleteAllAndFill: true,
-      },
-    );
-    await addScene({ svgFileName: "cte" });
-    await monacoType(page, `.ProstglesSQL`, "SELECT jsonb_agg", {
-      deleteAllAndFill: true,
-    });
-    await addScene({ svgFileName: "functions" });
-  },
-  ai_assistant: async (page, { openConnection }, addScene) => {
-    // "01": async (page, { openConnection }) => {
-    /**
-     * This is required to initialize the askLLM function
-     */
-    await openConnection("cloud");
-    await openConnection("prostgles_video_demo");
-    await deleteExistingLLMChat(page);
-    // await page.getByTestId("AskLLM").click();
-    await setModelByText(page, "pros");
-    await setPromptByText(page, "dashboard");
-    await addScene({ svgFileName: "empty" });
-    const firstMessage = await page.getByTestId("AskLLM.DeleteMessage").first();
-    if (await firstMessage.count()) {
-      await firstMessage.click();
-      await page.locator(getDataKeyElemSelector("allToBottom")).click();
-    }
-    await page
-      .getByTestId("Chat.textarea")
-      .fill("I need some dashboards with useful insights and metrics");
-    await page.getByTestId("Chat.send").click();
-    await page.waitForTimeout(2500);
-    await addScene({ svgFileName: "dashboards" });
-    await page.getByTestId("AskLLM.DeleteMessage").first().click();
-    await page.locator(getDataKeyElemSelector("allToBottom")).click();
-    await setPromptByText(page, "chat");
-    await page.getByTestId("Chat.textarea").fill(" mcpplaywright ");
-    await page.getByTestId("Chat.send").click();
-    await page.waitForTimeout(2500);
-    await addScene({ svgFileName: "mcp" });
-    await page.getByTestId("AskLLM.DeleteMessage").first().click();
-    await page.locator(getDataKeyElemSelector("allToBottom")).click();
-    await setPromptByText(page, "create task");
-    await page
-      .getByTestId("Chat.textarea")
-      .fill("The task involves importing data from scanned documents");
-    await page.getByTestId("Chat.send").click();
-    await page.waitForTimeout(2500);
-    await page
-      .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
-      .last()
-      .click();
-    await page.getByTestId("Alert").getByText("OK").click();
-    await addScene({ svgFileName: "tasks" });
-    const { filePath } = await createReceipt(page);
-    await page
-      .getByTestId("Chat.textarea")
-      .fill(`Extract data from this receipt ${filePath}`);
-    await page.getByTestId("Chat.addFiles").setInputFiles(filePath);
-    await page.getByTestId("Chat.send").click();
-    await page.waitForTimeout(2500);
-    await expect(page.getByTestId("Popup.content").last()).toContainText(
-      "Grand Ocean Hotel",
-    );
-    await page.getByText("Allow once").click();
-    await addScene({ svgFileName: "vision_ocr" });
-    await page.getByTestId("AskLLM.DeleteMessage").first().click();
-    await page.locator(getDataKeyElemSelector("allToBottom")).click();
-    await setPromptByText(page, "chat");
-    await page.getByTestId("LLMChatOptions.MCPTools").click();
-    await page
-      .getByTestId("MCPServerTools")
-      .getByText("create_container")
-      .click();
-    await page.getByText("Auto-approve: OFF").click();
-    await page.getByTestId("Popup.close").last().click();
-    await page
-      .getByTestId("Chat.textarea")
-      .fill(
-        "Upload some historical weather data for London for the last 4 years",
-      );
-    await page.getByTestId("Chat.send").click();
-    await page.waitForTimeout(2500);
-    await page.getByTestId("ToolUseMessage.toggle").last().click();
-    await page.waitForTimeout(2500);
-    await expect(page.getByTestId("ToolUseMessage.Popup").last()).toContainText(
-      "Fetching data from",
-    );
-    await page.getByTestId("Popup.close").last().click();
-    await addScene({ svgFileName: "docker" });
-    await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
-    await page
-      .getByTestId("Popup.content")
-      .last()
-      .getByLabel("Mode", { exact: true })
-      .click();
-
-    await page.getByRole("option", { name: "Run readonly SQL" }).click();
-    await page.getByTestId("Popup.close").last().click();
-
-    await page.getByTestId("AskLLM.DeleteMessage").first().click();
-    await page.locator(getDataKeyElemSelector("allToBottom")).click();
-    await setPromptByText(page, "chat");
-    await page
-      .getByTestId("Chat.textarea")
-      .fill("Show a list of orders from the last 30 days");
-    await page.getByTestId("Chat.send").click();
-    await page.getByText("Allow once").click();
-    await page.waitForTimeout(2500);
-    await page.getByTestId("ToolUseMessage.toggle").last().click();
-    await expect(page.getByTestId("ToolUseMessage.Popup").last()).toContainText(
-      "SELECT * FROM orders",
-    );
-    await page.getByTestId("Popup.close").last().click();
-    await addScene({ svgFileName: "sql" });
-    // },
-  },
+  sql_editor: sqlEditorSVG,
+  ai_assistant: aiAssistantSVG,
   schema_diagram: async (page, { openMenuIfClosed, openConnection }) => {
     await openConnection("prostgles_video_demo");
     await openMenuIfClosed();
@@ -281,25 +93,7 @@ export const SVG_SCREENSHOT_DETAILS = {
   connections: async (page) => {
     await goTo(page, "/connections");
   },
-  dashboard: async (page, { openConnection, hideMenuIfOpen }, addScene) => {
-    await goTo(page, "/connections");
-    await addScene({
-      animations: [
-        {
-          type: "wait",
-          duration: 1000,
-        },
-        {
-          type: "click",
-          elementSelector: '[data-command="Connection.openConnection"]',
-          duration: 1000,
-        },
-      ],
-    });
-    await openConnection("crypto");
-    await hideMenuIfOpen();
-    await addScene();
-  },
+  dashboard: dashboardSvgif,
   table: async (page, { hideMenuIfOpen, openConnection, openMenuIfClosed }) => {
     await openConnection("prostgles_video_demo");
 
