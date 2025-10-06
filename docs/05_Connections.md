@@ -28,10 +28,6 @@ This will open a form where you can enter the connection details such as host, p
 <source srcset="/screenshots/dark/new_connection.svgif.svg" media="(prefers-color-scheme: dark)" />
 <img src="/screenshots/new_connection.svgif.svg" alt="New connection form screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
-<picture>
-<source srcset="/screenshots/dark/new_connection.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/new_connection.svg" alt="New connection form screenshot" style="border: 1px solid; margin: 1em 0;" />
-</picture>
 
 ### New connection form fields:
   - **PostgreSQL Installation Instructions**: Instructions for installing PostgreSQL on your system.  

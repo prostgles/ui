@@ -16,7 +16,6 @@ export const sqlEditorUIDoc = {
     The SQL editor is a powerful tool for executing SQL queries against your database. It supports syntax highlighting, auto-completion, and various options for managing queries.
 
     <img src="/screenshots/sql_editor.svgif.svg" alt="SQL editor screenshot" />
-    <img src="/screenshots/sql_editor.svg" alt="SQL editor screenshot" />
   `),
   docOptions: "asSeparateFile",
   children: [

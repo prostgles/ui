@@ -5,24 +5,8 @@ It can generate SQL queries, explain database schemas, analyze data patterns, an
 MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
 
 <picture>
-<source srcset="/screenshots/dark/ai_assistant_01.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/ai_assistant_01.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-<picture>
-<source srcset="/screenshots/dark/ai_assistant_dashboards_02.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/ai_assistant_dashboards_02.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-<picture>
-<source srcset="/screenshots/dark/ai_assistant_mcp_03.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/ai_assistant_mcp_03.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-<picture>
-<source srcset="/screenshots/dark/ai_assistant_tasks_04.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/ai_assistant_tasks_04.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-<picture>
-<source srcset="/screenshots/dark/ai_assistant_docker_05.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/ai_assistant_docker_05.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
+<source srcset="/screenshots/dark/ai_assistant.svgif.svg" media="(prefers-color-scheme: dark)" />
+<img src="/screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
 Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 

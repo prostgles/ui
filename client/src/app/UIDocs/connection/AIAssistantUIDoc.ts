@@ -13,11 +13,7 @@ export const AIAssistantUIDoc = {
     It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.
     MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
 
-    <img src="/screenshots/ai_assistant_01.svg" alt="AI assistant popup screenshot" />
-    <img src="/screenshots/ai_assistant_dashboards_02.svg" alt="AI assistant popup screenshot" />
-    <img src="/screenshots/ai_assistant_mcp_03.svg" alt="AI assistant popup screenshot" />
-    <img src="/screenshots/ai_assistant_tasks_04.svg" alt="AI assistant popup screenshot" />
-    <img src="/screenshots/ai_assistant_docker_05.svg" alt="AI assistant popup screenshot" />
+    <img src="/screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" />
  
     Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
 

@@ -32,7 +32,7 @@ test.describe("Create docs and screenshots", () => {
   test.describe.configure({
     retries: 0,
     mode: "serial",
-    timeout: 15 * MINUTE,
+    timeout: 14 * MINUTE,
   });
 
   test(`Restore databases`, async ({ page: p }) => {
@@ -126,20 +126,11 @@ test.describe("Create docs and screenshots", () => {
       await page.waitForTimeout(1100);
 
       await prepare(page);
-      await saveSVGs(page);
-      // await saveSVGifs(page);
+      const { svgifSpecs } = await saveSVGs(page);
+      await svgScreenshotsCompleteReferenced(
+        svgifSpecs.flatMap((s) => s.scenes),
+      );
     }
-    // await svgScreenshotsCompleteReferenced();
-  });
-
-  test("Create svgifs", async ({ page: p }) => {
-    const page = p as PageWIds;
-
-    await login(page, USERS.test_user, "/login");
-    if (!IS_PIPELINE) {
-      await saveSVGifs(page);
-    }
-    await svgScreenshotsCompleteReferenced();
   });
 });
 

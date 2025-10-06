@@ -27,7 +27,7 @@ export type SVGifAnimation =
       duration: number;
     };
 
-export const getSVGif = async (
+export const getSVGif = (
   scenes: SVGifScene[],
   svgFiles: Map<string, string>,
   loop = true,
@@ -167,9 +167,12 @@ export const parseSVGWithViewBox = (
   svgFileName: string,
   svgFiles: Map<string, string>,
 ) => {
-  const svgFile = svgFiles.get(svgFileName);
+  if (!svgFileName) {
+    throw "SVG file name is empty";
+  }
+  const svgFile = svgFiles.get(svgFileName + ".svg");
   if (!svgFile) {
-    throw `SVG file not found: ${svgFileName}`;
+    throw `SVG file not found: ${svgFileName} \nExpecting one of: ${svgFiles.keys().toArray()}`;
   }
   const parsedSVG = new DOMParser().parseFromString(svgFile, "image/svg+xml");
   const viewBox = parsedSVG.documentElement.getAttribute("viewBox");

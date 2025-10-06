@@ -8,26 +8,11 @@ export const overviewUIDoc = {
     Prostgles UI is a user-friendly way for interacting with PostgreSQL, creating dashboards and internal tools.
 
     <img src="/screenshots/sql_editor.svgif.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/empty_dashboard.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/empty_sql_editor.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/sql_editor_01.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/sql_editor_02.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/sql_editor_03.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/sql_editor_04.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/sql_editor_05.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/sql_editor_06.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/sql_editor_07.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/sql_editor_08.svg" alt="Prostgles UI Overview" width="100%" />
-
-    
     <img src="/screenshots/dashboard.svgif.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/dashboard.svg" alt="Prostgles UI Overview" width="100%" />
 
     <img src="/screenshots/schema_diagram.svg" alt="Prostgles UI Overview" width="100%" />
     <img src="/screenshots/postgis_map.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/ai_assistant_sql_querying.svg" alt="Prostgles UI Overview" width="100%" />
-    <img src="/screenshots/ai_assistant_ocr.svg" alt="Prostgles UI Overview" width="100%" />
-
+    <img src="/screenshots/ai_assistant.svgif.svg" alt="Prostgles UI Overview" width="100%" />
 
     ## Features
     - SQL Editor with syntax highlighting and auto-completion

@@ -68,7 +68,6 @@ export const connectionsUIDoc = {
         This will open a form where you can enter the connection details such as host, port, database name, user, and password.
         
         <img src="/screenshots/new_connection.svgif.svg" alt="New connection form screenshot" />
-        <img src="/screenshots/new_connection.svg" alt="New connection form screenshot" />
       `,
       childrenTitle: "New connection form fields",
       docOptions: { title: "Adding a connection" },
