@@ -72,7 +72,7 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
   await monacoType(
     page,
     `.ProstglesSQL`,
-    "CREATE INDEX idx_messages_sent ON messages USING ",
+    "CREATE INDEX idx_messages_sent ON messages \nUSING ",
     {
       deleteAllAndFill: true,
     },
@@ -93,11 +93,15 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
       /** Sets value to avoid extra parens inserted while typing */
       keyPressDelay: 0,
       pressAfterTyping: [
+        "ArrowDown",
+        "ArrowDown",
+        "ArrowDown",
         "Control+ArrowRight",
         "Control+ArrowRight",
         "Control+ArrowRight",
         "Control+ArrowRight",
         "Control+ArrowRight",
+        "Control+Space",
       ],
     },
   );
