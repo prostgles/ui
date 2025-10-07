@@ -649,7 +649,7 @@ export const selectAndInsertFile = async (
   const fileChooserPromise = page.waitForEvent("filechooser");
   await onOpenFileDialog(page);
   const fileChooser = await fileChooserPromise;
-  const resolvedPath = path.resolve(path.join(__dirname, "../" + fileName));
+  const resolvedPath = path.resolve(path.join(__dirname, "../../" + fileName));
 
   await fileChooser.setFiles(resolvedPath);
   await page.waitForTimeout(2e3);

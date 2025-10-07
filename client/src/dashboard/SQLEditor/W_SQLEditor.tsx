@@ -6,13 +6,18 @@ import type { MonacoSuggestion } from "./SQLCompletion/monacoSQLSetup/registerSu
 import { registerSuggestions } from "./SQLCompletion/monacoSQLSetup/registerSuggestions";
 
 export const LANG = "sql";
+
+let monacoPromise:
+  | Promise<typeof import("monaco-editor/esm/vs/editor/editor.api.js")>
+  | undefined;
 /**
  * This option seems to start downloading monaco (870.js) from the start: webpackPrefetch: true
  */
 export const getMonaco = async () => {
-  const monaco = await import(
+  monacoPromise ??= import(
     /* webpackChunkName: "monaco_editor" */ /*  webpackPrefetch: 99 */ "monaco-editor/esm/vs/editor/editor.api.js"
   );
+  const monaco = await monacoPromise;
   return monaco;
 };
 

@@ -34,6 +34,7 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
+import Loading from "@components/Loading";
 
 type SmartFormFieldValue =
   | string
@@ -53,6 +54,7 @@ export type SmartFormFieldProps = Pick<
   newValue: ColumnData | undefined;
   row: AnyObject | undefined;
   action?: "update" | "insert" | "view";
+  loading: boolean | undefined;
   column: SmartColumnInfo;
   style?: React.CSSProperties;
   placeholder?: string;
@@ -94,6 +96,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     enableInsert,
     newRowDataHandler,
     someColumnsHaveIcons,
+    loading,
   } = props;
 
   const onChange = useCallback(
@@ -243,12 +246,15 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
               onChange={onCheckAndChange}
             />
           : renderAsJSON?.component === "codeEditor" ?
-            <FormFieldCodeEditor
-              asJSON={renderAsJSON}
-              value={value}
-              onChange={onCheckAndChange}
-              readOnly={readOnly}
-            />
+            loading ?
+              <Loading />
+            : <FormFieldCodeEditor
+                asJSON={renderAsJSON}
+                value={value}
+                onChange={onCheckAndChange}
+                readOnly={readOnly}
+              />
+
           : foreignDataState?.showSmartFormFieldForeignKey && (
               <SmartFormFieldForeignKey
                 {...foreignDataState}
