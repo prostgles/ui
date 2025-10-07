@@ -9,10 +9,10 @@ import {
   PageWIds,
   restoreFromBackup,
   runDbsSql,
-  USERS,
-} from "./utils";
+} from "./utils/utils";
 import { DOCS_DIR } from "screenshotUtils/utils/constants";
 import { svgScreenshotsCompleteReferenced } from "screenshotUtils/utils/svgScreenshotsCompleteReferenced";
+import { USERS } from "utils/constants";
 
 test.use({
   viewport: {

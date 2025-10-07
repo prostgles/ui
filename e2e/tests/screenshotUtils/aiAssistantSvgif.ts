@@ -1,4 +1,8 @@
-import { deleteExistingLLMChat, setModelByText, setPromptByText } from "utils";
+import {
+  deleteExistingLLMChat,
+  setModelByText,
+  setPromptByText,
+} from "utils/utils";
 import { getDataKeyElemSelector } from "Testing";
 import { createReceipt } from "createReceipt";
 import { expect } from "@playwright/test";
@@ -9,7 +13,6 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   { openConnection },
   addScene,
 ) => {
-  // "01": async (page, { openConnection }) => {
   /**
    * This is required to initialize the askLLM function
    */

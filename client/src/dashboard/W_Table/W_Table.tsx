@@ -664,7 +664,10 @@ export default class W_Table extends RTComp<
               <FlexCol
                 key={"W_Table_Filters"}
                 className={`gap-p5 p-p5 bg-color-0 ${childWindow ? " bb b-color " : ""}`}
-                style={{ zIndex: 1 }}
+                style={{
+                  /** Ensure it covers the attached timechart layer opts button */
+                  zIndex: 2,
+                }}
                 title="Edit filters"
               >
                 <SmartFilterBar

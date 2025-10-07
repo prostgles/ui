@@ -1,4 +1,4 @@
-import { closeWorkspaceWindows, monacoType } from "utils";
+import { closeWorkspaceWindows, monacoType } from "utils/utils";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
 
 export const sqlEditorSVG: OnBeforeScreenshot = async (
@@ -11,13 +11,22 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
   await closeWorkspaceWindows(page);
   await openMenuIfClosed();
   await page.waitForTimeout(500);
-  await addScene({ svgFileName: "empty_dashboard" });
+  await addScene();
 
-  await openMenuIfClosed();
+  await addScene({
+    animations: [
+      { type: "wait", duration: 1000 },
+      {
+        type: "click",
+        elementSelector: `[data-command="dashboard.menu.sqlEditor"]`,
+        duration: 1e3,
+      },
+    ],
+  });
   await page.getByTestId("dashboard.menu.sqlEditor").click();
   await page.waitForTimeout(500);
   await hideMenuIfOpen();
-  await addScene({ svgFileName: "empty" });
+  await addScene();
 
   await monacoType(page, `.ProstglesSQL`, "se", {
     deleteAllAndFill: true,
@@ -81,8 +90,18 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
     "WITH recent_messages AS (\n  SELECT * FROM messages\n  WHERE \"timestamp\" > NOW() - INTERVAL '7 days'\n)\nSELECT * FROM ",
     {
       deleteAllAndFill: true,
+      /** Sets value to avoid extra parens inserted while typing */
+      keyPressDelay: 0,
+      pressAfterTyping: [
+        "Control+ArrowRight",
+        "Control+ArrowRight",
+        "Control+ArrowRight",
+        "Control+ArrowRight",
+        "Control+ArrowRight",
+      ],
     },
   );
+
   await addScene({ svgFileName: "cte" });
 
   await monacoType(page, `.ProstglesSQL`, "SELECT jsonb_agg", {

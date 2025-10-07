@@ -195,7 +195,7 @@ export const dashboardMenuUIDoc = {
         It allows you to explore the schema structure, view table relationships, and manage the layout of the schema diagram.
         You can filter tables and columns based on their relationship types, reset the layout, and close the schema diagram to return to the dashboard menu.
         
-        <img src="/screenshots/schema_diagram.svg" alt="Schema diagram screenshot" />
+        <img src="/screenshots/schema_diagram.svgif.svg" alt="Schema diagram screenshot" />
       `,
       docOptions: "asSeparateFile",
       childrenTitle: "Top controls",

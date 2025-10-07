@@ -1,6 +1,8 @@
 import { Locator, Page as PG, expect } from "@playwright/test";
 import * as path from "path";
-import { Command, getDataKeyElemSelector } from "./Testing";
+import { Command, getDataKeyElemSelector } from "../Testing";
+import { goTo } from "./goTo";
+import { TEST_DB_NAME, USERS } from "./constants";
 
 type FuncNamesReturningLocatorObj = {
   [prop in keyof PG as PG[prop] extends (...args: any) => any ?
@@ -261,31 +263,6 @@ export const insertRow = async (
   await clickInsertRow(page, tableName, useTopBtn);
   await fillSmartFormAndInsert(page, tableName, row);
   await page.waitForTimeout(2200);
-};
-
-export const goTo = async (page: PageWIds, url = "localhost:3004") => {
-  const resp = await page.goto(url, {
-    waitUntil: "networkidle",
-    timeout: 30e3,
-  });
-  if (resp && resp.status() >= 400) {
-    console.error(`page.goto failed:`, await resp.text());
-  }
-  if (!resp) {
-    console.warn(`page.goto ${url}: no response`);
-  }
-
-  await page.waitForTimeout(500);
-  const errorCompSelector = "div.ErrorComponent";
-  if (await page.isVisible(errorCompSelector)) {
-    const pageText = await page.innerText(errorCompSelector);
-    if (pageText.includes("connectionError")) {
-      if (localNoAuthSetup && pageText.includes("passwordless admin")) {
-        throw `For local testing you must disable passwordless admin and \ncreate a prostgles admin account for user: ${USERS.test_user} with password: ${USERS.test_user}`;
-      }
-      throw pageText;
-    }
-  }
 };
 
 export const fillLoginFormAndSubmit = async (
@@ -693,22 +670,6 @@ export const isEmpty = (obj?: any) => {
   return !obj || Object.keys(obj).length === 0;
 };
 
-export enum USERS {
-  test_user = "test_user",
-  default_user = "default_user",
-  default_user1 = "default_user1",
-  public_user = "public_user",
-  new_user = "new_user",
-  new_user1 = "new_user1",
-  free_llm_user1 = "free_llm_user1",
-}
-export const TEST_DB_NAME = "Prostgles UI automated tests database";
-
-export const localNoAuthSetup = !!process.env.PRGL_DEV_ENV;
-export const queries = {
-  orders: `CREATE TABLE orders ( id SERIAL PRIMARY KEY, user_id UUID NOT NULL, status TEXT );`,
-};
-
 export const getSearchListItem = (
   page: PageWIds | LocatorWIds,
   { dataKey }: { dataKey: string },
@@ -937,9 +898,14 @@ export const getDashboardUtils = (page: PageWIds) => {
   const _open = openConnection.bind(null, page);
   const openMenuIfClosed = async () => {
     await page.waitForTimeout(1500);
+    const menuContentButton = await page.getByTestId(
+      "dashboard.menu.quickSearch",
+    );
+    const menuIsOpen = await menuContentButton.count();
+    if (menuIsOpen) return;
     const menuBtn = await page.getByTestId("dashboard.menu");
     if ((await menuBtn.count()) && (await menuBtn.isEnabled())) {
-      menuBtn.click();
+      await menuBtn.click();
     }
   };
   const hideMenuIfOpen = async () => {
@@ -948,7 +914,7 @@ export const getDashboardUtils = (page: PageWIds) => {
       "DashboardMenuHeader.togglePinned",
     );
     if ((await toggleBtn.count()) && (await toggleBtn.isEnabled())) {
-      toggleBtn.click();
+      await toggleBtn.click();
     }
   };
   return {

@@ -5,8 +5,6 @@ import { testAskLLMCode } from "./testAskLLM";
 import { getDataKeyElemSelector } from "./Testing";
 import {
   PageWIds,
-  TEST_DB_NAME,
-  USERS,
   clickInsertRow,
   closeWorkspaceWindows,
   createAccessRule,
@@ -28,15 +26,12 @@ import {
   getSearchListItem,
   getSelector,
   getTableWindow,
-  goTo,
   insertRow,
-  localNoAuthSetup,
   login,
   loginWhenSignupIsEnabled,
   monacoType,
   openConnection,
   openTable,
-  queries,
   restoreFromBackup,
   runDbSql,
   runDbsSql,
@@ -49,7 +44,14 @@ import {
   setWspColLayout,
   typeConfirmationCode,
   uploadFile,
-} from "./utils";
+} from "./utils/utils";
+import { goTo } from "utils/goTo";
+import {
+  localNoAuthSetup,
+  QUERIES,
+  TEST_DB_NAME,
+  USERS,
+} from "utils/constants";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -1336,7 +1338,7 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", timeout: 5e3 });
 
     /** Create schema */
-    await runSql(page, queries.orders);
+    await runSql(page, QUERIES.orders);
     await page.waitForTimeout(1e3);
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
@@ -1682,7 +1684,7 @@ test.describe("Main test", () => {
       DROP TABLE IF EXISTS orders CASCADE;
       DROP TABLE IF EXISTS users CASCADE;
       CREATE TABLE users (id UUID  PRIMARY KEY, first_name text, last_name text, email text, created_at timestamp default now(), type TEXT DEFAULT 'default', position numeric);
-      ${queries.orders}
+      ${QUERIES.orders}
       ALTER TABLE orders 
       ADD COLUMN total_cost NUMERIC NOT NULL DEFAULT random() * 100;
       ALTER TABLE orders ADD COLUMN delivery_address GEOGRAPHY DEFAULT st_point(-0.08 + random()/10, 51.5 + random()/10)::GEOGRAPHY;

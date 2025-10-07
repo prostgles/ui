@@ -122,10 +122,7 @@ export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
                   };
                 })}
               />
-            : <ScrollFade className="oy-auto">
-                <Documentation isElectron={isElectron} />
-              </ScrollFade>
-            }
+            : <Documentation isElectron={isElectron} />}
           </Popup>
         )
       }

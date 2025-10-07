@@ -1,8 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
-import { goTo, type PageWIds } from "utils";
+import { type PageWIds } from "utils/utils";
 import { SVG_SCREENSHOT_DIR, type SVGifScene } from "./constants";
 import { getFilesFromDir } from "./getFilesFromDir";
+import { goTo } from "utils/goTo";
 
 export const saveSVGifs = async (
   page: PageWIds,

@@ -10,7 +10,7 @@ export const overviewUIDoc = {
     <img src="/screenshots/sql_editor.svgif.svg" alt="Prostgles UI Overview" width="100%" />
     <img src="/screenshots/dashboard.svgif.svg" alt="Prostgles UI Overview" width="100%" />
 
-    <img src="/screenshots/schema_diagram.svg" alt="Prostgles UI Overview" width="100%" />
+    <img src="/screenshots/schema_diagram.svgif.svg" alt="Prostgles UI Overview" width="100%" />
     <img src="/screenshots/postgis_map.svg" alt="Prostgles UI Overview" width="100%" />
     <img src="/screenshots/ai_assistant.svgif.svg" alt="Prostgles UI Overview" width="100%" />
 

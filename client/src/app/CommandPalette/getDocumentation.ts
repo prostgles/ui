@@ -114,7 +114,9 @@ const getUIDocAsMarkdown = (
 };
 
 export type DocumentationFile = {
+  id: string;
   fileName: string;
+  title: string;
   text: string;
 };
 export const getDocumentationFiles = (isElectron: boolean) => {
@@ -126,6 +128,8 @@ export const getDocumentationFiles = (isElectron: boolean) => {
       const index = documentationPages.length + 1;
       documentationPages.push({
         fileName: `${index.toString().padStart(2, "0")}_${title.replaceAll(" ", "_")}.md`,
+        title,
+        id: toSnakeCase(title),
         text,
       });
     };

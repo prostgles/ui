@@ -157,7 +157,7 @@ export const getSVGif = (
   g.appendChild(pointerCircle);
   g.appendChild(animationProgressBar);
   g.appendChild(setPause);
-  document.body.appendChild(svg);
+  // document.body.appendChild(svg); // debugging
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
   return svgString;

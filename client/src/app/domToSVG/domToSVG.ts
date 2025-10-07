@@ -57,8 +57,8 @@ export const domToSVG = async (node: HTMLElement) => {
   await wrapAllSVGText(svg);
   await addFragmentViewBoxes(svg, 10);
   repositionAbsoluteAndFixed(svg);
-  await tout(1000);
   remove();
+  await tout(1000);
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);

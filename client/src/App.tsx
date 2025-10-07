@@ -321,9 +321,7 @@ export const App = () => {
                 needsUser={false}
                 userThemeOption={userThemeOption}
               >
-                <ScrollFade className="o-auto f-1 w-full ai-center flex-col bg-color-0">
-                  <Documentation isElectron={isElectron} />
-                </ScrollFade>
+                <Documentation isElectron={isElectron} />
               </NavBarWrapper>
             }
           />

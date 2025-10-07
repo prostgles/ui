@@ -706,3 +706,9 @@ const setActions = async (
   //   this.editor?.trigger('newline', 'type', { text: EOL });
   // }, '!suggestWidgetVisible && !renameInputVisible && !inSnippetMode && !quickFixWidgetVisible');
 };
+
+declare module "react" {
+  interface HTMLAttributes<T> {
+    sqlRef?: SQLEditorRef;
+  }
+}

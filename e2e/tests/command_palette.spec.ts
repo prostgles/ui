@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "./Testing";
-import { goTo, login, MINUTE, PageWIds, runDbsSql, USERS } from "./utils";
+import { login, MINUTE, PageWIds } from "./utils/utils";
+import { goTo } from "utils/goTo";
+import { USERS } from "utils/constants";
 
 test.use({
   viewport: {

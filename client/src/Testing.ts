@@ -1,5 +1,3 @@
-import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
-
 export const COMMANDS = {
   "NewConnectionForm.connectionName": "Connection name input field",
   "NewConnectionForm.connectionType": "Connection type select field",
@@ -492,6 +490,9 @@ export const COMMAND_SEARCH_ATTRIBUTE_NAME = "data-command-search-ended";
 declare module "react" {
   interface HTMLAttributes<T> {
     "data-command"?: Command;
-    sqlRef?: SQLEditorRef;
   }
 }
+
+/**
+ * Forbid imports to ensure this file is portable
+ */

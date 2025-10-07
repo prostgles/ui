@@ -1,10 +1,10 @@
 import {
   closeWorkspaceWindows,
   getDataKey,
-  goTo,
   setOrAddWorkspace,
-} from "utils";
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
+import { goTo } from "utils/goTo";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,

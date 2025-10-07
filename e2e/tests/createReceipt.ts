@@ -1,4 +1,4 @@
-import type { PageWIds } from "utils";
+import type { PageWIds } from "utils/utils";
 import * as path from "path";
 
 export const createReceipt = async (page1: PageWIds) => {

@@ -3,16 +3,17 @@ import * as path from "path";
 import { getDataKeyElemSelector } from "../../Testing";
 import {
   getDashboardUtils,
-  goTo,
   openConnection,
   openTable,
   type PageWIds,
-} from "../../utils";
+} from "../../utils/utils";
 import { aiAssistantSVG } from "./../aiAssistantSvgif";
 import { SVG_SCREENSHOT_DIR, type SVGifScene } from "./constants";
 import { saveSVGifs } from "./saveSVGifs";
 import { sqlEditorSVG } from "./../sqlEditorSvgif";
 import { dashboardSvgif } from "screenshotUtils/dashboardSvgif";
+import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagramSvgif";
+import { goTo } from "utils/goTo";
 
 export type OnBeforeScreenshot = (
   page: PageWIds,
@@ -44,11 +45,7 @@ export const SVG_SCREENSHOT_DETAILS = {
   // },
   sql_editor: sqlEditorSVG,
   ai_assistant: aiAssistantSVG,
-  schema_diagram: async (page, { openMenuIfClosed, openConnection }) => {
-    await openConnection("prostgles_video_demo");
-    await openMenuIfClosed();
-    await page.getByTestId("SchemaGraph").click();
-  },
+  schema_diagram: schemaDiagramSvgif,
   postgis_map: async (page) => {
     await openConnection(page, "food_delivery");
     await page.waitForTimeout(1500);
@@ -203,9 +200,12 @@ export const saveSVGs = async (page: PageWIds) => {
   }
 
   const onSave = async (fileName: string) => {
+    const start = Date.now();
     await page.waitForTimeout(600);
     await saveSVGScreenshot(page, fileName);
-    console.log(`Saved SVG screenshot: ${fileName}.svg`);
+    console.log(
+      `Saved SVG screenshot (${(Date.now() - start).toLocaleString()}ms): ${fileName}.svg`,
+    );
   };
 
   const utils = getDashboardUtils(page);

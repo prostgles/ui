@@ -1,14 +1,14 @@
 import { test } from "@playwright/test";
 import {
   PageWIds,
-  USERS,
   createDatabase,
-  goTo,
   login,
   openConnection,
   runDbsSql,
   setupProstglesLLMProvider,
-} from "./utils";
+} from "./utils/utils";
+import { USERS } from "utils/constants";
+import { goTo } from "utils/goTo";
 // const viewPortSize = { width: 1920, height: 1080 };
 const viewPortSize = { width: 1280, height: 1080 };
 test.use({
