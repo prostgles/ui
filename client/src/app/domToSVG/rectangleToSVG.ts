@@ -14,9 +14,10 @@ export const rectangleToSVG = (
     border,
     background,
     backdropFilter,
+    attributeData,
   }: Pick<
     Awaited<ReturnType<typeof getWhatToRenderOnSVG>>,
-    "background" | "border" | "backdropFilter"
+    "background" | "border" | "backdropFilter" | "attributeData"
   >,
   bboxCode: string,
   context: SVGContext,
@@ -26,7 +27,14 @@ export const rectangleToSVG = (
     style.backdropFilter &&
     style.mask &&
     style.mask.includes("linear-gradient");
-  if (!border && !background && !shadow && !scrollMask && !backdropFilter) {
+  if (
+    !border &&
+    !background &&
+    !shadow &&
+    !scrollMask &&
+    !backdropFilter &&
+    !attributeData
+  ) {
     return;
   }
 

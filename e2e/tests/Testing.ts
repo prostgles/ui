@@ -493,6 +493,33 @@ declare module "react" {
   }
 }
 
+export declare namespace SVGif {
+  export type Animation =
+    | {
+        elementSelector: string;
+        offset?: { x: number; y: number };
+        duration: number;
+        type: "click" | "zoomTo" | "type";
+
+        /**
+         * Time to wait before clicking after reaching the final position
+         * */
+        waitBeforeClick?: number;
+        /**
+         * Time to stay on the final position after clicking
+         */
+        lingerMs?: number;
+      }
+    | {
+        type: "wait";
+        duration: number;
+      };
+  export type Scene = {
+    svgFileName: string;
+    animations: Animation[];
+  };
+}
+
 /**
  * Forbid imports to ensure this file is portable
  */

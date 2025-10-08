@@ -1,34 +1,10 @@
 import { fixIndent } from "@common/utils";
 import { SVG_NAMESPACE } from "../domToSVG";
 import { getSVGifAnimations } from "./getSVGifAnimations";
-
-export type SVGifScene = {
-  svgFileName: string;
-  animations: SVGifAnimation[];
-};
-
-export type SVGifAnimation =
-  | {
-      elementSelector: string;
-      duration: number;
-      type: "click" | "zoomTo";
-
-      /**
-       * Time to wait before clicking after reaching the final position
-       * */
-      waitBeforeClick?: number;
-      /**
-       * Time to stay on the final position after clicking
-       */
-      lingerMs?: number;
-    }
-  | {
-      type: "wait";
-      duration: number;
-    };
+import type { SVGif } from "src/Testing";
 
 export const getSVGif = (
-  scenes: SVGifScene[],
+  scenes: SVGif.Scene[],
   svgFiles: Map<string, string>,
   loop = true,
 ) => {
@@ -58,49 +34,37 @@ export const getSVGif = (
   svg.appendChild(g);
 
   const { cursorKeyframes, sceneAnimations, totalDuration } =
-    getSVGifAnimations({ width, height }, g, parsedScenes);
+    getSVGifAnimations({ width, height }, g, parsedScenes, loop);
 
   const cursorAnimationName = `cursor-move`;
-  const getAnimationProperty = (
-    {
-      elemId,
-      animName,
-    }: {
-      elemId: string;
-      animName: string;
-    },
-    onlyValue = false,
-  ) => {
-    const value = `animation: ${animName} ${totalDuration}ms ease-in-out ${
-      loop ? "infinite" : "forwards"
-    };`;
-    if (onlyValue) return value;
-    return fixIndent(`
-      #${elemId} {
-        ${value}
-      }
-    `);
-  };
+  const getThisAnimationProperty = (
+    args: Omit<
+      Parameters<typeof getAnimationProperty>[0],
+      "totalDuration" | "loop"
+    >,
+    onlyValue?: boolean,
+  ) => getAnimationProperty({ ...args, totalDuration, loop }, onlyValue);
+
   style.textContent += "\n";
   sceneAnimations.forEach(({ sceneId, keyframes }) => {
     const animationName = `scene-${sceneId}-anim`;
     style.textContent += "\n";
     style.textContent += fixIndent(`
       @keyframes ${animationName} {
-        ${keyframes.join("\n")}
+      ${keyframes.map((v) => `  ${v}`).join("\n")}
       }
-      ${getAnimationProperty({ elemId: sceneId, animName: animationName })}
+      ${getThisAnimationProperty({ elemSelector: `#${sceneId}`, animName: animationName })}
     `);
   });
   style.textContent += "\n\n";
   style.textContent += fixIndent(`
     @keyframes ${cursorAnimationName} {
-      ${cursorKeyframes.join("\n")}
+    ${cursorKeyframes.map((v) => `  ${v}`).join("\n")}
     } 
-    ${getAnimationProperty({ elemId: pointerId, animName: cursorAnimationName })}
+    ${getThisAnimationProperty({ elemSelector: `#${pointerId}`, animName: cursorAnimationName })}
   `);
 
-  const progressBarId = "animation-progress-bar";
+  const progressBarId = "progress-bar";
   const animationProgressBar = document.createElementNS(SVG_NAMESPACE, "rect");
   const animationProgressBarHeight = 2;
   animationProgressBar.setAttribute("id", progressBarId);
@@ -111,7 +75,7 @@ export const getSVGif = (
   animationProgressBar.setAttribute("rx", "2.5");
   animationProgressBar.setAttribute("ry", "2.5");
 
-  const progressBarAnimationName = "progress-bar";
+  const progressBarAnimationName = "animation-progress-bar";
   style.textContent += ` 
     @keyframes ${progressBarAnimationName} {
       0% { transform: translateX(-100%); }
@@ -121,7 +85,7 @@ export const getSVGif = (
     #${progressBarId} {
       fill: red;
       opacity: 0.3;
-      ${getAnimationProperty({ animName: progressBarAnimationName, elemId: progressBarId }, true)} 
+      ${getThisAnimationProperty({ animName: progressBarAnimationName, elemSelector: `#${progressBarId}` }, true)} 
     }
 
     #${pointerId} { 
@@ -193,4 +157,29 @@ export const parseSVGWithViewBox = (
     viewBox,
     svgFile,
   };
+};
+
+export const getAnimationProperty = (
+  {
+    elemSelector,
+    animName,
+    loop,
+    totalDuration,
+  }: {
+    elemSelector: string;
+    animName: string;
+    totalDuration: number;
+    loop?: boolean;
+  },
+  onlyValue = false,
+) => {
+  const value = `animation: ${animName} ${totalDuration}ms ease-in-out ${
+    loop ? "infinite" : "forwards"
+  };`;
+  if (onlyValue) return value;
+  return fixIndent(`
+      ${elemSelector} {
+        ${value}
+      }
+    `);
 };

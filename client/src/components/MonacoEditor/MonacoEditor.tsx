@@ -12,8 +12,8 @@ import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils
 
 import {
   CUSTOM_MONACO_SQL_THEMES,
-  defineCustomSQLTheme,
-} from "../../dashboard/SQLEditor/defineCustomSQLTheme";
+  defineCustomMonacoSQLTheme,
+} from "../../dashboard/SQLEditor/defineCustomMonacoSQLTheme";
 import { getMonaco, LANG } from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
@@ -50,7 +50,7 @@ const useMonacoSingleton = () => {
       (async () => {
         monacoPromise ??= getMonaco();
         monacoResolved = await monacoPromise;
-        await defineCustomSQLTheme();
+        await defineCustomMonacoSQLTheme();
         setMonaco(monacoResolved);
       })();
     }

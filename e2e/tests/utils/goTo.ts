@@ -55,6 +55,7 @@ export const goTo = async (page: PageWIds, url = "localhost:3004") => {
       })
       .join("");
     console.error(requestInfo);
+    /** It's usually  http://localhost:3004/json.worker.js */
     throw new Error("\n⚠️ TIMEOUT! Pending requests: " + requestInfo, {
       cause: error,
     });

@@ -1,5 +1,9 @@
 import { isDefined } from "../../../utils";
-import { isElementNode, isInputNode, isTextNode } from "../isElementVisible";
+import {
+  isElementNode,
+  isInputOrTextAreaNode,
+  isTextNode,
+} from "../isElementVisible";
 
 export type TextForSVG = {
   style: CSSStyleDeclaration;
@@ -26,7 +30,7 @@ export const getTextForSVG = (
   if (isTextNode(element)) {
     throw new Error("Not expecting this to be honest");
   }
-  if (isInputNode(element)) {
+  if (isInputOrTextAreaNode(element)) {
     const inputRect = element.getBoundingClientRect();
     let textContent = element.value || element.placeholder;
     if (
@@ -53,7 +57,11 @@ export const getTextForSVG = (
     const borderLeft = parseFloat(style.borderLeftWidth) || 0;
 
     const yTextOffset = -paddingBottom - borderBottom - fontYPadding / 2 - 2;
-    const y = inputRect.y + inputRect.height + yTextOffset;
+    const isTextArea = element instanceof HTMLTextAreaElement;
+    const y =
+      isTextArea ?
+        inputRect.y + paddingTop + fontSize + borderTop + 2
+      : inputRect.y + inputRect.height + yTextOffset;
     const result = [
       {
         style: actualStyle,

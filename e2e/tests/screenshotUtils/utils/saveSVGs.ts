@@ -8,7 +8,11 @@ import {
   type PageWIds,
 } from "../../utils/utils";
 import { aiAssistantSVG } from "./../aiAssistantSvgif";
-import { SVG_SCREENSHOT_DIR, type SVGifScene } from "./constants";
+import {
+  SVG_SCREENSHOT_DIR,
+  SVGIF_SCENES_DIR,
+  type SVGifScene,
+} from "./constants";
 import { saveSVGifs } from "./saveSVGifs";
 import { sqlEditorSVG } from "./../sqlEditorSvgif";
 import { dashboardSvgif } from "screenshotUtils/dashboardSvgif";
@@ -43,8 +47,8 @@ export const SVG_SCREENSHOT_DETAILS = {
   //   await page.keyboard.press("Control+Space");
   //   await page.waitForTimeout(500);
   // },
-  sql_editor: sqlEditorSVG,
   ai_assistant: aiAssistantSVG,
+  sql_editor: sqlEditorSVG,
   schema_diagram: schemaDiagramSvgif,
   postgis_map: async (page) => {
     await openConnection(page, "food_delivery");
@@ -199,10 +203,9 @@ export const saveSVGs = async (page: PageWIds) => {
     fs.rmSync(SVG_SCREENSHOT_DIR, { recursive: true, force: true });
   }
 
-  const onSave = async (fileName: string) => {
+  const onSave = async (fileName: string, isSvgifScene: boolean) => {
     const start = Date.now();
-    await page.waitForTimeout(600);
-    await saveSVGScreenshot(page, fileName);
+    await saveSVGScreenshot(page, fileName, isSvgifScene);
     console.log(
       `Saved SVG screenshot (${(Date.now() - start).toLocaleString()}ms): ${fileName}.svg`,
     );
@@ -214,7 +217,13 @@ export const saveSVGs = async (page: PageWIds) => {
     let svgifScenes: SVGifScene[] | undefined;
     const addSVGifScene = async (scene?: Partial<SVGifScene>) => {
       svgifScenes ??= [];
-      const sceneFileName = `${fileName}_${scene?.svgFileName ?? svgifScenes.length.toString().padStart(2, "0")}`;
+      const sceneFileName = [
+        fileName,
+        svgifScenes.length.toString().padStart(2, "0"),
+        scene?.svgFileName,
+      ]
+        .filter(Boolean)
+        .join("_");
       const animations = scene?.animations ?? [
         {
           type: "wait",
@@ -225,7 +234,7 @@ export const saveSVGs = async (page: PageWIds) => {
         svgFileName: sceneFileName,
         animations,
       });
-      await onSave(sceneFileName);
+      await onSave(sceneFileName, true);
     };
     await onBefore(page, utils, addSVGifScene);
     if (svgifScenes) {
@@ -238,14 +247,18 @@ export const saveSVGs = async (page: PageWIds) => {
       await saveSVGifs(page, [svgifSpec]);
       console.timeEnd(`Generating SVGif: ${fileName}`);
     } else {
-      await onSave(fileName);
+      await onSave(fileName, false);
     }
   }
   await page.waitForTimeout(100);
   return { svgifSpecs };
 };
 
-const saveSVGScreenshot = async (page: PageWIds, fileName: string) => {
+const saveSVGScreenshot = async (
+  page: PageWIds,
+  fileName: string,
+  isSvgifScene: boolean,
+) => {
   const svgStrings: { light: string; dark: string } = await page.evaluate(
     async () => {
       //@ts-ignore
@@ -254,16 +267,25 @@ const saveSVGScreenshot = async (page: PageWIds, fileName: string) => {
     },
   );
 
-  for (const theme of themes) {
-    const svg = svgStrings[theme.name];
-    if (!svg) throw "SVG missing";
-    fs.mkdirSync(theme.dir, { recursive: true });
-    const filePath = path.join(theme.dir, fileName + ".svg");
+  // for (const theme of themes) {
+  //   const svg = svgStrings[theme.name];
+  //   if (!svg) throw "SVG missing";
+  //   fs.mkdirSync(theme.dir, { recursive: true });
+  //   const filePath = path.join(theme.dir, fileName + ".svg");
 
-    fs.writeFileSync(filePath, svg, {
-      encoding: "utf8",
-    });
-  }
+  //   fs.writeFileSync(filePath, svg, {
+  //     encoding: "utf8",
+  //   });
+  // }
+  const svg = svgStrings.light;
+  if (!svg) throw "SVG missing";
+  const dir = isSvgifScene ? SVGIF_SCENES_DIR : SVG_SCREENSHOT_DIR;
+  fs.mkdirSync(dir, { recursive: true });
+  const filePath = path.join(dir, fileName + ".svg");
+
+  fs.writeFileSync(filePath, svg, {
+    encoding: "utf8",
+  });
 };
 
 const themes = [

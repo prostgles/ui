@@ -3,6 +3,7 @@ import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 export const isElementVisible = (element: Element) => {
   const style = window.getComputedStyle(element);
   const bbox = element.getBoundingClientRect();
+
   if (!isElementNode(element) && !isTextNode(element))
     return { isVisible: false, style, bbox };
 
@@ -86,8 +87,9 @@ export const isTextNode = (node: Node): node is Text =>
 export const isImgNode = (node: Node): node is HTMLImageElement =>
   isElementNode(node) && node.nodeName.toLowerCase() === "img";
 
-export const isInputNode = (node: Node): node is HTMLInputElement =>
-  isElementNode(node) && node.nodeName.toLowerCase() === "input";
+export const isInputOrTextAreaNode = (node: Node): node is HTMLInputElement =>
+  isElementNode(node) &&
+  (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement);
 
 export const isSVGNode = (node: Node): node is SVGElement =>
   isElementNode(node) && node.nodeName.toLowerCase() === "svg";

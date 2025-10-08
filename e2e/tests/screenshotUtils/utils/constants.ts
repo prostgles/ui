@@ -1,4 +1,5 @@
 import * as path from "path";
+import type { SVGif } from "Testing";
 
 export const DOCS_DIR = path.join(__dirname, "../../../../docs/");
 if (!DOCS_DIR.endsWith("ui/docs/")) {
@@ -6,22 +7,13 @@ if (!DOCS_DIR.endsWith("ui/docs/")) {
 }
 
 export const SCREENSHOTS_PATH = "/screenshots";
+export const SVGIF_SCENES_PATH = "/svgif-scenes";
 
 export const SVG_SCREENSHOT_DIR = path.join(DOCS_DIR, SCREENSHOTS_PATH);
+export const SVGIF_SCENES_DIR = path.join(
+  DOCS_DIR,
+  SCREENSHOTS_PATH,
+  SVGIF_SCENES_PATH,
+);
 
-export type SVGifScene = {
-  svgFileName: string;
-  animations: (
-    | {
-        type: "click" | "hover";
-        elementSelector: string;
-        duration: number;
-        waitBeforeClick?: number;
-        lingerMs?: number;
-      }
-    | {
-        type: "wait";
-        duration: number;
-      }
-  )[];
-};
+export type SVGifScene = SVGif.Scene;

@@ -212,7 +212,7 @@ import type {
   PG_Trigger,
 } from "./SQLCompletion/getPGObjects";
 import { addSqlEditorFunctions } from "./addSqlEditorFunctions";
-import { defineCustomSQLTheme } from "./defineCustomSQLTheme";
+import { defineCustomMonacoSQLTheme } from "./defineCustomMonacoSQLTheme";
 import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
 import { scrollToLineIfNeeded } from "./utils/scrollToLineIfNeeded";

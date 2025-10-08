@@ -1,6 +1,9 @@
+import type { SVGif } from "src/Testing";
 import { SVG_NAMESPACE } from "../domToSVG";
 import { renderSvg } from "../text/textToSVG";
-import type { parseSVGWithViewBox, SVGifScene } from "./getSVGif";
+import { getAnimationProperty, type parseSVGWithViewBox } from "./getSVGif";
+import { getSVGifTargetBBox } from "./getSVGifTargetBBox";
+import { fixIndent } from "@common/utils";
 
 /**
  * Given an SVGifScenes, return the animations
@@ -8,9 +11,15 @@ import type { parseSVGWithViewBox, SVGifScene } from "./getSVGif";
 export const getSVGifAnimations = (
   { height, width }: { width: number; height: number },
   g: SVGGElement,
-  parsedScenes: (ReturnType<typeof parseSVGWithViewBox> & SVGifScene)[],
+  parsedScenes: (ReturnType<typeof parseSVGWithViewBox> & SVGif.Scene)[],
+  loop: boolean,
 ) => {
-  const cursorKeyframes = [`0% { opacity: 0; }`];
+  const cursorMovements: {
+    fromPerc: number;
+    toPerc: number;
+    lingerPerc: number | undefined;
+    target: [number, number];
+  }[] = [];
   const totalDuration = parsedScenes.reduce(
     (acc, { animations }) =>
       acc + animations.reduce((a, { duration }) => a + duration, 0),
@@ -41,7 +50,7 @@ export const getSVGifAnimations = (
     }
     const sceneId = `scene-${sceneIndex}`;
     const renderedSceneSVG = renderSvg(svgDom);
-    appendSvgToSvg({ id: sceneId, svgFile }, g);
+    // appendSvgToSvg({ id: sceneId, svgFile }, g);
 
     const sceneKeyframes: string[] = [];
     if (prevSceneAnim) {
@@ -57,7 +66,15 @@ export const getSVGifAnimations = (
     }
 
     sceneKeyframes.push(`${getPercent(currentPrevDuration)}% { opacity: 1; }`);
-    for (const animation of animations) {
+
+    const sceneNodeAnimations: {
+      sceneId: string;
+      elemSelector: string;
+      keyframes: string[];
+    }[] = [];
+    let sceneNodeAnimationsStyle = "";
+
+    for (const [animationIndex, animation] of animations.entries()) {
       if (animation.type === "wait") {
       } else {
         const {
@@ -65,42 +82,112 @@ export const getSVGifAnimations = (
           waitBeforeClick = 300,
           duration,
           elementSelector,
-          type,
+          offset,
         } = animation;
-        const element = svgDom.querySelector<SVGGElement>(
-          animation.elementSelector,
-        );
-        if (!element) {
-          throw `Element not found: ${elementSelector} in SVG file ${svgFileName}`;
+
+        const { bbox, element } = getSVGifTargetBBox({
+          elementSelector,
+          svgDom,
+          svgFileName,
+          width,
+          height,
+        });
+        if (animation.type === "type") {
+          const tSpansOrText = Array.from(
+            element.querySelectorAll<SVGTSpanElement | SVGTextElement>(
+              "tspan, text",
+            ),
+          );
+          if (!tSpansOrText.length) {
+            throw `No tspan elements found in element: ${elementSelector} in SVG file ${svgFileName}. "type" animations require the target element to contain one or more <tspan> elements.`;
+          }
+          const totalWidth = tSpansOrText.reduce(
+            (acc, tspan) => acc + tspan.getComputedTextLength(),
+            0,
+          );
+          const msPerPx = duration / totalWidth;
+          let currentXOffset = 0;
+          tSpansOrText.forEach((tspanOrText, i) => {
+            const tspanWidth = tspanOrText.getComputedTextLength();
+            const tspanDuration = tspanWidth * msPerPx;
+            const fromTime = currentPrevDuration;
+            const toTime = fromTime + tspanDuration;
+            const fromPerc = Number(getPercent(fromTime));
+            const toPerc = Number(getPercent(toTime));
+            sceneNodeAnimations.push({
+              sceneId,
+              elemSelector: `${elementSelector} ${tspanOrText.nodeName}:nth-of-type(${i + 1})`,
+              keyframes: [
+                !fromPerc ? "" : (
+                  `0% { opacity: 0; clip-path: inset(0 100% 0 0); }`
+                ),
+                `${fromPerc}% { opacity: 0; clip-path: inset(0 100% 0 0); }`,
+                `${fromPerc + 0.1}% { opacity: 1; clip-path: inset(0 100% 0 0); }`,
+                `${toPerc}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
+                toPerc === 100 ? "" : (
+                  `100% { opacity: 1; clip-path: inset(0 0 0 0); }`
+                ),
+              ].filter(Boolean),
+            });
+            currentXOffset += tspanWidth;
+          });
+        } else {
+          const xOffset = offset?.x ?? bbox.width / 2;
+          const yOffset = offset?.y ?? bbox.height / 2;
+          const cx = bbox.x + xOffset;
+          const cy = bbox.y + yOffset;
+
+          const clickEndTime = currentPrevDuration + duration - waitBeforeClick;
+          const nextAnimation =
+            animations[animationIndex + 1] ||
+            parsedScenes[sceneIndex + 1]?.animations[0];
+          const anotherClickFollowing = nextAnimation?.type === "click";
+          cursorMovements.push({
+            fromPerc: Number(getPercent(currentPrevDuration)),
+            toPerc: Number(getPercent(clickEndTime)),
+            lingerPerc:
+              !lingerMs || anotherClickFollowing ? undefined : (
+                Number(
+                  getPercent(Math.min(totalDuration, clickEndTime + lingerMs)),
+                )
+              ),
+            target: [cx, cy],
+          });
         }
-
-        const bbox = element.getBBox();
-
-        /* Clamp width and height to be within visible bounds */
-        bbox.x = Math.max(0, Math.min(bbox.x, width));
-        bbox.y = Math.max(0, Math.min(bbox.y, height));
-        bbox.width = Math.max(0, Math.min(bbox.width, width - bbox.x));
-        bbox.height = Math.max(0, Math.min(bbox.height, height - bbox.y));
-
-        const cx = bbox.x + bbox.width / 2;
-        const cy = bbox.y + bbox.height / 2;
-
-        const clickEndTime = currentPrevDuration + duration - waitBeforeClick;
-        cursorKeyframes.push(
-          ...[
-            `${getPercent(
-              currentPrevDuration,
-            )}% { opacity: 0; transform: translate(${width / 2}px, ${height}px); }`,
-            `${getPercent(
-              clickEndTime,
-            )}% { opacity: 1; transform: translate(${cx}px, ${cy}px); }`,
-            `${getPercent(
-              Math.min(totalDuration, clickEndTime + lingerMs),
-            )}% { opacity: 0; transform: translate(${cx}px, ${cy}px); }`,
-          ],
-        );
       }
       currentPrevDuration += animation.duration;
+    }
+
+    if (sceneNodeAnimations.length) {
+      sceneNodeAnimationsStyle += "\n";
+      let nodeAnimIndex = 0;
+      sceneNodeAnimations.forEach(({ sceneId, elemSelector, keyframes }) => {
+        nodeAnimIndex++;
+        const animationName = `node-${sceneId}-anim-${nodeAnimIndex}`;
+        sceneNodeAnimationsStyle += "\n";
+        sceneNodeAnimationsStyle += fixIndent(`
+          @keyframes ${animationName} {
+          ${keyframes.map((v) => `  ${v}`).join("\n")}
+          }
+          ${getAnimationProperty({ elemSelector, animName: animationName, loop, totalDuration })}
+        `);
+      });
+
+      const styleElem = document.createElementNS(SVG_NAMESPACE, "style");
+      styleElem.textContent = sceneNodeAnimationsStyle;
+      const defs = svgDom.querySelector("defs");
+      if (defs) {
+        defs.appendChild(styleElem);
+      } else {
+        const newDefs = document.createElementNS(SVG_NAMESPACE, "defs");
+        newDefs.appendChild(styleElem);
+        svgDom.insertBefore(newDefs, svgDom.firstChild);
+      }
+      const svgFileWithNewStyle = svgDom.outerHTML;
+      appendSvgToSvg({ id: sceneId, svgFile: svgFileWithNewStyle }, g);
+      // throw svgFileWithNewStyle;
+    } else {
+      appendSvgToSvg({ id: sceneId, svgFile }, g);
     }
 
     const isLastScene = sceneIndex === parsedScenes.length - 1;
@@ -119,7 +206,29 @@ export const getSVGifAnimations = (
     renderedSceneSVG.remove();
   }
 
-  return { cursorKeyframes, sceneAnimations, totalDuration };
+  const [x0, y0] = [width / 2, height];
+  const firstTranslate = `transform: translate(${x0}px, ${y0}px)`;
+  const cursorKeyframes = [`0% { opacity: 0; ${firstTranslate}; }`];
+  cursorMovements.forEach(
+    ({ fromPerc, toPerc, lingerPerc, target: [x, y] }, i, arr) => {
+      const translate = `transform: translate(${x}px, ${y}px)`;
+      const prevTarget = arr[i - 1]?.target ?? [x0, y0];
+      const prevTranslate = `transform: translate(${prevTarget[0]}px, ${prevTarget[1]}px)`;
+      cursorKeyframes.push(
+        ...[
+          `${fromPerc - 0.1}% { opacity: 0; ${prevTranslate}; }`,
+          `${fromPerc}% { opacity: 1; ${prevTranslate}; }`,
+          `${toPerc}% { opacity: 1; ${translate}; }`,
+          `${lingerPerc ?? toPerc + 0.1}% { opacity: 0; ${translate}; }`,
+        ],
+      );
+    },
+  );
+  return {
+    cursorKeyframes,
+    sceneAnimations,
+    totalDuration,
+  };
 };
 
 const appendSvgToSvg = (
@@ -137,4 +246,10 @@ const appendSvgToSvg = (
   img.setAttribute("height", "100%");
   img.setAttribute("style", "opacity: 0;");
   g.appendChild(img);
+
+  return {
+    remove: () => {
+      img.remove();
+    },
+  };
 };

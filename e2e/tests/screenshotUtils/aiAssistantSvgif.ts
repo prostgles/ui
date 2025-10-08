@@ -1,9 +1,10 @@
 import {
+  closeWorkspaceWindows,
   deleteExistingLLMChat,
   setModelByText,
   setPromptByText,
 } from "utils/utils";
-import { getDataKeyElemSelector } from "Testing";
+import { getCommandElemSelector, getDataKeyElemSelector } from "Testing";
 import { createReceipt } from "createReceipt";
 import { expect } from "@playwright/test";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
@@ -19,18 +20,55 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   await openConnection("cloud");
   await openConnection("prostgles_video_demo");
   await deleteExistingLLMChat(page);
-  // await page.getByTestId("AskLLM").click();
+  await page.getByTestId("Popup.close").last().click();
+  await closeWorkspaceWindows(page);
+  await addScene({
+    svgFileName: "open_chat",
+    animations: [
+      { type: "wait", duration: 1000 },
+      {
+        type: "click",
+        elementSelector: getCommandElemSelector("AskLLM"),
+        duration: 1e3,
+      },
+    ],
+  });
+  await page.getByTestId("AskLLM").click();
   await setModelByText(page, "pros");
   await setPromptByText(page, "dashboard");
-  await addScene({ svgFileName: "empty" });
   const firstMessage = await page.getByTestId("AskLLM.DeleteMessage").first();
   if (await firstMessage.count()) {
     await firstMessage.click();
     await page.locator(getDataKeyElemSelector("allToBottom")).click();
   }
+  await addScene({
+    svgFileName: "focus_textarea",
+    animations: [
+      { type: "wait", duration: 1000 },
+      {
+        type: "click",
+        elementSelector: getCommandElemSelector("Chat.textarea"),
+        offset: { x: 20, y: 10 },
+        duration: 1e3,
+      },
+    ],
+  });
   await page
     .getByTestId("Chat.textarea")
     .fill("I need some dashboards with useful insights and metrics");
+  await page.waitForTimeout(500);
+  await addScene({
+    svgFileName: "dashboards_type",
+    animations: [
+      { type: "wait", duration: 1000 },
+      {
+        type: "type",
+        elementSelector: getCommandElemSelector("Chat.textarea"),
+        duration: 1000,
+      },
+    ],
+  });
+
   await page.getByTestId("Chat.send").click();
   await page.waitForTimeout(2500);
   await addScene({ svgFileName: "dashboards" });
