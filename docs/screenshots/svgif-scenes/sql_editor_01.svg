@@ -38,7 +38,7 @@
   --color-17: rgb(11, 33, 111); 
   --fontFamily-18: Consolas, "Courier New", monospace; 
   --color-19: rgba(0, 0, 0, 0.05); 
-  --opacity-20: 0.99985; 
+  --opacity-20: 0.999963; 
   --color-22: rgb(159, 166, 178); 
 }
 @media (prefers-color-scheme: dark) { 
@@ -66,7 +66,7 @@
   --color-17: rgb(198, 198, 198); 
   --fontFamily-18: Consolas, "Courier New", monospace; 
   --color-19: rgba(0, 0, 0, 0.05); 
-  --opacity-20: 0.99985; 
+  --opacity-20: 0.999963; 
   --color-22: rgb(159, 166, 178); 
   }
 } 

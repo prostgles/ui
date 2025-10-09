@@ -197,37 +197,31 @@ export default class Loading extends RTComp<P, S> {
   }
 }
 
-const Spinner = ({
-  size,
-  colorAnimation,
-}: {
-  size: string;
-  colorAnimation: boolean;
-}) => <SpinnerV2 size={size} />;
+/* 
+  The spinner should keep laptop fans quiet.
+  SVG is quiter than SpinnerV2.
+  Test page: http://localhost:3004/component-list#d
 
-// CPU usage is too high for css animation used below
-// const Spinner = ({
-//   size,
-//   colorAnimation,
-// }: {
-//   size: string;
-//   colorAnimation: boolean;
-// }) => (
-//   <svg
-//     className="spinner f-0"
-//     width={size}
-//     height={size}
-//     viewBox="0 0 66 66"
-//     xmlns="http://www.w3.org/2000/svg"
-//   >
-//     <circle
-//       className={"path " + (colorAnimation ? " color-animation " : "")}
-//       fill="none"
-//       strokeWidth="6"
-//       strokeLinecap="round"
-//       cx="33"
-//       cy="33"
-//       r="30"
-//     ></circle>
-//   </svg>
-// );
+  SVG: 
+    60% cpu 20% gpu
+  Canvas (SpinnerV2): 
+    30% cpu 50% gpu
+*/
+const Spinner = ({ size }: { size: string; colorAnimation: boolean }) => {
+  // return <SpinnerV2 size={size} />;
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="Spinner f-0"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+    >
+      <path
+        xmlns="http://www.w3.org/2000/svg"
+        fill="inherit"
+        d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"
+      />
+    </svg>
+  );
+};

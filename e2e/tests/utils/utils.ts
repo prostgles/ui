@@ -802,7 +802,7 @@ export const getAskLLMLastMessage = async (page: PageWIds) => {
 
   await Promise.all(
     toolCallBtns.map((btn) =>
-      btn.locator(".Loading").waitFor({ state: "detached" }),
+      btn.locator(".Loading").waitFor({ state: "detached", timeout: 30_000 }),
     ),
   );
   await page.waitForTimeout(1500);
@@ -998,6 +998,9 @@ export const setOrAddWorkspace = async (
   page: PageWIds,
   workspaceName: string,
 ) => {
+  const workspaceList = await page.getByTestId("WorkspaceMenu.list");
+  await workspaceList.waitFor({ state: "visible", timeout: 10e3 });
+  await page.waitForTimeout(1500);
   const toggleBtn = await page
     .getByTestId("WorkspaceMenu.list")
     .getByText(workspaceName, { exact: true });

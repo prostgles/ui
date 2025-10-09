@@ -3,11 +3,13 @@ import React, { useEffect, useRef, useState } from "react";
 import Btn from "../components/Btn";
 import { FlexCol, FlexRow } from "../components/Flex";
 import { isEmpty } from "../utils";
+import { useLocation } from "react-router-dom";
 
 const buttonHeights: Record<string, number> = {};
 const buttonLoadingHeights: Record<string, number> = {};
 
 export const ComponentList = () => {
+  const { hash } = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [checkMessage, setCheckMessage] = useState(
     "Checking button heights...",
@@ -34,6 +36,7 @@ export const ComponentList = () => {
         if (!isLoading && isEmpty(buttonLoadingHeights)) {
           setIsLoading(true);
         } else if (isLoading) {
+          if (hash) return;
           let allHeightsMatch = true as boolean;
           // If we are loading, we want to ensure the heights are set for loading state
           Object.keys(buttonHeights).forEach((size) => {
@@ -50,7 +53,7 @@ export const ComponentList = () => {
         }
       }
     }, 1000);
-  }, [isLoading]);
+  }, [isLoading, hash]);
 
   return (
     <FlexCol ref={ref} className="ComponentList f-1 min-w-0 p-2 o-auto">

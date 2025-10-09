@@ -116,10 +116,10 @@ export const useGoToUI = (
       const shortcut =
         currentPage ? getUIDocShorterPath(currentPage, prevParents) : undefined;
       const pathItems = shortcut ?? prevParents;
-      const isLinkOrPage = includes(data.type, ["link", "page"]);
+      const shouldBeOpened = includes(data.type, ["link", "page", "tab"]);
       const finalPathItems =
         data.type === "hotkey-popup" ? [data]
-        : isLinkOrPage ? [...pathItems, data]
+        : shouldBeOpened ? [...pathItems, data]
         : pathItems;
       for (const parent of finalPathItems) {
         const shouldStop = await goToUI(parent);
@@ -128,7 +128,7 @@ export const useGoToUI = (
         }
         await tout(200);
       }
-      if (!isLinkOrPage) {
+      if (!shouldBeOpened) {
         await highlight(data, "last");
       }
       window.document.body.setAttribute(

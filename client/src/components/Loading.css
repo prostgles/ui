@@ -82,33 +82,14 @@
 /* $offset: 187;
 $duration: 1.4s; */
 
-.spinner {
-  animation: rotator 1.4s linear infinite;
-  will-change: transform;
-}
-
-@keyframes rotator {
-  0% {
-    transform: translateZ(0) rotate(0deg);
-  }
-  100% {
-    transform: translateZ(0) rotate(270deg);
-  }
-}
-
-.path {
-  stroke-dasharray: 187;
-  stroke-dashoffset: 0;
+.Spinner path {
   transform-origin: center;
-  stroke: currentColor;
-  will-change: transform;
-  animation: dash 1.4s ease-in-out infinite;
+  animation: rotator 0.75s infinite linear;
 }
-
-.path.color-animation {
-  animation:
-    dash 1.4s ease-in-out infinite,
-    colors 5.6s ease-in-out infinite;
+@keyframes rotator {
+  100% {
+    transform: translateZ(0) rotate(360deg);
+  }
 }
 
 @keyframes colors {
