@@ -19,14 +19,15 @@ export const ColumnDisplayFormat = ({ column, table, tables, onChange }: P) => {
     typeof ColumnFormatSchema
   >;
   const allowedRenderers = getFormatOptions(column.info);
-  // const textCols = table.columns.filter(c => c.tsDataType === "string").map(c => c.name);
+  const textCols = table.columns
+    .filter((c) => c.tsDataType === "string")
+    .map((c) => c.name);
   s.oneOfType = s.oneOfType
     .map((t) => {
       if ("params" in t) {
         if (t.type.enum[0] === "Currency") {
           // @ts-ignore
-          t.params.oneOfType[1].currencyCodeField.lookup.filter.table =
-            table.name;
+          t.params.oneOfType[1].currencyCodeField.allowedValues = textCols;
         } else if (t.type.enum[0] === "Media") {
           //@ts-ignore
           t.params.oneOfType[1]!.contentTypeColumnName!.lookup.filter.table =

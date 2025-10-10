@@ -106,17 +106,17 @@ export const loadGeneratedWorkspaces = async (
             (x_axis === "count(*)" ? "$countAll" : "$" + x_axis.aggregation),
         )!;
         const xColName =
-          x_axis === "count(*)" ? "Count" : (
-            `${funcDef.label}(${x_axis.column})`
-          );
+          x_axis === "count(*)" ? "Count" : `${funcDef.name}(${x_axis.column})`;
 
         const columns: WindowData<"table">["columns"] = [
           {
             name: y_axis_column,
+            width: 150,
             show: true,
           },
           {
             name: xColName,
+            width: 250,
             show: true,
             computedConfig: {
               column: x_axis === "count(*)" ? undefined : x_axis.column,
@@ -152,7 +152,7 @@ export const loadGeneratedWorkspaces = async (
             quickFilterGroups,
             hideEditRow: true,
           } satisfies WindowData<"table">["options"],
-          sort: [{ key: "xColName", asc: false }],
+          sort: [{ key: xColName, asc: false }],
         } satisfies Omit<
           DBSSchemaForInsert["windows"],
           "last_updated" | "user_id"

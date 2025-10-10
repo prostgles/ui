@@ -182,6 +182,43 @@ export type TableWindowInsertModel = Filtering & {
      * Show linked data from other tables that are linked to this column through foreign keys
      */
     nested?: LinkedData;
+
+    /**
+     * If set, column value will rendered in a specific way
+     */
+    format?:
+      | {
+          type: "URL" | "Email" | "Tel" | "QR Code";
+        }
+      | {
+          type: "Currency";
+          params:
+            | {
+                type: "Fixed";
+                /** @example "USD" */
+                currencyCode: string;
+              }
+            | {
+                type: "From column";
+                /** Column which contains the currency code  */
+                currencyCodeField: string;
+              };
+        }
+      | {
+          /** Display the timestamp value as an age */
+          type: "Age";
+        }
+      | {
+          /** Text content as sanitised html */
+          type: "Age";
+        }
+      | {
+          /** Displays the media from URL. Accepted formats: image, audio or video. Media/Mime type will be used from headers */
+          type: "Media";
+          params: {
+            type: "fromColumn";
+          };
+        };
   }[];
 
   /**

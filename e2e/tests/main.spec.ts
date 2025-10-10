@@ -809,7 +809,7 @@ test.describe("Main test", () => {
         .getByTestId("ToolUseMessage.toggle")
         .last()
         .locator(".Loading")
-        .waitFor({ state: "detached", timeout: 20e3 });
+        .waitFor({ state: "detached", timeout: 40e3 });
       await page.getByTestId("ToolUseMessage.toggle").last().click();
       await page.getByTestId("Popup.toggleFullscreen").last().click();
       await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(

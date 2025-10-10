@@ -34,11 +34,7 @@ const CurrencySchema = {
         type: { enum: ["From column"], title: "Type" },
         currencyCodeField: {
           // enum: ["c"],
-          lookup: {
-            type: "schema",
-            object: "column",
-            filter: { tsDataType: "string", table: "" },
-          },
+          type: "string",
           title: "Currency Field",
           description:
             "Column containint the currency code (EUR, GBP, USD, etc...)",
@@ -396,7 +392,7 @@ export const DISPLAY_FORMATS = [
 
       try {
         const currencyCode =
-          type === "Fixed" ? p.currencyCode : row[p.currencyCodeField.column];
+          type === "Fixed" ? p.currencyCode : row[p.currencyCodeField];
         const formatter = new Intl.NumberFormat(undefined, {
           style: "currency",
           currency: currencyCode,

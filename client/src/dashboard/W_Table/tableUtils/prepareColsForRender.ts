@@ -34,7 +34,8 @@ export const prepareColsForRender = (
       ...c,
       /* Align numbers to right for an easier read */
       headerClassname:
-        (
+        c.style?.type === "Barchart" ? ""
+        : (
           isNumericColumn(c) ||
           c.nested?.columns.filter(
             (nc) =>
