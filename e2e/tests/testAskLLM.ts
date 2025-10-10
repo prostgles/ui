@@ -227,7 +227,7 @@ const defaultContent = !msg && !failedToolResult? undefined : ("free ai assistan
 const content = toolResponse?.content ?? defaultContent;
 const tool_calls = toolResponse?.tool.map(tc => ({ ...tc, id: [tc.id, tc["function"].name, Math.random(), Date.now()].join("_") })); 
 
-await new Promise(res => setTimeout(res, 2000 + Math.random() * 2000));
+// await new Promise(res => setTimeout(res, 2000 + Math.random() * 2000));
 
 const choicesItem = { 
   type: "text", 

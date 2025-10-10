@@ -13,7 +13,7 @@ import { isDefined } from "../../../../../../utils";
 import {
   useSetActiveWorkspace,
   useWorkspacesSync,
-} from "../../../../../WorkspaceMenu/WorkspaceMenu";
+} from "../../../../../WorkspaceMenu/useWorkspaces";
 import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import type { WorkspaceInsertModel } from "@common/DashboardTypes";

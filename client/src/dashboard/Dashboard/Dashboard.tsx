@@ -24,7 +24,7 @@ import { TopControls } from "../../pages/TopControls";
 import { DashboardMenu } from "../DashboardMenu/DashboardMenu";
 import type { ActiveRow } from "../W_Table/W_Table";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
-import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
+import { getWorkspacePath } from "../WorkspaceMenu/useWorkspaces";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";
 import { CloseSaveSQLPopup } from "./CloseSaveSQLPopup";
