@@ -277,7 +277,15 @@ export const fetchMimeFromURLHead = async (
   url: string,
 ): Promise<string | null> => {
   try {
-    const resp = await fetch(url, { method: "HEAD" });
+    const resp = await fetch(
+      url,
+      // { method: "HEAD" }
+      {
+        headers: {
+          Range: "bytes=0-0",
+        },
+      },
+    );
     if (resp.status >= 400) return null;
     return resp.headers.get("Content-Type");
   } catch (e) {

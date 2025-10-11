@@ -128,6 +128,12 @@ export const StyledCell = ({
           ...(style.borderColor && {
             border: `1px solid ${style.borderColor}`,
           }),
+          /**
+           * Prevent left side overflow when showing numbers with "as-end"
+           */
+          maxWidth: "100%",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
       >
         {renderedVal}

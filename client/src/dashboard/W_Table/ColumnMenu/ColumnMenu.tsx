@@ -142,6 +142,7 @@ export const ColumnMenu = (props: P) => {
   const { state, setState } = useReactiveState(props.columnMenuState);
   const colName = state?.column;
   const getIsMounted = useIsMounted();
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffectAsync(async () => {
     const wSub = await props.w.$cloneSync(async (wdata) => {

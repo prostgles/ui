@@ -1,8 +1,8 @@
 import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import { JSONBSchema } from "../../../../components/JSONBSchema/JSONBSchema";
+import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
 import type { ColumnConfigWInfo } from "../../W_Table";
-import type { DeepWriteable } from "../../../../../../common/utils";
+import type { DeepWriteable } from "@common/utils";
 import type { ColumnFormat } from "./columnFormatUtils";
 import { ColumnFormatSchema, getFormatOptions } from "./columnFormatUtils";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
@@ -30,8 +30,7 @@ export const ColumnDisplayFormat = ({ column, table, tables, onChange }: P) => {
           t.params.oneOfType[1].currencyCodeField.allowedValues = textCols;
         } else if (t.type.enum[0] === "Media") {
           //@ts-ignore
-          t.params.oneOfType[1]!.contentTypeColumnName!.lookup.filter.table =
-            table.name;
+          t.params.oneOfType[2]!.contentTypeColumnName.allowedValues = textCols;
         }
       }
 

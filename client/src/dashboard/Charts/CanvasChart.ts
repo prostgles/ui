@@ -195,9 +195,8 @@ export class CanvasChart {
          */
         // this.ctx.canvas.width  = offsetWidth;
         // this.ctx.canvas.height = offsetHeight;
-        const { onResize } = this.opts ?? {};
         setTimeout(() => {
-          onResize?.();
+          this.opts?.onResize?.();
         }, 50);
         this.render();
       }

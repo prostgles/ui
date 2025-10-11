@@ -44,6 +44,10 @@ export type LayoutGroup = {
 
 export type LayoutConfig = LayoutItem | LayoutGroup;
 
+/**
+ * This will render a time chart for each row in the table.
+ * Useful for showing and comparing time series data for multiple entities
+ */
 type LinkedDataChart = {
   chart: {
     type: "time";
@@ -56,6 +60,9 @@ type LinkedDataChart = {
   };
 };
 
+/**
+ * This will render nested rows for each row in the table.
+ */
 type LinkedDataTable = {
   limit: number;
   columns: {
@@ -63,6 +70,9 @@ type LinkedDataTable = {
   }[];
 };
 
+/**
+ * Show linked data from other tables that are linked to this column through foreign keys
+ */
 type LinkedData = {
   joinType: "left" | "inner";
   /**
@@ -96,12 +106,12 @@ type ColumnFilter = {
 } & (
   | {
       type: "$in";
-      value: string[];
+      value: (string | null)[];
     }
   | {
       /** Not in */
       type: "$nin";
-      value: string[];
+      value: (string | null)[];
     }
   | {
       type: "$eq" | "$ne" | "$lt" | "$lte" | "$gt" | "$gte";
@@ -188,36 +198,48 @@ export type TableWindowInsertModel = Filtering & {
      */
     format?:
       | {
-          type: "URL" | "Email" | "Tel" | "QR Code";
+          /**
+           * Column value will be rendered as a link with specific behaviour
+           */
+          type: "URL" | "Email" | "Tel";
         }
       | {
+          /**
+           * Render column value as a scannable QR code image
+           */
+          type: "QR Code";
+        }
+      | {
+          /**
+           * Render column value with a currency symbol
+           */
           type: "Currency";
           params:
             | {
-                type: "Fixed";
+                mode: "Fixed";
                 /** @example "USD" */
                 currencyCode: string;
               }
             | {
-                type: "From column";
+                mode: "From column";
                 /** Column which contains the currency code  */
                 currencyCodeField: string;
               };
         }
       | {
-          /** Display the timestamp value as an age */
+          /** Display the timestamp value as an age. Short variant (default) shows top two biggest units */
           type: "Age";
+          params?: {
+            variant: "short" | "full";
+          };
         }
       | {
           /** Text content as sanitised html */
-          type: "Age";
+          type: "HTML";
         }
       | {
           /** Displays the media from URL. Accepted formats: image, audio or video. Media/Mime type will be used from headers */
           type: "Media";
-          params: {
-            type: "fromColumn";
-          };
         };
   }[];
 

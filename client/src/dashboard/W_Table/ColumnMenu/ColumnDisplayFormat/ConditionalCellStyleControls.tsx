@@ -1,7 +1,7 @@
 import { mdiClose, mdiPlus } from "@mdi/js";
 import React from "react";
 import Btn from "../../../../components/Btn";
-import { FlexCol, FlexRow } from "../../../../components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
 import PopupMenu from "../../../../components/PopupMenu";
 import Select from "../../../../components/Select/Select";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
@@ -71,8 +71,8 @@ export const ConditionalCellStyleControls = ({
           className="flex-col gap-1 p-p5 ai-start card  "
           style={{ padding: "1em", alignItems: "stretch" }}
         >
-          <div className="flex-row-wrap gap-0 ai-center">
-            <Btn color="action" variant="faded">
+          <FlexRowWrap className="gap-p5">
+            <Btn color="action" variant="faded" className="max-w-full">
               {column.name}
             </Btn>
             <Select
@@ -116,7 +116,7 @@ export const ConditionalCellStyleControls = ({
                 updateCondStyle(null, condIdx);
               }}
             />
-          </div>
+          </FlexRowWrap>
 
           <PopupMenu
             button={

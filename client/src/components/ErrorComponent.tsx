@@ -101,7 +101,10 @@ export default class ErrorComponent extends React.Component<P> {
           <Icon size={1} className="as-start" path={mdiAlertOutline} />
         )}
         <FlexCol
-          className={"gap-1 as-center " + (noScroll ? "ws-break" : "o-auto")}
+          className={
+            "gap-1 as-center-thisbreakslongerrors " +
+            (noScroll ? "ws-break" : "o-auto")
+          }
         >
           {title && <div className="font-18 bold">{title}</div>}
           {(parsedError(error, findMsg) + "").slice(0, maxTextLength)}

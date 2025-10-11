@@ -62,11 +62,15 @@ export const TimeChartLayerOptions = ({
     lq?.type === "table" ?
       tables.find((t) => t.name === lq.tableName)
     : undefined;
+  const dataSource = linkOpts.dataSource;
+  // TODO: this needs refactoring
   const cols =
-    (parentW?.type === "sql" ?
-      (linkOpts.otherColumns ?? parentW.options.sqlResultCols)
-    : parentW?.type === "table" ? table?.columns
-    : []) ?? [];
+    dataSource?.type === "local-table" ?
+      (tables.find((t) => t.name === dataSource.localTableName)?.columns ?? [])
+    : ((parentW?.type === "sql" ?
+        (linkOpts.otherColumns ?? parentW.options.sqlResultCols)
+      : parentW?.type === "table" ? table?.columns
+      : []) ?? []);
   const numericCols = cols.filter((c) =>
     _PG_numbers.includes(c.udt_name as any),
   );

@@ -190,9 +190,11 @@ export class TimeChart extends RTComp<
         }}
         style={{
           ...style,
+          /** Prevent resize-render recursion due to scrollbars */
+          overflow: "hidden",
         }}
         className={classOverride(
-          "charts-comp flex-col f-1 h-fit min-h-0 min-w-0 relative  noselect ",
+          "TimeChart flex-col f-1 h-fit min-h-0 min-w-0 relative  noselect ",
           className,
         )}
         onPointerMove={onHover}
