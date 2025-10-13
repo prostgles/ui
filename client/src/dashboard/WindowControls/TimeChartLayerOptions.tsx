@@ -124,6 +124,13 @@ export const TimeChartLayerOptions = ({
       c.udt_name !== "timestamptz",
   );
 
+  const title = linkOpts.title || (
+    <>
+      {activeStatLabelDesc}
+      {isOnScreen ? `${lq?.dateColumn}` : ""}
+    </>
+  );
+
   return (
     <>
       <PopupMenu
@@ -141,8 +148,7 @@ export const TimeChartLayerOptions = ({
                 paddingRight: isOnScreen ? "0" : undefined,
               }}
             >
-              {activeStatLabelDesc}
-              {isOnScreen ? `${lq?.dateColumn}` : ""}
+              {title}
             </Btn>
           </FlexRow>
         }

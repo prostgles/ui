@@ -12,6 +12,7 @@ import type {
 } from "./W_TimeChart";
 import Btn from "../../components/Btn";
 import { mdiClose } from "@mdi/js";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 type P = Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl"> & {
   layerQueries: ProstglesTimeChartLayer[];
@@ -31,7 +32,6 @@ export const W_TimeChartLayerLegend = ({
     myLinks,
     prgl: { tables },
   } = props;
-  // const groupedByLayer = layerQueries.find(lq => !lq.disabled && lq.groupByColumn && lq.type === "table");
 
   const activeLayerQueries = useSortedLayerQueries({
     layerQueries,
@@ -39,7 +39,7 @@ export const W_TimeChartLayerLegend = ({
   }).filter((l) => !l.disabled);
 
   return (
-    <FlexRow className="W_TimeChartLayerLegend min-w-0 o-auto">
+    <ScrollFade className="W_TimeChartLayerLegend flex-row gap-1 min-w-0 o-auto no-scroll-bar">
       {activeLayerQueries.map(
         ({ _id, linkId, dateColumn, groupByColumn, link }) => {
           return (
@@ -91,6 +91,6 @@ export const W_TimeChartLayerLegend = ({
           );
         },
       )}
-    </FlexRow>
+    </ScrollFade>
   );
 };

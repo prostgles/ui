@@ -25,6 +25,11 @@ const CurrencySchema = {
     oneOfType: [
       {
         mode: { enum: ["Fixed"], title: "Type" },
+        metricPrefix: {
+          type: "boolean",
+          title: "Use Metric Prefix",
+          optional: true,
+        },
         currencyCode: {
           type: "string",
           title: "Currency code",
@@ -33,6 +38,11 @@ const CurrencySchema = {
       },
       {
         mode: { enum: ["From column"], title: "Type" },
+        metricPrefix: {
+          type: "boolean",
+          title: "Use Metric Prefix",
+          optional: true,
+        },
         currencyCodeField: {
           type: "string",
           title: "Currency Field",
@@ -139,6 +149,13 @@ export const ColumnFormatSchema = {
       },
     },
     CurrencySchema,
+    {
+      type: {
+        enum: ["Metric Prefix"],
+        title: "Format",
+        description: "Display large numbers with metric prefixes (e.g. 1.2K)",
+      },
+    },
     {
       type: {
         enum: ["UNIX Timestamp"],
@@ -255,6 +272,11 @@ const HREFRender: FormattedColRender<any>["render"] = (v, r, c) => (
   </a>
 );
 
+const metricPrefixOptions = {
+  notation: "compact",
+  compactDisplay: "short",
+} as const;
+
 export const DISPLAY_FORMATS = [
   {
     type: "NONE",
@@ -273,6 +295,16 @@ export const DISPLAY_FORMATS = [
     tsDataType: undefined,
     render: HREFRender,
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Tel" }>>,
+  {
+    type: "Metric Prefix",
+    tsDataType: ["number", "string"],
+    render: (rawValue: any) => {
+      const v = tryParseNumber(rawValue);
+      if (!Number.isFinite(v)) return rawValue;
+      const formatter = new Intl.NumberFormat(undefined, metricPrefixOptions);
+      return formatter.format(v); // 1.2K, 1.2M, 1.2B, etc
+    },
+  },
   {
     type: "Media",
     tsDataType: ["string"],
@@ -389,6 +421,7 @@ export const DISPLAY_FORMATS = [
         const formatter = new Intl.NumberFormat(undefined, {
           style: "currency",
           currency: currencyCode,
+          ...(params.metricPrefix ? metricPrefixOptions : undefined),
         });
         return formatter.format(v); // $2,500.00
       } catch (error) {

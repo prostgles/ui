@@ -624,6 +624,7 @@ export default class W_Table extends RTComp<
       }
 
       const canInsert = Boolean(tableHandler?.insert);
+      const showInsertButton = canInsert && w.options.hideInsertButton !== true;
       const pkeys = cols
         .map((c) => (c.show && c.info?.is_pkey ? c.info.name : undefined))
         .filter(isDefined);
@@ -755,7 +756,7 @@ export default class W_Table extends RTComp<
                   activeRowIndex={activeRowIndex}
                   onRowClick={this.state.onRowClick}
                   afterLastRowContent={
-                    canInsert &&
+                    showInsertButton &&
                     !childWindow && (
                       <Btn
                         iconPath={mdiPlus}

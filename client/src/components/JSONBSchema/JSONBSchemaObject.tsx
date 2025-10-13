@@ -19,6 +19,7 @@ type P = JSONBSchemaCommonProps & {
 export const JSONBSchemaObjectMatch = (
   s: JSONB.JSONBSchema,
 ): s is JSONB.ObjectType => isObject(s.type);
+
 export const JSONBSchemaObject = ({
   value: rawValue,
   schema,

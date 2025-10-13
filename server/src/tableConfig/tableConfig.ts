@@ -183,6 +183,7 @@ const CommonChartLinkOpts = {
     optional: true,
     type: "string",
   },
+  title: { type: "string", optional: true },
 } as const satisfies JSONB.ObjectType["type"];
 
 export const tableConfig: TableConfig<{ en: 1 }> = {

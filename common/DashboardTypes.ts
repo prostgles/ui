@@ -71,6 +71,27 @@ type LinkedDataTable = {
 };
 
 /**
+ * Join to linked table.
+ */
+type TableJoin = {
+  /**
+   * Join columns.
+   * property = root table (or previous table) column name
+   * value = linked table column name
+   * @example
+   * path: {
+   *   on: [{ user_id: "id" }]
+   *   table: "users"
+   * }
+   */
+  on: Record<string, string>[];
+  /**
+   * Linked table name
+   */
+  table: string;
+};
+
+/**
  * Show linked data from other tables that are linked to this column through foreign keys
  */
 type LinkedData = {
@@ -79,26 +100,12 @@ type LinkedData = {
    * Join to linked table.
    * Last table in the path is the target table that columns will refer to.
    */
-  path: {
-    /**
-     * Join columns.
-     * property = root table (or previous table) column name
-     * value = linked table column name
-     * @example
-     * path: {
-     *   on: [{ user_id: "id" }]
-     *   table: "users"
-     * }
-     */
-    on: Record<string, string>[];
-    /**
-     * Linked table name
-     */
-    table: string;
-  }[];
+  path: TableJoin[];
 } & (LinkedDataChart | LinkedDataTable);
 
-type ColumnFilter = {
+type Comparator = "$eq" | "$ne" | "$lt" | "$lte" | "$gt" | "$gte";
+
+type BasicFilter = {
   /**
    * Column name
    */
@@ -114,22 +121,68 @@ type ColumnFilter = {
       value: (string | null)[];
     }
   | {
-      type: "$eq" | "$ne" | "$lt" | "$lte" | "$gt" | "$gte";
+      type: Comparator;
       value: string;
     }
 );
 
-export type Filter =
-  | ColumnFilter
+type ComplexColumnFilterFunction =
   | {
-      $and: ColumnFilter[];
+      /**
+       * Age to current day
+       * Implemented as pg_catalog.age(column)
+       */
+      $age: [
+        /**
+         * Column name with a timestamp / date value
+         */
+        string,
+      ];
     }
   | {
-      $or: ColumnFilter[];
+      /**
+       * Age to current timestamp
+       * Implemented as pg_catalog.age(now(), column)
+       */
+      $ageNow: [
+        /**
+         * Column name with a timestamp / date value
+         */
+        string,
+      ];
+    };
+type ComplexColumnFilter = {
+  $filter: [ComplexColumnFilterFunction, Comparator, string | null];
+};
+
+type ColumnFilter = BasicFilter | ComplexColumnFilter;
+
+/**
+ * Filter that matches rows based on existence of related rows in another table
+ */
+type JoinedFilter = {
+  $existsJoined: {
+    path: TableJoin[];
+    /**
+     * Filter that will be applied to the joined table (last table in the path)
+     */
+    filter: ColumnFilter;
+  };
+};
+
+type FilterItem = ColumnFilter | JoinedFilter;
+
+export type Filter =
+  | FilterItem
+  | {
+      $and: FilterItem[];
+    }
+  | {
+      $or: FilterItem[];
     };
 
 type Filtering = {
-  filter?: ColumnFilter[];
+  filter?: FilterItem[];
   /** Defaults to AND */
   filterOperand?: "AND" | "OR";
 
@@ -210,6 +263,10 @@ export type TableWindowInsertModel = Filtering & {
           type: "QR Code";
         }
       | {
+          /** Display large numbers with metric prefixes (e.g. 1.2K) */
+          type: "Metric Prefix";
+        }
+      | {
           /**
            * Render column value with a currency symbol
            */
@@ -219,11 +276,13 @@ export type TableWindowInsertModel = Filtering & {
                 mode: "Fixed";
                 /** @example "USD" */
                 currencyCode: string;
+                metricPrefix?: boolean;
               }
             | {
                 mode: "From column";
                 /** Column which contains the currency code  */
                 currencyCodeField: string;
+                metricPrefix?: boolean;
               };
         }
       | {
@@ -258,24 +317,34 @@ export type TableWindowInsertModel = Filtering & {
       }[];
 };
 
+type LayerDataSource =
+  | (Filtering & {
+      table_name: string;
+    })
+  | {
+      sql: string;
+    };
+
 /**
  * Shows GEOGRAPHY/GEOMETRY data on a map
  */
-type MapWindowInsertModel = {
+export type MapWindowInsertModel = {
   id: string;
   type: "map";
   title?: string;
-  table_name: string;
-  /**
-   * Column name with GEOGRAPHY/GEOMETRY data
-   */
-  geo_column: string;
+  layers: (LayerDataSource & {
+    title?: string;
+    /**
+     * Column name with GEOGRAPHY/GEOMETRY data
+     */
+    geoColumn: string;
+  })[];
 };
 
 /**
  * Allows user to write and excute custom SQL queries with results displayed in a table
  */
-type SqlWindowInsertModel = {
+export type SqlWindowInsertModel = {
   id: string;
   name: string;
   type: "sql";
@@ -285,32 +354,33 @@ type SqlWindowInsertModel = {
 /**
  * Shows a time chart
  */
-type TimechartWindowInsertModel = {
+export type TimechartWindowInsertModel = {
   id: string;
   type: "timechart";
   title?: string;
-  table_name: string;
-  date_column: string;
-  y_axis:
-    | "count(*)"
-    | {
-        column: string;
-        aggregation: "sum" | "avg" | "min" | "max" | "count";
-      };
+  layers: (LayerDataSource & {
+    title?: string;
+    dateColumn: string;
+    groupByColumn?: string;
+    yAxis:
+      | "count(*)"
+      | {
+          column: string;
+          aggregation: "sum" | "avg" | "min" | "max" | "count";
+        };
+  })[];
 };
-
-type BarchartWindowInsertModel = Filtering & {
+export type BarchartWindowInsertModel = LayerDataSource & {
   id: string;
   type: "barchart";
   title?: string;
-  table_name: string;
-  x_axis:
+  xAxis:
     | "count(*)"
     | {
         column: string;
         aggregation: "sum" | "avg" | "min" | "max" | "count";
       };
-  y_axis_column: string;
+  yAxisColumn: string;
 };
 
 export type WindowInsertModel =

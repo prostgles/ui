@@ -155,7 +155,7 @@ export const setupLLM = async (dbs: DBS) => {
         api_pricing_url: "https://www.anthropic.com/pricing#api",
         logo_url: "/logos/anthropic.svg",
         extra_body: {
-          max_tokens: 6_000,
+          max_tokens: 16_000,
         },
         llm_models: [
           {
@@ -326,7 +326,7 @@ export const setupLLM = async (dbs: DBS) => {
         api_pricing_url:
           "https://openrouter.ai/docs/api-reference/list-available-models",
         extra_body: {
-          max_tokens: 6_000,
+          max_tokens: 16_000,
         },
         logo_url: "/logos/openrouter.svg",
         llm_models: [

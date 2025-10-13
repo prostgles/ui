@@ -14,7 +14,7 @@ import {
   useSetActiveWorkspace,
   useWorkspacesSync,
 } from "../../../../../WorkspaceMenu/useWorkspaces";
-import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces";
+import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import type { WorkspaceInsertModel } from "@common/DashboardTypes";
 import { SvgIcon } from "@components/SvgIcon";

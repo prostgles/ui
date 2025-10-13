@@ -43,6 +43,7 @@ export type ProstglesTimeChartLayer = Pick<
   LayerBase,
   "_id" | "linkId" | "disabled"
 > & {
+  title?: string;
   dateColumn: string;
   groupByColumn: string | undefined;
 

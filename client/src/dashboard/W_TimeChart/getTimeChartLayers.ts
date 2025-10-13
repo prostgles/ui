@@ -22,7 +22,7 @@ export const getTimeChartLayer = ({
   w,
 }: Args & { link: LinkSyncItem }): ProstglesTimeChartLayer[] => {
   const l = link;
-  const wTable = windows.find(
+  const parentWindow = windows.find(
     (_w) =>
       (_w.type === "table" || _w.type === "sql") &&
       _w.id !== w.id &&
@@ -34,6 +34,7 @@ export const getTimeChartLayer = ({
     throw "Not expected";
   }
 
+  const { dataSource } = lOpts;
   return lOpts.columns
     .flatMap(({ name: dateColumn, colorArr, statType }, columnIndex) => {
       const color = getLinkColor(colorArr).colorStr;
@@ -49,14 +50,12 @@ export const getTimeChartLayer = ({
       } as const;
 
       const localTableName =
-        lOpts.dataSource?.type === "local-table" ?
-          lOpts.dataSource.localTableName
+        dataSource?.type === "local-table" ?
+          dataSource.localTableName
         : lOpts.localTableName;
       const joinPath =
-        lOpts.dataSource?.type === "table" ?
-          lOpts.dataSource.joinPath
-        : lOpts.joinPath;
-      if (wTable?.type === "table" || localTableName) {
+        dataSource?.type === "table" ? dataSource.joinPath : lOpts.joinPath;
+      if (parentWindow?.type === "table" || localTableName) {
         if (localTableName) {
           return {
             ...commonOpts,
@@ -69,7 +68,7 @@ export const getTimeChartLayer = ({
           } satisfies ProstglesTimeChartLayer;
         }
 
-        if (!wTable || !wTable.table_name) {
+        if (!parentWindow || !parentWindow.table_name) {
           throw "Unexpected: wTable or table_name missing";
         }
 
@@ -79,7 +78,7 @@ export const getTimeChartLayer = ({
         const layer: ProstglesTimeChartLayer = {
           ...commonOpts,
           type: "table",
-          tableName: wTable.table_name,
+          tableName: parentWindow.table_name,
           path: joinPath,
           // activeRowFilter: jf.activeRowFilter,
           tableFilter: undefined, // getSmartGroupFilter(tbl.filter || []),
@@ -88,8 +87,8 @@ export const getTimeChartLayer = ({
         };
 
         return layer;
-      } else if (wTable) {
-        if ((wTable as any).type !== "sql" || !lOpts.sql) {
+      } else if (parentWindow) {
+        if ((parentWindow as any).type !== "sql" || !lOpts.sql) {
           throw "Unexpected: wTable or table_name missing";
         }
         // const latestW = tbl.$get();
@@ -105,6 +104,18 @@ export const getTimeChartLayer = ({
         };
 
         return layer;
+      } else if (dataSource?.type === "sql") {
+        const layer: ProstglesTimeChartLayer = {
+          ...commonOpts,
+          type: "sql",
+          sql: dataSource.sql,
+          withStatement: "",
+          color,
+        };
+
+        return layer;
+      } else {
+        throw "Unexpected timechart layer source";
       }
     })
     .filter(isDefined);

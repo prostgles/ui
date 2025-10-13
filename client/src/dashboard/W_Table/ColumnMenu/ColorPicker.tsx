@@ -1,27 +1,15 @@
 import { mdiPalette } from "@mdi/js";
 import React from "react";
-import { isObject } from "../../../../../common/publishUtils";
-import type { BtnProps } from "../../../components/Btn";
-import Btn from "../../../components/Btn";
-import { FlexRow, FlexRowWrap, classOverride } from "../../../components/Flex";
-import FormField from "../../../components/FormField/FormField";
-import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
-import { type LabelProps } from "../../../components/Label";
-import Popup from "../../../components/Popup/Popup";
+import { isObject } from "@common/publishUtils";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
+import { FlexRow, FlexRowWrap, classOverride } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import { type LabelProps } from "@components/Label";
+import Popup from "@components/Popup/Popup";
 import type { Command } from "../../../Testing";
-
-export type RGBA = [number, number, number, number];
-export const COLOR_PALETTE = [
-  "#0AA1FA", // blue
-  "#36E00B", // green
-  "#F79800", // orange
-  "#ff004a", // red
-  "#CB11F0", // purple
-  "#7430F0", // purple
-  "#ffffff", // white
-  "#174CFA", // blue
-  "rgb(143 143 143)", // gray
-] as const;
+import { getRandomElement } from "./ColumnStyleControls";
 
 type S = {
   anchorEl: Element | null;
@@ -275,3 +263,31 @@ export function rgba2hex(orig: string) {
 
   return `#${hex}`;
 }
+
+export type RGBA = [number, number, number, number];
+
+export const COLORS = {
+  "dark blue": "#174CFA",
+  blue: "#0AA1FA",
+  cyan: "#00D5FF",
+  green: "#36E00B",
+  orange: "#F79800",
+  red: "#ff004a",
+  purple: "#CB11F0",
+  indigo: "#7430F0",
+  gray: "#cecece",
+} as const;
+
+export const COLOR_PALETTE = Object.values(
+  COLORS,
+) as (typeof COLORS)[keyof typeof COLORS][];
+
+export const COLOR_PALETTE_RGB = COLOR_PALETTE.map(
+  (c) => asRGB(c).slice(0, 3) as [number, number, number],
+);
+
+export const getRGBColor = (layerIndex: number) => {
+  return (
+    COLOR_PALETTE_RGB[layerIndex] ?? getRandomElement(COLOR_PALETTE_RGB).elem
+  );
+};

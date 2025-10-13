@@ -31,7 +31,7 @@ const getRandomElement = <Arr>(
   return { elem: items[randomIndex], index: randomIndex };
 };
 type ColorFunc = {
-  (opacity: number, target: "deck"): number[];
+  (opacity: number, target: "deck"): [number, number, number, number];
   (opacity?: number, target?: "css"): string;
 };
 export type GetColor = { get: ColorFunc };
@@ -92,7 +92,7 @@ export const PALETTE = {
       return target === "deck" ? v : (`rgba(${v.join(", ")})` as any);
     },
   },
-} as const;
+} as const satisfies Record<string, GetColor>;
 
 export const getRandomColor = (
   opacity = 1,
@@ -188,6 +188,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
             maxCardWidth?: string;
           };
       hideEditRow?: boolean;
+      hideInsertButton?: boolean;
       showFilters?: boolean;
       showSubLabel?: boolean;
       filterOperand?: "AND" | "OR";
