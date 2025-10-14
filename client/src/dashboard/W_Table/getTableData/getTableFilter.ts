@@ -1,4 +1,8 @@
-import { getSmartGroupFilter, simplifyFilter } from "@common/filterUtils";
+import {
+  getSmartGroupFilter,
+  simplifyFilter,
+  type SimpleFilter,
+} from "@common/filterUtils";
 import type { AnyObject } from "prostgles-types";
 import { isDefined, isEmpty } from "prostgles-types";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
@@ -29,7 +33,11 @@ export const getTableFilter = (
           "$and" in filter ? ["and", filter.$and]
           : "$or" in filter ? ["or", filter.$or]
           : ["and", [filter]]) satisfies ["and" | "or", AnyObject[]];
-        return getSmartGroupFilter(fieldFilters, undefined, operand);
+        return getSmartGroupFilter(
+          fieldFilters as SimpleFilter[],
+          undefined,
+          operand,
+        );
       })
       .filter(isDefined);
 

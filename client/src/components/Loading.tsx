@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import "./Loading.css";
 import RTComp from "../dashboard/RTComp";
 import { classOverride, FlexRow } from "./Flex";
@@ -200,28 +200,73 @@ export default class Loading extends RTComp<P, S> {
 /* 
   The spinner should keep laptop fans quiet.
   SVG is quiter than SpinnerV2.
-  Test page: http://localhost:3004/component-list#d
+  Test pages: 
+    http://localhost:3004/component-list#loader-test
 
-  SVG: 
+
+  SVG (SpinnerV3): 
     60% cpu 20% gpu
   Canvas (SpinnerV2): 
     30% cpu 50% gpu
 */
+
 const Spinner = ({ size }: { size: string; colorAnimation: boolean }) => {
+  return <SpinnerV3 size={size} />;
   // return <SpinnerV2 size={size} />;
-  return (
+
+  /** ONLY USE IN DEVELOPMENT. Causes high cpu usage on high node count page */
+  // return (
+  //   <svg
+  //     xmlns="http://www.w3.org/2000/svg"
+  //     className="Spinner f-0"
+  //     width={size}
+  //     height={size}
+  //     viewBox="0 0 24 24"
+  //   >
+  //     <path
+  //       xmlns="http://www.w3.org/2000/svg"
+  //       fill="inherit"
+  //       d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"
+  //     />
+  //   </svg>
+  // );
+};
+
+const SpinnerV3 = ({ size }: { size: string }) => {
+  const dataUrl = useMemo(() => {
+    const svgString = `
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      className="Spinner f-0"
-      width={size}
-      height={size}
+      class="Spinner f-0"
+      width="${size}"
+      height="${size}"
+      style="color: inherit;"
       viewBox="0 0 24 24"
     >
+      <defs>
+        <style>
+          .Spinner path {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: rotator 0.75s infinite linear;
+            will-change: transform;
+          }
+          @keyframes rotator {
+            100% {
+              transform: translateZ(0) rotate(360deg);
+            }
+          }
+        </style>
+      </defs>
       <path
         xmlns="http://www.w3.org/2000/svg"
         fill="inherit"
         d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"
       />
     </svg>
-  );
+  `;
+    const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+    return dataUrl;
+  }, [size]);
+  return <img src={dataUrl} style={{ width: size, height: size }} />;
 };

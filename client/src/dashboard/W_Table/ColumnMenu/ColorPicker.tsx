@@ -286,7 +286,7 @@ export const COLOR_PALETTE_RGB = COLOR_PALETTE.map(
   (c) => asRGB(c).slice(0, 3) as [number, number, number],
 );
 
-export const getRGBColor = (layerIndex: number) => {
+export const getPaletteRGBColor = (layerIndex: number) => {
   return (
     COLOR_PALETTE_RGB[layerIndex] ?? getRandomElement(COLOR_PALETTE_RGB).elem
   );

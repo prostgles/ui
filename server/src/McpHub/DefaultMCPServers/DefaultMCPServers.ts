@@ -1487,6 +1487,10 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
       },
     },
   },
+  // "chrome-devtools": {
+  //   command: "npx",
+  //   args: ["-y", "chrome-devtools-mcp@latest"],
+  // },
   // "docker-sandbox": {
   //   command: "npm",
   //   args: ["start", "--silent"],

@@ -1,5 +1,5 @@
 import { mdiSigma, mdiTableColumn } from "@mdi/js";
-import { _PG_numbers } from "prostgles-types";
+import { _PG_numbers, includes } from "prostgles-types";
 import React from "react";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
@@ -11,6 +11,10 @@ import { windowIs } from "../Dashboard/dashboardUtils";
 import { getTimeChartLayer } from "../W_TimeChart/getTimeChartLayers";
 import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
+import { SQLChartLayerEditor } from "./SQLChartLayerEditor";
+import { usePromise } from "prostgles-client/dist/react-hooks";
+import { getTableExpressionReturnType } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 type TimeChartLayerOptionsProps = Pick<
   MapLayerManagerProps,
@@ -30,11 +34,35 @@ export const TimeChartLayerOptions = ({
   w: wMapOrTimechart,
   mode,
 }: TimeChartLayerOptionsProps) => {
+  const { db } = usePrgl();
+  const sqlHandler = db.sql;
+  const linkOpts = link.options;
+  const sqlDataSourceColumns = usePromise(async () => {
+    if (
+      !sqlHandler ||
+      linkOpts.type !== "timechart" ||
+      linkOpts.dataSource?.type !== "sql"
+    )
+      return [];
+    const { colTypes, error } = await getTableExpressionReturnType(
+      linkOpts.dataSource.sql,
+      sqlHandler,
+    );
+    if (error) console.warn(error);
+    return (
+      colTypes?.map((c) => {
+        return {
+          ...c,
+          name: c.column_name,
+        };
+      }) ?? []
+    );
+  }, [linkOpts, sqlHandler]);
+
   if (!windowIs(wMapOrTimechart, "timechart")) {
     return null;
   }
   const w = wMapOrTimechart as WindowSyncItem<"timechart">;
-  const linkOpts = link.options;
   if (linkOpts.type !== "timechart") {
     return <>Invalid link type: {linkOpts.type}</>;
   }
@@ -63,17 +91,18 @@ export const TimeChartLayerOptions = ({
       tables.find((t) => t.name === lq.tableName)
     : undefined;
   const dataSource = linkOpts.dataSource;
+
   // TODO: this needs refactoring
   const cols =
-    dataSource?.type === "local-table" ?
+    dataSource?.type === "sql" ? (sqlDataSourceColumns ?? [])
+    : dataSource?.type === "local-table" ?
       (tables.find((t) => t.name === dataSource.localTableName)?.columns ?? [])
     : ((parentW?.type === "sql" ?
         (linkOpts.otherColumns ?? parentW.options.sqlResultCols)
       : parentW?.type === "table" ? table?.columns
       : []) ?? []);
-  const numericCols = cols.filter((c) =>
-    _PG_numbers.includes(c.udt_name as any),
-  );
+
+  const numericCols = cols.filter((c) => includes(_PG_numbers, c.udt_name));
   const statType = colOpts.statType ?? {
     funcName: "$countAll",
     numericColumn: undefined,
@@ -249,9 +278,12 @@ export const TimeChartLayerOptions = ({
                 <Label variant="normal">
                   {lq?.type === "sql" ? "Query" : "Table"}
                 </Label>
-                <code className="ta-start ws-pre-line bg-color-2 rounded p-p5">
-                  {lq?.type === "sql" ? lq.sql : lq?.tableName}
-                </code>
+                {lq?.type === "sql" ?
+                  <SQLChartLayerEditor link={link} />
+                : <code className="ta-start ws-pre-line bg-color-2 rounded p-p5">
+                    {lq?.tableName}
+                  </code>
+                }
               </FlexCol>
             )}
           </FlexCol>

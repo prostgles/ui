@@ -1,20 +1,21 @@
 import type { ColType } from "../../../../../../common/utils";
 import type { SQLHandler } from "prostgles-types";
-import { asName, tryCatch, tryCatchV2 } from "prostgles-types";
+import { asName, tryCatchV2 } from "prostgles-types";
 
 /**
  * Get statement return type ensuring any dangerous commands are not commited
  */
 const getQueryReturnType = async (
-  query: string,
+  rawQuery: string,
   sql: SQLHandler,
 ): Promise<ColType[]> => {
+  const queryWithSemicolon = getSQLQuerySemicolon(rawQuery, true);
   /** Check if it's a data returning statement to avoid useless error logs */
   const res = await sql(
     `
       EXPLAIN
-      ${query};      
-    `,
+      ${queryWithSemicolon}
+      `,
     {},
     { returnType: "default-with-rollback" },
   ).catch((_e) => false);
@@ -27,7 +28,7 @@ const getQueryReturnType = async (
   const result = await sql(
     `
       CREATE OR REPLACE TEMP VIEW "${viewName}" AS 
-      ${query};
+      ${queryWithSemicolon}
 
       SELECT 
         --column_name, 
@@ -115,4 +116,107 @@ export const getTableExpressionReturnType = async (
       error,
     };
   }
+};
+
+export const getSQLQuerySemicolon = (
+  rawQuery: string,
+  shouldEndWithSemicolon: boolean,
+) => {
+  const queryWithoutComments = removePostgresComments(rawQuery).trim();
+  const endsWithSemicolon = queryWithoutComments.endsWith(";");
+
+  if (shouldEndWithSemicolon) {
+    return endsWithSemicolon ? rawQuery : rawQuery + "\n;";
+  }
+  return endsWithSemicolon ? queryWithoutComments.slice(0, -1) : rawQuery;
+};
+
+/**
+ * Removes PostgreSQL comments from SQL code while preserving string literals
+ * Handles:
+ * - Single-line comments (-- comment)
+ * - Multi-line block comments (\/* comment *\/)
+ * - Nested block comments
+ * - Comments inside string literals (preserved)
+ */
+const removePostgresComments = (sql: string) => {
+  let result = "";
+  let i = 0;
+
+  while (i < sql.length) {
+    const char = sql[i];
+    const nextChar = sql[i + 1];
+
+    // Handle string literals (single quotes)
+    if (char === "'") {
+      result += char;
+      i++;
+      // Continue until closing quote, handling escaped quotes
+      while (i < sql.length) {
+        result += sql[i];
+        if (sql[i] === "'" && sql[i - 1] !== "\\") {
+          i++;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+
+    // Handle string literals (double quotes - identifiers in PostgreSQL)
+    if (char === '"') {
+      result += char;
+      i++;
+      while (i < sql.length) {
+        result += sql[i];
+        if (sql[i] === '"' && sql[i - 1] !== "\\") {
+          i++;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+
+    // Handle single-line comments (--)
+    if (char === "-" && nextChar === "-") {
+      i += 2;
+      // Skip until end of line
+      while (i < sql.length && sql[i] !== "\n") {
+        i++;
+      }
+      // Keep the newline
+      if (i < sql.length && sql[i] === "\n") {
+        result += "\n";
+        i++;
+      }
+      continue;
+    }
+
+    // Handle multi-line block comments (/* ... */)
+    if (char === "/" && nextChar === "*") {
+      i += 2;
+      let depth = 1;
+
+      // Handle nested comments (PostgreSQL supports nested /* */ comments)
+      while (i < sql.length && depth > 0) {
+        if (sql[i] === "/" && sql[i + 1] === "*") {
+          depth++;
+          i += 2;
+        } else if (sql[i] === "*" && sql[i + 1] === "/") {
+          depth--;
+          i += 2;
+        } else {
+          i++;
+        }
+      }
+      continue;
+    }
+
+    // Regular character
+    result += char;
+    i++;
+  }
+
+  return result;
 };

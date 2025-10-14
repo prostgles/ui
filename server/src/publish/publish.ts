@@ -134,7 +134,6 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
   };
 
   const forcedData = { user_id: user.id };
-  const forcedFilter = { user_id: user.id };
 
   // const forcedFilterLLM = {
   //   $existsJoined: {
@@ -146,7 +145,7 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
 
   let dashboardTables: Publish<DBGeneratedSchema> = {
     /* DASHBOARD */
-    ...(dashboardMainTables as object),
+    ...dashboardMainTables,
     access_control_user_types: isAdmin && "*",
     published_methods:
       isAdmin ? "*" : (

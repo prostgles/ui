@@ -3,8 +3,8 @@ import type { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { getCrossFilters } from "../joinUtils";
 import { getLinkColor } from "../W_Map/getMapLayerQueries";
 import type { ActiveRow } from "../W_Table/W_Table";
-import type { ProstglesTimeChartLayer } from "./W_TimeChart";
 import { tryCatchV2 } from "../WindowControls/TimeChartLayerOptions";
+import type { ProstglesTimeChartLayer } from "./W_TimeChart";
 
 type Args = {
   links: LinkSyncItem[];
@@ -40,6 +40,7 @@ export const getTimeChartLayer = ({
       const color = getLinkColor(colorArr).colorStr;
       const commonOpts = {
         _id: `${l.id}-${columnIndex}`,
+        title: lOpts.title,
         linkId: l.id,
         disabled: !!l.disabled,
         groupByColumn: lOpts.groupByColumn,
@@ -122,7 +123,7 @@ export const getTimeChartLayer = ({
 };
 
 export const getTimeChartLayerQueries = (args: Args) => {
-  const { links, myLinks } = args;
+  const { myLinks } = args;
   const layerQueries: ProstglesTimeChartLayer[] = myLinks
     .flatMap((link) => {
       const { data = [] } = tryCatchV2(() =>

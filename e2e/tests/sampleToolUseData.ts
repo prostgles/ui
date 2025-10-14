@@ -157,9 +157,13 @@ export const prostglesUIDashboardSample = {
         {
           id: "order-status-chart",
           type: "timechart",
-          y_axis: "count(*)",
-          table_name: "orders",
-          date_column: "created_at",
+          layers: [
+            {
+              yAxis: "count(*)",
+              table_name: "orders",
+              dateColumn: "created_at",
+            },
+          ],
         },
         {
           id: "order-items-table",
@@ -408,12 +412,16 @@ export const prostglesUIDashboardSample = {
         {
           id: "revenue-chart",
           type: "timechart",
-          y_axis: {
-            column: "total_price",
-            aggregation: "sum",
-          },
-          table_name: "orders",
-          date_column: "created_at",
+          layers: [
+            {
+              yAxis: {
+                column: "total_price",
+                aggregation: "sum",
+              },
+              table_name: "orders",
+              dateColumn: "created_at",
+            },
+          ],
         },
       ],
     },
@@ -541,8 +549,12 @@ export const prostglesUIDashboardSample = {
         {
           id: "delivery-map",
           type: "map",
-          geo_column: "location",
-          table_name: "v_riders",
+          layers: [
+            {
+              geoColumn: "location",
+              table_name: "v_riders",
+            },
+          ],
         },
         {
           id: "delivery-status-changes",
@@ -626,14 +638,22 @@ export const prostglesUIDashboardSample = {
         {
           id: "restaurant-map",
           type: "map",
-          geo_column: "geometry",
-          table_name: "london_restaurants.geojson",
+          layers: [
+            {
+              geoColumn: "geometry",
+              table_name: "london_restaurants.geojson",
+            },
+          ],
         },
         {
           id: "user-map",
           type: "map",
-          geo_column: "location",
-          table_name: "v_users",
+          layers: [
+            {
+              geoColumn: "location",
+              table_name: "v_users",
+            },
+          ],
         },
       ],
     },
@@ -733,9 +753,13 @@ export const prostglesUIDashboardSample = {
         {
           id: "customer-orders-chart",
           type: "timechart",
-          y_axis: "count(*)",
-          table_name: "v_users",
-          date_column: "created_at",
+          layers: [
+            {
+              yAxis: "count(*)",
+              table_name: "v_users",
+              dateColumn: "created_at",
+            },
+          ],
         },
         {
           id: "customer-addresses",

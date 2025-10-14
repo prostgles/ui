@@ -1,9 +1,6 @@
 import type { TimechartWindowInsertModel } from "@common/DashboardTypes";
+import { getPaletteRGBColor } from "src/dashboard/W_Table/ColumnMenu/ColorPicker";
 import type { LinkOption, WindowInsertModel } from "./loadGeneratedWorkspaces";
-import { PALETTE } from "src/dashboard/Dashboard/dashboardUtils";
-import { getRGBColor } from "src/dashboard/W_Table/ColumnMenu/ColorPicker";
-
-const colors = Object.values(PALETTE).map((c) => c.get(1, "deck"));
 
 export const loadGeneratedTimechart = (
   generatedWindow: TimechartWindowInsertModel,
@@ -31,7 +28,7 @@ export const loadGeneratedTimechart = (
               numericColumn: l.yAxis.column,
             },
 
-        colorArr: [...getRGBColor(i), 255],
+        colorArr: [...getPaletteRGBColor(i), 255],
       },
     ];
     if ("table_name" in l) {

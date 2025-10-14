@@ -1,6 +1,6 @@
 import type { MapWindowInsertModel } from "@common/DashboardTypes";
 import type { LinkOption, WindowInsertModel } from "./loadGeneratedWorkspaces";
-import { getRGBColor } from "src/dashboard/W_Table/ColumnMenu/ColorPicker";
+import { getPaletteRGBColor } from "src/dashboard/W_Table/ColumnMenu/ColorPicker";
 
 export const loadGeneratedMap = (
   generatedWindow: MapWindowInsertModel,
@@ -20,7 +20,7 @@ export const loadGeneratedMap = (
     const columns = [
       {
         name: l.geoColumn,
-        colorArr: [...getRGBColor(i), 0.8],
+        colorArr: [...getPaletteRGBColor(i), 0.8],
       },
     ];
     if ("table_name" in l) {

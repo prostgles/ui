@@ -82,7 +82,8 @@
 /* $offset: 187;
 $duration: 1.4s; */
 
-.Spinner {
+.Spinner path {
+  transform-box: fill-box;
   transform-origin: center;
   animation: rotator 0.75s infinite linear;
   will-change: transform;

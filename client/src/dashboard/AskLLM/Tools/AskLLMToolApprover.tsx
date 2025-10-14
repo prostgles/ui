@@ -142,6 +142,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       clickCatchStyle={{ opacity: 1 }}
       contentStyle={{
         maxWidth: "min(800px, 100vw)",
+        width: "100%",
       }}
       contentClassName="p-1 f-1 as-center"
       footerButtons={[
@@ -190,7 +191,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         <Marked
           style={{ maxHeight: "200px" }}
           className="ta-start"
-          content={`### Tool description \n\n${description}`}
+          content={description}
           codeHeader={undefined}
           loadedSuggestions={undefined}
           sqlHandler={undefined}

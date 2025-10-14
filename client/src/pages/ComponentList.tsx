@@ -14,6 +14,7 @@ export const ComponentList = () => {
   const [checkMessage, setCheckMessage] = useState(
     "Checking button heights...",
   );
+  const isLoaderTest = hash === "#loader-test";
 
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -36,7 +37,7 @@ export const ComponentList = () => {
         if (!isLoading && isEmpty(buttonLoadingHeights)) {
           setIsLoading(true);
         } else if (isLoading) {
-          if (hash) return;
+          if (isLoaderTest) return;
           let allHeightsMatch = true as boolean;
           // If we are loading, we want to ensure the heights are set for loading state
           Object.keys(buttonHeights).forEach((size) => {
@@ -53,7 +54,7 @@ export const ComponentList = () => {
         }
       }
     }, 1000);
-  }, [isLoading, hash]);
+  }, [isLoading, isLoaderTest]);
 
   return (
     <FlexCol ref={ref} className="ComponentList f-1 min-w-0 p-2 o-auto">
@@ -90,6 +91,13 @@ export const ComponentList = () => {
           ))}
         </FlexCol>
       ))}
+      {Array(isLoaderTest ? 5000 : 0)
+        .fill(0)
+        .map((_, i) => (
+          <div key={i} style={{ top: 0, left: 0, position: "absolute" }}>
+            Increasing node count
+          </div>
+        ))}
     </FlexCol>
   );
 };
