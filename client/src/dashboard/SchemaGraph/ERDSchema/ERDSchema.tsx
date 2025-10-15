@@ -109,7 +109,11 @@ export const ERDSchema = ({
     onPanEnded,
   });
   return (
-    <FlexCol ref={divRef} className="f-1  bg-color-1">
+    <FlexCol
+      ref={divRef}
+      className="f-1 bg-color-1"
+      style={{ overflow: "hidden" }}
+    >
       <canvas onWheel={handleWheel} className="f-1" ref={canvasRef} />
     </FlexCol>
   );

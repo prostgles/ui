@@ -20,5 +20,6 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
     ],
   });
   await page.getByTestId("SchemaGraph").click();
+  await page.waitForTimeout(1500);
   await addScene();
 };

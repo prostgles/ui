@@ -495,14 +495,17 @@ export const getTimeChartSelectParams = ({
   } as const;
 };
 
+/**
+ * Given the y-axis value range, format the number for best comprehension
+ */
 export const getYLabelFunc = (
   endText: string,
   asIs?: boolean,
-): ProstglesTimeChartState["layers"][number]["getYLabel"] => {
+): ProstglesTimeChartStateLayer["getYLabel"] => {
   return ({ value, min, max }) => {
     const result =
-      min === max || asIs ?
-        `${value}`
+      Math.abs(min - max) > 1 || min === max || asIs ?
+        `${value.toLocaleString()}`
       : `${value.toFixed(
           Math.max(
             2,

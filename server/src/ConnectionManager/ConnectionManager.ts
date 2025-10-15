@@ -42,8 +42,6 @@ export type Unpromise<T extends Promise<any>> =
 export type ConnectionTableConfig = Pick<FileTableConfig, "referencedTables"> &
   Omit<Exclude<DatabaseConfigs["file_table_config"], null>, "referencedTables">;
 
-export const DB_TRANSACTION_KEY = "dbTransactionProstgles" as const;
-
 export type User = DBSSchema["users"];
 
 export const getACRules = async (

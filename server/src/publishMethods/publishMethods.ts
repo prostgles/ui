@@ -12,7 +12,6 @@ export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
 import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject } from "prostgles-types";
 import {
@@ -29,7 +28,6 @@ import type { Backups } from "../BackupManager/BackupManager";
 import { getInstalledPsqlVersions } from "../BackupManager/getInstalledPrograms";
 import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
 import {
-  DB_TRANSACTION_KEY,
   getACRules,
   getCDB,
   getSuperUserCDB,
@@ -55,11 +53,11 @@ import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import { upsertConnection } from "../upsertConnection";
 import { getSampleSchemas } from "./applySampleSchema";
 import { askLLM } from "./askLLM/askLLM";
+import { getFullPrompt } from "./askLLM/getFullPrompt";
+import { getLLMAllowedChatTools } from "./askLLM/getLLMTools";
 import { refreshModels } from "./askLLM/refreshModels";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
-import { getLLMAllowedChatTools } from "./askLLM/getLLMTools";
-import { getFullPrompt } from "./askLLM/getFullPrompt";
 
 export const publishMethods: PublishMethods<
   DBGeneratedSchema,
@@ -435,29 +433,27 @@ export const publishMethods: PublishMethods<
       } else {
         const fileTable = dbConf.file_table_config?.fileTable;
         if (!fileTable) throw "Unexpected: fileTable already disabled";
-        await (db[DB_TRANSACTION_KEY] as DBHandlerServer["tx"])!(
-          async (dbTX) => {
-            const fileTableHandler = dbTX[fileTable];
-            if (!fileTableHandler)
-              throw "Unexpected: fileTable table handler missing";
-            if (
-              dbConf.file_table_config?.fileTable &&
-              (dbConf.file_table_config.storageType.type === "local" ||
-                !opts?.keepS3Data)
-            ) {
-              if (!fileTable || !fileTableHandler.delete) {
-                throw "Unexpected error. fileTable handler not found";
-              }
+        await db.tx(async (dbTX) => {
+          const fileTableHandler = dbTX[fileTable];
+          if (!fileTableHandler)
+            throw "Unexpected: fileTable table handler missing";
+          if (
+            dbConf.file_table_config?.fileTable &&
+            (dbConf.file_table_config.storageType.type === "local" ||
+              !opts?.keepS3Data)
+          ) {
+            if (!fileTable || !fileTableHandler.delete) {
+              throw "Unexpected error. fileTable handler not found";
+            }
 
-              await fileTableHandler.delete({});
-            }
-            if (!opts?.keepFileTable) {
-              await dbTX.sql!("DROP TABLE ${fileTable:name} CASCADE", {
-                fileTable,
-              });
-            }
-          },
-        );
+            await fileTableHandler.delete({});
+          }
+          if (!opts?.keepFileTable) {
+            await dbTX.sql!("DROP TABLE ${fileTable:name} CASCADE", {
+              fileTable,
+            });
+          }
+        });
         newTableConfig = null;
       }
       const con = await dbs.connections.findOne({ id: connId });

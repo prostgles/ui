@@ -292,11 +292,7 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
             defaultValue={filter.value}
             column={filterItem ?? filter.fieldName}
             searchEmpty={true}
-            wrapperStyle={{
-              borderRadius: 0,
-              borderTop: "unset",
-              borderBottom: "unset",
-            }}
+            noBorder={true}
             noResultsComponent={
               <FlexRow>
                 <div className="text-0p75">No results</div>

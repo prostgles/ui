@@ -29,7 +29,6 @@ export const SearchListContent = <M extends boolean = false>(
     className,
     onSearchItems,
     searchEmpty = false,
-    wrapperStyle,
     placeholder,
     inputProps,
     inputEl,
@@ -40,6 +39,7 @@ export const SearchListContent = <M extends boolean = false>(
     onPressEnter,
     dataSignature,
     leftContent,
+    noBorder,
   } = props;
   const multiSelect = !!onMultiToggle;
   const isSearch = variant?.startsWith("search");
@@ -76,15 +76,21 @@ export const SearchListContent = <M extends boolean = false>(
   const noList = isSearch ? searchClosed : !renderedItems.length && !searchTerm;
 
   const wrapperStyleFinal = useMemo(() => {
-    if (searchClosed) return wrapperStyle;
+    if (noBorder)
+      return {
+        borderRadius: 0,
+        borderTop: "unset",
+        borderBottom: "unset",
+      };
+    if (searchClosed) return {};
     return {
       ...{
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
       },
-      ...wrapperStyle,
     };
-  }, [wrapperStyle, searchClosed]);
+  }, [noBorder, searchClosed]);
+
   useSearchListOnClick({
     isSearch,
     dataSignature,

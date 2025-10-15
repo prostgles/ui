@@ -7,6 +7,7 @@ import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import type { ColumnColorMode } from "./ERDSchema";
 import { getInitialPlacement } from "./getInitialPlacement";
 import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
+import { createHiPPICanvas } from "src/dashboard/Charts/createHiPPICanvas";
 
 export const minScale = 0.1;
 export const maxScale = 5;
@@ -83,13 +84,13 @@ export const useDrawSchemaShapes = (
         if (!ctx) {
           return;
         }
-        const shapes = getShapes(); // shapesRef.current;
+        const shapes = getShapes();
         const { width: w, height: h } =
-          canvasRef.current.getBoundingClientRect();
+          canvasRef.current.parentElement!.getBoundingClientRect();
         ctx.canvas.width = w;
         ctx.canvas.height = h;
         const canvas = canvasRef.current;
-        // createHiPPICanvas(canvas, w, h);
+        createHiPPICanvas(canvas, w, h);
 
         let drawnShapes = shapes.slice(0);
         if (hoveredRectangle) {

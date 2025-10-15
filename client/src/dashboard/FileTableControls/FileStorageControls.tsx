@@ -137,7 +137,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
         label={
           !fileTable ? "Enable"
           : !fileConfig?.fileTable ?
-            "Enabling..."
+            "Enable"
           : "Enabled"
         }
         checked={!!fileTable}

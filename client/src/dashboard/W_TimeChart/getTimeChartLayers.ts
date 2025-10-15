@@ -115,8 +115,10 @@ export const getTimeChartLayer = ({
         };
 
         return layer;
-      } else {
-        throw "Unexpected timechart layer source";
+      } else if (dataSource) {
+        throw (
+          "Unexpected timechart layer source: " + JSON.stringify(dataSource)
+        );
       }
     })
     .filter(isDefined);
