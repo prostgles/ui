@@ -1,4 +1,4 @@
-import { _PG_date } from "prostgles-types";
+import { _PG_date, type AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import { matchObj } from "../../../../../common/utils";
 import { FlexRowWrap } from "../../../components/Flex";
@@ -7,6 +7,7 @@ import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import { getEditColumn } from "../tableUtils/getEditColumn";
 import type { CardViewProps, IndexedRow } from "./CardView";
 import { DragHeader, DragHeaderHeight } from "./DragHeader";
+import type { CardLayout } from "@common/DashboardTypes";
 
 export type CardViewRowProps = Pick<
   CardViewProps,
@@ -118,6 +119,19 @@ export const CardViewRow = ({
     row,
   ]);
 
+  const visibleCols = useMemo(
+    () =>
+      cols.filter(
+        (c) =>
+          !c.hidden &&
+          !(
+            hideEmptyCardCells &&
+            [null, undefined, ""].includes(`${row[c.name] ?? ""}`.trim())
+          ),
+      ),
+    [cols, hideEmptyCardCells, row],
+  );
+
   return (
     <FlexRowWrap
       data-command="CardView.row"
@@ -174,62 +188,131 @@ export const CardViewRow = ({
           })}
         </div>
       )}
-
-      {cols
-        .filter(
-          (c) =>
-            !c.hidden &&
-            !(
-              hideEmptyCardCells &&
-              [null, undefined, ""].includes(`${row[c.name] ?? ""}`.trim())
-            ),
-        )
-        .map((c, ci) => (
-          <div
-            key={ci}
-            title={c.udt_name}
-            className={
-              "flex-col min-w-0 " + (cardRows > 1 ? " h-fit w-fit " : "")
-            }
-            style={{ minWidth: cardCellMinWidth }}
-          >
-            {!hideCardFieldNames && (
-              <div
-                className=" text-2 pointer noselect"
-                onContextMenu={c.onContextMenu as any}
-              >
-                {c.name}
-              </div>
-            )}
-            <div
-              className=" o-auto font-18"
-              title={
-                (
-                  typeof row[c.name] === "string" &&
-                  (_PG_date.some((v) => v === c.udt_name) ||
-                    c.tsDataType === "number")
-                ) ?
-                  row[c.name]
-                : ""
-              }
-              style={{
-                lineHeight: 1.33,
-                ...(c.getCellStyle?.(row, row[c.name], row[c.name]) || {}),
-                maxHeight: `${maxCardRowHeight || 800}px`,
-              }}
-            >
-              {c.onRender?.({
-                row: row,
-                value: row[c.name],
-                renderedVal: row[c.name],
-                rowIndex: rowIndex,
-                nextRow: indexedRows[rowIndex + 1],
-                prevRow: indexedRows[rowIndex - 1],
-              }) ?? <RenderValue column={c} value={row[c.name]} />}
-            </div>
-          </div>
-        ))}
+      <CardViewRowContent
+        visibleCols={visibleCols}
+        cardCellMinWidth={cardCellMinWidth}
+        cardRows={cardRows}
+        row={row}
+        hideCardFieldNames={hideCardFieldNames}
+        maxCardRowHeight={maxCardRowHeight}
+        rowIndex={rowIndex}
+        indexedRows={indexedRows}
+        cardLayout={w?.options.cardLayout}
+      />
     </FlexRowWrap>
+  );
+};
+
+const CardViewRowContent = ({
+  visibleCols,
+  cardCellMinWidth,
+  cardRows,
+  row,
+  hideCardFieldNames,
+  maxCardRowHeight,
+  rowIndex,
+  indexedRows,
+  cardLayout,
+}: Pick<
+  Required<CardViewRowProps["cardOpts"]>,
+  "cardCellMinWidth" | "cardRows"
+> & {
+  visibleCols: CardViewRowProps["cols"];
+  row: AnyObject;
+  maxCardRowHeight: number | undefined;
+  hideCardFieldNames: boolean | undefined;
+  cardCellMinWidth: string;
+  rowIndex: number;
+  indexedRows: IndexedRow[];
+  cardLayout: CardLayout | undefined;
+}) => {
+  const columnNodeList = visibleCols.map((c, ci) => (
+    <div
+      key={ci}
+      title={c.udt_name}
+      className={"flex-col min-w-0 " + (cardRows > 1 ? " h-fit w-fit " : "")}
+      style={{ minWidth: cardCellMinWidth }}
+    >
+      {!hideCardFieldNames && (
+        <div
+          className=" text-2 pointer noselect"
+          onContextMenu={c.onContextMenu as any}
+        >
+          {c.name}
+        </div>
+      )}
+      <div
+        className=" o-auto font-18"
+        title={
+          (
+            typeof row[c.name] === "string" &&
+            (_PG_date.some((v) => v === c.udt_name) ||
+              c.tsDataType === "number")
+          ) ?
+            row[c.name]
+          : ""
+        }
+        style={{
+          lineHeight: 1.33,
+          ...(c.getCellStyle?.(row, row[c.name], row[c.name]) || {}),
+          maxHeight: `${maxCardRowHeight || 800}px`,
+        }}
+      >
+        {c.onRender?.({
+          row: row,
+          value: row[c.name],
+          renderedVal: row[c.name],
+          rowIndex: rowIndex,
+          nextRow: indexedRows[rowIndex + 1],
+          prevRow: indexedRows[rowIndex - 1],
+        }) ?? <RenderValue column={c} value={row[c.name]} />}
+      </div>
+    </div>
+  ));
+
+  if (cardLayout) {
+    const columnNodes: Record<string, React.ReactNode> = {};
+    visibleCols.forEach((c, i) => {
+      columnNodes[c.name] = columnNodeList[i];
+    });
+    return (
+      <CardLayoutRenderer
+        cardLayout={cardLayout}
+        columnNodes={columnNodes}
+        item={cardLayout}
+      />
+    );
+  }
+
+  return <>{columnNodeList}</>;
+};
+
+const CardLayoutRenderer = ({
+  cardLayout,
+  columnNodes,
+  item,
+}: {
+  cardLayout: CardLayout;
+  columnNodes: Record<string, React.ReactNode>;
+  item: CardLayout["children"][number];
+}) => {
+  if ("type" in item) {
+    const node = columnNodes[item.columnName];
+    if (!node) return <>Column node missing for {item.columnName}</>;
+    return node;
+  }
+
+  return (
+    <div style={item.style}>
+      {item.children.map((childItem, index) => (
+        <CardLayoutRenderer
+          key={index}
+          cardLayout={cardLayout}
+          columnNodes={columnNodes}
+          item={childItem}
+        />
+      ))}
+    </div>
   );
 };
 

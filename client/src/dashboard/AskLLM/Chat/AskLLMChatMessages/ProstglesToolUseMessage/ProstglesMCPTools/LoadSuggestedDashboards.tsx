@@ -1,13 +1,17 @@
-import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";
-import type { JSONB } from "prostgles-types";
-import React, { useMemo } from "react";
+import type { WorkspaceInsertModel } from "@common/DashboardTypes";
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { isObject } from "@common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
+import { MarkdownMonacoCode } from "@components/Chat/MarkdownMonacoCode";
 import Chip from "@components/Chip";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { pageReload } from "@components/Loading";
+import PopupMenu from "@components/PopupMenu";
+import { SvgIcon } from "@components/SvgIcon";
+import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";
+import { tryCatchV2, type JSONB } from "prostgles-types";
+import React, { useMemo } from "react";
 import { usePrgl } from "../../../../../../pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../../../../utils";
 import {
@@ -16,8 +20,6 @@ import {
 } from "../../../../../WorkspaceMenu/useWorkspaces";
 import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
-import type { WorkspaceInsertModel } from "@common/DashboardTypes";
-import { SvgIcon } from "@components/SvgIcon";
 
 export const LoadSuggestedDashboards = ({
   workspaceId,
@@ -58,17 +60,35 @@ export const LoadSuggestedDashboards = ({
     <FlexCol>
       <FlexRowWrap>
         {prostglesWorkspaces.map((w, i) => (
-          <Chip
-            key={i}
-            color="blue"
-            leftIcon={w.icon ? undefined : { path: mdiViewCarousel }}
-            style={{ borderRadius: "8px" }}
+          <PopupMenu
+            key={`${w.name}${i}-input`}
+            title={`Suggested Dashboard: ${w.name}`}
+            onClickClose={false}
+            button={
+              <Chip
+                key={i}
+                color="blue"
+                leftIcon={w.icon ? undefined : { path: mdiViewCarousel }}
+                style={{ borderRadius: "8px", cursor: "pointer" }}
+              >
+                <FlexRow className="gap-p5 pr-p25">
+                  {w.icon && <SvgIcon icon={w.icon} />}
+                  {w.name}
+                </FlexRow>
+              </Chip>
+            }
           >
-            <FlexRow className="gap-p5 pr-p25">
-              {w.icon && <SvgIcon icon={w.icon} />}
-              {w.name}
-            </FlexRow>
-          </Chip>
+            <MarkdownMonacoCode
+              codeString={
+                tryCatchV2(() => JSON.stringify(w, null, 2)).data ?? ""
+              }
+              className="f-1"
+              language="json"
+              codeHeader={undefined}
+              sqlHandler={undefined}
+              loadedSuggestions={undefined}
+            />
+          </PopupMenu>
         ))}
       </FlexRowWrap>
       {!alreadyLoadedWorkspaceIds.length ?

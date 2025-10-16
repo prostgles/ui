@@ -234,12 +234,13 @@ const Spinner = ({ size }: { size: string; colorAnimation: boolean }) => {
 
 const SpinnerV3 = ({ size }: { size: string }) => {
   const dataUrl = useMemo(() => {
+    const sizeStringified = JSON.stringify(size);
     const svgString = `
     <svg
       xmlns="http://www.w3.org/2000/svg"
       class="Spinner f-0"
-      width="${size}"
-      height="${size}"
+      width=${sizeStringified}
+      height=${sizeStringified}
       style="color: inherit;"
       viewBox="0 0 24 24"
     >

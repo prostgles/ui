@@ -23,6 +23,7 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
    */
   await openConnection("cloud");
   await openConnection("prostgles_video_demo");
+  await openConnection("food_delivery");
   await deleteExistingLLMChat(page);
   await page.getByTestId("Popup.close").last().click();
   await closeWorkspaceWindows(page);
@@ -40,11 +41,14 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   await page.getByTestId("AskLLM").click();
   await setModelByText(page, "pros");
   await setPromptByText(page, "dashboard");
-  const firstMessage = await page.getByTestId("AskLLM.DeleteMessage").first();
-  if (await firstMessage.count()) {
-    await firstMessage.click();
-    await page.locator(getDataKeyElemSelector("allToBottom")).click();
-  }
+  const deletePreviousMessages = async () => {
+    const firstMessage = await page.getByTestId("AskLLM.DeleteMessage").first();
+    if (await firstMessage.count()) {
+      await firstMessage.click();
+      await page.locator(getDataKeyElemSelector("allToBottom")).click();
+    }
+  };
+  await deletePreviousMessages();
   await addScene({
     svgFileName: "focus_textarea",
     animations: [
@@ -67,7 +71,7 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   };
   const typeSendAddScenes = async (
     text: string,
-    endAnimations?: SVGif.Animation[],
+    endAnimations: SVGif.Animation[] = [],
     waitFor?: () => Promise<void>,
   ) => {
     await page.getByTestId("Chat.textarea").fill(text);
@@ -85,18 +89,46 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
     await page.getByTestId("Chat.send").click();
     await page.waitForTimeout(2500);
     await waitFor?.();
-    await addScene(endAnimations && { animations: endAnimations });
+    await addScene({
+      animations: [
+        {
+          type: "reveal-list",
+          duration: 2000,
+          elementSelector: getCommandElemSelector("Chat.messageList"),
+        },
+        {
+          type: "wait",
+          duration: 3000,
+        },
+        ...endAnimations,
+      ],
+    });
   };
   await typeSendAddScenes(
     "I need some dashboards with useful insights and metrics",
+    [
+      {
+        type: "click",
+        elementSelector: getCommandElemSelector(
+          "AskLLMChat.LoadSuggestedDashboards",
+        ),
+        duration: 1000,
+      },
+    ],
   );
+  await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
+  await page.waitForTimeout(2000);
+  await addScene({ svgFileName: "dashboards_loaded" });
 
-  await page.getByTestId("AskLLM.DeleteMessage").first().click();
-  await page.locator(getDataKeyElemSelector("allToBottom")).click();
+  await page.getByTestId("AskLLM").click();
+  await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
+
+  await openConnection("prostgles_video_demo");
+  await page.getByTestId("AskLLM").click();
+  await deletePreviousMessages();
   await setPromptByText(page, "chat");
   await typeSendAddScenes(" mcpplaywright ");
-  await page.getByTestId("AskLLM.DeleteMessage").first().click();
-  await page.locator(getDataKeyElemSelector("allToBottom")).click();
+  await deletePreviousMessages();
   await setPromptByText(page, "create task");
   await typeSendAddScenes(
     "The task involves importing data from scanned documents",
@@ -142,8 +174,7 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   );
   await allowOnce();
   await addScene({ svgFileName: "vision_ocr" });
-  await page.getByTestId("AskLLM.DeleteMessage").first().click();
-  await page.locator(getDataKeyElemSelector("allToBottom")).click();
+  await deletePreviousMessages();
   await setPromptByText(page, "chat");
   await page.getByTestId("LLMChatOptions.MCPTools").click();
   await page
@@ -173,8 +204,7 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   await page.getByRole("option", { name: "Run readonly SQL" }).click();
   await page.getByTestId("Popup.close").last().click();
 
-  await page.getByTestId("AskLLM.DeleteMessage").first().click();
-  await page.locator(getDataKeyElemSelector("allToBottom")).click();
+  await deletePreviousMessages();
   await setPromptByText(page, "chat");
   // await page
   //   .getByTestId("Chat.textarea")

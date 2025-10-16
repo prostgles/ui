@@ -53,16 +53,24 @@ export const loadGeneratedWorkspaces = async (
             },
           };
         });
-        const { sort, filter, filterOperand, quickFilterGroups } =
-          generatedWindow;
+        const {
+          sort,
+          filter,
+          filterOperand,
+          quickFilterGroups,
+          cardLayout,
+          table_name,
+          title,
+        } = generatedWindow;
         return {
           type: "table",
-          title: generatedWindow.title,
+          title,
           columns,
           filter,
           options: {
             filterOperand,
             quickFilterGroups,
+            cardLayout,
           } satisfies WindowData<"table">["options"],
           sort: sort
             ?.map((s) => {
@@ -78,7 +86,7 @@ export const loadGeneratedWorkspaces = async (
               return s;
             })
             .filter(isDefined),
-          table_name: generatedWindow.table_name,
+          table_name,
         } satisfies Omit<
           DBSSchemaForInsert["windows"],
           "last_updated" | "user_id"

@@ -24,10 +24,10 @@ export const getForeignObject = async (
     /** Ensure the icon buttons icons are centered */
     foreignObject.style.display = "grid";
     foreignObject.style.placeItems = "center";
-    foreignObject.setAttribute("x", `${x}`);
-    foreignObject.setAttribute("y", `${y}`);
-    foreignObject.setAttribute("width", `${bbox.width}`);
-    foreignObject.setAttribute("height", `${bbox.height}`);
+    foreignObject.setAttribute("x", `${x.toFixed(2)}`);
+    foreignObject.setAttribute("y", `${y.toFixed(2)}`);
+    foreignObject.setAttribute("width", `${bbox.width.toFixed(2)}`);
+    foreignObject.setAttribute("height", `${bbox.height.toFixed(2)}`);
     const wrapper = document.createElement("div");
     wrapper.style.width = "100%";
     wrapper.style.height = "100%";
@@ -71,6 +71,8 @@ export const getForeignObject = async (
 
     const svgClone = element.cloneNode(true) as SVGElement;
     element.style.boxSizing = "content-box";
+    foreignObject.setAttribute("class", svgClone.classList.toString());
+    svgClone.style.margin = "0";
     foreignObject.firstChild!.appendChild(svgClone);
     return foreignObject;
   }

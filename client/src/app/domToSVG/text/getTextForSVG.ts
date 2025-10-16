@@ -14,6 +14,7 @@ export type TextForSVG = {
   width: number;
   height: number;
   isSingleLine: boolean | undefined;
+  numberOfLines?: number;
   element: HTMLElement;
 };
 
@@ -95,6 +96,9 @@ export const getTextForSVG = (
       const textyMaxHeight = Math.min(textMaxY, maxY) - textRect.y;
       const visibleTextWidth = Math.min(textRect.width, textxMaxWidth);
       const visibleTextHeight = Math.min(textRect.height, textyMaxHeight);
+      const spanHeight =
+        element instanceof HTMLSpanElement ? element.clientHeight : undefined;
+      const numberOfLines = range.getClientRects().length;
       if (visibleTextWidth && visibleTextHeight) {
         const edgeRects = getTextEdgeRects(childTextNode, textContent.length);
         const textIndent = edgeRects.startCharRect.left - textRect.x;
@@ -109,10 +113,11 @@ export const getTextForSVG = (
           y: textRect.y,
           /** This ensures the actual visible/non overflown size of text is used */
           width: visibleTextWidth,
-          height: visibleTextHeight,
+          height: spanHeight ?? visibleTextHeight,
           textIndent: Math.max(0, textIndent),
           isSingleLine:
             edgeRects.startCharRect.top === edgeRects.endCharRect.top,
+          numberOfLines,
           element,
         };
         return res;

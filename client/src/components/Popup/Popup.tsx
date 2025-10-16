@@ -205,7 +205,8 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
         const firstFocusable = [...firstInputLike].find(
           (e) =>
             getComputedStyle(e).display !== "none" &&
-            getComputedStyle(e).opacity !== "0",
+            getComputedStyle(e).opacity !== "0" &&
+            !e.closest("." + DATA_NULLABLE),
         );
         (firstFocusable ?? container).focus();
       }
@@ -412,6 +413,8 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     return ReactDOM.createPortal(result, this.el);
   }
 }
+
+export const DATA_NULLABLE = "data-nullable";
 
 type FooterProps = TestSelectors & {
   children: React.ReactNode;

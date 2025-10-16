@@ -1,17 +1,17 @@
-import React, { useMemo } from "react";
-import Btn from "../../../components/Btn";
-import type { SmartFormProps } from "../SmartForm";
-import type { PopupProps } from "../../../components/Popup/Popup";
 import { mdiChevronLeft, mdiChevronRight } from "@mdi/js";
 import {
-  type ValidatedColumnInfo,
   type AnyObject,
   getKeys,
+  type ValidatedColumnInfo,
 } from "prostgles-types";
+import React, { useMemo } from "react";
 import { sliceText } from "../../../../../common/utils";
-import Popup from "../../../components/Popup/Popup";
+import Btn from "../../../components/Btn";
 import { FlexRow } from "../../../components/Flex";
+import type { PopupProps } from "../../../components/Popup/Popup";
+import Popup from "../../../components/Popup/Popup";
 import { SvgIcon } from "../../../components/SvgIcon";
+import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormState } from "../useSmartForm";
 
 type P = Pick<SmartFormProps, "onPrevOrNext" | "prevNext" | "asPopup"> & {
@@ -45,9 +45,9 @@ export const SmartFormPopupWrapper = ({
     "onKeyDown" | "headerRightContent" | "autoFocusFirst"
   > = useMemo(() => {
     return !onPrevOrNext ?
-        {
+        ({
           autoFocusFirst: "content",
-        }
+        } satisfies Pick<PopupProps, "autoFocusFirst">)
       : {
           autoFocusFirst: "header",
           onKeyDown: (e, section) => {

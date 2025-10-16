@@ -50,15 +50,28 @@ export const SVG_SCREENSHOT_DETAILS = {
   ai_assistant: aiAssistantSVG,
   sql_editor: sqlEditorSVG,
   schema_diagram: schemaDiagramSvgif,
-  postgis_map: async (page) => {
+  postgis_map: async (page, { hideMenuIfOpen }) => {
     await openConnection(page, "food_delivery");
     await page.waitForTimeout(1500);
-    const chartDetachBtn = await page
-      .locator(`[data-table-name="users"]`)
-      .getByTestId("dashboard.window.detachChart");
+    let getUsersTableView = await page.locator(`[data-table-name="users"]`);
+
+    if (!(await getUsersTableView.count())) {
+      await openTable(page, "users");
+      await page.getByTestId("AddChartMenu.Map").click();
+      await page.waitForTimeout(1500);
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(1500);
+      getUsersTableView = await page.locator(`[data-table-name="users"]`);
+    }
+    await hideMenuIfOpen();
+
+    const chartDetachBtn = await getUsersTableView.getByTestId(
+      "dashboard.window.detachChart",
+    );
 
     if (await chartDetachBtn.count()) {
-      chartDetachBtn.click();
+      await chartDetachBtn.click();
+      await page.waitForTimeout(1500);
     }
 
     await page

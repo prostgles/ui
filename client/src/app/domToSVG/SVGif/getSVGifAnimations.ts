@@ -50,7 +50,6 @@ export const getSVGifAnimations = (
     }
     const sceneId = `scene-${sceneIndex}`;
     const renderedSceneSVG = renderSvg(svgDom);
-    // appendSvgToSvg({ id: sceneId, svgFile }, g);
 
     const sceneKeyframes: string[] = [];
     if (prevSceneAnim) {
@@ -92,7 +91,44 @@ export const getSVGifAnimations = (
           width,
           height,
         });
-        if (animation.type === "type") {
+        const getClipPathKeyframes = ({
+          fromPerc,
+          toPerc,
+          direction,
+        }: {
+          fromPerc: number;
+          toPerc: number;
+          direction: "top to bottom" | "left to right";
+        }) => {
+          const clippedInset =
+            direction === "top to bottom" ? `inset(0 0 100% 0)` : (
+              `inset(0 100% 0 0)`
+            );
+          return [
+            !fromPerc ? "" : `0% { opacity: 0; clip-path: ${clippedInset} }`,
+            `${fromPerc}% { opacity: 0; clip-path: ${clippedInset} }`,
+            `${fromPerc + 0.1}% { opacity: 1; clip-path: ${clippedInset} }`,
+            `${toPerc}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
+            toPerc === 100 ? "" : (
+              `100% { opacity: 1; clip-path: inset(0 0 0 0); }`
+            ),
+          ].filter(Boolean);
+        };
+        if (animation.type === "reveal-list") {
+          const fromTime = currentPrevDuration;
+          const toTime = fromTime + duration;
+          const fromPerc = Number(getPercent(fromTime));
+          const toPerc = Number(getPercent(toTime));
+          sceneNodeAnimations.push({
+            sceneId,
+            elemSelector: elementSelector,
+            keyframes: getClipPathKeyframes({
+              fromPerc,
+              toPerc,
+              direction: "top to bottom",
+            }),
+          });
+        } else if (animation.type === "type") {
           const tSpansOrText = Array.from(
             element.querySelectorAll<SVGTSpanElement | SVGTextElement>(
               "tspan, text",
@@ -117,17 +153,11 @@ export const getSVGifAnimations = (
             sceneNodeAnimations.push({
               sceneId,
               elemSelector: `${elementSelector} ${tspanOrText.nodeName}:nth-of-type(${i + 1})`,
-              keyframes: [
-                !fromPerc ? "" : (
-                  `0% { opacity: 0; clip-path: inset(0 100% 0 0); }`
-                ),
-                `${fromPerc}% { opacity: 0; clip-path: inset(0 100% 0 0); }`,
-                `${fromPerc + 0.1}% { opacity: 1; clip-path: inset(0 100% 0 0); }`,
-                `${toPerc}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
-                toPerc === 100 ? "" : (
-                  `100% { opacity: 1; clip-path: inset(0 0 0 0); }`
-                ),
-              ].filter(Boolean),
+              keyframes: getClipPathKeyframes({
+                fromPerc,
+                toPerc,
+                direction: "left to right",
+              }),
             });
             currentXOffset += tspanWidth;
           });

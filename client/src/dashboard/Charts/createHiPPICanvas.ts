@@ -16,7 +16,10 @@ export const createHiPPICanvas = (
   canvas.style.height = h + "px";
   const overflowThatWillNotCauseScrollbars = ["hidden", "visible", "clip"];
   const parentStyle = getComputedStyle(canvas.parentElement!);
-  if (!overflowThatWillNotCauseScrollbars.includes(parentStyle.overflow)) {
+  if (
+    canvas.isConnected &&
+    !overflowThatWillNotCauseScrollbars.includes(parentStyle.overflow)
+  ) {
     throw new Error(
       `Canvas parent should have overflow:${overflowThatWillNotCauseScrollbars.join(" | ")} to prevent resize-render recursion due to scrollbars`,
     );

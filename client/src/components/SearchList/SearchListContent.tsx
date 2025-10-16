@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { isObject } from "../../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import Checkbox from "../Checkbox";
 import ErrorComponent from "../ErrorComponent";
 import { generateUniqueID } from "../FileInput/FileInput";

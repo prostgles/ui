@@ -24,6 +24,7 @@ import type {
   ColumnSort,
   ColumnSortSQL,
 } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { CardLayout } from "@common/DashboardTypes";
 const getRandomElement = <Arr>(
   items: Arr[],
 ): { elem: Arr | undefined; index: number } => {
@@ -187,6 +188,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
             maxCardRowHeight?: number;
             maxCardWidth?: string;
           };
+      cardLayout?: CardLayout;
       hideEditRow?: boolean;
       hideInsertButton?: boolean;
       showFilters?: boolean;

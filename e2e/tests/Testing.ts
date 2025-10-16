@@ -499,7 +499,7 @@ export declare namespace SVGif {
         elementSelector: string;
         offset?: { x: number; y: number };
         duration: number;
-        type: "click" | "zoomTo" | "type";
+        type: "click" | "zoomTo" | "type" | "reveal-list";
 
         /**
          * Time to wait before clicking after reaching the final position

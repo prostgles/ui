@@ -155,17 +155,29 @@ export const roundedRectPath = (
     rbr *= scale;
   }
 
+  const toFixed = (num: number) => {
+    return num.toFixed(2);
+  };
+
   /* Path – clockwise, starting in the top-left corner */
   return [
-    `M${x + rtl},${y}`, // start
-    `H${x + w - rtr}`, // top
-    rtr ? `A${rtr},${rtr} 0 0 1 ${x + w},${y + rtr}` : "",
-    `V${y + h - rbr}`, // right
-    rbr ? `A${rbr},${rbr} 0 0 1 ${x + w - rbr},${y + h}` : "",
-    `H${x + rbl}`, // bottom
-    rbl ? `A${rbl},${rbl} 0 0 1 ${x},${y + h - rbl}` : "",
-    `V${y + rtl}`, // left
-    rtl ? `A${rtl},${rtl} 0 0 1 ${x + rtl},${y}` : "",
+    `M${toFixed(x + rtl)},${toFixed(y)}`, // start
+    `H${toFixed(x + w - rtr)}`, // top
+    rtr ?
+      `A${toFixed(rtr)},${toFixed(rtr)} 0 0 1 ${toFixed(x + w)},${toFixed(y + rtr)}`
+    : "",
+    `V${toFixed(y + h - rbr)}`, // right
+    rbr ?
+      `A${toFixed(rbr)},${toFixed(rbr)} 0 0 1 ${toFixed(x + w - rbr)},${toFixed(y + h)}`
+    : "",
+    `H${toFixed(x + rbl)}`, // bottom
+    rbl ?
+      `A${toFixed(rbl)},${toFixed(rbl)} 0 0 1 ${toFixed(x)},${toFixed(y + h - rbl)}`
+    : "",
+    `V${toFixed(y + rtl)}`, // left
+    rtl ?
+      `A${toFixed(rtl)},${toFixed(rtl)} 0 0 1 ${toFixed(x + rtl)},${toFixed(y)}`
+    : "",
     "Z",
   ]
     .filter(Boolean)

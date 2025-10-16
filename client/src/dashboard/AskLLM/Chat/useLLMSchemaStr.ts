@@ -77,7 +77,8 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
           .map((c) => {
             return [
               `  ${JSON.stringify(c.name)} ${c.udt_name}${
-                c.character_maximum_length ? `(${c.character_maximum_length})`
+                c.udt_name.startsWith("int") ? ""
+                : c.character_maximum_length ? `(${c.character_maximum_length})`
                 : c.numeric_precision ?
                   `(${c.numeric_precision}${c.numeric_scale ? `, ${c.numeric_scale}` : ""})`
                 : ""

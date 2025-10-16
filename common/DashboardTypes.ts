@@ -65,9 +65,7 @@ type LinkedDataChart = {
  */
 type LinkedDataTable = {
   limit: number;
-  columns: {
-    name: string;
-  }[];
+  columns: Omit<TableColumn, "nested">[];
 };
 
 /**
@@ -200,6 +198,123 @@ type Filtering = {
   };
 };
 
+/**
+ * Represents a rendered cell in a card layout
+ */
+type CardLayoutRowColumnValue = {
+  type: "row-column";
+  columnName: string;
+  /**
+   * If true, label will be hidden and only value will be shown
+   */
+  hideLabel?: boolean;
+};
+/**
+ * Renders a div element with specified style and contents
+ */
+export type CardLayout = {
+  /**
+   * React.CSSProperties;
+   */
+  style?: Record<string, string | number>;
+  children: (CardLayout | CardLayoutRowColumnValue)[];
+};
+
+type TableColumn = {
+  /**
+   * Column name as it appears in the database.
+   * For nested columns this can be anything. Use the table name or a more descriptive name.
+   */
+  name: string;
+
+  /**
+   * Show linked data from other tables that are linked to this column through foreign keys.
+   * If defined then "name" from above should be used as a label for the nested data.
+   */
+  nested?: LinkedData;
+
+  /**
+   * Column width in pixels
+   */
+  width: number;
+
+  /**
+   * Render column value in a chip
+   * Cannot be used with nested
+   */
+  styling?: {
+    type: "conditional";
+    conditions: {
+      chipColor:
+        | "red"
+        | "pink"
+        | "purple"
+        | "blue"
+        | "indigo"
+        | "green"
+        | "yellow"
+        | "gray";
+      operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
+      value: string;
+    }[];
+  };
+
+  /**
+   * If set, column value will rendered in a specific way
+   */
+  format?:
+    | {
+        /**
+         * Column value will be rendered as a link with specific behaviour
+         */
+        type: "URL" | "Email" | "Tel";
+      }
+    | {
+        /**
+         * Render column value as a scannable QR code image
+         */
+        type: "QR Code";
+      }
+    | {
+        /** Display large numbers with metric prefixes (e.g. 1.2K) */
+        type: "Metric Prefix";
+      }
+    | {
+        /**
+         * Render column value with a currency symbol
+         */
+        type: "Currency";
+        params:
+          | {
+              mode: "Fixed";
+              /** @example "USD" */
+              currencyCode: string;
+              metricPrefix?: boolean;
+            }
+          | {
+              mode: "From column";
+              /** Column which contains the currency code  */
+              currencyCodeField: string;
+              metricPrefix?: boolean;
+            };
+      }
+    | {
+        /** Display the timestamp value as an age. Short variant (default) shows top two biggest units */
+        type: "Age";
+        params?: {
+          variant: "short" | "full";
+        };
+      }
+    | {
+        /** Text content as sanitised html */
+        type: "HTML";
+      }
+    | {
+        /** Displays the media from URL. Accepted formats: image, audio or video. Media/Mime type will be used from headers */
+        type: "Media";
+      };
+};
+
 export type TableWindowInsertModel = Filtering & {
   id: string;
   type: "table";
@@ -209,98 +324,7 @@ export type TableWindowInsertModel = Filtering & {
    */
   title?: string;
   table_name: string;
-  columns?: {
-    /**
-     * Column name as it appears in the database.
-     * For nested columns this can be anything. Use the table name or a more descriptive name.
-     */
-    name: string;
-    /**
-     * Column width in pixels
-     */
-    width: number;
-
-    /**
-     * Render column value in a chip
-     * Cannot be used with nested
-     */
-    styling?: {
-      type: "conditional";
-      conditions: {
-        chipColor:
-          | "red"
-          | "pink"
-          | "purple"
-          | "blue"
-          | "indigo"
-          | "green"
-          | "yellow"
-          | "gray";
-        operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
-        value: string;
-      }[];
-    };
-
-    /**
-     * Show linked data from other tables that are linked to this column through foreign keys
-     */
-    nested?: LinkedData;
-
-    /**
-     * If set, column value will rendered in a specific way
-     */
-    format?:
-      | {
-          /**
-           * Column value will be rendered as a link with specific behaviour
-           */
-          type: "URL" | "Email" | "Tel";
-        }
-      | {
-          /**
-           * Render column value as a scannable QR code image
-           */
-          type: "QR Code";
-        }
-      | {
-          /** Display large numbers with metric prefixes (e.g. 1.2K) */
-          type: "Metric Prefix";
-        }
-      | {
-          /**
-           * Render column value with a currency symbol
-           */
-          type: "Currency";
-          params:
-            | {
-                mode: "Fixed";
-                /** @example "USD" */
-                currencyCode: string;
-                metricPrefix?: boolean;
-              }
-            | {
-                mode: "From column";
-                /** Column which contains the currency code  */
-                currencyCodeField: string;
-                metricPrefix?: boolean;
-              };
-        }
-      | {
-          /** Display the timestamp value as an age. Short variant (default) shows top two biggest units */
-          type: "Age";
-          params?: {
-            variant: "short" | "full";
-          };
-        }
-      | {
-          /** Text content as sanitised html */
-          type: "HTML";
-        }
-      | {
-          /** Displays the media from URL. Accepted formats: image, audio or video. Media/Mime type will be used from headers */
-          type: "Media";
-        };
-  }[];
+  columns?: TableColumn[];
 
   /**
    * Sort order when of type 'table'
@@ -315,13 +339,25 @@ export type TableWindowInsertModel = Filtering & {
         asc: boolean;
         nulls: "first" | "last";
       }[];
+
+  /**
+   * If set, will render the table in a card layout where each row is shown as a card.
+   */
+  cardLayout?: CardLayout;
 };
 
 type LayerDataSource =
   | (Filtering & {
+      type: "local-table";
       table_name: string;
+      /**
+       * Join to linked table (table_name is root table).
+       * The charted columns must be from the end table while the filters are from the root table (table_name).
+       */
+      joinPath?: TableJoin[];
     })
   | {
+      type: "sql";
       sql: string;
     };
 
@@ -370,7 +406,14 @@ export type TimechartWindowInsertModel = {
         };
   })[];
 };
-export type BarchartWindowInsertModel = LayerDataSource & {
+export type BarchartWindowInsertModel = (
+  | (Filtering & {
+      table_name: string;
+    })
+  | {
+      sql: string;
+    }
+) & {
   id: string;
   type: "barchart";
   title?: string;

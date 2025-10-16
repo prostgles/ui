@@ -8,8 +8,6 @@ import {
   SmartCardList,
   type SmartCardListProps,
 } from "../../SmartCardList/SmartCardList";
-import Btn from "../../../components/Btn";
-import { mdiRefresh } from "@mdi/js";
 
 export const LLMProviderSetup = ({
   dbs,
