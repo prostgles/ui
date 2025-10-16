@@ -42,7 +42,7 @@
   --color-22: rgb(199, 0, 198); 
   --color-23: rgba(100, 100, 100, 0.4); 
   --color-24: rgba(0, 0, 0, 0.05); 
-  --opacity-25: 0.575765; 
+  --opacity-25: 0.63221; 
   --color-26: rgb(159, 166, 178); 
 }
 @media (prefers-color-scheme: dark) { 
@@ -74,7 +74,7 @@
   --color-22: rgb(222, 29, 222); 
   --color-23: rgba(121, 121, 121, 0.4); 
   --color-24: rgba(0, 0, 0, 0.05); 
-  --opacity-25: 0.575765; 
+  --opacity-25: 0.63221; 
   --color-26: rgb(159, 166, 178); 
   }
 } 
