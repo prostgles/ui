@@ -339,9 +339,10 @@ export const closeWorkspaceWindows = async (page: PageWIds) => {
   await page.waitForTimeout(100);
 };
 
-export const getDataKey = (key: string) => `[data-key=${JSON.stringify(key)}]`;
+export const getDataKey = (key: string) =>
+  `[data-key=${JSON.stringify(key)}]` as const;
 export const getTestId = (testid: Command) =>
-  `[data-command=${JSON.stringify(testid)}]`;
+  `[data-command=${JSON.stringify(testid)}]` as const;
 export const getSelector = ({
   testid,
   dataKey,

@@ -516,6 +516,7 @@ export declare namespace SVGif {
       };
   export type Scene = {
     svgFileName: string;
+    caption?: string;
     animations: Animation[];
   };
 }

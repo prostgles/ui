@@ -1,4 +1,5 @@
-import { SVG_NAMESPACE } from "./domToSVG";
+import { SVG_NAMESPACE } from "../domToSVG";
+import { toFixed } from "../utils/toFixed";
 
 export function hasBorder(style) {
   return (
@@ -154,10 +155,6 @@ export const roundedRectPath = (
     rtr *= scale;
     rbr *= scale;
   }
-
-  const toFixed = (num: number) => {
-    return num.toFixed(2);
-  };
 
   /* Path – clockwise, starting in the top-left corner */
   return [

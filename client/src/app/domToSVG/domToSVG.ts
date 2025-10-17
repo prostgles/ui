@@ -1,8 +1,9 @@
 import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { addFragmentViewBoxes } from "./addFragmentViewBoxes";
-import { elementToSVG, type SVGContext } from "./elementToSVG";
+import { elementToSVG, type SVGContext } from "./containers/elementToSVG";
 import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
 import { tout } from "src/utils";
+import { deduplicateSVGPaths } from "./containers/deduplicateSVGPaths";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
@@ -55,6 +56,8 @@ export const domToSVG = async (node: HTMLElement) => {
   setBackdropFilters(svg);
   const { remove } = renderSvg(svg);
   await wrapAllSVGText(svg);
+  /** Does not really seem effective */
+  // deduplicateSVGPaths(svg);
   await addFragmentViewBoxes(svg, 10);
   repositionAbsoluteAndFixed(svg);
   remove();

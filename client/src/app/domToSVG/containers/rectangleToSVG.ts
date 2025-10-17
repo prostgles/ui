@@ -1,9 +1,10 @@
 import { addSpecificBorders, roundedRectPath } from "./bgAndBorderToSVG";
-import { SVG_NAMESPACE } from "./domToSVG";
-import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
+import { SVG_NAMESPACE } from "../domToSVG";
+import type { SVGScreenshotNodeType } from "../domToThemeAwareSVG";
 import type { SVGContext, SVGNodeLayout } from "./elementToSVG";
-import type { getWhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
+import type { getWhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
 import { getBoxShadowAsDropShadow } from "./shadowToSVG";
+import { isEmpty } from "src/utils";
 
 export const rectangleToSVG = (
   g: SVGGElement,
@@ -33,7 +34,7 @@ export const rectangleToSVG = (
     !shadow &&
     !scrollMask &&
     !backdropFilter &&
-    !attributeData
+    (!attributeData || isEmpty(attributeData))
   ) {
     return;
   }

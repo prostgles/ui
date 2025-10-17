@@ -1,5 +1,5 @@
-import type { SVGContext, SVGNodeLayout } from "./elementToSVG";
-import { SVG_NAMESPACE } from "./domToSVG";
+import type { SVGContext, SVGNodeLayout } from "../containers/elementToSVG";
+import { SVG_NAMESPACE } from "../domToSVG";
 
 export const addImageFromDataURL = (
   g: SVGGElement,

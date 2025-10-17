@@ -1,10 +1,13 @@
-import { isDefined } from "../../utils";
-import { getBackdropFilter, getBackgroundColor } from "./bgAndBorderToSVG";
-import type { SVGContext } from "./elementToSVG";
-import { getFontIconElement } from "./fontIconToSVG";
-import { getTextForSVG } from "./text/getTextForSVG";
+import { isDefined } from "../../../utils";
+import {
+  getBackdropFilter,
+  getBackgroundColor,
+} from "../containers/bgAndBorderToSVG";
+import type { SVGContext } from "../containers/elementToSVG";
+import { getFontIconElement } from "../graphics/fontIconToSVG";
+import { getTextForSVG } from "../text/getTextForSVG";
 import { isElementVisible, isImgNode } from "./isElementVisible";
-import { getForeignObject } from "./getForeignObject";
+import { getForeignObject } from "../graphics/getForeignObject";
 import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 const attributesToKeep = ["data-command", "data-key", "data-label"] as const;
@@ -59,12 +62,14 @@ export const getWhatToRenderOnSVG = async (
     (parentSvg as SVGGElement)._domElement === element.parentElement;
 
   const backdropFilter = getBackdropFilter(style);
-  const childAffectingStyles: Partial<CSSStyleDeclaration> = {};
-  if (
-    style.opacity !== "1" ||
-    includes(style.position, ["fixed", "absolute", "relative"])
-  ) {
+  const childAffectingStyles: Partial<
+    Pick<CSSStyleDeclaration, "opacity" | "position">
+  > = {};
+  if (style.opacity && style.opacity !== "1") {
     childAffectingStyles.opacity = style.opacity;
+  }
+  if (includes(style.position, ["fixed", "absolute", "relative"])) {
+    childAffectingStyles.position = style.position;
   }
 
   const foreignObject = await getForeignObject(element, style, bbox, x, y);
@@ -86,6 +91,7 @@ export const getWhatToRenderOnSVG = async (
         element,
       }
     : undefined;
+
   const text = getTextForSVG(element, style, {
     x,
     y,

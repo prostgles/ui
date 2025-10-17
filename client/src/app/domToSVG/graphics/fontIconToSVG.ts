@@ -1,7 +1,7 @@
-import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import type { SVGContext, SVGNodeLayout } from "./elementToSVG";
-import { isElementNode } from "./isElementVisible";
-import { SVG_NAMESPACE } from "./domToSVG";
+import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import type { SVGContext, SVGNodeLayout } from "../containers/elementToSVG";
+import { isElementNode } from "../utils/isElementVisible";
+import { SVG_NAMESPACE } from "../domToSVG";
 
 export const fontIconToSVG = async (
   g: SVGGElement,

@@ -1,13 +1,14 @@
-import { drawShapesOnSVG } from "../../dashboard/Charts/drawShapes/drawShapesOnSVG";
+import { drawShapesOnSVG } from "../../../dashboard/Charts/drawShapes/drawShapesOnSVG";
 import { addOverflowClipPath } from "./addOverflowClipPath";
-import { SVG_NAMESPACE } from "./domToSVG";
-import { getBBoxCode, type SVGScreenshotNodeType } from "./domToThemeAwareSVG";
-import { fontIconToSVG } from "./fontIconToSVG";
-import { getWhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
-import { addImageFromDataURL, imgToSVG } from "./imgToSVG";
-import { isElementNode } from "./isElementVisible";
+import { SVG_NAMESPACE } from "../domToSVG";
+import { getBBoxCode, type SVGScreenshotNodeType } from "../domToThemeAwareSVG";
+import { fontIconToSVG } from "../graphics/fontIconToSVG";
+import { getWhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
+import { addImageFromDataURL, imgToSVG } from "../graphics/imgToSVG";
+import { isElementNode } from "../utils/isElementVisible";
 import { rectangleToSVG } from "./rectangleToSVG";
-import { textToSVG } from "./text/textToSVG";
+import { textToSVG } from "../text/textToSVG";
+import { getEntries } from "@common/utils";
 
 export type SVGContext = {
   offsetX: number;
@@ -43,7 +44,7 @@ export const elementToSVG = async (
   g._domElement = element;
   g._whatToRender = _whatToRender;
 
-  if (style.opacity !== "1") {
+  if (style.opacity && style.opacity !== "1") {
     g.setAttribute("opacity", style.opacity.toString());
   }
 
@@ -56,13 +57,18 @@ export const elementToSVG = async (
   const bboxCode = getBBoxCode(element, roundedPosition);
   (g as SVGScreenshotNodeType)._bboxCode = bboxCode;
 
-  Object.entries({
+  getEntries({
     ...whatToRender.attributeData,
-    ...whatToRender.childAffectingStyles,
   }).forEach(([key, value]) => {
     if (value) {
-      //@ts-ignore
       g.setAttribute(key, value);
+    }
+  });
+  getEntries({
+    ...whatToRender.childAffectingStyles,
+  }).forEach(([key, value]) => {
+    if (value && key === "opacity") {
+      g.style[key] = value;
     }
   });
   rectangleToSVG(g, element, style, elemInfo, whatToRender, bboxCode, context);

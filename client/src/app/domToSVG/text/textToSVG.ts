@@ -2,7 +2,8 @@ import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar
 import { tout } from "../../../utils";
 import { SVG_NAMESPACE } from "../domToSVG";
 import type { SVGScreenshotNodeType } from "../domToThemeAwareSVG";
-import { isInputOrTextAreaNode } from "../isElementVisible";
+import { isInputOrTextAreaNode } from "../utils/isElementVisible";
+import { toFixed } from "../utils/toFixed";
 import type { TextForSVG } from "./getTextForSVG";
 const _singleLineEllipsis = "_singleLineEllipsis" as const;
 const TEXT_WIDTH_ATTR = "data-text-width";
@@ -33,9 +34,9 @@ export const textToSVG = (
   const textNode = document.createElementNS(SVG_NAMESPACE, "text");
   (textNode as SVGScreenshotNodeType)._bboxCode = bboxCode;
   (textNode as SVGScreenshotNodeType)._textInfo = textInfo;
-  textNode.setAttribute(TEXT_WIDTH_ATTR, width.toFixed(2));
-  textNode.setAttribute(TEXT_HEIGHT_ATTR, height.toFixed(2));
-  textNode.setAttribute("x", x.toFixed(2));
+  textNode.setAttribute(TEXT_WIDTH_ATTR, toFixed(width));
+  textNode.setAttribute(TEXT_HEIGHT_ATTR, toFixed(height));
+  textNode.setAttribute("x", toFixed(x));
 
   /** In firefox it seems the text nodes don't have font size */
   const textNodeStyle = {
@@ -53,10 +54,7 @@ export const textToSVG = (
   };
   const fontSize = parseFloat(textNodeStyle.fontSize);
   const isInputElement = isInputOrTextAreaNode(element);
-  textNode.setAttribute(
-    "y",
-    ((isInputElement ? y : y + fontSize) - 2).toFixed(2),
-  );
+  textNode.setAttribute("y", toFixed((isInputElement ? y : y + fontSize) - 2));
   textNode.setAttribute("fill", textNodeStyle.color);
   textNode.setAttribute("font-family", textNodeStyle.fontFamily);
   textNode.setAttribute("font-size", textNodeStyle.fontSize);
@@ -123,7 +121,7 @@ const wrapTextIfOverflowing = (
   const x = parseFloat(textNode.getAttribute("x") || "0");
   const maxLines = numberOfLines ?? Math.floor(height / lineHeightPx);
   let tspan = document.createElementNS(SVG_NAMESPACE, "tspan");
-  tspan.setAttribute("x", (x + textIndent).toFixed(2));
+  tspan.setAttribute("x", toFixed(x + textIndent));
   tspan.setAttribute("dy", 0);
   tspan.textContent =
     style?.whiteSpace === "pre" ? content : content.trimStart();
@@ -181,8 +179,8 @@ const wrapTextIfOverflowing = (
       // Create new tspan for next line
       line = [word];
       tspan = document.createElementNS(SVG_NAMESPACE, "tspan");
-      tspan.setAttribute("x", x.toFixed(2));
-      tspan.setAttribute("dy", lineHeightPx.toFixed(2) + "px");
+      tspan.setAttribute("x", toFixed(x));
+      tspan.setAttribute("dy", toFixed(lineHeightPx) + "px");
       textNode.appendChild(tspan);
       tspan.textContent = word;
     }

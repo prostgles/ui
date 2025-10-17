@@ -4,6 +4,8 @@ import { renderSvg } from "../text/textToSVG";
 import { getAnimationProperty, type parseSVGWithViewBox } from "./getSVGif";
 import { getSVGifTargetBBox } from "./getSVGifTargetBBox";
 import { fixIndent } from "@common/utils";
+import { toFixed } from "../utils/toFixed";
+import { addSVGifCaption } from "./addSVGifCaption";
 
 /**
  * Given an SVGifScenes, return the animations
@@ -30,7 +32,7 @@ export const getSVGifAnimations = (
     const result = Math.max(0, Math.min(100, perc));
     const resultWithOffset = result + offset;
 
-    return resultWithOffset.toFixed(2);
+    return toFixed(resultWithOffset);
   };
   const sceneAnimations: {
     sceneId: string;
@@ -41,7 +43,7 @@ export const getSVGifAnimations = (
   const prevSceneAnim = sceneAnimations.at(-1);
   for (const [
     sceneIndex,
-    { svgFileName, animations, svgFile, svgDom },
+    { svgFileName, animations, svgDom, caption },
   ] of parsedScenes.entries()) {
     if (!animations.length) {
       throw new Error(
@@ -72,7 +74,16 @@ export const getSVGifAnimations = (
       keyframes: string[];
     }[] = [];
     let sceneNodeAnimationsStyle = "";
-
+    const getDefs = () => {
+      let defs = svgDom.querySelector("defs");
+      if (!defs) {
+        const newDefs = document.createElementNS(SVG_NAMESPACE, "defs");
+        svgDom.insertBefore(newDefs, svgDom.firstChild);
+        defs = document.createElementNS(SVG_NAMESPACE, "defs");
+        svgDom.insertBefore(defs, svgDom.firstChild);
+      }
+      return defs;
+    };
     for (const [animationIndex, animation] of animations.entries()) {
       if (animation.type === "wait") {
       } else {
@@ -205,20 +216,16 @@ export const getSVGifAnimations = (
 
       const styleElem = document.createElementNS(SVG_NAMESPACE, "style");
       styleElem.textContent = sceneNodeAnimationsStyle;
-      const defs = svgDom.querySelector("defs");
-      if (defs) {
-        defs.appendChild(styleElem);
-      } else {
-        const newDefs = document.createElementNS(SVG_NAMESPACE, "defs");
-        newDefs.appendChild(styleElem);
-        svgDom.insertBefore(newDefs, svgDom.firstChild);
-      }
-      const svgFileWithNewStyle = svgDom.outerHTML;
-      appendSvgToSvg({ id: sceneId, svgFile: svgFileWithNewStyle }, g);
-      // throw svgFileWithNewStyle;
-    } else {
-      appendSvgToSvg({ id: sceneId, svgFile }, g);
+      const defs = getDefs();
+      defs.appendChild(styleElem);
     }
+
+    if (caption) {
+      addSVGifCaption(svgDom, width, height, caption, getDefs);
+    }
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svgDom);
+    appendSvgToSvg({ id: sceneId, svgFile: svgString }, g);
 
     const isLastScene = sceneIndex === parsedScenes.length - 1;
     sceneKeyframes.push(`${getPercent(currentPrevDuration)}% { opacity: 1; }`);

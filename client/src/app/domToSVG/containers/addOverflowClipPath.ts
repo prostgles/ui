@@ -1,9 +1,9 @@
 import { isDefined } from "prostgles-types";
-import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { SVG_NAMESPACE } from "./domToSVG";
+import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { SVG_NAMESPACE } from "../domToSVG";
 import type { SVGContext } from "./elementToSVG";
-import type { WhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
-import { isElementNode } from "./isElementVisible";
+import type { WhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
+import { isElementNode } from "../utils/isElementVisible";
 import { getRectanglePath } from "./rectangleToSVG";
 
 export const addOverflowClipPath = (

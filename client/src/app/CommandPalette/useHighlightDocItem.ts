@@ -5,7 +5,7 @@ import { getUIDocElementsAndAlertIfEmpty } from "./utils";
 import type { UIDocNonInfo } from "../UIDocs";
 import { scrollIntoViewIfNeeded, tout } from "../../utils";
 import type { CommandSearchHighlight } from "./CommandPalette";
-import { isInParentViewport } from "../domToSVG/isElementVisible";
+import { isInParentViewport } from "../domToSVG/utils/isElementVisible";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import type { DocItemHighlightItemPosition } from "./useGoToUI";
 

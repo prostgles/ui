@@ -1,5 +1,6 @@
-import { isImgNode, isSVGNode } from "./isElementVisible";
-import { SVG_NAMESPACE } from "./domToSVG";
+import { isImgNode, isSVGNode } from "../utils/isElementVisible";
+import { SVG_NAMESPACE } from "../domToSVG";
+import { toFixed } from "../utils/toFixed";
 
 export const isSVGElement = (element: Element): element is SVGElement => {
   return element instanceof SVGElement;
@@ -24,10 +25,10 @@ export const getForeignObject = async (
     /** Ensure the icon buttons icons are centered */
     foreignObject.style.display = "grid";
     foreignObject.style.placeItems = "center";
-    foreignObject.setAttribute("x", `${x.toFixed(2)}`);
-    foreignObject.setAttribute("y", `${y.toFixed(2)}`);
-    foreignObject.setAttribute("width", `${bbox.width.toFixed(2)}`);
-    foreignObject.setAttribute("height", `${bbox.height.toFixed(2)}`);
+    foreignObject.setAttribute("x", `${toFixed(x)}`);
+    foreignObject.setAttribute("y", `${toFixed(y)}`);
+    foreignObject.setAttribute("width", `${toFixed(bbox.width)}`);
+    foreignObject.setAttribute("height", `${toFixed(bbox.height)}`);
     const wrapper = document.createElement("div");
     wrapper.style.width = "100%";
     wrapper.style.height = "100%";

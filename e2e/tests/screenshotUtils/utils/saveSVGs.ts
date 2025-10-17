@@ -7,16 +7,16 @@ import {
   openTable,
   type PageWIds,
 } from "../../utils/utils";
-import { aiAssistantSVG } from "./../aiAssistantSvgif";
+import { aiAssistantSVG } from "../aiAssistant.svgif";
 import {
   SVG_SCREENSHOT_DIR,
   SVGIF_SCENES_DIR,
   type SVGifScene,
 } from "./constants";
 import { saveSVGifs } from "./saveSVGifs";
-import { sqlEditorSVG } from "./../sqlEditorSvgif";
-import { dashboardSvgif } from "screenshotUtils/dashboardSvgif";
-import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagramSvgif";
+import { sqlEditorSVG } from "../sqlEditor.svgif";
+import { dashboardSvgif } from "screenshotUtils/dashboard.svgif";
+import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
 
 export type OnBeforeScreenshot = (
@@ -47,8 +47,8 @@ export const SVG_SCREENSHOT_DETAILS = {
   //   await page.keyboard.press("Control+Space");
   //   await page.waitForTimeout(500);
   // },
-  ai_assistant: aiAssistantSVG,
   sql_editor: sqlEditorSVG,
+  ai_assistant: aiAssistantSVG,
   schema_diagram: schemaDiagramSvgif,
   postgis_map: async (page, { hideMenuIfOpen }) => {
     await openConnection(page, "food_delivery");

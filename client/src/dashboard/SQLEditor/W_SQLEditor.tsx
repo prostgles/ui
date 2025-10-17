@@ -104,6 +104,7 @@ type CodeBlockSignature = {
   numberOfLineBreaks: number;
   numberOfSemicolons: number;
   currentLineNumber: number;
+  query: string;
 };
 
 export type SQLSuggestion = {
@@ -585,6 +586,7 @@ const setActiveCodeBlock = async function (
   const codeBlockSignature: CodeBlockSignature = {
     numberOfLineBreaks: value.split(EOL).length,
     numberOfSemicolons: value.split(";").length,
+    query: value,
     currentLineNumber:
       e?.position.lineNumber ??
       editor.getPosition()?.lineNumber ??
@@ -629,6 +631,9 @@ const setActiveCodeBlock = async function (
   const signatureDiffers =
     !isEqual(this.codeBlockSignature, codeBlockSignature) ||
     currentDecorationsNotRendered;
+  const codeBlockLinesChanged =
+    this.codeBlockSignature?.numberOfLineBreaks !==
+    codeBlockSignature.numberOfLineBreaks;
   const noSelection = !document.getSelection()?.toString();
   if (signatureDiffers && noSelection) {
     this.codeBlockSignature = codeBlockSignature;
@@ -638,11 +643,13 @@ const setActiveCodeBlock = async function (
 
     // removePlayDecoration({ editor, EOL, value });
 
-    this.currentDecorations?.clear();
-    this.currentDecorations = await highlightCurrentCodeBlock(
-      editor,
-      codeBlock,
-    );
+    if (codeBlockLinesChanged) {
+      this.currentDecorations?.clear();
+      this.currentDecorations = await highlightCurrentCodeBlock(
+        editor,
+        codeBlock,
+      );
+    }
   }
 };
 

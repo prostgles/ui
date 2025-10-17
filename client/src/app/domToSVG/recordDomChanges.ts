@@ -1,4 +1,4 @@
-import { isElementNode, isElementVisible } from "./isElementVisible";
+import { isElementNode, isElementVisible } from "./utils/isElementVisible";
 
 export const recordDomChanges = (targetNode: HTMLElement) => {
   const config = {

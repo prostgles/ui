@@ -1,4 +1,4 @@
-import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 export const isElementVisible = (element: Element) => {
   const style = window.getComputedStyle(element);

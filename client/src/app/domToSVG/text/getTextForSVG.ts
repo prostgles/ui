@@ -3,7 +3,7 @@ import {
   isElementNode,
   isInputOrTextAreaNode,
   isTextNode,
-} from "../isElementVisible";
+} from "../utils/isElementVisible";
 
 export type TextForSVG = {
   style: CSSStyleDeclaration;
