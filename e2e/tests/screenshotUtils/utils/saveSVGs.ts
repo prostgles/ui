@@ -244,6 +244,7 @@ export const saveSVGs = async (page: PageWIds) => {
         },
       ];
       svgifScenes.push({
+        ...scene,
         svgFileName: sceneFileName,
         animations,
       });

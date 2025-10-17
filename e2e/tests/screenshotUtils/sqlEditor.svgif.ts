@@ -55,7 +55,7 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
   await monacoType(page, `.ProstglesSQL`, "SELECT *\nFROM me", {
     deleteAllAndFill: true,
   });
-  await addScene({ svgFileName: "tables" });
+  await addScene({ svgFileName: "tables", caption: "Table name completion" });
 
   await monacoType(
     page,
@@ -65,7 +65,7 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
       deleteAllAndFill: true,
     },
   );
-  await addScene({ svgFileName: "joins" });
+  await addScene({ svgFileName: "joins", caption: "JOIN suggestions" });
 
   await monacoType(
     page,
@@ -75,7 +75,10 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
       deleteAllAndFill: true,
     },
   );
-  await addScene({ svgFileName: "jsonb_properties" });
+  await addScene({
+    svgFileName: "jsonb_properties",
+    caption: "JSONB property access",
+  });
 
   /** Insert data */
   await runDbSql(
@@ -104,7 +107,10 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
       pressAfterTyping: ["ArrowLeft", "Control+Space"],
     },
   );
-  await addScene({ svgFileName: "values" });
+  await addScene({
+    svgFileName: "values",
+    caption: "Column value suggestions",
+  });
   await page.keyboard.press("Tab");
   await page.keyboard.press("Alt+KeyE");
   await page.waitForTimeout(1500);
@@ -120,17 +126,48 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
       deleteAllAndFill: true,
     },
   );
-  await addScene({ svgFileName: "index_types" });
+  await addScene({
+    svgFileName: "index_types",
+    caption: "Index type suggestions",
+  });
 
   await monacoType(page, `.ProstglesSQL`, "EXPLAIN ( ", {
     deleteAllAndFill: true,
   });
-  await addScene({ svgFileName: "explain_options" });
+  await addScene({
+    svgFileName: "explain_options",
+    caption: "EXPLAIN command options",
+  });
 
   await monacoType(page, `.ProstglesSQL`, "SELECT jsonb_agg", {
     deleteAllAndFill: true,
   });
-  await addScene({ svgFileName: "functions" });
+  await addScene({
+    svgFileName: "functions",
+    caption: "Function argument details and documentation",
+  });
+
+  // Window functions demonstration
+  await monacoType(
+    page,
+    `.ProstglesSQL`,
+    "SELECT \n  username,\n  message_text,\n  ROW_NUMBER() OVER ()\nFROM users u\nJOIN messages m ON u.id = m.sender_id",
+    {
+      deleteAllAndFill: true,
+      keyPressDelay: 0,
+      pressAfterTyping: [
+        "ArrowUp",
+        "Control+ArrowRight",
+        "Control+ArrowRight",
+        "Control+ArrowRight",
+        "Control+Space",
+      ],
+    },
+  );
+  await addScene({
+    svgFileName: "window_functions",
+    caption: "Window function syntax",
+  });
 
   await monacoType(
     page,
@@ -154,7 +191,10 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
     },
   );
 
-  await addScene({ svgFileName: "cte" });
+  await addScene({
+    svgFileName: "cte",
+    caption: "Common Table Expression (CTE) completion",
+  });
 
   await page.keyboard.press("Tab");
   await page.waitForTimeout(1500);
@@ -183,7 +223,7 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
       {
         type: "click",
         elementSelector: '[data-key="timestamp"]',
-        duration: 1e3,
+        duration: 500,
       },
     ],
   });
@@ -220,19 +260,15 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
     svgFileName: "map_btn",
     animations: [
       {
-        type: "wait",
-        duration: 1500,
-      },
-      {
         type: "click",
         elementSelector: getCommandElemSelector("AddChartMenu.Map"),
-        duration: 1e3,
+        duration: 500,
       },
     ],
   });
 
   await page.getByTestId("AddChartMenu.Map").first().click();
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2500);
   await addScene({
     svgFileName: "map",
   });

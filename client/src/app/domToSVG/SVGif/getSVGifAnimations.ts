@@ -41,6 +41,7 @@ export const getSVGifAnimations = (
   }[] = [];
   let currentPrevDuration = 0;
   const prevSceneAnim = sceneAnimations.at(-1);
+
   for (const [
     sceneIndex,
     { svgFileName, animations, svgDom, caption },
@@ -51,6 +52,8 @@ export const getSVGifAnimations = (
       );
     }
     const sceneId = `scene-${sceneIndex}`;
+    const sceneFromPercent = getPercent(currentPrevDuration);
+
     const renderedSceneSVG = renderSvg(svgDom);
 
     const sceneKeyframes: string[] = [];
@@ -83,6 +86,15 @@ export const getSVGifAnimations = (
         svgDom.insertBefore(defs, svgDom.firstChild);
       }
       return defs;
+    };
+    const appendStyle = (style: string) => {
+      let styleElem = svgDom.querySelector<SVGStyleElement>("style");
+      if (!styleElem) {
+        styleElem = document.createElementNS(SVG_NAMESPACE, "style");
+        const defs = getDefs();
+        defs.appendChild(styleElem);
+      }
+      styleElem.textContent += style;
     };
     for (const [animationIndex, animation] of animations.entries()) {
       if (animation.type === "wait") {
@@ -214,14 +226,21 @@ export const getSVGifAnimations = (
         `);
       });
 
-      const styleElem = document.createElementNS(SVG_NAMESPACE, "style");
-      styleElem.textContent = sceneNodeAnimationsStyle;
-      const defs = getDefs();
-      defs.appendChild(styleElem);
+      appendStyle(sceneNodeAnimationsStyle);
     }
 
     if (caption) {
-      addSVGifCaption(svgDom, width, height, caption, getDefs);
+      addSVGifCaption({
+        svgDom,
+        appendStyle,
+        width,
+        height,
+        caption,
+        fromPerc: sceneFromPercent,
+        toPerc: getPercent(currentPrevDuration),
+        totalDuration,
+        sceneId,
+      });
     }
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svgDom);
