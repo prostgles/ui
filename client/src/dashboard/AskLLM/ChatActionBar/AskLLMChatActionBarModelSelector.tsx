@@ -33,7 +33,7 @@ export const AskLLMChatActionBarModelSelector = (
           logo_url: 1,
         },
         llm_credentials: {
-          $leftJoin: [{ table: "llm_providers" }, { table: "llm_credentials" }],
+          $leftJoin: ["llm_providers", "llm_credentials"],
           select: "*",
           limit: 1,
         } satisfies DetailedJoinSelect,

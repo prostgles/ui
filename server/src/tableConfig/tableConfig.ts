@@ -1006,6 +1006,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
                   name: "string",
                   label: { type: "string", optional: true },
                   udt_name: "string",
+                  is_pkey: { type: "boolean", optional: true },
                 },
                 optional: true,
               },

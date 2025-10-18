@@ -252,6 +252,7 @@ export function sliceText<T extends string | undefined>(
 }
 
 export type ColType = {
+  table_oid: number | undefined;
   column_name: string;
   escaped_column_name: string;
   data_type: string;

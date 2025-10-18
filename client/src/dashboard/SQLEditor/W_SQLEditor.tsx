@@ -633,7 +633,9 @@ const setActiveCodeBlock = async function (
     currentDecorationsNotRendered;
   const codeBlockLinesChanged =
     this.codeBlockSignature?.numberOfLineBreaks !==
-    codeBlockSignature.numberOfLineBreaks;
+      codeBlockSignature.numberOfLineBreaks ||
+    this.codeBlockSignature.currentLineNumber !==
+      codeBlockSignature.currentLineNumber;
   const noSelection = !document.getSelection()?.toString();
   if (signatureDiffers && noSelection) {
     this.codeBlockSignature = codeBlockSignature;

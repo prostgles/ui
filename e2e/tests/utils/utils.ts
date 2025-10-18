@@ -770,6 +770,7 @@ export const enableAskLLM = async (
       provider_id: {
         id: "Custom",
         api_url: "http://localhost:3004/mocked-llm",
+        logo_url: "/icons/CloudQuestionOutline.svg",
         llm_models: [
           {
             name: "mymodel",

@@ -454,7 +454,9 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 }
                 const res =
                   cb &&
-                  (await getChartableSQL(cb, db.sql!).catch(() => undefined));
+                  (await getChartableSQL(cb, db.sql!, tables).catch(
+                    () => undefined,
+                  ));
                 this.setState({ currentCodeBlockChartColumns: res });
               }}
               onUnmount={(_editor, cursorPosition) => {

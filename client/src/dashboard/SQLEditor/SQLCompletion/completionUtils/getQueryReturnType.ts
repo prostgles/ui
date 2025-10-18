@@ -1,6 +1,6 @@
-import type { ColType } from "../../../../../../common/utils";
 import type { SQLHandler } from "prostgles-types";
-import { asName, tryCatchV2 } from "prostgles-types";
+import { asName, includes, tryCatchV2 } from "prostgles-types";
+import type { ColType } from "../../../../../../common/utils";
 
 /**
  * Get statement return type ensuring any dangerous commands are not commited
@@ -30,15 +30,14 @@ const getQueryReturnType = async (
       CREATE OR REPLACE TEMP VIEW "${viewName}" AS 
       ${queryWithSemicolon}
 
-      SELECT 
-        --column_name, 
+      SELECT
         column_name,
         format('%I', column_name) as escaped_column_name,
         data_type, 
         udt_name, 
         current_schema() as schema
-      FROM information_schema.columns i 
-      WHERE i.table_name = '${viewName}'
+      FROM information_schema.columns c 
+      WHERE c.table_name = '${viewName}'
       
     `,
     {},
@@ -51,13 +50,14 @@ const getQueryReturnType = async (
 /**
  * Does not fail on duplicate columns
  */
-const getQueryReturnTypeForDuplicateCols = async (
+const getTableExpressionReturnTypeWithTableOIDs = async (
   query: string,
   sql: SQLHandler,
 ): Promise<ColType[]> => {
+  const queryWithoutSemicolon = getSQLQuerySemicolon(query, false);
   const result = await sql(
     `
-      ${query}
+      ${queryWithoutSemicolon}
       LIMIT 0;
     `,
     {},
@@ -66,6 +66,7 @@ const getQueryReturnTypeForDuplicateCols = async (
 
   const cols: ColType[] = result.fields.map((f) => {
     return {
+      table_oid: f.tableID,
       column_name: f.name,
       escaped_column_name:
         /^[a-z_][a-z0-9_$]*$/.test(f.name) ? f.name : asName(f.name),
@@ -85,6 +86,7 @@ const cached = new Map<string, ExpressionResult>();
 export const getTableExpressionReturnType = async (
   expression: string,
   sql: SQLHandler,
+  includeTableOid = false,
 ): Promise<ExpressionResult> => {
   const cachedValue = cached.get(expression);
   if (cachedValue) {
@@ -92,6 +94,15 @@ export const getTableExpressionReturnType = async (
   }
 
   try {
+    if (includeTableOid) {
+      const colTypes = await getTableExpressionReturnTypeWithTableOIDs(
+        expression,
+        sql,
+      );
+      cached.set(expression, { colTypes });
+      return { colTypes };
+    }
+
     const result = await tryCatchV2(async () => {
       const colTypes = await getQueryReturnType(expression, sql);
       return { colTypes };
@@ -99,8 +110,11 @@ export const getTableExpressionReturnType = async (
     let colTypes = result.data?.colTypes;
     const { error } = result;
     if (!colTypes) {
-      if (["42701", "42P16"].includes((error as any)?.code)) {
-        colTypes = await getQueryReturnTypeForDuplicateCols(expression, sql);
+      if (includes(["42701", "42P16"], (error as any)?.code)) {
+        colTypes = await getTableExpressionReturnTypeWithTableOIDs(
+          expression,
+          sql,
+        );
       }
     }
     if (!colTypes) {

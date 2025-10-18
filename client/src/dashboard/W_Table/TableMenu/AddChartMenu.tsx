@@ -1,14 +1,15 @@
 import { mdiChartLine, mdiMap } from "@mdi/js";
-import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
+import { useMemoDeep } from "prostgles-client/dist/prostgles";
 import {
   _PG_numbers,
+  includes,
   isDefined,
   type ParsedJoinPath,
-  type SQLHandler,
 } from "prostgles-types";
 import React from "react";
 import Btn, { type BtnProps } from "../../../components/Btn";
 import Select from "../../../components/Select/Select";
+import { t } from "../../../i18n/i18nUtils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
   DBSchemaTablesWJoins,
@@ -17,11 +18,10 @@ import type {
 } from "../../Dashboard/dashboardUtils";
 import { getRandomColor } from "../../Dashboard/dashboardUtils";
 import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
+import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
 import type { ChartColumn, ColInfo } from "./getChartCols";
 import { getChartCols } from "./getChartCols";
-import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
-import { t } from "../../../i18n/i18nUtils";
 
 type P = Pick<CommonWindowProps, "myLinks" | "childWindows"> & {
   onAddChart: OnAddChart;
@@ -71,18 +71,21 @@ export const AddChartMenu = (props: P) => {
     joinPath: ParsedJoinPath[] | undefined,
   ) => {
     const otherColumns = linkOpts.columns
-      .reduce((a, v) => {
-        v.otherColumns.forEach((vc) => {
-          if (!a.some((ac) => ac.name === vc.name)) {
-            a.push(vc);
-          }
-        });
-        return a;
-      }, [] as ColInfo[])
-      .map(({ name, udt_name }) => ({ name, udt_name }));
+      .reduce(
+        (a, v) => {
+          v.otherColumns.forEach((vc) => {
+            if (!a.some((ac) => ac.name === vc.name)) {
+              a.push(vc);
+            }
+          });
+          return a;
+        },
+        [] as (ColInfo & { is_pkey: boolean })[],
+      )
+      .map(({ name, udt_name, is_pkey }) => ({ name, udt_name, is_pkey }));
 
-    const firstNumericColumn = otherColumns.find((c) =>
-      _PG_numbers.includes(c.udt_name as any),
+    const firstNumericColumn = otherColumns.find(
+      (c) => !c.is_pkey && includes(_PG_numbers, c.udt_name),
     )?.name;
     const columnList = `(${linkOpts.columns.map((c) => c.name).join()})`;
     const name =

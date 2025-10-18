@@ -1,13 +1,13 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
-import { asName, isDefined, tryCatch, tryCatchV2 } from "prostgles-types";
-import { omitKeys } from "prostgles-types";
+import { asName, isDefined, omitKeys, tryCatchV2 } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DataItem, TimeChartLayer } from "../Charts/TimeChart";
 import type { DateExtent } from "../Charts/getTimechartBinSize";
 import { getMainTimeBinSizes } from "../Charts/getTimechartBinSize";
 import type { WindowData } from "../Dashboard/dashboardUtils";
+import { getSQLQuerySemicolon } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getGroupByValueColor } from "../WindowControls/ColorByLegend";
 import type {
   ProstglesTimeChartLayer,
@@ -23,8 +23,6 @@ import {
   type TimeChartLayerWithBin,
   type TimeChartLayerWithBinOrError,
 } from "./getTimeChartLayersWithBins";
-import type { DBS } from "../Dashboard/DBS";
-import { getSQLQuerySemicolon } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 
 export const getTimeLayerDataSignature = (
   l: ProstglesTimeChartLayer,

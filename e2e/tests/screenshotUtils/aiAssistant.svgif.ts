@@ -12,12 +12,26 @@ import {
 import { createReceipt } from "createReceipt";
 import { expect } from "@playwright/test";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
+import { goTo } from "utils/goTo";
 
 export const aiAssistantSVG: OnBeforeScreenshot = async (
   page,
   { openConnection },
   addScene,
 ) => {
+  await goTo(page, "/server-settings?section=llmProviders");
+  await page.getByTestId("dashboard.window.rowInsertTop").click();
+  await page.keyboard.press("Enter");
+  await page.evaluate(() => {
+    // Remove Prostgles elem
+    const prostglesElem = document.querySelector('[data-key="Prostgles"]');
+    prostglesElem?.parentElement?.removeChild(prostglesElem);
+  });
+  await addScene({
+    svgFileName: "supported_providers",
+    caption: "Supported providers",
+  });
+
   /**
    * This is required to initialize the askLLM function
    */
@@ -34,10 +48,11 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
       {
         type: "click",
         elementSelector: getCommandElemSelector("AskLLM"),
-        duration: 1e3,
+        duration: 500,
       },
     ],
   });
+
   await page.getByTestId("AskLLM").click();
   await setModelByText(page, "pros");
   await setPromptByText(page, "dashboard");
@@ -61,6 +76,7 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
       },
     ],
   });
+
   const allowOnce = async (doClick = true) => {
     const allowOnceBtn = await page
       .getByTestId("AskLLMToolApprover.AllowOnce")
@@ -124,6 +140,7 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
 
   await openConnection("prostgles_video_demo");
+  await closeWorkspaceWindows(page);
   await page.getByTestId("AskLLM").click();
   await deletePreviousMessages();
   await setPromptByText(page, "chat");

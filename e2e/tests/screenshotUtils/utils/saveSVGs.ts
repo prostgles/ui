@@ -25,30 +25,8 @@ export type OnBeforeScreenshot = (
   addSVGifScene: (scene?: Partial<SVGifScene>) => Promise<void>,
 ) => Promise<void>;
 export const SVG_SCREENSHOT_DETAILS = {
-  // sql_editor: async (
-  //   page,
-  //   { openMenuIfClosed, hideMenuIfOpen, openConnection },
-  // ) => {
-  //   await openConnection("prostgles_video_demo");
-  //   await page.waitForTimeout(1500);
-  //   if (!(await page.getByTestId("MonacoEditor").count())) {
-  //     await openMenuIfClosed();
-  //     await page.getByTestId("dashboard.menu.sqlEditor").click();
-  //   }
-  //   await hideMenuIfOpen();
-
-  //   const query = `SELECT * FROM chat_m`;
-  //   await monacoType(page, `.ProstglesSQL`, query, { deleteAll: true });
-  //   await page.waitForTimeout(500);
-  //   await page.reload(); // This reload is needed to ensure the suggestions moves to right
-  //   await page.waitForTimeout(1500);
-  //   await monacoType(page, `.ProstglesSQL`, `t`, { deleteAll: false });
-  //   await page.keyboard.press("Backspace");
-  //   await page.keyboard.press("Control+Space");
-  //   await page.waitForTimeout(500);
-  // },
-  sql_editor: sqlEditorSVG,
   ai_assistant: aiAssistantSVG,
+  sql_editor: sqlEditorSVG,
   schema_diagram: schemaDiagramSvgif,
   postgis_map: async (page, { hideMenuIfOpen }) => {
     await openConnection(page, "food_delivery");

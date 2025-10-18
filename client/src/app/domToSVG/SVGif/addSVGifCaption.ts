@@ -99,10 +99,11 @@ export const addSVGifCaption = ({
       0% { width: 0; }
       ${fromPerc + 0.1}% { width: 0; }
       ${toPerc - 0.1}% { width: ${bgWidth}px; }
+      ${toPerc}% { width: 0; }
       100% { width: 0; }
     }
     #${barId} {
-      animation: ${barId}-anim ${totalDuration}ms linear forwards; 
+      animation: ${barId}-anim ${totalDuration}ms ease-in-out infinite; 
     }
   `);
 };
