@@ -94,16 +94,14 @@ export const getTableExpressionReturnType = async (
   }
 
   try {
-    if (includeTableOid) {
-      const colTypes = await getTableExpressionReturnTypeWithTableOIDs(
-        expression,
-        sql,
-      );
-      cached.set(expression, { colTypes });
-      return { colTypes };
-    }
-
     const result = await tryCatchV2(async () => {
+      if (includeTableOid) {
+        const colTypes = await getTableExpressionReturnTypeWithTableOIDs(
+          expression,
+          sql,
+        );
+        return { colTypes };
+      }
       const colTypes = await getQueryReturnType(expression, sql);
       return { colTypes };
     });

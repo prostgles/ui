@@ -125,7 +125,10 @@ export const sqlEditorSVG: OnBeforeScreenshot = async (
     INSERT INTO messages (sender_id, message_text, "timestamp") VALUES
     ((SELECT id FROM user_inserts WHERE username = 'user1'), 'Hello from user1', now() - '1day'::interval),
     ((SELECT id FROM user_inserts WHERE username = 'user2'), 'Hello from user2', now() - '2day'::interval),
-    ((SELECT id FROM user_inserts WHERE username = 'user3'), 'Hello from user3', now() - '3day'::interval);
+    ((SELECT id FROM user_inserts WHERE username = 'user2'), 'Hello from user2', now() - '2day'::interval),
+    ((SELECT id FROM user_inserts WHERE username = 'user2'), 'Hello from user2', now() - '4day'::interval),
+    ((SELECT id FROM user_inserts WHERE username = 'user2'), 'Hello from user2', now() - '4day'::interval),
+    ((SELECT id FROM user_inserts WHERE username = 'user3'), 'Hello from user3', now() - '5day'::interval);
   `,
   );
   await monacoType(
