@@ -7,12 +7,12 @@ import type {
   JoinedFilter,
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import {
   isDetailedFilter,
   isJoinedFilter,
-} from "../../../../commonTypes/filterUtils";
-import { isObject } from "../../../../commonTypes/publishUtils";
+} from "../../../../common/filterUtils";
+import { isObject } from "../../../../common/publishUtils";
 import Btn from "../../components/Btn";
 import { FlexCol, classOverride } from "../../components/Flex";
 import { InfoRow } from "../../components/InfoRow";

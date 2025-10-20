@@ -29,7 +29,7 @@ type P<W extends WindowSyncItem> = {
 
   children?: ReactNode;
   getMenu?: (w: W, onClose: () => any) => ReactNode;
-
+  layoutMode: "fixed" | "editable";
   quickMenuProps?: W extends WindowSyncItem<"table"> | WindowSyncItem<"sql"> ?
     Omit<ProstglesQuickMenuProps, "w">
   : undefined;
@@ -59,12 +59,13 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
   static getTitle(_w: WindowSyncItem) {
     const w = _w.$get() as WindowSyncItem | undefined;
     const title =
-      !w ? undefined : w.name || w.table_name || w.method_name || w.id;
-    // if(!w){
-    //   // TODO ensure on reconnect all syncs work as expected
-    //   console.warn("Window not found. Reloading...");
-    //   setTimeout(() => window.location.reload(), 500);
-    // }
+      !w ? undefined : (
+        w.name ||
+        w.title?.replace("${rowCount}", "") ||
+        w.table_name ||
+        w.method_name ||
+        w.id
+      );
     return title || "Empty";
   }
 
@@ -115,7 +116,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
 
   ref?: HTMLDivElement;
   render(): ReactSilverGridNode | null {
-    const { children, getMenu } = this.props;
+    const { children, getMenu, layoutMode = "editable" } = this.props;
     const { showMenu } = this.state;
     const { w = this.props.w } = this.state;
 
@@ -128,18 +129,21 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
     if (getMenu && menuIconContainer) {
       menuPortal = ReactDOM.createPortal(
         <>
-          <Btn
-            className="f-0"
-            iconPath={mdiDotsVertical}
-            title={t.Window["Open menu"]}
-            data-command="dashboard.window.menu"
-            onContextMenu={(e) => {
-              navigator.clipboard.writeText(w.id);
-            }}
-            onClick={() => {
-              this.setState({ showMenu: !showMenu });
-            }}
-          />
+          {layoutMode === "fixed" ?
+            <div style={{ width: ".65em" }}></div>
+          : <Btn
+              className="f-0"
+              iconPath={mdiDotsVertical}
+              title={t.Window["Open menu"]}
+              data-command="dashboard.window.menu"
+              onContextMenu={(e) => {
+                navigator.clipboard.writeText(w.id);
+              }}
+              onClick={() => {
+                this.setState({ showMenu: !showMenu });
+              }}
+            />
+          }
           {this.getTitleIcon()}
         </>,
         menuIconContainer,
@@ -190,7 +194,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
       </>
     );
 
-    if (w.parent_window_id) {
+    if (w.parent_window_id && this.props.layoutMode === "editable") {
       return (
         <FlexCol
           data-command="Window.ChildChart"

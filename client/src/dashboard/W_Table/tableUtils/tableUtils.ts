@@ -37,7 +37,7 @@ export const getFullColumnConfig = (
         ...r,
         format:
           !r.format && isFileColumn ?
-            { type: "Media", params: { type: "fromUrlEnding" } }
+            { type: "Media", params: { type: "From URL Extension" } }
           : r.format,
       };
     });
@@ -74,7 +74,10 @@ export const getFullColumnConfig = (
         colsWInfo.unshift(origNameCol);
       }
       if (urlColumn) {
-        urlColumn.format = { type: "Media", params: { type: "fromUrlEnding" } };
+        urlColumn.format = {
+          type: "Media",
+          params: { type: "From URL Extension" },
+        };
         colsWInfo.unshift(urlColumn);
       }
     }

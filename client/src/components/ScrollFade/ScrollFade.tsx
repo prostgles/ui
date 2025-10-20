@@ -1,15 +1,17 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import type { TestSelectors } from "../../Testing";
 import { classOverride, type DivProps } from "../Flex";
 import { useResizeObserver } from "./useResizeObserver";
-import { fixIndent, getEntries } from "../../../../commonTypes/utils";
-import { isDefined } from "../../utils";
+import { fixIndent, getEntries } from "../../../../common/utils";
+import { isDefined, scrollIntoViewIfNeeded } from "../../utils";
 import { isEqual } from "prostgles-types";
+import { useLocation } from "react-router-dom";
 
 type P = TestSelectors &
   DivProps & {
     children: React.ReactNode;
     className?: string;
+    scrollRestore?: boolean;
   };
 
 type Sides = Record<"top" | "bottom" | "left" | "right", boolean>;
@@ -17,9 +19,10 @@ type Sides = Record<"top" | "bottom" | "left" | "right", boolean>;
 /**
  * Given a list of children, this component will add a fade effect to the bottom of the children if the children are scrollable
  */
-export const ScrollFade = ({ children, ...divProps }: P) => {
+export const ScrollFade = ({ children, scrollRestore, ...divProps }: P) => {
   const ref = React.useRef<HTMLDivElement>(null);
   useScrollFade({ ref });
+  useScrollRestore(scrollRestore ? ref.current : undefined);
 
   return (
     <div
@@ -118,4 +121,39 @@ const getGradient = (side: keyof Sides) => {
       rgba(0, 0, 0, 1) 80px,
       rgba(0, 0, 0, 1) 100%
     )`);
+};
+
+/**
+ * On fragment change will scroll to the appropriate element and restore scroll position on unmount
+ */
+const useScrollRestore = (list: HTMLElement | undefined | null) => {
+  const { hash } = useLocation();
+  const noHashScrollRef = React.useRef(0);
+
+  useEffect(() => {
+    if (!list || hash) return;
+    const onScroll = () => {
+      const currentHash = window.location.hash;
+      if (currentHash) return;
+      noHashScrollRef.current = list.scrollTop;
+    };
+    list.addEventListener("scroll", onScroll);
+    return () => list.removeEventListener("scroll", onScroll);
+  }, [list, hash]);
+
+  useEffect(() => {
+    if (!list) return;
+    if (!hash) {
+      list.scrollTop = noHashScrollRef.current;
+    } else {
+      try {
+        const el = list.querySelector<HTMLHeadElement>(
+          `[id='${hash.slice(1)}']`,
+        );
+        if (el) {
+          scrollIntoViewIfNeeded(el);
+        }
+      } catch {}
+    }
+  }, [hash, list]);
 };

@@ -35,7 +35,7 @@ import type { ParsedJoinPath } from "prostgles-types";
 import type {
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../../commonTypes/filterUtils";
+} from "../../../../../common/filterUtils";
 import { useReactiveState } from "../../../appUtils";
 import Popup from "../../../components/Popup/Popup";
 import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
@@ -142,6 +142,7 @@ export const ColumnMenu = (props: P) => {
   const { state, setState } = useReactiveState(props.columnMenuState);
   const colName = state?.column;
   const getIsMounted = useIsMounted();
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffectAsync(async () => {
     const wSub = await props.w.$cloneSync(async (wdata) => {

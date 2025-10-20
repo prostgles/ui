@@ -1,13 +1,11 @@
 import {
   mdiChartBoxMultipleOutline,
-  mdiEyeOff,
   mdiFilter,
   mdiSetLeftCenter,
 } from "@mdi/js";
 
 import React from "react";
 import Btn from "../components/Btn";
-import Popup from "../components/Popup/Popup";
 import type { CommonWindowProps } from "./Dashboard/Dashboard";
 import type {
   OnAddChart,
@@ -16,13 +14,13 @@ import type {
 } from "./Dashboard/dashboardUtils";
 
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { isJoinedFilter } from "../../../commonTypes/filterUtils";
+import { isJoinedFilter } from "../../../common/filterUtils";
+import { classOverride } from "../components/Flex";
+import { t } from "../i18n/i18nUtils";
 import type { DBS } from "./Dashboard/DBS";
 import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
-import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
-import { t } from "../i18n/i18nUtils";
-import { classOverride } from "../components/Flex";
+import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
@@ -61,8 +59,6 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
       (setLinkMenu && w.table_name && table?.joinsV2.length) ||
         (w.type !== "sql" && !!myLinks.length),
     );
-
-  let popup;
 
   const [firstLink] = myLinks;
   const divRef = React.useRef<HTMLDivElement>(null);
@@ -117,7 +113,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
               : undefined
             }
             onClick={async (e) => {
-              const _w: SyncDataItem<WindowData<"table">, true> = w as any;
+              const _w = w as SyncDataItem<WindowData<"table">, true>;
               _w.$update(
                 { options: { showFilters: !_w.options?.showFilters } },
                 { deepMerge: true },
@@ -125,7 +121,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
             }}
           />
         )}
-        {onAddChart && addChartProps && (
+        {onAddChart && addChartProps && !show && (
           <AddChartMenu
             {...addChartProps}
             tables={tables}
@@ -169,20 +165,6 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
           />
         )}
       </div>
-
-      {popup && divRef.current && (
-        <Popup
-          title={t.W_QuickMenu["Add chart"]}
-          anchorEl={divRef.current}
-          positioning={"inside"}
-          rootStyle={{ padding: 0 }}
-          clickCatchStyle={{ opacity: 0.5, backdropFilter: "blur(1px)" }}
-          contentClassName=""
-          onClose={() => {}}
-        >
-          {popup}
-        </Popup>
-      )}
     </>
   );
 };

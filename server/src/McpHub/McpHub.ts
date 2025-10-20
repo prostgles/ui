@@ -10,7 +10,6 @@ import {
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import {
   getSerialisableError,
   isEqual,
@@ -18,11 +17,18 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import { DBS } from "..";
-import { McpToolCallResponse } from "../../../commonTypes/mcp";
-import { DBSSchema } from "../../../commonTypes/publishUtils";
+import { McpToolCallResponse } from "@common/mcp";
+import { DBSSchema } from "@common/publishUtils";
+import {
+  getDockerMCP,
+  getDockerMCPToolSchemas,
+} from "../DockerManager/getDockerMCP";
 import { checkMCPServerTools } from "./checkMCPServerTools";
 import { connectToMCPServer } from "./connectToMCPServer";
-import { DefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
+import {
+  DefaultMCPServers,
+  ProstglesLocalMCPServers,
+} from "./DefaultMCPServers/DefaultMCPServers";
 import { fetchMCPResourcesList } from "./fetchMCPResourcesList";
 import { fetchMCPResourceTemplatesList } from "./fetchMCPResourceTemplatesList";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
@@ -33,6 +39,7 @@ import {
   McpServer,
   McpServerEvents,
   ServersConfig,
+  type McpTool,
 } from "./McpTypes";
 
 export type McpConnection = {
@@ -82,7 +89,7 @@ export class McpHub {
     }
   }
 
-  async destroyConnection(name: string): Promise<void> {
+  private async destroyConnection(name: string): Promise<void> {
     const connection = this.connections[name];
     if (connection) {
       delete this.connections[name];
@@ -251,12 +258,24 @@ export const startMcpHub = async (
   }
   return result.data;
 };
+
 export const _reloadMcpServerTools = async (
   dbs: DBS,
   serverName: string,
-  client: McpConnection["client"],
+  client: McpConnection["client"] | undefined,
 ) => {
-  const tools = await fetchMCPToolsList(client);
+  let tools: McpTool[] = [];
+  if (ProstglesLocalMCPServers.includes(serverName)) {
+    tools = (await getDockerMCP(dbs, undefined)).toolSchemas;
+  } else {
+    if (!client) {
+      throw new Error(
+        `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
+      );
+    }
+    tools = await fetchMCPToolsList(client);
+  }
+
   await dbs.tx(async (tx) => {
     await tx.mcp_server_tools.delete({ server_name: serverName });
     tools.length &&
@@ -268,8 +287,7 @@ export const _reloadMcpServerTools = async (
         })),
       ));
   });
-  const resources = await fetchMCPResourcesList(client);
-  console.log(resources);
+  // const   resources = await fetchMCPResourcesList(client);
   return tools.length;
 };
 
@@ -278,11 +296,6 @@ export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
     await startMcpHub(dbs);
   }
   const client = mcpHub.connections[serverName]?.client;
-  if (!client) {
-    throw new Error(
-      `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
-    );
-  }
   return _reloadMcpServerTools(dbs, serverName, client);
 };
 
@@ -294,15 +307,20 @@ const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
 export const setupMCPServerHub = async (dbs: DBS) => {
   const servers = await dbs.mcp_servers.find();
   if (!servers.length) {
+    const dockerMCPTools = await getDockerMCPToolSchemas(dbs, undefined);
     const defaultServers = Object.entries(DefaultMCPServers).map(
-      ([name, server]) => ({
-        name,
-        cwd:
-          server.source ?
-            path.join(getMCPDirectory(), name)
-          : getMCPDirectory(),
-        ...server,
-      }),
+      ([name, { mcp_server_tools = [], ...server }]) => {
+        return {
+          name,
+          cwd:
+            server.source ?
+              path.join(getMCPDirectory(), name)
+            : getMCPDirectory(),
+          ...server,
+          mcp_server_tools:
+            name === "docker-sandbox" ? dockerMCPTools : mcp_server_tools,
+        };
+      },
     );
     await dbs.mcp_servers.insert(defaultServers);
   }

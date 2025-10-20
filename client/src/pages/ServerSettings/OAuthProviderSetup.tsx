@@ -1,7 +1,7 @@
 import { mdiLock } from "@mdi/js";
 import { isEqual } from "prostgles-types";
 import React, { useState } from "react";
-import { OAuthProviderOptions } from "../../../../commonTypes/OAuthUtils";
+import { OAuthProviderOptions } from "../../../../common/OAuthUtils";
 import { CopyToClipboardBtn } from "../../components/CopyToClipboardBtn";
 import ErrorComponent from "../../components/ErrorComponent";
 import FormField from "../../components/FormField/FormField";

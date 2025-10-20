@@ -6,9 +6,9 @@ import {
   type AnyObject,
   type MethodFullDef,
 } from "prostgles-types";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../common/publishUtils";
 import { getCompiledTS } from "./connectionManagerUtils";
-import { getACRule } from "./startConnection";
+import { getAccessRule } from "./startConnection";
 import type { DBS } from "..";
 import type { JSONBColumnDef } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { DB } from "prostgles-server/dist/initProstgles";
@@ -39,7 +39,7 @@ export const getConnectionPublishMethods = ({
         connection_id: con.id,
       });
     } else {
-      const ac = await getACRule(dbs, user, dbConf.id, con.id);
+      const ac = await getAccessRule(dbs, user, dbConf.id, con.id);
       if (ac) {
         allowedMethods = await dbs.published_methods.find({
           connection_id: con.id,

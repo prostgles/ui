@@ -1,13 +1,16 @@
-import { fixIndent, ROUTES } from "../../../../../commonTypes/utils";
+import { mdiChartLine, mdiDatabaseCogOutline } from "@mdi/js";
+import { fixIndent, ROUTES } from "../../../../../common/utils";
 import type { UIDocContainers } from "../../UIDocs";
 import { editConnectionUIDoc } from "../editConnectionUIDoc";
 import { accessControlUIDoc } from "./config/accessControlUIDoc";
+import { apiUIDoc } from "./config/apiUIDoc";
 import { backupAndRestoreUIDoc } from "./config/backupAndRestoreUIDoc";
 import { fileStorageUIDoc } from "./config/fileStorageUIDoc";
 
 export const connectionConfigUIDoc = {
   type: "page",
   path: ROUTES.CONFIG,
+  iconPath: mdiDatabaseCogOutline,
   pathItem: {
     tableName: "connections",
     selectorCommand: "Connection.configure",
@@ -18,7 +21,8 @@ export const connectionConfigUIDoc = {
     "Configure the selected database connection. Set connection details, manage users, and customize settings.",
   docs: fixIndent(`
     Configure the selected database connection. Set connection details, manage users, and customize settings.
-    <img src="/screenshots/connection_config.svg" alt="Connection configuration" />
+    <img src="./screenshots/connection_config.svg" alt="Connection configuration" />
+    <img src="./screenshots/connection_config_expanded.svg" alt="Connection configuration" />
   `),
   children: [
     {
@@ -28,12 +32,14 @@ export const connectionConfigUIDoc = {
       description:
         "Edit connection parameters such as host, port, database name, and other connection settings.",
       docs: editConnectionUIDoc.docs,
+      iconPath: mdiDatabaseCogOutline,
       children: [],
     },
     {
       type: "tab",
       selectorCommand: "config.status",
       title: "Status monitor",
+      iconPath: mdiChartLine,
       description:
         "View real-time connection status, running queries, and system resource usage.",
       children: [],
@@ -41,13 +47,7 @@ export const connectionConfigUIDoc = {
     accessControlUIDoc,
     fileStorageUIDoc,
     backupAndRestoreUIDoc,
-    {
-      type: "tab",
-      selectorCommand: "config.api",
-      title: "API",
-      description: "Configure API access settings and view API documentation.",
-      children: [],
-    },
+    apiUIDoc,
     {
       type: "tab",
       selectorCommand: "config.tableConfig",

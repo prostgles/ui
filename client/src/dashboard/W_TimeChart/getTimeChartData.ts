@@ -1,13 +1,13 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
-import { asName, isDefined, tryCatch } from "prostgles-types";
-import { omitKeys } from "prostgles-types";
+import { asName, isDefined, omitKeys, tryCatchV2 } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DataItem, TimeChartLayer } from "../Charts/TimeChart";
 import type { DateExtent } from "../Charts/getTimechartBinSize";
 import { getMainTimeBinSizes } from "../Charts/getTimechartBinSize";
 import type { WindowData } from "../Dashboard/dashboardUtils";
+import { getSQLQuerySemicolon } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getGroupByValueColor } from "../WindowControls/ColorByLegend";
 import type {
   ProstglesTimeChartLayer,
@@ -23,7 +23,6 @@ import {
   type TimeChartLayerWithBin,
   type TimeChartLayerWithBinOrError,
 } from "./getTimeChartLayersWithBins";
-import type { DBS } from "../Dashboard/DBS";
 
 export const getTimeLayerDataSignature = (
   l: ProstglesTimeChartLayer,
@@ -231,10 +230,11 @@ async function getTChartLayer({
       return;
     }
 
+    const queryWithoutSemicolon = getSQLQuerySemicolon(sql, false);
     const plainResult = await db.sql(`
         ${withStatement}
         SELECT * FROM (
-          ${sql}
+          ${queryWithoutSemicolon}
         ) prostgles_chart_table 
         LIMIT 0 
       `);
@@ -290,7 +290,7 @@ async function getTChartLayer({
       withStatement,
       `SELECT ${topSelect}`,
       `FROM (`,
-      sql,
+      queryWithoutSemicolon,
       `) t `,
       `WHERE ${escDateCol} IS NOT NULL `,
       `GROUP BY 1 ${escGroupByCol ? `, 2` : ""}`,
@@ -301,16 +301,18 @@ async function getTChartLayer({
       dataQuery,
       { dateColumn, bin: binInfo.unit, statField },
       { returnType: "rows" },
-    )) as any;
+    )) as DataItem[];
   }
 
-  const renderedLayer: ProstglesTimeChartState["layers"][number] = {
+  const renderedLayer: ProstglesTimeChartStateLayer = {
     color: layer.color || "red",
     getYLabel: getYLabelFunc("", !layer.statType),
     data: rows,
     cols,
     fullExtent: [layer.request.min, layer.request.max],
-    label: layer.type === "table" ? layer.tableName : layer.sql.slice(0, 50),
+    label:
+      layer.title ??
+      (layer.type === "table" ? layer.tableName : layer.sql.slice(0, 50)),
     extFilter: extentFilter,
     dataSignature,
   };
@@ -406,7 +408,11 @@ export async function getTimeChartData(
     layers = (
       await Promise.all(
         nonErroredLayers.map(async (layer) => {
-          const { fetchedLayer, hasError, error } = await tryCatch(async () => {
+          const {
+            data: fetchedLayer,
+            hasError,
+            error,
+          } = await tryCatchV2(async () => {
             const fetchedLayer = await getTChartLayer({
               getLinksAndWindows,
               myLinks,
@@ -420,7 +426,7 @@ export async function getTimeChartData(
               w,
               desiredBinCount,
             });
-            return { fetchedLayer };
+            return fetchedLayer;
           });
           const layerSubscription = this.layerSubscriptions[layer._id];
           if (layerSubscription) {
@@ -487,14 +493,17 @@ export const getTimeChartSelectParams = ({
   } as const;
 };
 
+/**
+ * Given the y-axis value range, format the number for best comprehension
+ */
 export const getYLabelFunc = (
   endText: string,
   asIs?: boolean,
-): ProstglesTimeChartState["layers"][number]["getYLabel"] => {
+): ProstglesTimeChartStateLayer["getYLabel"] => {
   return ({ value, min, max }) => {
     const result =
-      min === max || asIs ?
-        `${value}`
+      Math.abs(min - max) > 1 || min === max || asIs ?
+        `${value.toLocaleString()}`
       : `${value.toFixed(
           Math.max(
             2,

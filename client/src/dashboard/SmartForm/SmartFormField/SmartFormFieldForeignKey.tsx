@@ -7,7 +7,7 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { sliceText } from "../../../../../commonTypes/utils";
+import { sliceText } from "../../../../../common/utils";
 import Btn from "../../../components/Btn";
 import { FileInput } from "../../../components/FileInput/FileInput";
 import { FlexRow, FlexRowWrap } from "../../../components/Flex";

@@ -24,7 +24,7 @@ export const cloneWorkspace = async (
   const newName = existing ? `${wsp.name} (Copy ${existingDigit})` : name;
   const clonedWsp = await dbs.workspaces.insert(
     {
-      ...omitKeys(wsp, ["id", "user_id", "publish_mode", "published"]),
+      ...omitKeys(wsp, ["id", "user_id", "layout_mode", "published"]),
       user_id: undefined as any,
       name: keepName ? wsp.name : newName,
       published: false,

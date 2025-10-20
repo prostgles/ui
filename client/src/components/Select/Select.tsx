@@ -14,7 +14,7 @@ import type { SearchListItem, SearchListProps } from "../SearchList/SearchList";
 import { SearchList } from "../SearchList/SearchList";
 import "./Select.css";
 import { SelectTriggerButton } from "./SelectTriggerButton";
-import { sliceText } from "../../../../commonTypes/utils";
+import { sliceText } from "../../../../common/utils";
 import { generateUniqueID } from "../FileInput/FileInput";
 
 export type OptionKey = string | number | boolean | Date | null | undefined;

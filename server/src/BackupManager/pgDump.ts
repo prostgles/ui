@@ -1,7 +1,7 @@
 import type { ChildProcess } from "child_process";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
-import { omitKeys, pickKeys } from "prostgles-types";
-import type { DumpOpts, PGDumpParams } from "../../../commonTypes/utils";
+import { isDefined, omitKeys, pickKeys } from "prostgles-types";
+import type { DumpOpts, PGDumpParams } from "../../../common/utils";
 import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
 import { envToStr, pipeFromCommand } from "./pipeFromCommand";
@@ -22,8 +22,12 @@ export async function pgDump(
     destination,
     credentialID,
     initiator = "manual_backup",
+    name,
   }: PGDumpParams,
 ) {
+  if (isDefined(name) && typeof name !== "string") {
+    throw new Error("Backup name must be a string");
+  }
   const con = await this.dbs.connections.findOne({ id: conId });
   if (!con) throw new Error("Could not find the connection");
   let proc: ChildProcess | undefined;
@@ -110,6 +114,7 @@ export async function pgDump(
       dumpAll || o.format === "p" ? "text/sql" : "application/gzip";
     const backup = await this.dbs.backups.insert(
       {
+        name,
         created: new Date(),
         dbSizeInBytes: await this.getDBSizeInBytes(conId),
         initiator,

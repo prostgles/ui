@@ -1,5 +1,5 @@
 import { ConnectionString } from "connection-string";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
 import type { DBSConnectionInfo } from "../electronConfig";
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type ConnectionInsert = DBGeneratedSchema["connections"]["columns"];

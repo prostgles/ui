@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
-import { mdiAttachment, mdiSend } from "@mdi/js";
+import { mdiAttachment, mdiSend, mdiStopCircle } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
@@ -14,6 +14,7 @@ import { ScrollFade } from "../ScrollFade/ScrollFade";
 import { ChatMessage } from "./ChatMessage";
 import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import { useChatOnPaste } from "./useChatOnPaste";
+import Loading from "@components/Loader/Loading";
 
 export type Message = {
   id: number | string;
@@ -29,12 +30,14 @@ export type ChatProps = {
   style?: React.CSSProperties;
   className?: string;
   onSend: (msg?: string, files?: File[]) => Promise<any | void>;
+  onStopSending: undefined | (() => void);
   messages: Message[];
   allowedMessageTypes?: Partial<{
     speech: { tts: boolean; audio: boolean };
     file: boolean;
   }>;
   disabledInfo?: string;
+  isLoading: boolean;
   actionBar?: React.ReactNode;
 };
 
@@ -47,11 +50,13 @@ export const Chat = (props: ChatProps) => {
     style = {},
     messages,
     onSend,
+    onStopSending,
     disabledInfo,
     allowedMessageTypes = {
       file: false,
     },
     actionBar,
+    isLoading,
   } = props;
   const speech = speechFeatureFlagEnabled && allowedMessageTypes.speech;
 
@@ -127,6 +132,7 @@ export const Chat = (props: ChatProps) => {
     }
     setSendingMsg(false);
   }, [getCurrentMessage, onSend, setCurrentMessage, files]);
+  const chatIsLoading = isLoading || sendingMsg;
 
   const filesAsBase64 = usePromise(async () => {
     if (!files.length) return [];
@@ -170,12 +176,13 @@ export const Chat = (props: ChatProps) => {
         data-command="Chat.sendWrapper"
         className={
           "send-wrapper relative " +
-          (sendingMsg || disabledInfo ? "no-interaction not-allowed" : "")
+          (disabledInfo ? "no-interaction not-allowed" : "")
         }
       >
         <FlexCol
           className={
             "f-1 rounded ml-1 p-p5 " +
+            (chatIsLoading ? "no-interaction not-allowed" : "") +
             (isEngaged ? "active-shadow bg-action" : "bg-color-2 ")
           }
           {...divHandlers}
@@ -233,6 +240,7 @@ export const Chat = (props: ChatProps) => {
           <FlexRow className="gap-0">
             {allowedMessageTypes.file && (
               <label
+                data-command="Chat.addFiles"
                 className="pointer button bg-transparent bg-active-hover"
                 style={{ background: "transparent", padding: ".5em" }}
               >
@@ -255,17 +263,24 @@ export const Chat = (props: ChatProps) => {
               />
             )}
           </FlexRow>
-          <Btn
-            iconPath={mdiSend}
-            loading={sendingMsg}
-            title={t.common.Send}
-            data-command="Chat.send"
-            disabledInfo={disabledInfo}
-            onClick={async (e) => {
-              if (!ref.current) return;
-              sendMsg();
-            }}
-          />
+          {onStopSending ?
+            <Btn
+              onClick={onStopSending}
+              title={t.common.Stop}
+              iconPath={mdiStopCircle}
+            />
+          : <Btn
+              iconPath={mdiSend}
+              loading={sendingMsg}
+              title={t.common.Send}
+              data-command="Chat.send"
+              disabledInfo={disabledInfo}
+              onClick={async (e) => {
+                if (!ref.current) return;
+                sendMsg();
+              }}
+            />
+          }
         </FlexCol>
       </div>
     </div>

@@ -41,5 +41,15 @@ export const readFetchStream = async (response: Response) => {
     await reader.cancel();
   }
 
+  if (
+    response.headers.get("content-type")?.includes("text/html") &&
+    buffer.trim().startsWith("<")
+  ) {
+    return {
+      error: "HTML response from LLM",
+      statusCode: response.status,
+      html: buffer,
+    };
+  }
   return JSON.parse(buffer);
 };

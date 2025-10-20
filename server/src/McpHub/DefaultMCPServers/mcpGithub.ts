@@ -1,6 +1,7 @@
-import type { MCPServerInfo } from "../../../../commonTypes/mcp";
+import type { MCPServerInfo } from "../../../../common/mcp";
 
 export const mcpGithub: MCPServerInfo = {
+  icon_path: "Github",
   command: "docker",
   args: [
     "run",

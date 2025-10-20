@@ -1,6 +1,6 @@
 import { mdiFilter, mdiStopCircleOutline } from "@mdi/js";
 import React from "react";
-import type { ConnectionStatus } from "../../../../commonTypes/utils";
+import type { ConnectionStatus } from "../../../../common/utils";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
 import PopupMenu from "../../components/PopupMenu";

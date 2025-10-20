@@ -1,5 +1,9 @@
 import { isDefined } from "../../../utils";
-import { isElementNode, isInputNode, isTextNode } from "../isElementVisible";
+import {
+  isElementNode,
+  isInputOrTextAreaNode,
+  isTextNode,
+} from "../utils/isElementVisible";
 
 export type TextForSVG = {
   style: CSSStyleDeclaration;
@@ -10,6 +14,7 @@ export type TextForSVG = {
   width: number;
   height: number;
   isSingleLine: boolean | undefined;
+  numberOfLines?: number;
   element: HTMLElement;
 };
 
@@ -26,9 +31,17 @@ export const getTextForSVG = (
   if (isTextNode(element)) {
     throw new Error("Not expecting this to be honest");
   }
-  if (isInputNode(element)) {
+  if (isInputOrTextAreaNode(element)) {
     const inputRect = element.getBoundingClientRect();
-    const textContent = element.value || element.placeholder;
+    let textContent = element.value || element.placeholder;
+    if (
+      (element.type === "date" || element.type === "datetime-local") &&
+      element.value
+    ) {
+      try {
+        textContent = new Date(element.value).toLocaleString();
+      } catch {}
+    }
     const isPlaceholder = !element.value;
     if (!textContent) return;
     const paddingLeft = parseFloat(style.paddingLeft) || 0;
@@ -45,7 +58,11 @@ export const getTextForSVG = (
     const borderLeft = parseFloat(style.borderLeftWidth) || 0;
 
     const yTextOffset = -paddingBottom - borderBottom - fontYPadding / 2 - 2;
-    const y = inputRect.y + inputRect.height + yTextOffset;
+    const isTextArea = element instanceof HTMLTextAreaElement;
+    const y =
+      isTextArea ?
+        inputRect.y + paddingTop + fontSize + borderTop + 2
+      : inputRect.y + inputRect.height + yTextOffset;
     const result = [
       {
         style: actualStyle,
@@ -79,6 +96,9 @@ export const getTextForSVG = (
       const textyMaxHeight = Math.min(textMaxY, maxY) - textRect.y;
       const visibleTextWidth = Math.min(textRect.width, textxMaxWidth);
       const visibleTextHeight = Math.min(textRect.height, textyMaxHeight);
+      const spanHeight =
+        element instanceof HTMLSpanElement ? element.clientHeight : undefined;
+      const numberOfLines = range.getClientRects().length;
       if (visibleTextWidth && visibleTextHeight) {
         const edgeRects = getTextEdgeRects(childTextNode, textContent.length);
         const textIndent = edgeRects.startCharRect.left - textRect.x;
@@ -93,10 +113,11 @@ export const getTextForSVG = (
           y: textRect.y,
           /** This ensures the actual visible/non overflown size of text is used */
           width: visibleTextWidth,
-          height: visibleTextHeight,
+          height: spanHeight ?? visibleTextHeight,
           textIndent: Math.max(0, textIndent),
           isSingleLine:
             edgeRects.startCharRect.top === edgeRects.endCharRect.top,
+          numberOfLines,
           element,
         };
         return res;

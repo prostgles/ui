@@ -5,28 +5,26 @@ export const overviewUIDoc = {
   title: "Overview",
   description: "Overview",
   docs: `
-    Prostgles UI is a powerful and user-friendly interface designed for creating internal tools as well as managing and exploring PostgreSQL databases.
+    Prostgles UI is a user-friendly way for interacting with PostgreSQL, creating dashboards and internal tools.
 
-    <img src="/screenshots/dashboard.svg" alt="Prostgles UI Overview" width="100%" />
+    <img src="./screenshots/sql_editor.svgif.svg" alt="Prostgles UI Overview" width="100%" />
+    <img src="./screenshots/ai_assistant.svgif.svg" alt="Prostgles UI Overview" width="100%" />
 
-    It comes in two versions: 
-
-    ### 1. Prostgles UI 
-    
-    Web-based application accessible through any modern browser with a complete feature set:
-    - Real-time dashboards
+    ## Features
+    - SQL Editor with syntax highlighting and auto-completion
+    - Real-time dashboards with charts
     - AI assistant with MCP support
-    - User authentication (email and third-party OAuth providers)
+    - User authentication (email, third-party OAuth and two-factor authentication)
     - Role-based access control
     - Database management
     - File storage and management
     - API integration
-    
-    ### 2. Prostgles Desktop 
-    
-    Native desktop application for Linux, MacOS and Windows. 
+
+    It comes in two versions: 
+    - **Prostgles UI** - a web-based application with the complete feature set accessible through any modern browser.
+    - **Prostgles Desktop** - a native desktop application based on Electron available for Linux, MacOS and Windows. 
     It has a subset of the core features from Prostgles UI for data exploration and database management. 
-    Authentication, User Management and other multi-user focused features are not available in the desktop version.
+    User Management and other multi-user focused features are not available in the desktop version.
   `,
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
 } as const satisfies UIDoc;

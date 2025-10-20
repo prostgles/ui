@@ -7,17 +7,17 @@ import type { DBS } from "../..";
 
 import {
   getMCPFullToolName,
-  getProstglesDBTools,
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
   type ProstglesMcpTool,
-} from "../../../../commonTypes/prostglesMcp";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { getAddTaskTools, suggestDashboardsTool } from "./prostglesMcpTools";
-import { getEntries } from "../../../../commonTypes/utils";
+} from "../../../../common/prostglesMcp";
+import type { DBSSchema } from "../../../../common/publishUtils";
+import { getEntries } from "../../../../common/utils";
+import { getDockerMCP } from "../../DockerManager/getDockerMCP";
+import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
 
-type Args = {
-  isAdmin: boolean;
+export type GetLLMToolsArgs = {
+  userType: string;
   chat: DBSSchema["llm_chats"];
   prompt: DBSSchema["llm_prompts"];
   dbs: DBS;
@@ -40,45 +40,14 @@ export type MCPToolSchemaWithApproveInfo = MCPToolSchema &
         auto_approve: boolean;
       })
   );
-export const getLLMTools = async ({
-  isAdmin,
+export const getLLMAllowedChatTools = async ({
+  userType,
   dbs,
   chat,
   connectionId,
   prompt,
-}: Args): Promise<undefined | MCPToolSchemaWithApproveInfo[]> => {
-  const { prompt_type } = prompt.options ?? {};
-
+}: GetLLMToolsArgs): Promise<undefined | MCPToolSchemaWithApproveInfo[]> => {
   const { id: chatId } = chat;
-
-  let taskTool: MCPToolSchema | undefined = undefined;
-  if (prompt_type === "tasks") {
-    if (!isAdmin) {
-      throw new Error("Only admins can use task creation tools");
-    }
-    const { published_methods } = await getPublishedMethodsTools(dbs, {});
-    const { mcp_server_tools } = await getMCPServerTools(dbs, {});
-    taskTool = getAddTaskTools({
-      availableMCPTools: mcp_server_tools.map((t) => ({
-        ...t,
-        name: getMCPFullToolName(t.server_name, t.name),
-      })),
-      availableDBTools: published_methods.map((t) => ({
-        ...t,
-        name: getProstglesMCPFullToolName("prostgles-db-methods", t.name),
-      })),
-    });
-  }
-
-  const dbTools: MCPToolSchemaWithApproveInfo[] = getProstglesDBTools(chat).map(
-    (tool) => {
-      return {
-        ...tool,
-        input_schema: getJSONBSchemaAsJSONSchema("", "", tool.schema),
-      };
-    },
-  );
-
   const { serverSideFuncTools } = await getPublishedMethodsTools(dbs, {
     connection_id: connectionId,
     $existsJoined: {
@@ -104,23 +73,37 @@ export const getLLMTools = async ({
     },
   });
   const tools: Record<string, MCPToolSchemaWithApproveInfo> = {};
+  const dockerMCP = await getDockerMCP(dbs, chat);
+  const mcpToolsWithInfo = mcpTools
+    .map(({ id, ...tool }) => {
+      const info = llm_chats_allowed_mcp_tools.find(
+        ({ tool_id }) => tool_id === id,
+      );
+      const toolInfo = dockerMCP.toolSchemas.find((t) => t.name === tool.name);
+      if (!info) return;
+      return {
+        type: "mcp" as const,
+        ...tool,
+        ...info,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        input_schema: toolInfo?.inputSchema ?? tool.input_schema,
+        description: toolInfo?.description ?? tool.description,
+        auto_approve: Boolean(info.auto_approve),
+      };
+    })
+    .filter(isDefined);
+
+  const { mcpToolsWithDocker, prostglesDBTools } = await getProstglesLLMTools({
+    userType,
+    dbs,
+    chat,
+    prompt,
+    mcpToolsWithInfo,
+  });
 
   /** Check for name collisions */
   [
-    ...mcpTools
-      .map(({ id, ...t }) => {
-        const info = llm_chats_allowed_mcp_tools.find(
-          ({ tool_id }) => tool_id === id,
-        );
-        if (!info) return;
-        return {
-          type: "mcp" as const,
-          ...t,
-          ...info,
-          auto_approve: Boolean(info.auto_approve),
-        };
-      })
-      .filter(isDefined),
+    ...mcpToolsWithDocker,
     ...serverSideFuncTools
       .map(({ id, ...t }) => {
         const info = llm_chats_allowed_functions.find(
@@ -135,24 +118,8 @@ export const getLLMTools = async ({
         };
       })
       .filter(isDefined),
-    ...dbTools,
-    prompt_type === "dashboards" ?
-      ({
-        ...suggestDashboardsTool,
-        auto_approve: true,
-        type: "prostgles-ui",
-        tool_name: "suggest_dashboards",
-      } satisfies MCPToolSchemaWithApproveInfo)
-    : undefined,
-    taskTool &&
-      ({
-        ...taskTool,
-        auto_approve: true,
-        type: "prostgles-ui",
-        tool_name: "suggest_tools_and_prompt",
-      } satisfies MCPToolSchemaWithApproveInfo),
+    ...prostglesDBTools,
   ].forEach((tool) => {
-    if (!tool) return;
     const { name } = tool;
     if (tools[name]) {
       throw new Error(

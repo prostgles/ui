@@ -1,7 +1,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import type { Prgl } from "../../../App";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
@@ -9,8 +9,14 @@ import Popup from "../../../components/Popup/Popup";
 import { isEmpty } from "../../../utils";
 import { CodeEditor } from "../../CodeEditor/CodeEditor";
 import type { DBS } from "../../Dashboard/DBS";
-import { type ApproveRequest } from "./useLLMChatAllowedTools";
-import { useLLMToolsApprover } from "./useLLMToolsApprover";
+import {
+  useLLMToolsApprover,
+  type ApproveRequest,
+} from "./useLLMToolsApprover";
+import { getMCPToolNameParts } from "../../../../../common/prostglesMcp";
+import { Marked } from "@components/Chat/Marked";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
@@ -112,29 +118,33 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       activeChat,
     ],
   );
+  const nameParts = useMemo(
+    () => (mustApprove ? getMCPToolNameParts(mustApprove.name) : undefined),
+    [mustApprove],
+  );
 
   useLLMToolsApprover({ ...props, requestApproval: onRequestToolUse });
 
   if (!mustApprove) return null;
 
   const { input, description } = mustApprove;
-
   return (
     <Popup
       title={
         mustApprove.type === "mcp" ?
-          `Allow tool from ${mustApprove.server_name} to run?`
+          `Allow tool from ${nameParts?.serverName} to run?`
         : `Allow function to run?`
       }
+      showFullscreenToggle={{}}
       onClose={() => {
-        mustApprove.onResponse("deny");
         setMustApprove(undefined);
       }}
       clickCatchStyle={{ opacity: 1 }}
-      rootStyle={{
-        maxWidth: "min(600px, 100vw)",
+      contentStyle={{
+        maxWidth: "min(800px, 100vw)",
+        width: "100%",
       }}
-      contentClassName="p-1"
+      contentClassName="p-1 f-1 as-center"
       footerButtons={[
         {
           label: "Deny",
@@ -169,16 +179,30 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         },
       ]}
     >
-      <FlexCol>
+      <FlexCol className="f-1">
         <FlexRow>
-          Run <strong>{mustApprove.name}</strong>
-          {mustApprove.type === "mcp" && <>from {mustApprove.server_name}</>}
+          Run <strong>{nameParts?.toolName}</strong>
+          {mustApprove.type === "mcp" && (
+            <FlexRow>
+              from <strong>{nameParts?.serverName}</strong>
+            </FlexRow>
+          )}
         </FlexRow>
-        <InfoRow variant="naked" iconPath="" color="info">
-          {description}
-        </InfoRow>
+        <Marked
+          style={{ maxHeight: "200px" }}
+          className="ta-start"
+          content={description}
+          codeHeader={undefined}
+          loadedSuggestions={undefined}
+          sqlHandler={undefined}
+        />
         {input && !isEmpty(input) && (
-          <CodeEditor value={JSON.stringify(input, null, 2)} language="json" />
+          <CodeEditorWithSaveButton
+            label="Input"
+            // contentTop={<FlexRow className="p-1 bg-color-1">Input</FlexRow>}
+            value={JSON.stringify(input, null, 2)}
+            language="json"
+          />
         )}
       </FlexCol>
     </Popup>

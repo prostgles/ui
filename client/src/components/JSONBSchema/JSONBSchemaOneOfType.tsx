@@ -116,8 +116,27 @@ export const JSONBSchemaOneOfType = ({
           //@ts-ignore
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (newValue && newSchemaIdx !== matchingOneOfSchemaIdx) {
+            const currentSchema = matchingOneOfSchema;
+            const newSchema = s.oneOfType[newSchemaIdx]!;
+            /** Must remove any properties that do not exist in the new schema */
+            const newValueWithCommonProps = pickKeys(
+              newValue,
+              getKeys(newSchema).filter((key) => {
+                if (toggleProps.includes(key)) return true;
+                const oldPropSchema =
+                  currentSchema[key] && getFieldObj(currentSchema[key]);
+                const newPropSchema =
+                  newSchema[key] && getFieldObj(newSchema[key]);
+                return (
+                  oldPropSchema &&
+                  newPropSchema &&
+                  typeof oldPropSchema.type === "string" &&
+                  oldPropSchema.type === newPropSchema.type
+                );
+              }),
+            );
             //@ts-ignore
-            onChange(pickKeys(newValue, getKeys(s.oneOfType[newSchemaIdx])));
+            onChange(newValueWithCommonProps);
           } else {
             onChange(newValue);
           }

@@ -10,22 +10,14 @@ type P = Pick<ExtraProps, "dbs"> & {
   serverState: undefined | ExtraProps["serverState"];
   userId: string | undefined;
 };
-export const ThemeSelector = ({
-  serverState,
-  dbs,
-  userId,
-  userThemeOption,
-}: P) => {
+export const ThemeSelector = ({ dbs, userId, userThemeOption }: P) => {
   return (
     <Select
       title={t.common.Theme}
       btnProps={{
         variant: "default",
         iconPath: mdiThemeLightDark,
-        children:
-          window.isLowWidthScreen || !!serverState?.isElectron ?
-            t.common.Theme
-          : "",
+        children: "",
       }}
       data-command="App.colorScheme"
       value={userThemeOption}

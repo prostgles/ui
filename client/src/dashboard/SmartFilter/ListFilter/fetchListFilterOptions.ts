@@ -1,4 +1,4 @@
-import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import { getSmartGroupFilter } from "../../../../../common/filterUtils";
 import { getSuggestions } from "../../SmartForm/SmartFormField/fieldUtils";
 import { type BaseFilterProps } from "../smartFilterUtils";
 

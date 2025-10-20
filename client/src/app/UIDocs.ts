@@ -1,12 +1,14 @@
+import { filterArrInverse } from "@common/llmUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import type { ROUTES } from "@common/utils";
 import type { Route } from "react-router-dom";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { ROUTES } from "../../../commonTypes/utils";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import type { Command } from "../Testing";
 import { isDefined } from "../utils";
 import { domToThemeAwareSVG } from "./domToSVG/domToThemeAwareSVG";
 import { accountUIDoc } from "./UIDocs/accountUIDoc";
-import { commandSearchUIDoc } from "./UIDocs/commandSearchUIDoc";
+import { commandPaletteUIDoc } from "./UIDocs/commandPaletteUIDoc";
+import { connectionConfigUIDoc } from "./UIDocs/connection/connectionConfigUIDoc";
 import { dashboardUIDoc } from "./UIDocs/connection/dashboardUIDoc";
 import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
 import { desktopInstallationUIDoc } from "./UIDocs/desktopInstallation";
@@ -14,23 +16,55 @@ import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
 import { overviewUIDoc } from "./UIDocs/overviewUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 import { UIInstallation } from "./UIDocs/UIInstallationUIDoc";
-import { connectionConfigUIDoc } from "./UIDocs/connection/connectionConfigUIDoc";
-import { editConnectionUIDoc } from "./UIDocs/editConnectionUIDoc";
+import { getSVGif } from "./domToSVG/SVGif/getSVGif";
 
-type Route = (typeof ROUTES)[keyof typeof ROUTES];
+/**
+ * The purpose of UIDocs is to provide structured metadata about the UI elements.
+ * This metadata is used for:
+ * 1. Command Palette. It requires a list of all UI elements and their relationships to enable quick navigation.
+ * 2. Documentation. Generating user guides and documentation with screenshots and descriptions.
+ * 3. Automated testing to ensure UI elements are present and functional.
+ *
+ * Each UIDoc describes a UI element or a group of elements, including their type, selector, description, and hierarchical relationships.
+ * This structured approach allows for easy maintenance and scalability of the documentation system.
+ */
 
 type UIDocCommon = {
   title: string;
+
+  /**
+   * Optional mdi icon path representing the element, enhancing visual identification in the Command Palette.
+   */
+  iconPath?: string;
+
+  /**
+   * Short description of the element's purpose or functionality used in Command Palette.
+   */
   description: string;
+
   /**
    * If defined, this will be used to generate a separate section in the documentation.
    */
   docs?: string;
+
   /**
-   * If true AND docs is defined, this will be saved as a separate file in the documentation.
-   * By default, a single file is generated for each root UIDoc.
+   * If defined, this will be used as the title for the children list in the documentation.
    */
-  asSeparateFile?: boolean;
+  childrenTitle?: string;
+
+  docOptions?: /**
+   * If docs is defined, then it will be rendered as a separate header in the documentation with this title.
+   */
+  | { title: string }
+    /**
+     * If "asSeparateFile" AND docs is defined, this will be saved as a separate file in the documentation.
+     * By default, a single file is generated for each root UIDoc with child items with docs appended to the bottom.
+     */
+    | "asSeparateFile"
+    /**
+     * Hides children from documentation. Meant to be used when the children content is obvious/documented on the parent.
+     */
+    | "hideChildren";
 
   /** If true then this is not available for Prostgles Desktop */
   uiVersionOnly?: true;
@@ -57,6 +91,13 @@ type UIDocBase<T> = (
   UIDocCommon &
   T;
 
+type Route = (typeof ROUTES)[keyof typeof ROUTES];
+
+export type UIDocInputElement = UIDocBase<{
+  type: "input";
+  inputType: "text" | "number" | "checkbox" | "select" | "file";
+}>;
+
 export type UIDocElement =
   | UIDocBase<{
       type: "button";
@@ -68,10 +109,7 @@ export type UIDocElement =
   | UIDocBase<{
       type: "canvas";
     }>
-  | UIDocBase<{
-      type: "input";
-      inputType: "text" | "number" | "checkbox" | "select" | "file";
-    }>
+  | UIDocInputElement
   | UIDocBase<{
       type: "text";
     }>
@@ -112,6 +150,9 @@ export type UIDocElement =
       fieldNames?: string[];
     }>
   | (UIDocCommon & {
+      /**
+       * Documentation-only. Does not appear in Command Palette.
+       */
       type: "info";
     });
 
@@ -130,7 +171,7 @@ export type UIDocContainers =
   | UIDocPage
   | UIDocBase<{
       type: "hotkey-popup";
-      hotkey: string;
+      hotkey: ["Ctrl" | "Alt" | "Shift", "A" | "K"];
       children: UIDocElement[];
     }>;
 
@@ -138,8 +179,13 @@ export type UIDocNavbar = UIDocBase<{
   type: "navbar";
   docs?: string;
   children: UIDocElement[];
+  /**
+   * List of paths the navbar appears on.
+   */
   paths: (Route | { route: Route; exact: true })[];
 }>;
+
+export type UIDoc = UIDocContainers | UIDocElement | UIDocNavbar;
 
 export const UIDocs = [
   overviewUIDoc,
@@ -147,18 +193,13 @@ export const UIDocs = [
   desktopInstallationUIDoc,
   navbarUIDoc,
   connectionsUIDoc,
-  {
-    ...editConnectionUIDoc,
-    path: ROUTES.NEW_CONNECTION,
-  },
   dashboardUIDoc,
   connectionConfigUIDoc,
   serverSettingsUIDoc,
   accountUIDoc,
-  commandSearchUIDoc,
-] satisfies (UIDocContainers | UIDocNavbar | UIDocElement)[];
+  commandPaletteUIDoc,
+] satisfies UIDoc[];
 
-export type UIDoc = UIDocContainers | UIDocElement | UIDocNavbar;
 const getFlatDocs = (
   doc: UIDoc | undefined,
   parentDocs: UIDoc[] = [],
@@ -207,11 +248,13 @@ export type UIDocFlat = UIDocNonInfo & {
   parentTitles: string[];
   parentDocs: UIDoc[];
 };
-export const flatDocs = UIDocs.filter((d) => d.type !== "info")
+export const flatUIDocs = filterArrInverse(UIDocs, { type: "info" } as const)
   .map((doc) => getFlatDocs(doc))
   .filter(isDefined)
   .flat() as UIDocFlat[];
+window.flatUIDocs = flatUIDocs;
 
 if (isPlaywrightTest) {
   window.toSVG = domToThemeAwareSVG;
+  window.getSVGif = getSVGif;
 }

@@ -1,5 +1,6 @@
 import { test } from "@playwright/test";
-import { PageWIds, USERS, login } from "./utils";
+import { PageWIds, login } from "./utils/utils";
+import { USERS } from "utils/constants";
 test.use({
   viewport: { width: 1280, height: 1080 },
   video: {
@@ -36,7 +37,7 @@ test.describe("Create load test users", () => {
             status: "active",
           })),
         );
-      } catch (err) {
+      } catch (err: any) {
         document.body.innerText = JSON.stringify(err.message ?? err);
         throw err;
       }

@@ -5,6 +5,8 @@ import {
   _electron as electron,
   Page,
 } from "@playwright/test";
+import { rmSync } from "original-fs";
+import * as path from "path";
 let electronApp: ElectronApplication | undefined;
 
 const start = Date.now();
@@ -117,6 +119,13 @@ test("renders the first page", async () => {
   await page
     .getByTestId("ConnectionServer.add")
     .waitFor({ state: "visible", timeout: 60e3 });
+
+  /** TODO: Delete creds and re-try with smart setup */
+  // const localDataDir =
+  //   (await electronApp?.evaluate(({ app }) => app.getPath("userData"))) || "";
+  // rmSync(path.resolve(`${localDataDir}/.prostgles-desktop-config.json`));
+  // await page.reload();
+
   await screenshot();
   await page.getByTestId("Connection.openConnection").click();
   await screenshot();

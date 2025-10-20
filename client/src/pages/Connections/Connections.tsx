@@ -1,11 +1,11 @@
 import { mdiPlus } from "@mdi/js";
 import React from "react";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import type { PrglState } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import { t } from "../../i18n/i18nUtils";
 import { Connection } from "./Connection";
 import { ConnectionsOptions } from "./ConnectionsOptions";

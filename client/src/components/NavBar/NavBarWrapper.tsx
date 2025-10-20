@@ -3,18 +3,12 @@ import { NavLink } from "react-router-dom";
 import type { PrglState } from "../../App";
 import "../../App.css";
 import { t } from "../../i18n/i18nUtils";
-import { isDefined } from "prostgles-types";
 
-import {
-  mdiAccountMultiple,
-  mdiServerNetwork,
-  mdiServerSecurity,
-} from "@mdi/js";
-import { NavBar } from "./NavBar";
-import { ROUTES } from "../../../../commonTypes/utils";
-import { FlexRow } from "../Flex";
-import { ThemeSelector, type ThemeOption } from "../../theme/ThemeSelector";
 import { LanguageSelector } from "../../i18n/LanguageSelector";
+import { ThemeSelector, type ThemeOption } from "../../theme/ThemeSelector";
+import { FlexRow } from "../Flex";
+import { NavBar } from "./NavBar";
+import { useNavBarItems } from "./useNavBarItems";
 
 type NavBarWrapperProps = {
   children: React.ReactNode;
@@ -28,6 +22,8 @@ export const NavBarWrapper = (props: NavBarWrapperProps) => {
   // const withNavBar = (content: React.ReactNode, ) => {
   const showLoginRegister =
     needsUser && !extraProps.user && !extraProps.auth.user;
+
+  const options = useNavBarItems(extraProps);
   return (
     <div className="flex-col ai-center w-full f-1 min-h-0">
       <NavBar
@@ -35,31 +31,7 @@ export const NavBarWrapper = (props: NavBarWrapperProps) => {
         dbsMethods={dbsMethods}
         serverState={serverState}
         user={auth.user}
-        options={[
-          {
-            label: t["App"]["Connections"],
-            to: ROUTES.CONNECTIONS,
-            iconPath: mdiServerNetwork,
-          },
-          serverState.isElectron ? undefined : (
-            {
-              label: t["App"]["Users"],
-              to: ROUTES.USERS,
-              forAdmin: true,
-              iconPath: mdiAccountMultiple,
-            }
-          ),
-          {
-            label: t["App"]["Server settings"],
-            to: ROUTES.SERVER_SETTINGS,
-            forAdmin: true,
-            iconPath: mdiServerSecurity,
-          },
-
-          // { label: "Permissions", to: "/access-management", forAdmin: true },
-        ]
-          .filter(isDefined)
-          .filter((o) => !o.forAdmin || extraProps.user?.type === "admin")}
+        options={options}
         endContent={
           <FlexRow className={window.isLowWidthScreen ? "ml-2" : ""}>
             <ThemeSelector

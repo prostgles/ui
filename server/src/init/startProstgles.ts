@@ -8,8 +8,8 @@ import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from "..";
 import { connMgr } from "..";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import type { ProstglesInitState } from "../../../commonTypes/electronInitTypes";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { ProstglesInitState } from "../../../common/electronInitTypes";
 import BackupManager from "../BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/McpHub";
@@ -111,7 +111,7 @@ export const startProstgles = async ({
     const tsGeneratedTypesDir =
       IS_PROD || getElectronConfig()?.isElectron ?
         undefined
-      : path.join(actualRootDir + "/../commonTypes/");
+      : path.join(actualRootDir + "/../common/");
     const watchSchema = !!tsGeneratedTypesDir;
 
     const prgl = await prostgles<DBGeneratedSchema, SUser>({

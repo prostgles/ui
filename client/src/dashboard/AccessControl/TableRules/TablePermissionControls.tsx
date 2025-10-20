@@ -1,7 +1,7 @@
 import { mdiAlertCircleOutline, mdiCog } from "@mdi/js";
 import { getKeys, isObject } from "prostgles-types";
 import React, { useState } from "react";
-import type { GroupedDetailedFilter } from "../../../../../commonTypes/filterUtils";
+import type { GroupedDetailedFilter } from "../../../../../common/filterUtils";
 import type {
   BasicTablePermissions,
   ContextDataObject,
@@ -9,7 +9,7 @@ import type {
   TableRules,
   TableRulesErrors,
   UpdateRule,
-} from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
 import Btn from "../../../components/Btn";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";

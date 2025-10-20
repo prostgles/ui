@@ -142,7 +142,7 @@ export const getSearchListMatchAndHighlight = (args: {
       isSublabel: true,
       matchCase,
       style: subLabelStyle,
-      ranking: 1,
+      // ranking: 1, // Why was this here?
     });
     result.node = (
       <div className="flex-col f-1" style={rootStyle}>
@@ -154,6 +154,7 @@ export const getSearchListMatchAndHighlight = (args: {
     if (node1.rank !== Infinity && node2.rank !== Infinity) {
       rank /= 2;
     }
+
     result.rank = rank;
   }
   return result;

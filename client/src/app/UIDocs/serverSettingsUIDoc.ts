@@ -1,16 +1,18 @@
-import { ROUTES } from "../../../../commonTypes/utils";
+import { mdiServerSecurity } from "@mdi/js";
+import { ROUTES } from "../../../../common/utils";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers } from "../UIDocs";
 
 export const serverSettingsUIDoc = {
   type: "page",
   path: ROUTES.SERVER_SETTINGS,
+  iconPath: mdiServerSecurity,
   title: "Server Settings",
   description:
     "Server Settings. Configure security, authentication, and LLM settings.",
   docs: `
     Manage server settings to enhance security, configure authentication methods, and set up LLM providers.
-    <img src="/screenshots/server_settings.svg" alt="Server Settings" />
+    <img src="./screenshots/server_settings.svg" alt="Server Settings" />
   `,
   children: [
     {
@@ -116,7 +118,7 @@ export const serverSettingsUIDoc = {
           type: "list",
           title: "Third-party login providers",
           description: "Third-party login providers (OAuth2)",
-          selector: getCommandElemSelector("AuthProviders.list"),
+          selectorCommand: "AuthProviders.list",
           itemSelector:
             getCommandElemSelector("AuthProviders.list") + " > .Section",
           itemContent: [],

@@ -23,7 +23,7 @@ import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
 import { SchemaGraph } from "../SchemaGraph/SchemaGraph";
 import { WorkspaceAddBtn } from "../WorkspaceMenu/WorkspaceAddBtn";
-import { useSetActiveWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
+import { useSetActiveWorkspace } from "../WorkspaceMenu/useWorkspaces";
 import { useLocalSettings } from "../localSettings";
 import type { DashboardMenuProps, DashboardMenuState } from "./DashboardMenu";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";

@@ -16,10 +16,14 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"noUncheckedIndexedAccess": true,
+		"baseUrl": ".",
 		"paths": {
 			"@common/*": [
-				"../commonTypes/*"
-			], 
+				"../common/*"
+			],
+			"@src/*": [
+				"src/*"
+			],
 		},
 	},
 	"exclude": [

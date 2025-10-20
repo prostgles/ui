@@ -7,11 +7,13 @@ import Popup from "../components/Popup/Popup";
 import type { DBS } from "../dashboard/Dashboard/DBS";
 import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { getKeys } from "../utils";
-import { accessControlDemo } from "./accessControlDemo";
-import { backupDemo } from "./backupDemo";
-import { dashboardDemo } from "./dashboardDemo";
-import { fileDemo } from "./fileDemo";
-import { sqlDemo } from "./sqlVideoDemo";
+import { accessControlDemo } from "./scripts/accessControlDemo";
+import { backupDemo } from "./scripts/backupDemo";
+import { dashboardDemo } from "./scripts/dashboardDemo";
+import { fileDemo } from "./scripts/fileDemo";
+import { sqlDemo } from "./scripts/sqlVideoDemo";
+import { schemaDiagramDemo } from "./scripts/schemaDiagramDemo";
+import { AIAssistantDemo } from "./scripts/AIAssistantDemo";
 
 const loadTest = async () => {
   const dbs: DBS = (window as any).dbs;
@@ -19,6 +21,8 @@ const loadTest = async () => {
 };
 
 const VIDEO_DEMO_SCRIPTS = {
+  AIAssistantDemo,
+  schemaDiagramDemo,
   backupDemo,
   fileDemo,
   accessControlDemo,
@@ -61,12 +65,18 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
       await VIDEO_DEMO_SCRIPTS[name]();
     } else {
       const {
+        AIAssistantDemo,
+        schemaDiagramDemo,
         sqlDemo,
         accessControlDemo,
         backupDemo,
         fileDemo,
         dashboardDemo,
       } = VIDEO_DEMO_SCRIPTS;
+      startVideoDemo("AI Assistant");
+      await AIAssistantDemo();
+      startVideoDemo("Schema Diagram");
+      await schemaDiagramDemo();
       startVideoDemo("SQL");
       await sqlDemo();
       startVideoDemo("Access Control");

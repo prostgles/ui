@@ -1,7 +1,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import { isDefined } from "prostgles-types";
-import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import { getSmartGroupFilter } from "../../../../../common/filterUtils";
 import { isEmpty } from "../../../utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
@@ -24,32 +24,72 @@ export const getTableSelect = async (
   let select: AnyObject = {};
   let barchartVals: MinMaxVals | undefined;
   if (w.columns && Array.isArray(w.columns)) {
+    const fullColumns = getFullColumnConfig(tables, w);
     await Promise.all(
-      getFullColumnConfig(tables, w).map(async (c) => {
+      fullColumns.map(async (c) => {
         if (c.show) {
           if (c.style && ["Barchart", "Scale"].includes(c.style.type)) {
-            if (c.computedConfig)
-              throw "Cannot use Scale/Barchart styling on a computed column";
-
             barchartVals ??= {};
-            const mm =
-              withoutData ?
-                { min: -1, max: -1 }
-              : await db[w.table_name]?.findOne?.(filter, {
-                  select: {
-                    min: { $min: [c.name] },
-                    max: { $max: [c.name] },
-                  },
-                });
+            let minMax:
+              | {
+                  min: any;
+                  max: any;
+                }
+              | undefined;
+            let isDate = false;
 
-            const isDate =
-              c.info?.udt_name.startsWith("timestamp") ||
-              c.info?.udt_name === "date";
+            if (withoutData) {
+              minMax = { min: -1, max: -1 };
+            } else if (c.computedConfig) {
+              const otherColumns = fullColumns.filter(
+                (oc) => oc.name !== c.name,
+              );
+              const otherColumnSelect = otherColumns
+                .filter((c) => c.show && !c.nested)
+                .reduce(
+                  (acc, otherCol) => ({
+                    ...acc,
+                    [otherCol.name]:
+                      otherCol.computedConfig ?
+                        getComputedColumnSelect(otherCol.computedConfig)
+                      : 1,
+                  }),
+                  {} as Record<string, any>,
+                );
+              const min = await db[w.table_name]?.findOne?.(filter, {
+                select: {
+                  ...otherColumnSelect,
+                  prostgles_min: getComputedColumnSelect(c.computedConfig),
+                },
+                orderBy: [{ key: "prostgles_min", asc: true, nulls: "last" }],
+              });
+              const max = await db[w.table_name]?.findOne?.(filter, {
+                select: {
+                  ...otherColumnSelect,
+                  prostgles_max: getComputedColumnSelect(c.computedConfig),
+                },
+                orderBy: [{ key: "prostgles_max", asc: false, nulls: "last" }],
+              });
+              minMax = {
+                min: min?.prostgles_min,
+                max: max?.prostgles_max,
+              };
+            } else {
+              minMax = await db[w.table_name]?.findOne?.(filter, {
+                select: {
+                  min: { $min: [c.name] },
+                  max: { $max: [c.name] },
+                },
+              });
 
-            if (mm) {
+              isDate =
+                c.info?.udt_name.startsWith("timestamp") ||
+                c.info?.udt_name === "date";
+            }
+            if (minMax) {
               barchartVals[c.name] = {
-                min: isDate ? +new Date(mm.min) : +mm.min,
-                max: isDate ? +new Date(mm.max) : +mm.max,
+                min: isDate ? +new Date(minMax.min) : +minMax.min,
+                max: isDate ? +new Date(minMax.max) : +minMax.max,
               };
             }
           }

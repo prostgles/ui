@@ -1,7 +1,7 @@
 import { mdiDatabase } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import Btn from "../../../components/Btn";
 import PopupMenu from "../../../components/PopupMenu";
 import { SmartForm } from "../../SmartForm/SmartForm";

@@ -8,10 +8,10 @@ import path from "path";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
-import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
-import type { ProstglesState } from "../../commonTypes/electronInitTypes";
-import { isObject, type DBSSchema } from "../../commonTypes/publishUtils";
-import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import type { DBGeneratedSchema } from "../../common/DBGeneratedSchema";
+import type { ProstglesState } from "../../common/electronInitTypes";
+import { isObject, type DBSSchema } from "../../common/publishUtils";
+import { SPOOF_TEST_VALUE } from "../../common/utils";
 import { sidKeyName } from "./authConfig/sessionUtils";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
@@ -31,6 +31,7 @@ import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 const { app, http, io } = initExpressAndIOServers();
 
 export const connMgr = new ConnectionManager(http, app);
+export const isDocker = Boolean(process.env.IS_DOCKER);
 
 const isTestingElectron = require.main?.filename.endsWith("testElectron.js");
 const electronConfig = getElectronConfig();
@@ -234,7 +235,6 @@ type OnServerReadyResult = {
 };
 
 export const startServer = async (
-  initialPort: number | undefined,
   onReady?: (result: OnServerReadyResult) => void | Promise<void>,
 ) => {
   const actualPort = await new Promise<number>((resolve) => {
@@ -253,7 +253,11 @@ export const startServer = async (
     });
   });
 
-  await waitForInitialisation();
+  const startupResult = await waitForInitialisation();
+  if (startupResult.state === "error") {
+    console.error("Failed to start prostgles", startupResult);
+    throw new Error("Failed to start prostgles");
+  }
   void onReady?.({ port: actualPort });
 };
 
@@ -262,7 +266,7 @@ export const startServer = async (
  * Otherwise it will be started from electron/main.ts
  */
 if (require.main === module) {
-  void startServer(PORT, (result) => {
+  void startServer((result) => {
     console.log("Server started", result);
   });
 }

@@ -8,9 +8,9 @@ import {
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
+import type { DBSSchema } from "../../../../common/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import type { ExtraProps } from "../../App";
 import Btn from "../../components/Btn";
 import ErrorComponent, {
@@ -19,7 +19,7 @@ import ErrorComponent, {
 import { FlexCol } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import { Section } from "../../components/Section";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { CodeConfirmation } from "../../dashboard/BackupAndRestore/CodeConfirmation";
@@ -27,11 +27,11 @@ import RTComp from "../../dashboard/RTComp";
 import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRecords";
 import { t } from "../../i18n/i18nUtils";
 import { get } from "../../utils";
-import { getOS } from "../ElectronSetup/ElectronSetup";
+import { getBrowserOS } from "../ElectronSetup/ElectronSetup";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionFormFields";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 export const getSqlErrorText = (e: any) => {
@@ -324,7 +324,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
             )}
             {mode === "insert" && (
               <PostgresInstallationInstructions
-                os={getOS()}
+                os={getBrowserOS()}
                 placement="add-connection"
               />
             )}

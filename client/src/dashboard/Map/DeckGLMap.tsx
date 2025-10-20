@@ -84,10 +84,12 @@ export type GeoJsonLayerProps = {
   getText?: (f: GeoJSONFeature) => string;
   getTextSize?: number | ((f: GeoJSONFeature) => number);
   getIcon?: (f: GeoJSONFeature) => {
+    id: string;
     url: string;
     width: number;
     height: number;
   };
+  display: "icon" | "icon+circle" | undefined;
   elevation?: number;
   pickable?: boolean;
   stroked?: boolean;
@@ -451,7 +453,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
           /**
            * Radius of the circle in meters. If radiusUnits is not meters, this is converted from meters.
            */
-          getPointRadius: (f) => f.properties.radius ?? 1,
+          getPointRadius: (f) => (g.getIcon ? 0.1 : (f.properties.radius ?? 1)),
           pointRadiusMinPixels: 2,
           pointRadiusScale: 1,
 
@@ -461,8 +463,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
           getFillColor: g.getFillColor, // ?? [200, 0, 80, 255],
           getLineColor: g.getLineColor, // ?? [200, 0, 80, 255],
           pointType: [
-            "circle",
-            g.getIcon ? "icon" : undefined,
+            ...(g.getIcon ? (g.display ?? "icon").split("+") : ["circle"]),
             g.getText ? "text" : undefined,
           ]
             .filter(isDefined)

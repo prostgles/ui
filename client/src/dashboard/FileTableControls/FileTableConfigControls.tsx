@@ -1,9 +1,9 @@
 import { useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
 import type { SQLHandler } from "prostgles-types";
 import React, { useState } from "react";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import { type Prgl } from "../../App";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 import { FileStorageControls } from "./FileStorageControls";
 import { FileStorageReferencedTablesConfig } from "./FileStorageReferencedTablesConfig";

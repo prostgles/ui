@@ -1,7 +1,7 @@
 import React from "react";
 import PopupMenu from "../../components/PopupMenu";
 import Btn from "../../components/Btn";
-import { sliceText } from "../../../../commonTypes/utils";
+import { sliceText } from "../../../../common/utils";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 
 export const RenderBackupLogs = ({
@@ -15,11 +15,12 @@ export const RenderBackupLogs = ({
 }) => (
   <PopupMenu
     showFullscreenToggle={{}}
+    clickCatchStyle={{ opacity: 1 }}
     title="Logs"
     button={
       !logs ?
         <div></div>
-      : <Btn className="w-full" variant="outline" size="small">
+      : <Btn className="w-full" size="small">
           {completed ?
             "..."
           : sliceText(

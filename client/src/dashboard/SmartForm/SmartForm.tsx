@@ -1,12 +1,12 @@
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
 import React, { useCallback } from "react";
-import { type DetailedFilterBase } from "../../../../commonTypes/filterUtils";
+import { type DetailedFilterBase } from "../../../../common/filterUtils";
 import type { Prgl } from "../../App";
 import { SuccessMessage } from "../../components/Animations";
 import ErrorComponent from "../../components/ErrorComponent";
 import { classOverride } from "../../components/Flex";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import { ifEmpty } from "../../utils";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { SmartFormFieldList } from "./SmartFormFieldList";

@@ -1,5 +1,5 @@
 import React from "react";
-import { isObject } from "../../../commonTypes/publishUtils";
+import { isObject } from "../../../common/publishUtils";
 import Btn from "./Btn";
 import { FlexCol } from "./Flex";
 import type { LabelProps } from "./Label";

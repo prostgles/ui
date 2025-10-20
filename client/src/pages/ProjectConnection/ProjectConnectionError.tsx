@@ -5,7 +5,7 @@ import type { PrglState } from "../../App";
 import Btn from "../../components/Btn";
 
 import { useParams } from "react-router-dom";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import type { Command } from "../../Testing";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { t } from "../../i18n/i18nUtils";

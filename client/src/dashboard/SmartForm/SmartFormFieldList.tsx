@@ -17,6 +17,7 @@ import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
 import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
+import { includes } from "../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 type P = Pick<
   SmartFormProps,
@@ -136,6 +137,11 @@ export const SmartFormFieldList = (props: P) => {
             tableName={tableName}
             table={table}
             action={modeType}
+            loading={
+              mode.type === "update" || mode.type === "view" ?
+                mode.loading
+              : undefined
+            }
             column={c}
             value={rawValue}
             newValue={newValue}

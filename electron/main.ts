@@ -1,18 +1,18 @@
 const unhandled = require("electron-unhandled");
 unhandled();
+import * as crypto from "crypto";
 import {
   app,
-  screen,
   BrowserWindow,
+  nativeImage,
+  screen,
+  shell,
   safeStorage as ss,
   Tray,
-  shell,
-  nativeImage,
   type SafeStorage,
 } from "electron";
-import * as path from "path";
 import * as fs from "fs";
-import * as crypto from "crypto";
+import * as path from "path";
 // import { getProtocolHandler } from "./getProtocolHandler";
 
 let localCreds: any;
@@ -167,6 +167,7 @@ const createWindow = () => {
   const startupHeight = Math.min(desiredHeight, height);
   const x = Math.round(primaryDisplay.bounds.x + (width - startupWidth) / 2);
   const y = Math.round(primaryDisplay.bounds.y + (height - startupHeight) / 2);
+
   mainWindow = new BrowserWindow({
     x,
     y,
@@ -278,7 +279,6 @@ function getLoadingHtml() {
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <meta name="theme-color" content="#000000" />
     <meta
       name="description"
       content=" "

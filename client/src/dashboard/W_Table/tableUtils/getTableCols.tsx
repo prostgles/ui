@@ -35,6 +35,7 @@ type GetTableColsArgs = Pick<W_TableProps, "prgl"> &
     allowMediaSkip?: boolean;
     hideEditRow?: boolean;
     columnMenuState?: W_Table["columnMenuState"];
+    opts?: Pick<Partial<ProstglesTableColumn>, "noRightBorder">;
   };
 export const getTableCols = ({
   w,
@@ -46,6 +47,7 @@ export const getTableCols = ({
   suggestions,
   hideEditRow,
   columnMenuState,
+  opts,
 }: GetTableColsArgs): ProstglesTableColumn[] => {
   let tblCols: ProstglesTableColumn[] = [];
 
@@ -177,7 +179,7 @@ export const getTableCols = ({
         title,
         hidden: c.name === "$rowhash",
         width: c.width ?? 100,
-
+        noRightBorder: opts?.noRightBorder ?? false,
         onRender: onRenderColumn({
           c,
           table,

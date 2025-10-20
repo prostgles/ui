@@ -1,17 +1,14 @@
-import { filterArr } from "../../../../../commonTypes/llmUtils";
 import type { LLMMessage } from "../askLLM";
+import type { ToolUseMessage } from "./runApprovedTools";
 
 export const validateLastMessageToolUseRequests = ({
-  lastMessage,
+  toolUseMessages,
   userToolUseApprovals,
 }: {
-  lastMessage: LLMMessage | undefined;
+  toolUseMessages: ToolUseMessage[];
   userToolUseApprovals: LLMMessage;
 }) => {
-  const lastMessageToolUseRequests = filterArr(lastMessage ?? [], {
-    type: "tool_use",
-  } as const);
-  if (!lastMessageToolUseRequests.length) {
+  if (!toolUseMessages.length) {
     throw new Error(
       "Last message does not contain any tool use requests to approve",
     );
@@ -19,9 +16,7 @@ export const validateLastMessageToolUseRequests = ({
   const invalidUserApprovals = userToolUseApprovals.filter(
     (m) =>
       m.type !== "tool_use" ||
-      !lastMessageToolUseRequests.some(
-        (lm) => lm.id === m.id && lm.name === m.name,
-      ),
+      !toolUseMessages.some((lm) => lm.id === m.id && lm.name === m.name),
   );
   if (invalidUserApprovals.length) {
     throw new Error(

@@ -2,7 +2,7 @@ import type { ReactChild } from "react";
 import React, { useMemo, useState } from "react";
 import { Navigate, Route, Routes as Switch } from "react-router-dom";
 import "./App.css";
-import Loading from "./components/Loading";
+import Loading from "./components/Loader/Loading";
 import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
 import { t } from "./i18n/i18nUtils";
 import { Connections } from "./pages/Connections/Connections";
@@ -21,12 +21,12 @@ import {
   type MethodHandler,
 } from "prostgles-client/dist/prostgles";
 import { type Socket } from "socket.io-client";
-import type { ProstglesState } from "../../commonTypes/electronInitTypes";
-import type { DBSSchema } from "../../commonTypes/publishUtils";
-import { fixIndent, ROUTES } from "../../commonTypes/utils";
+import type { ProstglesState } from "@common/electronInitTypes";
+import type { DBSSchema } from "@common/publishUtils";
+import { fixIndent, ROUTES } from "@common/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
-import { CommandSearch } from "./app/CommandSearch/CommandSearch";
-import { FlexCol } from "./components/Flex";
+import { CommandPalette } from "./app/CommandPalette/CommandPalette";
+import { FlexCol, FlexRow } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import { NavBarWrapper } from "./components/NavBar/NavBarWrapper";
 import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
@@ -38,9 +38,10 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { useAppState } from "./useAppState/useAppState";
 import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
-import { Documentation } from "./app/CommandSearch/Documentation";
+import { Documentation } from "./app/CommandPalette/Documentation";
 import { ScrollFade } from "./components/ScrollFade/ScrollFade";
 import { AlertProvider } from "./components/AlertProvider";
+import { PostgresInstallationInstructions } from "./pages/PostgresInstallationInstructions";
 
 export type ClientUser = {
   sid: string;
@@ -162,12 +163,17 @@ export const App = () => {
       : initStateError?.errorType && errorHints[initStateError.errorType];
     return (
       <FlexCol className="m-auto ai-center jc-center max-w-700 p-2">
-        <ErrorComponent
-          error={error}
-          variant="outlined"
-          className="p-2"
-          withIcon={true}
-        />
+        <FlexRow>
+          <ErrorComponent
+            error={error}
+            variant="outlined"
+            className="p-2"
+            withIcon={true}
+          />
+          {initStateError?.errorType === "connection" && (
+            <PostgresInstallationInstructions placement="state-db" os="linux" />
+          )}
+        </FlexRow>
         {hint && (
           <InfoRow color="warning" variant="naked">
             {hint}
@@ -180,7 +186,7 @@ export const App = () => {
   return (
     <AlertProvider>
       <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
-        <CommandSearch isElectron={isElectron} />
+        <CommandPalette isElectron={isElectron} />
         <XRealIpSpoofableAlert {...state} />
         {demoStarted && <MousePointer />}
         {isDisconnected && (
@@ -315,9 +321,7 @@ export const App = () => {
                 needsUser={false}
                 userThemeOption={userThemeOption}
               >
-                <ScrollFade className="o-auto f-1 w-full ai-center flex-col bg-color-0">
-                  <Documentation isElectron={isElectron} />
-                </ScrollFade>
+                <Documentation isElectron={isElectron} />
               </NavBarWrapper>
             }
           />

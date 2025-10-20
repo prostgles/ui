@@ -1,5 +1,5 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import { getTableRulesErrors } from "../../../../../commonTypes/publishUtils";
+import { getTableRulesErrors } from "../../../../../common/publishUtils";
 import { omitKeys } from "prostgles-types";
 import type { TablePermissionControlsProps } from "./TablePermissionControls";
 

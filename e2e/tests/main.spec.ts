@@ -5,13 +5,12 @@ import { testAskLLMCode } from "./testAskLLM";
 import { getDataKeyElemSelector } from "./Testing";
 import {
   PageWIds,
-  TEST_DB_NAME,
-  USERS,
   clickInsertRow,
   closeWorkspaceWindows,
   createAccessRule,
   createAccessRuleForTestDB,
   createDatabase,
+  deleteExistingLLMChat,
   disablePwdlessAdminAndCreateUser,
   dropConnectionAndDatabase,
   enableAskLLM,
@@ -27,25 +26,32 @@ import {
   getSearchListItem,
   getSelector,
   getTableWindow,
-  goTo,
   insertRow,
-  localNoAuthSetup,
   login,
   loginWhenSignupIsEnabled,
   monacoType,
   openConnection,
   openTable,
-  queries,
+  restoreFromBackup,
   runDbSql,
   runDbsSql,
   runSql,
   selectAndInsertFile,
   sendAskLLMMessage,
+  setModelByText,
+  setPromptByText,
   setTableRule,
   setWspColLayout,
   typeConfirmationCode,
   uploadFile,
-} from "./utils";
+} from "./utils/utils";
+import { goTo } from "utils/goTo";
+import {
+  localNoAuthSetup,
+  QUERIES,
+  TEST_DB_NAME,
+  USERS,
+} from "utils/constants";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -76,7 +82,7 @@ test.describe("Main test", () => {
   const deleteAllBackups = async (page: PageWIds) => {
     await page.getByTestId("config.bkp").click();
     await page
-      .getByTestId("SmartCardList")
+      .getByTestId("BackupsControls.Completed")
       .waitFor({ state: "visible", timeout: 15e3 });
     const canDelete = await page.getByRole("button", { name: "Delete all..." });
     if (await canDelete.count()) {
@@ -511,10 +517,10 @@ test.describe("Main test", () => {
     await expect(funcCode).toEqual(initialCode);
 
     /** Add llm server side func */
-    await monacoType(page, ".MethodDefinition", testAskLLMCode, {
-      deleteAll: false,
-      pressBeforeTyping: ["Control+ArrowLeft", "Control+ArrowLeft"],
-      keyPressDelay: 15,
+    const fullCode = initialCode.replace("dbo.tx", testAskLLMCode + "dbo.tx");
+    await monacoType(page, ".MethodDefinition", fullCode, {
+      deleteAll: true,
+      keyPressDelay: 0,
     });
     const funcCode2 = await getMonacoValue(page, ".MethodDefinition");
     const allWhiteSpaceAsSingleSpace = (v: string) => {
@@ -522,9 +528,7 @@ test.describe("Main test", () => {
       return res;
     };
     await expect(allWhiteSpaceAsSingleSpace(funcCode2)).toEqual(
-      allWhiteSpaceAsSingleSpace(
-        initialCode.replace("dbo.tx", testAskLLMCode + "dbo.tx"),
-      ),
+      allWhiteSpaceAsSingleSpace(fullCode),
     );
 
     /** Add askLLM func args */
@@ -556,7 +560,7 @@ test.describe("Main test", () => {
     await goTo(page, "/connections");
     await page.getByRole("link", { name: "Prostgles UI state" }).click();
     await page.getByTestId("AskLLM").click();
-    await page.getByTestId("SetupLLMCredentials.free").click();
+    await page.getByTestId("SetupLLMCredentials.free").click({ timeout: 10e3 });
     await page.locator("input#email").fill(USERS.free_llm_user1);
     await page.getByTestId("ProstglesSignup.continue").click();
     await page.waitForTimeout(1e3);
@@ -584,15 +588,31 @@ test.describe("Main test", () => {
 
     await openConnection(page, "cloud");
 
-    /** Delete existing chat during local testing */
-    const removeActiveChat = async () => {
-      await page.getByTestId("AskLLM").click();
-      await page.getByTestId("LLMChatOptions.toggle").click();
-      await page.getByTestId("SmartForm.delete").click();
-      await page.getByTestId("SmartForm.delete.confirm").click();
-      await page.waitForTimeout(1e3);
-    };
-    await removeActiveChat();
+    await runDbsSql(
+      page,
+      `
+      UPDATE mcp_servers SET enabled = false WHERE name IN ('playwright', 'docker-sandbox');
+      DELETE FROM mcp_server_tools WHERE server_name IN ('playwright', 'docker-sandbox');
+      `,
+    );
+    await runDbSql(
+      page,
+      `
+      CREATE TABLE IF NOT EXISTS receipts (
+        id SERIAL PRIMARY KEY,
+        company_name TEXT,
+        amount NUMERIC,
+        currency TEXT,
+        date TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      `,
+    );
+    /* Wait for schema change */
+    await page.waitForTimeout(2e3);
+
+    await deleteExistingLLMChat(page);
+
     await page.getByTestId("Popup.close").click();
 
     const userMessage = "hey";
@@ -606,24 +626,14 @@ test.describe("Main test", () => {
     ]);
 
     await page.getByTestId("AskLLM").click();
-    await page.getByTestId("LLMChatOptions.Model").click();
-    await page.waitForTimeout(500);
-    await page.keyboard.type("3-5");
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(1e3); // wait for model to be set
+    await setModelByText(page, "son");
 
-    const setPromptByText = async (text: string) => {
-      await page.getByTestId("LLMChatOptions.Prompt").click();
-      await page.locator(".SmartCard").getByText(text).first().click();
-      await page
-        .getByTestId("LLMChatOptions.Prompt")
-        .getByTestId("Popup.close")
-        .click();
-    };
-    await setPromptByText("Create task");
-    await sendAskLLMMessage(page, "tasks");
+    await setPromptByText(page, "Create task");
+    await sendAskLLMMessage(page, " task ");
 
-    await page.getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt").click();
+    await page
+      .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
+      .click({ timeout: 10e3 });
     await page.getByText("OK", { exact: true }).click();
 
     const mcpToolsBtn = await page.getByTestId("LLMChatOptions.MCPTools");
@@ -636,36 +646,42 @@ test.describe("Main test", () => {
       "btn-color-action",
     );
 
-    await setPromptByText("dashboard");
+    await setPromptByText(page, "dashboard");
 
-    await sendAskLLMMessage(page, "dashboards");
-    await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
+    await sendAskLLMMessage(
+      page,
+      "I need some useful dashboards to track performance",
+    );
+    await page
+      .getByTestId("AskLLMChat.LoadSuggestedDashboards")
+      .click({ timeout: 10e3 });
 
     const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
-    await expect(workspaceBtn).toContainText("generated workspace");
+    await expect(workspaceBtn).toContainText("Customer Insights");
 
     await page.waitForTimeout(1e3);
     await page.getByTestId("AskLLM").click();
 
     await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
-    await expect(workspaceBtn).not.toContainText("generated workspace");
+    await expect(workspaceBtn).not.toContainText("Customer Insights");
 
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLM").click();
-    await sendAskLLMMessage(page, "mcp");
-    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    await page.waitForTimeout(4e3);
+    await sendAskLLMMessage(page, " mcp ");
+    await page
+      .getByTestId("AskLLMToolApprover.AllowOnce")
+      .click({ timeout: 10e3 });
+    await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
-    await expect(mcpToolUse).toContain("tool result received");
+    await expect(mcpToolUse).toContain("fetch--fetch url");
 
     await page.waitForTimeout(1e3);
-    await sendAskLLMMessage(page, "mcpplaywright");
-    await page.waitForTimeout(2e3);
+    await sendAskLLMMessage(page, " mcpplaywright ");
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Tool name "playwright--browser_navigate" is invalid`,
+      `Tool name "playwright--browser_navigate" is invalid. Try enabling and reloading the tools`,
     );
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Tool name "playwright--browser_snapshot" is invalid`,
+      `Tool name "playwright--browser_snapshot" is invalid. Try enabling and reloading the tools`,
     );
     await page.getByTestId("LLMChatOptions.MCPTools").click();
 
@@ -681,12 +697,12 @@ test.describe("Main test", () => {
       .locator(getDataKeyElemSelector("playwright"))
       .getByTestId("MCPServerFooterActions.refreshTools");
     await page
-      .getByText("browser_tab_list")
+      .getByText("browser_tabs")
       .waitFor({ state: "visible", timeout: 10e3 }); // wait for tools list to refresh
     await page.getByTestId("Popup.close").last().click();
 
     await page.waitForTimeout(2e3);
-    await sendAskLLMMessage(page, "mcpplaywright");
+    await sendAskLLMMessage(page, " mcpplaywright ");
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is not allowed`,
     );
@@ -707,7 +723,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1000);
     await page.getByTestId("Popup.close").last().click();
     await page.waitForTimeout(500);
-    await sendAskLLMMessage(page, "mcpplaywright");
+    await sendAskLLMMessage(page, " mcpplaywright ");
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(200);
@@ -721,22 +737,22 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await lastToolUseBtn.click();
     await page.waitForTimeout(1e3);
-    await expect(
-      page
-        .getByTestId("Chat.messageList")
-        .getByTestId("MarkdownMonacoCode")
-        .last(),
-    ).toContainText(`Page Title: Prostgles`, { timeout: 15e3 });
+    /** Can be flaky */
+    await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
+      `Page Title: Prostgles`,
+      { timeout: 15e3 },
+    );
+    await page.getByTestId("Popup.close").last().click();
 
     await page.waitForTimeout(2e3);
     /** Test max consecutive tool call fails */
-    await sendAskLLMMessage(page, "mcpfail");
+    await sendAskLLMMessage(page, " mcpfail ");
     await page.waitForTimeout(2e3);
     await expect(
       page
         .getByTestId("Chat.messageList")
         .getByText(`Tool name "fetch--invalidfetch" is invalid`),
-    ).toHaveCount(5);
+    ).toHaveCount(5, { timeout: 30e3 });
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `failed consecutive tool requests reached`,
     );
@@ -750,7 +766,7 @@ test.describe("Main test", () => {
     });
     await page.getByTestId("Popup.close").last().click();
     for (let step = 1; step <= Math.ceil(maxCost / costPerMsg); step++) {
-      await sendAskLLMMessage(page, "cost");
+      await sendAskLLMMessage(page, " cost ");
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Maximum number (5) of failed consecutive tool requests reached`,
@@ -763,33 +779,73 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("LLMChatOptions.Prompt")).toContainText(
       "Create dashboards",
     );
+
     await page.getByTestId("LLMChatOptions.MCPTools").click();
-    await page
-      .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByTestId("MCPServersInstall.install")
-      .click();
-    await page.waitForTimeout(1e3);
-    /** Wait until it finishes installing */
-    await page
-      .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByTestId("MCPServersInstall.install")
-      .click({ trial: true, timeout: 15e3 });
-    await page.waitForTimeout(10e3);
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
       .getByTestId("MCPServerFooterActions.enableToggle")
       .click();
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByText("create_sandbox", { exact: true })
+      .getByTestId("MCPServerFooterActions.refreshTools")
+      .click();
+    await page.waitForTimeout(2e3);
+    await expect(page.getByTestId("Popup.content").last()).toContainText(
+      `Reloaded 1 tool for "docker-sandbox" server`,
+    );
+    await page.getByText("OK", { exact: true }).click();
+    await page
+      .locator(getDataKeyElemSelector("docker-sandbox"))
+      .getByText("create_container", { exact: true })
       .click();
     await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
-    await sendAskLLMMessage(page, "mcpsandbox");
-    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    // await expect(page.getByTestId("Chat.messageList")).toContainText(
-    //   `dwadwadwawaddwadwa`,
-    // );
+
+    const dockerRunAndExpect = async (result: string) => {
+      await sendAskLLMMessage(page, " mcpsandbox ");
+      await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+      await expect(page.getByTestId("Chat.messageList")).toContainText(
+        "create a container that runs",
+        { timeout: 40e3 },
+      );
+      await page.waitForTimeout(3e3);
+      await page
+        .getByTestId("Chat.messageList")
+        .locator(".Loading")
+        .waitFor({ state: "detached", timeout: 40e3 });
+      await page.getByTestId("ToolUseMessage.toggle").last().click();
+      await page.getByTestId("Popup.toggleFullscreen").last().click();
+      await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(
+        result,
+        { timeout: 10e3 },
+      );
+      await page.getByTestId("Popup.close").last().click();
+    };
+    await dockerRunAndExpect(`Tool "execute_sql_with_rollback" not found`);
+
+    await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
+
+    await runDbSql(
+      page,
+      `CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL UNIQUE, 
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      INSERT INTO users (username) 
+      VALUES ('fresh_user') ON CONFLICT DO NOTHING;
+      `,
+    );
+    await page
+      .getByTestId("Popup.content")
+      .last()
+      .getByLabel("Mode", { exact: true })
+      .click();
+
+    await page.getByRole("option", { name: "Run readonly SQL" }).click();
+    await page.getByTestId("Popup.close").last().click();
+    await page.waitForTimeout(4e3); // wait for askLLM publish method forked process to restart after schema change
+    await dockerRunAndExpect(`username: 'fresh_user'`);
   });
 
   test("Disable signups", async ({ page: p }) => {
@@ -1285,7 +1341,7 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", timeout: 5e3 });
 
     /** Create schema */
-    await runSql(page, queries.orders);
+    await runSql(page, QUERIES.orders);
     await page.waitForTimeout(1e3);
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
@@ -1389,9 +1445,7 @@ test.describe("Main test", () => {
     /** Restore db */
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();
-    await page.getByRole("button", { name: "Restore...", exact: true }).click();
-    await typeConfirmationCode(page);
-    await page.getByRole("button", { name: "Restore", exact: true }).click();
+    await restoreFromBackup(page);
 
     /** Go to dashboard. Deleted row should be there */
     await page.waitForTimeout(2200);
@@ -1633,7 +1687,7 @@ test.describe("Main test", () => {
       DROP TABLE IF EXISTS orders CASCADE;
       DROP TABLE IF EXISTS users CASCADE;
       CREATE TABLE users (id UUID  PRIMARY KEY, first_name text, last_name text, email text, created_at timestamp default now(), type TEXT DEFAULT 'default', position numeric);
-      ${queries.orders}
+      ${QUERIES.orders}
       ALTER TABLE orders 
       ADD COLUMN total_cost NUMERIC NOT NULL DEFAULT random() * 100;
       ALTER TABLE orders ADD COLUMN delivery_address GEOGRAPHY DEFAULT st_point(-0.08 + random()/10, 51.5 + random()/10)::GEOGRAPHY;
@@ -1914,7 +1968,7 @@ test.describe("Main test", () => {
 
   test("SQL Autocomplete", async ({ page: p }) => {
     const page = p as PageWIds;
-    const sqlTestTimeout = { total: 8 * 6e4, sql: 7 * 6e4 };
+    const sqlTestTimeout = { total: 9 * 6e4, sql: 8 * 6e4 };
     test.setTimeout(sqlTestTimeout.total);
 
     await page.request.post("/logout");

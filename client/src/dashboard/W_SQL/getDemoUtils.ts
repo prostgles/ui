@@ -1,9 +1,8 @@
+import { includes, type SQLHandler } from "prostgles-types";
 import { getCommandElemSelector } from "../../Testing";
 import { tout } from "../../utils";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { triggerCharacters } from "../SQLEditor/SQLCompletion/monacoSQLSetup/registerSuggestions";
-import type { SQLEditorRef } from "../SQLEditor/W_SQLEditor";
-import { includes, type SQLHandler } from "prostgles-types";
 
 export type TypeOpts = {
   msPerChar?: number;

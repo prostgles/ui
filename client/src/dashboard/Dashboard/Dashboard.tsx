@@ -5,7 +5,7 @@ import type {
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll";
@@ -14,7 +14,7 @@ import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../appUtils";
 import Btn from "../../components/Btn";
@@ -24,7 +24,7 @@ import { TopControls } from "../../pages/TopControls";
 import { DashboardMenu } from "../DashboardMenu/DashboardMenu";
 import type { ActiveRow } from "../W_Table/W_Table";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
-import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
+import { getWorkspacePath } from "../WorkspaceMenu/useWorkspaces";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";
 import { CloseSaveSQLPopup } from "./CloseSaveSQLPopup";
@@ -46,7 +46,7 @@ import type {
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
@@ -230,7 +230,7 @@ export class _Dashboard extends RTComp<
         if (
           wsp.published &&
           wsp.user_id !== this.props.prgl.user?.id &&
-          wsp.publish_mode !== "fixed"
+          wsp.layout_mode !== "fixed"
         ) {
           let myClonedWsp = await workspaces.findOne({
             parent_workspace_id: wsp.id,
@@ -376,12 +376,21 @@ export class _Dashboard extends RTComp<
       workspaceId,
       prgl: { dbs },
     } = this.props;
-    if (workspaceId) {
+    if (
+      workspaceId &&
+      !this.d.windows.some(
+        (w) => w.workspace_id === workspaceId && !w.closed,
+      ) &&
+      !this.checkedIfNoOpenWindows
+    ) {
       this.checkedIfNoOpenWindows = true;
-      const hasOpenWindows = await dbs.windows.findOne({
-        workspace_id: workspaceId,
-        closed: false,
-      });
+      const hasOpenWindows = await dbs.windows.findOne(
+        {
+          workspace_id: workspaceId,
+          closed: false,
+        },
+        { select: "" },
+      );
       if (!hasOpenWindows) {
         const menuBtn = document.querySelector<HTMLButtonElement>(
           `[data-command="menu"]`,
@@ -480,7 +489,7 @@ export class _Dashboard extends RTComp<
     const pinnedMenu = getIsPinnedMenu(workspace);
     const isReadonlyWorkspace =
       workspace.published && workspace.user_id !== prgl.user?.id;
-    const isFixed = isReadonlyWorkspace && workspace.publish_mode === "fixed";
+    const isFixed = isReadonlyWorkspace && workspace.layout_mode === "fixed";
     const dashboardMenu = (
       <DashboardMenu
         menuAnchorState={this.menuAnchorState}
@@ -638,6 +647,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
   myLinks: LinkSyncItem[];
   onAddChart: OnAddChart | undefined;
   active_row: ActiveRow | undefined;
+  workspace: WorkspaceSyncItem;
 } & Pick<ViewRendererProps, "searchParams" | "setSearchParams">;
 
 export const getTables = (
@@ -704,7 +714,7 @@ const cloneEditableWorkpsaces = async ({
     : await dbs.workspaces.find({
         published: true,
         user_id: { $ne: user_id! },
-        publish_mode: { $isDistinctFrom: "fixed" },
+        layout_mode: { $isDistinctFrom: "fixed" },
         $notExistsJoined: {
           workspaces: {
             user_id,

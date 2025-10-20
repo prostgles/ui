@@ -1,14 +1,7 @@
 import type { InitOptions } from "prostgles-client/dist/prostgles";
-import {
-  getKeys,
-  isEmpty,
-  isDefined,
-  pickKeys,
-  isEqual,
-} from "prostgles-types";
-export { getKeys, isEmpty, isDefined };
 import type { AnyObject } from "prostgles-types";
-import { isObject } from "prostgles-types";
+import { getKeys, isDefined, isEmpty, isObject } from "prostgles-types";
+export { getKeys, isDefined, isEmpty };
 export const get = (nestedObj: any, pathArr: string | (string | number)[]) => {
   if (typeof pathArr === "string") pathArr = pathArr.split(".");
   return pathArr.reduce(
@@ -201,4 +194,18 @@ export const tout = (timeout: number) => {
       resolve(true);
     }, timeout);
   });
+};
+
+export const scrollIntoViewIfNeeded = (
+  element: HTMLElement,
+  options?: ScrollIntoViewOptions,
+) => {
+  // @ts-ignore
+  if (element.scrollIntoViewIfNeeded) {
+    // @ts-ignore
+    element.scrollIntoViewIfNeeded(options);
+  } else {
+    // same as scrollIntoViewIfNeeded
+    element.scrollIntoView(options ?? { block: "nearest" });
+  }
 };

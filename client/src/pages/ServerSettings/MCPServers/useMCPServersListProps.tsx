@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import type { Prgl } from "../../../App";
 import type { DBS } from "../../../dashboard/Dashboard/DBS";
 import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
@@ -92,12 +92,17 @@ export const useMCPServersListProps = (
             );
           },
         },
-        ...["installed", "config_schema", "enabled", "source", "command"].map(
-          (name) => ({
-            name,
-            hide: true,
-          }),
-        ),
+        ...[
+          "installed",
+          "config_schema",
+          "enabled",
+          "source",
+          "command",
+          "icon_path",
+        ].map((name) => ({
+          name,
+          hide: true,
+        })),
       ] satisfies FieldConfig<MCPServerWithToolAndConfigs>[],
     [chatId, dbs, dbsMethods, llm_chats_allowed_mcp_tools, selectedTool?.name],
   );

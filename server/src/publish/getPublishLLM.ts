@@ -1,6 +1,6 @@
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBSSchema } from "../../../common/publishUtils";
 import { testMCPServerConfig } from "../McpHub/McpHub";
 import { getBestLLMChatModel } from "../publishMethods/askLLM/askLLM";
 import { fetchLLMResponse } from "../publishMethods/askLLM/fetchLLMResponse";
@@ -166,18 +166,34 @@ export const getPublishLLM = (
         forcedFilter: userOwnsRelatedChat,
       },
     },
-    mcp_servers: isAdmin && {
-      select: "*",
-      update: {
-        fields: {
-          args: 1,
-          env: 1,
-          enabled: 1,
+    mcp_servers:
+      isAdmin ?
+        {
+          select: "*",
+          update: {
+            fields: {
+              args: 1,
+              env: 1,
+              icon_path: 1,
+              enabled: 1,
+            },
+          },
+          insert: "*",
+          delete: "*",
+        }
+      : {
+          select: {
+            fields: "*",
+            forcedFilter: {
+              $exists: {
+                users: {
+                  id: user_id,
+                  type: "admin",
+                },
+              },
+            },
+          },
         },
-      },
-      insert: "*",
-      delete: "*",
-    },
     mcp_server_tools:
       isAdmin ? "*" : (
         {

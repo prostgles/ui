@@ -1,6 +1,6 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { SearchAllProps } from "../SearchAll";
 
 import type {
@@ -15,15 +15,16 @@ import type {
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
 
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
-import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
-import type { OmitDistributive } from "../../../../commonTypes/utils";
+import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
+import type { SmartGroupFilter } from "../../../../common/filterUtils";
+import type { OmitDistributive } from "../../../../common/utils";
 import type { Extent, MapExtentBehavior } from "../Map/DeckGLMap";
 import type {
   ColumnConfig,
   ColumnSort,
   ColumnSortSQL,
 } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { CardLayout } from "@common/DashboardTypes";
 const getRandomElement = <Arr>(
   items: Arr[],
 ): { elem: Arr | undefined; index: number } => {
@@ -31,7 +32,7 @@ const getRandomElement = <Arr>(
   return { elem: items[randomIndex], index: randomIndex };
 };
 type ColorFunc = {
-  (opacity: number, target: "deck"): number[];
+  (opacity: number, target: "deck"): [number, number, number, number];
   (opacity?: number, target?: "css"): string;
 };
 export type GetColor = { get: ColorFunc };
@@ -92,7 +93,7 @@ export const PALETTE = {
       return target === "deck" ? v : (`rgba(${v.join(", ")})` as any);
     },
   },
-} as const;
+} as const satisfies Record<string, GetColor>;
 
 export const getRandomColor = (
   opacity = 1,
@@ -172,7 +173,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
       hideCount?: boolean;
       maxRowHeight?: number;
       maxCellChars?: number;
-      // viewAsCard?: boolean;
+      quickFilterGroups?: QuickFilterGroups;
       viewAs?:
         | { type: "table" }
         | { type: "json" }
@@ -187,7 +188,9 @@ export type ChartOptions<CType extends ChartType = "table"> =
             maxCardRowHeight?: number;
             maxCardWidth?: string;
           };
+      cardLayout?: CardLayout;
       hideEditRow?: boolean;
+      hideInsertButton?: boolean;
       showFilters?: boolean;
       showSubLabel?: boolean;
       filterOperand?: "AND" | "OR";
@@ -443,3 +446,16 @@ export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
   columns: DBSchemaTableColumn[];
 } & Omit<TableOptions, "label" | "columns">;
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];
+
+/**
+ * Predefined quick filters that the user can toggle on/off
+ * These are shown in the filter bar under "Quick Filters"
+ */
+export type QuickFilterGroups = {
+  [groupName: string]: {
+    toggledFilterName?: string;
+    filters: {
+      [filterName: string]: {};
+    };
+  };
+};

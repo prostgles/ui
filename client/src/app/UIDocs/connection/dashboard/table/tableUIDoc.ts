@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../../../demo/scripts/sqlVideoDemo";
 import type { UIDocElement } from "../../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../../getCommonViewHeaderUIDoc";
 import { paginationUIDoc } from "./paginationUIDoc";
@@ -13,8 +13,8 @@ export const tableUIDoc = {
   docs: fixIndent(`
     The table view displays data from a database table or view, allowing users to interact with the data, including sorting, filtering, and editing.
     It supports computed columns, linked fields, and various actions for managing the data.
-    <img src="/screenshots/table.svg" alt="Table view screenshot" />`),
-  asSeparateFile: true,
+    <img src="./screenshots/table.svg" alt="Table view screenshot" />`),
+  docOptions: "asSeparateFile",
   children: [
     getCommonViewHeaderUIDoc(
       "The name of the table/view together with the number of records matching the current filters. ",

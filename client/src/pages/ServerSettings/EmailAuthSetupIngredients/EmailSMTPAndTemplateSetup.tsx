@@ -5,7 +5,7 @@ import {
   DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
   DEFAULT_MAGIC_LINK_TEMPLATE,
   getMagicLinkEmailFromTemplate,
-} from "../../../../../commonTypes/OAuthUtils";
+} from "../../../../../common/OAuthUtils";
 import Btn from "../../../components/Btn";
 import ErrorComponent from "../../../components/ErrorComponent";
 import { FlexCol } from "../../../components/Flex";

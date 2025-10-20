@@ -1,6 +1,6 @@
 import type { JSONB } from "prostgles-types";
 import { getKeys, isObject } from "prostgles-types";
-import { getEntries } from "../../../../commonTypes/utils";
+import { getEntries } from "../../../../common/utils";
 import { getFieldObj } from "./JSONBSchemaOneOfType";
 
 export const getSchemaFromField = (s: JSONB.FieldType): JSONB.FieldTypeObj =>

@@ -6,11 +6,11 @@ import type {
 } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 import React from "react";
-import { throttle } from "../../../../commonTypes/utils";
+import { throttle } from "../../../../common/utils";
 import { createReactiveState } from "../../appUtils";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import PopupMenu from "../../components/PopupMenu";
 import type { Command } from "../../Testing";
 import type { DateExtent } from "../Charts/getTimechartBinSize";
@@ -33,7 +33,7 @@ import { W_TimeChartLayerLegend } from "./W_TimeChartLayerLegend";
 import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
 import { FlexRow } from "../../components/Flex";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 
 type ChartColumn = Extract<
   DBSSchema["links"]["options"],
@@ -43,6 +43,7 @@ export type ProstglesTimeChartLayer = Pick<
   LayerBase,
   "_id" | "linkId" | "disabled"
 > & {
+  title?: string;
   dateColumn: string;
   groupByColumn: string | undefined;
 
@@ -274,8 +275,7 @@ export class W_TimeChart extends RTComp<
       addingFilter = false,
     } = this.state;
 
-    const { onClickRow, myActiveRow, activeRowColor } = this.props;
-
+    const { onClickRow, myActiveRow, activeRowColor, workspace } = this.props;
     const { w } = this.d;
     if (!w) return <Loading className="m-auto f-1" />;
 
@@ -483,7 +483,11 @@ export class W_TimeChart extends RTComp<
     );
 
     return (
-      <Window w={w} getMenu={this.getMenu}>
+      <Window
+        w={w}
+        getMenu={this.getMenu}
+        layoutMode={workspace.layout_mode ?? "editable"}
+      >
         {content}
       </Window>
     );

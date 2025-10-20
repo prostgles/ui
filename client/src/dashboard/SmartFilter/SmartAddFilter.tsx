@@ -8,7 +8,7 @@ import type {
   JoinedFilter,
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import Popup from "../../components/Popup/Popup";

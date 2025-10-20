@@ -1,4 +1,4 @@
-import { isElementNode, isElementVisible } from "./isElementVisible";
+import { isElementNode, isElementVisible } from "./utils/isElementVisible";
 
 export const recordDomChanges = (targetNode: HTMLElement) => {
   const config = {
@@ -11,7 +11,8 @@ export const recordDomChanges = (targetNode: HTMLElement) => {
   const observer = new MutationObserver((mutationList, observer) => {
     for (const mutation of mutationList) {
       const { target, oldValue } = mutation;
-      if (!isElementNode(target) || !isElementVisible(target)) continue;
+      if (!isElementNode(target) || !isElementVisible(target).isVisible)
+        continue;
       if (mutation.type === "childList") {
         console.log(
           "A child node has been added or removed.",

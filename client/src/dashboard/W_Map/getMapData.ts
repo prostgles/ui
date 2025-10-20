@@ -6,7 +6,7 @@ import type {
 } from "prostgles-types";
 import type { LayerSQL, LayerTable } from "./W_Map";
 import type { GeoJSONFeature } from "../Map/DeckGLMap";
-import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
+import type { DetailedFilterBase } from "../../../../common/filterUtils";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import type { DBS } from "../Dashboard/DBS";
 

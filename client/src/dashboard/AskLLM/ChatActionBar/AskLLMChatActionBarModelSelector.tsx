@@ -2,8 +2,8 @@ import { mdiAccountKey, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DetailedJoinSelect } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DetailedFilterBase } from "../../../../../common/filterUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import Btn from "../../../components/Btn";
 import Chip from "../../../components/Chip";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
@@ -33,7 +33,7 @@ export const AskLLMChatActionBarModelSelector = (
           logo_url: 1,
         },
         llm_credentials: {
-          $leftJoin: [{ table: "llm_providers" }, { table: "llm_credentials" }],
+          $leftJoin: ["llm_providers", "llm_credentials"],
           select: "*",
           limit: 1,
         } satisfies DetailedJoinSelect,

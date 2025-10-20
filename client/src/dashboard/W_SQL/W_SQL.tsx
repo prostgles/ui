@@ -6,7 +6,7 @@ import type {
 } from "prostgles-types";
 
 import React, { useEffect } from "react";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import type {
   PageSize,
   TableColumn,
@@ -43,7 +43,7 @@ import { Icon } from "../../components/Icon/Icon";
 import type { CommonWindowProps, DashboardState } from "../Dashboard/Dashboard";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import Window from "../Window";
-import { runSQL } from "./runSQL";
+import { runSQL } from "./runSQL/runSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
 import { W_SQLBottomBar } from "./W_SQLBottomBar/W_SQLBottomBar";
 import { ProstglesSQLMenu } from "./W_SQLMenu";
@@ -341,6 +341,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       prgl: { db, dbs, dbsTables, user },
       myLinks,
       childWindow,
+      workspace,
     } = this.props;
 
     if (loading || !w) return <Loading className="m-auto" />;
@@ -453,7 +454,9 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 }
                 const res =
                   cb &&
-                  (await getChartableSQL(cb, db.sql!).catch(() => undefined));
+                  (await getChartableSQL(cb, db.sql!, tables).catch(
+                    () => undefined,
+                  ));
                 this.setState({ currentCodeBlockChartColumns: res });
               }}
               onUnmount={(_editor, cursorPosition) => {
@@ -569,6 +572,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     return (
       <Window
         w={w}
+        layoutMode={workspace.layout_mode ?? "editable"}
         quickMenuProps={{
           dbs,
           prgl: this.props.prgl,

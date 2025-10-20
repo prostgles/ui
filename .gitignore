@@ -9,7 +9,7 @@ prostgles_mcp
 .prostgles-desktop-config.json
 **/.prostgles-desktop-config.json
 
-demo_utils/dist
+scripts/demo/dist
 client/build
 client/static/icons
 server/dist

@@ -9,8 +9,8 @@ import React from "react";
 import type {
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../commonTypes/filterUtils";
-import { isJoinedFilter } from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
+import { isJoinedFilter } from "../../../../common/filterUtils";
 import type { PrglCore } from "../../App";
 import Btn, { type BtnProps } from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";

@@ -20,7 +20,7 @@ import type {
   FullExtraProps,
 } from "./ProjectConnection/ProjectConnection";
 import { AskLLM } from "../dashboard/AskLLM/AskLLM";
-import { ROUTES } from "../../../commonTypes/utils";
+import { ROUTES } from "../../../common/utils";
 import { t } from "../i18n/i18nUtils";
 
 type TopControlsProps = {

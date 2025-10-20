@@ -107,6 +107,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 stroked: true,
                 filled: true,
                 ...DEFAULT_GET_COLOR,
+                display: undefined,
               });
             } else if ("tableName" in q) {
               const { tableName, geomColumn } = { ...q };
@@ -188,6 +189,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                   stroked: true,
                   filled: true,
                   ...DEFAULT_GET_COLOR,
+                  display: undefined,
                 });
                 return;
               }

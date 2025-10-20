@@ -6,13 +6,18 @@ import type { MonacoSuggestion } from "./SQLCompletion/monacoSQLSetup/registerSu
 import { registerSuggestions } from "./SQLCompletion/monacoSQLSetup/registerSuggestions";
 
 export const LANG = "sql";
+
+let monacoPromise:
+  | Promise<typeof import("monaco-editor/esm/vs/editor/editor.api.js")>
+  | undefined;
 /**
  * This option seems to start downloading monaco (870.js) from the start: webpackPrefetch: true
  */
 export const getMonaco = async () => {
-  const monaco = await import(
+  monacoPromise ??= import(
     /* webpackChunkName: "monaco_editor" */ /*  webpackPrefetch: 99 */ "monaco-editor/esm/vs/editor/editor.api.js"
   );
+  const monaco = await monacoPromise;
   return monaco;
 };
 
@@ -99,6 +104,7 @@ type CodeBlockSignature = {
   numberOfLineBreaks: number;
   numberOfSemicolons: number;
   currentLineNumber: number;
+  query: string;
 };
 
 export type SQLSuggestion = {
@@ -177,7 +183,6 @@ import Btn from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";
 import { FlexCol } from "../../components/Flex";
 import {
-  getSelectedText,
   MonacoEditor,
   type MonacoEditorProps,
 } from "../../components/MonacoEditor/MonacoEditor";
@@ -208,11 +213,12 @@ import type {
   PG_Trigger,
 } from "./SQLCompletion/getPGObjects";
 import { addSqlEditorFunctions } from "./addSqlEditorFunctions";
-import { defineCustomSQLTheme } from "./defineCustomSQLTheme";
+import { defineCustomMonacoSQLTheme } from "./defineCustomMonacoSQLTheme";
 import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
 import { scrollToLineIfNeeded } from "./utils/scrollToLineIfNeeded";
 import { setMonacEditorError } from "./utils/setMonacEditorError";
+import { getSelectedText } from "@components/MonacoEditor/useMonacoEditorAddActions";
 
 export type SQLEditorRef = {
   editor: editor.IStandaloneCodeEditor;
@@ -580,6 +586,7 @@ const setActiveCodeBlock = async function (
   const codeBlockSignature: CodeBlockSignature = {
     numberOfLineBreaks: value.split(EOL).length,
     numberOfSemicolons: value.split(";").length,
+    query: value,
     currentLineNumber:
       e?.position.lineNumber ??
       editor.getPosition()?.lineNumber ??
@@ -624,6 +631,11 @@ const setActiveCodeBlock = async function (
   const signatureDiffers =
     !isEqual(this.codeBlockSignature, codeBlockSignature) ||
     currentDecorationsNotRendered;
+  const codeBlockLinesChanged =
+    this.codeBlockSignature?.numberOfLineBreaks !==
+      codeBlockSignature.numberOfLineBreaks ||
+    this.codeBlockSignature.currentLineNumber !==
+      codeBlockSignature.currentLineNumber;
   const noSelection = !document.getSelection()?.toString();
   if (signatureDiffers && noSelection) {
     this.codeBlockSignature = codeBlockSignature;
@@ -633,11 +645,13 @@ const setActiveCodeBlock = async function (
 
     // removePlayDecoration({ editor, EOL, value });
 
-    this.currentDecorations?.clear();
-    this.currentDecorations = await highlightCurrentCodeBlock(
-      editor,
-      codeBlock,
-    );
+    if (codeBlockLinesChanged) {
+      this.currentDecorations?.clear();
+      this.currentDecorations = await highlightCurrentCodeBlock(
+        editor,
+        codeBlock,
+      );
+    }
   }
 };
 
@@ -706,3 +720,9 @@ const setActions = async (
   //   this.editor?.trigger('newline', 'type', { text: EOL });
   // }, '!suggestWidgetVisible && !renameInputVisible && !inSnippetMode && !quickFixWidgetVisible');
 };
+
+declare module "react" {
+  interface HTMLAttributes<T> {
+    sqlRef?: SQLEditorRef;
+  }
+}

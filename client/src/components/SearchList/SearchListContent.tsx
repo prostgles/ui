@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import React, { useEffect, useMemo } from "react";
+import { isObject } from "@common/publishUtils";
 import Checkbox from "../Checkbox";
 import ErrorComponent from "../ErrorComponent";
 import { generateUniqueID } from "../FileInput/FileInput";
@@ -29,7 +29,6 @@ export const SearchListContent = <M extends boolean = false>(
     className,
     onSearchItems,
     searchEmpty = false,
-    wrapperStyle,
     placeholder,
     inputProps,
     inputEl,
@@ -40,6 +39,7 @@ export const SearchListContent = <M extends boolean = false>(
     onPressEnter,
     dataSignature,
     leftContent,
+    noBorder,
   } = props;
   const multiSelect = !!onMultiToggle;
   const isSearch = variant?.startsWith("search");
@@ -74,6 +74,22 @@ export const SearchListContent = <M extends boolean = false>(
   });
 
   const noList = isSearch ? searchClosed : !renderedItems.length && !searchTerm;
+
+  const wrapperStyleFinal = useMemo(() => {
+    if (noBorder)
+      return {
+        borderRadius: 0,
+        borderTop: "unset",
+        borderBottom: "unset",
+      };
+    if (searchClosed) return {};
+    return {
+      ...{
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+      },
+    };
+  }, [noBorder, searchClosed]);
 
   useSearchListOnClick({
     isSearch,
@@ -161,8 +177,9 @@ export const SearchListContent = <M extends boolean = false>(
                 onSetTerm(searchTerm || "", {});
               }
             }}
-            wrapperStyle={wrapperStyle}
+            wrapperStyle={wrapperStyleFinal}
             className={SEARCH_LIST_INPUT_CLASSNAME}
+            data-command="SearchList.Input"
             {...inputProps}
             placeholder={placeholder}
             title={"Search"}

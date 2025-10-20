@@ -1,6 +1,6 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { JSONB } from "prostgles-types";
-import { CONNECTION_CONFIG_SECTIONS } from "../../../commonTypes/utils";
+import { CONNECTION_CONFIG_SECTIONS } from "../../../common/utils";
 import { loggerTableConfig } from "../Logger";
 import { tableConfigConnections } from "./tableConfigConnections";
 import { tableConfigGlobalSettings } from "./tableConfigGlobalSettings";
@@ -8,44 +8,10 @@ import { tableConfigPublishedMethods } from "./tableConfigPublishedMethods";
 import { tableConfigUsers } from "./tableConfigUsers";
 import { tableConfigLLM } from "./tableConfigLlm";
 import { tableConfigMCPServers } from "./tableConfigMCPServers";
+import { DUMP_OPTIONS_SCHEMA, tableConfigBackups } from "./tableConfigBackups";
 
 export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
-const DUMP_OPTIONS_SCHEMA = {
-  jsonbSchema: {
-    oneOfType: [
-      {
-        command: { enum: ["pg_dumpall"] },
-        clean: { type: "boolean" },
-        dataOnly: { type: "boolean", optional: true },
-        globalsOnly: { type: "boolean", optional: true },
-        rolesOnly: { type: "boolean", optional: true },
-        schemaOnly: { type: "boolean", optional: true },
-        ifExists: { type: "boolean", optional: true },
-        encoding: { type: "string", optional: true },
-        keepLogs: { type: "boolean", optional: true },
-      },
-      {
-        command: { enum: ["pg_dump"] },
-        format: { enum: ["p", "t", "c"] },
-        dataOnly: { type: "boolean", optional: true },
-        clean: { type: "boolean", optional: true },
-        create: { type: "boolean", optional: true },
-        encoding: { type: "string", optional: true },
-        numberOfJobs: { type: "integer", optional: true },
-        noOwner: { type: "boolean", optional: true },
-
-        compressionLevel: { type: "integer", optional: true },
-        ifExists: { type: "boolean", optional: true },
-
-        keepLogs: { type: "boolean", optional: true },
-        excludeSchema: { type: "string", optional: true },
-        schemaOnly: { type: "boolean", optional: true },
-      },
-    ],
-  },
-  // defaultValue: "{}"
-} as const;
 
 const FieldFilterSchema = {
   oneOf: [
@@ -64,7 +30,7 @@ const FieldFilterSchema = {
   ],
 } satisfies JSONB.FieldType;
 
-const tableConfigSchema: JSONB.JSONBSchema<JSONB.FieldTypeObj> = {
+const tableConfigSchema: JSONB.JSONBSchema = {
   record: {
     values: {
       oneOfType: [
@@ -217,6 +183,7 @@ const CommonChartLinkOpts = {
     optional: true,
     type: "string",
   },
+  title: { type: "string", optional: true },
 } as const satisfies JSONB.ObjectType["type"];
 
 export const tableConfig: TableConfig<{ en: 1 }> = {
@@ -721,115 +688,19 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     },
   },
 
-  backups: {
-    // dropIfExists: true,
-    columns: {
-      id: {
-        sqlDefinition: `TEXT PRIMARY KEY DEFAULT gen_random_uuid()`,
-        info: { hint: "Format: dbname_datetime_uuid" },
-      },
-      connection_id: {
-        sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL`,
-        info: { hint: "If null then connection was deleted" },
-      },
-      connection_details: {
-        sqlDefinition: `TEXT NOT NULL DEFAULT 'unknown connection' `,
-      },
-      credential_id: {
-        sqlDefinition: `INTEGER REFERENCES credentials(id) `,
-        info: { hint: "If null then uploaded locally" },
-      },
-      destination: {
-        enum: ["Local", "Cloud", "None (temp stream)"],
-        nullable: false,
-      },
-      dump_command: { sqlDefinition: `TEXT NOT NULL` },
-      restore_command: { sqlDefinition: `TEXT` },
-      local_filepath: { sqlDefinition: `TEXT` },
-      content_type: {
-        sqlDefinition: `TEXT NOT NULL DEFAULT 'application/gzip'`,
-      },
-      initiator: { sqlDefinition: `TEXT` },
-      details: { sqlDefinition: `JSONB` },
-      status: {
-        jsonbSchema: {
-          oneOfType: [
-            { ok: { type: "string" } },
-            { err: { type: "string" } },
-            // { cancelled: { type: "number" } },
-            {
-              loading: {
-                optional: true,
-                type: {
-                  loaded: { type: "number" },
-                  total: { type: "number", optional: true },
-                },
-              },
-            },
-          ],
-        },
-      },
-      uploaded: { sqlDefinition: `TIMESTAMP` },
-      restore_status: {
-        nullable: true,
-        jsonbSchema: {
-          oneOfType: [
-            { ok: { type: "string" } },
-            { err: { type: "string" } },
-            {
-              loading: {
-                type: {
-                  loaded: { type: "number" },
-                  total: { type: "number" },
-                },
-              },
-            },
-          ],
-        },
-      },
-      restore_start: { sqlDefinition: `TIMESTAMP` },
-      restore_end: { sqlDefinition: `TIMESTAMP` },
-      restore_logs: { sqlDefinition: `TEXT` },
-      dump_logs: { sqlDefinition: `TEXT` },
-      dbSizeInBytes: {
-        sqlDefinition: `BIGINT NOT NULL`,
-        label: "Database size on disk",
-      },
-      sizeInBytes: { sqlDefinition: `BIGINT`, label: "Backup file size" },
-      created: { sqlDefinition: `TIMESTAMP NOT NULL DEFAULT NOW()` },
-      last_updated: { sqlDefinition: `TIMESTAMP NOT NULL DEFAULT NOW()` },
-      options: DUMP_OPTIONS_SCHEMA,
-      restore_options: {
-        jsonbSchemaType: {
-          command: { enum: ["pg_restore", "psql"] },
-          format: { enum: ["p", "t", "c"] },
-          clean: { type: "boolean" },
-          excludeSchema: { type: "string", optional: true },
-          newDbName: { type: "string", optional: true },
-          create: { type: "boolean", optional: true },
-          dataOnly: { type: "boolean", optional: true },
-          noOwner: { type: "boolean", optional: true },
-          numberOfJobs: { type: "integer", optional: true },
+  ...tableConfigBackups,
 
-          ifExists: { type: "boolean", optional: true },
-
-          keepLogs: { type: "boolean", optional: true },
-        },
-        defaultValue: `{ "clean": true, "format": "c", "command": "pg_restore" }`,
-      },
-    },
-  },
-
-  workspace_publish_modes: {
+  workspace_layout_modes: {
     isLookupTable: {
       values: {
         fixed: {
           en: "Fixed",
-          description: "The workspace layout is fixed",
+          description: "The workspace layout is fixed. Only admins can edit",
         },
         editable: {
           en: "Editable",
-          description: "The workspace will be cloned layout for each user",
+          description:
+            "The workspace will be cloned for each user to allow editing",
         },
       },
     },
@@ -895,7 +766,10 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
           hint: "If true then this workspace can be shared with other users through Access Control",
         },
       },
-      publish_mode: `TEXT REFERENCES workspace_publish_modes `,
+      layout_mode: {
+        nullable: true,
+        references: { tableName: "workspace_layout_modes" },
+      },
       source: {
         nullable: true,
         jsonbSchemaType: {
@@ -932,6 +806,12 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       sql: `TEXT NOT NULL DEFAULT ''`,
       selected_sql: `TEXT NOT NULL DEFAULT ''`,
       name: `TEXT`,
+      title: {
+        sqlDefinition: `TEXT`,
+        info: {
+          hint: "Override name. Accepts ${rowCount} variable",
+        },
+      }, // Hacky way to set a fixed title
       limit: `INTEGER DEFAULT 1000 CHECK("limit" > -1 AND "limit" < 100000)`,
       closed: `BOOLEAN DEFAULT FALSE`,
       deleted: `BOOLEAN DEFAULT FALSE CHECK(NOT (type = 'sql' AND deleted = TRUE AND (options->>'sqlWasSaved')::boolean = true))`,
@@ -1054,10 +934,12 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
                 oneOfType: [
                   {
                     type: { enum: ["fixed"] },
+                    display: { enum: ["icon", "icon+circle"], optional: true },
                     iconPath: "string",
                   },
                   {
                     type: { enum: ["conditional"] },
+                    display: { enum: ["icon", "icon+circle"], optional: true },
                     columnName: "string",
                     conditions: {
                       arrayOfType: {
@@ -1124,6 +1006,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
                   name: "string",
                   label: { type: "string", optional: true },
                   udt_name: "string",
+                  is_pkey: { type: "boolean", optional: true },
                 },
                 optional: true,
               },

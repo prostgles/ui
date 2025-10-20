@@ -3,9 +3,10 @@ import type { TranslationGroup } from "../i18nUtils";
 export const LANGUAGES = [
   { key: "en", label: "English" },
   { key: "es", label: "Español" },
-  { key: "zh", label: "简体中文" },
-  { key: "ru", label: "Русский" },
+  { key: "fr", label: "Français" },
   { key: "de", label: "Deutsch" },
+  { key: "ru", label: "Русский" },
+  { key: "zh", label: "简体中文" },
   { key: "hi", label: "हिंदी" },
 ] as const;
 
@@ -46,6 +47,7 @@ export const translations = {
     "You do not have sufficient privileges to access this": undefined,
     "Copy to clipboard": undefined,
     Send: undefined,
+    Stop: undefined,
     "Stop recording": undefined,
     "Speech to text": undefined,
     "Record audio": undefined,
@@ -272,10 +274,6 @@ export const translations = {
     API: undefined,
   },
   APIDetailsWs: {
-    "Allowed origin specifies which domains can access this app in a cross-origin manner. Sets the Access-Control-Allow-Origin header. Use '*' or a specific URL to allow API access":
-      undefined,
-    'For testing it is recommended to use "*" as the allowed origin value':
-      undefined,
     "Allowed origin": undefined,
     "Allowed origin is required": undefined,
     "Allowed origin not set": undefined,

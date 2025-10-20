@@ -146,7 +146,7 @@ export class Chart extends RTComp<
           ...style,
         }}
         className={classOverride(
-          "charts-comp flex-col f-1 min-h-0 min-w-0 relative ",
+          "Chart flex-col f-1 min-h-0 min-w-0 relative ",
           className,
         )}
         onMouseMove={(e) => {

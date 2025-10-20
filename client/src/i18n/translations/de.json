@@ -33,6 +33,7 @@
     "You do not have sufficient privileges to access this": "Du hast nicht die erforderlichen Berechtigungen, um darauf zuzugreifen",
     "Copy to clipboard": "In die Zwischenablage kopieren",
     "Send": "Senden",
+    "Stop": "Stopp",
     "Toggle fullscreen": "Vollbild umschalten",
     "experimental": "experimentell",
     "Stop recording": "Aufnahme stoppen",
@@ -434,10 +435,7 @@
     "More options": "Weitere Optionen",
     "Must connect to see schemas": "Muss verbunden sein, um Schemas zu sehen",
     "You are about to create a new database": "Sie sind dabei, eine neue Datenbank zu erstellen",
-    "You are about to clone the current database": {
-      "text": "Sie sind dabei, die aktuelle Datenbank {{currDb}} in {{newDb}} zu klonen. Dies wird alle bestehenden Verbindungen zur aktuellen Datenbank schließen!",
-      "argNames": ["currDb", "newDb"]
-    },
+    "You are about to clone the current database": "Sie sind dabei, die aktuelle Datenbank {{currDb}} in {{newDb}} zu klonen. Dies wird alle bestehenden Verbindungen zur aktuellen Datenbank schließen!",
     "Create database": "Datenbank erstellen",
     "Connection type": "Verbindungstyp",
     "Connection name": "Verbindungsname",

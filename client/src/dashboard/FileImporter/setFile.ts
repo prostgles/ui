@@ -1,7 +1,7 @@
 import type { AnyObject } from "prostgles-types";
 import { asName, getKeys, isDefined, isObject } from "prostgles-types";
 import { getFileText } from "../W_SQL/W_SQLMenu";
-import type FileImporter from "./FileImporter";
+import type { FileImporter } from "./FileImporter";
 import { getRowsPerBatch } from "./FileImporter";
 import type { Col } from "./parseCSVFile";
 import { parseCSVFile } from "./parseCSVFile";

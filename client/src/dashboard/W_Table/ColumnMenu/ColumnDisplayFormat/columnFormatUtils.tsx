@@ -6,13 +6,14 @@ import type {
 } from "prostgles-types";
 import React from "react";
 import sanitizeHtml from "sanitize-html";
-import { getAge } from "../../../../../../commonTypes/utils";
+import { getAge } from "../../../../../../common/utils";
 import { ContentTypes, MediaViewer } from "../../../../components/MediaViewer";
 import { QRCodeImage } from "../../../../components/QRCodeImage";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { StyledInterval } from "../../../W_SQL/customRenderers";
 import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
 import type { ColumnConfig } from "../ColumnMenu";
+import type { TableWindowInsertModel } from "@common/DashboardTypes";
 
 const CurrencySchema = {
   type: {
@@ -23,7 +24,12 @@ const CurrencySchema = {
   params: {
     oneOfType: [
       {
-        type: { enum: ["Fixed"], title: "Type" },
+        mode: { enum: ["Fixed"], title: "Type" },
+        metricPrefix: {
+          type: "boolean",
+          title: "Use Metric Prefix",
+          optional: true,
+        },
         currencyCode: {
           type: "string",
           title: "Currency code",
@@ -31,14 +37,14 @@ const CurrencySchema = {
         },
       },
       {
-        type: { enum: ["From column"], title: "Type" },
+        mode: { enum: ["From column"], title: "Type" },
+        metricPrefix: {
+          type: "boolean",
+          title: "Use Metric Prefix",
+          optional: true,
+        },
         currencyCodeField: {
-          // enum: ["c"],
-          lookup: {
-            type: "schema",
-            object: "column",
-            filter: { tsDataType: "string", table: "" },
-          },
+          type: "string",
           title: "Currency Field",
           description:
             "Column containint the currency code (EUR, GBP, USD, etc...)",
@@ -55,43 +61,41 @@ const MediaSchema = {
     description: "Display media (video/image/audio) from URL",
   },
   params: {
+    optional: true,
     oneOfType: [
       {
         type: {
-          enum: ["fixed"],
+          enum: ["Auto"],
+          description: "Auto detect from URL and headers (default)",
+        },
+      },
+      {
+        type: {
+          enum: ["Fixed"],
           description: "Fixed",
         },
         fixedContentType: {
           type: "string",
           title: "Fixed content type",
           allowedValues: ContentTypes,
-          optional: true,
         },
       },
       {
         type: {
-          enum: ["fromColumn"],
+          enum: ["From column"],
           description: "From column",
         },
         contentTypeColumnName: {
           title: "MIME column",
+          type: "string",
           description:
             "Column that contains valid extesion values (img, mp4, mp3, ...)",
-          optional: true,
-          lookup: {
-            type: "schema",
-            object: "column",
-            filter: {
-              tsDataType: "string",
-              table: "",
-            },
-          },
         },
       },
       {
         type: {
-          enum: ["fromUrlEnding"],
-          description: "From URL Extension",
+          enum: ["From URL Extension"],
+          description: "From URL Extension (e.g. .png, .mp4)",
         },
       },
     ],
@@ -147,6 +151,13 @@ export const ColumnFormatSchema = {
     CurrencySchema,
     {
       type: {
+        enum: ["Metric Prefix"],
+        title: "Format",
+        description: "Display large numbers with metric prefixes (e.g. 1.2K)",
+      },
+    },
+    {
+      type: {
         enum: ["UNIX Timestamp"],
         title: "Format",
         description: "Display unix timestamp as datetime",
@@ -159,26 +170,12 @@ export const ColumnFormatSchema = {
         description: "Display time difference between now and the value",
       },
       params: {
+        optional: true,
         type: {
           variant: {
             title: "Variant",
-            optional: false,
-            oneOfType: [
-              {
-                type: {
-                  title: "Variant",
-                  enum: ["short"],
-                  description: "Show top two biggest units",
-                },
-              },
-              {
-                type: {
-                  title: "Variant",
-                  enum: ["full"],
-                  description: "Show all age units",
-                },
-              },
-            ],
+            description: "Short shows top two biggest units",
+            enum: ["short", "full"],
           },
         },
       },
@@ -205,7 +202,7 @@ export const ColumnFormatSchema = {
               { key: "video", label: "Video" },
               { key: "audio", label: "Audio" },
               { key: "svg", label: "SVG" },
-              { key: "apth", label: "Path (SVG)" },
+              { key: "path", label: "Path (SVG)" },
             ].map((v) => v.key),
             description: "List of allowed HTML tags. E.g.: div, p, html",
             optional: true,
@@ -218,6 +215,11 @@ export const ColumnFormatSchema = {
 } as const satisfies JSONB.JSONBSchema;
 
 export type ColumnFormat = JSONB.GetSchemaType<typeof ColumnFormatSchema>;
+
+const ensureAITypesAreInSync = {} as Exclude<
+  ColumnFormat,
+  { type: "NONE" | "UNIX Timestamp" }
+> satisfies NonNullable<TableWindowInsertModel["columns"]>[number]["format"];
 
 type ColumnRenderer = {
   type: ColumnFormat["type"];
@@ -270,6 +272,11 @@ const HREFRender: FormattedColRender<any>["render"] = (v, r, c) => (
   </a>
 );
 
+const metricPrefixOptions = {
+  notation: "compact",
+  compactDisplay: "short",
+} as const;
+
 export const DISPLAY_FORMATS = [
   {
     type: "NONE",
@@ -289,17 +296,27 @@ export const DISPLAY_FORMATS = [
     render: HREFRender,
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Tel" }>>,
   {
+    type: "Metric Prefix",
+    tsDataType: ["number", "string"],
+    render: (rawValue: any) => {
+      const v = tryParseNumber(rawValue);
+      if (!Number.isFinite(v)) return rawValue;
+      const formatter = new Intl.NumberFormat(undefined, metricPrefixOptions);
+      return formatter.format(v); // 1.2K, 1.2M, 1.2B, etc
+    },
+  },
+  {
     type: "Media",
     tsDataType: ["string"],
     render: (v, row, c, f) => {
-      const mediaFormat = f; // ?? { params: {} } as Extract<ColumnFormat, { type: "Media" }>;
-      const params = mediaFormat.params as any;
+      const mediaFormat = f;
+      const params = mediaFormat.params;
       return (
         <MediaViewer
           url={v}
           content_type={
-            params.type === "fixed" ? (params.fixedContentType ?? "image")
-            : params.type === "fromColumn" && params.contentTypeColumnName ?
+            params?.type === "Fixed" ? params.fixedContentType
+            : params?.type === "From column" && params.contentTypeColumnName ?
               row[params.contentTypeColumnName]
             : undefined
           }
@@ -379,7 +396,9 @@ export const DISPLAY_FORMATS = [
     render: (v, c, rc, p) => {
       if (v) {
         const age = getAge(+new Date(v), Date.now(), true);
-        return <StyledInterval value={age} mode={p.params.variant.type} />;
+        return (
+          <StyledInterval value={age} mode={p.params?.variant ?? "short"} />
+        );
       }
 
       return v;
@@ -388,27 +407,25 @@ export const DISPLAY_FORMATS = [
   {
     type: "Currency",
     tsDataType: ["number", "string"],
-    render: (rawValue: any, row, c, { params: { type, ...p } }: any) => {
+    render: (rawValue: any, row, c, { params }) => {
       const v = tryParseNumber(rawValue);
-      if (!Number.isFinite(v) || (!p.currencyCodeField && !p.currencyCode)) {
-        return v;
-      }
 
       try {
         const currencyCode =
-          type === "Fixed" ? p.currencyCode : row[p.currencyCodeField.column];
+          params.mode === "Fixed" ?
+            params.currencyCode
+          : row[params.currencyCodeField];
+        if (!Number.isFinite(v) || !currencyCode) {
+          return v;
+        }
         const formatter = new Intl.NumberFormat(undefined, {
           style: "currency",
           currency: currencyCode,
-
-          // These options are needed to round to whole numbers if that's what you want.
-          //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
-          //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
+          ...(params.metricPrefix ? metricPrefixOptions : undefined),
         });
-
         return formatter.format(v); // $2,500.00
       } catch (error) {
-        console.warn("Failed to render as currency:", { ...p, error });
+        console.warn("Failed to render as currency:", { params, error });
       }
 
       return v;

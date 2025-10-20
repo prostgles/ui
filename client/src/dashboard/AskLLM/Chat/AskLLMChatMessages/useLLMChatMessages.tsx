@@ -1,16 +1,16 @@
 import { mdiBrain, mdiDelete } from "@mdi/js";
 import React, { useMemo } from "react";
-import {
-  filterArr,
-  filterArrInverse,
-} from "../../../../../../commonTypes/llmUtils";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import { filterArr, filterArrInverse } from "../../../../../../common/llmUtils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
+import Btn from "../../../../components/Btn";
 import type { Message } from "../../../../components/Chat/Chat";
 import { Marked } from "../../../../components/Chat/Marked";
 import Chip from "../../../../components/Chip";
 import { CopyToClipboardBtn } from "../../../../components/CopyToClipboardBtn";
+import ErrorComponent from "../../../../components/ErrorComponent";
+import Expander from "../../../../components/Expander";
 import { FlexCol, FlexRow } from "../../../../components/Flex";
-import Loading from "../../../../components/Loading";
+import Loading from "../../../../components/Loader/Loading";
 import { MediaViewer } from "../../../../components/MediaViewer";
 import Select from "../../../../components/Select/Select";
 import { t } from "../../../../i18n/i18nUtils";
@@ -18,24 +18,30 @@ import { isDefined } from "../../../../utils";
 import { Counter } from "../../../W_SQL/W_SQL";
 import type { UseLLMChatProps } from "../useLLMChat";
 import { ToolUseChatMessage } from "./ToolUseChatMessage";
-import { ExpandSection } from "../../../../components/ExpandSection";
-import Expander from "../../../../components/Expander";
-import Btn from "../../../../components/Btn";
-import ErrorComponent from "../../../../components/ErrorComponent";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 
 type P = UseLLMChatProps & {
   activeChat: DBSSchema["llm_chats"] | undefined;
 };
 
 export const useLLMChatMessages = (props: P) => {
-  const { dbs, user, activeChat, db, loadedSuggestions, workspaceId } = props;
-  const { is_loading } = activeChat ?? {};
+  const {
+    dbs,
+    user,
+    activeChat,
+    db,
+    loadedSuggestions,
+    workspaceId,
+    mcpServerIcons,
+  } = props;
+  const { status } = activeChat ?? {};
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChat?.id },
     { orderBy: { created: 1 } },
     { skip: !activeChat?.id },
   );
 
+  const isLoadingSince = status?.state === "loading" ? status.since : null;
   const sqlHandler = db.sql;
 
   const actualMessages: Message[] | undefined = useMemo(
@@ -109,6 +115,7 @@ export const useLLMChatMessages = (props: P) => {
                   sqlHandler={sqlHandler}
                   loadedSuggestions={loadedSuggestions}
                   workspaceId={workspaceId}
+                  mcpServerIcons={mcpServerIcons}
                 />
               );
             });
@@ -121,7 +128,7 @@ export const useLLMChatMessages = (props: P) => {
                 textMessages.map((m) => m.text).join("\n")
               : undefined;
 
-            const isLoading = Boolean(isLastMessage && is_loading);
+            const isLoading = Boolean(isLastMessage && isLoadingSince);
             const costNum = cost ? parseFloat(cost) : 0;
             return {
               id,
@@ -138,6 +145,7 @@ export const useLLMChatMessages = (props: P) => {
                   )}
                   <Select
                     title={t.common.Delete + "..."}
+                    data-command="AskLLM.DeleteMessage"
                     fullOptions={[
                       {
                         key: "thisMessage",
@@ -147,10 +155,6 @@ export const useLLMChatMessages = (props: P) => {
                         key: "allToBottom",
                         label: "Delete this and all following messages",
                       },
-                      // {
-                      //   key: "regenerate",
-                      //   label: "Delete and re-generate from this message",
-                      // },
                     ]}
                     btnProps={{
                       size: "micro",
@@ -191,7 +195,7 @@ export const useLLMChatMessages = (props: P) => {
                   {isLoading && (
                     <>
                       <Loading />
-                      <Counter from={new Date(is_loading!)} />
+                      <Counter from={new Date(isLoadingSince!)} />
                     </>
                   )}
                   {meta?.stop_reason?.toLowerCase() === "max_tokens" && (
@@ -210,16 +214,18 @@ export const useLLMChatMessages = (props: P) => {
         .filter(isDefined),
     [
       llmMessages,
-      is_loading,
+      isLoadingSince,
       user?.id,
       sqlHandler,
       loadedSuggestions,
       workspaceId,
       dbs.llm_messages,
       activeChat?.id,
+      mcpServerIcons,
     ],
   );
 
+  const lastMessage = llmMessages?.at(-1);
   const disabled_message =
     (
       activeChat?.disabled_until &&
@@ -227,6 +233,26 @@ export const useLLMChatMessages = (props: P) => {
       activeChat.disabled_message
     ) ?
       activeChat.disabled_message
+    : lastMessage?.meta?.finish_reason === "length" ?
+      <FlexCol>
+        <ErrorComponent
+          error={"finish_reason = 'length'. Increase max_tokens and try again"}
+        />
+        <FormFieldDebounced
+          label={"Max tokens"}
+          value={
+            activeChat?.extra_body?.max_tokens ||
+            lastMessage.meta?.max_tokens ||
+            6000
+          }
+          onChange={(max_tokens) => {
+            dbs.llm_chats.update(
+              { id: activeChat!.id },
+              { extra_body: { max_tokens: Number(max_tokens) } },
+            );
+          }}
+        />
+      </FlexCol>
     : undefined;
 
   const messages: Message[] = (

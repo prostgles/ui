@@ -6,6 +6,7 @@ import FormField from "../FormField/FormField";
 import type { FullOption } from "../Select/Select";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { isCompleteJSONB } from "./isCompleteJSONB";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 
 type Schema = JSONB.BasicType | JSONB.EnumType;
 type P = JSONBSchemaCommonProps & {
@@ -63,7 +64,7 @@ export const JSONBSchemaPrimitive = ({
     showErrors && !isCompleteJSONB(value, schema) ? "Required" : undefined;
 
   return (
-    <FormField
+    <FormFieldDebounced
       name={schema.title}
       label={
         /**

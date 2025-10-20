@@ -7,9 +7,9 @@ import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUti
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys, type AnyObject } from "prostgles-types";
 import { Server } from "socket.io";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { getConnectionPaths } from "../../../commonTypes/utils";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBSSchema } from "../../../common/publishUtils";
+import { getConnectionPaths } from "../../../common/utils";
 import { addLog } from "../Logger";
 import { getAuth, withOrigin } from "../authConfig/getAuth";
 import type { SUser } from "../authConfig/sessionUtils";
@@ -214,7 +214,7 @@ export const startConnection = async function (
           if (user?.type === "admin") {
             return true;
           }
-          const ac = await getACRule(dbs, user, dbConf.id, con.id);
+          const ac = await getAccessRule(dbs, user, dbConf.id, con.id);
           if (
             ac?.dbPermissions.type === "Run SQL" &&
             ac.dbPermissions.allowSQL
@@ -330,7 +330,7 @@ export const startConnection = async function (
   });
 };
 
-export const getACRule = async (
+export const getAccessRule = async (
   dbs: DBOFullyTyped<DBGeneratedSchema>,
   user: User | undefined,
   database_id: number,

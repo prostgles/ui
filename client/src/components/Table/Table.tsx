@@ -47,6 +47,7 @@ export type TableColumn = {
   className?: string;
   blur?: boolean;
   hidden?: boolean;
+  noRightBorder?: boolean;
   /** If it's a joined column then a string array of sortable columns */
   sortable: boolean | ColumnSortMenuProps;
   onClick?: (
@@ -118,7 +119,7 @@ export const Table = <Sort extends ColumnSort | ColumnSortSQL>(
 ) => {
   const {
     rows = [],
-    cols: c = [],
+    cols: allCols = [],
     tableStyle = {},
     maxRowsPerPage = 100,
     className = "",
@@ -128,7 +129,7 @@ export const Table = <Sort extends ColumnSort | ColumnSortSQL>(
 
   const [draggedCol, setDraggedCol] = useState<TableState["draggedCol"]>();
 
-  const cols = c.filter((c) => !c.hidden);
+  const cols = allCols.filter((c) => !c.hidden);
 
   const tableKey =
     cols.map((c) => `${c.key}${c.width}`).join() + draggedCol?.idx;

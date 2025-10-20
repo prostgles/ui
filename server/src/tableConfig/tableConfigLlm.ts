@@ -91,6 +91,25 @@ const extraRequestData = {
         optional: true,
       },
       think: { type: "boolean", optional: true },
+      /* OpenRouter */
+      reasoning: {
+        optional: true,
+        oneOfType: [
+          {
+            effort: {
+              enum: ["high", "medium", "low"],
+              description: 'Can be "high", "medium", or "low" (OpenAI-style)',
+            },
+          },
+          {
+            max_tokens: {
+              type: "integer",
+              optional: true,
+              description: "Specific token limit (Anthropic-style)",
+            },
+          },
+        ],
+      },
       stream: { type: "boolean", optional: true },
     },
   },
@@ -278,9 +297,20 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         sqlDefinition: `TIMESTAMPTZ`,
         info: { hint: "If set then chat is disabled until this time" },
       },
-      is_loading: {
-        sqlDefinition: `TIMESTAMPTZ`,
-        info: { hint: "Timestamp since started waiting for LLM response" },
+      status: {
+        nullable: true,
+        jsonbSchema: {
+          oneOf: [
+            { type: { state: { enum: ["stopped"] } } },
+            {
+              type: {
+                state: { enum: ["loading"] },
+                /** Timestamp since started waiting for LLM response */
+                since: "Date",
+              },
+            },
+          ],
+        },
       },
       db_schema_permissions: {
         label: "Schema read access",
@@ -313,10 +343,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                   "Specific tables and their columns and constraints",
               },
               tables: {
+                title: "Tables",
                 type: "Lookup[]",
                 lookup: {
                   type: "schema",
                   object: "table",
+                  isArray: true,
                 },
               },
             },
@@ -367,7 +399,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                 arrayOfType: {
                   tableName: {
                     title: "Table name",
-                    type: "Lookup[]",
+                    type: "Lookup",
                     lookup: {
                       type: "schema",
                       object: "table",

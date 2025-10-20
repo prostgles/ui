@@ -1,16 +1,16 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types/lib";
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
-import type { InstalledPrograms } from "../../../../commonTypes/electronInitTypes";
-import type { LLMMessage } from "../../../../commonTypes/llmUtils";
-import type { McpToolCallResponse } from "../../../../commonTypes/mcp";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
+import type { InstalledPrograms } from "../../../../common/electronInitTypes";
+import type { LLMMessage } from "../../../../common/llmUtils";
+import type { McpToolCallResponse } from "../../../../common/mcp";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type {
   ConnectionStatus,
   PGDumpParams,
   ProcStats,
   SampleSchema,
-} from "../../../../commonTypes/utils";
+} from "../../../../common/utils";
 import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 import type { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
 import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
@@ -32,6 +32,16 @@ export type DBSMethods = Partial<{
     chatId: number,
     type: "new-message" | "approve-tool-use",
   ) => Promise<AnyObject>;
+  getFullPrompt: ({
+    prompt,
+    schema,
+    dashboardTypesContent,
+  }: {
+    prompt: string;
+    schema: string;
+    dashboardTypesContent: string;
+  }) => Promise<string>;
+  stopAskLLM: (chatId: number) => Promise<void>;
   pgDump: (
     conId: string,
     credId: number | null | undefined,
@@ -97,8 +107,8 @@ export type DBSMethods = Partial<{
     content: string;
   }[];
   getConnectionDBTypes: (
-    conId: string,
-  ) => { dbsSchema: string; dbSchema: string } | undefined;
+    conId: string | undefined,
+  ) => Promise<string | undefined>;
   getStatus: (conId: string) => Promise<ConnectionStatus>;
   killPID: (
     connId: string,
@@ -156,6 +166,22 @@ export type DBSMethods = Partial<{
     uvxVersion: string;
   }>;
   refreshModels: () => Promise<void>;
+  getLLMAllowedChatTools: (chatId: number) => Promise<
+    | {
+        type:
+          | "mcp"
+          | "prostgles-db-methods"
+          | "prostgles-db"
+          | "prostgles-ui"
+          | "docker-sandbox";
+        name: string;
+        description: string;
+        input_schema: any;
+        tool_name: string;
+        auto_approve: boolean;
+      }[]
+    | undefined
+  >;
 }>;
 
 const AdminTableNames = ["connections", "global_settings"] as const;

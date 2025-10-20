@@ -1,6 +1,6 @@
 import { mdiReload } from "@mdi/js";
 import React from "react";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
 import { useAlert } from "../../../../components/AlertProvider";
 import Btn from "../../../../components/Btn";
 import { FlexRow } from "../../../../components/Flex";
@@ -12,6 +12,7 @@ import { MCPServerConfigButton } from "../MCPServerConfig/MCPServerConfigButton"
 import { useMCPServerEnable } from "../MCPServerConfig/useMCPServerEnable";
 import type { MCPServerWithToolAndConfigs } from "../useMCPServersListProps";
 import { MCPServersInstall } from "./MCPServersInstall";
+import { pluralise } from "src/pages/Connections/Connection";
 
 export type MCPServerFooterActionsProps = Pick<
   ServerSettingsProps,
@@ -100,7 +101,9 @@ export const MCPServerFooterActions = ({
           }
           onClickPromise={async () => {
             const toolCount = await reloadMcpServerTools(mcp_server.name);
-            addAlert(`Reloaded ${toolCount || 0} tools`);
+            addAlert(
+              `Reloaded ${toolCount || 0} ${pluralise(toolCount, "tool")} for ${JSON.stringify(mcp_server.name)} server`,
+            );
           }}
         />
       )}

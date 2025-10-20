@@ -1,26 +1,27 @@
+import { dashboardTypesContent } from "@common/dashboardTypesContent";
+import {
+  filterArr,
+  filterArrInverse,
+  getLLMMessageText,
+  isAssistantMessageRequestingToolUse,
+  reachedMaximumNumberOfConsecutiveToolRequests,
+} from "@common/llmUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import { sliceText } from "@common/utils";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import { getSerialisableError, isObject, omitKeys } from "prostgles-types";
 import { type DBS } from "../..";
-import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
-import {
-  getLLMMessageText,
-  isAssistantMessageRequestingToolUse,
-  LLM_PROMPT_VARIABLES,
-  reachedMaximumNumberOfConsecutiveToolRequests,
-} from "../../../../commonTypes/llmUtils";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { sliceText } from "../../../../commonTypes/utils";
-import { getElectronConfig } from "../../electronConfig";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
-import { getLLMTools, type MCPToolSchema } from "./getLLMTools";
+import { getLLMAllowedChatTools } from "./getLLMTools";
 
-import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../commonTypes/prostglesMcp";
+} from "@common/prostglesMcp";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
+import { getFullPrompt } from "./getFullPrompt";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
 export const getBestLLMChatModel = async (
@@ -47,7 +48,11 @@ export type AskLLMArgs = {
   allowedLLMCreds: DBSSchema["access_control_allowed_llm"][] | undefined;
   accessRules: DBSSchema["access_control"][] | undefined;
   clientReq: AuthClientRequest;
-  type: "new-message" | "approve-tool-use";
+  type:
+    | "new-message"
+    | "approve-tool-use"
+    | "tool-use-result"
+    | "tool-use-result-with-denied";
 };
 
 export const askLLM = async (args: AskLLMArgs) => {
@@ -62,89 +67,115 @@ export const askLLM = async (args: AskLLMArgs) => {
     userMessage,
     type,
   } = args;
-  if (!userMessage.length) throw "Message is empty";
-  if (!Number.isInteger(chatId)) throw "chatId must be an integer";
-  const getChat = () => dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
-  let chat = await getChat();
-  if (!chat) throw "Chat not found";
-  const { llm_prompt_id } = chat;
-  if (!chat.model) {
-    const preferredChatModel = await getBestLLMChatModel(dbs, {
-      $existsJoined: {
-        "llm_providers.llm_credentials": {},
-      },
-    } as Filter);
-    await dbs.llm_chats.update(
-      { id: chatId },
-      { model: preferredChatModel.id },
-    );
-    chat = await getChat();
-  }
-  if (!chat?.model) throw "Chat model not found";
-  const llm_credential = await dbs.llm_credentials.findOne({
-    $existsJoined: {
-      "llm_providers.llm_models": {
-        id: chat.model,
-      },
-    },
-  } as Filter);
-  if (!llm_prompt_id) throw "Chat missing prompt";
-  if (!llm_credential) throw "LLM credentials missing";
-  const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
-  if (!promptObj) throw "Prompt not found";
-  const { prompt } = promptObj;
-  const pastMessages = await dbs.llm_messages.find(
-    { chat_id: chatId },
-    { orderBy: { created: 1 } },
-  );
 
-  const toolsWithInfo = await getLLMTools({
-    isAdmin: user.type === "admin",
+  const {
+    chat,
+    prompt,
+    pastMessages,
+    promptObj,
+    getChat,
+    llm_credential,
+    llm_prompt_id,
+  } = await getValidatedAskLLMChatOptions(args);
+
+  const toolsWithInfo = await getLLMAllowedChatTools({
+    userType: user.type,
     dbs,
     chat,
     connectionId,
     prompt: promptObj,
   });
-  const tools = toolsWithInfo?.map(({ name, description, input_schema }) => {
-    return {
-      name,
-      description,
-      input_schema: omitKeys(input_schema, ["$id"]),
-    } satisfies MCPToolSchema;
-  });
+  const tools = toolsWithInfo?.map(
+    ({ name, description, input_schema, auto_approve }) => {
+      return {
+        name,
+        description,
+        input_schema: omitKeys(input_schema, ["$id"]),
+        auto_approve,
+      };
+    },
+  );
 
   const lastMessage = pastMessages.at(-1);
-  if (type === "new-message") {
+  if (type === "approve-tool-use") {
+    if (!lastMessage) {
+      throw new Error("Last message not found for tool use approval");
+    }
+    const toolUseMessages = filterArr(lastMessage.message, {
+      type: "tool_use",
+    } as const);
+
+    return runApprovedTools(
+      toolsWithInfo,
+      args,
+      chat,
+      toolUseMessages,
+      userMessage,
+    );
+  }
+
+  /** If user stopped chat must add tool use responses to prevent errors */
+  const awaitingToolUseResult = pastMessages.flatMap(({ message }, index) => {
+    const result = filterArr(message, {
+      type: "tool_use",
+    } as const).filter(
+      (toolUse) =>
+        !pastMessages
+          .slice(index + 1)
+          .some((maybeResponse) =>
+            maybeResponse.message.some(
+              (n) => n.type === "tool_result" && n.tool_use_id === toolUse.id,
+            ),
+          ),
+    );
+    return result;
+  });
+  if (awaitingToolUseResult.length && args.type === "new-message") {
     await dbs.llm_messages.insert({
       user_id: user.id,
       chat_id: chatId,
-      message: userMessage,
+      message: awaitingToolUseResult.map((m) => ({
+        type: "tool_result" as const,
+        tool_name: m.name,
+        tool_use_id: m.id,
+        content:
+          chat.status?.state === "stopped" ?
+            "Tool use requests were stopped by the user"
+          : "Tool use requests were interrupted by the user",
+      })),
       llm_model_id: chat.model,
     });
+  }
 
-    /** Update chat name based on first user message */
-    const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
-    if (isFirstUserMessage) {
-      const questionText = getLLMMessageText({ message: userMessage });
-      const isOnlyImage =
-        !questionText && userMessage.some((m) => m.type === "image");
-      void dbs.llm_chats.update(
-        { id: chatId },
-        {
-          name:
-            isOnlyImage ? "[Attached image]" : (
-              sliceText(questionText, 25).replaceAll("\n", " ")
-            ),
-        },
-      );
-    }
-  } else {
-    return runApprovedTools(
-      args,
-      chat,
-      userMessage,
-      lastMessage?.message,
-      toolsWithInfo,
+  if (args.type === "tool-use-result" && !awaitingToolUseResult.length) {
+    // Chat might have since been stopped and other user messages were added
+    return;
+  }
+
+  await dbs.llm_messages.insert({
+    user_id: user.id,
+    chat_id: chatId,
+    message: userMessage,
+    llm_model_id: chat.model,
+  });
+  if (type === "tool-use-result-with-denied") {
+    return;
+  }
+
+  /** Update chat name based on first user message */
+  const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
+  if (isFirstUserMessage) {
+    const questionText = getLLMMessageText({ message: userMessage });
+    const isOnlyImage =
+      !questionText && userMessage.some((m) => m.type === "image");
+    void dbs.llm_chats.update(
+      { id: chatId },
+      {
+        name:
+          isOnlyImage ? "[Attached image]" : (
+            sliceText(questionText, 25).replaceAll("\n", " ")
+          ),
+      },
     );
   }
 
@@ -198,7 +229,7 @@ export const askLLM = async (args: AskLLMArgs) => {
   await dbs.llm_chats.update(
     { id: chatId },
     {
-      is_loading: new Date(),
+      status: { state: "loading", since: new Date().toISOString() },
     },
   );
   const aiResponseMessagePlaceholder = await dbs.llm_messages.insert(
@@ -222,18 +253,11 @@ export const askLLM = async (args: AskLLMArgs) => {
         throw `Maximum total cost of the chat (${maxTotalCost}) reached. Current cost: ${chatCost}`;
       }
     }
-    const promptWithContext = prompt
-      .replaceAll(
-        LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME,
-        getElectronConfig()?.isElectron ? "Prostgles Desktop" : "Prostgles UI",
-      )
-      .replace(LLM_PROMPT_VARIABLES.TODAY, new Date().toISOString())
-      .replace(
-        LLM_PROMPT_VARIABLES.SCHEMA,
-        schema ||
-          "Schema is empty: there are no tables or views in the database",
-      )
-      .replace(LLM_PROMPT_VARIABLES.DASHBOARD_TYPES, dashboardTypes);
+    const promptWithContext = getFullPrompt({
+      prompt,
+      schema,
+      dashboardTypesContent,
+    });
 
     const modelData = (await dbs.llm_models.findOne(
       { id: chat.model },
@@ -258,7 +282,7 @@ export const askLLM = async (args: AskLLMArgs) => {
 
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const {
-      content: aiResponseMessage,
+      content: aiResponseMessageRaw,
       meta,
       cost,
     } = await fetchLLMResponse({
@@ -292,6 +316,25 @@ export const askLLM = async (args: AskLLMArgs) => {
         } satisfies LLMMessageWithRole,
       ],
     });
+
+    /** Move prostgles-ui tool_use messages to the end for better UX (because no tool result is expected) */
+    const prostglesUIToolUse = filterArr(aiResponseMessageRaw, {
+      type: "tool_use",
+    } as const).filter(
+      (m) =>
+        getMCPToolNameParts(m.name)?.serverName ===
+        ("prostgles-ui" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS),
+    );
+    const aiResponseMessage =
+      !prostglesUIToolUse.length ? aiResponseMessageRaw : (
+        [
+          ...filterArrInverse(aiResponseMessageRaw, {
+            type: "tool_use",
+          } as const),
+          ...prostglesUIToolUse,
+        ]
+      );
+
     await dbs.llm_messages.update(
       { id: aiResponseMessagePlaceholder.id },
       {
@@ -303,7 +346,7 @@ export const askLLM = async (args: AskLLMArgs) => {
 
     if (
       maximum_consecutive_tool_fails &&
-      args.type === "new-message" &&
+      args.type !== "approve-tool-use" &&
       isAssistantMessageRequestingToolUse({ message: aiResponseMessage }) &&
       reachedMaximumNumberOfConsecutiveToolRequests(
         [...pastMessages, { message: userMessage }],
@@ -314,13 +357,21 @@ export const askLLM = async (args: AskLLMArgs) => {
       throw `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`;
     }
 
-    await runApprovedTools(
-      args,
-      chat,
-      aiResponseMessage,
-      lastMessage?.message,
-      toolsWithInfo,
-    );
+    const latestChat = await getChat();
+    if (!latestChat) throw "Chat not found after LLM response";
+
+    const newToolUseMessages = filterArr(aiResponseMessage, {
+      type: "tool_use",
+    } as const);
+    if (latestChat.status?.state !== "stopped" && newToolUseMessages.length) {
+      await runApprovedTools(
+        toolsWithInfo,
+        args,
+        latestChat,
+        newToolUseMessages,
+        undefined,
+      );
+    }
   } catch (err) {
     console.error(err);
     const isAdmin = user.type === "admin";
@@ -346,7 +397,61 @@ export const askLLM = async (args: AskLLMArgs) => {
   await dbs.llm_chats.update(
     { id: chatId },
     {
-      is_loading: null,
+      status: null,
     },
   );
+};
+
+const getValidatedAskLLMChatOptions = async ({
+  userMessage,
+  type,
+  chatId,
+  dbs,
+  user,
+}: AskLLMArgs) => {
+  if (!userMessage.length && type === "new-message") throw "Message is empty";
+  if (!Number.isInteger(chatId)) throw "chatId must be an integer";
+  const getChat = () => dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
+  let maybeChat = await getChat();
+  if (!maybeChat) throw "Chat not found";
+  const { llm_prompt_id } = maybeChat;
+  if (!maybeChat.model) {
+    const preferredChatModel = await getBestLLMChatModel(dbs, {
+      $existsJoined: {
+        "llm_providers.llm_credentials": {},
+      },
+    } as Filter);
+    await dbs.llm_chats.update(
+      { id: chatId },
+      { model: preferredChatModel.id },
+    );
+    maybeChat = await getChat();
+  }
+  if (!maybeChat?.model) throw "Chat model not found";
+  const chat = { ...maybeChat, model: maybeChat.model };
+  const llm_credential = await dbs.llm_credentials.findOne({
+    $existsJoined: {
+      "llm_providers.llm_models": {
+        id: chat.model,
+      },
+    },
+  } as Filter);
+  if (!llm_prompt_id) throw "Chat missing prompt";
+  if (!llm_credential) throw "LLM credentials missing";
+  const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
+  if (!promptObj) throw "Prompt not found";
+  const { prompt } = promptObj;
+  const pastMessages = await dbs.llm_messages.find(
+    { chat_id: chatId },
+    { orderBy: { created: 1 } },
+  );
+  return {
+    prompt,
+    promptObj,
+    pastMessages,
+    chat,
+    llm_credential,
+    llm_prompt_id,
+    getChat,
+  };
 };

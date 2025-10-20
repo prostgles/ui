@@ -109,7 +109,6 @@ export const Sessions = ({
                     {!!os && (
                       <Icon
                         title={os}
-                        size={1}
                         path={
                           os === "linux" ? mdiLinux
                           : os === "windows" ?
@@ -123,7 +122,6 @@ export const Sessions = ({
                     {!!browser && (
                       <Icon
                         title={browser}
-                        size={1}
                         path={
                           browser === "chrome" ? mdiGoogleChrome
                           : browser === "firefox" ?

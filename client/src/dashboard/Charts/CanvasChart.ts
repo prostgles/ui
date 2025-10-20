@@ -195,9 +195,8 @@ export class CanvasChart {
          */
         // this.ctx.canvas.width  = offsetWidth;
         // this.ctx.canvas.height = offsetHeight;
-        const { onResize } = this.opts ?? {};
         setTimeout(() => {
-          onResize?.();
+          this.opts?.onResize?.();
         }, 50);
         this.render();
       }
@@ -554,7 +553,8 @@ export class CanvasChart {
         ctx.closePath();
         ctx.stroke();
         ctx.fill();
-      } else if ((s.type as any) === "text") {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      } else if (s.type === "text") {
         const { textAlign = "start" } = s;
 
         if (s.background) {
@@ -566,10 +566,7 @@ export class CanvasChart {
           }
           ctx.lineWidth = s.background.lineWidth ?? ctx.lineWidth;
           let x = coords[0] - txtSize.width / 2 - txtPadding;
-          const y =
-            coords[1] -
-            (allLowerCase(s.text) ? 1 : 1) * txtSize.actualHeight -
-            txtPadding;
+          const y = coords[1] - txtSize.actualHeight - txtPadding;
 
           if (["left", "start"].includes(textAlign)) {
             x = coords[0] - txtPadding;
@@ -595,7 +592,12 @@ export class CanvasChart {
         ctx.fillStyle = s.fillStyle;
         ctx.textAlign = textAlign;
         ctx.font = s.font || ctx.font;
-        ctx.fillText(s.text, coords[0], coords[1]);
+        const topOffsetToCenterItVertically = 2;
+        ctx.fillText(
+          s.text,
+          coords[0],
+          coords[1] - topOffsetToCenterItVertically,
+        );
         // s.text.split("\n").map(text => {
         //   ctx.fillText(text, coords[0], coords[1]);
         // })

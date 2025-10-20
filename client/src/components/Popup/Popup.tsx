@@ -106,6 +106,7 @@ export type PopupProps = TestSelectors & {
   showFullscreenToggle?: {
     defaultValue?: boolean;
     getStyle?: (fullscreen: boolean) => React.CSSProperties;
+    getContentStyle?: (fullscreen: boolean) => React.CSSProperties;
   };
   persistInitialSize?: boolean;
   /**
@@ -204,7 +205,8 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
         const firstFocusable = [...firstInputLike].find(
           (e) =>
             getComputedStyle(e).display !== "none" &&
-            getComputedStyle(e).opacity !== "0",
+            getComputedStyle(e).opacity !== "0" &&
+            !e.closest("." + DATA_NULLABLE),
         );
         (firstFocusable ?? container).focus();
       }
@@ -307,6 +309,9 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
       "fullscreen",
       undefined,
     ];
+    const contentFullScreenStyle = showFullscreenToggle?.getContentStyle?.(
+      Boolean(fullScreen),
+    );
 
     const result = (
       <>
@@ -357,7 +362,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
             )}
             style={{
               ...rootChildStyle,
-              ...showFullscreenToggle?.getStyle?.(!!fullScreen),
+              ...showFullscreenToggle?.getStyle?.(Boolean(fullScreen)),
             }}
           >
             <PopupHeader
@@ -382,7 +387,10 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
                     " bg-inherit flex-col f-1 min-h-0 o-auto ",
                   contentClassName,
                 )}
-                style={contentStyle}
+                style={{
+                  ...contentStyle,
+                  ...contentFullScreenStyle,
+                }}
                 data-command={"Popup.content" satisfies Command}
               >
                 <ErrorTrap>{content || children}</ErrorTrap>
@@ -405,6 +413,8 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     return ReactDOM.createPortal(result, this.el);
   }
 }
+
+export const DATA_NULLABLE = "data-nullable";
 
 type FooterProps = TestSelectors & {
   children: React.ReactNode;
