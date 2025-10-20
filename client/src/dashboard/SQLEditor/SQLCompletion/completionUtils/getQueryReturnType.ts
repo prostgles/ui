@@ -2,15 +2,8 @@ import type { SQLHandler } from "prostgles-types";
 import { asName, includes, tryCatchV2 } from "prostgles-types";
 import type { ColType } from "../../../../../../common/utils";
 
-/**
- * Get statement return type ensuring any dangerous commands are not commited
- */
-const getQueryReturnType = async (
-  rawQuery: string,
-  sql: SQLHandler,
-): Promise<ColType[]> => {
+const isQueryValid = async (rawQuery: string, sql: SQLHandler) => {
   const queryWithSemicolon = getSQLQuerySemicolon(rawQuery, true);
-  /** Check if it's a data returning statement to avoid useless error logs */
   const res = await sql(
     `
       EXPLAIN
@@ -19,9 +12,29 @@ const getQueryReturnType = async (
     {},
     { returnType: "default-with-rollback" },
   ).catch((_e) => false);
+  return { isValid: Boolean(res), queryWithSemicolon };
+};
 
-  if (!res) {
+/**
+ * Get statement return type ensuring any dangerous commands are not commited
+ */
+const getQueryReturnType = async (
+  rawQuery: string,
+  sql: SQLHandler,
+  includeTableOid = false,
+): Promise<ColType[]> => {
+  /** Check if it's a data returning statement to avoid useless error logs */
+  const { queryWithSemicolon, isValid } = await isQueryValid(rawQuery, sql);
+
+  if (!isValid) {
     return [];
+  }
+  if (includeTableOid) {
+    const colTypes = await getTableExpressionReturnTypeWithTableOIDs(
+      rawQuery,
+      sql,
+    );
+    return colTypes;
   }
 
   const viewName = "prostgles_temp_view_getQueryReturnType" + Date.now();
@@ -95,14 +108,11 @@ export const getTableExpressionReturnType = async (
 
   try {
     const result = await tryCatchV2(async () => {
-      if (includeTableOid) {
-        const colTypes = await getTableExpressionReturnTypeWithTableOIDs(
-          expression,
-          sql,
-        );
-        return { colTypes };
-      }
-      const colTypes = await getQueryReturnType(expression, sql);
+      const colTypes = await getQueryReturnType(
+        expression,
+        sql,
+        includeTableOid,
+      );
       return { colTypes };
     });
     let colTypes = result.data?.colTypes;

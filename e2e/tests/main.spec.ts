@@ -631,7 +631,9 @@ test.describe("Main test", () => {
     await setPromptByText(page, "Create task");
     await sendAskLLMMessage(page, " task ");
 
-    await page.getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt").click();
+    await page
+      .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
+      .click({ timeout: 10e3 });
     await page.getByText("OK", { exact: true }).click();
 
     const mcpToolsBtn = await page.getByTestId("LLMChatOptions.MCPTools");
@@ -650,7 +652,9 @@ test.describe("Main test", () => {
       page,
       "I need some useful dashboards to track performance",
     );
-    await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
+    await page
+      .getByTestId("AskLLMChat.LoadSuggestedDashboards")
+      .click({ timeout: 10e3 });
 
     const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
     await expect(workspaceBtn).toContainText("Customer Insights");
@@ -664,15 +668,15 @@ test.describe("Main test", () => {
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLM").click();
     await sendAskLLMMessage(page, " mcp ");
-    await page.waitForTimeout(1e3);
-    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page
+      .getByTestId("AskLLMToolApprover.AllowOnce")
+      .click({ timeout: 10e3 });
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
     await expect(mcpToolUse).toContain("fetch--fetch url");
 
     await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " mcpplaywright ");
-    await page.waitForTimeout(2e3);
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is invalid. Try enabling and reloading the tools`,
     );
@@ -806,8 +810,7 @@ test.describe("Main test", () => {
       );
       await page.waitForTimeout(3e3);
       await page
-        .getByTestId("ToolUseMessage.toggle")
-        .last()
+        .getByTestId("Chat.messageList")
         .locator(".Loading")
         .waitFor({ state: "detached", timeout: 40e3 });
       await page.getByTestId("ToolUseMessage.toggle").last().click();

@@ -98,7 +98,6 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   inputEl?: HTMLElement;
   dontHighlight?: boolean;
   label?: React.ReactNode;
-  // wrapperStyle?: React.CSSProperties;
   variant?: "search" | "search-no-shadow";
   noBorder?: boolean;
   selectedKey?: OptionKey;

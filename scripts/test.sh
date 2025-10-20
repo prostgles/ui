@@ -2,9 +2,13 @@ set -e
 
 # Compile TS to Ensure any errors are caught
 cd client
+npm i
 npx tsc
+
 cd ../server
+npm i
 npx tsc
+npm test
 
 cd ..
 

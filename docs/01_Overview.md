@@ -2,27 +2,8 @@
 
 Prostgles UI is a user-friendly way for interacting with PostgreSQL, creating dashboards and internal tools.
 
-<picture>
-<source srcset="/screenshots/dark/sql_editor.svgif.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/sql_editor.svgif.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-<picture>
-<source srcset="/screenshots/dark/dashboard.svgif.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/dashboard.svgif.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-
-<picture>
-<source srcset="/screenshots/dark/schema_diagram.svgif.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/schema_diagram.svgif.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-<picture>
-<source srcset="/screenshots/dark/postgis_map.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/postgis_map.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-<picture>
-<source srcset="/screenshots/dark/ai_assistant.svgif.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/ai_assistant.svgif.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
-</picture>
+<img src="./screenshots/sql_editor.svgif.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
+<img src="./screenshots/ai_assistant.svgif.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
 
 ## Features
 - SQL Editor with syntax highlighting and auto-completion

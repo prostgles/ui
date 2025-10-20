@@ -34,7 +34,7 @@ export const getSVGif = (
       "totalDuration" | "loop"
     >,
     onlyValue?: boolean,
-  ) => getAnimationProperty({ ...args, totalDuration, loop }, onlyValue);
+  ) => getAnimationProperty({ ...args, totalDuration }, onlyValue);
 
   sceneAnimations.forEach(({ sceneId, keyframes }) => {
     const animationName = `scene-${sceneId}-anim`;
@@ -65,16 +65,15 @@ export const getAnimationProperty = (
   {
     elemSelector,
     animName,
-    loop,
     totalDuration,
   }: {
     elemSelector: string;
     animName: string;
     totalDuration: number;
-    loop?: boolean;
   },
   onlyValue = false,
 ) => {
+  const loop = true as boolean;
   const value = `animation: ${animName} ${totalDuration}ms ease-in-out ${
     loop ? "infinite" : "forwards"
   };`;

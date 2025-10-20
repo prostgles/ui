@@ -1487,41 +1487,6 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
       },
     },
   },
-  // "chrome-devtools": {
-  //   command: "npx",
-  //   args: ["-y", "chrome-devtools-mcp@latest"],
-  // },
-  // "docker-sandbox": {
-  //   command: "npm",
-  //   args: ["start", "--silent"],
-  //   source: {
-  //     type: "code",
-  //     files: fs.readdirSync(join(dockerSandboxDir, "/src")).reduce(
-  //       (acc, file) => {
-  //         if (file.endsWith(".ts")) {
-  //           acc[file] = fs.readFileSync(
-  //             join(dockerSandboxDir, "/src/", file),
-  //             "utf-8",
-  //           );
-  //         }
-  //         return acc;
-  //       },
-  //       {} as Record<string, string>,
-  //     ),
-  //     packageJson: fs.readFileSync(
-  //       join(dockerSandboxDir, "/package.json"),
-  //       "utf-8",
-  //     ),
-  //     tsconfigJson: fs.readFileSync(
-  //       join(dockerSandboxDir, "/tsconfig.json"),
-  //       "utf-8",
-  //     ),
-  //   },
-  //   env: {
-  //     NODE_ENV: "production",
-  //   },
-  //   info: "Run code in docker containers",
-  // },
   "docker-sandbox": {
     icon_path: "Docker",
     command: "prostgles-local",

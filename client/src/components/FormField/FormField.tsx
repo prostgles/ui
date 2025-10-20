@@ -356,6 +356,9 @@ export default class FormField extends React.Component<
 
     inptClass += " " + inputClassName;
 
+    const onDragStop = (e: React.DragEvent<HTMLInputElement>) => {
+      e.currentTarget.classList.toggle("active-drop-target", false);
+    };
     const inputProps: React.DetailedHTMLProps<
       React.InputHTMLAttributes<HTMLInputElement>,
       HTMLInputElement
@@ -420,18 +423,10 @@ export default class FormField extends React.Component<
         onDragOver: (e) => {
           e.currentTarget.classList.toggle("active-drop-target", true);
         },
-        onDrop: (e) => {
-          e.currentTarget.classList.toggle("active-drop-target", false);
-        },
-        onDragEnd: (e) => {
-          e.currentTarget.classList.toggle("active-drop-target", false);
-        },
-        onDragExit: (e) => {
-          e.currentTarget.classList.toggle("active-drop-target", false);
-        },
-        onDragLeave: (e) => {
-          e.currentTarget.classList.toggle("active-drop-target", false);
-        },
+        onDrop: onDragStop,
+        onDragEnd: onDragStop,
+        onDragExit: onDragStop,
+        onDragLeave: onDragStop,
       },
     };
 

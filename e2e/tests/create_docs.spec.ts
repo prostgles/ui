@@ -139,15 +139,9 @@ const getDocWithDarkModeImgTags = (fileContent: string) => {
   if (imgTags.length > 1) {
     imgTags.slice(1).forEach((imgTag, index) => {
       const tagText = "<img" + imgTag.split("/>")[0] + "/>";
-      const src = imgTag.split('src="')[1]?.split('"')[0];
       fileContent = fileContent.replaceAll(
         tagText,
-        [
-          `<picture>`,
-          `<source srcset="${src.replace("screenshots/", "screenshots/dark/")}" media="(prefers-color-scheme: dark)" />`,
-          tagText.replace("/>", `style="border: 1px solid; margin: 1em 0;" />`),
-          `</picture>`,
-        ].join("\n"),
+        tagText.replace("/>", `style="border: 1px solid; margin: 1em 0;" />`),
       );
     });
   }

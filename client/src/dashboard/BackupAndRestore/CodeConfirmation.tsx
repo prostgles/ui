@@ -22,7 +22,8 @@ type CodeConfirmationProps = TestSelectors & {
   positioning?: PopupProps["positioning"];
   fixedCode?: string;
 };
-export function CodeConfirmation({
+const getCode = () => Math.random().toFixed(3).slice(2, 5);
+export const CodeConfirmation = ({
   button,
   confirmButton,
   message: rawMessage,
@@ -37,26 +38,29 @@ export function CodeConfirmation({
   positioning = "beneath-left",
   fixedCode,
   ...testSelectors
-}: CodeConfirmationProps): JSX.Element {
+}: CodeConfirmationProps) => {
   const [message, setMessage] = useState<React.ReactNode>();
 
+  const getIsMounted = useIsMounted();
   useEffect(() => {
     if (typeof rawMessage === "function") {
       (async () => {
-        setMessage(await rawMessage());
+        const message = await rawMessage();
+        if (!getIsMounted()) return;
+        setMessage(message);
       })();
     } else {
       setMessage(rawMessage);
     }
-  }, [rawMessage]);
+  }, [rawMessage, getIsMounted]);
 
   const isMounted = useIsMounted();
-  const getCode = () => Math.random().toFixed(3).slice(2, 5);
   const [key, setKey] = useState(getCode());
   const [hasConfirmed, setHasConfirmed] = useState(false);
 
-  if (show)
+  if (show) {
     return show === "button" ? <>{button} </> : <>{confirmButton(() => {})} </>;
+  }
 
   return (
     <PopupMenu
@@ -109,7 +113,7 @@ export function CodeConfirmation({
       }}
     />
   );
-}
+};
 
 type CodeCheckerProps = Pick<
   CodeConfirmationProps,
@@ -123,16 +127,7 @@ export function CodeChecker({
   onChange,
   fixedCode,
 }: CodeCheckerProps): JSX.Element {
-  const getCode = () => {
-    const alphabet = "abcdefghijklmnopqrstuvwxyz";
-    return [Math.random(), Math.random(), Math.random()]
-      .map((rand) => {
-        const randomCharacter = alphabet[Math.floor(rand * alphabet.length)];
-        return randomCharacter;
-      })
-      .join("");
-  };
-  const [code] = useState(fixedCode ?? getCode());
+  const [code] = useState(fixedCode ?? getTextCode());
   const [confirmCode, setConfirmCode] = useState("");
 
   return (
@@ -152,3 +147,13 @@ export function CodeChecker({
     </div>
   );
 }
+
+const getTextCode = () => {
+  const alphabet = "abcdefghijklmnopqrstuvwxyz";
+  return [Math.random(), Math.random(), Math.random()]
+    .map((rand) => {
+      const randomCharacter = alphabet[Math.floor(rand * alphabet.length)];
+      return randomCharacter;
+    })
+    .join("");
+};

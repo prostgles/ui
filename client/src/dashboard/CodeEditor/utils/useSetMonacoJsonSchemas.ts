@@ -26,9 +26,6 @@ export const setMonacoEditorJsonSchemas = async (
   const currentSchemas =
     monaco.languages.json.jsonDefaults.diagnosticsOptions.schemas ?? [];
 
-  // const schemas = [
-  //   ...mySchemas.filter((s) => !currentSchemas.some((ms) => ms.uri === s.uri)),
-  // ];
   const existingUris = new Set(currentSchemas.map((s) => s.uri));
   const newSchemas = mySchemas.filter((s) => !existingUris.has(s.uri));
   const allSchemas = [...currentSchemas, ...newSchemas];
@@ -40,7 +37,6 @@ export const setMonacoEditorJsonSchemas = async (
   });
 
   // SQL Editor options not working if opened twice
-  // const model = editor.getModel();
   const models = monaco.editor.getModels();
   const matchingModel = models.find(
     (m) => m.uri.path === mySchemas[0]?.theUri.path,

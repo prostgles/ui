@@ -21,6 +21,9 @@ export const addSVGifCaption = ({
   totalDuration: number;
 }) => {
   appendStyle(`
+    :root {
+      color-scheme: light dark;
+    }
     .caption-background {
       fill: light-dark(#ffffff, #1a1a1a);
       stroke: light-dark(#e0e0e0, #404040);
@@ -34,9 +37,6 @@ export const addSVGifCaption = ({
     }
     .caption-progress-bar {
       fill: light-dark(#00000066, #ffffff66);
-    }
-    @media (prefers-color-scheme: dark) {
-      .caption-progress-bar { fill: #ffffff66; }
     }
   `);
 

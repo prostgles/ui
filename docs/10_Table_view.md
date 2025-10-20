@@ -2,10 +2,7 @@
 
 The table view displays data from a database table or view, allowing users to interact with the data, including sorting, filtering, and editing.
 It supports computed columns, linked fields, and various actions for managing the data.
-<picture>
-<source srcset="/screenshots/dark/table.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/table.svg" alt="Table view screenshot" style="border: 1px solid; margin: 1em 0;" />
-</picture>
+<img src="./screenshots/table.svg" alt="Table view screenshot" style="border: 1px solid; margin: 1em 0;" />
 
   - **View header**: Contains menu button, title and window minimise/fullscreen controls.  
     - **Quick actions**: Quick actions for the view, providing easy access to charting and joins.  
@@ -75,10 +72,7 @@ The table menu provides options for managing the table view, including viewing t
 Table toolbar can be toggled through the show/hide filtering button (top left corner). 
 It provides a user-friendly interface to add filters, search for data, and perform various actions on the table data.
 
-<picture>
-<source srcset="/screenshots/dark/smart_filter_bar.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/smart_filter_bar.svg" alt="Smart Filter Bar screenshot" style="border: 1px solid; margin: 1em 0;" />
-</picture>
+<img src="./screenshots/smart_filter_bar.svg" alt="Smart Filter Bar screenshot" style="border: 1px solid; margin: 1em 0;" />
 
   - **Add Filter**: Allows adding a filter by chosing a column from the current table or from linked tables.  
     - **Include Linked Columns**: Toggle to include columns from linked tables in the column list.  

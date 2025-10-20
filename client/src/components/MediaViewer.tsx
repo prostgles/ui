@@ -279,7 +279,7 @@ export const fetchMimeFromURLHead = async (
   try {
     const resp = await fetch(
       url,
-      // { method: "HEAD" }
+      // { method: "HEAD" } this approach is not suitable due to CORS issues on some servers
       {
         headers: {
           Range: "bytes=0-0",

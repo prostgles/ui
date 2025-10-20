@@ -3,10 +3,7 @@
 Main interface for interacting with a selected database connection. 
 Browse data, execute SQL queries, manage database objects, and access various tools.
 
-<picture>
-<source srcset="/screenshots/dark/dashboard.svgif.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/dashboard.svgif.svg" alt="Connection dashboard" style="border: 1px solid; margin: 1em 0;" />
-</picture>
+<img src="./screenshots/dashboard.svgif.svg" alt="Connection dashboard" style="border: 1px solid; margin: 1em 0;" />
 
 ### Dashboard elements:
 - <a href="#dashboard_menu">Dashboard menu</a>: Main menu for navigating and managing the database tables and views.  

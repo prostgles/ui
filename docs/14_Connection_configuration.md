@@ -1,14 +1,8 @@
 <h1 id="connection_configuration"> Connection configuration </h1> 
 
 Configure the selected database connection. Set connection details, manage users, and customize settings.
-<picture>
-<source srcset="/screenshots/dark/connection_config.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/connection_config.svg" alt="Connection configuration" style="border: 1px solid; margin: 1em 0;" />
-</picture>
-<picture>
-<source srcset="/screenshots/dark/connection_config_expanded.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/connection_config_expanded.svg" alt="Connection configuration" style="border: 1px solid; margin: 1em 0;" />
-</picture>
+<img src="./screenshots/connection_config.svg" alt="Connection configuration" style="border: 1px solid; margin: 1em 0;" />
+<img src="./screenshots/connection_config_expanded.svg" alt="Connection configuration" style="border: 1px solid; margin: 1em 0;" />
 
 - <a href="#connection_details">Connection details</a>: Edit connection parameters such as host, port, database name, and other connection settings.  
 - **Status monitor**: View real-time connection status, running queries, and system resource usage.  

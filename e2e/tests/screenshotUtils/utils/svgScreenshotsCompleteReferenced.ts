@@ -1,10 +1,12 @@
-import { getFilesFromDir } from "./getFilesFromDir";
+import { rmSync } from "fs";
 import {
   DOCS_DIR,
   SCREENSHOTS_PATH,
   SVG_SCREENSHOT_DIR,
+  SVGIF_SCENES_DIR,
   type SVGifScene,
 } from "./constants";
+import { getFilesFromDir } from "./getFilesFromDir";
 import { SVG_SCREENSHOT_DETAILS } from "./saveSVGs";
 
 const getSavedSVGFiles = () => {
@@ -31,7 +33,10 @@ export const svgScreenshotsCompleteReferenced = async (
       .split(`src="`)
       .slice(1)
       .map((v) => {
-        const src = v.split(`"`)[0].slice(SCREENSHOTS_PATH.length + 1);
+        const startsWithDot = v.startsWith(".");
+        const src = v
+          .split(`"`)[0]
+          .slice(SCREENSHOTS_PATH.length + (startsWithDot ? 2 : 1));
         return {
           docName: f.fileName,
           srcWithFragment: src.includes("#") ? src : undefined,
@@ -87,4 +92,6 @@ export const svgScreenshotsCompleteReferenced = async (
       }
     }
   }
+  /** Delete scenes folder */
+  rmSync(SVGIF_SCENES_DIR, { recursive: true, force: true });
 };

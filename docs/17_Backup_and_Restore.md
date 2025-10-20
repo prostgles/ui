@@ -7,10 +7,7 @@ your data when needed.
 Backups can be saved to a local file system or to cloud storage to AWS S3.
 Similarly, you can restore backups from local files or from AWS S3.
 
-<picture>
-<source srcset="/screenshots/dark/backup_and_restore.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/backup_and_restore.svg" alt="Backup and Restore" style="border: 1px solid; margin: 1em 0;" />
-</picture>
+<img src="./screenshots/backup_and_restore.svg" alt="Backup and Restore" style="border: 1px solid; margin: 1em 0;" />
 
   - **Create Backup**: Start a new database backup operation.  
   - **Start Backup**: Begin the backup process with the selected options.  

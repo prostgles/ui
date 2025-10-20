@@ -225,7 +225,7 @@ export const getSVGifAnimations = (
           @keyframes ${animationName} {
           ${keyframes.map((v) => `  ${v}`).join("\n")}
           }
-          ${getAnimationProperty({ elemSelector, animName: animationName, loop, totalDuration })}
+          ${getAnimationProperty({ elemSelector, animName: animationName, totalDuration })}
         `);
       });
 

@@ -164,7 +164,8 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
     `
       CREATE TABLE IF NOT EXISTS receipts (
         id SERIAL PRIMARY KEY,
-        company_name TEXT,
+        company TEXT,
+        extracted_text TEXT,
         amount NUMERIC,
         currency TEXT,
         date TIMESTAMP,

@@ -4,10 +4,7 @@ The AI assistant is an intelligent companion that helps you work more efficientl
 It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.
 MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
 
-<picture>
-<source srcset="/screenshots/dark/ai_assistant.svgif.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
-</picture>
+<img src="./screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
 
 Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
 

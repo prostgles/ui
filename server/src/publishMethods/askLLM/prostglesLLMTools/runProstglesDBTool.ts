@@ -117,7 +117,7 @@ export const getClientDBHandlersForChat = async (
   if (!connection_id) {
     throw new Error("Chat does not have a connection_id");
   }
-  const chatScope =
+  const tables =
     chatDBPermissions?.Mode === "Custom" ?
       Object.fromEntries(
         chatDBPermissions.tables.map(({ tableName, ...rules }) => [
@@ -127,9 +127,8 @@ export const getClientDBHandlersForChat = async (
       )
     : undefined;
   const connection = connMgr.getConnection(connection_id);
-  const handlers = await connection.prgl.getClientDBHandlers(
-    clientReq,
-    chatScope,
-  );
+  const handlers = await connection.prgl.getClientDBHandlers(clientReq, {
+    tables,
+  });
   return handlers;
 };

@@ -1,10 +1,7 @@
 <h1 id="server_settings"> Server Settings </h1> 
 
 Manage server settings to enhance security, configure authentication methods, and set up LLM providers.
-<picture>
-<source srcset="/screenshots/dark/server_settings.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/server_settings.svg" alt="Server Settings" style="border: 1px solid; margin: 1em 0;" />
-</picture>
+<img src="./screenshots/server_settings.svg" alt="Server Settings" style="border: 1px solid; margin: 1em 0;" />
 
 - **Security**: Security. Configure domain access, IP restrictions, session duration, and login rate limits to enhance security.  
   - **Settings form**: Configure server settings.  

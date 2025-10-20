@@ -18,6 +18,7 @@ import { sqlEditorSVG } from "../sqlEditor.svgif";
 import { dashboardSvgif } from "screenshotUtils/dashboard.svgif";
 import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
+import { fileImporter } from "screenshotUtils/fileImporter.svgif";
 
 export type OnBeforeScreenshot = (
   page: PageWIds,
@@ -26,8 +27,17 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 export const SVG_SCREENSHOT_DETAILS = {
   ai_assistant: aiAssistantSVG,
-  sql_editor: sqlEditorSVG,
   schema_diagram: schemaDiagramSvgif,
+  file_importer: fileImporter,
+  timechart: async (page, { openConnection, hideMenuIfOpen }) => {
+    await openConnection("crypto");
+    const btn = await page.getByTestId("dashboard.window.detachChart");
+    if (await btn.count()) {
+      await btn.click();
+    }
+    await hideMenuIfOpen();
+  },
+  sql_editor: sqlEditorSVG,
   postgis_map: async (page, { hideMenuIfOpen }) => {
     await openConnection(page, "food_delivery");
     await page.waitForTimeout(1500);
@@ -77,10 +87,17 @@ export const SVG_SCREENSHOT_DETAILS = {
     await page.waitForTimeout(1500);
     await addScene({ svgFileName: "new_connection" });
   },
-  command_palette: async (page) => {
+  command_palette: async (page, _, addScene) => {
+    await addScene({
+      caption: "Open command palette (Ctrl+K)...",
+    });
     await page.keyboard.press("Control+KeyK");
     await page.getByTestId("Popup.content").locator("input").fill("access con");
     await page.waitForTimeout(500);
+    await addScene({ caption: "Press Enter to navigate to item" });
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(1500);
+    await addScene();
   },
   connections: async (page) => {
     await goTo(page, "/connections");
@@ -105,51 +122,29 @@ export const SVG_SCREENSHOT_DETAILS = {
       await openTable(page, "users");
       await hideMenuIfOpen();
     }
+    await page.waitForTimeout(1500);
   },
   smart_filter_bar: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");
+    await page.waitForTimeout(1500);
   },
   map: async (page, { openConnection }) => {
     await openConnection("food_delivery");
-  },
-  timechart: async (page, { openConnection, hideMenuIfOpen }) => {
-    await openConnection("crypto");
-    const btn = await page.getByTestId("dashboard.window.detachChart");
-    if (await btn.count()) {
-      await btn.click();
-    }
-    await hideMenuIfOpen();
+    await page.waitForTimeout(1500);
   },
   file_storage: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.files").click();
     await page.mouse.move(0, 0);
-  },
-  file_importer: async (page, { openConnection, openMenuIfClosed }) => {
-    await openConnection("prostgles_video_demo");
-    await openMenuIfClosed();
-    await page.getByTestId("dashboard.menu.create").click();
-    await page
-      .getByTestId("dashboard.menu.create")
-      .locator(getDataKeyElemSelector("import file"))
-      .click();
-    const csvContent = `Name,Email,Age,Department
-    Alice Wilson,alice@example.com,28,Engineering
-    Charlie Brown,charlie@example.com,32,Marketing
-    Diana Prince,diana@example.com,29,Sales
-    Edward Norton,edward@example.com,31,HR`;
-    await page.getByTestId("FileBtn").setInputFiles({
-      name: "contacts.csv",
-      mimeType: "text/plain",
-      buffer: Buffer.from(csvContent),
-    });
+    await page.waitForTimeout(1500);
   },
   backup_and_restore: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();
     await page.mouse.move(0, 0);
+    await page.waitForTimeout(1500);
     // await page.getByTestId("config.bkp.create").click();
     // await page.getByTestId("config.bkp.create.start").click();
   },
@@ -158,6 +153,7 @@ export const SVG_SCREENSHOT_DETAILS = {
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.ac").click();
     await page.mouse.move(0, 0);
+    await page.waitForTimeout(1500);
   },
   server_settings: async (page) => {
     await page.reload();
@@ -173,15 +169,18 @@ export const SVG_SCREENSHOT_DETAILS = {
       .getByTestId("ConnectionServer.add.existingDatabase")
       .locator(getDataKeyElemSelector("postgres"))
       .click();
+    await page.waitForTimeout(1500);
   },
   connection_config: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.waitForTimeout(1500);
   },
   connection_config_expanded: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.files").click();
+    await page.waitForTimeout(1500);
   },
 } satisfies Record<
   string,

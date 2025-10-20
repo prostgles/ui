@@ -119,7 +119,7 @@ export const dashboardMenuUIDoc = {
             Import files into the current database. Supported file types include CSV, GeoJSON, and JSON.
             The import process allows you to specify the table name, infer column data types, and choose how to insert JSON/GeoJSON data into the table.  
             
-            <img src="/screenshots/file_importer.svg" alt="File Importer screenshot" />
+            <img src="./screenshots/file_importer.svgif.svg" alt="File Importer screenshot" />
           `,
           docOptions: "asSeparateFile",
           childrenTitle: "Import file options",
@@ -195,7 +195,7 @@ export const dashboardMenuUIDoc = {
         It allows you to explore the schema structure, view table relationships, and manage the layout of the schema diagram.
         You can filter tables and columns based on their relationship types, reset the layout, and close the schema diagram to return to the dashboard menu.
         
-        <img src="/screenshots/schema_diagram.svgif.svg" alt="Schema diagram screenshot" />
+        <img src="./screenshots/schema_diagram.svgif.svg" alt="Schema diagram screenshot" />
       `,
       docOptions: "asSeparateFile",
       childrenTitle: "Top controls",

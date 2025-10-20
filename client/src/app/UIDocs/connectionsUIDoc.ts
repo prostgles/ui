@@ -48,7 +48,7 @@ export const connectionsUIDoc = {
     The Connections page serves as the central hub within Prostgles UI for managing all your PostgreSQL database connections. 
     From here, you can establish new connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
 
-    <img src="/screenshots/connections.svg" alt="Connections page screenshot" />  
+    <img src="./screenshots/connections.svg" alt="Connections page screenshot" />  
       
 `,
   childrenTitle: "Connection controls",
@@ -63,11 +63,11 @@ export const connectionsUIDoc = {
       docs: `
         Use the **New Connection** button to add a new database connection.
         
-        <img src="/screenshots/connections.svg#Connections_new" alt="New connection button" style="max-width: 200px;" />
+        <img src="./screenshots/connections.svg#Connections_new" alt="New connection button" style="max-width: 200px;" />
 
         This will open a form where you can enter the connection details such as host, port, database name, user, and password.
         
-        <img src="/screenshots/new_connection.svgif.svg" alt="New connection form screenshot" />
+        <img src="./screenshots/new_connection.svgif.svg" alt="New connection form screenshot" />
       `,
       childrenTitle: "New connection form fields",
       docOptions: { title: "Adding a connection" },
@@ -107,7 +107,7 @@ export const connectionsUIDoc = {
       docs: `
         The connection list displays all your database connections grouped by database host, port and user.
         
-        <img src="/screenshots/connections.svg" alt="Connections list screenshot" />
+        <img src="./screenshots/connections.svg" alt="Connections list screenshot" />
         `,
       selector: getCommandElemSelector("Connections") + " .Connections_list",
       itemSelector: ".Connection",
@@ -175,7 +175,7 @@ export const connectionsUIDoc = {
                 Allows you to connect to an existing database in the selected server.
                 It will use the first connection details from the group connection. 
 
-                <img src="/screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" />
+                <img src="./screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" />
 
                 After selecting the database, you can choose to create a new owner or user for the connection should you need to.
               `,

@@ -2,10 +2,7 @@
 
 The SQL editor is a powerful tool for executing SQL queries against your database. It supports syntax highlighting, auto-completion, and various options for managing queries.
 
-<picture>
-<source srcset="/screenshots/dark/sql_editor.svgif.svg" media="(prefers-color-scheme: dark)" />
-<img src="/screenshots/sql_editor.svgif.svg" alt="SQL editor screenshot" style="border: 1px solid; margin: 1em 0;" />
-</picture>
+<img src="./screenshots/sql_editor.svgif.svg" alt="SQL editor screenshot" style="border: 1px solid; margin: 1em 0;" />
 
   - **View header**: Contains menu button, title and window minimise/fullscreen controls.  
     - **Quick actions**: Quick actions for the view, providing easy access to charting and joins.  

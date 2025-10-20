@@ -12,7 +12,7 @@ export const serverSettingsUIDoc = {
     "Server Settings. Configure security, authentication, and LLM settings.",
   docs: `
     Manage server settings to enhance security, configure authentication methods, and set up LLM providers.
-    <img src="/screenshots/server_settings.svg" alt="Server Settings" />
+    <img src="./screenshots/server_settings.svg" alt="Server Settings" />
   `,
   children: [
     {

@@ -812,9 +812,39 @@ export const getAskLLMLastMessage = async (page: PageWIds) => {
   return response;
 };
 
-export const sendAskLLMMessage = async (page: PageWIds, msg: string) => {
+const waitForAllMatchingLocatorsToDisappear = async (
+  locator: LocatorWIds,
+  timeout = 30_000,
+) => {
+  const start = Date.now();
+  while (true) {
+    const count = await locator.count();
+    if (!count) return;
+    if (Date.now() - start > timeout) {
+      throw new Error(
+        `Timeout waiting for locators to disappear. Still ${count} remaining.`,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+};
+
+export const sendAskLLMMessage = async (
+  page: PageWIds,
+  msg: string,
+  waitForLoadingToStop = false,
+) => {
   await page.getByTestId("AskLLM.popup").getByTestId("Chat.textarea").fill(msg);
   await page.keyboard.press("Enter");
+  await page.waitForTimeout(500);
+  if (waitForLoadingToStop) {
+    await waitForAllMatchingLocatorsToDisappear(
+      page
+        .getByTestId("Chat.messageList")
+        .locator(".message.incoming .Loading")
+        .last(),
+    );
+  }
 };
 export const getLLMResponses = async (
   page: PageWIds,
@@ -833,7 +863,6 @@ export const getLLMResponses = async (
 
   for (const question of questions) {
     await sendAskLLMMessage(page, question);
-    await page.waitForTimeout(2e3);
     const response = await getAskLLMLastMessage(page);
     result.push({
       response,
