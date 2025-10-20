@@ -2,7 +2,7 @@ import type { ReactChild } from "react";
 import React, { useMemo, useState } from "react";
 import { Navigate, Route, Routes as Switch } from "react-router-dom";
 import "./App.css";
-import Loading from "./components/Loading";
+import Loading from "./components/Loader/Loading";
 import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
 import { t } from "./i18n/i18nUtils";
 import { Connections } from "./pages/Connections/Connections";

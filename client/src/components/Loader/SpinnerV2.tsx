@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useRef } from "react";
-import { useResizeObserver } from "./ScrollFade/useResizeObserver";
+import { useResizeObserver } from "../ScrollFade/useResizeObserver";
 
 /**
- * Used to reduce CPU load
+ * @deprecated Use SpinnerV4 instead. Deprecated due to performance issues when page has too many nodes
  */
 export const SpinnerV2 = ({ size }: { size: string }) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);

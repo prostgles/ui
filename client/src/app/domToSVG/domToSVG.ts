@@ -74,6 +74,7 @@ const repositionAbsoluteAndFixed = (svg: SVGGElement) => {
     svg.querySelectorAll<SVGGElement>(":scope > g"),
   );
   if (!gBody || other.length || gBody._domElement !== document.body) {
+    console.error("Unexpected SVG structure", { svg, gBody, other });
     throw new Error("Unexpected SVG structure");
   }
   const gElements = Array.from(svg.querySelectorAll("g"));

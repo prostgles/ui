@@ -11,7 +11,7 @@ import { classOverride } from "./Flex";
 import type { IconProps } from "./Icon/Icon";
 import { Icon } from "./Icon/Icon";
 import { Label, type LabelProps } from "./Label";
-import Loading from "./Loading";
+import Loading from "./Loader/Loading";
 import Popup from "./Popup/Popup";
 
 type ClickMessage = (

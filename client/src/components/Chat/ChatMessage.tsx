@@ -1,6 +1,6 @@
 import React from "react";
 import { FlexCol } from "../Flex";
-import Loading from "../Loading";
+import Loading from "../Loader/Loading";
 import type { Message } from "./Chat";
 
 type ChatMessageProps = {

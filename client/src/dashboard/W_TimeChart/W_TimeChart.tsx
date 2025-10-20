@@ -10,7 +10,7 @@ import { throttle } from "../../../../common/utils";
 import { createReactiveState } from "../../appUtils";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import PopupMenu from "../../components/PopupMenu";
 import type { Command } from "../../Testing";
 import type { DateExtent } from "../Charts/getTimechartBinSize";

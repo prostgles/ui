@@ -1,36 +1,35 @@
-import {
-  closeWorkspaceWindows,
-  deleteExistingLLMChat,
-  setModelByText,
-  setPromptByText,
-} from "utils/utils";
+import { expect } from "@playwright/test";
 import {
   getCommandElemSelector,
   getDataKeyElemSelector,
   type SVGif,
 } from "Testing";
 import { createReceipt } from "createReceipt";
-import { expect } from "@playwright/test";
+import {
+  closeWorkspaceWindows,
+  deleteExistingLLMChat,
+  runDbSql,
+  setModelByText,
+  setPromptByText,
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
-import { goTo } from "utils/goTo";
 
 export const aiAssistantSVG: OnBeforeScreenshot = async (
   page,
   { openConnection },
   addScene,
 ) => {
-  await goTo(page, "/server-settings?section=llmProviders");
-  await page.getByTestId("dashboard.window.rowInsertTop").click();
-  await page.keyboard.press("Enter");
-  await page.evaluate(() => {
-    // Remove Prostgles elem
-    const prostglesElem = document.querySelector('[data-key="Prostgles"]');
-    prostglesElem?.parentElement?.removeChild(prostglesElem);
-  });
-  await addScene({
-    svgFileName: "supported_providers",
-    caption: "Supported providers",
-  });
+  // await goTo(page, "/server-settings?section=llmProviders");
+  // await page.getByTestId("dashboard.window.rowInsertTop").click();
+  // await page.getByTestId("Popup.content").waitFor({ state: "visible" });
+  // await page.waitForTimeout(1500);
+  // await page.keyboard.press("Enter");
+  // await page.waitForTimeout(1500);
+
+  // await addScene({
+  //   svgFileName: "supported_providers",
+  //   caption: "Supported providers",
+  // });
 
   /**
    * This is required to initialize the askLLM function
@@ -38,6 +37,17 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   await openConnection("cloud");
   await openConnection("prostgles_video_demo");
   await openConnection("food_delivery");
+  await page.getByTestId("AskLLM").click();
+  await page.waitForTimeout(1000);
+  const UnloadSuggestedDashboards = await page.getByTestId(
+    "AskLLMChat.UnloadSuggestedDashboards",
+  );
+  if (await UnloadSuggestedDashboards.count()) {
+    await UnloadSuggestedDashboards.click();
+    await page.waitForTimeout(1000);
+  } else {
+    await page.getByTestId("Popup.close").last().click();
+  }
   await deleteExistingLLMChat(page);
   await page.getByTestId("Popup.close").last().click();
   await closeWorkspaceWindows(page);
@@ -48,7 +58,8 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
       {
         type: "click",
         elementSelector: getCommandElemSelector("AskLLM"),
-        duration: 500,
+        lingerMs: 100,
+        duration: 1000,
       },
     ],
   });
@@ -63,7 +74,6 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
       await page.locator(getDataKeyElemSelector("allToBottom")).click();
     }
   };
-  await deletePreviousMessages();
   await addScene({
     svgFileName: "focus_textarea",
     animations: [
@@ -91,7 +101,7 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
     waitFor?: () => Promise<void>,
   ) => {
     await page.getByTestId("Chat.textarea").fill(text);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
     await addScene({
       animations: [
         {
@@ -99,22 +109,30 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
           elementSelector: getCommandElemSelector("Chat.textarea"),
           duration: 2000,
         },
-        { type: "wait", duration: 1000 },
+        { type: "wait", duration: 500 },
       ],
     });
     await page.getByTestId("Chat.send").click();
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(2000);
+    await addScene(); // LLM response loading
+    const lastMessage = page
+      .getByTestId("Chat.messageList")
+      .locator(".message")
+      .last();
+
+    await expect(lastMessage).toContainClass("incoming", { timeout: 15000 });
     await waitFor?.();
     await addScene({
       animations: [
         {
           type: "reveal-list",
           duration: 2000,
-          elementSelector: getCommandElemSelector("Chat.messageList"),
+          elementSelector:
+            getCommandElemSelector("Chat.messageList") + " > g:last-of-type",
         },
         {
           type: "wait",
-          duration: 3000,
+          duration: 2000,
         },
         ...endAnimations,
       ],
@@ -133,7 +151,7 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
     ],
   );
   await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(4000);
   await addScene({ svgFileName: "dashboards_loaded" });
 
   await page.getByTestId("AskLLM").click();
@@ -141,14 +159,27 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
 
   await openConnection("prostgles_video_demo");
   await closeWorkspaceWindows(page);
+  await runDbSql(
+    page,
+    `
+      CREATE TABLE IF NOT EXISTS receipts (
+        id SERIAL PRIMARY KEY,
+        company_name TEXT,
+        amount NUMERIC,
+        currency TEXT,
+        date TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      `,
+  );
   await page.getByTestId("AskLLM").click();
   await deletePreviousMessages();
   await setPromptByText(page, "chat");
-  await typeSendAddScenes(" mcpplaywright ");
+
   await deletePreviousMessages();
   await setPromptByText(page, "create task");
   await typeSendAddScenes(
-    "The task involves importing data from scanned documents",
+    "The task involves importing data from scanned receipts",
   );
   const loadTaskBtn = await page
     .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
@@ -157,7 +188,6 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   await loadTaskBtn.waitFor({ state: "visible", timeout: 15000 });
   await addScene({
     animations: [
-      { type: "wait", duration: 1000 },
       {
         type: "click",
         elementSelector: getCommandElemSelector(
@@ -175,9 +205,9 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   await page.getByTestId("Chat.addFiles").setInputFiles(filePath);
 
   await typeSendAddScenes(
-    `Extract data from this receipt ${filePath}`,
+    `Here is a scanned receipt `,
     [
-      { type: "wait", duration: 3000 },
+      { type: "wait", duration: 500 },
       {
         type: "click",
         elementSelector: getCommandElemSelector("AskLLMToolApprover.AllowOnce"),
@@ -202,13 +232,46 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
 
   await typeSendAddScenes(
-    "Upload some historical weather data for London for the last 4 years",
+    "Upload some weather data for London for the last 4 years",
+    [
+      { type: "wait", duration: 1000 },
+      {
+        type: "click",
+        elementSelector: getCommandElemSelector("ToolUseMessage.toggle"),
+        duration: 1000,
+      },
+    ],
   );
   await page.getByTestId("ToolUseMessage.toggle").last().click();
   await page.waitForTimeout(2500);
   await expect(page.getByTestId("ToolUseMessage.Popup").last()).toContainText(
     "Fetching data from",
   );
+  await addScene({
+    svgFileName: "docker0",
+    animations: [
+      { type: "wait", duration: 1000 },
+      {
+        type: "click",
+        elementSelector: getDataKeyElemSelector("fetch_weather.js"),
+        duration: 1000,
+      },
+    ],
+  });
+  await page.locator(getDataKeyElemSelector("fetch_weather.js")).click();
+  await page.waitForTimeout(600);
+  await addScene({
+    svgFileName: "docker_js",
+    animations: [
+      { type: "wait", duration: 1000 },
+      {
+        type: "click",
+        elementSelector: getDataKeyElemSelector("fetch_weather.js"),
+        duration: 1000,
+      },
+    ],
+  });
+
   await page.getByTestId("Popup.close").last().click();
   await addScene({ svgFileName: "docker" });
   await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
@@ -223,15 +286,11 @@ export const aiAssistantSVG: OnBeforeScreenshot = async (
 
   await deletePreviousMessages();
   await setPromptByText(page, "chat");
-  // await page
-  //   .getByTestId("Chat.textarea")
-  //   .fill("Show a list of orders from the last 30 days");
-  // await page.getByTestId("Chat.send").click();
 
   await typeSendAddScenes(
     "Show a list of orders from the last 30 days",
     [
-      { type: "wait", duration: 3000 },
+      { type: "wait", duration: 1000 },
       {
         type: "click",
         elementSelector: getCommandElemSelector("AskLLMToolApprover.AllowOnce"),

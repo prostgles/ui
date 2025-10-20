@@ -3,7 +3,7 @@ import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 
 import React from "react";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import type { TableColumn, TableProps } from "../../components/Table/Table";
 import { PAGE_SIZES, Table, closest } from "../../components/Table/Table";
 import type {

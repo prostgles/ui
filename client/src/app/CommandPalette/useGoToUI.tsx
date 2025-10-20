@@ -46,10 +46,10 @@ export const useGoToUI = (
     async (doc: UIDoc, duration: DocItemHighlightItemPosition) => {
       if (doc.type === "info") return;
 
-      const { items, selector, selectorCommand } = getUIDocElements(doc);
+      const { items, fullSelector } = getUIDocElements(doc);
       if (items.length === 1) {
         await highlight(doc, duration);
-        await click(selectorCommand ?? "", selector);
+        await click("", fullSelector);
       } else if (items.length > 1) {
         await showMultiHighlight(doc, duration);
       }

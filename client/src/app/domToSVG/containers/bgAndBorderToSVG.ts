@@ -103,12 +103,14 @@ export const addSpecificBorders = (
 };
 
 export function getBackgroundColor(style: CSSStyleDeclaration) {
-  return (
-      style.backgroundColor !== "rgba(0, 0, 0, 0)" &&
-        style.backgroundColor !== "transparent"
-    ) ?
-      style.backgroundColor
-    : undefined;
+  const { backgroundColor } = style;
+  if (backgroundColor.startsWith("rgba") && backgroundColor.endsWith("0)")) {
+    return undefined;
+  }
+  if (backgroundColor === "transparent") {
+    return undefined;
+  }
+  return backgroundColor;
 }
 
 export const getBackdropFilter = (style: CSSStyleDeclaration) => {

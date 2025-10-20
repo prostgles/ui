@@ -4,7 +4,7 @@ import { isObject } from "prostgles-types";
 import React from "react";
 import type { FilterType } from "../../../../../common/filterUtils";
 import { FlexRow } from "../../../components/Flex";
-import Loading from "../../../components/Loading";
+import Loading from "../../../components/Loader/Loading";
 import type { SearchListItem } from "../../../components/SearchList/SearchList";
 import { SearchList } from "../../../components/SearchList/SearchList";
 import RTComp from "../../RTComp";

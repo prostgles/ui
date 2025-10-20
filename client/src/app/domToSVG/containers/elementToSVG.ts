@@ -9,6 +9,11 @@ import { isElementNode } from "../utils/isElementVisible";
 import { rectangleToSVG } from "./rectangleToSVG";
 import { textToSVG } from "../text/textToSVG";
 import { getEntries } from "@common/utils";
+import { toFixed } from "../utils/toFixed";
+import {
+  cloneAnimations,
+  copyAnimationStyles,
+} from "../graphics/getForeignObject";
 
 export type SVGContext = {
   offsetX: number;
@@ -103,10 +108,68 @@ export const elementToSVG = async (
     return;
   }
 
-  if (whatToRender.image?.type === "fontIcon") {
-    await fontIconToSVG(g, whatToRender.image, context, elemInfo);
-  } else if (whatToRender.image?.type === "img") {
-    await imgToSVG(g, whatToRender.image.element, elemInfo, context);
+  const { image } = whatToRender;
+  if (image?.type === "svgElement") {
+    const width =
+      image.element instanceof HTMLImageElement ?
+        image.element.width
+      : element.clientWidth;
+    const height =
+      image.element instanceof HTMLImageElement ?
+        image.element.height
+      : element.clientHeight;
+    const gWrapper = document.createElementNS(SVG_NAMESPACE, "g");
+    parentSvg.appendChild(gWrapper);
+    const svgClone = image.element.cloneNode(true) as SVGElement;
+    svgClone.setAttribute("width", `${toFixed(width)}`);
+    svgClone.setAttribute("height", `${toFixed(height)}`);
+    gWrapper.style.transform = `translate(${toFixed(x)}px, ${toFixed(y)}px)`;
+    gWrapper.style.color = style.color;
+    gWrapper.appendChild(svgClone);
+  } else if (image?.type === "fontIcon") {
+    await fontIconToSVG(g, image, context, elemInfo);
+  } else if (image?.type === "img") {
+    await imgToSVG(g, image.element, elemInfo, context);
+  } else if (image?.type === "maskedElement") {
+    // const {
+    //   clientWidth: width,
+    //   clientHeight: height,
+    //   offsetLeft: x,
+    //   offsetTop: y,
+    // } = element;
+    // const rect = document.createElementNS(SVG_NAMESPACE, "rect");
+    element.getAnimations().forEach((animation) => {
+      animation.pause();
+      animation.currentTime = 0;
+    });
+    const { width, height, x, y } = element.getBoundingClientRect();
+    const dataUrl = decodeURIComponent(
+      style.maskImage.split(",")[1]!.slice(0, -2),
+    );
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(dataUrl, "image/svg+xml");
+    const svgElement = svgDoc.documentElement;
+    svgElement.setAttribute("width", `${toFixed(width)}`);
+    svgElement.setAttribute("height", `${toFixed(height)}`);
+    svgElement.setAttribute("x", toFixed(x));
+    svgElement.setAttribute("y", toFixed(y));
+    svgElement.setAttribute("fill", style.color);
+
+    if (style.animation) {
+      svgElement.setAttribute(
+        "style",
+        `animation: ${style.animation}; transform-origin: ${toFixed(x + width / 2)}px ${toFixed(y + height / 2)}px;`,
+      );
+    }
+
+    // Extract keyframes from the original element's styles
+    copyAnimationStyles(style, svgElement);
+    const animationStyles = cloneAnimations(element);
+    if (animationStyles) {
+      context.defs.appendChild(animationStyles);
+    }
+
+    parentSvg.appendChild(svgElement);
   }
 
   for (const child of getChildrenSortedByZIndex(element)) {

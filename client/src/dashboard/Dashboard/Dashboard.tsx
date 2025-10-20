@@ -5,7 +5,7 @@ import type {
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll";

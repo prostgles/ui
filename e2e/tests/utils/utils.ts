@@ -803,7 +803,7 @@ export const getAskLLMLastMessage = async (page: PageWIds) => {
     .all();
 
   await Promise.all(
-    toolCallBtns.map((btn) =>
+    [...toolCallBtns, lastIncomingMessage].map((btn) =>
       btn.locator(".Loading").waitFor({ state: "detached", timeout: 30_000 }),
     ),
   );

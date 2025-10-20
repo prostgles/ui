@@ -23,21 +23,20 @@ export const getUIDocElements = (doc: Exclude<UIDoc, { type: "info" }>) => {
   const { selectorCommand, selector = "" } = selectors ?? {};
 
   const childSelector = doc.type === "list" ? doc.itemSelector : "";
-  const fullSelector =
+  let fullSelector =
     (selectorCommand ? getCommandElemSelector(selectorCommand) : "") +
     " " +
     selector +
     " " +
     childSelector;
   if (!fullSelector.trim() && doc.type === "page") {
-    return {
-      items: document.querySelectorAll<HTMLDivElement>("body"),
-      selectorCommand: undefined,
-      selector: "body",
-    };
+    fullSelector = "body";
   }
   const items = document.querySelectorAll<HTMLDivElement>(fullSelector);
-  return { items, selectorCommand, selector };
+  return {
+    items,
+    fullSelector,
+  };
 };
 
 export const highlightItems = (doc: Exclude<UIDoc, { type: "info" }>) => {
@@ -103,7 +102,10 @@ export const getUIDocElementsAndAlertIfEmpty = (
   const result = getUIDocElements(doc);
   if (!result.items.length && !isPlaywrightTest) {
     addAlert({
-      children: `Could not find a ${JSON.stringify(doc.title)} item.`,
+      children: [
+        `Could not find a ${JSON.stringify(doc.title)} item.`,
+        `Selector used: ${JSON.stringify(result.fullSelector)}`,
+      ].join("\n"),
     });
   }
   return result;

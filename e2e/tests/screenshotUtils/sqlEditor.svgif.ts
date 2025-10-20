@@ -1,3 +1,4 @@
+import { getCommandElemSelector, type SVGif } from "Testing";
 import {
   closeWorkspaceWindows,
   getDataKey,
@@ -5,7 +6,6 @@ import {
   runDbSql,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
-import { getCommandElemSelector, type SVGif } from "Testing";
 
 export const sqlEditorSVG: OnBeforeScreenshot = async (
   page,

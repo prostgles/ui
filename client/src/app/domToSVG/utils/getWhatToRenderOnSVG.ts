@@ -6,7 +6,7 @@ import {
 import type { SVGContext } from "../containers/elementToSVG";
 import { getFontIconElement } from "../graphics/fontIconToSVG";
 import { getTextForSVG } from "../text/getTextForSVG";
-import { isElementVisible, isImgNode } from "./isElementVisible";
+import { isElementVisible, isImgNode, isSVGNode } from "./isElementVisible";
 import { getForeignObject } from "../graphics/getForeignObject";
 import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
@@ -75,7 +75,12 @@ export const getWhatToRenderOnSVG = async (
   const foreignObject = await getForeignObject(element, style, bbox, x, y);
   const fontIcon = getFontIconElement(element);
   const image =
-    foreignObject ?
+    isSVGNode(element) ?
+      {
+        type: "svgElement" as const,
+        element,
+      }
+    : foreignObject ?
       {
         type: "foreignObject" as const,
         foreignObject,
@@ -90,6 +95,11 @@ export const getWhatToRenderOnSVG = async (
         type: "img" as const,
         element,
       }
+    : style.maskImage.startsWith("url(") ?
+      {
+        type: "maskedElement" as const,
+        element,
+      }
     : undefined;
 
   const text = getTextForSVG(element, style, {
@@ -102,7 +112,10 @@ export const getWhatToRenderOnSVG = async (
   return {
     elemInfo,
     attributeData,
-    background: backgroundSameAsRenderedParent ? undefined : background,
+    background:
+      backgroundSameAsRenderedParent || image?.type === "maskedElement" ?
+        undefined
+      : background,
     backdropFilter,
     border: getBorderForSVG(style),
     childAffectingStyles,

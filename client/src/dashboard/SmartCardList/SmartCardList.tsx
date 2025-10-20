@@ -10,7 +10,7 @@ import FlipMove from "react-flip-move";
 import type { Prgl } from "../../App";
 import ErrorComponent from "../../components/ErrorComponent";
 import { classOverride, FlexCol } from "../../components/Flex";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import { Pagination, usePagination } from "../../components/Table/Pagination";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { FieldConfig, SmartCardProps } from "../SmartCard/SmartCard";

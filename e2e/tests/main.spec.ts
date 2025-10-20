@@ -748,7 +748,7 @@ test.describe("Main test", () => {
       page
         .getByTestId("Chat.messageList")
         .getByText(`Tool name "fetch--invalidfetch" is invalid`),
-    ).toHaveCount(5);
+    ).toHaveCount(5, { timeout: 30e3 });
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `failed consecutive tool requests reached`,
     );

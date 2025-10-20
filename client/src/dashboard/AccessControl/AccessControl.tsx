@@ -5,7 +5,7 @@ import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import { AccessControlRuleEditor } from "./AccessControlRuleEditor";
 import { AccessControlRules } from "./ExistingAccessRules";
 import type { useAccessControlSearchParams } from "./useAccessControlSearchParams";

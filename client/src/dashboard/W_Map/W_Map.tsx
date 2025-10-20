@@ -7,7 +7,7 @@ import {
 } from "prostgles-types";
 import React from "react";
 import ErrorComponent from "../../components/ErrorComponent";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import Popup from "../../components/Popup/Popup";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";

@@ -64,6 +64,9 @@ const loadImage = async (
 
 const convertImageToDataURL = (img: HTMLImageElement): string => {
   try {
+    if (img.src.startsWith("data:")) {
+      return img.src;
+    }
     const canvas = document.createElement("canvas");
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;

@@ -19,7 +19,7 @@ import ErrorComponent, {
 import { FlexCol } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import { Section } from "../../components/Section";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { CodeConfirmation } from "../../dashboard/BackupAndRestore/CodeConfirmation";

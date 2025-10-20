@@ -1,5 +1,5 @@
 import React from "react";
-import Loading from "../components/Loading";
+import Loading from "../components/Loader/Loading";
 import Popup from "../components/Popup/Popup";
 import { Table } from "../components/Table/Table";
 import type {

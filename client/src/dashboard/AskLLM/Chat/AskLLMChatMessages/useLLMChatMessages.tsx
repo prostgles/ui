@@ -10,7 +10,7 @@ import { CopyToClipboardBtn } from "../../../../components/CopyToClipboardBtn";
 import ErrorComponent from "../../../../components/ErrorComponent";
 import Expander from "../../../../components/Expander";
 import { FlexCol, FlexRow } from "../../../../components/Flex";
-import Loading from "../../../../components/Loading";
+import Loading from "../../../../components/Loader/Loading";
 import { MediaViewer } from "../../../../components/MediaViewer";
 import Select from "../../../../components/Select/Select";
 import { t } from "../../../../i18n/i18nUtils";

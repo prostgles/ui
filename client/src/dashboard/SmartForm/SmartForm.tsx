@@ -6,7 +6,7 @@ import type { Prgl } from "../../App";
 import { SuccessMessage } from "../../components/Animations";
 import ErrorComponent from "../../components/ErrorComponent";
 import { classOverride } from "../../components/Flex";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import { ifEmpty } from "../../utils";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { SmartFormFieldList } from "./SmartFormFieldList";

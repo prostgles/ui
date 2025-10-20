@@ -6,7 +6,7 @@ import { FlexCol } from "../../components/Flex";
 import { CreateFileColumn } from "./CreateFileColumn";
 import { FileColumnConfigControls } from "./FileColumnConfigControls";
 import type { useFileTableConfigControls } from "./useFileTableConfigControls";
-import { pageReload } from "../../components/Loading";
+import { pageReload } from "../../components/Loader/Loading";
 
 type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables" | "db"> &
   Pick<

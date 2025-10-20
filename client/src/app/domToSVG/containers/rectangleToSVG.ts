@@ -47,7 +47,7 @@ export const rectangleToSVG = (
   path._purpose = "bg";
 
   /** This is required to make backgroundSameAsRenderedParent work as expected */
-  path.setAttribute("fill", "transparent");
+  path.setAttribute("fill", "none");
 
   g.appendChild(path);
 
@@ -152,6 +152,7 @@ export const rectangleToSVG = (
     path.setAttribute("fill", style.backgroundColor);
   }
 
+  // TODO: shadow and border must be drawn outside the overflow clip path
   if (shadow) {
     path.style.filter = shadow.filter;
   }
@@ -188,7 +189,7 @@ export const rectangleToSVG = (
       path.setAttribute("stroke", border.borderColor);
     } else {
       addSpecificBorders(g, x, y, width, height, style);
-      path.setAttribute("stroke", "transparent");
+      path.setAttribute("stroke", "none");
     }
   }
 

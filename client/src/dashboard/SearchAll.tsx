@@ -14,7 +14,7 @@ import type { SimpleFilter } from "../../../common/filterUtils";
 import { isObject } from "../../../common/publishUtils";
 import type { Prgl } from "../App";
 import ButtonGroup from "../components/ButtonGroup";
-import Loading from "../components/Loading";
+import Loading from "../components/Loader/Loading";
 import Popup from "../components/Popup/Popup";
 import type {
   SearchListItem,

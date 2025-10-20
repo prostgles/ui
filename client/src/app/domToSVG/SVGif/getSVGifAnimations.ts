@@ -1,11 +1,11 @@
-import type { SVGif } from "src/Testing";
+import { fixIndent } from "@common/utils";
 import { SVG_NAMESPACE } from "../domToSVG";
 import { renderSvg } from "../text/textToSVG";
-import { getAnimationProperty, type parseSVGWithViewBox } from "./getSVGif";
-import { getSVGifTargetBBox } from "./getSVGifTargetBBox";
-import { fixIndent } from "@common/utils";
 import { toFixed } from "../utils/toFixed";
 import { addSVGifCaption } from "./addSVGifCaption";
+import { getAnimationProperty } from "./getSVGif";
+import { getSVGifTargetBBox } from "./getSVGifTargetBBox";
+import type { SVGifParsedScene } from "./getSVGifParsedScenes";
 
 /**
  * Given an SVGifScenes, return the animations
@@ -13,7 +13,7 @@ import { addSVGifCaption } from "./addSVGifCaption";
 export const getSVGifAnimations = (
   { height, width }: { width: number; height: number },
   g: SVGGElement,
-  parsedScenes: (ReturnType<typeof parseSVGWithViewBox> & SVGif.Scene)[],
+  parsedScenes: SVGifParsedScene[],
   loop: boolean,
 ) => {
   const cursorMovements: {
@@ -37,6 +37,8 @@ export const getSVGifAnimations = (
   const sceneAnimations: {
     sceneId: string;
     svgName: string;
+    startMs: number;
+    duration: number;
     keyframes: string[];
   }[] = [];
   let currentPrevDuration = 0;
@@ -52,6 +54,7 @@ export const getSVGifAnimations = (
       );
     }
     const sceneId = `scene-${sceneIndex}`;
+    const sceneStartMs = currentPrevDuration;
     const sceneFromPercent = getPercent(currentPrevDuration);
 
     const renderedSceneSVG = renderSvg(svgDom);
@@ -63,13 +66,13 @@ export const getSVGifAnimations = (
       }
     }
     if (currentPrevDuration) {
-      sceneKeyframes.push(`0% { opacity: 0; }`);
+      sceneKeyframes.push(`0% ${hidden}`);
       sceneKeyframes.push(
-        `${getPercent(currentPrevDuration, -0.1)}% { opacity: 0; }`,
+        `${getPercent(currentPrevDuration, -0.1)}% ${hidden}`,
       );
     }
 
-    sceneKeyframes.push(`${getPercent(currentPrevDuration)}% { opacity: 1; }`);
+    sceneKeyframes.push(`${getPercent(currentPrevDuration)}% ${visible}`);
 
     const sceneNodeAnimations: {
       sceneId: string;
@@ -129,9 +132,9 @@ export const getSVGifAnimations = (
             );
           return [
             !fromPerc ? "" : `0% { opacity: 0; clip-path: ${clippedInset} }`,
-            `${fromPerc}% { opacity: 0; clip-path: ${clippedInset} }`,
-            `${fromPerc + 0.1}% { opacity: 1; clip-path: ${clippedInset} }`,
-            `${toPerc}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
+            `${toFixed(fromPerc)}% { opacity: 0; clip-path: ${clippedInset} }`,
+            `${toFixed(fromPerc + 0.1)}% { opacity: 1; clip-path: ${clippedInset} }`,
+            `${toFixed(toPerc)}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
             toPerc === 100 ? "" : (
               `100% { opacity: 1; clip-path: inset(0 0 0 0); }`
             ),
@@ -247,15 +250,15 @@ export const getSVGifAnimations = (
     appendSvgToSvg({ id: sceneId, svgFile: svgString }, g);
 
     const isLastScene = sceneIndex === parsedScenes.length - 1;
-    sceneKeyframes.push(`${getPercent(currentPrevDuration)}% { opacity: 1; }`);
+    sceneKeyframes.push(`${getPercent(currentPrevDuration)}% ${visible}`);
     if (!isLastScene) {
-      sceneKeyframes.push(
-        `${getPercent(currentPrevDuration, 0.1)}% { opacity: 0; }`,
-      );
+      sceneKeyframes.push(`${getPercent(currentPrevDuration, 0.1)}% ${hidden}`);
     }
 
     sceneAnimations.push({
       sceneId,
+      startMs: sceneStartMs,
+      duration: currentPrevDuration - sceneStartMs,
       svgName: svgFileName,
       keyframes: sceneKeyframes,
     });
@@ -263,19 +266,19 @@ export const getSVGifAnimations = (
   }
 
   const [x0, y0] = [width / 2, height];
-  const firstTranslate = `transform: translate(${x0}px, ${y0}px)`;
+  const firstTranslate = `transform: translate(${toFixed(x0)}px, ${toFixed(y0)}px)`;
   const cursorKeyframes = [`0% { opacity: 0; ${firstTranslate}; }`];
   cursorMovements.forEach(
     ({ fromPerc, toPerc, lingerPerc, target: [x, y] }, i, arr) => {
       const translate = `transform: translate(${x}px, ${y}px)`;
-      const prevTarget = arr[i - 1]?.target ?? [x0, y0];
+      const prevTarget = arr[i - 1]?.target ?? [x0, y0].map(toFixed);
       const prevTranslate = `transform: translate(${prevTarget[0]}px, ${prevTarget[1]}px)`;
       cursorKeyframes.push(
         ...[
-          `${fromPerc - 0.1}% { opacity: 0; ${prevTranslate}; }`,
-          `${fromPerc}% { opacity: 1; ${prevTranslate}; }`,
-          `${toPerc}% { opacity: 1; ${translate}; }`,
-          `${lingerPerc ?? toPerc + 0.1}% { opacity: 0; ${translate}; }`,
+          `${toFixed(fromPerc - 0.1)}% { opacity: 0; ${prevTranslate}; }`,
+          `${toFixed(fromPerc)}% { opacity: 1; ${prevTranslate}; }`,
+          `${toFixed(toPerc)}% { opacity: 1; ${translate}; }`,
+          `${toFixed(lingerPerc ?? toPerc + 0.1)}% { opacity: 0; ${translate}; }`,
         ],
       );
     },
@@ -309,3 +312,6 @@ const appendSvgToSvg = (
     },
   };
 };
+
+const visible = "{ opacity: 1; visibility: visible; }";
+const hidden = "{ opacity: 0; visibility: hidden; }";

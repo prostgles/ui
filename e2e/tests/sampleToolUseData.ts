@@ -131,6 +131,11 @@ export const prostglesUIDashboardSample = {
                     chipColor: "purple",
                   },
                   {
+                    value: "picked_up",
+                    operator: "=",
+                    chipColor: "gray",
+                  },
+                  {
                     value: "delivered",
                     operator: "=",
                     chipColor: "green",

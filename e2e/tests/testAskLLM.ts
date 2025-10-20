@@ -32,6 +32,8 @@ type ToolUse = {
       arguments: string;
     };
   }[];
+  duration?: number;
+  result_content?: string;
 };
 
 const taskToolUse: ToolUse = {
@@ -50,7 +52,7 @@ const taskToolUse: ToolUse = {
 };
 
 const dashboardToolUse: ToolUse = {
-  content: `I'll analyze your schema and create some useful dashboards for what appears to be a food delivery platform. Let me suggest several workspaces that would provide valuable insights into different aspects of your business.`,
+  content: `I analyzed your schema for what appears to be a food delivery platform. Let me suggest several workspaces that would provide valuable insights into different aspects of your business.`,
   tool: [
     {
       id: "dashboard-tool-use",
@@ -151,6 +153,8 @@ const toolResponses: Record<string, ToolUse> = {
       ...t,
       function: { ...t.function, name: "fetch--invalidfetch" },
     })),
+    duration: 1000,
+    result_content: "... let's retry the failed tool",
   },
   mcpplaywright: playwrightMCPToolUse,
   mcpsandbox: mcpSandboxToolUse,
@@ -167,6 +171,8 @@ const toolResponses: Record<string, ToolUse> = {
         },
       },
     ],
+    result_content:
+      "The container has fetched the historical weather data for London for the last 4 years.",
   },
   last: {
     content:
@@ -183,6 +189,8 @@ const toolResponses: Record<string, ToolUse> = {
         },
       },
     ],
+    result_content:
+      "Here is the list of orders from the last 30 days that you requested:  \n\n- OrderID: 101, Customer: John Doe, Amount: $250.00, Date: 2025-09-10 \n- OrderID: 102, Customer: Jane Smith, Amount: $150.00, Date: 2025-09-11",
   },
   receipt: {
     content:
@@ -209,25 +217,31 @@ const toolResponses: Record<string, ToolUse> = {
         },
       },
     ],
+    result_content:
+      "Inserted receipt data for Item1 $10.00, Item2 $15.00, Total $25.00 into the receipts table at Grand Ocean Hotel.",
   },
 };
 
 export const testAskLLMCode = `
 
+const toolResponses = ${stringify(toolResponses)};
+
 const lastMsg = args.messages.at(-1);
 const lastMsgText = lastMsg?.content[0]?.text;
-const failedToolResult = typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch");
+const toolCallKeyResult = typeof lastMsg?.tool_call_id === "string"? lastMsg.tool_call_id.split("#")[0] : undefined;
+const toolResult = toolCallKeyResult && toolResponses[toolCallKeyResult];
+const failedToolResult = toolCallKeyResult === "mcpfail";// typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch");
 const msg = failedToolResult ? " mcpfail " : lastMsgText;
 
-const toolResponses = ${stringify(toolResponses)};
 const toolResponseKey = Object.keys(toolResponses).find(k => msg && msg.includes(" " + k + " ")); 
 const toolResponse = toolResponses[toolResponseKey];
 
 const defaultContent = !msg && !failedToolResult? undefined : ("free ai assistant" + (msg ?? " empty message") + (failedToolResult ? "... let's retry the failed tool" : ""));
-const content = toolResponse?.content ?? defaultContent;
-const tool_calls = toolResponse?.tool.map(tc => ({ ...tc, id: [tc.id, tc["function"].name, Math.random(), Date.now()].join("_") })); 
+const content = toolResult?.result_content ?? toolResponse?.content ?? defaultContent;
+const tool_calls = toolResponse?.tool.map(tc => ({ ...tc, id: [toolResponseKey + "#", tc.id, tc["function"].name, Math.random(), Date.now()].join("_") })); 
 
-// await new Promise(res => setTimeout(res, 2000 + Math.random() * 2000));
+const duration = toolResponse?.duration ?? (3000 + Math.random() * 2000);
+await new Promise(res => setTimeout(res, duration));
 
 const choicesItem = { 
   type: "text", 

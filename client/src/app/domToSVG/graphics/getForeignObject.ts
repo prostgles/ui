@@ -12,8 +12,13 @@ export const getForeignObject = async (
   bbox: DOMRect,
   x: number,
   y: number,
+  force = false,
 ) => {
   const getForeignObject = () => {
+    console.error(
+      "AVOID USING foreignObject BECAUSE IOS SAFARI DOESN'T FULLY SUPPORT IT",
+      element,
+    );
     const foreignObject = document.createElementNS(
       SVG_NAMESPACE,
       "foreignObject",
@@ -29,7 +34,10 @@ export const getForeignObject = async (
     foreignObject.setAttribute("y", `${toFixed(y)}`);
     foreignObject.setAttribute("width", `${toFixed(bbox.width)}`);
     foreignObject.setAttribute("height", `${toFixed(bbox.height)}`);
-    const wrapper = document.createElement("div");
+    const wrapper = document.createElementNS(
+      "http://www.w3.org/1999/xhtml",
+      "div",
+    );
     wrapper.style.width = "100%";
     wrapper.style.height = "100%";
     wrapper.style.boxSizing = "border-box";
@@ -42,8 +50,7 @@ export const getForeignObject = async (
   };
 
   if (isImgNode(element) && element.src.endsWith(".svg")) {
-    // Fetch the SVG content and embed it to ensure portability
-    return new Promise<SVGForeignObjectElement | undefined>((resolve) => {
+    return new Promise<SVGElement | undefined>((resolve) => {
       fetch(element.src)
         .then((response) => {
           if (!response.ok) {
@@ -55,11 +62,15 @@ export const getForeignObject = async (
           const parser = new DOMParser();
           const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
           const svgElement = svgDoc.documentElement;
-          const foreignObject = getForeignObject();
 
-          // Append the SVG content
-          foreignObject.firstChild!.appendChild(svgElement);
-          resolve(foreignObject);
+          const { width, height } = element;
+          const paddingLeft = parseFloat(style.paddingLeft) || 0;
+          const paddingTop = parseFloat(style.paddingTop) || 0;
+          svgElement.setAttribute("x", `${toFixed(x + paddingLeft)}`);
+          svgElement.setAttribute("y", `${toFixed(y + paddingTop)}`);
+          svgElement.setAttribute("width", `${toFixed(width)}`);
+          svgElement.setAttribute("height", `${toFixed(height)}`);
+          resolve(svgElement as unknown as SVGElement);
         })
         .catch((error) => {
           console.error("Error fetching SVG:", error);
@@ -67,14 +78,101 @@ export const getForeignObject = async (
         });
     });
   }
-  if (isSVGNode(element)) {
-    const foreignObject = getForeignObject();
+  // if (isSVGNode(element)) {
+  //   const foreignObject = getForeignObject();
 
-    const svgClone = element.cloneNode(true) as SVGElement;
-    element.style.boxSizing = "content-box";
-    foreignObject.setAttribute("class", svgClone.classList.toString());
-    svgClone.style.margin = "0";
-    foreignObject.firstChild!.appendChild(svgClone);
-    return foreignObject;
+  //   const svgClone = element.cloneNode(true) as SVGElement;
+  //   element.style.boxSizing = "content-box";
+  //   foreignObject.setAttribute("class", svgClone.classList.toString());
+  //   svgClone.style.margin = "0";
+  //   foreignObject.firstChild!.appendChild(svgClone);
+  //   return foreignObject;
+  // }
+
+  if (!force) return;
+
+  const foreignObject = getForeignObject();
+  const elementClone = element.cloneNode(true) as HTMLElement;
+
+  // Move relevant animations and keyframes as well
+  copyAnimationStyles(style, elementClone);
+  const animationStyles = cloneAnimations(element);
+  if (animationStyles) {
+    foreignObject.firstChild!.appendChild(animationStyles);
   }
+  foreignObject.firstChild!.appendChild(elementClone);
+
+  return foreignObject;
+};
+
+/**
+ * Extracts and clones CSS animations and keyframes from an element
+ */
+export const cloneAnimations = (
+  element: Element,
+  targetDocument: Document = document,
+): HTMLStyleElement | null => {
+  const computedStyle = window.getComputedStyle(element);
+  const animationName = computedStyle.animationName;
+
+  if (!animationName || animationName === "none") {
+    return null;
+  }
+
+  const styleElement = targetDocument.createElement("style");
+  const keyframeRules: string[] = [];
+  const animationNames = animationName.split(",").map((name) => name.trim());
+
+  // Search through all stylesheets for matching @keyframes rules
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      const rules = sheet.cssRules;
+
+      for (const rule of Array.from(rules)) {
+        if (
+          rule instanceof CSSKeyframesRule &&
+          animationNames.includes(rule.name)
+        ) {
+          keyframeRules.push(rule.cssText);
+        }
+      }
+    } catch (e) {
+      // Skip stylesheets that can't be accessed (CORS)
+      console.warn("Cannot access stylesheet:", e);
+    }
+  }
+
+  if (keyframeRules.length > 0) {
+    styleElement.textContent = keyframeRules.join("\n");
+    return styleElement;
+  }
+
+  return null;
+};
+
+/**
+ * Copies inline animation styles to the cloned element
+ */
+export const copyAnimationStyles = (
+  source: CSSStyleDeclaration,
+  target: HTMLElement | SVGElement,
+): void => {
+  const computedStyle = source;
+  const animationProperties = [
+    "animationName",
+    "animationDuration",
+    "animationTimingFunction",
+    "animationDelay",
+    "animationIterationCount",
+    "animationDirection",
+    "animationFillMode",
+    "animationPlayState",
+  ] as const;
+
+  animationProperties.forEach((prop) => {
+    const value = computedStyle[prop];
+    if (value && value !== "none") {
+      target.style[prop] = value;
+    }
+  });
 };

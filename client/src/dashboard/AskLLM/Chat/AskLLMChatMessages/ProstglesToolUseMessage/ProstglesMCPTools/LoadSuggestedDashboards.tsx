@@ -6,7 +6,7 @@ import Btn from "@components/Btn";
 import { MarkdownMonacoCode } from "@components/Chat/MarkdownMonacoCode";
 import Chip from "@components/Chip";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
-import { pageReload } from "@components/Loading";
+import { pageReload } from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
 import { SvgIcon } from "@components/SvgIcon";
 import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";

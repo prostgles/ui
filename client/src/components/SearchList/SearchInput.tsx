@@ -4,7 +4,7 @@ import type { TestSelectors } from "../../Testing";
 import Btn from "../Btn";
 import { classOverride, FlexRow } from "../Flex";
 import { Input } from "../Input";
-import Loading from "../Loading";
+import Loading from "../Loader/Loading";
 
 export const SearchInputZIndex = 2;
 

@@ -4,6 +4,7 @@ import Btn from "../components/Btn";
 import { FlexCol, FlexRow } from "../components/Flex";
 import { isEmpty } from "../utils";
 import { useLocation } from "react-router-dom";
+import Loading from "@components/Loader/Loading";
 
 const buttonHeights: Record<string, number> = {};
 const buttonLoadingHeights: Record<string, number> = {};
@@ -55,6 +56,10 @@ export const ComponentList = () => {
       }
     }, 1000);
   }, [isLoading, isLoaderTest]);
+
+  if (hash === "#loader") {
+    return <Loading />;
+  }
 
   return (
     <FlexCol ref={ref} className="ComponentList f-1 min-w-0 p-2 o-auto">

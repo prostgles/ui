@@ -37,7 +37,8 @@ export const addOverflowClipPath = (
    * This is to ensure we don't cut out the rounded parent corners
    * */
   // const parentWithRoundedCorners = element
-  const inputBorderRadius = element instanceof HTMLInputElement ? "8px" : "0";
+  const inputBorderRadius =
+    element instanceof HTMLInputElement ? "8px" : style.borderRadius || "0";
   const { path: clipRect } = getRectanglePath(
     {
       ...style,
@@ -55,7 +56,7 @@ export const addOverflowClipPath = (
     whatToRender,
   );
   clipRect.setAttribute("fill", "none");
-  clipRect.setAttribute("stroke", "transparent");
+  clipRect.setAttribute("stroke", "none");
 
   const clipPath = document.createElementNS(SVG_NAMESPACE, "clipPath");
   const clipPathId = `clip-of-${context.idCounter++}`;

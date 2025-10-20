@@ -1,5 +1,5 @@
 import React from "react";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 
 import type { CommonWindowProps } from "../../dashboard/Dashboard/Dashboard";
 import { Dashboard } from "../../dashboard/Dashboard/Dashboard";

@@ -5,7 +5,7 @@ import React from "react";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import FormField from "../../components/FormField/FormField";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import Popup from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { Table } from "../../components/Table/Table";

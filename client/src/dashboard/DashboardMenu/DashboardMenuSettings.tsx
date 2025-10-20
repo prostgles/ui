@@ -4,7 +4,7 @@ import { useEffectAsync, usePromise } from "prostgles-client/dist/react-hooks";
 import React from "react";
 import Btn from "../../components/Btn";
 import FormField from "../../components/FormField/FormField";
-import { pageReload } from "../../components/Loading";
+import { pageReload } from "../../components/Loader/Loading";
 import PopupMenu from "../../components/PopupMenu";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import type { DashboardProps } from "../Dashboard/Dashboard";

@@ -6,7 +6,7 @@ import type {
 } from "prostgles-types";
 
 import React, { useEffect } from "react";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import type {
   PageSize,
   TableColumn,

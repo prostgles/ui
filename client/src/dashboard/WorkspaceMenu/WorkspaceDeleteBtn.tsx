@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import type { Prgl } from "../../App";
 import Btn, { type BtnProps } from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import { pageReload } from "../../components/Loading";
+import { pageReload } from "../../components/Loader/Loading";
 import PopupMenu from "../../components/PopupMenu";
 import type { Workspace } from "../Dashboard/dashboardUtils";
 import { ROUTES } from "../../../../common/utils";

@@ -34,7 +34,7 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
-import Loading from "@components/Loading";
+import Loading from "@components/Loader/Loading";
 
 type SmartFormFieldValue =
   | string

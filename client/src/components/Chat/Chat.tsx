@@ -14,7 +14,7 @@ import { ScrollFade } from "../ScrollFade/ScrollFade";
 import { ChatMessage } from "./ChatMessage";
 import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import { useChatOnPaste } from "./useChatOnPaste";
-import Loading from "@components/Loading";
+import Loading from "@components/Loader/Loading";
 
 export type Message = {
   id: number | string;
