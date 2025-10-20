@@ -76,7 +76,7 @@ export const DashboardMenu = ({
   if (!pinnedMenu && !anchor.node && !showSearchAll) return hotKeys;
   const isReadonlyWorkspace =
     workspace.published && workspace.user_id !== prgl.user?.id;
-  const isFixed = isReadonlyWorkspace && workspace.publish_mode === "fixed";
+  const isFixed = isReadonlyWorkspace && workspace.layout_mode === "fixed";
   const mainContent =
     isFixed ? null
     : pinnedMenu ?

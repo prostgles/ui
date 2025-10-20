@@ -8,6 +8,7 @@ import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import type { ProstglesTimeChartLayer, W_TimeChart } from "./W_TimeChart";
 import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { getExtentFilter, getTimeLayerDataSignature } from "./getTimeChartData";
+import { getSQLQuerySemicolon } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 
 export const getTimeChartFilters = (
   w: WindowData<"timechart"> | WindowSyncItem<"timechart">,
@@ -168,13 +169,14 @@ async function getTimeChartLayerWithBin(
 
     const escDateCol = asName(dateColumn);
 
+    const queryWithoutSemicolon = getSQLQuerySemicolon(sql, false);
     const minMaxQuery = `
       ${withStatement}
       SELECT 
         MIN(${escDateCol}) as min, 
         MAX(${escDateCol}) as max 
       FROM (
-        ${sql}
+        ${queryWithoutSemicolon}
       ) t
     `;
     const rows = await db.sql(

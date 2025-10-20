@@ -19,12 +19,15 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitAny": false,
     "declaration": true,
+    "declarationMap": true,
     "ignoreDeprecations": "5.0",
     "strictNullChecks": true,
     "checkJs": true,
     "paths": {
-      "@common/*": ["../commonTypes/*"],
-      "@docs/*": ["../docs/*"]
+      "@common/*": ["../common/*"],
+      "@docs/*": ["../docs/*"],
+      "@components/*": ["src/components/*"],
+      "@pages/*": ["src/papges/*"],
     }
   },
   "include": ["src"],

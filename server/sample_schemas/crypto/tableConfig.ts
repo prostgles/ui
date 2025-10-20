@@ -33,7 +33,7 @@ export const tableConfig: TableConfig = {
       total_supply: "NUMERIC",
       total_volume: "NUMERIC",
       current_price: "NUMERIC",
-      market_cap_rank: "NUMERIC",
+      market_cap_rank: "INTEGER",
       price_change_24h: "NUMERIC",
       circulating_supply: "NUMERIC",
       ath_change_percentage: "NUMERIC",

@@ -1,6 +1,6 @@
 import { isDefined } from "prostgles-types";
 import type { DBS } from "../..";
-import type { DBSSchemaForInsert } from "../../../../commonTypes/publishUtils";
+import type { DBSSchemaForInsert } from "../../../../common/publishUtils";
 
 export const refreshModels = async (dbs: DBS) => {
   /**

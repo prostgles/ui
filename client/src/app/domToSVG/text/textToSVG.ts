@@ -2,6 +2,8 @@ import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar
 import { tout } from "../../../utils";
 import { SVG_NAMESPACE } from "../domToSVG";
 import type { SVGScreenshotNodeType } from "../domToThemeAwareSVG";
+import { isInputOrTextAreaNode } from "../utils/isElementVisible";
+import { toFixed } from "../utils/toFixed";
 import type { TextForSVG } from "./getTextForSVG";
 const _singleLineEllipsis = "_singleLineEllipsis" as const;
 const TEXT_WIDTH_ATTR = "data-text-width";
@@ -25,15 +27,16 @@ export const textToSVG = (
     x,
     y,
     isSingleLine,
+    numberOfLines,
   } = textInfo;
   const style = placeholderOrElementStyle;
   if (!content.trim()) return;
   const textNode = document.createElementNS(SVG_NAMESPACE, "text");
   (textNode as SVGScreenshotNodeType)._bboxCode = bboxCode;
   (textNode as SVGScreenshotNodeType)._textInfo = textInfo;
-  textNode.setAttribute(TEXT_WIDTH_ATTR, width);
-  textNode.setAttribute(TEXT_HEIGHT_ATTR, height);
-  textNode.setAttribute("x", x);
+  textNode.setAttribute(TEXT_WIDTH_ATTR, toFixed(width));
+  textNode.setAttribute(TEXT_HEIGHT_ATTR, toFixed(height));
+  textNode.setAttribute("x", toFixed(x));
 
   /** In firefox it seems the text nodes don't have font size */
   const textNodeStyle = {
@@ -50,8 +53,8 @@ export const textToSVG = (
     fontStyle: style.fontStyle || elementStyle.fontStyle,
   };
   const fontSize = parseFloat(textNodeStyle.fontSize);
-  const isInputElement = element instanceof HTMLInputElement;
-  textNode.setAttribute("y", (isInputElement ? y : y + fontSize) - 2);
+  const isInputElement = isInputOrTextAreaNode(element);
+  textNode.setAttribute("y", toFixed((isInputElement ? y : y + fontSize) - 2));
   textNode.setAttribute("fill", textNodeStyle.color);
   textNode.setAttribute("font-family", textNodeStyle.fontFamily);
   textNode.setAttribute("font-size", textNodeStyle.fontSize);
@@ -71,9 +74,11 @@ export const textToSVG = (
   }
   textNode.setAttribute("text-anchor", "start");
 
-  // Ensures overflowing text is wrapped correctly
-  textNode.textContent =
-    textNodeStyle.whiteSpace === "pre" ? content.trimEnd() : content.trim();
+  // Where was this necessary?!
+  //  - Ensures overflowing text is wrapped correctly
+  // textNode.textContent =
+  //   textNodeStyle.whiteSpace === "pre" ? content.trimEnd() : content.trim();
+  textNode.textContent = content.trimEnd();
 
   g.appendChild(textNode);
 };
@@ -86,7 +91,12 @@ const wrapTextIfOverflowing = (
   content: string,
 ) => {
   const currTextLength = textNode.getComputedTextLength();
-  const { textIndent = 0, isSingleLine, style } = textNode._textInfo ?? {};
+  const {
+    textIndent = 0,
+    isSingleLine,
+    style,
+    numberOfLines,
+  } = textNode._textInfo ?? {};
 
   if (currTextLength <= width + tolerance && !textIndent) {
     return;
@@ -102,7 +112,6 @@ const wrapTextIfOverflowing = (
   }
   textNode.textContent = "";
   let line: string[] = [];
-  let lineNumber = -1;
   const wordsWithDelimiters = getLineBreakPartsWithDelimiters(content).filter(
     (w) => w !== "",
   );
@@ -110,9 +119,9 @@ const wrapTextIfOverflowing = (
   const lineHeightPx =
     parseFloat(textNode.style.lineHeight) || 1.1 * parseFloat(fontSize);
   const x = parseFloat(textNode.getAttribute("x") || "0");
-  const maxLines = Math.floor(height / lineHeightPx);
+  const maxLines = numberOfLines ?? Math.floor(height / lineHeightPx);
   let tspan = document.createElementNS(SVG_NAMESPACE, "tspan");
-  tspan.setAttribute("x", x + textIndent);
+  tspan.setAttribute("x", toFixed(x + textIndent));
   tspan.setAttribute("dy", 0);
   tspan.textContent =
     style?.whiteSpace === "pre" ? content : content.trimStart();
@@ -123,8 +132,11 @@ const wrapTextIfOverflowing = (
   if (willNotWrap) {
     return;
   }
+  let lineNumber = 1;
+  const hasTextOverflowEllipsis =
+    style?.textOverflow === "ellipsis" && style.overflow === "hidden";
   for (let wordIndex = 0; wordIndex < wordsWithDelimiters.length; wordIndex++) {
-    const isFirstLine = lineNumber === -1;
+    const isFirstLine = lineNumber === 1;
     const currentLineWidth = isFirstLine ? width - textIndent : width;
     const word = wordsWithDelimiters[wordIndex]!;
     line.push(word);
@@ -138,20 +150,28 @@ const wrapTextIfOverflowing = (
     const textLen = tspan.getComputedTextLength();
 
     if (textLen > currentLineWidth + tolerance) {
+      if (
+        numberOfLines &&
+        lineNumber === numberOfLines &&
+        !hasTextOverflowEllipsis
+      ) {
+        return;
+      }
+
       line.pop(); // Remove the word that caused overflow
 
       setTextContent();
 
       // Move to next line if possible
       lineNumber++;
-      if (lineNumber >= maxLines) {
+
+      if (lineNumber >= maxLines && hasTextOverflowEllipsis) {
         // Add ellipsis to indicate truncation if there's room
         if (
           tspan.textContent &&
           tspan.getComputedTextLength() < currentLineWidth - 10
         ) {
           tspan.textContent += "...";
-          textNode.removeChild(tspan);
         }
         return;
       }
@@ -159,8 +179,8 @@ const wrapTextIfOverflowing = (
       // Create new tspan for next line
       line = [word];
       tspan = document.createElementNS(SVG_NAMESPACE, "tspan");
-      tspan.setAttribute("x", x);
-      tspan.setAttribute("dy", lineHeightPx + "px");
+      tspan.setAttribute("x", toFixed(x));
+      tspan.setAttribute("dy", toFixed(lineHeightPx) + "px");
       textNode.appendChild(tspan);
       tspan.textContent = word;
     }
@@ -188,18 +208,8 @@ const unnestRedundantGElements = (svg: SVGElement) => {
 };
 
 export const wrapAllSVGText = async (svg: SVGElement) => {
-  /** Must render svg to ensure the text length calcs work */
-  const topStyle = {
-    position: "absolute",
-    top: "0",
-    left: "0",
-    zIndex: "9999",
-  } as const;
   if (!svg.isConnected) {
-    Object.entries(topStyle).forEach(([key, value]) => {
-      svg.style[key] = value;
-    });
-    document.body.appendChild(svg);
+    throw new Error("SVG must be in the DOM for bbox calculations");
   }
 
   unnestRedundantGElements(svg);
@@ -217,10 +227,40 @@ export const wrapAllSVGText = async (svg: SVGElement) => {
         text.textContent || "",
       );
     });
+  svg
+    .querySelectorAll<SVGTextElement>(`text[${TEXT_WIDTH_ATTR}]`)
+    .forEach((text) => {
+      text.removeAttribute(TEXT_WIDTH_ATTR);
+      text.removeAttribute(TEXT_HEIGHT_ATTR);
+    });
+};
 
-  if (svg.isConnected) {
-    await tout(1000);
-    svg.removeAttribute("style");
-    svg.remove();
+/**
+ * Appends svg to document to ensure the bbox/text length calcs work
+ * */
+export const renderSvg = (svg: SVGElement) => {
+  const topStyle = {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    zIndex: "9999",
+  } as const;
+
+  const getIsAppended = () => document.body.contains(svg);
+
+  if (!getIsAppended()) {
+    Object.entries(topStyle).forEach(([key, value]) => {
+      svg.style[key] = value;
+    });
+    document.body.appendChild(svg);
   }
+
+  return {
+    remove: () => {
+      if (getIsAppended()) {
+        svg.removeAttribute("style");
+        svg.remove();
+      }
+    },
+  };
 };

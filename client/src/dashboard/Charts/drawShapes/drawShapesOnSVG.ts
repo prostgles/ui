@@ -1,5 +1,5 @@
-import type { SVGContext } from "../../../app/domToSVG/elementToSVG";
-import { addImageFromDataURL } from "../../../app/domToSVG/imgToSVG";
+import type { SVGContext } from "../../../app/domToSVG/containers/elementToSVG";
+import { addImageFromDataURL } from "../../../app/domToSVG/graphics/imgToSVG";
 import type { Point } from "../../Charts";
 import type { LinkLine, Rectangle } from "../CanvasChart";
 import { measureText } from "../measureText";

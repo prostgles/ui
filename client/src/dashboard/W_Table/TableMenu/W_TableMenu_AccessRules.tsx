@@ -8,7 +8,7 @@ import { LabeledRow } from "../../../components/LabeledRow";
 import { mdiAccount, mdiPlus } from "@mdi/js";
 import Btn from "../../../components/Btn";
 import { InfoRow } from "../../../components/InfoRow";
-import { isObject } from "../../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../../common/publishUtils";
 import { RenderFilter } from "../../RenderFilter";
 import { Label } from "../../../components/Label";
 

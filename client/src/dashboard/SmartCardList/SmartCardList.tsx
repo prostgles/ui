@@ -10,7 +10,7 @@ import FlipMove from "react-flip-move";
 import type { Prgl } from "../../App";
 import ErrorComponent from "../../components/ErrorComponent";
 import { classOverride, FlexCol } from "../../components/Flex";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import { Pagination, usePagination } from "../../components/Table/Pagination";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { FieldConfig, SmartCardProps } from "../SmartCard/SmartCard";
@@ -19,8 +19,10 @@ import type { SmartFormProps } from "../SmartForm/SmartForm";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
-import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { SmartGroupFilter } from "../../../../common/filterUtils";
 import type { InsertButtonProps } from "../SmartForm/InsertButton";
+import type { TestSelectors } from "../../Testing";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -103,7 +105,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   orderByfields?: string[];
   showEdit?: boolean;
   onSetData?: (items: AnyObject[]) => void;
-};
+} & Pick<TestSelectors, "data-command">;
 
 export const SmartCardList = <T extends AnyObject>(
   props: SmartCardListProps<T>,
@@ -127,6 +129,7 @@ export const SmartCardList = <T extends AnyObject>(
     enableListAnimations = false,
     getActions,
     limit = 25,
+    "data-command": dataCommand = "SmartCardList",
   } = props;
 
   const paginationState = usePagination(limit);
@@ -158,12 +161,12 @@ export const SmartCardList = <T extends AnyObject>(
   }
 
   return (
-    <FlexCol
+    <ScrollFade
       className={classOverride(
-        "SmartCardList o-auto gap-p5 relative max-w-full",
+        "SmartCardList o-auto flex-col gap-p5 relative max-w-full",
         className,
       )}
-      data-command="SmartCardList"
+      data-command={dataCommand}
       style={smartCardListStyle}
     >
       {loading && <Loading variant="cover" />}
@@ -215,7 +218,7 @@ export const SmartCardList = <T extends AnyObject>(
       </MaybeFlipMove>
       <Pagination {...paginationState} totalRows={totalRows} />
       {footer}
-    </FlexCol>
+    </ScrollFade>
   );
 };
 

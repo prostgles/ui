@@ -1,10 +1,10 @@
-import React from "react";
-import { Input } from "../Input";
-import { classOverride, FlexRow } from "../Flex";
-import Btn from "../Btn";
-import type { TestSelectors } from "../../Testing";
 import { mdiFormatLetterCase } from "@mdi/js";
-import Loading from "../Loading";
+import React from "react";
+import type { TestSelectors } from "../../Testing";
+import Btn from "../Btn";
+import { classOverride, FlexRow } from "../Flex";
+import { Input } from "../Input";
+import Loading from "../Loader/Loading";
 
 export const SearchInputZIndex = 2;
 
@@ -31,6 +31,7 @@ export type SearchInputProps = Pick<
     mode: undefined | { "!listNode": boolean; "!noList": boolean };
     leftContent?: React.ReactNode;
   };
+
 export const SearchInput = (props: SearchInputProps) => {
   const {
     type = "text",

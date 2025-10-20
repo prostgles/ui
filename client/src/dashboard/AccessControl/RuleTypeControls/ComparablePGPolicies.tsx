@@ -9,7 +9,7 @@ import CodeExample from "../../CodeExample";
 import type { EditedAccessRule } from "../AccessControl";
 import { ACCESS_RULE_METHODS } from "../AccessRuleSummary";
 import { getComparablePGPolicy } from "./getComparablePGPolicy";
-import { fixIndent } from "../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 
 export const ComparablePGPolicies = ({
   prgl,

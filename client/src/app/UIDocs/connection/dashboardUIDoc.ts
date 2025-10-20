@@ -1,9 +1,10 @@
-import { fixIndent, ROUTES } from "../../../../../commonTypes/utils";
+import { mdiMonitorDashboard } from "@mdi/js";
+import { ROUTES } from "../../../../../common/utils";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocContainers } from "../../UIDocs";
 import { AIAssistantUIDoc } from "./AIAssistantUIDoc";
-import { dashboardMenuUIDoc } from "./dashboard/dashboardMenuUIDoc";
 import { dashboardContentUIDoc } from "./dashboard/dashboardContentUIDoc";
+import { dashboardMenuUIDoc } from "./dashboard/dashboardMenuUIDoc";
 
 export const dashboardUIDoc = {
   type: "page",
@@ -12,18 +13,21 @@ export const dashboardUIDoc = {
     tableName: "connections",
     selectorCommand: "Connection.openConnection",
   },
-  title: "Dashboard",
-  description: fixIndent(`
+  title: "Connection dashboard",
+  description: "Database exploration and management interface",
+  iconPath: mdiMonitorDashboard,
+  docs: `
     Main interface for interacting with a selected database connection. 
     Browse data, execute SQL queries, manage database objects, and access various tools.
     
-    <img src="/screenshots/dashboard.svg" alt="Connection dashboard" />
-    `),
+    <img src="./screenshots/dashboard.svgif.svg" alt="Connection dashboard" />
+    `,
+  childrenTitle: "Dashboard elements",
   children: [
     dashboardMenuUIDoc,
     {
       type: "button",
-      title: "Toggle dashboard menu",
+      title: "Dashboard menu toggle",
       description:
         "Opens or closes the dashboard menu unless the menu is pinned.",
       selector: getCommandElemSelector("dashboard.menu"),
@@ -58,14 +62,14 @@ export const dashboardUIDoc = {
       title: "Workspaces menu",
       description:
         "Opens the workspaces menu, allowing you to create, manage, and switch between workspaces.",
-      docs: fixIndent(`
+      docs: `
         Workspaces are a powerful feature that allows you to organize your work within a connection.
         The opened views and their layout is saved to the workspace, so you can switch between different sets of data and configurations without losing your progress.
 
         The workspaces menu provides access to all available workspaces for the selected connection. You can create new workspaces, switch between existing ones, and manage workspace settings.
         Each workspace allows you to work with a separate set of data and configurations, making it easier to organize your work and collaborate with others.
         The menu also includes options to clone existing workspaces and delete them if they are no longer needed.
-      `),
+      `,
       children: [
         {
           type: "list",

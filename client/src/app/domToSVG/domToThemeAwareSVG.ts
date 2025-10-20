@@ -2,10 +2,18 @@ import { domToSVG } from "./domToSVG";
 import { getCorrespondingDarkNode } from "./getCorrespondingDarkNode";
 import type { TextForSVG } from "./text/getTextForSVG";
 import { setThemeForSVGScreenshot } from "./setThemeForSVGScreenshot";
+import { renderSvg } from "./text/textToSVG";
 const displayNoneIfLight = "--dark-theme-hide";
 const displayNoneIfDark = "--light-theme-hide";
-export const domToThemeAwareSVG = async (node: HTMLElement) => {
+export const domToThemeAwareSVG = async (
+  node: HTMLElement,
+  debugMode?: "light" | "both",
+) => {
   const { svg: svgLight } = await domToSVG(node);
+  if (debugMode === "light") {
+    renderSvg(svgLight);
+    return;
+  }
   svgLight.parentElement?.removeChild(svgLight);
   await setThemeForSVGScreenshot("dark");
   const { svg: svgDark } = await domToSVG(node);
@@ -110,7 +118,12 @@ export const domToThemeAwareSVG = async (node: HTMLElement) => {
         "No corresponding dark node found for light node " + lightNode.nodeName,
         lightNode._bboxCode,
       );
-      // if (lightNode instanceof SVGUseElement) {
+      // if (
+      //   lightNode instanceof SVGTextElement
+      //   // &&
+      //   // lightNode.textContent?.includes("11:4")
+      // ) {
+      //   console.log(lightNodes, darkNodes);
       //   debugger;
       // }
       return;
@@ -209,12 +222,28 @@ export const domToThemeAwareSVG = async (node: HTMLElement) => {
   const svgString = xmlSerializer.serializeToString(svgLight);
   document.body.removeChild(svgDark);
   await setThemeForSVGScreenshot(undefined);
-  // console.log(svgString);
+  document.body.removeChild(svgLight);
+
+  if (debugMode === "both") {
+    renderSvg(svgLight);
+    return;
+  }
   return {
     light: svgString,
     dark: xmlSerializer.serializeToString(svgDark),
   };
 };
+
+document.body.addEventListener("keydown", (e) => {
+  if (e.key === "F2") {
+    domToThemeAwareSVG(document.body, "light");
+  } else if (e.key === "F4") {
+    domToThemeAwareSVG(document.body, "both");
+  } else if (e.key === "F6") {
+    // eslint-disable-next-line no-debugger
+    debugger;
+  }
+});
 
 /** Interleave data */
 export const getBBoxCode = (

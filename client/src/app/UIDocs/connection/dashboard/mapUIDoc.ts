@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
 import {
   getCommandElemSelector,
   getDataKeyElemSelector,
@@ -12,14 +12,16 @@ export const mapUIDoc = {
   title: "Map view",
   description:
     "Displays a map visualization based on the Table/SQL query results.",
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
   docs: fixIndent(`
     The map view allows you to visualize geographical data from your database.
     It requires the [PostGIS](https://postgis.net/) extension to be installed on your PostgreSQL database.
     It can display points, lines, and polygons based on geometry or geography columns in your tables or views.
     It supports multiple layers, custom basemaps, and various map controls for interaction.
 
-    <img src="/screenshots/map.svg" alt="Map view screenshot" />
+    <img src="./screenshots/map.svg" alt="Map view screenshot" />
+    <img src="./screenshots/postgis_map.svg" alt="Map view screenshot" />
+    
   `),
   children: [
     getCommonViewHeaderUIDoc(

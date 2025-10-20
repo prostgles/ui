@@ -1910,3 +1910,28 @@ nav.left-nav-list a.active {
 .disabled * {
   cursor: not-allowed !important;
 }
+
+/** Merging these rules will not work */
+input[type="file"]::file-selector-button {
+  background: transparent;
+  border: unset;
+  cursor: pointer;
+  font-weight: bold;
+
+  /* Vertical centering */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+input[type="file"]::-webkit-file-upload-button {
+  background: transparent;
+  border: unset;
+  cursor: pointer;
+  font-weight: bold;
+
+  /* Vertical centering */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

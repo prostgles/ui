@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect } from "react";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { Prgl } from "../../App";
 import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import Select from "../../components/Select/Select";
 import { t } from "../../i18n/i18nUtils";
 import { EmailAuthSetup } from "./EmailAuthSetup";

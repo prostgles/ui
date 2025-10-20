@@ -2,7 +2,6 @@ FROM node:20-slim AS base
 
 WORKDIR /usr/src/app
 
-
 COPY . .
 
 # Install latest pg_dump (psql v17) to ensure backup/restore works

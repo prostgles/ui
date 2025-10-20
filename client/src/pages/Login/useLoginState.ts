@@ -6,9 +6,9 @@ import {
 import type { AuthResponse } from "prostgles-types";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../../commonTypes/OAuthUtils";
+import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../../common/OAuthUtils";
 import type { LoginFormProps } from "./Login";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordLogin;

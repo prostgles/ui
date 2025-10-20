@@ -4,7 +4,7 @@ import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import Btn from "../../../components/Btn";
 
-import { type DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
+import { type DetailedFilterBase } from "../../../../../common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
 import { AddColumnMenu } from "../ColumnMenu/AddColumnMenu";

@@ -96,6 +96,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
           rootStyle={{
             flex: 1,
           }}
+          clickCatchStyle={{ opacity: 1 }}
           rootChildClassname="f-1"
           contentClassName="p-0"
           positioning="center"
@@ -132,7 +133,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
                       maxWidth: `${iconSize + 45}px`,
                     }}
                     key={name}
-                    className="pointer ai-center"
+                    className="pointer ai-center h-fit"
                     onClick={() => {
                       onChange(name);
                       setOpen(false);

@@ -5,7 +5,7 @@ import React from "react";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import FormField from "../../components/FormField/FormField";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import Popup from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { Table } from "../../components/Table/Table";
@@ -134,10 +134,7 @@ export type FileImporterState = {
   streamColDelimiter: string;
 };
 
-export default class FileImporter extends RTComp<
-  FileImporterProps,
-  FileImporterState
-> {
+export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
   state: FileImporterState = {
     streamColumnDataType: "TEXT",
     streamBatchMb: 10,
@@ -383,6 +380,7 @@ export default class FileImporter extends RTComp<
               type="file"
               inputProps={{
                 multiple: true,
+                "data-command": "FileBtn",
               }}
               accept="text/*, .csv, .txt, .json, .geojson, .tsv"
               onChange={(files) => {
@@ -493,11 +491,8 @@ export default class FileImporter extends RTComp<
 
                   <div className="flex-row gap-1 jc-center">
                     <div className="f-0 mb-1 noselect bold">
-                      File size:{" "}
-                      {Math.round(
-                        selectedFile.file.size / 1e6,
-                      ).toLocaleString()}{" "}
-                      MB
+                      {selectedFile.file.name}:{" "}
+                      {bytesToSize(selectedFile.file.size)}
                     </div>
                     <div className="f-0 mb-1 noselect">
                       Preview ({selectedFile.preview?.allRows?.length} rows)

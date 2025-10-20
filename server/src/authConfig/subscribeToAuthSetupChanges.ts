@@ -1,5 +1,6 @@
 import { getKeys, isEqual } from "prostgles-types";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import { DOCKER_USER_AGENT } from "../../../common/OAuthUtils";
+import type { DBSSchema } from "../../../common/publishUtils";
 import { tout, type DBS } from "../index";
 import {
   activePasswordlessAdminFilter,
@@ -74,19 +75,27 @@ export const subscribeToAuthSetupChanges = async (
       });
     },
   );
-
+  /** This is used to avoid docker-mcp session that changes frequently and causes page restart when running a docker mcp */
+  const userAgentFilter = {
+    user_agent: { $ne: DOCKER_USER_AGENT },
+  };
   const passwordlessAdminSub = await dbs.users.subscribeOne(
     activePasswordlessAdminFilter,
     {
       select: {
         "*": 1,
-        sessions: "*",
+        sessions: {
+          $leftJoin: "sessions",
+          select: "*",
+          filter: userAgentFilter,
+        },
         activeSessions: {
           $leftJoin: "sessions",
           select: "*",
           filter: {
             "expires.>": Date.now(),
             active: true,
+            ...userAgentFilter,
           },
         },
       },

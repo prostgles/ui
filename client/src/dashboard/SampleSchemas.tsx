@@ -4,7 +4,7 @@ import type { DBSMethods } from "./Dashboard/DBS";
 import { FlexCol } from "../components/Flex";
 import { W_SQLEditor } from "./SQLEditor/W_SQLEditor";
 import CodeExample from "./CodeExample";
-import type { SampleSchema } from "../../../commonTypes/utils";
+import type { SampleSchema } from "../../../common/utils";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 
 type P = {

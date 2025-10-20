@@ -194,6 +194,7 @@ export class ViewRenderer extends RTComp<
         "data-view-type": w.type,
         "data-title": WNDOW.getTitle(w),
         w,
+        workspace,
         childWindows,
         prgl: this.props.prgl,
         tables,
@@ -284,7 +285,6 @@ export class ViewRenderer extends RTComp<
 
           result = (
             <W_Table
-              workspace={workspace}
               setLinkMenu={setLinkMenu}
               activeRowColor={colorStr}
               activeRow={
@@ -392,7 +392,7 @@ export class ViewRenderer extends RTComp<
           _ref={(r) => {
             this.gridRef = r;
           }}
-          layoutMode={workspace.publish_mode === "fixed" ? "fixed" : "editable"}
+          layoutMode={workspace.layout_mode === "fixed" ? "fixed" : "editable"}
           defaultLayoutType={workspace.options.defaultLayoutType}
           className="min-h-0 relative"
           layout={workspace.layout}

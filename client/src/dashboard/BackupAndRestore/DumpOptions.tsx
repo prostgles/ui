@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { PGDumpParams } from "../../../../commonTypes/utils";
+import type { PGDumpParams } from "../../../../common/utils";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexRowWrap } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";

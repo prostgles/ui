@@ -1,4 +1,4 @@
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type {
   AnthropicChatCompletionResponse,
   GoogleGeminiChatCompletionResponse,

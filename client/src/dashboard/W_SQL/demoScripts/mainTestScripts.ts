@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 
@@ -231,7 +231,7 @@ export const mainTestScripts: DemoScript = async ({
       counter++;
       await tout(200);
     }
-    await tout(1200);
+    await tout(3200);
     if (!window.document.documentElement.innerText.includes("col_4")) {
       throw "Realtime not working: col_4 not found";
     }

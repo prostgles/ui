@@ -1,4 +1,4 @@
-import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../commonTypes/utils";
+import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../common/utils";
 import { tout } from "../../../pages/ElectronSetup/ElectronSetup";
 import type { DemoScript, TypeAutoOpts } from "../getDemoUtils";
 import { SQL_TESTING_SCRIPTS, type SqlTestingScripts } from "./mainTestScripts";

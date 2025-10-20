@@ -1,19 +1,28 @@
-import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
-import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
+import { useEffectDeep, useMemoDeep } from "prostgles-client/dist/react-hooks";
+import {
+  getKeys,
+  isEqual,
+  isObject,
+  omitKeys,
+  pickKeys,
+} from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
 
+import {
+  CUSTOM_MONACO_SQL_THEMES,
+  defineCustomMonacoSQLTheme,
+} from "../../dashboard/SQLEditor/defineCustomMonacoSQLTheme";
 import { getMonaco, LANG } from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
-import {
-  CUSTOM_MONACO_SQL_THEMES,
-  defineCustomSQLTheme,
-} from "../../dashboard/SQLEditor/defineCustomSQLTheme";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
+import type { TestSelectors } from "src/Testing";
+import { useWhyDidYouUpdate } from "./useWhyDidYouUpdate";
+import { useMonacoEditorAddActions } from "./useMonacoEditorAddActions";
 
-export type MonacoEditorProps = {
+export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
   language: string;
   value: string;
   onChange?: (
@@ -41,7 +50,7 @@ const useMonacoSingleton = () => {
       (async () => {
         monacoPromise ??= getMonaco();
         monacoResolved = await monacoPromise;
-        await defineCustomSQLTheme();
+        await defineCustomMonacoSQLTheme();
         setMonaco(monacoResolved);
       })();
     }
@@ -50,6 +59,10 @@ const useMonacoSingleton = () => {
   return { monaco };
 };
 
+/** This wrapping check necessary to ensure:
+ * - getTokens returns correct data
+ * - opening json schema formfield does not cause cancelled promise errors (/server-settings)
+ * */
 export const MonacoEditor = (props: MonacoEditorProps) => {
   const { loadedSuggestions } = props;
 
@@ -60,6 +73,13 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     });
   }, [loadedSuggestions]);
 
+  if (!loadedLanguage) {
+    return <div> </div>;
+  }
+  return <MonacoEditorWithoutLanguage {...props} />;
+};
+
+const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
   const [editor, setEditor] = React.useState<editor.IStandaloneCodeEditor>();
   const container = React.useRef<HTMLDivElement>(null);
   const { state: _appTheme } = useReactiveState(appTheme);
@@ -77,7 +97,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const monacoRef = useRef<Monaco>();
 
-  const fullOptions = useMemo(() => {
+  const fullOptions = useMemoDeep(() => {
     const themeFromOptions = options?.theme;
     const theme =
       themeFromOptions && themeFromOptions !== "vs" ?
@@ -124,7 +144,13 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     return () => {
       newEditor.dispose();
     };
-  }, [monaco, language, container, fullOptions, expandSuggestionDocs]);
+  }, [
+    monaco,
+    language,
+    /* we deal with fullOptions updates later on to ensure the theme switch doesn't reset monaco text */
+    container,
+    expandSuggestionDocs,
+  ]);
 
   useEffect(() => {
     if (!editor) return;
@@ -133,41 +159,13 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       container.current._getValue = () => {
         return editor.getValue();
       };
+      //@ts-ignore
+      container.current.editorRef = editor;
     }
-    /** This check necessary to ensure getTokens returns correct data */
-    if (loadedLanguage) {
-      onMount?.(editor);
-    }
-  }, [editor, onMount, loadedLanguage]);
+    onMount?.(editor);
+  }, [editor, onMount]);
 
-  useEffect(() => {
-    if (!editor) return;
-
-    editor.addAction({
-      id: "googleSearch",
-      label: "Search with Google",
-      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
-      contextMenuGroupId: "navigation",
-      run: (editor) => {
-        window.open(
-          "https://www.google.com/search?q=" + getSelectedText(editor),
-        );
-      },
-    });
-
-    if (language !== LANG) return;
-    editor.addAction({
-      id: "googleSearchPG",
-      label: "Search with Google Postgres",
-      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
-      contextMenuGroupId: "navigation",
-      run: (editor) => {
-        window.open(
-          "https://www.google.com/search?q=postgres+" + getSelectedText(editor),
-        );
-      },
-    });
-  }, [editor, language]);
+  useMonacoEditorAddActions(editor, language);
 
   useEffect(() => {
     if (!editor) return;
@@ -183,9 +181,13 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   useEffect(() => {
     if (!editor) return;
+    /** For some reason getRawOptions() returns stale theme from time to time */
+    const theme =
+      //@ts-ignore
+      editor._themeService?.getColorTheme().themeName ?? fullOptions.theme;
     const currentEditorOptions = pickKeys(
-      editor.getRawOptions(),
-      getKeys(fullOptions) as any,
+      { ...editor.getRawOptions(), theme },
+      getKeys(fullOptions as editor.IEditorOptions),
     );
     if (isEqual(currentEditorOptions, fullOptions)) return;
     editor.updateOptions(fullOptions);
@@ -222,7 +224,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       key={`${!!language.length}`}
       ref={container}
       style={monacoStyle}
-      data-command="MonacoEditor"
+      data-command={props["data-command"] ?? "MonacoEditor"}
       className={`MonacoEditor  ${className}`}
     />
   );
@@ -271,7 +273,12 @@ const hackyFixOptionmatchOnWordStartOnly = (
   editor: editor.IStandaloneCodeEditor,
 ) => {
   try {
-    const indexOfConfig = 118; // 119 for version 0.52.0
+    /* 
+      118 for 0.50 
+      119 for 0.52.0
+      133 for 0.53 
+    */
+    const indexOfConfig = 133;
     // ensure typing name matches relname
     // suggestModel.js:420
     //@ts-ignore
@@ -290,12 +297,13 @@ const hackyFixOptionmatchOnWordStartOnly = (
   } catch (e) {}
 };
 
-export const getSelectedText = (
-  editor: editor.ICodeEditor | editor.IStandaloneCodeEditor | undefined,
-): string => {
-  if (!editor) return "";
-  const model = editor.getModel();
-  const selection = editor.getSelection();
-  if (!model || !selection) return "";
-  return model.getValueInRange(selection);
-};
+export const MONACO_READONLY_DEFAULT_OPTIONS = {
+  minimap: { enabled: false },
+  lineNumbers: "off",
+  tabSize: 2,
+  padding: { top: 10 },
+  scrollBeyondLastLine: false,
+  automaticLayout: true,
+  lineHeight: 19,
+  readOnly: true,
+} satisfies editor.IStandaloneEditorConstructionOptions;

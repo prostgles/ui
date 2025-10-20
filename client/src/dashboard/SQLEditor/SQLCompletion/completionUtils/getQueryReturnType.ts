@@ -1,43 +1,56 @@
-import type { ColType } from "../../../../../../commonTypes/utils";
 import type { SQLHandler } from "prostgles-types";
-import { asName, tryCatch, tryCatchV2 } from "prostgles-types";
+import { asName, includes, tryCatchV2 } from "prostgles-types";
+import type { ColType } from "../../../../../../common/utils";
+
+const isQueryValid = async (rawQuery: string, sql: SQLHandler) => {
+  const queryWithSemicolon = getSQLQuerySemicolon(rawQuery, true);
+  const res = await sql(
+    `
+      EXPLAIN
+      ${queryWithSemicolon}
+      `,
+    {},
+    { returnType: "default-with-rollback" },
+  ).catch((_e) => false);
+  return { isValid: Boolean(res), queryWithSemicolon };
+};
 
 /**
  * Get statement return type ensuring any dangerous commands are not commited
  */
 const getQueryReturnType = async (
-  query: string,
+  rawQuery: string,
   sql: SQLHandler,
+  includeTableOid = false,
 ): Promise<ColType[]> => {
   /** Check if it's a data returning statement to avoid useless error logs */
-  const res = await sql(
-    `
-      EXPLAIN
-      ${query};      
-    `,
-    {},
-    { returnType: "default-with-rollback" },
-  ).catch((_e) => false);
+  const { queryWithSemicolon, isValid } = await isQueryValid(rawQuery, sql);
 
-  if (!res) {
+  if (!isValid) {
     return [];
+  }
+  if (includeTableOid) {
+    const colTypes = await getTableExpressionReturnTypeWithTableOIDs(
+      rawQuery,
+      sql,
+    );
+    return colTypes;
   }
 
   const viewName = "prostgles_temp_view_getQueryReturnType" + Date.now();
   const result = await sql(
     `
       CREATE OR REPLACE TEMP VIEW "${viewName}" AS 
-      ${query};
+      ${queryWithSemicolon}
 
-      SELECT 
-        --column_name, 
+      SELECT
         column_name,
         format('%I', column_name) as escaped_column_name,
         data_type, 
         udt_name, 
         current_schema() as schema
-      FROM information_schema.columns i 
-      WHERE i.table_name = '${viewName}'
+      FROM information_schema.columns c 
+      WHERE c.table_name = '${viewName}'
       
     `,
     {},
@@ -50,13 +63,14 @@ const getQueryReturnType = async (
 /**
  * Does not fail on duplicate columns
  */
-const getQueryReturnTypeForDuplicateCols = async (
+const getTableExpressionReturnTypeWithTableOIDs = async (
   query: string,
   sql: SQLHandler,
 ): Promise<ColType[]> => {
+  const queryWithoutSemicolon = getSQLQuerySemicolon(query, false);
   const result = await sql(
     `
-      ${query}
+      ${queryWithoutSemicolon}
       LIMIT 0;
     `,
     {},
@@ -65,6 +79,7 @@ const getQueryReturnTypeForDuplicateCols = async (
 
   const cols: ColType[] = result.fields.map((f) => {
     return {
+      table_oid: f.tableID,
       column_name: f.name,
       escaped_column_name:
         /^[a-z_][a-z0-9_$]*$/.test(f.name) ? f.name : asName(f.name),
@@ -84,6 +99,7 @@ const cached = new Map<string, ExpressionResult>();
 export const getTableExpressionReturnType = async (
   expression: string,
   sql: SQLHandler,
+  includeTableOid = false,
 ): Promise<ExpressionResult> => {
   const cachedValue = cached.get(expression);
   if (cachedValue) {
@@ -92,14 +108,21 @@ export const getTableExpressionReturnType = async (
 
   try {
     const result = await tryCatchV2(async () => {
-      const colTypes = await getQueryReturnType(expression, sql);
+      const colTypes = await getQueryReturnType(
+        expression,
+        sql,
+        includeTableOid,
+      );
       return { colTypes };
     });
     let colTypes = result.data?.colTypes;
     const { error } = result;
     if (!colTypes) {
-      if (["42701", "42P16"].includes((error as any)?.code)) {
-        colTypes = await getQueryReturnTypeForDuplicateCols(expression, sql);
+      if (includes(["42701", "42P16"], (error as any)?.code)) {
+        colTypes = await getTableExpressionReturnTypeWithTableOIDs(
+          expression,
+          sql,
+        );
       }
     }
     if (!colTypes) {
@@ -115,4 +138,107 @@ export const getTableExpressionReturnType = async (
       error,
     };
   }
+};
+
+export const getSQLQuerySemicolon = (
+  rawQuery: string,
+  shouldEndWithSemicolon: boolean,
+) => {
+  const queryWithoutComments = removePostgresComments(rawQuery).trim();
+  const endsWithSemicolon = queryWithoutComments.endsWith(";");
+
+  if (shouldEndWithSemicolon) {
+    return endsWithSemicolon ? rawQuery : rawQuery + "\n;";
+  }
+  return endsWithSemicolon ? queryWithoutComments.slice(0, -1) : rawQuery;
+};
+
+/**
+ * Removes PostgreSQL comments from SQL code while preserving string literals
+ * Handles:
+ * - Single-line comments (-- comment)
+ * - Multi-line block comments (\/* comment *\/)
+ * - Nested block comments
+ * - Comments inside string literals (preserved)
+ */
+const removePostgresComments = (sql: string) => {
+  let result = "";
+  let i = 0;
+
+  while (i < sql.length) {
+    const char = sql[i];
+    const nextChar = sql[i + 1];
+
+    // Handle string literals (single quotes)
+    if (char === "'") {
+      result += char;
+      i++;
+      // Continue until closing quote, handling escaped quotes
+      while (i < sql.length) {
+        result += sql[i];
+        if (sql[i] === "'" && sql[i - 1] !== "\\") {
+          i++;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+
+    // Handle string literals (double quotes - identifiers in PostgreSQL)
+    if (char === '"') {
+      result += char;
+      i++;
+      while (i < sql.length) {
+        result += sql[i];
+        if (sql[i] === '"' && sql[i - 1] !== "\\") {
+          i++;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+
+    // Handle single-line comments (--)
+    if (char === "-" && nextChar === "-") {
+      i += 2;
+      // Skip until end of line
+      while (i < sql.length && sql[i] !== "\n") {
+        i++;
+      }
+      // Keep the newline
+      if (i < sql.length && sql[i] === "\n") {
+        result += "\n";
+        i++;
+      }
+      continue;
+    }
+
+    // Handle multi-line block comments (/* ... */)
+    if (char === "/" && nextChar === "*") {
+      i += 2;
+      let depth = 1;
+
+      // Handle nested comments (PostgreSQL supports nested /* */ comments)
+      while (i < sql.length && depth > 0) {
+        if (sql[i] === "/" && sql[i + 1] === "*") {
+          depth++;
+          i += 2;
+        } else if (sql[i] === "*" && sql[i + 1] === "/") {
+          depth--;
+          i += 2;
+        } else {
+          i++;
+        }
+      }
+      continue;
+    }
+
+    // Regular character
+    result += char;
+    i++;
+  }
+
+  return result;
 };

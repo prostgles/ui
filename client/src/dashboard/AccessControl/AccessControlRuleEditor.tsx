@@ -13,14 +13,14 @@ import type {
   ContextDataObject,
   DBSSchema,
   TableRulesErrors,
-} from "../../../../commonTypes/publishUtils";
+} from "../../../../common/publishUtils";
 import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
 import ButtonGroup from "../../components/ButtonGroup";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
 import type {

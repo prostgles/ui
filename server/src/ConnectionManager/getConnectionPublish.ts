@@ -4,11 +4,11 @@ import type {
 } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { isDefined, omitKeys } from "prostgles-types";
 import type { DBS } from "..";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { parseTableRules } from "../../../commonTypes/publishUtils";
-import { getEntries } from "../../../commonTypes/utils";
+import type { DBSSchema } from "../../../common/publishUtils";
+import { parseTableRules } from "../../../common/publishUtils";
+import { getEntries } from "../../../common/utils";
 import type { SUser } from "../authConfig/sessionUtils";
-import { getACRule } from "./startConnection";
+import { getAccessRule } from "./startConnection";
 import { publish } from "../publish/publish";
 
 type Args = {
@@ -42,7 +42,7 @@ export const getConnectionPublish = ({
       return "*";
     }
 
-    const accessRule = await getACRule(dbs, user, dbConf.id, connectionId);
+    const accessRule = await getAccessRule(dbs, user, dbConf.id, connectionId);
     if (!accessRule) {
       return null;
     }

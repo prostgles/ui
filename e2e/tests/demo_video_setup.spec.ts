@@ -1,5 +1,7 @@
 import { test } from "@playwright/test";
-import { PageWIds, USERS, createDatabase, goTo, login } from "./utils";
+import { PageWIds, createDatabase, login } from "./utils/utils";
+import { USERS } from "utils/constants";
+import { goTo } from "utils/goTo";
 
 const videoTestDuration = 10 * 60e3;
 test.describe("Demo video setup", () => {

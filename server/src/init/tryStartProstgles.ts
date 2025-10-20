@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
 import { tout } from "..";
-import type { ProstglesState } from "../../../commonTypes/electronInitTypes";
+import type { ProstglesState } from "../../../common/electronInitTypes";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
@@ -14,6 +14,7 @@ import {
   type InitExtra,
   type ProstglesInitStateWithDBS,
 } from "./startProstgles";
+import { testDashboardTypesContent } from "./testDashboardTypesContent";
 
 type StartArguments = {
   app: Express;
@@ -175,3 +176,7 @@ export const getProstglesState = (): ProstglesState<InitExtra> => {
     electronCredsProvided: Boolean(eConfig?.hasCredentials()),
   };
 };
+
+if (process.env.NODE_ENV !== "production") {
+  testDashboardTypesContent();
+}

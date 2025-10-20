@@ -7,7 +7,7 @@ import React, {
 } from "react";
 
 import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import { classOverride } from "../../components/Flex";
 import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
 import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
@@ -184,8 +184,16 @@ export const CodeEditor = (props: CodeEditorProps) => {
     setMonacoErrorMarkers(editor, monaco, { markers });
   }, [markers, monaco]);
 
-  useEffect(() => {
-    const onKeyDown = (e) => {
+  const onMountMonacoEditor = useCallback(
+    (newEditor: editor.IStandaloneCodeEditor) => {
+      setEditor(newEditor);
+      onMount?.(newEditor);
+    },
+    [onMount],
+  );
+
+  const onKeyDown = useCallback(
+    (e) => {
       const _domElement =
         (editor as any)?._domElement ?? ({} as HTMLDivElement);
       if (
@@ -198,17 +206,8 @@ export const CodeEditor = (props: CodeEditorProps) => {
         e.preventDefault();
         onSave(editor.getValue());
       }
-    };
-    document.addEventListener("keydown", onKeyDown, false);
-    document.removeEventListener("keydown", onKeyDown, false);
-  }, [onSave, editor]);
-
-  const onMountMonacoEditor = useCallback(
-    (newEditor: editor.IStandaloneCodeEditor) => {
-      setEditor(newEditor);
-      onMount?.(newEditor);
     },
-    [onMount],
+    [onSave, editor],
   );
 
   const latestValueRef = useRef(value);
@@ -251,6 +250,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
       )}
       style={style}
       onFocus={onFocus}
+      onKeyDown={onKeyDown}
     >
       {contentTop}
       <MonacoEditor

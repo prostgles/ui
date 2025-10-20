@@ -1,5 +1,3 @@
-import { isDefined } from "../../../utils";
-import type { ColInfo } from "../../W_Table/TableMenu/getChartCols";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getParentFunction } from "./MatchSelect";
 import { matchNested } from "./MatchWith";
@@ -7,7 +5,6 @@ import { getTableExpressionSuggestions } from "./completionUtils/getTableExpress
 import type { TokenInfo } from "./completionUtils/getTokens";
 import { jsonbPathSuggest } from "./jsonbPathSuggest";
 import {
-  KNDS as KindMap,
   getKind,
   type SQLMatchContext,
   type SQLMatcherResultArgs,

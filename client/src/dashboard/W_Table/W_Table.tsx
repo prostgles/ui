@@ -3,7 +3,7 @@ import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 
 import React from "react";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import type { TableColumn, TableProps } from "../../components/Table/Table";
 import { PAGE_SIZES, Table, closest } from "../../components/Table/Table";
 import type {
@@ -30,8 +30,8 @@ import type {
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
 import { isDefined, isEqual, pickKeys } from "prostgles-types";
-import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
-import { matchObj } from "../../../../commonTypes/utils";
+import type { DetailedFilterBase } from "../../../../common/filterUtils";
+import { matchObj } from "../../../../common/utils";
 import type { Command } from "../../Testing";
 import { createReactiveState } from "../../appUtils";
 import { ClickCatchOverlayZIndex } from "../../components/ClickCatchOverlay";
@@ -51,7 +51,7 @@ import { W_TableMenu } from "./TableMenu/W_TableMenu";
 import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
 import { TooManyColumnsWarning } from "./TooManyColumnsWarning";
 import { W_Table_Content } from "./W_Table_Content";
-import { getTableData } from "./getTableData";
+import { getTableData } from "./getTableData/getTableData";
 import type {
   OnClickEditRow,
   RowSiblingData,
@@ -65,6 +65,9 @@ import {
   getSortColumn,
   updateWCols,
 } from "./tableUtils/tableUtils";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import Select from "@components/Select/Select";
+import { QuickFilterGroupsControl } from "./QuickFilterGroupsControl";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
@@ -457,7 +460,7 @@ export default class W_Table extends RTComp<
 
     const cols = w.columns;
 
-    if (!cols) return null;
+    if (!cols) return <ErrorComponent error="Columns not defined" />;
 
     return (
       <W_TableMenu
@@ -540,6 +543,7 @@ export default class W_Table extends RTComp<
       activeRowColor,
       prgl,
       childWindow,
+      workspace,
     } = this.props;
     const { tables, db, dbs } = prgl;
     const tableHandler = db[tableName];
@@ -564,6 +568,7 @@ export default class W_Table extends RTComp<
       return (
         <Window
           w={w}
+          layoutMode={workspace.layout_mode ?? "editable"}
           quickMenuProps={{
             tables,
             prgl,
@@ -573,7 +578,10 @@ export default class W_Table extends RTComp<
             onAddChart,
             myLinks: this.props.myLinks,
             childWindows: this.props.childWindows,
-            show: childWindow ? { filter: true } : undefined,
+            show:
+              childWindow || this.props.workspace.layout_mode === "fixed" ?
+                { filter: true }
+              : undefined,
           }}
           getMenu={this.getMenu}
         >
@@ -603,6 +611,9 @@ export default class W_Table extends RTComp<
         barchartVals: this.state.barchartVals,
         suggestions: this.props.suggestions,
         columnMenuState: this.columnMenuState,
+        opts: {
+          noRightBorder: this.props.workspace.layout_mode === "fixed",
+        },
       });
 
       let activeRowIndex = -1;
@@ -613,6 +624,7 @@ export default class W_Table extends RTComp<
       }
 
       const canInsert = Boolean(tableHandler?.insert);
+      const showInsertButton = canInsert && w.options.hideInsertButton !== true;
       const pkeys = cols
         .map((c) => (c.show && c.info?.is_pkey ? c.info.name : undefined))
         .filter(isDefined);
@@ -650,10 +662,13 @@ export default class W_Table extends RTComp<
             />
 
             {!!w.options.showFilters && (
-              <div
+              <FlexCol
                 key={"W_Table_Filters"}
-                className={`ai-center p-p5 bg-color-1 ${childWindow ? " bb b-color " : ""}`}
-                style={{ zIndex: 1 }}
+                className={`gap-p5 p-p5 bg-color-0 ${childWindow ? " bb b-color " : ""}`}
+                style={{
+                  /** Ensure it covers the attached timechart layer opts button */
+                  zIndex: 2,
+                }}
                 title="Edit filters"
               >
                 <SmartFilterBar
@@ -670,7 +685,8 @@ export default class W_Table extends RTComp<
                     },
                   }}
                 />
-              </div>
+                <QuickFilterGroupsControl {...this.props} />
+              </FlexCol>
             )}
 
             <W_Table_Content
@@ -740,7 +756,7 @@ export default class W_Table extends RTComp<
                   activeRowIndex={activeRowIndex}
                   onRowClick={this.state.onRowClick}
                   afterLastRowContent={
-                    canInsert &&
+                    showInsertButton &&
                     !childWindow && (
                       <Btn
                         iconPath={mdiPlus}

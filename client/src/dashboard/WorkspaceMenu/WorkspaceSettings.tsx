@@ -75,7 +75,7 @@ export const WorkspaceSettings = ({
             columns={{
               name: 1,
               published: 1,
-              publish_mode: 1,
+              layout_mode: 1,
               icon: {
                 onRender: (value, onChange) => {
                   return <IconPalette iconName={value} onChange={onChange} />;

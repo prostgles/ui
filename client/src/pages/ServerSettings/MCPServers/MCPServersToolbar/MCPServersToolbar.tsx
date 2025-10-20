@@ -1,6 +1,6 @@
 import { mdiFilter, mdiMagnify, mdiPlay, mdiPlayBox, mdiStop } from "@mdi/js";
 import React from "react";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
 import Btn from "../../../../components/Btn";
 import { FlexRow } from "../../../../components/Flex";
 import Select from "../../../../components/Select/Select";

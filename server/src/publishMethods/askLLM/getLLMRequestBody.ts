@@ -5,8 +5,9 @@ import {
   tryCatchV2,
   type AnyObject,
 } from "prostgles-types";
-import { filterArr } from "../../../../commonTypes/llmUtils";
+import { filterArr, findArr } from "../../../../common/llmUtils";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
+import type { LLMMessage } from "./askLLM";
 
 export const getLLMRequestBody = ({
   llm_provider,
@@ -135,15 +136,9 @@ export const getLLMRequestBody = ({
                   },
                 };
               }
-              if (c.type === "tool_result") {
-                const resultText =
-                  typeof c.content === "string" ?
-                    c.content
-                  : c.content
-                      .map((c) => {
-                        c.type === "text" ? c.text : undefined;
-                      })
-                      .find(isDefined);
+              const toolResult = getToolResult([c]);
+              if (toolResult) {
+                const resultText = toolResult.content;
                 const funcName = arr[i - 1]?.content
                   .map((c) =>
                     c.type === "tool_use" && c.name ? c.name : undefined,
@@ -189,10 +184,12 @@ export const getLLMRequestBody = ({
         model,
         messages: messages.map((m) => {
           const isToolUse = filterArr(m.content, { type: "tool_use" as const });
+          const textContent = filterArr(m.content, { type: "text" as const });
+
           if (isToolUse.length) {
             return {
               role: "assistant",
-              content: null,
+              content: textContent.map((t) => t.text).join("\n") || "",
               tool_calls: isToolUse.map((tc) => ({
                 id: tc.id,
                 type: "function",
@@ -203,18 +200,12 @@ export const getLLMRequestBody = ({
               })),
             };
           }
-          const [isToolUseResult] = filterArr(m.content, {
-            type: "tool_result" as const,
-          });
-          if (isToolUseResult) {
-            const [firstContent] = isToolUseResult.content;
+          const toolUseResult = getToolResult(m.content);
+          if (toolUseResult) {
             return {
               role: "tool",
-              tool_call_id: isToolUseResult.tool_use_id,
-              content:
-                typeof firstContent === "string" ? firstContent
-                : firstContent?.type === "text" ? firstContent.text
-                : "?? Internal issue in tool result parsing in prostgles ui",
+              tool_call_id: toolUseResult.tool_use_id,
+              content: toolUseResult.content,
             };
           }
           return {
@@ -285,4 +276,27 @@ const removeBase64Prefix = (data: string) => {
     return data.substring(data.indexOf("base64,") + 7);
   }
   return data;
+};
+
+const getToolResult = (content: LLMMessage) => {
+  const toolUseResult = findArr(content, {
+    type: "tool_result" as const,
+  });
+  if (toolUseResult) {
+    const { content, ...other } = toolUseResult;
+    const contentText =
+      typeof content === "string" ? content : (
+        filterArr(content, { type: "text" as const })
+          .map((c) => c.text)
+          .join("\n")
+      );
+    return {
+      ...other,
+      role: "tool",
+      tool_call_id: toolUseResult.tool_use_id,
+      content:
+        contentText ||
+        "?? Internal issue in tool result parsing in prostgles ui",
+    };
+  }
 };

@@ -73,7 +73,7 @@ export const CellBarchart = ({
 }: CellBarchartProps) => {
   const delta = +max - +min;
   const valDelta = +value - +min;
-  const perc = +value > +min ? Math.round((100 * valDelta) / delta) : -1;
+  const perc = Math.round((100 * valDelta) / delta);
   const height = 8;
   return (
     <div

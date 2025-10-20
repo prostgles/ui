@@ -15,7 +15,7 @@ import {
 import {
   DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
   DEFAULT_MAGIC_LINK_TEMPLATE,
-} from "../../../../commonTypes/OAuthUtils";
+} from "../../../../common/OAuthUtils";
 import { t } from "../../i18n/i18nUtils";
 
 export const EmailAuthSetup = ({

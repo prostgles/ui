@@ -14,7 +14,7 @@ import { StatusMonitor } from "../../dashboard/StatusMonitor/StatusMonitor";
 import { StatusDotCircleIcon } from "../Account/Sessions";
 import type { ConnectionProps } from "./Connection";
 import { t } from "../../i18n/i18nUtils";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../common/utils";
 
 export const ConnectionActionBar = (props: ConnectionProps) => {
   const { dbsMethods, connection, dbs, isAdmin } = props;

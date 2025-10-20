@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Btn from "../../../components/Btn";
 import { FlexCol } from "../../../components/Flex";
 import CodeExample from "../../CodeExample";
-import { getTableFilter } from "../getTableData";
+import { getTableFilter } from "../getTableData/getTableFilter";
 import { getTableSelect } from "../tableUtils/getTableSelect";
 import { getSort } from "../tableUtils/tableUtils";
 import type { W_TableMenuProps } from "./W_TableMenu";
@@ -19,7 +19,6 @@ export const W_TableMenu_CurrentQuery = (props: W_TableMenuProps) => {
     query: string;
     type?: QueryType;
   }>({ query: "", type: undefined });
-  // const [queryType, setQueryType] = useState<QueryType>("SQL");
 
   return (
     <FlexCol>

@@ -24,7 +24,7 @@ const saveMdiIcons = () => {
     const nameWithoutMdi = name.slice(3);
     iconNames.push(nameWithoutMdi);
     const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="presentation">
-      <path d="${iconPathD}" style="fill: currentcolor;"></path>
+      <path d=${JSON.stringify(iconPathD)} style="fill: currentcolor;"></path>
     </svg>`;
     fs.writeFileSync(
       path.join(iconsDestinationFolder, `${name.slice(3)}.svg`),

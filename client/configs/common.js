@@ -1,4 +1,6 @@
 const { resolve } = require("path");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
+
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
@@ -53,10 +55,29 @@ const getLoader = () => {
 
 */
 
+let compiled = false;
+let timeout;
+const debouncedProgressHandler = (percentage, message, ...args) => {
+  if (compiled) {
+    return;
+  }
+  clearTimeout(timeout);
+
+  timeout = setTimeout(() => {
+    console.log(percentage.toFixed(1), message, ...args);
+  }, 200);
+  compiled = compiled || percentage === 1;
+};
+
 module.exports = {
   target: ["web", "es2020"],
   resolve: {
     extensions: [".js", ".jsx", ".ts", ".tsx"],
+    plugins: [
+      new TsconfigPathsPlugin({
+        /* options: see below */
+      }),
+    ],
   },
   context: resolve(__dirname, "../src"),
   module: {
@@ -138,14 +159,21 @@ module.exports = {
       chunkFilename: "static/css/[name].[contenthash:8].chunk.css",
     }),
     new MonacoWebpackPlugin({
-      languages: ["typescript", "javascript", "sql", "pgsql", "json"],
+      languages: [
+        "typescript",
+        "javascript",
+        "sql",
+        "pgsql",
+        "json",
+        /** Used by DockerSandboxCreateContainer */
+        "dockerfile",
+        "python",
+      ],
     }),
     new webpack.ProgressPlugin({
       activeModules: true,
       entries: true,
-      // handler(percentage, message, ...args) {
-      //   console.log(percentage, message, args);
-      // },
+      handler: debouncedProgressHandler,
       modules: true,
       modulesCount: 5000,
       profile: false,

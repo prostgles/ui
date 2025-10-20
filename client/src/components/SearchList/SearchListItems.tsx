@@ -1,15 +1,14 @@
 import React from "react";
-import Checkbox from "../Checkbox";
 import { ClickCatchOverlay } from "../ClickCatchOverlay";
 import { DraggableLI } from "../DraggableLI";
 import { classOverride } from "../Flex";
 import { POPUP_CLASSES } from "../Popup/Popup";
-import { useScrollFade } from "../ScrollFade/ScrollFade";
 import type {
   ParsedListItem,
   SearchListItem,
   SearchListProps,
 } from "./SearchList";
+import { SearchListRowContent } from "./SearchListRowContent";
 
 export type SearchListItemsProps = Pick<
   SearchListProps,
@@ -35,7 +34,6 @@ export const SearchListItems = React.forwardRef<
   SearchListItemsProps
 >((props: SearchListItemsProps, ref) => {
   const {
-    id,
     renderedItems,
     items = [],
     searchTerm,
@@ -52,12 +50,6 @@ export const SearchListItems = React.forwardRef<
   const notAllItemsShown =
     renderedItems.length && renderedItems.length < items.length && !searchTerm;
 
-  const ulRef = React.useRef<HTMLUListElement>(null);
-
-  useScrollFade({
-    ref: ulRef,
-  });
-
   return (
     <div
       className={
@@ -70,8 +62,8 @@ export const SearchListItems = React.forwardRef<
       {isSearch && !!renderedItems.length && <ClickCatchOverlay />}
       <ul
         className={
-          "no-decor f-1 max-h-fit o-auto min-h-0 min-w-0 ul-search-list o-auto  no-scroll-bar " +
-          (isSearch ? " no-scroll-bar shadow bg-color-0 " : "")
+          "no-decor f-1 max-h-fit o-auto min-h-0 min-w-0 ul-search-list o-auto rounded-b  no-scroll-bar " +
+          (isSearch ? "  shadow bg-color-0 " : "")
         }
         role="listbox"
         ref={ref}
@@ -113,58 +105,16 @@ export const SearchListItems = React.forwardRef<
         }}
       >
         {onSearch && !props.items ? null : (
-          renderedItems.map((d, i) => {
+          renderedItems.map((renderedItem, i) => {
             const onPress: SearchListItem["onPress"] =
-              !d.onPress || d.disabledInfo ?
+              !renderedItem.onPress || renderedItem.disabledInfo ?
                 undefined
               : (e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  d.onPress!(e, searchTerm);
+                  renderedItem.onPress!(e, searchTerm);
                   endSearch();
                 };
-
-            let rowContent: React.ReactNode;
-            if ("content" in d) {
-              rowContent = d.content;
-            } else {
-              const { contentLeft, contentBottom, contentRight } = d;
-              rowContent = (
-                <div
-                  className="ROWINNER flex-row ai-center f-1 "
-                  style={d.styles?.rowInner}
-                >
-                  {contentLeft || null}
-                  <div
-                    className="LABELWRAPPER flex-col ai-start f-1"
-                    style={d.styles?.labelWrapper}
-                  >
-                    <label
-                      className={
-                        "ws-pre mr-p5 f-1 flex-row noselect min-w-0 w-full " +
-                        (d.disabledInfo ? " not-allowed "
-                        : d.onPress ? " pointer "
-                        : " ")
-                      }
-                      style={d.style}
-                    >
-                      {d.node}
-                    </label>
-                    {contentBottom}
-                  </div>
-                  {contentRight || null}
-                  {typeof d.checked === "boolean" ?
-                    <Checkbox
-                      id={id}
-                      className="f-0 no-pointer-events"
-                      checked={d.checked}
-                      style={{ marginRight: "12px" }}
-                      onChange={() => {}}
-                    />
-                  : null}
-                </div>
-              );
-            }
 
             const asStringIfPossible = (v: any) => {
               if (typeof v === "string" || typeof v === "number") {
@@ -177,18 +127,18 @@ export const SearchListItems = React.forwardRef<
             };
             return (
               <React.Fragment key={i}>
-                {d.contentTop}
+                {renderedItem.contentTop}
                 <DraggableLI
                   role={onPress ? "option" : "listitem"}
-                  data-command={d["data-command"]}
-                  data-key={asStringIfPossible(d.key)}
-                  data-label={asStringIfPossible(d.label)}
-                  aria-disabled={!!d.disabledInfo}
-                  aria-selected={!!d.selected}
-                  title={d.disabledInfo ?? d.title}
+                  data-command={renderedItem["data-command"]}
+                  data-key={asStringIfPossible(renderedItem.key)}
+                  data-label={asStringIfPossible(renderedItem.label)}
+                  aria-disabled={!!renderedItem.disabledInfo}
+                  aria-selected={!!renderedItem.selected}
+                  title={renderedItem.disabledInfo ?? renderedItem.title}
                   style={{
-                    ...d.rowStyle,
-                    ...(d.disabledInfo ?
+                    ...renderedItem.rowStyle,
+                    ...(renderedItem.disabledInfo ?
                       {
                         cursor: "not-allowed",
                         opacity: 0.4,
@@ -203,12 +153,14 @@ export const SearchListItems = React.forwardRef<
                   onReorder={onReorder}
                   className={classOverride(
                     "noselect bg-li flex-row ai-start p-p5 pl-1 min-w-0 " +
-                      (d.selected ? " selected " : "") +
-                      (d.disabledInfo ? " not-allowed "
-                      : d.onPress ? " pointer "
+                      (renderedItem.selected ? " selected " : "") +
+                      (renderedItem.disabledInfo ? " not-allowed "
+                      : renderedItem.onPress ? " pointer "
                       : "") +
-                      (!d.onPress && !props.showHover ? " no-hover " : " "),
-                    d.rowClassname,
+                      (!renderedItem.onPress && !props.showHover ?
+                        " no-hover "
+                      : " "),
+                    renderedItem.rowClassname,
                   )}
                   onClick={(e) => {
                     return onPress?.(e, searchTerm);
@@ -223,7 +175,7 @@ export const SearchListItems = React.forwardRef<
                     )
                   }
                 >
-                  {rowContent}
+                  <SearchListRowContent item={renderedItem} />
                 </DraggableLI>
               </React.Fragment>
             );

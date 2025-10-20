@@ -9,7 +9,7 @@ import type { AnyObject, FileColumnConfig } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
 import type { Connections, DatabaseConfigs, DBS } from "..";
-import { getConnectionPaths, ROUTES } from "../../../commonTypes/utils";
+import { getConnectionPaths, ROUTES } from "../../../common/utils";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";

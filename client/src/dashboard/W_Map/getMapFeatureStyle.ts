@@ -53,7 +53,12 @@ export const getMapFeatureStyle = (
   links: LinkSyncItem[],
 ): Pick<
   GeoJsonLayerProps,
-  "getFillColor" | "getLineColor" | "getText" | "getTextSize" | "getIcon"
+  | "getFillColor"
+  | "getLineColor"
+  | "getText"
+  | "getTextSize"
+  | "getIcon"
+  | "display"
 > => {
   const getIsClickedFeature = (f: GeoJSONFeature) => {
     return (
@@ -139,11 +144,14 @@ export const getMapFeatureStyle = (
             `<svg width="24" height="24" style="color:${rgbaToString(lineColor)};" `,
           );
           return {
+            id: `${iconPath}-${lineColor}`,
+            // Maybe load directly to avoid the flickering? `${location.origin}${iconPath}`, //
             url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
             width: 24,
             height: 24,
           };
         }
       ),
+    display: mapIcons?.display,
   };
 };

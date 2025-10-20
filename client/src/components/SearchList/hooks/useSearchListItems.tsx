@@ -1,6 +1,6 @@
 import { isEqual } from "prostgles-types";
 import React from "react";
-import { FlexRowWrap } from "../../Flex";
+import { FlexRow, FlexRowWrap } from "../../Flex";
 import { getSearchListMatchAndHighlight } from "../getSearchListMatchAndHighlight";
 import type {
   ParsedListItem,
@@ -9,6 +9,8 @@ import type {
 } from "../SearchList";
 import { getValueAsText } from "../SearchListContent";
 import type { SearchListState } from "./useSearchListSearch";
+import { Icon } from "@components/Icon/Icon";
+import { mdiPlus } from "@mdi/js";
 
 export const useSearchListItems = (
   props: Pick<
@@ -99,42 +101,46 @@ export const useSearchListItems = (
 
   const renderedItems =
     itemGroupHeaders.length ?
-      itemGroupHeaders.flatMap(({ header, parentLabels }) => {
-        const [firstGroupItem, ...otherGroupItems] =
-          renderedItemsWithoutHeaders.filter((d) =>
-            isEqual(d.parentLabels, parentLabels),
-          );
+      itemGroupHeaders.flatMap(({ parentLabels }) => {
+        const groupItems = renderedItemsWithoutHeaders.filter((d) =>
+          isEqual(d.parentLabels, parentLabels),
+        );
+        const [firstGroupItem] = groupItems;
         if (!firstGroupItem) return [];
-        const contentLeft =
-          !parentLabels.length ? undefined : <div style={{ width: "1em" }} />;
-        return [
-          {
-            ...firstGroupItem,
-            contentLeft,
-            contentTop:
-              !parentLabels.length ? undefined : (
-                <FlexRowWrap
-                  className="SearchList_GroupHeader p-1 my-p5 text-1 bg-color-0 bb b-color gap-p25"
-                  style={{ position: "sticky", top: 0 }}
-                >
-                  {parentLabels.map((label, i) => (
-                    <React.Fragment key={i}>
-                      {i > 0 && <span className="text-2">{">"}</span>}
-                      <span key={i} className="bold">
-                        {label}
-                      </span>
-                    </React.Fragment>
-                  ))}
-                </FlexRowWrap>
-              ),
-          },
-          ...(!contentLeft ? otherGroupItems : (
-            otherGroupItems.map((d) => ({
-              ...d,
-              contentLeft,
-            }))
-          )),
-        ];
+        const leftSpacer =
+          !parentLabels.length ? undefined : (
+            <Icon path={mdiPlus} style={{ opacity: 0 }} />
+          );
+
+        return groupItems.map(({ contentLeft, ...item }, index) => {
+          const isFirst = index === 0;
+          const contentTop =
+            !isFirst ? undefined
+            : !parentLabels.length ? undefined
+            : <FlexRowWrap
+                className="SearchList_GroupHeader p-1 my-p5 text-1 bg-color-0 bb b-color gap-p25"
+                style={{ position: "sticky", top: 0 }}
+              >
+                {parentLabels.map((label, i) => (
+                  <React.Fragment key={i}>
+                    {i > 0 && <span className="text-2">{">"}</span>}
+                    <span key={i} className="bold">
+                      {label}
+                    </span>
+                  </React.Fragment>
+                ))}
+              </FlexRowWrap>;
+          return {
+            ...item,
+            contentTop,
+            contentLeft:
+              !leftSpacer && !contentLeft ?
+                undefined
+              : <FlexRow className="gap-0">
+                  {contentLeft ?? leftSpacer}
+                </FlexRow>,
+          };
+        });
       })
     : renderedItemsWithoutHeaders;
 

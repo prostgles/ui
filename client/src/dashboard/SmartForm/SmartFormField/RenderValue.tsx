@@ -4,7 +4,7 @@ import { isObject, _PG_date, _PG_numbers, includes } from "prostgles-types";
 import { ShorterText } from "../../../components/ShorterText";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import { dateAsYMD_Time } from "../../Charts";
-import { sliceText } from "../../../../../commonTypes/utils";
+import { sliceText } from "../../../../../common/utils";
 
 type P = {
   column: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType"> | undefined;

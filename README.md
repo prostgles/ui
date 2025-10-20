@@ -39,16 +39,23 @@ git clone https://github.com/prostgles/ui.git
 cd ui
 ```
 
-Docker setup. By default the app will be accessible at [localhost:3004](http://localhost:3004)
+Docker setup. By default the app will be accessible at [localhost:3004](http://localhost:3004).
+Omit "--build" to use our published images.
 
 ```docker-compose.sh
-docker compose up -d
+docker compose up -d --build
 ```
 
 To use a custom port (3099 for example) and/or a custom binding address (0.0.0.0 for example):
 
 ```bash
-PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up
+PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up --build
+```
+
+To use with docker mcp experimental feature:
+
+```bash
+docker compose --profile=docker-mcp up --build
 ```
 
 ### Installation - use existing PostgreSQL instance
@@ -62,12 +69,12 @@ git clone https://github.com/prostgles/ui.git prostgles
 cd prostgles
 ```
 
-Build and run our docker image (172.17.0.1 is used to connect to localhost):
+Build and run our docker image:
 
 ```docker-run.sh
 docker build -t prostgles .
-docker run -d -p 127.0.0.1:3004:3004 \
-  -e POSTGRES_HOST=172.17.0.1 \
+docker run --network=host -d -p 127.0.0.1:3004:3004 \
+  -e POSTGRES_HOST=127.0.0.1 \
   -e POSTGRES_PORT=5432 \
   -e POSTGRES_DB=postgres \
   -e POSTGRES_USER=postgres \
@@ -86,7 +93,7 @@ Your server will be running on [localhost:3004](http://localhost:3004).
 #### 1. Install dependencies:
 
 - [NodeJS](https://nodejs.org/en/download)
-- [Postgres](https://www.postgresql.org/download/): For full features **postgresql-15-postgis-3** is recommended
+- [Postgres](https://www.postgresql.org/download/): For full features **postgresql-17-postgis-3.4** is recommended
 
 #### 2. Create a database and user update `.env`. All prostgles state and metadata will be stored in this database
 

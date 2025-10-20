@@ -1,6 +1,6 @@
 import { mdiCardAccountDetailsOutline, mdiClose } from "@mdi/js";
 import React from "react";
-import type { ContextValue } from "../../../../commonTypes/publishUtils";
+import type { ContextValue } from "../../../../common/publishUtils";
 import Btn from "../../components/Btn";
 import { classOverride } from "../../components/Flex";
 import Select from "../../components/Select/Select";

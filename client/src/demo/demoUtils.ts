@@ -1,4 +1,9 @@
-import { type Command, getCommandElemSelector } from "../Testing";
+import { scrollIntoViewIfNeeded } from "src/utils";
+import {
+  type Command,
+  getCommandElemSelector,
+  getDataKeyElemSelector,
+} from "../Testing";
 import { tout } from "../pages/ElectronSetup/ElectronSetup";
 
 let pointer: HTMLDivElement | null = null;
@@ -10,6 +15,18 @@ export const movePointer = async (x: number, y: number) => {
     pointer.style.left = x + "px";
     pointer.style.top = y + "px";
     await tout(500);
+    const targetEl = document.elementFromPoint(x, y);
+    if (targetEl) {
+      const evt = new PointerEvent("pointermove", {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        view: window,
+      });
+
+      targetEl.dispatchEvent(evt);
+    }
   }
 };
 type GetElemOpts = {
@@ -64,10 +81,12 @@ export const waitForElement = async <T extends Element>(
 export const clickWhenReady = async (elem: HTMLElement, timeout = 5e3) => {
   if (elem instanceof HTMLButtonElement && elem.disabled) {
     let timeoutLeft = timeout;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (elem.disabled && timeoutLeft > 0) {
       await tout(100);
       timeoutLeft -= 100;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (elem.disabled) {
       throw `Element ${elem} is still disabled after ${timeout}ms`;
     }
@@ -88,10 +107,8 @@ export const goToElem = async <ElemType = HTMLElement>(
     opts,
   );
   const bbox = elem.getBoundingClientRect();
-  if ((elem as any).scrollIntoViewIfNeeded) {
-    (elem as any).scrollIntoViewIfNeeded({ behavior: "smooth" });
-    !opts.noTimeToWait && (await tout(200));
-  }
+  scrollIntoViewIfNeeded(elem, { behavior: "smooth" });
+  !opts.noTimeToWait && (await tout(200));
   await movePointer(
     bbox.left + Math.min(60, bbox.width / 2),
     bbox.top + bbox.height / 2,
@@ -115,6 +132,16 @@ export const click = async (
   } else {
     finalElem.click();
   }
+};
+export const openConnection = async (
+  name: "prostgles_video_demo" | "food_delivery",
+) => {
+  await click(
+    "Connections",
+    getDataKeyElemSelector(name) +
+      " " +
+      getCommandElemSelector("Connection.openConnection"),
+  );
 };
 // window._click = click;
 

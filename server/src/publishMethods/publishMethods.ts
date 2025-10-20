@@ -4,27 +4,30 @@ import fs from "fs";
 import * as os from "os";
 import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
 import type { DBS } from "../index";
 import { connMgr } from "../index";
 
 export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
-import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
-import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
+import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject } from "prostgles-types";
-import { asName, isEmpty, pickKeys } from "prostgles-types";
-import type { LLMMessage } from "../../../commonTypes/llmUtils";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import {
+  asName,
+  assertJSONBObjectAgainstSchema,
+  isEmpty,
+  pickKeys,
+} from "prostgles-types";
+import type { LLMMessage } from "../../../common/llmUtils";
+import type { DBSSchema } from "../../../common/publishUtils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { checkClientIP, createSessionSecret } from "../authConfig/sessionUtils";
 import type { Backups } from "../BackupManager/BackupManager";
 import { getInstalledPsqlVersions } from "../BackupManager/getInstalledPrograms";
 import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
 import {
-  DB_TRANSACTION_KEY,
   getACRules,
   getCDB,
   getSuperUserCDB,
@@ -50,13 +53,16 @@ import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import { upsertConnection } from "../upsertConnection";
 import { getSampleSchemas } from "./applySampleSchema";
 import { askLLM } from "./askLLM/askLLM";
+import { getFullPrompt } from "./askLLM/getFullPrompt";
+import { getLLMAllowedChatTools } from "./askLLM/getLLMTools";
 import { refreshModels } from "./askLLM/refreshModels";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
 
-export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
-  params,
-) => {
+export const publishMethods: PublishMethods<
+  DBGeneratedSchema,
+  SessionUser<Users, Users>
+> = async (params) => {
   const { dbo: dbs, clientReq, db: _dbs, user } = params;
   const { socket } = clientReq;
   const bkpManager = await initBackupManager(_dbs, dbs);
@@ -122,20 +128,14 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       /** Terminate all sessions */
       await dbs.sessions.delete({});
     },
-    getConnectionDBTypes: (conId: string) => {
-      /** Maybe state connection */
-      // const con = await dbs.connections.findOne({ id: conId, is_state_db: true });
+    getConnectionDBTypes: (conId: string | undefined) => {
       if (!statePrgl) throw "statePrgl missing";
-      // if(con){
-      //   return statePrgl.getTSSchema()
-      // }
-      const dbsSchema = statePrgl.getTSSchema();
+      /** No connection id = state connection */
+      if (!conId) {
+        return statePrgl.getTSSchema();
+      }
       const c = connMgr.getConnection(conId);
-      const dbSchema = c.prgl.getTSSchema();
-      return {
-        dbsSchema,
-        dbSchema,
-      };
+      return c.prgl.getTSSchema();
     },
     getMyIP: async () => {
       if (!socket) throw "Socket missing";
@@ -433,29 +433,27 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       } else {
         const fileTable = dbConf.file_table_config?.fileTable;
         if (!fileTable) throw "Unexpected: fileTable already disabled";
-        await (db[DB_TRANSACTION_KEY] as DBHandlerServer["tx"])!(
-          async (dbTX) => {
-            const fileTableHandler = dbTX[fileTable];
-            if (!fileTableHandler)
-              throw "Unexpected: fileTable table handler missing";
-            if (
-              dbConf.file_table_config?.fileTable &&
-              (dbConf.file_table_config.storageType.type === "local" ||
-                !opts?.keepS3Data)
-            ) {
-              if (!fileTable || !fileTableHandler.delete) {
-                throw "Unexpected error. fileTable handler not found";
-              }
+        await db.tx(async (dbTX) => {
+          const fileTableHandler = dbTX[fileTable];
+          if (!fileTableHandler)
+            throw "Unexpected: fileTable table handler missing";
+          if (
+            dbConf.file_table_config?.fileTable &&
+            (dbConf.file_table_config.storageType.type === "local" ||
+              !opts?.keepS3Data)
+          ) {
+            if (!fileTable || !fileTableHandler.delete) {
+              throw "Unexpected error. fileTable handler not found";
+            }
 
-              await fileTableHandler.delete({});
-            }
-            if (!opts?.keepFileTable) {
-              await dbTX.sql!("DROP TABLE ${fileTable:name} CASCADE", {
-                fileTable,
-              });
-            }
-          },
-        );
+            await fileTableHandler.delete({});
+          }
+          if (!opts?.keepFileTable) {
+            await dbTX.sql!("DROP TABLE ${fileTable:name} CASCADE", {
+              fileTable,
+            });
+          }
+        });
         newTableConfig = null;
       }
       const con = await dbs.connections.findOne({ id: connId });
@@ -541,15 +539,16 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       return res;
     },
     getNodeTypes,
-    installMCPServer: async (name) => {
+    installMCPServer: async (name: string) => {
       return installMCPServer(dbs, name);
     },
-    getMCPServersStatus: (serverName) => getMCPServersStatus(dbs, serverName),
+    getMCPServersStatus: (serverName: string) =>
+      getMCPServersStatus(dbs, serverName),
     callMCPServerTool: async (
       chatId: number,
       serverName: string,
       toolName: string,
-      args: any,
+      args: Record<string, unknown> | undefined,
     ) => {
       const res = await callMCPServerTool(
         user,
@@ -597,6 +596,19 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
         });
       },
     }),
+    getFullPrompt,
+    stopAskLLM: async (chatId: number) => {
+      if (!chatId) throw "Chat ID is required";
+      const chat = await dbs.llm_chats.findOne({ id: chatId });
+      if (!chat) throw "Chat not found";
+      if (chat.user_id !== user.id && user.type !== "admin") {
+        throw "You are not allowed to stop this chat";
+      }
+      await dbs.llm_chats.update(
+        { id: chatId },
+        { status: { state: "stopped" } },
+      );
+    },
     sendFeedback: async ({
       details,
       email,
@@ -620,7 +632,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       }
 
       if (!socket) throw "Socket missing";
-      const ip_address = (socket as any).conn.remoteAddress;
+      const ip_address = (socket as any).conn.remoteAddress as string;
       const session = await dbs.sessions.insert(
         {
           expires: Date.now() + days * 24 * 3600 * 1000,
@@ -686,6 +698,23 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
         throw "Old password is incorrect";
       const hashedNewPassword = getPasswordHash(user, newPassword);
       await dbs.users.update({ id: user.id }, { password: hashedNewPassword });
+    },
+    getLLMAllowedChatTools: async (chatId: number) => {
+      const chat = await dbs.llm_chats.findOne({ id: chatId });
+      if (!chat || chat.user_id !== user.id) throw "Invalid chat";
+      const connectionId = chat.connection_id;
+      if (!connectionId) throw "Chat connection_id not found";
+      if (!chat.llm_prompt_id) throw "Chat prompt_id not found";
+      const prompt = await dbs.llm_prompts.findOne({ id: chat.llm_prompt_id });
+      if (!prompt) throw "Chat prompt not found";
+      const allowedTools = await getLLMAllowedChatTools({
+        chat,
+        userType: user.type,
+        dbs,
+        prompt,
+        connectionId,
+      });
+      return allowedTools;
     },
   };
 

@@ -4,7 +4,7 @@ import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
-import Loading from "../../../components/Loading";
+import Loading from "../../../components/Loader/Loading";
 import Popup from "../../../components/Popup/Popup";
 import { AddLLMPromptForm } from "./AddLLMPromptForm";
 import { LLMProviderSetup } from "./LLMProviderSetup";

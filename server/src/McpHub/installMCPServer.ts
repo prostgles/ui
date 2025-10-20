@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { simpleGit, type SimpleGit } from "simple-git";
 import type { DBS } from "..";
-import { getEntries } from "../../../commonTypes/utils";
+import { getEntries } from "../../../common/utils";
 import { getRootDir } from "../electronConfig";
 import { runShellCommand } from "./runShellCommand";
 

@@ -2,7 +2,7 @@
 .env
 .github
 .vscode
-demo_utils
+scripts/demo
 e2e
 electron
 releases

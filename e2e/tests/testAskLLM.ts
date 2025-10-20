@@ -1,115 +1,252 @@
+import { prostglesUIDashboardSample } from "sampleToolUseData";
+import { dockerWeatherToolUse } from "sampleToolUseData";
+
 const stringify = (obj: any) => JSON.stringify(obj, null, 2);
 
-const taskToolArguments = stringify({
-  suggested_prompt: "generated prompt",
+const taskToolArguments = {
+  suggested_prompt:
+    "Given the receipt image, extract the text and insert it into the receipts table.",
   suggested_database_access: {
     Mode: "Custom",
     tables: [
       {
-        tableName: "mytable",
+        tableName: "receipts",
         select: true,
-        insert: false,
+        insert: true,
         delete: false,
         update: true,
       },
     ],
   },
-  suggested_database_tool_names: ["prostgles-db-methods--askLLM"],
+  suggested_database_tool_names: [],
   suggested_mcp_tool_names: ["fetch--fetch"],
-});
-
-const taskToolUse = {
-  id: "task-tool-use",
-  type: "function",
-  function: {
-    name: "prostgles-ui--suggest_tools_and_prompt",
-    arguments: taskToolArguments,
-  },
 };
 
-const dashboardToolArguments = stringify({
-  prostglesWorkspaces: [
+type ToolUse = {
+  content?: string;
+  tool: {
+    id: string;
+    type: "function";
+    function: {
+      name: string;
+      arguments: string;
+    };
+  }[];
+  duration?: number;
+  result_content?: string;
+};
+
+const taskToolUse: ToolUse = {
+  content:
+    "Based on your requirements, I suggest the following prompt and database access settings to help you get started effectively.",
+  tool: [
     {
-      name: "generated workspace",
-      windows: [{ type: "table" }],
-      layout: { id: "root", size: 100, isRoot: true, items: [] },
+      id: "task-tool-use",
+      type: "function",
+      function: {
+        name: "prostgles-ui--suggest_tools_and_prompt",
+        arguments: stringify(taskToolArguments),
+      },
     },
   ],
-});
-const dashboardToolUse = {
-  id: "dashboard-tool-use",
-  type: "function",
-  function: {
-    name: "prostgles-ui--suggest_dashboards",
-    arguments: dashboardToolArguments,
-  },
 };
 
-const mcpToolUse = {
-  id: "mcp-tool-use",
-  type: "function",
-  function: {
-    name: "fetch--fetch",
-    arguments: stringify({
-      url: "http://localhost:3004/login",
-    }),
+const dashboardToolUse: ToolUse = {
+  content: `I analyzed your schema for what appears to be a food delivery platform. Let me suggest several workspaces that would provide valuable insights into different aspects of your business.`,
+  tool: [
+    {
+      id: "dashboard-tool-use",
+      type: "function",
+      function: {
+        name: "prostgles-ui--suggest_dashboards",
+        arguments: stringify(prostglesUIDashboardSample),
+      },
+    },
+  ],
+};
+
+const mcpToolUse: ToolUse = {
+  content: `To assist you further, I'll use the fetch tool to access the  application.`,
+  tool: [
+    {
+      id: "mcp-tool-use",
+      type: "function",
+      function: {
+        name: "fetch--fetch",
+        arguments: stringify({
+          url: "http://localhost:3004/login",
+        }),
+      },
+    },
+  ],
+};
+const playwrightMCPToolUse: ToolUse = {
+  content: `I'll use Playwright to navigate to the login page and take a snapshot of it. This will help us verify that the page loads correctly and looks as expected.`,
+  tool: [
+    {
+      id: "mcp-tool-use-playwright1",
+      type: "function",
+      function: {
+        name: "playwright--browser_navigate",
+        arguments: stringify({
+          url: "http://localhost:3004/login",
+        }),
+      },
+    },
+    {
+      id: "mcp-tool-use-playwright2",
+      type: "function",
+      function: {
+        name: "playwright--browser_snapshot",
+        arguments: stringify({
+          url: "http://localhost:3004/login",
+        }),
+      },
+    },
+  ],
+};
+const isDocker = Boolean(process.env.IS_DOCKER);
+const mcpSandboxToolUse: ToolUse = {
+  content: `I'll create a container that runs a simple Node.js application.`,
+  tool: [
+    {
+      id: "mcp-tool-use-sandbox1",
+      type: "function",
+      function: {
+        name: "docker-sandbox--create_container",
+        arguments: stringify({
+          files: {
+            Dockerfile: `FROM node:20 \nWORKDIR /app \nCOPY . . \nRUN npm install \nCMD ["npm", "start"]`,
+            "package.json": JSON.stringify({
+              name: "test-app",
+              version: "1.0.0",
+              scripts: {
+                start: "node index.js",
+              },
+              depenencies: {
+                "node-fetch": "^3.3.0",
+              },
+            }),
+            "index.js": `
+            fetch(
+              "http://${isDocker ? "prostgles-ui-docker-mcp" : "172.17.0.1"}:3009/db/execute_sql_with_rollback", 
+              { headers: { "Content-Type": "application/json" }, 
+              method: "POST", 
+              body: JSON.stringify({ sql: "SELECT * FROM users" }) 
+            }).then(res => res.json()).then(console.log).catch(console.error);`,
+          },
+          networkMode: "bridge",
+          timeout: 30_000,
+        }),
+      },
+    },
+  ],
+};
+
+const toolResponses: Record<string, ToolUse> = {
+  task: taskToolUse,
+  dashboards: dashboardToolUse,
+  mcp: mcpToolUse,
+  mcpfail: {
+    content: "Hmm, the fetch tool encountered an error. Let's try again...",
+    tool: mcpToolUse.tool.map((t) => ({
+      ...t,
+      function: { ...t.function, name: "fetch--invalidfetch" },
+    })),
+    duration: 1000,
+    result_content: "... let's retry the failed tool",
+  },
+  mcpplaywright: playwrightMCPToolUse,
+  mcpsandbox: mcpSandboxToolUse,
+  weather: {
+    content:
+      "I'll create a container with a script that fetches real historical weather data from a free API source.",
+    tool: [
+      {
+        id: "weather-tool-use",
+        type: "function",
+        function: {
+          name: "docker-sandbox--create_container",
+          arguments: stringify(dockerWeatherToolUse),
+        },
+      },
+    ],
+    result_content:
+      "The container has fetched the historical weather data for London for the last 4 years.",
+  },
+  last: {
+    content:
+      "To get the information you need, I'll run a SQL query against your database to fetch the relevant data.",
+    tool: [
+      {
+        id: "sql-tool-use",
+        type: "function",
+        function: {
+          name: "prostgles-db--execute_sql_with_rollback",
+          arguments: stringify({
+            sql: "SELECT * FROM orders WHERE created_at >= NOW() - INTERVAL '30 days';",
+          }),
+        },
+      },
+    ],
+    result_content:
+      "Here is the list of orders from the last 30 days that you requested:  \n\n- OrderID: 101, Customer: John Doe, Amount: $250.00, Date: 2025-09-10 \n- OrderID: 102, Customer: Jane Smith, Amount: $150.00, Date: 2025-09-11",
+  },
+  receipt: {
+    content:
+      "Great! I've extracted the text from the receipt image. Now, I'll insert the relevant details into the receipts table in your database.",
+    tool: [
+      {
+        id: "db-tool-use",
+        type: "function",
+        function: {
+          name: "prostgles-db--insert",
+          arguments: stringify({
+            tableName: "receipts",
+            data: [
+              {
+                extracted_text: "Item1 $10.00\nItem2 $15.00\nTotal $25.00",
+                amount: 450,
+                currency: "USD",
+                company: "Grand Ocean Hotel",
+                date: "2025-09-12",
+                created_at: new Date().toISOString(),
+              },
+            ],
+          }),
+        },
+      },
+    ],
+    result_content:
+      "Inserted receipt data for Item1 $10.00, Item2 $15.00, Total $25.00 into the receipts table at Grand Ocean Hotel.",
   },
 };
-const playwrightMCPToolUse = [
-  {
-    id: "mcp-tool-use-playwright1",
-    type: "function",
-    function: {
-      name: "playwright--browser_navigate",
-      arguments: stringify({
-        url: "http://localhost:3004/login",
-      }),
-    },
-  },
-  {
-    id: "mcp-tool-use-playwright2",
-    type: "function",
-    function: {
-      name: "playwright--browser_snapshot",
-      arguments: stringify({
-        url: "http://localhost:3004/login",
-      }),
-    },
-  },
-];
-
-const mcpSandboxToolUse = [
-  {
-    function: {
-      name: "docker-sandbox--create_sandbox",
-      arguments: stringify({
-        image: "node:18-alpine",
-      }),
-    },
-  },
-];
 
 export const testAskLLMCode = `
 
+const toolResponses = ${stringify(toolResponses)};
+
 const lastMsg = args.messages.at(-1);
 const lastMsgText = lastMsg?.content[0]?.text;
-const failedToolResult = typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch"));
-const msg = failedToolResult ? "mcpfail" : lastMsgText;
+const toolCallKeyResult = typeof lastMsg?.tool_call_id === "string"? lastMsg.tool_call_id.split("#")[0] : undefined;
+const toolResult = toolCallKeyResult && toolResponses[toolCallKeyResult];
+const failedToolResult = toolCallKeyResult === "mcpfail";// typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch");
+const msg = failedToolResult ? " mcpfail " : lastMsgText;
 
-const tool_calls = ({
-  tasks: [${stringify(taskToolUse)}],
-  dashboards: [${stringify(dashboardToolUse)}],
-  mcp: [${stringify(mcpToolUse)}],
-  mcpfail: [${stringify({ ...mcpToolUse, function: { ...mcpToolUse.function, name: "fetch--invalidfetch" } })}],
-  mcpplaywright: ${stringify(playwrightMCPToolUse)},
-  mcpsandbox: ${stringify(mcpSandboxToolUse)},
-})[msg]?.map(tc => ({ ...tc, id: [tc.id, tc["function"].name, Math.random(), Date.now()].join("_") })); 
+const toolResponseKey = Object.keys(toolResponses).find(k => msg && msg.includes(" " + k + " ")); 
+const toolResponse = toolResponses[toolResponseKey];
 
+const defaultContent = !msg && !failedToolResult? undefined : ("free ai assistant" + (msg ?? " empty message") + (failedToolResult ? "... let's retry the failed tool" : ""));
+const content = toolResult?.result_content ?? toolResponse?.content ?? defaultContent;
+const tool_calls = toolResponse?.tool.map(tc => ({ ...tc, id: [toolResponseKey + "#", tc.id, tc["function"].name, Math.random(), Date.now()].join("_") })); 
+
+const duration = toolResponse?.duration ?? (3000 + Math.random() * 2000);
+await new Promise(res => setTimeout(res, duration));
 
 const choicesItem = { 
   type: "text", 
   message: {
-    content: "free ai assistant" + (msg ?? " tool result received") + (failedToolResult ? "... let's retry the failed tool" : ""),
+    content,
     tool_calls 
   }
 };

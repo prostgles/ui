@@ -1,11 +1,12 @@
+import { useMemoDeep } from "prostgles-client/dist/react-hooks";
 import React, { useCallback, useMemo } from "react";
+import { isObject } from "../../../../common/publishUtils";
 import {
   CodeEditor,
   type CodeEditorProps,
 } from "../../dashboard/CodeEditor/CodeEditor";
 import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 import type { FormFieldProps } from "./FormField";
-import { isObject } from "../../../../commonTypes/publishUtils";
 
 type P = Pick<FormFieldProps, "value" | "onChange" | "readOnly"> & {
   className?: string;
@@ -49,36 +50,40 @@ export const FormFieldCodeEditor = ({
     [onChange],
   );
 
-  const editorProps = useMemo(
-    () =>
-      ({
-        style: {
-          minHeight: valueAsString.toString().length ? "100px" : "26px",
-          minWidth: "200px",
-          borderRadius: ".5em",
-          flex: 1,
-          resize: "vertical",
-          overflow: "auto",
-          border: "unset",
-          borderRight: `1px solid var(--text-4)`,
-          ...style,
+  const hasValue = !!valueAsString.toString().length;
+  const editorProps = useMemoDeep(() => {
+    return {
+      style: {
+        minHeight: hasValue ? "100px" : "26px",
+        minWidth: "200px",
+        borderRadius: ".5em",
+        flex: 1,
+        resize: "vertical",
+        overflow: "auto",
+        border: "unset",
+        borderRight: `1px solid var(--text-4)`,
+        ...style,
+      },
+      options: {
+        ...asJSON.options,
+        tabSize: 2,
+        minimap: {
+          enabled: false,
         },
-        options: {
-          ...asJSON.options,
-          tabSize: 2,
-          minimap: {
-            enabled: false,
-          },
-          lineNumbers: "off",
-          automaticLayout: true,
-        },
-        language: {
-          lang: "json",
-          jsonSchemas: asJSON.schemas,
-        },
-      }) satisfies Pick<CodeEditorProps, "options" | "language" | "style">,
-    [valueAsString, asJSON.schemas, asJSON.options, style],
-  );
+        lineNumbers: "off",
+        automaticLayout: true,
+      },
+      language: {
+        lang: "json",
+        jsonSchemas: asJSON.schemas,
+      },
+    } satisfies Pick<CodeEditorProps, "options" | "language" | "style">;
+  }, [
+    //hasValue,
+    asJSON.schemas,
+    asJSON.options,
+    style,
+  ]);
 
   return (
     <CodeEditor

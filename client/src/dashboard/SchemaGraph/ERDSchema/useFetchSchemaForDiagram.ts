@@ -5,9 +5,6 @@ import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
 import type { ERDSchemaProps } from "./ERDSchema";
-const COLOR_PALETTE_WITHOUT_WHITE = [
-  ...COLOR_PALETTE.filter((c) => c !== "#ffffff"),
-];
 
 export const useFetchSchemaForDiagram = (
   props: ERDSchemaProps & {
@@ -92,7 +89,7 @@ export const useFetchSchemaForDiagram = (
         return mostReferenced;
       });
 
-    const colors = COLOR_PALETTE_WITHOUT_WHITE.slice(0);
+    const colors = COLOR_PALETTE.slice(0);
     const allTablesWithRootColor = allTableMostReferencedTop.map((t) => ({
       ...t,
       /** Root color assigned to top most referenced tables  */

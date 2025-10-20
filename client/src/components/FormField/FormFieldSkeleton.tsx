@@ -90,7 +90,7 @@ export const FormFieldSkeleton = forwardRef(
       >
         {leftIcon}
         <div
-          className={`form-field__hint-wrapper trigger-hover flex-col gap-p5`}
+          className={`form-field__hint-wrapper trigger-hover flex-col gap-p5 min-w-0`}
           title={title}
           style={{
             ...hintWrapperStyle,

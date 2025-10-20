@@ -101,11 +101,8 @@ const table_schema_positions = {
   },
 };
 const table_schema_transform = {
-  scale: 1.1325289291376481,
-  translate: {
-    x: 1951.738391,
-    y: 1269.27963922513,
-  },
+  scale: 0.917348432601495,
+  translate: { x: 1400, y: 1116 },
 };
 
 export default {

@@ -6,7 +6,7 @@ import type {
   InsertRule,
   SelectRule,
   UpdateRule,
-} from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
 import { FlexCol } from "../../../components/Flex";
 import { Label } from "../../../components/Label";
 import CodeExample from "../../CodeExample";

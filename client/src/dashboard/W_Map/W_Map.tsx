@@ -7,7 +7,7 @@ import {
 } from "prostgles-types";
 import React from "react";
 import ErrorComponent from "../../components/ErrorComponent";
-import Loading from "../../components/Loading";
+import Loading from "../../components/Loader/Loading";
 import Popup from "../../components/Popup/Popup";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
@@ -31,7 +31,7 @@ import type { HoveredObject } from "./onMapHover";
 import { onMapHover } from "./onMapHover";
 import { fetchMapLayerData } from "./fetchMapLayerData";
 import { SmartForm } from "../SmartForm/SmartForm";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../common/publishUtils";
 import { getMapFilter } from "./getMapData";
 
 export type LayerBase = {
@@ -440,6 +440,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
             lineWidth: 1222,
             pickable: true,
             stroked: true,
+            display: undefined,
           },
         ]
       : []),
@@ -715,7 +716,11 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     );
 
     return (
-      <Window w={w} getMenu={this.getMenu}>
+      <Window
+        w={w}
+        getMenu={this.getMenu}
+        layoutMode={this.props.workspace.layout_mode ?? "editable"}
+      >
         {content}
       </Window>
     );

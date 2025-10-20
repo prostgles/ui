@@ -1,7 +1,7 @@
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
+import type { DetailedFilterBase } from "../../../../common/filterUtils";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { RowSiblingData } from "./tableUtils/getEditColumn";

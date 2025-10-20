@@ -6,7 +6,7 @@ import Select from "../../../components/Select/Select";
 import {
   getSmartGroupFilter,
   type SimpleFilter,
-} from "../../../../../commonTypes/filterUtils";
+} from "../../../../../common/filterUtils";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
 import {
   omitKeys,

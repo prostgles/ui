@@ -4,7 +4,7 @@ import Chip from "./Chip";
 import { FlexCol } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import Popup from "./Popup/Popup";
-import { sliceText } from "../../../commonTypes/utils";
+import { sliceText } from "../../../common/utils";
 
 export const ContentTypes = ["image", "video", "audio"] as const;
 type ValidContentType = (typeof ContentTypes)[number];
@@ -277,7 +277,15 @@ export const fetchMimeFromURLHead = async (
   url: string,
 ): Promise<string | null> => {
   try {
-    const resp = await fetch(url, { method: "HEAD" });
+    const resp = await fetch(
+      url,
+      // { method: "HEAD" } this approach is not suitable due to CORS issues on some servers
+      {
+        headers: {
+          Range: "bytes=0-0",
+        },
+      },
+    );
     if (resp.status >= 400) return null;
     return resp.headers.get("Content-Type");
   } catch (e) {

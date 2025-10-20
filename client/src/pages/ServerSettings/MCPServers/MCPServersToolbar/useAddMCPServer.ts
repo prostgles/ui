@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   isObject,
   type DBSSchema,
-} from "../../../../../../commonTypes/publishUtils";
+} from "../../../../../../common/publishUtils";
 import { isEmpty } from "../../../../utils";
 
 type NewMCPServer = Pick<

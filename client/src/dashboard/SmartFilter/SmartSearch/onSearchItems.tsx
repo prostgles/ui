@@ -8,7 +8,7 @@ import { getSmartSearchRows } from "./getSmartSearchRows";
 import type {
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../../commonTypes/filterUtils";
+} from "../../../../../common/filterUtils";
 import { isDefined } from "../../../utils";
 import { SearchAll } from "../../SearchAll";
 

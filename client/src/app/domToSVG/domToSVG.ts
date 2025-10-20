@@ -1,5 +1,9 @@
-import { elementToSVG, type SVGContext } from "./elementToSVG";
-import { wrapAllSVGText } from "./text/textToSVG";
+import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { addFragmentViewBoxes } from "./addFragmentViewBoxes";
+import { elementToSVG, type SVGContext } from "./containers/elementToSVG";
+import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
+import { tout } from "src/utils";
+import { deduplicateSVGPaths } from "./containers/deduplicateSVGPaths";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
@@ -10,7 +14,6 @@ export const domToSVG = async (node: HTMLElement) => {
   // Get dimensions and position
   const nodeBBox = node.getBoundingClientRect();
 
-  // Set SVG attributes
   svg.setAttribute("width", nodeBBox.width.toString());
   svg.setAttribute("height", nodeBBox.height.toString());
   svg.setAttribute("viewBox", `0 0 ${nodeBBox.width} ${nodeBBox.height}`);
@@ -50,7 +53,15 @@ export const domToSVG = async (node: HTMLElement) => {
     .map(([_selector, declaration]) => declaration)
     .join("\n");
 
+  setBackdropFilters(svg);
+  const { remove } = renderSvg(svg);
   await wrapAllSVGText(svg);
+  /** Does not really seem effective */
+  // deduplicateSVGPaths(svg);
+  await addFragmentViewBoxes(svg, 10);
+  repositionAbsoluteAndFixed(svg);
+  remove();
+  await tout(1000);
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
@@ -58,8 +69,59 @@ export const domToSVG = async (node: HTMLElement) => {
   return { svgString, svg };
 };
 
+const repositionAbsoluteAndFixed = (svg: SVGGElement) => {
+  const [gBody, ...other] = Array.from(
+    svg.querySelectorAll<SVGGElement>(":scope > g"),
+  );
+  if (!gBody || other.length || gBody._domElement !== document.body) {
+    console.error("Unexpected SVG structure", { svg, gBody, other });
+    throw new Error("Unexpected SVG structure");
+  }
+  const gElements = Array.from(svg.querySelectorAll("g"));
+  gElements.forEach((g) => {
+    const style = g._domElement && getComputedStyle(g._domElement);
+    if (style?.position === "fixed") {
+      gBody.appendChild(g);
+    }
+    if (style?.position === "absolute") {
+      const closestParent = getClosestRelativeOrAbsoluteParent(g) || gBody;
+      const closestParentOrGBody =
+        gBody.contains(closestParent) ? closestParent : gBody;
+      closestParentOrGBody.appendChild(g);
+    }
+  });
+};
+
+const getClosestRelativeOrAbsoluteParent = (g: SVGGElement) => {
+  let parentG = g.parentElement;
+  while (parentG && parentG instanceof SVGGElement && parentG._domElement) {
+    const position = getComputedStyle(parentG._domElement).position;
+    if (
+      includes(position, ["relative", "absolute"]) &&
+      parentG._domElement !== g._domElement
+    ) {
+      return parentG;
+    }
+    parentG = parentG.parentElement;
+  }
+};
+
 declare global {
   interface Element {
     setAttribute(name: string, value: any): void;
   }
 }
+
+const setBackdropFilters = (svg: SVGGElement) => {
+  const gElements = svg.querySelectorAll("g");
+  gElements.forEach((g) => {
+    const prevContent = g.parentElement?.parentElement?.previousSibling;
+    if (
+      g._whatToRender?.backdropFilter &&
+      prevContent &&
+      prevContent instanceof SVGGElement
+    ) {
+      prevContent.style.filter = g._whatToRender.backdropFilter;
+    }
+  });
+};

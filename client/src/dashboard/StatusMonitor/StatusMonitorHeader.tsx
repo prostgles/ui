@@ -1,6 +1,6 @@
 import { mdiChartLine, mdiChip } from "@mdi/js";
 import React, { useEffect, useState } from "react";
-import type { ConnectionStatus } from "../../../../commonTypes/utils";
+import type { ConnectionStatus } from "../../../../common/utils";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
 import ErrorComponent from "../../components/ErrorComponent";

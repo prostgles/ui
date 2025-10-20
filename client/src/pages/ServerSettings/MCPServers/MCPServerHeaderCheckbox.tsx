@@ -24,7 +24,7 @@ export const MCPServerHeaderCheckbox = ({
   dbs: DBS;
   dbsMethods: DBSMethods;
 }) => {
-  const mcpServerTools = mcpServer.mcp_server_tools;
+  const { mcp_server_tools: mcpServerTools, icon_path } = mcpServer;
   const toolsAllowed = llm_chats_allowed_mcp_tools?.filter((at) =>
     mcpServerTools.some((t) => t.id === at.tool_id),
   );

@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
 import type { UIDocElement } from "../../../UIDocs";
 import { mapUIDoc } from "./mapUIDoc";
 import { sqlEditorUIDoc } from "./sqlEditorUIDoc";

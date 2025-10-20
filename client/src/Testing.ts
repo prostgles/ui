@@ -1,5 +1,3 @@
-import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
-
 export const COMMANDS = {
   "NewConnectionForm.connectionName": "Connection name input field",
   "NewConnectionForm.connectionType": "Connection type select field",
@@ -22,6 +20,7 @@ export const COMMANDS = {
   "config.bkp": "",
   "config.tableConfig": "",
   "config.bkp.create": "",
+  "config.bkp.create.name": "Backup name input field",
   "config.bkp.create.start": "",
   "config.bkp.AutomaticBackups": "",
   "config.bkp.AutomaticBackups.toggle": "",
@@ -154,6 +153,7 @@ export const COMMANDS = {
 
   "SearchList.toggleAll": "",
   "SearchList.List": "",
+  "SearchList.Input": "",
 
   FieldFilterControl: "",
   "FieldFilterControl.type": "",
@@ -347,6 +347,7 @@ export const COMMANDS = {
   "Chat.messageList": "",
   "Chat.sendWrapper": "",
   "Chat.send": "",
+  "Chat.addFiles": "",
   "Chat.textarea": "",
   AskLLM: "",
   "AskLLM.popup": "",
@@ -434,15 +435,27 @@ export const COMMANDS = {
   NavBar: "",
   "NavBar.mobileMenuToggle": "",
   "NavBar.logout": "",
-  CommandSearch: "",
+  CommandPalette: "",
   "Chat.attachedFiles": "",
   "Window.W_QuickMenu.addCrossFilteredTable": "Add cross-filtered table",
   Alert: "Alert popup",
   ErrorComponent: "",
   "ToolUseMessage.toggle": "",
+  "ToolUseMessage.Popup": "",
   MarkdownMonacoCode: "",
   "MCPServersInstall.install": "",
   NewConnectionForm: "",
+  "BackupsControls.Completed": "Completed backups list",
+  "AllowedOriginCheck.FormField": "",
+  "APIDetailsWs.Examples": "",
+  "APIDetailsHttp.Examples": "",
+  AllowedOriginCheck: "",
+  "APIDetailsTokens.CreateToken": "",
+  "APIDetailsTokens.CreateToken.daysUntilExpiration": "",
+  "APIDetailsTokens.CreateToken.generate": "",
+  APIDetailsTokens: "",
+  "AskLLM.DeleteMessage": "",
+  "DockerSandboxCreateContainer.Logs": "",
 } as const satisfies Record<
   string,
   | string
@@ -477,6 +490,37 @@ export const COMMAND_SEARCH_ATTRIBUTE_NAME = "data-command-search-ended";
 declare module "react" {
   interface HTMLAttributes<T> {
     "data-command"?: Command;
-    sqlRef?: SQLEditorRef;
   }
 }
+
+export declare namespace SVGif {
+  export type Animation =
+    | {
+        elementSelector: string;
+        offset?: { x: number; y: number };
+        duration: number;
+        type: "click" | "zoomTo" | "type" | "reveal-list";
+
+        /**
+         * Time to wait before clicking after reaching the final position
+         * */
+        waitBeforeClick?: number;
+        /**
+         * Time to stay on the final position after clicking
+         */
+        lingerMs?: number;
+      }
+    | {
+        type: "wait";
+        duration: number;
+      };
+  export type Scene = {
+    svgFileName: string;
+    caption?: string;
+    animations: Animation[];
+  };
+}
+
+/**
+ * Forbid imports to ensure this file is portable
+ */

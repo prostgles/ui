@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { isObject } from "prostgles-types";
-import { isPlaywrightTest } from "../i18n/i18nUtils";
+import { useEffect, useState } from "react";
 
 export type LocalSettings = {
   centeredLayout?: {
@@ -74,6 +73,7 @@ export const localSettings = {
           ...ls,
         }),
       );
+      window.dispatchEvent(new Event("storage"));
     },
   }),
 } as const;

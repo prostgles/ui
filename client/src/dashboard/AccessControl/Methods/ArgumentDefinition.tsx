@@ -1,6 +1,6 @@
 import { mdiClose } from "@mdi/js";
 import React from "react";
-import type { ArgDef } from "../../../../../commonTypes/publishUtils";
+import type { ArgDef } from "../../../../../common/publishUtils";
 import Btn from "../../../components/Btn";
 import FormField from "../../../components/FormField/FormField";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";

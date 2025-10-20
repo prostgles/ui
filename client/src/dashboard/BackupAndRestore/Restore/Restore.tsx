@@ -1,8 +1,8 @@
 import { mdiBackupRestore } from "@mdi/js";
 import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
-import { sliceText } from "../../../../../commonTypes/utils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
+import { sliceText } from "../../../../../common/utils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import FormField from "../../../components/FormField/FormField";

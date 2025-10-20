@@ -1,7 +1,7 @@
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
 import { getKeys } from "prostgles-types";
 import React, { useState } from "react";
-import type { TableRules } from "../../../../../commonTypes/publishUtils";
+import type { TableRules } from "../../../../../common/publishUtils";
 import { FlexCol } from "../../../components/Flex";
 import { Icon } from "../../../components/Icon/Icon";
 import { SearchList } from "../../../components/SearchList/SearchList";

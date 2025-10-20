@@ -301,13 +301,16 @@ export class SilverGridChild extends RTComp<
   ref?: HTMLDivElement;
   refHeader?: HTMLDivElement;
   render() {
-    const { children, header, layout, minimize } = this.props;
+    const { children, header, layout, minimize, layoutMode } = this.props;
     const { fullscreen } = this.state;
     const minimized = minimize?.value ?? this.state.minimized;
 
     let content: any = children;
 
-    const height = window.isMobileDevice ? 32 : 40;
+    const height =
+      layoutMode === "fixed" ? 50
+      : window.isMobileDevice ? 32
+      : 40;
     const isMinimized = !fullscreen && !minimize && minimized;
 
     if (!content) return null;

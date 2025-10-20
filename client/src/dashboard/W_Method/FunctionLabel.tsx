@@ -1,6 +1,6 @@
 import React from "react";
 import { FlexCol, FlexRow } from "../../components/Flex";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../common/publishUtils";
 
 export const FunctionLabel = ({
   name,
@@ -8,7 +8,7 @@ export const FunctionLabel = ({
   arguments: args,
 }: DBSSchema["published_methods"]) => {
   return (
-    <FlexCol className="gap-p5">
+    <FlexCol className="gap-p5 m-auto">
       <FlexRow className="gap-p25">
         <div>{name}</div>
         <div className="text-2">

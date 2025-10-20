@@ -98,6 +98,7 @@ export const CardView = (_props: CardViewProps) => {
               cols={cols}
               draggedRow={draggedRow}
               setDraggedRow={setDraggedRow}
+              w={w}
             />
           );
         })}

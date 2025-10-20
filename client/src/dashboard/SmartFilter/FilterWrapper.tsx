@@ -6,7 +6,7 @@ import type {
   DetailedFilterBase,
   FilterType,
   JoinedFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import {
   CORE_FILTER_TYPES,
   DATE_FILTER_TYPES,
@@ -15,7 +15,7 @@ import {
   NUMERIC_FILTER_TYPES,
   TEXT_FILTER_TYPES,
   getFinalFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";

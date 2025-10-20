@@ -1,4 +1,4 @@
-import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { SmartGroupFilter } from "../../../../common/filterUtils";
 import type { Prgl } from "../../App";
 import { type WindowData } from "./dashboardUtils";
 

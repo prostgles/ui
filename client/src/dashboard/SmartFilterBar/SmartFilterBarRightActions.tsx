@@ -6,11 +6,11 @@ import {
 } from "@mdi/js";
 import { isObject, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { SmartGroupFilter } from "../../../../common/filterUtils";
 import {
   getFinalFilterInfo,
   getSmartGroupFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import Btn from "../../components/Btn";
 import { ExpandSection } from "../../components/ExpandSection";
 import { Footer } from "../../components/Popup/Popup";
@@ -76,6 +76,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
       <div className="flex-row ai-center gap-p5 ml-1">
         {!!canUpdateOrDelete && (
           <ExpandSection
+            title="Bulk actions"
             label={""}
             className=""
             iconPath={(collapsed) =>
@@ -96,9 +97,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                     {...commonBtnProps}
                     color="danger"
                     data-command="SmartFilterBar.rightOptions.delete"
-                  >
-                    Delete
-                  </Btn>
+                  />
                 }
                 message={async () => {
                   const count = await tableHandler.count?.(finalFilter);
@@ -145,9 +144,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                     title="Update rows"
                     color="action"
                     data-command="SmartFilterBar.rightOptions.update"
-                  >
-                    Update
-                  </Btn>
+                  />
                 }
                 contentStyle={{
                   padding: 0,

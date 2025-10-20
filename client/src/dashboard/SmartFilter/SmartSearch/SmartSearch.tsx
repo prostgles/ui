@@ -4,13 +4,13 @@ import "./SmartSearch.css";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { isObject } from "prostgles-types";
-import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
-import ErrorComponent from "../../../components/ErrorComponent";
+import type { SmartGroupFilter } from "@common/filterUtils";
+import ErrorComponent from "@components/ErrorComponent";
 import type {
   SearchListItem,
   SearchListProps,
-} from "../../../components/SearchList/SearchList";
-import { SearchList } from "../../../components/SearchList/SearchList";
+} from "@components/SearchList/SearchList";
+import { SearchList } from "@components/SearchList/SearchList";
 import type { DashboardState } from "../../Dashboard/Dashboard";
 import RTComp from "../../RTComp";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
@@ -67,6 +67,7 @@ type P = {
 
   searchOnFocus?: boolean;
   variant?: "search-no-shadow";
+  noBorder?: boolean;
   extraFilters?: AnyObject[];
 
   size?: "small";
@@ -77,7 +78,6 @@ type P = {
 
   inputStyle?: React.CSSProperties;
   noResultsComponent?: React.ReactNode;
-  wrapperStyle?: React.CSSProperties;
 };
 
 type S = {
@@ -162,7 +162,7 @@ export class SmartSearch extends RTComp<P, S> {
       error,
       inputStyle,
       noResultsComponent,
-      wrapperStyle,
+      noBorder,
     } = this.props;
 
     const { defaultValue } = this;
@@ -191,7 +191,7 @@ export class SmartSearch extends RTComp<P, S> {
         searchEmpty={searchEmpty}
         onSearchItems={this.onSearchItems}
         inputStyle={inputStyle}
-        wrapperStyle={wrapperStyle}
+        noBorder={noBorder}
         placeholder={placeholder}
         onPressEnter={
           !onPressEnter ? undefined : (

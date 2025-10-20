@@ -1,5 +1,5 @@
 import React from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import { FlexRow } from "../../../components/Flex";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { AskLLMChatActionBarDatabaseAccess } from "./AskLLMChatActionBarDatabaseAccess";
@@ -27,5 +27,5 @@ export const AskLLMChatActionBar = (
 export const btnStyleProps = {
   variant: "icon",
   size: "small",
-  style: { opacity: 0.75 },
+  style: { opacity: 0.75, flex: 1, maxWidth: "fit-content", minWidth: "0" },
 } as const;

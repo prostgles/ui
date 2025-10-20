@@ -1,5 +1,5 @@
 import type { AnyObject } from "prostgles-types";
-import { _PG_date, isDefined } from "prostgles-types";
+import { _PG_date, _PG_numbers, includes, isDefined } from "prostgles-types";
 import React from "react";
 import { FlexRow, FlexRowWrap } from "../../../components/Flex";
 import { CellBarchart } from "../../../components/ProgressBar";
@@ -31,22 +31,25 @@ export const StyledTableColumn = ({
     return <FlexRow>{iconNode ?? value}</FlexRow>;
   }
   if (c.style?.type === "Barchart" && barchartVals?.[c.name]) {
+    const numVal = Number(value);
+    const numMin = Number(barchartVals[c.name]?.min ?? 0);
+    const numMax = Number(barchartVals[c.name]?.max ?? 0);
     return (
       <CellBarchart
         style={{ marginTop: "6px" }}
-        min={barchartVals[c.name]?.min ?? 0}
-        max={barchartVals[c.name]?.max ?? 0}
+        min={numMin}
+        max={numMax}
         barColor={c.style.barColor}
         textColor={c.style.textColor}
-        value={value}
-        message={kFormatter(value)}
+        value={numVal}
+        message={kFormatter(numVal)}
       />
     );
   } else if (c.style?.type !== "None") {
     const style = getCellStyle(c, c, row, barchartVals?.[c.name]);
 
     if (
-      ["Fixed", "Conditional"].includes(c.style?.type as any) &&
+      includes(["Fixed", "Conditional"], c.style?.type) &&
       Array.isArray(value) &&
       c.udt_name.startsWith("_")
     ) {
@@ -85,7 +88,7 @@ export const StyledTableColumn = ({
           c.style?.type === "Scale" ? { textColor: style?.textColor } : style
         }
         renderedVal={renderedVal}
-        className={_PG_date.includes(c.udt_name as any) ? "" : "as-end"}
+        className={includes(_PG_numbers, c.udt_name) ? "as-end" : ""}
       />
     );
   }
@@ -125,6 +128,12 @@ export const StyledCell = ({
           ...(style.borderColor && {
             border: `1px solid ${style.borderColor}`,
           }),
+          /**
+           * Prevent left side overflow when showing numbers with "as-end"
+           */
+          maxWidth: "100%",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
       >
         {renderedVal}

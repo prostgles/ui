@@ -1,6 +1,6 @@
 import { mdiSearchWeb } from "@mdi/js";
 import React, { useState } from "react";
-import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import type { SmartGroupFilter } from "../../../../../common/filterUtils";
 import Btn from "../../../components/Btn";
 import { InfoRow } from "../../../components/InfoRow";
 import Popup from "../../../components/Popup/Popup";
@@ -52,9 +52,10 @@ export const ViewMoreSmartCardList = ({
           anchorEl={anchorEl}
           onClickClose={false}
           positioning="left"
+          showFullscreenToggle={{}}
           clickCatchStyle={{ opacity: 1 }}
-          rootStyle={{
-            maxWidth: "min(100vw, 700px)",
+          rootChildStyle={{
+            maxWidth: "min(100vw, 800px)",
           }}
         >
           <SmartCardList

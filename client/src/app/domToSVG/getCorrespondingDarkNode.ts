@@ -48,12 +48,15 @@ export const getCorrespondingDarkNode = (
         n.getAttribute("y1") === lightNode.getAttribute("y1") &&
         n.getAttribute("x2") === lightNode.getAttribute("x2") &&
         n.getAttribute("y2") === lightNode.getAttribute("y2")
-      : n.textContent === lightNode.textContent,
+      : n.textContent === lightNode.textContent ||
+        /** Some text content changes between renders */
+        (n.getAttribute("x") === lightNode.getAttribute("x") &&
+          n.getAttribute("y") === lightNode.getAttribute("y")),
     );
   }
   // if (
   //   lightNode instanceof SVGTextElement &&
-  //   lightNode.textContent?.includes("username")
+  //   lightNode.textContent?.includes("11:5")
   //   // &&
   //   // lightNode.getAttribute("fill") === "rgb(108, 6, 171)"
   // ) {

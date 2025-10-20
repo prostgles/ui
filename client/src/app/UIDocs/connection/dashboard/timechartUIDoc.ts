@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../getCommonViewHeaderUIDoc";
@@ -12,9 +12,9 @@ export const timechartUIDoc = {
     The timechart view allows you to visualize time-series data from your database.
     It supports multiple layers, each with its own data source and style.
     You can add filters to the timechart to narrow down the data displayed.
-    <img src="/screenshots/timechart.svg" alt="Timechart view screenshot" />
+    <img src="./screenshots/timechart.svg" alt="Timechart view screenshot" />
   `),
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
   children: [
     getCommonViewHeaderUIDoc(
       "Shows the table/view name together with the number of records matching the current filters.",

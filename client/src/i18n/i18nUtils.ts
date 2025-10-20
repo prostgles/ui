@@ -9,13 +9,19 @@ import de from "./translations/de.json";
 import zh from "./translations/zh.json";
 import hi from "./translations/hi.json";
 import ru from "./translations/ru.json";
+import fr from "./translations/fr.json";
 export const isPlaywrightTest =
   navigator.userAgent.includes("Playwright") || navigator.webdriver;
 
 const getMatchingLanguage = (lang: string): Language | undefined => {
   return LANGUAGES.find((l) => l.key === lang)?.key;
 };
+
+let cachedLang: Language | undefined;
 export const getLanguage = (): Language => {
+  if (cachedLang) {
+    return cachedLang;
+  }
   const storedLang = localStorage.getItem("lang");
   const result =
     getMatchingLanguage(storedLang ?? "") ||
@@ -23,6 +29,7 @@ export const getLanguage = (): Language => {
     "en";
 
   document.documentElement.lang = result;
+  cachedLang = result;
   return result;
 };
 
@@ -35,15 +42,12 @@ type TranslationsType<T> = {
 type TranslationFile = TranslationsType<typeof translations>;
 
 const translationFiles: Record<LanguageWithoutEn, TranslationFile> = {
-  //@ts-ignore
   es,
-  //@ts-ignore
   de,
   zh,
-  //@ts-ignore
   ru,
-  //@ts-ignore
   hi,
+  fr,
 };
 
 type LanguageWithoutEn = Exclude<Language, "en">;

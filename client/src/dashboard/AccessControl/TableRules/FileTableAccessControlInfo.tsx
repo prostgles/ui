@@ -3,8 +3,8 @@ import React, { useMemo } from "react";
 import type {
   FieldFilter,
   TableRules,
-} from "../../../../../commonTypes/publishUtils";
-import { parseFieldFilter } from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
+import { parseFieldFilter } from "../../../../../common/publishUtils";
 import { FlexCol } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import { isDefined } from "../../../utils";

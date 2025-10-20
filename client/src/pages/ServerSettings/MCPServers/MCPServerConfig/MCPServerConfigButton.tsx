@@ -1,5 +1,5 @@
 import React from "react";
-import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../../common/publishUtils";
 import Btn from "../../../../components/Btn";
 import { FlexRow } from "../../../../components/Flex";
 import {

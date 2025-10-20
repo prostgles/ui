@@ -4,8 +4,8 @@ import type {
   ContextDataObject,
   TableRules,
   UpdateRule,
-} from "../../../../../commonTypes/publishUtils";
-import { validateDynamicFields } from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
+import { validateDynamicFields } from "../../../../../common/publishUtils";
 import Btn from "../../../components/Btn";
 import ErrorComponent from "../../../components/ErrorComponent";
 import { Label } from "../../../components/Label";

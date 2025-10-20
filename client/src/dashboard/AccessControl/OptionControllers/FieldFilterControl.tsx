@@ -3,7 +3,7 @@ import type { ValidatedColumnInfo } from "prostgles-types";
 import { isObject, getKeys } from "prostgles-types";
 import Select from "../../../components/Select/Select";
 import ErrorComponent from "../../../components/ErrorComponent";
-import type { FieldFilter } from "../../../../../commonTypes/publishUtils";
+import type { FieldFilter } from "../../../../../common/publishUtils";
 import { mdiFilter } from "@mdi/js";
 import { Label } from "../../../components/Label";
 import { FlexCol, FlexRow } from "../../../components/Flex";

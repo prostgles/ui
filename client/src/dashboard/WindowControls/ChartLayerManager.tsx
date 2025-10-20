@@ -28,6 +28,10 @@ import { MapOpacityMenu } from "../W_Map/MapOpacityMenu";
 import { MapBasemapOptions } from "../W_Map/MapBasemapOptions";
 import { OSMLayerOptions } from "./OSMLayerOptions";
 import { isDefined } from "../../utils";
+import { SQLSmartEditor } from "../SQLEditor/SQLSmartEditor";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
+import { LANG } from "../SQLEditor/W_SQLEditor";
+import { SQLChartLayerEditor } from "./SQLChartLayerEditor";
 
 export type MapLayerManagerProps = (
   | ({
@@ -45,7 +49,7 @@ export type MapLayerManagerProps = (
 export const ChartLayerManager = (props: MapLayerManagerProps) => {
   const {
     myLinks,
-    prgl: { dbs },
+    prgl: { dbs, db },
     type,
     asMenuBtn,
     tables,
@@ -130,7 +134,7 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
                         "Local table"
                       : `${lTypeInfo.path?.length ? "Linked table" : "Table"}: ${[{ table: lTypeInfo.lq.tableName }, ...(lTypeInfo.path ?? [])].map((p) => p.table).join(" -> ")} (${column})`
 
-                    : "SQL Script"
+                    : <SQLChartLayerEditor link={thisLink} />
                   }
                   className={"ws-nowrap f-1 min-w-0"}
                   title={

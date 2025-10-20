@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FlexRow } from "../../../components/Flex";
 import type { W_SQLBottomBarProps } from "./W_SQLBottomBar";
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import Chip from "../../../components/Chip";
 import type { FilterItem } from "prostgles-types";
 

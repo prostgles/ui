@@ -116,7 +116,7 @@ export const getPSQLQueries = (con: DBSConnectionInfo) => {
   });
 
   fs.writeFileSync(
-    __dirname + `/../../../../commonTypes/psql_queries.json`,
+    __dirname + `/../../../../common/psql_queries.json`,
     JSON.stringify(queries, null, 2),
     { encoding: "utf-8" },
   );

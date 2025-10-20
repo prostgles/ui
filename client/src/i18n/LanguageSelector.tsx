@@ -1,8 +1,8 @@
+import { mdiEarth, mdiTranslate } from "@mdi/js";
 import React from "react";
 import Select from "../components/Select/Select";
-import { mdiEarth } from "@mdi/js";
-import { type Language, LANGUAGES } from "./translations/translations";
 import { getLanguage, t } from "./i18nUtils";
+import { type Language, LANGUAGES } from "./translations/translations";
 
 export const LanguageSelector = ({ isElectron }: { isElectron: boolean }) => {
   const lang = getLanguage();
@@ -18,7 +18,7 @@ export const LanguageSelector = ({ isElectron }: { isElectron: boolean }) => {
       data-command="App.LanguageSelector"
       fullOptions={LANGUAGES}
       value={lang}
-      iconPath={mdiEarth}
+      iconPath={mdiTranslate}
       onChange={(lang) => {
         setLanguage(lang);
         window.location.reload();

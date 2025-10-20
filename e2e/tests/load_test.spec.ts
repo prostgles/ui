@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import { PageWIds, login } from "./utils";
+import { PageWIds, login } from "./utils/utils";
 test.use({
   viewport: { width: 1280, height: 1080 },
   video: {

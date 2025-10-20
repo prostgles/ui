@@ -1,29 +1,22 @@
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { saveSVGs } from "./screenshotUtils/utils/saveSVGs";
 import {
-  DOCS_DIR,
-  saveSVGScreenshots,
-  svgScreenshotsCompleteReferenced,
-} from "./docScreenshotUtils";
-import {
-  COMMAND_SEARCH_ATTRIBUTE_NAME,
-  getDataKeyElemSelector,
-} from "./Testing";
-import {
-  goTo,
   login,
   MINUTE,
-  monacoType,
   openConnection,
   PageWIds,
+  restoreFromBackup,
   runDbsSql,
-  USERS,
-} from "./utils";
+} from "./utils/utils";
+import { DOCS_DIR } from "screenshotUtils/utils/constants";
+import { svgScreenshotsCompleteReferenced } from "screenshotUtils/utils/svgScreenshotsCompleteReferenced";
+import { USERS } from "utils/constants";
 
 test.use({
   viewport: {
-    width: 800,
+    width: 900,
     height: 600,
   },
   trace: "retain-on-failure",
@@ -37,102 +30,20 @@ const IS_PIPELINE = process.env.CI === "true";
 test.describe("Create docs and screenshots", () => {
   test.describe.configure({
     retries: 0,
-    mode: "parallel",
-    timeout: 35 * MINUTE,
+    mode: "serial",
+    timeout: 14 * MINUTE,
   });
 
-  let flatDocs: any[];
-  test.beforeEach(async ({ page: p }) => {
+  test(`Restore databases`, async ({ page: p }) => {
     const page = p as PageWIds;
-    page.on("console", console.log);
-    page.on("pageerror", console.error);
 
-    if (!flatDocs) {
-      if (IS_PIPELINE) {
-        // Takes too long. Run locally only
-        return;
-      }
-      await goTo(page, "/");
-      await page.waitForTimeout(500);
-      flatDocs = await page.evaluate(() => {
-        //@ts-ignore
-        return window.flatDocs;
-      });
-      if (!flatDocs || !flatDocs.length) {
-        throw new Error("No docs found in the command search");
-      }
-    }
-
-    await page.waitForTimeout(100);
+    await login(page, USERS.test_user, "/login");
+    // await saveSVGifs(page); throw "hehe"; // For debugging
+    await openConnection(page, "prostgles_video_demo");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.bkp").click();
+    await restoreFromBackup(page, "Demo");
   });
-
-  const workers = 2;
-  for (let i = 0; i < workers; i++) {
-    test(`Test command search worker: ${i}`, async ({ page: p }) => {
-      const page = p as PageWIds;
-      if (IS_PIPELINE) {
-        // Takes too long. Run locally only
-        return;
-      }
-      await login(page, USERS.test_user, "/login");
-
-      const workerFlatDocsBatchSize = Math.ceil(flatDocs.length / workers);
-      const startIndex = i * workerFlatDocsBatchSize;
-      const workerFlatDocs = flatDocs.slice(
-        startIndex,
-        startIndex + workerFlatDocsBatchSize,
-      ) as {
-        title: string;
-        parentTitles: string[];
-      }[];
-      console.log(
-        `Worker ${i} has ${workerFlatDocs.length} docs to test`,
-        flatDocs.length,
-      );
-      await page.waitForTimeout(500);
-
-      if (!workerFlatDocs.length) {
-        throw new Error("No docs found in the command search");
-      }
-
-      const batchSize = 50;
-      do {
-        const batchItems = workerFlatDocs.splice(0, batchSize);
-        await page.reload();
-        await page.waitForTimeout(1500);
-        console.log(`Remaining docs: ${workerFlatDocs.length}`);
-        for (const [indx, doc] of batchItems.entries()) {
-          if (doc.title === "Logout") {
-            continue; // Skip logout as it will close the session
-          }
-
-          console.log(doc.parentTitles.join(" > ") + " -", doc.title);
-          await page.keyboard.press("Control+KeyK", { delay: 100 });
-          await page
-            .getByTestId("CommandSearch")
-            .locator("input")
-            .fill(doc.title);
-          await page.waitForTimeout(200);
-          await page.keyboard.press("Enter");
-          await page.waitForTimeout(200);
-
-          await expect(page.locator("body")).toHaveAttribute(
-            COMMAND_SEARCH_ATTRIBUTE_NAME,
-            doc.title,
-            { timeout: 15_000 },
-          );
-          await page.evaluate((COMMAND_SEARCH_ATTRIBUTE_NAME) => {
-            document.body.removeAttribute(COMMAND_SEARCH_ATTRIBUTE_NAME);
-          }, COMMAND_SEARCH_ATTRIBUTE_NAME);
-
-          /** Close any popups */
-          await page.keyboard.press("Escape", { delay: 100 });
-          await page.keyboard.press("Escape", { delay: 100 });
-          await page.waitForTimeout(100);
-        }
-      } while (workerFlatDocs.length > 0);
-    });
-  }
 
   test("Create docs", async ({ page: p }) => {
     const page = p as PageWIds;
@@ -142,7 +53,7 @@ test.describe("Create docs and screenshots", () => {
     if (!IS_PIPELINE) {
       /** Delete existing markdown docs */
       if (fs.existsSync(DOCS_DIR)) {
-        fs.rmSync(DOCS_DIR, { recursive: true, force: true });
+        fs.rmSync(DOCS_DIR, { force: true, recursive: true });
       }
       fs.mkdirSync(DOCS_DIR, { recursive: true });
     }
@@ -163,7 +74,7 @@ test.describe("Create docs and screenshots", () => {
         if (existingFile !== preparedFileContent) {
           console.error(existingFile, preparedFileContent);
           throw new Error(
-            `File ${file.fileName} has changed. Please update the docs.`,
+            `File ${file.fileName} has changed. Please update the docs. Existing ${existingFile} Expected ${preparedFileContent}`,
           );
         }
       } else {
@@ -174,7 +85,7 @@ test.describe("Create docs and screenshots", () => {
 
     /** Ensure all scripts exist in the readme to ensure we don't show non-tested scripts */
     const uiInstallationFile = fs.readFileSync(
-      path.join(DOCS_DIR, "02_installation.md"),
+      path.join(DOCS_DIR, "02_Installation.md"),
       "utf-8",
     );
     const mainReadmeFile = fs.readFileSync(
@@ -210,103 +121,15 @@ test.describe("Create docs and screenshots", () => {
     const page = p as PageWIds;
 
     await login(page, USERS.test_user, "/login");
-    const open = openConnection.bind(null, page);
-    await page.waitForTimeout(1100);
     if (!IS_PIPELINE) {
-      await prepare(page);
-      const openMenuIfClosed = async () => {
-        await page.waitForTimeout(1500);
-        const menuBtn = await page.getByTestId("dashboard.menu");
-        if (await menuBtn.count()) {
-          menuBtn.click();
-        }
-      };
-      await saveSVGScreenshots(page, async (fileName) => {
-        if (fileName === "schema_diagram") {
-          await open("prostgles_video_demo");
-          await openMenuIfClosed();
-          await page.getByTestId("SchemaGraph").click();
-        } else if (fileName === "sql_editor") {
-          await open("prostgles_video_demo");
-          await page.waitForTimeout(1500);
-          if (!(await page.getByTestId("MonacoEditor").count())) {
-            await openMenuIfClosed();
-            await page.getByTestId("dashboard.menu.sqlEditor").click();
-          }
-          const togglePinned = await page.getByTestId(
-            "DashboardMenuHeader.togglePinned",
-          );
-          if (await togglePinned.count()) {
-            await togglePinned.click();
-          }
+      await page.waitForTimeout(1100);
 
-          const query = `SELECT * FROM chat_m`;
-          await monacoType(page, `.ProstglesSQL`, query, { deleteAll: true });
-          await page.waitForTimeout(500);
-          await page.reload();
-          await page.waitForTimeout(1500);
-          await monacoType(page, `.ProstglesSQL`, `t`, { deleteAll: false });
-          await page.keyboard.press("Backspace");
-          await page.keyboard.press("Control+Space");
-          await page.waitForTimeout(500);
-        } else if (fileName === "map") {
-          await open("food_delivery");
-        } else if (fileName === "connections") {
-          await goTo(page, "/connections");
-        } else if (fileName === "backup_and_restore") {
-          await open("prostgles_video_demo");
-          await page.getByTestId("dashboard.goToConnConfig").click();
-          await page.getByTestId("config.bkp").click();
-          // await page.getByTestId("config.bkp.create").click();
-          // await page.getByTestId("config.bkp.create.start").click();
-        } else if (fileName === "dashboard" || fileName === "timechart") {
-          await open("crypto");
-          const btn = await page.getByTestId("dashboard.window.detachChart");
-          if (fileName === "timechart" && (await btn.count())) {
-            await btn.click();
-          }
-        } else if (fileName === "new_connection") {
-          await goTo(page, "/connections");
-          await page.getByTestId("Connections.new").click();
-        } else if (fileName === "ai_assistant") {
-          await open("prostgles_video_demo");
-          await page.getByTestId("AskLLM").click();
-        } else if (fileName === "file_storage") {
-          await open("prostgles_video_demo");
-          await page.getByTestId("dashboard.goToConnConfig").click();
-          await page.getByTestId("config.files").click();
-        } else if (fileName === "file_importer") {
-          await open("prostgles_video_demo");
-          await page.getByTestId("dashboard.menu").click();
-          await page.getByTestId("dashboard.menu.create").click();
-          await page
-            .getByTestId("dashboard.menu.create")
-            .locator(getDataKeyElemSelector("new table"))
-            .click();
-        } else if (fileName === "access_control") {
-          await open("prostgles_video_demo");
-          await page.getByTestId("dashboard.goToConnConfig").click();
-          await page.getByTestId("config.ac").click();
-        } else if (fileName === "server_settings") {
-          await goTo(page, "/server-settings");
-        } else if (fileName === "connect_existing_database") {
-          await goTo(page, "/connections");
-          await page.getByTestId("ConnectionServer.add").click();
-          await page.locator(getDataKeyElemSelector("existing")).click();
-        } else if (fileName === "connection_config") {
-          await open("prostgles_video_demo");
-          await page.getByTestId("dashboard.goToConnConfig").click();
-        } else if (fileName === "command_search") {
-          await page.keyboard.press("Control+KeyK");
-          await page
-            .getByTestId("Popup.content")
-            .locator("input")
-            .fill("access con");
-          await page.waitForTimeout(500);
-        }
-      });
+      await prepare(page);
+      const { svgifSpecs } = await saveSVGs(page);
+      await svgScreenshotsCompleteReferenced(
+        svgifSpecs.flatMap((s) => s.scenes),
+      );
     }
-    await svgScreenshotsCompleteReferenced();
   });
 });
 
@@ -316,15 +139,9 @@ const getDocWithDarkModeImgTags = (fileContent: string) => {
   if (imgTags.length > 1) {
     imgTags.slice(1).forEach((imgTag, index) => {
       const tagText = "<img" + imgTag.split("/>")[0] + "/>";
-      const src = imgTag.split('src="')[1]?.split('"')[0];
       fileContent = fileContent.replaceAll(
         tagText,
-        [
-          `<picture>`,
-          `<source srcset="${src.replace("screenshots/", "screenshots/dark/")}" media="(prefers-color-scheme: dark)">`,
-          tagText.replace("/>", `style="border: 1px solid; margin: 1em 0;" />`),
-          `</picture>`,
-        ].join("\n"),
+        tagText.replace("/>", `style="border: 1px solid; margin: 1em 0;" />`),
       );
     });
   }

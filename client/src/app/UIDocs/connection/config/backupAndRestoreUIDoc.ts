@@ -1,3 +1,4 @@
+import { mdiDatabaseSync } from "@mdi/js";
 import type { UIDoc } from "../../../UIDocs";
 
 export const backupAndRestoreUIDoc = {
@@ -5,7 +6,8 @@ export const backupAndRestoreUIDoc = {
   selectorCommand: "config.bkp",
   title: "Backup and Restore",
   description: "Manage database backups and restore operations.",
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
+  iconPath: mdiDatabaseSync,
   docs: `
     Manage database backups and restore operations for this PostgreSQL connection. 
     Create reliable backups using PostgreSQL's native tools and restore 
@@ -14,7 +16,7 @@ export const backupAndRestoreUIDoc = {
     Backups can be saved to a local file system or to cloud storage to AWS S3.
     Similarly, you can restore backups from local files or from AWS S3.
 
-    <img src="/screenshots/backup_and_restore.svg" alt="Backup and Restore" />
+    <img src="./screenshots/backup_and_restore.svg" alt="Backup and Restore" />
   `,
   children: [
     {

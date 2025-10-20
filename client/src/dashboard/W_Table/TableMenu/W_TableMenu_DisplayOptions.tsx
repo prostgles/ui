@@ -22,6 +22,32 @@ export const W_TableMenu_DisplayOptions = ({
 
   return (
     <div className="flex-col gap-1 ai-start mb-1 f-1 o-auto p-p25 ">
+      <FormField
+        className=" w-fit f-0"
+        label="Display mode"
+        data-command="table.options.displayMode"
+        value={w.options.viewAs?.type ?? "table"}
+        fullOptions={(["table", "card", "json"] as const).map((key) => ({
+          key,
+        }))}
+        onChange={(viewAsType) => {
+          w.$update(
+            {
+              options: {
+                viewAs:
+                  viewAsType === "card" ?
+                    {
+                      type: "card",
+                      maxCardWidth: window.isLowWidthScreen ? "100%" : "700px",
+                      hideEmptyCardCells: true,
+                    }
+                  : { type: viewAsType },
+              },
+            },
+            { deepMerge: true },
+          );
+        }}
+      />
       <IconPalette
         label={{
           label: "Icon",
@@ -58,33 +84,6 @@ export const W_TableMenu_DisplayOptions = ({
         value={w.options.hideCount ?? workspace.options.hideCounts ?? false}
         onChange={(hideCount) => {
           w.$update({ options: { hideCount } }, { deepMerge: true });
-        }}
-      />
-
-      <FormField
-        className=" w-fit f-0"
-        label="Display mode"
-        data-command="table.options.displayMode"
-        value={w.options.viewAs?.type ?? "table"}
-        fullOptions={(["table", "card", "json"] as const).map((key) => ({
-          key,
-        }))}
-        onChange={(viewAsType) => {
-          w.$update(
-            {
-              options: {
-                viewAs:
-                  viewAsType === "card" ?
-                    {
-                      type: "card",
-                      maxCardWidth: window.isLowWidthScreen ? "100%" : "700px",
-                      hideEmptyCardCells: true,
-                    }
-                  : { type: viewAsType },
-              },
-            },
-            { deepMerge: true },
-          );
         }}
       />
 

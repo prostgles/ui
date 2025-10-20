@@ -1,26 +1,20 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import Btn from "../../components/Btn";
 import {
   mdiClose,
-  mdiFilter,
   mdiFilterCogOutline,
+  mdiFilterPlus,
   mdiGestureTap,
 } from "@mdi/js";
-import type { TimeChart } from "../Charts/TimeChart";
-import type { PopupProps } from "../../components/Popup/Popup";
-import Popup from "../../components/Popup/Popup";
+import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import Btn from "../../components/Btn";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
-import type { ActiveRow } from "../W_Table/W_Table";
+import type { PopupProps } from "../../components/Popup/Popup";
+import Popup from "../../components/Popup/Popup";
+import type { TimeChart } from "../Charts/TimeChart";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+import type { ActiveRow } from "../W_Table/W_Table";
 const filterColor = "rgba(5, 176, 223, 0.1)";
 const filterColorOpaque = "rgb(226 248 255)";
 type DateFilter = { min: Date; max: Date };
@@ -137,7 +131,7 @@ export const AddTimeChartFilter = ({
       title={filter ? "Edit filter" : "Add filter"}
       data-command="W_TimeChart.AddTimeChartFilter"
       color={newFilter || filter ? "action" : undefined}
-      iconPath={filter ? mdiFilterCogOutline : mdiFilter}
+      iconPath={filter ? mdiFilterCogOutline : mdiFilterPlus}
       onClick={({ currentTarget }) => {
         if (filter) {
           setNewFilter({

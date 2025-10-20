@@ -1,7 +1,7 @@
 import path from "path";
 import * as fs from "fs";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
-import { RELOAD_NOTIFICATION } from "../../../commonTypes/utils";
+import { RELOAD_NOTIFICATION } from "../../../common/utils";
 
 let showedMessage = false;
 export const startDevHotReloadNotifier = ({

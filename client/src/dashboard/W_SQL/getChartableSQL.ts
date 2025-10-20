@@ -1,4 +1,4 @@
-import type { SQLHandler } from "prostgles-types";
+import type { PG_COLUMN_UDT_DATA_TYPE, SQLHandler } from "prostgles-types";
 import type { CodeBlock } from "../SQLEditor/SQLCompletion/completionUtils/getCodeBlock";
 import {
   isDateCol,
@@ -7,6 +7,7 @@ import {
   type ColInfo,
 } from "../W_Table/TableMenu/getChartCols";
 import { getTableExpressionReturnType } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 
 export type ChartableSQL = {
   /**
@@ -32,6 +33,7 @@ export const getChartableSQL = async (
     blockStartOffset,
   }: Pick<CodeBlock, "text" | "tokens" | "blockStartOffset" | "ftoken">,
   sqlHandler: SQLHandler,
+  tables: DBSchemaTableWJoins[],
 ): Promise<ChartableSQL> => {
   const emptyResult = {
     text,
@@ -46,6 +48,7 @@ export const getChartableSQL = async (
   const { dateCols, geoCols, columns } = await getChartColsFromSql(
     sql,
     sqlHandler,
+    tables,
   );
   if (ftoken?.textLC === "select") {
     return { text, withStatement: "", sql, dateCols, geoCols, columns };
@@ -82,6 +85,7 @@ export const getChartableSQL = async (
     ) prostgles_chartable_sql
   `,
     sqlHandler,
+    tables,
   );
 
   if (
@@ -114,16 +118,28 @@ const cleanSql = (text: string) => {
   return sql;
 };
 
-const getChartColsFromSql = async (sql: string, sqlHandler: SQLHandler) => {
+const getChartColsFromSql = async (
+  sql: string,
+  sqlHandler: SQLHandler,
+  tables: DBSchemaTableWJoins[],
+) => {
   const trimmedSql = sql.trim();
   const { colTypes = [] } = await getTableExpressionReturnType(
     trimmedSql,
     sqlHandler,
+    true,
   );
   const _allCols: ColInfo[] = colTypes.map((c) => ({
     ...c,
     name: c.column_name,
-    udt_name: c.udt_name as any,
+    is_pkey:
+      Boolean(c.table_oid) &&
+      tables.some(
+        ({ info: { oid }, columns }) =>
+          oid === c.table_oid &&
+          columns.some((col) => col.is_pkey && col.name === c.column_name),
+      ),
+    udt_name: c.udt_name as PG_COLUMN_UDT_DATA_TYPE,
   }));
   const allCols: ChartColumn[] = _allCols.map((c) => ({
     ...c,

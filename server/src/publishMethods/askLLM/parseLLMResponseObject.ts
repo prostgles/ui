@@ -1,12 +1,17 @@
-import { type AnyObject, isDefined, omitKeys } from "prostgles-types";
+import {
+  type AnyObject,
+  getSerialisableError,
+  isDefined,
+  omitKeys,
+} from "prostgles-types";
+import type { DBSSchema } from "../../../../common/publishUtils";
 import type { LLMMessageWithRole } from "./fetchLLMResponse";
+import { getLLMUsageCost } from "./getLLMUsageCost";
 import type {
   AnthropicChatCompletionResponse,
   GoogleGeminiChatCompletionResponse,
   OpenAIChatCompletionResponse,
 } from "./LLMResponseTypes";
-import { getLLMUsageCost } from "./getLLMUsageCost";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 export type LLMResponseParser<T = AnyObject> = (args: {
   provider: string;
@@ -51,7 +56,10 @@ export const parseLLMResponseObject: LLMResponseParser = ({
     });
     return {
       content,
-      meta,
+      meta: {
+        ...meta,
+        finishReason: candidates[0]?.finishReason,
+      },
       cost: getLLMUsageCost(model, { type: "Gemini", meta }),
     };
   }
@@ -105,7 +113,8 @@ export const parseLLMResponseObject: LLMResponseParser = ({
                 } satisfies LLMMessageWithRole["content"][number];
               } catch (_e) {
                 const error = new Error(
-                  `Could not parse tool arguments as JSON: ${toolCall.function.arguments}`,
+                  `Could not parse tool arguments as JSON: ${toolCall.function.arguments}. ` +
+                    JSON.stringify(getSerialisableError(_e)),
                 );
                 error.name = "ToolArgumentsParsingError";
                 throw error;
@@ -126,7 +135,10 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       .filter(isDefined);
     return {
       content,
-      meta,
+      meta: {
+        ...meta,
+        finish_reason: choices[0]?.finish_reason,
+      },
       cost: getLLMUsageCost(model, { type: "OpenAI", meta }),
     };
   } else {

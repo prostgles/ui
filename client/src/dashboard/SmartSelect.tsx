@@ -9,7 +9,7 @@ import { FlexCol, FlexRowWrap } from "../components/Flex";
 import { Icon } from "../components/Icon/Icon";
 import type { LabelProps } from "../components/Label";
 import { Label } from "../components/Label";
-import Loading from "../components/Loading";
+import Loading from "../components/Loader/Loading";
 import PopupMenu from "../components/PopupMenu";
 import {
   SearchList,

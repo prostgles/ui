@@ -3,7 +3,7 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { getKeys } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { API_ENDPOINTS } from "../../../../commonTypes/utils";
+import { API_ENDPOINTS } from "../../../../common/utils";
 import type { ExtraProps } from "../../App";
 import { FlexRow } from "../../components/Flex";
 import { InfoRow } from "../../components/InfoRow";
@@ -19,7 +19,7 @@ import { Setup2FA } from "./Setup2FA";
 type AccountProps = ExtraProps;
 
 export const Account = (props: AccountProps) => {
-  const { dbs, dbsTables, dbsMethods, user, auth } = props;
+  const { dbs, dbsTables, dbsMethods, user } = props;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: dbsConnection } = dbs.connections.useFindOne({
@@ -141,9 +141,7 @@ export const Account = (props: AccountProps) => {
                 {item.label}
               </h2>
               <div
-                className={
-                  " f-1 o-auto flex-row " + (window.isLowWidthScreen ? "" : " ")
-                }
+                className={" f-1 o-auto flex-row "}
                 style={{ alignSelf: "stretch" }}
               >
                 {item.content}

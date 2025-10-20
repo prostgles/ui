@@ -3,15 +3,19 @@ import React, { useEffect, useRef, useState } from "react";
 import Btn from "../components/Btn";
 import { FlexCol, FlexRow } from "../components/Flex";
 import { isEmpty } from "../utils";
+import { useLocation } from "react-router-dom";
+import Loading from "@components/Loader/Loading";
 
 const buttonHeights: Record<string, number> = {};
 const buttonLoadingHeights: Record<string, number> = {};
 
 export const ComponentList = () => {
+  const { hash } = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [checkMessage, setCheckMessage] = useState(
     "Checking button heights...",
   );
+  const isLoaderTest = hash === "#loader-test";
 
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -34,6 +38,7 @@ export const ComponentList = () => {
         if (!isLoading && isEmpty(buttonLoadingHeights)) {
           setIsLoading(true);
         } else if (isLoading) {
+          if (isLoaderTest) return;
           let allHeightsMatch = true as boolean;
           // If we are loading, we want to ensure the heights are set for loading state
           Object.keys(buttonHeights).forEach((size) => {
@@ -50,7 +55,11 @@ export const ComponentList = () => {
         }
       }
     }, 1000);
-  }, [isLoading]);
+  }, [isLoading, isLoaderTest]);
+
+  if (hash === "#loader") {
+    return <Loading />;
+  }
 
   return (
     <FlexCol ref={ref} className="ComponentList f-1 min-w-0 p-2 o-auto">
@@ -87,6 +96,13 @@ export const ComponentList = () => {
           ))}
         </FlexCol>
       ))}
+      {Array(isLoaderTest ? 5000 : 0)
+        .fill(0)
+        .map((_, i) => (
+          <div key={i} style={{ top: 0, left: 0, position: "absolute" }}>
+            Increasing node count
+          </div>
+        ))}
     </FlexCol>
   );
 };

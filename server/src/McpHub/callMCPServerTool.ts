@@ -1,9 +1,14 @@
-import { getJSONBObjectSchemaValidationError } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
-import { getSerialisableError, tryCatchV2 } from "prostgles-types";
+import {
+  getJSONBObjectSchemaValidationError,
+  getSerialisableError,
+  tryCatchV2,
+} from "prostgles-types";
 import type { DBS } from "..";
-import type { McpToolCallResponse } from "../../../commonTypes/mcp";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import type { McpToolCallResponse } from "../../../common/mcp";
+import type { DBSSchema } from "../../../common/publishUtils";
 import { startMcpHub } from "./McpHub";
+import { ProstglesLocalMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
+import { getDockerMCP } from "../DockerManager/getDockerMCP";
 
 export const callMCPServerTool = async (
   user: Pick<DBSSchema["users"], "id">,
@@ -46,6 +51,25 @@ export const callMCPServerTool = async (
     if (!chatAllowedMCPTool) {
       throw new Error("Tool invalid or not allowed for this chat");
     }
+
+    if (ProstglesLocalMCPServers.includes(serverName)) {
+      if (serverName === "docker-sandbox") {
+        const dockerMCP = await getDockerMCP(dbs, chat);
+        if (toolName === "create_container") {
+          const result = await dockerMCP.tools.createContainer(toolArguments, {
+            chatId: chat.id,
+            userId: user.id,
+          });
+          return result;
+        }
+        throw new Error(
+          `MCP server ${serverName}.${toolName} not implemented for tool ${toolName}`,
+        );
+      }
+      throw new Error(
+        `MCP server ${serverName} ProstglesLocalMCPServers not implemented`,
+      );
+    }
     // if (
     //   chatAllowedMCPTool.allowed_inputs?.length &&
     //   !chatAllowedMCPTool.allowed_inputs.some((allowedArgs) =>
@@ -60,7 +84,7 @@ export const callMCPServerTool = async (
   });
 
   await dbs.mcp_server_tool_calls.insert({
-    duration: { milliseconds: result.duration },
+    duration: `${result.duration}ms` as {},
     called: start,
     mcp_server_name: serverName,
     mcp_tool_name: toolName,

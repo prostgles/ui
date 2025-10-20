@@ -3,10 +3,9 @@ import type {
   AuthConfig,
   BasicSession,
 } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DB } from "prostgles-server/dist/initProstgles";
 import { omitKeys } from "prostgles-types";
 import type { DBS } from "..";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
 import { createPasswordlessAdminSessionIfNeeded } from "./createPasswordlessAdminSessionIfNeeded";
 import { createPublicUserSessionIfAllowed } from "./createPublicUserSessionIfAllowed";
 import { getActiveSession } from "./getActiveSession";

@@ -1106,16 +1106,19 @@ let loadedPSQLLanguage = false;
 export const loadPSQLLanguage = async (
   loadedSuggestions: LoadedSuggestions | undefined,
 ) => {
-  if (loadedPSQLLanguage) return false;
+  if (loadedPSQLLanguage) {
+    return false;
+  }
   loadedPSQLLanguage = true;
   const monaco = await getMonaco();
-
-  monaco.languages.getLanguages().forEach((lang) => {
+  const monacoLanguages = monaco.languages.getLanguages();
+  for await (const lang of monacoLanguages) {
     if (["sql"].includes(lang.id) && "loader" in lang) {
-      const oldLoader: () => Promise<{ language: languages.IMonarchLanguage }> =
-        lang.loader as any;
-      lang.loader = async () => {
-        const langModule = await oldLoader();
+      const oldLoader = lang.loader as () => Promise<{
+        language: languages.IMonarchLanguage;
+      }>;
+      const langModule = await oldLoader();
+      lang.loader = () => {
         langModule.language.operators = Array.from(
           new Set([...operators, ...langModule.language.operators]),
         );
@@ -1159,10 +1162,9 @@ export const loadPSQLLanguage = async (
           new RegExp("\\$\\$[^$]*\\$\\$"),
           "string",
         ]);
-        return langModule;
+        return Promise.resolve(langModule);
       };
     }
-  });
-  await tout(1000);
+  }
   return true;
 };

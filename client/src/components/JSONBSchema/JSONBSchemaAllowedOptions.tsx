@@ -70,8 +70,19 @@ const getFullOptions = (
   s: JSONB.JSONBSchema,
 ): { fullOptions: FullOption[]; isMulti: boolean } | undefined => {
   if (s.allowedValues) {
+    const firstValue = s.allowedValues[0];
+    const fullOptions =
+      isObject(firstValue) ?
+        (
+          s.allowedValues as { label: string; value: any; subLabel?: string }[]
+        ).map(({ value, label, subLabel }) => ({
+          key: value,
+          label,
+          subLabel,
+        }))
+      : s.allowedValues.map((key) => ({ key }));
     return {
-      fullOptions: s.allowedValues.map((key) => ({ key })),
+      fullOptions,
       isMulti: typeof s.type === "string" && s.type.endsWith("[]"),
     };
   } else if (s.oneOf?.every((ss) => isObject(ss) && ss.enum)) {

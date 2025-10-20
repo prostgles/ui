@@ -2,11 +2,11 @@ import { mdiMagnify } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import { isDefined, isEmpty } from "prostgles-types";
 import React, { useState } from "react";
-import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
+import type { DetailedFilterBase } from "../../../../common/filterUtils";
 import {
   GEO_FILTER_TYPES,
   getFinalFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import Btn from "../../components/Btn";
 import { ExpandSection } from "../../components/ExpandSection";
 import { FlexRow } from "../../components/Flex";

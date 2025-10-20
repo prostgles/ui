@@ -1,4 +1,4 @@
-import { fixIndent } from "../../demo/sqlVideoDemo";
+import { fixIndent } from "../../demo/scripts/sqlVideoDemo";
 
 export const SQL_SNIPPETS: { label: string; info: string; query: string }[] = [
   {

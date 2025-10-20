@@ -3,7 +3,7 @@ import type { ClientUser, ExtraProps } from "../../App";
 import Btn from "../../components/Btn";
 import FormField from "../../components/FormField/FormField";
 import PopupMenu from "../../components/PopupMenu";
-import { pageReload } from "../../components/Loading";
+import { pageReload } from "../../components/Loader/Loading";
 
 export const PasswordlessSetup = ({ dbsMethods }: ExtraProps) => {
   type NewUser = Partial<ClientUser & { passwordconfirm?: string }>;

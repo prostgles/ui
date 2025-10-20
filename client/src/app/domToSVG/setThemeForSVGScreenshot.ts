@@ -14,6 +14,7 @@ export const setThemeForSVGScreenshot = async (theme: undefined | "dark") => {
     const position = sqlEditor.sqlRef.editor.getPosition();
     if (suggestionsAreShown && position) {
       resetUICallbacks.push(async () => {
+        await tout(500);
         const editor =
           document.querySelector<HTMLDivElement>(`div.ProstglesSQL`);
         editor?.sqlRef?.editor.setPosition(position);
@@ -27,15 +28,9 @@ export const setThemeForSVGScreenshot = async (theme: undefined | "dark") => {
     }
   }
   localSettings.get().$set({ themeOverride: theme });
-  if (theme === "dark") {
-    localStorage.setItem("theme", theme);
-  } else {
-    localStorage.removeItem("theme");
-  }
-  window.dispatchEvent(new Event("storage"));
-  await tout(3000);
+  await tout(500);
   for (const cb of resetUICallbacks) {
     await cb();
   }
-  await tout(3000);
+  await tout(500);
 };

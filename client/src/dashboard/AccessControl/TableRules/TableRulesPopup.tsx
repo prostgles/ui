@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import type {
   TableRules,
   TableRulesErrors,
-} from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
 import ErrorComponent from "../../../components/ErrorComponent";
 import { MenuList } from "../../../components/MenuList";
 import Popup from "../../../components/Popup/Popup";
@@ -20,7 +20,7 @@ import type {
 import { TABLE_RULE_LABELS } from "./TablePermissionControls";
 import { Icon } from "../../../components/Icon/Icon";
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
-import { getEntries } from "../../../../../commonTypes/utils";
+import { getEntries } from "../../../../../common/utils";
 import { SyncRuleControl } from "../RuleTypeControls/SyncRuleControl";
 
 type TableRulesPopupProps = TablePermissionControlsProps & {

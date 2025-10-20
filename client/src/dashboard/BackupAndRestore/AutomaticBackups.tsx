@@ -27,8 +27,8 @@ const DAYS_OF_WEEK = [
   { key: 7, label: "Sunday" },
 ] as const;
 
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { PGDumpParams } from "../../../../commonTypes/utils";
+import type { DBSSchema } from "../../../../common/publishUtils";
+import type { PGDumpParams } from "../../../../common/utils";
 import FormField from "../../components/FormField/FormField";
 import { CredentialSelector } from "./CredentialSelector";
 import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";

@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../demo/sqlVideoDemo";
+import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocElement } from "../../UIDocs";
 
@@ -13,13 +13,13 @@ export const AIAssistantUIDoc = {
     It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.
     MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
 
-    <img src="/screenshots/ai_assistant.svg" alt="AI assistant popup screenshot" />
+    <img src="./screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" />
  
     Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
 
     *Note: AI providers are configured by administrators in Server Settings > LLM Providers*
   `),
-  asSeparateFile: true,
+  docOptions: "asSeparateFile",
   children: [
     {
       type: "section",

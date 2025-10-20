@@ -9,17 +9,18 @@ import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtil
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
 import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 import type { TestSelectors } from "../../Testing";
-import Btn, { FileBtn } from "../Btn";
+import Btn from "../Btn";
 import Checkbox from "../Checkbox";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { classOverride } from "../Flex";
 import { Label, type LabelPropsNormal } from "../Label";
 import List from "../List";
-import Popup from "../Popup/Popup";
+import Popup, { DATA_NULLABLE } from "../Popup/Popup";
 import type { FullOption } from "../Select/Select";
 import Select from "../Select/Select";
 import { FormFieldSkeleton } from "./FormFieldSkeleton";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
+import { scrollIntoViewIfNeeded } from "src/utils";
 
 export type FormFieldProps = TestSelectors & {
   onChange?: (val: string | number | any, e?: any) => void;
@@ -67,9 +68,12 @@ export type FormFieldProps = TestSelectors & {
   labelAsValue?: boolean;
   onSuggest?: (term?: string) => Promise<string[]>;
   name?: string;
-  inputProps?: React.DetailedHTMLProps<
-    React.InputHTMLAttributes<HTMLInputElement>,
-    HTMLInputElement
+  inputProps?: Omit<
+    React.DetailedHTMLProps<
+      React.InputHTMLAttributes<HTMLInputElement>,
+      HTMLInputElement
+    >,
+    "children" | "onChange" | "value" | "defaultValue"
   >;
   hideClearButton?: boolean;
   maxWidth?: React.CSSProperties["maxWidth"];
@@ -152,14 +156,10 @@ export default class FormField extends React.Component<
     const err = this.props.error,
       preverr = prevProps.error;
     if (this.rootDiv && (err || preverr) && err !== preverr) {
-      if ((this.rootDiv as any).scrollIntoViewIfNeeded) {
-        (this.rootDiv as any).scrollIntoViewIfNeeded({
-          block: "end",
-          behavior: "smooth",
-        });
-      } else {
-        this.rootDiv.scrollIntoView({ block: "end", behavior: "smooth" });
-      }
+      scrollIntoViewIfNeeded(this.rootDiv, {
+        block: "end",
+        behavior: "smooth",
+      });
     }
     this.setResizer();
     if (prevProps.value !== this.props.value) {
@@ -356,6 +356,9 @@ export default class FormField extends React.Component<
 
     inptClass += " " + inputClassName;
 
+    const onDragStop = (e: React.DragEvent<HTMLInputElement>) => {
+      e.currentTarget.classList.toggle("active-drop-target", false);
+    };
     const inputProps: React.DetailedHTMLProps<
       React.InputHTMLAttributes<HTMLInputElement>,
       HTMLInputElement
@@ -376,7 +379,8 @@ export default class FormField extends React.Component<
       className: inptClass,
       type,
       accept,
-      ...(type !== "file" ? valProp : undefined),
+      ...valProp,
+      // ...(type !== "file" ? valProp : undefined),
       autoComplete,
       onInput,
       placeholder,
@@ -412,25 +416,18 @@ export default class FormField extends React.Component<
             _inputProps.onFocus?.(e);
           }
         ),
-      ...(!type.startsWith("file") ?
-        {}
-      : {
-          onDragOver: (e) => {
-            e.currentTarget.classList.toggle("active-drop-target", true);
-          },
-          onDrop: (e) => {
-            e.currentTarget.classList.toggle("active-drop-target", false);
-          },
-          onDragEnd: (e) => {
-            e.currentTarget.classList.toggle("active-drop-target", false);
-          },
-          onDragExit: (e) => {
-            e.currentTarget.classList.toggle("active-drop-target", false);
-          },
-          onDragLeave: (e) => {
-            e.currentTarget.classList.toggle("active-drop-target", false);
-          },
-        }),
+      // ...(!type.startsWith("file") ?
+      //   {}
+      // :
+      ...{
+        onDragOver: (e) => {
+          e.currentTarget.classList.toggle("active-drop-target", true);
+        },
+        onDrop: onDragStop,
+        onDragEnd: onDragStop,
+        onDragExit: onDragStop,
+        onDragLeave: onDragStop,
+      },
     };
 
     const selectSuggestion = (key) => {
@@ -465,7 +462,7 @@ export default class FormField extends React.Component<
 
     const inputNode =
       inputContent ? inputContent
-      : type === "file" ? <FileBtn {...(inputProps as any)} />
+        // : type === "file" ? <InputFile {...(inputProps as any)} />
       : type === "checkbox" ? <Checkbox {...(inputProps as any)} />
       : readOnly ?
         <div
@@ -565,7 +562,7 @@ export default class FormField extends React.Component<
         leftIcon={leftIcon}
         data-command={isEditableSelect ? undefined : this.props["data-command"]}
         data-key={this.props["data-key"]}
-        className={className}
+        className={`${className} ${nullable ? DATA_NULLABLE : ""} `}
         disabledInfo={disabledInfo}
         style={style}
         onBlur={() => {
@@ -587,7 +584,7 @@ export default class FormField extends React.Component<
               title="Click to toggle full screen"
               className="show-on-trigger-hover"
               iconPath={mdiFullscreen}
-              size="small"
+              size="micro"
               style={{ padding: "0" }}
               onClick={() => {
                 this.setState({ fullScreen: !this.state.fullScreen });

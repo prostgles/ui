@@ -4,7 +4,7 @@ import "./NavBar.css";
 
 import { mdiArrowLeft, mdiClose, mdiMenu } from "@mdi/js";
 import { useNavigate } from "react-router-dom";
-import type { ProstglesState } from "../../../../commonTypes/electronInitTypes";
+import type { ProstglesState } from "../../../../common/electronInitTypes";
 import type { ClientUser, Prgl } from "../../App";
 import { AccountMenu } from "../../pages/AccountMenu";
 import ClickCatch from "../ClickCatch";
@@ -85,12 +85,7 @@ export const NavBar = (props: P) => {
             </NavLink>
           )}
 
-          <div
-            className={
-              "flex-col " +
-              (serverState?.isElectron ? "f-0 ml-auto jc-center" : "f-1")
-            }
-          >
+          <div className={"flex-col f-1"}>
             <div
               className="navwrapper flex-row gap-p5 ai-center"
               style={{ order: 2 }}

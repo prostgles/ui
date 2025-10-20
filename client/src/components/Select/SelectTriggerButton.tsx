@@ -67,6 +67,31 @@ export const SelectTriggerButton = <
   const showSelectedIcon =
     showIconOnly ? selectedFullOptions[0]?.iconPath : undefined;
 
+  const btnText = btnLabel ?? emptyLabel;
+  const btnChildren =
+    chipMode || showSelectedIcon ? null
+    : iconPath || btnProps?.children !== undefined ?
+      (btnProps?.children ?? null)
+    : <>
+        <div
+          className={
+            " text-ellipsis " +
+            (value !== undefined ? "text-color-0" : "text-1")
+          }
+          style={{ lineHeight: "18px" }}
+        >
+          {!labelAsValue ?
+            btnText
+          : <RenderValue
+              column={undefined}
+              value={btnText}
+              showTitle={!noOtherOption}
+              maxLength={150}
+            />
+          }
+        </div>
+      </>;
+
   const triggerButton = (
     <Btn
       title={title}
@@ -147,38 +172,14 @@ export const SelectTriggerButton = <
           }
         )
       }
-      children={
-        chipMode || showSelectedIcon ? null
-        : iconPath || btnProps?.children !== undefined ?
-          (btnProps?.children ?? null)
-        : <>
-            <div
-              className={
-                " text-ellipsis " +
-                (value !== undefined ? "text-color-0" : "text-1")
-              }
-              style={{ lineHeight: "18px" }}
-            >
-              {!labelAsValue ?
-                (btnLabel ?? emptyLabel)
-              : <RenderValue
-                  column={undefined}
-                  value={btnLabel}
-                  showTitle={!noOtherOption}
-                  maxLength={150}
-                />
-              }
-            </div>
-          </>
-
-      }
+      children={btnChildren}
     />
   );
 
   const trigger =
     !optional ? triggerButton : (
       <div
-        className={`${label ? "  " : className} flex-row gap-p5 ai-center ${selectClass} `}
+        className={`${label ? "  " : className} flex-row gap-0 ai-center ${selectClass} `}
       >
         {triggerButton}
         {![undefined, null].includes(value) && (

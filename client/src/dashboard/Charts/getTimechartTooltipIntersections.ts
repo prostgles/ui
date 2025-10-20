@@ -9,7 +9,7 @@ export const getTimechartTooltipIntersections = function (
   this: TimeChart,
   xCanvas: number,
 ): IntersectedLayers | undefined {
-  let snapped_x;
+  let snappedX: number | undefined;
 
   if (!this.chart) return undefined;
 
@@ -38,7 +38,7 @@ export const getTimechartTooltipIntersections = function (
 
         /* Snapped point to line joints */
         if (xDist <= SNAP_DISTANCE) {
-          snapped_x = x;
+          snappedX = x;
 
           layers.push({
             ...layer,
@@ -52,7 +52,7 @@ export const getTimechartTooltipIntersections = function (
           const xNextDist = Math.abs(xCanvas - xNS);
 
           if (xNextDist <= SNAP_DISTANCE) {
-            snapped_x = xNext;
+            snappedX = xNext;
             const layerSnapData = {
               ...layer,
               y: yNext,
@@ -82,5 +82,5 @@ export const getTimechartTooltipIntersections = function (
     });
   });
 
-  return { layers, snapped_x };
+  return { layers, snapped_x: snappedX };
 };

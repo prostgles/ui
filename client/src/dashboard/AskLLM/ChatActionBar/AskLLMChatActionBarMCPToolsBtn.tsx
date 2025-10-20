@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import { FlexRow } from "../../../components/Flex";

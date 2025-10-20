@@ -4,7 +4,7 @@ import { IsTable, type WindowSyncItem } from "../Dashboard/dashboardUtils";
 import type {
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../commonTypes/filterUtils";
+} from "../../../../common/filterUtils";
 import type { Operand } from "../SmartFilter/SmartFilter";
 
 export const useSmartFilterBarState = (props: SmartFilterBarProps) => {

@@ -1,6 +1,6 @@
 import { mdiArrowLeft } from "@mdi/js";
 import React from "react";
-import { isObject } from "../../../commonTypes/publishUtils";
+import { isObject } from "../../../common/publishUtils";
 import type { DeltaOf, DeltaOfData } from "../dashboard/RTComp";
 import RTComp from "../dashboard/RTComp";
 import Btn from "./Btn";

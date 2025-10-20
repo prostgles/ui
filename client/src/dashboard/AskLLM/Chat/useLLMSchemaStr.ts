@@ -1,6 +1,6 @@
 import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
 import { useMemo } from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
 import type { Prgl } from "../../../App";
 
 type P = Pick<Prgl, "connection" | "db" | "tables"> & {
@@ -52,12 +52,20 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
   }, [db, connection.db_schema_filter]);
 
   const dbSchemaForPrompt = useMemo(() => {
-    if (!tableConstraints || !cachedSchemaPermissions) return "";
+    if (
+      !tableConstraints ||
+      !cachedSchemaPermissions ||
+      cachedSchemaPermissions.type === "None"
+    )
+      return "";
     const allowedTables =
-      cachedSchemaPermissions.type === "Full" ? tables : tables;
-    // .filter((t) => {
-    //     return cachedSchemaPermissions.tables?.some((l) => l.hehe === t.name);
-    //   });
+      cachedSchemaPermissions.type === "Full" ?
+        tables
+      : tables.filter((t) => {
+          return cachedSchemaPermissions.tables.some(
+            (allowedTableName) => allowedTableName === t.name,
+          );
+        });
     const res = allowedTables
       .map((t) => {
         const constraints = tableConstraints.filter(
@@ -68,7 +76,13 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
           .sort((a, b) => a.ordinal_position - b.ordinal_position)
           .map((c) => {
             return [
-              `  ${JSON.stringify(c.name)} ${c.udt_name}`,
+              `  ${JSON.stringify(c.name)} ${c.udt_name}${
+                c.udt_name.startsWith("int") ? ""
+                : c.character_maximum_length ? `(${c.character_maximum_length})`
+                : c.numeric_precision ?
+                  `(${c.numeric_precision}${c.numeric_scale ? `, ${c.numeric_scale}` : ""})`
+                : ""
+              }`,
               !c.is_pkey && !c.is_nullable ? "NOT NULL" : "",
               !c.is_pkey && c.has_default ? `DEFAULT ${c.column_default}` : "",
             ]

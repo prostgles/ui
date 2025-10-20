@@ -1,19 +1,17 @@
-import { mdiAlert, mdiCheck, mdiUpload } from "@mdi/js";
+import { mdiAlert, mdiCheck } from "@mdi/js";
 import { omitKeys } from "prostgles-types";
-import React, { useState } from "react";
+import React from "react";
 import { NavLink } from "react-router-dom";
 import RTComp from "../dashboard/RTComp";
 import type { TestSelectors } from "../Testing";
 import { tout } from "../utils";
 import "./Btn.css";
-import Chip from "./Chip";
 import { parsedError } from "./ErrorComponent";
-import { generateUniqueID } from "./FileInput/FileInput";
 import { classOverride } from "./Flex";
 import type { IconProps } from "./Icon/Icon";
 import { Icon } from "./Icon/Icon";
 import { Label, type LabelProps } from "./Label";
-import Loading from "./Loading";
+import Loading from "./Loader/Loading";
 import Popup from "./Popup/Popup";
 
 type ClickMessage = (
@@ -46,7 +44,7 @@ type BtnCustomProps = (
    * If provided then the button is disabled and will display a tooltip with this message
    */
   disabledInfo?: string;
-  disabledVariant?: "no-fade";
+  disabledVariant?: "no-fade" | "ignore-loading";
   loading?: boolean;
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
@@ -285,7 +283,8 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     if (clickMessage?.replace) return clickMessage.msg;
 
-    const isDisabled = disabledInfo || loading;
+    const isDisabled =
+      disabledInfo || (loading && disabledVariant !== "ignore-loading");
     let _className = "";
     const { size = window.isLowWidthScreen ? "small" : "default" } = this.props;
 
@@ -339,9 +338,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     _className +=
       (fadeIn ? " fade-in " : "") +
       (iconPath && !children ? "  " : "rounded") + // round
-      (isDisabled ? ` disabled ${disabledVariant} ` : " ");
-
-    _className = classOverride(_className, className);
+      (isDisabled ? ` disabled ${disabledVariant ? "no-fade" : ""} ` : " ");
 
     const loadingSize = {
       large: 22,
@@ -360,7 +357,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       : loading ?
         <div
           className="min-w-0 ws-nowrap text-ellipsis f-0 o-hidden"
-          style={{ opacity: 0.5 }}
+          style={{ opacity: disabledVariant !== "ignore-loading" ? 0.5 : 1 }}
         >
           {children}
         </div>
@@ -446,11 +443,10 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       {
         ...omitKeys(this.props, CUSTOM_ATTRS as any),
         onClick:
-          disabledInfo ?
+          isDisabled ?
             !window.isMobileDevice ?
               undefined
             : () => alert(disabledInfo)
-          : loading ? undefined
           : onClick,
         title: disabledInfo || title,
         style: {
@@ -462,7 +458,10 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
           fontSize: FontSizeMap[size],
         },
         onMouseDown: (e) => e.preventDefault(),
-        className: `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
+        className: classOverride(
+          `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
+          className,
+        ),
         ref: this.props._ref as any,
         ...{ "data-id": otherProps["data-id"] },
       };
@@ -549,62 +548,3 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     );
   }
 }
-
-type FileBtnProps = {
-  iconPath?: string;
-  children: React.ReactChild;
-};
-
-export const FileBtn = React.forwardRef<
-  HTMLInputElement,
-  FileBtnProps & React.HTMLProps<HTMLInputElement>
->(
-  (
-    {
-      iconPath = mdiUpload,
-      onChange,
-      children = "Choose file",
-      id = generateUniqueID(),
-      style = {},
-      className = "",
-      ...inputProps
-    },
-    ref,
-  ) => {
-    const [files, setFiles] = useState<FileList | null>(null);
-
-    return (
-      <div className={"flex-row  gap-p25 ai-center " + className} style={style}>
-        <Btn
-          title="Choose file"
-          color="action"
-          data-command="FileBtn"
-          iconPath={iconPath}
-          style={{ borderRadius: 0 }}
-          onClick={(e) => {
-            e.currentTarget.querySelector("input")?.click();
-          }}
-        >
-          {children}
-          <input
-            id={id}
-            ref={ref}
-            type="file"
-            autoCapitalize="off"
-            style={{ width: 0, height: 0, position: "absolute" }}
-            {...inputProps}
-            onChange={(e) => {
-              setFiles(e.target.files);
-              onChange?.(e);
-            }}
-          />
-        </Btn>
-        <div className="flex-row-wrap gap-p5 text-1p5 px-1">
-          {!files?.length ?
-            "No file chosen"
-          : Array.from(files).map((f) => <Chip key={f.name}>{f.name}</Chip>)}
-        </div>
-      </div>
-    );
-  },
-);

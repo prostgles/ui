@@ -16,7 +16,7 @@ export const DumpRestoreAlerts = ({
       if (!versions) {
         return;
       }
-      const prglVersion = versions.psql.split(")")[1]?.split("(")[0]?.trim();
+      const prglVersion = versions.psql?.split(")")[1]?.split("(")[0]?.trim();
       if (!prglVersion) {
         return;
       }

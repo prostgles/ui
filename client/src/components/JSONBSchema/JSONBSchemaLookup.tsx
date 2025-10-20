@@ -8,7 +8,7 @@ import Select from "../Select/Select";
 import { isCompleteJSONB } from "./isCompleteJSONB";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { JSONBSchema } from "./JSONBSchema";
-import { getFinalFilter } from "../../../../commonTypes/filterUtils";
+import { getFinalFilter } from "../../../../common/filterUtils";
 
 type Schema = JSONB.Lookup;
 type P = JSONBSchemaCommonProps & {
@@ -66,7 +66,10 @@ export const JSONBSchemaLookup = ({
               subLabel: c.udt_name,
             }));
         })
-      : matchingTables.map((t) => ({ key: t.name }));
+      : matchingTables.map((t) => ({
+          key: t.name,
+          subLabel: t.columns.map((c) => c.name).join(", "),
+        }));
 
     const setLookupMerged = (l: Partial<typeof lookup>) => {
       const newLookup = { ...(isObject(rawValue) ? rawValue : {}), ...l };
@@ -79,13 +82,22 @@ export const JSONBSchemaLookup = ({
         [rawValue.table, rawValue.column].join(delimiter)
       : rawValue;
 
+    // TODO: this must be fixed through LookupTable, LookupTable[], LookupTableColumn etc
+    if (schema.type === "Lookup[]" && !lookup.isArray) {
+      return (
+        <ErrorComponent
+          error={"Schema type is Lookup[] but lookup.isArray is not true"}
+        />
+      );
+    }
+    const multiSelect = lookup.isArray;
     const selector = (
       <Select
         label={oProps.noLabels ? undefined : schema.title}
         value={selectedValue}
         optional={schema.optional}
         fullOptions={fullOptions}
-        multiSelect={lookup.isArray}
+        multiSelect={multiSelect}
         onChange={(opts) => {
           if (needsCol) {
             const [table, column] =

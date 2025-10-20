@@ -28,9 +28,8 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
   if (!xCursor || this.panning || (yCursor ?? 0) > yMax - 14) return undefined;
   else {
     let [x] = this.chart.getDataXY(xCursor, yCursor ?? 0);
-    const { layers: iLayers = [], snapped_x } =
-      this.getIntersections(xCursor) ?? {};
-    if (!iLayers.length || !this.data) {
+    const { layers = [], snapped_x } = this.getIntersections(xCursor) ?? {};
+    if (!layers.length || !this.data) {
       //  && !("layers" in delta)
       return undefined;
     }
@@ -115,7 +114,7 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
     let minLabelY: number | undefined;
     let maxLabelY: number | undefined;
     const labelTickCanvasX = xCursor + 14;
-    let textLabels = iLayers
+    let textLabels = layers
       .map((l) => {
         if (!this.data || l.snapped_data?.value === undefined) {
           return undefined;
@@ -222,7 +221,7 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
       });
     }
 
-    const pointCircles: Circle[] = iLayers.flatMap((l) => {
+    const pointCircles: Circle[] = layers.flatMap((l) => {
       const commonOpts: Pick<Circle, "id" | "type" | "coords" | "lineWidth"> = {
         id: `tooltip-${Date.now()}`,
         type: "circle",

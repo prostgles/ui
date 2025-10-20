@@ -1,4 +1,4 @@
-import PSQL_COMMANDS from "../../../../../commonTypes/psql_queries.json";
+import PSQL_COMMANDS from "../../../../../common/psql_queries.json";
 import {
   getMonaco,
   SUGGESTION_TYPE_DOCS,

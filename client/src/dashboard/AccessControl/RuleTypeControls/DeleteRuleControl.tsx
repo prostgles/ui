@@ -5,7 +5,7 @@ import ErrorComponent from "../../../components/ErrorComponent";
 import type {
   DeleteRule,
   TableRules,
-} from "../../../../../commonTypes/publishUtils";
+} from "../../../../../common/publishUtils";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
 import type {
   ContextDataSchema,

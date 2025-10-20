@@ -35,8 +35,6 @@ export const W_Table_Content = ({ children, runningQuerySince }: P) => {
       ref={ref}
       className={"W_Table_Content flex-col oy-auto f-1 relative "}
       style={{
-        /* ensure the header bottom shadow is visible */
-        marginTop: "2px",
         ...(loading ? loadingStyle : {}),
       }}
     >

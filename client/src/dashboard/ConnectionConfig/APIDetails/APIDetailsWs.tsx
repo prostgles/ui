@@ -1,79 +1,15 @@
-import { mdiAlert, mdiCodeBraces, mdiLanguageTypescript } from "@mdi/js";
+import { mdiCodeBraces, mdiLanguageTypescript } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import React from "react";
+import React, { useMemo } from "react";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
-import FormField from "../../../components/FormField/FormField";
-import { InfoRow } from "../../../components/InfoRow";
 import PopupMenu from "../../../components/PopupMenu";
+import { t } from "../../../i18n/i18nUtils";
 import { download } from "../../W_SQL/W_SQL";
 import { APICodeExamples } from "./APICodeExamples";
 import type { APIDetailsProps } from "./APIDetails";
-import { t } from "../../../i18n/i18nUtils";
-
-const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
-  const { data: serverSettings } = dbs.global_settings.useSubscribeOne({});
-  const [allowed_origin, setAllowedOrigin] = React.useState(
-    serverSettings?.allowed_origin,
-  );
-
-  if (serverSettings && !serverSettings.allowed_origin) {
-    return (
-      <PopupMenu
-        button={
-          <Btn iconPath={mdiAlert} color="warn" variant="faded">
-            {t.APIDetailsWs["Allowed origin not set"]}
-          </Btn>
-        }
-        clickCatchStyle={{ opacity: 0.2 }}
-        contentStyle={{ maxWidth: "500px" }}
-        footerButtons={(pClose) => [
-          { label: t.common.Close, onClick: pClose },
-          {
-            label: t.common.Confirm,
-            color: "action",
-            variant: "filled",
-            disabledInfo:
-              !allowed_origin ?
-                t.APIDetailsWs["Allowed origin is required"]
-              : undefined,
-            onClickPromise: async () => {
-              await dbs.global_settings.update({}, { allowed_origin });
-            },
-          },
-        ]}
-        render={() => (
-          <FlexCol>
-            <InfoRow className="ws-pre">
-              {
-                t.APIDetailsWs[
-                  "Allowed origin specifies which domains can access this app in a cross-origin manner. Sets the Access-Control-Allow-Origin header. Use '*' or a specific URL to allow API access"
-                ]
-              }
-            </InfoRow>
-            <p className="ta-left">
-              {
-                t.APIDetailsWs[
-                  'For testing it is recommended to use "*" as the allowed origin value'
-                ]
-              }
-            </p>
-            <FormField
-              label={t.APIDetailsWs["Allowed origin"]}
-              value={allowed_origin}
-              onChange={setAllowedOrigin}
-            />
-          </FlexCol>
-        )}
-      />
-    );
-  }
-
-  return null;
-};
 
 export const APIDetailsWs = ({
-  dbs,
   dbsMethods,
   connection,
   token,
@@ -82,11 +18,14 @@ export const APIDetailsWs = ({
   const dbSchemaTypes = usePromise(async () => {
     if (connection.id) {
       const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.(
-        connection.id,
+        connection.is_state_db ? undefined : connection.id,
       );
+      // ?.catch((e) => {
+      //   console.error("Failed to get connection DB types", e);
+      // });
       return dbSchemaTypes;
     }
-  }, [dbsMethods, connection.id]);
+  }, [connection.id, connection.is_state_db, dbsMethods]);
 
   return (
     <FlexCol>
@@ -98,6 +37,7 @@ export const APIDetailsWs = ({
         <a
           target="_blank"
           href="https://github.com/prostgles/prostgles-client-js"
+          rel="noreferrer"
         >
           prostgles-client
         </a>{" "}
@@ -108,12 +48,19 @@ export const APIDetailsWs = ({
         }
       </div>
 
-      {!!(dbs as any).global_settings && <AllowedOriginCheck dbs={dbs} />}
       <FlexRow className="ai-end mb-1 ">
         <PopupMenu
           title={t.APIDetailsWs.Examples}
+          data-command="APIDetailsWs.Examples"
           button={
-            <Btn variant="filled" iconPath={mdiCodeBraces} color="action">
+            <Btn
+              variant="filled"
+              iconPath={mdiCodeBraces}
+              color="action"
+              disabledInfo={
+                token ? undefined : "Must generate an access token first"
+              }
+            >
               {t.APIDetailsWs.Examples}
             </Btn>
           }
@@ -125,7 +72,7 @@ export const APIDetailsWs = ({
             <APICodeExamples
               token={token}
               projectPath={projectPath}
-              dbSchemaTypes={dbSchemaTypes?.dbSchema}
+              dbSchemaTypes={dbSchemaTypes}
             />
           }
         />
@@ -137,11 +84,7 @@ export const APIDetailsWs = ({
             )
           }
           onClick={() => {
-            download(
-              dbSchemaTypes?.dbSchema,
-              "DBoGenerated.d.ts",
-              "text/plain",
-            );
+            download(dbSchemaTypes, "DBoGenerated.d.ts", "text/plain");
           }}
           iconPath={mdiLanguageTypescript}
           variant="faded"

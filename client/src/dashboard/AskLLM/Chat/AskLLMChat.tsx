@@ -1,22 +1,22 @@
 import React, { useCallback, useMemo } from "react";
-import type { LLMMessage } from "../../../../../commonTypes/llmUtils";
+import type { LLMMessage } from "../../../../../common/llmUtils";
+import type { DBSSchema } from "../../../../../common/publishUtils";
+import { MINUTE } from "../../../../../common/utils";
 import type { Prgl } from "../../../App";
+import { useAlert } from "../../../components/AlertProvider";
 import Btn from "../../../components/Btn";
 import { Chat, type ChatProps } from "../../../components/Chat/Chat";
 import { FlexCol } from "../../../components/Flex";
 import Popup from "../../../components/Popup/Popup";
+import { isDefined } from "../../../utils";
+import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import { CHAT_WIDTH } from "../AskLLM";
 import { AskLLMChatActionBar } from "../ChatActionBar/AskLLMChatActionBar";
-import { AskLLMChatHeader } from "./AskLLMChatHeader";
+import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
 import { AskLLMToolApprover } from "../Tools/AskLLMToolApprover";
+import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
-import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
-import { isDefined } from "../../../utils";
-import { MINUTE } from "../../../../../commonTypes/utils";
-import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
-import { useAlert } from "../../../components/AlertProvider";
 
 export type AskLLMChatProps = {
   prgl: Prgl;
@@ -124,18 +124,24 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
 
   /* Prevents flickering when popup is opened */
   if (!messages) return;
+  const status = activeChat?.status;
   const chatIsLoading =
-    activeChat?.is_loading &&
-    new Date(activeChat.is_loading) > new Date(Date.now() - 1 * MINUTE);
+    status?.state === "loading" &&
+    new Date(status.since) > new Date(Date.now() - 1 * MINUTE);
   return (
     <Popup
       data-command="AskLLM.popup"
       showFullscreenToggle={{
-        getStyle: (isFullscreen: boolean) =>
+        getContentStyle: (isFullscreen) =>
+          isFullscreen && !window.isLowWidthScreen ?
+            { alignItems: "center" }
+          : {},
+        getStyle: (isFullscreen) =>
           isFullscreen ?
             {}
           : {
-              width: `${CHAT_WIDTH}px`,
+              // width: `${CHAT_WIDTH}px`,
+              minWidth: "0",
               maxWidth: `${CHAT_WIDTH}px`,
             },
       }}
@@ -155,7 +161,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       onClickClose={false}
       onClose={onClose}
       anchorEl={anchorEl}
-      contentClassName="p-0 f-1 ai-center"
+      contentClassName="p-0 f-1"
       rootStyle={{
         flex: 1,
       }}
@@ -169,18 +175,14 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           className="min-h-0 f-1"
           style={{
             whiteSpace: "pre-line",
-            width: `${CHAT_WIDTH}px`,
-            maxWidth: `${CHAT_WIDTH}px`,
+            maxWidth: `min(100vw, ${CHAT_WIDTH}px)`,
+            width: `${CHAT_WIDTH - 100}px`,
           }}
         >
           <Chat
             style={chatStyle}
             messages={messages}
-            disabledInfo={
-              chatIsLoading ?
-                "Waiting for response"
-              : (activeChat.disabled_message ?? undefined)
-            }
+            disabledInfo={activeChat.disabled_message ?? undefined}
             allowedMessageTypes={{
               speech: {
                 audio: true,
@@ -189,6 +191,17 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               file: true,
             }}
             onSend={sendMessage}
+            isLoading={chatIsLoading}
+            onStopSending={
+              status?.state !== "loading" ?
+                undefined
+              : () => {
+                  dbs.llm_chats.update(
+                    { id: activeChatId },
+                    { status: { state: "stopped" } },
+                  );
+                }
+            }
             actionBar={
               isAdmin && (
                 <AskLLMChatActionBar

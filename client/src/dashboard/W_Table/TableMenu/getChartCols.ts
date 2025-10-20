@@ -9,7 +9,10 @@ import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 import { getAllJoins } from "../ColumnMenu/JoinPathSelectorV2";
 import { getColWInfo } from "../tableUtils/getColWInfo";
 
-export type ColInfo = Pick<ValidatedColumnInfo, "name" | "udt_name">;
+export type ColInfo = Pick<
+  ValidatedColumnInfo,
+  "name" | "udt_name" | "is_pkey"
+>;
 type JoinedChartColumn = {
   type: "joined";
   label: string;
@@ -17,14 +20,12 @@ type JoinedChartColumn = {
   otherColumns: ColInfo[];
 } & ColInfo;
 
-export type ChartColumn = (
-  | JoinedChartColumn
-  | {
-      type: "normal";
-      otherColumns: ColInfo[];
-    }
-) &
-  ColInfo;
+type NormalChartColumn = {
+  type: "normal";
+  otherColumns: ColInfo[];
+} & ColInfo;
+
+export type ChartColumn = JoinedChartColumn | NormalChartColumn;
 export const isGeoCol = (c: ColInfo) =>
   ["geography", "geometry"].includes(c.udt_name);
 export const isDateCol = (c: ColInfo) =>
@@ -64,7 +65,7 @@ export const getChartCols = (
     });
 
   const allJoins = getAllJoins({
-    tableName: w.table_name!,
+    tableName: w.table_name,
     tables,
     value: undefined,
   });
@@ -75,6 +76,7 @@ export const getChartCols = (
           ({
             type: "joined",
             ...j,
+            is_pkey: c.is_pkey,
             label: j.label,
             name: c.name,
             udt_name: c.udt_name,
@@ -90,6 +92,7 @@ export const getChartCols = (
           ({
             type: "joined",
             ...j,
+            is_pkey: c.is_pkey,
             name: c.name,
             label: j.label,
             udt_name: c.udt_name,
@@ -101,11 +104,11 @@ export const getChartCols = (
 
   const cols = getColWInfo(tables, w).map((c) => ({
     ...c,
+    is_pkey: Boolean(c.info?.is_pkey),
     udt_name:
       c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text",
   }));
 
-  //@ts-ignore
   const windowDateCols: ChartColumn[] = cols.filter(isDateCol).map((c) => ({
     ...c,
     type: "normal",

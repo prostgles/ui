@@ -15,6 +15,11 @@ export const DashboardHotkeys = ({ keyStyle, style }: P) => {
       </SectionHeader>
       <Hotkey
         keyStyle={keyStyle}
+        label="Open Command Palette"
+        keys={["ctrl", "k"]}
+      />
+      <Hotkey
+        keyStyle={keyStyle}
         label="Open a table or script"
         keys={["ctrl", "p"]}
       />

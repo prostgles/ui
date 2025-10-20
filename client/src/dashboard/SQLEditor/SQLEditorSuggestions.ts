@@ -497,7 +497,7 @@ export const getSqlSuggestions = async (
           name: f.escaped_identifier,
           label: {
             label: `${f.escaped_identifier}(${f.args.map((a) => a.data_type).join(",")})`,
-            description: f.extension,
+            description: f.extension || f.schema,
           },
           subLabel: f.func_signature,
           schema: f.schema,

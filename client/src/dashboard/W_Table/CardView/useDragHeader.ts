@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import { getSmartGroupFilter } from "../../../../../common/filterUtils";
 import { isEmpty } from "../../../utils";
 import { getDistanceBetweenBoxes } from "../../SilverGrid/SilverGridChild";
 import { getRowFilter } from "../tableUtils/getRowFilter";

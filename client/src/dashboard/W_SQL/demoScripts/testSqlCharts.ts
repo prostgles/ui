@@ -1,5 +1,5 @@
 import { click, getElement, waitForElement } from "../../../demo/demoUtils";
-import { fixIndent, shouldBeEqual } from "../../../demo/sqlVideoDemo";
+import { fixIndent, shouldBeEqual } from "../../../demo/scripts/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 

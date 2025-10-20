@@ -9,7 +9,7 @@ import {
   toDateStr,
   YEAR,
 } from "../Charts";
-import { getAge } from "../../../../commonTypes/utils";
+import { getAge } from "../../../../common/utils";
 import type { XYFunc } from "./TimeChart";
 import type { DateExtent } from "./getTimechartBinSize";
 import type { ChartedText, TextMeasurement } from "./CanvasChart";
@@ -142,7 +142,7 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
       getStart: (d: Date) => {
         d = new Date(+d);
         d.setSeconds(0);
-        return new Date(+d);
+        return d;
       },
       getLabel: (d: Date) =>
         toDateStr(d, { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
@@ -206,7 +206,6 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
     /* Get start point v, then two consecutive v1, v2 to ensure we have a full spacing between v1 and v2 */
     const v = inc.getStart(new Date(+lDate)),
       v1 = new Date(+v + inc.dateDelta),
-      // v2 = inc.dateDelta? new Date(+v1 + inc.dateDelta) : inc.getNext(new Date(+v1)),
       v2 = new Date(+v1 + inc.dateDelta),
       tickWidth = measureText(
         getTickText({ text: inc.getLabel(new Date(2001, 1, 1)) }),
@@ -215,7 +214,6 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
       x2 = getScreenXY(getX(+v2), 0)[0],
       spacing = x2 - x1 - tickWidth;
 
-    // console.log(lDate, rDate)
     return {
       inc,
       spacing,
@@ -252,7 +250,7 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
   };
 
   const getProvidedTicks = (): undefined | typeof midTicks => {
-    const newMidTicks = values?.map((date) => {
+    const valueTicks = values?.map((date) => {
       const v = +date;
       return {
         v,
@@ -261,21 +259,20 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
       };
     });
 
-    const chartedTicks = newMidTicks?.map(getTickChartedText);
+    const chartedTicks = valueTicks?.map(getTickChartedText);
 
-    const noOverlap = chartedTicks?.every((t, i) => {
+    const overlapsOrDuplicates = chartedTicks?.slice(1, -1).some((t, i) => {
       const prevT = chartedTicks[i - 1];
       const nextT = chartedTicks[i + 1];
-
-      return ![prevT, nextT].filter(isDefined).some((st: typeof t) => {
+      const ticks = [prevT, nextT].filter(isDefined);
+      return ticks.some((st) => {
         const overlap =
           t.xRange[0] < st.xRange[1] && t.xRange[1] > st.xRange[0];
-
-        return overlap;
+        return overlap || t.text === st.text;
       });
     });
 
-    return noOverlap ? newMidTicks : undefined;
+    return !overlapsOrDuplicates ? valueTicks : undefined;
   };
 
   const providedTicks = getProvidedTicks();
@@ -354,7 +351,6 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
     rt.text = `${rDate.getDate()} ${rt.text}`;
   }
 
-  // console.log(midTicks.map(t => t.x), rightX - 50)
   const leftTickMaxWidth =
     Math.max(measureText(lt).width, measureText(lb).width) + 10;
   const rightTickMaxWidth =
@@ -385,32 +381,3 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
     rb,
   ];
 }
-
-const getAgePart = (
-  date1: number,
-  date2: number,
-  by?: "years" | "months" | "days" | "hours" | "minutes" | "seconds",
-): number | undefined => {
-  const diff = +date2 - +date1;
-
-  const years = diff / YEAR,
-    months = diff / MONTH,
-    days = diff / DAY,
-    hours = diff / HOUR,
-    minutes = diff / MINUTE,
-    seconds = diff / SECOND;
-
-  if (by === "years") {
-    return years;
-  } else if (by === "months") {
-    return months;
-  } else if (by === "days") {
-    return days;
-  } else if (by === "hours") {
-    return hours;
-  } else if (by === "minutes") {
-    return minutes;
-  } else if (by === "seconds") {
-    return seconds;
-  }
-};

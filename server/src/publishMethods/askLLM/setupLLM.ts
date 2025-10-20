@@ -1,6 +1,6 @@
 import type { DBS } from "../..";
-import { LLM_PROMPT_VARIABLES } from "../../../../commonTypes/llmUtils";
-import type { DBSSchemaForInsert } from "../../../../commonTypes/publishUtils";
+import { LLM_PROMPT_VARIABLES } from "../../../../common/llmUtils";
+import type { DBSSchemaForInsert } from "../../../../common/publishUtils";
 export const setupLLM = async (dbs: DBS) => {
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -8,13 +8,15 @@ export const setupLLM = async (dbs: DBS) => {
     const adminUser = await dbs.users.findOne({ passwordless_admin: true });
     const user_id = adminUser?.id;
     const firstLine = [
-      `You are an assistant for a PostgreSQL based software called ${LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME}.`,
+      `You are an assistant for a software called ${LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME}.`,
+      `It allows managing and exploring data within Postgres databases as well as creating internal tools. \n`,
       `Today is ${LLM_PROMPT_VARIABLES.TODAY}.`,
+      `DO NOT USE HARDCODED SAMPLE DATA UNLESS THE USER ASKS FOR IT.`,
     ].join("\n");
     await dbs.llm_prompts.insert([
       {
         name: "Chat",
-        description: "Basic chat",
+        description: "Default chat. Includes schema (if allowed)",
         user_id,
         prompt: [
           firstLine,
@@ -27,7 +29,8 @@ export const setupLLM = async (dbs: DBS) => {
       },
       {
         name: "Create dashboards",
-        description: "Create dashboards. Claude Sonnet recommended",
+        description:
+          "Includes database schema and dashboard view structure. Claude Sonnet recommended",
         user_id,
         options: {
           prompt_type: "dashboards",
@@ -40,15 +43,17 @@ export const setupLLM = async (dbs: DBS) => {
           LLM_PROMPT_VARIABLES.SCHEMA,
           "",
           "Using dashboard structure below create workspaces with useful views my current schema.",
-          "Return a json of this format: { prostglesWorkspaces: WorkspaceInsertModel[] }",
-          "Return valid json, markdown compatible and in a clearly delimited section with a json code block.",
+          "Return a json of this format: `{ prostglesWorkspaces: WorkspaceInsertModel[] }`",
           "",
+          "```typescript",
           LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,
+          "```",
         ].join("\n"),
       },
       {
         name: "Create task",
-        description: "Create tasks. Claude Sonnet recommended",
+        description:
+          "Includes database schema and full tools list. Will suggest database access type and tools required to completed the task. Claude Sonnet recommended",
         user_id,
         options: {
           prompt_type: "tasks",
@@ -150,7 +155,7 @@ export const setupLLM = async (dbs: DBS) => {
         api_pricing_url: "https://www.anthropic.com/pricing#api",
         logo_url: "/logos/anthropic.svg",
         extra_body: {
-          max_tokens: 6_000,
+          max_tokens: 16_000,
         },
         llm_models: [
           {
@@ -321,7 +326,7 @@ export const setupLLM = async (dbs: DBS) => {
         api_pricing_url:
           "https://openrouter.ai/docs/api-reference/list-available-models",
         extra_body: {
-          max_tokens: 6_000,
+          max_tokens: 16_000,
         },
         logo_url: "/logos/openrouter.svg",
         llm_models: [
@@ -350,9 +355,15 @@ export const setupLLM = async (dbs: DBS) => {
         logo_url: "/v2.svg",
         llm_models: [
           {
-            name: "claude-3-5-sonnet-20241022",
-            pricing_info: { input: 3, output: 15 },
-            chat_suitability_rank: "2",
+            name: "anthropic/claude-sonnet-4",
+            pricing_info: {
+              input: 3,
+              output: 15,
+              cachedInput: 1,
+              cachedOutput: 0.08,
+            },
+            model_created: "2024-10-22 12:00:00",
+            chat_suitability_rank: "1",
           },
         ],
       },
