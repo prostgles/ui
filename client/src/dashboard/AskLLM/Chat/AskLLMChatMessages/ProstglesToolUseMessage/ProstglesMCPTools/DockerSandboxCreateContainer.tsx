@@ -32,7 +32,7 @@ import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { useAlert } from "@components/AlertProvider";
 import ErrorComponent from "@components/ErrorComponent";
-import type { ToolResultMessage } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ToolUseChatMessage";
+import type { ToolResultMessage } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
 import Chip from "@components/Chip";
 import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
 

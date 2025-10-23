@@ -19,6 +19,9 @@ export const getCorrespondingDarkNode = (
 
   const lightBBox = lightNode.getBBox();
   let matchedTypeAndOverlap = matchesTypes.filter((n) => {
+    if (lightNode._gWrapperFor) {
+      return n._gWrapperFor === lightNode._gWrapperFor;
+    }
     const nBBox = n.getBBox();
 
     if (!lightBBox.width || !lightBBox.height) {
@@ -66,6 +69,9 @@ export const getCorrespondingDarkNode = (
     matchedTypeAndOverlap = matchedTypeAndOverlap.filter(
       (n) => n._bboxCode?.length === lightNode._bboxCode?.length,
     );
+  }
+  if (lightNode._gWrapperFor && matchedTypeAndOverlap.length > 1) {
+    throw new Error("Multiple matching gWrappers found");
   }
   if (matchedTypeAndOverlap.length === 1) {
     darkNode = matchedTypeAndOverlap[0];

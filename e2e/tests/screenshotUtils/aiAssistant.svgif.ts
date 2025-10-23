@@ -14,7 +14,7 @@ import {
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
 
-export const aiAssistantSVG: OnBeforeScreenshot = async (
+export const aiAssistantSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection },
   addScene,

@@ -1,5 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
+import { dashboardSvgif } from "screenshotUtils/dashboard.svgif";
+import { fileImporter } from "screenshotUtils/fileImporter.svgif";
+import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagram.svgif";
+import { goTo } from "utils/goTo";
 import { getDataKeyElemSelector } from "../../Testing";
 import {
   getDashboardUtils,
@@ -7,18 +11,15 @@ import {
   openTable,
   type PageWIds,
 } from "../../utils/utils";
-import { aiAssistantSVG } from "../aiAssistant.svgif";
+import { aiAssistantSvgif } from "../aiAssistant.svgif";
+import { sqlEditorSVG } from "../sqlEditor.svgif";
+import { commandPaletteSvgif } from "./commandPalette.svgif";
 import {
   SVG_SCREENSHOT_DIR,
   SVGIF_SCENES_DIR,
   type SVGifScene,
 } from "./constants";
 import { saveSVGifs } from "./saveSVGifs";
-import { sqlEditorSVG } from "../sqlEditor.svgif";
-import { dashboardSvgif } from "screenshotUtils/dashboard.svgif";
-import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagram.svgif";
-import { goTo } from "utils/goTo";
-import { fileImporter } from "screenshotUtils/fileImporter.svgif";
 
 export type OnBeforeScreenshot = (
   page: PageWIds,
@@ -26,7 +27,7 @@ export type OnBeforeScreenshot = (
   addSVGifScene: (scene?: Partial<SVGifScene>) => Promise<void>,
 ) => Promise<void>;
 export const SVG_SCREENSHOT_DETAILS = {
-  ai_assistant: aiAssistantSVG,
+  ai_assistant: aiAssistantSvgif,
   schema_diagram: schemaDiagramSvgif,
   file_importer: fileImporter,
   timechart: async (page, { openConnection, hideMenuIfOpen }) => {
@@ -87,18 +88,7 @@ export const SVG_SCREENSHOT_DETAILS = {
     await page.waitForTimeout(1500);
     await addScene({ svgFileName: "new_connection" });
   },
-  command_palette: async (page, _, addScene) => {
-    await addScene({
-      caption: "Open command palette (Ctrl+K)...",
-    });
-    await page.keyboard.press("Control+KeyK");
-    await page.getByTestId("Popup.content").locator("input").fill("access con");
-    await page.waitForTimeout(500);
-    await addScene({ caption: "Press Enter to navigate to item" });
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(1500);
-    await addScene();
-  },
+  command_palette: commandPaletteSvgif,
   connections: async (page) => {
     await goTo(page, "/connections");
   },

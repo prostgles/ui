@@ -92,6 +92,8 @@ export const svgScreenshotsCompleteReferenced = async (
       }
     }
   }
+
+  return;
   /** Delete scenes folder */
   rmSync(SVGIF_SCENES_DIR, { recursive: true, force: true });
 };

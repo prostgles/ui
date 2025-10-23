@@ -227,7 +227,7 @@ export const testAskLLMCode = `
 const toolResponses = ${stringify(toolResponses)};
 
 const lastMsg = args.messages.at(-1);
-const lastMsgText = lastMsg?.content[0]?.text;
+const lastMsgText = lastMsg?.content?.[0]?.text;
 const toolCallKeyResult = typeof lastMsg?.tool_call_id === "string"? lastMsg.tool_call_id.split("#")[0] : undefined;
 const toolResult = toolCallKeyResult && toolResponses[toolCallKeyResult];
 const failedToolResult = toolCallKeyResult === "mcpfail";// typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch");

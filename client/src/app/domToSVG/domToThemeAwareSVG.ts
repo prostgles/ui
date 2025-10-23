@@ -3,8 +3,11 @@ import { getCorrespondingDarkNode } from "./getCorrespondingDarkNode";
 import type { TextForSVG } from "./text/getTextForSVG";
 import { setThemeForSVGScreenshot } from "./setThemeForSVGScreenshot";
 import { renderSvg } from "./text/textToSVG";
-const displayNoneIfLight = "--dark-theme-hide";
-const displayNoneIfDark = "--light-theme-hide";
+import type { getWhatToRenderOnSVG } from "./utils/getWhatToRenderOnSVG";
+import { isDefined } from "src/utils";
+import { matchChildren } from "./utils/matchChildren";
+export const displayNoneIfDark = "--dark-theme-hide";
+export const displayNoneIfLight = "--light-theme-hide";
 export const domToThemeAwareSVG = async (
   node: HTMLElement,
   debugMode?: "light" | "both",
@@ -56,7 +59,7 @@ export const domToThemeAwareSVG = async (
     return varName;
   };
 
-  const isVisibleFillOrStroke = (color: string | null) => {
+  const isVisibleColor = (color: string | null) => {
     const isVisible =
       color &&
       color !== "none" &&
@@ -76,43 +79,24 @@ export const domToThemeAwareSVG = async (
       "SVGs must be connected to the DOM to ensure bbox calculations work.",
     );
   }
-  lightNodes.forEach((lightNode, index) => {
-    // Ignore nested svgs
-    if (lightNode.ownerSVGElement !== svgLight) {
-      return;
-    }
 
-    const darkNode = getCorrespondingDarkNode(darkNodes, lightNode, index);
-
-    if (lightNode instanceof SVGUseElement) {
-      const lightHref = lightNode.getAttribute("href");
-      const darkHref = darkNode?.getAttribute("href");
-      if (lightHref && darkHref) {
-        const darkRefImg = svgDark.querySelector<SVGImageElement>(darkHref);
-        const lightRefImg = svgLight.querySelector<SVGImageElement>(lightHref);
-        const darkRefImgData = darkRefImg?.href.baseVal;
-        const lightRefImgData = lightRefImg?.href.baseVal;
-        if (
-          darkRefImgData &&
-          lightRefImgData &&
-          darkRefImgData !== lightRefImgData
-        ) {
-          /** Add dark image into light svg */
-          const darkImage = darkRefImg.cloneNode(true) as SVGImageElement;
-          darkImage.id = `${darkImage.id}-dark`;
-          lightNode.ownerSVGElement
-            .querySelector("defs")
-            ?.appendChild(darkImage);
-
-          const darkThemeUse = lightNode.cloneNode(true) as SVGUseElement;
-          darkThemeUse.setAttribute("href", `#${darkImage.id}`);
-          darkThemeUse.style.display = `var(${displayNoneIfLight})`;
-          lightNode.parentElement?.appendChild(darkThemeUse);
-          lightNode.style.display = `var(${displayNoneIfDark})`;
-        }
+  const matchesMap: Map<
+    SVGScreenshotNodeType,
+    SVGScreenshotNodeType | undefined
+  > = new Map();
+  const matches = Array.from(lightNodes)
+    .map((lightNode, index) => {
+      // Ignore nested svgs
+      if (lightNode.ownerSVGElement !== svgLight) {
+        return;
       }
-      return;
-    }
+      const darkNode = getCorrespondingDarkNode(darkNodes, lightNode, index);
+      matchesMap.set(lightNode, darkNode);
+      return { lightNode, darkNode };
+    })
+    .filter(isDefined);
+
+  matches.forEach(({ lightNode, darkNode }) => {
     if (!darkNode) {
       console.warn(
         "No corresponding dark node found for light node " + lightNode.nodeName,
@@ -128,30 +112,74 @@ export const domToThemeAwareSVG = async (
       // }
       return;
     }
+    if (lightNode instanceof SVGUseElement) {
+      const lightHref = lightNode.getAttribute("href");
+      const darkHref = darkNode.getAttribute("href");
+      if (lightHref && darkHref) {
+        const darkRefImg = svgDark.querySelector<SVGImageElement>(darkHref);
+        const lightRefImg = svgLight.querySelector<SVGImageElement>(lightHref);
+        const darkRefImgData = darkRefImg?.href.baseVal;
+        const lightRefImgData = lightRefImg?.href.baseVal;
+        if (
+          darkRefImgData &&
+          lightRefImgData &&
+          darkRefImgData !== lightRefImgData
+        ) {
+          /** Add dark image into light svg */
+          const darkImage = darkRefImg.cloneNode(true) as SVGImageElement;
+          darkImage.id = `${darkImage.id}-dark`;
+          lightNode.ownerSVGElement
+            ?.querySelector("defs")
+            ?.appendChild(darkImage);
+
+          const darkThemeUse = lightNode.cloneNode(true) as SVGUseElement;
+          darkThemeUse.setAttribute("href", `#${darkImage.id}`);
+          darkThemeUse.style.visibility = `var(${displayNoneIfDark})`;
+          lightNode.parentElement?.appendChild(darkThemeUse);
+          lightNode.style.display = `var(${displayNoneIfLight})`;
+        }
+      }
+      return;
+    }
+
+    /** Add extra elements from dark node (sometimes the background changes from transparent to color) */
+    if (lightNode instanceof SVGGElement && darkNode instanceof SVGGElement) {
+      matchChildren(lightNode, darkNode, matchesMap);
+    }
 
     const fill = lightNode.getAttribute("fill");
-    if (fill && isVisibleFillOrStroke(fill)) {
-      const darkFill = darkNode.getAttribute("fill");
-      const varName = upsertCssVar("color", fill, darkFill || fill);
+    const darkFill = darkNode.getAttribute("fill");
+    if (fill !== darkFill) {
+      const varName = upsertCssVar("color", fill || "", darkFill || fill || "");
       lightNode.setAttribute("fill", `var(--${varName})`);
     }
     const stroke = lightNode.getAttribute("stroke");
-    if (stroke && isVisibleFillOrStroke(stroke)) {
-      const darkStroke = darkNode.getAttribute("stroke");
-      const varName = upsertCssVar("color", stroke, darkStroke || stroke);
+    const darkStroke = darkNode.getAttribute("stroke");
+    if (stroke !== darkStroke) {
+      const varName = upsertCssVar(
+        "color",
+        stroke || "",
+        darkStroke || stroke || "",
+      );
       lightNode.setAttribute("stroke", `var(--${varName})`);
     }
+    const color = lightNode.style.color;
+    if (color) {
+      const darkColor = darkNode.style.color;
+      const varName = upsertCssVar("color", color, darkColor || color);
+      lightNode.style.color = `var(--${varName})`;
+    }
 
-    const opacity = lightNode.getAttribute("opacity");
+    const opacity = lightNode.style.opacity;
     if (!opacity || opacity !== "1") {
-      const darkOpacity = darkNode.getAttribute("opacity");
+      const darkOpacity = darkNode.style.opacity;
       if (darkOpacity !== opacity) {
         const varName = upsertCssVar(
           "opacity",
-          opacity ?? "",
-          (darkOpacity || opacity) ?? "",
+          opacity,
+          darkOpacity || opacity,
         );
-        lightNode.setAttribute("opacity", `var(--${varName})`);
+        lightNode.style.opacity = `var(--${varName})`;
       }
     }
 
@@ -170,17 +198,15 @@ export const domToThemeAwareSVG = async (
     }
 
     const filter = lightNode.style.filter;
-    if (filter) {
-      const darkFilter = darkNode.style.filter;
-      if (darkFilter !== filter) {
-        const varName = upsertCssVar("shadow", filter, darkFilter || filter);
-        lightNode.style.filter = `var(--${varName})`;
-      }
+    const darkFilter = darkNode.style.filter;
+    if (darkFilter !== filter) {
+      const varName = upsertCssVar("shadow", filter, darkFilter || filter);
+      lightNode.style.filter = `var(--${varName})`;
     }
 
     if (lightNode instanceof SVGForeignObjectElement) {
       const color = lightNode.style.color;
-      if (color && isVisibleFillOrStroke(color)) {
+      if (color && isVisibleColor(color)) {
         const darkColor = darkNode.style.color;
         const varName = upsertCssVar("color", color, darkColor || color);
         lightNode.style.color = `var(--${varName})`;
@@ -192,6 +218,7 @@ export const domToThemeAwareSVG = async (
       darkItems.map(({ darkValue: darkColor, varName }) => ({
         lightColor,
         darkColor,
+        sameForBoth: lightColor === darkColor,
         varName,
       })),
   );
@@ -201,7 +228,8 @@ export const domToThemeAwareSVG = async (
   svgLight.appendChild(cssSheet);
   cssSheet.textContent = [
     `:root { `,
-    `  ${displayNoneIfLight}: none;`,
+    `  ${displayNoneIfDark}: visible;`,
+    `  ${displayNoneIfLight}: hidden;`,
     ...colorArr.map(
       ({ varName, lightColor }) => `  --${varName}: ${lightColor}; `,
     ),
@@ -210,10 +238,11 @@ export const domToThemeAwareSVG = async (
   cssSheet.textContent += [
     `@media (prefers-color-scheme: dark) { `,
     ` :root  { `,
-    `  ${displayNoneIfDark}: none;`,
-    ...colorArr.map(
-      ({ varName, darkColor }) => `  --${varName}: ${darkColor}; `,
-    ),
+    `  ${displayNoneIfDark}: hidden;`,
+    `  ${displayNoneIfLight}: visible;`,
+    ...colorArr
+      .filter((c) => !c.sameForBoth)
+      .map(({ varName, darkColor }) => `  --${varName}: ${darkColor}; `),
     `  }`,
     `} \n`,
   ].join("\n");
@@ -263,14 +292,22 @@ export const getBBoxCode = (
   return `${x}-${y}-${width}-${height}__${element.nodeName}${getElementPath(element).join("-")}`;
 };
 
+declare global {
+  interface SVGGElement {
+    _gWrapperFor?: HTMLElement;
+    _domElement?: HTMLElement;
+    _whatToRender?: Awaited<ReturnType<typeof getWhatToRenderOnSVG>>;
+  }
+}
 export type SVGScreenshotNodeType = (
   | SVGPathElement
   | SVGTextElement
   | SVGForeignObjectElement
 ) & {
   _bboxCode?: string;
-  _purpose?: "bg" | "overflow";
+  _purpose?: "bg" | "overflow" | "wrapper";
   _bbox?: DOMRect;
+  _gWrapperFor?: HTMLElement;
   _domElement?: HTMLElement;
   _domElementId?: string;
   _domElementPath?: number[];

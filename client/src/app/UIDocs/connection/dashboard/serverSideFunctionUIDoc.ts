@@ -7,6 +7,9 @@ export const serverSideFunctionUIDoc = {
   selector: `.SilverGridChild[data-view-type="method"]`,
   title: "Server-side function view",
   description: "Allows executing server-side functions and viewing results.",
+  entity: {
+    tableName: "published_methods",
+  },
   docs: fixIndent(`
     The server-side functions is an experimental feature that allows you to specify and execute server-side Typescript functions directly from the dashboard.`),
   children: [

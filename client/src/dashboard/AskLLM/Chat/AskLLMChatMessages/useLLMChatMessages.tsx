@@ -17,7 +17,7 @@ import { t } from "../../../../i18n/i18nUtils";
 import { isDefined } from "../../../../utils";
 import { Counter } from "../../../W_SQL/W_SQL";
 import type { UseLLMChatProps } from "../useLLMChat";
-import { ToolUseChatMessage } from "./ToolUseChatMessage";
+import { ToolUseChatMessage } from "./ToolUseChatMessage/ToolUseChatMessage";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 
 type P = UseLLMChatProps & {

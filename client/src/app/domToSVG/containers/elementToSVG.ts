@@ -22,6 +22,8 @@ export type SVGContext = {
   idCounter: number;
   fontFamilies: string[];
   cssDeclarations: Map<string, string>;
+  width: number;
+  height: number;
 };
 export type SVGNodeLayout = {
   x: number;
@@ -48,10 +50,10 @@ export const elementToSVG = async (
   const g = document.createElementNS(SVG_NAMESPACE, "g");
   g._domElement = element;
   g._whatToRender = _whatToRender;
-
-  if (style.opacity && style.opacity !== "1") {
-    g.setAttribute("opacity", style.opacity.toString());
-  }
+  g.setAttribute(
+    "data-selector",
+    [element.nodeName.toLowerCase(), element.className].join("."),
+  );
 
   const roundedPosition = {
     x: Math.round(x),
@@ -69,6 +71,7 @@ export const elementToSVG = async (
       g.setAttribute(key, value);
     }
   });
+
   getEntries({
     ...whatToRender.childAffectingStyles,
   }).forEach(([key, value]) => {
@@ -125,6 +128,7 @@ export const elementToSVG = async (
     svgClone.setAttribute("height", `${toFixed(height)}`);
     gWrapper.style.transform = `translate(${toFixed(x)}px, ${toFixed(y)}px)`;
     gWrapper.style.color = style.color;
+    gWrapper._gWrapperFor = element;
     gWrapper.appendChild(svgClone);
   } else if (image?.type === "fontIcon") {
     await fontIconToSVG(g, image, context, elemInfo);
@@ -201,10 +205,3 @@ const getChildrenSortedByZIndex = (element: HTMLElement): HTMLElement[] => {
     return aZIndex - bZIndex;
   });
 };
-
-declare global {
-  interface SVGGElement {
-    _domElement?: HTMLElement;
-    _whatToRender?: Awaited<ReturnType<typeof getWhatToRenderOnSVG>>;
-  }
-}

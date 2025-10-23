@@ -22,24 +22,11 @@ export const domToSVG = async (node: HTMLElement) => {
   const defs = document.createElementNS(SVG_NAMESPACE, "defs");
   svg.appendChild(defs);
 
-  // Process the node and all its children recursively
-  const nodeComputedStyle = window.getComputedStyle(node);
-
-  // Add background to root SVG if needed
-  if (
-    nodeComputedStyle.backgroundColor &&
-    nodeComputedStyle.backgroundColor !== "rgba(0, 0, 0, 0)"
-  ) {
-    const bgRect = document.createElementNS(SVG_NAMESPACE, "rect");
-    bgRect.setAttribute("width", "100%");
-    bgRect.setAttribute("height", "100%");
-    bgRect.setAttribute("fill", nodeComputedStyle.backgroundColor);
-    svg.appendChild(bgRect);
-  }
-
   const context: SVGContext = {
     offsetX: -nodeBBox.left,
     offsetY: -nodeBBox.top,
+    width: nodeBBox.width,
+    height: nodeBBox.height,
     defs: defs,
     idCounter: 0,
     cssDeclarations,

@@ -1,21 +1,18 @@
 import { isEmpty, tryCatchV2 } from "prostgles-types";
 import React, { useMemo } from "react";
-import { filterArr } from "../../../../../../common/llmUtils";
-import type { DBSSchema } from "../../../../../../common/publishUtils";
+import { filterArr } from "@common/llmUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,
-} from "../../../../components/Chat/MarkdownMonacoCode";
-import { MediaViewer } from "../../../../components/MediaViewer";
+} from "@components/Chat/MarkdownMonacoCode";
+import { MediaViewer } from "@components/MediaViewer";
 
-import { ErrorTrap } from "../../../../components/ErrorComponent";
-import type {
-  ToolResultMessage,
-  ToolUseMessage,
-  ToolUseMessageProps,
-} from "./ToolUseChatMessage";
+import { ErrorTrap } from "@components/ErrorComponent";
+import type { ToolResultMessage, ToolUseMessage } from "./ToolUseChatMessage";
+import type { ToolUseMessageProps } from "./useToolUseChatMessage";
 
-export const ToolUseChatMessageResult = ({
+export const ToolUseChatMessageJSONData = ({
   messages,
   toolUseMessageIndex,
   messageIndex,
