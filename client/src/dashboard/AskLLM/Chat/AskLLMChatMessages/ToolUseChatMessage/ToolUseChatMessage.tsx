@@ -1,8 +1,8 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import { FlexCol } from "@components/Flex";
-import { mdiTools } from "@mdi/js";
-import React, { useState } from "react";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { mdiCodeJson, mdiTools } from "@mdi/js";
+import React, { useCallback, useState } from "react";
 
 import { ErrorTrap } from "@components/ErrorComponent";
 import { SvgIcon } from "@components/SvgIcon";
@@ -13,23 +13,32 @@ import {
   useToolUseChatMessage,
   type ToolUseMessageProps,
 } from "./useToolUseChatMessage";
+import { ToolUseChatMessageBtn } from "./ToolUseChatMessageBtn";
+import PopupMenu from "@components/PopupMenu";
+import { ToolUseChatMessageJSONData } from "./ToolUseChatMessageJSONData";
 
 export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
   const [toolDataAnchorEl, setToolDataAnchorEl] = useState<HTMLButtonElement>();
 
   const toolUseInfo = useToolUseChatMessage(props);
+  const onClick: React.MouseEventHandler<HTMLButtonElement> = useCallback(
+    ({ currentTarget }) => {
+      setToolDataAnchorEl(toolDataAnchorEl ? undefined : currentTarget);
+    },
+    [toolDataAnchorEl],
+  );
   if (typeof toolUseInfo === "string") {
     return <>{toolUseInfo}</>;
   }
-  const { toolUseResult, iconName, m } = toolUseInfo;
+  const { m } = toolUseInfo;
 
-  const ProstglesTool = ProstglesMCPToolsWithUI[m.name];
-  const { displayMode } = ProstglesTool ?? {};
-  const needsResult = displayMode !== "full";
+  const ToolUI = ProstglesMCPToolsWithUI[m.name];
+  const { displayMode } = ToolUI ?? {};
 
   return (
     <ErrorTrap>
       <FlexCol
+        data-command="ToolUseMessage"
         className={"ToolUseMessage gap-p5 "}
         style={
           displayMode === "full" ?
@@ -37,39 +46,26 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
           : undefined
         }
       >
-        <Btn
-          iconPath={!iconName ? mdiTools : undefined}
-          iconNode={
-            !iconName ? undefined : (
-              <SvgIcon icon={iconName} style={{ margin: "-4px" }} size={20} />
-            )
-          }
-          disabledVariant="ignore-loading"
-          onClick={({ currentTarget }) => {
-            setToolDataAnchorEl(toolDataAnchorEl ? undefined : currentTarget);
-          }}
-          variant="faded"
-          size="small"
-          color={
-            toolUseResult?.toolUseResultMessage.is_error ? "danger" : undefined
-          }
-          title={
-            toolUseResult || !needsResult ?
-              `Tool use result for: ${m.name}`
-            : `Awaiting tool result: ${m.name}`
-          }
-          data-command="ToolUseMessage.toggle"
-          loading={!toolUseResult && needsResult}
-          children={
-            displayMode === "full" ? undefined : (
-              <>
-                {" "}
-                {m.name}
-                <ToolUseChatMessageBtnTextSummary m={m} />
-              </>
-            )
-          }
-        />
+        <FlexRow className="trigger-hover">
+          <ToolUseChatMessageBtn
+            {...toolUseInfo}
+            displayMode={displayMode}
+            onClick={onClick}
+          />
+          {ToolUI && (
+            <PopupMenu
+              positioning="fullscreen"
+              title={m.name}
+              button={
+                <Btn iconPath={mdiCodeJson} className="show-on-trigger-hover" />
+              }
+              contentClassName="p-1 flex-col gap-1 f-1"
+            >
+              <ToolUseChatMessageJSONData {...props} />
+            </PopupMenu>
+          )}
+        </FlexRow>
+
         <ToolUseChatMessageResult
           {...toolUseInfo}
           {...props}

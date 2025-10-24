@@ -35,7 +35,10 @@ export const ToolUseChatMessageBtnTextSummary = ({
   return (
     <>
       {inputTextSummary && (
-        <span style={{ fontWeight: "normal", opacity: 0.75 }}>
+        <span
+          className="text-ellipsis"
+          style={{ fontWeight: "normal", opacity: 0.75 }}
+        >
           {inputTextSummary}
         </span>
       )}

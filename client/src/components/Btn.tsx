@@ -356,7 +356,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       children === undefined || children === null || children === "" ? null
       : loading ?
         <div
-          className="min-w-0 ws-nowrap text-ellipsis f-0 o-hidden"
+          className="min-w-0 ws-nowrap text-ellipsis f-1 o-hidden flex-row"
           style={{ opacity: disabledVariant !== "ignore-loading" ? 0.5 : 1 }}
         >
           {children}

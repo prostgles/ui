@@ -4,7 +4,7 @@ import {
   type SVGScreenshotNodeType,
 } from "../domToThemeAwareSVG";
 
-export const matchChildren = (
+export const addNewChildren = (
   lightNode: SVGScreenshotNodeType,
   darkNode: SVGScreenshotNodeType,
   matchesMap: Map<SVGScreenshotNodeType, SVGScreenshotNodeType | undefined>,

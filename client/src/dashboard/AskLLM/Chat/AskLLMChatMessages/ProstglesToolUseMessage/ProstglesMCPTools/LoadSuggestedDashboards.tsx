@@ -3,7 +3,7 @@ import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { isObject } from "@common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
-import { MarkdownMonacoCode } from "@components/Chat/MarkdownMonacoCode";
+import { MarkdownMonacoCode } from "@components/Chat/MarkdownMonacoCode/MarkdownMonacoCode";
 import Chip from "@components/Chip";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { pageReload } from "@components/Loader/Loading";

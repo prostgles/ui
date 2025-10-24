@@ -62,7 +62,7 @@ export const useScrollFade = ({
     const threshold = 10;
     if (scrollHeight >= clientHeight) {
       fadeClasses.top = scrollTop > threshold;
-      fadeClasses.bottom = scrollTop + clientHeight < scrollHeight;
+      fadeClasses.bottom = scrollTop + clientHeight < scrollHeight - threshold;
     }
     if (scrollWidth >= clientWidth) {
       fadeClasses.left = scrollLeft > threshold;

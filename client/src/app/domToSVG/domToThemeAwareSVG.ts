@@ -5,7 +5,7 @@ import { setThemeForSVGScreenshot } from "./setThemeForSVGScreenshot";
 import { renderSvg } from "./text/textToSVG";
 import type { getWhatToRenderOnSVG } from "./utils/getWhatToRenderOnSVG";
 import { isDefined } from "src/utils";
-import { matchChildren } from "./utils/matchChildren";
+import { addNewChildren } from "./utils/addNewChildren";
 export const displayNoneIfDark = "--dark-theme-hide";
 export const displayNoneIfLight = "--light-theme-hide";
 export const domToThemeAwareSVG = async (
@@ -142,10 +142,10 @@ export const domToThemeAwareSVG = async (
       return;
     }
 
-    /** Add extra elements from dark node (sometimes the background changes from transparent to color) */
-    if (lightNode instanceof SVGGElement && darkNode instanceof SVGGElement) {
-      matchChildren(lightNode, darkNode, matchesMap);
-    }
+    /** Add extra elements from dark node (sometimes the background changes from transparent to color on match case button) */
+    // if (lightNode instanceof SVGGElement && darkNode instanceof SVGGElement) {
+    //   addNewChildren(lightNode, darkNode, matchesMap);
+    // }
 
     const fill = lightNode.getAttribute("fill");
     const darkFill = darkNode.getAttribute("fill");

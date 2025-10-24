@@ -5,7 +5,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,
-} from "@components/Chat/MarkdownMonacoCode";
+} from "@components/Chat/MarkdownMonacoCode/MarkdownMonacoCode";
 import { MediaViewer } from "@components/MediaViewer";
 
 import { ErrorTrap } from "@components/ErrorComponent";

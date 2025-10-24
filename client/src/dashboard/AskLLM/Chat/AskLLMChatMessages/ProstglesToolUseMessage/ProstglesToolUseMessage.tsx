@@ -24,7 +24,7 @@ export const ProstglesMCPToolsWithUI = {
   },
   "docker-sandbox--create_container": {
     component: DockerSandboxCreateContainer,
-    displayMode: "popup",
+    displayMode: "inline",
   },
   [getProstglesMCPFullToolName(
     "prostgles-db",
@@ -46,11 +46,10 @@ export const ProstglesMCPToolsWithUI = {
     component: React.ComponentType<ProstglesMCPToolsProps>;
     /**
      * How to display the tool UI
-     * - popup: (default) Will show a summary button that opens a popup with the full component
-     * - inline: Will show a summary button that opens an inline expanded component
+     * - inline (default): Will show a summary button that opens an inline expanded component
      * - full: will render component and a side button to show source JSON in popup
      */
-    displayMode?: "full" | "popup" | "inline";
+    displayMode: "full" | "inline";
   }
 >;
 

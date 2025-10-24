@@ -9,7 +9,6 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
 ) => {
   await openConnection("prostgles_video_demo");
   await closeWorkspaceWindows(page);
-  await addScene();
   await openMenuIfClosed();
   await addScene({
     animations: [

@@ -1,7 +1,7 @@
 import { getMCPToolNameParts } from "@common/prostglesMcp";
 import { getToolUseResult } from "./ToolUseChatMessageJSONData";
 import { useMemo } from "react";
-import type { MarkdownMonacoCodeProps } from "@components/Chat/MarkdownMonacoCode";
+import type { MarkdownMonacoCodeProps } from "@components/Chat/MarkdownMonacoCode/MarkdownMonacoCode";
 import type { UseLLMChatProps } from "../../useLLMChat";
 import type { DBSSchema } from "@common/publishUtils";
 
@@ -16,27 +16,34 @@ export const useToolUseChatMessage = (props: ToolUseMessageProps) => {
   const { messages, toolUseMessageIndex, messageIndex, mcpServerIcons } = props;
 
   const fullMessage = messages[messageIndex];
-  const m = fullMessage?.message[toolUseMessageIndex];
+  const toolUseMessage = fullMessage?.message[toolUseMessageIndex];
 
   const iconName = useMemo(() => {
     const serverName =
-      m?.type !== "tool_use" ? "" : getMCPToolNameParts(m.name)?.serverName;
+      toolUseMessage?.type !== "tool_use" ?
+        ""
+      : getMCPToolNameParts(toolUseMessage.name)?.serverName;
     return serverName && mcpServerIcons.get(serverName);
-  }, [mcpServerIcons, m]);
+  }, [mcpServerIcons, toolUseMessage]);
 
-  if (!fullMessage || m?.type !== "tool_use") {
+  if (!fullMessage || toolUseMessage?.type !== "tool_use") {
     return "Unexpected message tool use message";
   }
 
   const toolUseResult = getToolUseResult(
     messages.slice(toolUseMessageIndex),
-    m,
+    toolUseMessage,
   );
 
   return {
     toolUseResult,
     iconName,
     fullMessage,
-    m,
+    m: toolUseMessage,
   };
 };
+
+export type ToolUseChatMessageState = Exclude<
+  ReturnType<typeof useToolUseChatMessage>,
+  string
+>;

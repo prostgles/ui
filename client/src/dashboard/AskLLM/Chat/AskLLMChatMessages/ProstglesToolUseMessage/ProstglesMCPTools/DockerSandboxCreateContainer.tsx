@@ -12,6 +12,7 @@ import {
   mdiBash,
   mdiCodeJson,
   mdiDocker,
+  mdiFullscreen,
   mdiLanguageGo,
   mdiLanguageHtml5,
   mdiLanguageJavascript,
@@ -35,6 +36,8 @@ import ErrorComponent from "@components/ErrorComponent";
 import type { ToolResultMessage } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
 import Chip from "@components/Chip";
 import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
+import { PopupSection } from "../../ToolUseChatMessage/PopupSection";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["schema"]["type"]
@@ -72,120 +75,127 @@ export const DockerSandboxCreateContainer = ({
     dbsMethods: { callMCPServerTool },
     dbs,
   } = usePrgl();
-
+  // <FlexRow className="bg-colord-1 p-p5 ws-nowrap min-w-0 max-w-600 w-full max-w-full"></FlexRow>
   return (
-    <FlexCol className="DockerSandboxCreateContainer b b-color ai-start gap-0 f-1">
-      <FlexRow className="bg-color-1 p-p5 ws-nowrap min-w-0 max-w-600 bb b-color w-full max-w-full">
-        <div
-          className="text-ellipsis min-w-0 ws-nowrap f-1 ta-start"
-          title={`${resultObj?.command ?? ""}\n\n${JSON.stringify(omitKeys(data, ["files"]))}`}
-        >
-          {sliceText(resultObj?.command, 100) ??
-            "Docker Sandbox Create Container"}
-        </div>
-        <Chip label="Network mode">{data.networkMode ?? "none"}</Chip>
-        <Chip label="Duration">
-          {getMillisecondsAsInterval(
-            (resultObj?.buildDuration ?? 0) + (resultObj?.runDuration ?? 0),
-          )}
-        </Chip>
-        <Chip label="Timeout">
-          {getMillisecondsAsInterval(data.timeout ?? 30_000)}
-        </Chip>
-        <CopyToClipboardBtn
-          size="small"
-          content={JSON.stringify(message.input)}
-        />
-        {callMCPServerTool && toolResult && (
-          <Btn
-            variant="faded"
-            color="action"
-            iconPath={mdiReload}
-            size="small"
-            onClickPromise={async () => {
-              const result = await callMCPServerTool(
-                chatId,
-                "docker-sandbox",
-                "create_container",
-                data,
-              );
-              console.log("Re-run result:", result);
-              if (result.isError) {
-                addAlert({
-                  title: "Error re-running tool",
-                  children: <ErrorComponent error={result.content} />,
-                });
-              } else {
-                await dbs.llm_messages.update(
-                  { id: toolResult.toolUseResult.id },
-                  {
-                    message: [
-                      {
-                        type: "tool_result",
-                        content: result.content,
-                        tool_name:
-                          toolUseResult?.tool_name ??
-                          "docker-sandbox--create_container",
-                        tool_use_id: toolUseResult!.tool_use_id,
-                      },
-                    ],
-                  },
-                );
-              }
-            }}
+    <PopupSection
+      titleItems={
+        <>
+          <div
+            className="text-ellipsis min-w-0 ws-nowrap f-1 ta-start"
+            title={`${resultObj?.command ?? ""}\n\n${JSON.stringify(omitKeys(data, ["files"]))}`}
           >
-            Re-run
-          </Btn>
-        )}
-      </FlexRow>
-      <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">
-        <MenuList
-          activeKey={activeFilePath}
-          items={Object.keys(data.files).map((filePath) => {
-            const ext = filePath.toLowerCase().split(".").pop() ?? "txt";
-            return {
-              key: filePath,
-              label: filePath,
-              leftIconPath: extensionToInfo[ext]?.iconPath ?? mdiText,
-              iconStyle: { opacity: 0.7 },
-              onPress: () => setActiveFilePath(filePath),
-            };
-          })}
-          variant="vertical"
-          className="pointer bg-color-1 rounded-none"
-          style={{ alignSelf: "stretch", fontSize: 14 }}
-        />
-        <FlexRow className="o-auto f-1 w-full h-full">
-          {activeFilePath && (
-            <MonacoEditor
-              className="f-1 h-full"
-              language={extensionToInfo[extension]?.label ?? "plaintext"}
-              loadedSuggestions={undefined}
-              value={activeContent}
-              style={{ width: "min(600px, 100%)", minHeight: 200 }}
-              onChange={(newValue) => {
-                setEditedFiles((prev) => ({
-                  ...prev,
-                  [activeFilePath]: newValue,
-                }));
+            {sliceText(resultObj?.command, 100) ??
+              "Docker Sandbox Create Container"}
+          </div>
+          <ScrollFade className="flex-row gap-p5 oy-auto min-w-0 f-1 no-scroll-bar">
+            <Chip label="Duration">
+              {getMillisecondsAsSingleInterval(
+                (resultObj?.buildDuration ?? 0) + (resultObj?.runDuration ?? 0),
+              )}
+            </Chip>
+            <Chip label="Timeout">
+              {getMillisecondsAsSingleInterval(data.timeout ?? 30_000)}
+            </Chip>
+            <Chip label="Network mode">{data.networkMode ?? "none"}</Chip>
+          </ScrollFade>
+          <CopyToClipboardBtn
+            size="small"
+            content={JSON.stringify(message.input)}
+          />
+          {callMCPServerTool && toolResult && (
+            <Btn
+              variant="faded"
+              color="action"
+              iconPath={mdiReload}
+              size="small"
+              onClickPromise={async () => {
+                const result = await callMCPServerTool(
+                  chatId,
+                  "docker-sandbox",
+                  "create_container",
+                  data,
+                );
+                console.log("Re-run result:", result);
+                if (result.isError) {
+                  addAlert({
+                    title: "Error re-running tool",
+                    children: <ErrorComponent error={result.content} />,
+                  });
+                } else {
+                  await dbs.llm_messages.update(
+                    { id: toolResult.toolUseResult.id },
+                    {
+                      message: [
+                        {
+                          type: "tool_result",
+                          content: result.content,
+                          tool_name:
+                            toolUseResult?.tool_name ??
+                            "docker-sandbox--create_container",
+                          tool_use_id: toolUseResult!.tool_use_id,
+                        },
+                      ],
+                    },
+                  );
+                }
               }}
-              options={monacoOptions}
-            />
+            >
+              Re-run
+            </Btn>
           )}
+        </>
+      }
+    >
+      <FlexCol className="DockerSandboxCreateContainer b b-color ai-start gap-0 f-1">
+        <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">
+          <MenuList
+            activeKey={activeFilePath}
+            items={Object.keys(data.files).map((filePath) => {
+              const ext = filePath.toLowerCase().split(".").pop() ?? "txt";
+              return {
+                key: filePath,
+                label: filePath,
+                leftIconPath: extensionToInfo[ext]?.iconPath ?? mdiText,
+                iconStyle: { opacity: 0.7 },
+                onPress: () => setActiveFilePath(filePath),
+              };
+            })}
+            variant="vertical"
+            className="pointer bg-color-1 rounded-none"
+            style={{ alignSelf: "stretch", fontSize: 14 }}
+          />
+          <FlexRow className="o-auto f-1 w-full h-full">
+            {activeFilePath && (
+              <MonacoEditor
+                className="f-1 h-full"
+                language={extensionToInfo[extension]?.label ?? "plaintext"}
+                loadedSuggestions={undefined}
+                value={activeContent}
+                style={{ width: "min(600px, 100%)", minHeight: 200 }}
+                onChange={(newValue) => {
+                  setEditedFiles((prev) => ({
+                    ...prev,
+                    [activeFilePath]: newValue,
+                  }));
+                }}
+                options={monacoOptions}
+              />
+            )}
+          </FlexRow>
         </FlexRow>
-      </FlexRow>
-      <div className="bt b-color p-p5 bg-color-2 w-full ta-start">Logs</div>
-      <MonacoEditor
-        key={"logs"}
-        language="text"
-        className="f-p5"
-        data-command="DockerSandboxCreateContainer.Logs"
-        style={{ width: "100%", minHeight: 100 }}
-        value={resultObj?.log.map((l) => l.text).join("") ?? ""}
-        loadedSuggestions={undefined}
-        options={MONACO_READONLY_DEFAULT_OPTIONS}
-      />
-    </FlexCol>
+        <div className="bt b-color p-p5 bg-color-2 w-full ta-start">Logs</div>
+        <MonacoEditor
+          key={"logs"}
+          language="text"
+          className="f-p5"
+          data-command="DockerSandboxCreateContainer.Logs"
+          style={{ width: "100%", minHeight: 100 }}
+          value={resultObj?.log.map((l) => l.text).join("") ?? ""}
+          loadedSuggestions={undefined}
+          options={MONACO_READONLY_DEFAULT_OPTIONS}
+        />
+      </FlexCol>
+    </PopupSection>
   );
 };
 
@@ -235,18 +245,22 @@ const extensionToInfo: Record<string, { label: string; iconPath?: string }> = {
   Dockerfile: { iconPath: mdiDocker, label: "dockerfile" },
 };
 
-const getMillisecondsAsInterval = (ms: number) => {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
+const getMillisecondsAsSingleInterval = (ms: number) => {
+  const seconds = ms / 1000;
+  const minutes = ms / 60_000;
+  const hours = ms / (60 * 60_000);
   const result = {
+    s: seconds,
+    m: minutes,
     h: hours,
-    m: minutes % 60,
-    s: seconds % 60,
-    ms: ms % 1000,
   };
-  return Object.entries(result)
-    .filter(([n, v]) => v)
-    .map(([n, v]) => `${v}${n}`)
-    .join(" ");
+
+  const entries = Object.entries(result);
+
+  return (
+    entries
+      .filter(([n, v]) => v >= 1)
+      .map(([n, v]) => `${v}${n}`)
+      .at(-1) || `${seconds}s`
+  );
 };

@@ -4,7 +4,7 @@ import { classOverride, FlexCol, type DivProps } from "../Flex";
 import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,
-} from "./MarkdownMonacoCode";
+} from "./MarkdownMonacoCode/MarkdownMonacoCode";
 import "./Marked.css";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 

@@ -127,13 +127,13 @@ const mcpSandboxToolUse: ToolUse = {
                 "node-fetch": "^3.3.0",
               },
             }),
-            "index.js": `
+            "index.js": dedent(`
             fetch(
               "http://${isDocker ? "prostgles-ui-docker-mcp" : "172.17.0.1"}:3009/db/execute_sql_with_rollback", 
               { headers: { "Content-Type": "application/json" }, 
               method: "POST", 
               body: JSON.stringify({ sql: "SELECT * FROM users" }) 
-            }).then(res => res.json()).then(console.log).catch(console.error);`,
+            }).then(res => res.json()).then(console.log).catch(console.error);`),
           },
           networkMode: "bridge",
           timeout: 30_000,
@@ -228,7 +228,8 @@ const toolResponses = ${stringify(toolResponses)};
 
 const lastMsg = args.messages.at(-1);
 const lastMsgText = lastMsg?.content?.[0]?.text;
-const toolCallKeyResult = typeof lastMsg?.tool_call_id === "string"? lastMsg.tool_call_id.split("#")[0] : undefined;
+const { tool_call_id } = lastMsg?.[0] ?? {};
+const toolCallKeyResult = typeof tool_call_id === "string"? tool_call_id.split("#")[0] : undefined;
 const toolResult = toolCallKeyResult && toolResponses[toolCallKeyResult];
 const failedToolResult = toolCallKeyResult === "mcpfail";// typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch");
 const msg = failedToolResult ? " mcpfail " : lastMsgText;
@@ -261,3 +262,13 @@ return {
     total_tokens: 0, 
   },
 };//`;
+
+function dedent(str: string) {
+  const lines = str.replace(/^\n/, "").split("\n");
+  const indent = Math.min(
+    ...lines
+      .filter((line) => line.trim().length > 0)
+      .map((line) => line.match(/^(\s*)/)![1].length),
+  );
+  return lines.map((line) => line.slice(indent)).join("\n");
+}

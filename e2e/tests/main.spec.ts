@@ -742,7 +742,7 @@ test.describe("Main test", () => {
       `Page Title: Prostgles`,
       { timeout: 15e3 },
     );
-    await page.getByTestId("Popup.close").last().click();
+    await lastToolUseBtn.click();
 
     await page.waitForTimeout(2e3);
     /** Test max consecutive tool call fails */
@@ -801,7 +801,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
 
-    const dockerRunAndExpect = async (result: string) => {
+    const dockerRunAndExpect = async (result: string, inFullscreen = false) => {
       await sendAskLLMMessage(page, " mcpsandbox ");
       await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
       await expect(page.getByTestId("Chat.messageList")).toContainText(
@@ -814,12 +814,19 @@ test.describe("Main test", () => {
         .locator(".Loading")
         .waitFor({ state: "detached", timeout: 40e3 });
       await page.getByTestId("ToolUseMessage.toggle").last().click();
-      await page.getByTestId("Popup.toggleFullscreen").last().click();
-      await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(
-        result,
-        { timeout: 10e3 },
-      );
-      await page.getByTestId("Popup.close").last().click();
+      if (inFullscreen) {
+        await page.getByTestId("PopupSection.fullscreen").last().click();
+      } else {
+        // await page.getByTestId("Popup.toggleFullscreen").last().click();
+      }
+      await expect(
+        inFullscreen ?
+          page.getByTestId("PopupSection.content").last()
+        : page.getByTestId("ToolUseMessage").last(),
+      ).toContainText(result, {
+        timeout: 10e3,
+      });
+      // await page.getByTestId("Popup.toggleFullscreen").last().click();
     };
     await dockerRunAndExpect(`Tool "execute_sql_with_rollback" not found`);
 
@@ -845,7 +852,7 @@ test.describe("Main test", () => {
     await page.getByRole("option", { name: "Run readonly SQL" }).click();
     await page.getByTestId("Popup.close").last().click();
     await page.waitForTimeout(4e3); // wait for askLLM publish method forked process to restart after schema change
-    await dockerRunAndExpect(`username: 'fresh_user'`);
+    await dockerRunAndExpect(`username: 'fresh_user'`, true);
   });
 
   test("Disable signups", async ({ page: p }) => {

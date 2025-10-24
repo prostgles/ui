@@ -68,11 +68,6 @@ type UIDocCommon = {
 
   /** If true then this is not available for Prostgles Desktop */
   uiVersionOnly?: true;
-
-  /** DBS table info that allows searching it by name */
-  entity?: {
-    tableName: keyof DBSSchema;
-  };
 };
 
 /**

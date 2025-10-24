@@ -245,7 +245,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   );
   await page.getByTestId("ToolUseMessage.toggle").last().click();
   await page.waitForTimeout(2500);
-  await expect(page.getByTestId("ToolUseMessage.Popup").last()).toContainText(
+  await expect(page.getByTestId("ToolUseMessage").last()).toContainText(
     "Fetching data from",
   );
   await addScene({
@@ -261,6 +261,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   });
   await page.locator(getDataKeyElemSelector("fetch_weather.js")).click();
   await page.waitForTimeout(600);
+  await page.getByTestId("ToolUseMessage").last().scrollIntoViewIfNeeded();
   await addScene({
     svgFileName: "docker_js",
     animations: [
@@ -273,7 +274,6 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     ],
   });
 
-  await page.getByTestId("Popup.close").last().click();
   await addScene({ svgFileName: "docker" });
   await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
   await page
@@ -302,7 +302,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   );
   await allowOnce();
   await page.getByTestId("ToolUseMessage.toggle").last().click();
-  await expect(page.getByTestId("ToolUseMessage.Popup").last()).toContainText(
+  await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
     "SELECT * FROM orders",
   );
   await page.getByTestId("Popup.close").last().click();
