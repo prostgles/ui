@@ -52,8 +52,19 @@ export const domToSVG = async (node: HTMLElement) => {
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
+  const rootId = "id-" + crypto.randomUUID();
+  const [firstG, otherChild] = Array.from(svg.children).filter(
+    (c) => c instanceof SVGGElement,
+  ) as SVGGElement[];
+  if (!firstG) {
+    throw new Error("No SVG content generated");
+  }
+  if (otherChild) {
+    throw new Error("Unexpected SVG structure - multiple root elements");
+  }
+  firstG.setAttribute("id", rootId);
   // recordDomChanges(node);
-  return { svgString, svg };
+  return { svgString, svg, rootId };
 };
 
 const repositionAbsoluteAndFixed = (svg: SVGGElement) => {

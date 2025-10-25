@@ -7,9 +7,9 @@ import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUti
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys, type AnyObject } from "prostgles-types";
 import { Server } from "socket.io";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { getConnectionPaths } from "../../../common/utils";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
+import { getConnectionPaths } from "@common/utils";
 import { addLog } from "../Logger";
 import { getAuth, withOrigin } from "../authConfig/getAuth";
 import type { SUser } from "../authConfig/sessionUtils";

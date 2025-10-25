@@ -4,15 +4,15 @@ import type {
   ProstglesInitOptions,
 } from "prostgles-server/dist/ProstglesTypes";
 import type { DbTableInfo } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { DB, OnInitReason } from "prostgles-server/dist/initProstgles";
-import type { AnyObject, FileColumnConfig } from "prostgles-types";
+import type { FileColumnConfig } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
 import type { Connections, DatabaseConfigs, DBS } from "..";
 import { getConnectionPaths, ROUTES } from "../../../common/utils";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 
 export const getDatabaseConfigFilter = (c: Connections) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);

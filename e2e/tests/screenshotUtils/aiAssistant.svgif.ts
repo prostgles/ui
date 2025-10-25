@@ -30,12 +30,6 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   //   svgFileName: "supported_providers",
   //   caption: "Supported providers",
   // });
-
-  /**
-   * This is required to initialize the askLLM function
-   */
-  await openConnection("cloud");
-  await openConnection("prostgles_video_demo");
   await openConnection("food_delivery");
   await page.getByTestId("AskLLM").click();
   await page.waitForTimeout(1000);

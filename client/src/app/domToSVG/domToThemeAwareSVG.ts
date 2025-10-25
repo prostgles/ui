@@ -12,7 +12,7 @@ export const domToThemeAwareSVG = async (
   node: HTMLElement,
   debugMode?: "light" | "both",
 ) => {
-  const { svg: svgLight } = await domToSVG(node);
+  const { svg: svgLight, rootId: svgLightRootId } = await domToSVG(node);
   if (debugMode === "light") {
     renderSvg(svgLight);
     return;
@@ -97,24 +97,9 @@ export const domToThemeAwareSVG = async (
     .filter(isDefined);
 
   matches.forEach(({ lightNode, darkNode }) => {
-    if (!darkNode) {
-      console.warn(
-        "No corresponding dark node found for light node " + lightNode.nodeName,
-        lightNode._bboxCode,
-      );
-      // if (
-      //   lightNode instanceof SVGTextElement
-      //   // &&
-      //   // lightNode.textContent?.includes("11:4")
-      // ) {
-      //   console.log(lightNodes, darkNodes);
-      //   debugger;
-      // }
-      return;
-    }
     if (lightNode instanceof SVGUseElement) {
       const lightHref = lightNode.getAttribute("href");
-      const darkHref = darkNode.getAttribute("href");
+      const darkHref = darkNode?.getAttribute("href");
       if (lightHref && darkHref) {
         const darkRefImg = svgDark.querySelector<SVGImageElement>(darkHref);
         const lightRefImg = svgLight.querySelector<SVGImageElement>(lightHref);
@@ -134,18 +119,33 @@ export const domToThemeAwareSVG = async (
 
           const darkThemeUse = lightNode.cloneNode(true) as SVGUseElement;
           darkThemeUse.setAttribute("href", `#${darkImage.id}`);
-          darkThemeUse.style.visibility = `var(${displayNoneIfDark})`;
+          darkThemeUse.style.visibility = `var(${displayNoneIfLight})`;
           lightNode.parentElement?.appendChild(darkThemeUse);
-          lightNode.style.display = `var(${displayNoneIfLight})`;
+          lightNode.style.visibility = `var(${displayNoneIfDark})`;
         }
       }
       return;
     }
+    if (!darkNode) {
+      console.warn(
+        "No corresponding dark node found for light node " + lightNode.nodeName,
+        lightNode._bboxCode,
+      );
+      // if (
+      //   lightNode instanceof SVGTextElement
+      //   // &&
+      //   // lightNode.textContent?.includes("11:4")
+      // ) {
+      //   console.log(lightNodes, darkNodes);
+      //   debugger;
+      // }
+      return;
+    }
 
     /** Add extra elements from dark node (sometimes the background changes from transparent to color on match case button) */
-    // if (lightNode instanceof SVGGElement && darkNode instanceof SVGGElement) {
-    //   addNewChildren(lightNode, darkNode, matchesMap);
-    // }
+    if (lightNode instanceof SVGGElement && darkNode instanceof SVGGElement) {
+      addNewChildren(lightNode, darkNode, matchesMap);
+    }
 
     const fill = lightNode.getAttribute("fill");
     const darkFill = darkNode.getAttribute("fill");
@@ -227,7 +227,7 @@ export const domToThemeAwareSVG = async (
   cssSheet.setAttribute("type", "text/css");
   svgLight.appendChild(cssSheet);
   cssSheet.textContent = [
-    `:root { `,
+    `:root #${svgLightRootId} { `,
     `  ${displayNoneIfDark}: visible;`,
     `  ${displayNoneIfLight}: hidden;`,
     ...colorArr.map(
@@ -237,7 +237,7 @@ export const domToThemeAwareSVG = async (
   ].join("\n");
   cssSheet.textContent += [
     `@media (prefers-color-scheme: dark) { `,
-    ` :root  { `,
+    ` :root #${svgLightRootId}  { `,
     `  ${displayNoneIfDark}: hidden;`,
     `  ${displayNoneIfLight}: visible;`,
     ...colorArr

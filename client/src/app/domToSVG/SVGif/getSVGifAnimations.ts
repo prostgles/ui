@@ -247,7 +247,7 @@ export const getSVGifAnimations = (
     }
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svgDom);
-    appendSvgToSvg({ id: sceneId, svgFile: svgString }, g);
+    appendSvgToSvg({ id: sceneId, svgFile: svgString, svgDom }, g);
 
     const isLastScene = sceneIndex === parsedScenes.length - 1;
     sceneKeyframes.push(`${getPercent(currentPrevDuration)}% ${visible}`);
@@ -291,24 +291,30 @@ export const getSVGifAnimations = (
 };
 
 const appendSvgToSvg = (
-  { svgFile, id }: { svgFile: string; id: string },
+  { svgFile, id, svgDom }: { svgFile: string; id: string; svgDom: SVGElement },
   g: SVGGElement,
 ) => {
-  const img = document.createElementNS(SVG_NAMESPACE, "image");
-  img.setAttribute("id", id);
-  img.setAttribute("xmlns", SVG_NAMESPACE);
-  img.setAttribute(
-    "href",
-    `data:image/svg+xml;utf8,${encodeURIComponent(svgFile)}`,
-  );
-  img.setAttribute("width", "100%");
-  img.setAttribute("height", "100%");
-  img.setAttribute("style", "opacity: 0;");
-  g.appendChild(img);
+  // const img = document.createElementNS(SVG_NAMESPACE, "image");
+  // img.setAttribute("id", id);
+  // img.setAttribute("xmlns", SVG_NAMESPACE);
+  // img.setAttribute(
+  //   "href",
+  //   `data:image/svg+xml;utf8,${encodeURIComponent(svgFile)}`,
+  // );
+  // img.setAttribute("width", "100%");
+  // img.setAttribute("height", "100%");
+  // img.setAttribute("style", "opacity: 0;");
+  // g.appendChild(img);
+
+  const wrappingG = document.createElementNS(SVG_NAMESPACE, "g");
+  wrappingG.setAttribute("id", id);
+  wrappingG.style.opacity = "0";
+  wrappingG.append(...Array.from(svgDom.children));
+  g.appendChild(wrappingG);
 
   return {
     remove: () => {
-      img.remove();
+      wrappingG.remove();
     },
   };
 };

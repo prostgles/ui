@@ -27,8 +27,8 @@ export type OnBeforeScreenshot = (
   addSVGifScene: (scene?: Partial<SVGifScene>) => Promise<void>,
 ) => Promise<void>;
 export const SVG_SCREENSHOT_DETAILS = {
-  ai_assistant: aiAssistantSvgif,
   schema_diagram: schemaDiagramSvgif,
+  ai_assistant: aiAssistantSvgif,
   file_importer: fileImporter,
   timechart: async (page, { openConnection, hideMenuIfOpen }) => {
     await openConnection("crypto");

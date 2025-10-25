@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.4",
     "@types/node": "^22.15.2",
     "@types/smtp-server": "^3.5.10",
     "@types/ws": "^8.5.3",

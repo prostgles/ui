@@ -15,7 +15,10 @@ type P = {
 };
 export const Documentation = ({ isElectron }: P) => {
   const { docText, docFiles } = useMemo(() => {
-    const docFiles = getDocumentationFiles(isElectron);
+    const docFiles = getDocumentationFiles(isElectron).map((d) => ({
+      ...d,
+      text: d.text.replaceAll(`="./screenshots/`, `="/screenshots/`),
+    }));
 
     const docText = docFiles.map(({ text }) => text).join("\n\n");
     return {

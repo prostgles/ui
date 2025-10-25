@@ -132,7 +132,7 @@ export const AuthProviderSetup = ({
             });
           }}
         />
-        <Select
+        <FormField
           label={t.AuthProviderSetup["Default user type"]}
           data-command="AuthProviderSetup.defaultUserType"
           value={auth_providers?.created_user_type ?? "default"}
@@ -156,14 +156,12 @@ export const AuthProviderSetup = ({
               created_user_type: default_user_type || undefined,
             });
           }}
-        />
-        <InfoRow variant="naked" iconPath={""} color="info">
-          {
+          hint={
             t.AuthProviderSetup[
               "The default user type assigned to new users. Defaults to 'default'"
             ]
           }
-        </InfoRow>
+        />
         {auth_providers?.created_user_type === "admin" && (
           <InfoRow variant="filled" color="danger">
             {
