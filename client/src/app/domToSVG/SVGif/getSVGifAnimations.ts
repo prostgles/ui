@@ -117,29 +117,6 @@ export const getSVGifAnimations = (
           width,
           height,
         });
-        const getClipPathKeyframes = ({
-          fromPerc,
-          toPerc,
-          direction,
-        }: {
-          fromPerc: number;
-          toPerc: number;
-          direction: "top to bottom" | "left to right";
-        }) => {
-          const clippedInset =
-            direction === "top to bottom" ? `inset(0 0 100% 0)` : (
-              `inset(0 100% 0 0)`
-            );
-          return [
-            !fromPerc ? "" : `0% { opacity: 0; clip-path: ${clippedInset} }`,
-            `${toFixed(fromPerc)}% { opacity: 0; clip-path: ${clippedInset} }`,
-            `${toFixed(fromPerc + 0.1)}% { opacity: 1; clip-path: ${clippedInset} }`,
-            `${toFixed(toPerc)}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
-            toPerc === 100 ? "" : (
-              `100% { opacity: 1; clip-path: inset(0 0 0 0); }`
-            ),
-          ].filter(Boolean);
-        };
         if (animation.type === "reveal-list") {
           const fromTime = currentPrevDuration;
           const toTime = fromTime + duration;
@@ -148,10 +125,11 @@ export const getSVGifAnimations = (
           sceneNodeAnimations.push({
             sceneId,
             elemSelector: elementSelector,
-            keyframes: getClipPathKeyframes({
+            keyframes: getRevealKeyframes({
               fromPerc,
               toPerc,
-              direction: "top to bottom",
+              mode: "opacity",
+              // mode: "top to bottom",
             }),
           });
         } else if (animation.type === "type") {
@@ -179,10 +157,10 @@ export const getSVGifAnimations = (
             sceneNodeAnimations.push({
               sceneId,
               elemSelector: `${elementSelector} ${tspanOrText.nodeName}:nth-of-type(${i + 1})`,
-              keyframes: getClipPathKeyframes({
+              keyframes: getRevealKeyframes({
                 fromPerc,
                 toPerc,
-                direction: "left to right",
+                mode: "left to right",
               }),
             });
             currentXOffset += tspanWidth;
@@ -225,7 +203,7 @@ export const getSVGifAnimations = (
           @keyframes ${animationName} {
           ${keyframes.map((v) => `  ${v}`).join("\n")}
           }
-          ${getAnimationProperty({ elemSelector, animName: animationName, totalDuration })}
+          ${getAnimationProperty({ elemSelector: `#${sceneId} ${elemSelector}`, animName: animationName, totalDuration })}
         `);
       });
 
@@ -306,18 +284,48 @@ const appendSvgToSvg = (
   // img.setAttribute("style", "opacity: 0;");
   // g.appendChild(img);
 
-  const wrappingG = document.createElementNS(SVG_NAMESPACE, "g");
-  wrappingG.setAttribute("id", id);
-  wrappingG.style.opacity = "0";
-  wrappingG.append(...Array.from(svgDom.children));
-  g.appendChild(wrappingG);
+  // const wrappingG = document.createElementNS(SVG_NAMESPACE, "g");
+  // wrappingG.setAttribute("id", id);
+  // wrappingG.style.opacity = "0";
+  // wrappingG.append(...Array.from(svgDom.children));
+  svgDom.setAttribute("id", id);
+  g.appendChild(svgDom);
 
   return {
     remove: () => {
-      wrappingG.remove();
+      svgDom.remove();
     },
   };
 };
 
 const visible = "{ opacity: 1; visibility: visible; }";
 const hidden = "{ opacity: 0; visibility: hidden; }";
+
+const getRevealKeyframes = ({
+  fromPerc,
+  toPerc,
+  mode,
+}: {
+  fromPerc: number;
+  toPerc: number;
+  mode: "top to bottom" | "left to right" | "opacity";
+}) => {
+  if (mode === "opacity") {
+    return [
+      !fromPerc ? "" : `0% { opacity: 0; }`,
+      `${toFixed(fromPerc)}% { opacity: 0; }`,
+      `${toFixed(fromPerc + 0.1)}% { opacity: 1; }`,
+      `${toFixed(toPerc)}% { opacity: 1; }`,
+      toPerc === 100 ? "" : `100% { opacity: 1; }`,
+    ].filter(Boolean);
+  }
+  const clippedInset =
+    mode === "top to bottom" ? `inset(0 0 100% 0)` : `inset(0 100% 0 0)`;
+  return [
+    !fromPerc ? "" : `0% { opacity: 0; clip-path: ${clippedInset} }`,
+    `${toFixed(fromPerc)}% { opacity: 0; clip-path: ${clippedInset} }`,
+    `${toFixed(fromPerc + 0.1)}% { opacity: 1; clip-path: ${clippedInset} }`,
+    `${toFixed(toPerc)}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
+    toPerc === 100 ? "" : `100% { opacity: 1; clip-path: inset(0 0 0 0); }`,
+  ].filter(Boolean);
+};

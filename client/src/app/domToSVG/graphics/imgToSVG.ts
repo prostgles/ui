@@ -19,7 +19,7 @@ export const addImageFromDataURL = (
   }
 
   if (!imageId) {
-    imageId = `svg-image-${context.idCounter++}`;
+    imageId = `${context.docId}-svg-image-${context.idCounter++}`;
     const imageElem = document.createElementNS(SVG_NAMESPACE, "image");
     imageElem.setAttribute("id", imageId);
     imageElem.setAttribute("href", dataUrl);

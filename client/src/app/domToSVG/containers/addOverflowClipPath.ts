@@ -59,7 +59,7 @@ export const addOverflowClipPath = (
   clipRect.setAttribute("stroke", "none");
 
   const clipPath = document.createElementNS(SVG_NAMESPACE, "clipPath");
-  const clipPathId = `clip-of-${context.idCounter++}`;
+  const clipPathId = `${context.docId}-clip-of-${context.idCounter++}`;
   clipPath.setAttribute("id", clipPathId);
   const transform = g.getAttribute("transform");
   const transformParts = transform?.split(")");

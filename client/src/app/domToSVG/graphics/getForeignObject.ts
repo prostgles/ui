@@ -14,41 +14,6 @@ export const getForeignObject = async (
   y: number,
   force = false,
 ) => {
-  const getForeignObject = () => {
-    console.error(
-      "AVOID USING foreignObject BECAUSE IOS SAFARI DOESN'T FULLY SUPPORT IT",
-      element,
-    );
-    const foreignObject = document.createElementNS(
-      SVG_NAMESPACE,
-      "foreignObject",
-    );
-    foreignObject.style.color = style.color;
-    foreignObject.style.padding = style.padding;
-    foreignObject.style.margin = style.margin;
-    foreignObject.style.color = style.color;
-    /** Ensure the icon buttons icons are centered */
-    foreignObject.style.display = "grid";
-    foreignObject.style.placeItems = "center";
-    foreignObject.setAttribute("x", `${toFixed(x)}`);
-    foreignObject.setAttribute("y", `${toFixed(y)}`);
-    foreignObject.setAttribute("width", `${toFixed(bbox.width)}`);
-    foreignObject.setAttribute("height", `${toFixed(bbox.height)}`);
-    const wrapper = document.createElementNS(
-      "http://www.w3.org/1999/xhtml",
-      "div",
-    );
-    wrapper.style.width = "100%";
-    wrapper.style.height = "100%";
-    wrapper.style.boxSizing = "border-box";
-    wrapper.style.display = "flex";
-    wrapper.style.alignItems = "center";
-    wrapper.style.justifyContent = "center";
-    foreignObject.appendChild(wrapper);
-
-    return foreignObject;
-  };
-
   if (isImgNode(element) && element.src.endsWith(".svg")) {
     return new Promise<SVGElement | undefined>((resolve) => {
       fetch(element.src)
@@ -78,6 +43,7 @@ export const getForeignObject = async (
         });
     });
   }
+
   // if (isSVGNode(element)) {
   //   const foreignObject = getForeignObject();
 
@@ -89,20 +55,20 @@ export const getForeignObject = async (
   //   return foreignObject;
   // }
 
-  if (!force) return;
+  // if (!force) return;
 
-  const foreignObject = getForeignObject();
-  const elementClone = element.cloneNode(true) as HTMLElement;
+  // const foreignObject = getForeignObject();
+  // const elementClone = element.cloneNode(true) as HTMLElement;
 
-  // Move relevant animations and keyframes as well
-  copyAnimationStyles(style, elementClone);
-  const animationStyles = cloneAnimations(element);
-  if (animationStyles) {
-    foreignObject.firstChild!.appendChild(animationStyles);
-  }
-  foreignObject.firstChild!.appendChild(elementClone);
+  // // Move relevant animations and keyframes as well
+  // copyAnimationStyles(style, elementClone);
+  // const animationStyles = cloneAnimations(element);
+  // if (animationStyles) {
+  //   foreignObject.firstChild!.appendChild(animationStyles);
+  // }
+  // foreignObject.firstChild!.appendChild(elementClone);
 
-  return foreignObject;
+  // return foreignObject;
 };
 
 /**

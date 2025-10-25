@@ -27,6 +27,7 @@ export type OnBeforeScreenshot = (
   addSVGifScene: (scene?: Partial<SVGifScene>) => Promise<void>,
 ) => Promise<void>;
 export const SVG_SCREENSHOT_DETAILS = {
+  sql_editor: sqlEditorSVG,
   schema_diagram: schemaDiagramSvgif,
   ai_assistant: aiAssistantSvgif,
   file_importer: fileImporter,
@@ -38,7 +39,6 @@ export const SVG_SCREENSHOT_DETAILS = {
     }
     await hideMenuIfOpen();
   },
-  sql_editor: sqlEditorSVG,
   postgis_map: async (page, { hideMenuIfOpen }) => {
     await openConnection(page, "food_delivery");
     await page.waitForTimeout(1500);

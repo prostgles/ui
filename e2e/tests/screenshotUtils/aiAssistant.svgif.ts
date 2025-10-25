@@ -193,9 +193,10 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     ],
   });
   await loadTaskBtn.click();
+  await page.getByTestId("Alert").getByText("OK").waitFor({ state: "visible" });
+  await addScene({ svgFileName: "tasks" });
   await page.getByTestId("Alert").getByText("OK").click();
   await page.waitForTimeout(4000);
-  await addScene({ svgFileName: "tasks" });
   const { filePath } = await createReceipt(page);
   await page.getByTestId("Chat.addFiles").setInputFiles(filePath);
 

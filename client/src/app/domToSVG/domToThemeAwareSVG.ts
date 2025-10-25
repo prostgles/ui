@@ -143,9 +143,9 @@ export const domToThemeAwareSVG = async (
     }
 
     /** Add extra elements from dark node (sometimes the background changes from transparent to color on match case button) */
-    if (lightNode instanceof SVGGElement && darkNode instanceof SVGGElement) {
-      addNewChildren(lightNode, darkNode, matchesMap);
-    }
+    // if (lightNode instanceof SVGGElement && darkNode instanceof SVGGElement) {
+    //   addNewChildren(lightNode, darkNode, matchesMap);
+    // }
 
     const fill = lightNode.getAttribute("fill");
     const darkFill = darkNode.getAttribute("fill");

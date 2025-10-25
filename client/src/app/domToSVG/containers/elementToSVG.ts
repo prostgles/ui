@@ -16,6 +16,7 @@ import {
 } from "../graphics/getForeignObject";
 
 export type SVGContext = {
+  docId: string;
   offsetX: number;
   offsetY: number;
   defs: SVGDefsElement;

@@ -22,7 +22,9 @@ export const domToSVG = async (node: HTMLElement) => {
   const defs = document.createElementNS(SVG_NAMESPACE, "defs");
   svg.appendChild(defs);
 
+  const rootId = "id-" + crypto.randomUUID().split("-")[0];
   const context: SVGContext = {
+    docId: rootId,
     offsetX: -nodeBBox.left,
     offsetY: -nodeBBox.top,
     width: nodeBBox.width,
@@ -52,7 +54,6 @@ export const domToSVG = async (node: HTMLElement) => {
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
-  const rootId = "id-" + crypto.randomUUID();
   const [firstG, otherChild] = Array.from(svg.children).filter(
     (c) => c instanceof SVGGElement,
   ) as SVGGElement[];
