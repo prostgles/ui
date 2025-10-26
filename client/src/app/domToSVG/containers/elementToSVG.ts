@@ -162,6 +162,7 @@ export const elementToSVG = async (
 
     const wrapperG = document.createElementNS(SVG_NAMESPACE, "g");
     wrapperG.appendChild(svgElement);
+    /** wrapperG required for safari to ensure animations work */
     if (style.animation) {
       wrapperG.setAttribute(
         "style",
