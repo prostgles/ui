@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { dashboardSvgif } from "screenshotUtils/dashboard.svgif";
 import { fileImporter } from "screenshotUtils/fileImporter.svgif";
+import { overviewSvgif } from "screenshotUtils/overview.svgif";
 import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
 import { getDataKeyElemSelector } from "../../Testing";
@@ -12,7 +13,7 @@ import {
   type PageWIds,
 } from "../../utils/utils";
 import { aiAssistantSvgif } from "../aiAssistant.svgif";
-import { sqlEditorSVG } from "../sqlEditor.svgif";
+import { sqlEditorSvgif } from "../sqlEditor.svgif";
 import { commandPaletteSvgif } from "./commandPalette.svgif";
 import {
   SVG_SCREENSHOT_DIR,
@@ -27,9 +28,9 @@ export type OnBeforeScreenshot = (
   addSVGifScene: (scene?: Partial<SVGifScene>) => Promise<void>,
 ) => Promise<void>;
 export const SVG_SCREENSHOT_DETAILS = {
-  sql_editor: sqlEditorSVG,
-  schema_diagram: schemaDiagramSvgif,
   ai_assistant: aiAssistantSvgif,
+  sql_editor: sqlEditorSvgif,
+  schema_diagram: schemaDiagramSvgif,
   file_importer: fileImporter,
   timechart: async (page, { openConnection, hideMenuIfOpen }) => {
     await openConnection("crypto");
@@ -172,6 +173,7 @@ export const SVG_SCREENSHOT_DETAILS = {
     await page.getByTestId("config.files").click();
     await page.waitForTimeout(1500);
   },
+  overview: overviewSvgif,
 } satisfies Record<
   string,
   OnBeforeScreenshot | Record<string, OnBeforeScreenshot>
@@ -268,8 +270,3 @@ const saveSVGScreenshot = async (
     encoding: "utf8",
   });
 };
-
-const themes = [
-  { name: "light", dir: SVG_SCREENSHOT_DIR },
-  { name: "dark", dir: path.join(SVG_SCREENSHOT_DIR, "dark") },
-] as const;

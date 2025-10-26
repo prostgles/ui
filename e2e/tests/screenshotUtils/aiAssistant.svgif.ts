@@ -11,6 +11,7 @@ import {
   runDbSql,
   setModelByText,
   setPromptByText,
+  type PageWIds,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
 
@@ -89,50 +90,10 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     doClick && (await allowOnceBtn.click());
     await page.waitForTimeout(2500);
   };
-  const typeSendAddScenes = async (
-    text: string,
-    endAnimations: SVGif.Animation[] = [],
-    waitFor?: () => Promise<void>,
-  ) => {
-    await page.getByTestId("Chat.textarea").fill(text);
-    await page.waitForTimeout(1000);
-    await addScene({
-      animations: [
-        {
-          type: "type",
-          elementSelector: getCommandElemSelector("Chat.textarea"),
-          duration: 2000,
-        },
-        { type: "wait", duration: 500 },
-      ],
-    });
-    await page.getByTestId("Chat.send").click();
-    await page.waitForTimeout(2000);
-    await addScene(); // LLM response loading
-    const lastMessage = page
-      .getByTestId("Chat.messageList")
-      .locator(".message")
-      .last();
 
-    await expect(lastMessage).toContainClass("incoming", { timeout: 15000 });
-    await waitFor?.();
-    await addScene({
-      animations: [
-        {
-          type: "reveal-list",
-          duration: 2000,
-          elementSelector:
-            getCommandElemSelector("Chat.messageList") + " > g:last-of-type",
-        },
-        {
-          type: "wait",
-          duration: 2000,
-        },
-        ...endAnimations,
-      ],
-    });
-  };
   await typeSendAddScenes(
+    page,
+    addScene,
     "I need some dashboards with useful insights and metrics",
     [
       {
@@ -174,6 +135,8 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await deletePreviousMessages();
   await setPromptByText(page, "create task");
   await typeSendAddScenes(
+    page,
+    addScene,
     "The task involves importing data from scanned receipts",
   );
   const loadTaskBtn = await page
@@ -194,6 +157,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   });
   await loadTaskBtn.click();
   await page.getByTestId("Alert").getByText("OK").waitFor({ state: "visible" });
+  await page.waitForTimeout(1000);
   await addScene({ svgFileName: "tasks" });
   await page.getByTestId("Alert").getByText("OK").click();
   await page.waitForTimeout(4000);
@@ -201,21 +165,23 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Chat.addFiles").setInputFiles(filePath);
 
   await typeSendAddScenes(
+    page,
+    addScene,
     `Here is a scanned receipt `,
-    [
-      { type: "wait", duration: 500 },
-      {
-        type: "click",
-        elementSelector: getCommandElemSelector("AskLLMToolApprover.AllowOnce"),
-        duration: 1000,
-      },
-    ],
-    () => allowOnce(false),
+    // [
+    //   { type: "wait", duration: 500 },
+    //   {
+    //     type: "click",
+    //     elementSelector: getCommandElemSelector("AskLLMToolApprover.AllowOnce"),
+    //     duration: 1000,
+    //   },
+    // ],
+    // () => allowOnce(false),
   );
   await expect(page.getByTestId("Popup.content").last()).toContainText(
     "Grand Ocean Hotel",
   );
-  await allowOnce();
+  // await allowOnce();
   await addScene({ svgFileName: "vision_ocr" });
   await deletePreviousMessages();
   await setPromptByText(page, "chat");
@@ -223,11 +189,13 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page
     .getByTestId("MCPServerTools")
     .getByText("create_container")
-    .click();
-  await page.getByText("Auto-approve: OFF").click();
+    .click({ clickCount: 2, delay: 1000 }); // Click twice for auto-approve
+  // await page.getByText("Auto-approve: OFF").click();
   await page.getByTestId("Popup.close").last().click();
 
   await typeSendAddScenes(
+    page,
+    addScene,
     "Upload some weather data for London for the last 4 years",
     [
       { type: "wait", duration: 1000 },
@@ -284,6 +252,8 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await setPromptByText(page, "chat");
 
   await typeSendAddScenes(
+    page,
+    addScene,
     "Show a list of orders from the last 30 days",
     [
       { type: "wait", duration: 1000 },
@@ -302,4 +272,46 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   );
   await page.getByTestId("Popup.close").last().click();
   await addScene({ svgFileName: "sql" });
+};
+
+export const typeSendAddScenes = async (
+  page: PageWIds,
+  addScene: Parameters<OnBeforeScreenshot>[2],
+  text: string,
+  endAnimations: SVGif.Animation[] = [],
+  waitFor?: () => Promise<void>,
+) => {
+  await page.getByTestId("Chat.textarea").fill(text);
+  await page.waitForTimeout(1000);
+  await addScene({
+    animations: [
+      {
+        type: "type",
+        elementSelector: getCommandElemSelector("Chat.textarea"),
+        duration: 2000,
+      },
+      { type: "wait", duration: 500 },
+    ],
+  });
+  await page.getByTestId("Chat.send").click();
+  await page.waitForTimeout(2000);
+  await addScene(); // LLM response loading
+  const lastMessage = page
+    .getByTestId("Chat.messageList")
+    .locator(".message")
+    .last();
+
+  await expect(lastMessage).toContainClass("incoming", { timeout: 15000 });
+  await waitFor?.();
+  await addScene({
+    animations: [
+      {
+        type: "reveal-list",
+        duration: 2000,
+        elementSelector:
+          getCommandElemSelector("Chat.messageList") + " > g:last-of-type",
+      },
+      ...endAnimations,
+    ],
+  });
 };

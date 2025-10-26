@@ -122,7 +122,6 @@ export const parseLLMResponseObject: LLMResponseParser = ({
             }
           }) ?? [];
         return [
-          ...toolCalls,
           c.message.content ?
             ({
               type: "text",
@@ -130,6 +129,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
               reasoning: c.message.reasoning || undefined,
             } satisfies LLMMessageWithRole["content"][number])
           : undefined,
+          ...toolCalls,
         ];
       })
       .filter(isDefined);

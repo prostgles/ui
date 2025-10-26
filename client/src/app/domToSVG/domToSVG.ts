@@ -47,7 +47,7 @@ export const domToSVG = async (node: HTMLElement) => {
   await wrapAllSVGText(svg);
   /** Does not really seem effective */
   // deduplicateSVGPaths(svg);
-  await addFragmentViewBoxes(svg, 10);
+  // await addFragmentViewBoxes(svg, 10);
   repositionAbsoluteAndFixed(svg);
   remove();
   await tout(1000);

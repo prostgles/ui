@@ -29,8 +29,10 @@ export const domToThemeAwareSVG = async (
   const getUniqueColorVarName = (
     property: CSSProperty,
     value: string,
+    darkValue: string,
   ): string => {
-    let varName = `${property}-${varId++}`;
+    // let varName = `${property}-${varId++}`;
+    let varName = `${(value + "-" + darkValue).replace(/[^a-zA-Z0-9]/g, "")}`;
     while (lightToDarkMap.get(value)?.some((c) => c.varName === varName)) {
       varName = `${property}-${varId++}`;
     }
@@ -51,7 +53,7 @@ export const domToThemeAwareSVG = async (
     if (existing) {
       return existing.varName;
     }
-    const varName = getUniqueColorVarName(property, value);
+    const varName = getUniqueColorVarName(property, value, darkValue);
     lightToDarkMap.set(value, [
       ...existingGroup,
       { darkValue: darkValue, varName },

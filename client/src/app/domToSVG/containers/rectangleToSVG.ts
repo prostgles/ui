@@ -201,10 +201,10 @@ export const getRectanglePath = (
   { x, y, width, height }: Pick<SVGNodeLayout, "x" | "y" | "width" | "height">,
   { border }: Pick<Awaited<ReturnType<typeof getWhatToRenderOnSVG>>, "border">,
 ) => {
-  const path = document.createElementNS(
-    SVG_NAMESPACE,
-    "path",
-  ) as SVGScreenshotNodeType;
+  const path = document.createElementNS(SVG_NAMESPACE, "path") as Extract<
+    SVGScreenshotNodeType,
+    SVGPathElement
+  >;
 
   const minDimension = Math.min(width, height);
   const [rtl = 0, rtr = 0, rbr = 0, rbl = 0] = [

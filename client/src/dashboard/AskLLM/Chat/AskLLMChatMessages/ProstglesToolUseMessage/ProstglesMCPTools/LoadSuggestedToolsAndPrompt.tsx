@@ -6,7 +6,7 @@ import {
   mdiScript,
   mdiTools,
 } from "@mdi/js";
-import type { JSONB } from "prostgles-types";
+import type { DBSchema, JSONB } from "prostgles-types";
 import React, { useState } from "react";
 import {
   getMCPToolNameParts,
@@ -21,6 +21,7 @@ import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { usePrgl } from "../../../../../../pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../../../../utils";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
+import type { DBSSchema } from "@common/publishUtils";
 
 export const LoadSuggestedToolsAndPrompt = ({
   chatId,
@@ -139,6 +140,7 @@ export const LoadSuggestedToolsAndPrompt = ({
                 return {
                   chat_id: chatId,
                   tool_id: t.id,
+                  auto_approve: true,
                 };
               }),
             );
@@ -163,6 +165,7 @@ export const LoadSuggestedToolsAndPrompt = ({
                   connection_id: connectionId,
                   chat_id: chatId,
                   server_function_id: t.id,
+                  auto_approve: true,
                 };
               }),
             );
@@ -174,21 +177,70 @@ export const LoadSuggestedToolsAndPrompt = ({
             {
               db_data_permissions:
                 dbAccess.Mode === "execute_sql_commit" ?
-                  { Mode: "Run commited SQL" }
+                  { Mode: "Run commited SQL", auto_approve: true }
                 : dbAccess.Mode === "execute_sql_rollback" ?
-                  { Mode: "Run readonly SQL" }
+                  { Mode: "Run readonly SQL", auto_approve: true }
+                : dbAccess.Mode === "Custom" ?
+                  { ...dbAccess, auto_approve: true }
                 : dbAccess,
             },
           );
 
           addAlert({
             children: (
-              <div>
-                {data.suggested_mcp_tool_names.length}{" "}
-                <strong>MCP tools</strong> and{" "}
-                {data.suggested_database_tool_names?.length ?? 0}{" "}
-                <strong>DB Functions</strong> added to this chat
-              </div>
+              <FlexCol className="ta-start">
+                <div>The following were applied to this chat:</div>
+                {data.suggested_mcp_tool_names.length ?
+                  <span>
+                    MCP Tools:{" "}
+                    <ul>
+                      {data.suggested_mcp_tool_names.map((name) => (
+                        <li key={name} className="bold">
+                          {name}
+                        </li>
+                      ))}
+                    </ul>
+                  </span>
+                : null}
+                {data.suggested_database_tool_names?.length ?
+                  <div>
+                    DB Functions:{" "}
+                    <ul>
+                      {data.suggested_database_tool_names.map((name) => (
+                        <li key={name} className="bold">
+                          {name}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                : null}
+
+                {dbAccess.Mode !== "Custom" && (
+                  <div>
+                    Database Access: <strong>{dbAccess.Mode}</strong>
+                  </div>
+                )}
+                {dbAccess.Mode === "Custom" && (
+                  <div>
+                    Table access:
+                    <ul>
+                      {dbAccess.tables.map((t) => (
+                        <li key={t.tableName}>
+                          <strong>{t.tableName}</strong>:{" "}
+                          {[
+                            t.select ? "select" : null,
+                            t.update ? "update" : null,
+                            t.insert ? "insert" : null,
+                            t.delete ? "delete" : null,
+                          ]
+                            .filter(isDefined)
+                            .join(", ")}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </FlexCol>
             ),
           });
         }}

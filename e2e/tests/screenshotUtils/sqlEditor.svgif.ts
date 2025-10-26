@@ -7,7 +7,7 @@ import {
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
 
-export const sqlEditorSVG: OnBeforeScreenshot = async (
+export const sqlEditorSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection, openMenuIfClosed, hideMenuIfOpen },
   addScene,

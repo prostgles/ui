@@ -44,7 +44,6 @@ export const fetchLLMResponse = async (
     headers,
     body,
   }).catch((err) => {
-    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
     return Promise.reject(getSerialisableError(err));
   });
 

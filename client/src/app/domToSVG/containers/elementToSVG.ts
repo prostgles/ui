@@ -160,21 +160,23 @@ export const elementToSVG = async (
     svgElement.setAttribute("y", toFixed(y));
     svgElement.setAttribute("fill", style.color);
 
+    const wrapperG = document.createElementNS(SVG_NAMESPACE, "g");
+    wrapperG.appendChild(svgElement);
     if (style.animation) {
-      svgElement.setAttribute(
+      wrapperG.setAttribute(
         "style",
         `animation: ${style.animation}; transform-origin: ${toFixed(x + width / 2)}px ${toFixed(y + height / 2)}px;`,
       );
     }
 
     // Extract keyframes from the original element's styles
-    copyAnimationStyles(style, svgElement);
+    copyAnimationStyles(style, wrapperG);
     const animationStyles = cloneAnimations(element);
     if (animationStyles) {
       context.defs.appendChild(animationStyles);
     }
 
-    parentSvg.appendChild(svgElement);
+    parentSvg.appendChild(wrapperG);
   }
 
   for (const child of getChildrenSortedByZIndex(element)) {
