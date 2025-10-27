@@ -82,15 +82,6 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     ],
   });
 
-  const allowOnce = async (doClick = true) => {
-    const allowOnceBtn = await page
-      .getByTestId("AskLLMToolApprover.AllowOnce")
-      .last();
-    await allowOnceBtn.waitFor({ state: "visible", timeout: 15000 });
-    doClick && (await allowOnceBtn.click());
-    await page.waitForTimeout(2500);
-  };
-
   await typeSendAddScenes(
     page,
     addScene,
@@ -131,6 +122,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("AskLLM").click();
   await deletePreviousMessages();
   await setPromptByText(page, "chat");
+  await setModelByText(page, "pros");
 
   await deletePreviousMessages();
   await setPromptByText(page, "create task");
@@ -164,24 +156,20 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   const { filePath } = await createReceipt(page);
   await page.getByTestId("Chat.addFiles").setInputFiles(filePath);
 
-  await typeSendAddScenes(
-    page,
-    addScene,
-    `Here is a scanned receipt `,
-    // [
-    //   { type: "wait", duration: 500 },
-    //   {
-    //     type: "click",
-    //     elementSelector: getCommandElemSelector("AskLLMToolApprover.AllowOnce"),
-    //     duration: 1000,
-    //   },
-    // ],
-    // () => allowOnce(false),
-  );
+  await typeSendAddScenes(page, addScene, `Here is a scanned receipt `, [
+    { type: "wait", duration: 500 },
+    {
+      type: "click",
+      elementSelector:
+        getCommandElemSelector("ToolUseMessage.toggle") + ":last-child",
+      duration: 1000,
+    },
+  ]);
+  await page.getByTestId("ToolUseMessage.toggle").last().click();
   await expect(page.getByTestId("Popup.content").last()).toContainText(
     "Grand Ocean Hotel",
   );
-  // await allowOnce();
+
   await addScene({ svgFileName: "vision_ocr" });
   await deletePreviousMessages();
   await setPromptByText(page, "chat");
@@ -189,8 +177,11 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page
     .getByTestId("MCPServerTools")
     .getByText("create_container")
-    .click({ clickCount: 2, delay: 1000 }); // Click twice for auto-approve
-  // await page.getByText("Auto-approve: OFF").click();
+    .click();
+  await page.getByText("Auto-approve: ON").click();
+  await page.waitForTimeout(1000);
+  await page.getByText("Auto-approve: OFF").click();
+  await page.waitForTimeout(1000);
   await page.getByTestId("Popup.close").last().click();
 
   await typeSendAddScenes(
@@ -238,6 +229,9 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   });
 
   await addScene({ svgFileName: "docker" });
+
+  await page.getByTestId("Popup.close").last().click();
+  await deleteExistingLLMChat(page);
   await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
   await page
     .getByTestId("Popup.content")
@@ -248,9 +242,16 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByRole("option", { name: "Run readonly SQL" }).click();
   await page.getByTestId("Popup.close").last().click();
 
-  await deletePreviousMessages();
   await setPromptByText(page, "chat");
 
+  const allowOnce = async (doClick = true) => {
+    const allowOnceBtn = await page
+      .getByTestId("AskLLMToolApprover.AllowOnce")
+      .last();
+    await allowOnceBtn.waitFor({ state: "visible", timeout: 15000 });
+    doClick && (await allowOnceBtn.click());
+    await page.waitForTimeout(2500);
+  };
   await typeSendAddScenes(
     page,
     addScene,

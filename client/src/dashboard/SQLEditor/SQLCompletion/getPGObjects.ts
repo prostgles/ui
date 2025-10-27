@@ -408,6 +408,7 @@ export type PG_Table = {
     character_maximum_length: number | null;
   }[];
   tableStats?: TableStats;
+  constraints?: PGConstraint[];
 };
 
 type TableStats = {

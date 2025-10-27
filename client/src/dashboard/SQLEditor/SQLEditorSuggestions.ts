@@ -331,7 +331,7 @@ export const getSqlSuggestions = async (
         view: t.is_view ? { definition: t.view_definition! } : undefined,
         relkind: t.relkind,
         documentation,
-        tablesInfo: t,
+        tablesInfo: { ...t, constraints: tConstraints },
         cols,
       });
       suggestions = suggestions.concat(

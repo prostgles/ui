@@ -78,6 +78,18 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     // caption: "EXPLAIN command options",
   });
 
+  await monacoType(page, `.ProstglesSQL`, intensiveQuery, {
+    deleteAllAndFill: true,
+    keyPressDelay: 0,
+  });
+  await page.keyboard.press("Alt+KeyE");
+  await page.waitForTimeout(1000);
+  await addScene({
+    svgFileName: "cpu_usage",
+    animations: [{ type: "wait", duration: 2000 }],
+    caption: "Runtime statistics",
+  });
+
   await sqlSuggestionsScene({
     query: "CREATE INDEX idx_messages_sent ON messages \nUSING ",
     svgFileName: "index_types",
@@ -263,3 +275,34 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   });
   await page.getByTestId("dashboard.window.closeChart").click();
 };
+
+const intensiveQuery = `
+WITH RECURSIVE
+  -- Generate pixel grid and map to complex plane
+  pixels AS (
+    SELECT
+      x, y,
+      -2.5 + (x * 3.5 / 900) AS cx,
+      -1.0 + (y * 2.0 / 600) AS cy
+    FROM generate_series(0, 900-1) AS x,
+         generate_series(0, 600-1) AS y 
+  ),
+  -- Recursively iterate z = z² + c
+  mandelbrot_iterations AS (
+    SELECT x, y, cx, cy, 0.0 AS zx, 0.0 AS zy, 0 AS iteration
+    FROM pixels 
+    UNION ALL 
+    SELECT
+      x, y, cx, cy,
+      zx * zx - zy * zy + cx AS zx,
+      2.0 * zx * zy + cy AS zy,
+      iteration + 1
+    FROM mandelbrot_iterations
+    WHERE iteration < 5 -- max_iterations
+      AND (zx * zx + zy * zy) <= 4.0
+  )
+SELECT x, y, MAX(iteration) AS depth
+FROM mandelbrot_iterations
+GROUP BY x, y;
+
+ `;

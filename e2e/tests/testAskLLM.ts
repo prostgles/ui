@@ -228,7 +228,7 @@ const toolResponses = ${stringify(toolResponses)};
 
 const lastMsg = args.messages.at(-1);
 const lastMsgText = lastMsg?.content?.[0]?.text;
-const { tool_call_id } = lastMsg?.[0] ?? {};
+const { tool_call_id } = lastMsg ?? {};
 const toolCallKeyResult = typeof tool_call_id === "string"? tool_call_id.split("#")[0] : undefined;
 const toolResult = toolCallKeyResult && toolResponses[toolCallKeyResult];
 const failedToolResult = toolCallKeyResult === "mcpfail";// typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch");

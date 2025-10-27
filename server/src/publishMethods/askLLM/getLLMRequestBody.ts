@@ -187,62 +187,66 @@ export const getLLMRequestBody = ({
     : /**  "OpenAI"  */
       {
         model,
-        messages: messages.map((m) => {
-          const isToolUse = filterArr(m.content, { type: "tool_use" as const });
-          const textContent = filterArr(m.content, { type: "text" as const });
-
-          if (isToolUse.length) {
-            return {
-              role: "assistant",
-              content: textContent.map((t) => t.text).join("\n") || "",
-              tool_calls: isToolUse.map((tc) => ({
-                id: tc.id,
-                type: "function",
-                function: {
-                  name: tc.name,
-                  arguments: JSON.stringify(tc.input),
-                },
-              })),
-            };
-          }
-          const toolUseResults = getToolResults(m.content);
-          if (toolUseResults.length) {
-            return toolUseResults.map((toolUseResult) => {
-              return {
-                role: "tool",
-                tool_call_id: toolUseResult.tool_use_id,
-                content: toolUseResult.content,
-              };
+        messages: messages
+          .map((m) => {
+            const isToolUse = filterArr(m.content, {
+              type: "tool_use" as const,
             });
-          }
-          return {
-            ...m,
-            content: m.content.map((c) => {
-              if (c.type === "image") {
+            const textContent = filterArr(m.content, { type: "text" as const });
+
+            if (isToolUse.length) {
+              return {
+                role: "assistant",
+                content: textContent.map((t) => t.text).join("\n") || "",
+                tool_calls: isToolUse.map((tc) => ({
+                  id: tc.id,
+                  type: "function",
+                  function: {
+                    name: tc.name,
+                    arguments: JSON.stringify(tc.input),
+                  },
+                })),
+              };
+            }
+            const toolUseResults = getToolResults(m.content);
+            if (toolUseResults.length) {
+              return toolUseResults.map((toolUseResult) => {
                 return {
-                  type: "image_url",
-                  image_url: { url: c.source.data },
+                  role: "tool",
+                  tool_call_id: toolUseResult.tool_use_id,
+                  content: toolUseResult.content,
                 };
-              }
-              if (c.type === "tool_result") {
-                return {
-                  type: "function_call_output",
-                  call_id: c.tool_use_id,
-                  output:
-                    typeof c.content === "string" ?
-                      c.content
-                    : (filterArr(c.content, { type: "text" as const })[0]
-                        ?.text ??
-                      "?? Internal issue in tool result parsing in prostgles ui"),
-                };
-              }
-              return c;
-            }),
-            ...(m.content.some((c) => c.type === "tool_result") && {
-              role: "tool",
-            }),
-          };
-        }),
+              });
+            }
+            return {
+              ...m,
+              content: m.content.map((c) => {
+                if (c.type === "image") {
+                  return {
+                    type: "image_url",
+                    image_url: { url: c.source.data },
+                  };
+                }
+                if (c.type === "tool_result") {
+                  return {
+                    type: "function_call_output",
+                    call_id: c.tool_use_id,
+                    output:
+                      typeof c.content === "string" ?
+                        c.content
+                      : (filterArr(c.content, { type: "text" as const })[0]
+                          ?.text ??
+                        "?? Internal issue in tool result parsing in prostgles ui"),
+                  };
+                }
+                return c;
+              }),
+              ...(m.content.some((c) => c.type === "tool_result") && {
+                role: "tool",
+              }),
+            };
+          })
+          .flat(),
         tools: tools?.map((t) => ({
           type: "function",
           function: {

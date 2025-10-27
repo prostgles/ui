@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
-import { mdiAttachment, mdiSend, mdiStopCircle } from "@mdi/js";
+import { mdiAttachment, mdiClose, mdiSend, mdiStopCircle } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
@@ -194,22 +194,38 @@ export const Chat = (props: ChatProps) => {
               style={{ maxHeight: "40vh" }}
             >
               {filesAsBase64.map(({ file, base64Data }, index) => (
-                <Chip
+                <FlexCol
                   key={file.name + index}
                   data-key={file.name}
-                  variant="outline"
-                  onDelete={() => {
-                    setFiles((prev) =>
-                      prev.filter((f, i) => f.name + i !== file.name + index),
-                    );
-                  }}
+                  title={file.name}
+                  className="relative pt-p5 pr-p5 "
                 >
-                  {file.name}
                   <MediaViewer
                     url={base64Data}
-                    style={{ maxHeight: "100px" }}
+                    style={{
+                      maxHeight: "100px",
+                      borderRadius: "var(--rounded)",
+                      boxShadow: "var(--shadow)",
+                    }}
                   />
-                </Chip>
+                  <Btn
+                    title={t.common.Remove}
+                    iconPath={mdiClose}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      borderRadius: "50%",
+                    }}
+                    variant="filled"
+                    size="small"
+                    onClick={() => {
+                      setFiles((prev) =>
+                        prev.filter((f, i) => f.name + i !== file.name + index),
+                      );
+                    }}
+                  />
+                </FlexCol>
               ))}
             </ScrollFade>
           )}

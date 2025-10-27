@@ -21,16 +21,16 @@ export const W_SQLBottomBarProcStats = ({
     const interval = setInterval(async () => {
       await getStatus(connectionId);
       const procInfo = await dbs.stats.findOne({
-        database_id: {
-          $existsJoined: {
-            connections: {
-              connectionId,
-            },
+        $existsJoined: {
+          "database_configs.connections": {
+            id: connectionId,
           },
         },
         pid,
       } as FilterItem);
-      if (!getIsMounted()) return clearInterval(interval);
+      if (!getIsMounted()) {
+        return clearInterval(interval);
+      }
       setProcStats(procInfo);
     }, 1e3);
 

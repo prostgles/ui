@@ -4,7 +4,9 @@ import * as path from "path";
 export const createReceipt = async (page1: PageWIds) => {
   const context = await page1.context();
   const page = await context.newPage();
-
+  const width = 500;
+  const height = 600;
+  await page.setViewportSize({ width, height });
   const receiptData = {
     hotelName: "Grand Ocean Hotel",
     guestName: "John Doe",
@@ -108,9 +110,11 @@ export const createReceipt = async (page1: PageWIds) => {
   const fileName = "hotel_receipt.png";
   // Take screenshot
   const filePath = path.join(__dirname, "../demo", fileName);
-  await page.screenshot({ path: filePath, fullPage: true });
+  await page.screenshot({
+    path: filePath,
+    fullPage: true,
+  });
 
-  console.log("Pretty receipt saved as hotel_receipt_pretty.png");
   await page.close();
   return { filePath };
 };
