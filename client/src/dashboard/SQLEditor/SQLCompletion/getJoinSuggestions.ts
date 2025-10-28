@@ -9,54 +9,29 @@ type Args = {
   ss: ParsedSQLSuggestion[];
   rawExpect: RawExpect;
   cb: CodeBlock;
-  tableSuggestions: ParsedSQLSuggestion[];
 };
 
-export const getJoinSuggestions = ({
-  ss,
-  tableSuggestions,
-  rawExpect,
-  cb,
-}: Args) => {
-  let joinSuggestions: ParsedSQLSuggestion[] = [];
-  const identifiers = cb.prevIdentifiers;
-  if (identifiers.length) {
-    if (cb.ltoken?.textLC === "join" && rawExpect === "tableOrView") {
-      const prevTableIndexes = cb.prevTokens
-        .map((_, i) => {
-          const prevToken = cb.prevTokens[i - 1];
-          const isTable =
-            prevToken && ["from", "join"].includes(prevToken.textLC);
-          return isTable ? i : undefined;
-        })
-        .filter(isDefined);
-
-      prevTableIndexes.forEach((tableTokenIdx) => {
-        const joins = getTableJoins(tableTokenIdx, prevTableIndexes, {
-          ss,
-          tableSuggestions,
-          rawExpect,
-          cb,
-        });
-        joinSuggestions = [...joinSuggestions, ...joins];
-      });
-    }
-
-    const matches = tableSuggestions.filter((s) =>
-      identifiers.some((pi) => pi.text === s.escapedParentName),
-    );
-    if (matches.length) {
-      return {
-        suggestions: matches,
-        joinSuggestions: undefined,
-      };
-    }
+export const getJoinSuggestions = ({ ss, rawExpect, cb }: Args) => {
+  const { prevIdentifiers, ltoken, prevTokens } = cb;
+  if (!prevIdentifiers.length) {
+    return [];
   }
+  if (ltoken?.textLC !== "join" || rawExpect !== "tableOrView") {
+    return [];
+  }
+  const prevTableIndexes = prevTokens
+    .map((_, i) => {
+      const prevToken = prevTokens[i - 1];
+      const isTable = prevToken && ["from", "join"].includes(prevToken.textLC);
+      return isTable ? i : undefined;
+    })
+    .filter(isDefined);
 
-  return {
-    joinSuggestions,
-    suggestions: undefined,
-  };
+  return getTableJoins(prevTableIndexes, {
+    ss,
+    rawExpect,
+    cb,
+  });
 };
 
 export const removeQuotes = (str: string) => {
@@ -81,14 +56,11 @@ export const getStartingLetters = (rawString) => {
   return startingLetters.join("");
 };
 
-const getTableJoins = (
-  tableTokenIdx: number,
-  prevTableTokenIndexes: number[],
-  { ss, tableSuggestions, cb }: Args,
-) => {
-  const joinSuggestions: ParsedSQLSuggestion[] = [];
+const getTableJoins = (prevTableTokenIndexes: number[], { ss, cb }: Args) => {
+  const tableTokenIdx = prevTableTokenIndexes[0]!;
   const fromTable = cb.prevTokens[tableTokenIdx]?.text;
   if (!fromTable) return [];
+
   const prevTablesIncludingFromTable = prevTableTokenIndexes
     .map((i) => {
       const tableName = cb.prevTokens[i]?.text;
@@ -113,162 +85,110 @@ const getTableJoins = (
     })
     .filter(isDefined);
 
-  // const joinConstraints = ss
-  //   .map((s) =>
-  //     (
-  //       s.type === "constraint" &&
-  //       s.constraintInfo?.contype === "f" &&
-  //       prevTablesIncludingFromTable.some((pt) =>
-  //         [s.constraintInfo!.ftable_oid, s.constraintInfo!.table_oid].includes(
-  //           pt.tablesInfo.oid,
-  //         ),
-  //       )
-  //     ) ?
-  //       s.constraintInfo
-  //     : undefined,
-  //   )
-  //   .filter(isDefined);
+  const isInPrevTables = (oid: number) =>
+    prevTablesIncludingFromTable.some((pt) => pt.tablesInfo.oid === oid);
 
-  // const joinOptions = prevTablesIncludingFromTable.map(
-  //   ({ tablesInfo, alias }) => {
-  //     const isInPrevTables = (t: string) =>
-  //       prevTablesIncludingFromTable.some((pt) => pt.tableName === t);
-  //     const fCons = joinConstraints
-  //       .map(
-  //         ({
-  //           ftable_name,
-  //           table_name,
-  //           table_oid,
-  //           ftable_oid,
-  //           conkey,
-  //           confkey,
-  //         }) => {
-  //           if (!isInPrevTables(ftable_name!) && tablesInfo.oid === table_oid) {
-  //             return {
-  //               ftable_name,
-  //               conkey,
-  //               confkey,
-  //             };
-  //           }
-  //           if (!isInPrevTables(table_name!) && tablesInfo.oid === ftable_oid) {
-  //             return {
-  //               ftable_name: table_name,
-  //               conkey: confkey,
-  //               confkey: conkey,
-  //             };
-  //           }
-  //         },
-  //       )
-  //       .filter(isDefined);
-  //     const conditions = fCons.map(({ ftable_name, conkey, confkey }) => {
-  //       const joinToTableAlias = getStartingLetters(ftable_name!);
-  //       const on = conkey!
-  //         .map((ordPos, cidx) => {
-  //           const toColumnPosition = confkey![cidx];
-  //           const fromTableCol = tablesInfo.cols.find(
-  //             (c) => c.ordinal_position === ordPos,
-  //           )?.escaped_identifier;
-  //           if (!fromTableCol) return;
-  //           const toTable = ss.find(
-  //             (s) =>
-  //               s.type === "table" &&
-  //               s.escapedIdentifier?.includes(ftable_name!),
-  //           );
-  //           const toColumn = toTable?.cols?.find(
-  //             (c) => c.ordinal_position === toColumnPosition,
-  //           )?.escaped_identifier;
-  //           if (!toColumn) return;
-  //           return `${alias}.${fromTableCol} = ${joinToTableAlias}.${toColumn}`;
-  //         })
-  //         .join(" AND ");
-  //       return `${ftable_name} ${joinToTableAlias}\nON ${on}`;
-  //     });
-  //     console.log(conditions);
-  //   },
-  // );
-  const fromTableSuggestion = ss.find(
-    (s) => s.type === "table" && s.escapedIdentifier?.includes(fromTable),
-  );
-  const fromTableAlias =
-    cb.prevTokens[tableTokenIdx + 1]?.textLC !== "as" ?
-      cb.prevTokens[tableTokenIdx + 1]
-    : cb.prevTokens[tableTokenIdx + 2];
-  const fromTableAliasStr =
-    fromTableAlias?.type === "identifier.sql" ? fromTableAlias.text : fromTable;
-  if (fromTableSuggestion) {
-    tableSuggestions.forEach((tableSuggestion) => {
-      const isTableAndNotInPrevTableNames =
-        tableSuggestion.type === "table" &&
-        tableSuggestion.name &&
-        !prevTablesIncludingFromTable.some(
-          (pt) => pt.tableName === tableSuggestion.name,
-        );
+  const joinConstraints = ss
+    .map(({ type, constraintInfo }) => {
+      if (type !== "constraint") return;
+      if (!constraintInfo) return;
+      const {
+        contype,
+        confkey,
+        conkey,
+        table_name,
+        table_oid,
+        ftable_name,
+        ftable_oid,
+      } = constraintInfo;
+      if (!isDefined(contype) || contype !== "f") return;
+      if (
+        conkey === null ||
+        confkey === null ||
+        ftable_oid === null ||
+        ftable_name === null
+      )
+        return;
 
-      if (isTableAndNotInPrevTableNames) {
-        const ftableAlias = getStartingLetters(tableSuggestion.name);
-        tableSuggestion.cols?.forEach((c) => {
-          let joins: ParsedSQLSuggestion[] = [];
-
-          /** referenced */
-          let indentSize = 2;
-          if (cb.thisLineLC.includes("join")) {
-            indentSize =
-              cb.thisLine.split(" ").findIndex((char) => char !== " ") + 2;
-          }
-          const fcols = fromTableSuggestion.cols?.filter(
-            (c) => c.cConstraint?.ftable_name === tableSuggestion.name,
-          );
-          if (c.cConstraint?.ftable_name === fromTable) {
-            const onConditions = c.cConstraint.conkey!.map((ordPos, cidx) => {
-              const fromOrdPos = c.cConstraint!.confkey![cidx];
-              const fTableCol = `${ftableAlias}.${tableSuggestion.cols?.find((c) => c.ordinal_position === ordPos)?.escaped_identifier}`;
-              const tableCol = `${fromTableAliasStr}.${fromTableSuggestion.cols?.find((c) => c.ordinal_position === fromOrdPos)?.escaped_identifier}`;
-              return `${fTableCol} = ${tableCol}`;
-            });
-            const joinCondition = `${tableSuggestion.escapedIdentifier} ${ftableAlias}\n${" ".repeat(indentSize)}ON ${onConditions.join(" AND ")}`;
-            joins = suggestSnippets([
-              {
-                label: joinCondition.replaceAll("\n", ""),
-                insertText: joinCondition,
-                sortText: "a",
-                kind: getKind("table"),
-                docs: tableSuggestion.documentation,
-              },
-            ]).suggestions;
-
-            /** referencing */
-          } else if (fcols?.length) {
-            const onConditions = fcols.map((c) =>
-              c
-                .cConstraint!.confkey?.map((ordPos, cidx) => {
-                  const fromTableOrdPos = c.cConstraint?.conkey![cidx];
-                  const fTableCol = `${ftableAlias}.${tableSuggestion.cols?.find((c) => c.ordinal_position === ordPos)?.escaped_identifier}`;
-                  const tableCol = `${fromTableAliasStr}.${fromTableSuggestion.cols?.find((c) => c.ordinal_position === fromTableOrdPos)?.escaped_identifier}`;
-                  return `${fTableCol} = ${tableCol}`;
-                })
-                .join(" AND "),
-            );
-
-            const joinCondition = `${tableSuggestion.escapedIdentifier} ${ftableAlias}\n${" ".repeat(indentSize)}ON ${onConditions.join(" AND ")}`;
-            joins = suggestSnippets([
-              {
-                label: joinCondition.replaceAll("\n", ""),
-                insertText: joinCondition,
-                sortText: "a",
-                kind: getKind("table"),
-                docs: tableSuggestion.documentation,
-              },
-            ]).suggestions;
-          }
-          joins.forEach((j) => {
-            if (!joinSuggestions.some((js) => js.label === j.label)) {
-              joinSuggestions.push(j);
-            }
-          });
-        });
+      if (!isInPrevTables(ftable_oid) && isInPrevTables(table_oid)) {
+        return {
+          ftable_name,
+          ftable_oid,
+          conkey,
+          confkey,
+        };
       }
-    });
-  }
+      if (
+        table_name &&
+        !isInPrevTables(table_oid) &&
+        isInPrevTables(ftable_oid)
+      ) {
+        return {
+          ftable_name: table_name,
+          ftable_oid: table_oid,
+          conkey: confkey,
+          confkey: conkey,
+        };
+      }
+    })
+    .filter(isDefined);
 
-  return joinSuggestions;
+  const currentIndentSize =
+    cb.thisLineLC.trim() ?
+      cb.thisLine.split(" ").findIndex((char) => char !== " ")
+    : 0;
+  const indentSize = currentIndentSize + 2;
+  const joinOptions = prevTablesIncludingFromTable
+    .map(({ tablesInfo, alias }) => {
+      return joinConstraints
+        .map(({ ftable_name, ftable_oid, conkey, confkey }) => {
+          const ftable = ss.find(
+            (t) => t.type === "table" && t.tablesInfo?.oid === ftable_oid,
+          );
+          if (!ftable) return;
+          const joinToTableAlias = getStartingLetters(ftable_name);
+          const condition = conkey!
+            .map((ordPos, cidx) => {
+              const toColumnPosition = confkey![cidx];
+              const fromTableCol = tablesInfo.cols.find(
+                (c) => c.ordinal_position === ordPos,
+              )?.escaped_identifier;
+              if (!fromTableCol) return;
+              const toTable = ss.find(
+                (s) =>
+                  s.type === "table" &&
+                  s.escapedIdentifier?.includes(ftable_name!),
+              );
+              const toColumn = toTable?.cols?.find(
+                (c) => c.ordinal_position === toColumnPosition,
+              )?.escaped_identifier;
+              if (!toColumn) return;
+              return [
+                `${joinToTableAlias}.${toColumn}`,
+                `${alias}.${fromTableCol}`,
+              ].join(" = ");
+            })
+            .map(
+              (condition, i) =>
+                `${" ".repeat(indentSize)}${!i ? "ON" : "AND"} ${condition}`,
+            )
+            .join("\n");
+          const joinQuery = `${ftable_name} ${joinToTableAlias}\n${condition}\n`;
+          return { joinQuery, ftable };
+        })
+        .filter(isDefined);
+    })
+    .flat();
+
+  const { suggestions } = suggestSnippets(
+    joinOptions.map(({ joinQuery, ftable }) => ({
+      label: joinQuery.replaceAll("\n", ""),
+      insertText: joinQuery,
+      sortText: "a",
+      kind: getKind("table"),
+      docs: ftable.documentation,
+    })),
+  );
+
+  return suggestions;
 };

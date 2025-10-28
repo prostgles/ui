@@ -156,21 +156,29 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   const { filePath } = await createReceipt(page);
   await page.getByTestId("Chat.addFiles").setInputFiles(filePath);
 
-  await typeSendAddScenes(page, addScene, `Here is a scanned receipt `, [
-    { type: "wait", duration: 500 },
-    {
-      type: "click",
-      elementSelector:
-        getCommandElemSelector("ToolUseMessage.toggle") + ":last-child",
-      duration: 1000,
-    },
-  ]);
+  await typeSendAddScenes(
+    page,
+    addScene,
+    `Here is a scanned receipt `,
+    //   [
+    //   { type: "wait", duration: 500 },
+    //   {
+    //     type: "click",
+    //     elementSelector:
+    //       getCommandElemSelector("ToolUseMessage.toggle") + ":last-child",
+    //     duration: 1000,
+    //   },
+    // ]
+  );
+
+  await page.waitForTimeout(2000);
+  await addScene({ svgFileName: "vision_ocr" });
+
   await page.getByTestId("ToolUseMessage.toggle").last().click();
   await expect(page.getByTestId("Popup.content").last()).toContainText(
     "Grand Ocean Hotel",
   );
 
-  await addScene({ svgFileName: "vision_ocr" });
   await deletePreviousMessages();
   await setPromptByText(page, "chat");
   await page.getByTestId("LLMChatOptions.MCPTools").click();

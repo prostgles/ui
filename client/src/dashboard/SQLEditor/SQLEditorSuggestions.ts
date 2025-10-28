@@ -297,11 +297,15 @@ export const getSqlSuggestions = async (
       const documentation =
         t.is_view ?
           `**Definition:**  \n\n${asSQL(t.view_definition || "")}`
-        : `${t.comment ? `\n**Comment:** \n\n ${t.comment}` : ""}\n\n**Columns (${cols.length}):**  \n${asSQL(cols.map((c) => c.definition).join(",  \n"))} \n` +
-          `\n**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map((c) => c.definition + ";").join("\n"))} \n` +
-          `**Indexes (${tIndexes.length}):** \n ${asSQL(tIndexes.map((d) => d.indexdef + ";").join("\n"))}  \n` +
-          `**Triggers (${tableTriggers.length}):** \n ${asSQL(tableTriggers.map((d) => d.trigger_name + ";").join("\n"))}  \n` +
-          `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map((p) => p.definition + ";").join("\n\n"))} \n` +
+        : [
+            `**${t.name}** `,
+            `${t.comment ? `**Comment:** \n\n ${t.comment}` : ""}`,
+            `**Columns (${cols.length}):**  \n${asSQL(cols.map((c) => c.definition).join(",  \n"))} `,
+            `**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map((c) => c.definition + ";").join("\n"))} `,
+            `**Indexes (${tIndexes.length}):** \n ${asSQL(tIndexes.map((d) => d.indexdef + ";").join("\n"))}  `,
+            `**Triggers (${tableTriggers.length}):** \n ${asSQL(tableTriggers.map((d) => d.trigger_name + ";").join("\n"))}  `,
+            `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map((p) => p.definition + ";").join("\n\n"))} `,
+          ].join("\n") +
           (!t.tableStats ? "" : (
             `\n ${asListObject({
               oid: t.tableStats.relid,

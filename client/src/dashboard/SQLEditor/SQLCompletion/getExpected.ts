@@ -106,11 +106,10 @@ export const getExpected = (
     }
   }
 
-  const { joinSuggestions = [] } = getJoinSuggestions({
+  const joinSuggestions = getJoinSuggestions({
     ss,
     rawExpect,
     cb,
-    tableSuggestions: suggestions,
   });
 
   if (

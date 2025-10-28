@@ -78,6 +78,9 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     // caption: "EXPLAIN command options",
   });
 
+  await page.getByTestId("dashboard.window.menu").click();
+  await page.getByText("General").click();
+  await monacoType(page, `.MonacoEditor`, "show", {});
   await monacoType(page, `.ProstglesSQL`, intensiveQuery, {
     deleteAllAndFill: true,
     keyPressDelay: 0,

@@ -43,32 +43,6 @@ export const getForeignObject = async (
         });
     });
   }
-
-  // if (isSVGNode(element)) {
-  //   const foreignObject = getForeignObject();
-
-  //   const svgClone = element.cloneNode(true) as SVGElement;
-  //   element.style.boxSizing = "content-box";
-  //   foreignObject.setAttribute("class", svgClone.classList.toString());
-  //   svgClone.style.margin = "0";
-  //   foreignObject.firstChild!.appendChild(svgClone);
-  //   return foreignObject;
-  // }
-
-  // if (!force) return;
-
-  // const foreignObject = getForeignObject();
-  // const elementClone = element.cloneNode(true) as HTMLElement;
-
-  // // Move relevant animations and keyframes as well
-  // copyAnimationStyles(style, elementClone);
-  // const animationStyles = cloneAnimations(element);
-  // if (animationStyles) {
-  //   foreignObject.firstChild!.appendChild(animationStyles);
-  // }
-  // foreignObject.firstChild!.appendChild(elementClone);
-
-  // return foreignObject;
 };
 
 /**
