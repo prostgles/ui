@@ -1,0 +1,34 @@
+[
+  {
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 1000
+      },
+      {
+        "type": "click",
+        "elementSelector": "[data-command=\"Connection.openConnection\"]",
+        "duration": 1000
+      }
+    ],
+    "svgFileName": "dashboard_00"
+  },
+  {
+    "svgFileName": "dashboard_01_empty",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "svgFileName": "dashboard_02_table",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  }
+]

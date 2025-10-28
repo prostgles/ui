@@ -1,0 +1,306 @@
+[
+  {
+    "svgFileName": "ai_assistant_00_open_chat",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 1000
+      },
+      {
+        "type": "click",
+        "elementSelector": "[data-command=\"AskLLM\"]",
+        "lingerMs": 100,
+        "duration": 1000
+      }
+    ]
+  },
+  {
+    "svgFileName": "ai_assistant_01_focus_textarea",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 1000
+      },
+      {
+        "type": "click",
+        "elementSelector": "[data-command=\"Chat.textarea\"]",
+        "offset": {
+          "x": 20,
+          "y": 10
+        },
+        "duration": 1000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "type",
+        "elementSelector": "[data-command=\"Chat.textarea\"]",
+        "duration": 2000
+      },
+      {
+        "type": "wait",
+        "duration": 500
+      }
+    ],
+    "svgFileName": "ai_assistant_02"
+  },
+  {
+    "svgFileName": "ai_assistant_03",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "reveal-list",
+        "duration": 2000,
+        "elementSelector": "[data-command=\"Chat.messageList\"] > g:last-of-type"
+      },
+      {
+        "type": "click",
+        "elementSelector": "[data-command=\"AskLLMChat.LoadSuggestedDashboards\"]",
+        "duration": 1000
+      }
+    ],
+    "svgFileName": "ai_assistant_04"
+  },
+  {
+    "svgFileName": "ai_assistant_05_dashboards_loaded",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "type",
+        "elementSelector": "[data-command=\"Chat.textarea\"]",
+        "duration": 2000
+      },
+      {
+        "type": "wait",
+        "duration": 500
+      }
+    ],
+    "svgFileName": "ai_assistant_06"
+  },
+  {
+    "svgFileName": "ai_assistant_07",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "reveal-list",
+        "duration": 2000,
+        "elementSelector": "[data-command=\"Chat.messageList\"] > g:last-of-type"
+      }
+    ],
+    "svgFileName": "ai_assistant_08"
+  },
+  {
+    "animations": [
+      {
+        "type": "click",
+        "elementSelector": "[data-command=\"AskLLMChat.LoadSuggestedToolsAndPrompt\"]",
+        "duration": 1000
+      }
+    ],
+    "svgFileName": "ai_assistant_09"
+  },
+  {
+    "svgFileName": "ai_assistant_10_tasks",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "type",
+        "elementSelector": "[data-command=\"Chat.textarea\"]",
+        "duration": 2000
+      },
+      {
+        "type": "wait",
+        "duration": 500
+      }
+    ],
+    "svgFileName": "ai_assistant_11"
+  },
+  {
+    "svgFileName": "ai_assistant_12",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "reveal-list",
+        "duration": 2000,
+        "elementSelector": "[data-command=\"Chat.messageList\"] > g:last-of-type"
+      }
+    ],
+    "svgFileName": "ai_assistant_13"
+  },
+  {
+    "svgFileName": "ai_assistant_14_vision_ocr",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "type",
+        "elementSelector": "[data-command=\"Chat.textarea\"]",
+        "duration": 2000
+      },
+      {
+        "type": "wait",
+        "duration": 500
+      }
+    ],
+    "svgFileName": "ai_assistant_15"
+  },
+  {
+    "svgFileName": "ai_assistant_16",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "reveal-list",
+        "duration": 2000,
+        "elementSelector": "[data-command=\"Chat.messageList\"] > g:last-of-type"
+      },
+      {
+        "type": "wait",
+        "duration": 1000
+      },
+      {
+        "type": "click",
+        "elementSelector": "[data-command=\"ToolUseMessage.toggle\"]",
+        "duration": 1000
+      }
+    ],
+    "svgFileName": "ai_assistant_17"
+  },
+  {
+    "svgFileName": "ai_assistant_18_docker0",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 1000
+      },
+      {
+        "type": "click",
+        "elementSelector": "[data-key=\"fetch_weather.js\"]",
+        "duration": 1000
+      }
+    ]
+  },
+  {
+    "svgFileName": "ai_assistant_19_docker_js",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 1000
+      },
+      {
+        "type": "click",
+        "elementSelector": "[data-key=\"fetch_weather.js\"]",
+        "duration": 1000
+      }
+    ]
+  },
+  {
+    "svgFileName": "ai_assistant_20_docker",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "type",
+        "elementSelector": "[data-command=\"Chat.textarea\"]",
+        "duration": 2000
+      },
+      {
+        "type": "wait",
+        "duration": 500
+      }
+    ],
+    "svgFileName": "ai_assistant_21"
+  },
+  {
+    "svgFileName": "ai_assistant_22",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "animations": [
+      {
+        "type": "reveal-list",
+        "duration": 2000,
+        "elementSelector": "[data-command=\"Chat.messageList\"] > g:last-of-type"
+      },
+      {
+        "type": "wait",
+        "duration": 1000
+      },
+      {
+        "type": "click",
+        "elementSelector": "[data-command=\"AskLLMToolApprover.AllowOnce\"]",
+        "duration": 1000
+      }
+    ],
+    "svgFileName": "ai_assistant_23"
+  },
+  {
+    "svgFileName": "ai_assistant_24_sql",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  }
+]

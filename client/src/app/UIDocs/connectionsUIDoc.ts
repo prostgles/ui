@@ -63,8 +63,6 @@ export const connectionsUIDoc = {
       docs: `
         Use the **New Connection** button to add a new database connection.
         
-        <img src="./screenshots/connections.svg#Connections_new" alt="New connection button" style="max-width: 200px;" />
-
         This will open a form where you can enter the connection details such as host, port, database name, user, and password.
         
         <img src="./screenshots/new_connection.svgif.svg" alt="New connection form screenshot" />

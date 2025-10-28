@@ -8,7 +8,10 @@ import {
 } from "./constants";
 import { getFilesFromDir } from "./getFilesFromDir";
 import { goTo } from "utils/goTo";
-
+export type SVGIfSpec = {
+  fileName: string;
+  scenes: SVGifScene[];
+};
 export const saveSVGifs = async (
   page: PageWIds,
   svgifSpecs: { fileName: string; scenes: SVGifScene[] }[],

@@ -1,0 +1,40 @@
+[
+  {
+    "caption": "Open command palette (Ctrl+K)...",
+    "svgFileName": "command_palette_00",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "caption": "Press Enter to navigate to item",
+    "svgFileName": "command_palette_01",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "svgFileName": "command_palette_02",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "svgFileName": "command_palette_03",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  }
+]

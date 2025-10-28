@@ -1,5 +1,4 @@
 import {
-  mdiChartBoxPlusOutline,
   mdiCodeJson,
   mdiCog,
   mdiContentSave,
@@ -30,13 +29,13 @@ import type {
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
+import { t } from "../../i18n/i18nUtils";
 import { SECOND } from "../Charts";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS } from "../Dashboard/DBS";
-import { TestSQL } from "./TestSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
+import { TestSQL } from "./TestSQL";
 import { download } from "./W_SQL";
-import { t } from "../../i18n/i18nUtils";
 
 type P = {
   tableName?: string;
@@ -311,8 +310,8 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
                 } catch (err) {}
               }}
             />
-            <InfoRow color="info">
-              {t.W_SQLMenu.Press} <strong>ctrl</strong> + <strong>space</strong>
+            <InfoRow color="info" className="ws-pre">
+              {t.W_SQLMenu.Press} <strong>ctrl</strong> + <strong>space</strong>{" "}
               {t.W_SQLMenu["to get a list of possible options"]}
             </InfoRow>
             {!!error && <ErrorComponent error={error} />}

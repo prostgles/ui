@@ -135,7 +135,7 @@ export const withKWDs = <KWDD extends KWD>(
         )?.idx
     );
 
-  let usedKeywords = kwds
+  const usedKeywordsWithoutInput = kwds
     .flatMap((kwd, kwdIdx) => {
       const kwdWords = kwd.kwd.split(" ");
       const matchedStartingIndexes: number[] = [];
@@ -155,16 +155,13 @@ export const withKWDs = <KWDD extends KWD>(
       return matchedStartingIndexes.map((startingTokenIdx) => {
         const startingToken = currNestingTokens[startingTokenIdx];
         if (!startingToken) return undefined;
-        const inputTokens = cb.tokens.filter(
-          (t) => t.offset > startingToken.offset + kwd.kwd.length,
-        );
+
         const start = startingToken.offset;
         const end = startingToken.offset + kwd.kwd.length;
         return {
           kwd,
           kwdIdx,
           startingToken,
-          inputTokens,
           start,
           end,
           length: kwd.kwd.length,
@@ -172,6 +169,17 @@ export const withKWDs = <KWDD extends KWD>(
       });
     })
     .filter(isDefined);
+
+  let usedKeywords = usedKeywordsWithoutInput.map((uk, i, arr) => {
+    const nextUK = arr[i + 1];
+    const inputTokens = cb.tokens.filter(
+      (t) => t.offset > uk.end && (!nextUK || t.end <= nextUK.start),
+    );
+    return {
+      ...uk,
+      inputTokens,
+    };
+  });
 
   /** Remove smaller overlapping kwds (JOIN vs LEFT JOIN) */
   usedKeywords = usedKeywords
@@ -321,6 +329,36 @@ export const withKWDs = <KWDD extends KWD>(
         return { suggestions: [] };
       }
 
+      const { ltoken, currToken } = cb;
+      if (
+        !currToken &&
+        ltoken &&
+        (!prevUsedKwd || prevUsedKwd.end < ltoken.end)
+      ) {
+        const stillWritingKwd = kwds.filter((t) =>
+          t.kwd.toUpperCase().startsWith(ltoken.text.toUpperCase() + " "),
+        );
+        if (stillWritingKwd.length) {
+          return suggestSnippets(
+            stillWritingKwd.map((k) => {
+              const remainingText = k.kwd.slice(ltoken.text.length + 1);
+              return {
+                label: {
+                  label: remainingText,
+                  detail: k.optional ? " (optional)" : undefined,
+                },
+                docs:
+                  k.docs ||
+                  ss.find((s) => s.name === k.kwd && s.documentation)
+                    ?.documentation,
+                insertText: remainingText,
+                kind: getKind("keyword"),
+              };
+            }),
+          );
+        }
+      }
+
       const [firstInputToken] = (prevKWDFull?.inputTokens ?? []).filter(
         (t) => t.type !== "delimiter.parenthesis.sql" && t.end <= cb.currOffset,
       );
@@ -332,6 +370,7 @@ export const withKWDs = <KWDD extends KWD>(
       );
       const stillWritingInput =
         prevKWD?.expects === "(options)" ||
+        (firstInputToken && firstInputToken.offset === cb.currToken?.offset) ||
         Boolean(
           prevKWD &&
             firstInputToken &&
@@ -390,37 +429,36 @@ export const withKWDs = <KWDD extends KWD>(
             ss,
           ).suggestions;
         }
-        if (firstSuggestions.length || expectedSuggestions.length) {
-          const result = {
-            suggestions: [
-              ...firstSuggestions.map((s) => ({
-                ...s,
-                sortText: "0" + (s.sortText ?? ""),
-              })),
-              ...expectedSuggestions.map((s) => ({
-                ...s,
-                sortText:
-                  (cb.prevTokens.some((prevT) => s.insertText === prevT.text) ?
-                    "b"
-                  : "a") + (s.sortText ?? ""),
-              })),
-            ],
+
+        const result = {
+          suggestions: [
+            ...firstSuggestions.map((s) => ({
+              ...s,
+              sortText: "0" + (s.sortText ?? ""),
+            })),
+            ...expectedSuggestions.map((s) => ({
+              ...s,
+              sortText:
+                (cb.prevTokens.some((prevT) => s.insertText === prevT.text) ?
+                  "b"
+                : "a") + (s.sortText ?? ""),
+            })),
+          ],
+        };
+
+        if (
+          prevKWD.expects === "(options)" &&
+          cb.currNestingFunc?.textLC !== prevKWD.kwd.toLowerCase()
+        ) {
+          return {
+            suggestions: result.suggestions.map((s) => ({
+              ...s,
+              insertText: `(${s.insertText}$0)`,
+            })),
           };
-
-          if (
-            prevKWD.expects === "(options)" &&
-            cb.currNestingFunc?.textLC !== prevKWD.kwd.toLowerCase()
-          ) {
-            return {
-              suggestions: result.suggestions.map((s) => ({
-                ...s,
-                insertText: `(${s.insertText}$0)`,
-              })),
-            };
-          }
-
-          return result;
         }
+
+        return result;
       }
 
       return suggestSnippets(

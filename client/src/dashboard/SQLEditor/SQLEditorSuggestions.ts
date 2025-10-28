@@ -298,7 +298,6 @@ export const getSqlSuggestions = async (
         t.is_view ?
           `**Definition:**  \n\n${asSQL(t.view_definition || "")}`
         : [
-            `**${t.name}** `,
             `${t.comment ? `**Comment:** \n\n ${t.comment}` : ""}`,
             `**Columns (${cols.length}):**  \n${asSQL(cols.map((c) => c.definition).join(",  \n"))} `,
             `**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map((c) => c.definition + ";").join("\n"))} `,
@@ -329,9 +328,9 @@ export const getSqlSuggestions = async (
         schema: t.schema,
         insertText: t.escaped_identifier,
         detail:
-          t.relkind === "m" ? `(materialized view)`
-          : t.is_view ? `(view)`
-          : `(table)`,
+          t.relkind === "m" ? `(materialized view) ${t.name}`
+          : t.is_view ? `(view) ${t.name}`
+          : `(table) ${t.name}`,
         view: t.is_view ? { definition: t.view_definition! } : undefined,
         relkind: t.relkind,
         documentation,

@@ -1,0 +1,34 @@
+[
+  {
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 1000
+      },
+      {
+        "type": "click",
+        "elementSelector": "[data-command=\"SchemaGraph\"]",
+        "duration": 1000
+      }
+    ],
+    "svgFileName": "schema_diagram_00"
+  },
+  {
+    "svgFileName": "schema_diagram_01",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  },
+  {
+    "svgFileName": "schema_diagram_02",
+    "animations": [
+      {
+        "type": "wait",
+        "duration": 3000
+      }
+    ]
+  }
+]

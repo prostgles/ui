@@ -6,6 +6,7 @@ import {
   runDbSql,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./utils/saveSVGs";
+import { expect } from "@playwright/test";
 
 export const sqlEditorSvgif: OnBeforeScreenshot = async (
   page,
@@ -79,19 +80,28 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   });
 
   await page.getByTestId("dashboard.window.menu").click();
-  await page.getByText("General").click();
-  await monacoType(page, `.MonacoEditor`, "show", {});
+  await page.getByText("Editor options").click();
+  await monacoType(page, `.CodeEditor`, ", show", {
+    pressBeforeTyping: ["ArrowLeft"],
+    pressAfterTyping: ["Tab", "Space", "ArrowDown", "Enter"],
+  });
+  await page.getByText("Update options").click();
+  await page.waitForTimeout(1000);
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
   await monacoType(page, `.ProstglesSQL`, intensiveQuery, {
     deleteAllAndFill: true,
     keyPressDelay: 0,
   });
   await page.keyboard.press("Alt+KeyE");
-  await page.waitForTimeout(1000);
+  await expect(page.getByTestId("W_SQLBottomBar")).toContainText("Mhz");
   await addScene({
     svgFileName: "cpu_usage",
     animations: [{ type: "wait", duration: 2000 }],
     caption: "Runtime statistics",
   });
+
+  await page.reload();
 
   await sqlSuggestionsScene({
     query: "CREATE INDEX idx_messages_sent ON messages \nUSING ",

@@ -19,6 +19,16 @@ export const testBugs: DemoScript = async (args) => {
     runSQL,
   } = args;
 
+  const testIncompleteQuery = async () => {
+    fromBeginning();
+    await typeAuto(`\nALTER TABLE my_ ALTER`, { nth: -1 });
+    await typeAuto(` `);
+    await moveCursor.left(13);
+    await typeAuto(`t`);
+    await testResult("ALTER TABLE my_table ALTER COLUMN");
+  };
+  await testIncompleteQuery();
+
   const nestedSubQueryInWith = fixIndent(`
     WITH cols AS (
         SELECT *

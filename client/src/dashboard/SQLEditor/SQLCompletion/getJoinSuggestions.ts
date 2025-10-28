@@ -112,18 +112,16 @@ const getTableJoins = (prevTableTokenIndexes: number[], { ss, cb }: Args) => {
 
       if (!isInPrevTables(ftable_oid) && isInPrevTables(table_oid)) {
         return {
+          table_oid,
           ftable_name,
           ftable_oid,
           conkey,
           confkey,
         };
       }
-      if (
-        table_name &&
-        !isInPrevTables(table_oid) &&
-        isInPrevTables(ftable_oid)
-      ) {
+      if (!isInPrevTables(table_oid) && isInPrevTables(ftable_oid)) {
         return {
+          table_oid: ftable_oid,
           ftable_name: table_name,
           ftable_oid: table_oid,
           conkey: confkey,
@@ -141,6 +139,7 @@ const getTableJoins = (prevTableTokenIndexes: number[], { ss, cb }: Args) => {
   const joinOptions = prevTablesIncludingFromTable
     .map(({ tablesInfo, alias }) => {
       return joinConstraints
+        .filter(({ table_oid }) => table_oid === tablesInfo.oid)
         .map(({ ftable_name, ftable_oid, conkey, confkey }) => {
           const ftable = ss.find(
             (t) => t.type === "table" && t.tablesInfo?.oid === ftable_oid,
