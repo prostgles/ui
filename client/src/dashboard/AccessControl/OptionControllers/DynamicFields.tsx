@@ -4,16 +4,16 @@ import type {
   ContextDataObject,
   TableRules,
   UpdateRule,
-} from "../../../../../common/publishUtils";
-import { validateDynamicFields } from "../../../../../common/publishUtils";
-import Btn from "../../../components/Btn";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { Label } from "../../../components/Label";
+} from "@common/publishUtils";
+import { validateDynamicFields } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { Label } from "@components/Label";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { FieldFilterControl } from "./FieldFilterControl";
 import type { ContextDataSchema } from "./FilterControl";
 import { FilterControl } from "./FilterControl";
-import { FlexRow } from "../../../components/Flex";
+import { FlexRow } from "@components/Flex";
 import { useEffectAsync } from "prostgles-client/dist/react-hooks";
 
 type P = Pick<

@@ -1,10 +1,10 @@
 import React from "react";
-import { InfoRow } from "../../../components/InfoRow";
-import { LabeledRow } from "../../../components/LabeledRow";
+import { InfoRow } from "@components/InfoRow";
+import { LabeledRow } from "@components/LabeledRow";
 import { areEqual } from "../../../utils";
 import type { EditedAccessRule } from "../AccessControl";
 import type { DBPermissionEditorProps } from "./PCustomTables";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 
 export const PRunSQL = ({

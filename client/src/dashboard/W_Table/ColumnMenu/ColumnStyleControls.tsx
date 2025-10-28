@@ -4,9 +4,9 @@ import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import React from "react";
 import { type Prgl, type Theme } from "../../../App";
 import { appTheme, useReactiveState } from "../../../appUtils";
-import { FlexCol, FlexRowWrap } from "../../../components/Flex";
-import { MINI_BARCHART_COLOR } from "../../../components/ProgressBar";
-import Select from "../../../components/Select/Select";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { MINI_BARCHART_COLOR } from "@components/ProgressBar";
+import Select from "@components/Select/Select";
 import { ColorPicker } from "./ColorPicker";
 import {
   ChipStylePalette,

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import { FlexRow } from "../../../components/Flex";
-import Popup from "../../../components/Popup/Popup";
-import { ScrollFade } from "../../../components/ScrollFade/ScrollFade";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { MCPServerConfig } from "../../../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
 import { mdiClose, mdiTools } from "@mdi/js";
 import type { FilterItem } from "prostgles-types";

@@ -1,9 +1,9 @@
 import { omitKeys } from "prostgles-types";
 import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../App";
-import { pageReload } from "../../components/Loader/Loading";
-import Popup from "../../components/Popup/Popup";
+import { pageReload } from "@components/Loader/Loading";
+import Popup from "@components/Popup/Popup";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 
 export type Method = DBSSchema["published_methods"] & {

@@ -9,10 +9,10 @@ import {
   mdiTable,
 } from "@mdi/js";
 import React from "react";
-import type { BtnProps } from "../../components/Btn";
-import Btn from "../../components/Btn";
-import { Label } from "../../components/Label";
-import PopupMenu from "../../components/PopupMenu";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
+import { Label } from "@components/Label";
+import PopupMenu from "@components/PopupMenu";
 import type { Link, LinkSyncItem } from "../Dashboard/dashboardUtils";
 import type { LayerQuery, W_MapProps } from "../W_Map/W_Map";
 import type {
@@ -23,7 +23,7 @@ import { AddChartLayer } from "./AddChartLayer";
 import { LayerColorPicker } from "./LayerColorPicker";
 import { LayerFilterManager } from "./LayerFilterManager";
 import { TimeChartLayerOptions } from "./TimeChartLayerOptions";
-import { FlexCol, FlexRowWrap } from "../../components/Flex";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { MapOpacityMenu } from "../W_Map/MapOpacityMenu";
 import { MapBasemapOptions } from "../W_Map/MapBasemapOptions";
 import { OSMLayerOptions } from "./OSMLayerOptions";

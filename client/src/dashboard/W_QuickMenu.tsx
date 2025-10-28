@@ -5,7 +5,7 @@ import {
 } from "@mdi/js";
 
 import React from "react";
-import Btn from "../components/Btn";
+import Btn from "@components/Btn";
 import type { CommonWindowProps } from "./Dashboard/Dashboard";
 import type {
   OnAddChart,
@@ -14,8 +14,8 @@ import type {
 } from "./Dashboard/dashboardUtils";
 
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { isJoinedFilter } from "../../../common/filterUtils";
-import { classOverride } from "../components/Flex";
+import { isJoinedFilter } from "@common/filterUtils";
+import { classOverride } from "@components/Flex";
 import { t } from "../i18n/i18nUtils";
 import type { DBS } from "./Dashboard/DBS";
 import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";

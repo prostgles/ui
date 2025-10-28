@@ -1,12 +1,9 @@
 import { mdiFilter } from "@mdi/js";
 import { pickKeys } from "prostgles-types";
 import React, { useMemo } from "react";
-import type {
-  GroupedDetailedFilter,
-  SimpleFilter,
-} from "../../../common/filterUtils";
-import Btn from "../components/Btn";
-import PopupMenu from "../components/PopupMenu";
+import type { GroupedDetailedFilter, SimpleFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
 import type {
   ContextDataSchema,
   ForcedFilterControlProps,

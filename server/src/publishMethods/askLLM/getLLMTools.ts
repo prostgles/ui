@@ -10,9 +10,9 @@ import {
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
   type ProstglesMcpTool,
-} from "../../../../common/prostglesMcp";
-import type { DBSSchema } from "../../../../common/publishUtils";
-import { getEntries } from "../../../../common/utils";
+} from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
 import { getDockerMCP } from "../../DockerManager/getDockerMCP";
 import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
 

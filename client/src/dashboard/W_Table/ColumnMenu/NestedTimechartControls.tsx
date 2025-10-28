@@ -1,10 +1,10 @@
 import { mdiChartTimelineVariant } from "@mdi/js";
 import React from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import Select from "../../../components/Select/Select";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import Select from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import {
   TIMECHART_STAT_TYPES,

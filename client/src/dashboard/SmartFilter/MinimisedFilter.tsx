@@ -1,12 +1,9 @@
 import { mdiSetCenter } from "@mdi/js";
 import { includes } from "prostgles-types";
 import React from "react";
-import {
-  getFinalFilterInfo,
-  TEXT_FILTER_TYPES,
-} from "../../../../common/filterUtils";
-import { sliceText } from "../../../../common/utils";
-import { Icon } from "../../components/Icon/Icon";
+import { getFinalFilterInfo, TEXT_FILTER_TYPES } from "@common/filterUtils";
+import { sliceText } from "@common/utils";
+import { Icon } from "@components/Icon/Icon";
 import type { FilterWrapperProps } from "./FilterWrapper";
 import "./MinimisedFilter.css";
 

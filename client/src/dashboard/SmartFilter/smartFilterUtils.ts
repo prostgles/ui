@@ -7,8 +7,8 @@ import type {
   DetailedFilterBase,
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../common/filterUtils";
-import { getFinalFilter, simplifyFilter } from "../../../../common/filterUtils";
+} from "@common/filterUtils";
+import { getFinalFilter, simplifyFilter } from "@common/filterUtils";
 import { isDefined } from "../../utils";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";

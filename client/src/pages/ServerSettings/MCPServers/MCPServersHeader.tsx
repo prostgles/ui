@@ -1,6 +1,6 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React from "react";
-import { InfoRow } from "../../../components/InfoRow";
+import { InfoRow } from "@components/InfoRow";
 import type { ServerSettingsProps } from "../ServerSettings";
 
 export type MCPServersProps = Pick<ServerSettingsProps, "dbsMethods">;

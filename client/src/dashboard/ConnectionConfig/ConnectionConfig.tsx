@@ -9,12 +9,12 @@ import {
   mdiTableEdit,
 } from "@mdi/js";
 import React, { useMemo } from "react";
-import type { CONNECTION_CONFIG_SECTIONS } from "../../../../common/utils";
+import type { CONNECTION_CONFIG_SECTIONS } from "@common/utils";
 import { dataCommand } from "../../Testing";
-import { FlexRow } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import type { TabItem } from "../../components/Tabs";
-import Tabs from "../../components/Tabs";
+import { FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import type { TabItem } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import { t } from "../../i18n/i18nUtils";
 import NewConnection from "../../pages/NewConnection/NewConnnectionForm";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";

@@ -1,9 +1,9 @@
 import { type AnyObject, type ParsedJoinPath, isEmpty } from "prostgles-types";
-import type { SmartGroupFilter } from "../../../../common/filterUtils";
-import type { DBSSchema } from "../../../../common/publishUtils";
-import type { OmitDistributive } from "../../../../common/utils";
-import { matchObj } from "../../../../common/utils";
-import { pageReload } from "../../components/Loader/Loading";
+import type { SmartGroupFilter } from "@common/filterUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import type { OmitDistributive } from "@common/utils";
+import { matchObj } from "@common/utils";
+import { pageReload } from "@components/Loader/Loading";
 import type { ActiveRow } from "../W_Table/W_Table";
 import type {
   ChartType,

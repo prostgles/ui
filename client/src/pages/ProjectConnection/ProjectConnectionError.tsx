@@ -1,13 +1,13 @@
 import { mdiArrowLeft, mdiLogin } from "@mdi/js";
 import React from "react";
-import ErrorComponent from "../../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 import type { PrglState } from "../../App";
-import Btn from "../../components/Btn";
+import Btn from "@components/Btn";
 
 import { useParams } from "react-router-dom";
-import { ROUTES } from "../../../../common/utils";
+import { ROUTES } from "@common/utils";
 import type { Command } from "../../Testing";
-import { FlexCol, FlexRow } from "../../components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { t } from "../../i18n/i18nUtils";
 import { type PrglProjectState } from "./useProjectDb";
 

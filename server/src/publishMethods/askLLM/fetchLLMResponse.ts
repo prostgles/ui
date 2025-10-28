@@ -3,7 +3,7 @@ import {
   isObject,
   type AnyObject,
 } from "prostgles-types";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { getLLMRequestBody } from "./getLLMRequestBody";
 import type { MCPToolSchema } from "./getLLMTools";
 import {

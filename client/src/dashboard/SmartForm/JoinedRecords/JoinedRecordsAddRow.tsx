@@ -1,6 +1,6 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useCallback, useMemo, useState } from "react";
-import Btn, { type BtnProps } from "../../../components/Btn";
+import Btn, { type BtnProps } from "@components/Btn";
 import { SmartForm, type SmartFormProps } from "../SmartForm";
 import { useNestedInsertDefaultData } from "../SmartFormField/useNestedInsertDefaultData";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";

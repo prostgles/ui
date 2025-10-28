@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import Btn from "../../components/Btn";
-import FormField from "../../components/FormField/FormField";
-import Loading from "../../components/Loader/Loading";
-import type { PopupProps } from "../../components/Popup/Popup";
-import PopupMenu from "../../components/PopupMenu";
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import Loading from "@components/Loader/Loading";
+import type { PopupProps } from "@components/Popup/Popup";
+import PopupMenu from "@components/PopupMenu";
 import { useIsMounted } from "./CredentialSelector";
 import type { TestSelectors } from "../../Testing";
 

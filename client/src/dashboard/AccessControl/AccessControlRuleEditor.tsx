@@ -13,14 +13,14 @@ import type {
   ContextDataObject,
   DBSSchema,
   TableRulesErrors,
-} from "../../../../common/publishUtils";
+} from "@common/publishUtils";
 import { dataCommand } from "../../Testing";
-import Btn from "../../components/Btn";
-import ButtonGroup from "../../components/ButtonGroup";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import Loading from "../../components/Loader/Loading";
+import Btn from "@components/Btn";
+import ButtonGroup from "@components/ButtonGroup";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow, classOverride } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import Loading from "@components/Loader/Loading";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
 import type {
@@ -40,7 +40,7 @@ import { useAccessControlSearchParams } from "./useAccessControlSearchParams";
 import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
 import { useEditedAccessRule } from "./useEditedAccessRule";
 import { AskLLMAccessControl } from "../AskLLM/Setup/AskLLMAccessControl";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 const ACCESS_TYPES = ["Custom", "All views/tables", "Run SQL"] as const;
 export type PermissionEditProps = Pick<

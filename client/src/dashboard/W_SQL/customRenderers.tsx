@@ -1,7 +1,7 @@
 import React from "react";
 import type { AnyObject } from "prostgles-types";
 import { getKeys, isEmpty } from "prostgles-types";
-import type { DivProps } from "../../components/Flex";
+import type { DivProps } from "@components/Flex";
 
 const SHORT_NAMES = [
   ["years", "y"],

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
-import { getSmartGroupFilter } from "../../../../../common/filterUtils";
-import type { ConfirmDialogProps } from "../../../components/ConfirmationDialog";
+import { getSmartGroupFilter } from "@common/filterUtils";
+import type { ConfirmDialogProps } from "@components/ConfirmationDialog";
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormNewRowState } from "../useNewRowDataHandler";
 import type { SmartFormState } from "../useSmartForm";

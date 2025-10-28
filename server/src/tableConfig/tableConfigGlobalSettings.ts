@@ -1,6 +1,6 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { JSONB } from "prostgles-types";
-import { OAuthProviderOptions } from "../../../common/OAuthUtils";
+import { OAuthProviderOptions } from "@common/OAuthUtils";
 
 const commonAuthSchema = {
   enabled: { type: "boolean", optional: true },

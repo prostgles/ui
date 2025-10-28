@@ -3,13 +3,13 @@ import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getKeys } from "prostgles-types";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import { isDefined } from "../../../common/filterUtils";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { isDefined } from "@common/filterUtils";
 import {
   getMagicLinkEmailFromTemplate,
   getVerificationEmailFromTemplate,
   MOCK_SMTP_HOST,
-} from "../../../common/OAuthUtils";
+} from "@common/OAuthUtils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
 import { checkClientIP } from "../authConfig/sessionUtils";

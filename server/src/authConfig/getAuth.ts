@@ -5,7 +5,7 @@ import path from "path";
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import { upsertNamedExpressMiddleware } from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { API_ENDPOINTS, ROUTES } from "@common/utils";
 import { actualRootDir } from "../electronConfig";
 import type { DBS } from "../index";

@@ -1,6 +1,6 @@
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import type { DBSSchema } from "../../../common/publishUtils";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
 import { testMCPServerConfig } from "../McpHub/McpHub";
 import { getBestLLMChatModel } from "../publishMethods/askLLM/askLLM";
 import { fetchLLMResponse } from "../publishMethods/askLLM/fetchLLMResponse";

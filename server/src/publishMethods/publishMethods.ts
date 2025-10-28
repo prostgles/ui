@@ -4,7 +4,7 @@ import fs from "fs";
 import * as os from "os";
 import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBS } from "../index";
 import { connMgr } from "../index";
 
@@ -20,8 +20,8 @@ import {
   isEmpty,
   pickKeys,
 } from "prostgles-types";
-import type { LLMMessage } from "../../../common/llmUtils";
-import type { DBSSchema } from "../../../common/publishUtils";
+import type { LLMMessage } from "@common/llmUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { checkClientIP, createSessionSecret } from "../authConfig/sessionUtils";
 import type { Backups } from "../BackupManager/BackupManager";

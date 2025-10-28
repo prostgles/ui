@@ -7,10 +7,10 @@ import React, {
 } from "react";
 
 import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
-import { isObject } from "../../../../common/publishUtils";
-import { classOverride } from "../../components/Flex";
-import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
-import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
+import { isObject } from "@common/publishUtils";
+import { classOverride } from "@components/Flex";
+import type { MonacoEditorProps } from "@components/MonacoEditor/MonacoEditor";
+import { MonacoEditor } from "@components/MonacoEditor/MonacoEditor";
 import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import { type editor, type Uri } from "../W_SQL/monacoEditorTypes";
 import { registerLogLang } from "./registerLogLang";

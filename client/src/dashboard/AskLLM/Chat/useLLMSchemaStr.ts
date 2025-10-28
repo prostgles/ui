@@ -1,6 +1,6 @@
 import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
 import { useMemo } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
 
 type P = Pick<Prgl, "connection" | "db" | "tables"> & {

@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexRow, classOverride } from "../../components/Flex";
-import { SvgIcon } from "../../components/SvgIcon";
-import { onWheelScroll } from "../../components/Table/Table";
+import Btn from "@components/Btn";
+import { FlexRow, classOverride } from "@components/Flex";
+import { SvgIcon } from "@components/SvgIcon";
+import { onWheelScroll } from "@components/Table/Table";
 import type { Command } from "../../Testing";
 import type { WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
 import { useSetActiveWorkspace, useWorkspaces } from "./useWorkspaces";

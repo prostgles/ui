@@ -1,6 +1,6 @@
 import { useMemoDeep } from "prostgles-client/dist/react-hooks";
 import React, { useCallback, useMemo } from "react";
-import { isObject } from "../../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import {
   CodeEditor,
   type CodeEditorProps,

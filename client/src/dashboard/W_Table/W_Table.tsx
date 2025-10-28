@@ -3,9 +3,9 @@ import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 
 import React from "react";
-import Loading from "../../components/Loader/Loading";
-import type { TableColumn, TableProps } from "../../components/Table/Table";
-import { PAGE_SIZES, Table, closest } from "../../components/Table/Table";
+import Loading from "@components/Loader/Loading";
+import type { TableColumn, TableProps } from "@components/Table/Table";
+import { PAGE_SIZES, Table, closest } from "@components/Table/Table";
 import type {
   OnAddChart,
   Query,
@@ -20,8 +20,8 @@ import RTComp from "../RTComp";
 
 import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
 import type {
   ColumnConfig,
   ColumnSort,
@@ -30,13 +30,13 @@ import type {
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
 import { isDefined, isEqual, pickKeys } from "prostgles-types";
-import type { DetailedFilterBase } from "../../../../common/filterUtils";
-import { matchObj } from "../../../../common/utils";
+import type { DetailedFilterBase } from "@common/filterUtils";
+import { matchObj } from "@common/utils";
 import type { Command } from "../../Testing";
 import { createReactiveState } from "../../appUtils";
-import { ClickCatchOverlayZIndex } from "../../components/ClickCatchOverlay";
-import { Icon } from "../../components/Icon/Icon";
-import type { PaginationProps } from "../../components/Table/Pagination";
+import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
+import { Icon } from "@components/Icon/Icon";
+import type { PaginationProps } from "@components/Table/Pagination";
 import { t } from "../../i18n/i18nUtils";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";

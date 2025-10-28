@@ -1,9 +1,9 @@
 import { mdiPlay } from "@mdi/js";
 import React, { useState } from "react";
 import { r_useAppVideoDemo, useReactiveState, type Prgl } from "../App";
-import Btn from "../components/Btn";
-import { FlexCol } from "../components/Flex";
-import Popup from "../components/Popup/Popup";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
 import type { DBS } from "../dashboard/Dashboard/DBS";
 import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { getKeys } from "../utils";

@@ -1,11 +1,11 @@
 import { mdiCogOutline } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import Popup from "../../../components/Popup/Popup";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
 import { t } from "../../../i18n/i18nUtils";
 import { SmartForm, type SmartFormProps } from "../../SmartForm/SmartForm";
 

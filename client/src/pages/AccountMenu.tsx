@@ -2,19 +2,19 @@ import { useNavigate } from "react-router-dom";
 import React from "react";
 import { NavLink } from "react-router-dom";
 import type { ClientUser } from "../App";
-import PopupMenu from "../components/PopupMenu";
-import Btn from "../components/Btn";
+import PopupMenu from "@components/PopupMenu";
+import Btn from "@components/Btn";
 import {
   mdiAccountOutline,
   mdiAccountStarOutline,
   mdiLogin,
   mdiLogout,
 } from "@mdi/js";
-import { MenuList } from "../components/MenuList";
+import { MenuList } from "@components/MenuList";
 import { isDefined } from "prostgles-types";
-import { Icon } from "../components/Icon/Icon";
+import { Icon } from "@components/Icon/Icon";
 import { t } from "../i18n/i18nUtils";
-import { ROUTES } from "../../../common/utils";
+import { ROUTES } from "@common/utils";
 
 type P = {
   forNavBar?: boolean;

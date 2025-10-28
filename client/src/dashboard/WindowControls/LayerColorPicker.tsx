@@ -5,7 +5,7 @@ import type { RGBA } from "../W_Table/ColumnMenu/ColorPicker";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
 import { MapLayerStyling } from "./MapLayerStyling";
-import type { BtnProps } from "../../components/Btn";
+import type { BtnProps } from "@components/Btn";
 
 export type LayerColorPickerProps = {
   link: LinkSyncItem;

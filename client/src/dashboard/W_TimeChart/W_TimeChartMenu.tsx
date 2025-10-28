@@ -1,10 +1,10 @@
 import { mdiPanHorizontal, mdiSyncCircle } from "@mdi/js";
 import React from "react";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import PopupMenu from "@components/PopupMenu";
+import Select from "@components/Select/Select";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { AutoRefreshMenu } from "../W_Table/TableMenu/AutoRefreshMenu";
 

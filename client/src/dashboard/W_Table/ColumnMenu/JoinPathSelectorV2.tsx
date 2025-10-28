@@ -3,12 +3,12 @@ import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import type { TargetPath } from "../tableUtils/getJoinPaths";
 import { getJoinPathStr, getJoinPaths } from "../tableUtils/getJoinPaths";
 import type { ParsedJoinPath } from "prostgles-types";
-import type { FullOption } from "../../../components/Select/Select";
-import Select from "../../../components/Select/Select";
+import type { FullOption } from "@components/Select/Select";
+import Select from "@components/Select/Select";
 import { isDefined } from "../../../utils";
 import CodeExample from "../../CodeExample";
-import { FlexCol } from "../../../components/Flex";
-import type { BtnProps } from "../../../components/Btn";
+import { FlexCol } from "@components/Flex";
+import type { BtnProps } from "@components/Btn";
 type P = {
   tables: DBSchemaTablesWJoins;
   tableName: string;

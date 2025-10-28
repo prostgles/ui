@@ -8,10 +8,10 @@ import type { ValidatedColumnInfo } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
 import React, { useState } from "react";
 import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import { FlexRow } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import { SearchList } from "../../../components/SearchList/SearchList";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { SearchList } from "@components/SearchList/SearchList";
 import type {
   DBSchemaTablesWJoins,
   LoadedSuggestions,

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "../../Testing";
-import { useAlert } from "../../components/AlertProvider";
+import { useAlert } from "@components/AlertProvider";
 import { click } from "../../demo/demoUtils";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { tout } from "../../utils";

@@ -1,9 +1,9 @@
 import { mdiDatabase } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import Btn from "../../../components/Btn";
-import PopupMenu from "../../../components/PopupMenu";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
 import { SmartForm } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { btnStyleProps } from "./AskLLMChatActionBar";

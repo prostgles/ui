@@ -1,12 +1,12 @@
 import { mdiAccountMultiple } from "@mdi/js";
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { ROUTES } from "../../../../common/utils";
+import { ROUTES } from "@common/utils";
 import type { ExtraProps } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRowWrap } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import { InfoRow } from "../../components/InfoRow";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { InfoRow } from "@components/InfoRow";
 import { WspIconPath } from "../../dashboard/AccessControl/ExistingAccessRules";
 import { t } from "../../i18n/i18nUtils";
 import { ConnectionActionBar } from "./ConnectionActionBar";

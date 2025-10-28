@@ -2,7 +2,7 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import React, { useCallback, useMemo } from "react";
 import type { ReactiveState } from "../../appUtils";
 import { useReactiveState } from "../../appUtils";
-import Popup from "../../components/Popup/Popup";
+import Popup from "@components/Popup/Popup";
 import type {
   CommonWindowProps,
   DashboardProps,

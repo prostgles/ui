@@ -2,25 +2,22 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/prostgles";
 import { quickClone } from "../../../utils";
-import Select from "../../../components/Select/Select";
-import {
-  getSmartGroupFilter,
-  type SimpleFilter,
-} from "../../../../../common/filterUtils";
+import Select from "@components/Select/Select";
+import { getSmartGroupFilter, type SimpleFilter } from "@common/filterUtils";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
 import {
   omitKeys,
   type MethodHandler,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import Btn from "../../../components/Btn";
-import PopupMenu from "../../../components/PopupMenu";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
 import SmartTable from "../../SmartTable";
 import { pluralise } from "../../../pages/Connections/Connection";
-import { Label } from "../../../components/Label";
+import { Label } from "@components/Label";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderFilter } from "../../RenderFilter";
-import { FlexCol, FlexRowWrap } from "../../../components/Flex";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { appTheme, useReactiveState } from "../../../App";
 import type { DBS } from "../../Dashboard/DBS";
 

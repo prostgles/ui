@@ -1,6 +1,6 @@
 import { mdiKeyboard } from "@mdi/js";
 import React from "react";
-import { Hotkey } from "../../components/Hotkey";
+import { Hotkey } from "@components/Hotkey";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 
 type P = {

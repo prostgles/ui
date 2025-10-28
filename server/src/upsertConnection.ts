@@ -1,6 +1,6 @@
 import { omitKeys, pickKeys, type ProstglesError } from "prostgles-types";
 import type { Connections, DBS, Users } from ".";
-import type { DBGeneratedSchema } from "../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import { applySampleSchema } from "./publishMethods/applySampleSchema";

@@ -1,7 +1,7 @@
-import { filterArr } from "../../../../common/llmUtils";
-import { isObject } from "../../../../common/publishUtils";
+import { filterArr } from "@common/llmUtils";
+import { isObject } from "@common/publishUtils";
 import { getCommandElemSelector, type Command } from "../../Testing";
-import type { AlertContext } from "../../components/AlertProvider";
+import type { AlertContext } from "@components/AlertProvider";
 import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { waitForElement } from "../../demo/demoUtils";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";

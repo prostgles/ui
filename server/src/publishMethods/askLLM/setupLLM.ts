@@ -1,6 +1,6 @@
 import type { DBS } from "../..";
-import { LLM_PROMPT_VARIABLES } from "../../../../common/llmUtils";
-import type { DBSSchemaForInsert } from "../../../../common/publishUtils";
+import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
+import type { DBSSchemaForInsert } from "@common/publishUtils";
 export const setupLLM = async (dbs: DBS) => {
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition

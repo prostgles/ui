@@ -1,9 +1,9 @@
 import type { AnyObject } from "prostgles-types";
 import { _PG_date, _PG_numbers, includes, isDefined } from "prostgles-types";
 import React from "react";
-import { FlexRow, FlexRowWrap } from "../../../components/Flex";
-import { CellBarchart } from "../../../components/ProgressBar";
-import type { OnColRenderRowInfo } from "../../../components/Table/Table";
+import { FlexRow, FlexRowWrap } from "@components/Flex";
+import { CellBarchart } from "@components/ProgressBar";
+import type { OnColRenderRowInfo } from "@components/Table/Table";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type { ChipStyle, ColumnValue } from "../ColumnMenu/ColumnStyleControls";
@@ -11,7 +11,7 @@ import { kFormatter, type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
 import type { OnRenderColumnProps } from "./onRenderColumn";
-import { SvgIcon } from "../../../components/SvgIcon";
+import { SvgIcon } from "@components/SvgIcon";
 
 type P = OnColRenderRowInfo &
   Pick<OnRenderColumnProps, "maxCellChars" | "c" | "barchartVals">;

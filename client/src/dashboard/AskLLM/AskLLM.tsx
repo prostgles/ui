@@ -1,7 +1,7 @@
 import { mdiAssistant } from "@mdi/js";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
+import Btn from "@components/Btn";
 import { t } from "../../i18n/i18nUtils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { AskLLMChat } from "./Chat/AskLLMChat";

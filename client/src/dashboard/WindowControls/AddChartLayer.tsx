@@ -1,11 +1,11 @@
 import { mdiPlus } from "@mdi/js";
 import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import Select from "../../components/Select/Select";
+import Select from "@components/Select/Select";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
-import { FlexRow } from "../../components/Flex";
-import PopupMenu from "../../components/PopupMenu";
-import Btn from "../../components/Btn";
+import { FlexRow } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import Btn from "@components/Btn";
 import { MapOSMQuery } from "../W_Map/MapOSMQuery";
 import type { Extent } from "../Map/DeckGLMap";
 

@@ -1,8 +1,8 @@
 import React from "react";
 import type { Backups } from "../Dashboard/dashboardUtils";
-import Chip from "../../components/Chip";
-import { parsedError } from "../../components/ErrorComponent";
-import { ProgressBar } from "../../components/ProgressBar";
+import Chip from "@components/Chip";
+import { parsedError } from "@components/ErrorComponent";
+import { ProgressBar } from "@components/ProgressBar";
 import { bytesToSize } from "./BackupsControls";
 
 export const RenderBackupStatus = ({

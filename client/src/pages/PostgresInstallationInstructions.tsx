@@ -5,10 +5,10 @@ import {
   mdiMicrosoftWindows,
 } from "@mdi/js";
 import React from "react";
-import Btn from "../components/Btn";
-import { ExpandSection } from "../components/ExpandSection";
-import PopupMenu from "../components/PopupMenu";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../common/electronInitTypes";
+import Btn from "@components/Btn";
+import { ExpandSection } from "@components/ExpandSection";
+import PopupMenu from "@components/PopupMenu";
+import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
 
 const OPERATING_SYSTEMS = [
   { key: "linux", label: "Linux", icon: mdiLinux },

@@ -6,8 +6,8 @@ import {
 } from "@mdi/js";
 import React from "react";
 import { dataCommand } from "../../Testing";
-import Btn from "../../components/Btn";
-import { FlexRowWrap } from "../../components/Flex";
+import Btn from "@components/Btn";
+import { FlexRowWrap } from "@components/Flex";
 import type { DashboardMenuProps } from "./DashboardMenu";
 import { DashboardMenuSettings } from "./DashboardMenuSettings";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";

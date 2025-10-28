@@ -1,12 +1,12 @@
 import React from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl, PrglCore } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
 import { CreateFileColumn } from "./CreateFileColumn";
 import { FileColumnConfigControls } from "./FileColumnConfigControls";
 import type { useFileTableConfigControls } from "./useFileTableConfigControls";
-import { pageReload } from "../../components/Loader/Loading";
+import { pageReload } from "@components/Loader/Loading";
 
 type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables" | "db"> &
   Pick<

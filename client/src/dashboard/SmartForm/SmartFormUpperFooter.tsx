@@ -1,8 +1,8 @@
 import type { AnyObject } from "prostgles-types";
 import { isDefined, isObject } from "prostgles-types";
 import React, { useState } from "react";
-import Btn from "../../components/Btn";
-import Popup from "../../components/Popup/Popup";
+import Btn from "@components/Btn";
+import Popup from "@components/Popup/Popup";
 import { W_MethodControls } from "../W_Method/W_MethodControls";
 import { JoinedRecords } from "./JoinedRecords/JoinedRecords";
 import { useActiveJoinedRecordsTab } from "./JoinedRecords/useActiveJoinedRecordsTab";

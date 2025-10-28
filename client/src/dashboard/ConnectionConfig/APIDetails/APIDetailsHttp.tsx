@@ -1,12 +1,12 @@
 import { mdiCodeBraces } from "@mdi/js";
 import React from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import CodeExample from "../../CodeExample";
 import type { APIDetailsProps } from "./APIDetails";
-import { getConnectionPaths } from "../../../../../common/utils";
+import { getConnectionPaths } from "@common/utils";
 import { t } from "../../../i18n/i18nUtils";
 import { download } from "../../W_SQL/W_SQL";
 

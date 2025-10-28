@@ -1,7 +1,7 @@
 import React from "react";
-import type { DBSSchema } from "../../../../../../common/publishUtils";
-import Btn from "../../../../components/Btn";
-import { FlexRow } from "../../../../components/Flex";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
 import {
   MCPServerConfig,
   useMCPServerConfig,

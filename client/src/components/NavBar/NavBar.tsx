@@ -4,7 +4,7 @@ import "./NavBar.css";
 
 import { mdiArrowLeft, mdiClose, mdiMenu } from "@mdi/js";
 import { useNavigate } from "react-router-dom";
-import type { ProstglesState } from "../../../../common/electronInitTypes";
+import type { ProstglesState } from "@common/electronInitTypes";
 import type { ClientUser, Prgl } from "../../App";
 import { AccountMenu } from "../../pages/AccountMenu";
 import ClickCatch from "../ClickCatch";

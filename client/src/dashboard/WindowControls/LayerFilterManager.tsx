@@ -1,4 +1,4 @@
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import React from "react";
 import { RenderFilter } from "../RenderFilter";
 import type { MapLayerManagerProps } from "./ChartLayerManager";

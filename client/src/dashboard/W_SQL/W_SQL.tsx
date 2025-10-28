@@ -6,12 +6,12 @@ import type {
 } from "prostgles-types";
 
 import React, { useEffect } from "react";
-import Loading from "../../components/Loader/Loading";
+import Loading from "@components/Loader/Loading";
 import type {
   PageSize,
   TableColumn,
   TableProps,
-} from "../../components/Table/Table";
+} from "@components/Table/Table";
 import type {
   OnAddChart,
   Query,
@@ -19,8 +19,8 @@ import type {
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
 
-import type { PopupProps } from "../../components/Popup/Popup";
-import Popup from "../../components/Popup/Popup";
+import type { PopupProps } from "@components/Popup/Popup";
+import Popup from "@components/Popup/Popup";
 
 import type { DeltaOf } from "../RTComp";
 import RTComp from "../RTComp";
@@ -33,13 +33,13 @@ import type {
   SyncDataItem,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBEventHandles, ValidatedColumnInfo } from "prostgles-types/lib";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
 import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
 import { createReactiveState } from "../../appUtils";
-import { Icon } from "../../components/Icon/Icon";
+import { Icon } from "@components/Icon/Icon";
 import type { CommonWindowProps, DashboardState } from "../Dashboard/Dashboard";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import Window from "../Window";

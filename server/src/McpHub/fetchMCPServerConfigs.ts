@@ -1,6 +1,6 @@
 import { isDefined, pickKeys, type ValueOf } from "prostgles-types";
 import type { DBS } from "..";
-import type { DBSSchema } from "../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { ServersConfig } from "./McpTypes";
 
 export const fetchMCPServerConfigs = async (

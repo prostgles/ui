@@ -1,7 +1,7 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React from "react";
-import { classOverride } from "../../components/Flex";
-import { Slider } from "../../components/Slider";
+import { classOverride } from "@components/Flex";
+import { Slider } from "@components/Slider";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 
 type P = {

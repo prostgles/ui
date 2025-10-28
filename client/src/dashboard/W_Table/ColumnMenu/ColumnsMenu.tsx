@@ -20,9 +20,9 @@ import type {
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import { Icon } from "../../../components/Icon/Icon";
-import Popup from "../../../components/Popup/Popup";
-import type { SearchListItem } from "../../../components/SearchList/SearchList";
+import { Icon } from "@components/Icon/Icon";
+import Popup from "@components/Popup/Popup";
+import type { SearchListItem } from "@components/SearchList/SearchList";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
   WindowData,

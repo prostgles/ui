@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo, useState } from "react";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
-import PopupMenu from "../../../../components/PopupMenu";
-import { FlexCol } from "../../../../components/Flex";
-import Btn from "../../../../components/Btn";
+import PopupMenu from "@components/PopupMenu";
+import { FlexCol } from "@components/Flex";
+import Btn from "@components/Btn";
 import { mdiFunction, mdiSigma } from "@mdi/js";
 import { type FuncDef, FunctionSelector } from "../FunctionSelector";
 import { getFuncDefColumns } from "./AddComputedColMenu";
-import { SearchList } from "../../../../components/SearchList/SearchList";
+import { SearchList } from "@components/SearchList/SearchList";
 import { getColumnListItem } from "../ColumnsMenu";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import type { ColumnConfig } from "../ColumnMenu";

@@ -5,7 +5,7 @@ import {
   isEqual,
   type AnyObject,
 } from "prostgles-types";
-import type { Media } from "../../components/FileInput/FileInput";
+import type { Media } from "@components/FileInput/FileInput";
 
 export type NewRow = Record<string, ColumnData>;
 

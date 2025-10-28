@@ -10,28 +10,28 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import type { MethodFullDef } from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import React from "react";
-import type { SimpleFilter } from "../../../common/filterUtils";
-import { isObject } from "../../../common/publishUtils";
+import type { SimpleFilter } from "@common/filterUtils";
+import { isObject } from "@common/publishUtils";
 import type { Prgl } from "../App";
-import ButtonGroup from "../components/ButtonGroup";
-import Loading from "../components/Loader/Loading";
-import Popup from "../components/Popup/Popup";
+import ButtonGroup from "@components/ButtonGroup";
+import Loading from "@components/Loader/Loading";
+import Popup from "@components/Popup/Popup";
 import type {
   SearchListItem,
   SearchListProps,
-} from "../components/SearchList/SearchList";
-import { SearchList } from "../components/SearchList/SearchList";
-import Select from "../components/Select/Select";
-import type { TableColumn } from "../components/Table/Table";
+} from "@components/SearchList/SearchList";
+import { SearchList } from "@components/SearchList/SearchList";
+import Select from "@components/Select/Select";
+import type { TableColumn } from "@components/Table/Table";
 import type { _Dashboard } from "./Dashboard/Dashboard";
 import type { ChartOptions, WindowData } from "./Dashboard/dashboardUtils";
 import { SQL_SNIPPETS } from "./W_SQL/SQLSnippets";
 import RTComp from "./RTComp";
 import type { SQLSuggestion } from "./SQLEditor/W_SQLEditor";
 import type { AnyObject } from "prostgles-types";
-import { Icon } from "../components/Icon/Icon";
-import { sliceText } from "../../../common/utils";
-import { FlexCol } from "../components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { sliceText } from "@common/utils";
+import { FlexCol } from "@components/Flex";
 
 export const SEARCH_TYPES = [
   { key: "views and queries", label: "Tables/Queries" },

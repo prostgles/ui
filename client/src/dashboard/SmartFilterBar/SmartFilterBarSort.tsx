@@ -1,7 +1,7 @@
 import { mdiSortReverseVariant, mdiSortVariant } from "@mdi/js";
 import React from "react";
-import Btn from "../../components/Btn";
-import Select from "../../components/Select/Select";
+import Btn from "@components/Btn";
+import Select from "@components/Select/Select";
 import type {
   DBSchemaTableWJoins,
   WindowSyncItem,

@@ -2,9 +2,9 @@ import { mdiStop } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
+import Btn from "@components/Btn";
 import {
   SmartCardList,
   type SmartCardListProps,

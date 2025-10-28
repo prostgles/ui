@@ -3,11 +3,11 @@ import type { AnyObject } from "prostgles-types";
 
 import React from "react";
 
-import Btn from "../../../components/Btn";
+import Btn from "@components/Btn";
 
 import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { FlexRow } from "../../../components/Flex";
-import { Icon } from "../../../components/Icon/Icon";
+import { FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import type W_Table from "../W_Table";

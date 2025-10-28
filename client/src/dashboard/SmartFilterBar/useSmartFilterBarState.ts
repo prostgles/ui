@@ -1,10 +1,7 @@
 import { useMemo, useState } from "react";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 import { IsTable, type WindowSyncItem } from "../Dashboard/dashboardUtils";
-import type {
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../common/filterUtils";
+import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
 import type { Operand } from "../SmartFilter/SmartFilter";
 
 export const useSmartFilterBarState = (props: SmartFilterBarProps) => {

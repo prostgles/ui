@@ -1,9 +1,9 @@
 import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { type AuthResponse, isEmpty, pickKeys } from "prostgles-types";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { HOUR } from "../../../common/utils";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
+import { HOUR } from "@common/utils";
 import { waitForGlobalSettings } from "./subscribeToAuthSetupChanges";
 
 type FailedAttemptsInfo =

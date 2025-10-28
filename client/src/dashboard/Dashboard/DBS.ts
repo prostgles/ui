@@ -1,16 +1,16 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types/lib";
-import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
-import type { InstalledPrograms } from "../../../../common/electronInitTypes";
-import type { LLMMessage } from "../../../../common/llmUtils";
-import type { McpToolCallResponse } from "../../../../common/mcp";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { InstalledPrograms } from "@common/electronInitTypes";
+import type { LLMMessage } from "@common/llmUtils";
+import type { McpToolCallResponse } from "@common/mcp";
+import type { DBSSchema } from "@common/publishUtils";
 import type {
   ConnectionStatus,
   PGDumpParams,
   ProcStats,
   SampleSchema,
-} from "../../../../common/utils";
+} from "@common/utils";
 import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 import type { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
 import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";

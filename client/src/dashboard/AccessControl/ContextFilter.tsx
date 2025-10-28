@@ -1,10 +1,10 @@
 import { mdiPlus } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useEffect, useState } from "react";
-import type { FilterType, SimpleFilter } from "../../../../common/filterUtils";
-import Btn from "../../components/Btn";
-import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import type { FilterType, SimpleFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
+import Select from "@components/Select/Select";
 
 export const CONTEXT_FILTER_OPERANDS = [
   "=",

@@ -1,8 +1,8 @@
 import type { AnyObject, DBSchemaTable } from "prostgles-types";
 import { isEmpty } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { Media } from "../../components/FileInput/FileInput";
-import { FileInput } from "../../components/FileInput/FileInput";
+import type { Media } from "@components/FileInput/FileInput";
+import { FileInput } from "@components/FileInput/FileInput";
 import type { SmartFormProps } from "./SmartForm";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";

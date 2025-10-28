@@ -7,9 +7,9 @@ import {
 import {
   getSmartGroupFilter,
   type SmartGroupFilter,
-} from "../../../../../common/filterUtils";
+} from "@common/filterUtils";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
-import { isObject } from "../../../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import {
   getComputedColumnSelect,
   getTableSelect,

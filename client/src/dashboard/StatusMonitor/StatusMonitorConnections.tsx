@@ -1,10 +1,10 @@
 import { mdiFilter, mdiStopCircleOutline } from "@mdi/js";
 import React from "react";
-import type { ConnectionStatus } from "../../../../common/utils";
-import Btn from "../../components/Btn";
-import Chip from "../../components/Chip";
-import PopupMenu from "../../components/PopupMenu";
-import { Table } from "../../components/Table/Table";
+import type { ConnectionStatus } from "@common/utils";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import PopupMenu from "@components/PopupMenu";
+import { Table } from "@components/Table/Table";
 import type { ProstglesColumn } from "../W_SQL/W_SQL";
 import type { StatusMonitorProps } from "./StatusMonitor";
 

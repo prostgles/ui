@@ -4,7 +4,7 @@ import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import type { CodeEditorProps } from "./CodeEditor/CodeEditor";
 import { CodeEditor } from "./CodeEditor/CodeEditor";
 import { appTheme, useReactiveState } from "../App";
-import ErrorComponent from "../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 
 type P = {
   style?: React.CSSProperties;

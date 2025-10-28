@@ -1,8 +1,8 @@
 import { isDefined } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { ErrorTrap } from "../../components/ErrorComponent";
-import { FlexCol } from "../../components/Flex";
+import { ErrorTrap } from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
 import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
 import { LinkMenu } from "../LinkMenu";
 import RTComp from "../RTComp";

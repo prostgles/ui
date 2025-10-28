@@ -7,15 +7,12 @@ import type {
   JoinedFilter,
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../common/filterUtils";
-import {
-  isDetailedFilter,
-  isJoinedFilter,
-} from "../../../../common/filterUtils";
-import { isObject } from "../../../../common/publishUtils";
-import Btn from "../../components/Btn";
-import { FlexCol, classOverride } from "../../components/Flex";
-import { InfoRow } from "../../components/InfoRow";
+} from "@common/filterUtils";
+import { isDetailedFilter, isJoinedFilter } from "@common/filterUtils";
+import { isObject } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { FlexCol, classOverride } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";

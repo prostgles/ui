@@ -1,11 +1,11 @@
 import { mdiDelete, mdiLinkPlus } from "@mdi/js";
 import React, { useMemo } from "react";
-import Btn from "../../../../components/Btn";
-import Chip from "../../../../components/Chip";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
-import { InfoRow } from "../../../../components/InfoRow";
-import { Label } from "../../../../components/Label";
-import Select from "../../../../components/Select/Select";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import { Label } from "@components/Label";
+import Select from "@components/Select/Select";
 import { REFERENCES_COL_OPTS } from "../../../SQLEditor/SQLCompletion/TableKWDs";
 import type { ColumnOptions } from "./ColumnEditor";
 import { isDefined } from "../../../../utils";

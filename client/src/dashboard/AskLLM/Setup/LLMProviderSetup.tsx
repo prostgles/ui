@@ -1,9 +1,9 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
-import Chip from "../../../components/Chip";
-import { InfoRow } from "../../../components/InfoRow";
+import Chip from "@components/Chip";
+import { InfoRow } from "@components/InfoRow";
 import {
   SmartCardList,
   type SmartCardListProps,

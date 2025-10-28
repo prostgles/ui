@@ -1,13 +1,13 @@
 import fs from "fs";
 import path from "path";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBS } from "../index";
 
 export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
-import { isDefined } from "../../../common/filterUtils";
-import type { SampleSchema, SampleSchemaDir } from "../../../common/utils";
+import { isDefined } from "@common/filterUtils";
+import type { SampleSchema, SampleSchemaDir } from "@common/utils";
 import { getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
 import { actualRootDir } from "../electronConfig";
 import { runConnectionQuery } from "./publishMethods";

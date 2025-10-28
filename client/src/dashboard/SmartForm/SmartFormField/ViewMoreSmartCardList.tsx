@@ -1,9 +1,9 @@
 import { mdiSearchWeb } from "@mdi/js";
 import React, { useState } from "react";
-import type { SmartGroupFilter } from "../../../../../common/filterUtils";
-import Btn from "../../../components/Btn";
-import { InfoRow } from "../../../components/InfoRow";
-import Popup from "../../../components/Popup/Popup";
+import type { SmartGroupFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { InfoRow } from "@components/InfoRow";
+import Popup from "@components/Popup/Popup";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { useJoinedSectionFieldConfigs } from "../JoinedRecords/useJoinedSectionFieldConfigs";

@@ -1,12 +1,12 @@
 import React from "react";
 import type { APIDetailsProps } from "./APIDetails";
-import PopupMenu from "../../../components/PopupMenu";
+import PopupMenu from "@components/PopupMenu";
 import { mdiAlert } from "@mdi/js";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
 import { t } from "../../../i18n/i18nUtils";
-import FormField from "../../../components/FormField/FormField";
+import FormField from "@components/FormField/FormField";
 
 export const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
   const { data: serverSettings } = dbs.global_settings.useSubscribeOne({});

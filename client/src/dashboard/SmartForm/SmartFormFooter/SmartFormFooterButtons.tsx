@@ -2,13 +2,13 @@ import { mdiContentCopy, mdiDelete } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import React from "react";
 import { dataCommand } from "../../../Testing";
-import Btn from "../../../components/Btn";
-import ConfirmationDialog from "../../../components/ConfirmationDialog";
-import { Footer } from "../../../components/Popup/Popup";
+import Btn from "@components/Btn";
+import ConfirmationDialog from "@components/ConfirmationDialog";
+import { Footer } from "@components/Popup/Popup";
 import { type SmartFormProps } from "../SmartForm";
 import type { SmartFormState } from "../useSmartForm";
 import { type SmartFormActionsState } from "./useSmartFormActions";
-import { getEntries } from "../../../../../common/utils";
+import { getEntries } from "@common/utils";
 
 type P = SmartFormState &
   SmartFormActionsState &

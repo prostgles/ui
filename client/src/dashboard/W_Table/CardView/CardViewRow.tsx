@@ -1,7 +1,7 @@
 import { _PG_date, type AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import { matchObj } from "../../../../../common/utils";
-import { FlexRowWrap } from "../../../components/Flex";
+import { matchObj } from "@common/utils";
+import { FlexRowWrap } from "@components/Flex";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import { getEditColumn } from "../tableUtils/getEditColumn";

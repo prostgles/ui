@@ -1,8 +1,8 @@
 import React from "react";
-import ErrorComponent from "../../../../components/ErrorComponent";
-import { FlexCol } from "../../../../components/Flex";
-import FormField from "../../../../components/FormField/FormField";
-import Popup from "../../../../components/Popup/Popup";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import Popup from "@components/Popup/Popup";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
 import { useEditableData } from "../../useEditableData";
 

@@ -1,17 +1,14 @@
 import React from "react";
-import type {
-  JOINED_FILTER_TYPES,
-  JoinedFilter,
-} from "../../../../common/filterUtils";
+import type { JOINED_FILTER_TYPES, JoinedFilter } from "@common/filterUtils";
 import type { DBSchemaTablesWJoins, JoinV2 } from "../Dashboard/dashboardUtils";
 import {
   JoinPathSelector,
   getHasJoins,
 } from "../W_Table/JoinPathSelector/JoinPathSelector";
 import { getFilterableCols } from "./SmartSearch/SmartSearch";
-import { Label } from "../../components/Label";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import Btn from "../../components/Btn";
+import { Label } from "@components/Label";
+import { FlexCol, FlexRow } from "@components/Flex";
+import Btn from "@components/Btn";
 import { mdiSetCenter, mdiSetNone } from "@mdi/js";
 
 type JoinOpts = { path: JoinV2[]; type: JoinedFilter["type"] };

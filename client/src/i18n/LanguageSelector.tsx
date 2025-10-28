@@ -1,6 +1,6 @@
 import { mdiEarth, mdiTranslate } from "@mdi/js";
 import React from "react";
-import Select from "../components/Select/Select";
+import Select from "@components/Select/Select";
 import { getLanguage, t } from "./i18nUtils";
 import { type Language, LANGUAGES } from "./translations/translations";
 

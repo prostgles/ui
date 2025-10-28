@@ -1,9 +1,9 @@
 import React from "react";
-import { FlexCol } from "../../components/Flex";
+import { FlexCol } from "@components/Flex";
 import { OnMountFunction } from "./OnMountFunction";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
 import type { Prgl } from "../../App";
-import Loading from "../../components/Loader/Loading";
+import Loading from "@components/Loader/Loading";
 
 export const ServerSideFunctions = (prgl: Prgl) => {
   /**

@@ -1,5 +1,5 @@
 import { pickKeys, type AnyObject } from "prostgles-types";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { AdminConnectionModel, useConnections } from "./useConnections";
 
 type ServerUser = Pick<

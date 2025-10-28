@@ -2,9 +2,9 @@ import { mdiCog } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { IconPalette } from "../../components/IconPalette/IconPalette";
-import PopupMenu from "../../components/PopupMenu";
+import Btn from "@components/Btn";
+import { IconPalette } from "@components/IconPalette/IconPalette";
+import PopupMenu from "@components/PopupMenu";
 import type {
   DBSchemaTablesWJoins,
   Workspace,

@@ -3,21 +3,21 @@ import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { isDefined } from "prostgles-types";
 import React, { useState } from "react";
 import type { TestSelectors } from "../Testing";
-import Btn from "../components/Btn";
-import Chip from "../components/Chip";
-import { FlexCol, FlexRowWrap } from "../components/Flex";
-import { Icon } from "../components/Icon/Icon";
-import type { LabelProps } from "../components/Label";
-import { Label } from "../components/Label";
-import Loading from "../components/Loader/Loading";
-import PopupMenu from "../components/PopupMenu";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import type { LabelProps } from "@components/Label";
+import { Label } from "@components/Label";
+import Loading from "@components/Loader/Loading";
+import PopupMenu from "@components/PopupMenu";
 import {
   SearchList,
   type SearchListItemContent,
   type SearchListItem,
-} from "../components/SearchList/SearchList";
+} from "@components/SearchList/SearchList";
 import { useIsMounted } from "./BackupAndRestore/CredentialSelector";
-import { InfoRow } from "../components/InfoRow";
+import { InfoRow } from "@components/InfoRow";
 
 type SmartSelectProps<
   THandler extends TableHandlerClient = TableHandlerClient,

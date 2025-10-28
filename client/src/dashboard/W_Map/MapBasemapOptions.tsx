@@ -1,19 +1,19 @@
 import { mdiDelete, mdiMap, mdiPlus, mdiSearchWeb } from "@mdi/js";
 import React, { useCallback, useState } from "react";
-import Btn from "../../components/Btn";
-import ButtonGroup from "../../components/ButtonGroup";
-import Chip from "../../components/Chip";
-import { FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import PopupMenu from "../../components/PopupMenu";
+import Btn from "@components/Btn";
+import ButtonGroup from "@components/ButtonGroup";
+import Chip from "@components/Chip";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import PopupMenu from "@components/PopupMenu";
 import SmartTable from "../SmartTable";
 import { MAP_PROJECTIONS } from "./W_MapMenu";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { Prgl } from "../../App";
 import { DEFAULT_TILE_URLS } from "../Map/mapUtils";
-import { Label } from "../../components/Label";
-import { InfoRow } from "../../components/InfoRow";
+import { Label } from "@components/Label";
+import { InfoRow } from "@components/InfoRow";
 import { isEqual, isDefined } from "prostgles-types";
 
 type P = {

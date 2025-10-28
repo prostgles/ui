@@ -1,11 +1,11 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useMemo } from "react";
 
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
-import { FlexCol, FlexRow } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
-import Popup from "../../../components/Popup/Popup";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import Popup from "@components/Popup/Popup";
 import { isEmpty } from "../../../utils";
 import { CodeEditor } from "../../CodeEditor/CodeEditor";
 import type { DBS } from "../../Dashboard/DBS";
@@ -13,7 +13,7 @@ import {
   useLLMToolsApprover,
   type ApproveRequest,
 } from "./useLLMToolsApprover";
-import { getMCPToolNameParts } from "../../../../../common/prostglesMcp";
+import { getMCPToolNameParts } from "@common/prostglesMcp";
 import { Marked } from "@components/Chat/Marked";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";

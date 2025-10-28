@@ -1,7 +1,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { ParsedJoinPath } from "prostgles-types";
 import React from "react";
-import Popup from "../components/Popup/Popup";
+import Popup from "@components/Popup/Popup";
 import { Chart } from "./Charts";
 import type { CanvasChart, Shape } from "./Charts/CanvasChart";
 import type { DBS } from "./Dashboard/DBS";

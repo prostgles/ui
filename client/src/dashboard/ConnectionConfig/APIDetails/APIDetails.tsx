@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import type { Prgl, PrglState } from "../../../App";
-import { FlexCol } from "../../../components/Flex";
-import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
+import { FlexCol } from "@components/Flex";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { getActiveTokensFilter } from "../../../pages/Account/Sessions";
 import { APIDetailsHttp } from "./APIDetailsHttp";
 import { APIDetailsTokens } from "./APIDetailsTokens";

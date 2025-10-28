@@ -1,8 +1,8 @@
 import { mdiCalendar, mdiCrosshairsGps, mdiFormatText } from "@mdi/js";
 import { _PG_date } from "prostgles-types";
 import React from "react";
-import Btn from "../../../components/Btn";
-import PopupMenu from "../../../components/PopupMenu";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
 import type { SmartFormFieldProps } from "./SmartFormField";
 
 type P = Omit<SmartFormFieldProps, "onChange"> & {

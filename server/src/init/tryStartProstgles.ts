@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
 import { tout } from "..";
-import type { ProstglesState } from "../../../common/electronInitTypes";
+import type { ProstglesState } from "@common/electronInitTypes";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";

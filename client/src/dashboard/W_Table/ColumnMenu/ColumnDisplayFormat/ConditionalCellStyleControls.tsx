@@ -1,9 +1,9 @@
 import { mdiClose, mdiPlus } from "@mdi/js";
 import React from "react";
-import Btn from "../../../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
-import PopupMenu from "../../../../components/PopupMenu";
-import Select from "../../../../components/Select/Select";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import Select from "@components/Select/Select";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
 import { StyledCell } from "../../tableUtils/StyledTableColumn";
 import { ColorPicker } from "../ColorPicker";

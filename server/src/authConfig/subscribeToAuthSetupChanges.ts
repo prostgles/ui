@@ -1,6 +1,6 @@
 import { getKeys, isEqual } from "prostgles-types";
-import { DOCKER_USER_AGENT } from "../../../common/OAuthUtils";
-import type { DBSSchema } from "../../../common/publishUtils";
+import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { tout, type DBS } from "../index";
 import {
   activePasswordlessAdminFilter,

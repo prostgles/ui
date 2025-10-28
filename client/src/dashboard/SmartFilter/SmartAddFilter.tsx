@@ -8,11 +8,11 @@ import type {
   JoinedFilter,
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../common/filterUtils";
-import type { BtnProps } from "../../components/Btn";
-import Btn from "../../components/Btn";
-import Popup from "../../components/Popup/Popup";
-import { SearchList } from "../../components/SearchList/SearchList";
+} from "@common/filterUtils";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
+import Popup from "@components/Popup/Popup";
+import { SearchList } from "@components/SearchList/SearchList";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { JoinV2 } from "../Dashboard/dashboardUtils";
 import { getColumnDataColor } from "../SmartForm/SmartFormField/RenderValue";
@@ -22,8 +22,8 @@ import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import { isDefined } from "../../utils";
 import { getComputedColumnSelect } from "../W_Table/tableUtils/getTableSelect";
 import { getJoinPaths } from "../W_Table/tableUtils/getJoinPaths";
-import { FlexRow } from "../../components/Flex";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import { FlexRow } from "@components/Flex";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { getJoinPathLabel } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getDefaultAgeFilter } from "./AgeFilter";
 import { includes } from "prostgles-types";

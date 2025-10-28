@@ -1,10 +1,10 @@
 import { mdiFunction } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useState } from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import Popup from "../../../components/Popup/Popup";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
+import { SwitchToggle } from "@components/SwitchToggle";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { FunctionSelector } from "./FunctionSelector";
 

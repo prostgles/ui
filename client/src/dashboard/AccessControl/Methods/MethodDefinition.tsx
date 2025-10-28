@@ -1,12 +1,12 @@
 import { mdiCodeJson } from "@mdi/js";
 import React, { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import FormField from "../../../components/FormField/FormField";
-import { JSONBSchema } from "../../../components/JSONBSchema/JSONBSchema";
-import { Section } from "../../../components/Section";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
+import { Section } from "@components/Section";
 import { MethodDefinitionEditAsJson } from "./MethodDefinitionEditAsJson";
 import { MethodFunctionDefinition } from "./MethodFunctionDefinition";
 

@@ -5,8 +5,8 @@ import {
 import {
   getMCPToolNameParts,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../../common/prostglesMcp";
-import type { DBSSchema } from "../../../../../common/publishUtils";
+} from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import {

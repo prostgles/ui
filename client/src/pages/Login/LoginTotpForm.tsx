@@ -1,7 +1,7 @@
 import React from "react";
 import type { useLoginState } from "./useLoginState";
-import FormField from "../../components/FormField/FormField";
-import Btn from "../../components/Btn";
+import FormField from "@components/FormField/FormField";
+import Btn from "@components/Btn";
 
 export const LoginTotpFormFields = ({
   formHandlers,

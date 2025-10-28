@@ -1,4 +1,4 @@
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 import { ConnectionString } from "connection-string";
 import type pg from "pg-promise/typescript/pg-subset";

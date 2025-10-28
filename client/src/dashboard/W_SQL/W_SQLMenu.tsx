@@ -13,10 +13,10 @@ import {
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
-import Btn from "../../components/Btn";
-import FormField from "../../components/FormField/FormField";
-import type { TabsProps } from "../../components/Tabs";
-import Tabs from "../../components/Tabs";
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import type { TabsProps } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import RTComp from "../RTComp";
 
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
@@ -27,8 +27,8 @@ import type {
 } from "../Dashboard/dashboardUtils";
 
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import ErrorComponent from "../../components/ErrorComponent";
-import { InfoRow } from "../../components/InfoRow";
+import ErrorComponent from "@components/ErrorComponent";
+import { InfoRow } from "@components/InfoRow";
 import { t } from "../../i18n/i18nUtils";
 import { SECOND } from "../Charts";
 import { CodeEditor } from "../CodeEditor/CodeEditor";

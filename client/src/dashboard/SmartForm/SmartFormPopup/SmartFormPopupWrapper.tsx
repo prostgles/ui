@@ -5,12 +5,12 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useMemo } from "react";
-import { sliceText } from "../../../../../common/utils";
-import Btn from "../../../components/Btn";
-import { FlexRow } from "../../../components/Flex";
-import type { PopupProps } from "../../../components/Popup/Popup";
-import Popup from "../../../components/Popup/Popup";
-import { SvgIcon } from "../../../components/SvgIcon";
+import { sliceText } from "@common/utils";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import type { PopupProps } from "@components/Popup/Popup";
+import Popup from "@components/Popup/Popup";
+import { SvgIcon } from "@components/SvgIcon";
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormState } from "../useSmartForm";
 

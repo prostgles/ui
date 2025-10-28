@@ -1,4 +1,4 @@
-import { cachedSvgs } from "../../components/SvgIcon";
+import { cachedSvgs } from "@components/SvgIcon";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import type {
   DeckGlColor,

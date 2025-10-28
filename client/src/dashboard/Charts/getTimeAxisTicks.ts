@@ -9,7 +9,7 @@ import {
   toDateStr,
   YEAR,
 } from "../Charts";
-import { getAge } from "../../../../common/utils";
+import { getAge } from "@common/utils";
 import type { XYFunc } from "./TimeChart";
 import type { DateExtent } from "./getTimechartBinSize";
 import type { ChartedText, TextMeasurement } from "./CanvasChart";

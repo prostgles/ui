@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useAlert } from "../../components/AlertProvider";
+import { useAlert } from "@components/AlertProvider";
 import { isDefined } from "prostgles-types";
 import { getUIDocElementsAndAlertIfEmpty } from "./utils";
 import type { UIDocNonInfo } from "../UIDocs";

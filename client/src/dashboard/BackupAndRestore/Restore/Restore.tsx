@@ -1,19 +1,19 @@
 import { mdiBackupRestore } from "@mdi/js";
 import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import { sliceText } from "../../../../../common/utils";
+import type { DBSSchema } from "@common/publishUtils";
+import { sliceText } from "@common/utils";
 import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import FormField from "../../../components/FormField/FormField";
-import { InfoRow } from "../../../components/InfoRow";
-import { Section } from "../../../components/Section";
-import Select from "../../../components/Select/Select";
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import { Section } from "@components/Section";
+import Select from "@components/Select/Select";
 import type { DBS } from "../../Dashboard/DBS";
 import { CodeConfirmation } from "../CodeConfirmation";
 import { FORMATS } from "../DumpOptions";
 import { DumpRestoreAlerts } from "../DumpRestoreAlerts";
-import { FlexCol } from "../../../components/Flex";
+import { FlexCol } from "@components/Flex";
 import { t } from "../../../i18n/i18nUtils";
 import { RestoreOptions } from "./RestoreOptions";
 

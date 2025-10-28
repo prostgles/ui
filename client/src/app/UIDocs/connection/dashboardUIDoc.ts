@@ -1,5 +1,5 @@
 import { mdiMonitorDashboard } from "@mdi/js";
-import { ROUTES } from "../../../../../common/utils";
+import { ROUTES } from "@common/utils";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocContainers } from "../../UIDocs";
 import { AIAssistantUIDoc } from "./AIAssistantUIDoc";

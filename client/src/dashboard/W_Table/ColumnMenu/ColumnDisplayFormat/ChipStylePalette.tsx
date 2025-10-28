@@ -1,5 +1,5 @@
 import React from "react";
-import { FlexRowWrap } from "../../../../components/Flex";
+import { FlexRowWrap } from "@components/Flex";
 import { StyledCell } from "../../tableUtils/StyledTableColumn";
 
 type ChipStylePaletteProps = {

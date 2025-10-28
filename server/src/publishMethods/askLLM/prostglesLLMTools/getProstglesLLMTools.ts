@@ -9,7 +9,7 @@ import {
   getMCPFullToolName,
   getMCPToolNameParts,
   getProstglesMCPFullToolName,
-} from "../../../../../common/prostglesMcp";
+} from "@common/prostglesMcp";
 import { getDockerMCP } from "../../../DockerManager/getDockerMCP";
 
 import type {

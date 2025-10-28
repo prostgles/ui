@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { getEntries } from "../../../../common/utils";
-import Btn from "../../components/Btn";
-import Chip from "../../components/Chip";
-import { FlexRow, FlexRowWrap } from "../../components/Flex";
-import Select from "../../components/Select/Select";
+import { getEntries } from "@common/utils";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexRow, FlexRowWrap } from "@components/Flex";
+import Select from "@components/Select/Select";
 import { getCssVariableValue } from "../Charts/onRenderTimechart";
 import {
   type ColumnColorMode,
@@ -12,7 +12,7 @@ import {
 import type { SchemaGraphProps } from "./SchemaGraph";
 import type { CASCADE } from "../SQLEditor/SQLCompletion/getPGObjects";
 import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export const SchemaGraphControls = ({
   columnColorMode,

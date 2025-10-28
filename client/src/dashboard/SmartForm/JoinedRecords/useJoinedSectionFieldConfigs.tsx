@@ -1,6 +1,6 @@
 import { isDefined, isObject, type AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import { MediaViewer } from "../../../components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { FieldConfig } from "../../SmartCard/SmartCard";
 import { getBestTextColumns } from "../SmartFormField/fetchForeignKeyOptions";

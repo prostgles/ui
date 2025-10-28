@@ -1,10 +1,10 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useState } from "react";
 import { WithPrgl } from "../../../../WithPrgl";
-import Btn from "../../../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
-import { Label } from "../../../../components/Label";
-import PopupMenu from "../../../../components/PopupMenu";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { Label } from "@components/Label";
+import PopupMenu from "@components/PopupMenu";
 import { AddComputedColMenu } from "../AddComputedColumn/AddComputedColMenu";
 import { QuickAddComputedColumn } from "../AddComputedColumn/QuickAddComputedColumn";
 import { ColumnList } from "../ColumnList";

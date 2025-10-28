@@ -3,14 +3,11 @@ import type {
   DetailedFilterBase,
   FilterType,
   SimpleFilter,
-} from "../../../../common/filterUtils";
-import {
-  CORE_FILTER_TYPES,
-  NUMERIC_FILTER_TYPES,
-} from "../../../../common/filterUtils";
-import Btn from "../../components/Btn";
-import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
-import Select from "../../components/Select/Select";
+} from "@common/filterUtils";
+import { CORE_FILTER_TYPES, NUMERIC_FILTER_TYPES } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import Select from "@components/Select/Select";
 import type { BaseFilterProps } from "./SmartFilter";
 
 type FilterProps = BaseFilterProps;

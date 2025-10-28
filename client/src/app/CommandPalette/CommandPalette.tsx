@@ -19,10 +19,10 @@ import {
 } from "@mdi/js";
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FlashMessage } from "../../components/FlashMessage";
-import Popup from "../../components/Popup/Popup";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
-import { SearchList } from "../../components/SearchList/SearchList";
+import { FlashMessage } from "@components/FlashMessage";
+import Popup from "@components/Popup/Popup";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { SearchList } from "@components/SearchList/SearchList";
 import { flatUIDocs, type UIDoc, type UIDocInputElement } from "../UIDocs";
 import "./CommandPalette.css";
 import { Documentation } from "./Documentation";

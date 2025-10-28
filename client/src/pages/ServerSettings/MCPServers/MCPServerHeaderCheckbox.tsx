@@ -1,7 +1,7 @@
 import { mdiCheckAll } from "@mdi/js";
 import React from "react";
-import Checkbox from "../../../components/Checkbox";
-import { FlexRow } from "../../../components/Flex";
+import Checkbox from "@components/Checkbox";
+import { FlexRow } from "@components/Flex";
 import type { DBS, DBSMethods } from "../../../dashboard/Dashboard/DBS";
 import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
 import type { MCPServerWithToolAndConfigs } from "./useMCPServersListProps";

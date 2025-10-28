@@ -1,8 +1,8 @@
 import React from "react";
-import { FlexRow } from "../../components/Flex";
-import { IconPalette } from "../../components/IconPalette/IconPalette";
-import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import { FlexRow } from "@components/Flex";
+import { IconPalette } from "@components/IconPalette/IconPalette";
+import PopupMenu from "@components/PopupMenu";
+import Select from "@components/Select/Select";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import { ColorCircle, ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { LayerColorPickerProps } from "./LayerColorPicker";

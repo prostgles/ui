@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { PrglState } from "../../App";
-import { FlexCol } from "../../components/Flex";
+import { FlexCol } from "@components/Flex";
 import type { DBSMethods } from "../Dashboard/DBS";
 import { StatusMonitorHeader } from "./StatusMonitorHeader";
 import { StatusMonitorProcList } from "./StatusMonitorProcList";

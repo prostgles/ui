@@ -6,7 +6,7 @@ import {
   type AnyObject,
   type MethodFullDef,
 } from "prostgles-types";
-import type { DBSSchema } from "../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { getCompiledTS } from "./connectionManagerUtils";
 import { getAccessRule } from "./startConnection";
 import type { DBS } from "..";

@@ -1,17 +1,17 @@
 import { isDefined, omitKeys } from "prostgles-types";
 import React, { useState } from "react";
-import { SuccessMessage } from "../../components/Animations";
-import type { BtnProps } from "../../components/Btn";
-import { ButtonBar } from "../../components/ButtonBar";
-import ClickCatch from "../../components/ClickCatch";
+import { SuccessMessage } from "@components/Animations";
+import type { BtnProps } from "@components/Btn";
+import { ButtonBar } from "@components/ButtonBar";
+import ClickCatch from "@components/ClickCatch";
 import type { DBS } from "../Dashboard/DBS";
 import type {
   AccessControlAction,
   AccessRule,
   EditedAccessRule,
 } from "./AccessControl";
-import { FlexCol } from "../../components/Flex";
-import ErrorComponent from "../../components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import ErrorComponent from "@components/ErrorComponent";
 import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
 
 type P = {

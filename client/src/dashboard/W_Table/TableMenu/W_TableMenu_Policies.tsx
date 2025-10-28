@@ -1,11 +1,11 @@
 import { mdiDelete, mdiPencil, mdiPlus } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol, FlexRowWrap } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
-import Select from "../../../components/Select/Select";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import Select from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import type { W_TableInfo } from "./getTableMeta";

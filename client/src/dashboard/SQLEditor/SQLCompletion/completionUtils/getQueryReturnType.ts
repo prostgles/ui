@@ -1,6 +1,6 @@
 import type { SQLHandler } from "prostgles-types";
 import { asName, includes, tryCatchV2 } from "prostgles-types";
-import type { ColType } from "../../../../../../common/utils";
+import type { ColType } from "@common/utils";
 
 const isQueryValid = async (rawQuery: string, sql: SQLHandler) => {
   const queryWithSemicolon = getSQLQuerySemicolon(rawQuery, true);

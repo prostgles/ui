@@ -6,7 +6,7 @@ import type {
   DetailedFilterBase,
   FilterType,
   JoinedFilter,
-} from "../../../../common/filterUtils";
+} from "@common/filterUtils";
 import {
   CORE_FILTER_TYPES,
   DATE_FILTER_TYPES,
@@ -15,11 +15,11 @@ import {
   NUMERIC_FILTER_TYPES,
   TEXT_FILTER_TYPES,
   getFinalFilter,
-} from "../../../../common/filterUtils";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
-import Select from "../../components/Select/Select";
+} from "@common/filterUtils";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import Select from "@components/Select/Select";
 import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";
 import RTComp from "../RTComp";
 import { JOIN_FILTER_TYPES } from "./AddJoinFilter";

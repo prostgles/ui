@@ -1,7 +1,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import { isDefined } from "prostgles-types";
-import { getSmartGroupFilter } from "../../../../../common/filterUtils";
+import { getSmartGroupFilter } from "@common/filterUtils";
 import { isEmpty } from "../../../utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowData } from "../../Dashboard/dashboardUtils";

@@ -11,8 +11,8 @@ import {
   _PG_strings,
 } from "prostgles-types";
 import React from "react";
-import Btn from "../../../components/Btn";
-import FormField from "../../../components/FormField/FormField";
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
 import { getColumnListItem } from "./ColumnsMenu";
 import type { TestSelectors } from "../../../Testing";
 type P = TestSelectors & {

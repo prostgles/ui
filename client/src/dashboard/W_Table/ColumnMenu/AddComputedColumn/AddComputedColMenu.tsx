@@ -4,15 +4,15 @@ import { _PG_date } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import React from "react";
 import type { Prgl } from "../../../../App";
-import Btn from "../../../../components/Btn";
-import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
-import FormField from "../../../../components/FormField/FormField";
-import { Label } from "../../../../components/Label";
-import { FooterButtons } from "../../../../components/Popup/FooterButtons";
-import type { FooterButton } from "../../../../components/Popup/FooterButtons";
-import Popup from "../../../../components/Popup/Popup";
-import { SearchList } from "../../../../components/SearchList/SearchList";
-import Select from "../../../../components/Select/Select";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { Label } from "@components/Label";
+import { FooterButtons } from "@components/Popup/FooterButtons";
+import type { FooterButton } from "@components/Popup/FooterButtons";
+import Popup from "@components/Popup/Popup";
+import { SearchList } from "@components/SearchList/SearchList";
+import Select from "@components/Select/Select";
 import { isEmpty } from "../../../../utils";
 import type {
   DBSchemaTablesWJoins,

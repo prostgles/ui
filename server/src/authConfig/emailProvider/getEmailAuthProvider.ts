@@ -1,6 +1,6 @@
 import type { SignupWithEmail } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBS } from "../..";
-import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getEmailSenderWithMockTest } from "./getEmailSenderWithMockTest";
 import { onEmailRegistration } from "./onEmailRegistration";
 

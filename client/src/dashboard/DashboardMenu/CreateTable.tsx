@@ -1,11 +1,11 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useMemo, useState } from "react";
-import { SuccessMessage } from "../../components/Animations";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
-import Popup from "../../components/Popup/Popup";
+import { SuccessMessage } from "@components/Animations";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import Popup from "@components/Popup/Popup";
 import { isDefined } from "../../utils";
 import { SQLSmartEditor } from "../SQLEditor/SQLSmartEditor";
 import type { ColumnOptions } from "../W_Table/ColumnMenu/AlterColumn/ColumnEditor";

@@ -6,20 +6,12 @@ import {
 } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import type {
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../common/filterUtils";
-import { isJoinedFilter } from "../../../../common/filterUtils";
+import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
+import { isJoinedFilter } from "@common/filterUtils";
 import type { PrglCore } from "../../App";
-import Btn, { type BtnProps } from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import {
-  FlexCol,
-  FlexRow,
-  FlexRowWrap,
-  classOverride,
-} from "../../components/Flex";
+import Btn, { type BtnProps } from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow, FlexRowWrap, classOverride } from "@components/Flex";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { SmartAddFilter } from "../SmartFilter/SmartAddFilter";
 import type {

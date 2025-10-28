@@ -1,6 +1,6 @@
 import type { AnyObject, SelectParams } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
-import { getIcon } from "../../components/SvgIcon";
+import { getIcon } from "@components/SvgIcon";
 import type {
   Extent,
   GeoJSONFeature,

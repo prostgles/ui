@@ -1,11 +1,11 @@
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import type { ProcStats } from "../../../../common/utils";
-import { getAgeFromDiff } from "../../../../common/utils";
+import type { ProcStats } from "@common/utils";
+import { getAgeFromDiff } from "@common/utils";
 import type { Prgl } from "../../App";
-import Chip from "../../components/Chip";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import { Label } from "../../components/Label";
+import Chip from "@components/Chip";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { Label } from "@components/Label";
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { getPGIntervalAsText } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";

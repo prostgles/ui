@@ -2,7 +2,7 @@ import type {
   DetailedFilterBase,
   SimpleFilter,
   SmartGroupFilter,
-} from "../../../../../common/filterUtils";
+} from "@common/filterUtils";
 import { isDefined } from "../../../utils";
 
 export const getJoinFilter = function (

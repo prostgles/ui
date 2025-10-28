@@ -1,12 +1,12 @@
 import { mdiMessageBookmarkOutline } from "@mdi/js";
 import React, { useState } from "react";
 import type { Prgl } from "../App";
-import { Success } from "../components/Animations";
-import Btn from "../components/Btn";
-import ErrorComponent from "../components/ErrorComponent";
-import { FlexCol } from "../components/Flex";
-import FormField from "../components/FormField/FormField";
-import PopupMenu from "../components/PopupMenu";
+import { Success } from "@components/Animations";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import PopupMenu from "@components/PopupMenu";
 import { t } from "../i18n/i18nUtils";
 import { tout } from "../utils";
 import { useIsMounted } from "./BackupAndRestore/CredentialSelector";

@@ -1,9 +1,9 @@
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import { FlexCol } from "../../../components/Flex";
-import type { PaginationProps } from "../../../components/Table/Pagination";
-import { Pagination } from "../../../components/Table/Pagination";
+import { FlexCol } from "@components/Flex";
+import type { PaginationProps } from "@components/Table/Pagination";
+import { Pagination } from "@components/Table/Pagination";
 import type {
   ChartOptions,
   WindowSyncItem,

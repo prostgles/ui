@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from "react";
-import { FlexCol } from "../../../components/Flex";
+import { FlexCol } from "@components/Flex";
 import type { SchemaGraphProps } from "../SchemaGraph";
 import type { useSchemaGraphControls } from "../SchemaGraphControls";
 import { useCanvasPanZoom } from "./useCanvasPanZoom";

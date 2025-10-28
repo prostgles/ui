@@ -1,12 +1,12 @@
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
 import React, { useCallback } from "react";
-import { type DetailedFilterBase } from "../../../../common/filterUtils";
+import { type DetailedFilterBase } from "@common/filterUtils";
 import type { Prgl } from "../../App";
-import { SuccessMessage } from "../../components/Animations";
-import ErrorComponent from "../../components/ErrorComponent";
-import { classOverride } from "../../components/Flex";
-import Loading from "../../components/Loader/Loading";
+import { SuccessMessage } from "@components/Animations";
+import ErrorComponent from "@components/ErrorComponent";
+import { classOverride } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
 import { ifEmpty } from "../../utils";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { SmartFormFieldList } from "./SmartFormFieldList";
@@ -16,10 +16,10 @@ import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
-import type { BtnProps } from "../../components/Btn";
-import Btn from "../../components/Btn";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
 import type { JoinedRecordsProps } from "./JoinedRecords/JoinedRecords";
-import type { JSONBSchemaCommonProps } from "../../components/JSONBSchema/JSONBSchema";
+import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
 
 export type getErrorsHook = (
   cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,

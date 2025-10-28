@@ -1,4 +1,4 @@
-import { PROSTGLES_CLOUD_URL, ROUTES } from "../../../common/utils";
+import { PROSTGLES_CLOUD_URL, ROUTES } from "@common/utils";
 import { isTesting } from "../init/initExpressAndIOServers";
 
 export const prostglesSignup = async (email: string, code: string) => {

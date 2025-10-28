@@ -4,8 +4,8 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import type { DBS } from "..";
-import type { McpToolCallResponse } from "../../../common/mcp";
-import type { DBSSchema } from "../../../common/publishUtils";
+import type { McpToolCallResponse } from "@common/mcp";
+import type { DBSSchema } from "@common/publishUtils";
 import { startMcpHub } from "./McpHub";
 import { ProstglesLocalMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
 import { getDockerMCP } from "../DockerManager/getDockerMCP";

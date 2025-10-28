@@ -6,9 +6,9 @@ import type {
   InsertRule,
   SelectRule,
   UpdateRule,
-} from "../../../../../common/publishUtils";
-import { FlexCol } from "../../../components/Flex";
-import { Label } from "../../../components/Label";
+} from "@common/publishUtils";
+import { FlexCol } from "@components/Flex";
+import { Label } from "@components/Label";
 import CodeExample from "../../CodeExample";
 import type { SelectRuleControlProps } from "./SelectRuleControl";
 import { getComparablePGPolicy } from "./getComparablePGPolicy";

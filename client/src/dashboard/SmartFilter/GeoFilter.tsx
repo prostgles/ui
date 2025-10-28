@@ -2,18 +2,15 @@ import { mdiMagnify } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import { isDefined, isEmpty } from "prostgles-types";
 import React, { useState } from "react";
-import type { DetailedFilterBase } from "../../../../common/filterUtils";
-import {
-  GEO_FILTER_TYPES,
-  getFinalFilter,
-} from "../../../../common/filterUtils";
-import Btn from "../../components/Btn";
-import { ExpandSection } from "../../components/ExpandSection";
-import { FlexRow } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
-import Popup from "../../components/Popup/Popup";
-import Select from "../../components/Select/Select";
+import type { DetailedFilterBase } from "@common/filterUtils";
+import { GEO_FILTER_TYPES, getFinalFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { ExpandSection } from "@components/ExpandSection";
+import { FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import Popup from "@components/Popup/Popup";
+import Select from "@components/Select/Select";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { BaseFilterProps } from "./SmartFilter";
 import type { SmartSearchOnChangeArgs } from "./SmartSearch/SmartSearch";

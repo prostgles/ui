@@ -5,7 +5,7 @@ import {
 } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import type { Users } from "..";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { log } from "../index";
 import { getPasswordHash } from "./authUtils";
 import { upsertSession } from "./upsertSession";

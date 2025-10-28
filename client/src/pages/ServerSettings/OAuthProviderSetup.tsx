@@ -1,14 +1,14 @@
 import { mdiLock } from "@mdi/js";
 import { isEqual } from "prostgles-types";
 import React, { useState } from "react";
-import { OAuthProviderOptions } from "../../../../common/OAuthUtils";
-import { CopyToClipboardBtn } from "../../components/CopyToClipboardBtn";
-import ErrorComponent from "../../components/ErrorComponent";
-import FormField from "../../components/FormField/FormField";
-import { Icon } from "../../components/Icon/Icon";
-import { FooterButtons } from "../../components/Popup/FooterButtons";
-import { Section } from "../../components/Section";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import { OAuthProviderOptions } from "@common/OAuthUtils";
+import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
+import ErrorComponent from "@components/ErrorComponent";
+import FormField from "@components/FormField/FormField";
+import { Icon } from "@components/Icon/Icon";
+import { FooterButtons } from "@components/Popup/FooterButtons";
+import { Section } from "@components/Section";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { t } from "../../i18n/i18nUtils";
 import { tout } from "../ElectronSetup/ElectronSetup";
 import {

@@ -232,13 +232,6 @@ export const saveSVGs = async (page: PageWIds) => {
       svgifSpecs.push(svgifSpec);
       console.time(`Generating SVGif: ${fileName}`);
 
-      fs.writeFileSync(
-        path.join(SVG_SCREENSHOT_DIR, fileName + ".json"),
-        JSON.stringify(svgifScenes, null, 2),
-        {
-          encoding: "utf8",
-        },
-      );
       await saveSVGifs(page, [svgifSpec]);
       console.timeEnd(`Generating SVGif: ${fileName}`);
     } else {

@@ -1,10 +1,10 @@
 import { mdiRefreshAuto } from "@mdi/js";
 import React, { useState } from "react";
 import type { ExtraProps, Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import Btn from "@components/Btn";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
+import Select from "@components/Select/Select";
 
 const DESTINATIONS = [
   { key: "Local", subLabel: "Saved locally (server in address bar)" },
@@ -27,9 +27,9 @@ const DAYS_OF_WEEK = [
   { key: 7, label: "Sunday" },
 ] as const;
 
-import type { DBSSchema } from "../../../../common/publishUtils";
-import type { PGDumpParams } from "../../../../common/utils";
-import FormField from "../../components/FormField/FormField";
+import type { DBSSchema } from "@common/publishUtils";
+import type { PGDumpParams } from "@common/utils";
+import FormField from "@components/FormField/FormField";
 import { CredentialSelector } from "./CredentialSelector";
 import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
 

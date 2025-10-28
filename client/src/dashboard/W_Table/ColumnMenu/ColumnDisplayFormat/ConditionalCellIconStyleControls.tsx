@@ -1,14 +1,14 @@
 import { mdiClose, mdiPlus } from "@mdi/js";
 import React from "react";
-import Btn from "../../../../components/Btn";
-import { FlexCol } from "../../../../components/Flex";
-import { IconPalette } from "../../../../components/IconPalette/IconPalette";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { IconPalette } from "@components/IconPalette/IconPalette";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
 import type {
   ConditionalStyleIcons,
   StyleColumnProps,
 } from "../ColumnStyleControls";
-import FormField from "../../../../components/FormField/FormField";
+import FormField from "@components/FormField/FormField";
 
 type P = StyleColumnProps & {
   style: ConditionalStyleIcons;

@@ -1,8 +1,8 @@
 import { omitKeys, type AnyObject } from "prostgles-types";
 import { useEffect, useState } from "react";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../../common/electronInitTypes";
+import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
 import type { AppState } from "../../App";
-import { pageReload } from "../../components/Loader/Loading";
+import { pageReload } from "@components/Loader/Loading";
 import type { Connection } from "../NewConnection/NewConnnectionForm";
 import { DEFAULT_CONNECTION } from "../NewConnection/NewConnnectionForm";
 import type { OS } from "../PostgresInstallationInstructions";

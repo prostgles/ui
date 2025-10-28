@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import type { Prgl } from "../../App";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { useCodeEditorTsTypes } from "../AccessControl/Methods/useCodeEditorTsTypes";
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";

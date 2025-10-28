@@ -1,11 +1,11 @@
 import { mdiReload } from "@mdi/js";
 import React from "react";
-import type { DBSSchema } from "../../../../../../common/publishUtils";
-import { useAlert } from "../../../../components/AlertProvider";
-import Btn from "../../../../components/Btn";
-import { FlexRow } from "../../../../components/Flex";
-import PopupMenu from "../../../../components/PopupMenu";
-import { SwitchToggle } from "../../../../components/SwitchToggle";
+import type { DBSSchema } from "@common/publishUtils";
+import { useAlert } from "@components/AlertProvider";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { CodeEditor } from "../../../../dashboard/CodeEditor/CodeEditor";
 import type { ServerSettingsProps } from "../../ServerSettings";
 import { MCPServerConfigButton } from "../MCPServerConfig/MCPServerConfigButton";

@@ -1,7 +1,7 @@
 import { mdiAlertOutline, mdiClose } from "@mdi/js";
 import type { ReactNode } from "react";
 import React from "react";
-import { isObject } from "../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import type { TestSelectors } from "../Testing";
 import { isEmpty, scrollIntoViewIfNeeded } from "../utils";
 import Btn from "./Btn";

@@ -6,14 +6,11 @@ import {
 } from "@mdi/js";
 import { getKeys, isObject } from "prostgles-types";
 import React, { useState } from "react";
-import ErrorComponent from "../../../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 
-import type {
-  SelectRule,
-  TableRules,
-} from "../../../../../common/publishUtils";
-import { ExpandSection } from "../../../components/ExpandSection";
-import { FlexCol } from "../../../components/Flex";
+import type { SelectRule, TableRules } from "@common/publishUtils";
+import { ExpandSection } from "@components/ExpandSection";
+import { FlexCol } from "@components/Flex";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
 import type {
   ContextDataSchema,
@@ -23,7 +20,7 @@ import { FilterControl } from "../OptionControllers/FilterControl";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { ExampleComparablePolicy } from "./ExampleComparablePolicy";
 import { RuleToggle } from "./RuleToggle";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import { SwitchToggle } from "@components/SwitchToggle";
 
 export type SelectRuleControlProps = Pick<
   Required<TablePermissionControlsProps>,

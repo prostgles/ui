@@ -3,11 +3,11 @@ import { asName } from "prostgles-types";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import type { Prgl, PrglCore } from "../../App";
-import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
-import { InfoRow } from "../../components/InfoRow";
-import Popup from "../../components/Popup/Popup";
-import Select from "../../components/Select/Select";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import { InfoRow } from "@components/InfoRow";
+import Popup from "@components/Popup/Popup";
+import Select from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
 import { useFileTableConfigControls } from "./useFileTableConfigControls";
 

@@ -2,7 +2,7 @@ import React from "react";
 import type { CanvasChartViewDataExtent } from "./Charts/CanvasChart";
 import { CanvasChart } from "./Charts/CanvasChart";
 import RTComp from "./RTComp";
-import { classOverride } from "../components/Flex";
+import { classOverride } from "@components/Flex";
 
 export const MILLISECOND = 1;
 export const SECOND = MILLISECOND * 1000;

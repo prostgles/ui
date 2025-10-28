@@ -4,7 +4,7 @@ import type { AddressInfo } from "net";
 import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
 import { getSerialisableError, isObject } from "prostgles-types";
 import { isDocker } from "..";
-import type { DBSSchema } from "../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { getProstglesState } from "../init/tryStartProstgles";
 import { runProstglesDBTool } from "../publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
 import { getDockerGatewayIP } from "./getDockerGatewayIP";

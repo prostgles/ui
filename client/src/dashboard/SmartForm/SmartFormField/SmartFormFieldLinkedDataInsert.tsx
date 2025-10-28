@@ -1,7 +1,7 @@
 import { mdiFilePlusOutline, mdiPlus } from "@mdi/js";
 import { CONTENT_TYPE_TO_EXT, getKeys } from "prostgles-types";
 import React, { useMemo } from "react";
-import Btn from "../../../components/Btn";
+import Btn from "@components/Btn";
 import { SmartForm } from "../SmartForm";
 import type {
   SmartFormFieldLinkedDataInsertState,

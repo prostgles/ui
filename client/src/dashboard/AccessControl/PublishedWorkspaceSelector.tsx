@@ -1,8 +1,8 @@
 import { mdiViewQuilt } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useEffect } from "react";
-import { FlexCol } from "../../components/Flex";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import { FlexCol } from "@components/Flex";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { isDefined } from "../../utils";
 import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
 import type { DBS } from "../Dashboard/DBS";

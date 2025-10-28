@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
 import { pickKeys } from "prostgles-types";
 import { type DBS } from "..";
-import { DOCKER_USER_AGENT } from "../../../common/OAuthUtils";
-import type { DBSSchema } from "../../../common/publishUtils";
+import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { upsertSession } from "../authConfig/upsertSession";
 import { createContainer } from "./createContainer";
 import { type CreateContainerParams } from "./createContainer.schema";

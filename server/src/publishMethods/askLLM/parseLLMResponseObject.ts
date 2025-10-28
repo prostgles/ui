@@ -4,7 +4,7 @@ import {
   isDefined,
   omitKeys,
 } from "prostgles-types";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { LLMMessageWithRole } from "./fetchLLMResponse";
 import { getLLMUsageCost } from "./getLLMUsageCost";
 import type {

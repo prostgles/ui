@@ -3,9 +3,9 @@ import type { DBSchemaTable } from "prostgles-types";
 import { asName, getKeys } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../../App";
-import Btn from "../../../../components/Btn";
-import ErrorComponent from "../../../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../../../components/Flex";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { getStringFormat } from "../../../../utils";
 import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
@@ -20,7 +20,7 @@ import {
 } from "./alterColumnUtilts";
 import { ColumnEditor } from "./ColumnEditor";
 import { getAlterFkeyQuery } from "./ReferenceEditor";
-import { IconPalette } from "../../../../components/IconPalette/IconPalette";
+import { IconPalette } from "@components/IconPalette/IconPalette";
 
 export type AlterColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   prgl: Prgl;

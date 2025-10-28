@@ -1,5 +1,5 @@
 import { join } from "path";
-import type { MCPServerInfo } from "../../../../common/mcp";
+import type { MCPServerInfo } from "@common/mcp";
 import { actualRootDir } from "../../electronConfig";
 import { mcpGithub } from "./mcpGithub";
 

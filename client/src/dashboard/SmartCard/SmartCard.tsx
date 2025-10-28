@@ -6,10 +6,10 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useState } from "react";
-import type { DetailedFilterBase } from "../../../../common/filterUtils";
+import type { DetailedFilterBase } from "@common/filterUtils";
 import type { Prgl } from "../../App";
-import { classOverride } from "../../components/Flex";
-import Loading from "../../components/Loader/Loading";
+import { classOverride } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
 import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";

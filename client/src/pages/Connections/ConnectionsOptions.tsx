@@ -1,10 +1,10 @@
 import { mdiAlert, mdiCogOutline } from "@mdi/js";
 import React from "react";
 import type { PrglState } from "../../App";
-import Btn from "../../components/Btn";
-import ConfirmationDialog from "../../components/ConfirmationDialog";
-import PopupMenu from "../../components/PopupMenu";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import ConfirmationDialog from "@components/ConfirmationDialog";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { t } from "../../i18n/i18nUtils";
 import type { useConnections } from "./useConnections";
 

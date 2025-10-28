@@ -2,7 +2,7 @@ import { mdiFunction, mdiSigma } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { _PG_date, _PG_interval, _PG_numbers } from "prostgles-types";
 import React, { useMemo } from "react";
-import Select from "../../../components/Select/Select";
+import Select from "@components/Select/Select";
 import type { ColumnConfig } from "./ColumnMenu";
 
 type P = {

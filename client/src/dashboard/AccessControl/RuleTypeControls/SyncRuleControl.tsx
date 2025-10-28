@@ -1,12 +1,12 @@
 import React from "react";
-import ErrorComponent from "../../../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 
-import type { SyncRule, TableRules } from "../../../../../common/publishUtils";
-import Select from "../../../components/Select/Select";
+import type { SyncRule, TableRules } from "@common/publishUtils";
+import Select from "@components/Select/Select";
 import type { ContextDataSchema } from "../OptionControllers/FilterControl";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { RuleToggle } from "./RuleToggle";
-import { InfoRow } from "../../../components/InfoRow";
+import { InfoRow } from "@components/InfoRow";
 // import { _PG_date, _PG_numbers, _PG_strings } from "prostgles-types";
 
 type P = Pick<

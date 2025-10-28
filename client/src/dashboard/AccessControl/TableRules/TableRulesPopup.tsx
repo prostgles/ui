@@ -1,13 +1,10 @@
 import React, { useState } from "react";
-import type {
-  TableRules,
-  TableRulesErrors,
-} from "../../../../../common/publishUtils";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { MenuList } from "../../../components/MenuList";
-import Popup from "../../../components/Popup/Popup";
+import type { TableRules, TableRulesErrors } from "@common/publishUtils";
+import ErrorComponent from "@components/ErrorComponent";
+import { MenuList } from "@components/MenuList";
+import Popup from "@components/Popup/Popup";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
-import { FlexCol, FlexRow } from "../../../components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { FileTableAccessControlInfo } from "./FileTableAccessControlInfo";
 import { DeleteRuleControl } from "./../RuleTypeControls/DeleteRuleControl";
 import { InsertRuleControl } from "./../RuleTypeControls/InsertRuleControl";
@@ -18,9 +15,9 @@ import type {
   TablePermissionControlsProps,
 } from "./TablePermissionControls";
 import { TABLE_RULE_LABELS } from "./TablePermissionControls";
-import { Icon } from "../../../components/Icon/Icon";
+import { Icon } from "@components/Icon/Icon";
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
-import { getEntries } from "../../../../../common/utils";
+import { getEntries } from "@common/utils";
 import { SyncRuleControl } from "../RuleTypeControls/SyncRuleControl";
 
 type TableRulesPopupProps = TablePermissionControlsProps & {

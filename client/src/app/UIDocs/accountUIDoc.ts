@@ -1,5 +1,5 @@
 import { mdiAccountOutline, mdiApplicationBracesOutline } from "@mdi/js";
-import { ROUTES } from "../../../../common/utils";
+import { ROUTES } from "@common/utils";
 import { getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers } from "../UIDocs";
 

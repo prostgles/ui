@@ -10,9 +10,9 @@ import {
 } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
 import { WithPrgl } from "../../../WithPrgl";
-import Popup, { POPUP_CLASSES } from "../../../components/Popup/Popup";
-import type { FullOption } from "../../../components/Select/Select";
-import Select from "../../../components/Select/Select";
+import Popup, { POPUP_CLASSES } from "@components/Popup/Popup";
+import type { FullOption } from "@components/Select/Select";
+import Select from "@components/Select/Select";
 import type {
   DBSchemaTablesWJoins,
   LoadedSuggestions,

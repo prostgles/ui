@@ -1,8 +1,8 @@
 import type { AnyObject } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
 import React from "react";
-import { FlexRowWrap } from "../../../../components/Flex";
-import { MediaViewer } from "../../../../components/MediaViewer";
+import { FlexRowWrap } from "@components/Flex";
+import { MediaViewer } from "@components/MediaViewer";
 import { TimeChart } from "../../../Charts/TimeChart";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";

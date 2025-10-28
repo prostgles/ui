@@ -1,7 +1,7 @@
 import { mdiFilter } from "@mdi/js";
 import React, { useMemo } from "react";
-import Chip from "../../components/Chip";
-import Select from "../../components/Select/Select";
+import Chip from "@components/Chip";
+import Select from "@components/Select/Select";
 import type { StatusMonitorProps } from "./StatusMonitor";
 import {
   StatusMonitorViewTypes,

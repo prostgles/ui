@@ -1,13 +1,13 @@
 import React from "react";
-import { FlexCol } from "../../../components/Flex";
-import Select from "../../../components/Select/Select";
+import { FlexCol } from "@components/Flex";
+import Select from "@components/Select/Select";
 import type { ColumnSort } from "./ColumnMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
 import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
-import FormField from "../../../components/FormField/FormField";
+import FormField from "@components/FormField/FormField";
 
 const SORT_NULLS_OPTIONS = [
   { key: "first", label: "First" },

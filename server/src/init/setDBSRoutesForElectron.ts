@@ -8,7 +8,7 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import type { Server } from "socket.io";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../common/electronInitTypes";
+import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { getElectronConfig } from "../electronConfig";

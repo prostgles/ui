@@ -1,14 +1,14 @@
 import React from "react";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../../common/electronInitTypes";
-import { FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import Tabs from "../../components/Tabs";
+import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import Tabs from "@components/Tabs";
 import { t } from "../../i18n/i18nUtils";
 import { NewConnectionForm } from "../NewConnection/NewConnectionFormFields";
 import type { useElectronSetup } from "./useElectronSetup";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
-import ErrorComponent from "../../components/ErrorComponent";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
+import ErrorComponent from "@components/ErrorComponent";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export const ElectronSetupStateDB = ({
   state,

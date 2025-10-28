@@ -1,5 +1,5 @@
 import React from "react";
-import { FlexRow } from "../../components/Flex";
+import { FlexRow } from "@components/Flex";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { useSortedLayerQueries } from "../WindowControls/ChartLayerManager";
@@ -10,7 +10,7 @@ import type {
   ProstglesTimeChartLayer,
   ProstglesTimeChartStateLayer,
 } from "./W_TimeChart";
-import Btn from "../../components/Btn";
+import Btn from "@components/Btn";
 import { mdiClose } from "@mdi/js";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 

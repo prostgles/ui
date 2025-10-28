@@ -5,7 +5,7 @@ import pidusage from "pidusage";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import { type AnyObject, isObject } from "prostgles-types";
 import type { DBS } from "..";
-import { FORKED_PROC_ENV_NAME, type ProcStats } from "../../../common/utils";
+import { FORKED_PROC_ENV_NAME, type ProcStats } from "@common/utils";
 import { getError } from "./forkedProcess";
 
 type ForkedProcMessageCommon = {

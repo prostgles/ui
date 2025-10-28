@@ -1,11 +1,8 @@
 import { mdiFileDocumentPlusOutline } from "@mdi/js";
 import { isObject } from "prostgles-types";
 import React from "react";
-import type {
-  InsertRule,
-  TableRules,
-} from "../../../../../common/publishUtils";
-import ErrorComponent from "../../../components/ErrorComponent";
+import type { InsertRule, TableRules } from "@common/publishUtils";
+import ErrorComponent from "@components/ErrorComponent";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
 import type {
   ContextDataSchema,

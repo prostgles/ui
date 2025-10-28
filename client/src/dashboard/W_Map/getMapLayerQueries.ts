@@ -1,5 +1,5 @@
 import { isDefined } from "prostgles-types";
-import { parseFullFilter } from "../../../../common/publishUtils";
+import { parseFullFilter } from "@common/publishUtils";
 import type {
   Link,
   LinkSyncItem,
@@ -11,7 +11,7 @@ import { getCrossFilters } from "../joinUtils";
 import type { LayerOSM, LayerQuery, LayerSQL, LayerTable } from "./W_Map";
 import type { ActiveRow } from "../W_Table/W_Table";
 import type { DeckGlColor } from "../Map/DeckGLMap";
-import { getSmartGroupFilter } from "../../../../common/filterUtils";
+import { getSmartGroupFilter } from "@common/filterUtils";
 
 type Args = {
   links: LinkSyncItem[];

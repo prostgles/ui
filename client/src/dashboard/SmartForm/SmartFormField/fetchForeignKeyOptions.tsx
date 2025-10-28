@@ -5,11 +5,11 @@ import {
   type AnyObject,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import { type FullOption } from "../../../components/Select/Select";
+import { type FullOption } from "@components/Select/Select";
 import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import React from "react";
-import { SvgIconFromURL } from "../../../components/SvgIcon";
+import { SvgIconFromURL } from "@components/SvgIcon";
 
 type FetchForeignKeyOptionsArgs = Pick<
   SmartFormFieldForeignKeyProps,

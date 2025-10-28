@@ -1,9 +1,9 @@
 import { mdiCheck, mdiCheckAll, mdiCheckboxBlankOutline } from "@mdi/js";
 import React from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
-import Chip from "../../../components/Chip";
-import { ScrollFade } from "../../../components/ScrollFade/ScrollFade";
+import Chip from "@components/Chip";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
 
 export const MCPServerTools = ({

@@ -2,9 +2,9 @@ import { mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import Btn from "../../../components/Btn";
+import Btn from "@components/Btn";
 
-import { type DetailedFilterBase } from "../../../../../common/filterUtils";
+import { type DetailedFilterBase } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
 import { AddColumnMenu } from "../ColumnMenu/AddColumnMenu";

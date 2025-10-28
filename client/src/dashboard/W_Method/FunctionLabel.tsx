@@ -1,6 +1,6 @@
 import React from "react";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import { FlexCol, FlexRow } from "@components/Flex";
+import type { DBSSchema } from "@common/publishUtils";
 
 export const FunctionLabel = ({
   name,

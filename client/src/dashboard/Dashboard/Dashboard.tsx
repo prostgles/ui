@@ -5,7 +5,7 @@ import type {
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import Loading from "../../components/Loader/Loading";
+import Loading from "@components/Loader/Loading";
 import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll";
@@ -14,12 +14,12 @@ import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../appUtils";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../components/Flex";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { TopControls } from "../../pages/TopControls";
 import { DashboardMenu } from "../DashboardMenu/DashboardMenu";
 import type { ActiveRow } from "../W_Table/W_Table";
@@ -46,7 +46,7 @@ import type {
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
-import { ROUTES } from "../../../../common/utils";
+import { ROUTES } from "@common/utils";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;

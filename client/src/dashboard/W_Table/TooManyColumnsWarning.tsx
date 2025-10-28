@@ -1,8 +1,8 @@
 import { mdiAlertOutline } from "@mdi/js";
 import React, { useEffect, useMemo } from "react";
-import Btn from "../../components/Btn";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
+import Btn from "@components/Btn";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 
 type P = {

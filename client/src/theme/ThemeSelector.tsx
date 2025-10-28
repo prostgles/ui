@@ -1,7 +1,7 @@
 import { mdiThemeLightDark } from "@mdi/js";
 import React from "react";
 import type { ExtraProps } from "../App";
-import Select from "../components/Select/Select";
+import Select from "@components/Select/Select";
 import { t } from "../i18n/i18nUtils";
 
 export type ThemeOption = "light" | "dark" | "from-system";

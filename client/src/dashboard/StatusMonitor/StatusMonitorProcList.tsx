@@ -2,20 +2,20 @@ import { mdiCancel, mdiStopCircleOutline } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { PrglState } from "../../App";
-import Btn from "../../components/Btn";
-import Chip from "../../components/Chip";
-import { FlexRow } from "../../components/Flex";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import CodeExample from "../CodeExample";
 import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { StyledInterval } from "../W_SQL/customRenderers";
 import type { StatusMonitorProps } from "./StatusMonitor";
 import { StatusMonitorProcListHeader } from "./StatusMonitorProcListHeader";
-import { STATUS_MONITOR_IGNORE_QUERY } from "../../../../common/utils";
+import { STATUS_MONITOR_IGNORE_QUERY } from "@common/utils";
 
 export const StatusMonitorViewTypes = [
   { key: "All Queries", subLabel: "No filtering applied" },

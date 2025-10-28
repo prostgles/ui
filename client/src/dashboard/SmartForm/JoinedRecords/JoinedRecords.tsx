@@ -1,11 +1,11 @@
 import { type AnyObject } from "prostgles-types";
 import React, { useEffect } from "react";
-import { type DetailedFilterBase } from "../../../../../common/filterUtils";
+import { type DetailedFilterBase } from "@common/filterUtils";
 import type { Prgl } from "../../../App";
-import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
-import Loading from "../../../components/Loader/Loading";
-import { Section } from "../../../components/Section";
-import { SvgIcon } from "../../../components/SvgIcon";
+import { FlexCol, FlexRow, classOverride } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
+import { Section } from "@components/Section";
+import { SvgIcon } from "@components/SvgIcon";
 import type { SmartFormProps } from "../SmartForm";
 import { ViewMoreSmartCardList } from "../SmartFormField/ViewMoreSmartCardList";
 import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";

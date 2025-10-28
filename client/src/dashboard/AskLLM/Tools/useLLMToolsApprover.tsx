@@ -4,11 +4,11 @@ import {
   getLLMMessageToolUse,
   isAssistantMessageRequestingToolUse,
   type LLMMessage,
-} from "../../../../../common/llmUtils";
+} from "@common/llmUtils";
 import { isDefined } from "../../../utils";
 import type { AskLLMToolsProps } from "./AskLLMToolApprover";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import type { ProstglesMcpTool } from "../../../../../common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
+import type { ProstglesMcpTool } from "@common/prostglesMcp";
 import { useRef } from "react";
 
 let approvingMessageId = "";

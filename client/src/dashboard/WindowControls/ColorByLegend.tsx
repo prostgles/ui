@@ -1,8 +1,8 @@
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
 import React from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
-import type { DivProps } from "../../components/Flex";
-import { FlexRow, classOverride } from "../../components/Flex";
+import type { DivProps } from "@components/Flex";
+import { FlexRow, classOverride } from "@components/Flex";
 import { isDefined } from "../../utils";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
@@ -16,7 +16,7 @@ import {
 } from "../W_Table/ColumnMenu/ColumnStyleControls";
 import { updateWCols } from "../W_Table/tableUtils/tableUtils";
 import type { ProstglesTimeChartStateLayer } from "../W_TimeChart/W_TimeChart";
-import { getSmartGroupFilter } from "../../../../common/filterUtils";
+import { getSmartGroupFilter } from "@common/filterUtils";
 
 type P = DivProps &
   Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl" | "w"> & {

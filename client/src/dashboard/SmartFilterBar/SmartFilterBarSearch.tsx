@@ -1,12 +1,9 @@
 import { useMemoDeep } from "prostgles-client/dist/react-hooks";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import type {
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../common/filterUtils";
-import { isJoinedFilter } from "../../../../common/filterUtils";
-import ErrorComponent from "../../components/ErrorComponent";
+import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
+import { isJoinedFilter } from "@common/filterUtils";
+import ErrorComponent from "@components/ErrorComponent";
 import { SmartSearch } from "../SmartFilter/SmartSearch/SmartSearch";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 import { colIs } from "../SmartForm/SmartFormField/fieldUtils";

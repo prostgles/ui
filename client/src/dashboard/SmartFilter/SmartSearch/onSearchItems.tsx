@@ -2,13 +2,10 @@ import React from "react";
 import type {
   SearchListItem,
   SearchListProps,
-} from "../../../components/SearchList/SearchList";
+} from "@components/SearchList/SearchList";
 import type { SmartSearch } from "./SmartSearch";
 import { getSmartSearchRows } from "./getSmartSearchRows";
-import type {
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../../common/filterUtils";
+import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
 import { isDefined } from "../../../utils";
 import { SearchAll } from "../../SearchAll";
 

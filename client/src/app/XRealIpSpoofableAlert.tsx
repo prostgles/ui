@@ -1,10 +1,10 @@
 import { mdiAlertOutline } from "@mdi/js";
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { ROUTES } from "../../../common/utils";
-import Btn from "../components/Btn";
-import { InfoRow } from "../components/InfoRow";
-import PopupMenu from "../components/PopupMenu";
+import { ROUTES } from "@common/utils";
+import Btn from "@components/Btn";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import { t } from "../i18n/i18nUtils";
 import type { useAppState } from "../useAppState/useAppState";
 

@@ -1,12 +1,9 @@
 import { isObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import type {
-  FieldFilter,
-  TableRules,
-} from "../../../../../common/publishUtils";
-import { parseFieldFilter } from "../../../../../common/publishUtils";
-import { FlexCol } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
+import type { FieldFilter, TableRules } from "@common/publishUtils";
+import { parseFieldFilter } from "@common/publishUtils";
+import { FlexCol } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
 import { isDefined } from "../../../utils";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import type { TableInfoWithRules } from "./TablePermissionControls";

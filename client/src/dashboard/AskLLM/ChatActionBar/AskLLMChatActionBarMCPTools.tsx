@@ -1,6 +1,6 @@
 import React from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import PopupMenu from "../../../components/PopupMenu";
+import type { DBSSchema } from "@common/publishUtils";
+import PopupMenu from "@components/PopupMenu";
 import { MCPServers } from "../../../pages/ServerSettings/MCPServers/MCPServers";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { AskLLMChatActionBarMCPToolsBtn } from "./AskLLMChatActionBarMCPToolsBtn";

@@ -1,4 +1,4 @@
-import type { ColType } from "../../../../../../common/utils";
+import type { ColType } from "@common/utils";
 import { getColumnSuggestionLabel } from "../../SQLEditorSuggestions";
 import { asSQL } from "../KEYWORDS";
 import {

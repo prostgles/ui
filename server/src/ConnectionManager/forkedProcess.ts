@@ -1,7 +1,7 @@
 import prostgles from "prostgles-server";
 import type { OnReadyParamsBasic } from "prostgles-server/dist/initProstgles";
 import { getSerialisableError } from "prostgles-types";
-import { FORKED_PROC_ENV_NAME } from "../../../common/utils";
+import { FORKED_PROC_ENV_NAME } from "@common/utils";
 import type {
   ForkedProcMessage,
   ForkedProcMessageError,

@@ -1,13 +1,13 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useCallback, useState } from "react";
-import type { BtnProps } from "../../components/Btn";
-import Btn from "../../components/Btn";
-import FormField from "../../components/FormField/FormField";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
 import { isObject } from "prostgles-types";
-import PopupMenu from "../../components/PopupMenu";
+import PopupMenu from "@components/PopupMenu";
 import type { WorkspaceSchema } from "../Dashboard/dashboardUtils";
 import type { Prgl } from "../../App";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
 
 type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> & {

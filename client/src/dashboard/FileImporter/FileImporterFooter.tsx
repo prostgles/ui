@@ -1,6 +1,6 @@
 import React from "react";
-import Btn from "../../components/Btn";
-import { ProgressBar } from "../../components/ProgressBar";
+import Btn from "@components/Btn";
+import { ProgressBar } from "@components/ProgressBar";
 import type { FileImporterProps, FileImporterState } from "./FileImporter";
 
 type P = FileImporterState &

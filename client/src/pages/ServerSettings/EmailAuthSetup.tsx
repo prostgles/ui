@@ -1,12 +1,12 @@
 import { mdiEmail } from "@mdi/js";
 import { isEqual } from "prostgles-types";
 import React, { useState } from "react";
-import ErrorComponent from "../../components/ErrorComponent";
-import FormField from "../../components/FormField/FormField";
-import { FooterButtons } from "../../components/Popup/FooterButtons";
-import { Section } from "../../components/Section";
-import Select from "../../components/Select/Select";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import ErrorComponent from "@components/ErrorComponent";
+import FormField from "@components/FormField/FormField";
+import { FooterButtons } from "@components/Popup/FooterButtons";
+import { Section } from "@components/Section";
+import Select from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
 import type { AuthProviderProps } from "./AuthProvidersSetup";
 import {
   DEFAULT_SMTP_CONFIG,
@@ -15,7 +15,7 @@ import {
 import {
   DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
   DEFAULT_MAGIC_LINK_TEMPLATE,
-} from "../../../../common/OAuthUtils";
+} from "@common/OAuthUtils";
 import { t } from "../../i18n/i18nUtils";
 
 export const EmailAuthSetup = ({

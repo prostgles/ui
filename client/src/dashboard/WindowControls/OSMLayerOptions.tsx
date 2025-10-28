@@ -1,11 +1,11 @@
 import React from "react";
 import { getRandomColor, type LinkSyncItem } from "../Dashboard/dashboardUtils";
-import PopupMenu from "../../components/PopupMenu";
-import Btn from "../../components/Btn";
+import PopupMenu from "@components/PopupMenu";
+import Btn from "@components/Btn";
 import { mdiMap } from "@mdi/js";
 import { OverpassQuery } from "../W_Map/OSM/OverpassQuery";
 import { isDefined } from "../../utils";
-import { FlexRow } from "../../components/Flex";
+import { FlexRow } from "@components/Flex";
 
 type P = {
   link: LinkSyncItem;

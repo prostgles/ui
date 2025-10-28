@@ -6,15 +6,12 @@ import {
 } from "@mdi/js";
 import { isObject, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import type { SmartGroupFilter } from "../../../../common/filterUtils";
-import {
-  getFinalFilterInfo,
-  getSmartGroupFilter,
-} from "../../../../common/filterUtils";
-import Btn from "../../components/Btn";
-import { ExpandSection } from "../../components/ExpandSection";
-import { Footer } from "../../components/Popup/Popup";
-import PopupMenu from "../../components/PopupMenu";
+import type { SmartGroupFilter } from "@common/filterUtils";
+import { getFinalFilterInfo, getSmartGroupFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { ExpandSection } from "@components/ExpandSection";
+import { Footer } from "@components/Popup/Popup";
+import PopupMenu from "@components/PopupMenu";
 import { pluralise } from "../../pages/Connections/Connection";
 import { CodeConfirmation } from "../BackupAndRestore/CodeConfirmation";
 import { InsertButton } from "../SmartForm/InsertButton";

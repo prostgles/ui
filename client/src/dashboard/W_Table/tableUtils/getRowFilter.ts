@@ -5,7 +5,7 @@ import { isEmpty } from "../../../utils";
 import {
   getSmartGroupFilter,
   type DetailedFilterBase,
-} from "../../../../../common/filterUtils";
+} from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 
 export const getRowFilter = async (

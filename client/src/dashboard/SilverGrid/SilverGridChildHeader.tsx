@@ -7,11 +7,11 @@ import {
   mdiUnfoldMoreHorizontal,
 } from "@mdi/js";
 import React from "react";
-import Btn from "../../components/Btn";
+import Btn from "@components/Btn";
 import type { SilverGridChildProps } from "./SilverGridChild";
 import { dataCommand } from "../../Testing";
 import { appTheme, useReactiveState } from "../../appUtils";
-import { FlexRow } from "../../components/Flex";
+import { FlexRow } from "@components/Flex";
 export const GridHeaderClassname = "silver-grid-item-header--title" as const;
 
 type P = SilverGridChildProps & {

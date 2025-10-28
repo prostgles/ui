@@ -1,6 +1,6 @@
 import { isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
-import { FlexCol, FlexRowWrap } from "../../components/Flex";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { RenderFilter, type RenderFilterProps } from "../RenderFilter";
 import SortByControl from "../SmartFilter/SortByControl";
 import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";

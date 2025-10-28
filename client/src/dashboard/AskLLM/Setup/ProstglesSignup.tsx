@@ -1,11 +1,11 @@
 import React from "react";
-import { SuccessMessage } from "../../../components/Animations";
-import Btn from "../../../components/Btn";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { FlexCol } from "../../../components/Flex";
-import FormField from "../../../components/FormField/FormField";
+import { SuccessMessage } from "@components/Animations";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
 import type { SetupLLMCredentialsProps } from "./SetupLLMCredentials";
-import { isObject } from "../../../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import { ERR_CODE_MESSAGES } from "../../../pages/Login/useLoginState";
 
 export const ProstglesSignup = ({

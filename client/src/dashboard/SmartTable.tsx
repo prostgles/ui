@@ -1,7 +1,7 @@
 import React from "react";
-import Loading from "../components/Loader/Loading";
-import Popup from "../components/Popup/Popup";
-import { Table } from "../components/Table/Table";
+import Loading from "@components/Loader/Loading";
+import Popup from "@components/Popup/Popup";
+import { Table } from "@components/Table/Table";
 import type {
   ColumnSort,
   ColumnSortSQL,
@@ -12,10 +12,10 @@ import {
   getSmartGroupFilter,
   type DetailedFilterBase,
   type SmartGroupFilter,
-} from "../../../common/filterUtils";
+} from "@common/filterUtils";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
 import { SmartForm, type SmartFormProps } from "./SmartForm/SmartForm";
-import ErrorComponent from "../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
 import {
   _PG_numbers,
@@ -26,8 +26,8 @@ import {
 import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
 import type { Prgl } from "../App";
 import { quickClone } from "../utils";
-import type { PaginationProps } from "../components/Table/Pagination";
-import { FlexCol } from "../components/Flex";
+import type { PaginationProps } from "@components/Table/Pagination";
+import { FlexCol } from "@components/Flex";
 import { isNumericColumn } from "./W_SQL/getSQLResultTableColumns";
 
 type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {

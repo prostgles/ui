@@ -179,13 +179,13 @@ export type MonacoError = Pick<
 import { mdiPlay } from "@mdi/js";
 import { isEqual } from "prostgles-types";
 import type { SQLHandler } from "prostgles-types";
-import Btn from "../../components/Btn";
-import { getDataTransferFiles } from "../../components/FileInput/DropZone";
-import { FlexCol } from "../../components/Flex";
+import Btn from "@components/Btn";
+import { getDataTransferFiles } from "@components/FileInput/DropZone";
+import { FlexCol } from "@components/Flex";
 import {
   MonacoEditor,
   type MonacoEditorProps,
-} from "../../components/MonacoEditor/MonacoEditor";
+} from "@components/MonacoEditor/MonacoEditor";
 import { isEmpty, omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";

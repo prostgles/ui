@@ -1,6 +1,6 @@
 import { asName, omitKeys } from "prostgles-types";
 import type { Readable } from "stream";
-import { throttle } from "../../../common/utils";
+import { throttle } from "@common/utils";
 import type BackupManager from "./BackupManager";
 import type { Backups } from "./BackupManager";
 import { envToStr } from "./pipeFromCommand";

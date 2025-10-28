@@ -1,10 +1,10 @@
 import { mdiArrowLeft, mdiArrowRight, mdiConnection } from "@mdi/js";
 import React from "react";
 import type { AppState } from "../../App";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import Loading from "../../components/Loader/Loading";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
 import type { OS } from "../PostgresInstallationInstructions";
 import { ElectronSetupStateDB } from "./ElectronSetupStateDB";
 import { useElectronSetup } from "./useElectronSetup";

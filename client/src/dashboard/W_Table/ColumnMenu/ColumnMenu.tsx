@@ -14,8 +14,8 @@ import {
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
-import type { TabItems } from "../../../components/Tabs";
-import Tabs from "../../../components/Tabs";
+import type { TabItems } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 
 import type {
   TIMECHART_STAT_TYPES,
@@ -32,12 +32,9 @@ import type {
 import { ColumnStyleControls } from "./ColumnStyleControls";
 
 import type { ParsedJoinPath } from "prostgles-types";
-import type {
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../../common/filterUtils";
+import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
 import { useReactiveState } from "../../../appUtils";
-import Popup from "../../../components/Popup/Popup";
+import Popup from "@components/Popup/Popup";
 import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
 import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";

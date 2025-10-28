@@ -4,8 +4,8 @@ import {
   parseContextVal,
   type GroupedDetailedFilter,
   type SimpleFilter,
-} from "../../../../../common/filterUtils";
-import type { ForcedData } from "../../../../../common/publishUtils";
+} from "@common/filterUtils";
+import type { ForcedData } from "@common/publishUtils";
 import type { SelectRuleControlProps } from "./SelectRuleControl";
 type GetComparablePGPolicyArgs = Pick<
   SelectRuleControlProps,

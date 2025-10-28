@@ -4,7 +4,7 @@ import type { ScaleLinear } from "d3";
 import type { ValidatedColumnInfo } from "prostgles-types";
 
 import React from "react";
-import { classOverride } from "../../components/Flex";
+import { classOverride } from "@components/Flex";
 import type { Point } from "../Charts";
 import type { CanvasChart, Shape } from "../Charts/CanvasChart";
 import RTComp from "../RTComp";

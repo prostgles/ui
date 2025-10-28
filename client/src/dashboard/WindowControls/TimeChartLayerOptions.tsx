@@ -1,11 +1,11 @@
 import { mdiSigma, mdiTableColumn } from "@mdi/js";
 import { _PG_numbers, includes } from "prostgles-types";
 import React from "react";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
-import { Label } from "../../components/Label";
-import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { Label } from "@components/Label";
+import PopupMenu from "@components/PopupMenu";
+import Select from "@components/Select/Select";
 import type { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { windowIs } from "../Dashboard/dashboardUtils";
 import { getTimeChartLayer } from "../W_TimeChart/getTimeChartLayers";

@@ -1,19 +1,19 @@
 import { mdiChartLine, mdiChip } from "@mdi/js";
 import React, { useEffect, useState } from "react";
-import type { ConnectionStatus } from "../../../../common/utils";
-import Btn from "../../components/Btn";
-import Chip from "../../components/Chip";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
+import type { ConnectionStatus } from "@common/utils";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import { isEmpty } from "../../utils";
 import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
 import type { StatusMonitorProps } from "./StatusMonitor";
 import { StatusMonitorConnections } from "./StatusMonitorConnections";
 import { getServerCoreInfoStr } from "../../pages/Connections/useConnectionServersList";
-import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 
 export const StatusMonitorHeader = (
   props: StatusMonitorProps & {

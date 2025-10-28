@@ -1,5 +1,5 @@
 import { mdiChartLine, mdiDatabaseCogOutline } from "@mdi/js";
-import { fixIndent, ROUTES } from "../../../../../common/utils";
+import { fixIndent, ROUTES } from "@common/utils";
 import type { UIDocContainers } from "../../UIDocs";
 import { editConnectionUIDoc } from "../editConnectionUIDoc";
 import { accessControlUIDoc } from "./config/accessControlUIDoc";

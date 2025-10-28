@@ -1,6 +1,6 @@
 import React from "react";
-import { classOverride } from "../../components/Flex";
-import { Label } from "../../components/Label";
+import { classOverride } from "@components/Flex";
+import { Label } from "@components/Label";
 import type { ParsedFieldConfig } from "./SmartCard";
 
 type SmartCardColumnProps = {

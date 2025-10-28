@@ -1,5 +1,5 @@
 import { mdiThemeLightDark, mdiTranslate } from "@mdi/js";
-import { ROUTES } from "../../../../common/utils";
+import { ROUTES } from "@common/utils";
 import type { UIDocNavbar } from "../UIDocs";
 
 export const navbarUIDoc = {

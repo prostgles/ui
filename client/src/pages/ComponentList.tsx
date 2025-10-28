@@ -1,7 +1,7 @@
 import { mdiFullscreen } from "@mdi/js";
 import React, { useEffect, useRef, useState } from "react";
-import Btn from "../components/Btn";
-import { FlexCol, FlexRow } from "../components/Flex";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { isEmpty } from "../utils";
 import { useLocation } from "react-router-dom";
 import Loading from "@components/Loader/Loading";

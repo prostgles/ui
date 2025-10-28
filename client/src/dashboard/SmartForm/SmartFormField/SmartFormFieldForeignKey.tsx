@@ -7,11 +7,11 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { sliceText } from "../../../../../common/utils";
-import Btn from "../../../components/Btn";
-import { FileInput } from "../../../components/FileInput/FileInput";
-import { FlexRow, FlexRowWrap } from "../../../components/Flex";
-import Select, { type FullOption } from "../../../components/Select/Select";
+import { sliceText } from "@common/utils";
+import Btn from "@components/Btn";
+import { FileInput } from "@components/FileInput/FileInput";
+import { FlexRow, FlexRowWrap } from "@components/Flex";
+import Select, { type FullOption } from "@components/Select/Select";
 import {
   type ColumnData,
   NewRowDataHandler,

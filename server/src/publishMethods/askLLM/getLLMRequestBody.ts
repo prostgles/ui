@@ -5,7 +5,7 @@ import {
   tryCatchV2,
   type AnyObject,
 } from "prostgles-types";
-import { filterArr, findArr } from "../../../../common/llmUtils";
+import { filterArr, findArr } from "@common/llmUtils";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 import type { LLMMessage } from "./askLLM";
 

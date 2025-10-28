@@ -1,12 +1,12 @@
 import { mdiDotsHorizontal } from "@mdi/js";
 import { isObject, type AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import Btn from "../../../components/Btn";
-import type { FormFieldProps } from "../../../components/FormField/FormField";
-import FormField from "../../../components/FormField/FormField";
-import { FormFieldCodeEditor } from "../../../components/FormField/FormFieldCodeEditor";
-import { JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
-import { SvgIcon } from "../../../components/SvgIcon";
+import Btn from "@components/Btn";
+import type { FormFieldProps } from "@components/FormField/FormField";
+import FormField from "@components/FormField/FormField";
+import { FormFieldCodeEditor } from "@components/FormField/FormFieldCodeEditor";
+import { JSONBSchemaA } from "@components/JSONBSchema/JSONBSchema";
+import { SvgIcon } from "@components/SvgIcon";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { DBSchemaTableColumn } from "../../Dashboard/dashboardUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
