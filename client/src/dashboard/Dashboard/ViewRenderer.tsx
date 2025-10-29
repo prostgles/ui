@@ -1,7 +1,7 @@
 import { isDefined } from "prostgles-types";
-import React from "react";
+import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ErrorTrap } from "@components/ErrorComponent";
+import ErrorComponent, { ErrorTrap } from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
 import { LinkMenu } from "../LinkMenu";
@@ -275,7 +275,7 @@ export class ViewRenderer extends RTComp<
               w={w}
             />
           );
-        } else {
+        } else if (w.type === "table") {
           const crossF = getCrossFilters(
             w as WindowSyncItem<"table">,
             active_row,
@@ -305,8 +305,12 @@ export class ViewRenderer extends RTComp<
               childWindow={childWindow}
               {...commonProps}
               key={commonProps.key + this.props.prgl.dbKey}
-              w={w as any}
+              w={w}
             />
+          );
+        } else {
+          result = (
+            <ErrorComponent error={`Unsupported window type: ${w.type}`} />
           );
         }
       }

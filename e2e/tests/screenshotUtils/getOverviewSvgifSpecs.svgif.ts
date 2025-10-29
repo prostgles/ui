@@ -17,12 +17,12 @@ export const getOverviewSvgifSpecs = async (
     fileName: "overview",
     scenes: [
       ...sliceScenes("command_palette", 1, 4),
+      ...sliceScenes("schema_diagram", 1, 4),
 
       ...sliceScenes("sql_editor", 8, 10),
       ...sliceScenes("sql_editor", 18, 19),
       ...sliceScenes("dashboard", 0, 3),
       ...sliceScenes("ai_assistant", 0, 2),
-      ...sliceScenes("schema_diagram", 0, 2),
       ...sliceScenes("file_importer", 0, 2),
     ],
   };

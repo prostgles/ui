@@ -42,6 +42,14 @@ export type OSMRelation = OSMElementBase & {
 
 export type OSMElement = OSMNode | OSMWay | OSMRelation;
 
+const checkIfFailedResponse = (response: Response) => {
+  if (!response.ok) {
+    throw new Error(
+      `Overpass API request failed: ${response.status} ${response.statusText}`,
+    );
+  }
+};
+
 const cachedFeatures: Map<number, GeoJSONFeature> = new Map();
 export const getOSMData = async (query: string, bbox: string) => {
   const response = await fetch(OVERPASS_URL, {
@@ -49,6 +57,7 @@ export const getOSMData = async (query: string, bbox: string) => {
     body: query.replace(/\${bbox}/g, bbox),
     cache: "default",
   });
+  checkIfFailedResponse(response);
   const data: {
     elements: OSMElement[];
   } = await response.json();
@@ -81,12 +90,12 @@ const fetchElements = async <T extends "node" | "way">(
     batchNodeIds = nonCachedIds.splice(0, limit);
     step++;
     if (!batchNodeIds.length) break;
-    const nodeBatch = await fetch(OVERPASS_URL, {
+    const response = await fetch(OVERPASS_URL, {
       method: "POST",
       body: `[out:json];${type}(id:${batchNodeIds.join(",")});out ${limit};`,
-    })
-      .then((res) => res.json())
-      .then((res) => res.elements);
+    });
+    checkIfFailedResponse(response);
+    const nodeBatch = await response.json().then((res) => res.elements);
     elements = [...elements, ...nodeBatch];
     nodeBatch.forEach((node: any) => {
       cachedElements.set(node.id, node);

@@ -467,11 +467,11 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
       >
         {this.renderGrid()}
         <div
-          key={"silver-grid-target"}
+          key={"silver-grid-view-move-target"}
           ref={(r) => {
             if (r) this.refTarget = r;
           }}
-          className={" absolute silver-grid-target b"}
+          className={" absolute silver-grid-view-move-target b"}
           style={{
             ...targetStyle,
             zIndex: 232,

@@ -21,6 +21,10 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
+  dashboard: dashboardSvgif,
+  here: () => {
+    throw new Error("done");
+  },
   schema_diagram: schemaDiagramSvgif,
   command_palette: commandPaletteSvgif,
   sql_editor: sqlEditorSvgif,
@@ -86,7 +90,6 @@ export const SVG_SCREENSHOT_DETAILS = {
   connections: async (page) => {
     await goTo(page, "/connections");
   },
-  dashboard: dashboardSvgif,
   table: async (page, { hideMenuIfOpen, openConnection, openMenuIfClosed }) => {
     await openConnection("prostgles_video_demo");
 

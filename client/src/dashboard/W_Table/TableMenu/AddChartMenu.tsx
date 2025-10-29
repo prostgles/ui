@@ -227,7 +227,8 @@ export const AddChartMenu = (props: P) => {
                   rgbaToString(layerAlreadyAdded as any)
                 : undefined,
             },
-            "data-command": `AddChartMenu.${c.label}`,
+            "data-command":
+              c.label === "Map" ? "AddChartMenu.Map" : "AddChartMenu.Timechart",
           };
 
           /**

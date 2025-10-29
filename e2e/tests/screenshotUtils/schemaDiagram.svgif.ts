@@ -25,26 +25,41 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
   await addScene({
     animations: [
       {
-        type: "growIn",
+        type: "fadeIn",
         elementSelector: getCommandElemSelector("SchemaGraph"),
-        duration: 1000,
+        duration: 500,
       },
       { type: "wait", duration: 1000 },
     ],
   });
 
-  const chat_members_tablePosition = [481, 273] as const;
-  await page.mouse.move(...chat_members_tablePosition);
-  await page.mouse.click(...chat_members_tablePosition);
-  await page.waitForTimeout(1500);
+  await page
+    .getByTestId("SchemaGraph")
+    .locator("canvas")
+    .waitFor({ state: "visible" });
+
+  for (const point of [
+    [390, 430],
+    [350, 440],
+  ] satisfies [number, number][]) {
+    await page.mouse.move(...point, { steps: 10 });
+    await page.waitForTimeout(400);
+    await addScene({
+      animations: [
+        {
+          type: "moveTo",
+          xy: point,
+          duration: 500,
+        },
+        { type: "wait", duration: 1000 },
+      ],
+    });
+  }
+
   await addScene({
-    animations: [
-      { type: "wait", duration: 1000 },
-      {
-        type: "moveTo",
-        xy: chat_members_tablePosition as [number, number],
-        duration: 1000,
-      },
-    ],
+    animations: [{ type: "moveTo", xy: [350, 460], duration: 200 }],
+  });
+  await addScene({
+    animations: [{ type: "wait", duration: 4000 }],
   });
 };

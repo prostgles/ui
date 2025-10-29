@@ -125,7 +125,7 @@ export const getSVGifAnimations = (
           width,
           height,
         });
-        if (type === "reveal-list" || type === "growIn") {
+        if (type === "fadeIn" || type === "growIn") {
           const { type } = animation;
           const fromTime = currentPrevDuration;
           const toTime = fromTime + duration;
@@ -137,7 +137,7 @@ export const getSVGifAnimations = (
             keyframes: getRevealKeyframes({
               fromPerc,
               toPerc,
-              mode: type === "reveal-list" ? "opacity" : "growIn",
+              mode: type === "fadeIn" ? "opacity" : "growIn",
               // mode: "top to bottom",
             }),
           });

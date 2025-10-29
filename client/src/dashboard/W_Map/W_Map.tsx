@@ -506,7 +506,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
 
     if (error) {
       infoSection = (
-        <div className="f-1 flex-row relative m-2 ai-center jc-center absolute p-2 bg-color-0 rounded">
+        <div className="f-1 flex-row relative m-2 ai-center absolute p-2 bg-color-0 rounded max-h-fit">
           <ErrorComponent title="Map error" withIcon={true} error={error} />
         </div>
       );

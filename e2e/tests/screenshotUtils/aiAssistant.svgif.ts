@@ -315,7 +315,7 @@ export const typeSendAddScenes = async (
   await addScene({
     animations: [
       {
-        type: "reveal-list",
+        type: "fadeIn",
         duration: 2000,
         elementSelector:
           getCommandElemSelector("Chat.messageList") + " > g:last-of-type",

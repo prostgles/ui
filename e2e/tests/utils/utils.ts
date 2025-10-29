@@ -1025,6 +1025,20 @@ export const deleteExistingLLMChat = async (page: PageWIds) => {
   await page.waitForTimeout(1e3);
 };
 
+export const deleteAllWorkspaces = async (page: PageWIds): Promise<void> => {
+  const list = await page.getByTestId("WorkspaceMenu.list");
+  await list.waitFor({ state: "visible", timeout: 10e3 });
+  await page.waitForTimeout(1500);
+  const listTextContent = await list.textContent();
+  if (listTextContent?.trim().toLowerCase() === "default") return; // only default workspace exists
+  await page.getByTestId("WorkspaceMenuDropDown").click();
+  await page.getByTestId("WorkspaceDeleteBtn").last().click();
+  await page.getByTestId("WorkspaceDeleteBtn.Confirm").click();
+  await page.waitForTimeout(555);
+  await page.reload();
+  return deleteAllWorkspaces(page);
+};
+
 export const setOrAddWorkspace = async (
   page: PageWIds,
   workspaceName: string,

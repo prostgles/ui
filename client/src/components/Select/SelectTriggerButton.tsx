@@ -4,6 +4,7 @@ import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValu
 import Btn from "../Btn";
 import type { FullOption, OptionKey, SelectProps, SelectState } from "./Select";
 import { getCommandElemSelector } from "../../Testing";
+import { classOverride } from "@components/Flex";
 
 type P<
   O extends OptionKey,
@@ -107,7 +108,7 @@ export const SelectTriggerButton = <
       }}
       /** Use "data-command" for content when button not needed anymore */
       data-command={popupAnchor ? undefined : props["data-command"]}
-      className={`${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${buttonClassName}`}
+      // className={`${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${buttonClassName} ${popupAnchor ? "is-open" : ""} `}
       size={size}
       variant={chipMode ? "icon" : "faded"}
       color={chipMode ? "action" : "default"}
@@ -126,6 +127,10 @@ export const SelectTriggerButton = <
       }
       disabledVariant={noOtherOption ? "no-fade" : undefined}
       {...btnProps}
+      className={classOverride(
+        `${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${buttonClassName} ${popupAnchor ? "is-open" : ""} `,
+        btnProps?.className,
+      )}
       onClick={
         noOtherOption ? undefined : (
           (e) => {

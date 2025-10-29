@@ -459,6 +459,7 @@ export const COMMANDS = {
   APIDetailsTokens: "",
   "AskLLM.DeleteMessage": "",
   "DockerSandboxCreateContainer.Logs": "",
+  TableBody: "",
 } as const satisfies Record<
   string,
   | string
@@ -502,7 +503,7 @@ export declare namespace SVGif {
         elementSelector: string;
         offset?: { x: number; y: number };
         duration: number;
-        type: "click" | "zoomTo" | "type" | "reveal-list" | "growIn";
+        type: "click" | "zoomTo" | "type" | "fadeIn" | "growIn";
 
         /**
          * Time to wait before clicking after reaching the final position

@@ -1,21 +1,20 @@
-import React from "react";
+import { sliceText } from "@common/utils";
 import { mdiMenuDown } from "@mdi/js";
+import React from "react";
 import type { TestSelectors } from "../../Testing";
 import RTComp from "../../dashboard/RTComp";
 import type { BtnProps } from "../Btn";
-import Btn from "../Btn";
 import Chip from "../Chip";
-import { FlexRow, classOverride } from "../Flex";
+import { generateUniqueID } from "../FileInput/FileInput";
+import { FlexRow } from "../Flex";
 import { Icon } from "../Icon/Icon";
 import type { LabelProps } from "../Label";
 import { Label } from "../Label";
 import Popup from "../Popup/Popup";
 import type { SearchListItem, SearchListProps } from "../SearchList/SearchList";
 import { SearchList } from "../SearchList/SearchList";
-import "./Select.css";
 import { SelectTriggerButton } from "./SelectTriggerButton";
-import { sliceText } from "@common/utils";
-import { generateUniqueID } from "../FileInput/FileInput";
+import "./Select.css";
 
 export type OptionKey = string | number | boolean | Date | null | undefined;
 export type FullOption<O extends OptionKey = string> = Pick<
@@ -161,6 +160,7 @@ export default class Select<
       disabledInfo,
       optional = false,
       showSelectedSublabel = false,
+      buttonClassName = "",
     } = this.props;
 
     const value = this.state.multiSelection ?? _value;

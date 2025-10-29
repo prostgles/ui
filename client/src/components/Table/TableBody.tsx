@@ -86,6 +86,7 @@ export const TableBody = <Sort extends ColumnSort | ColumnSortSQL>(
 
   return (
     <div
+      data-command="TableBody"
       className={classOverride(
         "TableBody b-y b-default f-1 oy-auto ox-hidden flex-col min-w-fit relative " +
           (rawPagination === "virtual" ? "" : "no-scroll-bar"),
