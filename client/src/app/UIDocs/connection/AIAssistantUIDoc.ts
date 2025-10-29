@@ -1,3 +1,4 @@
+import { mdiMagnify, mdiPlus, mdiStop, mdiTools } from "@mdi/js";
 import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocElement } from "../../UIDocs";
@@ -99,6 +100,7 @@ export const AIAssistantUIDoc = {
         {
           type: "popup",
           title: "MCP tools allowed",
+          iconPath: mdiTools,
           description: "Opens the MCP tools menu for the current chat.",
           selector: getCommandElemSelector("LLMChatOptions.MCPTools"),
           children: [
@@ -106,6 +108,7 @@ export const AIAssistantUIDoc = {
               type: "popup",
               selector: getCommandElemSelector("AddMCPServer.Open"),
               title: "Add MCP server",
+              iconPath: mdiPlus,
               description:
                 "Opens the form to add a new MCP server for the current chat.",
               children: [
@@ -121,11 +124,12 @@ export const AIAssistantUIDoc = {
                     getCommandElemSelector("MonacoEditor"),
                 },
                 {
-                  type: "button",
+                  type: "popup",
                   title: "Add MCP server",
                   description:
                     "Adds the specified MCP server to the current chat.",
                   selector: getCommandElemSelector("AddMCPServer.Add"),
+                  children: [],
                 },
               ],
             },
@@ -136,6 +140,7 @@ export const AIAssistantUIDoc = {
               selector: getCommandElemSelector(
                 "MCPServersToolbar.stopAllToggle",
               ),
+              iconPath: mdiStop,
             },
             {
               type: "button",
@@ -143,10 +148,12 @@ export const AIAssistantUIDoc = {
               description:
                 "Searches for specific MCP tools in the list of available tools.",
               selector: getCommandElemSelector("MCPServersToolbar.searchTools"),
+              iconPath: mdiMagnify,
             },
             {
               type: "list",
               title: "MCP tools",
+              iconPath: mdiTools,
               description:
                 "List of available MCP tools. To allow a tool to be used in the current chat it must be ticked. Each tool represents a specific functionality or integration.",
               selector:

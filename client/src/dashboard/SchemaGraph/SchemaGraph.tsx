@@ -29,7 +29,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
         iconPath={mdiRelationManyToMany}
         className="fit "
         title="Show schema diagram"
-        data-command="SchemaGraph"
+        data-command={showSchemaDiagram ? undefined : "SchemaGraph"}
         variant="outline"
         onClick={() => {
           setShowSchemaDiagram(true);
@@ -43,6 +43,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
           clickCatchStyle={{ opacity: 1 }}
           contentClassName="o-visible relative "
           onClose={() => setShowSchemaDiagram(false)}
+          data-command="SchemaGraph"
         >
           <ERDSchema
             key={controlState.schemaKey + props.theme}

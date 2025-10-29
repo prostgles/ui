@@ -1,5 +1,5 @@
 import { getCommandElemSelector } from "Testing";
-import type { OnBeforeScreenshot } from "./utils/saveSVGs";
+import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { closeWorkspaceWindows } from "utils/utils";
 
 export const schemaDiagramSvgif: OnBeforeScreenshot = async (
@@ -22,11 +22,29 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
   });
   await page.getByTestId("SchemaGraph").click();
   await page.waitForTimeout(1500);
-  await addScene();
+  await addScene({
+    animations: [
+      {
+        type: "growIn",
+        elementSelector: getCommandElemSelector("SchemaGraph"),
+        duration: 1000,
+      },
+      { type: "wait", duration: 1000 },
+    ],
+  });
 
   const chat_members_tablePosition = [481, 273] as const;
   await page.mouse.move(...chat_members_tablePosition);
   await page.mouse.click(...chat_members_tablePosition);
   await page.waitForTimeout(1500);
-  await addScene();
+  await addScene({
+    animations: [
+      { type: "wait", duration: 1000 },
+      {
+        type: "moveTo",
+        xy: chat_members_tablePosition as [number, number],
+        duration: 1000,
+      },
+    ],
+  });
 };

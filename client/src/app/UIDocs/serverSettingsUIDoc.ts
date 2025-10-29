@@ -1,4 +1,4 @@
-import { mdiServerSecurity } from "@mdi/js";
+import { mdiServerSecurity, mdiTools } from "@mdi/js";
 import { ROUTES } from "@common/utils";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers } from "../UIDocs";
@@ -127,6 +127,7 @@ export const serverSettingsUIDoc = {
     },
     {
       type: "tab",
+      iconPath: mdiTools,
       title: "MCP Servers",
       selector: getDataKeyElemSelector("mcpServers"),
       description:

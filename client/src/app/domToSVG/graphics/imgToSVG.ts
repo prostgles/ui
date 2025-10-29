@@ -1,5 +1,6 @@
 import type { SVGContext, SVGNodeLayout } from "../containers/elementToSVG";
 import { SVG_NAMESPACE } from "../domToSVG";
+import { canvasToDataURL } from "../utils/canvasToDataURL";
 
 export const addImageFromDataURL = (
   g: SVGGElement,
@@ -7,19 +8,13 @@ export const addImageFromDataURL = (
   context: SVGContext,
   { style, height, width, x, y }: SVGNodeLayout,
 ) => {
-  let imageId: string | null = null;
+  const imageIdWithSameDataUrl = Array.from(
+    context.defs.querySelectorAll("image"),
+  ).find((img) => img.getAttribute("href") === dataUrl)?.id;
 
-  // Loop through existing image elements in defs to find a match
-  const existingImages = context.defs.querySelectorAll("image");
-  for (const img of existingImages) {
-    if (img.getAttribute("href") === dataUrl) {
-      imageId = img.getAttribute("id")!;
-      break;
-    }
-  }
-
+  let imageId = imageIdWithSameDataUrl;
   if (!imageId) {
-    let imageId = dataUrl.slice(0, 100).replaceAll(/[^a-z0-9]/gi, "");
+    imageId = "id" + hashCode(dataUrl.slice(100));
     while (context.defs.querySelector(`#${imageId}`)) {
       imageId += Math.floor(Math.random() * 10).toString();
     }
@@ -31,7 +26,6 @@ export const addImageFromDataURL = (
     context.defs.appendChild(imageElem);
   }
 
-  // Reference the image
   const useElem = document.createElementNS(SVG_NAMESPACE, "use");
   useElem.setAttribute("href", `#${imageId}`);
   useElem.setAttribute("x", x);
@@ -40,6 +34,7 @@ export const addImageFromDataURL = (
 
   g.appendChild(useElem);
 };
+
 export const imgToSVG = async (
   g: SVGGElement,
   imgElement: HTMLImageElement,
@@ -80,10 +75,19 @@ const convertImageToDataURL = (img: HTMLImageElement): string => {
     }
 
     ctx.drawImage(img, 0, 0);
-    return canvas.toDataURL("image/png");
+    return canvasToDataURL(canvas);
   } catch (error) {
     console.error("Error converting image to data URL:", error);
     // Fallback to original source if conversion fails
     return img.src;
   }
+};
+
+const hashCode = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
 };

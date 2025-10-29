@@ -34,6 +34,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
       },
     },
   );
+
   const allowedMcpServerNames = Array.from(
     new Set(allowedTools?.map((tool) => tool.server_name) ?? []),
   );
@@ -47,6 +48,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
     {},
     { deps: [serverToConfigure] },
   );
+
   useEffect(() => {
     const canBeEnabledServers = mcpServersThatNeedEnabling?.filter(
       (server) => !server.config_schema,

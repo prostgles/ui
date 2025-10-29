@@ -13,7 +13,7 @@ import {
   setPromptByText,
   type PageWIds,
 } from "utils/utils";
-import type { OnBeforeScreenshot } from "./utils/saveSVGs";
+import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 
 export const aiAssistantSvgif: OnBeforeScreenshot = async (
   page,

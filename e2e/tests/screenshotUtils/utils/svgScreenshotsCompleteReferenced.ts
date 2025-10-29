@@ -7,7 +7,7 @@ import {
   type SVGifScene,
 } from "./constants";
 import { getFilesFromDir } from "./getFilesFromDir";
-import { SVG_SCREENSHOT_DETAILS } from "./saveSVGs";
+import { SVG_SCREENSHOT_DETAILS } from "screenshotUtils/SVG_SCREENSHOT_DETAILS";
 
 const getSavedSVGFiles = () => {
   const savedSVGFiles = getFilesFromDir(SVG_SCREENSHOT_DIR, ".svg");

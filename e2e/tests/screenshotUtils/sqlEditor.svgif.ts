@@ -5,7 +5,7 @@ import {
   monacoType,
   runDbSql,
 } from "utils/utils";
-import type { OnBeforeScreenshot } from "./utils/saveSVGs";
+import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { expect } from "@playwright/test";
 
 export const sqlEditorSvgif: OnBeforeScreenshot = async (

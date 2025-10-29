@@ -1,19 +1,20 @@
+import { getEntries } from "@common/utils";
 import { drawShapesOnSVG } from "../../../dashboard/Charts/drawShapes/drawShapesOnSVG";
-import { addOverflowClipPath } from "./addOverflowClipPath";
 import { SVG_NAMESPACE } from "../domToSVG";
 import { getBBoxCode, type SVGScreenshotNodeType } from "../domToThemeAwareSVG";
 import { fontIconToSVG } from "../graphics/fontIconToSVG";
-import { getWhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
-import { addImageFromDataURL, imgToSVG } from "../graphics/imgToSVG";
-import { isElementNode } from "../utils/isElementVisible";
-import { rectangleToSVG } from "./rectangleToSVG";
-import { textToSVG } from "../text/textToSVG";
-import { getEntries } from "@common/utils";
-import { toFixed } from "../utils/toFixed";
 import {
   cloneAnimations,
   copyAnimationStyles,
 } from "../graphics/getForeignObject";
+import { addImageFromDataURL, imgToSVG } from "../graphics/imgToSVG";
+import { textToSVG } from "../text/textToSVG";
+import { canvasToDataURL } from "../utils/canvasToDataURL";
+import { getWhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
+import { isElementNode } from "../utils/isElementVisible";
+import { toFixed } from "../utils/toFixed";
+import { addOverflowClipPath } from "./addOverflowClipPath";
+import { rectangleToSVG } from "./rectangleToSVG";
 
 export type SVGContext = {
   docId: string;
@@ -97,9 +98,8 @@ export const elementToSVG = async (
       drawShapesOnSVG(shapes, context, transformedG, { scale, translate });
     } else {
       element._deckgl?.redraw("screenshot");
-      const dataURL =
-        element._deckgl?.getCanvas()?.toDataURL("image/png") ??
-        element.toDataURL("image/png");
+      const canvas = element._deckgl?.getCanvas() || element;
+      const dataURL = canvasToDataURL(canvas);
       addImageFromDataURL(g, dataURL, context, elemInfo);
     }
   }
@@ -136,13 +136,7 @@ export const elementToSVG = async (
   } else if (image?.type === "img") {
     await imgToSVG(g, image.element, elemInfo, context);
   } else if (image?.type === "maskedElement") {
-    // const {
-    //   clientWidth: width,
-    //   clientHeight: height,
-    //   offsetLeft: x,
-    //   offsetTop: y,
-    // } = element;
-    // const rect = document.createElementNS(SVG_NAMESPACE, "rect");
+    /** Ensures bbox calculations are stable */
     element.getAnimations().forEach((animation) => {
       animation.pause();
       animation.currentTime = 0;

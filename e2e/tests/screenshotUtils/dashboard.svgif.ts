@@ -3,7 +3,7 @@ import {
   getDataKey,
   setOrAddWorkspace,
 } from "utils/utils";
-import type { OnBeforeScreenshot } from "./utils/saveSVGs";
+import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { goTo } from "utils/goTo";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (

@@ -1,5 +1,5 @@
 import { getCommandElemSelector, getDataKeyElemSelector } from "Testing";
-import type { OnBeforeScreenshot } from "./utils/saveSVGs";
+import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 
 export const fileImporter: OnBeforeScreenshot = async (
   page,

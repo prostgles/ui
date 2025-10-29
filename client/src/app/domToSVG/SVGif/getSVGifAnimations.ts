@@ -101,8 +101,16 @@ export const getSVGifAnimations = (
     };
     for (const [animationIndex, animation] of animations.entries()) {
       if (animation.type === "wait") {
+      } else if (animation.type === "moveTo") {
+        cursorMovements.push({
+          fromPerc: Number(getPercent(currentPrevDuration)),
+          toPerc: Number(getPercent(currentPrevDuration + animation.duration)),
+          lingerPerc: undefined,
+          target: animation.xy,
+        });
       } else {
         const {
+          type,
           lingerMs = 500,
           waitBeforeClick = 300,
           duration,
@@ -117,18 +125,19 @@ export const getSVGifAnimations = (
           width,
           height,
         });
-        if (animation.type === "reveal-list") {
+        if (type === "reveal-list" || type === "growIn") {
+          const { type } = animation;
           const fromTime = currentPrevDuration;
           const toTime = fromTime + duration;
-          const fromPerc = Number(getPercent(fromTime));
-          const toPerc = Number(getPercent(toTime));
+          const fromPerc = getPercent(fromTime);
+          const toPerc = getPercent(toTime);
           sceneNodeAnimations.push({
             sceneId,
             elemSelector: elementSelector,
             keyframes: getRevealKeyframes({
               fromPerc,
               toPerc,
-              mode: "opacity",
+              mode: type === "reveal-list" ? "opacity" : "growIn",
               // mode: "top to bottom",
             }),
           });
@@ -308,13 +317,26 @@ const getRevealKeyframes = ({
 }: {
   fromPerc: number;
   toPerc: number;
-  mode: "top to bottom" | "left to right" | "opacity";
+  mode: "top to bottom" | "left to right" | "opacity" | "growIn";
 }) => {
+  if (mode === "growIn") {
+    return [
+      !fromPerc ? "" : (
+        `0% { opacity: 0; transform: scale(0.2); transform-origin: center; }`
+      ),
+      `${toFixed(fromPerc)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
+      `${toFixed(fromPerc + 0.1)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
+      `${toFixed(toPerc)}% { opacity: 1; transform: scale(1); transform-origin: center; }`,
+      toPerc === 100 ? "" : (
+        `100% { opacity: 1; transform: scale(1); transform-origin: center; }`
+      ),
+    ].filter(Boolean);
+  }
   if (mode === "opacity") {
     return [
       !fromPerc ? "" : `0% { opacity: 0; }`,
       `${toFixed(fromPerc)}% { opacity: 0; }`,
-      `${toFixed(fromPerc + 0.1)}% { opacity: 1; }`,
+      `${toFixed(fromPerc + 0.1)}% { opacity: 0; }`,
       `${toFixed(toPerc)}% { opacity: 1; }`,
       toPerc === 100 ? "" : `100% { opacity: 1; }`,
     ].filter(Boolean);

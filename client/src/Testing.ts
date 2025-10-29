@@ -502,7 +502,7 @@ export declare namespace SVGif {
         elementSelector: string;
         offset?: { x: number; y: number };
         duration: number;
-        type: "click" | "zoomTo" | "type" | "reveal-list";
+        type: "click" | "zoomTo" | "type" | "reveal-list" | "growIn";
 
         /**
          * Time to wait before clicking after reaching the final position
@@ -512,6 +512,11 @@ export declare namespace SVGif {
          * Time to stay on the final position after clicking
          */
         lingerMs?: number;
+      }
+    | {
+        type: "moveTo";
+        xy: [number, number];
+        duration: number;
       }
     | {
         type: "wait";

@@ -116,7 +116,13 @@ export const useGoToUI = (
       const shortcut =
         currentPage ? getUIDocShorterPath(currentPage, prevParents) : undefined;
       const pathItems = shortcut ?? prevParents;
-      const shouldBeOpened = includes(data.type, ["link", "page", "tab"]);
+      const shouldBeOpened = includes(data.type, [
+        "link",
+        "page",
+        "tab",
+        "popup",
+        "smartform-popup",
+      ]);
       const finalPathItems =
         data.type === "hotkey-popup" ? [data]
         : shouldBeOpened ? [...pathItems, data]

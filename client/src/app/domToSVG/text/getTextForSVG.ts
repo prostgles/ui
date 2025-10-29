@@ -43,7 +43,7 @@ export const getTextForSVG = (
       } catch {}
     }
     const isPlaceholder = !element.value;
-    if (!textContent) return;
+    if (!textContent.trim()) return;
     const paddingLeft = parseFloat(style.paddingLeft) || 0;
     const paddingTop = parseFloat(style.paddingTop) || 0;
     const paddingBottom = parseFloat(style.paddingBottom) || 0;
@@ -83,7 +83,7 @@ export const getTextForSVG = (
     .map((childTextNode, index) => {
       if (!isTextNode(childTextNode)) return;
       const textContent = childTextNode.textContent;
-      if (!textContent) return;
+      if (!textContent?.trim()) return;
       const range = document.createRange();
       range.selectNodeContents(childTextNode);
       const textRect = range.getBoundingClientRect();
@@ -106,7 +106,7 @@ export const getTextForSVG = (
           style: {
             ...style,
             /** This is done to preserve leading spaces between spans of the same text block */
-            whiteSpace: index ? "pre" : style.whiteSpace,
+            whiteSpace: textContent.startsWith(" ") ? "pre" : style.whiteSpace,
           },
           textContent,
           x: textRect.x,

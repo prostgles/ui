@@ -1,4 +1,3 @@
-import { fileName } from "utils/utils";
 import type { SVGifScene } from "./utils/constants";
 import type { SVGIfSpec } from "./utils/saveSVGifs";
 
@@ -17,9 +16,11 @@ export const getOverviewSvgifSpecs = async (
   return {
     fileName: "overview",
     scenes: [
-      ...sliceScenes("sql_editor", 0, 4),
+      ...sliceScenes("command_palette", 1, 4),
+
+      ...sliceScenes("sql_editor", 8, 10),
+      ...sliceScenes("sql_editor", 18, 19),
       ...sliceScenes("dashboard", 0, 3),
-      ...sliceScenes("command_palette", 0, 2),
       ...sliceScenes("ai_assistant", 0, 2),
       ...sliceScenes("schema_diagram", 0, 2),
       ...sliceScenes("file_importer", 0, 2),
