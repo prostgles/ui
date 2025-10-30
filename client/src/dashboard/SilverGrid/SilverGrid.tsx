@@ -266,7 +266,9 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
     const children = React.Children.toArray(c) as ReactSilverGridNode[];
     let content: React.ReactNode = null;
 
-    if (!children.length || !layout) return null;
+    if (!children.length || !layout) {
+      return null;
+    }
     const onChange = _onChange ?? this.onChange;
     const key = _key ?? layout.id;
 

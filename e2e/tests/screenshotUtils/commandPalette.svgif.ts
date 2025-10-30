@@ -10,7 +10,7 @@ const showBriefly = {
 export const commandPaletteSvgif: OnBeforeScreenshot = async (
   page,
   _,
-  addScene,
+  { addScene },
 ) => {
   await openConnection(page, "Prostgles UI automated tests database");
   await closeWorkspaceWindows(page);

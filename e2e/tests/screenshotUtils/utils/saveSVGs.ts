@@ -31,7 +31,7 @@ export const saveSVGs = async (page: PageWIds) => {
   const svgifSpecs: { fileName: string; scenes: SVGifScene[] }[] = [];
   for (const [fileName, onBefore] of Object.entries(SVG_SCREENSHOT_DETAILS)) {
     let svgifScenes: SVGifScene[] | undefined;
-    const addSVGifScene = async (scene?: Partial<SVGifScene>) => {
+    const addScene = async (scene?: Partial<SVGifScene>) => {
       svgifScenes ??= [];
       const sceneFileName = [
         fileName,
@@ -54,7 +54,32 @@ export const saveSVGs = async (page: PageWIds) => {
       svgifScenes.push(finalScene);
       await onSave(sceneFileName, finalScene);
     };
-    await onBefore(page, utils, addSVGifScene);
+
+    const addSceneWithClickAnimation = async (
+      selector: string | { svgif: string; playwright: string },
+    ) => {
+      const svgifSelector =
+        typeof selector === "string" ? selector : selector.svgif;
+      const playwrightSelector =
+        typeof selector === "string" ? selector : selector.playwright;
+      await addScene({
+        animations: [
+          {
+            type: "wait",
+            duration: 1000,
+          },
+          {
+            type: "click",
+            elementSelector: svgifSelector,
+            duration: 1000,
+          },
+        ],
+      });
+      await page.locator(playwrightSelector).click();
+      await page.waitForTimeout(1000);
+    };
+
+    await onBefore(page, utils, { addScene, addSceneWithClickAnimation });
     if (svgifScenes) {
       const svgifSpec = {
         fileName,

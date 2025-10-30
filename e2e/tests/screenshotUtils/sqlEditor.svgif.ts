@@ -11,7 +11,7 @@ import { expect } from "@playwright/test";
 export const sqlEditorSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection, openMenuIfClosed, hideMenuIfOpen },
-  addScene,
+  { addScene },
 ) => {
   await openConnection("prostgles_video_demo");
   await page.getByTestId("WorkspaceMenu.list").getByText("default").click();

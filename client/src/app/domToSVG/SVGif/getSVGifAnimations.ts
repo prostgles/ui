@@ -175,8 +175,8 @@ export const getSVGifAnimations = (
             currentXOffset += tspanWidth;
           });
         } else {
-          const xOffset = offset?.x ?? bbox.width / 2;
-          const yOffset = offset?.y ?? bbox.height / 2;
+          const xOffset = offset?.x ?? Math.min(60, bbox.width / 2);
+          const yOffset = offset?.y ?? Math.min(30, bbox.height / 2);
           const cx = bbox.x + xOffset;
           const cy = bbox.y + yOffset;
 

@@ -17,7 +17,17 @@ import { type SVGifScene } from "./utils/constants";
 export type OnBeforeScreenshot = (
   page: PageWIds,
   utils: ReturnType<typeof getDashboardUtils>,
-  addSVGifScene: (scene?: Partial<SVGifScene>) => Promise<void>,
+  svgOpts: {
+    addScene: (scene?: Partial<SVGifScene>) => Promise<void>;
+    addSceneWithClickAnimation: (
+      selector:
+        | string
+        | {
+            svgif: string;
+            playwright: string;
+          },
+    ) => Promise<void>;
+  },
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
@@ -68,7 +78,7 @@ export const SVG_SCREENSHOT_DETAILS = {
       .click();
     await page.waitForTimeout(1500);
   },
-  new_connection: async (page, _, addScene) => {
+  new_connection: async (page, _, { addScene }) => {
     await goTo(page, "/connections");
     await addScene({
       animations: [

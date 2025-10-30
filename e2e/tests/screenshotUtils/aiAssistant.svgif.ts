@@ -18,7 +18,7 @@ import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 export const aiAssistantSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection },
-  addScene,
+  { addScene, addSceneWithClickAnimation },
 ) => {
   // await goTo(page, "/server-settings?section=llmProviders");
   // await page.getByTestId("dashboard.window.rowInsertTop").click();
@@ -46,20 +46,8 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await deleteExistingLLMChat(page);
   await page.getByTestId("Popup.close").last().click();
   await closeWorkspaceWindows(page);
-  await addScene({
-    svgFileName: "open_chat",
-    animations: [
-      { type: "wait", duration: 1000 },
-      {
-        type: "click",
-        elementSelector: getCommandElemSelector("AskLLM"),
-        lingerMs: 100,
-        duration: 1000,
-      },
-    ],
-  });
+  await addSceneWithClickAnimation(getCommandElemSelector("AskLLM"));
 
-  await page.getByTestId("AskLLM").click();
   await setModelByText(page, "pros");
   await setPromptByText(page, "dashboard");
   const deletePreviousMessages = async () => {
@@ -136,18 +124,10 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     .last();
 
   await loadTaskBtn.waitFor({ state: "visible", timeout: 15000 });
-  await addScene({
-    animations: [
-      {
-        type: "click",
-        elementSelector: getCommandElemSelector(
-          "AskLLMChat.LoadSuggestedToolsAndPrompt",
-        ),
-        duration: 1000,
-      },
-    ],
-  });
-  await loadTaskBtn.click();
+  await addSceneWithClickAnimation(
+    getCommandElemSelector("AskLLMChat.LoadSuggestedToolsAndPrompt"),
+  );
+
   await page.getByTestId("Alert").getByText("OK").waitFor({ state: "visible" });
   await page.waitForTimeout(1000);
   await addScene({ svgFileName: "tasks" });
@@ -210,19 +190,9 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await expect(page.getByTestId("ToolUseMessage").last()).toContainText(
     "Fetching data from",
   );
-  await addScene({
-    svgFileName: "docker0",
-    animations: [
-      { type: "wait", duration: 1000 },
-      {
-        type: "click",
-        elementSelector: getDataKeyElemSelector("fetch_weather.js"),
-        duration: 1000,
-      },
-    ],
-  });
-  await page.locator(getDataKeyElemSelector("fetch_weather.js")).click();
-  await page.waitForTimeout(600);
+
+  await addSceneWithClickAnimation(getDataKeyElemSelector("fetch_weather.js"));
+
   await page.getByTestId("ToolUseMessage").last().scrollIntoViewIfNeeded();
   await addScene({
     svgFileName: "docker_js",
@@ -285,7 +255,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
 
 export const typeSendAddScenes = async (
   page: PageWIds,
-  addScene: Parameters<OnBeforeScreenshot>[2],
+  addScene: Parameters<OnBeforeScreenshot>[2]["addScene"],
   text: string,
   endAnimations: SVGif.Animation[] = [],
   waitFor?: () => Promise<void>,

@@ -5,7 +5,7 @@ import { closeWorkspaceWindows } from "utils/utils";
 export const schemaDiagramSvgif: OnBeforeScreenshot = async (
   page,
   { openMenuIfClosed, openConnection },
-  addScene,
+  { addScene },
 ) => {
   await openConnection("prostgles_video_demo");
   await closeWorkspaceWindows(page);
