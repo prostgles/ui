@@ -44,7 +44,10 @@ export const rectangleToSVG = (
   path._domElement = element;
 
   path._bboxCode = bboxCode;
-  path._purpose = "bg";
+  path._purpose =
+    background && border ? "bg+border"
+    : border ? "border"
+    : "bg";
 
   /** This is required to make backgroundSameAsRenderedParent work as expected */
   path.setAttribute("fill", "none");

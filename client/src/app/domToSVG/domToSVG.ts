@@ -4,6 +4,7 @@ import { elementToSVG, type SVGContext } from "./containers/elementToSVG";
 import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
 import { tout } from "src/utils";
 import { deduplicateSVGPaths } from "./containers/deduplicateSVGPaths";
+import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
@@ -49,6 +50,7 @@ export const domToSVG = async (node: HTMLElement) => {
   // deduplicateSVGPaths(svg);
   // await addFragmentViewBoxes(svg, 10);
   repositionAbsoluteAndFixed(svg);
+  moveBordersToTop(svg);
   remove();
   await tout(1000);
 
@@ -66,6 +68,20 @@ export const domToSVG = async (node: HTMLElement) => {
   firstG.setAttribute("id", rootId);
   // recordDomChanges(node);
   return { svgString, svg, rootId };
+};
+
+/**
+ * Hacky (because bg+border case is not handled) approach to ensure row card foreign key select fields rounded border corners are visible
+ */
+const moveBordersToTop = (svg: SVGGElement) => {
+  svg.querySelectorAll<SVGScreenshotNodeType>("path").forEach((path) => {
+    if (
+      path._purpose === "border" &&
+      path.parentElement instanceof SVGGElement
+    ) {
+      path.parentElement.appendChild(path);
+    }
+  });
 };
 
 const repositionAbsoluteAndFixed = (svg: SVGGElement) => {

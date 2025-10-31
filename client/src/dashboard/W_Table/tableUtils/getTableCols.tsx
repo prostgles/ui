@@ -186,6 +186,9 @@ export const getTableCols = ({
           tables,
           barchartVals,
           maxCellChars: w.options.maxCellChars,
+          getValues: () => {
+            return data?.map((r) => r[c.name]) ?? [];
+          },
         }),
 
         /**

@@ -15,14 +15,14 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   const clickTableRow = async (
     rowIndex: number,
     recordScene = true,
-    columnIndex = 2,
+    columnIndex: 1 | 2 = 2,
   ) => {
     const svgif =
       getCommandElemSelector("TableBody") +
       ` > :nth-child(2) > :nth-child(${rowIndex}) > :nth-child(${columnIndex})`;
     const playwright =
       getCommandElemSelector("TableBody") +
-      ` > :nth-child(1) > :nth-child(${rowIndex}) > :nth-child(${columnIndex})`;
+      ` > :nth-child(1) > :nth-child(${rowIndex}) > :nth-child(${columnIndex}) ${columnIndex === 1 ? "button" : ""}`;
     if (!recordScene) {
       await page.locator(playwright).click();
       return;
@@ -49,12 +49,20 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await hideMenuIfOpen();
 
   await clickTableRow(1, undefined, 1);
-  await page.waitForTimeout(2000);
+
   await addSceneWithClickAnimation(
     getCommandElemSelector("JoinedRecords.SectionToggle") +
       '[data-key="order_items"]',
   );
 
+  await page.waitForTimeout(2000);
+  await page
+    .locator(
+      getCommandElemSelector("JoinedRecords.Section") +
+        '[data-key="order_items"]',
+    )
+    .scrollIntoViewIfNeeded();
+  await addScene();
   await page.getByTestId("Popup.close").click();
 
   await addSceneWithClickAnimation(getCommandElemSelector("AddChartMenu.Map"));

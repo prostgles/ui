@@ -143,6 +143,15 @@ export type PG_Keyword = {
   topKwd?: TopKeyword;
   documentation: string;
   insertText: string;
+  barelabel?: boolean;
+  catdesc?: string;
+  /**
+   * - C = unreserved (cannot be function or type name)
+   * - R = reserved
+   * - U = unreserved
+   * - T = reserved (can be function or type name)
+   */
+  catcode?: "T" | "R" | "U" | "C";
 };
 
 type PG_Publication = {
@@ -1181,20 +1190,21 @@ export const PG_OBJECT_QUERIES = {
     getData: async (db: DB) => {
       const allKeywords = (
         await db.sql(
-          "select upper(word) as word from pg_get_keywords();",
+          "select upper(word) as word, barelabel, catcode, catdesc from pg_get_keywords();",
           {},
           { returnType: "rows" },
         )
-      )
-        .map((d) => d.word)
-        .concat([
-          "RAISE",
-          "NOTICE",
-          "IF NOT EXISTS",
-          "INSERT INTO",
-          "DELETE FROM",
-        ]) as string[];
-      return allKeywords.map((label) => {
+      ).concat([
+        { word: "RAISE" },
+        { word: "NOTICE" },
+        { word: "IF NOT EXISTS" },
+        { word: "INSERT INTO" },
+        { word: "DELETE FROM" },
+      ]) as {
+        word: string;
+        barelabel?: boolean;
+      }[];
+      return allKeywords.map(({ word: label, ...rest }) => {
         const topKwd = TOP_KEYWORDS.find((k) => k.label === label);
         let documentation = missingKeywordDocumentation[label] ?? label;
         const insertText =
@@ -1210,6 +1220,7 @@ export const PG_OBJECT_QUERIES = {
           topKwd,
           documentation,
           insertText,
+          ...rest,
         } satisfies PG_Keyword;
       });
     },

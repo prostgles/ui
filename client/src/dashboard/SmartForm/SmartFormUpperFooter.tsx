@@ -90,7 +90,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
   return (
     <div
       className={
-        "SmartFormUpperFooter max-h-fit flex-col o-auto min-h-0 min-w-0 w-full f-0 bg-popup-content"
+        "SmartFormUpperFooter bt b-color-0 max-h-fit flex-col o-auto min-h-0 min-w-0 w-full f-0 bg-popup-content"
       }
       ref={rootDivRef}
       style={{

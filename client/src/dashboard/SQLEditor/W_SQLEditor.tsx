@@ -156,6 +156,7 @@ export type SQLSuggestion = {
   constraintInfo?: PGConstraint;
 
   topKwd?: TopKeyword;
+  keywordInfo?: PG_Keyword;
   colInfo?: PG_Table["cols"][number];
 
   /**
@@ -205,6 +206,7 @@ import type {
   PG_DataType,
   PG_EventTrigger,
   PG_Function,
+  PG_Keyword,
   PG_Policy,
   PG_Role,
   PG_Rule,
@@ -244,6 +246,7 @@ type P = {
   onMount?: (ref: SQLEditorRef) => void;
   onUnmount?: (editor: any, cursorPosition: any) => void | Promise<void>;
   cursorPosition?: any;
+  onDidSetCursorPosition?: () => void;
   style?: React.CSSProperties;
   className?: string;
   autoFocus?: boolean;
@@ -466,14 +469,17 @@ export class W_SQLEditor extends RTComp<P, S> {
       setActiveCodeBlock.bind(this)(e);
     });
 
-    const { cursorPosition } = this.props;
+    const { cursorPosition, onDidSetCursorPosition } = this.props;
     if (cursorPosition && !isEmpty(cursorPosition)) {
       this.editor.setPosition(cursorPosition);
 
       setTimeout(() => {
         if (!this.mounted || !this.editor) return;
         scrollToLineIfNeeded(this.editor, cursorPosition.lineNumber || 1);
+        onDidSetCursorPosition?.();
       }, SECOND / 2);
+    } else {
+      onDidSetCursorPosition?.();
     }
   };
 
@@ -521,7 +527,9 @@ export class W_SQLEditor extends RTComp<P, S> {
     return (
       <div
         className={
-          "sqleditor f-1 min-h-0 min-w-0 flex-col relative " + className
+          /** o-hidden is required to ensure monaco code is not visible in W_SQLBottomBar when results are shown in a low height (220px) table */
+          "sqleditor f-1 min-h-0 min-w-0 flex-col relative o-hidden " +
+          className
         }
         ref={(e) => {
           if (e) this.rootRef = e;

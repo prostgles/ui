@@ -109,6 +109,7 @@ export const SmartFormFieldForeignKey = (
           column={column}
           showTitle={false}
           maxLength={30}
+          getValues={undefined}
         />
       </div>
       {isDefined(selectedOption?.subLabel) && (

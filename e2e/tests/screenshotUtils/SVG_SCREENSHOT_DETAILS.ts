@@ -48,7 +48,7 @@ export const SVG_SCREENSHOT_DETAILS = {
     }
     await hideMenuIfOpen();
   },
-  postgis_map: async (page, { hideMenuIfOpen }) => {
+  map: async (page, { hideMenuIfOpen }) => {
     await openConnection(page, "food_delivery");
     await page.waitForTimeout(1500);
     let getUsersTableView = await page.locator(`[data-table-name="users"]`);
@@ -123,10 +123,6 @@ export const SVG_SCREENSHOT_DETAILS = {
   },
   smart_filter_bar: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");
-    await page.waitForTimeout(1500);
-  },
-  map: async (page, { openConnection }) => {
-    await openConnection("food_delivery");
     await page.waitForTimeout(1500);
   },
   file_storage: async (page, { openConnection }) => {

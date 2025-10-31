@@ -20,7 +20,6 @@ export const mapUIDoc = {
     It supports multiple layers, custom basemaps, and various map controls for interaction.
 
     <img src="./screenshots/map.svg" alt="Map view screenshot" />
-    <img src="./screenshots/postgis_map.svg" alt="Map view screenshot" />
     
   `),
   children: [

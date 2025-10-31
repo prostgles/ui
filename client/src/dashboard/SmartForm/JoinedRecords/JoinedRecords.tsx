@@ -97,6 +97,8 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
               ["data-command"]: "JoinedRecords.SectionToggle",
               ["data-key"]: path.join("."),
             }}
+            data-command="JoinedRecords.Section"
+            data-key={path.join(".")}
             titleIcon={icon && <SvgIcon icon={icon} />}
             title={
               <FlexRow data-key={path.join(".")}>

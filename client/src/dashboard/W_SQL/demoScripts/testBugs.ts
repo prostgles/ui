@@ -340,6 +340,18 @@ CREATE TABLE "MySchema"."MyTable" (
     LIMIT 200`),
   );
 
+  const alterQ = fixIndent(`
+      ALTER TABLE "MySchema"."MyTable"
+      ALTER COLUMN "MyColu"`);
+  fromBeginning(false, alterQ);
+  await tout(2500);
+  await moveCursor.lineEnd();
+  await moveCursor.left(1);
+  await triggerSuggest();
+  await tout(500);
+  acceptSelectedSuggestion();
+  await testResult(alterQ.replace(`"MyColu"`, `"MyColumn"`));
+
   fromBeginning(false, `DROP SCHEMA`);
   await typeAuto(` mys`);
   testResult(`DROP SCHEMA "MySchema"`);

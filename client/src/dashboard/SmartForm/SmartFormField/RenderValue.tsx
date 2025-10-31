@@ -15,6 +15,7 @@ type P = {
   showTitle?: boolean;
   maxLength?: number;
   maximumFractionDigits?: number;
+  getValues?: () => any[];
   style?: React.CSSProperties;
 };
 export const renderNull = (
@@ -44,6 +45,7 @@ export const RenderValue = ({
   maxLength,
   style,
   maximumFractionDigits = 3,
+  getValues,
 }: P): JSX.Element => {
   const nullRender = renderNull(value, style, showTitle);
   if (nullRender) return nullRender;
@@ -86,6 +88,14 @@ export const RenderValue = ({
     value !== undefined &&
     value !== null
   ) {
+    const maxDecimalsFromValues = getValues?.()
+      ?.map((v) => {
+        if (v === null || v === undefined) return 0;
+        const num = +v;
+        if (isNaN(num)) return 0;
+        return countDecimals(num);
+      })
+      .reduce((a, b) => Math.max(a, b), 0);
     const getValue = () => {
       const isFloat =
         udt_name === "float4" ||
@@ -97,7 +107,8 @@ export const RenderValue = ({
         +value < 1 && +value > -1 ? actualDecimals + 1 : maximumFractionDigits;
       const slicedValue = getSliced(
         (+value).toLocaleString(undefined, {
-          minimumFractionDigits: maxDecimals, // Math.min(maxDecimals, actualDecimals),
+          minimumFractionDigits:
+            maxDecimalsFromValues ?? Math.min(maxDecimals, actualDecimals),
         }),
       );
       return slicedValue;

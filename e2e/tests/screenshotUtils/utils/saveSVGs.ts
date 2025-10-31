@@ -62,6 +62,18 @@ export const saveSVGs = async (page: PageWIds) => {
         typeof selector === "string" ? selector : selector.svgif;
       const playwrightSelector =
         typeof selector === "string" ? selector : selector.playwright;
+
+      const elementIsVisible = await page
+        .locator(playwrightSelector)
+        .evaluate((n) => {
+          const isVisible = getComputedStyle(n).opacity != "0";
+
+          if (!isVisible) {
+            n.style.opacity = "1";
+          }
+          return isVisible;
+        });
+
       await addScene({
         animations: [
           {
@@ -69,12 +81,17 @@ export const saveSVGs = async (page: PageWIds) => {
             duration: 1000,
           },
           {
-            type: "click",
+            type: elementIsVisible ? "click" : "clickAppearOnHover",
             elementSelector: svgifSelector,
             duration: 1000,
           },
         ],
       });
+      if (!elementIsVisible) {
+        await page.locator(playwrightSelector).evaluate((n) => {
+          n.style.opacity = "0";
+        });
+      }
       await page.locator(playwrightSelector).click();
       await page.waitForTimeout(1000);
     };

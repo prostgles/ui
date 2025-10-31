@@ -1877,8 +1877,9 @@ nav.left-nav-list a.active {
 }
 .trigger-hover:hover .show-on-trigger-hover,
 .trigger-hover:focus .show-on-trigger-hover,
-.trigger-hover:focus-within .show-on-trigger-hover {
-  opacity: 1;
+.trigger-hover:focus-within .show-on-trigger-hover,
+.trigger-hover-force .show-on-trigger-hover {
+  opacity: 1 !important;
 }
 
 /* Disable on touch-only because there's no hover */

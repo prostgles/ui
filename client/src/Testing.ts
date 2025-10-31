@@ -335,6 +335,7 @@ export const COMMANDS = {
   JoinedRecords: "",
   "JoinedRecords.AddRow": "",
   "JoinedRecords.SectionToggle": "",
+  "JoinedRecords.Section": "",
   "SmartCard.viewEditRow": "",
   "TimeChartLayerOptions.yAxis": "",
   "TimeChartLayerOptions.aggFunc": "",
@@ -503,7 +504,13 @@ export declare namespace SVGif {
         elementSelector: string;
         offset?: { x: number; y: number };
         duration: number;
-        type: "click" | "zoomTo" | "type" | "fadeIn" | "growIn";
+        type:
+          | "click"
+          | "clickAppearOnHover"
+          | "zoomTo"
+          | "type"
+          | "fadeIn"
+          | "growIn";
 
         /**
          * Time to wait before clicking after reaching the final position

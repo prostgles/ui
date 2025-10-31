@@ -132,7 +132,7 @@ export const JoinedRecordsSection = ({
   descendants: JoinedRecordsProps["tables"];
 }) => {
   return (
-    <FlexCol className=" p-1 ">
+    <FlexCol className=" p-1 " data-command="JoinedRecords.Section">
       {section.error && (
         <ErrorComponent
           error={section.error}

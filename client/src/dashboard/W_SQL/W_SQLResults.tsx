@@ -73,11 +73,9 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
       tables,
       maxCharsPerCell,
       onResize,
+      rows,
     });
-  }, [cols, tables, maxCharsPerCell, onResize]);
-  // if (activeQuery?.state === "running" && !rows.length) {
-  //   return null;
-  // }
+  }, [cols, tables, maxCharsPerCell, onResize, rows]);
 
   const pagination = useMemo(() => {
     if (!isSelect) return;

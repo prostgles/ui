@@ -16,6 +16,7 @@ export const getSVGifAnimations = (
   parsedScenes: SVGifParsedScene[],
   loop: boolean,
 ) => {
+  const [x0, y0] = [width / 2, height];
   const cursorMovements: {
     fromPerc: number;
     toPerc: number;
@@ -125,11 +126,10 @@ export const getSVGifAnimations = (
           width,
           height,
         });
+        const fromTime = currentPrevDuration;
+        const fromPerc = getPercent(fromTime);
         if (type === "fadeIn" || type === "growIn") {
-          const { type } = animation;
-          const fromTime = currentPrevDuration;
           const toTime = fromTime + duration;
-          const fromPerc = getPercent(fromTime);
           const toPerc = getPercent(toTime);
           sceneNodeAnimations.push({
             sceneId,
@@ -141,7 +141,7 @@ export const getSVGifAnimations = (
               // mode: "top to bottom",
             }),
           });
-        } else if (animation.type === "type") {
+        } else if (type === "type") {
           const tSpansOrText = Array.from(
             element.querySelectorAll<SVGTSpanElement | SVGTextElement>(
               "tspan, text",
@@ -159,7 +159,6 @@ export const getSVGifAnimations = (
           tSpansOrText.forEach((tspanOrText, i) => {
             const tspanWidth = tspanOrText.getComputedTextLength();
             const tspanDuration = tspanWidth * msPerPx;
-            const fromTime = currentPrevDuration;
             const toTime = fromTime + tspanDuration;
             const fromPerc = Number(getPercent(fromTime));
             const toPerc = Number(getPercent(toTime));
@@ -186,8 +185,8 @@ export const getSVGifAnimations = (
             parsedScenes[sceneIndex + 1]?.animations[0];
           const anotherClickFollowing = nextAnimation?.type === "click";
           cursorMovements.push({
-            fromPerc: Number(getPercent(currentPrevDuration)),
-            toPerc: Number(getPercent(clickEndTime)),
+            fromPerc: getPercent(currentPrevDuration),
+            toPerc: getPercent(clickEndTime),
             lingerPerc:
               !lingerMs || anotherClickFollowing ? undefined : (
                 Number(
@@ -196,6 +195,34 @@ export const getSVGifAnimations = (
               ),
             target: [cx, cy],
           });
+
+          if (type === "clickAppearOnHover") {
+            const toPerc = getPercent(clickEndTime);
+            /** Ensure it appears as the cursor enters the bbox */
+            const xDistance = Math.abs(
+              cx - (cursorMovements.at(-2)?.target[0] ?? x0),
+            );
+            const yDistance = Math.abs(
+              cy - (cursorMovements.at(-2)?.target[1] ?? y0),
+            );
+            const distance = Math.sqrt(xDistance ** 2 + yDistance ** 2);
+            const approxMsToEnter = Math.max(300, distance * 4);
+            const appearTime = Math.max(
+              fromTime,
+              clickEndTime - approxMsToEnter,
+            );
+            const appearPerc = getPercent(appearTime);
+
+            sceneNodeAnimations.push({
+              sceneId,
+              elemSelector: elementSelector,
+              keyframes: getRevealKeyframes({
+                fromPerc: appearPerc,
+                toPerc,
+                mode: "opacity",
+              }),
+            });
+          }
         }
       }
       currentPrevDuration += animation.duration;
@@ -252,7 +279,6 @@ export const getSVGifAnimations = (
     renderedSceneSVG.remove();
   }
 
-  const [x0, y0] = [width / 2, height];
   const firstTranslate = `transform: translate(${toFixed(x0)}px, ${toFixed(y0)}px)`;
   const cursorKeyframes = [`0% { opacity: 0; ${firstTranslate}; }`];
   cursorMovements.forEach(
@@ -262,8 +288,8 @@ export const getSVGifAnimations = (
       const prevTranslate = `transform: translate(${prevTarget[0]}px, ${prevTarget[1]}px)`;
       cursorKeyframes.push(
         ...[
-          `${toFixed(fromPerc - 0.1)}% { opacity: 0; ${prevTranslate}; }`,
-          `${toFixed(fromPerc)}% { opacity: 1; ${prevTranslate}; }`,
+          `${toFixed(fromPerc)}% { opacity: 0; ${prevTranslate}; }`,
+          `${toFixed(fromPerc) + 0.1}% { opacity: 1; ${prevTranslate}; }`,
           `${toFixed(toPerc)}% { opacity: 1; ${translate}; }`,
           `${toFixed(lingerPerc ?? toPerc + 0.1)}% { opacity: 0; ${translate}; }`,
         ],

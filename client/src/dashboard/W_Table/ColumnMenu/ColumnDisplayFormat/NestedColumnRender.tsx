@@ -83,7 +83,11 @@ export const NestedColumnRender = ({
       columnWInfo?.info ?? columnWInfo?.computedConfig?.funcDef.outType;
     const renderedValue =
       columnWInfo ?
-        <RenderValue column={datType} value={value} />
+        <RenderValue
+          column={datType}
+          value={value}
+          getValues={() => valueList.map((v) => v?.[key])}
+        />
       : JSON.stringify(value);
     return renderedValue;
   };

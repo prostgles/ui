@@ -570,6 +570,7 @@ export const getSqlSuggestions = async (
         detail: `(keyword)`,
         type: "keyword",
         ...kwd,
+        keywordInfo: kwd,
         name: kwd.label,
       })),
     );

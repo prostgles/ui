@@ -4,6 +4,7 @@ import { debounce } from "../../../Map/DeckGLWrapped";
 import type {
   editor,
   IDisposable,
+  IRange,
   languages,
   Monaco,
   Position,
@@ -148,7 +149,8 @@ const getRespectedSortText = (
   const sortText = Array.from(
     new Set(suggestions.map((s) => s.sortText)),
   ).sort();
-  if (sortText.length === 1) return { suggestions };
+  const isSingleSortText = sortText.length === 1;
+  // if (isSingleSortText) return { suggestions };
 
   const getRangeAndFilter = (
     rawFilterText: string | undefined,
@@ -165,12 +167,17 @@ const getRespectedSortText = (
         currToken.columnNumber + currTextRaw.length,
       );
       return {
-        range: range as any,
+        range,
         filterText: `"` + rawFilterText,
       };
     }
+    if (isSingleSortText) {
+      return {
+        range: range as IRange,
+      };
+    }
     return {
-      range: range as any,
+      range: range as IRange,
       // insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
       filterText: rawFilterText,
     };

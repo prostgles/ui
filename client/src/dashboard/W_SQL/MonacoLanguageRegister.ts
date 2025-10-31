@@ -278,7 +278,7 @@ export const language = {
     "mode",
     "month",
     "move",
-    "name",
+    // "name",
     "names",
     "national",
     "natural",
@@ -1131,7 +1131,6 @@ export const loadPSQLLanguage = async (
             ([ruleRegex], i) => !"$".match(ruleRegex),
           );
 
-        // langModule.language.keywords = Array.from(new Set([...STARTING_KEYWORDS, ...langModule.language.keywords]));
         const dataTypes =
           loadedSuggestions?.suggestions
             .flatMap(
@@ -1142,9 +1141,27 @@ export const loadPSQLLanguage = async (
                 ],
             )
             .filter(isDefined) ?? [];
+        // langModule.language.keywords = Array.from(
+        //   new Set([...STARTING_KEYWORDS, ...keywords, ...dataTypes]),
+        // );
+
+        const pgKeywords = loadedSuggestions?.suggestions
+          .filter((s) => {
+            const { keywordInfo, topKwd } = s;
+            if (!keywordInfo) return false;
+            const { catcode, barelabel } = keywordInfo;
+            return topKwd || !barelabel || catcode === "R" || catcode === "C";
+          })
+          .map((s) => s.name);
+
         langModule.language.keywords = Array.from(
-          new Set([...STARTING_KEYWORDS, ...keywords, ...dataTypes]),
+          new Set([
+            ...STARTING_KEYWORDS,
+            ...(pgKeywords ?? keywords),
+            ...dataTypes,
+          ]),
         );
+
         langModule.language.builtinFunctions =
           loadedSuggestions?.suggestions
             .filter(

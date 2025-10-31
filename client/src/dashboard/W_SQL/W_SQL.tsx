@@ -1,17 +1,9 @@
 import { mdiKeyboard } from "@mdi/js";
-import type {
-  AnyObject,
-  SocketSQLStreamHandlers,
-  SQLResultInfo,
-} from "prostgles-types";
+import type { SocketSQLStreamHandlers, SQLResultInfo } from "prostgles-types";
 
-import React, { useEffect } from "react";
 import Loading from "@components/Loader/Loading";
-import type {
-  PageSize,
-  TableColumn,
-  TableProps,
-} from "@components/Table/Table";
+import type { TableColumn, TableProps } from "@components/Table/Table";
+import React, { useEffect } from "react";
 import type {
   OnAddChart,
   Query,
@@ -28,30 +20,30 @@ import { getFuncs } from "../SQLEditor/SQLCompletion/getPGObjects";
 import type { MonacoError, SQLEditorRef } from "../SQLEditor/W_SQLEditor";
 import { W_SQLEditor } from "../SQLEditor/W_SQLEditor";
 
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
 import type {
   SingleSyncHandles,
   SyncDataItem,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBEventHandles, ValidatedColumnInfo } from "prostgles-types/lib";
-import Btn from "@components/Btn";
-import ErrorComponent from "@components/ErrorComponent";
 import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 
+import { Icon } from "@components/Icon/Icon";
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
 import { createReactiveState } from "../../appUtils";
-import { Icon } from "@components/Icon/Icon";
+import type { TestSelectors } from "../../Testing";
 import type { CommonWindowProps, DashboardState } from "../Dashboard/Dashboard";
+import type { CodeBlock } from "../SQLEditor/SQLCompletion/completionUtils/getCodeBlock";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
+import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
 import Window from "../Window";
+import { type ChartableSQL, getChartableSQL } from "./getChartableSQL";
 import { runSQL } from "./runSQL/runSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
 import { W_SQLBottomBar } from "./W_SQLBottomBar/W_SQLBottomBar";
 import { ProstglesSQLMenu } from "./W_SQLMenu";
 import { W_SQLResults } from "./W_SQLResults";
-import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
-import type { CodeBlock } from "../SQLEditor/SQLCompletion/completionUtils/getCodeBlock";
-import { type ChartableSQL, getChartableSQL } from "./getChartableSQL";
-import type { TestSelectors } from "../../Testing";
 
 export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"sql">;
@@ -110,6 +102,7 @@ export type W_SQLState = {
   table?: TableProps<ColumnSortSQL> & Query;
   sort: ColumnSortSQL[];
   loading: boolean;
+  didSetCursorPosition: boolean;
   currentCodeBlockChartColumns?: ChartableSQL;
   isSelect: boolean;
   hideCodeEditor?: boolean;
@@ -180,6 +173,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
   state: W_SQLState = {
     sql: "",
     loading: false,
+    didSetCursorPosition: false,
     page: 0,
     pageSize: 100,
     activeQuery: undefined,
@@ -331,6 +325,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       activeQuery,
       hideCodeEditor,
       currentCodeBlockChartColumns,
+      didSetCursorPosition,
     } = this.state;
     const { w } = this.d;
     const {
@@ -411,6 +406,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       <>
         <div
           className={"ProstglesSQL flex-col f-1 min-h-0 min-w-0 relative "}
+          style={didSetCursorPosition ? {} : { visibility: "hidden" }}
           ref={(r) => {
             if (r) {
               this.ref = r;
@@ -463,6 +459,9 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 updateOptions({ cursorPosition });
               }}
               cursorPosition={this.d.w?.options.cursorPosition}
+              onDidSetCursorPosition={() => {
+                this.setState({ didSetCursorPosition: true });
+              }}
               onChange={(code, cursorPosition) => {
                 if (!this.d.w) throw new Error("this.d.w missing");
 

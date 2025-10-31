@@ -81,6 +81,13 @@ export const elementToSVG = async (
       g.style[key] = value;
     }
   });
+
+  // if (
+  //   element instanceof HTMLButtonElement &&
+  //   element.className.includes("SmartFormFieldForeignKey")
+  // ) {
+  //   debugger;
+  // }
   rectangleToSVG(g, element, style, elemInfo, whatToRender, bboxCode, context);
 
   if (whatToRender.text?.length) {

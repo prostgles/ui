@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { omitKeys } from "prostgles-types";
 import type { BtnProps } from "./Btn";
 import Btn from "./Btn";
-import { classOverride } from "./Flex";
+import { classOverride, FlexRow } from "./Flex";
 import Popup from "./Popup/Popup";
 import type { Command, TestSelectors } from "../Testing";
 
@@ -55,6 +55,7 @@ export const Section = (props: SectionProps) => {
     titleIconPath,
     btnProps,
     "data-command": dataCommand,
+    "data-key": dataKey,
     ...otherProps
   } = props;
   const [open, toggle] = useState(oDef);
@@ -63,6 +64,7 @@ export const Section = (props: SectionProps) => {
   const content = (
     <div
       data-command={dataCommand satisfies Command | undefined}
+      data-key={dataKey}
       className={classOverride(
         "Section flex-col min-h-0 f-0 relative bg-inherit " +
           (open ? "bb b-color" : ""),
@@ -137,11 +139,18 @@ export const Section = (props: SectionProps) => {
     return (
       <Popup
         positioning="fullscreen"
+        title={
+          <FlexRow className="trigger-hover-force">
+            {titleIcon}
+            {title}
+            {titleRightContent}
+          </FlexRow>
+        }
         onClose={() => {
           setFullscreen(false);
         }}
       >
-        {content}
+        {children}
       </Popup>
     );
   }

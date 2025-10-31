@@ -307,7 +307,7 @@ export type SVGScreenshotNodeType = (
   | SVGForeignObjectElement
 ) & {
   _bboxCode?: string;
-  _purpose?: "bg" | "overflow" | "wrapper";
+  _purpose?: "bg" | "border" | "bg+border" | "overflow" | "wrapper";
   _bbox?: DOMRect;
   _gWrapperFor?: HTMLElement;
   _domElement?: HTMLElement;
