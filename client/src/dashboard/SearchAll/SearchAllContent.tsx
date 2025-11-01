@@ -3,9 +3,9 @@ import Loading from "@components/Loader/Loading";
 import { SearchList } from "@components/SearchList/SearchList";
 import React from "react";
 import type { SearchAllProps } from "./SearchAll";
-import type { SearchAllState } from "./useSearchAllState";
-import { useSearchAllListProps } from "./useSearchListProps";
-import { useSearchAllRows } from "./useSearchAllRows";
+import type { SearchAllState } from "./hooks/useSearchAllState";
+import { useSearchAllListProps } from "./hooks/useSearchListProps";
+import { useSearchTables } from "./hooks/useSearchTables";
 
 export const SearchAllContent = (props: SearchAllProps & SearchAllState) => {
   const {
@@ -16,7 +16,7 @@ export const SearchAllContent = (props: SearchAllProps & SearchAllState) => {
     setMatchCase,
     currentSearchedTable,
   } = props;
-  const searchRowState = useSearchAllRows(props);
+  const searchRowState = useSearchTables(props);
   const searchListProps = useSearchAllListProps({
     ...props,
     ...searchRowState,

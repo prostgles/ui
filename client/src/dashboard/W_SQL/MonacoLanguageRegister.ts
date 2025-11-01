@@ -2,7 +2,7 @@
 import { isDefined } from "../../utils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
-import { getMonaco } from "../SQLEditor/W_SQLEditor";
+import { getMonaco, LANG } from "../SQLEditor/W_SQLEditor";
 import type { languages } from "./monacoEditorTypes";
 
 let loadedPSQLLanguage = false;
@@ -16,10 +16,11 @@ export const loadPSQLLanguage = async (
   const monaco = await getMonaco();
   const monacoLanguages = monaco.languages.getLanguages();
   for await (const lang of monacoLanguages) {
-    if (["sql"].includes(lang.id) && "loader" in lang) {
+    if (LANG === lang.id && "loader" in lang) {
       const oldLoader = lang.loader as () => Promise<{
         language: languages.IMonarchLanguage;
       }>;
+
       const langModule = await oldLoader();
       lang.loader = () => {
         langModule.language.operators = Array.from(
@@ -86,6 +87,7 @@ export const loadPSQLLanguage = async (
       };
     }
   }
+
   return true;
 };
 

@@ -112,6 +112,9 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
               table,
               tables,
               barchartVals: undefined,
+              getValues: () => {
+                return this.state.rows.map((r) => r[c.name]);
+              },
             }),
           };
         });

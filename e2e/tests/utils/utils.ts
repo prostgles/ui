@@ -556,10 +556,11 @@ export const openTable = async (page: PageWIds, namePartStart: string) => {
   await page.keyboard.press("Enter");
   await page.waitForTimeout(500);
   /** Ensure table_name strats with */
-  const table = await page.locator(
+  const table = page.locator(
     `[data-table-name^=${JSON.stringify(namePartStart)}]`,
   );
-  // debugging
+
+  /** Used for debugging */
   if (!table.isVisible()) {
     const v_triggers = await runDbsSql(
       page,
@@ -570,7 +571,7 @@ export const openTable = async (page: PageWIds, namePartStart: string) => {
     console.log(JSON.stringify({ v_triggers, namePartStart }));
     await page.waitForTimeout(500);
   }
-  expect(table).toBeVisible();
+  await expect(table).toBeVisible();
   await page.waitForTimeout(1000);
 };
 export const MINUTE = 60e3;
@@ -927,19 +928,27 @@ export const restoreFromBackup = async (
 
 export const getDashboardUtils = (page: PageWIds) => {
   const _open = openConnection.bind(null, page);
-  const openMenuIfClosed = async () => {
+  const openMenuIfClosed = async (closeMenu = false) => {
     await page.waitForTimeout(1500);
     const menuContentButton = await page.getByTestId(
       "dashboard.menu.quickSearch",
     );
     const menuIsOpen = await menuContentButton.count();
-    if (menuIsOpen) return;
+    if (menuIsOpen) {
+      if (closeMenu) {
+        await page
+          .getByTestId("DashboardMenu")
+          .getByTestId("Popup.close")
+          .click();
+      }
+      return;
+    }
     const menuBtn = await page.getByTestId("dashboard.menu");
     if ((await menuBtn.count()) && (await menuBtn.isEnabled())) {
       await menuBtn.click();
     }
   };
-  const hideMenuIfOpen = async () => {
+  const toggleMenuPinned = async () => {
     await page.waitForTimeout(1500);
     const toggleBtn = await page.getByTestId(
       "DashboardMenuHeader.togglePinned",
@@ -948,10 +957,11 @@ export const getDashboardUtils = (page: PageWIds) => {
       await toggleBtn.click();
     }
   };
+  const closeMenuIfOpen = async () => {};
   return {
     openConnection: _open,
     openMenuIfClosed,
-    hideMenuIfOpen,
+    toggleMenuPinned,
   };
 };
 

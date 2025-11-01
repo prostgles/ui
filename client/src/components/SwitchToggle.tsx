@@ -67,7 +67,7 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
       }}
       title={(disabledInfo ? disabledInfo : undefined) ?? title}
     >
-      {labelProps && <Label {...labelProps} />}
+      {labelProps && <Label {...labelProps} aria-checked={checked} />}
       <div
         className={
           "Switch-root rounded focusable " + (checked ? " checked" : " ")

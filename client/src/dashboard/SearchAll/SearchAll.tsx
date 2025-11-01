@@ -8,7 +8,7 @@ import type { WindowData } from "../Dashboard/dashboardUtils";
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import { SearchAllContent } from "./SearchAllContent";
 import { SearchAllHeader } from "./SearchAllHeader";
-import { useSearchAllState } from "./useSearchAllState";
+import { useSearchAllState } from "./hooks/useSearchAllState";
 
 export const SEARCH_TYPES = [
   { key: "views and queries", label: "Tables/Queries" },
@@ -58,6 +58,7 @@ export const SearchAll = (props: SearchAllProps) => {
       contentClassName=" p-1"
       clickCatchStyle={{ opacity: 1 }}
       contentStyle={{ overflow: "unset", paddingTop: "1em" }}
+      data-command="SearchAll.Popup"
       rootStyle={{
         minHeight: "50vh",
         top: margin,

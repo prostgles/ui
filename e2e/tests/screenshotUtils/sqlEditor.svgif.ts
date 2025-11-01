@@ -10,12 +10,12 @@ import { expect } from "@playwright/test";
 
 export const sqlEditorSvgif: OnBeforeScreenshot = async (
   page,
-  { openConnection, openMenuIfClosed, hideMenuIfOpen },
+  { openConnection, openMenuIfClosed, toggleMenuPinned },
   { addScene },
 ) => {
   await openConnection("prostgles_video_demo");
   await page.getByTestId("WorkspaceMenu.list").getByText("default").click();
-  await hideMenuIfOpen();
+  await toggleMenuPinned();
   await closeWorkspaceWindows(page);
   await openMenuIfClosed();
 
@@ -52,7 +52,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(500);
   await page.getByTestId("dashboard.menu.sqlEditor").click();
   await page.waitForTimeout(500);
-  await hideMenuIfOpen();
+  await toggleMenuPinned();
   await addScene({
     animations: [
       {

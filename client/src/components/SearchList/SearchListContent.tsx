@@ -172,9 +172,9 @@ export const SearchListContent = <M extends boolean = false>(
             withShadow={isSearch && !noShadow}
             inputRef={inputRef}
             inputWrapperRef={inputWrapperRef}
-            onClickWrapper={() => {
+            onClickWrapper={(e) => {
               if (!listNode && searchEmpty) {
-                onSetTerm(searchTerm || "", {});
+                onSetTerm(searchTerm || "", e);
               }
             }}
             wrapperStyle={wrapperStyleFinal}

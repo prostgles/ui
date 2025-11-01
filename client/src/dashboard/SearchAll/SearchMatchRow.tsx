@@ -1,4 +1,8 @@
 import { sliceText } from "@common/utils";
+import { Icon } from "@components/Icon/Icon";
+import { SvgIcon } from "@components/SvgIcon";
+import { mdiTable, mdiTableEdit } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 
 export type SearchMatch = {
@@ -59,6 +63,41 @@ export const SearchMatchRow = ({ matchRow }: P) => {
           return null;
         }
       })}
+    </div>
+  );
+};
+
+export const SearchMatchRowWithTable = ({
+  icon,
+  db,
+  match,
+}: {
+  icon: string | undefined;
+  match: SearchMatch;
+  db: DBHandlerClient;
+}) => {
+  return (
+    <div className="f-1 flex-row ai-start" title="Open table">
+      <div className="flex-col ai-start f-0 mr-p5 text-1">
+        {icon ?
+          <SvgIcon icon={icon} />
+        : <Icon path={db[match.table]?.insert ? mdiTableEdit : mdiTable} />}
+      </div>
+      <div className="flex-col ai-start f-1">
+        <div className="font-18">{match.table}</div>
+        <div
+          style={{
+            fontSize: "16px",
+            opacity: 0.7,
+            textAlign: "left",
+            width: "100%",
+            marginTop: ".25em",
+          }}
+          // className={!mode ? "text-2" : ""}
+        >
+          <SearchMatchRow matchRow={match.match} />
+        </div>
+      </div>
     </div>
   );
 };

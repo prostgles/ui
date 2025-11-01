@@ -90,6 +90,7 @@ export const DashboardMenu = ({
     : anchor.node ?
       <Popup
         key="main menu"
+        data-command="DashboardMenu"
         showFullscreenToggle={{}}
         title={
           <DashboardMenuHeader

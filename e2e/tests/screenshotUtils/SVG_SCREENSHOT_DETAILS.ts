@@ -4,6 +4,7 @@ import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
 import { getDataKeyElemSelector } from "../Testing";
 import {
+  closeWorkspaceWindows,
   getDashboardUtils,
   openConnection,
   openTable,
@@ -31,26 +32,27 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
+  ai_assistant: aiAssistantSvgif,
   dashboard: dashboardSvgif,
-  here: () => {
-    throw new Error("done");
-  },
+  // here: () => {
+  //   throw new Error("done");
+  // },
   schema_diagram: schemaDiagramSvgif,
   command_palette: commandPaletteSvgif,
   sql_editor: sqlEditorSvgif,
-  ai_assistant: aiAssistantSvgif,
   file_importer: fileImporter,
-  timechart: async (page, { openConnection, hideMenuIfOpen }) => {
+  timechart: async (page, { openConnection, toggleMenuPinned }) => {
     await openConnection("crypto");
     const btn = await page.getByTestId("dashboard.window.detachChart");
     if (await btn.count()) {
       await btn.click();
     }
-    await hideMenuIfOpen();
+    await toggleMenuPinned();
   },
-  map: async (page, { hideMenuIfOpen }) => {
+  map: async (page, { toggleMenuPinned }) => {
     await openConnection(page, "food_delivery");
     await page.waitForTimeout(1500);
+    await closeWorkspaceWindows(page);
     let getUsersTableView = await page.locator(`[data-table-name="users"]`);
 
     if (!(await getUsersTableView.count())) {
@@ -61,7 +63,7 @@ export const SVG_SCREENSHOT_DETAILS = {
       await page.waitForTimeout(1500);
       getUsersTableView = await page.locator(`[data-table-name="users"]`);
     }
-    await hideMenuIfOpen();
+    await toggleMenuPinned();
 
     const chartDetachBtn = await getUsersTableView.getByTestId(
       "dashboard.window.detachChart",
@@ -100,7 +102,10 @@ export const SVG_SCREENSHOT_DETAILS = {
   connections: async (page) => {
     await goTo(page, "/connections");
   },
-  table: async (page, { hideMenuIfOpen, openConnection, openMenuIfClosed }) => {
+  table: async (
+    page,
+    { toggleMenuPinned, openConnection, openMenuIfClosed },
+  ) => {
     await openConnection("prostgles_video_demo");
 
     const userDashboard = await page.getByText("Users dashboard");
@@ -117,7 +122,7 @@ export const SVG_SCREENSHOT_DETAILS = {
       await page.waitForTimeout(1500);
       await openMenuIfClosed();
       await openTable(page, "users");
-      await hideMenuIfOpen();
+      await toggleMenuPinned();
     }
     await page.waitForTimeout(1500);
   },

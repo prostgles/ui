@@ -281,6 +281,7 @@ export const typeSendAddScenes = async (
     .last();
 
   await expect(lastMessage).toContainClass("incoming", { timeout: 15000 });
+
   await waitFor?.();
   await addScene({
     animations: [

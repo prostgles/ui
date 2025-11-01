@@ -6,10 +6,11 @@ import {
   getDataKey,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
+import { expect } from "@playwright/test";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,
-  { openConnection, hideMenuIfOpen, openMenuIfClosed },
+  { openConnection, openMenuIfClosed },
   { addScene, addSceneWithClickAnimation },
 ) => {
   const clickTableRow = async (
@@ -34,6 +35,30 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await goTo(page, "/connections");
 
   await openConnection("food_delivery");
+
+  const toggleMenuBtn = await page.getByTestId(
+    "DashboardMenuHeader.togglePinned",
+  );
+  await page.getByTestId("WorkspaceMenuDropDown").waitFor({ state: "visible" });
+  if (await toggleMenuBtn.count()) {
+    await toggleMenuBtn.click();
+  }
+
+  await expect(
+    page.getByTestId("DashboardMenuHeader.togglePinned"),
+  ).toHaveCount(0);
+
+  // Disable onMount
+  await page.getByTestId("dashboard.goToConnConfig").click();
+  await page.getByTestId("config.methods").click();
+  const onMountToggle = await page.getByTestId(
+    "ServerSideFunctions.onMountEnabled",
+  );
+  if ((await onMountToggle.getAttribute("aria-checked")) === "true") {
+    await onMountToggle.click();
+    await page.waitForTimeout(1000);
+  }
+  await page.getByTestId("config.goToConnDashboard").click();
   await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
 
@@ -44,9 +69,44 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
 
   // await setOrAddWorkspace(page, "Default Grid Layout");
+  await openMenuIfClosed(true);
 
+  /** Search all */
+  await addScene({ caption: "Search all tables (Ctrl+Shift+F)" });
+  await page.keyboard.press("Control+Shift+KeyF");
+  await addScene();
+  const searchAllInput = page.getByTestId("SearchAll");
+  /** To prevent searching */
+  await searchAllInput.evaluate(
+    (el: HTMLInputElement) => (el.value = "bengal tiger"),
+  );
+  await addScene({
+    animations: [
+      {
+        type: "growIn",
+        elementSelector: getCommandElemSelector("SearchAll.Popup"),
+        duration: 500,
+      },
+      {
+        type: "type",
+        elementSelector: getCommandElemSelector("SearchAll"),
+        duration: 1000,
+      },
+    ],
+  });
+  await searchAllInput.evaluate((el: HTMLInputElement) => (el.value = ""));
+  await searchAllInput.fill("bengal tiger");
+  await page.waitForTimeout(1000);
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+  await page.waitForTimeout(5500);
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+  await page.keyboard.press("Enter");
+  await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+  await closeWorkspaceWindows(page);
+
+  await openMenuIfClosed();
   await addSceneWithClickAnimation(getDataKey("orders"));
-  await hideMenuIfOpen();
 
   await clickTableRow(1, undefined, 1);
 

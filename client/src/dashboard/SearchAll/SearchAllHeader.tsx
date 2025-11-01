@@ -2,7 +2,7 @@ import ButtonGroup from "@components/ButtonGroup";
 import { FlexRow, FlexRowWrap } from "@components/Flex";
 import Select from "@components/Select/Select";
 import React from "react";
-import type { SearchAllState } from "./useSearchAllState";
+import type { SearchAllState } from "./hooks/useSearchAllState";
 
 export const SEARCH_TYPES = [
   { key: "views and queries", label: "Tables/Queries" },

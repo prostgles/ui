@@ -461,6 +461,9 @@ export const COMMANDS = {
   "AskLLM.DeleteMessage": "",
   "DockerSandboxCreateContainer.Logs": "",
   TableBody: "",
+  "ServerSideFunctions.onMountEnabled": "",
+  DashboardMenu: "",
+  "SearchAll.Popup": "",
 } as const satisfies Record<
   string,
   | string

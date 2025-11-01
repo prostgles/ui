@@ -7,28 +7,42 @@ import {
   mdiFunction,
   mdiScriptTextPlay,
   mdiTable,
+  mdiTableEdit,
 } from "@mdi/js";
-import React from "react";
-import type { ChartOptions } from "../Dashboard/dashboardUtils";
-import type { SearchAllProps } from "./SearchAll";
+import React, { useMemo } from "react";
+import type { ChartOptions } from "../../Dashboard/dashboardUtils";
+import type { SearchAllProps } from "../SearchAll";
 import type { SearchAllState } from "./useSearchAllState";
 import type { MethodFullDef } from "prostgles-types";
-import type { useSearchAllRows } from "./useSearchAllRows";
+import type { useSearchTables } from "./useSearchTables";
+import { SearchMatchRow } from "../SearchMatchRow";
+import type { SimpleFilter } from "@common/filterUtils";
 
 export const useSearchAllListProps = ({
   mode,
-  setMode,
+  searchRows,
   typesToSearch,
-  tablesToSearch,
+  methods,
   tablesAndViews,
   queries,
-  ...props
-}: SearchAllState & SearchAllProps & ReturnType<typeof useSearchAllRows>) => {
+  tables,
+  db,
+  onOpen,
+  onClose,
+  onOpenDBObject,
+  matchedRows,
+  searchTerm,
+}: SearchAllState & SearchAllProps & ReturnType<typeof useSearchTables>) => {
   const placeholder = "Search...";
 
   let items: SearchListProps["items"],
     dontHighlight = false,
     onSearch: SearchListProps["onSearch"] = undefined;
+
+  const tableHash = useMemo(
+    () => new Map(tables.map((t) => [t.name, t])),
+    [tables],
+  );
 
   if (mode === "views and queries") {
     /** Prioritise public schema */
@@ -57,8 +71,8 @@ export const useSearchAllListProps = ({
             </div>
           ),
           onPress: (e, term) => {
-            props.onClose();
-            props.onOpenDBObject(suggestion);
+            onClose();
+            onOpenDBObject(suggestion);
           },
         };
       })
@@ -73,7 +87,7 @@ export const useSearchAllListProps = ({
             </div>
           ),
           onPress: (e, term) => {
-            props.onClose();
+            onClose();
             let extra = {};
             if (
               q.sql &&
@@ -98,7 +112,7 @@ export const useSearchAllListProps = ({
       .concat(
         !typesToSearch.includes("actions") ?
           []
-        : Object.entries(props.methods as Record<string, MethodFullDef>)
+        : Object.entries(methods as Record<string, MethodFullDef>)
             .filter(([k, v]) => isObject(v) && (v as any).run)
             .map(([methodKey, method]) => ({
               key: methodKey,
@@ -110,15 +124,61 @@ export const useSearchAllListProps = ({
                 </div>
               ),
               onPress: (e, term) => {
-                props.onClose();
-                props.onOpenDBObject(undefined, methodKey);
+                onClose();
+                onOpenDBObject(undefined, methodKey);
               },
             })),
       );
   } else {
-    onSearch = props.searchRows;
+    onSearch = searchRows;
     dontHighlight = true;
-    items = props.items;
+    items = matchedRows?.map((m, i) => {
+      const icon = tableHash.get(m.table)?.icon;
+      return {
+        ...m,
+        key: m.$rowhash + i,
+        label: m.table,
+        content: (
+          <div className="f-1 flex-row ai-start" title="Open table">
+            <div className="flex-col ai-start f-0 mr-p5 text-1">
+              {icon ?
+                <SvgIcon icon={icon} />
+              : <Icon path={db[m.table]?.insert ? mdiTableEdit : mdiTable} />}
+            </div>
+            <div className="flex-col ai-start f-1">
+              <div className="font-18">{m.table}</div>
+              <div
+                style={{
+                  fontSize: "16px",
+                  opacity: 0.7,
+                  textAlign: "left",
+                  width: "100%",
+                  marginTop: ".25em",
+                }}
+                // className={!mode ? "text-2" : ""}
+              >
+                <SearchMatchRow key={i} matchRow={m.match} />
+              </div>
+            </div>
+          </div>
+        ),
+        onPress: () => {
+          const filter: SimpleFilter[] = [];
+          if (m.colName) {
+            filter.push({
+              fieldName: m.colName,
+              type: "$term_highlight",
+              value: searchTerm,
+            });
+          }
+          onOpen({
+            table: m.table,
+            filter,
+          });
+          onClose();
+        },
+      };
+    });
   }
 
   return { items, onSearch, dontHighlight, placeholder };

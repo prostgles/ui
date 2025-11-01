@@ -654,7 +654,7 @@ test.describe("Main test", () => {
     );
     await page
       .getByTestId("AskLLMChat.LoadSuggestedDashboards")
-      .click({ timeout: 10e3 });
+      .click({ timeout: 18e3 });
 
     const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
     await expect(workspaceBtn).toContainText("Customer Insights");

@@ -159,7 +159,12 @@ export const useSearchListSearch = (
   );
 
   const onSetTerm = useCallback(
-    (searchTerm, e?: any) => {
+    (
+      searchTerm,
+      e?:
+        | React.ChangeEvent<HTMLInputElement>
+        | React.MouseEvent<HTMLDivElement, MouseEvent>,
+    ) => {
       onType?.(searchTerm, (newTerm) => {
         searchTerm = newTerm;
       });
@@ -175,7 +180,7 @@ export const useSearchListSearch = (
     if (typeof defaultValueText === "string" && defaultValueText) {
       setSearchTerm(defaultValueText);
     } else if (typeof defaultSearch === "string" && defaultSearch) {
-      onSetTerm(defaultSearch, {});
+      onSetTerm(defaultSearch, undefined);
     }
   }, [defaultSearch, defaultValue, onSetTerm, setSearchTerm]);
 
