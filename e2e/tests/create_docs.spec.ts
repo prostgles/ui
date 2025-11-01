@@ -17,7 +17,7 @@ import { USERS } from "utils/constants";
 test.use({
   viewport: {
     width: 900,
-    height: 600,
+    height: 900,
   },
   trace: "retain-on-failure",
   launchOptions: {

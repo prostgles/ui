@@ -11,6 +11,35 @@ import type { JoinedRecordsProps } from "./JoinedRecords";
 import type { JoinedRecordSection } from "./useJoinedRecordsSections";
 import { useJoinedSectionFieldConfigs } from "./useJoinedSectionFieldConfigs";
 
+export const JoinedRecordsSection = ({
+  section,
+  descendants,
+  isInsert,
+  ...props
+}: JoinedRecordsProps & {
+  section: JoinedRecordSection;
+  isInsert: boolean;
+  descendants: JoinedRecordsProps["tables"];
+}) => {
+  return (
+    <FlexCol className=" p-1 " data-command="JoinedRecords.Section">
+      {section.error && (
+        <ErrorComponent
+          error={section.error}
+          variant="outlined"
+          className=" f-1"
+        />
+      )}
+      <JoinedRecordsSectionCardList
+        {...props}
+        section={section}
+        descendants={descendants}
+        isInsert={isInsert}
+      />
+    </FlexCol>
+  );
+};
+
 const JoinedRecordsSectionCardList = (
   props: JoinedRecordsProps & {
     section: JoinedRecordSection;
@@ -118,34 +147,5 @@ const JoinedRecordsSectionCardList = (
         fieldConfigs={fieldConfigs}
       />
     </div>
-  );
-};
-
-export const JoinedRecordsSection = ({
-  section,
-  descendants,
-  isInsert,
-  ...props
-}: JoinedRecordsProps & {
-  section: JoinedRecordSection;
-  isInsert: boolean;
-  descendants: JoinedRecordsProps["tables"];
-}) => {
-  return (
-    <FlexCol className=" p-1 " data-command="JoinedRecords.Section">
-      {section.error && (
-        <ErrorComponent
-          error={section.error}
-          variant="outlined"
-          className=" f-1"
-        />
-      )}
-      <JoinedRecordsSectionCardList
-        {...props}
-        section={section}
-        descendants={descendants}
-        isInsert={isInsert}
-      />
-    </FlexCol>
   );
 };

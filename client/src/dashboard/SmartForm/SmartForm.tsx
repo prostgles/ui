@@ -14,7 +14,7 @@ import { SmartFormFooterButtons } from "./SmartFormFooter/SmartFormFooterButtons
 import { useSmartFormActions } from "./SmartFormFooter/useSmartFormActions";
 import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
-import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
+import { SmartFormUpperFooter } from "./SmartFormUpperFooter/SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";

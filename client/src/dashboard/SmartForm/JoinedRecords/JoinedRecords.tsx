@@ -110,7 +110,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
             }
             titleRightContent={
               props.newRowDataHandler && (
-                <FlexRow className="show-on-trigger-hover">
+                <FlexRow className="show-on-trigger-hover ml-auto">
                   {!isInsert && (
                     <ViewMoreSmartCardList
                       db={db}

@@ -75,11 +75,10 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   await page.waitForTimeout(3000);
 
-  await clickTableRow(2);
-
-  await addSceneWithClickAnimation(getCommandElemSelector("MapExtentBehavior"));
+  await page.getByTestId("MapExtentBehavior").click();
   await page.waitForTimeout(2000);
-  await addSceneWithClickAnimation(getDataKey("autoZoomToData"));
+  await page.locator(getDataKey("autoZoomToData")).click();
+  await clickTableRow(2);
 
   await clickTableRow(3);
 
@@ -87,7 +86,8 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
 
-  await clickTableRow(1, false);
+  await clickTableRow(1);
+
   await addSceneWithClickAnimation(
     getCommandElemSelector("AddChartMenu.Timechart"),
   );

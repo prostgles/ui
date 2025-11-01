@@ -1,13 +1,13 @@
 import type { AnyObject } from "prostgles-types";
 import { isDefined, isObject } from "prostgles-types";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Btn from "@components/Btn";
 import Popup from "@components/Popup/Popup";
-import { W_MethodControls } from "../W_Method/W_MethodControls";
-import { JoinedRecords } from "./JoinedRecords/JoinedRecords";
-import { useActiveJoinedRecordsTab } from "./JoinedRecords/useActiveJoinedRecordsTab";
-import type { SmartFormProps } from "./SmartForm";
-import type { SmartFormState } from "./useSmartForm";
+import { W_MethodControls } from "../../W_Method/W_MethodControls";
+import { JoinedRecords } from "../JoinedRecords/JoinedRecords";
+import { useActiveJoinedRecordsTab } from "./useActiveJoinedRecordsTab";
+import type { SmartFormProps } from "../SmartForm";
+import type { SmartFormState } from "../useSmartForm";
 
 export type SmartFormUpperFooterProps = Omit<SmartFormProps, "columns"> &
   SmartFormState;
@@ -50,6 +50,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
       return undefined;
     })
     .filter(isDefined);
+
   const [method, setMethod] = useState<{
     name: string;
     row: AnyObject;
@@ -58,12 +59,30 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
 
   const showChanges =
     onChange && mode.type === "update" && Object.keys(newRowData ?? {}).length;
+
   const [methodState, setMethodState] = useState<{
     args?: AnyObject | undefined;
     disabledArgs?: string[] | undefined;
   }>({});
 
   const rootDivRef = React.useRef<HTMLDivElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  useEffect(() => {
+    const onClickListener = ({ target }: MouseEvent) => {
+      if (!rootDivRef.current) return;
+      if (rootDivRef.current.contains(target as Node)) {
+        setIsFocused(true);
+      } else {
+        setIsFocused(false);
+      }
+    };
+
+    document.addEventListener("click", onClickListener);
+    return () => {
+      document.removeEventListener("click", onClickListener);
+    };
+  }, [method]);
+
   const { activeJoinedRecordsTab, setActiveJoinedRecordsTab } =
     useActiveJoinedRecordsTab({
       rootDivRef,
@@ -98,7 +117,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
         // boxShadow: "0px 3px 9px 0px var(--shadow0)",
         // clipPath: "inset(-10px 1px 0px 1px)",
         minHeight: "1px",
-        flex: 0.3,
+        flex: isFocused ? 1 : 0.3,
         /** Expand full allowed height to prevent size change when toggling joined records sections */
         // ...(activeJoinedRecordsTab && {
         //   flex: 1,

@@ -1,7 +1,7 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
 import type { DBSSchema } from "@common/publishUtils";
-import type { SearchAllProps } from "../SearchAll";
+import type { SearchAllProps } from "../SearchAll/SearchAll";
 
 import type {
   MissingBinsOption,
@@ -416,7 +416,6 @@ export type LoadedSuggestions = {
   connectionId: string;
   suggestions: SQLSuggestion[];
   settingSuggestions: SQLSuggestion[];
-  searchAll?: SearchAllProps["suggestions"];
   /**
    * Must refresh suggestions for CREATE/DROP/ALTER USER because
    * it is not being picked up by the event trigger

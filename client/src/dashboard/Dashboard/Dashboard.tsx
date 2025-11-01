@@ -8,7 +8,7 @@ import React from "react";
 import Loading from "@components/Loader/Loading";
 import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
-import type { DBObject } from "../SearchAll";
+import type { DBObject } from "../SearchAll/SearchAll";
 
 import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
@@ -166,9 +166,6 @@ export class _Dashboard extends RTComp<
             ...suggestions,
             connectionId,
             dbKey,
-            searchAll: suggestions.suggestions.filter((s) =>
-              ["table", "function"].includes(s.type),
-            ) as any,
           };
           this.loadingSchema = { ...this.loadingSchema!, ...schema };
           ns.suggestions = { ...this.loadingSchema! };

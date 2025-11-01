@@ -221,7 +221,7 @@ export const getSqlSuggestions = async (
       return vals;
     });
 
-    tables.map((t) => {
+    tables.forEach((t) => {
       const type =
         t.relkind === "r" ? "table"
         : t.relkind === "v" ? "view"
@@ -318,6 +318,7 @@ export const getSqlSuggestions = async (
             })}\n`
           ));
       suggestions.push({
+        OID: t.oid,
         type,
         label: { label: t.name, description: t.schema },
         // name: t.escaped_identifier,

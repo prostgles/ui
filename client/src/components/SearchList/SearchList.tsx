@@ -1,6 +1,6 @@
 import type { Primitive } from "d3";
 import { type AnyObject } from "prostgles-types";
-import React from "react";
+import React, { useEffect } from "react";
 import type { TestSelectors } from "../../Testing";
 import "../List.css";
 import type { OptionKey } from "../Select/Select";
@@ -147,7 +147,5 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
 export const SearchList = <M extends boolean = false>(
   props: SearchListProps<M>,
 ) => {
-  const content = <SearchListContent {...props} />;
-
-  return content;
+  return <SearchListContent {...props} />;
 };

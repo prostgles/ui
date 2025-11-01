@@ -10,8 +10,8 @@ import type {
   _Dashboard,
 } from "../Dashboard/Dashboard";
 import type { WindowData, Workspace } from "../Dashboard/dashboardUtils";
-import type { SEARCH_TYPES } from "../SearchAll";
-import { SearchAll } from "../SearchAll";
+import type { SEARCH_TYPES } from "../SearchAll/SearchAll";
+import { SearchAll } from "../SearchAll/SearchAll";
 import { DashboardMenuContent } from "./DashboardMenuContent";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuHotkeys } from "./DashboardMenuHotkeys";
@@ -138,7 +138,7 @@ export const DashboardMenu = ({
           tables={tables}
           searchType={showSearchAll.mode}
           defaultTerm={showSearchAll.term}
-          suggestions={suggestions?.searchAll}
+          suggestions={suggestions?.suggestions}
           queries={queries}
           loadTable={loadTable}
           onOpenDBObject={(s, method_name) => {

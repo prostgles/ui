@@ -61,7 +61,7 @@ export const Section = (props: SectionProps) => {
   const [open, toggle] = useState(oDef);
   const [fullscreen, setFullscreen] = useState(false);
 
-  const content = (
+  return (
     <div
       data-command={dataCommand satisfies Command | undefined}
       data-key={dataKey}
@@ -111,7 +111,7 @@ export const Section = (props: SectionProps) => {
             )
           }
           iconNode={titleIcon}
-          {...(omitKeys(btnProps ?? {}, ["onClick"]) as any)}
+          {...(omitKeys(btnProps ?? {}, ["onClick"]) as BtnProps<void>)}
           onClick={fullscreen ? undefined : () => toggle(!open)}
         >
           {title}
@@ -132,28 +132,26 @@ export const Section = (props: SectionProps) => {
           {children}
         </div>
       )}
+
+      {fullscreen && (
+        <Popup
+          positioning="fullscreen"
+          title={
+            <FlexRow className="trigger-hover-force">
+              {titleIcon}
+              {title}
+              {titleRightContent}
+            </FlexRow>
+          }
+          contentClassName={contentClassName}
+          contentStyle={contentStyle}
+          onClose={() => {
+            setFullscreen(false);
+          }}
+        >
+          {children}
+        </Popup>
+      )}
     </div>
   );
-
-  if (fullscreen) {
-    return (
-      <Popup
-        positioning="fullscreen"
-        title={
-          <FlexRow className="trigger-hover-force">
-            {titleIcon}
-            {title}
-            {titleRightContent}
-          </FlexRow>
-        }
-        onClose={() => {
-          setFullscreen(false);
-        }}
-      >
-        {children}
-      </Popup>
-    );
-  }
-
-  return content;
 };

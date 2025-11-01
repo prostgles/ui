@@ -14,7 +14,6 @@ import {
   getMapLayerQueries,
 } from "../W_Map/getMapLayerQueries";
 import { W_Method } from "../W_Method/W_Method";
-import { SQL_SNIPPETS } from "../W_SQL/SQLSnippets";
 import { W_SQL } from "../W_SQL/W_SQL";
 import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
@@ -145,11 +144,7 @@ export class ViewRenderer extends RTComp<
           w.type === "sql" &&
           !(w as WindowData<"sql">).options?.sqlWasSaved
         ) {
-          if (SQL_SNIPPETS.some((s) => s.sql.trim() === w.sql.trim())) {
-            await w.$update({ closed: true, deleted: true });
-          } else {
-            this.props.onCloseUnsavedSQL(w, e);
-          }
+          this.props.onCloseUnsavedSQL(w, e);
 
           /** Is table or chart. Delete permanently */
         } else {

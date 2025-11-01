@@ -1,13 +1,13 @@
-import React from "react";
+import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
 import type {
   SearchListItem,
   SearchListProps,
 } from "@components/SearchList/SearchList";
+import React from "react";
+import { SearchMatchRow } from "src/dashboard/SearchAll/SearchMatchRow";
+import { isDefined } from "../../../utils";
 import type { SmartSearch } from "./SmartSearch";
 import { getSmartSearchRows } from "./getSmartSearchRows";
-import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
-import { isDefined } from "../../../utils";
-import { SearchAll } from "../../SearchAll";
 
 export async function onSearchItems(
   this: SmartSearch,
@@ -82,7 +82,10 @@ export async function onSearchItems(
                   </div>
                 )}
               <div className="f-1 " style={{ marginTop: "4px" }}>
-                {SearchAll.renderRow(r.prgl_term_highlight[colName], i)}
+                <SearchMatchRow
+                  key={i}
+                  matchRow={r.prgl_term_highlight[colName]}
+                />
               </div>
             </div>
           );
