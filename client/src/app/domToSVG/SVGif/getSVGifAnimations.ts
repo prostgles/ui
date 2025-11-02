@@ -14,7 +14,6 @@ export const getSVGifAnimations = (
   { height, width }: { width: number; height: number },
   g: SVGGElement,
   parsedScenes: SVGifParsedScene[],
-  loop: boolean,
 ) => {
   const [x0, y0] = [width / 2, height];
   const cursorMovements: {
@@ -266,7 +265,11 @@ export const getSVGifAnimations = (
     const isLastScene = sceneIndex === parsedScenes.length - 1;
     sceneKeyframes.push(`${getPercent(currentPrevDuration)}% ${visible}`);
     if (!isLastScene) {
+      const toPerc = getPercent(currentPrevDuration, 0.1);
       sceneKeyframes.push(`${getPercent(currentPrevDuration, 0.1)}% ${hidden}`);
+      if (toPerc < 100) {
+        sceneKeyframes.push(`100% ${hidden}`);
+      }
     }
 
     sceneAnimations.push({
@@ -333,8 +336,8 @@ const appendSvgToSvg = (
   };
 };
 
-const visible = "{ opacity: 1; visibility: visible; }";
-const hidden = "{ opacity: 0; visibility: hidden; }";
+const visible = "{  visibility: visible; }";
+const hidden = "{  visibility: hidden; }";
 
 const getRevealKeyframes = ({
   fromPerc,

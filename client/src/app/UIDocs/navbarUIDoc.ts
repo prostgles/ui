@@ -31,6 +31,8 @@ export const navbarUIDoc = {
     This allows you to return to the same views later, even after closing the application.
     You can create multiple workspaces to organize your views by project, team, task, or any other criteria.
 
+
+    <img src="./screenshots/navbar.svgif.svg" alt="Navigation" />
 `,
   children: [
     // {

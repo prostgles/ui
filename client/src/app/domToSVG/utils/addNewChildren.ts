@@ -49,7 +49,7 @@ export const addNewChildren = (
   /** Add new nodes to lightNode */
   newChildren.forEach(({ darkChild, index }) => {
     const clonedChild = darkChild.cloneNode(true) as SVGScreenshotNodeType;
-    clonedChild.style.visibility = `var(${displayNoneIfLight})`;
+    clonedChild.style.opacity = `var(${displayNoneIfLight})`;
     lightNode.insertBefore(clonedChild, lightNode.children[index] || null);
   });
 };

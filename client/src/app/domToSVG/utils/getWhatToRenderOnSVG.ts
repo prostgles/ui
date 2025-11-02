@@ -113,7 +113,9 @@ export const getWhatToRenderOnSVG = async (
     elemInfo,
     attributeData,
     background:
-      backgroundSameAsRenderedParent || image?.type === "maskedElement" ?
+      /** TODO: addNewChildren should be fixed. This is a workaround when non transparent bg appears after dark theme switch */
+      element instanceof HTMLBodyElement ? style.background
+      : backgroundSameAsRenderedParent || image?.type === "maskedElement" ?
         undefined
       : background,
     backdropFilter,

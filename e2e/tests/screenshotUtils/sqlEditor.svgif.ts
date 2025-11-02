@@ -79,30 +79,6 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     // caption: "EXPLAIN command options",
   });
 
-  await page.getByTestId("dashboard.window.menu").click();
-  await page.getByText("Editor options").click();
-  await monacoType(page, `.CodeEditor`, ", show", {
-    pressBeforeTyping: ["ArrowLeft"],
-    pressAfterTyping: ["Tab", "Space", "ArrowDown", "Enter"],
-  });
-  await page.getByText("Update options").click();
-  await page.waitForTimeout(1000);
-  await page.keyboard.press("Escape");
-  await page.keyboard.press("Escape");
-  await monacoType(page, `.ProstglesSQL`, intensiveQuery, {
-    deleteAllAndFill: true,
-    keyPressDelay: 0,
-  });
-  await page.keyboard.press("Alt+KeyE");
-  await expect(page.getByTestId("W_SQLBottomBar")).toContainText("Mhz");
-  await addScene({
-    svgFileName: "cpu_usage",
-    animations: [{ type: "wait", duration: 2000 }],
-    caption: "Runtime statistics",
-  });
-
-  await page.reload();
-
   await sqlSuggestionsScene({
     query: "CREATE INDEX idx_messages_sent ON messages \nUSING ",
     svgFileName: "index_types",
@@ -186,6 +162,30 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     caption: "Window functions",
   });
 
+  await page.getByTestId("dashboard.window.menu").click();
+  await page.getByText("Editor options").click();
+  await monacoType(page, `.CodeEditor`, ", show", {
+    pressBeforeTyping: ["ArrowLeft"],
+    pressAfterTyping: ["Tab", "Space", "ArrowDown", "Enter"],
+  });
+  await page.getByText("Update options").click();
+  await page.waitForTimeout(1000);
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await monacoType(page, `.ProstglesSQL`, intensiveQuery, {
+    deleteAllAndFill: true,
+    keyPressDelay: 0,
+  });
+  await page.keyboard.press("Alt+KeyE");
+  await expect(page.getByTestId("W_SQLBottomBar")).toContainText("Mhz");
+  await addScene({
+    svgFileName: "cpu_usage",
+    animations: [{ type: "wait", duration: 2000 }],
+    caption: "Runtime statistics",
+  });
+
+  await page.reload();
+
   await monacoType(
     page,
     `.ProstglesSQL`,
@@ -207,7 +207,6 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
       ],
     },
   );
-
   await addScene({
     svgFileName: "cte",
     caption: "Common Table Expression (CTE) completion",

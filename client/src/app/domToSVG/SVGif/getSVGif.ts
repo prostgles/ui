@@ -9,7 +9,6 @@ import { getSVGifParsedScenes } from "./getSVGifParsedScenes";
 export const getSVGif = (
   scenes: SVGif.Scene[],
   svgFiles: Map<string, string>,
-  loop = true,
 ) => {
   const { parsedScenes, firstScene } = getSVGifParsedScenes(scenes, svgFiles);
   const { viewBox, width, height } = firstScene;
@@ -26,7 +25,7 @@ export const getSVGif = (
   svg.appendChild(g);
 
   const { cursorKeyframes, sceneAnimations, totalDuration } =
-    getSVGifAnimations({ width, height }, g, parsedScenes, loop);
+    getSVGifAnimations({ width, height }, g, parsedScenes);
 
   const getThisAnimationProperty = (
     args: Omit<

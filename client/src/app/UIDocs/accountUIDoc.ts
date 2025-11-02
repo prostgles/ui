@@ -10,6 +10,11 @@ export const accountUIDoc = {
   iconPath: mdiAccountOutline,
   description:
     "Manage your account settings, security preferences, and API access.",
+  docs: `
+    Manage your account settings, security preferences, and API access.
+    
+    <img src="./screenshots/account.svgif.svg" alt="Account Page" />
+  `,
   children: [
     {
       type: "tab",

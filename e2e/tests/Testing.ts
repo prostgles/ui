@@ -495,6 +495,8 @@ export const getDataLabelElemSelector = (key: string) => {
 
 export const COMMAND_SEARCH_ATTRIBUTE_NAME = "data-command-search-ended";
 
+export const MOCK_ELECTRON_WINDOW_ATTR = "MOCK_ELECTRON_WINDOW_ATTR" as const;
+
 declare module "react" {
   interface HTMLAttributes<T> {
     "data-command"?: Command;
@@ -541,5 +543,5 @@ export declare namespace SVGif {
 }
 
 /**
- * Forbid imports to ensure this file is portable
+ * TODO: Forbid imports to ensure this file is portable
  */

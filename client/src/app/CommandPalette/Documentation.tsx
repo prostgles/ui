@@ -3,29 +3,36 @@ import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import "./Documentation.css";
 
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
-import {
-  getDocumentationFiles,
-  type DocumentationFile,
-} from "./getDocumentation";
-import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { useTypedSearchParams } from "src/hooks/useTypedSearchParams";
+import { getDocumentationFiles } from "./getDocumentation";
 
 type P = {
   isElectron: boolean;
 };
 export const Documentation = ({ isElectron }: P) => {
-  const { docText, docFiles } = useMemo(() => {
+  const { docFiles, docFilesMap } = useMemo(() => {
     const docFiles = getDocumentationFiles(isElectron).map((d) => ({
       ...d,
       text: d.text.replaceAll(`="./screenshots/`, `="/screenshots/`),
     }));
-
-    const docText = docFiles.map(({ text }) => text).join("\n\n");
+    const docFilesMap = new Map(docFiles.map((d) => [d.id, d]));
     return {
-      docText,
       docFiles,
+      docFilesMap,
     };
   }, [isElectron]);
+
+  const [{ section = docFiles[0]?.id }, setParams] = useTypedSearchParams(
+    {
+      section: { type: "string", optional: true },
+    },
+    true,
+  );
+
+  const currentDocFile = section ? docFilesMap.get(section) : undefined;
 
   const WrappingElement = window.isLowWidthScreen ? FlexCol : FlexRow;
 
@@ -35,7 +42,20 @@ export const Documentation = ({ isElectron }: P) => {
         className="ai-start min-s-0 f-1"
         style={{ alignSelf: "center" }}
       >
-        <TableOfContents docFiles={docFiles} />
+        <ScrollFade role="navigation">
+          {docFiles.map((docFile) => (
+            <Btn
+              role="menuitem"
+              style={{ width: "100%" }}
+              key={docFile.id}
+              aria-current={section === docFile.id}
+              variant={section === docFile.id ? "faded" : undefined}
+              onClick={() => setParams({ section: docFile.id })}
+            >
+              {docFile.title}
+            </Btn>
+          ))}
+        </ScrollFade>
         <ScrollFade
           scrollRestore={true}
           style={{
@@ -45,21 +65,13 @@ export const Documentation = ({ isElectron }: P) => {
             overflowY: "auto",
           }}
         >
-          <Markdown rehypePlugins={[rehypeRaw]}>{docText}</Markdown>
+          {!currentDocFile ? null : (
+            <Markdown rehypePlugins={[rehypeRaw]}>
+              {currentDocFile.text}
+            </Markdown>
+          )}
         </ScrollFade>
       </WrappingElement>
     </FlexCol>
-  );
-};
-
-const TableOfContents = ({ docFiles }: { docFiles: DocumentationFile[] }) => {
-  return (
-    <ScrollFade>
-      {docFiles.map((docFile) => (
-        <div key={docFile.id}>
-          <a href={`#${docFile.id}`}>{docFile.title}</a>
-        </div>
-      ))}
-    </ScrollFade>
   );
 };

@@ -28,6 +28,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
     return (
       <NavLink
         key={"account"}
+        data-key={"/account"}
         className={
           "text-0 ml-auto flex-row ai-center gap-p5  bb font-16 min-w-0"
         }
@@ -51,6 +52,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
       <>
         <NavLink
           key={"account"}
+          data-key={"/account"}
           className={
             "text-0 ml-auto flex-row ai-center gap-p5  bb font-16 min-w-0"
           }

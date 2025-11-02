@@ -102,6 +102,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
   await page.keyboard.press("Enter");
   await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
+  await page.waitForTimeout(2000);
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
   await closeWorkspaceWindows(page);
 

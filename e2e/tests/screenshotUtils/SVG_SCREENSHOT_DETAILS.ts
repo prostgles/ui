@@ -2,7 +2,11 @@ import { dashboardSvgif } from "screenshotUtils/dashboard.svgif";
 import { fileImporter } from "screenshotUtils/fileImporter.svgif";
 import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
-import { getDataKeyElemSelector } from "../Testing";
+import {
+  getCommandElemSelector,
+  getDataKeyElemSelector,
+  MOCK_ELECTRON_WINDOW_ATTR,
+} from "../Testing";
 import {
   closeWorkspaceWindows,
   getDashboardUtils,
@@ -32,11 +36,51 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
+  account: async (page, _, { addSceneWithClickAnimation }) => {
+    await goTo(page, "/account");
+    await page.waitForTimeout(1500);
+    await addSceneWithClickAnimation(getDataKeyElemSelector("security"));
+    await addSceneWithClickAnimation(getDataKeyElemSelector("api"));
+  },
+  navbar: async (page, _, { addSceneWithClickAnimation }) => {
+    await goTo(page, "/");
+
+    for (const to of [
+      "/connections",
+      "/users",
+      "/server-settings",
+      "/account",
+    ]) {
+      await addSceneWithClickAnimation(getDataKeyElemSelector(to));
+      await page.waitForTimeout(2000);
+    }
+
+    await addSceneWithClickAnimation(getCommandElemSelector("App.colorScheme"));
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(2000);
+    await addSceneWithClickAnimation(
+      getCommandElemSelector("App.LanguageSelector"),
+    );
+    await page.waitForTimeout(2000);
+  },
+  electron_setup: async (page, _, { addSceneWithClickAnimation, addScene }) => {
+    await page.addInitScript(() => {
+      //@ts-ignore
+      window.MOCK_ELECTRON_WINDOW_ATTR = true;
+    });
+    await goTo(page, "/");
+    await addSceneWithClickAnimation(
+      getCommandElemSelector("ElectronSetup.Next"),
+    );
+    await page.waitForTimeout(2500);
+    await addScene();
+    await page.addInitScript(() => {
+      //@ts-ignore
+      delete window.MOCK_ELECTRON_WINDOW_ATTR;
+    });
+  },
   ai_assistant: aiAssistantSvgif,
   dashboard: dashboardSvgif,
-  // here: () => {
-  //   throw new Error("done");
-  // },
   schema_diagram: schemaDiagramSvgif,
   command_palette: commandPaletteSvgif,
   sql_editor: sqlEditorSvgif,
@@ -106,7 +150,7 @@ export const SVG_SCREENSHOT_DETAILS = {
     page,
     { toggleMenuPinned, openConnection, openMenuIfClosed },
   ) => {
-    await openConnection("prostgles_video_demo");
+    await openConnection("food_delivery");
 
     const userDashboard = await page.getByText("Users dashboard");
     if (await userDashboard.count()) {

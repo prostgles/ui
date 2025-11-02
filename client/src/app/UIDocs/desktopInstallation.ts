@@ -27,5 +27,7 @@ export const desktopInstallationUIDoc = {
     Prostgles Desktop stores its state and configuration data in a PostgreSQL database.
     To maintain a secure and responsive environment, we highly recommend [installing Postgres](https://www.postgresql.org/download/) on your local machine.
     You will need to create a dedicated database and superuser account with a strong password for Prostgles Desktop.
+
+    <img src="./screenshots/electron_setup.svgif.svg" alt="Electron Setup" />  
 `),
 } satisfies UIDoc;

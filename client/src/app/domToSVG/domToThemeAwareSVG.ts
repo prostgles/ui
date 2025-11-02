@@ -121,9 +121,9 @@ export const domToThemeAwareSVG = async (
 
           const darkThemeUse = lightNode.cloneNode(true) as SVGUseElement;
           darkThemeUse.setAttribute("href", `#${darkImage.id}`);
-          darkThemeUse.style.visibility = `var(${displayNoneIfLight})`;
+          darkThemeUse.style.opacity = `var(${displayNoneIfLight})`;
           lightNode.parentElement?.appendChild(darkThemeUse);
-          lightNode.style.visibility = `var(${displayNoneIfDark})`;
+          lightNode.style.opacity = `var(${displayNoneIfDark})`;
         }
       }
       return;
@@ -230,8 +230,8 @@ export const domToThemeAwareSVG = async (
   svgLight.appendChild(cssSheet);
   cssSheet.textContent = [
     `:root #${svgLightRootId} { `,
-    `  ${displayNoneIfDark}: visible;`,
-    `  ${displayNoneIfLight}: hidden;`,
+    `  ${displayNoneIfDark}: 1;`,
+    `  ${displayNoneIfLight}: 0;`,
     ...colorArr.map(
       ({ varName, lightColor }) => `  --${varName}: ${lightColor}; `,
     ),
@@ -240,8 +240,8 @@ export const domToThemeAwareSVG = async (
   cssSheet.textContent += [
     `@media (prefers-color-scheme: dark) { `,
     ` :root #${svgLightRootId}  { `,
-    `  ${displayNoneIfDark}: hidden;`,
-    `  ${displayNoneIfLight}: visible;`,
+    `  ${displayNoneIfDark}: 0;`,
+    `  ${displayNoneIfLight}: 1;`,
     ...colorArr
       .filter((c) => !c.sameForBoth)
       .map(({ varName, darkColor }) => `  --${varName}: ${darkColor}; `),

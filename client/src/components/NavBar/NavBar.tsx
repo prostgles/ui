@@ -113,6 +113,7 @@ export const NavBar = (props: P) => {
                     <a
                       key={i}
                       href={o.href}
+                      data-key={o.href}
                       className={
                         "text-0 hover ai-center px-1 pt-1 bb font-16  "
                       }
@@ -123,13 +124,12 @@ export const NavBar = (props: P) => {
                   : <NavLink
                       key={i}
                       to={o.to as any}
+                      data-key={o.to}
                       className={
                         "text-0 hover gap-p5 flex-row ai-center fs-1 px-1 pt-1 bb font-16"
                       }
                     >
-                      {o.iconPath && (
-                        <Icon size={1} className="f-0" path={o.iconPath} />
-                      )}
+                      {o.iconPath && <Icon className="f-0" path={o.iconPath} />}
                       <div className="fs-1 ws-no-wrap text-ellipsis ws-nowrap">
                         {o.label}
                       </div>

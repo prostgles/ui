@@ -22,6 +22,9 @@ The views you open in the dashboard are saved automatically to the current works
 This allows you to return to the same views later, even after closing the application.
 You can create multiple workspaces to organize your views by project, team, task, or any other criteria.
 
+
+<img src="./screenshots/navbar.svgif.svg" alt="Navigation" style="border: 1px solid; margin: 1em 0;" />
+
 ### Navbar items:
 - **Connections**: Manage database connections  
 - **Users**: Manage user accounts (admin only)  
