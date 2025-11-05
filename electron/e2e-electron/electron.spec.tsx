@@ -93,7 +93,8 @@ test("renders the first page", async () => {
   await page.getByTestId("PostgresInstallationInstructions").click();
   await page.waitForTimeout(1000);
   await screenshot();
-  await page.getByTestId("PostgresInstallationInstructions.Close").click();
+  // await page.getByTestId("PostgresInstallationInstructions.Close").click();
+  await page.getByTestId("Popup.close").click();
   // await page.getByTestId("ElectronSetup.Next").click();
 
   /** State db connection details */

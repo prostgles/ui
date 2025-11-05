@@ -25,12 +25,9 @@ export const Documentation = ({ isElectron }: P) => {
     };
   }, [isElectron]);
 
-  const [{ section = docFiles[0]?.id }, setParams] = useTypedSearchParams(
-    {
-      section: { type: "string", optional: true },
-    },
-    true,
-  );
+  const [{ section = docFiles[0]?.id }, setParams] = useTypedSearchParams({
+    section: { type: "string", optional: true },
+  });
 
   const currentDocFile = section ? docFilesMap.get(section) : undefined;
 

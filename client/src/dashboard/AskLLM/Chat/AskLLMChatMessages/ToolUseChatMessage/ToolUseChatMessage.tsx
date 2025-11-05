@@ -39,19 +39,21 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
     <ErrorTrap>
       <FlexCol
         data-command="ToolUseMessage"
-        className={"ToolUseMessage gap-p5 "}
+        className={"ToolUseMessage gap-p5 trigger-hover"}
         style={
           displayMode === "full" ?
             { flexDirection: "row-reverse", justifyContent: "start" }
           : undefined
         }
       >
-        <FlexRow className="trigger-hover">
-          <ToolUseChatMessageBtn
-            {...toolUseInfo}
-            displayMode={displayMode}
-            onClick={onClick}
-          />
+        <FlexRow className="ai-start">
+          {(!ToolUI || displayMode !== "full") && (
+            <ToolUseChatMessageBtn
+              {...toolUseInfo}
+              displayMode={displayMode}
+              onClick={onClick}
+            />
+          )}
           {ToolUI && (
             <PopupMenu
               positioning="fullscreen"

@@ -50,7 +50,7 @@ export const PostgresInstallationInstructions = ({
       render={() => (
         <div className="flex-col p-2 font-18 gap-2 ta-left">
           <div>
-            <h3>Postgres installation instructions:</h3>
+            <h3>Postgres downloads:</h3>
             <ul className="no-decor flex-row gap-1 jc-start">
               {OPERATING_SYSTEMS.map(({ key, label, icon }) => (
                 <li key={key}>
@@ -102,15 +102,15 @@ export const PostgresInstallationInstructions = ({
           </div>
         </div>
       )}
-      footerButtons={[
-        {
-          onClickClose: true,
-          label: "Close",
-          variant: "filled",
-          color: "action",
-          "data-command": "PostgresInstallationInstructions.Close",
-        },
-      ]}
+      // footerButtons={[
+      //   {
+      //     onClickClose: true,
+      //     label: "Close",
+      //     variant: "filled",
+      //     color: "action",
+      //     "data-command": "PostgresInstallationInstructions.Close",
+      //   },
+      // ]}
     />
   );
 };

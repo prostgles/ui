@@ -2,21 +2,18 @@ import { dashboardSvgif } from "screenshotUtils/dashboard.svgif";
 import { fileImporter } from "screenshotUtils/fileImporter.svgif";
 import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
-import {
-  getCommandElemSelector,
-  getDataKeyElemSelector,
-  MOCK_ELECTRON_WINDOW_ATTR,
-} from "../Testing";
-import {
-  closeWorkspaceWindows,
-  getDashboardUtils,
-  openConnection,
-  openTable,
-  type PageWIds,
-} from "../utils/utils";
+import { getDataKeyElemSelector } from "../Testing";
+import { getDashboardUtils, type PageWIds } from "../utils/utils";
+import { accountSvgif } from "./accountSvgif";
 import { aiAssistantSvgif } from "./aiAssistant.svgif";
-import { sqlEditorSvgif } from "./sqlEditor.svgif";
 import { commandPaletteSvgif } from "./commandPalette.svgif";
+import { electronSetupSvgif } from "./electronSetup.svgif";
+import { mapSvgif } from "./mapSvgif";
+import { navbarSvgif } from "./navbarSvgif";
+import { newConnectionSvgif } from "./newConnectionSvgif";
+import { sqlEditorSvgif } from "./sqlEditor.svgif";
+import { tableSvgif } from "./tableSvgif";
+import { timechartSvgif } from "./timechartSvgif";
 import { type SVGifScene } from "./utils/constants";
 
 export type OnBeforeScreenshot = (
@@ -36,139 +33,21 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
-  account: async (page, _, { addSceneWithClickAnimation }) => {
-    await goTo(page, "/account");
-    await page.waitForTimeout(1500);
-    await addSceneWithClickAnimation(getDataKeyElemSelector("security"));
-    await addSceneWithClickAnimation(getDataKeyElemSelector("api"));
-  },
-  navbar: async (page, _, { addSceneWithClickAnimation }) => {
-    await goTo(page, "/");
-
-    for (const to of [
-      "/connections",
-      "/users",
-      "/server-settings",
-      "/account",
-    ]) {
-      await addSceneWithClickAnimation(getDataKeyElemSelector(to));
-      await page.waitForTimeout(2000);
-    }
-
-    await addSceneWithClickAnimation(getCommandElemSelector("App.colorScheme"));
-    await page.keyboard.press("Escape");
-    await page.waitForTimeout(2000);
-    await addSceneWithClickAnimation(
-      getCommandElemSelector("App.LanguageSelector"),
-    );
-    await page.waitForTimeout(2000);
-  },
-  electron_setup: async (page, _, { addSceneWithClickAnimation, addScene }) => {
-    await page.addInitScript(() => {
-      //@ts-ignore
-      window.MOCK_ELECTRON_WINDOW_ATTR = true;
-    });
-    await goTo(page, "/");
-    await addSceneWithClickAnimation(
-      getCommandElemSelector("ElectronSetup.Next"),
-    );
-    await page.waitForTimeout(2500);
-    await addScene();
-    await page.addInitScript(() => {
-      //@ts-ignore
-      delete window.MOCK_ELECTRON_WINDOW_ATTR;
-    });
-  },
+  table: tableSvgif,
+  timechart: timechartSvgif,
+  account: accountSvgif,
+  navbar: navbarSvgif,
+  electron_setup: electronSetupSvgif,
   ai_assistant: aiAssistantSvgif,
   dashboard: dashboardSvgif,
   schema_diagram: schemaDiagramSvgif,
   command_palette: commandPaletteSvgif,
   sql_editor: sqlEditorSvgif,
   file_importer: fileImporter,
-  timechart: async (page, { openConnection, toggleMenuPinned }) => {
-    await openConnection("crypto");
-    const btn = await page.getByTestId("dashboard.window.detachChart");
-    if (await btn.count()) {
-      await btn.click();
-    }
-    await toggleMenuPinned();
-  },
-  map: async (page, { toggleMenuPinned }) => {
-    await openConnection(page, "food_delivery");
-    await page.waitForTimeout(1500);
-    await closeWorkspaceWindows(page);
-    let getUsersTableView = await page.locator(`[data-table-name="users"]`);
-
-    if (!(await getUsersTableView.count())) {
-      await openTable(page, "users");
-      await page.getByTestId("AddChartMenu.Map").click();
-      await page.waitForTimeout(1500);
-      await page.keyboard.press("Enter");
-      await page.waitForTimeout(1500);
-      getUsersTableView = await page.locator(`[data-table-name="users"]`);
-    }
-    await toggleMenuPinned();
-
-    const chartDetachBtn = await getUsersTableView.getByTestId(
-      "dashboard.window.detachChart",
-    );
-
-    if (await chartDetachBtn.count()) {
-      await chartDetachBtn.click();
-      await page.waitForTimeout(1500);
-    }
-
-    await page
-      .locator(`[data-view-type="map"]`)
-      .getByTestId("dashboard.window.fullscreen")
-      .click();
-    await page.waitForTimeout(1500);
-  },
-  new_connection: async (page, _, { addScene }) => {
-    await goTo(page, "/connections");
-    await addScene({
-      animations: [
-        {
-          type: "wait",
-          duration: 1000,
-        },
-        {
-          elementSelector: '[data-command="Connections.new"]',
-          duration: 1000,
-          type: "click",
-        },
-      ],
-    });
-    await page.getByTestId("Connections.new").click();
-    await page.waitForTimeout(1500);
-    await addScene({ svgFileName: "new_connection" });
-  },
+  map: mapSvgif,
+  new_connection: newConnectionSvgif,
   connections: async (page) => {
     await goTo(page, "/connections");
-  },
-  table: async (
-    page,
-    { toggleMenuPinned, openConnection, openMenuIfClosed },
-  ) => {
-    await openConnection("food_delivery");
-
-    const userDashboard = await page.getByText("Users dashboard");
-    if (await userDashboard.count()) {
-      await userDashboard.click();
-    } else {
-      await page.getByTestId("WorkspaceMenuDropDown").click();
-      await page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn").click();
-      await page
-        .getByTestId("WorkspaceAddBtn")
-        .locator("input")
-        .fill("Users dashboard");
-      await page.getByTestId("WorkspaceAddBtn.Create").click();
-      await page.waitForTimeout(1500);
-      await openMenuIfClosed();
-      await openTable(page, "users");
-      await toggleMenuPinned();
-    }
-    await page.waitForTimeout(1500);
   },
   smart_filter_bar: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");

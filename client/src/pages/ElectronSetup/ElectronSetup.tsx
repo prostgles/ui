@@ -100,7 +100,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
                 iconPath={mdiConnection}
                 onClickMessage={onPressDone}
               >
-                Done
+                Connect
               </Btn>
             }
           </FlexRow>

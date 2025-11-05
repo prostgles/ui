@@ -95,7 +95,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
       </>
     );
   }
-
+  const { isLowWidthScreen } = window;
   return (
     <PopupMenu
       positioning="beneath-right"
@@ -112,8 +112,8 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
           title={user.username || "Account"}
           className=" flex-col text-white b g-gray-700"
         >
-          <Icon path={iconPath} size={!window.isLowWidthScreen ? 0.75 : 1} />
-          {!window.isLowWidthScreen && (
+          <Icon path={iconPath} size={!isLowWidthScreen ? 0.75 : 1} />
+          {!isLowWidthScreen && (
             <div className=" text-2 font-12 ws-nowrap">{user.username}</div>
           )}
         </Btn>

@@ -7,31 +7,13 @@ import {
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { expect } from "@playwright/test";
+import { clickTableRow } from "./tableSvgif";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection, openMenuIfClosed },
   { addScene, addSceneWithClickAnimation },
 ) => {
-  const clickTableRow = async (
-    rowIndex: number,
-    recordScene = true,
-    columnIndex: 1 | 2 = 2,
-  ) => {
-    const svgif =
-      getCommandElemSelector("TableBody") +
-      ` > :nth-child(2) > :nth-child(${rowIndex}) > :nth-child(${columnIndex})`;
-    const playwright =
-      getCommandElemSelector("TableBody") +
-      ` > :nth-child(1) > :nth-child(${rowIndex}) > :nth-child(${columnIndex}) ${columnIndex === 1 ? "button" : ""}`;
-    if (!recordScene) {
-      await page.locator(playwright).click();
-      return;
-    }
-    await addSceneWithClickAnimation({ svgif, playwright });
-    await page.waitForTimeout(2000);
-  };
-
   await goTo(page, "/connections");
 
   await openConnection("food_delivery");
@@ -104,12 +86,14 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
   await page.waitForTimeout(2000);
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
-  await closeWorkspaceWindows(page);
 
+  // Table
+  await closeWorkspaceWindows(page);
   await openMenuIfClosed();
   await addSceneWithClickAnimation(getDataKey("orders"));
 
-  await clickTableRow(1, undefined, 1);
+  const pageParams = { page, addSceneWithClickAnimation, addScene };
+  await clickTableRow(pageParams, 1, undefined, 1);
 
   await addSceneWithClickAnimation(
     getCommandElemSelector("JoinedRecords.SectionToggle") +
@@ -139,15 +123,15 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("MapExtentBehavior").click();
   await page.waitForTimeout(2000);
   await page.locator(getDataKey("autoZoomToData")).click();
-  await clickTableRow(2);
+  await clickTableRow(pageParams, 2);
 
-  await clickTableRow(3);
+  await clickTableRow(pageParams, 3);
 
-  await clickTableRow(1);
+  await clickTableRow(pageParams, 1);
 
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
 
-  await clickTableRow(1);
+  await clickTableRow(pageParams, 1);
 
   await addSceneWithClickAnimation(
     getCommandElemSelector("AddChartMenu.Timechart"),

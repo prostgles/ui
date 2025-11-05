@@ -28,13 +28,9 @@ export const ElectronSetupStateDB = ({
     <ScrollFade className="px-p25 min-s-0 flex-col f-1 oy-auto">
       <h2>State database</h2>
       <section className="ta-left font-18">
-        <strong>Prostgles Desktop</strong> requires full access to a postgres
-        database.
-        <p>
-          This database will be used to manage and store all connection and
-          state data (database connection details, sql queries, workspaces,
-          etc).
-        </p>
+        <strong>Prostgles Desktop</strong> needs a PostgreSQL database to
+        securely store your workspace and connection settings. (This will not
+        affect your existing databases.)
         <p className="m-0 mt-p5">
           For best experience we recommend using a locally installed database
         </p>
@@ -58,8 +54,9 @@ export const ElectronSetupStateDB = ({
             content: (
               <FlexCol>
                 <div>
-                  Provide superuser credentials for the locally running postgres
-                  server.
+                  Enter the credentials of your local PostgreSQL superuser
+                  (often postgres). These will be used once to create the
+                  Prostgles Desktop database.
                 </div>
                 <div>
                   Will create a{" "}

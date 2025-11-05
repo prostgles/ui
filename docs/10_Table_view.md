@@ -2,7 +2,7 @@
 
 The table view displays data from a database table or view, allowing users to interact with the data, including sorting, filtering, and editing.
 It supports computed columns, linked fields, and various actions for managing the data.
-<img src="./screenshots/table.svg" alt="Table view screenshot" style="border: 1px solid; margin: 1em 0;" />
+<img src="./screenshots/table.svgif.svg" alt="Table view screenshot" style="border: 1px solid; margin: 1em 0;" />
 
   - **View header**: Contains menu button, title and window minimise/fullscreen controls.  
     - **Quick actions**: Quick actions for the view, providing easy access to charting and joins.  

@@ -1,3 +1,4 @@
+import { toFixed } from "src/app/domToSVG/utils/toFixed";
 import type { SVGContext } from "../../../app/domToSVG/containers/elementToSVG";
 import { addImageFromDataURL } from "../../../app/domToSVG/graphics/imgToSVG";
 import type { Point } from "../../Charts";
@@ -49,9 +50,9 @@ export const drawShapesOnSVG = (
     } else if (s.type === "linkline") {
       drawSvgLinkLine(shapes, g as SVGElement, s);
     } else if (s.type === "rectangle") {
-      const [x, y] = s.coords;
-      const width = s.w;
-      const height = s.h;
+      const [x, y] = s.coords.map((v) => toFixed(v)) as typeof s.coords;
+      const width = toFixed(s.w);
+      const height = toFixed(s.h);
 
       let rectElement;
       if (s.borderRadius) {
@@ -63,10 +64,10 @@ export const drawShapesOnSVG = (
         rectElement = pathElement;
       } else {
         rectElement = createSvgElement("rect", {
-          x: x.toString(),
-          y: y.toString(),
-          width: width.toString(),
-          height: height.toString(),
+          x,
+          y,
+          width,
+          height,
         });
       }
       if (s.elevation !== 0) {
@@ -120,9 +121,9 @@ export const drawShapesOnSVG = (
     } else if (s.type === "circle") {
       const [cx, cy] = s.coords;
       const circleElement = createSvgElement("circle", {
-        cx: cx.toString(),
-        cy: cy.toString(),
-        r: s.r.toString(),
+        cx: toFixed(cx),
+        cy: toFixed(cy),
+        r: toFixed(s.r),
       });
 
       if (s.fillStyle) {
@@ -144,7 +145,8 @@ export const drawShapesOnSVG = (
         pathElement.setAttribute("d", drawSvgMonotoneXCurve(s.coords));
       } else {
         let pathData = "";
-        s.coords.forEach(([x, y], i) => {
+        s.coords.forEach((point, i) => {
+          const [x, y] = point.map((v) => toFixed(v)) as typeof point;
           if (i === 0) {
             pathData = `M ${x},${y}`;
           } else {
@@ -169,7 +171,8 @@ export const drawShapesOnSVG = (
       const pathElement = createSvgElement("path");
 
       let pathData = "";
-      s.coords.forEach(([x, y], i) => {
+      s.coords.forEach((point, i) => {
+        const [x, y] = point.map((v) => toFixed(v)) as typeof point;
         if (i === 0) {
           pathData = `M ${x},${y}`;
         } else {
@@ -192,7 +195,7 @@ export const drawShapesOnSVG = (
       pathElement.setAttribute("opacity", opacity.toString());
 
       g.appendChild(pathElement);
-    } else if ((s.type as any) === "text") {
+    } else if ((s.type as unknown) === "text") {
       const [x, y] = s.coords;
       const textElement = createSvgElement("text", {
         x: x.toString(),
@@ -305,7 +308,12 @@ export const drawSvgLinkLine = (
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute(
     "d",
-    `M ${startPoint.x},${startPoint.y} C ${controlPoint1.x},${controlPoint1.y} ${controlPoint2.x},${controlPoint2.y} ${endPoint.x},${endPoint.y}`,
+    [
+      `M ${startPoint.x},${startPoint.y}`,
+      `C ${controlPoint1.x},${controlPoint1.y}`,
+      `${controlPoint2.x},${controlPoint2.y}`,
+      `${endPoint.x},${endPoint.y}`,
+    ].join(" "),
   );
 
   if (linkLine.strokeStyle) {
@@ -325,7 +333,7 @@ export const drawSvgLinkLine = (
 // Helper function to create SVG elements
 const createSvgElement = (
   tagName: string,
-  attrs: Record<string, string> = {},
+  attrs: Record<string, string | number> = {},
 ) => {
   const element = document.createElementNS(
     "http://www.w3.org/2000/svg",

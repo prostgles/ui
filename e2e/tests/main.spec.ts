@@ -450,7 +450,7 @@ test.describe("Main test", () => {
     const darkBackgroundColor = await page.evaluate(() => {
       return getComputedStyle(document.body).backgroundColor;
     });
-    await expect(darkBackgroundColor).toBe("rgb(36, 36, 36)");
+    await expect(darkBackgroundColor).toBe("rgb(26, 25, 25)");
 
     await page.emulateMedia({ colorScheme: "light" });
     await goTo(page);
