@@ -5,7 +5,7 @@ import {
 } from "prostgles-types";
 import type { DBSSchema } from "@common/publishUtils";
 import { getLLMRequestBody } from "./getLLMRequestBody";
-import type { MCPToolSchema } from "./getLLMTools";
+import type { MCPToolSchema } from "./getLLMToolsAllowedInThisChat";
 import {
   parseLLMResponseObject,
   type LLMParsedResponse,

@@ -60,15 +60,15 @@ export const rectangleToSVG = (
     maskLinearGradients.length > 1 &&
     blendModes.every((b) => b === "source-in")
   ) {
-    const combinedMask = document.createElementNS(
-      SVG_NAMESPACE,
-      "mask",
-    ) as SVGMaskElement;
-    combinedMask.setAttribute("id", `mask-${context.idCounter++}`);
-    combinedMask.setAttribute("maskUnits", "userSpaceOnUse");
-    combinedMask.setAttribute("maskContentUnits", "userSpaceOnUse");
-    context.defs.appendChild(combinedMask);
-    g.setAttribute("mask", `url(#${combinedMask.id})`);
+    // const combinedMask = document.createElementNS(
+    //   SVG_NAMESPACE,
+    //   "mask",
+    // ) as SVGMaskElement;
+    // combinedMask.setAttribute("id", `mask-${context.idCounter++}`);
+    // combinedMask.setAttribute("maskUnits", "userSpaceOnUse");
+    // combinedMask.setAttribute("maskContentUnits", "userSpaceOnUse");
+    // context.defs.appendChild(combinedMask);
+    // g.setAttribute("mask", `url(#${combinedMask.id})`);
 
     const masks = maskLinearGradients.slice(1);
 
@@ -82,72 +82,77 @@ export const rectangleToSVG = (
         return;
       }
 
-      const stops = grad.split("rgb").slice(1);
-      const stopsWithColors = stops.map((stop) => {
-        const color = "rgb" + stop.split(")")[0] + ")";
-        const offset =
-          stop.split(")")[1]?.trim().replace(",", "").replace(")", "") || "0%";
-        let percentageOffset = offset;
-        if (offset.includes("px")) {
-          const pxValue = parseFloat(offset);
-          const percentage =
-            (pxValue / (direction === "toLeft" ? width : height)) * 100;
-          percentageOffset = `${percentage}%`;
-        }
-        return {
-          color,
-          offset: percentageOffset,
-          opacity: parseFloat(stop.split(")")[0]?.split(",")[3] || "1"),
-        };
-      });
+      g.style.maskImage = style.maskImage;
+      g.style.maskSize = `${width}px ${height}px`;
+      // g.style.maskPosition = `${x}px ${0}px`;
+      g.style.maskPosition = `0px 0px`;
 
-      const gradient = document.createElementNS(
-        SVG_NAMESPACE,
-        "linearGradient",
-      ) as SVGLinearGradientElement;
-      gradient.setAttribute(
-        "id",
-        `mask-gradient-${direction}-${context.idCounter++}`,
-      );
-      if (direction === "toTop") {
-        gradient.setAttribute("x1", "0%");
-        gradient.setAttribute("y1", "100%");
-        gradient.setAttribute("x2", "0%");
-        gradient.setAttribute("y2", "0%");
-      } else {
-        gradient.setAttribute("x1", "100%");
-        gradient.setAttribute("y1", "0%");
-        gradient.setAttribute("x2", "0%");
-        gradient.setAttribute("y2", "0%");
-      }
-      stopsWithColors.forEach(({ opacity, offset }) => {
-        const stop = document.createElementNS(
-          SVG_NAMESPACE,
-          "stop",
-        ) as SVGStopElement;
-        stop.setAttribute(
-          "offset",
-          offset.includes("px") ? parseFloat(offset) : offset,
-        );
-        stop.setAttribute("stop-color", "white");
-        stop.setAttribute("stop-opacity", opacity);
-        gradient.appendChild(stop);
-      });
-      context.defs.appendChild(gradient);
+      // const stops = grad.split("rgb").slice(1);
+      // const stopsWithColors = stops.map((stop) => {
+      //   const color = "rgb" + stop.split(")")[0] + ")";
+      //   const offset =
+      //     stop.split(")")[1]?.trim().replace(",", "").replace(")", "") || "0%";
+      //   let percentageOffset = offset;
+      //   if (offset.includes("px")) {
+      //     const pxValue = parseFloat(offset);
+      //     const percentage =
+      //       (pxValue / (direction === "toLeft" ? width : height)) * 100;
+      //     percentageOffset = `${percentage}%`;
+      //   }
+      //   return {
+      //     color,
+      //     offset: percentageOffset,
+      //     opacity: parseFloat(stop.split(")")[0]?.split(",")[3] || "1"),
+      //   };
+      // });
 
-      const rect = document.createElementNS(
-        SVG_NAMESPACE,
-        "rect",
-      ) as SVGScreenshotNodeType;
-      rect.setAttribute("x", String(x));
-      rect.setAttribute("y", String(y));
-      rect.setAttribute("width", String(width));
-      rect.setAttribute("height", String(height));
-      rect.setAttribute("fill", `url(#${gradient.id})`);
-      if (index) {
-        rect.style.mixBlendMode = "multiply";
-      }
-      combinedMask.appendChild(rect);
+      // const gradient = document.createElementNS(
+      //   SVG_NAMESPACE,
+      //   "linearGradient",
+      // ) as SVGLinearGradientElement;
+      // gradient.setAttribute(
+      //   "id",
+      //   `mask-gradient-${direction}-${context.idCounter++}`,
+      // );
+      // if (direction === "toTop") {
+      //   gradient.setAttribute("x1", "0%");
+      //   gradient.setAttribute("y1", "100%");
+      //   gradient.setAttribute("x2", "0%");
+      //   gradient.setAttribute("y2", "0%");
+      // } else {
+      //   gradient.setAttribute("x1", "100%");
+      //   gradient.setAttribute("y1", "0%");
+      //   gradient.setAttribute("x2", "0%");
+      //   gradient.setAttribute("y2", "0%");
+      // }
+      // stopsWithColors.forEach(({ opacity, offset }) => {
+      //   const stop = document.createElementNS(
+      //     SVG_NAMESPACE,
+      //     "stop",
+      //   ) as SVGStopElement;
+      //   stop.setAttribute(
+      //     "offset",
+      //     offset.includes("px") ? parseFloat(offset) : offset,
+      //   );
+      //   stop.setAttribute("stop-color", "white");
+      //   stop.setAttribute("stop-opacity", opacity);
+      //   gradient.appendChild(stop);
+      // });
+      // context.defs.appendChild(gradient);
+
+      // const rect = document.createElementNS(
+      //   SVG_NAMESPACE,
+      //   "rect",
+      // ) as SVGScreenshotNodeType;
+      // rect.setAttribute("x", String(x));
+      // rect.setAttribute("y", String(y));
+      // rect.setAttribute("width", String(width));
+      // rect.setAttribute("height", String(height));
+      // rect.setAttribute("fill", `url(#${gradient.id})`);
+      // if (index) {
+      //   rect.style.mixBlendMode = "multiply";
+      // }
+      // combinedMask.appendChild(rect);
     });
   }
 

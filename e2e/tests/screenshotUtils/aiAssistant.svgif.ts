@@ -117,7 +117,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await typeSendAddScenes(
     page,
     addScene,
-    "The task involves importing data from scanned receipts",
+    "The task involves importing data from receipt images I will paste in this chat",
   );
   const loadTaskBtn = await page
     .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
@@ -193,18 +193,18 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
 
   await addSceneWithClickAnimation(getDataKeyElemSelector("fetch_weather.js"));
 
-  await page.getByTestId("ToolUseMessage").last().scrollIntoViewIfNeeded();
-  await addScene({
-    svgFileName: "docker_js",
-    animations: [
-      { type: "wait", duration: 1000 },
-      {
-        type: "click",
-        elementSelector: getDataKeyElemSelector("fetch_weather.js"),
-        duration: 1000,
-      },
-    ],
-  });
+  // await page.getByTestId("ToolUseMessage").last().scrollIntoViewIfNeeded();
+  // await addScene({
+  //   svgFileName: "docker_js",
+  //   animations: [
+  //     { type: "wait", duration: 1000 },
+  //     {
+  //       type: "click",
+  //       elementSelector: getDataKeyElemSelector("fetch_weather.js"),
+  //       duration: 1000,
+  //     },
+  //   ],
+  // });
 
   await addScene({ svgFileName: "docker" });
 
@@ -262,12 +262,14 @@ export const typeSendAddScenes = async (
 ) => {
   await page.getByTestId("Chat.textarea").fill(text);
   await page.waitForTimeout(1000);
+  const msPerChar = 30;
+  const zoomDurations = 500 + 500 + 300; // zoom in + zoom out + wait before zoom out
   await addScene({
     animations: [
       {
         type: "type",
         elementSelector: getCommandElemSelector("Chat.textarea"),
-        duration: 2000,
+        duration: zoomDurations + text.length * msPerChar,
       },
       { type: "wait", duration: 500 },
     ],
@@ -282,15 +284,24 @@ export const typeSendAddScenes = async (
 
   await expect(lastMessage).toContainClass("incoming", { timeout: 15000 });
 
+  for await (const animation of endAnimations) {
+    if (animation.type !== "wait" && animation.type !== "moveTo") {
+      await page
+        .locator(animation.elementSelector)
+        .waitFor({ state: "visible", timeout: 15000 });
+    }
+  }
+
   await waitFor?.();
   await addScene({
     animations: [
       {
         type: "fadeIn",
-        duration: 2000,
+        duration: 500,
         elementSelector:
           getCommandElemSelector("Chat.messageList") + " > g:last-of-type",
       },
+      { type: "wait", duration: 1500 },
       ...endAnimations,
     ],
   });

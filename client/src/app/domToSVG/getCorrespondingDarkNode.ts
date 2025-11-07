@@ -43,7 +43,9 @@ export const getCorrespondingDarkNode = (
   if (matchedTypeAndOverlap.length > 1) {
     matchedTypeAndOverlap = matchedTypeAndOverlap.filter((n) =>
       n.nodeName === "use" ?
-        n.getAttribute("href") === lightNode.getAttribute("href")
+        n.getAttribute("href") === lightNode.getAttribute("href") ||
+        n.parentElement?.dataset.selector ===
+          lightNode.parentElement?.dataset.selector
       : n.nodeName === "path" ?
         n.getAttribute("d") === lightNode.getAttribute("d")
       : n.nodeName === "line" ?

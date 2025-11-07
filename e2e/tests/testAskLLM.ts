@@ -5,7 +5,7 @@ const stringify = (obj: any) => JSON.stringify(obj, null, 2);
 
 const taskToolArguments = {
   suggested_prompt:
-    "Given the receipt image, extract the text and insert it into the receipts table.",
+    "I will paste receipt images in this chat. Please extract the following information from each receipt:\n- Company/merchant name\n- Total amount\n- Currency\n- Date of purchase\n- Full extracted text\n\nAfter extracting the data, insert it into the receipts table.",
   suggested_database_access: {
     Mode: "Custom",
     tables: [

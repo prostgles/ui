@@ -11,9 +11,9 @@ import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import {
   getAllToolNames,
-  type getLLMAllowedChatTools,
+  type getLLMToolsAllowedInThisChat,
   type MCPToolSchemaWithApproveInfo,
-} from "../getLLMTools";
+} from "../getLLMToolsAllowedInThisChat";
 import {
   getClientDBHandlersForChat,
   runProstglesDBTool,
@@ -41,7 +41,7 @@ type ToolUseMessageWithInfo =
 type ToolResultMessage = Extract<LLMMessage[number], { type: "tool_result" }>;
 
 export const runApprovedTools = async (
-  allowedTools: Awaited<ReturnType<typeof getLLMAllowedChatTools>>,
+  allowedTools: Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>>,
   args: Omit<AskLLMArgs, "userMessage" | "type">,
   chat: DBSSchema["llm_chats"],
   toolUseRequestMessages: ToolUseMessage[],

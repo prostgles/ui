@@ -948,16 +948,24 @@ export const getDashboardUtils = (page: PageWIds) => {
       await menuBtn.click();
     }
   };
-  const toggleMenuPinned = async () => {
+  const toggleMenuPinned = async (shouldBePinned?: boolean) => {
     await page.waitForTimeout(1500);
     const toggleBtn = await page.getByTestId(
       "DashboardMenuHeader.togglePinned",
     );
+    const menuBtn = await page.getByTestId("dashboard.menu");
+    const menuIsPinned = await menuBtn.isDisabled();
     if ((await toggleBtn.count()) && (await toggleBtn.isEnabled())) {
+      if (menuIsPinned && shouldBePinned) {
+        return;
+      }
       await toggleBtn.click();
+    } else if (shouldBePinned) {
+      await menuBtn.click();
+      await page.getByTestId("DashboardMenuHeader.togglePinned").click();
     }
   };
-  const closeMenuIfOpen = async () => {};
+
   return {
     openConnection: _open,
     openMenuIfClosed,

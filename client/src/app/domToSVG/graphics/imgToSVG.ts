@@ -8,29 +8,45 @@ export const addImageFromDataURL = (
   context: SVGContext,
   { style, height, width, x, y }: SVGNodeLayout,
 ) => {
-  const imageIdWithSameDataUrl = Array.from(
-    context.defs.querySelectorAll("image"),
-  ).find((img) => img.getAttribute("href") === dataUrl)?.id;
+  const sameDataUrlSymbol = Array.from(
+    context.defs.querySelectorAll("symbol"),
+  ).find((symbol) => {
+    const imgInSymbol = symbol.querySelector("image");
+    if (!imgInSymbol) {
+      return false;
+    }
+    const href = imgInSymbol.getAttribute("href");
+    return href === dataUrl;
+  })?.id;
 
-  let imageId = imageIdWithSameDataUrl;
-  if (!imageId) {
-    imageId = "id" + hashCode(dataUrl.slice(100));
-    while (context.defs.querySelector(`#${imageId}`)) {
-      imageId += Math.floor(Math.random() * 10).toString();
+  let imageSymbolId = sameDataUrlSymbol;
+  if (!imageSymbolId) {
+    imageSymbolId = "id" + hashCode(dataUrl.slice(100));
+    while (context.defs.querySelector(`#${imageSymbolId}`)) {
+      imageSymbolId += Math.floor(Math.random() * 10).toString();
     }
     const imageElem = document.createElementNS(SVG_NAMESPACE, "image");
-    imageElem.setAttribute("id", imageId);
     imageElem.setAttribute("href", dataUrl);
-    imageElem.setAttribute("width", width);
-    imageElem.setAttribute("height", height);
-    context.defs.appendChild(imageElem);
+    imageElem.setAttribute("width", "100%");
+    imageElem.setAttribute("height", "100%");
+    imageElem.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+    const symbolElem = document.createElementNS(SVG_NAMESPACE, "symbol");
+    symbolElem.setAttribute("id", imageSymbolId);
+    symbolElem.appendChild(imageElem);
+    symbolElem.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    context.defs.appendChild(symbolElem);
   }
 
   const useElem = document.createElementNS(SVG_NAMESPACE, "use");
-  useElem.setAttribute("href", `#${imageId}`);
+  useElem.setAttribute("href", `#${imageSymbolId}`);
   useElem.setAttribute("x", x);
   useElem.setAttribute("y", y);
-  useElem.style.opacity = style.opacity || "1";
+  useElem.setAttribute("width", width);
+  useElem.setAttribute("height", height);
+  if (style.opacity && style.opacity !== "1") {
+    useElem.style.opacity = style.opacity;
+  }
 
   g.appendChild(useElem);
 };

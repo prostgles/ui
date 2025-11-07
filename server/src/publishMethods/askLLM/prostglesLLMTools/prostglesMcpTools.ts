@@ -47,13 +47,14 @@ export const getAddTaskTools = ({
 } = {}) => ({
   name: getProstglesMCPFullToolName("prostgles-ui", "suggest_tools_and_prompt"),
   description: fixIndent(`
-    This tool suggests tools and generates a prompt based on the provided task description.
-    The input will be shown to the user, and they can select which tools to use.
+    This tool will update the user chat context with suggests tools and prompt.
+    The input will be shown to the user for confirmation.
+    
     Available MCP tools: 
-    ${availableMCPTools.map((t) => `  - ${t.name}: ${t.description}`).join("\n")}
+    ${!availableMCPTools.length ? "None" : availableMCPTools.map((t) => `  - ${t.name}: ${t.description}`).join("\n")}
 
     Available database tools:
-    ${availableDBTools.map((t) => `  - ${t.name}: ${t.description}`).join("\n")}
+    ${!availableDBTools.length ? "None" : availableDBTools.map((t) => `  - ${t.name}: ${t.description}`).join("\n")}
 
     If access to the database is needed, an access type can be specified. 
     Use the most restrictive access type that is needed to complete the task (type custom with specific tables and allowed commands).

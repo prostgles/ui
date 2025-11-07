@@ -11,7 +11,7 @@ import { clickTableRow } from "./tableSvgif";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,
-  { openConnection, openMenuIfClosed },
+  { openConnection, openMenuIfClosed, toggleMenuPinned },
   { addScene, addSceneWithClickAnimation },
 ) => {
   await goTo(page, "/connections");
@@ -51,7 +51,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
 
   // await setOrAddWorkspace(page, "Default Grid Layout");
-  await openMenuIfClosed(true);
+  await toggleMenuPinned(false);
 
   /** Search all */
   await addScene({ caption: "Search all tables (Ctrl+Shift+F)" });
@@ -72,7 +72,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
       {
         type: "type",
         elementSelector: getCommandElemSelector("SearchAll"),
-        duration: 1000,
+        duration: 2000,
       },
     ],
   });

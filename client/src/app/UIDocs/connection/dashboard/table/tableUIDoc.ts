@@ -1,4 +1,4 @@
-import { fixIndent } from "../../../../../demo/scripts/sqlVideoDemo";
+import { fixIndent } from "src/demo/scripts/sqlVideoDemo";
 import type { UIDocElement } from "../../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../../getCommonViewHeaderUIDoc";
 import { paginationUIDoc } from "./paginationUIDoc";

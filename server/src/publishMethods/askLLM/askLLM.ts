@@ -14,7 +14,7 @@ import { getSerialisableError, isObject, omitKeys } from "prostgles-types";
 import { type DBS } from "../..";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
-import { getLLMAllowedChatTools } from "./getLLMTools";
+import { getLLMToolsAllowedInThisChat } from "./getLLMToolsAllowedInThisChat";
 
 import {
   getMCPToolNameParts,
@@ -78,7 +78,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     llm_prompt_id,
   } = await getValidatedAskLLMChatOptions(args);
 
-  const toolsWithInfo = await getLLMAllowedChatTools({
+  const toolsWithInfo = await getLLMToolsAllowedInThisChat({
     userType: user.type,
     dbs,
     chat,

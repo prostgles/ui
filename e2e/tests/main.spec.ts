@@ -273,7 +273,7 @@ test.describe("Main test", () => {
     };
     await fillHostAndTest("invalid___prostgles-test-mock");
     await page.getByText("Enabled").click();
-    await page.getByText("Save").click();
+    await page.getByText("Save").click({ timeout: 10e3 });
     const errNode = await page.getByTestId("EmailAuthSetup.error");
     await expect(await errNode.textContent()).toContain(
       // "getaddrinfo ENOTFOUND invalid___prostgles-test-mock", // or EAI_AGAIN

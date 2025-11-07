@@ -6,6 +6,8 @@ import { addSVGifCaption } from "./addSVGifCaption";
 import { getAnimationProperty } from "./getSVGif";
 import { getSVGifTargetBBox } from "./getSVGifTargetBBox";
 import type { SVGifParsedScene } from "./getSVGifParsedScenes";
+import { getSVGifRevealKeyframes } from "./getSVGifRevealKeyframes";
+import { getSVGifTypeAnimation } from "./animations/getSVGifTypeAnimation";
 
 /**
  * Given an SVGifScenes, return the animations
@@ -44,10 +46,8 @@ export const getSVGifAnimations = (
   let currentPrevDuration = 0;
   const prevSceneAnim = sceneAnimations.at(-1);
 
-  for (const [
-    sceneIndex,
-    { svgFileName, animations, svgDom, caption },
-  ] of parsedScenes.entries()) {
+  for (const [sceneIndex, parsedScene] of parsedScenes.entries()) {
+    const { svgFileName, animations, svgDom, caption } = parsedScene;
     if (!animations.length) {
       throw new Error(
         `No animations provided for scene ${sceneIndex} (${svgFileName}). Each scene must have at least one animation.`,
@@ -74,11 +74,7 @@ export const getSVGifAnimations = (
 
     sceneKeyframes.push(`${getPercent(currentPrevDuration)}% ${visible}`);
 
-    const sceneNodeAnimations: {
-      sceneId: string;
-      elemSelector: string;
-      keyframes: string[];
-    }[] = [];
+    const sceneNodeAnimations: SceneNodeAnimation[] = [];
     let sceneNodeAnimationsStyle = "";
     const getDefs = () => {
       let defs = svgDom.querySelector("defs");
@@ -109,14 +105,7 @@ export const getSVGifAnimations = (
           target: animation.xy,
         });
       } else {
-        const {
-          type,
-          lingerMs = 500,
-          waitBeforeClick = 300,
-          duration,
-          elementSelector,
-          offset,
-        } = animation;
+        const { type, duration, elementSelector } = animation;
 
         const { bbox, element } = getSVGifTargetBBox({
           elementSelector,
@@ -133,7 +122,7 @@ export const getSVGifAnimations = (
           sceneNodeAnimations.push({
             sceneId,
             elemSelector: elementSelector,
-            keyframes: getRevealKeyframes({
+            keyframes: getSVGifRevealKeyframes({
               fromPerc,
               toPerc,
               mode: type === "fadeIn" ? "opacity" : "growIn",
@@ -141,38 +130,102 @@ export const getSVGifAnimations = (
             }),
           });
         } else if (type === "type") {
-          const tSpansOrText = Array.from(
-            element.querySelectorAll<SVGTSpanElement | SVGTextElement>(
-              "tspan, text",
-            ),
+          const parsedAnimations = getSVGifTypeAnimation(
+            { height, width },
+            { element, bbox },
+            parsedScene,
+            animation,
+            { sceneId, sceneIndex, totalDuration, getPercent, fromTime },
           );
-          if (!tSpansOrText.length) {
-            throw `No tspan elements found in element: ${elementSelector} in SVG file ${svgFileName}. "type" animations require the target element to contain one or more <tspan> elements.`;
-          }
-          const totalWidth = tSpansOrText.reduce(
-            (acc, tspan) => acc + tspan.getComputedTextLength(),
-            0,
-          );
-          const msPerPx = duration / totalWidth;
-          let currentXOffset = 0;
-          tSpansOrText.forEach((tspanOrText, i) => {
-            const tspanWidth = tspanOrText.getComputedTextLength();
-            const tspanDuration = tspanWidth * msPerPx;
-            const toTime = fromTime + tspanDuration;
-            const fromPerc = Number(getPercent(fromTime));
-            const toPerc = Number(getPercent(toTime));
-            sceneNodeAnimations.push({
-              sceneId,
-              elemSelector: `${elementSelector} ${tspanOrText.nodeName}:nth-of-type(${i + 1})`,
-              keyframes: getRevealKeyframes({
-                fromPerc,
-                toPerc,
-                mode: "left to right",
-              }),
-            });
-            currentXOffset += tspanWidth;
-          });
+          sceneNodeAnimations.push(...parsedAnimations.sceneNodeAnimations);
+          appendStyle(parsedAnimations.style);
+          // const tSpansOrText = Array.from(
+          //   element.querySelectorAll<SVGTSpanElement | SVGTextElement>(
+          //     "tspan, text",
+          //   ),
+          // );
+          // if (!tSpansOrText.length) {
+          //   throw `No tspan elements found in element: ${elementSelector} in SVG file ${svgFileName}. "type" animations require the target element to contain one or more <tspan> elements.`;
+          // }
+          // const totalWidth = tSpansOrText.reduce(
+          //   (acc, tspan) => acc + tspan.getComputedTextLength(),
+          //   0,
+          // );
+          // const msPerPx = duration / totalWidth;
+          // let currentXOffset = 0;
+          // tSpansOrText.forEach((tspanOrText, i) => {
+          //   const tspanWidth = tspanOrText.getComputedTextLength();
+          //   const tspanDuration = tspanWidth * msPerPx;
+          //   const toTime = fromTime + tspanDuration;
+          //   const fromPerc = Number(getPercent(fromTime));
+          //   const toPerc = Number(getPercent(toTime));
+          //   sceneNodeAnimations.push({
+          //     sceneId,
+          //     elemSelector: `${elementSelector} ${tspanOrText.nodeName}:nth-of-type(${i + 1})`,
+          //     keyframes: getSVGifRevealKeyframes({
+          //       fromPerc,
+          //       toPerc,
+          //       mode: "left to right",
+          //     }),
+          //   });
+          //   currentXOffset += tspanWidth;
+          // });
+          // /** Add root svg zoom in-out animation to the typed */
+          // const animProp = getAnimationProperty({
+          //   animName: `scene-${sceneIndex}-type-zoom`,
+          //   elemSelector: `svg#${sceneId} g#${svgDom.querySelector(":scope > g")!.id}`,
+          //   totalDuration,
+          // });
+
+          // const requiredScale = (svgDom.clientWidth * 0.8) / totalWidth;
+          // const effectiveScale = toFixed(
+          //   requiredScale,
+          //   // Math.min(1.05, Math.max(1.02, requiredScale)),
+          // );
+          // const toPerc = getPercent(fromTime + duration);
+          // const zoomedPerc1 = getPercent(fromTime + duration / 4);
+          // const zoomedPerc2 = getPercent(fromTime + (duration / 4) * 3);
+
+          // // Calculate center of the element
+          // const elementCenterX = toFixed(bbox.x + bbox.width / 2);
+          // const elementCenterY = toFixed(bbox.y + bbox.height / 2);
+
+          // // Calculate viewport center
+          // const viewportCenterX = toFixed(width / 2);
+          // const viewportCenterY = toFixed(height / 2);
+
+          // // Calculate translation needed to center the element
+          // const translateX = toFixed(viewportCenterX - elementCenterX);
+          // const translateY = toFixed(viewportCenterY - elementCenterY);
+
+          // // const transformOriginX = toFixed(bbox.x + bbox.width / 2);
+          // // const transformOriginY = toFixed(bbox.y + bbox.height / 2);
+          // // const transformOrigin = `${translateX}px ${translateY}px`;
+
+          // appendStyle(
+          //   fixIndent(`
+          //   @keyframes scene-${sceneIndex}-type-zoom {
+          //     ${fromPerc}%    { transform: translate(0px, 0px) scale(1);}
+          //     ${zoomedPerc1}% { transform: translate(${translateX}px, ${translateY}px) scale(${effectiveScale}); }
+          //     ${zoomedPerc2}% { transform: translate(${translateX}px, ${translateY}px) scale(${effectiveScale}); }
+          //     ${toPerc}%      { transform: translate(0px, 0px) scale(1); }
+          //     ${toFixed(
+          //       Math.min(100, toPerc + 0.1),
+          //     )}% { transform: translate(0px, 0px) scale(1); }
+          //   }
+          //   ${animProp}
+          // `),
+          // );
         } else {
+          const {
+            type,
+            lingerMs = 500,
+            waitBeforeClick = 300,
+            duration,
+            elementSelector,
+            offset,
+          } = animation;
+
           const xOffset = offset?.x ?? Math.min(60, bbox.width / 2);
           const yOffset = offset?.y ?? Math.min(30, bbox.height / 2);
           const cx = bbox.x + xOffset;
@@ -215,7 +268,7 @@ export const getSVGifAnimations = (
             sceneNodeAnimations.push({
               sceneId,
               elemSelector: elementSelector,
-              keyframes: getRevealKeyframes({
+              keyframes: getSVGifRevealKeyframes({
                 fromPerc: appearPerc,
                 toPerc,
                 mode: "opacity",
@@ -284,7 +337,11 @@ export const getSVGifAnimations = (
 
   const firstTranslate = `transform: translate(${toFixed(x0)}px, ${toFixed(y0)}px)`;
   const cursorKeyframes = [`0% { opacity: 0; ${firstTranslate}; }`];
-  cursorMovements.forEach(
+  const cursorMovementsFixed = cursorMovements.map((e) => ({
+    ...e,
+    target: e.target.map(toFixed),
+  }));
+  cursorMovementsFixed.forEach(
     ({ fromPerc, toPerc, lingerPerc, target: [x, y] }, i, arr) => {
       const translate = `transform: translate(${x}px, ${y}px)`;
       const prevTarget = arr[i - 1]?.target ?? [x0, y0].map(toFixed);
@@ -306,26 +363,16 @@ export const getSVGifAnimations = (
   };
 };
 
+export type SceneNodeAnimation = {
+  sceneId: string;
+  elemSelector: string;
+  keyframes: string[];
+};
+
 const appendSvgToSvg = (
   { svgFile, id, svgDom }: { svgFile: string; id: string; svgDom: SVGElement },
   g: SVGGElement,
 ) => {
-  // const img = document.createElementNS(SVG_NAMESPACE, "image");
-  // img.setAttribute("id", id);
-  // img.setAttribute("xmlns", SVG_NAMESPACE);
-  // img.setAttribute(
-  //   "href",
-  //   `data:image/svg+xml;utf8,${encodeURIComponent(svgFile)}`,
-  // );
-  // img.setAttribute("width", "100%");
-  // img.setAttribute("height", "100%");
-  // img.setAttribute("style", "opacity: 0;");
-  // g.appendChild(img);
-
-  // const wrappingG = document.createElementNS(SVG_NAMESPACE, "g");
-  // wrappingG.setAttribute("id", id);
-  // wrappingG.style.opacity = "0";
-  // wrappingG.append(...Array.from(svgDom.children));
   svgDom.setAttribute("id", id);
   g.appendChild(svgDom);
 
@@ -338,45 +385,3 @@ const appendSvgToSvg = (
 
 const visible = "{  visibility: visible; }";
 const hidden = "{  visibility: hidden; }";
-
-const getRevealKeyframes = ({
-  fromPerc,
-  toPerc,
-  mode,
-}: {
-  fromPerc: number;
-  toPerc: number;
-  mode: "top to bottom" | "left to right" | "opacity" | "growIn";
-}) => {
-  if (mode === "growIn") {
-    return [
-      !fromPerc ? "" : (
-        `0% { opacity: 0; transform: scale(0.2); transform-origin: center; }`
-      ),
-      `${toFixed(fromPerc)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
-      `${toFixed(fromPerc + 0.1)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
-      `${toFixed(toPerc)}% { opacity: 1; transform: scale(1); transform-origin: center; }`,
-      toPerc === 100 ? "" : (
-        `100% { opacity: 1; transform: scale(1); transform-origin: center; }`
-      ),
-    ].filter(Boolean);
-  }
-  if (mode === "opacity") {
-    return [
-      !fromPerc ? "" : `0% { opacity: 0; }`,
-      `${toFixed(fromPerc)}% { opacity: 0; }`,
-      `${toFixed(fromPerc + 0.1)}% { opacity: 0; }`,
-      `${toFixed(toPerc)}% { opacity: 1; }`,
-      toPerc === 100 ? "" : `100% { opacity: 1; }`,
-    ].filter(Boolean);
-  }
-  const clippedInset =
-    mode === "top to bottom" ? `inset(0 0 100% 0)` : `inset(0 100% 0 0)`;
-  return [
-    !fromPerc ? "" : `0% { opacity: 0; clip-path: ${clippedInset} }`,
-    `${toFixed(fromPerc)}% { opacity: 0; clip-path: ${clippedInset} }`,
-    `${toFixed(fromPerc + 0.1)}% { opacity: 1; clip-path: ${clippedInset} }`,
-    `${toFixed(toPerc)}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
-    toPerc === 100 ? "" : `100% { opacity: 1; clip-path: inset(0 0 0 0); }`,
-  ].filter(Boolean);
-};

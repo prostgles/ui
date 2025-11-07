@@ -14,12 +14,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.54.1",
+    "@playwright/test": "^1.56.1",
     "@types/node": "^20.4.4",
-    "@types/smtp-server": "^3.5.10",
+    "@types/smtp-server": "^3.5.12",
     "otplib": "^12.0.1"
   },
   "dependencies": {
-    "smtp-server": "^3.13.6"
+    "smtp-server": "^3.16.1"
   }
 }

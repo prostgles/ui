@@ -103,24 +103,30 @@ export const domToThemeAwareSVG = async (
       const lightHref = lightNode.getAttribute("href");
       const darkHref = darkNode?.getAttribute("href");
       if (lightHref && darkHref) {
-        const darkRefImg = svgDark.querySelector<SVGImageElement>(darkHref);
-        const lightRefImg = svgLight.querySelector<SVGImageElement>(lightHref);
-        const darkRefImgData = darkRefImg?.href.baseVal;
-        const lightRefImgData = lightRefImg?.href.baseVal;
+        const darkRefImgSymbol =
+          svgDark.querySelector<SVGImageElement>(darkHref);
+        const lightRefImgSymbol =
+          svgLight.querySelector<SVGImageElement>(lightHref);
+        const darkRefImgData =
+          darkRefImgSymbol?.querySelector("image")?.href.baseVal;
+        const lightRefImgData =
+          lightRefImgSymbol?.querySelector("image")?.href.baseVal;
         if (
           darkRefImgData &&
           lightRefImgData &&
           darkRefImgData !== lightRefImgData
         ) {
           /** Add dark image into light svg */
-          const darkImage = darkRefImg.cloneNode(true) as SVGImageElement;
-          darkImage.id = `${darkImage.id}-dark`;
+          const darkImageSymbolClone = darkRefImgSymbol.cloneNode(
+            true,
+          ) as SVGImageElement;
+          darkImageSymbolClone.id = `${darkImageSymbolClone.id}-dark`;
           lightNode.ownerSVGElement
             ?.querySelector("defs")
-            ?.appendChild(darkImage);
+            ?.appendChild(darkImageSymbolClone);
 
           const darkThemeUse = lightNode.cloneNode(true) as SVGUseElement;
-          darkThemeUse.setAttribute("href", `#${darkImage.id}`);
+          darkThemeUse.setAttribute("href", `#${darkImageSymbolClone.id}`);
           darkThemeUse.style.opacity = `var(${displayNoneIfLight})`;
           lightNode.parentElement?.appendChild(darkThemeUse);
           lightNode.style.opacity = `var(${displayNoneIfDark})`;

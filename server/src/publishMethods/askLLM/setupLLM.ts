@@ -62,7 +62,7 @@ export const setupLLM = async (dbs: DBS) => {
           firstLine,
           "Assist the user with any queries they might have in their current task mode.",
           "They expect you to look at the schema and the tools available to them and return a list of tools are best suited for accomplishing their task.",
-          "Do not assume anything and ask the user for more information until you're 90% confident of what tools they need.",
+          "Ask the user for more information if you are not sure.",
           "When suggesting a prompt make sure you add a ${today} placeholder that will be replaced with today's date.",
           "",
           "",

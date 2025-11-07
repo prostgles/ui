@@ -6,7 +6,7 @@ import type {
 } from "../ToolUseChatMessage/ToolUseChatMessage";
 import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
-import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt";
+import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 
 export const ProstglesMCPToolsWithUI = {

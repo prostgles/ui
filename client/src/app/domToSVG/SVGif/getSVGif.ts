@@ -65,10 +65,12 @@ export const getAnimationProperty = (
     elemSelector,
     animName,
     totalDuration,
+    otherProps = "",
   }: {
     elemSelector: string;
     animName: string;
     totalDuration: number;
+    otherProps?: string;
   },
   onlyValue = false,
 ) => {
@@ -80,6 +82,7 @@ export const getAnimationProperty = (
   return fixIndent(`
       ${elemSelector} {
         ${value}
+        ${otherProps}
       }
     `);
 };

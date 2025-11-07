@@ -132,7 +132,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           },
           suggested_prompt: {
             description:
-              "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.",
+              "System prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.",
             type: "string",
           },
           suggested_database_access: {

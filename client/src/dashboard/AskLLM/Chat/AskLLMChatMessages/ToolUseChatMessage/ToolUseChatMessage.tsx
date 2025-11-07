@@ -58,6 +58,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
             <PopupMenu
               positioning="fullscreen"
               title={m.name}
+              onClickClose={false}
               button={
                 <Btn iconPath={mdiCodeJson} className="show-on-trigger-hover" />
               }

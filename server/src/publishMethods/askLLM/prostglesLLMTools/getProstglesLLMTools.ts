@@ -1,8 +1,4 @@
-import {
-  getJSONBSchemaAsJSONSchema,
-  isDefined,
-  type JSONB,
-} from "prostgles-types";
+import { getJSONBSchemaAsJSONSchema, isDefined } from "prostgles-types";
 import type { DBS } from "../../..";
 
 import {
@@ -12,13 +8,15 @@ import {
 } from "@common/prostglesMcp";
 import { getDockerMCP } from "../../../DockerManager/getDockerMCP";
 
-import type {
-  GetLLMToolsArgs,
-  MCPToolSchema,
-  MCPToolSchemaWithApproveInfo,
-} from "../getLLMTools";
-import { getAddTaskTools, suggestDashboardsTool } from "./prostglesMcpTools";
+import {
+  type GetLLMToolsArgs,
+  type MCPToolSchema,
+  type MCPToolSchemaWithApproveInfo,
+} from "../getLLMToolsAllowedInThisChat";
 import { getProstglesDBTools } from "./getProstglesDBTools";
+import { getPublishedMethodsTools } from "./getPublishedMethodsTools";
+import { getAddTaskTools, suggestDashboardsTool } from "./prostglesMcpTools";
+import { getMCPServerTools } from "./getMCPServerTools";
 
 export const getProstglesLLMTools = async ({
   userType,
@@ -26,6 +24,7 @@ export const getProstglesLLMTools = async ({
   chat,
   prompt,
   mcpToolsWithInfo,
+  connectionId,
 }: Omit<GetLLMToolsArgs, "connectionId"> & {
   mcpToolsWithInfo: {
     input_schema: any;
@@ -36,6 +35,7 @@ export const getProstglesLLMTools = async ({
     name: `${string}--${string}`;
     type: "mcp";
   }[];
+  connectionId: string;
 }) => {
   const isAdmin = userType === "admin";
   const { prompt_type } = prompt.options ?? {};
@@ -45,7 +45,10 @@ export const getProstglesLLMTools = async ({
     if (!isAdmin) {
       throw new Error("Only admins can use task creation tools");
     }
-    const { published_methods } = await getPublishedMethodsTools(dbs, {});
+    const { published_methods } = await getPublishedMethodsTools(dbs, {
+      chatId: chat.id,
+      connectionId,
+    });
     const { mcp_server_tools } = await getMCPServerTools(dbs, {});
     taskTool = getAddTaskTools({
       availableMCPTools: mcp_server_tools.map((t) => ({
@@ -121,59 +124,4 @@ export const getProstglesLLMTools = async ({
   }
 
   return { mcpToolsWithDocker, prostglesDBTools };
-};
-
-const getMCPServerTools = async (
-  dbs: DBS,
-  filter: Parameters<typeof dbs.mcp_server_tools.find>[0],
-) => {
-  const mcp_server_tools = await dbs.mcp_server_tools.find(filter);
-  const mcpTools = mcp_server_tools.map((t) => {
-    return {
-      id: t.id,
-      name: getMCPFullToolName(t.server_name, t.name),
-      description: t.description,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      input_schema: t.inputSchema,
-    } satisfies MCPToolSchema & { id: number };
-  });
-  return { mcpTools, mcp_server_tools };
-};
-
-const getPublishedMethodsTools = async (
-  dbs: DBS,
-  filter: Parameters<typeof dbs.published_methods.find>[0],
-) => {
-  const published_methods = await dbs.published_methods.find(filter);
-  const serverSideFuncTools = published_methods.map((m) => {
-    const { name, description, arguments: _arguments, id } = m;
-    const properties = _arguments.reduce(
-      (acc, arg) => ({
-        ...acc,
-        [arg.name]:
-          (
-            arg.type === "JsonbSchema" ||
-            arg.type === "Lookup" ||
-            arg.type === "Lookup[]"
-          ) ?
-            "any"
-          : arg.type,
-      }),
-      {} as JSONB.ObjectType["type"],
-    );
-    return {
-      id,
-      tool_name: name,
-      name: getProstglesMCPFullToolName("prostgles-db-methods", name),
-      description,
-      input_schema: getJSONBSchemaAsJSONSchema(
-        "published_methods",
-        "arguments",
-        {
-          type: properties,
-        },
-      ),
-    } satisfies MCPToolSchema & { id: number; tool_name: string };
-  });
-  return { serverSideFuncTools, published_methods };
 };

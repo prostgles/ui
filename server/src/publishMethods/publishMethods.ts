@@ -54,7 +54,7 @@ import { upsertConnection } from "../upsertConnection";
 import { getSampleSchemas } from "./applySampleSchema";
 import { askLLM } from "./askLLM/askLLM";
 import { getFullPrompt } from "./askLLM/getFullPrompt";
-import { getLLMAllowedChatTools } from "./askLLM/getLLMTools";
+import { getLLMToolsAllowedInThisChat } from "./askLLM/getLLMToolsAllowedInThisChat";
 import { refreshModels } from "./askLLM/refreshModels";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
@@ -707,7 +707,7 @@ export const publishMethods: PublishMethods<
       if (!chat.llm_prompt_id) throw "Chat prompt_id not found";
       const prompt = await dbs.llm_prompts.findOne({ id: chat.llm_prompt_id });
       if (!prompt) throw "Chat prompt not found";
-      const allowedTools = await getLLMAllowedChatTools({
+      const allowedTools = await getLLMToolsAllowedInThisChat({
         chat,
         userType: user.type,
         dbs,

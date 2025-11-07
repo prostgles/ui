@@ -507,15 +507,14 @@ export declare namespace SVGif {
   export type Animation =
     | {
         elementSelector: string;
+        duration: number;
+        type: "type";
+      }
+    | {
+        elementSelector: string;
         offset?: { x: number; y: number };
         duration: number;
-        type:
-          | "click"
-          | "clickAppearOnHover"
-          | "zoomTo"
-          | "type"
-          | "fadeIn"
-          | "growIn";
+        type: "click" | "clickAppearOnHover" | "zoomTo" | "fadeIn" | "growIn";
 
         /**
          * Time to wait before clicking after reaching the final position
