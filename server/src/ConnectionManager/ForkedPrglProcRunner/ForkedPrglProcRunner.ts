@@ -4,7 +4,7 @@ import * as path from "path";
 import pidusage from "pidusage";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import { type AnyObject, isObject } from "prostgles-types";
-import type { DBS } from "..";
+import type { DBS } from "../..";
 import { FORKED_PROC_ENV_NAME, type ProcStats } from "@common/utils";
 import { getError } from "./forkedProcess";
 
@@ -41,11 +41,13 @@ export type ForkedProcMessage =
   | ForkedProcMessageStart
   | ForkedProcMessageRun
   | ForkedProcMCPResult;
+
 export type ForkedProcMessageError = {
   lastMsgId: string;
   type: "error";
   error: any;
 };
+
 export type ForkedProcMessageResult =
   | {
       id: string;

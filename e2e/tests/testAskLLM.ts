@@ -227,7 +227,7 @@ export const testAskLLMCode = `
 const toolResponses = ${stringify(toolResponses)};
 
 const lastMsg = args.messages.at(-1);
-const lastMsgText = lastMsg?.content?.[0]?.text;
+const lastMsgText = lastMsg?.content?.[0]?.type === "image_url"? " receipt " : lastMsg?.content?.[0]?.text;
 const { tool_call_id } = lastMsg ?? {};
 const toolCallKeyResult = typeof tool_call_id === "string"? tool_call_id.split("#")[0] : undefined;
 const toolResult = toolCallKeyResult && toolResponses[toolCallKeyResult];

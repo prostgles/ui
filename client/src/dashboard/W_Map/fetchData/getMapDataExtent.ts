@@ -1,7 +1,7 @@
 import type { AnyObject } from "prostgles-types";
-import type { DecKGLMapProps } from "../Map/DeckGLMap";
-import type W_Map from "./W_Map";
-import { defaultWorldExtent } from "../WindowControls/AddChartLayer";
+import type { DecKGLMapProps } from "../../Map/DeckGLMap";
+import type W_Map from "../W_Map";
+import { defaultWorldExtent } from "../../WindowControls/AddChartLayer";
 
 /**
  *

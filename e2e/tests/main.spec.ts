@@ -52,6 +52,7 @@ import {
   TEST_DB_NAME,
   USERS,
 } from "utils/constants";
+import exp = require("constants");
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -851,6 +852,22 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
     await page.waitForTimeout(4e3); // wait for askLLM publish method forked process to restart after schema change
     await dockerRunAndExpect(`username: 'fresh_user'`, true);
+
+    /** Test stopping chat */
+    await page.getByTestId("Popup.close").last().click();
+    await page.getByTestId("AskLLMChat.NewChat").click();
+    await page.waitForTimeout(1500);
+    await sendAskLLMMessage(page, " longresponse ", {
+      onAfterSend: async () => {
+        await page.getByTestId("Chat.sendStop").click();
+      },
+    });
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `longresponse`,
+    );
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `aborted by user`,
+    );
   });
 
   test("Disable signups", async ({ page: p }) => {

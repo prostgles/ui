@@ -17,7 +17,7 @@ import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import { AutoRefreshMenu } from "../W_Table/TableMenu/AutoRefreshMenu";
 import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
-import { MapBasemapOptions } from "./MapBasemapOptions";
+import { MapBasemapOptions } from "./controls/MapBasemapOptions";
 import type { W_MapProps } from "./W_Map";
 export const MAP_PROJECTIONS = ["mercator", "orthographic"] as const;
 

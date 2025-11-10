@@ -12,7 +12,7 @@ import W_Map from "../W_Map/W_Map";
 import {
   getLinkColorV2,
   getMapLayerQueries,
-} from "../W_Map/getMapLayerQueries";
+} from "../W_Map/fetchData/getMapLayerQueries";
 import { W_Method } from "../W_Method/W_Method";
 import { W_SQL } from "../W_SQL/W_SQL";
 import type { ActiveRow } from "../W_Table/W_Table";

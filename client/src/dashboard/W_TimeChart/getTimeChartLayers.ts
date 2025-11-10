@@ -1,7 +1,7 @@
 import { isDefined } from "prostgles-types";
 import type { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { getCrossFilters } from "../joinUtils";
-import { getLinkColor } from "../W_Map/getMapLayerQueries";
+import { getLinkColor } from "../W_Map/fetchData/getMapLayerQueries";
 import type { ActiveRow } from "../W_Table/W_Table";
 import { tryCatchV2 } from "../WindowControls/TimeChartLayerOptions";
 import type { ProstglesTimeChartLayer } from "./W_TimeChart";

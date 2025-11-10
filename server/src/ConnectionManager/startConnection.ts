@@ -22,7 +22,7 @@ import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc, type DBS } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
 import { getHotReloadConfigs } from "./ConnectionManager";
-import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
+import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionPublishMethods } from "./getConnectionPublishMethods";

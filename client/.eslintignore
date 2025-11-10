@@ -4,5 +4,4 @@ examples
 **/*.d.ts
 **/*.js
 tests
-WebComponents.ts
 .eslintrc.js

@@ -6,7 +6,7 @@ import type { MapLayerManagerProps } from "./ChartLayerManager";
 import { FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
 import Btn from "@components/Btn";
-import { MapOSMQuery } from "../W_Map/MapOSMQuery";
+import { MapOSMQuery } from "../W_Map/controls/MapOSMQuery";
 import type { Extent } from "../Map/DeckGLMap";
 
 export const defaultWorldExtent: Extent = [-180, -90, 180, 90];

@@ -95,6 +95,7 @@ export const getPublishLLM = (
                 content: [{ type: "text", text: "Hey" }],
               },
             ],
+            aborter: new AbortController(),
           });
         },
       },

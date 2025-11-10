@@ -23,7 +23,7 @@ import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connMgr } from "../index";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfig";
-import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
+import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 import {
   getCompiledTS,
   getRestApiConfig,

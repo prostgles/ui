@@ -76,6 +76,7 @@ export const SearchInput = (props: SearchInputProps) => {
         type={type}
         ref={inputRef}
         style={{
+          minWidth: "5em",
           ...(mode?.["!noList"] && {
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,

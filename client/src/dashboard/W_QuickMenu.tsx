@@ -18,7 +18,7 @@ import { isJoinedFilter } from "@common/filterUtils";
 import { classOverride } from "@components/Flex";
 import { t } from "../i18n/i18nUtils";
 import type { DBS } from "./Dashboard/DBS";
-import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
+import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
 

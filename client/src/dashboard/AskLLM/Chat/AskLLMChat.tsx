@@ -49,6 +49,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     dbs,
     dbsTables,
     methods,
+    dbsMethods: { stopAskLLM },
   } = prgl;
   const chatState = useLLMChat({
     ...setupState,
@@ -122,12 +123,20 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     };
   }, []);
 
+  const status = activeChat?.status;
+  const isLoading = status?.state === "loading";
+  const chatIsLoading =
+    isLoading && new Date(status.since) > new Date(Date.now() - 1 * MINUTE);
+
+  const onStopSending = useMemo(() => {
+    if (!isLoading || activeChatId === undefined || !stopAskLLM) {
+      return;
+    }
+    return () => stopAskLLM(activeChatId);
+  }, [activeChatId, isLoading, stopAskLLM]);
+
   /* Prevents flickering when popup is opened */
   if (!messages) return;
-  const status = activeChat?.status;
-  const chatIsLoading =
-    status?.state === "loading" &&
-    new Date(status.since) > new Date(Date.now() - 1 * MINUTE);
   return (
     <Popup
       data-command="AskLLM.popup"
@@ -192,16 +201,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             }}
             onSend={sendMessage}
             isLoading={chatIsLoading}
-            onStopSending={
-              status?.state !== "loading" ?
-                undefined
-              : () => {
-                  dbs.llm_chats.update(
-                    { id: activeChatId },
-                    { status: { state: "stopped" } },
-                  );
-                }
-            }
+            onStopSending={onStopSending}
             actionBar={
               isAdmin && (
                 <AskLLMChatActionBar

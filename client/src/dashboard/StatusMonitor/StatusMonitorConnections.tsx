@@ -1,5 +1,5 @@
 import { mdiFilter, mdiStopCircleOutline } from "@mdi/js";
-import React from "react";
+import React, { useMemo } from "react";
 import type { ConnectionStatus } from "@common/utils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
@@ -20,72 +20,81 @@ export const StatusMonitorConnections = ({
   onSetDatidFilter,
   datidFilter,
 }: P) => {
-  const connectionsColumns: ProstglesColumn[] = [
-    {
-      key: "kill-conneciton",
-      label: "",
-      name: "kill-conneciton",
-      tsDataType: "string",
-      udt_name: "text",
-      filter: false,
-      computed: false,
-      sortable: false,
-      width: 60,
-      onRender: ({ row: { datid } }) => (
-        <Btn
-          title="Kill connection"
-          iconPath={mdiStopCircleOutline}
-          color="danger"
-          onClickPromise={async () => {
-            const query = `
+  const connectionsColumns: ProstglesColumn[] = useMemo(
+    () => [
+      {
+        key: "kill-conneciton",
+        label: "",
+        name: "kill-conneciton",
+        tsDataType: "string",
+        udt_name: "text",
+        filter: false,
+        computed: false,
+        sortable: false,
+        width: 60,
+        onRender: ({ row: { datid } }) => (
+          <Btn
+            title="Kill connection"
+            iconPath={mdiStopCircleOutline}
+            color="danger"
+            onClickPromise={async () => {
+              const query = `
             SELECT *, pg_terminate_backend(pid)
             FROM pg_stat_activity 
             WHERE pid <> pg_backend_pid()
             AND datid = \${datid};
           `;
-            await dbsMethods.runConnectionQuery!(connectionId, query, {
-              datid,
-            });
-          }}
-        />
+              await dbsMethods.runConnectionQuery!(connectionId, query, {
+                datid,
+              });
+            }}
+          />
+        ),
+      },
+      {
+        key: "show-conneciton-queries",
+        label: "",
+        name: "show-conneciton-queries",
+        tsDataType: "string",
+        udt_name: "text",
+        filter: false,
+        computed: false,
+        sortable: false,
+        width: 60,
+        onRender: ({ row: { datid } }) => (
+          <Btn
+            title="Filter queries by this connection"
+            iconPath={mdiFilter}
+            color="action"
+            variant={datidFilter === datid ? "filled" : undefined}
+            onClick={() => {
+              onSetDatidFilter(datid);
+            }}
+          />
+        ),
+      },
+      ...Object.keys(c.connections[0] ?? {}).map(
+        (key) =>
+          ({
+            key,
+            name: key,
+            tsDataType: "string",
+            udt_name: "text",
+            filter: false,
+            sortable: false,
+            label: key,
+            computed: false,
+          }) satisfies ProstglesColumn,
       ),
-    },
-    {
-      key: "show-conneciton-queries",
-      label: "",
-      name: "show-conneciton-queries",
-      tsDataType: "string",
-      udt_name: "text",
-      filter: false,
-      computed: false,
-      sortable: false,
-      width: 60,
-      onRender: ({ row: { datid } }) => (
-        <Btn
-          title="Filter queries by this connection"
-          iconPath={mdiFilter}
-          color="action"
-          variant={datidFilter === datid ? "filled" : undefined}
-          onClick={() => {
-            onSetDatidFilter(datid);
-          }}
-        />
-      ),
-    },
-    ...Object.keys(c.connections[0] ?? {}).map(
-      (key) =>
-        ({
-          key,
-          name: key,
-          tsDataType: "string",
-          udt_name: "text",
-          filter: false,
-          sortable: false,
-          label: key,
-          computed: false,
-        }) satisfies ProstglesColumn,
-    ),
-  ];
+    ],
+    [
+      c.connections,
+      connectionId,
+      datidFilter,
+      dbsMethods.runConnectionQuery,
+      onSetDatidFilter,
+    ],
+  );
 
   const connNum = c.connections.length;
   const maxConnNum = c.maxConnections;

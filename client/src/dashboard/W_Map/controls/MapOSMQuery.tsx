@@ -6,14 +6,14 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Select from "@components/Select/Select";
-import { getKeys } from "../../utils";
-import { CodeEditor } from "../CodeEditor/CodeEditor";
-import type { GeoJSONFeature } from "../Map/DeckGLMap";
-import { download } from "../W_SQL/W_SQL";
-import { getOSMData } from "./OSM/getOSMData";
-import { predefinedOsmQueries } from "./OSM/osmTypes";
+import { getKeys } from "../../../utils";
+import { CodeEditor } from "../../CodeEditor/CodeEditor";
+import type { GeoJSONFeature } from "../../Map/DeckGLMap";
+import { download } from "../../W_SQL/W_SQL";
+import { getOSMData } from "../OSM/getOSMData";
+import { predefinedOsmQueries } from "../OSM/osmTypes";
 import { mdiDownload, mdiPlus } from "@mdi/js";
-import { OverpassQuery } from "./OSM/OverpassQuery";
+import { OverpassQuery } from "../OSM/OverpassQuery";
 
 type DataType = keyof typeof predefinedOsmQueries;
 

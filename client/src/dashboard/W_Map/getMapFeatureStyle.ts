@@ -7,7 +7,7 @@ import type {
 } from "../Map/DeckGLMap";
 import { blend } from "../W_Table/colorBlend";
 import { asRGB } from "../W_Table/ColumnMenu/ColorPicker";
-import { MAP_SELECT_COLUMNS } from "./getMapData";
+import { MAP_SELECT_COLUMNS } from "./fetchData/getMapData";
 import type { ClickedItem, LayerQuery } from "./W_Map";
 
 export const rgbaToString = (rgba: DeckGlColor) => {

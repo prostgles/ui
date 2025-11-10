@@ -26,13 +26,14 @@ import W_Table from "../W_Table/W_Table";
 import Window from "../Window";
 import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
 import { W_MapMenu } from "./W_MapMenu";
-import { getMapDataExtent } from "./getMapDataExtent";
+import { getMapDataExtent } from "./fetchData/getMapDataExtent";
 import type { HoveredObject } from "./onMapHover";
 import { onMapHover } from "./onMapHover";
-import { fetchMapLayerData } from "./fetchMapLayerData";
+import { fetchMapLayerData } from "./fetchData/fetchMapLayerData";
 import { SmartForm } from "../SmartForm/SmartForm";
 import { isObject } from "@common/publishUtils";
-import { getMapFilter } from "./getMapData";
+import { getMapFilter } from "./fetchData/getMapData";
+import { MapInfoSection } from "./controls/MapInfoSection";
 
 export type LayerBase = {
   /**
@@ -410,7 +411,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
   render() {
     const {
       minimised = false,
-      layers: _layers = [],
+      layers: fetchedLayers = [],
       loadingLayers,
       clickedItem,
       hoverCoords,
@@ -420,12 +421,12 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
       error,
     } = this.state;
     const { w } = this.d;
-    const { layerQueries, onClickRow, prgl } = this.props;
+    const { layerQueries, onClickRow, prgl, active_row } = this.props;
 
     if (!w) return null;
 
-    const layers: typeof _layers = [
-      ..._layers,
+    const layers: typeof fetchedLayers = [
+      ...fetchedLayers,
       ...(drawingShape ?
         [
           {
@@ -445,9 +446,6 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         ]
       : []),
     ];
-
-    // !w?.options?.extent &&
-    // if(!this.state.layers) return <div className="relative f-1"><Loading variant="cover" /></div>
 
     let tooltipPopup: React.ReactNode = null;
     if (hovData && hoverCoords && this.ref) {
@@ -491,24 +489,6 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
             })}
           </div>
         </Popup>
-      );
-    }
-
-    let infoSection;
-
-    if (loadingLayers && w.options.refresh?.type !== "Realtime") {
-      infoSection = (
-        <div className="f-1 flex-col jc-center ai-center absolute pl-2 mt-1 ml-2">
-          <Loading delay={100} />
-        </div>
-      );
-    }
-
-    if (error) {
-      infoSection = (
-        <div className="f-1 flex-row relative m-2 ai-center absolute p-2 bg-color-0 rounded max-h-fit">
-          <ErrorComponent title="Map error" withIcon={true} error={error} />
-        </div>
       );
     }
 
@@ -565,7 +545,13 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
             }}
             style={isDrawing ? { cursor: "crosshair" } : {}}
           >
-            {infoSection}
+            <MapInfoSection
+              fetchedLayers={fetchedLayers}
+              error={error}
+              active_row={active_row}
+              loadingLayers={loadingLayers}
+              w={w}
+            />
             <DeckGLMap
               onLoad={(map) => {
                 this.setLayerData(this.state.dataAge);

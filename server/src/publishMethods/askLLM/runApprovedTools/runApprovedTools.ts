@@ -46,6 +46,7 @@ export const runApprovedTools = async (
   chat: DBSSchema["llm_chats"],
   toolUseRequestMessages: ToolUseMessage[],
   userApprovals: LLMMessage | undefined,
+  aborter: AbortController,
 ) => {
   const { user, chatId, dbs } = args;
   if (!toolUseRequestMessages.length) {
@@ -156,6 +157,10 @@ export const runApprovedTools = async (
         }
         return asResponse("Done");
       }
+
+      if (aborter.signal.aborted) {
+        return asResponse(`Operation was aborted by user.`, true);
+      }
       if (tool.type === "mcp") {
         const toolNameParts = getMCPToolNameParts(toolUseRequest.name);
         if (!toolNameParts) {
@@ -231,6 +236,7 @@ export const runApprovedTools = async (
       ...args,
       type: denied ? "tool-use-result-with-denied" : "tool-use-result",
       userMessage: toolResults,
+      aborter,
     });
   }
 };

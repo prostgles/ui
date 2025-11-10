@@ -4,13 +4,13 @@ import type {
   Link,
   LinkSyncItem,
   WindowSyncItem,
-} from "../Dashboard/dashboardUtils";
-import { PALETTE, windowIs } from "../Dashboard/dashboardUtils";
-import type { CrossFilters } from "../joinUtils";
-import { getCrossFilters } from "../joinUtils";
-import type { LayerOSM, LayerQuery, LayerSQL, LayerTable } from "./W_Map";
-import type { ActiveRow } from "../W_Table/W_Table";
-import type { DeckGlColor } from "../Map/DeckGLMap";
+} from "../../Dashboard/dashboardUtils";
+import { PALETTE, windowIs } from "../../Dashboard/dashboardUtils";
+import type { CrossFilters } from "../../joinUtils";
+import { getCrossFilters } from "../../joinUtils";
+import type { LayerOSM, LayerQuery, LayerSQL, LayerTable } from "../W_Map";
+import type { ActiveRow } from "../../W_Table/W_Table";
+import type { DeckGlColor } from "../../Map/DeckGLMap";
 import { getSmartGroupFilter } from "@common/filterUtils";
 
 type Args = {

@@ -15,7 +15,7 @@ import { generateUniqueID } from "../FileInput/FileInput";
 import { classOverride } from "../Flex";
 import { Label, type LabelPropsNormal } from "../Label";
 import List from "../List";
-import Popup, { DATA_NULLABLE } from "../Popup/Popup";
+import Popup, { DATA_HAS_VALUE, DATA_NULLABLE } from "../Popup/Popup";
 import type { FullOption } from "../Select/Select";
 import Select from "../Select/Select";
 import { FormFieldSkeleton } from "./FormFieldSkeleton";
@@ -562,7 +562,7 @@ export default class FormField extends React.Component<
         leftIcon={leftIcon}
         data-command={isEditableSelect ? undefined : this.props["data-command"]}
         data-key={this.props["data-key"]}
-        className={`${className} ${nullable ? DATA_NULLABLE : ""} `}
+        className={`${className} ${nullable ? DATA_NULLABLE : ""} ${value !== undefined && value !== null && value !== "" ? DATA_HAS_VALUE : ""}`}
         disabledInfo={disabledInfo}
         style={style}
         onBlur={() => {

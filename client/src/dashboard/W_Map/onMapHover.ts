@@ -1,8 +1,8 @@
 import type { HoverCoords } from "../Map/DeckGLMap";
 import type { LayerQuery, LayerSQL } from "./W_Map";
 import type W_Map from "./W_Map";
-import type { MapDataResult } from "./getMapData";
-import { getMapFilter, getSQLHoverRow } from "./getMapData";
+import type { MapDataResult } from "./fetchData/getMapData";
+import { getMapFilter, getSQLHoverRow } from "./fetchData/getMapData";
 import type { AnyObject } from "prostgles-types";
 import { isObject } from "prostgles-types";
 

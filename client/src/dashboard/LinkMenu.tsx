@@ -14,7 +14,7 @@ import type {
 } from "./Dashboard/dashboardUtils";
 import RTComp from "./RTComp";
 import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";
-import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
+import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 
 type P = {
   db: DBHandlerClient;
@@ -281,7 +281,7 @@ export class LinkMenu extends RTComp<P, S> {
         <Popup
           onClose={onClose}
           title={canJoin ? "Add joined table" : undefined}
-          collapsible={true}
+          collapsible={{ defaultValue: Boolean(links.length) }}
           anchorEl={anchorEl}
           positioning="beneath-left"
           clickCatchStyle={{ opacity: 0, zIndex: 14 }}

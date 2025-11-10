@@ -52,7 +52,7 @@ import { killPID } from "../methods/statusMonitorUtils";
 import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import { upsertConnection } from "../upsertConnection";
 import { getSampleSchemas } from "./applySampleSchema";
-import { askLLM } from "./askLLM/askLLM";
+import { askLLM, stopAskLLM } from "./askLLM/askLLM";
 import { getFullPrompt } from "./askLLM/getFullPrompt";
 import { getLLMToolsAllowedInThisChat } from "./askLLM/getLLMToolsAllowedInThisChat";
 import { refreshModels } from "./askLLM/refreshModels";
@@ -593,6 +593,7 @@ export const publishMethods: PublishMethods<
           accessRules,
           clientReq,
           type,
+          aborter: undefined,
         });
       },
     }),
@@ -604,10 +605,8 @@ export const publishMethods: PublishMethods<
       if (chat.user_id !== user.id && user.type !== "admin") {
         throw "You are not allowed to stop this chat";
       }
-      await dbs.llm_chats.update(
-        { id: chatId },
-        { status: { state: "stopped" } },
-      );
+      stopAskLLM(chatId);
+      await dbs.llm_chats.update({ id: chatId }, { status: null });
     },
     sendFeedback: async ({
       details,

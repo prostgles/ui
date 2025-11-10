@@ -224,13 +224,13 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
   llm_credentials: {
     columns: {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
-      name: `TEXT UNIQUE`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       provider_id: {
         label: "Provider",
         sqlDefinition: `TEXT NOT NULL REFERENCES llm_providers(id) ON DELETE CASCADE`,
       },
       api_key: `TEXT NOT NULL DEFAULT ''`,
+      name: { sqlDefinition: `TEXT UNIQUE`, info: { hint: "Optional" } },
       ...extraRequestData,
       is_default: {
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,

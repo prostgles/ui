@@ -4,11 +4,11 @@ import type {
   ValidatedColumnInfo,
   SelectParams,
 } from "prostgles-types";
-import type { LayerSQL, LayerTable } from "./W_Map";
-import type { GeoJSONFeature } from "../Map/DeckGLMap";
+import type { LayerSQL, LayerTable } from "../W_Map";
+import type { GeoJSONFeature } from "../../Map/DeckGLMap";
 import type { DetailedFilterBase } from "@common/filterUtils";
-import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
-import type { DBS } from "../Dashboard/DBS";
+import type { LinkSyncItem } from "../../Dashboard/dashboardUtils";
+import type { DBS } from "../../Dashboard/DBS";
 
 export const WITH_LAST_SELECT_ALIAS = "prostgles_chart_data";
 const rowHashQuery =

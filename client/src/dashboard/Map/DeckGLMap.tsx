@@ -47,7 +47,7 @@ export type Point = [number, number];
 import type { GeoJsonLayer } from "deck.gl";
 import type { Feature } from "geojson";
 import type { MapExtent } from "../Dashboard/dashboardUtils";
-import type { MAP_SELECT_COLUMNS } from "../W_Map/getMapData";
+import type { MAP_SELECT_COLUMNS } from "../W_Map/fetchData/getMapData";
 import { InMapControls } from "./InMapControls";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 

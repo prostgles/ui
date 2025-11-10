@@ -350,6 +350,7 @@ export const COMMANDS = {
   "Chat.messageList": "",
   "Chat.sendWrapper": "",
   "Chat.send": "",
+  "Chat.sendStop": "",
   "Chat.addFiles": "",
   "Chat.textarea": "",
   AskLLM: "",

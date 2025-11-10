@@ -25,8 +25,6 @@ export const useJoinedSectionFieldConfigs = ({
       return tableInfo.fieldConfigs;
     }
     const fileTable = tables.find((t) => t.info.isFileTable);
-    const rootTable =
-      !tableName ? undefined : tables.find((t) => t.name === tableName);
     if (fileTable?.name === sectionTable.name) {
       return [
         {
@@ -38,12 +36,16 @@ export const useJoinedSectionFieldConfigs = ({
       ];
     }
 
+    const rootTable =
+      !tableName ? undefined : tables.find((t) => t.name === tableName);
     if (!rootTable) return;
 
     const nonJoinColumnsToShow = sectionTable.columns.filter(
       (c) =>
         c.select && !c.references?.some((r) => r.ftable === rootTable.name),
     );
+
+    /** We want to add one-to-one joins that have text fields */
     const extraColumnsToShow: FieldConfig[] = sectionTable.joinsV2
       .filter((j) => j.tableName !== rootTable.name)
       .map((joinInfo) => {

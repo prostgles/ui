@@ -53,6 +53,17 @@ export type AskLLMArgs = {
     | "approve-tool-use"
     | "tool-use-result"
     | "tool-use-result-with-denied";
+  aborter: AbortController | undefined;
+};
+
+const activeLLMFetchRequests = new Map<number, AbortController>();
+
+export const stopAskLLM = (chatId: number) => {
+  const aborter = activeLLMFetchRequests.get(chatId);
+  if (aborter) {
+    aborter.abort();
+    activeLLMFetchRequests.delete(chatId);
+  }
 };
 
 export const askLLM = async (args: AskLLMArgs) => {
@@ -96,6 +107,8 @@ export const askLLM = async (args: AskLLMArgs) => {
     },
   );
 
+  const aborter = args.aborter ?? new AbortController();
+  activeLLMFetchRequests.set(chat.id, aborter);
   const lastMessage = pastMessages.at(-1);
   if (type === "approve-tool-use") {
     if (!lastMessage) {
@@ -111,6 +124,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       chat,
       toolUseMessages,
       userMessage,
+      aborter,
     );
   }
 
@@ -315,6 +329,7 @@ export const askLLM = async (args: AskLLMArgs) => {
           content: userMessage,
         } satisfies LLMMessageWithRole,
       ],
+      aborter,
     });
 
     /** Move prostgles-ui tool_use messages to the end for better UX (because no tool result is expected) */
@@ -363,17 +378,17 @@ export const askLLM = async (args: AskLLMArgs) => {
     const newToolUseMessages = filterArr(aiResponseMessage, {
       type: "tool_use",
     } as const);
-    if (latestChat.status?.state !== "stopped" && newToolUseMessages.length) {
+    if (newToolUseMessages.length) {
       await runApprovedTools(
         toolsWithInfo,
         args,
         latestChat,
         newToolUseMessages,
         undefined,
+        aborter,
       );
     }
   } catch (err) {
-    console.error(err);
     const isAdmin = user.type === "admin";
     const errorObjOrString = getSerialisableError(err);
     const errorIsString = typeof errorObjOrString === "string";
@@ -384,8 +399,11 @@ export const askLLM = async (args: AskLLMArgs) => {
     const errorText = isAdmin ? `${errorTextOrEmpty}` : "";
     const messageText = [
       "🔴 Something went wrong",
-      errorIsString ? errorText : ["```json", errorText, "```"].join("\n"),
-    ].join("\n");
+      isObject(err) && err.name === "AbortError" ?
+        "Response generation was aborted by user."
+      : errorIsString ? errorText
+      : ["```json", errorText, "```"].join("\n"),
+    ].join(".\n");
     await dbs.llm_messages.update(
       { id: aiResponseMessagePlaceholder.id },
       {

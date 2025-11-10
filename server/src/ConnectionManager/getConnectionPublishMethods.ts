@@ -12,7 +12,7 @@ import { getAccessRule } from "./startConnection";
 import type { DBS } from "..";
 import type { JSONBColumnDef } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { DB } from "prostgles-server/dist/initProstgles";
-import type { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
+import type { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 
 type Args = {
   dbs: DBS;

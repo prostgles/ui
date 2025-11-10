@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./Popup.css";
-import { pickKeys } from "prostgles-types";
+import { isObject, pickKeys } from "prostgles-types";
 import type { Command, TestSelectors } from "../../Testing";
 import RTComp, { type DeltaOf } from "../../dashboard/RTComp";
 import { ClickCatchOverlay } from "../ClickCatchOverlay";
@@ -102,7 +102,11 @@ export type PopupProps = TestSelectors & {
   fixedTopLeft?: boolean;
   autoFocusFirst?: "header" | "content" | { selector: string };
   onKeyDown?: (e: KeyboardEvent, section: "header" | "content") => void;
-  collapsible?: boolean;
+  collapsible?:
+    | boolean
+    | {
+        defaultValue: boolean;
+      };
   showFullscreenToggle?: {
     defaultValue?: boolean;
     getStyle?: (fullscreen: boolean) => React.CSSProperties;
@@ -133,7 +137,6 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     stateStyle: {
       opacity: 0,
     },
-    collapsed: false,
   };
 
   checkFocus = (e: KeyboardEvent) => {
@@ -200,13 +203,13 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
             HTMLButtonElement | HTMLSelectElement | HTMLTextAreaElement
           >('input:not([type="hidden"]), textarea, button'),
         );
-        // const firstBtn = Array.from(container.querySelectorAll<HTMLButtonElement>('button:not([data-close-popup]),  a, [tabindex]:not([tabindex="-1"])'))
 
         const firstFocusable = [...firstInputLike].find(
           (e) =>
             getComputedStyle(e).display !== "none" &&
             getComputedStyle(e).opacity !== "0" &&
-            !e.closest("." + DATA_NULLABLE),
+            !e.closest("." + DATA_NULLABLE) &&
+            !e.closest("." + DATA_HAS_VALUE),
         );
         (firstFocusable ?? container).focus();
       }
@@ -287,11 +290,15 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
       contentClassName = defaultContentClassName,
       contentStyle = {},
       showFullscreenToggle,
+      collapsible,
     } = this.props;
+
+    const collapsedDefaultValue =
+      isObject(collapsible) ? collapsible.defaultValue : false;
 
     const {
       stateStyle,
-      collapsed = false,
+      collapsed = collapsedDefaultValue,
       fullScreen = showFullscreenToggle?.defaultValue,
     } = this.state;
     const toggleContent = () => {
@@ -415,6 +422,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
 }
 
 export const DATA_NULLABLE = "data-nullable";
+export const DATA_HAS_VALUE = "data-has-value";
 
 type FooterProps = TestSelectors & {
   children: React.ReactNode;

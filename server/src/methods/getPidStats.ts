@@ -300,8 +300,15 @@ export const getStatus = async (connId: string, dbs: DBS) => {
 
   const database_id = dbConf.id;
   const sampled_at = new Date().toISOString();
+  const now = Date.now();
+  const retentionMs = 5_000;
   await dbs.tx(async (tx) => {
-    await tx.stats.delete({ database_id });
+    await tx.stats.delete({
+      $or: [
+        { database_id },
+        { sampled_at: { "<": new Date(now - retentionMs).toISOString() } },
+      ],
+    });
     await tx.stats.insert(
       result.queries.map((q) => {
         const pidInfo = procInfo?.pidStats.find((p) => p.pid === q.pid);

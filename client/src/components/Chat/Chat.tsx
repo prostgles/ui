@@ -231,12 +231,14 @@ export const Chat = (props: ChatProps) => {
           )}
           <textarea
             ref={ref}
+            name="chat-input"
             data-command={"Chat.textarea"}
             className="no-scroll-bar text-0 bg-transparent"
             rows={1}
             style={{
               maxHeight: "50vh",
             }}
+            disabled={!!disabledInfo || chatIsLoading}
             defaultValue={getCurrentMessage()}
             onPaste={handleOnPaste}
             onKeyDown={(e) => {
@@ -281,6 +283,7 @@ export const Chat = (props: ChatProps) => {
           </FlexRow>
           {onStopSending ?
             <Btn
+              data-command="Chat.sendStop"
               onClick={onStopSending}
               title={t.common.Stop}
               iconPath={mdiStopCircle}

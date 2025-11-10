@@ -833,12 +833,19 @@ const waitForAllMatchingLocatorsToDisappear = async (
 export const sendAskLLMMessage = async (
   page: PageWIds,
   msg: string,
-  waitForLoadingToStop = false,
+  waitForLoadingToStop:
+    | boolean
+    | {
+        onAfterSend: () => Promise<void>;
+      } = false,
 ) => {
   await page.getByTestId("AskLLM.popup").getByTestId("Chat.textarea").fill(msg);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(500);
   if (waitForLoadingToStop) {
+    if (typeof waitForLoadingToStop === "object") {
+      await waitForLoadingToStop.onAfterSend();
+    }
     await waitForAllMatchingLocatorsToDisappear(
       page
         .getByTestId("Chat.messageList")
@@ -1036,7 +1043,10 @@ export const setupProstglesLLMProvider = async (page: PageWIds) => {
 
 /** Delete existing chat during local testing */
 export const deleteExistingLLMChat = async (page: PageWIds) => {
-  await page.getByTestId("AskLLM").click();
+  const optsToggle = page.getByTestId("LLMChatOptions.toggle");
+  if ((await optsToggle.count()) === 0) {
+    await page.getByTestId("AskLLM").click();
+  }
   await page.getByTestId("LLMChatOptions.toggle").click();
   await page.getByTestId("SmartForm.delete").click();
   await page.getByTestId("SmartForm.delete.confirm").click();

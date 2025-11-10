@@ -22,12 +22,13 @@ export type FetchLLMResponseArgs = {
   llm_credential: DBSSchema["llm_credentials"];
   tools: undefined | (MCPToolSchema & { auto_approve: boolean })[];
   messages: LLMMessageWithRole[];
+  aborter: AbortController;
 };
 
 export const fetchLLMResponse = async (
   args: FetchLLMResponseArgs,
 ): Promise<LLMParsedResponse> => {
-  const { llm_provider, llm_credential, llm_model } = args;
+  const { llm_provider, llm_credential, llm_model, aborter } = args;
   const model = llm_model.name;
   const provider = llm_provider.id;
   const { api_key } = llm_credential;
@@ -43,8 +44,10 @@ export const fetchLLMResponse = async (
     method: "POST",
     headers,
     body,
+    signal: aborter.signal,
   }).catch((err) => {
-    return Promise.reject(getSerialisableError(err));
+    const serialisableError = getSerialisableError(err);
+    return Promise.reject(serialisableError);
   });
 
   const responseClone = res.clone();
