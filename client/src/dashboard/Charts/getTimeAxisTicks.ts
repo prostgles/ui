@@ -1,3 +1,5 @@
+import { getAge } from "@common/utils";
+import { isDefined } from "prostgles-types";
 import {
   dateAsYMD,
   DAY,
@@ -7,13 +9,10 @@ import {
   roundToNearest,
   SECOND,
   toDateStr,
-  YEAR,
 } from "../Charts";
-import { getAge } from "@common/utils";
+import type { ChartedText, TextMeasurement } from "./CanvasChart";
 import type { XYFunc } from "./TimeChart";
 import type { DateExtent } from "./getTimechartBinSize";
-import type { ChartedText, TextMeasurement } from "./CanvasChart";
-import { isDefined } from "prostgles-types";
 import { getCssVariableValue } from "./onRenderTimechart";
 
 type GetTimeTicksOpts = DateExtent & {

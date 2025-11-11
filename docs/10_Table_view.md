@@ -19,6 +19,37 @@ It supports computed columns, linked fields, and various actions for managing th
   - **Table**: The main table view displaying the data from the database. It allows users to interact with the data, including sorting, filtering, and editing.  
     - **Table header**: The header of the table, which contains the column names and allows users to sort the data by clicking on the column headers.  
       - **Add column menu**: Opens the column menu, allowing users to add computed columns, create new columns, add linked fields.  
+        - **Add Computed Field**: Opens a popup to create a computed column - calculations or transformations based on existing data using functions like aggregations, date formatting, string operations, etc.  
+          - **Count of all rows**: Creates a computed column that displays the total count of all rows in the table, regardless of filters.  
+          - **Column selection**: List of available columns to apply functions to. Choose a column to start creating a computed field.  
+          - **Function selector**: Choose a function to apply to the selected column (e.g., aggregates (min/max/avg), date formatting, string operations).  
+          - **Column name**: Name for the new computed column. Auto-generated based on the function and column.  
+          - **Add to position**: Choose whether to add the computed column at the start or end of the column list.  
+          - **Add computed column**: Confirms and adds the new computed column to the table based on the selected function and parameters.  
+        - **Add Linked Data**: Opens a popup to display data from related tables via foreign key relationships. Disabled if no foreign keys exist or when using aggregates with nested columns.  
+          - **Join path selector**: Select which related table to join to via foreign key relationships. Shows available join paths from the current table.  
+          - **Column label**: Custom name/label for this linked column field in the table. Defaults to the related table name.  
+          - **Linked column selection**: Choose which columns from the related table to display in this linked field.  
+          - **Quick add computed column**: Add a single computed column from the linked table. E.g., count, sum, avg.  
+          - **More options**: Additional configuration for linked columns including layout, join type, filters, and limits.  
+            - **Layout mode**: Choose how to display the linked data: as rows, columns, or without headers.  
+            - **Join type**: Select between inner join (discards parent rows without matches) or left join (keeps all parent rows).  
+            - **Limit**: Maximum number of linked records to display (0-30). Optional.  
+            - **Filters and sorting**: Apply filters and sorting to the linked table data.  
+        - **Create New Column**: Opens a popup to create a new physical column in the database table. Disabled for views or users without SQL privileges.  
+          - **Column editor**: Configure column properties including name, data type, constraints, default values, and foreign key references.  
+          - **Foreign key reference**: Optionally set up a foreign key relationship to another table/column in the database.  
+          - **Data type selection**: Appears after typing the column name. Choose the data type for the new column (e.g., integer, text, date, boolean, etc.).  
+          - **Show create column SQL**: Generates and displays the SQL query that will be executed to create the new column in the database.  
+            - **Generated SQL query**: The generated ALTER TABLE SQL query to create the new column based on the specified properties.  
+            - **Execute create column**: Runs the generated ALTER TABLE query to create the new column in the database.  
+        - **Create New File Column**: Opens a popup to create a new column for handling file uploads and attachments. Requires file storage to be enabled.  
+          - **New column name**: Name for the new file column.  
+          - **Optional**: Whether the file column should allow NULL values (optional) or require a file (NOT NULL).  
+          - **File column configuration**: Configure accepted file types and other file handling options. Appears after entering the column name.  
+            - **Maximum file size in megabytes**: Set the maximum allowed file size for uploads in megabytes. Default is 1 MB. 0 means no limit.  
+            - **Content filter mode**: Choose how to filter accepted files: by file extension, basic content type (e.g., image, audio, vide), by specific content type (e.g., image/png), by specific extension (jpg, png, pdf).  
+          - **Create file column**: Confirms and creates the new file column.  
       - **Column header**: Pressing the header will toggle sorting state (if the column is sortable). Right clicking (or long press on mobile) will open column menu. Dragging the header will allow reordering the columns.  
       - **Resize column**: Allows users to resize the column width by dragging the handle.  
       - **Edit row**: Opens the row edit menu, allowing users to view/edit/delete the selected row.  

@@ -1,12 +1,13 @@
-import { mdiDotsHorizontal } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { appTheme, useReactiveState } from "../../../../appUtils";
 import { ExpandSection } from "@components/ExpandSection";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { InfoRow } from "@components/InfoRow";
 import Select from "@components/Select/Select";
+import { mdiDotsHorizontal } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { appTheme, useReactiveState } from "../../../../appUtils";
+import { t } from "../../../../i18n/i18nUtils";
 import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
@@ -18,8 +19,6 @@ import type { ColumnConfig } from "../ColumnMenu";
 import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
-import { t } from "../../../../i18n/i18nUtils";
-import type { DBS } from "../../../Dashboard/DBS";
 
 export type LinkedColumnProps = {
   tables: DBSchemaTablesWJoins;
@@ -198,6 +197,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
               <FlexRowWrap className="ai-end">
                 <Select
                   label={t.LinkedColumn["Layout"]}
+                  data-command="LinkedColumn.layoutType"
                   fullOptions={NESTED_COLUMN_DISPLAY_MODES}
                   disabledInfo={
                     currentColumn.nested.chart ?
@@ -216,6 +216,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                 label={t.LinkedColumn["Join type"]}
                 value={currentColumn.nested?.joinType}
                 fullOptions={JOIN_TYPES}
+                data-command="LinkedColumn.joinType"
                 onChange={(joinType) => {
                   updateNested({ joinType });
                 }}

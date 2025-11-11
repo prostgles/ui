@@ -5,11 +5,11 @@ import { getSmartGroupFilter } from "@common/filterUtils";
 import { isEmpty } from "../../../utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
-import { getTimeChartSelectParams } from "../../W_TimeChart/getTimeChartData";
+import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
 import {
   getDesiredTimeChartBinSize,
   getTimeChartMinMax,
-} from "../../W_TimeChart/getTimeChartLayersWithBins";
+} from "../../W_TimeChart/fetchData/getTimeChartLayersWithBins";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type { MinMax, MinMaxVals } from "../W_Table";
 import { getFullColumnConfig } from "./tableUtils";

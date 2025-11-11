@@ -30,28 +30,22 @@ export const isCompleteJSONB = (
   if (s.nullable && v === null) {
     return true;
   }
-
-  if ((s as any).lookup) {
+  if ("lookup" in s && s.lookup) {
     return v !== undefined;
-  }
-  if (typeof s.type === "string" && v !== undefined) {
+  } else if (typeof s.type === "string" && v !== undefined) {
     return true;
-  }
-  if (s.enum?.includes(v)) {
+  } else if (s.enum?.includes(v)) {
     return true;
-  }
-  if (isObject(s.type) && isObject(v)) {
+  } else if (isObject(s.type) && isObject(v)) {
     return getEntries(s.type).every(([propName, propSchema]) =>
       isCompleteJSONB(v[propName]!, propSchema),
     );
-  }
-  if (s.arrayOf || s.arrayOfType) {
+  } else if (s.arrayOf || s.arrayOfType) {
     const arrSchema = s.arrayOf ? s.arrayOf : { type: s.arrayOfType };
     return (
       Array.isArray(v) && v.every((elem) => isCompleteJSONB(elem, arrSchema))
     );
-  }
-  if (s.oneOf || s.oneOfType) {
+  } else if (s.oneOf || s.oneOfType) {
     return (s.oneOf || s.oneOfType?.map((type) => ({ type })))?.some((oneS) =>
       isCompleteJSONB(v, oneS),
     );

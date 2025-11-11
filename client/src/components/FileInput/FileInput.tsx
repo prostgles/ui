@@ -138,7 +138,7 @@ export class FileInput extends RTComp<
     if (url) {
       const style = {
         maxWidth: "100%",
-        // maxHeight: "100%",
+        maxHeight: "100%",
       };
       if (type.startsWith("image")) {
         mediaPreview = <img loading="lazy" src={url} style={style}></img>;

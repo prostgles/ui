@@ -441,6 +441,7 @@ export default class FormField extends React.Component<
       minHeight: "2em",
       whiteSpace: "pre-line",
       borderRadius: ".5em",
+      resize: "vertical",
       ...inputProps.style,
     };
 

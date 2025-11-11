@@ -120,6 +120,17 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
           },
         },
       },
+      display_options: {
+        nullable: true,
+        jsonbSchemaType: {
+          prettyTableAndColumnNames: {
+            type: "boolean",
+            title: "Pretty table and column names",
+            description:
+              "Defaults to true. Whether to show pretty table names by converting underscores to spaces and capitalising words",
+          },
+        },
+      },
       config: {
         jsonbSchemaType: { enabled: "boolean", path: "string" },
         nullable: true,

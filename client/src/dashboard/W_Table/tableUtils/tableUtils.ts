@@ -9,11 +9,10 @@ import type {
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
 import type { ColumnConfig, ColumnSortSQL } from "../ColumnMenu/ColumnMenu";
+import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { getColWInfo } from "./getColWInfo";
 import { getColWidth } from "./getColWidth";
-import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
-import type { DBS } from "../../Dashboard/DBS";
 
 export const getFullColumnConfig = (
   tables: CommonWindowProps["tables"],

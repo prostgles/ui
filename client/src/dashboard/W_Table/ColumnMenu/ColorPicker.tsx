@@ -10,6 +10,7 @@ import { type LabelProps } from "@components/Label";
 import Popup from "@components/Popup/Popup";
 import type { Command } from "../../../Testing";
 import { getRandomElement } from "./ColumnStyleControls";
+import { rgba2hex } from "./rgba2hex";
 
 type S = {
   anchorEl: Element | null;
@@ -71,6 +72,9 @@ export class ColorPicker extends React.Component<
       variant,
       btnProps,
     } = this.props;
+
+    const rgba = asRGB(value);
+    const opacity = rgba[3] <= 1 ? rgba[3] : rgba[3] / 255;
 
     const labelNode =
       label ?
@@ -134,13 +138,14 @@ export class ColorPicker extends React.Component<
               <FormField
                 label="Other"
                 type="color"
-                value={asHex(value)}
+                value={`rgb(${rgba.slice(0, -1).join(",")})`}
+                style={{ opacity }}
                 onChange={(c) => this.onChange(c)}
               />
               <FormFieldDebounced
                 label="Opacity"
                 type="number"
-                value={asRGB(value)[3] || 1}
+                value={rgba[3] || 1}
                 maxWidth={50}
                 inputProps={{
                   step: 0.1,
@@ -148,7 +153,7 @@ export class ColorPicker extends React.Component<
                   max: 1,
                 }}
                 onChange={(opacity: number) => {
-                  const [r, g, b] = asRGB(value);
+                  const [r, g, b] = rgba;
                   const colorStr = this.asString([r, g, b, opacity]);
                   const hex = rgba2hex(colorStr);
                   this.onChange(hex);
@@ -187,7 +192,10 @@ export const ColorCircle = ({
       onClick={onClick}
       iconProps={{
         path: mdiPalette,
-        color,
+        style: {
+          /** button has bg which stacks when opacity < 1  */
+          opacity: 0,
+        },
       }}
     />
   );
@@ -238,31 +246,6 @@ export const asRGB = (color: string, maxOpacity?: "1" | "255"): RGBA => {
   }
   return [r, g, b, a];
 };
-
-export function rgba2hex(orig: string) {
-  let a;
-  const rgb = orig
-    .replace(/\s/g, "")
-    .match(/^rgba?\((\d+),(\d+),(\d+),?([^,\s)]+)?/i) as string[] | null;
-  const alpha = ((rgb && rgb[4]) || "").trim();
-  let hex =
-    rgb ?
-      ((rgb[1] as any | 1) << 8).toString(16).slice(1) +
-      ((rgb[2] as any | 1) << 8).toString(16).slice(1) +
-      ((rgb[3] as any | 1) << 8).toString(16).slice(1)
-    : orig;
-
-  if (alpha !== "") {
-    a = alpha;
-  } else {
-    a = 1;
-  }
-  // multiply before convert to HEX
-  a = ((a * 255) | (1 << 8)).toString(16).slice(1);
-  hex = hex + a;
-
-  return `#${hex}`;
-}
 
 export type RGBA = [number, number, number, number];
 

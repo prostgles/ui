@@ -8,7 +8,7 @@ import PopupMenu from "@components/PopupMenu";
 import Select from "@components/Select/Select";
 import type { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { windowIs } from "../Dashboard/dashboardUtils";
-import { getTimeChartLayer } from "../W_TimeChart/getTimeChartLayers";
+import { getTimeChartLayer } from "../W_TimeChart/fetchData/getTimeChartLayers";
 import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
 import { SQLChartLayerEditor } from "./SQLChartLayerEditor";

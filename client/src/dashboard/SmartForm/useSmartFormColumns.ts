@@ -27,6 +27,7 @@ export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
 
   const dynamicValidatedColumns = usePromise(async () => {
     if (!mode) return undefined;
+    /** TODO: merge with display_options?.prettyTableAndColumnNames */
     const result =
       mode.type !== "update" ?
         table?.columns

@@ -64,10 +64,10 @@ export const SmartCardActions = <T extends AnyObject>(
   }
 
   return (
-    <FlexCol>
+    <FlexCol className="show-on-parent-hover">
       {showViewEditRow && (
         <Btn
-          className="f-0 show-on-parent-hover"
+          className="f-0 "
           data-command="SmartCard.viewEditRow"
           iconPath={
             allowedActions.update || allowedActions.delete ?

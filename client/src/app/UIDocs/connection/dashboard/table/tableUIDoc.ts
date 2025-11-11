@@ -4,6 +4,7 @@ import { getCommonViewHeaderUIDoc } from "../../getCommonViewHeaderUIDoc";
 import { paginationUIDoc } from "./paginationUIDoc";
 import { smartFilterBarUIDoc } from "./smartFilterBarUIDoc";
 import { tableMenuUIDoc } from "./tableMenuUIDoc";
+import { addColumnMenuUIDoc } from "./addColumnMenuUIDoc";
 
 export const tableUIDoc = {
   type: "section",
@@ -36,14 +37,7 @@ export const tableUIDoc = {
           description:
             "The header of the table, which contains the column names and allows users to sort the data by clicking on the column headers.",
           children: [
-            {
-              type: "popup",
-              selectorCommand: "AddColumnMenu",
-              title: "Add column menu",
-              description:
-                "Opens the column menu, allowing users to add computed columns, create new columns, add linked fields.",
-              children: [],
-            },
+            addColumnMenuUIDoc,
             {
               type: "button",
               selector: `[role="columnheader"]`,

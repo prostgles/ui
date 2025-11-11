@@ -12,6 +12,8 @@ import type { Workspace } from "../Dashboard/dashboardUtils";
 import { useLocalSettings } from "../localSettings";
 import { DashboardHotkeys } from "./DashboardHotkeys";
 import { SettingsSection } from "./SettingsSection";
+import { SmartForm } from "../SmartForm/SmartForm";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 export { useEffectAsync };
 
 const layoutType = [
@@ -26,7 +28,7 @@ type P = Pick<DashboardProps, "prgl"> & {
 
 export const DashboardMenuSettings = ({
   workspace,
-  prgl: { dbsMethods },
+  prgl: { dbsMethods, dbs, dbsTables },
 }: P) => {
   const dbSize = usePromise(
     async () => dbsMethods.getDBSize?.(workspace.connection_id),
@@ -53,6 +55,30 @@ export const DashboardMenuSettings = ({
       render={() => {
         return (
           <div className="flex-col gap-2 p-1">
+            <SettingsSection title="Display options" iconPath={mdiTable}>
+              <SmartForm
+                label=""
+                db={dbs as DBHandlerClient}
+                tableName="connections"
+                rowFilter={[
+                  {
+                    fieldName: "id",
+                    value: workspace.connection_id,
+                  },
+                ]}
+                contentClassname="p-0"
+                jsonbSchemaWithControls={{ noLabels: false }}
+                methods={dbsMethods}
+                tables={dbsTables}
+                columns={{
+                  display_options: {
+                    hideLabel: true,
+                  },
+                }}
+                confirmUpdates={false}
+                showJoinedTables={false}
+              />
+            </SettingsSection>
             <SettingsSection title="Dashboard menu" iconPath={mdiTable}>
               <FormField
                 label={{

@@ -75,7 +75,6 @@ export const getTableCols = ({
         };
       });
 
-    //@ts-ignore
     tblCols = fullConfigCols.map((c) => {
       const nestedCols =
         !c.nested ? null
@@ -130,7 +129,7 @@ export const getTableCols = ({
         </div>
       );
 
-      let labelText = c.name;
+      let labelText = c.info?.label || c.name;
       let labelIcon = "";
       if (c.computedConfig?.isColumn) {
         labelIcon = mdiFunction;

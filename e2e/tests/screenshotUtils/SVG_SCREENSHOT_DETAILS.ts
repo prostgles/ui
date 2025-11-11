@@ -33,8 +33,8 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
-  ai_assistant: aiAssistantSvgif,
   table: tableSvgif,
+  ai_assistant: aiAssistantSvgif,
   timechart: timechartSvgif,
   account: accountSvgif,
   navbar: navbarSvgif,

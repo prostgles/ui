@@ -1,34 +1,22 @@
-import { closeWorkspaceWindows, getDataKey, type PageWIds } from "utils/utils";
+import {
+  closeWorkspaceWindows,
+  deleteAllWorkspaces,
+  getDataKey,
+  type PageWIds,
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { getCommandElemSelector } from "Testing";
 
 export const tableSvgif: OnBeforeScreenshot = async (
   page,
-  { openConnection, openMenuIfClosed },
+  { openConnection, toggleMenuPinned },
   { addScene, addSceneWithClickAnimation },
 ) => {
   await openConnection("food_delivery");
-
-  // const userDashboard = await page.getByText("Users dashboard");
-  // if (await userDashboard.count()) {
-  //   await userDashboard.click();
-  // } else {
-  //   await page.getByTestId("WorkspaceMenuDropDown").click();
-  //   await page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn").click();
-  //   await page
-  //     .getByTestId("WorkspaceAddBtn")
-  //     .locator("input")
-  //     .fill("Users dashboard");
-  //   await page.getByTestId("WorkspaceAddBtn.Create").click();
-  //   await page.waitForTimeout(1500);
-  //   await openMenuIfClosed();
-  //   await openTable(page, "users");
-  //   await toggleMenuPinned();
-  // }
-  // await page.waitForTimeout(1500);
-
+  await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
-  await openMenuIfClosed();
+  await toggleMenuPinned(false);
+  await addSceneWithClickAnimation(getCommandElemSelector("dashboard.menu"));
   await addSceneWithClickAnimation(getDataKey("orders"));
 
   const pageParams = { page, addSceneWithClickAnimation, addScene };
@@ -48,6 +36,34 @@ export const tableSvgif: OnBeforeScreenshot = async (
     .scrollIntoViewIfNeeded();
   await addScene();
   await page.getByTestId("Popup.close").click();
+  await addSceneWithClickAnimation(
+    getCommandElemSelector("dashboard.window.toggleFilterBar"),
+  );
+
+  await page.getByTestId("SmartFilterBar").locator("input").fill("picked");
+  await page.waitForTimeout(500);
+  await addScene({
+    animations: [
+      {
+        type: "wait",
+        duration: 1000,
+      },
+      {
+        type: "type",
+        elementSelector: getCommandElemSelector("SmartFilterBar") + " input",
+        duration: 2000,
+      },
+    ],
+  });
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(500);
+  await addScene();
+
+  await addSceneWithClickAnimation(getCommandElemSelector("AddChartMenu.Map"));
+  await addSceneWithClickAnimation(getDataKey("(deliverer_id = id) users"));
+  await page.waitForTimeout(1000);
+  await addScene();
 };
 
 export const clickTableRow = async (

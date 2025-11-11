@@ -400,7 +400,10 @@ export class CanvasChart {
   };
 
   /** Used to get final drawing XY that takes into account panning and zooming. Used for drawing data on canvas */
-  getScreenXY: XYFunc = (xData: number, yData?: number | undefined) => {
+  getScreenXY: XYFunc = <X extends number, Y extends number>(
+    xData: X,
+    yData?: Y,
+  ) => {
     const {
       view: { xScale, yScale, xO, yO },
     } = this;
@@ -409,7 +412,7 @@ export class CanvasChart {
     if (yData !== undefined) {
       y = yData * yScale + yO;
     }
-    return [x, y] as any;
+    return [x, y] as [X, Y];
   };
 
   getExtent = (): CanvasChartViewDataExtent => {
@@ -482,21 +485,18 @@ export class CanvasChart {
     if (!ctx) return;
     ctx.clearRect(0, 0, w, h);
 
-    shapes.map((s) => {
-      const getCoords = <C extends Coords>(coords: C): C => {
-        if (Array.isArray(coords[0])) {
-          return coords.map((p) => getCoords(p)) as C;
-        }
-        const point = coords as Point;
-        const [x, y] = this.getScreenXY(point[0], point[1]);
-        return [x, y] as C;
-      };
-      const coords: any = getCoords(s.coords);
-
-      if (!coords) return;
-
+    const getScreenCoords = <C extends Coords>(coords: C): C => {
+      if (Array.isArray(coords[0])) {
+        return coords.map((p) => getScreenCoords(p)) as C;
+      }
+      const point = coords as Point;
+      const [x, y] = this.getScreenXY(point[0], point[1]);
+      return [x, y] as C;
+    };
+    shapes.map((s, i) => {
       ctx.lineJoin = "bevel";
       if (s.type === "rectangle") {
+        const coords = getScreenCoords(s.coords);
         ctx.fillStyle = s.fillStyle;
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
@@ -512,6 +512,7 @@ export class CanvasChart {
         ctx.fill();
         ctx.stroke();
       } else if (s.type === "circle") {
+        const coords = getScreenCoords(s.coords);
         ctx.fillStyle = s.fillStyle;
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
@@ -520,6 +521,7 @@ export class CanvasChart {
         ctx.fill();
         ctx.stroke();
       } else if (s.type === "multiline") {
+        const coords = getScreenCoords(s.coords);
         ctx.lineCap = "round";
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
@@ -538,6 +540,7 @@ export class CanvasChart {
           ctx.stroke();
         }
       } else if (s.type === "polygon") {
+        const coords = getScreenCoords(s.coords);
         ctx.fillStyle = s.fillStyle;
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
@@ -555,6 +558,7 @@ export class CanvasChart {
         ctx.fill();
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       } else if (s.type === "text") {
+        const coords = getScreenCoords(s.coords);
         const { textAlign = "start" } = s;
 
         if (s.background) {

@@ -151,13 +151,17 @@ export class AddComputedColMenu extends RTComp<
     const hasJoinCols = w.columns?.some((c) => c.nested);
     const content = (
       <>
-        <FlexCol className="AddComputedColMenu gap-2 f-1 min-h-0 mt-1 ai-start max-h-fit">
+        <FlexCol
+          className="AddComputedColMenu gap-2 f-1 min-h-fit mt-1 ai-start"
+          data-command="AddComputedColMenu"
+        >
           {!column && !hasJoinCols && (
             <FlexRowWrap>
               <FlexCol className="gap-p25">
                 <Btn
                   variant="faded"
                   color="action"
+                  data-command="AddComputedColMenu.countOfAllRows"
                   onClick={() => {
                     this.setState({
                       funcDef: CountAllFunc,
@@ -342,6 +346,7 @@ export class AddComputedColMenu extends RTComp<
               label="Name"
               type="text"
               className="mt-1"
+              data-command="AddComputedColMenu.name"
               value={name}
               onChange={(name) => {
                 this.setState({ name });
@@ -350,6 +355,7 @@ export class AddComputedColMenu extends RTComp<
             <Select
               label={"Add to"}
               value={addTo}
+              data-command="AddComputedColMenu.addTo"
               fullOptions={NEW_COL_POSITIONS}
               onChange={(addTo) => this.setState({ addTo })}
             />
@@ -364,6 +370,7 @@ export class AddComputedColMenu extends RTComp<
         variant: "filled",
         color: "action",
         iconPath: mdiPlus,
+        "data-command": "AddComputedColMenu.addBtn",
         disabledInfo: canAdd ? undefined : "Some function inputs are missing",
         onClickPromise: async () => {
           if (!name) {

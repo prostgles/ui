@@ -25,15 +25,15 @@ import type { ActiveRow } from "../W_Table/W_Table";
 import Window from "../Window";
 import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
 import { AddTimeChartFilter } from "./AddTimeChartFilter";
-import { fetchAndSetTimechartLayerData } from "./fetchAndSetTimechartLayerData";
-import { getTimeChartSelectDate } from "./getTimeChartData";
-import { getTimeChartLayerQueries } from "./getTimeChartLayers";
-import type { TimeChartLayerWithBinOrError } from "./getTimeChartLayersWithBins";
+import { fetchAndSetTimechartLayerData } from "./fetchData/fetchAndSetTimechartLayerData";
+import { getTimeChartLayerQueries } from "./fetchData/getTimeChartLayers";
+import type { TimeChartLayerWithBinOrError } from "./fetchData/getTimeChartLayersWithBins";
 import { W_TimeChartLayerLegend } from "./W_TimeChartLayerLegend";
 import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
 import { FlexRow } from "@components/Flex";
 import type { DBSSchema } from "@common/publishUtils";
+import { getTimeChartSelectDate } from "./fetchData/getTimeChartSelectParams";
 
 type ChartColumn = Extract<
   DBSSchema["links"]["options"],

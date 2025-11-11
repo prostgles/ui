@@ -56,7 +56,15 @@ export const SmartFormFieldForeignKey = (
 
   const rowWithFkeyVals = useMemo(() => {
     if (!row) return;
-    const fkeyColNames = column.references.flatMap((r) => r.cols);
+    const fkeyColNames = column.references
+      .map((r) => {
+        if (r.cols.join() === column.name) {
+          return;
+        }
+        return r.cols;
+      })
+      .filter(isDefined)
+      .flat();
     return pickKeys(row, fkeyColNames);
   }, [row, column]);
 
@@ -228,3 +236,6 @@ export const SmartFormFieldForeignKey = (
     />
   );
 };
+
+console.error("FIX ADD FILE COLUMN");
+console.error("CANNOT ADD TIMECHART AI DASHBOARD SQL EDITOR");

@@ -1430,7 +1430,7 @@ test.describe("Main test", () => {
     await page.getByTestId("SQLSmartEditor.Run").click();
 
     /** Insert records into new table */
-    await page.getByRole("option").getByText("my_table").click({ delay: 200 });
+    await page.getByRole("option").getByText("My Table").click({ delay: 200 });
     await insertRow(page, "my_table", { name: "some text" });
     const deletedRowName = "some more text";
     await insertRow(page, "my_table", { name: deletedRowName });

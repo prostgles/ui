@@ -144,8 +144,6 @@ export class TimeChart extends RTComp<
     const { w, h } = this.chart!.getWH();
     const { padding } = this.props;
     const xForYLabels = 6;
-    // const xMin = 50 + (this.props.showBinLabels? 20 : 0);
-    // const xMax = w - (this.props.showBinLabels? 20 : 10);
     const xMin = 50 + 20;
     const xMax = w - 20;
     const yMin = padding?.top ?? 60;

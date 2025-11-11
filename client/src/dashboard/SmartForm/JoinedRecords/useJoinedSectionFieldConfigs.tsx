@@ -1,12 +1,12 @@
+import { MediaViewer } from "@components/MediaViewer";
 import { isDefined, isObject, type AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import { MediaViewer } from "@components/MediaViewer";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { FieldConfig } from "../../SmartCard/SmartCard";
-import { getBestTextColumns } from "../SmartFormField/fetchForeignKeyOptions";
-import type { JoinedRecordsProps } from "./JoinedRecords";
-import { RenderValue } from "../SmartFormField/RenderValue";
 import { SmartCardColumn } from "../../SmartCard/SmartCardColumn";
+import { getBestTextColumns } from "../SmartFormField/fetchForeignKeyOptions";
+import { RenderValue } from "../SmartFormField/RenderValue";
+import type { JoinedRecordsProps } from "./JoinedRecords";
 
 export const useJoinedSectionFieldConfigs = ({
   sectionTable,
@@ -55,6 +55,10 @@ export const useJoinedSectionFieldConfigs = ({
         const joinColumns = joinInfo.on.flatMap((conditions) =>
           conditions.map(([col1, col2]) => col2),
         );
+        const isOneToOneJoin = fTable.info.uniqueColumnGroups?.some(
+          (groupCols) => groupCols.every((col) => joinColumns.includes(col)),
+        );
+        if (!isOneToOneJoin) return;
         const textCols = getBestTextColumns(fTable, joinColumns);
         if (!textCols.length) return;
 

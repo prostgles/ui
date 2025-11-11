@@ -162,6 +162,7 @@ export type DBGeneratedSchema = {
       db_user?: string;
       db_watch_shema?: null | boolean;
       disable_realtime?: null | boolean;
+      display_options?: null | {    prettyTableAndColumnNames: boolean;  };
       id?: string;
       info?: null | {    canCreateDb?: boolean;  };
       is_state_db?: null | boolean;

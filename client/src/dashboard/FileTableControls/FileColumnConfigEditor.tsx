@@ -142,10 +142,14 @@ export const FileColumnConfigEditor = ({
   }, [error, onSetError]);
 
   return (
-    <FlexCol className="f-1 min-h-0 gap-2">
+    <FlexCol
+      className="f-1 min-h-0 gap-2"
+      data-command="FileColumnConfigEditor"
+    >
       <FormField
         type="number"
         label="Maximum file size in megabytes"
+        data-command="FileColumnConfigEditor.maxFileSizeMB"
         value={colConfig.maxFileSizeMB ?? 1}
         onChange={(e) => {
           updateMergeColConfig({ ...colConfig, maxFileSizeMB: +e });
@@ -155,6 +159,7 @@ export const FileColumnConfigEditor = ({
         label={"Content filter mode"}
         options={CONTENT_MODES.map((cm) => cm.key)}
         value={contentMode}
+        data-command="FileColumnConfigEditor.contentMode"
         onChange={(newMode) => {
           updateMergeColConfig(
             newMode === "By basic content type" ?

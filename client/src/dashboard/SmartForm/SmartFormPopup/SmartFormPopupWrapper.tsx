@@ -130,7 +130,8 @@ export const SmartFormPopupWrapper = ({
       onClose={onClose}
       clickCatchStyle={{ opacity: 0.2 }}
       showFullscreenToggle={{
-        getStyle: (fullscreen) => (fullscreen ? {} : { maxWidth: "600px" }),
+        getStyle: (fullscreen) =>
+          fullscreen ? {} : { width: "min(600px, 100vw)" },
       }}
     >
       {children}

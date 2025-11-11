@@ -1,18 +1,17 @@
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSchemaTable } from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import React, { useState } from "react";
-import Btn from "@components/Btn";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { t } from "../../../../i18n/i18nUtils";
 import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import { colIs } from "../../../SmartForm/SmartFormField/fieldUtils";
 import { SQLSmartEditor } from "../../../SQLEditor/SQLSmartEditor";
 import type { ColumnOptions } from "./ColumnEditor";
 import { ColumnEditor } from "./ColumnEditor";
 import { getAlterFkeyQuery } from "./ReferenceEditor";
-import { t } from "../../../../i18n/i18nUtils";
-import { colIs } from "../../../SmartForm/SmartFormField/fieldUtils";
-import type { DBS } from "../../../Dashboard/DBS";
 
 export type CreateColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   table: DBSchemaTable;
@@ -87,6 +86,7 @@ export const CreateColumn = ({
         </Btn>
         <Btn
           title={t.CreateColumn["Show create column query"]}
+          data-command="CreateColumn.next"
           className="ml-auto"
           disabledInfo={
             !col.name ? t.CreateColumn["New column name missing"]

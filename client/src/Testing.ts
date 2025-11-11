@@ -465,6 +465,18 @@ export const COMMANDS = {
   "ServerSideFunctions.onMountEnabled": "",
   DashboardMenu: "",
   "SearchAll.Popup": "",
+
+  AddComputedColMenu: "",
+  "AddComputedColMenu.countOfAllRows": "",
+  "AddComputedColMenu.addBtn": "",
+  "AddComputedColMenu.name": "",
+  "AddComputedColMenu.addTo": "",
+  "LinkedColumn.joinType": "",
+  "LinkedColumn.layoutType": "",
+  "CreateColumn.next": "",
+  FileColumnConfigEditor: "",
+  "FileColumnConfigEditor.maxFileSizeMB": "",
+  "FileColumnConfigEditor.contentMode": "",
 } as const satisfies Record<
   string,
   | string

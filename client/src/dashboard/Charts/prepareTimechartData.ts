@@ -120,7 +120,7 @@ export const prepareTimechartData = function (this: TimeChart) {
   const xScale = scaleLinear()
     .domain([minDate, maxDate])
     .range([xMin, xMax])
-    .clamp(true);
+    .clamp(false);
   const xScaleYLabels = scaleLinear()
     .domain([minDate, maxDate])
     .range([xForYLabels, xMax])
@@ -128,7 +128,7 @@ export const prepareTimechartData = function (this: TimeChart) {
   const yScale = scaleLinear()
     .domain([maxVal, minVal])
     .range([yMin, yMax])
-    .clamp(true);
+    .clamp(false);
 
   tcLayers = tcLayers.map((l) => {
     l.sortedParsedData = l.sortedParsedData?.map((d) => {

@@ -6,7 +6,7 @@ import {
 import { useMemoDeep, usePromise } from "prostgles-client/dist/react-hooks";
 import { useEffect, useMemo } from "react";
 import type { PrglProject, PrglState } from "../../App";
-import { getTables } from "../../dashboard/Dashboard/Dashboard";
+import { getTables } from "../../dashboard/Dashboard/getTables";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { prgl_R } from "../../WithPrgl";
 
@@ -191,13 +191,15 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       dbState.state !== "loaded" ||
       !con ||
       connectionInfo.state !== "loaded"
-    )
+    ) {
       return;
+    }
     const { dbo: db, methods, tableSchema, socket } = dbState.dbPrgl;
     const { tables: dbTables = [] } = getTables(
       tableSchema ?? [],
       con.table_options,
       db,
+      con.display_options?.prettyTableAndColumnNames ?? true,
     );
 
     const { path } = dbState;

@@ -35,6 +35,7 @@ export type GetRefHooks = {
 export type GetRefCB = (hooks: GetRefHooks) => void;
 
 export type ColumnDisplayConfig = {
+  hideLabel?: boolean;
   sectionHeader?: string;
   onRender?: (value: any, setValue: (newValue: any) => void) => React.ReactNode;
 };

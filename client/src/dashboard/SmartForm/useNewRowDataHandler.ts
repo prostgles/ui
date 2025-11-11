@@ -150,7 +150,9 @@ export const useNewRowDataHandler = (args: Args) => {
           onSuccess?.("update", newRow as any);
         } catch (_e: any) {
           parseError(_e);
-          return newRow;
+          throw _e;
+          // This triggered clearing the error before it could be shown
+          // return newRow;
         }
       }
 
@@ -195,6 +197,11 @@ export const useNewRowDataHandler = (args: Args) => {
       onChanged: setNewRowData,
     }),
   );
+  newRowDataHandler.setHandlers({
+    onChange: onSetColumnData,
+    onChanged: (newRow) => setNewRowData({ ...newRow }),
+  });
+
   const [newRow, setNewRow] = useState<AnyObject>();
   useEffect(() => {
     const newRow = newRowDataHandler.getRow();

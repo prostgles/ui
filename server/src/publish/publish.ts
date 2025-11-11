@@ -2,7 +2,7 @@ import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import { getKeys } from "prostgles-types";
+import { getKeys, type AnyObject, type FullFilter } from "prostgles-types";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { isDefined } from "@common/filterUtils";
 import {
@@ -15,6 +15,7 @@ import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMo
 import { checkClientIP } from "../authConfig/sessionUtils";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
 import { getPublishLLM } from "./getPublishLLM";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 
 export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
   params,
@@ -211,6 +212,7 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
           url_path: 1,
           table_options: 1,
           db_schema_filter: 1,
+          display_options: 1,
         },
         validate: async ({ update, dbx, filter }) => {
           const row = await dbx.connections.findOne(filter);

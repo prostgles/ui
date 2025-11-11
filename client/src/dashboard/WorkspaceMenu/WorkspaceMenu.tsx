@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from "react";
-import type { Prgl } from "../../App";
 import Btn from "@components/Btn";
 import { FlexRow, classOverride } from "@components/Flex";
 import { SvgIcon } from "@components/SvgIcon";
 import { onWheelScroll } from "@components/Table/Table";
+import { mdiPencil } from "@mdi/js";
+import React, { useEffect, useRef } from "react";
+import type { Prgl } from "../../App";
 import type { Command } from "../../Testing";
 import type { WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
 import { useSetActiveWorkspace, useWorkspaces } from "./useWorkspaces";
@@ -61,7 +62,7 @@ export const WorkspaceMenu = (props: P) => {
           <li
             key={w.id}
             className={
-              "workspace-list-item text-1 relative " +
+              "workspace-list-item text-1 relative flex-row " +
               (workspace.id === w.id ? "active" : "")
             }
           >
@@ -97,6 +98,21 @@ export const WorkspaceMenu = (props: P) => {
         setWorkspace={setWorkspace}
         workspaces={workspaces}
       />
+
+      {/* <Btn
+        iconPath={mdiPencil}
+        title="Finish editing workspace layout"
+        variant="faded"
+        color={workspace.layout_mode !== "fixed" ? "action" : undefined}
+        onClick={() => {
+          workspace.$update({
+            layout_mode:
+              workspace.layout_mode === "fixed" ? "editable" : "fixed",
+          });
+        }}
+      >
+        Edit mode
+      </Btn> */}
     </FlexRow>
   );
 };

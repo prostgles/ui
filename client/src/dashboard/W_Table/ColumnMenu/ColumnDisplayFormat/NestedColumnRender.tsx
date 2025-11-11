@@ -6,7 +6,7 @@ import { MediaViewer } from "@components/MediaViewer";
 import { TimeChart } from "../../../Charts/TimeChart";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
-import { getYLabelFunc } from "../../../W_TimeChart/getTimeChartData";
+import { getYLabelFunc } from "../../../W_TimeChart/fetchData/getTimeChartData";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
 import type { ColumnConfig } from "../ColumnMenu";
 
