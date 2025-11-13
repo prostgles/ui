@@ -1,3 +1,6 @@
+import Popup, { POPUP_CLASSES } from "@components/Popup/Popup";
+import type { FullOption } from "@components/Select/Select";
+import Select from "@components/Select/Select";
 import {
   mdiFunction,
   mdiLink,
@@ -9,10 +12,7 @@ import {
   type DBHandlerClient,
 } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
-import { WithPrgl } from "../../../WithPrgl";
-import Popup, { POPUP_CLASSES } from "@components/Popup/Popup";
-import type { FullOption } from "@components/Select/Select";
-import Select from "@components/Select/Select";
+import { t } from "../../../i18n/i18nUtils";
 import type {
   DBSchemaTablesWJoins,
   LoadedSuggestions,
@@ -21,10 +21,8 @@ import type {
 import { CreateFileColumn } from "../../FileTableControls/CreateFileColumn";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { CreateColumn } from "./AlterColumn/CreateColumn";
-import { t } from "../../../i18n/i18nUtils";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
-import type { DBS } from "../../Dashboard/DBS";
 
 const options = [
   {
@@ -132,6 +130,8 @@ export const AddColumnMenu = ({
               t.AddColumnMenu[
                 "Aggregates and/or Count not allowed with linked "
               ]
+            : o.key === "CreateFileColumn" && table.info.isFileTable ?
+              "Cannot add file column to a file table"
             : undefined,
         }))}
         onChange={(type) => setColType(type)}
@@ -147,17 +147,12 @@ export const AddColumnMenu = ({
           nestedColumnOpts={nestedColumnOpts}
         />
       : colType === "CreateFileColumn" ?
-        <WithPrgl
-          onRender={(prgl) => (
-            <CreateFileColumn
-              db={db}
-              tables={tables}
-              fileTable={tables[0]?.info.fileTableName}
-              tableName={table.name}
-              prgl={prgl}
-              onClose={() => setColType(undefined)}
-            />
-          )}
+        <CreateFileColumn
+          db={db}
+          tables={tables}
+          fileTable={tables[0]?.info.fileTableName}
+          tableName={table.name}
+          onClose={() => setColType(undefined)}
         />
       : <Popup
           title={

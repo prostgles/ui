@@ -292,6 +292,11 @@ export const SPOOF_TEST_VALUE = "trustme";
 export const getEntries = <T extends AnyObject>(obj: T) =>
   Object.entries(obj) as [keyof T, T[keyof T]][];
 
+export const fromEntries = <K extends string | number | symbol, V>(
+  entries: readonly (readonly [K, V])[],
+): Record<K, V> => {
+  return Object.fromEntries(entries) as Record<K, V>;
+};
 export const CONNECTION_CONFIG_SECTIONS = [
   "access_control",
   "backups",
@@ -416,4 +421,9 @@ export const getCaller = () => {
   const stackLines = error.stack?.split("\n") ?? [];
   const callerLine = stackLines[2] ?? "";
   return stackLines;
+};
+
+//TODO: add file table column info to prostgles-types
+export type FileTable = {
+  original_name: string;
 };

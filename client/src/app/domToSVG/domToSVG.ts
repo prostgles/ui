@@ -76,7 +76,8 @@ export const domToSVG = async (node: HTMLElement) => {
 const moveBordersToTop = (svg: SVGGElement) => {
   svg.querySelectorAll<SVGScreenshotNodeType>("path").forEach((path) => {
     if (
-      path._purpose === "border" &&
+      path._purpose?.border &&
+      !path._purpose.background &&
       path.parentElement instanceof SVGGElement
     ) {
       path.parentElement.appendChild(path);

@@ -1,12 +1,14 @@
-import { mdiDotsHorizontal } from "@mdi/js";
-import { isObject, type AnyObject } from "prostgles-types";
-import React, { useCallback, useState } from "react";
 import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
 import type { FormFieldProps } from "@components/FormField/FormField";
 import FormField from "@components/FormField/FormField";
 import { FormFieldCodeEditor } from "@components/FormField/FormFieldCodeEditor";
 import { JSONBSchemaA } from "@components/JSONBSchema/JSONBSchema";
+import Loading from "@components/Loader/Loading";
 import { SvgIcon } from "@components/SvgIcon";
+import { mdiDotsHorizontal } from "@mdi/js";
+import { isObject, type AnyObject } from "prostgles-types";
+import React, { useCallback, useState } from "react";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { DBSchemaTableColumn } from "../../Dashboard/dashboardUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
@@ -34,7 +36,6 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
-import Loading from "@components/Loader/Loading";
 
 type SmartFormFieldValue =
   | string
@@ -42,7 +43,7 @@ type SmartFormFieldValue =
   | {
       data: File;
       name: string;
-    }[]
+    }
   | null;
 
 export type SmartFormFieldProps = Pick<
@@ -237,7 +238,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         inputContent={
           renderAsJSON?.component === "JSONBSchema" ?
             <JSONBSchemaA
-              // className={renderAsJSON.noLabels ? "" : "m-p5"}
               db={db}
               schema={renderAsJSON.jsonbSchema}
               tables={tables}
@@ -315,13 +315,11 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         hint={hint}
         hideClearButton={hideNullBtn}
       />
-      {column.file && (
-        <SmartFormFieldFileSection
-          db={db}
-          table={table}
-          mediaId={typeof value === "string" ? value : undefined}
-        />
-      )}
+      {column.file ?
+        typeof value === "number" ?
+          <ErrorComponent error={"Unexpected number data type"} />
+        : <SmartFormFieldFileSection db={db} table={table} media={value} />
+      : null}
     </>
   );
 };

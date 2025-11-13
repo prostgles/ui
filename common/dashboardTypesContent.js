@@ -48,6 +48,10 @@ export type LayoutGroup = {
 
 export type LayoutConfig = LayoutItem | LayoutGroup;
 
+/**
+ * This will render a time chart for each row in the table.
+ * Useful for showing and comparing time series data for multiple entities
+ */
 type LinkedDataChart = {
   chart: {
     type: "time";
@@ -60,39 +64,50 @@ type LinkedDataChart = {
   };
 };
 
+/**
+ * This will render nested rows for each row in the table.
+ */
 type LinkedDataTable = {
   limit: number;
-  columns: {
-    name: string;
-  }[];
+  columns: Omit<TableColumn, "nested">[];
 };
 
+/**
+ * Join to linked table.
+ */
+type TableJoin = {
+  /**
+   * Join columns.
+   * property = root table (or previous table) column name
+   * value = linked table column name
+   * @example
+   * path: {
+   *   on: [{ user_id: "id" }]
+   *   table: "users"
+   * }
+   */
+  on: Record<string, string>[];
+  /**
+   * Linked table name
+   */
+  table: string;
+};
+
+/**
+ * Show linked data from other tables that are linked to this column through foreign keys
+ */
 type LinkedData = {
   joinType: "left" | "inner";
   /**
    * Join to linked table.
    * Last table in the path is the target table that columns will refer to.
    */
-  path: {
-    /**
-     * Join columns.
-     * property = root table (or previous table) column name
-     * value = linked table column name
-     * @example
-     * path: {
-     *   on: [{ user_id: "id" }]
-     *   table: "users"
-     * }
-     */
-    on: Record<string, string>[];
-    /**
-     * Linked table name
-     */
-    table: string;
-  }[];
+  path: TableJoin[];
 } & (LinkedDataChart | LinkedDataTable);
 
-type ColumnFilter = {
+type Comparator = "$eq" | "$ne" | "$lt" | "$lte" | "$gt" | "$gte";
+
+type BasicFilter = {
   /**
    * Column name
    */
@@ -100,30 +115,76 @@ type ColumnFilter = {
 } & (
   | {
       type: "$in";
-      value: string[];
+      value: (string | null)[];
     }
   | {
       /** Not in */
       type: "$nin";
-      value: string[];
+      value: (string | null)[];
     }
   | {
-      type: "$eq" | "$ne" | "$lt" | "$lte" | "$gt" | "$gte";
+      type: Comparator;
       value: string;
     }
 );
 
-export type Filter =
-  | ColumnFilter
+type ComplexColumnFilterFunction =
   | {
-      $and: ColumnFilter[];
+      /**
+       * Age to current day
+       * Implemented as pg_catalog.age(column)
+       */
+      $age: [
+        /**
+         * Column name with a timestamp / date value
+         */
+        string,
+      ];
     }
   | {
-      $or: ColumnFilter[];
+      /**
+       * Age to current timestamp
+       * Implemented as pg_catalog.age(now(), column)
+       */
+      $ageNow: [
+        /**
+         * Column name with a timestamp / date value
+         */
+        string,
+      ];
+    };
+type ComplexColumnFilter = {
+  $filter: [ComplexColumnFilterFunction, Comparator, string | null];
+};
+
+type ColumnFilter = BasicFilter | ComplexColumnFilter;
+
+/**
+ * Filter that matches rows based on existence of related rows in another table
+ */
+type JoinedFilter = {
+  $existsJoined: {
+    path: TableJoin[];
+    /**
+     * Filter that will be applied to the joined table (last table in the path)
+     */
+    filter: ColumnFilter;
+  };
+};
+
+type FilterItem = ColumnFilter | JoinedFilter;
+
+export type Filter =
+  | FilterItem
+  | {
+      $and: FilterItem[];
+    }
+  | {
+      $or: FilterItem[];
     };
 
 type Filtering = {
-  filter?: ColumnFilter[];
+  filter?: FilterItem[];
   /** Defaults to AND */
   filterOperand?: "AND" | "OR";
 
@@ -141,6 +202,123 @@ type Filtering = {
   };
 };
 
+/**
+ * Represents a rendered cell in a card layout
+ */
+type CardLayoutRowColumnValue = {
+  type: "row-column";
+  columnName: string;
+  /**
+   * If true, label will be hidden and only value will be shown
+   */
+  hideLabel?: boolean;
+};
+/**
+ * Renders a div element with specified style and contents
+ */
+export type CardLayout = {
+  /**
+   * React.CSSProperties;
+   */
+  style?: Record<string, string | number>;
+  children: (CardLayout | CardLayoutRowColumnValue)[];
+};
+
+type TableColumn = {
+  /**
+   * Column name as it appears in the database.
+   * For nested columns this can be anything. Use the table name or a more descriptive name.
+   */
+  name: string;
+
+  /**
+   * Show linked data from other tables that are linked to this column through foreign keys.
+   * If defined then "name" from above should be used as a label for the nested data.
+   */
+  nested?: LinkedData;
+
+  /**
+   * Column width in pixels
+   */
+  width: number;
+
+  /**
+   * Render column value in a chip
+   * Cannot be used with nested
+   */
+  styling?: {
+    type: "conditional";
+    conditions: {
+      chipColor:
+        | "red"
+        | "pink"
+        | "purple"
+        | "blue"
+        | "indigo"
+        | "green"
+        | "yellow"
+        | "gray";
+      operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
+      value: string;
+    }[];
+  };
+
+  /**
+   * If set, column value will rendered in a specific way
+   */
+  format?:
+    | {
+        /**
+         * Column value will be rendered as a link with specific behaviour
+         */
+        type: "URL" | "Email" | "Tel";
+      }
+    | {
+        /**
+         * Render column value as a scannable QR code image
+         */
+        type: "QR Code";
+      }
+    | {
+        /** Display large numbers with metric prefixes (e.g. 1.2K) */
+        type: "Metric Prefix";
+      }
+    | {
+        /**
+         * Render column value with a currency symbol
+         */
+        type: "Currency";
+        params:
+          | {
+              mode: "Fixed";
+              /** @example "USD" */
+              currencyCode: string;
+              metricPrefix?: boolean;
+            }
+          | {
+              mode: "From column";
+              /** Column which contains the currency code  */
+              currencyCodeField: string;
+              metricPrefix?: boolean;
+            };
+      }
+    | {
+        /** Display the timestamp value as an age. Short variant (default) shows top two biggest units */
+        type: "Age";
+        params?: {
+          variant: "short" | "full";
+        };
+      }
+    | {
+        /** Text content as sanitised html */
+        type: "HTML";
+      }
+    | {
+        /** Displays the media from URL. Accepted formats: image, audio or video. Media/Mime type will be used from headers */
+        type: "Media";
+      };
+};
+
 export type TableWindowInsertModel = Filtering & {
   id: string;
   type: "table";
@@ -150,43 +328,7 @@ export type TableWindowInsertModel = Filtering & {
    */
   title?: string;
   table_name: string;
-  columns?: {
-    /**
-     * Column name as it appears in the database.
-     * For nested columns this can be anything. Use the table name or a more descriptive name.
-     */
-    name: string;
-    /**
-     * Column width in pixels
-     */
-    width: number;
-
-    /**
-     * Render column value in a chip
-     * Cannot be used with nested
-     */
-    styling?: {
-      type: "conditional";
-      conditions: {
-        chipColor:
-          | "red"
-          | "pink"
-          | "purple"
-          | "blue"
-          | "indigo"
-          | "green"
-          | "yellow"
-          | "gray";
-        operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
-        value: string;
-      }[];
-    };
-
-    /**
-     * Show linked data from other tables that are linked to this column through foreign keys
-     */
-    nested?: LinkedData;
-  }[];
+  columns?: TableColumn[];
 
   /**
    * Sort order when of type 'table'
@@ -201,26 +343,48 @@ export type TableWindowInsertModel = Filtering & {
         asc: boolean;
         nulls: "first" | "last";
       }[];
+
+  /**
+   * If set, will render the table in a card layout where each row is shown as a card.
+   */
+  cardLayout?: CardLayout;
 };
+
+type LayerDataSource =
+  | (Filtering & {
+      type: "local-table";
+      table_name: string;
+      /**
+       * Join to linked table (table_name is root table).
+       * The charted columns must be from the end table while the filters are from the root table (table_name).
+       */
+      joinPath?: TableJoin[];
+    })
+  | {
+      type: "sql";
+      sql: string;
+    };
 
 /**
  * Shows GEOGRAPHY/GEOMETRY data on a map
  */
-type MapWindowInsertModel = {
+export type MapWindowInsertModel = {
   id: string;
   type: "map";
   title?: string;
-  table_name: string;
-  /**
-   * Column name with GEOGRAPHY/GEOMETRY data
-   */
-  geo_column: string;
+  layers: (LayerDataSource & {
+    title?: string;
+    /**
+     * Column name with GEOGRAPHY/GEOMETRY data
+     */
+    geoColumn: string;
+  })[];
 };
 
 /**
  * Allows user to write and excute custom SQL queries with results displayed in a table
  */
-type SqlWindowInsertModel = {
+export type SqlWindowInsertModel = {
   id: string;
   name: string;
   type: "sql";
@@ -230,32 +394,40 @@ type SqlWindowInsertModel = {
 /**
  * Shows a time chart
  */
-type TimechartWindowInsertModel = {
+export type TimechartWindowInsertModel = {
   id: string;
   type: "timechart";
   title?: string;
-  table_name: string;
-  date_column: string;
-  y_axis:
-    | "count(*)"
-    | {
-        column: string;
-        aggregation: "sum" | "avg" | "min" | "max" | "count";
-      };
+  layers: (LayerDataSource & {
+    title?: string;
+    dateColumn: string;
+    groupByColumn?: string;
+    yAxis:
+      | "count(*)"
+      | {
+          column: string;
+          aggregation: "sum" | "avg" | "min" | "max" | "count";
+        };
+  })[];
 };
-
-type BarchartWindowInsertModel = Filtering & {
+export type BarchartWindowInsertModel = (
+  | (Filtering & {
+      table_name: string;
+    })
+  | {
+      sql: string;
+    }
+) & {
   id: string;
   type: "barchart";
   title?: string;
-  table_name: string;
-  x_axis:
+  xAxis:
     | "count(*)"
     | {
         column: string;
         aggregation: "sum" | "avg" | "min" | "max" | "count";
       };
-  y_axis_column: string;
+  yAxisColumn: string;
 };
 
 export type WindowInsertModel =

@@ -477,6 +477,7 @@ export const COMMANDS = {
   FileColumnConfigEditor: "",
   "FileColumnConfigEditor.maxFileSizeMB": "",
   "FileColumnConfigEditor.contentMode": "",
+  CreateFileColumn: "",
 } as const satisfies Record<
   string,
   | string

@@ -63,6 +63,15 @@ export class NewRowDataHandler {
       value,
     });
   };
+  setNestedFileColumn = (
+    columnName: string,
+    value: Extract<ColumnData, { type: "nested-file-column" }>["value"],
+  ) => {
+    this.setColumnData(columnName, {
+      type: "nested-file-column",
+      value,
+    });
+  };
   setNestedTable = (
     columnName: string,
     value: Extract<ColumnData, { type: "nested-table" }>["value"],

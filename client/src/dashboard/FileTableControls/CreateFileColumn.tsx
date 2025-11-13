@@ -10,11 +10,11 @@ import Select from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
 import { useFileTableConfigControls } from "./useFileTableConfigControls";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 type CreateReferencedColumnProps = Omit<PrglCore, "methods"> & {
   fileTable: string | undefined;
   tableName?: string;
-  prgl: Prgl;
   onClose?: VoidFunction;
 };
 
@@ -23,9 +23,9 @@ export const CreateFileColumn = ({
   tables,
   fileTable,
   tableName: _tableName,
-  prgl,
   onClose,
 }: CreateReferencedColumnProps) => {
+  const prgl = usePrgl();
   const [tableName, setTableName] = useState(_tableName);
   if (!fileTable) {
     return (
@@ -34,6 +34,7 @@ export const CreateFileColumn = ({
         clickCatchStyle={{ opacity: 0.5 }}
         onClickClose={true}
         positioning="top-center"
+        data-command="CreateFileColumn"
         onClose={onClose}
       >
         <InfoRow variant="naked">
@@ -90,14 +91,15 @@ export const CreateFileColumn = ({
 
 const CreateFileColumnOptions = ({
   db,
-  prgl,
   fileTable,
   tableName,
   onDone,
+  prgl,
 }: Omit<CreateReferencedColumnProps, "fileTable"> & {
   fileTable: string;
   tableName: string;
   onDone: VoidFunction;
+  prgl: Prgl;
 }) => {
   const [colName, setColName] = useState<string>();
   const [optional, setOptional] = useState(true);
@@ -111,7 +113,8 @@ const CreateFileColumnOptions = ({
     !tableName ? "" : (
       [
         `ALTER TABLE ${asName(tableName || "empty")} `,
-        `ADD COLUMN ${asName(colName || "empty")} UUID ${!optional ? " NOT NULL " : ""} REFERENCES ${asName(fileTable)} (id)`,
+        `ADD COLUMN ${asName(colName || "empty")} UUID ${!optional ? " NOT NULL " : ""} `,
+        `REFERENCES ${asName(fileTable)} (id)`,
       ].join("\n")
     );
   const [error, setError] = useState<any>();
@@ -119,8 +122,9 @@ const CreateFileColumnOptions = ({
   return (
     <Popup
       title="Add new file link"
-      positioning="center"
+      positioning="top-center"
       clickCatchStyle={{ opacity: 0.5 }}
+      data-command="CreateFileColumn"
       onClose={onDone}
       contentClassName="gap-1 p-1"
       autoFocusFirst={{ selector: "input" }}
@@ -137,7 +141,9 @@ const CreateFileColumnOptions = ({
             onChange={(e) => setOptional(e)}
             checked={!!optional}
           />
-          <InfoRow iconPath="">{query}</InfoRow>
+          <InfoRow iconPath="">
+            This column will reference the <strong>{fileTable}</strong> table
+          </InfoRow>
           {colName && (
             <>
               <FileColumnConfigEditor
@@ -158,6 +164,7 @@ const CreateFileColumnOptions = ({
           variant: "filled",
           color: "action",
           "data-command": "CreateFileColumn.confirm",
+          className: "ml-auto",
           disabledInfo:
             error ? "Must fix error"
             : !colName ? "New column name missing"

@@ -13,6 +13,7 @@ import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { getColWInfo } from "./getColWInfo";
 import { getColWidth } from "./getColWidth";
+import type { FileTable } from "@common/utils";
 
 export const getFullColumnConfig = (
   tables: CommonWindowProps["tables"],
@@ -66,7 +67,7 @@ export const getFullColumnConfig = (
       const urlColumnIndex = colsWInfo.findIndex((c) => c.name === "url");
       const urlColumn = colsWInfo.splice(urlColumnIndex, 1)[0];
       const origNameColIdx = colsWInfo.findIndex(
-        ({ name }) => name === "original_name",
+        ({ name }) => name === ("original_name" satisfies keyof FileTable),
       );
       const origNameCol = colsWInfo.splice(origNameColIdx, 1)[0];
       if (origNameCol) {

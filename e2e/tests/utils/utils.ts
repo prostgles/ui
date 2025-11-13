@@ -643,9 +643,11 @@ export const dropConnectionAndDatabase = async (
   return { connectionSelector };
 };
 
-export const selectAndInsertFile = async (
+export const selectAndUpsertFile = async (
   page: PageWIds,
   onOpenFileDialog: (page: PageWIds) => Promise<void>,
+  onBeforePressInsert?: () => Promise<void>,
+  isUpdate = false,
 ) => {
   // Start waiting for file chooser before clicking. Note no await.
   const fileChooserPromise = page.waitForEvent("filechooser");
@@ -654,16 +656,22 @@ export const selectAndInsertFile = async (
   const resolvedPath = path.resolve(path.join(__dirname, "../../" + fileName));
 
   await fileChooser.setFiles(resolvedPath);
-  await page.waitForTimeout(2e3);
-  await page.getByRole("button", { name: "Insert", exact: true }).click();
-  await page.waitForTimeout(1200);
+  await onBeforePressInsert?.();
+  await page
+    .getByRole("button", { name: isUpdate ? "Update" : "Insert", exact: true })
+    .click();
+  if (isUpdate) {
+    await page
+      .getByRole("button", { name: "Update row!", exact: true })
+      .click();
+  }
 };
 
 export const fileName = "icon512.png";
 export const uploadFile = async (page: PageWIds) => {
   await clickInsertRow(page, "files");
   await page.waitForTimeout(200);
-  await selectAndInsertFile(page, (page) =>
+  await selectAndUpsertFile(page, (page) =>
     page.getByTestId("FileBtn").click(),
   );
 };

@@ -45,7 +45,9 @@ export const getWhatToRenderOnSVG = async (
       }
       return acc;
     },
-    {} as Partial<Record<(typeof attributesToKeep)[number], string>>,
+    undefined as
+      | Partial<Record<(typeof attributesToKeep)[number], string>>
+      | undefined,
   );
 
   const background = getBackgroundColor(style);

@@ -59,7 +59,6 @@ export const FileTableConfigControls = ({
         file_table_config={database_config.file_table_config}
         tables={tables}
         db={db}
-        prgl={prgl}
       />
     </div>
   );

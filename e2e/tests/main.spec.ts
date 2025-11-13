@@ -36,7 +36,7 @@ import {
   runDbSql,
   runDbsSql,
   runSql,
-  selectAndInsertFile,
+  selectAndUpsertFile,
   sendAskLLMMessage,
   setModelByText,
   setPromptByText,
@@ -1654,14 +1654,60 @@ test.describe("Main test", () => {
     await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
     await page.waitForTimeout(1e3);
     await clickInsertRow(page, "my_table");
-    await selectAndInsertFile(page, (page) =>
-      page.getByTestId("SmartFormFieldOptions.AttachFile").click(),
+    await selectAndUpsertFile(
+      page,
+      (page) => page.getByTestId("SmartFormFieldOptions.AttachFile").click(),
+      () =>
+        expect(
+          page.getByTestId("Popup.content").locator("img"),
+          // Must have blob src attribute
+        ).toHaveAttribute("src", /^\s*blob:/),
     );
-    await page.waitForTimeout(3e3);
+    const imgSrc = await page
+      .getByTestId("Popup.content")
+      .locator("img")
+      .getAttribute("src");
+    await expect(imgSrc).toContain("blob:");
     const nodes = await page.getByText(fileName).innerHTML();
     console.log({ nodes });
-    await expect(await page.getByText(fileName).count()).toBe(1);
+    await expect(page.getByText(fileName)).toHaveCount(1);
     await page.waitForTimeout(1e3);
+    // Required to ensure it is not obscured by the insert btn
+    await page.getByTestId("dashboard.window.fullscreen").last().click();
+    await page.getByTestId("dashboard.window.viewEditRow").last().click();
+
+    await expect(
+      page.getByTestId("Popup.content").locator("img"),
+    ).toHaveAttribute(
+      "src",
+      // Inserted url starts with /prostgles_storage
+
+      /^\/prostgles_storage/,
+    );
+
+    // Deleting works
+    await page
+      .locator(getDataKey("files_id"))
+      .getByTestId("FormField.clear")
+      .click();
+    await page.getByTestId("SmartForm.update").click();
+    await page
+      .getByRole("button", { name: "Update row!", exact: true })
+      .click();
+    await expect(page.getByText(fileName)).toHaveCount(0);
+
+    // Updating row with file works
+    await page.getByTestId("dashboard.window.viewEditRow").last().click();
+    await selectAndUpsertFile(
+      page,
+      (page) => page.getByTestId("SmartFormFieldOptions.AttachFile").click(),
+      () =>
+        expect(
+          page.getByTestId("Popup.content").locator("img"),
+        ).toHaveAttribute("src", /^\s*blob:/),
+      true,
+    );
+    await expect(page.getByText(fileName)).toHaveCount(1);
   });
 
   test("Table tests", async ({ page: p }) => {

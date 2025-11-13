@@ -88,7 +88,7 @@ export const elementToSVG = async (
   // ) {
   //   debugger;
   // }
-  rectangleToSVG(g, element, style, elemInfo, whatToRender, bboxCode, context);
+  rectangleToSVG(g, element, style, elemInfo, whatToRender, bboxCode);
 
   if (whatToRender.text?.length) {
     whatToRender.text.forEach((textForSVG) => {
@@ -187,6 +187,16 @@ export const elementToSVG = async (
     }
   }
 
+  /** Must ensure we have a bbox for clicking interaction placement */
+  if (!g.childNodes.length && whatToRender.attributeData) {
+    const bboxRect = document.createElementNS(SVG_NAMESPACE, "rect");
+    bboxRect.setAttribute("x", toFixed(x));
+    bboxRect.setAttribute("y", toFixed(y));
+    bboxRect.setAttribute("width", toFixed(width));
+    bboxRect.setAttribute("height", toFixed(height));
+    bboxRect.setAttribute("fill", "transparent");
+    g.appendChild(bboxRect);
+  }
   if (g.childNodes.length) {
     addOverflowClipPath(
       element,

@@ -1,10 +1,10 @@
-import { addSpecificBorders, roundedRectPath } from "./bgAndBorderToSVG";
+import { fromEntries, getEntries } from "@common/utils";
 import { SVG_NAMESPACE } from "../domToSVG";
 import type { SVGScreenshotNodeType } from "../domToThemeAwareSVG";
-import type { SVGContext, SVGNodeLayout } from "./elementToSVG";
 import type { getWhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
+import { addSpecificBorders, roundedRectPath } from "./bgAndBorderToSVG";
+import type { SVGNodeLayout } from "./elementToSVG";
 import { getBoxShadowAsDropShadow } from "./shadowToSVG";
-import { isEmpty } from "src/utils";
 
 export const rectangleToSVG = (
   g: SVGGElement,
@@ -15,44 +15,45 @@ export const rectangleToSVG = (
     border,
     background,
     backdropFilter,
-    attributeData,
   }: Pick<
     Awaited<ReturnType<typeof getWhatToRenderOnSVG>>,
-    "background" | "border" | "backdropFilter" | "attributeData"
+    "background" | "border" | "backdropFilter"
   >,
   bboxCode: string,
-  context: SVGContext,
 ) => {
   const shadow = getBoxShadowAsDropShadow(style);
   const scrollMask =
     style.backdropFilter &&
     style.mask &&
     style.mask.includes("linear-gradient");
-  if (
-    !border &&
-    !background &&
-    !shadow &&
-    !scrollMask &&
-    !backdropFilter &&
-    (!attributeData || isEmpty(attributeData))
-  ) {
+  if (!border && !background && !shadow && !scrollMask && !backdropFilter) {
     return;
   }
 
-  const { path, showBorder, rtl, rtr, rbr, rbl, borderWidth } =
-    getRectanglePath(style, { x, y, width, height }, { border });
-  path._domElement = element;
+  let _path: ReturnType<typeof getRectanglePath> | undefined;
+  const getPath = () => {
+    if (_path) return _path;
+    const entries = getEntries({
+      border,
+      background,
+      shadow,
+      scrollMask,
+      backdropFilter,
+    } as const);
+    const _purpose = fromEntries(entries.map(([k, v]) => [k, v]));
+    const { path, showBorder, rtl, rtr, rbr, rbl, borderWidth } =
+      getRectanglePath(style, { x, y, width, height }, { border });
+    path._domElement = element;
+    path._bboxCode = bboxCode;
+    path._purpose = _purpose;
 
-  path._bboxCode = bboxCode;
-  path._purpose =
-    background && border ? "bg+border"
-    : border ? "border"
-    : "bg";
+    /** This is required to make backgroundSameAsRenderedParent work as expected */
+    path.setAttribute("fill", "none");
 
-  /** This is required to make backgroundSameAsRenderedParent work as expected */
-  path.setAttribute("fill", "none");
-
-  g.appendChild(path);
+    g.appendChild(path);
+    _path = { path, showBorder, rtl, rtr, rbr, rbl, borderWidth };
+    return _path;
+  };
 
   const maskLinearGradients = style.maskImage.split("linear-gradient(");
   const blendModes = style.maskComposite.split(", ");
@@ -157,28 +158,31 @@ export const rectangleToSVG = (
   }
 
   if (background) {
-    path.setAttribute("fill", style.backgroundColor);
+    getPath().path.setAttribute("fill", style.backgroundColor);
   }
 
   // TODO: shadow and border must be drawn outside the overflow clip path
   if (shadow) {
-    path.style.filter = shadow.filter;
+    getPath().path.style.filter = shadow.filter;
   }
 
   if (border) {
-    if (!background) {
-      path.setAttribute("fill", "none");
-    }
+    // if (!background) {
+    //   getPath().path.setAttribute("fill", "none");
+    // }
 
     const { outline } = border;
     if (outline) {
-      const outlinePath = path.cloneNode(true) as SVGScreenshotNodeType;
+      const outlinePath = getPath().path.cloneNode(
+        true,
+      ) as SVGScreenshotNodeType;
       outlinePath.setAttribute("fill", "none");
       outlinePath.setAttribute("stroke-width", outline.borderWidth + "px");
       outlinePath.setAttribute("stroke", outline.borderColor);
       outlinePath.setAttribute("stroke-linejoin", "round");
       outlinePath.setAttribute("stroke-linecap", "round");
       g.appendChild(outlinePath);
+      const { path, rtl, rtr, rbr, rbl, showBorder, borderWidth } = getPath();
       path.setAttribute(
         "d",
         roundedRectPath(
@@ -193,15 +197,13 @@ export const rectangleToSVG = (
     }
 
     if (border.type === "border") {
-      path.setAttribute("stroke-width", border.borderWidth + "px");
-      path.setAttribute("stroke", border.borderColor);
+      getPath().path.setAttribute("stroke-width", border.borderWidth + "px");
+      getPath().path.setAttribute("stroke", border.borderColor);
     } else {
       addSpecificBorders(g, x, y, width, height, style);
-      path.setAttribute("stroke", "none");
+      // path.setAttribute("stroke", "none");
     }
   }
-
-  return path;
 };
 
 export const getRectanglePath = (

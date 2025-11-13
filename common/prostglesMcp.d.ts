@@ -133,7 +133,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly optional: true;
                     };
                     readonly suggested_prompt: {
-                        readonly description: "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.";
+                        readonly description: "System prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.";
                         readonly type: "string";
                     };
                     readonly suggested_database_access: {

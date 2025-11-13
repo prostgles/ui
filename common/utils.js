@@ -91,6 +91,9 @@ export function throttle(func, timeout) {
 }
 export const SPOOF_TEST_VALUE = "trustme";
 export const getEntries = (obj) => Object.entries(obj);
+export const fromEntries = (entries) => {
+    return Object.fromEntries(entries);
+};
 export const CONNECTION_CONFIG_SECTIONS = [
     "access_control",
     "backups",

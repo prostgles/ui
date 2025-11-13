@@ -50,7 +50,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
       },
       {
         type: "type",
-        elementSelector: getCommandElemSelector("SmartFilterBar") + " input",
+        elementSelector: getCommandElemSelector("SmartFilterBar"),
         duration: 2000,
       },
     ],
@@ -77,7 +77,7 @@ export const clickTableRow = async (
 ) => {
   const svgif =
     getCommandElemSelector("TableBody") +
-    ` > :nth-child(2) > :nth-child(${rowIndex}) > :nth-child(${columnIndex})`;
+    ` > :nth-child(1) > :nth-child(${rowIndex}) > :nth-child(${columnIndex})`;
   const playwright =
     getCommandElemSelector("TableBody") +
     ` > :nth-child(1) > :nth-child(${rowIndex}) > :nth-child(${columnIndex}) ${columnIndex === 1 ? "button" : ""}`;

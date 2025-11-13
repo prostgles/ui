@@ -1,31 +1,40 @@
+import type { LocalMedia } from "@components/FileInput/FileInput";
+import { MediaViewer } from "@components/MediaViewer";
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import type { DBSchemaTable } from "prostgles-types";
+import { type DBSchemaTable } from "prostgles-types";
 import React from "react";
-import type { Media } from "@components/FileInput/FileInput";
-import { FileInput } from "@components/FileInput/FileInput";
 import type { SmartFormProps } from "../SmartForm";
 
 type P = {
   table: DBSchemaTable;
-  mediaId: string | undefined | null;
+  media: string | LocalMedia | undefined | null;
 } & Pick<SmartFormProps, "db">;
 
-export const SmartFormFieldFileSection = ({ db, table, mediaId }: P) => {
+export const SmartFormFieldFileSection = ({ db, table, media }: P) => {
   const { fileTableName } = table.info;
-  const tableName = table.name;
-  const media: Media[] | undefined = usePromise(async () => {
-    if (!fileTableName || !mediaId) return undefined;
-    const mediaItems = await db[fileTableName]?.find?.({ id: mediaId });
-    return mediaItems as Media[];
-  }, [mediaId, db, fileTableName]);
-
+  const mediaFile = usePromise(async () => {
+    if (!fileTableName || !media) return undefined;
+    if (typeof media === "string") {
+      const mediaItem = await db[fileTableName]?.findOne?.({ id: media });
+      if (!mediaItem) return;
+      return {
+        url: mediaItem.url,
+        content_type: mediaItem.content_type,
+      };
+    }
+    const { data } = media;
+    const url = URL.createObjectURL(data);
+    const content_type = data.type;
+    return { url, content_type };
+  }, [media, db, fileTableName]);
+  if (!mediaFile) return null;
+  const { url, content_type } = mediaFile;
   return (
-    <FileInput
-      key={tableName}
-      className={"mt-p5 f-0 "}
-      media={media}
-      minSize={450}
-      maxFileCount={1}
+    <MediaViewer
+      style={{ maxHeight: "250px" }}
+      key={url}
+      url={url}
+      content_type={content_type}
     />
   );
 };

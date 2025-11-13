@@ -1,4 +1,16 @@
-import { mdiChevronLeft } from "@mdi/js";
+import {
+  mdiChevronLeft,
+  mdiCodeBraces,
+  mdiCodeJson,
+  mdiCube,
+  mdiCubeOutline,
+  mdiFileDocumentOutline,
+  mdiFileExcelOutline,
+  mdiFilePowerpointOutline,
+  mdiFileWordOutline,
+  mdiLanguageMarkdown,
+  mdiXml,
+} from "@mdi/js";
 import React, { useCallback, useEffect } from "react";
 import Chip from "./Chip";
 import { FlexCol } from "./Flex";
@@ -234,7 +246,7 @@ export const RenderMedia = ({
       mediaContent = <audio {...commonProps} controls src={url}></audio>;
     } else if (!isFocused && url) {
       mediaContent = (
-        <FlexCol className="f-0 p-p5 gap-p25">
+        <FlexCol className="f-0 gap-p25">
           {content_type && renderableContentTypes.includes(content_type) ?
             <iframe
               src={url}
@@ -242,7 +254,11 @@ export const RenderMedia = ({
                 minHeight: 0,
               }}
             ></iframe>
-          : <Chip value={content_type ?? "Not found"} />}
+          : <Chip
+              leftIcon={{ path: mdiFileDocumentOutline }}
+              value={content_type ?? "Not found"}
+            />
+          }
         </FlexCol>
       );
     }

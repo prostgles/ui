@@ -1010,7 +1010,26 @@ ON "london_restaurants.geojson" USING gist (geometry);
   https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#CSV_output_mode 
 */
 COPY "london_restaurants.geojson" (id, "type", lat, lon, name, postcode, amenity, website) FROM PROGRAM $$
-  curl -d "[out:csv(::id, ::type, ::lat, ::lon, name, \"addr:postcode\", amenity, website; false)];(node(51.31087184032102,-0.33782958984375,51.723200166800346,0.053558349609375)[amenity~\"pub|restaurant|bar|cafe|fast_food\"][name];); out meta;"  -X POST http://overpass-api.de/api/interpreter
+  curl --retry 5 --retry-delay 10 -d "
+    [out:csv(
+      ::id, 
+      ::type, 
+      ::lat, 
+      ::lon, 
+      name, 
+      \"addr:postcode\", 
+      amenity, 
+      website; 
+      false
+    )];
+    (
+      node(
+        51.31087184032102,
+        -0.33782958984375,
+        51.723200166800346,
+        0.053558349609375
+      )[amenity~\"pub|restaurant|bar|cafe|fast_food\"][name];
+    ); out meta;"  -X POST http://overpass-api.de/api/interpreter
 $$;
 
 UPDATE "london_restaurants.geojson"

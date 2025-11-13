@@ -66,7 +66,7 @@ export const SmartFormFileSection = ({
       key={tableName}
       className={"mt-p5 f-0 " + (tableInfo.isFileTable ? " min-w-300" : "")}
       media={media}
-      minSize={isFileTable ? 470 : 450}
+      // minSize={isFileTable ? 470 : 450}
       maxFileCount={1}
       onAdd={([file]) => {
         // const currentRow = action.type === "update" ? action.currentRow : {};

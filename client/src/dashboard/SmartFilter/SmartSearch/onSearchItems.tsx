@@ -100,11 +100,16 @@ export async function onSearchItems(
           title: stringColumnValue,
           data: columnValue,
           onPress: () => {
+            // const newFilter: SimpleFilter = {
+            //   fieldName: colName,
+            //   type: "$term_highlight",
+            //   value: columnTermValue ?? term,
+            // };
             const newFilter: SimpleFilter = {
               fieldName: colName,
-              type: "$term_highlight",
-              // value: this.props.column? ( columnValue ?? term) : term,
-              value: columnTermValue ?? term, // term// columnValue ?? term
+              type: "$in",
+              value: [columnValue],
+              minimised: true,
             };
             const result: SmartGroupFilter = [
               ...(this.props.detailedFilter ?? []),

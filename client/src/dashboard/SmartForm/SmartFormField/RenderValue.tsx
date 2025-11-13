@@ -1,13 +1,16 @@
-import React from "react";
-import type { ValidatedColumnInfo } from "prostgles-types";
-import { isObject, _PG_date, _PG_numbers, includes } from "prostgles-types";
-import { ShorterText } from "@components/ShorterText";
-import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
-import { dateAsYMD_Time } from "../../Charts";
 import { sliceText } from "@common/utils";
+import type { LocalMedia } from "@components/FileInput/FileInput";
+import { ShorterText } from "@components/ShorterText";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import { _PG_date, _PG_numbers, includes, isObject } from "prostgles-types";
+import React from "react";
+import { dateAsYMD_Time } from "../../Charts";
+import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 
 type P = {
-  column: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType"> | undefined;
+  column:
+    | Pick<ValidatedColumnInfo, "udt_name" | "tsDataType" | "file">
+    | undefined;
   value: any;
   /**
    * Defaults to true
@@ -56,6 +59,11 @@ export const RenderValue = ({
 
     return v;
   };
+
+  if (c?.file && isObject(value)) {
+    const media = value as LocalMedia;
+    return <div>{media.name}</div>;
+  }
 
   if (c?.udt_name === "uuid" && value) {
     return <ShorterText style={style} value={value} column={c} />;
