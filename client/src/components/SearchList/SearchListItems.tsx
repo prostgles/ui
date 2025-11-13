@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useImperativeHandle } from "react";
 import { ClickCatchOverlay } from "../ClickCatchOverlay";
 import { DraggableLI } from "../DraggableLI";
 import { classOverride } from "../Flex";
@@ -9,6 +9,7 @@ import type {
   SearchListProps,
 } from "./SearchList";
 import { SearchListRowContent } from "./SearchListRowContent";
+import { useScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export type SearchListItemsProps = Pick<
   SearchListProps,
@@ -50,6 +51,12 @@ export const SearchListItems = React.forwardRef<
   const notAllItemsShown =
     renderedItems.length && renderedItems.length < items.length && !searchTerm;
 
+  const internalRef = React.useRef<HTMLUListElement>(null);
+
+  useImperativeHandle(ref, () => internalRef.current!);
+  useScrollFade({
+    ref: internalRef,
+  });
   return (
     <div
       className={
@@ -66,7 +73,7 @@ export const SearchListItems = React.forwardRef<
           (isSearch ? "  shadow bg-color-0 " : "")
         }
         role="listbox"
-        ref={ref}
+        ref={internalRef}
         data-command={"SearchList.List"}
         style={{
           padding: 0,

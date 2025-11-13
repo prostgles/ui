@@ -4,6 +4,8 @@ import { type FullOption } from "@components/Select/Select";
 import { SvgIconFromURL } from "@components/SvgIcon";
 import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import {
+  _PG_numbers,
+  _PG_numbers_str,
   includes,
   isDefined,
   isEmpty,
@@ -67,11 +69,15 @@ export const fetchForeignKeyOptions = async ({
 
   /** We must add current value */
   const currentValue = row?.[column.name];
+
+  const isNumericSoMightBeString = includes(_PG_numbers, column.udt_name);
   if (
     row &&
     isDefined(currentValue) &&
     currentValue !== null &&
-    !result.some((o) => o.key === currentValue)
+    !result.some((o) =>
+      isNumericSoMightBeString ? o.key == currentValue : o.key === currentValue,
+    )
   ) {
     const [currentValueOption] = await fetchSearchResults({
       ...rootFkeyTable,

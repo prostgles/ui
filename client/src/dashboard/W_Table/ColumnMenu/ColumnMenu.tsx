@@ -1,4 +1,5 @@
 import {
+  mdiChartBar,
   mdiEye,
   mdiEyeOff,
   mdiEyeRemove,
@@ -54,6 +55,8 @@ import type { FuncDef } from "./FunctionSelector";
 import { FunctionSelector } from "./FunctionSelector";
 import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
+import { SummariseColumn } from "./SummariseColumns";
+import { ColumnQuickStats } from "./ColumnQuickStats/ColumnQuickStats";
 
 export type ColumnConfig = {
   idx?: number;
@@ -275,6 +278,15 @@ export const ColumnMenu = (props: P) => {
         w.filter.some((f) => "fieldName" in f && f.fieldName === column.name) ?
           { color: "var(--active)" }
         : {},
+    },
+    "Quick Stats": {
+      leftIconPath: mdiChartBar,
+      hide: !!column.nested,
+      disabledText:
+        isComputed ? "Cannot add quick stats on a computed column" : undefined,
+      content: table && w.columns && validatedColumn && (
+        <ColumnQuickStats column={validatedColumn} db={db} w={w} />
+      ),
     },
     Columns: {
       leftIconPath: mdiViewColumnOutline,

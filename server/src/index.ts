@@ -235,7 +235,10 @@ type OnServerReadyResult = {
 };
 
 export const startServer = async (
-  onReady?: (result: OnServerReadyResult) => void | Promise<void>,
+  onReady?: (
+    result: OnServerReadyResult,
+    startupResult: ProstglesInitStateWithDBS,
+  ) => void | Promise<void>,
 ) => {
   const actualPort = await new Promise<number>((resolve) => {
     const server = http.listen(PORT, HOST, () => {
@@ -254,11 +257,7 @@ export const startServer = async (
   });
 
   const startupResult = await waitForInitialisation();
-  if (startupResult.state === "error") {
-    console.error("Failed to start prostgles", startupResult);
-    throw new Error("Failed to start prostgles");
-  }
-  void onReady?.({ port: actualPort });
+  void onReady?.({ port: actualPort }, startupResult);
 };
 
 /**
@@ -266,7 +265,11 @@ export const startServer = async (
  * Otherwise it will be started from electron/main.ts
  */
 if (require.main === module) {
-  void startServer((result) => {
+  void startServer((result, dbStartupInfo) => {
+    if (dbStartupInfo.state === "error") {
+      console.error("Failed to start prostgles", dbStartupInfo);
+      process.exit(1);
+    }
     console.log("Server started", result);
   });
 }

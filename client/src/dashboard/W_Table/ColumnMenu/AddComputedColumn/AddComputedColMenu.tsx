@@ -152,7 +152,7 @@ export class AddComputedColMenu extends RTComp<
     const content = (
       <>
         <FlexCol
-          className="AddComputedColMenu gap-2 f-1 min-h-fit mt-1 ai-start"
+          className="AddComputedColMenu gap-2 f-1 min-h-fit ai-start"
           data-command="AddComputedColMenu"
         >
           {!column && !hasJoinCols && (
@@ -370,6 +370,7 @@ export class AddComputedColMenu extends RTComp<
         variant: "filled",
         color: "action",
         iconPath: mdiPlus,
+        className: "ml-auto",
         "data-command": "AddComputedColMenu.addBtn",
         disabledInfo: canAdd ? undefined : "Some function inputs are missing",
         onClickPromise: async () => {

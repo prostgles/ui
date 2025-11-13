@@ -1,5 +1,4 @@
 import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { tout } from "../../../utils";
 import { SVG_NAMESPACE } from "../domToSVG";
 import type { SVGScreenshotNodeType } from "../domToThemeAwareSVG";
 import { isInputOrTextAreaNode } from "../utils/isElementVisible";
@@ -149,7 +148,9 @@ const wrapTextIfOverflowing = (
     setTextContent();
     const textLen = tspan.getComputedTextLength();
 
-    if (textLen > currentLineWidth + tolerance) {
+    const textIsOverflowing = textLen > currentLineWidth + tolerance;
+    const cannotWrapMoreBecauseItsASingleWord = line.length === 1;
+    if (textIsOverflowing && !cannotWrapMoreBecauseItsASingleWord) {
       if (
         numberOfLines &&
         lineNumber === numberOfLines &&

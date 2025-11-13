@@ -25,7 +25,7 @@ export const ElectronSetupStateDB = ({
   } = state;
 
   return (
-    <ScrollFade className="px-p25 min-s-0 flex-col f-1 oy-auto">
+    <ScrollFade className="px-p25 min-s-0 flex-col f-1 oy-auto no-scroll-bar">
       <h2>State database</h2>
       <section className="ta-left font-18">
         <strong>Prostgles Desktop</strong> needs a PostgreSQL database to
