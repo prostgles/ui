@@ -1,7 +1,8 @@
 import React from "react";
-import type { CardViewProps, IndexedRow } from "./CardView";
-import { CardViewRow, type KanBanDraggedRow } from "./CardViewRow";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
+import type { CardViewProps, IndexedRow } from "./CardView";
+import { CardViewRow } from "./CardViewRow";
+import type { CardViewState } from "./useCardViewState";
 
 export type CardViewColumnProps = Pick<
   CardViewProps,
@@ -13,10 +14,14 @@ export type CardViewColumnProps = Pick<
   | "cols"
   | "cardOpts"
   | "tableHandler"
-> & {
-  indexedRows: IndexedRow[];
-  table: DBSchemaTableWJoins;
-};
+> &
+  Pick<
+    CardViewState,
+    "moveItemsProps" | "draggedRow" | "setDraggedRow" | "allIndexedRows"
+  > & {
+    indexedRows: IndexedRow[];
+    table: DBSchemaTableWJoins;
+  };
 
 export const CardViewColumn = (_props: CardViewColumnProps) => {
   const {
@@ -30,14 +35,14 @@ export const CardViewColumn = (_props: CardViewColumnProps) => {
     tableHandler,
     indexedRows,
     table,
+    draggedRow,
+    setDraggedRow,
+    moveItemsProps,
+    allIndexedRows,
   } = _props;
   const { rows: _rows = [] } = state;
 
   const { cardRows = 1 } = cardOpts;
-
-  const [draggedRow, setDraggedRow] = React.useState<
-    KanBanDraggedRow | undefined
-  >();
 
   return (
     <div
@@ -67,6 +72,8 @@ export const CardViewColumn = (_props: CardViewColumnProps) => {
             draggedRow={draggedRow}
             setDraggedRow={setDraggedRow}
             w={w}
+            moveItemsProps={moveItemsProps}
+            allIndexedRows={allIndexedRows}
           />
         );
       })}

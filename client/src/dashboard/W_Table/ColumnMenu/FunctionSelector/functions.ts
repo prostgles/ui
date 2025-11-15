@@ -395,7 +395,10 @@ export const funcAcceptsColumn = (
 };
 
 export const getColumnsAcceptedByFunction = (
-  { tsDataTypeCol, udtDataTypeCol }: FuncDef,
+  {
+    tsDataTypeCol,
+    udtDataTypeCol,
+  }: Pick<FuncDef, "tsDataTypeCol" | "udtDataTypeCol">,
   columns: ValidatedColumnInfo[],
 ) => {
   if (tsDataTypeCol || udtDataTypeCol) {

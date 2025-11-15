@@ -76,6 +76,7 @@ export const dashboardDemo = async () => {
 
   await click("QuickAddComputedColumn");
   await click("QuickAddComputedColumn", `[data-key="$countAll`);
+  await click("QuickAddComputedColumn.Add");
 
   await type("Customer Order Count", "", "#nested-col-name");
   await click("LinkedColumn.Add");

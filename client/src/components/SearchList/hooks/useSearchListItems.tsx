@@ -1,5 +1,5 @@
 import { isEqual } from "prostgles-types";
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { FlexRow, FlexRowWrap } from "../../Flex";
 import { getSearchListMatchAndHighlight } from "../getSearchListMatchAndHighlight";
 import type {
@@ -39,49 +39,67 @@ export const useSearchListItems = (
   } = props;
   const styles = rowStyleVariant === "row-wrap" ? rowWrapStyle : undefined;
 
-  const getFullItem = (d: SearchListItem): ParsedListItem => {
-    const match = getSearchListMatchAndHighlight({
-      matchCase,
-      ranking:
-        typeof d.ranking === "function" ? d.ranking(searchTerm) : d.ranking,
-      term: searchTerm,
-      style: d.styles?.label,
-      subLabelStyle: { ...styles?.subLabel, ...d.styles?.subLabel },
-      rootStyle: {
-        ...styles?.labelRootWrapperStyle,
-        ...d.styles?.labelRootWrapperStyle,
-      },
-      text: getValueAsText(d.label !== undefined ? d.label : d.key) ?? "",
-      key: d.key,
-      subLabel: d.subLabel,
-    });
-    return {
-      ...d,
-      ...match,
-    };
-  };
+  const getFullItem = useCallback(
+    (d: SearchListItem): ParsedListItem => {
+      const match = getSearchListMatchAndHighlight({
+        matchCase,
+        ranking:
+          typeof d.ranking === "function" ? d.ranking(searchTerm) : d.ranking,
+        term: searchTerm,
+        style: d.styles?.label,
+        subLabelStyle: { ...styles?.subLabel, ...d.styles?.subLabel },
+        rootStyle: {
+          ...styles?.labelRootWrapperStyle,
+          ...d.styles?.labelRootWrapperStyle,
+        },
+        text: getValueAsText(d.label !== undefined ? d.label : d.key) ?? "",
+        key: d.key,
+        subLabel: d.subLabel,
+      });
+      return {
+        ...d,
+        ...match,
+      };
+    },
+    [matchCase, searchTerm, styles],
+  );
 
   const sortDisabledLast = (a: ParsedListItem, b: ParsedListItem) =>
     Number(!!a.disabledInfo) - Number(!!b.disabledInfo);
-  const renderedItemsWithoutHeaders: ParsedListItem[] =
-    onSearchItems ? searchItems
-    : dontHighlight ? items
-    : onSearch ? items.map(getFullItem)
-    : items
-        .map(getFullItem)
-        .filter((d, i) => d.rank !== Infinity)
-        .sort(
-          (a, b) =>
-            sortDisabledLast(a, b) ||
-            (!searchTerm ? 0 : (
-              (a.rank ?? 0) - (b.rank ?? 0) || getLen(a.label) - getLen(b.label)
-            )),
-        )
-        .slice(0, (searchTerm ? 2 : 1) * limit);
+  const renderedItemsWithoutHeaders: ParsedListItem[] = useMemo(
+    () =>
+      onSearchItems ? searchItems
+      : dontHighlight ? items
+      : onSearch ? items.map(getFullItem)
+      : items
+          .map(getFullItem)
+          .filter((d, i) => d.rank !== Infinity)
+          .sort(
+            (a, b) =>
+              sortDisabledLast(a, b) ||
+              (!searchTerm ? 0 : (
+                (a.parentLabels?.length ?? 0) - (b.parentLabels?.length ?? 0) ||
+                (a.rank ?? 0) - (b.rank ?? 0) ||
+                getLen(a.label) - getLen(b.label)
+              )),
+          )
+          .slice(0, (searchTerm ? 2 : 1) * limit),
+    [
+      dontHighlight,
+      getFullItem,
+      items,
+      limit,
+      onSearch,
+      onSearchItems,
+      searchItems,
+      searchTerm,
+    ],
+  );
 
   const renderedSelected = renderedItemsWithoutHeaders.filter(
     (d) => !d.disabledInfo && d.checked,
   );
+
   const allSelected = items.filter((d) => d.checked);
   const itemGroupHeaders = renderedItemsWithoutHeaders
     .reduce((a, v) => {
@@ -118,8 +136,8 @@ export const useSearchListItems = (
             !isFirst ? undefined
             : !parentLabels.length ? undefined
             : <FlexRowWrap
-                className="SearchList_GroupHeader p-1 my-p5 text-1 bg-color-0 bb b-color gap-p25"
-                style={{ position: "sticky", top: 0 }}
+                className="SearchList_GroupHeader p-p5 text-1 bg-color-0 bb b-color gap-p25"
+                style={{ position: "sticky", top: 0, opacity: 0.75 }}
               >
                 {parentLabels.map((label, i) => (
                   <React.Fragment key={i}>

@@ -6,7 +6,6 @@ import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { appTheme, useReactiveState } from "../../../../appUtils";
 import { t } from "../../../../i18n/i18nUtils";
 import type {
   DBSchemaTablesWJoins,
@@ -49,7 +48,6 @@ export const NESTED_COLUMN_DISPLAY_MODES = [
 
 export const LinkedColumn = (props: LinkedColumnProps) => {
   const { w, tables, db } = props;
-  const { state: theme } = useReactiveState(appTheme);
   const getCol = (name: string) => w.columns?.find((c) => c.name === name);
 
   const [localColumn, setLocalColumn] = useState<ColumnConfigWInfo>();

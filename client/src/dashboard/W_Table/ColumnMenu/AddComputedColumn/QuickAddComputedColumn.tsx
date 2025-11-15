@@ -1,22 +1,19 @@
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
-import { SearchList } from "@components/SearchList/SearchList";
 import { mdiFunction, mdiSigma } from "@mdi/js";
 import { pickKeys } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback } from "react";
 import { t } from "src/i18n/i18nUtils";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnConfig } from "../ColumnMenu";
-import {
-  getColumnsAcceptedByFunction,
-  type FuncDef,
-} from "../FunctionSelector/functions";
+import { type FuncDef } from "../FunctionSelector/functions";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
-import { getColumnListItem } from "../ColumnSelect/getColumnListItem";
+import { FunctionColumnList } from "./FunctionColumnList";
+import { useAddComputedColumnState } from "./useAddComputedColumn";
 
-type QuickAddComputedColumnProps = {
+export type QuickAddComputedColumnProps = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
   onAddColumn: (newColumn: ColumnConfig | undefined) => void;
@@ -27,27 +24,17 @@ export const QuickAddComputedColumn = ({
   tables,
   onAddColumn,
 }: QuickAddComputedColumnProps) => {
-  const table = useMemo(
-    () => tables.find((t) => t.name === tableName),
-    [tables, tableName],
-  );
-
-  const [funcDef, setFuncDef] = useState<FuncDef | undefined>();
-  const allowedColumns = useMemo(() => {
-    if (!funcDef || !table) return undefined;
-    return getColumnsAcceptedByFunction(funcDef, table.columns);
-  }, [funcDef, table]);
-
-  const [column, setColumn] = useState<ValidatedColumnInfo | undefined>();
-  const [name, setName] = useState("");
-  useEffect(() => {
-    if (!funcDef) {
-      return;
-    }
-    const name = column ? `${funcDef.label}(${column.name})` : funcDef.label;
-    setName(name);
-  }, [funcDef, column]);
-
+  const state = useAddComputedColumnState({ tables, tableName });
+  const {
+    table,
+    allowedColumns,
+    column,
+    funcDef,
+    name,
+    setColumn,
+    setFuncDef,
+    setName,
+  } = state;
   const addColumn = useCallback(
     (column: ValidatedColumnInfo | undefined, funcDef: FuncDef) => {
       const { outType } = funcDef;
@@ -73,7 +60,7 @@ export const QuickAddComputedColumn = ({
   if (!table) return <>Table not found {tableName}</>;
 
   return (
-    <FlexCol data-command="QuickAddComputedColumn">
+    <FlexCol data-command="QuickAddComputedColumn" className="min-h-0 gap-2">
       <p className="m-0 ta-left">
         A computed column is a column that is calculated based on other data
         from the table.
@@ -81,6 +68,7 @@ export const QuickAddComputedColumn = ({
         It will not be stored in the database but will be calculated on the fly
         when queried.
       </p>
+
       {funcDef ?
         <Btn
           style={{ minWidth: "50px" }}
@@ -103,38 +91,16 @@ export const QuickAddComputedColumn = ({
           }}
         />
       }
-      {allowedColumns && funcDef ?
-        <>
-          {column ?
-            <Btn
-              style={{ minWidth: "50px" }}
-              label={{
-                label: "Column",
-                variant: "normal",
-                className: "mb-p25",
-              }}
-              variant="faded"
-              color="action"
-              onClick={() => {
-                setColumn(undefined);
-              }}
-            >
-              {column.label || column.name}
-            </Btn>
-          : <SearchList
-              id="cols-select"
-              label="Applicable columns"
-              className="f-1"
-              items={allowedColumns.map((c) => ({
-                ...getColumnListItem(c),
-                onPress: () => {
-                  setColumn(c);
-                },
-              }))}
-            />
-          }
-        </>
-      : null}
+
+      {allowedColumns && funcDef && (
+        <FunctionColumnList
+          allowedColumns={allowedColumns}
+          column={column}
+          onChange={setColumn}
+          setIncludeJoins={state.setIncludeJoins}
+          includeJoins={state.includeJoins}
+        />
+      )}
 
       {funcDef && (
         <FormField
@@ -144,12 +110,13 @@ export const QuickAddComputedColumn = ({
         />
       )}
 
-      <FlexRow>
+      <FlexRow className="mt-1">
         <Btn onClick={() => onAddColumn(undefined)}>{t.common.Cancel}</Btn>
         <Btn
           {...{
             variant: "filled",
             color: "action",
+            "data-command": "QuickAddComputedColumn.Add",
             ...(!funcDef ?
               {
                 disabledInfo: "Must select a function",
@@ -165,7 +132,7 @@ export const QuickAddComputedColumn = ({
               }),
           }}
         >
-          {t.common.Add}
+          {t.AddColumnMenu["Add Computed Field"]}
         </Btn>
       </FlexRow>
     </FlexCol>

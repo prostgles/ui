@@ -480,6 +480,8 @@ export const COMMANDS = {
   CreateFileColumn: "",
   ColumnQuickStats: "",
   "ColumnQuickStats.addFilter": "",
+  "QuickAddComputedColumn.Add": "",
+  "LLMChatOptions.Prompt.Preview": "",
 } as const satisfies Record<
   string,
   | string

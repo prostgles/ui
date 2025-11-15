@@ -119,7 +119,17 @@ export const SearchListContent = <M extends boolean = false>(
   });
 
   const noSearch =
-    !onSearchItems && items.length < noSearchLimit && !searchTerm;
+    !onSearchItems &&
+    items.length < noSearchLimit &&
+    !searchTerm &&
+    /** Ensure leftContent is shown even if search is not necessary */
+    !leftContent;
+
+  if (props.noSearchLimit && leftContent) {
+    console.warn(
+      "SearchList: noSearchLimit is ignored when leftContent is provided",
+    );
+  }
 
   const hasSearch = !(noSearch || inputEl);
 

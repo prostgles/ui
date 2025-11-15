@@ -2,7 +2,7 @@ import type { PaginationProps } from "@components/Table/Pagination";
 import { Pagination } from "@components/Table/Pagination";
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
-import React, { useMemo } from "react";
+import React from "react";
 import type {
   ChartOptions,
   WindowSyncItem,
@@ -12,6 +12,7 @@ import type { OnClickEditRow } from "../tableUtils/getEditColumn";
 import type { ProstglesTableColumn } from "../tableUtils/getTableCols";
 import { CardViewColumn } from "./CardViewColumn";
 import { CardViewKanban } from "./CardViewKanban";
+import { useCardViewState } from "./useCardViewState";
 
 export type CardViewProps = {
   props: W_TableProps;
@@ -33,35 +34,22 @@ export type IndexedRow = {
 };
 
 export const CardView = (_props: CardViewProps) => {
-  const {
-    props,
-    state,
-    w,
-    paginationProps,
-    className = "",
-    style,
-    cardOpts,
-  } = _props;
+  const { state, paginationProps, className = "", style, cardOpts } = _props;
   const { rows: _rows = [] } = state;
 
-  const { allIndexedRows, table } = useMemo(() => {
-    const allIndexedRows: IndexedRow[] = _rows.map((data, index) => ({
-      data,
-      index,
-    }));
-    const { tables } = props;
-    const table = tables.find((t) => t.name === w?.table_name);
-    return {
-      allIndexedRows,
-      table,
-    };
-  }, [_rows, props, w?.table_name]);
+  const cardViewState = useCardViewState(_props);
+  const {
+    table,
+    groupByColumn,
+    allIndexedRows,
+    draggedRow,
+    setDraggedRow,
+    moveItemsProps,
+  } = cardViewState;
 
   if (!table) {
     return <div>Table info missing</div>;
   }
-
-  const { cardGroupBy } = cardOpts;
 
   return (
     <div
@@ -70,17 +58,27 @@ export const CardView = (_props: CardViewProps) => {
       }
       style={style}
     >
-      {cardGroupBy ?
+      {groupByColumn ?
         <CardViewKanban
+          key="kanban"
           {..._props}
-          cardOpts={{ ...cardOpts, cardGroupBy }}
+          cardOpts={cardOpts}
+          groupByColumn={groupByColumn}
           allIndexedRows={allIndexedRows}
           table={table}
+          draggedRow={draggedRow}
+          setDraggedRow={setDraggedRow}
+          moveItemsProps={moveItemsProps}
         />
       : <CardViewColumn
+          key="column"
           {..._props}
           table={table}
           indexedRows={allIndexedRows}
+          draggedRow={draggedRow}
+          setDraggedRow={setDraggedRow}
+          moveItemsProps={moveItemsProps}
+          allIndexedRows={allIndexedRows}
         />
       }
       <Pagination {...paginationProps} />

@@ -1,13 +1,14 @@
-import { _PG_date, type AnyObject } from "prostgles-types";
-import React, { useMemo } from "react";
+import type { CardLayout } from "@common/DashboardTypes";
 import { matchObj } from "@common/utils";
 import { FlexRowWrap } from "@components/Flex";
+import { _PG_date, type AnyObject } from "prostgles-types";
+import React, { useMemo } from "react";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import { getEditColumn } from "../tableUtils/getEditColumn";
 import type { CardViewProps, IndexedRow } from "./CardView";
 import { DragHeader, DragHeaderHeight } from "./DragHeader";
-import type { CardLayout } from "@common/DashboardTypes";
+import type { CardViewState } from "./useCardViewState";
 
 export type CardViewRowProps = Pick<
   CardViewProps,
@@ -18,16 +19,16 @@ export type CardViewRowProps = Pick<
   | "onDataChanged"
   | "cols"
   | "w"
-> & {
-  indexedRow: IndexedRow;
-  rowIndex: number;
-  indexedRows: IndexedRow[];
-  table: DBSchemaTableWJoins;
-  draggedRow: KanBanDraggedRow | undefined;
-  setDraggedRow: React.Dispatch<
-    React.SetStateAction<KanBanDraggedRow | undefined>
-  >;
-};
+> &
+  Pick<
+    CardViewState,
+    "moveItemsProps" | "draggedRow" | "setDraggedRow" | "allIndexedRows"
+  > & {
+    indexedRow: IndexedRow;
+    rowIndex: number;
+    indexedRows: IndexedRow[];
+    table: DBSchemaTableWJoins;
+  };
 
 export type KanBanDraggedRow = IndexedRow & {
   height: number;
@@ -48,22 +49,11 @@ export const CardViewRow = ({
   w,
   draggedRow,
   setDraggedRow,
+  moveItemsProps,
+  allIndexedRows,
 }: CardViewRowProps) => {
   const columns = table.columns;
 
-  const groupByColumn = columns.find(
-    (c) => c.name === cardOpts.cardGroupBy && c.update,
-  );
-  const moveItemsProps = useMemo(
-    () =>
-      groupByColumn ?
-        {
-          groupByColumn,
-          orderByColumn: columns.find((c) => c.name === cardOpts.cardOrderBy),
-        }
-      : undefined,
-    [cardOpts.cardOrderBy, columns, groupByColumn],
-  );
   const {
     cardRows = 1,
     hideCardFieldNames,
@@ -153,7 +143,7 @@ export const CardViewRow = ({
           padding={padding}
           tableHandler={tableHandler}
           table={table}
-          allIndexedRows={indexedRows}
+          allIndexedRows={allIndexedRows}
           columns={columns}
           onDataChanged={onDataChanged}
           onEditClickRow={onEditClickRow}

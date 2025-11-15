@@ -1154,11 +1154,12 @@ test.describe("Main test", () => {
     createAndFillCode();
 
     /** Allow 1 invalid code */
+    const INVALID_CODE = "Invalid code";
     await page.waitForTimeout(300);
     const setupErrorNode = await page.getByTestId("Setup2FA.error");
     if (
       (await setupErrorNode.count()) &&
-      (await setupErrorNode.textContent())?.includes("Invalid token")
+      (await setupErrorNode.textContent())?.includes(INVALID_CODE)
     ) {
       createAndFillCode();
     }
@@ -1177,7 +1178,7 @@ test.describe("Main test", () => {
     const errorNode = await page.getByTestId("Login.error");
     if (
       (await errorNode.count()) &&
-      (await errorNode.textContent())?.includes("Invalid token")
+      (await errorNode.textContent())?.includes(INVALID_CODE)
     ) {
       await page.waitForTimeout(1e3);
       await fillTokenAndSignIn();
