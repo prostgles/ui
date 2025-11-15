@@ -130,6 +130,7 @@ export class TableHeader<
                     }
                   )
                 }
+                data-key={col.key}
                 role="columnheader"
                 style={{
                   ...getDraggedTableColStyle(col, iCol, draggedCol),

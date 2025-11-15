@@ -13,8 +13,8 @@ import {
 import React from "react";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
-import { getColumnListItem } from "./ColumnsMenu";
-import type { TestSelectors } from "../../../Testing";
+import type { TestSelectors } from "../../../../Testing";
+import { getColumnListItem } from "./getColumnListItem";
 type P = TestSelectors & {
   columns: (ValidatedColumnInfo & { disabledInfo?: string })[];
   onChange: (columnName?: string) => void;

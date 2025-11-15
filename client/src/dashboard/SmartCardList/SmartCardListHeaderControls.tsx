@@ -2,7 +2,7 @@ import { isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { RenderFilter, type RenderFilterProps } from "../RenderFilter";
-import SortByControl from "../SmartFilter/SortByControl";
+import { SortByControl } from "../SmartFilter/SortByControl";
 import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";
 import { InsertButton } from "../SmartForm/InsertButton";
 import type { SmartCardListProps } from "./SmartCardList";
@@ -23,7 +23,7 @@ export const SmartCardListHeaderControls = (
     typeof title === "string" ? <h4 className="m-0">{title}</h4>
     : typeof title === "function" ? title({ count: totalRows ?? -1 })
     : title;
-  const showSearch = tableControls?.localFilter?.length ? true : tableControls; //&& Boolean(totalRows && totalRows > 8)
+  const showSearch = tableControls?.localFilter?.length ? true : tableControls;
 
   const filterProps = useMemo(() => {
     if (!tableControls || !tableControls.localFilter?.length) return;

@@ -1,4 +1,7 @@
+import { FlashMessage } from "@components/FlashMessage";
 import { Icon } from "@components/Icon/Icon";
+import Popup from "@components/Popup/Popup";
+import { SearchList } from "@components/SearchList/SearchList";
 import {
   mdiArrowSplitVertical,
   mdiButtonPointer,
@@ -9,7 +12,6 @@ import {
   mdiFormatListBulleted,
   mdiFormSelect,
   mdiFormTextbox,
-  mdiGrid,
   mdiKeyboard,
   mdiLink,
   mdiListBoxOutline,
@@ -19,10 +21,6 @@ import {
 } from "@mdi/js";
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FlashMessage } from "@components/FlashMessage";
-import Popup from "@components/Popup/Popup";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
-import { SearchList } from "@components/SearchList/SearchList";
 import { flatUIDocs, type UIDoc, type UIDocInputElement } from "../UIDocs";
 import "./CommandPalette.css";
 import { Documentation } from "./Documentation";

@@ -1,6 +1,6 @@
 import ButtonGroup from "@components/ButtonGroup";
 import { FlexRow, FlexRowWrap } from "@components/Flex";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import React from "react";
 import type { SearchAllState } from "./hooks/useSearchAllState";
 

@@ -4,7 +4,8 @@ import type {
   DBSchemaTableWJoins,
   WindowData,
 } from "src/dashboard/Dashboard/dashboardUtils";
-import { aggFunctions } from "src/dashboard/W_Table/ColumnMenu/FunctionSelector";
+import { aggFunctions } from "src/dashboard/W_Table/ColumnMenu/FunctionSelector/functions";
+import { pickKeys } from "prostgles-types";
 
 export const loadGeneratedBarchart = (
   generatedWindow: BarchartWindowInsertModel,
@@ -18,7 +19,14 @@ export const loadGeneratedBarchart = (
   )!;
   const xColName =
     xAxis === "count(*)" ? "Count" : `${funcDef.name}(${xAxis.column})`;
-
+  const table =
+    "table_name" in generatedWindow ?
+      tables.find((t) => t.name === generatedWindow.table_name)
+    : undefined;
+  const xAxisColumnInfo =
+    xAxis === "count(*)" ? undefined : (
+      table?.columns.find((c) => c.name === xAxis.column)
+    );
   const columns: WindowData["columns"] = [
     {
       name: yAxisColumn,
@@ -31,6 +39,9 @@ export const loadGeneratedBarchart = (
       show: true,
       computedConfig: {
         column: xAxis === "count(*)" ? undefined : xAxis.column,
+        ...(funcDef.outType === "sameAsInput" ?
+          pickKeys(xAxisColumnInfo!, ["tsDataType", "udt_name"])
+        : funcDef.outType),
         funcDef: {
           ...funcDef,
           subLabel: "",

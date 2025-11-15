@@ -133,9 +133,10 @@ export const AskLLMChatActionBarPromptSelector = (
             <PopupMenu
               title="Prompt preview"
               subTitle="Preview of the prompt with context variables filled in"
-              positioning="top-center"
+              positioning="fullscreen"
               button={<Btn iconPath={mdiFileEyeOutline} title="Preview" />}
-              contentClassName="p-2 max-w-800"
+              data-command="LLMChatOptions.Prompt.Preview"
+              contentClassName="p-2"
               showFullscreenToggle={{}}
               rootChildClassname="f-1"
               onClickClose={false}

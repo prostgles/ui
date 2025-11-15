@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";

@@ -39,7 +39,6 @@ export const SelectTriggerButton = <
     labelAsValue,
     emptyLabel = "Select...",
     iconPath,
-    buttonClassName = "",
     size,
     btnProps,
     disabledInfo,
@@ -108,7 +107,6 @@ export const SelectTriggerButton = <
       }}
       /** Use "data-command" for content when button not needed anymore */
       data-command={popupAnchor ? undefined : props["data-command"]}
-      // className={`${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${buttonClassName} ${popupAnchor ? "is-open" : ""} `}
       size={size}
       variant={chipMode ? "icon" : "faded"}
       color={chipMode ? "action" : "default"}
@@ -128,7 +126,7 @@ export const SelectTriggerButton = <
       disabledVariant={noOtherOption ? "no-fade" : undefined}
       {...btnProps}
       className={classOverride(
-        `${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${buttonClassName} ${popupAnchor ? "is-open" : ""} `,
+        `${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${popupAnchor ? "is-open" : ""} `,
         btnProps?.className,
       )}
       onClick={

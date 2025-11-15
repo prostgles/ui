@@ -4,7 +4,7 @@ import React from "react";
 import { dataCommand } from "../../../Testing";
 import Btn from "@components/Btn";
 import ConfirmationDialog from "@components/ConfirmationDialog";
-import { Footer } from "@components/Popup/Popup";
+import { Footer } from "@components/Popup/Footer";
 import { type SmartFormProps } from "../SmartForm";
 import type { SmartFormState } from "../useSmartForm";
 import { type SmartFormActionsState } from "./useSmartFormActions";

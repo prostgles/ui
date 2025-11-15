@@ -105,8 +105,7 @@ export const getChartCols = (
   const cols = getColWInfo(tables, w).map((c) => ({
     ...c,
     is_pkey: Boolean(c.info?.is_pkey),
-    udt_name:
-      c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text",
+    udt_name: c.info?.udt_name || c.computedConfig?.udt_name || "text",
   }));
 
   const windowDateCols: ChartColumn[] = cols.filter(isDateCol).map((c) => ({

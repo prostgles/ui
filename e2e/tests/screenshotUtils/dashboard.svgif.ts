@@ -7,7 +7,7 @@ import {
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { expect } from "@playwright/test";
-import { clickTableRow } from "./tableSvgif";
+import { clickTableRow } from "./table.svgif";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,
@@ -30,17 +30,6 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
     page.getByTestId("DashboardMenuHeader.togglePinned"),
   ).toHaveCount(0);
 
-  // Disable onMount
-  await page.getByTestId("dashboard.goToConnConfig").click();
-  await page.getByTestId("config.methods").click();
-  const onMountToggle = await page.getByTestId(
-    "ServerSideFunctions.onMountEnabled",
-  );
-  if ((await onMountToggle.getAttribute("aria-checked")) === "true") {
-    await onMountToggle.click();
-    await page.waitForTimeout(1000);
-  }
-  await page.getByTestId("config.goToConnDashboard").click();
   await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
 

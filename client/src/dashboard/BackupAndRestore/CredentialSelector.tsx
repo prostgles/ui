@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useRef } from "react";
 import Btn from "@components/Btn";
 import { Icon } from "@components/Icon/Icon";
 import PopupMenu from "@components/PopupMenu";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";

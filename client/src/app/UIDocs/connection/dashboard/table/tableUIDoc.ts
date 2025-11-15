@@ -5,6 +5,7 @@ import { paginationUIDoc } from "./paginationUIDoc";
 import { smartFilterBarUIDoc } from "./smartFilterBarUIDoc";
 import { tableMenuUIDoc } from "./tableMenuUIDoc";
 import { addColumnMenuUIDoc } from "./addColumnMenuUIDoc";
+import { columnMenuUIDoc } from "./columnMenuUIDoc";
 
 export const tableUIDoc = {
   type: "section",
@@ -38,6 +39,7 @@ export const tableUIDoc = {
             "The header of the table, which contains the column names and allows users to sort the data by clicking on the column headers.",
           children: [
             addColumnMenuUIDoc,
+            columnMenuUIDoc,
             {
               type: "button",
               selector: `[role="columnheader"]`,

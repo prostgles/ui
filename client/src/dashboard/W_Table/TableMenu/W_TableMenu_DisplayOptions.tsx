@@ -1,8 +1,8 @@
 import React from "react";
 import type { W_TableMenuProps } from "./W_TableMenu";
 import FormField from "@components/FormField/FormField";
-import { ColumnSelect } from "../ColumnMenu/ColumnSelect";
-import Select from "@components/Select/Select";
+import { ColumnSelect } from "../ColumnMenu/ColumnSelect/ColumnSelect";
+import { Select } from "@components/Select/Select";
 import { includes } from "../../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { IconPalette } from "@components/IconPalette/IconPalette";
 

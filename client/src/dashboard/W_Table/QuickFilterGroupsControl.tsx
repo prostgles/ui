@@ -1,5 +1,5 @@
 import { FlexCol, FlexRowWrap } from "@components/Flex";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import React from "react";
 import { isEmpty } from "src/utils";
 import type { W_TableProps } from "./W_Table";

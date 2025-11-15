@@ -13,7 +13,11 @@ export const startDevHotReloadNotifier = ({
   port: number;
   host: string;
 }) => {
-  console.log("startDevHotReloadNotifier. Starting dev hot reload notifier");
+  console.log(
+    "startDevHotReloadNotifier. Starting dev hot reload notifier in " +
+      process.env.NODE_ENV +
+      " mode",
+  );
   const showMessage = () => {
     if (showedMessage) return;
     console.log(`\n\n${RELOAD_NOTIFICATION}:\n\n http://${host}:${port}`);
@@ -24,7 +28,7 @@ export const startDevHotReloadNotifier = ({
       __dirname,
       "../../../../../client/configs/last_compiled.txt",
     );
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
+
     fs.watchFile(lastCompiledPath, { interval: 100 }, (eventType, filename) => {
       io.emit("server-restart-request");
       showMessage();

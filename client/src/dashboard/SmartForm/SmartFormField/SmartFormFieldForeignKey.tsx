@@ -2,7 +2,7 @@ import { sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import { FileInput } from "@components/FileInput/FileInput";
 import { FlexRow, FlexRowWrap } from "@components/Flex";
-import Select, { type FullOption } from "@components/Select/Select";
+import { Select, type FullOption } from "@components/Select/Select";
 import { mdiClose } from "@mdi/js";
 import { useIsMounted, useMemoDeep } from "prostgles-client/dist/prostgles";
 import {

@@ -5,7 +5,7 @@ import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { t } from "../../i18n/i18nUtils";
 import { EmailAuthSetup } from "./EmailAuthSetup";
 import { OAuthProviderSetup } from "./OAuthProviderSetup";

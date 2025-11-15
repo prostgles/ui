@@ -1,7 +1,7 @@
 import React from "react";
 import { type DivProps, FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { EmailSMTPCofig } from "./EmailSMTPAndTemplateSetup";
 import { SwitchToggle } from "@components/SwitchToggle";
 

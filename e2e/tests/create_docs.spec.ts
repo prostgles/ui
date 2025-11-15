@@ -13,6 +13,7 @@ import {
 import { DOCS_DIR } from "screenshotUtils/utils/constants";
 import { svgScreenshotsCompleteReferenced } from "screenshotUtils/utils/svgScreenshotsCompleteReferenced";
 import { USERS } from "utils/constants";
+import { goTo } from "utils/goTo";
 
 test.use({
   viewport: {
@@ -43,6 +44,19 @@ test.describe("Create docs and screenshots", () => {
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();
     await restoreFromBackup(page, "Demo");
+
+    // Disable onMount
+    await goTo(page, "/connections");
+    await openConnection(page, "food_delivery");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.methods").click();
+    const onMountToggle = await page.getByTestId(
+      "ServerSideFunctions.onMountEnabled",
+    );
+    if ((await onMountToggle.getAttribute("aria-checked")) === "true") {
+      await onMountToggle.click();
+      await page.waitForTimeout(1000);
+    }
   });
 
   test("Create docs", async ({ page: p }) => {

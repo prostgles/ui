@@ -262,9 +262,9 @@ FROM (
 
 DROP FUNCTION IF EXISTS on_order_updates() CASCADE;
 
-DROP TABLE IF EXISTS fake_contacts CASCADE;
+DROP TABLE IF EXISTS customers_info CASCADE;
 SELECT first_name, last_name, email, '07' || round(random()*1e9) as phone_number
-INTO fake_contacts
+INTO customers_info
 FROM (
   VALUES 
     ('James', 'Butt', 'jbutt@gmail.com'),
@@ -770,18 +770,18 @@ FROM (
 ) AS result("first_name","last_name","email");
 
 
-CREATE OR REPLACE VIEW random_fake_contacts AS
+CREATE OR REPLACE VIEW customers_info_view AS
 SELECT first_name, last_name, email, phone_number, row_number() over() as rnum
-FROM fake_contacts;
+FROM customers_info;
 
 
-CREATE OR REPLACE FUNCTION setof_fake_contacts(num int4) RETURNS SETOF random_fake_contacts AS $$
+CREATE OR REPLACE FUNCTION setof_fake_contacts(num int4) RETURNS SETOF customers_info_view AS $$
   SELECT first_name, last_name, replace(email, '@', round(extract('epoch' from now()) - 1722705653) || '_' || rnum || '@') as email, phone_number, rnum
   FROM (
     SELECT fc.*, row_number() over() as rnum
     FROM (
       SELECT first_name, last_name, email, phone_number
-      FROM random_fake_contacts
+      FROM customers_info_view
     ) fc,
     generate_series(1, ceil(num::float/500)::int4) 
     ORDER BY random()
@@ -801,7 +801,7 @@ VALUES ('customer', 'Places orders for delivery'),
   ('rider', 'Delivers orders for the food delivery service');
 
 CREATE TABLE addresses (
-  id  BIGSERIAL PRIMARY KEY,
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   street VARCHAR(255) NOT NULL,
   city VARCHAR(255) NOT NULL,
   state VARCHAR(255) NOT NULL,
@@ -814,13 +814,13 @@ CREATE INDEX idx_addresses ON addresses USING gist (geog);
 
 
 CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  type TEXT NOT NULL REFERENCES user_types, 
   email VARCHAR(100) NOT NULL ,
   password VARCHAR(100) NOT NULL,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
   phone_number VARCHAR(20) NOT NULL,
-  type TEXT NOT NULL REFERENCES user_types, 
   location GEOGRAPHY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -837,7 +837,7 @@ CREATE TABLE user_addresses (
 );
  
 CREATE TABLE restaurants (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   address VARCHAR(100) NOT NULL,
   logo BYTEA,
@@ -855,7 +855,7 @@ CREATE TABLE restaurant_managers (
 );
  
 CREATE TABLE menu_items (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
   name VARCHAR(100) NOT NULL,
   category VARCHAR(100) NOT NULL,
@@ -891,7 +891,7 @@ VALUES
 
  
 CREATE TABLE orders (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
   customer_id INTEGER NOT NULL REFERENCES users(id),
   customer_address_id INTEGER NOT NULL,
@@ -915,7 +915,7 @@ CREATE INDEX ON orders (customer_id, created_at);
 CREATE INDEX ON orders (deliverer_id, created_at);
 
 CREATE TABLE order_items (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   order_id INTEGER NOT NULL REFERENCES orders(id),
   menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
   quantity INTEGER NOT NULL,
@@ -924,7 +924,7 @@ CREATE TABLE order_items (
 );
 
 CREATE TABLE order_updates (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   order_id INTEGER NOT NULL REFERENCES orders,
   change JSONB NOT NULL,
   changed_by INTEGER REFERENCES users,
@@ -932,14 +932,14 @@ CREATE TABLE order_updates (
 );
 
 CREATE TABLE delivery_status_changes (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   order_id INTEGER NOT NULL REFERENCES orders,
   delivery_status TEXT NOT NULL REFERENCES delivery_status_types,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE ratings (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
   customer_id INTEGER NOT NULL REFERENCES users(id),
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
@@ -1036,7 +1036,7 @@ UPDATE "london_restaurants.geojson"
 SET geometry = st_point(lon, lat, 4326);
 
 
-CREATE TABLE IF NOT EXISTS "roads.geojson" (
+CREATE TABLE IF NOT EXISTS "routes" (
   id BIGINT PRIMARY KEY,
   geog GEOGRAPHY,
   deliverer_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
@@ -1150,7 +1150,7 @@ END $$;
 
 CALL mock_users(1e5::integer, '1 year');
 
-CREATE OR REPLACE VIEW v_users AS
+CREATE OR REPLACE VIEW customers AS
 WITH order_stats AS (
   SELECT customer_id, max(created_at) as last_order, count(*) as total_orders
   FROM orders
@@ -1237,7 +1237,7 @@ BEGIN
     SELECT *, row_number() over() as rnum
     FROM (
       SELECT *
-      FROM v_users
+      FROM customers
       ORDER BY last_order
       LIMIT number_of_orders
     ) unested
@@ -1340,7 +1340,7 @@ BEGIN
       FROM ordrs o
       JOIN LATERAL (
         SELECT *
-        FROM "roads.geojson" r
+        FROM "routes" r
         -- WHERE properties::TEXT not ilike '%footway%'
         -- AND st_isempty(geog::GEOMETRY) = false 
         -- AND st_length(geog) > 100
@@ -1353,7 +1353,7 @@ BEGIN
         r.id, 
         r.geog <-> o.user_geog
     )
-  UPDATE "roads.geojson" r
+  UPDATE "routes" r
   SET deliverer_id = l.deliverer_id
   FROM locations l
   WHERE r.id = l.road_id;
@@ -1362,7 +1362,7 @@ BEGIN
 
     UPDATE users u
     SET location = st_lineinterpolatepoint(r.geog, progress - (random() * 0.1), true)
-    FROM "roads.geojson" r
+    FROM "routes" r
     WHERE u.id = r.deliverer_id;
     
     COMMIT;

@@ -105,8 +105,8 @@ export class SmartSearch extends RTComp<P, S> {
       return [
         {
           name: column.name,
-          tsDataType: column.computedConfig.funcDef.outType.tsDataType,
-          udt_name: column.computedConfig.funcDef.outType.udt_name,
+          tsDataType: column.computedConfig.tsDataType,
+          udt_name: column.computedConfig.udt_name,
           is_pkey: false,
         },
       ];

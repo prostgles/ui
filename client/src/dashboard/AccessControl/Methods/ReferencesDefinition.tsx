@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { omitKeys } from "prostgles-types";
 import type { ArgumentDefinitionProps } from "./ArgumentDefinition";

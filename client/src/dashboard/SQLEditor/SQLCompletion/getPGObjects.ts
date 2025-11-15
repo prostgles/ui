@@ -262,7 +262,7 @@ export async function getFuncs(args: {
         format('%I', name) as escaped_name
         FROM (
           SELECT p.proname AS name
-                , pg_get_function_identity_arguments(p.oid) AS arg_list_str
+                , pg_catalog.pg_get_function_identity_arguments(p.oid) AS arg_list_str
                 , pg_catalog.pg_get_function_result(p.oid) as restype
                 , t.typname as restype_udt_name
                 , d.description

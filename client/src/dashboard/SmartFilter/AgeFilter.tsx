@@ -7,7 +7,7 @@ import type {
 import { CORE_FILTER_TYPES, NUMERIC_FILTER_TYPES } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { BaseFilterProps } from "./SmartFilter";
 
 type FilterProps = BaseFilterProps;

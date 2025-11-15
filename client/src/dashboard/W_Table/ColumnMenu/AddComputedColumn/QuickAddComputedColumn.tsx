@@ -1,131 +1,173 @@
-import React, { useCallback, useMemo, useState } from "react";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
-import PopupMenu from "@components/PopupMenu";
-import { FlexCol } from "@components/Flex";
 import Btn from "@components/Btn";
-import { mdiFunction, mdiSigma } from "@mdi/js";
-import { type FuncDef, FunctionSelector } from "../FunctionSelector";
-import { getFuncDefColumns } from "./AddComputedColMenu";
+import { FlexCol, FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
 import { SearchList } from "@components/SearchList/SearchList";
-import { getColumnListItem } from "../ColumnsMenu";
+import { mdiFunction, mdiSigma } from "@mdi/js";
+import { pickKeys } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { t } from "src/i18n/i18nUtils";
+import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnConfig } from "../ColumnMenu";
+import {
+  getColumnsAcceptedByFunction,
+  type FuncDef,
+} from "../FunctionSelector/functions";
+import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
+import { getColumnListItem } from "../ColumnSelect/getColumnListItem";
 
-type P = {
+type QuickAddComputedColumnProps = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
-  onAddColumn: (newColumn: ColumnConfig) => void;
+  onAddColumn: (newColumn: ColumnConfig | undefined) => void;
 };
+
 export const QuickAddComputedColumn = ({
   tableName,
   tables,
   onAddColumn,
-}: P) => {
+}: QuickAddComputedColumnProps) => {
   const table = useMemo(
     () => tables.find((t) => t.name === tableName),
     [tables, tableName],
   );
-  const [funcDef, setFuncDef] = React.useState<FuncDef | undefined>();
-  const [allowedColumns, setAllowedColumns] = useState<
-    ValidatedColumnInfo[] | undefined
-  >();
+
+  const [funcDef, setFuncDef] = useState<FuncDef | undefined>();
+  const allowedColumns = useMemo(() => {
+    if (!funcDef || !table) return undefined;
+    return getColumnsAcceptedByFunction(funcDef, table.columns);
+  }, [funcDef, table]);
+
+  const [column, setColumn] = useState<ValidatedColumnInfo | undefined>();
+  const [name, setName] = useState("");
+  useEffect(() => {
+    if (!funcDef) {
+      return;
+    }
+    const name = column ? `${funcDef.label}(${column.name})` : funcDef.label;
+    setName(name);
+  }, [funcDef, column]);
 
   const addColumn = useCallback(
-    (
-      c: ValidatedColumnInfo | undefined,
-      funcDef: FuncDef,
-      pClose: VoidFunction,
-    ) => {
-      const name = c ? `${funcDef.label}(${c.name})` : funcDef.label;
+    (column: ValidatedColumnInfo | undefined, funcDef: FuncDef) => {
+      const { outType } = funcDef;
+      const outInfo = outType === "sameAsInput" ? column : outType;
+      if (!outInfo) {
+        throw new Error(
+          "Cannot determine output data type for the computed column",
+        );
+      }
       onAddColumn({
         name,
         show: true,
         computedConfig: {
+          ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
           funcDef,
-          column: c?.name,
+          column: column?.name,
         },
       });
-      setFuncDef(undefined);
-      setAllowedColumns(undefined);
-      pClose();
     },
-    [onAddColumn],
+    [onAddColumn, name],
   );
 
   if (!table) return <>Table not found {tableName}</>;
 
   return (
-    <PopupMenu
-      contentClassName="p-0"
-      title="Add computed column"
-      data-command="QuickAddComputedColumn"
-      button={
+    <FlexCol data-command="QuickAddComputedColumn">
+      <p className="m-0 ta-left">
+        A computed column is a column that is calculated based on other data
+        from the table.
+        <br></br>
+        It will not be stored in the database but will be calculated on the fly
+        when queried.
+      </p>
+      {funcDef ?
         <Btn
+          style={{ minWidth: "50px" }}
+          label={{ label: "Function", variant: "normal", className: "mb-p25" }}
           variant="faded"
-          iconPath={mdiSigma}
-          data-command="QuickAddComputedColumn"
+          color="action"
+          iconPath={funcDef.isAggregate ? mdiSigma : mdiFunction}
+          onClick={() => {
+            setFuncDef(undefined);
+          }}
         >
-          Row count/Aggregate
+          {funcDef.label}
         </Btn>
+      : <FunctionSelector
+          column={undefined}
+          wColumns={undefined}
+          tableColumns={table.columns}
+          onSelect={(funcDef) => {
+            setFuncDef(funcDef);
+          }}
+        />
       }
-      render={(pClose) => (
-        <FlexCol className="">
-          <p className="m-0 p-1 ta-left">
-            A computed column is a column that is calculated based on other data
-            from the table.
-            <br></br>
-            It will not be stored in the database but will be calculated on the
-            fly when queried.
-          </p>
-          {allowedColumns && funcDef ?
-            <>
-              <FlexCol className="p-1">
-                <Btn
-                  className="mt-p5"
-                  style={{ minWidth: "50px" }}
-                  label={{ label: "Function" }}
-                  variant="faded"
-                  color="action"
-                  iconPath={funcDef.isAggregate ? mdiSigma : mdiFunction}
-                  onClick={() => {
-                    setFuncDef(undefined);
-                  }}
-                >
-                  {funcDef.label}
-                </Btn>
-              </FlexCol>
-              <SearchList
-                label="Columns"
-                id="cols-elect"
-                style={{ margin: ".4em" }}
-                className=" f-1"
-                // label={`Columns for ${funcDef.label}`}
-                items={allowedColumns.map((c) => ({
-                  ...getColumnListItem(c),
-                  onPress: () => {
-                    addColumn(c, funcDef, pClose);
-                  },
-                }))}
-              />
-            </>
-          : <FunctionSelector
-              column={undefined}
-              wColumns={undefined}
-              tableColumns={table.columns}
-              onSelect={(funcDef) => {
-                if (!funcDef) return;
-                const allowedCols = getFuncDefColumns(funcDef, table.columns);
-                if (!allowedCols) {
-                  addColumn(undefined, funcDef, pClose);
-                  return;
-                }
-                setFuncDef(funcDef);
-                setAllowedColumns(allowedCols);
+      {allowedColumns && funcDef ?
+        <>
+          {column ?
+            <Btn
+              style={{ minWidth: "50px" }}
+              label={{
+                label: "Column",
+                variant: "normal",
+                className: "mb-p25",
               }}
+              variant="faded"
+              color="action"
+              onClick={() => {
+                setColumn(undefined);
+              }}
+            >
+              {column.label || column.name}
+            </Btn>
+          : <SearchList
+              id="cols-select"
+              label="Applicable columns"
+              className="f-1"
+              items={allowedColumns.map((c) => ({
+                ...getColumnListItem(c),
+                onPress: () => {
+                  setColumn(c);
+                },
+              }))}
             />
           }
-        </FlexCol>
+        </>
+      : null}
+
+      {funcDef && (
+        <FormField
+          label="Computed column name"
+          value={name}
+          onChange={setName}
+        />
       )}
-    />
+
+      <FlexRow>
+        <Btn onClick={() => onAddColumn(undefined)}>{t.common.Cancel}</Btn>
+        <Btn
+          {...{
+            variant: "filled",
+            color: "action",
+            ...(!funcDef ?
+              {
+                disabledInfo: "Must select a function",
+              }
+            : allowedColumns && !column ?
+              {
+                disabledInfo: "Must select a column",
+              }
+            : {
+                onClick: () => {
+                  addColumn(column, funcDef);
+                },
+              }),
+          }}
+        >
+          {t.common.Add}
+        </Btn>
+      </FlexRow>
+    </FlexCol>
   );
 };

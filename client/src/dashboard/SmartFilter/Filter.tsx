@@ -11,7 +11,7 @@ import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import PopupMenu from "@components/PopupMenu";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { ContextDataSelector } from "../AccessControl/ContextDataSelector";
 import RTComp from "../RTComp";
 import { colIs, getInputType } from "../SmartForm/SmartFormField/fieldUtils";

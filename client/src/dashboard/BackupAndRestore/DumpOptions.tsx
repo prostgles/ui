@@ -5,7 +5,7 @@ import { FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Section } from "@components/Section";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 import { DumpLocationOptions } from "./DumpLocationOptions";
 import { DumpRestoreAlerts } from "./DumpRestoreAlerts";

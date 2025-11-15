@@ -10,7 +10,12 @@ import { isElementVisible, isImgNode, isSVGNode } from "./isElementVisible";
 import { getForeignObject } from "../graphics/getForeignObject";
 import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
-const attributesToKeep = ["data-command", "data-key", "data-label"] as const;
+const attributesToKeep = [
+  "data-command",
+  "data-key",
+  "data-label",
+  "role",
+] as const;
 export type WhatToRenderOnSVG = Awaited<
   ReturnType<typeof getWhatToRenderOnSVG>
 >;

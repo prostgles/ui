@@ -66,7 +66,7 @@ export const getTableCols = ({
         const c: ColumnConfigWInfo = quickClone(_c);
 
         const { tsDataType = "any", udt_name = "text" } =
-          (c.computedConfig ? c.computedConfig.funcDef.outType : c.info) ?? {};
+          (c.computedConfig ? c.computedConfig : c.info) ?? {};
 
         return {
           ...c,
@@ -102,7 +102,6 @@ export const getTableCols = ({
               {c.info.udt_name}
             </div>
           : (nestedCols ?? (!c.computedConfig ? c.info?.udt_name : null))}
-          {/* {c.computedConfig && (c.computedConfig.funcDef.outType.udt_name)} */}
           {(
             !w.filter.some(
               (f) => "fieldName" in f && f.fieldName === c.name && !f.disabled,
@@ -211,6 +210,7 @@ export const getTableCols = ({
         },
         onContextMenu: (e: React.MouseEvent, n: HTMLElement) => {
           e.preventDefault();
+          e.stopPropagation();
           const { x, y } = e.currentTarget.getBoundingClientRect();
           columnMenuState?.set({ column: c.name, clientX: x, clientY: y });
 

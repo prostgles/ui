@@ -63,7 +63,7 @@ export const SearchInput = (props: SearchInputProps) => {
         ...(mode ?
           { zIndex: mode["!listNode"] ? "unset" : SearchInputZIndex }
         : {
-            margin: "8px",
+            marginBottom: "8px",
           }),
       }}
       onClick={onClickWrapper}

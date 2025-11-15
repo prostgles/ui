@@ -147,7 +147,7 @@ export const SearchListContent = <M extends boolean = false>(
       style={{ ...style, ...(!isSearch ? rootStyle : {}) }} // maxHeight: "50vh",
     >
       {!!label && (
-        <Label className="ml-p5 mb-p25" variant="normal">
+        <Label className="mb-p25" variant="normal">
           {label}
         </Label>
       )}

@@ -10,7 +10,7 @@ import type { SmartGroupFilter } from "@common/filterUtils";
 import { getFinalFilterInfo, getSmartGroupFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { ExpandSection } from "@components/ExpandSection";
-import { Footer } from "@components/Popup/Popup";
+import { Footer } from "@components/Popup/Footer";
 import PopupMenu from "@components/PopupMenu";
 import { pluralise } from "../../pages/Connections/Connection";
 import { CodeConfirmation } from "../BackupAndRestore/CodeConfirmation";

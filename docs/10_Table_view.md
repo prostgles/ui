@@ -18,7 +18,7 @@ It supports computed columns, linked fields, and various actions for managing th
   - <a href="#table_toolbar">Table Toolbar</a>: Filtering and data add/edit interface for database tables and views.  
   - **Table**: The main table view displaying the data from the database. It allows users to interact with the data, including sorting, filtering, and editing.  
     - **Table header**: The header of the table, which contains the column names and allows users to sort the data by clicking on the column headers.  
-      - **Add column menu**: Opens the column menu, allowing users to add computed columns, create new columns, add linked fields.  
+      - **Add column menu**: Opens the add column menu, allowing users to add computed columns, create new columns, add linked fields.  
         - **Add Computed Field**: Opens a popup to create a computed column - calculations or transformations based on existing data using functions like aggregations, date formatting, string operations, etc.  
           - **Count of all rows**: Creates a computed column that displays the total count of all rows in the table, regardless of filters.  
           - **Column selection**: List of available columns to apply functions to. Choose a column to start creating a computed field.  
@@ -50,6 +50,21 @@ It supports computed columns, linked fields, and various actions for managing th
             - **Maximum file size in megabytes**: Set the maximum allowed file size for uploads in megabytes. Default is 1 MB. 0 means no limit.  
             - **Content filter mode**: Choose how to filter accepted files: by file extension, basic content type (e.g., image, audio, vide), by specific content type (e.g., image/png), by specific extension (jpg, png, pdf).  
           - **Create file column**: Confirms and creates the new file column.  
+      - **Column menu**: Opens the column menu, allowing users to change styling, render mode, view quick stats and other column related options.  
+        - **Sort**: Sort the table data based on the values in this column, either in ascending or descending order. Table can also be sorted by multiple columns by holding shift while clicking column headers.  
+        - **Style**: Customize the appearance of this column, including text color and cell background. You can also set conditional formatting rules to highlight specific data patterns.  
+        - **Display format**: Choose how the data in this column is displayed, such as date formats, number formats, or custom render modes.  
+        - **Filter**: Open the filter panel to set up filters based on this column's values, helping you to quickly narrow down the data displayed in the table.  
+        - **Quick stats**: View quick statistics about the data in this column, such as count, unique values, and distribution.  
+          - **Column Quick Stats**: The Column Quick Stats panel provides a summary of key statistics for the selected column, including distinct count, min/max values, and value distribution. You can also sort the distribution and add filters directly from this panel.  
+            - **Add filter**: Add a filter based on the selected value from top values list.  
+        - **Columns**: Shortcut to the column management panel to add, remove, or rearrange columns in the table.  
+        - **Add Computed Column**: Add a computed field based on calculations or transformations of existing data in this column.  
+        - **Apply function**: Apply a function to the data in this column, such as aggregations, string manipulations, or date transformations.  
+        - **Add Linked Columns**: Add linked data from related tables based on foreign key relationships.  
+        - **Alter**: Alter the column's properties, such as data type, default value, or constraints.  
+        - **Hide**: Hide this column from the table view without deleting it, allowing you to focus on the most relevant data.  
+        - **Hide Others**: Hide all other columns except this one, providing a focused view of the data in this column.  
       - **Column header**: Pressing the header will toggle sorting state (if the column is sortable). Right clicking (or long press on mobile) will open column menu. Dragging the header will allow reordering the columns.  
       - **Resize column**: Allows users to resize the column width by dragging the handle.  
       - **Edit row**: Opens the row edit menu, allowing users to view/edit/delete the selected row.  

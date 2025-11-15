@@ -57,12 +57,13 @@ export const saveSVGs = async (page: PageWIds) => {
 
     const addSceneWithClickAnimation = async (
       selector: string | { svgif: string; playwright: string },
+      isRightClick = false,
     ) => {
       const svgifSelector =
         typeof selector === "string" ? selector : selector.svgif;
       const playwrightSelector =
         typeof selector === "string" ? selector : selector.playwright;
-
+      await page.locator(playwrightSelector).scrollIntoViewIfNeeded();
       const elementIsVisible = await page
         .locator(playwrightSelector)
         .evaluate((n) => {
@@ -92,7 +93,13 @@ export const saveSVGs = async (page: PageWIds) => {
           n.style.opacity = "0";
         });
       }
-      await page.locator(playwrightSelector).click();
+      await page
+        .locator(playwrightSelector)
+        .click({ button: isRightClick ? "right" : "left" });
+
+      /** prevent hover from showing hidden elements */
+      await page.mouse.move(-100, -100);
+
       await page.waitForTimeout(1000);
     };
 

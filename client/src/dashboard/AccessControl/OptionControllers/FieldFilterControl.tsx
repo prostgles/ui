@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from "react";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { isObject, getKeys } from "prostgles-types";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import ErrorComponent from "@components/ErrorComponent";
 import type { FieldFilter } from "@common/publishUtils";
 import { mdiFilter } from "@mdi/js";
@@ -138,7 +138,7 @@ export const FieldFilterControl = ({
               onChange={(fields) => {
                 setFields(fields, !isExcept);
               }}
-              variant={"chips-lg"}
+              variant="chips-lg"
             />
           )}
 

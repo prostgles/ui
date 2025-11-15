@@ -7,7 +7,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
-import Select, { type FullOption } from "@components/Select/Select";
+import { Select, type FullOption } from "@components/Select/Select";
 import { SvgIconFromURL } from "@components/SvgIcon";
 import { SmartForm, SmartFormPopup } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";

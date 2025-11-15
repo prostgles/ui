@@ -32,7 +32,12 @@ import type {
 } from "./ColumnStyleControls";
 import { ColumnStyleControls } from "./ColumnStyleControls";
 
-import type { ParsedJoinPath } from "prostgles-types";
+import {
+  includes,
+  pickKeys,
+  type ParsedJoinPath,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
 import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
 import { useReactiveState } from "../../../appUtils";
 import Popup from "@components/Popup/Popup";
@@ -51,11 +56,10 @@ import type { ColumnFormat } from "./ColumnDisplayFormat/columnFormatUtils";
 import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
 import { ColumnSortMenu } from "./ColumnSortMenu";
 import { ColumnsMenu } from "./ColumnsMenu";
-import type { FuncDef } from "./FunctionSelector";
-import { FunctionSelector } from "./FunctionSelector";
+import type { FuncDef } from "./FunctionSelector/functions";
+import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
-import { SummariseColumn } from "./SummariseColumns";
 import { ColumnQuickStats } from "./ColumnQuickStats/ColumnQuickStats";
 
 export type ColumnConfig = {
@@ -96,12 +100,14 @@ export type ColumnConfig = {
   format?: ColumnFormat;
 
   /** If present then this is a computed column */
-  computedConfig?: {
+  computedConfig?: Pick<ValidatedColumnInfo, "tsDataType" | "udt_name"> & {
     /**
      * If true then this (name === computedConfig.column) represents an actual column and should not be removed
      */
     isColumn?: boolean;
-    funcDef: FuncDef;
+
+    /** Out type removed to prevent confusion */
+    funcDef: Omit<FuncDef, "outType">;
 
     /**
      * In case of functions that don't need cols column will be undefined
@@ -230,13 +236,11 @@ export const ColumnMenu = (props: P) => {
           onUpdate={onUpdate}
           tsDataType={
             column.info?.tsDataType ||
-            column.computedConfig?.funcDef.outType.tsDataType ||
+            column.computedConfig?.tsDataType ||
             "any"
           }
           udt_name={
-            column.info?.udt_name ||
-            column.computedConfig?.funcDef.outType.udt_name ||
-            "text"
+            column.info?.udt_name || column.computedConfig?.udt_name || "text"
           }
         />
       ),
@@ -249,15 +253,12 @@ export const ColumnMenu = (props: P) => {
       leftIconPath: mdiFormatText,
       hide: !!column.nested,
       disabledText:
-        (
-          getFormatOptions(
-            column.info || column.computedConfig?.funcDef.outType,
-          ).length <= 1
-        ) ?
+        getFormatOptions(column.info || column.computedConfig).length <= 1 ?
           "Only text columns can have custom formats at the moment"
         : undefined,
       content: (
         <ColumnDisplayFormat
+          db={db}
           column={column}
           tables={props.tables}
           table={props.tables.find((t) => t.name === tableName)!}
@@ -283,7 +284,13 @@ export const ColumnMenu = (props: P) => {
       leftIconPath: mdiChartBar,
       hide: !!column.nested,
       disabledText:
-        isComputed ? "Cannot add quick stats on a computed column" : undefined,
+        isComputed ? "Cannot add quick stats on a computed column"
+        : (
+          validatedColumn?.udt_name.startsWith("geo") ||
+          includes(["json", "xml"], validatedColumn?.udt_name)
+        ) ?
+          `Not supported for ${validatedColumn.udt_name} columns`
+        : undefined,
       content: table && w.columns && validatedColumn && (
         <ColumnQuickStats column={validatedColumn} db={db} w={w} />
       ),
@@ -341,6 +348,7 @@ export const ColumnMenu = (props: P) => {
           onSelect={(funcDef) =>
             onUpdate({
               computedConfig: funcDef && {
+                ...pickKeys(validatedColumn, ["tsDataType", "udt_name"]),
                 funcDef,
                 isColumn: column.computedConfig?.isColumn ?? true,
                 column: validatedColumn.name,
@@ -471,11 +479,12 @@ export const ColumnMenu = (props: P) => {
       clickCatchStyle={{ opacity: 0.5 }}
       key="columnMenu"
       rootStyle={{ padding: 0 }}
-      contentClassName={"p-0 "}
+      contentClassName={"p-0 o-none"}
       showFullscreenToggle={{}}
       title={colName}
       positioning="beneath-left"
       onClose={onClose}
+      fixedTopLeft={false}
     >
       {content}
     </Popup>

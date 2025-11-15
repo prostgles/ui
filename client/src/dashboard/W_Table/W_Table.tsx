@@ -2,10 +2,10 @@ import { mdiAlertOutline, mdiPlus } from "@mdi/js";
 import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 
-import React from "react";
 import Loading from "@components/Loader/Loading";
 import type { TableColumn, TableProps } from "@components/Table/Table";
 import { PAGE_SIZES, Table, closest } from "@components/Table/Table";
+import React from "react";
 import type {
   OnAddChart,
   Query,
@@ -18,10 +18,10 @@ import "./ProstglesTable.css";
 import type { DeltaOf, DeltaOfData } from "../RTComp";
 import RTComp from "../RTComp";
 
-import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
+import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import type {
   ColumnConfig,
   ColumnSort,
@@ -29,14 +29,15 @@ import type {
 } from "./ColumnMenu/ColumnMenu";
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
-import { isDefined, isEqual, pickKeys } from "prostgles-types";
 import type { DetailedFilterBase } from "@common/filterUtils";
 import { matchObj } from "@common/utils";
-import type { Command } from "../../Testing";
-import { createReactiveState } from "../../appUtils";
 import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
+import { FlexCol } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import type { PaginationProps } from "@components/Table/Pagination";
+import { isDefined, isEqual, pickKeys } from "prostgles-types";
+import type { Command } from "../../Testing";
+import { createReactiveState } from "../../appUtils";
 import { t } from "../../i18n/i18nUtils";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
@@ -45,6 +46,7 @@ import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import Window from "../Window";
 import { CardView } from "./CardView/CardView";
 import { NodeCountChecker } from "./NodeCountChecker";
+import { QuickFilterGroupsControl } from "./QuickFilterGroupsControl";
 import type { RowPanelProps } from "./RowCard";
 import { RowCard } from "./RowCard";
 import { W_TableMenu } from "./TableMenu/W_TableMenu";
@@ -65,9 +67,6 @@ import {
   getSortColumn,
   updateWCols,
 } from "./tableUtils/tableUtils";
-import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
-import Select from "@components/Select/Select";
-import { QuickFilterGroupsControl } from "./QuickFilterGroupsControl";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
@@ -553,6 +552,7 @@ export default class W_Table extends RTComp<
       }
       return null;
     }
+
     const activeRowStyle: React.CSSProperties =
       this.activeRowStr === JSON.stringify(joinFilter || {}) ?
         { background: activeRowColor }

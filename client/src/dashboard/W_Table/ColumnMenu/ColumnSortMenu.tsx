@@ -1,6 +1,6 @@
 import React from "react";
 import { FlexCol } from "@components/Flex";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { ColumnSort } from "./ColumnMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
 import type {
@@ -50,7 +50,7 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
   };
   const colIsText =
     column.info?.tsDataType === "string" ||
-    column.computedConfig?.funcDef.outType.tsDataType === "string";
+    column.computedConfig?.tsDataType === "string";
   const updateSort = (newColSort: ColumnSort) => {
     let matched = false;
     let newSort = (w.sort || []).map((s) => {

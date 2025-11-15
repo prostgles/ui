@@ -239,7 +239,16 @@ export const AIAssistantUIDoc = {
           description:
             "Opens the prompt details for the current chat, allowing you to manage the prompt template and other related settings.",
           selector: getCommandElemSelector("LLMChatOptions.Prompt"),
-          children: [],
+          children: [
+            {
+              type: "popup",
+              selectorCommand: "LLMChatOptions.Prompt.Preview",
+              title: "Prompt preview",
+              description:
+                "Preview of the prompt with context variables filled in.",
+              children: [],
+            },
+          ],
         },
         {
           type: "select",

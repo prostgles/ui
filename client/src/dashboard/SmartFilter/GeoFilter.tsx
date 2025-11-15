@@ -10,7 +10,7 @@ import { FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import Popup from "@components/Popup/Popup";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { BaseFilterProps } from "./SmartFilter";
 import type { SmartSearchOnChangeArgs } from "./SmartSearch/SmartSearch";

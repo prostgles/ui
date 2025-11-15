@@ -124,7 +124,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
                 label: selectedCol.name,
                 name: selectedCol.name,
                 computedConfig,
-                ...computedConfig.funcDef.outType,
+                ...computedConfig,
               };
               tableCol = undefined;
             }

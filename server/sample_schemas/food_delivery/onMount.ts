@@ -1,5 +1,5 @@
 export const onMount: ProstglesOnMount = async ({ dbo }) => {
-  const roadTableHandler = dbo['"roads.geojson"'];
+  const roadTableHandler = dbo['"routes"'];
   if (!roadTableHandler) return;
 
   const count = await roadTableHandler.count();
@@ -75,7 +75,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     },
   }).then((res) => res.json());
 
-  await dbo['"roads.geojson"'].insert(
+  await dbo['"routes"'].insert(
     elements.map((d) => ({
       id: d.id,
       geometry: {
@@ -86,15 +86,15 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
   );
 
   await dbo.sql(`
-    UPDATE "roads.geojson"
+    UPDATE "routes"
     SET geog = ST_SetSRID(ST_GeomFromGeoJSON(geometry), 4326);
 
-    DELETE FROM "roads.geojson"
+    DELETE FROM "routes"
     WHERE st_isempty(geog::GEOMETRY) = true
     OR st_length(geog) < 100
     OR id IS NULL;
 
     CREATE INDEX IF NOT EXISTS idx_roads 
-    ON "roads.geojson" USING gist (geog);
+    ON "routes" USING gist (geog);
   `);
 };

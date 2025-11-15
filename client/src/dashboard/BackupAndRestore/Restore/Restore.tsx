@@ -8,7 +8,7 @@ import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Section } from "@components/Section";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { DBS } from "../../Dashboard/DBS";
 import { CodeConfirmation } from "../CodeConfirmation";
 import { FORMATS } from "../DumpOptions";

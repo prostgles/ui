@@ -121,7 +121,8 @@ export const getPopupPosition = ({
   const stateStyle = {
     top: `${y}px`,
     left: `${x}px`,
-    right: isDefined(right) ? `${right}px` : undefined,
+    /** Where is this used?! This is breaking column menu expand for last column */
+    // right: isDefined(right) ? `${right}px` : undefined,
     bottom: isDefined(bottom) ? `${bottom}px` : undefined,
   };
 

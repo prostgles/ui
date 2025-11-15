@@ -2,7 +2,7 @@ import React from "react";
 import ErrorComponent from "@components/ErrorComponent";
 
 import type { SyncRule, TableRules } from "@common/publishUtils";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { ContextDataSchema } from "../OptionControllers/FilterControl";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { RuleToggle } from "./RuleToggle";

@@ -11,7 +11,7 @@ import {
 import React, { useMemo } from "react";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";

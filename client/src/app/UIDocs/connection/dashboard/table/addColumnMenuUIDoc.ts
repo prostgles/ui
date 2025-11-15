@@ -6,7 +6,7 @@ export const addColumnMenuUIDoc = {
   selectorCommand: "AddColumnMenu",
   title: "Add column menu",
   description:
-    "Opens the column menu, allowing users to add computed columns, create new columns, add linked fields.",
+    "Opens the add column menu, allowing users to add computed columns, create new columns, add linked fields.",
   children: [
     {
       type: "popup",

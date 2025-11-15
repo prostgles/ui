@@ -19,7 +19,7 @@ import {
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";
 import RTComp from "../RTComp";
 import { JOIN_FILTER_TYPES } from "./AddJoinFilter";

@@ -1,15 +1,13 @@
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
 import { useEffect, useRef, useState } from "react";
 
-import type { RefObject } from "react";
-
 type Size = {
   width: number | undefined;
   height: number | undefined;
 };
 
 type UseResizeObserverOptions<T extends HTMLElement = HTMLElement> = {
-  ref: RefObject<T>;
+  elem: T | null;
   onResize?: (size: Size) => void;
   box?: "border-box" | "content-box" | "device-pixel-content-box";
 };
@@ -22,7 +20,7 @@ const initialSize: Size = {
 export function useResizeObserver<T extends HTMLElement = HTMLElement>(
   options: UseResizeObserverOptions<T>,
 ): Size {
-  const { ref, box = "content-box" } = options;
+  const { elem, box = "content-box" } = options;
   const [{ width, height }, setSize] = useState<Size>(initialSize);
   const getIsMounted = useIsMounted();
   const previousSize = useRef<Size>({ ...initialSize });
@@ -30,7 +28,7 @@ export function useResizeObserver<T extends HTMLElement = HTMLElement>(
   onResize.current = options.onResize;
 
   useEffect(() => {
-    if (!ref.current) return;
+    if (!elem) return;
 
     if (typeof window === "undefined" || !("ResizeObserver" in window)) return;
 
@@ -53,7 +51,7 @@ export function useResizeObserver<T extends HTMLElement = HTMLElement>(
         previousSize.current.width = newWidth;
         previousSize.current.height = newHeight;
 
-        if (onResize.current && ref.current) {
+        if (onResize.current) {
           onResize.current(newSize);
         } else {
           if (getIsMounted()) {
@@ -63,12 +61,12 @@ export function useResizeObserver<T extends HTMLElement = HTMLElement>(
       }
     });
 
-    observer.observe(ref.current, { box });
+    observer.observe(elem, { box });
 
     return () => {
       observer.disconnect();
     };
-  }, [box, ref, getIsMounted]);
+  }, [box, elem, getIsMounted]);
 
   return { width, height };
 }

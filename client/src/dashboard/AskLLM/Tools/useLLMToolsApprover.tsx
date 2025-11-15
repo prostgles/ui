@@ -1,15 +1,15 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import {
   getLLMMessageToolUse,
   isAssistantMessageRequestingToolUse,
   type LLMMessage,
 } from "@common/llmUtils";
-import { isDefined } from "../../../utils";
-import type { AskLLMToolsProps } from "./AskLLMToolApprover";
-import type { DBSSchema } from "@common/publishUtils";
 import type { ProstglesMcpTool } from "@common/prostglesMcp";
-import { useRef } from "react";
+import type { DBSSchema } from "@common/publishUtils";
+import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
+import { isDefined } from "../../../utils";
+import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
+import type { AskLLMToolsProps } from "./AskLLMToolApprover";
 
 let approvingMessageId = "";
 
@@ -24,7 +24,7 @@ export const useLLMToolsApprover = ({
 }: AskLLMToolsProps & {
   requestApproval: (
     tool: ApproveRequest,
-    input: unknown,
+    toolUseMessage: ToolUseMessage,
   ) => Promise<{ approved: boolean }>;
 }) => {
   const { dbsMethods } = usePrgl();
@@ -72,7 +72,7 @@ export const useLLMToolsApprover = ({
         const { approved } = await requestApproval(
           //@ts-ignore
           matchedTool,
-          toolUseRequest.input,
+          toolUseRequest,
         );
 
         toolApprovalReponses.push(approved ? toolUseRequest : undefined);
@@ -90,11 +90,12 @@ export type ApproveRequest =
       "id" | "name" | "description" | "server_name"
     > & {
       type: "mcp";
-      // tool_name: string;
+      requestId: string;
       auto_approve: boolean;
     })
   | (ProstglesMcpTool & {
       id: number;
+      requestId: string;
       name: string;
       description: string;
       auto_approve: boolean;

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/prostgles";
 import { quickClone } from "../../../utils";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { getSmartGroupFilter, type SimpleFilter } from "@common/filterUtils";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
 import {

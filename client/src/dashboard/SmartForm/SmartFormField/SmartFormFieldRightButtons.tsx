@@ -28,7 +28,6 @@ export const getSmartFormFieldRightButtons = ({
         className="h-full"
         // color={showDateInput? "action" : undefined}
         onClick={() => showDateInput.onChange(!showDateInput.value)}
-        size="small"
       />
     );
   } else if (isGeoData) {
@@ -72,7 +71,6 @@ export const getSmartFormFieldRightButtons = ({
               iconPath={mdiCrosshairsGps}
               className={`h-full rounded-${column.is_nullable ? 0 : "r"}`}
               onClick={() => showDateInput.onChange(!showDateInput.value)}
-              size="small"
             />
           }
           content={

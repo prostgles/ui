@@ -55,7 +55,11 @@ export const ProstglesMCPToolsWithUI = {
 
 export type ProstglesMCPToolsProps = {
   workspaceId: string | undefined;
-  message: ToolUseMessage;
+  // message: ToolUseMessage;
+  message: {
+    id: string;
+    input: any;
+  };
   chatId: number;
   toolUseResult:
     | {

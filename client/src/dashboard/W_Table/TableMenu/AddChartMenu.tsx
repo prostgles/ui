@@ -8,7 +8,7 @@ import {
 } from "prostgles-types";
 import React from "react";
 import Btn, { type BtnProps } from "@components/Btn";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { t } from "../../../i18n/i18nUtils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {

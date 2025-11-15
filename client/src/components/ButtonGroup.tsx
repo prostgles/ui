@@ -5,7 +5,7 @@ import { FlexCol } from "./Flex";
 import type { LabelProps } from "./Label";
 import { Label } from "./Label";
 import type { FullOption } from "./Select/Select";
-import Select from "./Select/Select";
+import { Select } from "./Select/Select";
 import { pickKeys } from "prostgles-types";
 import type { TestSelectors } from "../Testing";
 

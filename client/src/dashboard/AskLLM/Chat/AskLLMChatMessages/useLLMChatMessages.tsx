@@ -12,7 +12,7 @@ import Expander from "@components/Expander";
 import { FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import { MediaViewer } from "@components/MediaViewer";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { t } from "../../../../i18n/i18nUtils";
 import { isDefined } from "../../../../utils";
 import { Counter } from "../../../W_SQL/W_SQL";

@@ -1,4 +1,4 @@
-import { mdiPlus } from "@mdi/js";
+import { mdiPlus, mdiSigma } from "@mdi/js";
 import React, { useState } from "react";
 import { WithPrgl } from "../../../../WithPrgl";
 import Btn from "@components/Btn";
@@ -137,17 +137,39 @@ export const LinkedColumnSelect = ({
             tables={tables}
           />
           <div className="py-p75">OR</div>
-          <QuickAddComputedColumn
-            tables={tables}
-            tableName={table.name}
-            onAddColumn={(newCol) => {
-              const oldHiddenCols = (nestedColumns ?? []).map((c) => ({
-                ...c,
-                show: false,
-              }));
-              const newCols = [newCol, ...oldHiddenCols];
-              updateNested({ displayMode: "no-headers", columns: newCols });
-            }}
+
+          <PopupMenu
+            contentClassName="p-1 flex-col gap-1"
+            title="Add computed column"
+            positioning="beneath-left"
+            data-command="QuickAddComputedColumn"
+            button={
+              <Btn
+                variant="faded"
+                iconPath={mdiSigma}
+                data-command="QuickAddComputedColumn"
+              >
+                Row count/Aggregate
+              </Btn>
+            }
+            render={(popupClose) => (
+              <QuickAddComputedColumn
+                tables={tables}
+                tableName={table.name}
+                onAddColumn={(newCol) => {
+                  if (!newCol) {
+                    popupClose();
+                    return;
+                  }
+                  const oldHiddenCols = (nestedColumns ?? []).map((c) => ({
+                    ...c,
+                    show: false,
+                  }));
+                  const newCols = [newCol, ...oldHiddenCols];
+                  updateNested({ displayMode: "no-headers", columns: newCols });
+                }}
+              />
+            )}
           />
         </>
       )}

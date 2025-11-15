@@ -4,7 +4,7 @@ import { FlexRow } from "@components/Flex";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { updateWCols } from "../../tableUtils/tableUtils";
 import type { LinkedColumnProps } from "./LinkedColumn";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { mdiCheck } from "@mdi/js";
 import { t } from "../../../../i18n/i18nUtils";
 

@@ -1,5 +1,5 @@
 import { getSmartGroupFilter } from "@common/filterUtils";
-import { getSuggestions } from "../../SmartForm/SmartFormField/fieldUtils";
+import { fetchColumnValueSuggestions } from "../../SmartForm/SmartFormField/fetchColumnValueSuggestions";
 import { type BaseFilterProps } from "../smartFilterUtils";
 
 type Args = Pick<
@@ -51,7 +51,7 @@ export const fetchListFilterOptions = async (args: Args) => {
           },
         }
       : filter;
-    const rawOptions = await getSuggestions({
+    const rawOptions = await fetchColumnValueSuggestions({
       db,
       column: finalColumn,
       table: finalTableName,

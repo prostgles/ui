@@ -5,7 +5,7 @@ import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { getKeys } from "../../../utils";
 import { CodeEditor } from "../../CodeEditor/CodeEditor";
 import type { GeoJSONFeature } from "../../Map/DeckGLMap";

@@ -4,16 +4,16 @@ import { schemaDiagramSvgif } from "screenshotUtils/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
 import { getDataKeyElemSelector } from "../Testing";
 import { getDashboardUtils, type PageWIds } from "../utils/utils";
-import { accountSvgif } from "./accountSvgif";
+import { accountSvgif } from "./account.svgif";
 import { aiAssistantSvgif } from "./aiAssistant.svgif";
 import { commandPaletteSvgif } from "./commandPalette.svgif";
 import { electronSetupSvgif } from "./electronSetup.svgif";
-import { mapSvgif } from "./mapSvgif";
-import { navbarSvgif } from "./navbarSvgif";
-import { newConnectionSvgif } from "./newConnectionSvgif";
+import { mapSvgif } from "./map.svgif";
+import { navbarSvgif } from "./navbar.svgif";
+import { newConnectionSvgif } from "./newConnection.svgif";
 import { sqlEditorSvgif } from "./sqlEditor.svgif";
-import { tableSvgif } from "./tableSvgif";
-import { timechartSvgif } from "./timechartSvgif";
+import { tableSvgif } from "./table.svgif";
+import { timechartSvgif } from "./timechart.svgif";
 import { type SVGifScene } from "./utils/constants";
 
 export type OnBeforeScreenshot = (
@@ -28,6 +28,7 @@ export type OnBeforeScreenshot = (
             svgif: string;
             playwright: string;
           },
+      isRightClick?: boolean,
     ) => Promise<void>;
   },
 ) => Promise<void>;

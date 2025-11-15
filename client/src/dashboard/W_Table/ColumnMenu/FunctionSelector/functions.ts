@@ -1,102 +1,5 @@
-import { mdiFunction, mdiSigma } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { _PG_date, _PG_interval, _PG_numbers } from "prostgles-types";
-import React, { useMemo } from "react";
-import Select from "@components/Select/Select";
-import type { ColumnConfig } from "./ColumnMenu";
-
-type P = {
-  selectedFunction?: string;
-  column: string | undefined;
-  /**
-   * If defined then this is not a nested column
-   */
-  wColumns: ColumnConfig[] | undefined;
-  tableColumns: ValidatedColumnInfo[];
-  onSelect: (func: FuncDef | undefined) => void;
-  className?: string;
-  currentNestedColumnName?: string;
-};
-
-const funcAcceptsColumn = (f: FuncDef, targetCols: ValidatedColumnInfo[]) => {
-  return (
-    (!f.tsDataTypeCol && !f.udtDataTypeCol) ||
-    f.tsDataTypeCol === "any" ||
-    f.udtDataTypeCol === "any" ||
-    (Array.isArray(f.udtDataTypeCol) &&
-      f.udtDataTypeCol.some((udt) =>
-        targetCols.some((c) => c.udt_name === udt),
-      )) ||
-    (Array.isArray(f.tsDataTypeCol) &&
-      f.tsDataTypeCol.some((tsd) =>
-        targetCols.some((c) => c.tsDataType === tsd),
-      ))
-  );
-};
-
-export const FunctionSelector = ({
-  column,
-  tableColumns,
-  onSelect,
-  selectedFunction,
-  wColumns: parentColumns,
-  className,
-  currentNestedColumnName,
-}: P) => {
-  const cannotUseAggs = useMemo(
-    () =>
-      parentColumns?.some(
-        (c) => c.show && c.nested && c.name !== currentNestedColumnName,
-      ),
-    [parentColumns, currentNestedColumnName],
-  );
-
-  const funcs = useMemo(() => {
-    const columnInfo = tableColumns.find((c) => c.name === column);
-    const funcs = [...getAggFuncs(), ...getFuncs()]
-      .map((f) => ({
-        ...f,
-        isAllowedForColumn: funcAcceptsColumn(
-          f,
-          columnInfo ? [columnInfo] : tableColumns,
-        ),
-      }))
-      .filter((f) => f.isAllowedForColumn);
-    return funcs;
-  }, [column, tableColumns]);
-
-  const list = (
-    <Select
-      className={className}
-      style={{ maxHeight: "500px" }}
-      id="func_type"
-      value={selectedFunction}
-      label={"Applied function"}
-      showSelectedSublabel={true}
-      data-command="FunctionSelector"
-      optional={true}
-      onChange={(key) => {
-        const def = funcs.find((f) => f.key === key);
-        onSelect(def);
-      }}
-      noSearchLimit={5}
-      variant={selectedFunction ? undefined : "search-list-only"}
-      fullOptions={funcs.map((def) => {
-        return {
-          ...def,
-          iconPath: def.isAggregate ? mdiSigma : mdiFunction,
-          disabledInfo:
-            cannotUseAggs && def.isAggregate ?
-              "Cannot use aggregations with nested column"
-            : def.isAllowedForColumn ? undefined
-            : "Not suitable for the selected column data type",
-        };
-      })}
-    />
-  );
-
-  return list;
-};
 
 const infoTypes = {
   string: { udt_name: "text", tsDataType: "string" },
@@ -111,13 +14,13 @@ export type FuncDef = {
   key: string;
   label: string;
   subLabel: string;
-  tsDataTypeCol?: "any" | Array<ValidatedColumnInfo["tsDataType"]>;
-  udtDataTypeCol?: "any" | Array<ValidatedColumnInfo["udt_name"]>;
-  outType: Pick<ValidatedColumnInfo, "tsDataType" | "udt_name">;
+  tsDataTypeCol?: "any" | ValidatedColumnInfo["tsDataType"][];
+  udtDataTypeCol?: "any" | ValidatedColumnInfo["udt_name"][];
+  outType: "sameAsInput" | Pick<ValidatedColumnInfo, "tsDataType" | "udt_name">;
   isAggregate?: boolean;
 };
 
-function getFuncs(): FuncDef[] {
+export const getFuncs = (): FuncDef[] => {
   const GeometryFuncs: {
     key: string;
     label: string;
@@ -393,7 +296,7 @@ function getFuncs(): FuncDef[] {
   }));
 
   return res;
-}
+};
 
 const numericOrDate: FuncDef["udtDataTypeCol"] = [
   ..._PG_date,
@@ -427,14 +330,14 @@ export const aggFunctions = [
     name: "MAX",
     label: "Maximum value",
     udtDataTypeCol: numericOrDate,
-    outType: infoTypes.number,
+    outType: "sameAsInput",
   },
   {
     key: "$min",
     name: "MIN",
     label: "Minimum value",
     udtDataTypeCol: numericOrDate,
-    outType: infoTypes.number,
+    outType: "sameAsInput",
   },
   {
     key: "$avg",
@@ -460,7 +363,7 @@ export const aggFunctions = [
   },
 ] as const satisfies readonly (Omit<FuncDef, "subLabel"> & { name: string })[];
 
-function getAggFuncs(): FuncDef[] {
+export const getAggFuncs = (): FuncDef[] => {
   return aggFunctions.map(
     (f) =>
       ({
@@ -470,4 +373,43 @@ function getAggFuncs(): FuncDef[] {
         subLabel: f.label,
       }) satisfies FuncDef,
   );
-}
+};
+
+export const funcAcceptsColumn = (
+  f: FuncDef,
+  targetCols: ValidatedColumnInfo[],
+) => {
+  return (
+    (!f.tsDataTypeCol && !f.udtDataTypeCol) ||
+    f.tsDataTypeCol === "any" ||
+    f.udtDataTypeCol === "any" ||
+    (Array.isArray(f.udtDataTypeCol) &&
+      f.udtDataTypeCol.some((udt) =>
+        targetCols.some((c) => c.udt_name === udt),
+      )) ||
+    (Array.isArray(f.tsDataTypeCol) &&
+      f.tsDataTypeCol.some((tsd) =>
+        targetCols.some((c) => c.tsDataType === tsd),
+      ))
+  );
+};
+
+export const getColumnsAcceptedByFunction = (
+  { tsDataTypeCol, udtDataTypeCol }: FuncDef,
+  columns: ValidatedColumnInfo[],
+) => {
+  if (tsDataTypeCol || udtDataTypeCol) {
+    return columns.filter((c) => {
+      if (tsDataTypeCol === "any" || udtDataTypeCol === "any") {
+        return true;
+      } else if (tsDataTypeCol) {
+        return tsDataTypeCol.includes(c.tsDataType);
+      } else if (udtDataTypeCol) {
+        return udtDataTypeCol.includes(c.udt_name);
+      }
+
+      return false;
+    });
+  }
+  return undefined;
+};

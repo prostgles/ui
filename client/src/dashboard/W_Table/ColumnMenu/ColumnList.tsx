@@ -20,9 +20,9 @@ import type {
 import type { ColumnConfigWInfo } from "../W_Table";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
 import type { ColumnConfig } from "./ColumnMenu";
-import { getColumnListItem } from "./ColumnsMenu";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { SummariseColumn } from "./SummariseColumns";
+import { getColumnListItem } from "./ColumnSelect/getColumnListItem";
 
 type P = {
   columns: ColumnConfigWInfo[];
@@ -208,7 +208,6 @@ export const ColumnList = ({
                   )}
                 </FlexRow>,
             onPress: () => {
-              //@ts-ignore
               const nc = columns
                 .slice(0)
                 .map((_c) => ({ ..._c }))

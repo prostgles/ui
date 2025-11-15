@@ -1,6 +1,6 @@
 import Btn from "@components/Btn";
 import { FlexRowWrap } from "@components/Flex";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { mdiInformationOutline } from "@mdi/js";
 import React, { useMemo } from "react";
 import type { StatusMonitorProps } from "./StatusMonitor";

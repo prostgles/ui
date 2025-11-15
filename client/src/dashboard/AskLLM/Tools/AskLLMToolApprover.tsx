@@ -17,6 +17,8 @@ import { getMCPToolNameParts } from "@common/prostglesMcp";
 import { Marked } from "@components/Chat/Marked";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
+import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
+import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
@@ -37,15 +39,15 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   const [mustApprove, setMustApprove] = React.useState<
     {
       onResponse: (mode: "once" | "for-chat" | "deny") => void;
-      input: any;
+      toolUseMessage: ToolUseMessage;
     } & ApproveRequest
   >();
 
   const onRequestToolUse = useCallback(
-    async (req: ApproveRequest, input: any) => {
+    async (req: ApproveRequest, toolUseMessage: ToolUseMessage) => {
       return new Promise<{ approved: boolean }>((resolve) => {
         setMustApprove({
-          input,
+          toolUseMessage,
           ...req,
           onResponse: async (toolUseResponse) => {
             if (toolUseResponse !== "deny") {
@@ -127,7 +129,10 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
 
   if (!mustApprove) return null;
 
-  const { input, description } = mustApprove;
+  const { toolUseMessage, description, name, id } = mustApprove;
+
+  const ToolUI = ProstglesMCPToolsWithUI[name];
+  const { displayMode } = ToolUI ?? {};
   return (
     <Popup
       title={
@@ -196,13 +201,22 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           loadedSuggestions={undefined}
           sqlHandler={undefined}
         />
-        {input && !isEmpty(input) && (
-          <CodeEditorWithSaveButton
-            label="Input"
-            // contentTop={<FlexRow className="p-1 bg-color-1">Input</FlexRow>}
-            value={JSON.stringify(input, null, 2)}
-            language="json"
-          />
+        {!isEmpty(toolUseMessage.input) && (
+          <>
+            {ToolUI ?
+              <ToolUI.component
+                chatId={activeChat.id}
+                message={toolUseMessage}
+                toolUseResult={undefined}
+                workspaceId={undefined}
+              />
+            : <CodeEditorWithSaveButton
+                label="Input"
+                value={JSON.stringify(toolUseMessage.input, null, 2)}
+                language="json"
+              />
+            }
+          </>
         )}
       </FlexCol>
     </Popup>

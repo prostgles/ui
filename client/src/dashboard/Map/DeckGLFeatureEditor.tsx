@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { InfoRow } from "@components/InfoRow";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 import { isDefined } from "../../utils";
 import { SmartForm } from "../SmartForm/SmartForm";

@@ -79,8 +79,7 @@ export const NestedColumnRender = ({
   const shownNestedColumns = nestedColumns.filter((c) => c.show);
   const render = ({ key, value }: { key: string; value: any }) => {
     const columnWInfo = nestedColumns.find((c) => c.name === key);
-    const datType =
-      columnWInfo?.info ?? columnWInfo?.computedConfig?.funcDef.outType;
+    const datType = columnWInfo?.info ?? columnWInfo?.computedConfig;
     const renderedValue =
       columnWInfo ?
         <RenderValue

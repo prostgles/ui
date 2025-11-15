@@ -1,36 +1,39 @@
-import { mdiChevronDown, mdiPlus } from "@mdi/js";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
-import { _PG_date } from "prostgles-types";
-import type { ValidatedColumnInfo } from "prostgles-types/lib";
-import React from "react";
-import type { Prgl } from "../../../../App";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { Label } from "@components/Label";
-import { FooterButtons } from "@components/Popup/FooterButtons";
 import type { FooterButton } from "@components/Popup/FooterButtons";
+import { FooterButtons } from "@components/Popup/FooterButtons";
 import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
+import { mdiChevronDown, mdiPlus } from "@mdi/js";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import { _PG_date, pickKeys } from "prostgles-types";
+import React from "react";
+import type { Prgl } from "../../../../App";
 import { isEmpty } from "../../../../utils";
 import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
 } from "../../../Dashboard/dashboardUtils";
 import RTComp from "../../../RTComp";
+import type { ColumnConfigWInfo } from "../../W_Table";
 import { getTableSelect } from "../../tableUtils/getTableSelect";
 import { updateWCols } from "../../tableUtils/tableUtils";
 import type { ColumnConfig } from "../ColumnMenu";
-import { getColumnListItem } from "../ColumnsMenu";
-import type { FuncDef } from "../FunctionSelector";
-import { CountAllFunc, FunctionSelector } from "../FunctionSelector";
+import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
+import {
+  CountAllFunc,
+  getColumnsAcceptedByFunction,
+  type FuncDef,
+} from "../FunctionSelector/functions";
 import { NEW_COL_POSITIONS } from "../LinkedColumn/LinkedColumnFooter";
 import {
   getNestedColumnTable,
   type NestedColumnOpts,
 } from "../getNestedColumnTable";
-import type { ColumnConfigWInfo } from "../../W_Table";
+import { getColumnListItem } from "../ColumnSelect/getColumnListItem";
 
 const ColTypes = ["Function", "Aggregate Function"] as const;
 
@@ -139,7 +142,7 @@ export class AddComputedColMenu extends RTComp<
     const { columns } = table;
 
     const allowedColumnsForFunction =
-      (funcDef && getFuncDefColumns(funcDef, columns)) ?? columns;
+      (funcDef && getColumnsAcceptedByFunction(funcDef, columns)) ?? columns;
 
     const isAggNocol =
       funcDef && !funcDef.tsDataTypeCol && !funcDef.udtDataTypeCol;
@@ -152,8 +155,9 @@ export class AddComputedColMenu extends RTComp<
     const content = (
       <>
         <FlexCol
-          className="AddComputedColMenu gap-2 f-1 min-h-fit ai-start"
+          className="AddComputedColMenu gap-2 f-1 min-h-0 ai-start"
           data-command="AddComputedColMenu"
+          style={{ maxHeight: "600px" }}
         >
           {!column && !hasJoinCols && (
             <FlexRowWrap>
@@ -383,6 +387,15 @@ export class AddComputedColMenu extends RTComp<
               alert("Something went wrong. No function definition found");
               return;
             }
+            const columnInfo =
+              !column ? undefined : columns.find((c) => c.name === column);
+            const { outType } = funcDef;
+            const outInfo = outType === "sameAsInput" ? columnInfo : outType;
+            if (!outInfo) {
+              throw new Error(
+                "Cannot determine output data type for the computed column",
+              );
+            }
             const newComputedCol: ColumnConfig = {
               name: name,
               show: true,
@@ -390,7 +403,7 @@ export class AddComputedColMenu extends RTComp<
               computedConfig: {
                 funcDef,
                 column,
-                ...funcDef.outType,
+                ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
                 args: isEmpty(args) ? undefined : args,
               },
             };
@@ -437,7 +450,7 @@ export class AddComputedColMenu extends RTComp<
         positioning="top-center"
         persistInitialSize={true}
         clickCatchStyle={{ opacity: 1 }}
-        contentClassName="gap-2 p-2 "
+        contentClassName="gap-2 p-1"
         rootChildClassname="f-1"
         footerButtons={footerButtons}
         onClose={onClose}
@@ -447,26 +460,6 @@ export class AddComputedColMenu extends RTComp<
     );
   }
 }
-
-export const getFuncDefColumns = (
-  funcDef: FuncDef,
-  columns: ValidatedColumnInfo[],
-) => {
-  if (funcDef.tsDataTypeCol || funcDef.udtDataTypeCol) {
-    return columns.filter((c) => {
-      if (funcDef.tsDataTypeCol === "any" || funcDef.udtDataTypeCol === "any") {
-        return true;
-      } else if (funcDef.tsDataTypeCol) {
-        return funcDef.tsDataTypeCol.includes(c.tsDataType);
-      } else if (funcDef.udtDataTypeCol) {
-        return funcDef.udtDataTypeCol.includes(c.udt_name);
-      }
-
-      return false;
-    });
-  }
-  return undefined;
-};
 
 /*
 

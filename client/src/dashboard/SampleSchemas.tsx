@@ -1,5 +1,5 @@
 import React from "react";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { DBSMethods } from "./Dashboard/DBS";
 import { FlexCol } from "@components/Flex";
 import { W_SQLEditor } from "./SQLEditor/W_SQLEditor";

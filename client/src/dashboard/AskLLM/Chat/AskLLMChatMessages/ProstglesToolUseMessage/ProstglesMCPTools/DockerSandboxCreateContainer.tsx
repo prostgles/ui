@@ -1,18 +1,27 @@
 import { findArr } from "@common/llmUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { sliceText } from "@common/utils";
+import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
+import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
 import { MenuList } from "@components/MenuList";
 import {
   MONACO_READONLY_DEFAULT_OPTIONS,
   MonacoEditor,
 } from "@components/MonacoEditor/MonacoEditor";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import {
   mdiBash,
+  mdiChevronDown,
+  mdiChevronUp,
+  mdiChip,
   mdiCodeJson,
   mdiDocker,
-  mdiFullscreen,
+  mdiLanConnect,
   mdiLanguageGo,
   mdiLanguageHtml5,
   mdiLanguageJavascript,
@@ -20,8 +29,10 @@ import {
   mdiLanguagePython,
   mdiLanguageRuby,
   mdiLanguageTypescript,
+  mdiMemory,
   mdiReload,
   mdiText,
+  mdiTimerLockOutline,
 } from "@mdi/js";
 import {
   getJSONBObjectSchemaValidationError,
@@ -29,15 +40,10 @@ import {
   type JSONB,
 } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
-import { useAlert } from "@components/AlertProvider";
-import ErrorComponent from "@components/ErrorComponent";
 import type { ToolResultMessage } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
-import Chip from "@components/Chip";
-import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { PopupSection } from "../../ToolUseChatMessage/PopupSection";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["schema"]["type"]
@@ -66,6 +72,7 @@ export const DockerSandboxCreateContainer = ({
     },
   };
   const { resultObj } = useToolUseResultData(toolUseResult);
+  const [showLogs, setShowLogs] = useState(Boolean(resultObj?.log.length));
   const [activeFilePath, setActiveFilePath] = useState(
     Object.keys(data.files)[0],
   );
@@ -75,7 +82,7 @@ export const DockerSandboxCreateContainer = ({
     dbsMethods: { callMCPServerTool },
     dbs,
   } = usePrgl();
-  // <FlexRow className="bg-colord-1 p-p5 ws-nowrap min-w-0 max-w-600 w-full max-w-full"></FlexRow>
+
   return (
     <PopupSection
       titleItems={
@@ -87,16 +94,29 @@ export const DockerSandboxCreateContainer = ({
             {sliceText(resultObj?.command, 100) ??
               "Docker Sandbox Create Container"}
           </div>
-          <ScrollFade className="flex-row gap-p5 oy-auto min-w-0 f-1 no-scroll-bar">
-            <Chip label="Duration">
-              {getMillisecondsAsSingleInterval(
-                (resultObj?.buildDuration ?? 0) + (resultObj?.runDuration ?? 0),
-              )}
-            </Chip>
-            <Chip label="Timeout">
-              {getMillisecondsAsSingleInterval(data.timeout ?? 30_000)}
-            </Chip>
-            <Chip label="Network mode">{data.networkMode ?? "none"}</Chip>
+          <ScrollFade className="flex-row gap-1 oy-auto min-w-0 f-1 no-scroll-bar">
+            {data.cpus && (
+              <FlexRow title={"CPUs"} className="gap-p25 pointer">
+                <Icon path={mdiChip} />
+                <div>{data.cpus}</div>
+              </FlexRow>
+            )}
+            {data.memory && (
+              <FlexRow title={"Memory"} className="gap-p25 pointer">
+                <Icon path={mdiMemory} />
+                <div>{data.memory}</div>
+              </FlexRow>
+            )}
+            <FlexRow title={"Timeout"} className="gap-p25 pointer">
+              <Icon path={mdiTimerLockOutline} />
+              <div>
+                {getMillisecondsAsSingleInterval(data.timeout ?? 30_000)}
+              </div>
+            </FlexRow>
+            <FlexRow title={"Network mode"} className="gap-p25 pointer">
+              <Icon path={mdiLanConnect} />
+              <div>{data.networkMode ?? "none"}</div>
+            </FlexRow>
           </ScrollFade>
           <CopyToClipboardBtn
             size="small"
@@ -183,17 +203,36 @@ export const DockerSandboxCreateContainer = ({
             )}
           </FlexRow>
         </FlexRow>
-        <div className="bt b-color p-p5 bg-color-2 w-full ta-start">Logs</div>
-        <MonacoEditor
-          key={"logs"}
-          language="text"
-          className="f-p5"
-          data-command="DockerSandboxCreateContainer.Logs"
-          style={{ width: "100%", minHeight: 100 }}
-          value={resultObj?.log.map((l) => l.text).join("") ?? ""}
-          loadedSuggestions={undefined}
-          options={MONACO_READONLY_DEFAULT_OPTIONS}
-        />
+        <FlexRow className="bt b-color bg-color-2 w-full ta-start">
+          <Btn
+            size="small"
+            title="Toggle"
+            iconPosition="right"
+            iconPath={showLogs ? mdiChevronDown : mdiChevronUp}
+            onClick={() => setShowLogs(!showLogs)}
+          >
+            Logs
+          </Btn>
+          {resultObj && (
+            <Chip label="Duration">
+              {getMillisecondsAsSingleInterval(
+                resultObj.buildDuration + resultObj.runDuration,
+              )}
+            </Chip>
+          )}
+        </FlexRow>
+        {showLogs && (
+          <MonacoEditor
+            key={"logs"}
+            language="text"
+            className="f-p5"
+            data-command="DockerSandboxCreateContainer.Logs"
+            style={{ width: "100%", minHeight: 100 }}
+            value={resultObj?.log.map((l) => l.text).join("") ?? ""}
+            loadedSuggestions={undefined}
+            options={MONACO_READONLY_DEFAULT_OPTIONS}
+          />
+        )}
       </FlexCol>
     </PopupSection>
   );

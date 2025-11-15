@@ -1,9 +1,8 @@
+import Btn from "@components/Btn";
+import { Select } from "@components/Select/Select";
 import { mdiSortReverseVariant, mdiSortVariant } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import type { BtnProps } from "@components/Btn";
-import Btn from "@components/Btn";
-import Select from "@components/Select/Select";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 
 type SortByControlProps = Pick<
@@ -14,19 +13,15 @@ type SortByControlProps = Pick<
   columns: ValidatedColumnInfo[];
   value?: ColumnSort;
   fields?: string[];
-  buttonClassName?: string;
-  btnProps?: BtnProps<void>;
 };
-function SortByControl({
+export const SortByControl = ({
   onChange,
   columns,
   value,
   fields,
   style = {},
   className = "",
-  buttonClassName = "",
-  btnProps,
-}: SortByControlProps) {
+}: SortByControlProps) => {
   const setSort = (orderByKey: string | undefined, orderAsc = true) => {
     if (!orderByKey) {
       onChange(undefined);
@@ -40,14 +35,15 @@ function SortByControl({
   };
   if (fields?.length) {
     const bad = fields.filter((f) => columns.every((c) => c.name !== f));
-    if (bad.length)
+    if (bad.length) {
       console.warn("Bad fields provided for SortByControl: ", bad);
+    }
   }
   const orderableFields = columns.filter(
     (c) => c.filter && (!fields || fields.includes(c.name)),
   );
-  const orderAsc = !!value?.asc;
-  const orderByKey = value?.key as string;
+  const orderAsc = value?.asc ?? undefined;
+  const orderByKey = value?.key;
 
   return (
     <div
@@ -58,11 +54,7 @@ function SortByControl({
     >
       <Select
         id="orderbycomp"
-        buttonClassName={"shadow " + buttonClassName}
-        btnProps={btnProps}
-        // style={{
-        //   background: "white"
-        // }}
+        // btnProps={{ className: "shadow bg-color-0" }}
         emptyLabel="Sort by..."
         asRow={true}
         value={value?.key}
@@ -86,6 +78,4 @@ function SortByControl({
       )}
     </div>
   );
-}
-
-export default SortByControl;
+};

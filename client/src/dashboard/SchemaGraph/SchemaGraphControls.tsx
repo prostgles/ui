@@ -3,7 +3,7 @@ import { getEntries } from "@common/utils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { FlexRow, FlexRowWrap } from "@components/Flex";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { getCssVariableValue } from "../Charts/onRenderTimechart";
 import {
   type ColumnColorMode,

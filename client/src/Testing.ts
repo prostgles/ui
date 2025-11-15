@@ -478,6 +478,9 @@ export const COMMANDS = {
   "FileColumnConfigEditor.maxFileSizeMB": "",
   "FileColumnConfigEditor.contentMode": "",
   CreateFileColumn: "",
+  ColumnQuickStats: "",
+  "ColumnQuickStats.addFilter": "",
+  "LLMChatOptions.Prompt.Preview": "",
 } as const satisfies Record<
   string,
   | string

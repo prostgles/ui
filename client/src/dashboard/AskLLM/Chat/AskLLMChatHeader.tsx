@@ -3,7 +3,7 @@ import React from "react";
 import type { Prgl } from "../../../App";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import {

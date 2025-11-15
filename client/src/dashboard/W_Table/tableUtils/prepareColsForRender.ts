@@ -40,8 +40,8 @@ export const prepareColsForRender = (
           c.nested?.columns.filter(
             (nc) =>
               nc.show &&
-              nc.computedConfig?.funcDef.outType &&
-              isNumericColumn(nc.computedConfig.funcDef.outType),
+              nc.computedConfig &&
+              isNumericColumn(nc.computedConfig),
           ).length === 1
         ) ?
           " jc-end  "

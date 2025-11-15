@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
 import type { W_TableInfo } from "./getTableMeta";

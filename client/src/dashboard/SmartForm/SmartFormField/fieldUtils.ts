@@ -1,5 +1,4 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
+import type { ValidatedColumnInfo } from "prostgles-types";
 import {
   _PG_bool,
   _PG_date,
@@ -12,90 +11,8 @@ import {
   isObject,
   TS_PG_Types,
 } from "prostgles-types";
-import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
-import { getComputedColumnSelect } from "../../W_Table/tableUtils/getTableSelect";
-import type { DBS } from "../../Dashboard/DBS";
-
-export const OPTIONS_LIMIT = 20;
-export const getSuggestions = async (args: {
-  table: string;
-  db: DBHandlerClient;
-  column: FilterColumn;
-  term?: string;
-  groupBy?: boolean;
-  filter?: AnyObject;
-}): Promise<(string | null)[]> => {
-  //  { raw: any; text: string }
-
-  const { db, table, term: _term, column: col, groupBy = true, filter } = args;
-  const tableHandler = db[table];
-  if (!tableHandler?.find) {
-    console.error("Invalid column provided");
-    return [];
-  }
-  const term = (_term || "").trimStart();
-
-  try {
-    const finalFilter = {
-      $and: [
-        filter,
-        !term ? {} : { [col.name]: { $ilike: `%${term}%` } },
-      ].filter((v) => v),
-    };
-    const res = (await tableHandler.find(finalFilter, {
-      select: {
-        [col.name]:
-          col.type === "computed" ?
-            getComputedColumnSelect(col.computedConfig)
-          : 1,
-        // [`${col}_sort`]: {
-        //     $position_lower: [
-        //         term || '', col
-        //     ]
-        // },
-      },
-      groupBy,
-      returnType: "values",
-      limit: OPTIONS_LIMIT,
-      // orderBy: !term?
-      //     [{ key: col, asc: true, nulls: "first" } ]:
-
-      //     [
-
-      //         { key: `${col}_sort`, asc: true, nulls: "first" },
-      //         { key: col, asc: true, nulls: "first" }
-      //     ],
-    })) as any;
-
-    /**
-     * Prepend empty/null value options to the top if they exist
-     */
-    if (col.type === "column") {
-      if (
-        !res.includes("") &&
-        !colIs(col, "_PG_date") &&
-        col.tsDataType === "string" &&
-        col.udt_name !== "uuid"
-      ) {
-        const empty = await tableHandler.findOne?.(
-          { [col.name]: "" },
-          { select: { [col.name]: "$trim" } },
-        );
-        if (empty) res.unshift("");
-      }
-      if (!res.includes(null)) {
-        const c = (await tableHandler.count?.({ [col.name]: null })) ?? "0";
-        if (+c) res.unshift(null);
-      }
-    }
-
-    return res;
-  } catch (e) {
-    console.error(e);
-    return [];
-  }
-};
+import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 
 /**
  * Used in transforming a postgres/db value to a valid html <input /> OR <CodeEditor /> value

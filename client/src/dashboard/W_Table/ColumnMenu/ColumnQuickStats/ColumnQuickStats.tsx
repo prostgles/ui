@@ -2,14 +2,14 @@ import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
-import { mdiSort, mdiSortAscending, mdiSortDescending } from "@mdi/js";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { mdiFilter, mdiSortAscending, mdiSortDescending } from "@mdi/js";
 import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { type ValidatedColumnInfo } from "prostgles-types";
 import React, { useState } from "react";
 import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
-import { useColumnStats } from "./useColumnStats";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { useColumnStats } from "./useColumnQuickStats";
 
 export type ColumnQuickStatsProps = {
   column: ValidatedColumnInfo;
@@ -21,7 +21,7 @@ export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {
   const stats = useColumnStats(props, sortAscending);
 
   if (!stats) return <Loading />;
-  if (stats.type === "error") return <ErrorComponent error={stats.error} />;
+  if (stats.type === "error") return <ErrorComponent error={stats} />;
 
   const maxCount =
     stats.distribution ?
@@ -31,6 +31,7 @@ export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {
   return (
     <FlexCol
       className="ColumnQuickStats gap-1 ta-start"
+      data-command="ColumnQuickStats"
       style={{ minWidth: "250px" }}
     >
       <StatRow label="Distinct" value={stats.distinctCount.toLocaleString()} />
@@ -47,16 +48,17 @@ export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {
           className="gap-p5 mt-p5"
           style={{
             borderTop: "1px solid var(--border-color, #e0e0e0)",
-            paddingTop: "0.75rem",
           }}
         >
           <FlexRow
-            className="ta-start py-1"
+            className="ta-start"
             style={{
               opacity: 0.7,
             }}
           >
-            <div>Distribution</div>
+            <div>
+              {stats.canSortDistribution ? "Top Values" : "Distribution"}
+            </div>
             {stats.canSortDistribution && (
               <Btn
                 className="ml-auto"
@@ -71,6 +73,7 @@ export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {
                 key={d.label}
                 label={d.label}
                 count={d.count}
+                onClickAddFilter={d.onClick}
                 max={maxCount}
               />
             ))}
@@ -98,17 +101,35 @@ const DistributionBar = ({
   label,
   count,
   max,
+  onClickAddFilter,
 }: {
   label: string;
   count: number;
   max: number;
+  onClickAddFilter?: () => void;
 }) => {
   const percentage = max > 0 ? (count / max) * 100 : 0;
   return (
-    <div className="flex-col gap-p5">
+    <div className="flex-col gap-p5 trigger-hover">
       <div className="flex-row gap-p5 ai-center jc-between">
-        <strong>{label}</strong>
-        <span style={{ opacity: 0.6 }}>{count.toLocaleString()}</span>
+        <FlexRow>
+          <strong>{label}</strong>
+          {onClickAddFilter && (
+            <Btn
+              iconPath={mdiFilter}
+              title="Add filter"
+              color="action"
+              size="micro"
+              data-key={label}
+              data-command="ColumnQuickStats.addFilter"
+              className="show-on-trigger-hover"
+              onClick={onClickAddFilter}
+            />
+          )}
+        </FlexRow>
+        <span style={{ opacity: 0.6 }} title="Count">
+          {count.toLocaleString()}
+        </span>
       </div>
       <div
         style={{

@@ -5,7 +5,7 @@ import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import Popup from "@components/Popup/Popup";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { DBS, DBSMethods } from "../../../dashboard/Dashboard/DBS";
 import { SampleSchemas } from "../../../dashboard/SampleSchemas";
 import { t } from "../../../i18n/i18nUtils";

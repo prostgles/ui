@@ -5,6 +5,7 @@ import { classOverride, FlexRow } from "../Flex";
 import { tout } from "../../utils";
 import { SpinnerV2 } from "./SpinnerV2";
 import { SpinnerV4 } from "./SpinnerV4";
+import { SpinnerV3 } from "./SpinnerV3";
 export const pageReload = async (reason: string) => {
   console.log("pageReload due to: ", reason);
   await tout(200);
@@ -213,6 +214,7 @@ export default class Loading extends RTComp<P, S> {
 */
 
 const Spinner = ({ size }: { size: string; colorAnimation: boolean }) => {
+  // return <SpinnerV3 size={size} />;
   return <SpinnerV4 size={size} />;
   // return <SpinnerV2 size={size} />;
 

@@ -1,6 +1,6 @@
 import type { Primitive } from "d3";
 import { type AnyObject } from "prostgles-types";
-import React, { useEffect } from "react";
+import React from "react";
 import type { TestSelectors } from "../../Testing";
 import "../List.css";
 import type { OptionKey } from "../Select/Select";

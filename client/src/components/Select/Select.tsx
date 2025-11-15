@@ -19,7 +19,7 @@ import "./Select.css";
 export type OptionKey = string | number | boolean | Date | null | undefined;
 export type FullOption<O extends OptionKey = string> = Pick<
   SearchListItem,
-  "ranking"
+  "ranking" | "parentLabels"
 > & {
   key: O;
   label?: string | React.ReactElement;
@@ -80,14 +80,13 @@ export type SelectProps<
   showSelectedSublabel?: boolean;
   showIconOnly?: boolean;
   title?: string;
-  variant?: "search-list-only" | "div" | "chips" | "chips-lg";
+  placeholder?: string;
+  variant?: "search-list-only" | "div" | "chips-lg";
   multiSelect?: Multi;
   labelAsValue?: boolean;
   emptyLabel?: string;
   asRow?: boolean;
   iconPath?: string;
-  buttonClassName?: string;
-  // buttonStyle?: React.CSSProperties;
   size?: "small";
   btnProps?: BtnProps<void>;
   /**
@@ -124,7 +123,7 @@ export type SelectState = {
   fixedBtnWidth?: number;
 };
 
-export default class Select<
+export class Select<
   O extends OptionKey,
   Multi extends boolean = false,
   Optional extends boolean = false,
@@ -160,7 +159,7 @@ export default class Select<
       disabledInfo,
       optional = false,
       showSelectedSublabel = false,
-      buttonClassName = "",
+      placeholder = "Search...",
     } = this.props;
 
     const value = this.state.multiSelection ?? _value;
@@ -253,303 +252,248 @@ export default class Select<
     };
 
     let select: React.ReactNode = null;
-    if (
-      variant === "div" ||
-      variant === "search-list-only" ||
-      onSearch ||
-      multiSelect
-    ) {
-      const { popupAnchor, defaultSearch, fixedBtnWidth } = this.state;
+    const { popupAnchor, defaultSearch, fixedBtnWidth } = this.state;
 
-      const closeDropDown = (e: E) => {
-        this.props.onSearch?.("");
-        if (this.state.multiSelection && _onChange) {
-          _onChange(this.state.multiSelection as any, e, undefined);
-        }
-        this.setState({
-          popupAnchor: null,
-          multiSelection: undefined,
-          fixedBtnWidth: undefined,
-          defaultSearch: "",
-        });
-        /** Maintain the same form element focused for convenience */
-        setTimeout(() => {
-          if (document.activeElement !== document.body) {
-            this.btnRef?.focus();
-          }
-        }, 2);
-      };
-
-      let btnLabel: string | undefined = "Select...";
-      if (Array.isArray(value)) {
-        if (value.length) {
-          selectedFullOptions = fullOptions.filter((o) =>
-            value.includes(o.key),
-          );
-          const labels = selectedFullOptions.map(
-            (o) => o.label || (o.key as OptionKey),
-          );
-          const firstValues = labels
-            .map((v) =>
-              sliceText((v === null ? "NULL" : v)?.toString(), sliceMax),
-            )
-            .slice(0, showTop)
-            .join(", ");
-          btnLabel =
-            firstValues +
-            (labels.length > showTop ? ` + ${labels.length - showTop}` : "");
-        }
-      } else {
-        selectedFullOptions = fullOptions.filter((o) => o.key === value);
-        btnLabel = fullOptions.find((o) => o.key === value)?.label ?? value;
+    const closeDropDown = (e: E) => {
+      this.props.onSearch?.("");
+      if (this.state.multiSelection && _onChange) {
+        _onChange(this.state.multiSelection as any, e, undefined);
       }
+      this.setState({
+        popupAnchor: null,
+        multiSelection: undefined,
+        fixedBtnWidth: undefined,
+        defaultSearch: "",
+      });
+      /** Maintain the same form element focused for convenience */
+      setTimeout(() => {
+        if (document.activeElement !== document.body) {
+          this.btnRef?.focus();
+        }
+      }, 2);
+    };
 
-      const chipMode = variant.startsWith("chips");
-      const trigger = (
-        <SelectTriggerButton
-          {...this.props}
-          setRef={(r) => {
-            this.btnRef = r;
-          }}
-          selectedFullOptions={selectedFullOptions}
-          onChange={onChange}
-          optional={optional}
-          selectClass={selectClass}
-          chipMode={chipMode}
-          fixedBtnWidth={fixedBtnWidth}
-          fullOptions={fullOptions}
-          selectStyle={selectStyle}
-          multiSelection={this.state.multiSelection}
-          popupAnchor={popupAnchor}
-          onPress={(btn, defaultSearch) => {
-            const maxBtnWidth = btn.getBoundingClientRect().width;
-            this.props.onOpen?.(btn);
-            this.setState({
-              popupAnchor: btn,
-              defaultSearch,
-              fixedBtnWidth: maxBtnWidth,
-            });
-          }}
-          btnLabel={btnLabel}
-        />
-      );
-      let chips: React.ReactNode = null;
-      if (chipMode) {
-        const chipValues =
-          multiSelect && popupAnchor ?
-            fullOptions.filter((v) => {
-              return this.props.value.includes(v.key);
-            })
-          : selectedFullOptions;
-        chips = (
-          <div
-            className={
-              "Select_Chips flex-row-wrap gap-p5 ai-center " + className
-            }
-            style={style}
-          >
-            {chipValues.map(({ key, label }) => (
-              <Chip
-                key={key}
-                color="blue"
-                style={
-                  variant === "chips-lg" ?
-                    {
-                      fontSize: "18px",
-                    }
-                  : undefined
-                }
-                onDelete={(e) => {
-                  toggleOne(key, e);
-                }}
-              >
-                {label ?? key}
-              </Chip>
-            ))}
-            {trigger}
-          </div>
+    let btnLabel: string | undefined = "Select...";
+    if (Array.isArray(value)) {
+      if (value.length) {
+        selectedFullOptions = fullOptions.filter((o) => value.includes(o.key));
+        const labels = selectedFullOptions.map(
+          (o) => o.label || (o.key as OptionKey),
         );
+        const firstValues = labels
+          .map((v) =>
+            sliceText((v === null ? "NULL" : v)?.toString(), sliceMax),
+          )
+          .slice(0, showTop)
+          .join(", ");
+        btnLabel =
+          firstValues +
+          (labels.length > showTop ? ` + ${labels.length - showTop}` : "");
       }
-
-      const searchList = (
-        <SearchList
-          id={id}
-          style={{ maxHeight: "500px" }}
-          placeholder="Search..."
-          defaultSearch={defaultSearch}
-          noSearchLimit={noSearchLimit}
-          data-command={this.props["data-command"]}
-          data-key={this.props["data-key"]}
-          autoFocus={true}
-          // noSearch={!onSearch && options.length < 15}
-          endOfResultsContent={endOfResultsContent}
-          onSearch={onSearch}
-          onMultiToggle={
-            multiSelect ?
-              (items, e) => {
-                onChange(
-                  items.filter((d) => d.checked).map((d) => d.key) as any,
-                  e,
-                  undefined,
-                );
-              }
-            : undefined
-          }
-          onChange={multiSelect ? undefined : (onChange as any)}
-          limit={limit}
-          items={fullOptions.map(
-            ({
-              key,
-              label,
-              subLabel,
-              checked,
-              disabledInfo,
-              ranking,
-              iconPath,
-              leftContent,
-              rightContent,
-              ...selectorProps
-            }) => {
-              return {
-                key: key as OptionKey,
-                label,
-                subLabel,
-                ranking,
-                contentLeft:
-                  leftContent ? leftContent
-                  : iconPath ?
-                    <Icon size={1} path={iconPath} className="text-1 mr-p5" />
-                  : undefined,
-                contentRight: rightContent,
-                styles: {
-                  subLabel: {
-                    whiteSpace: "pre-wrap",
-                  },
-                },
-                onPress: (e) => {
-                  toggleOne(key, e);
-                  if (!multiSelect) {
-                    closeDropDown(e);
-                  }
-                },
-                selected: key === value,
-                checked,
-                disabledInfo,
-                ...selectorProps,
-              };
-            },
-          )}
-        />
-      );
-
-      if (variant === "search-list-only") {
-        return searchList;
-      }
-
-      select = (
-        <>
-          {chips || trigger}
-          {popupAnchor && (
-            <Popup
-              rootStyle={{
-                padding: 0,
-                maxWidth: "min(99vw, 600px)",
-                boxSizing: "border-box",
-              }}
-              anchorEl={popupAnchor}
-              positioning="beneath-left-minfill"
-              clickCatchStyle={{ opacity: 0 }}
-              onClose={closeDropDown}
-              contentClassName="rounded p-0"
-              persistInitialSize={true}
-            >
-              {searchList}
-            </Popup>
-          )}
-        </>
-      );
     } else {
-      select = (
-        <div
-          className={
-            "select-wrapper relative rounded-md " +
-            (label ? " f-1 " : className)
-          }
-        >
-          <select
-            id={id}
-            title={title}
-            className={selectClass}
-            style={{
-              appearance: "none",
-              paddingRight: "2em",
-              background: "transparent",
-              ...selectStyle,
-            }}
-            value={value}
-            required={required}
-            onChange={
-              !_onChange ? undefined : (
-                (e) => {
-                  onChange(e.target.value as any, e, undefined);
-                }
-              )
-            }
-          >
-            {fullOptions.map(({ key, label }, i) => (
-              <option key={i} value={key as string}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <Icon
-            path={mdiMenuDown}
-            size={1}
-            className="text-2"
-            style={{
-              pointerEvents: "none",
-              touchAction: "none",
-            }}
-          />
-        </div>
-      );
+      selectedFullOptions = fullOptions.filter((o) => o.key === value);
+      btnLabel = fullOptions.find((o) => o.key === value)?.label ?? value;
     }
 
-    const [selectedFullOption] = selectedFullOptions;
-    if (!label) return select;
-    else {
-      return (
+    const chipMode = variant === "chips-lg";
+    const trigger = (
+      <SelectTriggerButton
+        {...this.props}
+        setRef={(r) => {
+          this.btnRef = r;
+        }}
+        selectedFullOptions={selectedFullOptions}
+        onChange={onChange}
+        optional={optional}
+        selectClass={selectClass}
+        chipMode={chipMode}
+        fixedBtnWidth={fixedBtnWidth}
+        fullOptions={fullOptions}
+        selectStyle={selectStyle}
+        multiSelection={this.state.multiSelection}
+        popupAnchor={popupAnchor}
+        onPress={(btn, defaultSearch) => {
+          const maxBtnWidth = btn.getBoundingClientRect().width;
+          this.props.onOpen?.(btn);
+          this.setState({
+            popupAnchor: btn,
+            defaultSearch,
+            fixedBtnWidth: maxBtnWidth,
+          });
+        }}
+        btnLabel={btnLabel}
+      />
+    );
+    let chips: React.ReactNode = null;
+    if (chipMode) {
+      const chipValues =
+        multiSelect && popupAnchor ?
+          fullOptions.filter((v) => {
+            return this.props.value.includes(v.key);
+          })
+        : selectedFullOptions;
+      chips = (
         <div
-          className={
-            "Select w-fit " +
-            (asRow ? " flex-row ai-center " : " flex-col ") +
-            className
-          }
+          className={"Select_Chips flex-row-wrap gap-p5 ai-center " + className}
           style={style}
         >
-          {typeof label === "string" ?
-            <label
-              htmlFor={id}
-              className={
-                "noselect f-0 text-1 ta-left " + (asRow ? " mr-p5 " : " mb-p5 ")
-              }
+          {chipValues.map(({ key, label }) => (
+            <Chip
+              key={key}
+              color="blue"
+              style={{
+                fontSize: "18px",
+              }}
+              onDelete={(e) => {
+                toggleOne(key, e);
+              }}
             >
-              {label}
-            </label>
-          : <Label {...label} variant="normal" className={"mb-p5"} />}
-          {select}
-          {showSelectedSublabel &&
-            selectedFullOption &&
-            !!selectedFullOption.subLabel?.length && (
-              <FlexRow className="w-fit p-p5 text-1p5 gap-p5 font-14">
-                {!!selectedFullOption.iconPath && (
-                  <Icon path={selectedFullOption.iconPath} size={1} />
-                )}
-                {selectedFullOption.subLabel}
-              </FlexRow>
-            )}
+              {label ?? key}
+            </Chip>
+          ))}
+          {trigger}
         </div>
       );
     }
+
+    const searchList = (
+      <SearchList
+        id={id}
+        style={{ maxHeight: "500px" }}
+        searchStyle={
+          variant === "search-list-only" ?
+            {}
+          : { margin: "0.5em 0.5em 0 0.5em" }
+        }
+        placeholder={placeholder}
+        defaultSearch={defaultSearch}
+        noSearchLimit={noSearchLimit}
+        data-command={this.props["data-command"]}
+        data-key={this.props["data-key"]}
+        autoFocus={true}
+        // noSearch={!onSearch && options.length < 15}
+        endOfResultsContent={endOfResultsContent}
+        onSearch={onSearch}
+        onMultiToggle={
+          multiSelect ?
+            (items, e) => {
+              onChange(
+                items.filter((d) => d.checked).map((d) => d.key) as any,
+                e,
+                undefined,
+              );
+            }
+          : undefined
+        }
+        onChange={multiSelect ? undefined : (onChange as any)}
+        limit={limit}
+        items={fullOptions.map(
+          ({
+            key,
+            label,
+            subLabel,
+            checked,
+            disabledInfo,
+            ranking,
+            iconPath,
+            leftContent,
+            rightContent,
+            ...selectorProps
+          }) => {
+            return {
+              key: key as OptionKey,
+              label,
+              subLabel,
+              ranking,
+              contentLeft:
+                leftContent ? leftContent
+                : iconPath ? <Icon path={iconPath} className="text-1 mr-p5" />
+                : undefined,
+              contentRight: rightContent,
+              styles: {
+                subLabel: {
+                  whiteSpace: "pre-wrap",
+                },
+              },
+              onPress: (e) => {
+                toggleOne(key, e);
+                if (!multiSelect) {
+                  closeDropDown(e);
+                }
+              },
+              selected: key === value,
+              checked,
+              disabledInfo,
+              ...selectorProps,
+            };
+          },
+        )}
+      />
+    );
+
+    if (variant === "search-list-only") {
+      return searchList;
+    }
+
+    select = (
+      <>
+        {chips || trigger}
+        {popupAnchor && (
+          <Popup
+            rootStyle={{
+              padding: 0,
+              maxWidth: "min(99vw, 600px)",
+              boxSizing: "border-box",
+            }}
+            anchorEl={popupAnchor}
+            positioning="beneath-left-minfill"
+            clickCatchStyle={{ opacity: 0 }}
+            onClose={closeDropDown}
+            contentClassName="rounded p-0"
+            persistInitialSize={true}
+          >
+            {searchList}
+          </Popup>
+        )}
+      </>
+    );
+
+    const [selectedFullOption] = selectedFullOptions;
+    if (!label) {
+      return select;
+    }
+
+    return (
+      <div
+        className={
+          "Select w-fit " +
+          (asRow ? " flex-row ai-center " : " flex-col ") +
+          className
+        }
+        style={style}
+      >
+        {typeof label === "string" ?
+          <label
+            htmlFor={id}
+            className={
+              "noselect f-0 text-1 ta-left " + (asRow ? " mr-p5 " : " mb-p5 ")
+            }
+          >
+            {label}
+          </label>
+        : <Label {...label} variant="normal" className={"mb-p5"} />}
+        {select}
+        {showSelectedSublabel &&
+          selectedFullOption &&
+          !!selectedFullOption.subLabel?.length && (
+            <FlexRow className="w-fit p-p5 text-1p5 gap-p5 font-14">
+              {!!selectedFullOption.iconPath && (
+                <Icon path={selectedFullOption.iconPath} size={1} />
+              )}
+              {selectedFullOption.subLabel}
+            </FlexRow>
+          )}
+      </div>
+    );
   }
 }

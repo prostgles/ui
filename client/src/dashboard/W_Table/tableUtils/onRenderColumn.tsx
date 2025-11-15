@@ -110,7 +110,7 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
     : /** c.tsDataType and c.udt_name SHOULD NOT BE MISSING AT THIS POINT! */
       ({ value }) => (
         <RenderValue
-          column={c.computedConfig?.funcDef.outType ?? c}
+          column={c.computedConfig ?? c}
           value={value}
           showTitle={true}
           maxLength={maxCellChars}

@@ -1,4 +1,10 @@
-import React, { useImperativeHandle } from "react";
+import { useScrollFade } from "@components/ScrollFade/ScrollFade";
+import React, {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useState,
+} from "react";
 import { ClickCatchOverlay } from "../ClickCatchOverlay";
 import { DraggableLI } from "../DraggableLI";
 import { classOverride } from "../Flex";
@@ -9,7 +15,6 @@ import type {
   SearchListProps,
 } from "./SearchList";
 import { SearchListRowContent } from "./SearchListRowContent";
-import { useScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export type SearchListItemsProps = Pick<
   SearchListProps,
@@ -30,8 +35,8 @@ export type SearchListItemsProps = Pick<
   id: string;
   showHover: boolean;
 };
-export const SearchListItems = React.forwardRef<
-  HTMLUListElement,
+export const SearchListItems = forwardRef<
+  HTMLUListElement | null,
   SearchListItemsProps
 >((props: SearchListItemsProps, ref) => {
   const {
@@ -51,12 +56,13 @@ export const SearchListItems = React.forwardRef<
   const notAllItemsShown =
     renderedItems.length && renderedItems.length < items.length && !searchTerm;
 
-  const internalRef = React.useRef<HTMLUListElement>(null);
+  const [node, setNode] = useState<HTMLUListElement | null>(null);
+  const handleRef = useCallback((el: HTMLUListElement | null) => {
+    setNode(el);
+  }, []);
+  useImperativeHandle(ref, () => node as HTMLUListElement, [node]);
+  useScrollFade(node);
 
-  useImperativeHandle(ref, () => internalRef.current!);
-  useScrollFade({
-    ref: internalRef,
-  });
   return (
     <div
       className={
@@ -73,7 +79,7 @@ export const SearchListItems = React.forwardRef<
           (isSearch ? "  shadow bg-color-0 " : "")
         }
         role="listbox"
-        ref={internalRef}
+        ref={handleRef}
         data-command={"SearchList.List"}
         style={{
           padding: 0,

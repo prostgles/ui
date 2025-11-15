@@ -134,6 +134,7 @@ export type UIDocElement =
     }>
   | UIDocBase<{
       type: "popup";
+      triggerMode?: "click" | "contextmenu";
       children: UIDocElement[];
     }>
   | UIDocBase<{

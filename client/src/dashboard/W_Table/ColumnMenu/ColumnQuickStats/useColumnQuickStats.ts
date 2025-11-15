@@ -46,26 +46,26 @@ export const useColumnStats = (
     const minMax = await tableFindOneHandler(finalFilter, {
       select: { min: { $min: [name] }, max: { $max: [name] } },
     });
-    const distributionBins = Math.min(distinctCount, 15);
 
     let distribution:
       | {
           label: string;
           count: number;
+          onClick?: () => void;
         }[]
       | undefined = undefined;
     let canSortDistribution = false;
 
-    /** Get a distribution for few intervals */
     if (minMax && minMax.min !== minMax.max) {
       if (udt_name === "date" || udt_name.startsWith("timestamp")) {
         const intervals: { label: string; filters: AnyObject[] }[] = [];
         const minDate = new Date(minMax.min);
         const maxDate = new Date(minMax.max);
+        const intervalCount = Math.min(5, distinctCount);
         const totalMs = maxDate.getTime() - minDate.getTime();
-        const intervalMs = totalMs / distributionBins;
+        const intervalMs = totalMs / intervalCount;
 
-        for (let i = 0; i < distributionBins; i++) {
+        for (let i = 0; i < intervalCount; i++) {
           const start = new Date(minDate.getTime() + i * intervalMs);
           const end = new Date(minDate.getTime() + (i + 1) * intervalMs);
           intervals.push({
@@ -123,6 +123,8 @@ export const useColumnStats = (
           });
           distribution.push({ label: interval.label, count });
         }
+      } else if (udt_name.startsWith("geo")) {
+        // No min max
       } else {
         canSortDistribution = true;
 
@@ -132,11 +134,24 @@ export const useColumnStats = (
             count: { $countAll: [] },
           },
           orderBy: [{ key: "count", asc: sortAscending, nulls: "last" }],
-          limit: distributionBins,
+          limit: Math.min(distinctCount, 15),
         });
         distribution = topValues.map((v) => ({
           label: v.label?.toString() ?? "NULL",
           count: v.count,
+          onClick: () => {
+            w.$update({
+              filter: [
+                ...w.filter,
+                {
+                  fieldName: name,
+                  type: "$in",
+                  value: [v.label],
+                  minimised: true,
+                },
+              ],
+            });
+          },
         }));
       }
     }
@@ -148,7 +163,7 @@ export const useColumnStats = (
       distribution,
       canSortDistribution,
     };
-  }, [db, tableName, filter, filterOperand, name, udt_name, sortAscending]);
+  }, [db, tableName, filter, filterOperand, name, udt_name, sortAscending, w]);
 
   return res;
 };

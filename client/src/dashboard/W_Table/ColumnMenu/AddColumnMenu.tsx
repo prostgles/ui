@@ -1,17 +1,14 @@
 import Popup, { POPUP_CLASSES } from "@components/Popup/Popup";
 import type { FullOption } from "@components/Select/Select";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import {
   mdiFunction,
   mdiLink,
   mdiTableColumnPlusAfter,
   mdiTableEdit,
 } from "@mdi/js";
-import {
-  useMemoDeep,
-  type DBHandlerClient,
-} from "prostgles-client/dist/prostgles";
-import React, { useState } from "react";
+import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useMemo, useState } from "react";
 import { t } from "../../../i18n/i18nUtils";
 import type {
   DBSchemaTablesWJoins,
@@ -19,7 +16,8 @@ import type {
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
 import { CreateFileColumn } from "../../FileTableControls/CreateFileColumn";
-import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
+import { updateWCols } from "../tableUtils/tableUtils";
+import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
 import { CreateColumn } from "./AlterColumn/CreateColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
@@ -80,7 +78,7 @@ export const AddColumnMenu = ({
    * Root query aggregation AND nested joins not allowed
    */
   const wCols = w.columns;
-  const dissallow = useMemoDeep(() => {
+  const dissallow = useMemo(() => {
     return (
       (
         wCols?.some(
@@ -105,6 +103,7 @@ export const AddColumnMenu = ({
       t.AddColumnMenu["This is a view. Cannot create columns, must recreate"]
     : undefined;
   const onClose = () => setColType();
+
   return (
     <>
       <Select
@@ -136,54 +135,74 @@ export const AddColumnMenu = ({
         }))}
         onChange={(type) => setColType(type)}
       />
-      {!colType || !anchorEl ?
-        null
-      : colType === "Computed" ?
-        <AddComputedColMenu
-          db={db}
-          w={w}
-          tables={tables}
-          onClose={onClose}
-          nestedColumnOpts={nestedColumnOpts}
-        />
-      : colType === "CreateFileColumn" ?
-        <CreateFileColumn
-          db={db}
-          tables={tables}
-          fileTable={tables[0]?.info.fileTableName}
-          tableName={table.name}
-          onClose={() => setColType(undefined)}
-        />
-      : <Popup
-          title={
-            colType === "Create" ?
-              t.AddColumnMenu[`Create new column`]
-            : t.AddColumnMenu["Add Referenced/Linked Fields"]
-          }
-          positioning="beneath-left"
-          anchorEl={anchorEl}
-          onClose={onClose}
-          autoFocusFirst={{ selector: `.${POPUP_CLASSES.content} input` }}
-          clickCatchStyle={{ opacity: 0.5 }}
-        >
-          {colType === "Create" ?
-            <CreateColumn
-              db={db}
-              field=""
-              table={table}
-              tables={tables}
-              suggestions={suggestions}
-              onClose={onClose}
-            />
-          : <LinkedColumn
-              db={db}
-              column={undefined}
-              onClose={onClose}
-              tables={tables}
-              w={w}
-            />
-          }
-        </Popup>
+      {
+        !colType || !anchorEl ?
+          null
+          // <AddComputedColMenu
+          //   db={db}
+          //   w={w}
+          //   tables={tables}
+          //   onClose={onClose}
+          //   nestedColumnOpts={nestedColumnOpts}
+          // />
+        : colType === "CreateFileColumn" ?
+          <CreateFileColumn
+            db={db}
+            tables={tables}
+            fileTable={tables[0]?.info.fileTableName}
+            tableName={table.name}
+            onClose={() => setColType(undefined)}
+          />
+        : <Popup
+            title={
+              colType === "Computed" ? t.AddColumnMenu[`Add Computed Field`]
+              : colType === "Create" ?
+                t.AddColumnMenu[`Create new column`]
+              : t.AddColumnMenu["Add Referenced/Linked Fields"]
+            }
+            positioning="beneath-left"
+            anchorEl={anchorEl}
+            onClose={onClose}
+            autoFocusFirst={{ selector: `.${POPUP_CLASSES.content} input` }}
+            clickCatchStyle={{ opacity: 0.5 }}
+            contentClassName="p-1"
+          >
+            {colType === "Computed" ?
+              <QuickAddComputedColumn
+                tables={tables}
+                tableName={table.name}
+                onAddColumn={(computedColumn) => {
+                  if (!computedColumn) {
+                    setAnchorEl(undefined);
+                    return;
+                  }
+                  updateWCols(
+                    w,
+                    [computedColumn, ...(w.columns ?? [])],
+                    undefined,
+                  );
+                  setAnchorEl(undefined);
+                }}
+              />
+            : colType === "Create" ?
+              <CreateColumn
+                db={db}
+                field=""
+                table={table}
+                tables={tables}
+                suggestions={suggestions}
+                onClose={onClose}
+              />
+            : <LinkedColumn
+                db={db}
+                column={undefined}
+                onClose={onClose}
+                tables={tables}
+                w={w}
+              />
+            }
+          </Popup>
+
       }
     </>
   );

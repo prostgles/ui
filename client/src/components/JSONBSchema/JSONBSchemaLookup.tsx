@@ -4,7 +4,7 @@ import React from "react";
 import { SmartSearch } from "../../dashboard/SmartFilter/SmartSearch/SmartSearch";
 import { areEqual } from "../../utils";
 import ErrorComponent from "../ErrorComponent";
-import Select from "../Select/Select";
+import { Select } from "../Select/Select";
 import { isCompleteJSONB } from "./isCompleteJSONB";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { JSONBSchema } from "./JSONBSchema";

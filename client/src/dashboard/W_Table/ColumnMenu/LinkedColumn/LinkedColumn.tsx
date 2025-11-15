@@ -2,7 +2,7 @@ import { ExpandSection } from "@components/ExpandSection";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { InfoRow } from "@components/InfoRow";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useEffect, useMemo, useState } from "react";

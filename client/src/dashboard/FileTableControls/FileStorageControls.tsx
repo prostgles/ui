@@ -8,7 +8,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { pickKeys } from "prostgles-types";
 import { CredentialSelector } from "../BackupAndRestore/CredentialSelector";

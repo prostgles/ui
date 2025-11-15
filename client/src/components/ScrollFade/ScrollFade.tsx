@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import type { TestSelectors } from "../../Testing";
 import { classOverride, type DivProps } from "../Flex";
 import { useResizeObserver } from "./useResizeObserver";
@@ -20,13 +20,16 @@ type Sides = Record<"top" | "bottom" | "left" | "right", boolean>;
  * Given a list of children, this component will add a fade effect to the bottom of the children if the children are scrollable
  */
 export const ScrollFade = ({ children, scrollRestore, ...divProps }: P) => {
-  const ref = React.useRef<HTMLDivElement>(null);
-  useScrollFade({ ref });
-  useScrollRestore(scrollRestore ? ref.current : undefined);
+  const [elem, setElem] = useState<HTMLDivElement | null>(null);
+  const handleRef = useCallback((el: HTMLDivElement | null) => {
+    setElem(el);
+  }, []);
+  useScrollFade(elem);
+  useScrollRestore(scrollRestore ? elem : undefined);
 
   return (
     <div
-      ref={ref}
+      ref={handleRef}
       {...divProps}
       className={classOverride("ScrollFade", divProps.className ?? "")}
     >
@@ -35,15 +38,9 @@ export const ScrollFade = ({ children, scrollRestore, ...divProps }: P) => {
   );
 };
 
-export const useScrollFade = ({
-  ref,
-}: {
-  ref: React.RefObject<HTMLElement>;
-}) => {
+export const useScrollFade = (elem: HTMLElement | null) => {
   const [overflows, setOverflows] = React.useState({ x: false, y: false });
-  const el = ref.current;
   const onScroll = useCallback(() => {
-    const elem = ref.current;
     if (!elem) return;
     const {
       scrollHeight,
@@ -77,29 +74,29 @@ export const useScrollFade = ({
     elem.style.mask = finalMask;
     /** Required to ensure the masks colors stack correctly */
     elem.style["-webkit-mask-composite"] = "source-in";
-  }, [ref]);
+  }, [elem]);
 
   React.useEffect(() => {
-    if (!el) return;
-    el.addEventListener("scroll", onScroll);
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [el, onScroll]);
+    if (!elem) return;
+    elem.addEventListener("scroll", onScroll);
+    return () => elem.removeEventListener("scroll", onScroll);
+  }, [elem, onScroll]);
 
   const onResize = useCallback(() => {
     onScroll();
     const thresholdPx = 2;
-    if (!el) return;
+    if (!elem) return;
     const newOverflows = {
-      x: el.scrollWidth > el.clientWidth + thresholdPx,
-      y: el.scrollHeight > el.clientHeight + thresholdPx,
+      x: elem.scrollWidth > elem.clientWidth + thresholdPx,
+      y: elem.scrollHeight > elem.clientHeight + thresholdPx,
     };
     if (!isEqual(newOverflows, overflows)) {
       setOverflows(newOverflows);
     }
-  }, [onScroll, el, overflows]);
+  }, [onScroll, elem, overflows]);
 
   useResizeObserver({
-    ref,
+    elem,
     box: "border-box",
     onResize,
   });

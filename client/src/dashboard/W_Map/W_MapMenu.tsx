@@ -9,7 +9,7 @@ import {
 } from "@mdi/js";
 import { FlexRow } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
-import Select from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import type { TabItem } from "@components/Tabs";
 import Tabs from "@components/Tabs";

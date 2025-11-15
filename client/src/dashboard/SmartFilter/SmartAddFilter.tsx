@@ -124,7 +124,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
       .map((c) => {
         const { computedConfig } = c;
         if (!computedConfig) return undefined;
-        const { tsDataType, udt_name } = computedConfig.funcDef.outType;
+        const { tsDataType, udt_name } = computedConfig;
         return {
           key: c.name,
           ranking: 0,
@@ -255,7 +255,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
         </FlexRow>
         <div
           className={
-            "min-s-0 " +
+            "min-s-0 p-p5 " +
             (window.isMobileDevice ? " flex-col " : " flex-row ") +
             " "
           }

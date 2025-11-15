@@ -634,7 +634,7 @@ export const prostglesUIDashboardSample = {
             size: 0.5,
             type: "item",
             viewType: "map",
-            tableName: "v_users",
+            tableName: "customers",
           },
         ],
         isRoot: true,
@@ -656,7 +656,7 @@ export const prostglesUIDashboardSample = {
           layers: [
             {
               geoColumn: "location",
-              table_name: "v_users",
+              table_name: "customers",
             },
           ],
         },
@@ -680,14 +680,14 @@ export const prostglesUIDashboardSample = {
                 size: 0.6,
                 type: "item",
                 viewType: "table",
-                tableName: "v_users",
+                tableName: "customers",
               },
               {
                 id: "customer-orders-chart",
                 size: 0.4,
                 type: "item",
                 viewType: "timechart",
-                tableName: "v_users",
+                tableName: "customers",
               },
             ],
           },
@@ -753,7 +753,7 @@ export const prostglesUIDashboardSample = {
               width: 180,
             },
           ],
-          table_name: "v_users",
+          table_name: "customers",
         },
         {
           id: "customer-orders-chart",
@@ -761,7 +761,7 @@ export const prostglesUIDashboardSample = {
           layers: [
             {
               yAxis: "count(*)",
-              table_name: "v_users",
+              table_name: "customers",
               dateColumn: "created_at",
             },
           ],
