@@ -156,10 +156,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
              * Show first 5 cols to improve performance
              * If fileTable show all columns to ensure the images/media preview works
              */
-            const nestedColumns = getColWInfo([table], {
-              table_name: table.name,
-              columns: null,
-            }).map((c, i) => ({
+            const nestedColumns = getColWInfo(table, null).map((c, i) => ({
               ...c,
               show: !!table.info.isFileTable || i < 5,
             }));

@@ -1,8 +1,8 @@
-import { isDefined } from "prostgles-types";
-import React, { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import ErrorComponent, { ErrorTrap } from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
+import { isDefined } from "prostgles-types";
+import React from "react";
+import { useSearchParams } from "react-router-dom";
 import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
 import { LinkMenu } from "../LinkMenu";
 import RTComp from "../RTComp";
@@ -277,7 +277,6 @@ export class ViewRenderer extends RTComp<
             links,
             windows,
           );
-
           result = (
             <W_Table
               setLinkMenu={setLinkMenu}

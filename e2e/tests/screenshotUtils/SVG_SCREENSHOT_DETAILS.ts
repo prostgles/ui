@@ -28,7 +28,7 @@ export type OnBeforeScreenshot = (
             svgif: string;
             playwright: string;
           },
-      isRightClick?: boolean,
+      action?: "click" | "rightClick" | { action: "type"; text: string },
     ) => Promise<void>;
   },
 ) => Promise<void>;

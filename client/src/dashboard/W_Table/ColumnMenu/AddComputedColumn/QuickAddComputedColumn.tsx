@@ -2,19 +2,13 @@ import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { mdiFunction, mdiSigma } from "@mdi/js";
-import { pickKeys } from "prostgles-types";
-import type { ValidatedColumnInfo } from "prostgles-types/lib";
-import React, { useCallback } from "react";
+import React from "react";
 import { t } from "src/i18n/i18nUtils";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnConfig } from "../ColumnMenu";
-import { type FuncDef } from "../FunctionSelector/functions";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
 import { FunctionColumnList } from "./FunctionColumnList";
-import {
-  useAddComputedColumnState,
-  type ValidatedColumnInfoWithJoin,
-} from "./useAddComputedColumn";
+import { useAddComputedColumnState } from "./useAddComputedColumn";
 
 export type QuickAddComputedColumnProps = {
   tables: DBSchemaTablesWJoins;
@@ -27,7 +21,7 @@ export const QuickAddComputedColumn = ({
   tables,
   onAddColumn,
 }: QuickAddComputedColumnProps) => {
-  const state = useAddComputedColumnState({ tables, tableName });
+  const state = useAddComputedColumnState({ tables, tableName, onAddColumn });
   const {
     table,
     allowedColumns,
@@ -38,53 +32,6 @@ export const QuickAddComputedColumn = ({
     setFuncDef,
     setName,
   } = state;
-  const addColumn = useCallback(
-    (column: ValidatedColumnInfoWithJoin | undefined, funcDef: FuncDef) => {
-      const { outType } = funcDef;
-      const outInfo = outType === "sameAsInput" ? column : outType;
-      if (!outInfo) {
-        throw new Error(
-          "Cannot determine output data type for the computed column",
-        );
-      }
-
-      if (column?.join) {
-        onAddColumn({
-          name,
-          nested: {
-            columns: [
-              {
-                name,
-                show: true,
-                computedConfig: {
-                  ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
-                  funcDef,
-                  column: column.name,
-                },
-              },
-              ...column.join.table.columns.map((c) => ({
-                name: c.name,
-                show: false,
-              })),
-            ],
-            path: column.join.path,
-          },
-          show: true,
-        });
-      } else {
-        onAddColumn({
-          name,
-          show: true,
-          computedConfig: {
-            ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
-            funcDef,
-            column: column?.name,
-          },
-        });
-      }
-    },
-    [onAddColumn, name],
-  );
 
   if (!table) return <>Table not found {tableName}</>;
 
@@ -131,10 +78,14 @@ export const QuickAddComputedColumn = ({
         />
       )}
 
-      {funcDef && (
+      {!state.onAddDisabledInfo && (
         <FormField
           label="Computed column name"
           value={name}
+          inputProps={{
+            autoFocus: true,
+            "data-command": "QuickAddComputedColumn.name",
+          }}
           onChange={setName}
         />
       )}
@@ -142,24 +93,11 @@ export const QuickAddComputedColumn = ({
       <FlexRow className="mt-1">
         <Btn onClick={() => onAddColumn(undefined)}>{t.common.Cancel}</Btn>
         <Btn
-          {...{
-            variant: "filled",
-            color: "action",
-            "data-command": "QuickAddComputedColumn.Add",
-            ...(!funcDef ?
-              {
-                disabledInfo: "Must select a function",
-              }
-            : allowedColumns && !column ?
-              {
-                disabledInfo: "Must select a column",
-              }
-            : {
-                onClick: () => {
-                  addColumn(column, funcDef);
-                },
-              }),
-          }}
+          variant="filled"
+          color="action"
+          data-command="QuickAddComputedColumn.Add"
+          disabledInfo={state.onAddDisabledInfo}
+          onClick={state.onAdd}
         >
           {t.AddColumnMenu["Add Computed Field"]}
         </Btn>

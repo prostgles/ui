@@ -1,5 +1,5 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSSchema } from "@common/publishUtils";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSchemaTable } from "prostgles-types";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
 import type { DBSchemaTablesWJoins } from "./dashboardUtils";

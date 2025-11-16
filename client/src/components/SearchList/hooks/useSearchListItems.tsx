@@ -137,12 +137,12 @@ export const useSearchListItems = (
             : !parentLabels.length ? undefined
             : <FlexRowWrap
                 className="SearchList_GroupHeader p-p5 text-1 bg-color-0 bb b-color gap-p25"
-                style={{ position: "sticky", top: 0, opacity: 0.75 }}
+                style={{ position: "sticky", top: 0 }}
               >
                 {parentLabels.map((label, i) => (
                   <React.Fragment key={i}>
                     {i > 0 && <span className="text-2">{">"}</span>}
-                    <span key={i} className="bold">
+                    <span key={i} className="bold" style={{ opacity: 0.75 }}>
                       {label}
                     </span>
                   </React.Fragment>

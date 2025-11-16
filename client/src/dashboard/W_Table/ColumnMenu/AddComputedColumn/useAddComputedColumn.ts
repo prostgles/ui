@@ -1,6 +1,6 @@
-import { isDefined } from "prostgles-types";
+import { isDefined, pickKeys } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getColumnsAcceptedByFunction,
   type FuncDef,
@@ -11,7 +11,11 @@ import type { QuickAddComputedColumnProps } from "./QuickAddComputedColumn";
 export const useAddComputedColumnState = ({
   tables,
   tableName,
-}: Pick<QuickAddComputedColumnProps, "tables" | "tableName">) => {
+  onAddColumn,
+}: Pick<
+  QuickAddComputedColumnProps,
+  "tables" | "tableName" | "onAddColumn"
+>) => {
   const table = useMemo(
     () => tables.find((t) => t.name === tableName),
     [tables, tableName],
@@ -54,6 +58,7 @@ export const useAddComputedColumnState = ({
     ValidatedColumnInfoWithJoin | undefined
   >();
   const [name, setName] = useState("");
+
   useEffect(() => {
     if (!funcDef) {
       return;
@@ -64,6 +69,59 @@ export const useAddComputedColumnState = ({
       : funcDef.label;
     setName(name);
   }, [funcDef, column]);
+
+  const addColumn = useCallback(
+    (column: ValidatedColumnInfoWithJoin | undefined, funcDef: FuncDef) => {
+      const { outType } = funcDef;
+      const outInfo = outType === "sameAsInput" ? column : outType;
+      if (!outInfo) {
+        throw new Error(
+          "Cannot determine output data type for the computed column",
+        );
+      }
+
+      if (column?.join) {
+        onAddColumn({
+          name,
+          nested: {
+            columns: [
+              {
+                name,
+                show: true,
+                computedConfig: {
+                  ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
+                  funcDef,
+                  column: column.name,
+                },
+              },
+              ...column.join.table.columns.map((c) => ({
+                name: c.name,
+                show: false,
+              })),
+            ],
+            path: column.join.path,
+          },
+          show: true,
+        });
+      } else {
+        onAddColumn({
+          name,
+          show: true,
+          computedConfig: {
+            ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
+            funcDef,
+            column: column?.name,
+          },
+        });
+      }
+    },
+    [onAddColumn, name],
+  );
+
+  const [onAddDisabledInfo, onAdd] =
+    !funcDef ? ["Must select a function", undefined]
+    : allowedColumns && !column ? ["Must select a column", undefined]
+    : [undefined, () => addColumn(column, funcDef)];
 
   return {
     table,
@@ -76,6 +134,8 @@ export const useAddComputedColumnState = ({
     allowedColumns,
     setFuncDef,
     funcDef,
+    onAddDisabledInfo,
+    onAdd,
   };
 };
 

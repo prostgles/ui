@@ -1,3 +1,4 @@
+import { getCommandElemSelector } from "Testing";
 import {
   closeWorkspaceWindows,
   deleteAllWorkspaces,
@@ -5,7 +6,6 @@ import {
   type PageWIds,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
-import { getCommandElemSelector } from "Testing";
 
 export const tableSvgif: OnBeforeScreenshot = async (
   page,
@@ -19,10 +19,35 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await addSceneWithClickAnimation(getCommandElemSelector("dashboard.menu"));
   await addSceneWithClickAnimation(getDataKey("users"));
 
-  const pageParams = { page, addSceneWithClickAnimation, addScene };
-  await clickTableRow(pageParams, 1, undefined, 1);
+  /** Show linked computed column */
+  await addSceneWithClickAnimation(getCommandElemSelector("AddColumnMenu"));
+  await addSceneWithClickAnimation(
+    getCommandElemSelector("AddColumnMenu") + " " + getDataKey("Computed"),
+  );
+  await addSceneWithClickAnimation(getDataKey("$sum"));
+  await addSceneWithClickAnimation(
+    getCommandElemSelector("FunctionColumnList.SearchInput"),
+    { action: "type", text: "price" },
+  );
+
+  await addSceneWithClickAnimation(
+    getDataKey("(id = customer_id) orders.Total Price"),
+  );
+  await addSceneWithClickAnimation(
+    getCommandElemSelector("QuickAddComputedColumn.name"),
+    { action: "type", text: "Total Spent" },
+  );
+  await addSceneWithClickAnimation(
+    getCommandElemSelector("QuickAddComputedColumn.Add"),
+  );
+  await page.waitForTimeout(2000);
+  await addScene();
+  await addSceneWithClickAnimation(getDataKey("Total Spent"));
+  await addSceneWithClickAnimation(getDataKey("Total Spent"));
 
   /** Show card joined records */
+  const pageParams = { page, addSceneWithClickAnimation, addScene };
+  await clickTableRow(pageParams, 1, undefined, 1);
   await addSceneWithClickAnimation(
     getCommandElemSelector("JoinedRecords.SectionToggle") +
       '[data-key="orders"]',
@@ -40,7 +65,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
   /** Show quick stats filter and map */
   await addSceneWithClickAnimation(
     `[role="columnheader"]` + getDataKey("type"),
-    true,
+    "rightClick",
   );
   await addSceneWithClickAnimation(getDataKey("Quick Stats"));
   await addSceneWithClickAnimation(getDataKey("rider"));

@@ -36,9 +36,7 @@ export const LinkedColumnSelect = ({
   const updateNestedColumns = (newCols: ColumnConfigWInfo[]) => {
     if (!table) throw "not ok";
     updateNested({
-      columns: getMinimalColumnInfo(
-        getColWInfo(tables, { table_name: table.name, columns: newCols }),
-      ),
+      columns: getMinimalColumnInfo(getColWInfo(table, newCols)),
     });
   };
   const [showAddComputedCol, setShowAddComputedCol] = useState(false);

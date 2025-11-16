@@ -53,9 +53,15 @@ export const FunctionColumnList = ({
           style={{ maxHeight: "500px" }}
           id="cols-select"
           label="Applicable columns"
+          placeholder="Search columns"
           className="f-1"
+          inputProps={{
+            autoFocus: true,
+            "data-command": "FunctionColumnList.SearchInput",
+          }}
           items={allowedColumns.map((c) => ({
             ...getColumnListItem(c),
+            key: c.label,
             parentLabels: c.join?.labels.map(({ label }) => label) ?? [],
             // label: c.label || c.name,
             onPress: () => {

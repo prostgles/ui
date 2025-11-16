@@ -55,7 +55,10 @@ export const getSVGifTypeAnimation = (
   const typingDuration =
     duration - zoomInDuration - zoomOutDuration - waitBeforeZoomOut;
   if (typingDuration <= 500) {
-    throw `Duration ${duration}ms for "type" animation on element ${elementSelector} in SVG file ${svgFileName} is too short. Must be at least ${zoomInDuration - zoomOutDuration - waitBeforeZoomOut}ms`;
+    throw [
+      `Duration ${duration}ms for "type" animation on element ${elementSelector} in SVG file ${svgFileName} is too short.`,
+      `Must be at least ${zoomInDuration + zoomOutDuration + waitBeforeZoomOut + 500}ms`,
+    ].join("\n");
   }
   const zoomInStartTime = fromTime;
   const zoomInEndTime = fromTime + zoomInDuration;

@@ -49,7 +49,7 @@ import { useEffectAsync } from "../../DashboardMenu/DashboardMenuSettings";
 import { getAndFixWColumnsConfig } from "../TableMenu/getAndFixWColumnsConfig";
 import type W_Table from "../W_Table";
 import type { ColumnConfigWInfo } from "../W_Table";
-import { getFullColumnConfig, updateWCols } from "../tableUtils/tableUtils";
+import { updateWCols } from "../tableUtils/tableUtils";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
 import type { ColumnFormat } from "./ColumnDisplayFormat/columnFormatUtils";
@@ -61,6 +61,7 @@ import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { ColumnQuickStats } from "./ColumnQuickStats/ColumnQuickStats";
+import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
 
 export type ColumnConfig = {
   idx?: number;

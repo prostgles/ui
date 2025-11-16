@@ -10,7 +10,7 @@ export const SearchInputZIndex = 2;
 
 export type SearchInputProps = Pick<
   React.HTMLProps<HTMLInputElement>,
-  "type" | "title"
+  "type" | "title" | "autoFocus"
 > &
   TestSelectors & {
     placeholder?: string;

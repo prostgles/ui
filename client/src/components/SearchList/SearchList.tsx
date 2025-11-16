@@ -83,7 +83,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   autoFocus?: boolean;
   inputProps?: Pick<
     SearchInputProps,
-    "type" | "leftContent" | keyof TestSelectors
+    "type" | "leftContent" | keyof TestSelectors | "autoFocus"
   >;
 
   leftContent?: React.ReactNode;

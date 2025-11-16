@@ -31,15 +31,15 @@ export const commandPaletteSvgif: OnBeforeScreenshot = async (
       ...showBriefly.animations,
     ],
   });
-  for (const char of "mc") {
+  for (const char of "add mc") {
     await page.keyboard.press(char);
     await page.waitForTimeout(200);
     await addScene(showBriefly);
   }
   await page.keyboard.press("ArrowDown");
   await addScene(showBriefly);
-  await page.keyboard.press("ArrowDown");
-  await addScene(showBriefly);
+  // await page.keyboard.press("ArrowDown");
+  // await addScene(showBriefly);
   await page.waitForTimeout(500);
   await addScene({
     caption: "Enter opens the selected UI view",

@@ -19,7 +19,7 @@ export const prepareColsForRender = (
       }
       return !c.hidden;
     })
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       const wcols = getWCols();
       if (Array.isArray(wcols)) {
         const _a = wcols.findIndex((c) => c.name === a.name),

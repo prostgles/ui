@@ -125,6 +125,10 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await addSceneWithClickAnimation(
     getCommandElemSelector("AddChartMenu.Timechart"),
   );
-  await addSceneWithClickAnimation(getDataKey("created_at"));
+  await addSceneWithClickAnimation(
+    getCommandElemSelector("AddChartMenu.Timechart") +
+      " " +
+      getDataKey("created_at"),
+  );
   await addScene({ animations: [{ type: "wait", duration: 3000 }] });
 };

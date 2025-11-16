@@ -5,7 +5,6 @@ import type {
   SyncDataItem,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { type ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import { WithPrgl } from "../../../WithPrgl";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
@@ -15,18 +14,14 @@ import type {
 } from "../../Dashboard/dashboardUtils";
 import RTComp from "../../RTComp";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
-import {
-  colIs,
-  tsDataTypeFromUdtName,
-} from "../../SmartForm/SmartFormField/fieldUtils";
-import type { ColumnConfigWInfo } from "../W_Table";
-import { getFullColumnConfig, updateWCols } from "../tableUtils/tableUtils";
+import { updateWCols } from "../tableUtils/tableUtils";
 import { AddColumnMenu } from "./AddColumnMenu";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { ColumnList } from "./ColumnList";
 import type { ColumnConfig } from "./ColumnMenu";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
+import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
 
 type P = {
   db: DBHandlerClient;

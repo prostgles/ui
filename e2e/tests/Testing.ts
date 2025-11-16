@@ -481,7 +481,9 @@ export const COMMANDS = {
   ColumnQuickStats: "",
   "ColumnQuickStats.addFilter": "",
   "QuickAddComputedColumn.Add": "",
+  "QuickAddComputedColumn.name": "",
   "LLMChatOptions.Prompt.Preview": "",
+  "FunctionColumnList.SearchInput": "",
 } as const satisfies Record<
   string,
   | string

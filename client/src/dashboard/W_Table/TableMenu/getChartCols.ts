@@ -54,9 +54,10 @@ export const getChartCols = (
     return args.chartableSQL;
   }
   const { w, tables } = args;
+  const table = tables.find((t) => t.name === w.table_name);
 
   const getOtherCols = (cols: ValidatedColumnInfo[]): ColInfo[] =>
-    cols.sort((b, a) => {
+    cols.toSorted((b, a) => {
       /** Sort primary keys down */
       return (
         Number(b.is_pkey || false) - Number(a.is_pkey || false) ||
@@ -102,11 +103,14 @@ export const getChartCols = (
     )
     .filter(isDefined);
 
-  const cols = getColWInfo(tables, w).map((c) => ({
-    ...c,
-    is_pkey: Boolean(c.info?.is_pkey),
-    udt_name: c.info?.udt_name || c.computedConfig?.udt_name || "text",
-  }));
+  const cols =
+    !table ?
+      []
+    : getColWInfo(table, w.columns).map((c) => ({
+        ...c,
+        is_pkey: Boolean(c.info?.is_pkey),
+        udt_name: c.info?.udt_name || c.computedConfig?.udt_name || "text",
+      }));
 
   const windowDateCols: ChartColumn[] = cols.filter(isDateCol).map((c) => ({
     ...c,

@@ -33,12 +33,7 @@ export const NestedColumnRender = ({
   const table = tables.find((t) => t.name === c.nested?.path.at(-1)?.table);
   const isMedia = table?.info.isFileTable;
   const nestedColumns =
-    c.nested ?
-      getColWInfo(tables, {
-        table_name: c.nested!.path.at(-1)!.table,
-        columns: c.nested.columns,
-      })
-    : undefined;
+    c.nested && table ? getColWInfo(table, c.nested.columns) : undefined;
   if (!nestedColumns) {
     return <>Unexpected issue: No nested columns</>;
   }

@@ -1,5 +1,5 @@
 import type { ProstglesTableColumn } from "./getTableCols";
-import { _PG_numbers } from "prostgles-types";
+import { _PG_numbers, includes } from "prostgles-types";
 
 export const getColWidth = <
   T extends Pick<ProstglesTableColumn, "tsDataType" | "udt_name" | "width">,
@@ -14,10 +14,11 @@ export const getColWidth = <
   const maxCW = 300;
 
   /** If data AND no existing widths then calculate width based on row content length */
-  if (!cols.some((c) => Number.isFinite(c.width))) {
+  const noColumnHasWidth = !cols.some((c) => Number.isFinite(c.width));
+  if (noColumnHasWidth) {
     const [firstCol] = cols;
     const tableWidth = windowWidth ?? maxCW;
-    if (cols.length === 1 && !_PG_numbers.includes(firstCol?.udt_name as any)) {
+    if (cols.length === 1 && !includes(_PG_numbers, firstCol?.udt_name)) {
       return cols.map((c) => {
         return {
           ...c,
@@ -104,5 +105,5 @@ export const getColWidth = <
   //   }
   // }
 
-  return cols as any;
+  return cols as (T & { width: number })[];
 };

@@ -76,12 +76,13 @@ export const SearchListContent = <M extends boolean = false>(
   const noList = isSearch ? searchClosed : !renderedItems.length && !searchTerm;
 
   const wrapperStyleFinal = useMemo(() => {
-    if (noBorder)
+    if (noBorder) {
       return {
         borderRadius: 0,
         borderTop: "unset",
         borderBottom: "unset",
       };
+    }
     if (searchClosed) return {};
     return {
       ...{
@@ -163,14 +164,13 @@ export const SearchListContent = <M extends boolean = false>(
       )}
       <div
         className={
-          "f-0 min-h-0 min-w-0 flex-row jc-start relative " +
+          "SearchListInput f-0 min-h-0 min-w-0 flex-row jc-start relative " +
           (!hasSearch && multiSelect ? " bg-color-2 " : "") +
           (isSearch ? " " : "  ai-center  ") +
           (!hasSearch && !multiSelect ? " hidden" : "")
         }
         style={searchStyle}
       >
-        {leftContent}
         {!hasSearch ?
           multiSelect ?
             <div className="pl-1 py-p5 noselect text-1p5 ws-nowrap">
@@ -179,6 +179,7 @@ export const SearchListContent = <M extends boolean = false>(
           : null
         : <SearchInput
             id={inputID}
+            leftContent={leftContent}
             withShadow={isSearch && !noShadow}
             inputRef={inputRef}
             inputWrapperRef={inputWrapperRef}

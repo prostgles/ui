@@ -61,12 +61,9 @@ import type {
 import { getTableCols } from "./tableUtils/getTableCols";
 import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
-import {
-  getFullColumnConfig,
-  getSort,
-  getSortColumn,
-  updateWCols,
-} from "./tableUtils/tableUtils";
+import { getSort, getSortColumn, updateWCols } from "./tableUtils/tableUtils";
+import { getFullColumnConfig } from "./tableUtils/getFullColumnConfig";
+import { stackTrace } from "../Dashboard/debuggingUtils";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
@@ -300,6 +297,7 @@ export default class W_Table extends RTComp<
     dd: DeltaOfData<ProstglesTableD>,
   ) => {
     const delta = { ...dp, ...ds, ...dd };
+
     const { workspace } = this.props;
     const { db } = this.props.prgl;
     const { w } = this.d;
@@ -506,7 +504,7 @@ export default class W_Table extends RTComp<
       .map((c) => c.name);
     const columns = this.d.w?.columns
       ?.slice(0)
-      .sort((a, b) => nIdxes.indexOf(a.name) - nIdxes.indexOf(b.name));
+      .toSorted((a, b) => nIdxes.indexOf(a.name) - nIdxes.indexOf(b.name));
     updateWCols(w, columns);
   };
 
@@ -527,7 +525,7 @@ export default class W_Table extends RTComp<
         className=" p-2 flex-row ai-center text-danger"
         data-command={"W_Table.TableNotFound" satisfies Command}
       >
-        <Icon path={mdiAlertOutline} size={1} className="mr-p5 " />
+        <Icon path={mdiAlertOutline} className="mr-p5 " />
         Table {JSON.stringify(tableName)} not found
       </div>
     );
@@ -545,6 +543,7 @@ export default class W_Table extends RTComp<
       workspace,
     } = this.props;
     const { tables, db, dbs } = prgl;
+
     const tableHandler = db[tableName];
     if (!w) {
       if (tableName && !tableHandler) {
@@ -605,7 +604,8 @@ export default class W_Table extends RTComp<
       const cols = getTableCols({
         data: this.state.rows,
         windowWidth: this.ref?.getBoundingClientRect().width,
-        prgl: this.props.prgl,
+        tables,
+        db,
         w: this.d.w,
         onClickEditRow: this.onClickEditRow,
         barchartVals: this.state.barchartVals,

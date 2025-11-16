@@ -57,7 +57,10 @@ export const saveSVGs = async (page: PageWIds) => {
 
     const addSceneWithClickAnimation = async (
       selector: string | { svgif: string; playwright: string },
-      isRightClick = false,
+      action:
+        | "click"
+        | "rightClick"
+        | { action: "type"; text: string } = "click",
     ) => {
       const svgifSelector =
         typeof selector === "string" ? selector : selector.svgif;
@@ -93,10 +96,25 @@ export const saveSVGs = async (page: PageWIds) => {
           n.style.opacity = "0";
         });
       }
-      await page
-        .locator(playwrightSelector)
-        .click({ button: isRightClick ? "right" : "left" });
+      if (action === "click" || action === "rightClick") {
+        await page
+          .locator(playwrightSelector)
+          .click({ button: action === "rightClick" ? "right" : "left" });
+      } else {
+        await page.locator(playwrightSelector).fill(action.text);
+        await page.waitForTimeout(100);
 
+        await addScene({
+          animations: [
+            { type: "wait", duration: 1000 },
+            {
+              type: "type",
+              elementSelector: svgifSelector,
+              duration: 1800 + action.text.length * 40,
+            },
+          ],
+        });
+      }
       /** prevent hover from showing hidden elements */
       await page.mouse.move(-100, -100);
 
