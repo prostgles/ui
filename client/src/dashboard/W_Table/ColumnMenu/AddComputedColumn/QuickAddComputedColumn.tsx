@@ -11,7 +11,10 @@ import type { ColumnConfig } from "../ColumnMenu";
 import { type FuncDef } from "../FunctionSelector/functions";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
 import { FunctionColumnList } from "./FunctionColumnList";
-import { useAddComputedColumnState } from "./useAddComputedColumn";
+import {
+  useAddComputedColumnState,
+  type ValidatedColumnInfoWithJoin,
+} from "./useAddComputedColumn";
 
 export type QuickAddComputedColumnProps = {
   tables: DBSchemaTablesWJoins;
@@ -36,7 +39,7 @@ export const QuickAddComputedColumn = ({
     setName,
   } = state;
   const addColumn = useCallback(
-    (column: ValidatedColumnInfo | undefined, funcDef: FuncDef) => {
+    (column: ValidatedColumnInfoWithJoin | undefined, funcDef: FuncDef) => {
       const { outType } = funcDef;
       const outInfo = outType === "sameAsInput" ? column : outType;
       if (!outInfo) {
@@ -44,15 +47,41 @@ export const QuickAddComputedColumn = ({
           "Cannot determine output data type for the computed column",
         );
       }
-      onAddColumn({
-        name,
-        show: true,
-        computedConfig: {
-          ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
-          funcDef,
-          column: column?.name,
-        },
-      });
+
+      if (column?.join) {
+        onAddColumn({
+          name,
+          nested: {
+            columns: [
+              {
+                name,
+                show: true,
+                computedConfig: {
+                  ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
+                  funcDef,
+                  column: column.name,
+                },
+              },
+              ...column.join.table.columns.map((c) => ({
+                name: c.name,
+                show: false,
+              })),
+            ],
+            path: column.join.path,
+          },
+          show: true,
+        });
+      } else {
+        onAddColumn({
+          name,
+          show: true,
+          computedConfig: {
+            ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
+            funcDef,
+            column: column?.name,
+          },
+        });
+      }
     },
     [onAddColumn, name],
   );

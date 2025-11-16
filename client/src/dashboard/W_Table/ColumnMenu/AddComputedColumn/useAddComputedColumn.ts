@@ -19,47 +19,49 @@ export const useAddComputedColumnState = ({
   const [includeJoins, setIncludeJoins] = useState(true);
 
   const [funcDef, setFuncDef] = useState<FuncDef | undefined>();
-  const allowedColumns:
-    | undefined
-    | (ValidatedColumnInfo & {
-        join?: ReturnType<typeof getAllJoins>["allJoins"][0];
-      })[] = useMemo(() => {
-    if (!funcDef || !table) return undefined;
-    const tableColumns = getColumnsAcceptedByFunction(funcDef, table.columns);
-    if (!includeJoins || !tableColumns) {
-      return tableColumns;
-    }
+  const allowedColumns: undefined | ValidatedColumnInfoWithJoin[] =
+    useMemo(() => {
+      if (!funcDef || !table) return undefined;
+      const tableColumns = getColumnsAcceptedByFunction(funcDef, table.columns);
+      if (!includeJoins || !tableColumns) {
+        return tableColumns;
+      }
 
-    const { allJoins } = getAllJoins({ tableName, tables, value: undefined });
+      const { allJoins } = getAllJoins({ tableName, tables, value: undefined });
 
-    const joinedColumns = allJoins
-      .map((join) => {
-        const { table: joinTable } = join;
-        const joinColumns = getColumnsAcceptedByFunction(
-          funcDef,
-          joinTable!.columns,
-        );
-        if (!joinColumns?.length) return;
+      const joinedColumns = allJoins
+        .map((join) => {
+          const { table: joinTable } = join;
+          const joinColumns = getColumnsAcceptedByFunction(
+            funcDef,
+            joinTable!.columns,
+          );
+          if (!joinColumns?.length) return;
 
-        return joinColumns.map((col) => ({
-          ...col,
-          join,
-          label: `${join.label}.${col.label || col.name}`,
-        }));
-      })
-      .filter(isDefined)
-      .flat();
+          return joinColumns.map((col) => ({
+            ...col,
+            join,
+            label: `${join.label}.${col.label || col.name}`,
+          }));
+        })
+        .filter(isDefined)
+        .flat();
 
-    return [...tableColumns, ...joinedColumns];
-  }, [funcDef, includeJoins, table, tableName, tables]);
+      return [...tableColumns, ...joinedColumns];
+    }, [funcDef, includeJoins, table, tableName, tables]);
 
-  const [column, setColumn] = useState<ValidatedColumnInfo | undefined>();
+  const [column, setColumn] = useState<
+    ValidatedColumnInfoWithJoin | undefined
+  >();
   const [name, setName] = useState("");
   useEffect(() => {
     if (!funcDef) {
       return;
     }
-    const name = column ? `${funcDef.label}(${column.name})` : funcDef.label;
+    const name =
+      column ?
+        `${funcDef.label}( ${[column.join?.table.name, column.name].filter(isDefined).join(".")} )`
+      : funcDef.label;
     setName(name);
   }, [funcDef, column]);
 
@@ -75,6 +77,10 @@ export const useAddComputedColumnState = ({
     setFuncDef,
     funcDef,
   };
+};
+
+export type ValidatedColumnInfoWithJoin = ValidatedColumnInfo & {
+  join?: ReturnType<typeof getAllJoins>["allJoins"][0];
 };
 
 export type AddComputedColumnState = ReturnType<
