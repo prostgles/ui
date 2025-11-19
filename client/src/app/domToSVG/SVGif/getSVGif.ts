@@ -5,6 +5,7 @@ import { addSVGifPointer } from "./addSVGifPointer";
 import { addSVGifTimelineControls } from "./addSVGifTimelineControls";
 import { getSVGifAnimations } from "./getSVGifAnimations";
 import { getSVGifParsedScenes } from "./getSVGifParsedScenes";
+import { compressSVGif } from "./compressSVGif";
 
 export const getSVGif = (
   scenes: SVGif.Scene[],
@@ -54,6 +55,8 @@ export const getSVGif = (
     sceneAnimations,
   });
   addSVGifPointer({ cursorKeyframes, g, appendStyle, totalDuration });
+
+  compressSVGif(svg);
   // document.body.appendChild(svg); // debugging
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
@@ -66,16 +69,18 @@ export const getAnimationProperty = (
     animName,
     totalDuration,
     otherProps = "",
+    easeFunction = "ease-in-out",
   }: {
     elemSelector: string;
     animName: string;
     totalDuration: number;
     otherProps?: string;
+    easeFunction?: "ease-in-out" | "ease-out";
   },
   onlyValue = false,
 ) => {
   const loop = true as boolean;
-  const value = `animation: ${animName} ${totalDuration}ms ease-in-out ${
+  const value = `animation: ${animName} ${totalDuration}ms ${easeFunction} ${
     loop ? "infinite" : "forwards"
   };`;
   if (onlyValue) return value;

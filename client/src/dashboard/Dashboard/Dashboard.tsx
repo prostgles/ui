@@ -618,7 +618,14 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
   key: string;
   "data-key": string;
   "data-table-name": string | null;
-  "data-view-type": "table" | "map" | "timechart" | "sql" | "card" | "method";
+  "data-view-type":
+    | "table"
+    | "map"
+    | "timechart"
+    | "sql"
+    | "card"
+    | "method"
+    | "barchart";
   "data-title": string;
   w: WindowSyncItem<T>;
   childWindows: WindowSyncItem[];

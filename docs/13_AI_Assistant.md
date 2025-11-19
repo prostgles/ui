@@ -42,5 +42,7 @@ The message input area allows you to write text, attach files and control other 
   - **Database access**: Opens the database access settings for the current chat. This controls how the AI assistant can interact with the current database.  
   - **Prompt Selector**: Opens the prompt details for the current chat, allowing you to manage the prompt template and other related settings.  
     - **Prompt preview**: Preview of the prompt with context variables filled in.  
-  - **LLM Model**: Selects the LLM model to be used for the current chat. Different models may have different capabilities and performance.  
+  - **LLM Model**: Selects the LLM model to be used for the current chat. Different models may have different capabilities and performance.   
+    - **Select model**: Selects this LLM model for the current chat.  
+    - **Add model credentials**: Opens the form to add llm provider credentials for the selected LLM model.  
 

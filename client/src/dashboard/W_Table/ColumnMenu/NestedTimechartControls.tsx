@@ -12,22 +12,18 @@ import {
 } from "../../W_TimeChart/W_TimeChartMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { _PG_numbers } from "prostgles-types";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 export const SORTABLE_CHART_COLUMNS = ["date", "value"];
 
 export type ColTimeChart = Required<ColumnConfigWInfo>["nested"]["chart"];
 type P = {
   tableName: string | undefined;
-  tables: DBSchemaTablesWJoins;
   chart: ColTimeChart | undefined;
   onChange: (newCol: ColTimeChart | undefined) => void;
 };
-export const NestedTimechartControls = ({
-  tableName,
-  chart,
-  tables,
-  onChange,
-}: P) => {
+export const NestedTimechartControls = ({ tableName, chart, onChange }: P) => {
+  const { tables } = usePrgl();
   if (!tableName) return null;
 
   const table = tables.find((t) => t.name === tableName);

@@ -37,6 +37,7 @@ import type {
   WindowSyncItem,
 } from "./dashboardUtils";
 import { getViewRendererUtils } from "./getViewRendererUtils";
+import { W_Barchart } from "../W_Barchart/W_Barchart";
 
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &
@@ -253,6 +254,20 @@ export class ViewRenderer extends RTComp<
               titleIcon={linkIcon}
               layerQueries={layerQueries}
               {...commonProps}
+              w={w}
+            />
+          );
+        } else if (w.type === "barchart") {
+          result = (
+            <W_Barchart
+              {...commonProps}
+              activeRowColor={colorStr}
+              myActiveRow={
+                active_row?.window_id === w.id ? active_row : undefined
+              }
+              onClickRow={(row, tableName, value) => {
+                onClickRow(row, tableName, w.id, { type: "barchart", value });
+              }}
               w={w}
             />
           );

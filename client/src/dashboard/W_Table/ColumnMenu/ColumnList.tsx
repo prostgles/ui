@@ -1,17 +1,12 @@
-import { mdiDelete, mdiFunction, mdiLink, mdiPencil } from "@mdi/js";
-import {
-  useMemoDeep,
-  type DBHandlerClient,
-} from "prostgles-client/dist/prostgles";
-import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { ValidatedColumnInfo } from "prostgles-types";
-import { omitKeys } from "prostgles-types";
-import React, { useState } from "react";
-import type { Prgl } from "../../../App";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
 import { SearchList } from "@components/SearchList/SearchList";
+import { mdiDelete, mdiFunction, mdiLink, mdiPencil } from "@mdi/js";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import { omitKeys } from "prostgles-types";
+import React, { useMemo, useState } from "react";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type {
   DBSchemaTablesWJoins,
   LoadedSuggestions,
@@ -20,44 +15,38 @@ import type {
 import type { ColumnConfigWInfo } from "../W_Table";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
 import type { ColumnConfig } from "./ColumnMenu";
+import { getColumnListItem } from "./ColumnSelect/getColumnListItem";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { SummariseColumn } from "./SummariseColumns";
-import { getColumnListItem } from "./ColumnSelect/getColumnListItem";
 
 type P = {
   columns: ColumnConfigWInfo[];
-  tableColumns: ValidatedColumnInfo[];
   onChange: (newCols: ColumnConfigWInfo[]) => void;
-  mainMenuProps:
-    | undefined
-    | {
-        prgl: Prgl;
-        w: SyncDataItem<Required<WindowData<"table">>, true>;
-        db: DBHandlerClient;
-        suggestions: LoadedSuggestions | undefined;
-        table: DBSchemaTablesWJoins[number];
-        tables: DBSchemaTablesWJoins;
-        onClose: VoidFunction;
-      };
+  w: SyncDataItem<Required<WindowData<"table">>, true>;
+  table: DBSchemaTablesWJoins[number];
+  suggestions: LoadedSuggestions | undefined;
+  onClose: VoidFunction;
   showToggle?: boolean;
 };
 
 export const ColumnList = ({
   columns: columnsWithoutInfo,
-  tableColumns,
-  mainMenuProps,
+  table,
   onChange,
   showToggle = true,
+  w,
+  onClose,
 }: P) => {
-  const { db } = mainMenuProps ?? {};
-
-  const columns: ColumnConfigWInfo[] = useMemoDeep(
+  const prgl = usePrgl();
+  const { db } = prgl;
+  const tableColumns = table.columns;
+  const columns: ColumnConfigWInfo[] = useMemo(
     () =>
       columnsWithoutInfo.map((c) => {
         const col = tableColumns.find((tc) => tc.name === c.name);
         return { ...c, info: col };
       }),
-    [columnsWithoutInfo],
+    [columnsWithoutInfo, tableColumns],
   );
 
   /** Ensure columns do not change order when toggling */
@@ -79,7 +68,7 @@ export const ColumnList = ({
         );
       }}
       limit={200}
-      className="f-1"
+      className="f-1 p-1"
       onMultiToggle={
         !showToggle ? undefined : (
           (items) => {
@@ -93,7 +82,7 @@ export const ColumnList = ({
       }
       placeholder={`Search ${columns.length} columns`}
       items={columns
-        .sort(
+        .toSorted(
           (a, b) => (order[a.name] ?? Infinity) - (order[b.name] ?? Infinity),
         )
         .map((c) => {
@@ -108,10 +97,10 @@ export const ColumnList = ({
             data: c,
             rowClassname: "trigger-hover",
             contentRight:
-              !mainMenuProps || (!db?.sql && !c.computedConfig) ?
+              !db.sql && !c.computedConfig ?
                 null
               : <FlexRow className="mr-p5" onClick={(e) => e.stopPropagation()}>
-                  {db?.sql && !c.computedConfig && !c.nested && (
+                  {db.sql && !c.computedConfig && !c.nested && (
                     <PopupMenu
                       positioning="center"
                       title={`Alter ${c.name}`}
@@ -128,7 +117,13 @@ export const ColumnList = ({
                       onClickClose={false}
                       contentClassName="p-1"
                     >
-                      <AlterColumn {...mainMenuProps} field={c.name} />
+                      <AlterColumn
+                        table={table}
+                        onClose={onClose}
+                        prgl={prgl}
+                        suggestions={undefined}
+                        field={c.name}
+                      />
                     </PopupMenu>
                   )}
                   {c.nested && (
@@ -143,11 +138,7 @@ export const ColumnList = ({
                         />
                       }
                       render={(pClose) => (
-                        <LinkedColumn
-                          {...mainMenuProps}
-                          column={c}
-                          onClose={pClose}
-                        />
+                        <LinkedColumn w={w} column={c} onClose={pClose} />
                       )}
                     />
                   )}

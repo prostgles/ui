@@ -112,7 +112,7 @@ export const SmartFormFooterButtons = (props: P): JSX.Element => {
   );
 
   return (
-    <Footer>
+    <Footer style={{ padding: "1em" }}>
       {onClose && (
         <Btn
           className=" bg-color-0 mr-auto"

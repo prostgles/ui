@@ -1,4 +1,4 @@
-import { mdiChartLine, mdiMap } from "@mdi/js";
+import { mdiChartBar, mdiChartLine, mdiMap } from "@mdi/js";
 import { useMemoDeep } from "prostgles-client/dist/prostgles";
 import {
   _PG_numbers,
@@ -63,11 +63,14 @@ export const AddChartMenu = (props: P) => {
     return res;
   }, [chartableSQL, tables, w, type]);
 
-  const { geoCols, dateCols, sql, withStatement = "" } = chartCols;
+  const { geoCols, dateCols, barCols, sql, withStatement = "" } = chartCols;
 
   const tableName = w.table_name;
   const onAdd = (
-    linkOpts: { type: "map" | "timechart"; columns: ChartColumn[] },
+    linkOpts: {
+      type: "map" | "timechart" | "barchart";
+      columns: ChartColumn[];
+    },
     joinPath: ParsedJoinPath[] | undefined,
   ) => {
     const otherColumns = linkOpts.columns
@@ -120,6 +123,21 @@ export const AddChartMenu = (props: P) => {
               },
             ],
           }
+        : type === "barchart" ?
+          {
+            type: "barchart",
+            statType:
+              firstNumericColumn ?
+                {
+                  funcName: "$sum",
+                  numericColumn: firstNumericColumn,
+                }
+              : undefined,
+            columns: linkOpts.columns.map(({ name }, i) => ({
+              name,
+              colorArr,
+            })),
+          }
         : {
             type,
             columns: linkOpts.columns.map(({ name }, i) => ({
@@ -147,7 +165,7 @@ export const AddChartMenu = (props: P) => {
   const charts: {
     cols: ChartColumn[];
     onAdd: (cols: ChartColumn[], path: ParsedJoinPath[] | undefined) => any;
-    label: "Map" | "Timechart";
+    label: "Map" | "Timechart" | "Barchart";
     iconPath: string;
   }[] = [
     {
@@ -172,6 +190,20 @@ export const AddChartMenu = (props: P) => {
         );
       },
     },
+    // {
+    //   label: "Barchart",
+    //   iconPath: mdiChartBar,
+    //   cols: barCols,
+    //   onAdd: (cols, path) => {
+    //     onAdd(
+    //       {
+    //         type: "barchart",
+    //         columns: cols,
+    //       },
+    //       path,
+    //     );
+    //   },
+    // },
   ];
 
   return (
@@ -187,14 +219,15 @@ export const AddChartMenu = (props: P) => {
                 return undefined;
               }
 
+              const linkColumns = linkOpts.columns.map((col) => col.name);
               const matches =
                 linkOpts.type === c.label.toLowerCase() &&
                 ((w.type === "sql" && sql?.trim() === linkOpts.sql?.trim()) ||
                   (w.type === "table" &&
-                    c.cols.some((col) =>
-                      linkOpts.columns.some((c) => c.name === col.name),
-                    )));
-              if (matches) return linkOpts.columns[0]?.colorArr;
+                    c.cols.some((col) => linkColumns.includes(col.name))));
+              if (matches) {
+                return linkOpts.columns[0]?.colorArr;
+              }
             })
             .find(isDefined);
 

@@ -135,74 +135,58 @@ export const AddColumnMenu = ({
         }))}
         onChange={(type) => setColType(type)}
       />
-      {
-        !colType || !anchorEl ?
-          null
-          // <AddComputedColMenu
-          //   db={db}
-          //   w={w}
-          //   tables={tables}
-          //   onClose={onClose}
-          //   nestedColumnOpts={nestedColumnOpts}
-          // />
-        : colType === "CreateFileColumn" ?
-          <CreateFileColumn
-            db={db}
-            tables={tables}
-            fileTable={tables[0]?.info.fileTableName}
-            tableName={table.name}
-            onClose={() => setColType(undefined)}
-          />
-        : <Popup
-            title={
-              colType === "Computed" ? t.AddColumnMenu[`Add Computed Field`]
-              : colType === "Create" ?
-                t.AddColumnMenu[`Create new column`]
-              : t.AddColumnMenu["Add Referenced/Linked Fields"]
-            }
-            positioning="beneath-left"
-            anchorEl={anchorEl}
-            onClose={onClose}
-            autoFocusFirst={{ selector: `.${POPUP_CLASSES.content} input` }}
-            clickCatchStyle={{ opacity: 0.5 }}
-            contentClassName="p-1"
-          >
-            {colType === "Computed" ?
-              <QuickAddComputedColumn
-                tables={tables}
-                tableName={table.name}
-                onAddColumn={(computedColumn) => {
-                  if (!computedColumn) {
-                    setAnchorEl(undefined);
-                    return;
-                  }
-                  updateWCols(
-                    w,
-                    [computedColumn, ...(w.columns ?? [])],
-                    undefined,
-                  );
-                  setAnchorEl(undefined);
-                }}
-              />
+      {!colType || !anchorEl ?
+        null
+      : colType === "CreateFileColumn" ?
+        <CreateFileColumn
+          db={db}
+          tables={tables}
+          fileTable={tables[0]?.info.fileTableName}
+          tableName={table.name}
+          onClose={() => setColType(undefined)}
+        />
+      : <Popup
+          title={
+            colType === "Computed" ? t.AddColumnMenu[`Add Computed Field`]
             : colType === "Create" ?
-              <CreateColumn
-                db={db}
-                field=""
-                table={table}
-                tables={tables}
-                suggestions={suggestions}
-                onClose={onClose}
-              />
-            : <LinkedColumn
-                db={db}
-                column={undefined}
-                onClose={onClose}
-                tables={tables}
-                w={w}
-              />
-            }
-          </Popup>
-
+              t.AddColumnMenu[`Create new column`]
+            : t.AddColumnMenu["Add Referenced/Linked Fields"]
+          }
+          positioning="beneath-left"
+          anchorEl={anchorEl}
+          onClose={onClose}
+          autoFocusFirst={{ selector: `.${POPUP_CLASSES.content} input` }}
+          clickCatchStyle={{ opacity: 0.5 }}
+          contentClassName="p-1"
+        >
+          {colType === "Computed" ?
+            <QuickAddComputedColumn
+              existingColumn={undefined}
+              tableName={table.name}
+              onAddColumn={(computedColumn) => {
+                if (!computedColumn) {
+                  setAnchorEl(undefined);
+                  return;
+                }
+                updateWCols(
+                  w,
+                  [computedColumn, ...(w.columns ?? [])],
+                  undefined,
+                );
+                setAnchorEl(undefined);
+              }}
+            />
+          : colType === "Create" ?
+            <CreateColumn
+              db={db}
+              field=""
+              table={table}
+              tables={tables}
+              suggestions={suggestions}
+              onClose={onClose}
+            />
+          : <LinkedColumn column={undefined} onClose={onClose} w={w} />}
+        </Popup>
       }
     </>
   );

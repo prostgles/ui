@@ -5,7 +5,7 @@ import { createHiPPICanvas } from "./createHiPPICanvas";
 import { drawMonotoneXCurve } from "./drawMonotoneXCurve";
 import { allLowerCase, type ShapeV2 } from "./drawShapes/drawShapes";
 import { roundRect } from "./roundRect";
-import type { XYFunc } from "./TimeChart";
+import type { XYFunc } from "./TimeChart/TimeChart";
 
 export type StrokeProps = {
   lineWidth: number;
@@ -45,6 +45,7 @@ export type ChartedText<T = any> = ShapeBase<T> &
     text: string;
     font?: string;
     textAlign?: CanvasTextAlign;
+    textBaseline?: CanvasTextBaseline;
     coords: Point;
     background?: Partial<StrokeProps> &
       Partial<FillProps> & {
@@ -439,6 +440,7 @@ export class CanvasChart {
     if (cached) return cached;
     ctx.fillStyle = s.fillStyle;
     ctx.textAlign = s.textAlign ?? ctx.textAlign;
+    ctx.textBaseline = s.textBaseline ?? ctx.textBaseline;
     ctx.font = s.font || ctx.font;
     const metrics = ctx.measureText(s.text);
 
@@ -561,6 +563,11 @@ export class CanvasChart {
         const coords = getScreenCoords(s.coords);
         const { textAlign = "start" } = s;
 
+        ctx.fillStyle = s.fillStyle;
+        ctx.textAlign = textAlign;
+        ctx.textBaseline = s.textBaseline ?? ctx.textBaseline;
+        ctx.font = s.font || ctx.font;
+
         if (s.background) {
           const txtSize = this.measureText(s);
           const txtPadding = s.background.padding || 6;
@@ -593,9 +600,6 @@ export class CanvasChart {
           ctx.fill();
         }
 
-        ctx.fillStyle = s.fillStyle;
-        ctx.textAlign = textAlign;
-        ctx.font = s.font || ctx.font;
         const topOffsetToCenterItVertically = 2;
         ctx.fillText(
           s.text,

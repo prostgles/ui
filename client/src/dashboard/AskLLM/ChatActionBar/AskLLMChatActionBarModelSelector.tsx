@@ -116,6 +116,7 @@ export const AskLLMChatActionBarModelSelector = (
                         title="Add provider API Key"
                         onClick={() => setAddProviderCredentials(provider_id)}
                         color="action"
+                        data-command="LLMChatOptions.Model.AddCredentials"
                         iconPath={mdiAccountKey}
                       />
                     : <Btn

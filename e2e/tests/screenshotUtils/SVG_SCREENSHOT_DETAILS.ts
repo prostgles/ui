@@ -14,23 +14,12 @@ import { newConnectionSvgif } from "./newConnection.svgif";
 import { sqlEditorSvgif } from "./sqlEditor.svgif";
 import { tableSvgif } from "./table.svgif";
 import { timechartSvgif } from "./timechart.svgif";
-import { type SVGifScene } from "./utils/constants";
+import type { getSceneUtils } from "./utils/getSceneUtils";
 
 export type OnBeforeScreenshot = (
   page: PageWIds,
   utils: ReturnType<typeof getDashboardUtils>,
-  svgOpts: {
-    addScene: (scene?: Partial<SVGifScene>) => Promise<void>;
-    addSceneWithClickAnimation: (
-      selector:
-        | string
-        | {
-            svgif: string;
-            playwright: string;
-          },
-      action?: "click" | "rightClick" | { action: "type"; text: string },
-    ) => Promise<void>;
-  },
+  svgOpts: Omit<ReturnType<typeof getSceneUtils>, "svgifScenes">,
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {

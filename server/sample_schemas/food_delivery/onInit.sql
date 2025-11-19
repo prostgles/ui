@@ -1036,7 +1036,7 @@ UPDATE "london_restaurants.geojson"
 SET geometry = st_point(lon, lat, 4326);
 
 
-CREATE TABLE IF NOT EXISTS "routes" (
+CREATE TABLE IF NOT EXISTS routes (
   id BIGINT PRIMARY KEY,
   geog GEOGRAPHY,
   deliverer_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
@@ -1340,7 +1340,7 @@ BEGIN
       FROM ordrs o
       JOIN LATERAL (
         SELECT *
-        FROM "routes" r
+        FROM routes r
         -- WHERE properties::TEXT not ilike '%footway%'
         -- AND st_isempty(geog::GEOMETRY) = false 
         -- AND st_length(geog) > 100
@@ -1353,7 +1353,7 @@ BEGIN
         r.id, 
         r.geog <-> o.user_geog
     )
-  UPDATE "routes" r
+  UPDATE routes r
   SET deliverer_id = l.deliverer_id
   FROM locations l
   WHERE r.id = l.road_id;
@@ -1362,7 +1362,7 @@ BEGIN
 
     UPDATE users u
     SET location = st_lineinterpolatepoint(r.geog, progress - (random() * 0.1), true)
-    FROM "routes" r
+    FROM routes r
     WHERE u.id = r.deliverer_id;
     
     COMMIT;

@@ -176,6 +176,11 @@ const createWindow = () => {
     icon: iconPath,
   });
   mainWindow.setMenuBarVisibility(false);
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // open url in a browser and prevent default
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
 };
 
 let mainWindowLoaded: { port: number };

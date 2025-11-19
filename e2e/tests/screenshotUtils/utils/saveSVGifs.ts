@@ -29,7 +29,7 @@ export const saveSVGifs = async (
         svgifSpecs.map(async ({ fileName, scenes }) => {
           //@ts-ignore
           const content = await window.getSVGif(scenes, filesMap);
-          return { fileName: `${fileName}.svgif.svg`, content };
+          return { fileName: `${fileName}.svgif.svg`, content, scenes };
         }),
       );
 
@@ -38,7 +38,7 @@ export const saveSVGifs = async (
     { svgFiles: svgSceneFiles, svgifSpecs },
   );
 
-  svgifs.forEach(({ fileName, content }) => {
+  svgifs.forEach(({ fileName, content, scenes }) => {
     const savePath = SVG_SCREENSHOT_DIR;
     if (!fs.existsSync(savePath)) {
       fs.mkdirSync(savePath, { recursive: true });

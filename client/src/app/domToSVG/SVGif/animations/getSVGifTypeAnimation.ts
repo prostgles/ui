@@ -12,7 +12,7 @@ import type { getSVGifTargetBBox } from "../getSVGifTargetBBox";
  */
 export const getSVGifTypeAnimation = (
   viewport: { width: number; height: number },
-  { element, bbox }: ReturnType<typeof getSVGifTargetBBox>,
+  { element, bbox: rawBBox }: ReturnType<typeof getSVGifTargetBBox>,
   { svgDom, svgFileName }: SVGifParsedScene,
   animation: Extract<SVGif.Animation, { type: "type" }>,
   {
@@ -29,7 +29,6 @@ export const getSVGifTypeAnimation = (
     fromTime: number;
   },
 ) => {
-  const { height, width } = viewport;
   const { elementSelector, duration } = animation;
 
   const sceneNodeAnimations: SceneNodeAnimation[] = [];
@@ -54,7 +53,7 @@ export const getSVGifTypeAnimation = (
   const waitBeforeZoomOut = 300;
   const typingDuration =
     duration - zoomInDuration - zoomOutDuration - waitBeforeZoomOut;
-  if (typingDuration <= 500) {
+  if (typingDuration < 500) {
     throw [
       `Duration ${duration}ms for "type" animation on element ${elementSelector} in SVG file ${svgFileName} is too short.`,
       `Must be at least ${zoomInDuration + zoomOutDuration + waitBeforeZoomOut + 500}ms`,
@@ -84,18 +83,23 @@ export const getSVGifTypeAnimation = (
     fromTimeLocal += tspanDuration;
   });
 
+  const adjustedBBox = {
+    ...rawBBox,
+    width: Math.max(rawBBox.width, 600), // Ensure minimum width for better zoom effect
+  };
+
   const xPadding = 50;
-  const requiredScale = (svgDom.clientWidth - xPadding) / bbox.width;
+  const requiredScale = (svgDom.clientWidth - xPadding) / adjustedBBox.width;
   const effectiveScale = toFixed(requiredScale);
   const toPerc = getPercent(fromTime + duration);
 
   // Calculate center of the element
-  const elementCenterX = toFixed(bbox.x + bbox.width / 2);
-  const elementCenterY = toFixed(bbox.y + bbox.height / 2);
+  const elementCenterX = toFixed(adjustedBBox.x + adjustedBBox.width / 2);
+  const elementCenterY = toFixed(adjustedBBox.y + adjustedBBox.height / 2);
 
   // Calculate viewport center
-  const viewportCenterX = toFixed(width / 2);
-  const viewportCenterY = toFixed(height / 2);
+  const viewportCenterX = toFixed(viewport.width / 2);
+  const viewportCenterY = toFixed(viewport.height / 2);
 
   // Calculate translation needed to center the element
   const translateX = toFixed(viewportCenterX - elementCenterX);

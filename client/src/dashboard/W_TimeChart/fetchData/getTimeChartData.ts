@@ -2,7 +2,7 @@ import { isDefined, tryCatchV2 } from "prostgles-types";
 import type {
   DateExtent,
   getMainTimeBinSizes,
-} from "../../Charts/getTimechartBinSize";
+} from "../../Charts/TimeChart/getTimechartBinSize";
 import type {
   ProstglesTimeChartState,
   ProstglesTimeChartStateLayer,

@@ -39,7 +39,6 @@ export const getWhatToRenderOnSVG = async (
     bbox,
     isVisible,
   };
-  if (!isVisible) return { elemInfo };
 
   /** Used to highlight so will render as a rectangle */
   const attributeData = attributesToKeep.reduce(
@@ -54,6 +53,25 @@ export const getWhatToRenderOnSVG = async (
       | Partial<Record<(typeof attributesToKeep)[number], string>>
       | undefined,
   );
+
+  let mightBeHovered = false;
+  if (!isVisible) {
+    const hoverClasses = [
+      "show-on-row-hover",
+      "show-on-hover",
+      "show-on-parent-hover",
+      "show-on-trigger-hover",
+    ];
+    if (
+      hoverClasses.some(
+        (cls) => element.classList.contains(cls) || element.closest(`.${cls}`),
+      ) &&
+      (attributeData ||
+        element.querySelector(`[data-command], [data-key], [data-label]`))
+    ) {
+      mightBeHovered = true;
+    } else return { elemInfo };
+  }
 
   const background = getBackgroundColor(style);
   const parentBackground =
@@ -119,6 +137,7 @@ export const getWhatToRenderOnSVG = async (
   return {
     elemInfo,
     attributeData,
+    mightBeHovered,
     background:
       /** TODO: addNewChildren should be fixed. This is a workaround when non transparent bg appears after dark theme switch */
       element instanceof HTMLBodyElement ? style.background

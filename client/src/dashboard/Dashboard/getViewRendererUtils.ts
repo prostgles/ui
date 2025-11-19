@@ -181,6 +181,10 @@ export const getViewRendererUtils = function (
               },
             },
           };
+        } else if (type === "barchart") {
+          extra = {
+            parent_window_id: parentW.id,
+          };
         }
         // const existingCharts = await windows.filter(cw => cw.parent_window_id === parentW.id);
         // if(existingCharts.length){
@@ -198,7 +202,8 @@ export const getViewRendererUtils = function (
 
   type ClickRowOpts =
     | { type: "table-row" }
-    | { type: "timechart"; value: ActiveRow["timeChart"] };
+    | { type: "timechart"; value: ActiveRow["timeChart"] }
+    | { type: "barchart"; value: ActiveRow["barChart"] };
   const onClickRow = async (
     rowOrFilter: AnyObject | undefined,
     table_name: string,

@@ -1,11 +1,12 @@
+import type { SVG_SCREENSHOT_DETAILS } from "./SVG_SCREENSHOT_DETAILS";
 import type { SVGifScene } from "./utils/constants";
 import type { SVGIfSpec } from "./utils/saveSVGifs";
 
 export const getOverviewSvgifSpecs = async (
   existing: Record<string, SVGifScene[]>,
-): Promise<SVGIfSpec> => {
+): Promise<(SVGIfSpec & { usedExternally?: boolean })[]> => {
   const sliceScenes = (
-    fileName: string,
+    fileName: keyof typeof SVG_SCREENSHOT_DETAILS,
     start: number,
     end = existing[fileName].length,
   ) => {
@@ -17,17 +18,33 @@ export const getOverviewSvgifSpecs = async (
     }
     return scenes;
   };
-  return {
-    fileName: "overview",
-    scenes: [
-      ...sliceScenes("command_palette", 1, 8),
-      ...sliceScenes("schema_diagram", 1, 6),
-      ...sliceScenes("dashboard", 6),
-      ...sliceScenes("ai_assistant", 0),
+  return [
+    {
+      fileName: "overview",
+      scenes: [
+        ...sliceScenes("command_palette", 1, 8),
+        ...sliceScenes("schema_diagram", 1, 6),
+        ...sliceScenes("dashboard", 6),
+        ...sliceScenes("ai_assistant", 0),
 
-      ...sliceScenes("sql_editor", 8, 10),
-      ...sliceScenes("sql_editor", 18, 19),
-      ...sliceScenes("file_importer", 0),
-    ],
-  };
+        ...sliceScenes("sql_editor", 8, 10),
+        ...sliceScenes("sql_editor", 18, 19),
+        ...sliceScenes("file_importer", 0),
+      ],
+    },
+    {
+      fileName: "linked_data",
+      usedExternally: true,
+      scenes: [
+        ...sliceScenes("table", 2),
+        ...sliceScenes("schema_diagram", 1, 6),
+        ...sliceScenes("dashboard", 6),
+        ...sliceScenes("ai_assistant", 0),
+
+        ...sliceScenes("sql_editor", 8, 10),
+        ...sliceScenes("sql_editor", 18, 19),
+        ...sliceScenes("file_importer", 0),
+      ],
+    },
+  ];
 };

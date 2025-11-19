@@ -5,16 +5,14 @@ import { getCommandElemSelector } from "Testing";
 export const electronSetupSvgif: OnBeforeScreenshot = async (
   page,
   _,
-  { addSceneWithClickAnimation, addScene },
+  { addSceneAnimation, addScene },
 ) => {
   await page.addInitScript(() => {
     //@ts-ignore
     window.MOCK_ELECTRON_WINDOW_ATTR = true;
   });
   await goTo(page, "/");
-  await addSceneWithClickAnimation(
-    getCommandElemSelector("ElectronSetup.Next"),
-  );
+  await addSceneAnimation(getCommandElemSelector("ElectronSetup.Next"));
   await page.waitForTimeout(2500);
   await addScene({
     animations: [{ type: "wait", duration: 5000 }],

@@ -1,5 +1,6 @@
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { _PG_date, _PG_interval, _PG_numbers } from "prostgles-types";
+import type { ColumnConfig } from "../ColumnMenu";
 
 const infoTypes = {
   string: { udt_name: "text", tsDataType: "string" },
@@ -18,6 +19,9 @@ export type FuncDef = {
   udtDataTypeCol?: "any" | ValidatedColumnInfo["udt_name"][];
   outType: "sameAsInput" | Pick<ValidatedColumnInfo, "tsDataType" | "udt_name">;
   isAggregate?: boolean;
+  requiresArg?: keyof NonNullable<
+    Required<ColumnConfig>["computedConfig"]["args"]
+  >;
 };
 
 export const getFuncs = (): FuncDef[] => {
@@ -261,7 +265,8 @@ export const getFuncs = (): FuncDef[] => {
       label: "Template string",
       subLabel:
         "Create a string based on column values. E.g.: Dear {FirstName} {LastName}, ...",
-    },
+      requiresArg: "$template_string",
+    } satisfies Pick<FuncDef, "key" | "label" | "subLabel" | "requiresArg">,
   ];
 
   const res: FuncDef[] = [
@@ -269,14 +274,26 @@ export const getFuncs = (): FuncDef[] => {
       ...f,
       udtDataTypeCol: ["geography", "geometry"] as any,
     })),
-    ...DateFuncs.map((f) => ({
-      ...f,
-      outType:
-        f.key.startsWith("$age") || f.key === "$duration" ?
-          infoTypes.interval
-        : infoTypes.string,
-      udtDataTypeCol: ["int8", ..._PG_date] as any,
-    })),
+    ...DateFuncs.map(
+      (f) =>
+        ({
+          ...f,
+          outType:
+            f.key.startsWith("$age") || f.key === "$duration" ?
+              infoTypes.interval
+            : infoTypes.string,
+          requiresArg: undefined,
+          udtDataTypeCol: ["int8", ..._PG_date] as any,
+        }) satisfies Pick<
+          FuncDef,
+          | "key"
+          | "label"
+          | "subLabel"
+          | "requiresArg"
+          | "outType"
+          | "udtDataTypeCol"
+        >,
+    ),
     ...StringFuncs.map((f) => ({
       ...f,
       outType: infoTypes.string,
@@ -359,6 +376,7 @@ export const aggFunctions = [
     label:
       "Non-null string/text values concatenated into a string, separated by delimiter",
     tsDataTypeCol: ["string"] as ["string"],
+    requiresArg: "$string_agg",
     outType: infoTypes.string,
   },
 ] as const satisfies readonly (Omit<FuncDef, "subLabel"> & { name: string })[];
@@ -416,3 +434,5 @@ export const getColumnsAcceptedByFunction = (
   }
   return undefined;
 };
+
+export const FUCTION_DEFINITIONS = [...getAggFuncs(), ...getFuncs()];

@@ -47,6 +47,7 @@ export const getChartCols = (
 ): {
   geoCols: ChartColumn[];
   dateCols: ChartColumn[];
+  barCols: ChartColumn[];
   sql?: string;
   withStatement?: string;
 } => {
@@ -129,9 +130,17 @@ export const getChartCols = (
 
   const dateCols: ChartColumn[] = [...windowDateCols, ...dateColsJoined];
   const geoCols: ChartColumn[] = [...windowGeoCols, ...geoColsJoined];
+  const barCols: ChartColumn[] = cols.map((c) => ({
+    ...c,
+    type: "normal",
+    otherColumns: getOtherCols(
+      tables.find((t) => t.name === w.table_name)?.columns || [],
+    ),
+  }));
 
   return {
     dateCols,
     geoCols,
+    barCols,
   };
 };

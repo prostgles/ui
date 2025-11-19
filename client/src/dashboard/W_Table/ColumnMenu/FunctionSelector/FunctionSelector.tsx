@@ -1,8 +1,7 @@
+import { Select } from "@components/Select/Select";
 import { mdiFunction, mdiSigma } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { _PG_date, _PG_interval, _PG_numbers } from "prostgles-types";
 import React, { useMemo } from "react";
-import { Select } from "@components/Select/Select";
 import type { ColumnConfig } from "../ColumnMenu";
 import {
   funcAcceptsColumn,
@@ -56,33 +55,35 @@ export const FunctionSelector = ({
   }, [column, tableColumns]);
 
   return (
-    <Select
-      id="func_selector"
-      data-command="FunctionSelector"
-      className={className}
-      style={{ maxHeight: "500px" }}
-      value={selectedFunction}
-      label={"Applied function"}
-      placeholder="Search functions..."
-      showSelectedSublabel={true}
-      optional={true}
-      onChange={(key) => {
-        const def = funcs.find((f) => f.key === key);
-        onSelect(def);
-      }}
-      noSearchLimit={5}
-      variant={selectedFunction ? undefined : "search-list-only"}
-      fullOptions={funcs.map((def) => {
-        return {
-          ...def,
-          iconPath: def.isAggregate ? mdiSigma : mdiFunction,
-          disabledInfo:
-            cannotUseAggs && def.isAggregate ?
-              "Cannot use aggregations with nested column"
-            : def.isAllowedForColumn ? undefined
-            : "Not suitable for the selected column data type",
-        };
-      })}
-    />
+    <>
+      <Select
+        id="func_selector"
+        data-command="FunctionSelector"
+        className={className}
+        style={{ maxHeight: "500px" }}
+        value={selectedFunction}
+        label={"Applied function"}
+        placeholder="Search functions..."
+        showSelectedSublabel={true}
+        optional={true}
+        onChange={(key) => {
+          const def = funcs.find((f) => f.key === key);
+          onSelect(def);
+        }}
+        noSearchLimit={5}
+        variant={selectedFunction ? undefined : "search-list-only"}
+        fullOptions={funcs.map((def) => {
+          return {
+            ...def,
+            iconPath: def.isAggregate ? mdiSigma : mdiFunction,
+            disabledInfo:
+              cannotUseAggs && def.isAggregate ?
+                "Cannot use aggregations with nested column"
+              : def.isAllowedForColumn ? undefined
+              : "Not suitable for the selected column data type",
+          };
+        })}
+      />
+    </>
   );
 };

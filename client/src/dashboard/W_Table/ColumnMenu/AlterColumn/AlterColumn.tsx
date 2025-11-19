@@ -1,14 +1,13 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { IconPalette } from "@components/IconPalette/IconPalette";
 import type { DBSchemaTable } from "prostgles-types";
 import { asName, getKeys } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../../App";
-import Btn from "@components/Btn";
-import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol, FlexRow } from "@components/Flex";
 import { getStringFormat } from "../../../../utils";
 import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import { debounce } from "../../../Map/DeckGLWrapped";
 import type { DeltaOf } from "../../../RTComp";
 import RTComp from "../../../RTComp";
@@ -20,14 +19,11 @@ import {
 } from "./alterColumnUtilts";
 import { ColumnEditor } from "./ColumnEditor";
 import { getAlterFkeyQuery } from "./ReferenceEditor";
-import { IconPalette } from "@components/IconPalette/IconPalette";
 
 export type AlterColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   prgl: Prgl;
   table: DBSchemaTable;
   field: string;
-  db: DBHandlerClient;
-  tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };
 
@@ -76,7 +72,11 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
   };
 
   setConstraints = debounce(async () => {
-    const { table, db, field } = this.props;
+    const {
+      table,
+      prgl: { db },
+      field,
+    } = this.props;
     if (!db.sql || !field) return;
     const constraints = await getColumnConstraints(table.name, field, db.sql);
     this.setState({ constraints });
@@ -94,7 +94,10 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
   onNewDataType = async (
     args: Pick<Required<S>["edited"], "dataType" | "notNull" | "defaultValue">,
   ) => {
-    const { table, db } = this.props;
+    const {
+      table,
+      prgl: { db },
+    } = this.props;
 
     const field = JSON.stringify(this.state.field || this.props.field);
 
@@ -211,7 +214,8 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
   };
 
   render() {
-    const { table, db, tables, prgl } = this.props;
+    const { table, prgl } = this.props;
+    const { db, tables } = prgl;
 
     const isCreate = !this.props.field;
     const field = this.state.field || this.props.field;

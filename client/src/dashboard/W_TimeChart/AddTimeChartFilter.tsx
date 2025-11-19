@@ -12,7 +12,7 @@ import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import type { PopupProps } from "@components/Popup/Popup";
 import Popup from "@components/Popup/Popup";
-import type { TimeChart } from "../Charts/TimeChart";
+import type { TimeChart } from "../Charts/TimeChart/TimeChart";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import type { ActiveRow } from "../W_Table/W_Table";
 const filterColor = "rgba(5, 176, 223, 0.1)";

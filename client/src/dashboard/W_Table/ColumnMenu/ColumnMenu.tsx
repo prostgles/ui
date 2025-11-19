@@ -62,6 +62,7 @@ import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { ColumnQuickStats } from "./ColumnQuickStats/ColumnQuickStats";
 import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
+import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
 
 export type ColumnConfig = {
   idx?: number;
@@ -310,7 +311,7 @@ export const ColumnMenu = (props: P) => {
       ),
     },
     "Add Computed Column": {
-      hide: !!column.nested,
+      hide: !!column.nested || isComputed,
       disabledText: isComputed ? "Not allowed on computed columns" : undefined,
       leftIconPath: mdiTableColumnPlusAfter,
       content: (
@@ -325,6 +326,32 @@ export const ColumnMenu = (props: P) => {
           db={db}
           selectedColumn={column.name}
           tableHandler={db[tableName]}
+        />
+      ),
+    },
+    "Edit Computed Column": {
+      hide: !isComputed,
+      leftIconPath: mdiTableColumnPlusAfter,
+      style: { color: "var(--active)" },
+      content: (
+        <QuickAddComputedColumn
+          existingColumn={column}
+          onAddColumn={(newCol) => {
+            updateWCols(
+              w,
+              (w.columns ?? []).map((c) => {
+                if (c.name === column.name) {
+                  return {
+                    ...c,
+                    ...newCol,
+                  };
+                }
+                return c;
+              }),
+            );
+            onClose();
+          }}
+          tableName={tableName}
         />
       ),
     },
@@ -367,15 +394,7 @@ export const ColumnMenu = (props: P) => {
           "No foreign keys to/from this table"
         : undefined,
       label: `${column.nested ? "Edit" : "Add"} Linked Columns`,
-      content: (
-        <LinkedColumn
-          w={w}
-          tables={tables}
-          column={column}
-          db={db}
-          onClose={onClose}
-        />
-      ),
+      content: <LinkedColumn w={w} column={column} onClose={onClose} />,
     },
     Alter: {
       leftIconPath: mdiTools,
@@ -386,10 +405,8 @@ export const ColumnMenu = (props: P) => {
       hide: isComputed,
       content: !!table && (
         <AlterColumn
-          db={db}
           table={table}
           field={column.name}
-          tables={tables}
           prgl={prgl}
           suggestions={props.suggestions}
           onClose={onClose}

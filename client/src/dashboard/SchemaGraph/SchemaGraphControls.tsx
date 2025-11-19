@@ -1,18 +1,18 @@
-import React, { useState } from "react";
 import { getEntries } from "@common/utils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { FlexRow, FlexRowWrap } from "@components/Flex";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { Select } from "@components/Select/Select";
-import { getCssVariableValue } from "../Charts/onRenderTimechart";
+import React, { useState } from "react";
+import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
+import { getCssVariableValue } from "../Charts/TimeChart/onRenderTimechart";
+import type { CASCADE } from "../SQLEditor/SQLCompletion/getPGObjects";
 import {
   type ColumnColorMode,
   type ColumnDisplayMode,
 } from "./ERDSchema/ERDSchema";
 import type { SchemaGraphProps } from "./SchemaGraph";
-import type { CASCADE } from "../SQLEditor/SQLCompletion/getPGObjects";
-import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export const SchemaGraphControls = ({
   columnColorMode,

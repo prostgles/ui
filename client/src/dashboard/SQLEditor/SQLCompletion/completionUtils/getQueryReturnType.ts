@@ -70,7 +70,10 @@ const getTableExpressionReturnTypeWithTableOIDs = async (
   const queryWithoutSemicolon = getSQLQuerySemicolon(query, false);
   const result = await sql(
     `
-      ${queryWithoutSemicolon}
+      SELECT * 
+      FROM (
+        ${queryWithoutSemicolon}
+      ) prostgles_temp_table_getQueryReturnType
       LIMIT 0;
     `,
     {},

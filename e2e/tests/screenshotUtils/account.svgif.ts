@@ -5,10 +5,10 @@ import { goTo } from "utils/goTo";
 export const accountSvgif: OnBeforeScreenshot = async (
   page,
   _,
-  { addSceneWithClickAnimation },
+  { addSceneAnimation },
 ) => {
   await goTo(page, "/account");
   await page.waitForTimeout(1500);
-  await addSceneWithClickAnimation(getDataKeyElemSelector("security"));
-  await addSceneWithClickAnimation(getDataKeyElemSelector("api"));
+  await addSceneAnimation(getDataKeyElemSelector("security"));
+  await addSceneAnimation(getDataKeyElemSelector("api"));
 };

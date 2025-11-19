@@ -45,7 +45,7 @@ export const elementToSVG = async (
   const { elemInfo, ...whatToRender } = _whatToRender;
   const { x, y, width, height, style, isVisible } = elemInfo;
 
-  if (!isVisible) {
+  if (!isVisible && !_whatToRender.mightBeHovered) {
     return whatToRender;
   }
 

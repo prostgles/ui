@@ -189,6 +189,7 @@ export const SelectTriggerButton = <
           <Btn
             iconPath={mdiClose}
             title="Reset selection"
+            size={size}
             onClick={(e) => onChange(undefined as any, e, undefined)}
           />
         )}

@@ -11,7 +11,7 @@ import { expect } from "@playwright/test";
 export const sqlEditorSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection, openMenuIfClosed, toggleMenuPinned },
-  { addScene },
+  { addScene, addSceneAnimation },
 ) => {
   await openConnection("prostgles_video_demo");
   await page.getByTestId("WorkspaceMenu.list").getByText("default").click();
@@ -39,18 +39,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   };
 
   await page.waitForTimeout(500);
-  await addScene({
-    animations: [
-      { type: "wait", duration: 500 },
-      {
-        type: "click",
-        elementSelector: getCommandElemSelector("dashboard.menu.sqlEditor"),
-        duration: 1e3,
-      },
-    ],
-  });
-  await page.waitForTimeout(500);
-  await page.getByTestId("dashboard.menu.sqlEditor").click();
+  await addSceneAnimation(getCommandElemSelector("dashboard.menu.sqlEditor"));
   await page.waitForTimeout(500);
   await toggleMenuPinned();
   await addScene({
@@ -62,7 +51,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
         offset: { x: 50, y: 20 },
         duration: 500,
       },
-      { type: "wait", duration: 500 },
+      { type: "wait", duration: 700 },
     ],
   });
 

@@ -3,7 +3,6 @@ import type { SVGContext } from "../../../app/domToSVG/containers/elementToSVG";
 import { addImageFromDataURL } from "../../../app/domToSVG/graphics/imgToSVG";
 import type { Point } from "../../Charts";
 import type { LinkLine, Rectangle } from "../CanvasChart";
-import { measureText } from "../measureText";
 import { DEFAULT_SHADOW } from "../roundRect";
 import type { ShapeV2 } from "./drawShapes";
 

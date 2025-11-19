@@ -139,9 +139,12 @@ test.describe("Create docs and screenshots", () => {
       await page.waitForTimeout(1100);
 
       await prepare(page);
-      const { svgifSpecs } = await saveSVGs(page);
+      const { svgifSpecs, overviewSvgifSpecs } = await saveSVGs(page);
       await svgScreenshotsCompleteReferenced(
         svgifSpecs.flatMap((s) => s.scenes),
+        overviewSvgifSpecs
+          .filter((s) => s.usedExternally)
+          .map((s) => s.fileName + ".svgif"),
       );
     }
   });

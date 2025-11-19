@@ -1,7 +1,6 @@
+import type { DBSSchema } from "@common/publishUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
-import type { DBSSchema } from "@common/publishUtils";
-import type { SearchAllProps } from "../SearchAll/SearchAll";
 
 import type {
   MissingBinsOption,
@@ -15,6 +14,7 @@ import type {
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
 
+import type { CardLayout } from "@common/DashboardTypes";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { SmartGroupFilter } from "@common/filterUtils";
 import type { OmitDistributive } from "@common/utils";
@@ -24,7 +24,6 @@ import type {
   ColumnSort,
   ColumnSortSQL,
 } from "../W_Table/ColumnMenu/ColumnMenu";
-import type { CardLayout } from "@common/DashboardTypes";
 const getRandomElement = <Arr>(
   items: Arr[],
 ): { elem: Arr | undefined; index: number } => {
@@ -114,6 +113,7 @@ export type ChartType =
   | "table"
   | "map"
   | "timechart"
+  | "barchart"
   | "sql"
   | "card"
   | "method";

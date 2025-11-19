@@ -122,7 +122,7 @@ export const dashboardDemo = async () => {
   await tout(5e3);
   await click("ChartLayerManager");
   await click("ChartLayerManager.AddChartLayer.addLayer");
-  // await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`"routes".geog`)}]`);
+  // await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`routes.geog`)}]`);
   await click(
     "ChartLayerManager.AddChartLayer.addLayer",
     `[data-key=${JSON.stringify(`"london_restaurants.geojson".geometry`)}]`,

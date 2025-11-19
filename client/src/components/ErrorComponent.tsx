@@ -97,9 +97,7 @@ export default class ErrorComponent extends React.Component<P> {
             }),
         }}
       >
-        {withIcon && (
-          <Icon size={1} className="as-start" path={mdiAlertOutline} />
-        )}
+        {withIcon && <Icon className="as-start f-0" path={mdiAlertOutline} />}
         <FlexCol
           className={
             "gap-1 as-center-thisbreakslongerrors " +

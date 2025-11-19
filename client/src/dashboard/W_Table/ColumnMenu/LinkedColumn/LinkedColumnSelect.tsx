@@ -1,20 +1,20 @@
-import { mdiPlus, mdiSigma } from "@mdi/js";
-import React, { useState } from "react";
-import { WithPrgl } from "../../../../WithPrgl";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
-import { AddComputedColMenu } from "../AddComputedColumn/AddComputedColMenu";
-import { QuickAddComputedColumn } from "../AddComputedColumn/QuickAddComputedColumn";
-import { ColumnList } from "../ColumnList";
-import { NestedTimechartControls } from "../NestedTimechartControls";
-import type { ColumnConfig } from "../ColumnMenu";
-import type { LinkedColumnProps } from "./LinkedColumn";
+import { mdiPlus, mdiSigma } from "@mdi/js";
+import React, { useState } from "react";
+import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
 import { getMinimalColumnInfo } from "../../tableUtils/tableUtils";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import { AddComputedColMenu } from "../AddComputedColumn/AddComputedColMenu";
+import { QuickAddComputedColumn } from "../AddComputedColumn/QuickAddComputedColumn";
+import { ColumnList } from "../ColumnList";
+import type { ColumnConfig } from "../ColumnMenu";
+import { NestedTimechartControls } from "../NestedTimechartControls";
+import type { LinkedColumnProps } from "./LinkedColumn";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 type P = LinkedColumnProps & {
   updateNested: (newNested: Partial<ColumnConfig["nested"]>) => void;
@@ -23,15 +23,14 @@ type P = LinkedColumnProps & {
   updateColumn: (newCol: Partial<ColumnConfig>) => void;
 };
 export const LinkedColumnSelect = ({
-  tables,
   w,
-  db,
   table,
   currentColumn,
   column,
   updateNested,
   updateColumn,
 }: P) => {
+  const { tables, db } = usePrgl();
   const nestedColumns = currentColumn?.nested?.columns;
   const updateNestedColumns = (newCols: ColumnConfigWInfo[]) => {
     if (!table) throw "not ok";
@@ -70,23 +69,13 @@ export const LinkedColumnSelect = ({
           render={(pClose) => {
             return (
               <FlexCol>
-                <WithPrgl
-                  onRender={(prgl) => (
-                    <ColumnList
-                      columns={nestedColumns}
-                      tableColumns={table.columns}
-                      mainMenuProps={{
-                        db,
-                        onClose: pClose,
-                        suggestions: undefined,
-                        table,
-                        tables,
-                        w,
-                        prgl,
-                      }}
-                      onChange={updateNestedColumns}
-                    />
-                  )}
+                <ColumnList
+                  columns={nestedColumns}
+                  table={table}
+                  onClose={pClose}
+                  suggestions={undefined}
+                  w={w}
+                  onChange={updateNestedColumns}
                 />
 
                 <FlexRow className="p-1">
@@ -132,7 +121,6 @@ export const LinkedColumnSelect = ({
             onChange={(chart) => {
               updateNested({ chart, limit: chart ? 200 : 20 });
             }}
-            tables={tables}
           />
           <div className="py-p75">OR</div>
 
@@ -152,8 +140,8 @@ export const LinkedColumnSelect = ({
             }
             render={(popupClose) => (
               <QuickAddComputedColumn
-                tables={tables}
                 tableName={table.name}
+                existingColumn={undefined}
                 onAddColumn={(newCol) => {
                   if (!newCol) {
                     popupClose();

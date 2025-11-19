@@ -88,6 +88,9 @@ export type ActiveRow = {
     max: Date;
     center: Date;
   };
+  barChart?: {
+    values: any[];
+  };
 };
 
 export type MinMax<T = number> = {
@@ -685,9 +688,9 @@ export default class W_Table extends RTComp<
                     },
                   }}
                 />
-                <QuickFilterGroupsControl {...this.props} />
               </FlexCol>
             )}
+            <QuickFilterGroupsControl {...this.props} />
 
             <W_Table_Content
               key={"W_Table_Content"}

@@ -18,10 +18,9 @@ import type { ColumnConfig } from "../ColumnMenu";
 import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 export type LinkedColumnProps = {
-  tables: DBSchemaTablesWJoins;
-  db: DBHandlerClient;
   w: WindowSyncItem<"table">;
   column: ColumnConfigWInfo | undefined;
   onClose: VoidFunction | undefined;
@@ -47,7 +46,8 @@ export const NESTED_COLUMN_DISPLAY_MODES = [
 ] as const;
 
 export const LinkedColumn = (props: LinkedColumnProps) => {
-  const { w, tables, db } = props;
+  const { w } = props;
+  const { tables, db } = usePrgl();
   const getCol = (name: string) => w.columns?.find((c) => c.name === name);
 
   const [localColumn, setLocalColumn] = useState<ColumnConfigWInfo>();

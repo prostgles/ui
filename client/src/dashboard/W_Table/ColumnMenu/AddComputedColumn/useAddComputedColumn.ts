@@ -2,27 +2,49 @@ import { isDefined, pickKeys } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  FUCTION_DEFINITIONS,
   getColumnsAcceptedByFunction,
   type FuncDef,
 } from "../FunctionSelector/functions";
 import { getAllJoins } from "../JoinPathSelectorV2";
 import type { QuickAddComputedColumnProps } from "./QuickAddComputedColumn";
+import type { ColumnConfig } from "../ColumnMenu";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 export const useAddComputedColumnState = ({
-  tables,
   tableName,
   onAddColumn,
+  existingColumn,
 }: Pick<
   QuickAddComputedColumnProps,
-  "tables" | "tableName" | "onAddColumn"
+  "tableName" | "onAddColumn" | "existingColumn"
 >) => {
+  const { tables } = usePrgl();
   const table = useMemo(
     () => tables.find((t) => t.name === tableName),
     [tables, tableName],
   );
   const [includeJoins, setIncludeJoins] = useState(true);
 
-  const [funcDef, setFuncDef] = useState<FuncDef | undefined>();
+  const existingColumnInfo = useMemo(() => {
+    if (!existingColumn?.computedConfig || !table) return undefined;
+    const config = existingColumn.computedConfig;
+    return {
+      args: config.args,
+      funcDef:
+        FUCTION_DEFINITIONS.find((f) => f.key === config.funcDef.key) ||
+        undefined,
+      column: table.columns.find((c) => c.name === config.column),
+    };
+  }, [existingColumn, table]);
+
+  const [funcDef, setFuncDef] = useState<FuncDef | undefined>(
+    existingColumnInfo?.funcDef,
+  );
+  const [args, setArgs] = useState<
+    Required<ColumnConfig>["computedConfig"]["args"]
+  >(existingColumnInfo?.args);
+
   const allowedColumns: undefined | ValidatedColumnInfoWithJoin[] =
     useMemo(() => {
       if (!funcDef || !table) return undefined;
@@ -54,10 +76,10 @@ export const useAddComputedColumnState = ({
       return [...tableColumns, ...joinedColumns];
     }, [funcDef, includeJoins, table, tableName, tables]);
 
-  const [column, setColumn] = useState<
-    ValidatedColumnInfoWithJoin | undefined
-  >();
-  const [name, setName] = useState("");
+  const [column, setColumn] = useState<ValidatedColumnInfoWithJoin | undefined>(
+    existingColumnInfo?.column,
+  );
+  const [name, setName] = useState(existingColumn?.name || "");
 
   useEffect(() => {
     if (!funcDef) {
@@ -65,7 +87,7 @@ export const useAddComputedColumnState = ({
     }
     const name =
       column ?
-        `${funcDef.label}( ${[column.join?.table.name, column.name].filter(isDefined).join(".")} )`
+        `${funcDef.label}( ${[column.join?.table.label, column.name].filter(isDefined).join(".")} )`
       : funcDef.label;
     setName(name);
   }, [funcDef, column]);
@@ -110,16 +132,19 @@ export const useAddComputedColumnState = ({
           computedConfig: {
             ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
             funcDef,
+            args,
             column: column?.name,
           },
         });
       }
     },
-    [onAddColumn, name],
+    [onAddColumn, name, args],
   );
 
   const [onAddDisabledInfo, onAdd] =
     !funcDef ? ["Must select a function", undefined]
+    : funcDef.requiresArg && !args?.[funcDef.requiresArg] ?
+      [`Must provide argument: ${funcDef.requiresArg}`, undefined]
     : allowedColumns && !column ? ["Must select a column", undefined]
     : [undefined, () => addColumn(column, funcDef)];
 
@@ -136,6 +161,8 @@ export const useAddComputedColumnState = ({
     funcDef,
     onAddDisabledInfo,
     onAdd,
+    args,
+    setArgs,
   };
 };
 

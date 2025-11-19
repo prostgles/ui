@@ -187,6 +187,7 @@ type Filtering = {
   /**
    * Predefined quick filters that the user can toggle on/off
    * These are shown in the filter bar under "Quick Filters"
+   * MUST ENSURE FILTER VALUES FOR FOREIGN KEYS EXIST IN THE DATABASE
    */
   quickFilterGroups?: {
     [groupName: string]: {

@@ -129,7 +129,12 @@ export class LinkMenu extends RTComp<P, S> {
             if (l.options.type === "table") {
               return w.table_name!;
             } else {
-              return `${l.options.joinPath?.at(-1)?.table ?? w.table_name ?? otherW?.table_name} (${l.options.columns.map((c) => c.name)})`;
+              const chartedColumnsLabel = l.options.columns.map((c) => c.name);
+              const chartedTableLabel =
+                l.options.joinPath?.at(-1)?.table ??
+                w.table_name ??
+                otherW?.table_name;
+              return `${chartedTableLabel} (${chartedColumnsLabel})`;
             }
           };
           const textStyle = {

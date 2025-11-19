@@ -63,6 +63,9 @@ type AddComputedColMenuS = {
   addTo: (typeof NEW_COL_POSITIONS)[number]["key"];
 };
 
+/**
+ * @deprecated Use QuickAddComputedColumn instead
+ */
 export class AddComputedColMenu extends RTComp<
   AddComputedColMenuP,
   AddComputedColMenuS

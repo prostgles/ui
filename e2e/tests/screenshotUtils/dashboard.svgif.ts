@@ -12,7 +12,7 @@ import { clickTableRow } from "./table.svgif";
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection, openMenuIfClosed, toggleMenuPinned },
-  { addScene, addSceneWithClickAnimation },
+  { addScene, addSceneAnimation },
 ) => {
   await goTo(page, "/connections");
 
@@ -79,12 +79,12 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   // Table
   await closeWorkspaceWindows(page);
   await openMenuIfClosed();
-  await addSceneWithClickAnimation(getDataKey("orders"));
+  await addSceneAnimation(getDataKey("orders"));
 
-  const pageParams = { page, addSceneWithClickAnimation, addScene };
+  const pageParams = { page, addSceneAnimation, addScene };
   await clickTableRow(pageParams, 1, undefined, 1);
 
-  await addSceneWithClickAnimation(
+  await addSceneAnimation(
     getCommandElemSelector("JoinedRecords.SectionToggle") +
       '[data-key="order_items"]',
   );
@@ -99,11 +99,11 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await addScene();
   await page.getByTestId("Popup.close").click();
 
-  await addSceneWithClickAnimation(getCommandElemSelector("AddChartMenu.Map"));
+  await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
 
-  await addSceneWithClickAnimation(getDataKey("(deliverer_id = id) users"));
+  await addSceneAnimation(getDataKey("(deliverer_id = id) users"));
   await page.waitForTimeout(3000);
-  await addSceneWithClickAnimation(
+  await addSceneAnimation(
     getCommandElemSelector("dashboard.window.detachChart"),
   );
 
@@ -122,10 +122,8 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   await clickTableRow(pageParams, 1);
 
-  await addSceneWithClickAnimation(
-    getCommandElemSelector("AddChartMenu.Timechart"),
-  );
-  await addSceneWithClickAnimation(
+  await addSceneAnimation(getCommandElemSelector("AddChartMenu.Timechart"));
+  await addSceneAnimation(
     getCommandElemSelector("AddChartMenu.Timechart") +
       " " +
       getDataKey("created_at"),

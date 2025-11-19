@@ -6,8 +6,8 @@ import type {
   LinkLine,
   Rectangle,
 } from "../../Charts/CanvasChart";
-import { measureText } from "../../Charts/measureText";
-import { getCssVariableValue } from "../../Charts/onRenderTimechart";
+import { measureText } from "../../Charts/TimeChart/measureText";
+import { getCssVariableValue } from "../../Charts/TimeChart/onRenderTimechart";
 import type {
   DBSchemaTableColumn,
   DBSchemaTableWJoins,

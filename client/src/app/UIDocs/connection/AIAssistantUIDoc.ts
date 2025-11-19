@@ -251,11 +251,27 @@ export const AIAssistantUIDoc = {
           ],
         },
         {
-          type: "select",
+          type: "popup",
           title: "LLM Model",
           description:
-            "Selects the LLM model to be used for the current chat. Different models may have different capabilities and performance.",
+            "Selects the LLM model to be used for the current chat. Different models may have different capabilities and performance. ",
           selector: getCommandElemSelector("LLMChatOptions.Model"),
+          children: [
+            {
+              type: "button",
+              selector: `${getCommandElemSelector("LLMChatOptions.Model")} .LABELWRAPPER`,
+              title: "Select model",
+              description: "Selects this LLM model for the current chat.",
+            },
+            {
+              type: "smartform-popup",
+              title: "Add model credentials",
+              description:
+                "Opens the form to add llm provider credentials for the selected LLM model.",
+              selectorCommand: "LLMChatOptions.Model.AddCredentials",
+              tableName: "llm_credentials",
+            },
+          ],
         },
       ],
     },

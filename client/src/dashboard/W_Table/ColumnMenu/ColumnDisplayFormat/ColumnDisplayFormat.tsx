@@ -1,6 +1,6 @@
 import type { DeepWriteable } from "@common/utils";
 import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
-import type { DBSchemaTable } from "prostgles-types";
+import { includes, type DBSchemaTable } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { Prgl } from "src/App";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
@@ -27,7 +27,9 @@ export const ColumnDisplayFormat = ({
     const schemaWithoutAllowedValues = {
       ...ColumnFormatSchema,
     } as DeepWriteable<typeof ColumnFormatSchema>;
-    const allowedRenderers = getFormatOptions(column.info);
+    const allowedRenderers = getFormatOptions(
+      column.info ?? column.computedConfig,
+    );
     const textCols = table.columns
       .filter((c) => c.tsDataType === "string")
       .map((c) => c.name);
@@ -54,7 +56,7 @@ export const ColumnDisplayFormat = ({
         return t;
       })
       .filter((t) =>
-        allowedRenderers.find((df) => (t.type.enum as any).includes(df.type)),
+        allowedRenderers.find((df) => includes(t.type.enum, df.type)),
       ) as typeof schemaWithoutAllowedValues.oneOfType;
     return schemaWithoutAllowedValues;
   }, [column, table.columns]);

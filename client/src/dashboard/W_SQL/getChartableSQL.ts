@@ -8,6 +8,7 @@ import {
 } from "../W_Table/TableMenu/getChartCols";
 import { getTableExpressionReturnType } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
+import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
 
 export type ChartableSQL = {
   /**
@@ -22,6 +23,7 @@ export type ChartableSQL = {
   columns: ColInfo[];
   geoCols: ChartColumn[];
   dateCols: ChartColumn[];
+  barCols: ChartColumn[];
   text: string;
 };
 
@@ -41,17 +43,26 @@ export const getChartableSQL = async (
     sql: "",
     dateCols: [],
     geoCols: [],
+    barCols: [],
     columns: [],
   };
 
   const sql = cleanSql(text);
-  const { dateCols, geoCols, columns } = await getChartColsFromSql(
+  const { dateCols, geoCols, barCols, columns } = await getChartColsFromSql(
     sql,
     sqlHandler,
     tables,
   );
   if (ftoken?.textLC === "select") {
-    return { text, withStatement: "", sql, dateCols, geoCols, columns };
+    return {
+      text,
+      withStatement: "",
+      sql,
+      dateCols,
+      barCols,
+      geoCols,
+      columns,
+    };
   }
 
   /**
@@ -108,6 +119,7 @@ export const getChartableSQL = async (
     sql: lastSelectStatement,
     dateCols,
     geoCols,
+    barCols,
     columns,
   };
 };
@@ -151,6 +163,7 @@ const getChartColsFromSql = async (
     sql: trimmedSql,
     geoCols: allCols.filter((c) => isGeoCol(c)),
     dateCols: allCols.filter((c) => isDateCol(c)),
+    barCols: allCols,
     columns: allCols,
   };
 };

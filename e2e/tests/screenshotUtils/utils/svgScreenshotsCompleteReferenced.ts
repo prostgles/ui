@@ -24,6 +24,7 @@ const getSavedSVGFiles = () => {
 
 export const svgScreenshotsCompleteReferenced = async (
   svgifScenes: SVGifScene[],
+  svgifFilesUsedExternaally: string[],
 ) => {
   const { savedSVGFiles } = getSavedSVGFiles();
   const docMarkdownFiles = getFilesFromDir(DOCS_DIR, ".md");
@@ -61,7 +62,9 @@ export const svgScreenshotsCompleteReferenced = async (
   const svgFilesNotUsedAnywhere = savedSVGFiles
     .map((f) => f.fileName.slice(0, -4))
     .filter((fileName) => {
-      const isUsed = usedSrcValues.includes(fileName);
+      const isUsed =
+        usedSrcValues.includes(fileName) ||
+        svgifFilesUsedExternaally.includes(fileName);
       const isSVGif = fileName.includes(".svgif");
       if (!isUsed && !isSVGif) {
         const usedInSvgif = svgifFileNames.has(fileName);

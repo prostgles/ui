@@ -4,24 +4,31 @@ import FormField from "@components/FormField/FormField";
 import { mdiFunction, mdiSigma } from "@mdi/js";
 import React from "react";
 import { t } from "src/i18n/i18nUtils";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
+import type { ColumnConfigWInfo } from "../../W_Table";
 import type { ColumnConfig } from "../ColumnMenu";
+import { FunctionExtraArguments } from "../FunctionSelector/FunctionExtraArguments";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
 import { FunctionColumnList } from "./FunctionColumnList";
 import { useAddComputedColumnState } from "./useAddComputedColumn";
 
 export type QuickAddComputedColumnProps = {
-  tables: DBSchemaTablesWJoins;
   tableName: string;
+  existingColumn: ColumnConfigWInfo | undefined;
   onAddColumn: (newColumn: ColumnConfig | undefined) => void;
 };
 
 export const QuickAddComputedColumn = ({
   tableName,
-  tables,
   onAddColumn,
+  existingColumn,
 }: QuickAddComputedColumnProps) => {
-  const state = useAddComputedColumnState({ tables, tableName, onAddColumn });
+  const state = useAddComputedColumnState({
+    tableName,
+    onAddColumn,
+    existingColumn,
+  });
+  const { db } = usePrgl();
   const {
     table,
     allowedColumns,
@@ -31,6 +38,8 @@ export const QuickAddComputedColumn = ({
     setColumn,
     setFuncDef,
     setName,
+    args,
+    setArgs,
   } = state;
 
   if (!table) return <>Table not found {tableName}</>;
@@ -68,6 +77,17 @@ export const QuickAddComputedColumn = ({
         />
       }
 
+      {funcDef?.requiresArg && (
+        <FunctionExtraArguments
+          argName={funcDef.requiresArg}
+          args={args}
+          onChange={setArgs}
+          columnName={undefined}
+          db={db}
+          table={table}
+        />
+      )}
+
       {allowedColumns && funcDef && (
         <FunctionColumnList
           allowedColumns={allowedColumns}
@@ -83,7 +103,7 @@ export const QuickAddComputedColumn = ({
           label="Computed column name"
           value={name}
           inputProps={{
-            autoFocus: true,
+            autoFocus: !funcDef?.requiresArg,
             "data-command": "QuickAddComputedColumn.name",
           }}
           onChange={setName}
@@ -99,7 +119,9 @@ export const QuickAddComputedColumn = ({
           disabledInfo={state.onAddDisabledInfo}
           onClick={state.onAdd}
         >
-          {t.AddColumnMenu["Add Computed Field"]}
+          {existingColumn ?
+            t.common.Update
+          : t.AddColumnMenu["Add Computed Field"]}
         </Btn>
       </FlexRow>
     </FlexCol>

@@ -44,6 +44,7 @@ export const setupLLM = async (dbs: DBS) => {
           "",
           "Using dashboard structure below create workspaces with useful views my current schema.",
           "Return a json of this format: `{ prostglesWorkspaces: WorkspaceInsertModel[] }`",
+          "Do not return more than 3 workspaces, each with no more than 5 views.",
           "",
           "```typescript",
           LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,

@@ -20,7 +20,7 @@ export const loadGeneratedMap = (
     const columns = [
       {
         name: l.geoColumn,
-        colorArr: [...getPaletteRGBColor(i), 0.8],
+        colorArr: [...getPaletteRGBColor(i), 200],
       },
     ];
     if ("table_name" in l) {

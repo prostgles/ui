@@ -484,7 +484,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               getFuncDef={
                 !db.sql ? undefined : (
                   (name, minArgs) => {
-                    return getFuncs({ db: db as any, name, minArgs });
+                    return getFuncs({ db: { sql: db.sql! }, name, minArgs });
                   }
                 )
               }

@@ -2,8 +2,6 @@ import { type TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import { asName, isEqual, tryCatchV2 } from "prostgles-types";
 import { isDefined, quickClone } from "../../../utils";
-import type { DateExtent } from "../../Charts/getTimechartBinSize";
-import { getTimechartBinSize } from "../../Charts/getTimechartBinSize";
 import type {
   WindowData,
   WindowSyncItem,
@@ -13,6 +11,10 @@ import type { TimeChartBinSize } from "../W_TimeChartMenu";
 import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
 import { getSQLQuerySemicolon } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getTimechartExtentFilter } from "./getTimechartExtentFilter";
+import {
+  getTimechartBinSize,
+  type DateExtent,
+} from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
 
 export const getTimeChartFilters = (
   w: WindowData<"timechart"> | WindowSyncItem<"timechart">,

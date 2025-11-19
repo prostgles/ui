@@ -484,6 +484,8 @@ export const COMMANDS = {
   "QuickAddComputedColumn.name": "",
   "LLMChatOptions.Prompt.Preview": "",
   "FunctionColumnList.SearchInput": "",
+  "LLMChatOptions.Model.AddCredentials": "",
+  QuickFilterGroupsControl: "",
 } as const satisfies Record<
   string,
   | string
@@ -524,17 +526,12 @@ declare module "react" {
 }
 
 export declare namespace SVGif {
-  export type Animation =
-    | {
-        elementSelector: string;
-        duration: number;
-        type: "type";
-      }
+  export type CursorAnimation =
     | {
         elementSelector: string;
         offset?: { x: number; y: number };
         duration: number;
-        type: "click" | "clickAppearOnHover" | "zoomTo" | "fadeIn" | "growIn";
+        type: "click" | "clickAppearOnHover";
 
         /**
          * Time to wait before clicking after reaching the final position
@@ -549,6 +546,18 @@ export declare namespace SVGif {
         type: "moveTo";
         xy: [number, number];
         duration: number;
+      };
+  export type Animation =
+    | CursorAnimation
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "type";
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "fadeIn" | "growIn";
       }
     | {
         type: "wait";

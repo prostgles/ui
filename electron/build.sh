@@ -1,7 +1,7 @@
 
 #!/bin/bash
 
-npm version "$(../scripts/get_version.sh ../package.json)" --force --no-git-tag-version
+npm version "$(../scripts/get_version.sh ../package.json)" --force --no-git-tag-version --silent
 
 rm -rf ./ui
 rm -rf ./dist

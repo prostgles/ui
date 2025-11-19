@@ -14,7 +14,7 @@ import { typeSendAddScenes } from "./utils/typeSendAddScenes";
 export const aiAssistantSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection },
-  { addScene, addSceneWithClickAnimation },
+  { addScene, addSceneAnimation },
 ) => {
   // await goTo(page, "/server-settings?section=llmProviders");
   // await page.getByTestId("dashboard.window.rowInsertTop").click();
@@ -42,7 +42,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await deleteExistingLLMChat(page);
   await page.getByTestId("Popup.close").last().click();
   await closeWorkspaceWindows(page);
-  await addSceneWithClickAnimation(getCommandElemSelector("AskLLM"));
+  await addSceneAnimation(getCommandElemSelector("AskLLM"));
 
   await setModelByText(page, "pros");
   await setPromptByText(page, "dashboard");
@@ -120,7 +120,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     .last();
 
   await loadTaskBtn.waitFor({ state: "visible", timeout: 15000 });
-  await addSceneWithClickAnimation(
+  await addSceneAnimation(
     getCommandElemSelector("AskLLMChat.LoadSuggestedToolsAndPrompt"),
   );
 
@@ -187,7 +187,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     "Fetching data from",
   );
 
-  await addSceneWithClickAnimation(getDataKeyElemSelector("fetch_weather.js"));
+  await addSceneAnimation(getDataKeyElemSelector("fetch_weather.js"));
 
   // await page.getByTestId("ToolUseMessage").last().scrollIntoViewIfNeeded();
   // await addScene({

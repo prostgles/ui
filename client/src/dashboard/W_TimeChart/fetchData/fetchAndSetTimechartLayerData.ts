@@ -1,7 +1,7 @@
 import { MILLISECOND } from "../../Charts";
-import { getMainTimeBinSizes } from "../../Charts/getTimechartBinSize";
 import { getTimeChartData } from "./getTimeChartData";
 import type { W_TimeChart } from "../W_TimeChart";
+import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
 
 export const fetchAndSetTimechartLayerData = async function (
   this: W_TimeChart,

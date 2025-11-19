@@ -1,8 +1,10 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { asName } from "prostgles-types";
-import type { DataItem, TimeChartLayer } from "../../Charts/TimeChart";
-import { getMainTimeBinSizes } from "../../Charts/getTimechartBinSize";
+import type {
+  DataItem,
+  TimeChartLayer,
+} from "../../Charts/TimeChart/TimeChart";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { getSQLQuerySemicolon } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getGroupByValueColor } from "../../WindowControls/ColorByLegend";
@@ -18,6 +20,7 @@ import { type TimeChartLayerWithBinOrError } from "./getTimeChartLayersWithBins"
 import { getTimeChartSelectParams } from "./getTimeChartSelectParams";
 import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
 import { getTimechartExtentFilter } from "./getTimechartExtentFilter";
+import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
 
 type getTChartLayerArgs = Pick<
   ProstglesTimeChartState,

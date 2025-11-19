@@ -10,76 +10,89 @@ import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 export const tableSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection, toggleMenuPinned },
-  { addScene, addSceneWithClickAnimation },
+  { addScene, addSceneAnimation },
 ) => {
   await openConnection("food_delivery");
   await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
   await toggleMenuPinned(false);
-  await addSceneWithClickAnimation(getCommandElemSelector("dashboard.menu"));
-  await addSceneWithClickAnimation(getDataKey("users"));
+  await addSceneAnimation(
+    getCommandElemSelector("dashboard.menu"),
+    undefined,
+    "fast",
+  );
+  await addSceneAnimation(getDataKey("users"));
 
   /** Show linked computed column */
-  await addSceneWithClickAnimation(getCommandElemSelector("AddColumnMenu"));
-  await addSceneWithClickAnimation(
+  await addSceneAnimation(getCommandElemSelector("AddColumnMenu"));
+  await addSceneAnimation(
     getCommandElemSelector("AddColumnMenu") + " " + getDataKey("Computed"),
+    undefined,
+    "fast",
   );
-  await addSceneWithClickAnimation(getDataKey("$sum"));
-  await addSceneWithClickAnimation(
+  await addSceneAnimation(getDataKey("$sum"));
+  await addSceneAnimation(
     getCommandElemSelector("FunctionColumnList.SearchInput"),
     { action: "type", text: "price" },
   );
 
-  await addSceneWithClickAnimation(
-    getDataKey("(id = customer_id) orders.Total Price"),
-  );
-  await addSceneWithClickAnimation(
+  await addSceneAnimation(getDataKey("(id = customer_id) orders.Total Price"));
+  await addSceneAnimation(
     getCommandElemSelector("QuickAddComputedColumn.name"),
     { action: "type", text: "Total Spent" },
   );
-  await addSceneWithClickAnimation(
-    getCommandElemSelector("QuickAddComputedColumn.Add"),
-  );
+  await addSceneAnimation(getCommandElemSelector("QuickAddComputedColumn.Add"));
   await page.waitForTimeout(2000);
-  await addScene();
-  await addSceneWithClickAnimation(getDataKey("Total Spent"));
-  await addSceneWithClickAnimation(getDataKey("Total Spent"));
+
+  /** Sort by computed column */
+  await addSceneAnimation(getDataKey("Total Spent"), undefined, "fast");
+  await addSceneAnimation(getDataKey("Total Spent"), undefined, "fast");
 
   /** Show card joined records */
-  const pageParams = { page, addSceneWithClickAnimation, addScene };
+  const pageParams = { page, addSceneAnimation, addScene };
   await clickTableRow(pageParams, 1, undefined, 1);
-  await addSceneWithClickAnimation(
-    getCommandElemSelector("JoinedRecords.SectionToggle") +
-      '[data-key="orders"]',
-  );
-  await page.waitForTimeout(2000);
-  await page
-    .locator(
-      getCommandElemSelector("JoinedRecords.Section") + '[data-key="orders"]',
-    )
-    .scrollIntoViewIfNeeded();
-  await addScene();
+  const openJoinedSection = async (joinedTable: string) => {
+    await addSceneAnimation(
+      getCommandElemSelector("JoinedRecords.SectionToggle") +
+        getDataKey(joinedTable),
+    );
+    await page.waitForTimeout(2000);
+    await page
+      .locator(
+        getCommandElemSelector("JoinedRecords.Section") +
+          getDataKey(joinedTable),
+      )
+      .scrollIntoViewIfNeeded();
+    await addScene({ animations: [{ type: "wait", duration: 500 }] });
+  };
+  await openJoinedSection("orders");
+  await addSceneAnimation({
+    selector: getCommandElemSelector("SmartCard.viewEditRow"),
+    nth: 0,
+  });
+  await openJoinedSection("order_items");
 
-  await page.getByTestId("Popup.close").click();
+  await page.getByTestId("Popup.close").last().click();
+  await page.getByTestId("Popup.close").last().click();
 
   /** Show quick stats filter and map */
-  await addSceneWithClickAnimation(
+  await addSceneAnimation(
     `[role="columnheader"]` + getDataKey("type"),
     "rightClick",
   );
-  await addSceneWithClickAnimation(getDataKey("Quick Stats"));
-  await addSceneWithClickAnimation(getDataKey("rider"));
+  await addSceneAnimation(getDataKey("Quick Stats"));
+  await addSceneAnimation(getDataKey("rider"));
   await page.getByTestId("Popup.close").click();
 
-  await addSceneWithClickAnimation(getCommandElemSelector("AddChartMenu.Map"));
-  await addSceneWithClickAnimation(
+  await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
+  await addSceneAnimation(
     getCommandElemSelector("AddChartMenu.Map") + " " + getDataKey("location"),
   );
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(3000);
   await addScene();
 
-  // await addSceneWithClickAnimation(getDataKey("orders"));
-  // await addSceneWithClickAnimation(
+  // await addSceneAnimation(getDataKey("orders"));
+  // await addSceneAnimation(
   //   getCommandElemSelector("JoinedRecords.SectionToggle") +
   //     '[data-key="order_items"]',
   // );
@@ -92,7 +105,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
   //   .scrollIntoViewIfNeeded();
   // await addScene();
   // await page.getByTestId("Popup.close").click();
-  // await addSceneWithClickAnimation(
+  // await addSceneAnimation(
   //   getCommandElemSelector("dashboard.window.toggleFilterBar"),
   // );
 
@@ -116,8 +129,8 @@ export const tableSvgif: OnBeforeScreenshot = async (
   // await page.waitForTimeout(500);
   // await addScene();
 
-  // await addSceneWithClickAnimation(getCommandElemSelector("AddChartMenu.Map"));
-  // await addSceneWithClickAnimation(getDataKey("(deliverer_id = id) users"));
+  // await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
+  // await addSceneAnimation(getDataKey("(deliverer_id = id) users"));
   // await page.waitForTimeout(1000);
   // await addScene();
 };
@@ -125,7 +138,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
 export const clickTableRow = async (
   {
     page,
-    addSceneWithClickAnimation,
+    addSceneAnimation,
   }: { page: PageWIds } & Parameters<typeof tableSvgif>[2],
   rowIndex: number,
   recordScene = true,
@@ -141,6 +154,6 @@ export const clickTableRow = async (
     await page.locator(playwright).click();
     return;
   }
-  await addSceneWithClickAnimation({ svgif, playwright });
+  await addSceneAnimation({ svgif, playwright });
   await page.waitForTimeout(2000);
 };

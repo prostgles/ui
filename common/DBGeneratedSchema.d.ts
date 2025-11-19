@@ -292,6 +292,7 @@ export type DBGeneratedSchema = {
        |  {  type: "table";  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
        |  {  type: "map";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  title?: string;  osmLayerQuery?: string;  mapIcons?: |  {  type: "fixed";  display?: "icon" | "icon+circle";  iconPath: string; } |  {  type: "conditional";  display?: "icon" | "icon+circle";  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: "fixed";  colorArr: number[]; } |  {  type: "scale";  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: "conditional";  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
        |  {  type: "timechart";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  title?: string;  groupByColumn?: string;  otherColumns?: (  {  name: string;  label?: string;  udt_name: string;  is_pkey?: boolean; } )[];  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: "$min" | "$max" | "$countAll" | "$avg" | "$sum";  numericColumn: string; }; } )[]; }
+       |  {  type: "barchart";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  title?: string;  statType?: {  funcName: "$min" | "$max" | "$count" | "$countAll" | "$avg" | "$sum";  numericColumn: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
       user_id: string;
       w1_id: string;
       w2_id: string;
@@ -798,7 +799,7 @@ export type DBGeneratedSchema = {
       table_name?: null | string;
       table_oid?: null | number;
       title?: null | string;
-      type?: null | "map" | "sql" | "table" | "timechart" | "card" | "method"
+      type?: null | "map" | "sql" | "table" | "timechart" | "card" | "method" | "barchart"
       user_id: string;
       workspace_id?: null | string;
     };

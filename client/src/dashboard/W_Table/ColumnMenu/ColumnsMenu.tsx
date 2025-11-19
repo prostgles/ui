@@ -6,7 +6,6 @@ import type {
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
-import { WithPrgl } from "../../../WithPrgl";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
   WindowData,
@@ -14,6 +13,7 @@ import type {
 } from "../../Dashboard/dashboardUtils";
 import RTComp from "../../RTComp";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
+import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
 import { updateWCols } from "../tableUtils/tableUtils";
 import { AddColumnMenu } from "./AddColumnMenu";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
@@ -21,7 +21,6 @@ import { ColumnList } from "./ColumnList";
 import type { ColumnConfig } from "./ColumnMenu";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
-import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
 
 type P = {
   db: DBHandlerClient;
@@ -127,13 +126,7 @@ export class ColumnsMenu extends RTComp<P, S> {
     } else if (this.state.addRefColMenu) {
       popup = (
         <Popup title="Add Linked Data">
-          <LinkedColumn
-            db={db}
-            column={undefined}
-            tables={tables}
-            w={w}
-            onClose={onClose}
-          />
+          <LinkedColumn column={undefined} w={w} onClose={onClose} />
         </Popup>
       );
     }
@@ -157,23 +150,13 @@ export class ColumnsMenu extends RTComp<P, S> {
     return (
       <div className="flex-col f-1 min-h-0">
         {popup}
-        <WithPrgl
-          onRender={(prgl) => (
-            <ColumnList
-              columns={cols}
-              tableColumns={table!.columns}
-              mainMenuProps={{
-                db,
-                onClose,
-                suggestions: this.props.suggestions,
-                table: table!,
-                tables,
-                w,
-                prgl,
-              }}
-              onChange={onUpdateCols}
-            />
-          )}
+        <ColumnList
+          columns={cols}
+          w={w}
+          onClose={onClose}
+          suggestions={this.props.suggestions}
+          table={table}
+          onChange={onUpdateCols}
         />
         <div className="flex-col p-1">
           <AddColumnMenu
