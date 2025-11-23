@@ -3,7 +3,7 @@ import type { PanListeners } from "../setPan";
 import { setPan } from "../setPan";
 import { createHiPPICanvas } from "./createHiPPICanvas";
 import { drawMonotoneXCurve } from "./drawMonotoneXCurve";
-import { allLowerCase, type ShapeV2 } from "./drawShapes/drawShapes";
+import { type ShapeV2 } from "./drawShapes/drawShapes";
 import { roundRect } from "./roundRect";
 import type { XYFunc } from "./TimeChart/TimeChart";
 
@@ -567,7 +567,7 @@ export class CanvasChart {
         ctx.textAlign = textAlign;
         ctx.textBaseline = s.textBaseline ?? ctx.textBaseline;
         ctx.font = s.font || ctx.font;
-
+        ctx.save();
         if (s.background) {
           const txtSize = this.measureText(s);
           const txtPadding = s.background.padding || 6;
@@ -577,7 +577,7 @@ export class CanvasChart {
           }
           ctx.lineWidth = s.background.lineWidth ?? ctx.lineWidth;
           let x = coords[0] - txtSize.width / 2 - txtPadding;
-          const y = coords[1] - txtSize.actualHeight - txtPadding;
+          const y = coords[1] - txtSize.actualHeight / 1.4 - txtPadding;
 
           if (["left", "start"].includes(textAlign)) {
             x = coords[0] - txtPadding;
@@ -599,6 +599,7 @@ export class CanvasChart {
           }
           ctx.fill();
         }
+        ctx.restore();
 
         const topOffsetToCenterItVertically = 2;
         ctx.fillText(

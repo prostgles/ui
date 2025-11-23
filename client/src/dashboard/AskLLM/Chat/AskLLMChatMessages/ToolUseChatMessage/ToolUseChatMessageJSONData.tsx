@@ -1,43 +1,44 @@
-import { isEmpty, tryCatchV2 } from "prostgles-types";
-import React, { useMemo } from "react";
-import { filterArr } from "@common/llmUtils";
-import type { DBSSchema } from "@common/publishUtils";
 import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,
 } from "@components/Chat/MarkdownMonacoCode/MarkdownMonacoCode";
 import { MediaViewer } from "@components/MediaViewer";
+import { isEmpty, tryCatchV2 } from "prostgles-types";
+import React, { useMemo } from "react";
 
 import { ErrorTrap } from "@components/ErrorComponent";
-import type { ToolResultMessage, ToolUseMessage } from "./ToolUseChatMessage";
 import type { ToolUseMessageProps } from "./useToolUseChatMessage";
+import { getToolUseResult } from "./utils/getToolUseResult";
 
 export const ToolUseChatMessageJSONData = ({
   messages,
-  toolUseMessageIndex,
+  toolUseMessageContentIndex: toolUseMessageIndex,
   messageIndex,
   sqlHandler,
   loadedSuggestions,
 }: ToolUseMessageProps) => {
   const fullMessage = messages[messageIndex];
-  const m = fullMessage?.message[toolUseMessageIndex];
+  const toolUseMessageContent = fullMessage?.message[toolUseMessageIndex];
 
-  if (!fullMessage || m?.type !== "tool_use") {
+  if (!fullMessage || toolUseMessageContent?.type !== "tool_use") {
     return <>Unexpected message tool use message</>;
   }
 
-  const toolUseResult = getToolUseResult(
-    messages.slice(toolUseMessageIndex),
-    m,
-  );
+  const toolUseResult = getToolUseResult({
+    messages,
+    toolUseMessageIndex: messageIndex,
+    toolUseMessageContentIndex: toolUseMessageIndex,
+  });
   return (
     <ErrorTrap>
-      {m.input && !isEmpty(m.input) && (
+      {toolUseMessageContent.input && !isEmpty(toolUseMessageContent.input) && (
         <MarkdownMonacoCode
-          key={`${m.type}-input`}
+          key={`${toolUseMessageContent.type}-input`}
           title="Arguments:"
           codeString={
-            tryCatchV2(() => JSON.stringify(m.input, null, 2)).data ?? ""
+            tryCatchV2(() =>
+              JSON.stringify(toolUseMessageContent.input, null, 2),
+            ).data ?? ""
           }
           className="f-1"
           language="json"
@@ -122,31 +123,4 @@ const ContentRender = ({
       })}
     </>
   );
-};
-
-export const getToolUseResult = (
-  nextMessages: DBSSchema["llm_messages"][],
-  toolUseMessageRequest: ToolUseMessage,
-):
-  | undefined
-  | {
-      toolUseResult: DBSSchema["llm_messages"];
-      toolUseResultMessage: ToolResultMessage;
-    } => {
-  for (const m of nextMessages) {
-    const toolResults = filterArr(m.message, {
-      type: "tool_result",
-    } as const);
-
-    const result = toolResults.find(
-      (tr) => tr.tool_use_id === toolUseMessageRequest.id,
-    );
-    if (result) {
-      return {
-        toolUseResult: m,
-        toolUseResultMessage: result,
-      };
-    }
-  }
-  return;
 };

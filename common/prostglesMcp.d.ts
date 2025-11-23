@@ -120,6 +120,74 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
     readonly "prostgles-ui": {
+        readonly suggest_agent_workflow: {
+            readonly schema: {
+                readonly type: {
+                    readonly allowed_mcp_tool_names: {
+                        readonly description: "List of MCP tools that can be used to complete the task";
+                        readonly arrayOf: "string";
+                    };
+                    readonly database_access: {
+                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.";
+                        readonly oneOfType: readonly [{
+                            readonly Mode: {
+                                readonly enum: readonly ["None"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["execute_sql_rollback"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["execute_sql_commit"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["Custom"];
+                            };
+                            readonly tables: {
+                                readonly arrayOfType: {
+                                    readonly tableName: "string";
+                                    readonly select: "boolean";
+                                    readonly insert: "boolean";
+                                    readonly update: "boolean";
+                                    readonly delete: "boolean";
+                                };
+                            };
+                        }];
+                    };
+                    readonly agent_definitions: {
+                        readonly description: string;
+                        readonly record: {
+                            readonly values: {
+                                readonly type: {
+                                    readonly prompt: "string";
+                                    readonly inputJSONSchema: "any";
+                                    readonly outputJSONSchema: "any";
+                                    readonly maxCostUSD: {
+                                        readonly type: "number";
+                                        readonly optional: true;
+                                    };
+                                    readonly maxIterations: {
+                                        readonly type: "number";
+                                        readonly optional: true;
+                                    };
+                                    readonly allowedToolNames: "string[]";
+                                    readonly allowDatabaseAccess: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                };
+                            };
+                        };
+                    };
+                    readonly workflow_function_definition: {
+                        readonly description: string;
+                        readonly type: "string";
+                    };
+                };
+            };
+        };
         readonly suggest_tools_and_prompt: {
             readonly schema: {
                 readonly type: {

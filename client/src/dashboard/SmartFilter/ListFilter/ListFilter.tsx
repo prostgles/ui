@@ -198,6 +198,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
           onSearch={(searchTerm) => {
             this.setState({ searchTerm });
           }}
+          className="ml-p5"
           noSearchLimit={0}
           id="values"
           items={items}

@@ -119,7 +119,15 @@ export const getUIDocShorterPath = (
     type: "link",
   } as const);
   const shortcut = prevParents.slice().map((doc, index) => {
-    if (doc.type === "page" || doc.type === "link") {
+    if (doc.type === "popup" && doc.contentSelectorCommand) {
+      if (
+        document.querySelectorAll(
+          getCommandElemSelector(doc.contentSelectorCommand),
+        ).length === 1
+      ) {
+        return { index };
+      }
+    } else if (doc.type === "page" || doc.type === "link") {
       const matchingLink = currentPageLinks.find((link) => {
         return (
           link.path === doc.path &&
@@ -133,7 +141,7 @@ export const getUIDocShorterPath = (
         if (!isAlreadyOnPage) {
           return undefined;
         }
-        return { matchingLink, index };
+        return { index };
       }
       return { matchingLink, index };
     }

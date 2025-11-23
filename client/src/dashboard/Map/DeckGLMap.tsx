@@ -360,6 +360,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
   }
 
   onUnmount(): void {
+    this.deckW?.deck.finalize();
     this.rootResizeObserver?.unobserve(this.refRoot!);
   }
 

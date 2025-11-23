@@ -13,6 +13,11 @@ import type { AskLLMToolsProps } from "./AskLLMToolApprover";
 
 let approvingMessageId = "";
 
+export type ToolApproval = {
+  approved: boolean;
+  mode: "once" | "for-chat" | "deny";
+};
+
 /**
  * https://docs.anthropic.com/en/docs/build-with-claude/tool-use
  */
@@ -25,7 +30,7 @@ export const useLLMToolsApprover = ({
   requestApproval: (
     tool: ApproveRequest,
     toolUseMessage: ToolUseMessage,
-  ) => Promise<{ approved: boolean }>;
+  ) => Promise<ToolApproval>;
 }) => {
   const { dbsMethods } = usePrgl();
 
@@ -34,9 +39,12 @@ export const useLLMToolsApprover = ({
       .slice(-1)
       .reverse()
       .find(isAssistantMessageRequestingToolUse);
-    if (!lastToolUseMessage) return;
-    if (approvingMessageId && approvingMessageId === lastToolUseMessage.id)
+    if (!lastToolUseMessage) {
       return;
+    }
+    if (approvingMessageId && approvingMessageId === lastToolUseMessage.id) {
+      return;
+    }
 
     const toolUseRequests = getLLMMessageToolUse(lastToolUseMessage);
     const allowedTools = await dbsMethods.getLLMAllowedChatTools?.(
@@ -59,22 +67,25 @@ export const useLLMToolsApprover = ({
       })
       .filter(isDefined);
     approvingMessageId = lastToolUseMessage.id;
-    const toolApprovalReponses: (
-      | Extract<LLMMessage["message"][number], { type: "tool_use" }>
-      | undefined
-    )[] = [];
+    const toolApprovalReponses: (ToolUseMessage | undefined)[] = [];
+    /** Must ensure parallel tool request permissions behave as expected */
+    const toolsNamesThatHaveJustBeenAutoApproved = new Set<string>();
     for (const {
       matchedTool,
       toolUseRequest,
     } of toolUseRequestsThatNeedApproval) {
-      const isAllowedWithoutApproval = matchedTool.auto_approve;
+      const isAllowedWithoutApproval =
+        matchedTool.auto_approve ||
+        toolsNamesThatHaveJustBeenAutoApproved.has(matchedTool.name);
       if (!isAllowedWithoutApproval) {
-        const { approved } = await requestApproval(
+        const { approved, mode } = await requestApproval(
           //@ts-ignore
           matchedTool,
           toolUseRequest,
         );
-
+        if (approved && mode === "for-chat") {
+          toolsNamesThatHaveJustBeenAutoApproved.add(matchedTool.name);
+        }
         toolApprovalReponses.push(approved ? toolUseRequest : undefined);
       }
     }

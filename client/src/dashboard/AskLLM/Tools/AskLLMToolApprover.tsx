@@ -1,24 +1,22 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useMemo } from "react";
 
+import { getMCPToolNameParts } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
-import type { Prgl } from "../../../App";
+import { Marked } from "@components/Chat/Marked";
 import { FlexCol, FlexRow } from "@components/Flex";
-import { InfoRow } from "@components/InfoRow";
 import Popup from "@components/Popup/Popup";
+import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
+import type { Prgl } from "../../../App";
 import { isEmpty } from "../../../utils";
-import { CodeEditor } from "../../CodeEditor/CodeEditor";
 import type { DBS } from "../../Dashboard/DBS";
+import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
+import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
 import {
   useLLMToolsApprover,
   type ApproveRequest,
+  type ToolApproval,
 } from "./useLLMToolsApprover";
-import { getMCPToolNameParts } from "@common/prostglesMcp";
-import { Marked } from "@components/Chat/Marked";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
-import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
-import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
-import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
@@ -45,7 +43,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
 
   const onRequestToolUse = useCallback(
     async (req: ApproveRequest, toolUseMessage: ToolUseMessage) => {
-      return new Promise<{ approved: boolean }>((resolve) => {
+      return new Promise<ToolApproval>((resolve) => {
         setMustApprove({
           toolUseMessage,
           ...req,
@@ -107,6 +105,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
             }
             resolve({
               approved: toolUseResponse !== "deny",
+              mode: toolUseResponse,
             });
           },
         });
@@ -129,10 +128,9 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
 
   if (!mustApprove) return null;
 
-  const { toolUseMessage, description, name, id } = mustApprove;
+  const { toolUseMessage, description, name } = mustApprove;
 
   const ToolUI = ProstglesMCPToolsWithUI[name];
-  const { displayMode } = ToolUI ?? {};
   return (
     <Popup
       title={

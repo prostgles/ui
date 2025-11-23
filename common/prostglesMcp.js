@@ -1,3 +1,4 @@
+import { fixIndent } from "./utils";
 const runSQLSchema = {
     type: {
         sql: {
@@ -93,6 +94,85 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
     },
     "prostgles-ui": {
+        suggest_agent_workflow: {
+            schema: {
+                type: {
+                    allowed_mcp_tool_names: {
+                        description: "List of MCP tools that can be used to complete the task",
+                        arrayOf: "string",
+                    },
+                    database_access: {
+                        description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.",
+                        oneOfType: [
+                            { Mode: { enum: ["None"] } },
+                            { Mode: { enum: ["execute_sql_rollback"] } },
+                            { Mode: { enum: ["execute_sql_commit"] } },
+                            {
+                                Mode: { enum: ["Custom"] },
+                                tables: {
+                                    arrayOfType: {
+                                        tableName: "string",
+                                        select: "boolean",
+                                        insert: "boolean",
+                                        update: "boolean",
+                                        delete: "boolean",
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                    agent_definitions: {
+                        description: fixIndent(`
+              The agent definitions are used to invoke an LLM chat with the specified inputs and constraints to return the output schema. 
+              The agent can only use from the suggested tools to complete the task.
+              The workflow_function_definition can invoke these agents as needed.
+            `),
+                        record: {
+                            values: {
+                                type: {
+                                    prompt: "string",
+                                    inputJSONSchema: "any",
+                                    outputJSONSchema: "any",
+                                    maxCostUSD: { type: "number", optional: true },
+                                    maxIterations: { type: "number", optional: true },
+                                    allowedToolNames: "string[]",
+                                    allowDatabaseAccess: { type: "boolean", optional: true },
+                                },
+                            },
+                        },
+                    },
+                    workflow_function_definition: {
+                        description: fixIndent(` 
+                  The workflow function must satisfy the following definition: 
+                   
+                  type WorkflowFunction = ({
+                    runTableAction?: (tableName: string, action: "select" | "update" | "insert" | "delete") => Record<string, any>[];
+                    runSQL?: (sql: string) => Record<string, any>[];
+                    agents: { [AgentName: keyof typeof agentDefinitions]: (input: (typeof agentDefinitions)[AgentName]["inputSchema]) => Promise<(typeof agentDefinitions)[AgentName]["outputSchema]>>;
+                  }) => Promise<void>;
+                   
+                  /*
+                    Example workflow_function_definition:
+                    
+                    const workflow_function = async ({ runSQL, agents }) => {
+                      
+                      const rows = runSQL("SELECT * FROM my_table");
+                      
+                      for(const row of rows) {
+                        const rowEnhanced = await agents.rowEnhancer({ row });
+                        await runSQL(\`
+                          UPDATE my_table SET enhanced_data = \${rowEnhanced.enhanced_data} WHERE id = \${row.id}
+                        \`, { row, rowEnhanced });
+                      }
+                    };
+
+                  */
+                `),
+                        type: "string",
+                    },
+                },
+            },
+        },
         suggest_tools_and_prompt: {
             schema: {
                 type: {

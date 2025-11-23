@@ -207,11 +207,14 @@ export const FileColumnConfigEditor = ({
           onChangeOpts(newItems as string[]);
         }}
       />
-      {error && (
-        <InfoRow variant="filled" color="danger">
-          {error}
-        </InfoRow>
-      )}
+      <InfoRow
+        variant="filled"
+        color="danger"
+        /** To prevent layout shift we must reserve space within the popup */
+        style={{ opacity: error ? 1 : 0 }}
+      >
+        {error}
+      </InfoRow>
     </FlexCol>
   );
 };

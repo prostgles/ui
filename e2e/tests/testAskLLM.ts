@@ -158,6 +158,17 @@ const toolResponses: Record<string, ToolUse> = {
   },
   mcpplaywright: playwrightMCPToolUse,
   mcpsandbox: mcpSandboxToolUse,
+  parallel_calls: {
+    content: "I'll fetch in parallel ",
+    tool: [mcpToolUse.tool[0], mcpToolUse.tool[0], mcpToolUse.tool[0]].map(
+      (t, i) => ({
+        ...t,
+        id: t.id + "_" + (i + 1),
+      }),
+    ),
+    duration: 2000,
+    result_content: "Fetched in parallel successfully",
+  },
   weather: {
     content:
       "I'll create a container with a script that fetches real historical weather data from a free API source.",

@@ -39,8 +39,16 @@ export const MapInfoSection = ({
     !fetchedLayers.some((l) => l.features.length)
   ) {
     return (
-      <Wrapper className="w-full h-full">
-        No location data for the active row selection.
+      <Wrapper className="w-full h-full ">
+        <div
+          className="p-p5 rounded"
+          style={{
+            background: "rgb(255 255 255 / 20%)",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          No location data for the active row selection.
+        </div>
       </Wrapper>
     );
   }

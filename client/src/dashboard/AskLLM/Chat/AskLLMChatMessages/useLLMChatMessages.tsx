@@ -111,7 +111,7 @@ export const useLLMChatMessages = (props: P) => {
                   key={`${id}-tool-${idx}`}
                   messageIndex={llmMessageIdx}
                   messages={llmMessages}
-                  toolUseMessageIndex={idx}
+                  toolUseMessageContentIndex={idx}
                   sqlHandler={sqlHandler}
                   loadedSuggestions={loadedSuggestions}
                   workspaceId={workspaceId}

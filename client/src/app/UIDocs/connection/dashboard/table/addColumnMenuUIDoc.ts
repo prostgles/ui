@@ -11,34 +11,28 @@ export const addColumnMenuUIDoc = {
     {
       type: "popup",
       selector: `${getCommandElemSelector("AddColumnMenu")} [data-key="Computed"]`,
+      contentSelectorCommand: "QuickAddComputedColumn",
       title: "Add Computed Field",
       description:
         "Opens a popup to create a computed column - calculations or transformations based on existing data using functions like aggregations, date formatting, string operations, etc.",
       children: [
         {
-          type: "button",
-          selectorCommand: "AddComputedColMenu.countOfAllRows",
-          title: "Count of all rows",
+          type: "list",
+          selectorCommand: "FunctionSelector",
+          title: "Function selector",
           description:
-            "Creates a computed column that displays the total count of all rows in the table, regardless of filters.",
+            "Choose a function to apply to the selected column (e.g., aggregates (min/max/avg/count), date formatting, string operations).",
+          itemContent: [],
+          itemSelector: `li[role="option"]`,
         },
         {
           type: "list",
           selectorCommand: "SearchList.List",
           title: "Column selection",
           description:
-            "List of available columns to apply functions to. Choose a column to start creating a computed field.",
+            "List of applicable columns to apply functions to. Columns from foreign tables are also shown with the join path in the header.",
           itemSelector: "li",
           itemContent: [],
-        },
-        {
-          type: "list",
-          selectorCommand: "FunctionSelector",
-          title: "Function selector",
-          description:
-            "Choose a function to apply to the selected column (e.g., aggregates (min/max/avg), date formatting, string operations).",
-          itemContent: [],
-          itemSelector: `li[role="option"]`,
         },
         {
           type: "input",
@@ -67,6 +61,7 @@ export const addColumnMenuUIDoc = {
     {
       type: "popup",
       selector: `${getCommandElemSelector("AddColumnMenu")} [data-key="Referenced"]`,
+      contentSelectorCommand: "LinkedColumn",
       title: "Add Linked Data",
       description:
         "Opens a popup to display data from related tables via foreign key relationships. Disabled if no foreign keys exist or when using aggregates with nested columns.",

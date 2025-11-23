@@ -8,7 +8,7 @@ import { type ToolUseChatMessageState } from "./useToolUseChatMessage";
 import { FlexRow } from "@components/Flex";
 
 export const ToolUseChatMessageBtn = ({
-  m,
+  toolUseMessageContent: m,
   iconName,
   toolUseResult,
   displayMode,

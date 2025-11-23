@@ -32,7 +32,7 @@ export const CreateColumn = ({
   const [query, setQuery] = useState("");
 
   return (
-    <FlexCol className="CreateColumn gap-2">
+    <FlexCol data-command="CreateColumn" className="CreateColumn gap-2">
       {!query ?
         <ColumnEditor
           {...col}

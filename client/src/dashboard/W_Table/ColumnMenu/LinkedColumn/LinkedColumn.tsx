@@ -99,7 +99,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
   }, [localColumn, table]);
 
   return (
-    <FlexCol className="LinkedColumn gap-2">
+    <FlexCol data-command="LinkedColumn" className="LinkedColumn gap-2">
       <InfoRow color="info" variant="naked" className=" " iconPath="">
         {
           t.LinkedColumn[

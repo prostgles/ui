@@ -63,7 +63,6 @@ export const getSmartFormFieldRightButtons = ({
         <PopupMenu
           style={{
             height: "100%",
-            borderRight: `1px solid var(--gray-300)`,
           }}
           button={
             <Btn
@@ -71,6 +70,7 @@ export const getSmartFormFieldRightButtons = ({
               iconPath={mdiCrosshairsGps}
               className={`h-full rounded-${column.is_nullable ? 0 : "r"}`}
               onClick={() => showDateInput.onChange(!showDateInput.value)}
+              size="small"
             />
           }
           content={

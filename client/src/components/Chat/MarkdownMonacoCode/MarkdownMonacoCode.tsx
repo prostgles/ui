@@ -53,9 +53,12 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
   return (
     <FlexCol
       className={classOverride(
-        "MarkdownMonacoCode min-w-600 relative o-dvisible b b-color rounded gap-0 f-0 o-hidden ",
+        "MarkdownMonacoCode relative b b-color rounded gap-0 f-0 o-hidden ",
         className,
       )}
+      style={{
+        minWidth: "min(100%,600px, 100vw)",
+      }}
       data-command="MarkdownMonacoCode"
     >
       <MarkdownMonacoCodeHeader

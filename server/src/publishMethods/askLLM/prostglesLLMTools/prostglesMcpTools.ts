@@ -38,6 +38,7 @@ export const executeSQLToolWithCommit = {
   ),
 };
 
+const taskToolName = "suggest_tools_and_prompt" as const;
 export const getAddTaskTools = ({
   availableDBTools = [],
   availableMCPTools = [],
@@ -45,7 +46,7 @@ export const getAddTaskTools = ({
   availableMCPTools?: { name: string; description: string }[];
   availableDBTools?: { name: string; description: string }[];
 } = {}) => ({
-  name: getProstglesMCPFullToolName("prostgles-ui", "suggest_tools_and_prompt"),
+  name: getProstglesMCPFullToolName("prostgles-ui", taskToolName),
   description: fixIndent(`
     This tool will update the user chat context with suggests tools and prompt.
     The input will be shown to the user for confirmation.
@@ -62,9 +63,7 @@ export const getAddTaskTools = ({
     This tool input_schema must satisfy this typescript type:
     \`\`\`typescript
     ${getJSONBSchemaTSTypes(
-      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
-        "suggest_tools_and_prompt"
-      ].schema,
+      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][taskToolName].schema,
       {},
       undefined,
       [],
@@ -73,14 +72,53 @@ export const getAddTaskTools = ({
   `),
   input_schema: {
     description: getJSONBSchemaTSTypes(
-      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
-        "suggest_tools_and_prompt"
-      ].schema,
+      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][taskToolName].schema,
       {},
       undefined,
       [],
     ),
   },
+});
+
+const workflowToolName = "suggest_agent_workflow" as const;
+export const getAddWorkflowTools = ({
+  availableDBTools = [],
+  availableMCPTools = [],
+}: {
+  availableMCPTools?: { name: string; description: string }[];
+  availableDBTools?: { name: string; description: string }[];
+} = {}) => ({
+  name: getProstglesMCPFullToolName("prostgles-ui", workflowToolName),
+  description: fixIndent(`
+    This tool will allow the user to create and start an agent workflow with suggested tools and prompt.
+    The input will be shown to the user for confirmation.
+    
+    ## Available MCP tools: 
+    ${!availableMCPTools.length ? "None" : availableMCPTools.map((t) => JSON.stringify(t.name)).join(", ")}
+
+    ## Available database tools:
+    ${!availableDBTools.length ? "None" : availableDBTools.map((t) => JSON.stringify(t.name)).join(", ")}
+
+    ## Database Access
+    If access to the database is needed, an access type can be specified. 
+    Use the most restrictive access type that is needed to complete the task (type custom with specific tables and allowed commands).
+
+    Provide a json input for this tool that satisfies this typescript type:
+    \`\`\`typescript
+    ${getJSONBSchemaTSTypes(
+      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][workflowToolName].schema,
+      {},
+      undefined,
+      [],
+    )}
+    \`\`\`
+
+    Input tool schema details: 
+    \`\`\`json
+    ${JSON.stringify(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][workflowToolName].schema, null, 2)}
+    \`\`\`
+  `),
+  input_schema: {},
 });
 
 export const suggestDashboardsTool = {

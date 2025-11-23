@@ -6,7 +6,7 @@ import { tableConfigConnections } from "./tableConfigConnections";
 import { tableConfigGlobalSettings } from "./tableConfigGlobalSettings";
 import { tableConfigPublishedMethods } from "./tableConfigPublishedMethods";
 import { tableConfigUsers } from "./tableConfigUsers";
-import { tableConfigLLM } from "./tableConfigLlm";
+import { tableConfigLLM } from "./tableConfigLlm/tableConfigLlm";
 import { tableConfigMCPServers } from "./tableConfigMCPServers";
 import { DUMP_OPTIONS_SCHEMA, tableConfigBackups } from "./tableConfigBackups";
 import { tableConfigWindows } from "./tableConfigWindows";

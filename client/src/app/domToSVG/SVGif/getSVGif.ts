@@ -56,7 +56,10 @@ export const getSVGif = (
   });
   addSVGifPointer({ cursorKeyframes, g, appendStyle, totalDuration });
 
-  compressSVGif(svg);
+  // compressSVGif(svg);
+  svg
+    .querySelectorAll("[data-selector]")
+    .forEach((el) => el.removeAttribute("data-selector"));
   // document.body.appendChild(svg); // debugging
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);

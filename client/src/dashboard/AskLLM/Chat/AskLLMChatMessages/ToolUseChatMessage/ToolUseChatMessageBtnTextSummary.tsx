@@ -1,15 +1,12 @@
+import { sliceText } from "@common/utils";
 import { isObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { DBSSchema } from "@common/publishUtils";
-import { sliceText } from "@common/utils";
+import type { ToolUseMessage } from "./ToolUseChatMessage";
 
 export const ToolUseChatMessageBtnTextSummary = ({
   m,
 }: {
-  m: Extract<
-    DBSSchema["llm_messages"]["message"][number],
-    { type: "tool_use" }
-  >;
+  m: ToolUseMessage;
 }) => {
   const inputTextSummary = useMemo(() => {
     const maxLength = 50;

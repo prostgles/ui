@@ -8,7 +8,7 @@ import { AskLLMChat } from "./Chat/AskLLMChat";
 import { SetupLLMCredentials } from "./Setup/SetupLLMCredentials";
 import { useLLMSetupState } from "./Setup/useLLMSetupState";
 
-export const CHAT_WIDTH = 800;
+export const CHAT_WIDTH = 900;
 
 type P = Prgl & {
   workspaceId: string | undefined;

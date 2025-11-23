@@ -154,7 +154,7 @@ export const FormFieldSkeleton = forwardRef(
                 {Boolean(rightIcons) && (
                   <FlexRow
                     className={
-                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} h-fit as-end gap-0 ai-start jc-center ` +
+                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} h-fit as-start gap-0 ai-start jc-center ` +
                       (rightIconsShowBorder ? "  bl b-color " : " ")
                     }
                   >
@@ -187,7 +187,8 @@ export const FormFieldSkeleton = forwardRef(
             {Boolean(rightContent) && (
               <FlexRow
                 className={`RightContent  ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} f-0 gap-0`}
-                style={{ alignSelf: "center" }} // So it looks better for asJONB=JSONBSchema
+                // style={{ alignSelf: "center" }} // So it looks better for asJONB=JSONBSchema
+                style={{ alignSelf: "start" }}
               >
                 {rightContent}
               </FlexRow>

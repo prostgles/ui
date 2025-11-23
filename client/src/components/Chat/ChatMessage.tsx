@@ -25,9 +25,7 @@ export const ChatMessage = ({ message: m }: ChatMessageProps) => {
         </div>
       : <>
           {messageTopContent}
-          <div className="content-wrapper" style={{ paddingRight: "2em" }}>
-            {m.message}
-          </div>
+          <div className="content-wrapper">{m.message}</div>
         </>
       }
     </FlexCol>

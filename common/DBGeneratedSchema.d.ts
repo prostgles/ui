@@ -330,6 +330,7 @@ export type DBGeneratedSchema = {
       maximum_consecutive_tool_fails?: number;
       model?: null | number;
       name?: string;
+      parent_chat_id?: null | number;
       status?: 
        | null
        |  {  state: "stopped"; }
@@ -436,7 +437,7 @@ export type DBGeneratedSchema = {
       description?: null | string;
       id?: number;
       name?: string;
-      options?: null | {    prompt_type?: "dashboards" | "tasks";  };
+      options?: null | {    prompt_type?: "dashboards" | "tasks" | "agent_workflow";  };
       prompt?: string;
       user_id?: null | string;
     };

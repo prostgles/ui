@@ -102,15 +102,11 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       .flatMap((c) => {
         const toolCalls =
           c.message.tool_calls?.map((toolCall) => {
+            let input: any = {};
             if (toolCall.function.arguments) {
               try {
-                return {
-                  type: "tool_use",
-                  id: toolCall.id,
-                  name: toolCall.function.name,
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                  input: JSON.parse(toolCall.function.arguments),
-                } satisfies LLMMessageWithRole["content"][number];
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                input = JSON.parse(toolCall.function.arguments);
               } catch (_e) {
                 const error = new Error(
                   `Could not parse tool arguments as JSON: ${toolCall.function.arguments}. ` +
@@ -120,13 +116,26 @@ export const parseLLMResponseObject: LLMResponseParser = ({
                 throw error;
               }
             }
+
+            return {
+              type: "tool_use",
+              id: toolCall.id,
+              name: toolCall.function.name,
+              input,
+            } satisfies LLMMessageWithRole["content"][number];
           }) ?? [];
         return [
-          c.message.content ?
+          typeof c.message.content === "string" ?
             ({
               type: "text",
               text: c.message.content,
               reasoning: c.message.reasoning || undefined,
+            } satisfies LLMMessageWithRole["content"][number])
+          : undefined,
+          c.error ?
+            ({
+              type: "text",
+              text: `🔴 Something went wrong! Error received from from LLM Provider: \n\`\`\`json\n${JSON.stringify(c.error, null, 2)}\n\`\`\``,
             } satisfies LLMMessageWithRole["content"][number])
           : undefined,
           ...toolCalls,

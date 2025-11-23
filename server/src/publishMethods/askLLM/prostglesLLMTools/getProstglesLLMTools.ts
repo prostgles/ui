@@ -1,5 +1,4 @@
 import { getJSONBSchemaAsJSONSchema, isDefined } from "prostgles-types";
-import type { DBS } from "../../..";
 
 import {
   getMCPFullToolName,
@@ -13,10 +12,14 @@ import {
   type MCPToolSchema,
   type MCPToolSchemaWithApproveInfo,
 } from "../getLLMToolsAllowedInThisChat";
+import { getMCPServerTools } from "./getMCPServerTools";
 import { getProstglesDBTools } from "./getProstglesDBTools";
 import { getPublishedMethodsTools } from "./getPublishedMethodsTools";
-import { getAddTaskTools, suggestDashboardsTool } from "./prostglesMcpTools";
-import { getMCPServerTools } from "./getMCPServerTools";
+import {
+  getAddTaskTools,
+  getAddWorkflowTools,
+  suggestDashboardsTool,
+} from "./prostglesMcpTools";
 
 export const getProstglesLLMTools = async ({
   userType,
@@ -40,8 +43,13 @@ export const getProstglesLLMTools = async ({
   const isAdmin = userType === "admin";
   const { prompt_type } = prompt.options ?? {};
 
-  let taskTool: MCPToolSchema | undefined = undefined;
-  if (prompt_type === "tasks") {
+  let taskTool:
+    | {
+        tool_name: "suggest_tools_and_prompt" | "suggest_agent_workflow";
+        mcpSchema: MCPToolSchema;
+      }
+    | undefined = undefined;
+  if (prompt_type === "tasks" || prompt_type === "agent_workflow") {
     if (!isAdmin) {
       throw new Error("Only admins can use task creation tools");
     }
@@ -50,7 +58,12 @@ export const getProstglesLLMTools = async ({
       connectionId,
     });
     const { mcp_server_tools } = await getMCPServerTools(dbs, {});
-    taskTool = getAddTaskTools({
+    const [tool_name, getMCPSchema] =
+      prompt_type === "tasks" ?
+        (["suggest_tools_and_prompt", getAddTaskTools] as const)
+      : (["suggest_agent_workflow", getAddWorkflowTools] as const);
+
+    const mcpSchema = getMCPSchema({
       availableMCPTools: mcp_server_tools.map((t) => ({
         ...t,
         name: getMCPFullToolName(t.server_name, t.name),
@@ -60,6 +73,10 @@ export const getProstglesLLMTools = async ({
         name: getProstglesMCPFullToolName("prostgles-db-methods", t.name),
       })),
     });
+    taskTool = {
+      tool_name,
+      mcpSchema,
+    };
   }
 
   const dbTools: MCPToolSchemaWithApproveInfo[] = getProstglesDBTools(chat).map(
@@ -83,10 +100,10 @@ export const getProstglesLLMTools = async ({
     : undefined,
     taskTool &&
       ({
-        ...taskTool,
+        ...taskTool.mcpSchema,
         auto_approve: true,
         type: "prostgles-ui",
-        tool_name: "suggest_tools_and_prompt",
+        tool_name: taskTool.tool_name,
       } satisfies MCPToolSchemaWithApproveInfo),
   ].filter(isDefined);
 

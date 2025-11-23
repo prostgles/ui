@@ -46,5 +46,17 @@ export const getOverviewSvgifSpecs = async (
         ...sliceScenes("file_importer", 0),
       ],
     },
+    {
+      fileName: "interactive_dashboards",
+      usedExternally: true,
+      scenes: [
+        ...sliceScenes("dashboard", 13),
+        ...sliceScenes("ai_assistant", 0),
+
+        ...sliceScenes("sql_editor", 8, 10),
+        ...sliceScenes("sql_editor", 18, 19),
+        ...sliceScenes("file_importer", 0),
+      ],
+    },
   ];
 };

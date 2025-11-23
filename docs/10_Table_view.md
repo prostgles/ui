@@ -20,9 +20,8 @@ It supports computed columns, linked fields, and various actions for managing th
     - **Table header**: The header of the table, which contains the column names and allows users to sort the data by clicking on the column headers.  
       - **Add column menu**: Opens the add column menu, allowing users to add computed columns, create new columns, add linked fields.  
         - **Add Computed Field**: Opens a popup to create a computed column - calculations or transformations based on existing data using functions like aggregations, date formatting, string operations, etc.  
-          - **Count of all rows**: Creates a computed column that displays the total count of all rows in the table, regardless of filters.  
-          - **Column selection**: List of available columns to apply functions to. Choose a column to start creating a computed field.  
-          - **Function selector**: Choose a function to apply to the selected column (e.g., aggregates (min/max/avg), date formatting, string operations).  
+          - **Function selector**: Choose a function to apply to the selected column (e.g., aggregates (min/max/avg/count), date formatting, string operations).  
+          - **Column selection**: List of applicable columns to apply functions to. Columns from foreign tables are also shown with the join path in the header.  
           - **Column name**: Name for the new computed column. Auto-generated based on the function and column.  
           - **Add to position**: Choose whether to add the computed column at the start or end of the column list.  
           - **Add computed column**: Confirms and adds the new computed column to the table based on the selected function and parameters.  

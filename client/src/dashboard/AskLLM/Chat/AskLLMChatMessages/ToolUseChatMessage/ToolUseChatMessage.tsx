@@ -1,21 +1,19 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
-import { mdiCodeJson, mdiTools } from "@mdi/js";
+import { mdiCodeJson } from "@mdi/js";
 import React, { useCallback, useState } from "react";
 
 import { ErrorTrap } from "@components/ErrorComponent";
-import { SvgIcon } from "@components/SvgIcon";
+import PopupMenu from "@components/PopupMenu";
 import { ProstglesMCPToolsWithUI } from "../ProstglesToolUseMessage/ProstglesToolUseMessage";
-import { ToolUseChatMessageBtnTextSummary } from "./ToolUseChatMessageBtnTextSummary";
+import { ToolUseChatMessageBtn } from "./ToolUseChatMessageBtn";
+import { ToolUseChatMessageJSONData } from "./ToolUseChatMessageJSONData";
 import { ToolUseChatMessageResult } from "./ToolUseChatMessageResult";
 import {
   useToolUseChatMessage,
   type ToolUseMessageProps,
 } from "./useToolUseChatMessage";
-import { ToolUseChatMessageBtn } from "./ToolUseChatMessageBtn";
-import PopupMenu from "@components/PopupMenu";
-import { ToolUseChatMessageJSONData } from "./ToolUseChatMessageJSONData";
 
 export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
   const [toolDataAnchorEl, setToolDataAnchorEl] = useState<HTMLButtonElement>();
@@ -30,7 +28,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
   if (typeof toolUseInfo === "string") {
     return <>{toolUseInfo}</>;
   }
-  const { m } = toolUseInfo;
+  const { toolUseMessageContent: m } = toolUseInfo;
 
   const ToolUI = ProstglesMCPToolsWithUI[m.name];
   const { displayMode } = ToolUI ?? {};

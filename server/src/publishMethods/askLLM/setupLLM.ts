@@ -74,6 +74,27 @@ export const setupLLM = async (dbs: DBS) => {
         ].join("\n"),
       },
       {
+        name: "Create workflow",
+        description:
+          "Includes database schema and full tools list. Will suggest database access type, tools and workflow logic required to completed the task. Claude Sonnet recommended",
+        user_id,
+        options: {
+          prompt_type: "agent_workflow",
+        },
+        prompt: [
+          firstLine,
+          "Assist the user in creating a workflow.",
+          "They expect you to look at the schema and tools available to them and return the best suited tools, database schema and workflow logic for accomplishing their task.",
+          "Ask the user for more information if you are not sure.",
+          "",
+          "",
+          "Below is the database schema they're currently working with:",
+          "",
+          LLM_PROMPT_VARIABLES.SCHEMA,
+          "",
+        ].join("\n"),
+      },
+      {
         name: "Empty",
         description: "Empty prompt",
         user_id,

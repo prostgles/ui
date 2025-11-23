@@ -129,7 +129,7 @@ export const PCustomTables = ({
               })
             );
           })
-          .sort(
+          .toSorted(
             (a, b) =>
               initialOrder.indexOf(a.name) - initialOrder.indexOf(b.name),
           )

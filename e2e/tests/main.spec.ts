@@ -708,20 +708,23 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_snapshot" is not allowed`,
     );
-    await page.getByTestId("LLMChatOptions.MCPTools").click();
-    await page.waitForTimeout(1000);
-    await page
-      .getByTestId("LLMChatOptions.MCPTools")
-      .getByText("browser_navigate", { exact: true })
-      .click({ force: true });
-    await page.waitForTimeout(500);
-    await page
-      .getByTestId("LLMChatOptions.MCPTools")
-      .getByText("browser_snapshot", { exact: true })
-      .click({ force: true });
-    await page.waitForTimeout(1000);
-    await page.getByTestId("Popup.close").last().click();
-    await page.waitForTimeout(500);
+    const toggleMCPTools = async (toolNames: string[]) => {
+      await page.getByTestId("LLMChatOptions.MCPTools").click();
+      await page.waitForTimeout(1000);
+      for (const toolName of toolNames) {
+        await page
+          .getByTestId("LLMChatOptions.MCPTools")
+          .getByTestId("MCPServerTools")
+          .getByText(toolName, { exact: true })
+          .click({ force: true });
+        await page.waitForTimeout(500);
+      }
+      await page.getByTestId("Popup.close").last().click();
+      await page.waitForTimeout(500);
+    };
+
+    await toggleMCPTools(["browser_navigate", "browser_snapshot"]);
+
     await sendAskLLMMessage(page, " mcpplaywright ");
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
@@ -771,9 +774,16 @@ test.describe("Main test", () => {
       `Maximum number (5) of failed consecutive tool requests reached`,
     );
 
+    const newChat = async () => {
+      await page.getByTestId("AskLLMChat.NewChat").click();
+      await page
+        .getByTestId("AskLLMChat.NewChat")
+        .waitFor({ state: "detached" });
+      // await page.waitForTimeout(1e3);
+    };
+
     /* MCP Docker sandbox */
-    await page.getByTestId("AskLLMChat.NewChat").click();
-    await page.waitForTimeout(1e3);
+    await newChat();
     /* Prompt persists from the prev chat */
     await expect(page.getByTestId("LLMChatOptions.Prompt")).toContainText(
       "Create dashboards",
@@ -855,8 +865,7 @@ test.describe("Main test", () => {
 
     /** Test stopping chat */
     await page.getByTestId("Popup.close").last().click();
-    await page.getByTestId("AskLLMChat.NewChat").click();
-    await page.waitForTimeout(1500);
+    await newChat();
     await sendAskLLMMessage(page, " longresponse ", {
       onAfterSend: async () => {
         await page.getByTestId("Chat.sendStop").click();
@@ -868,6 +877,29 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `aborted by user`,
     );
+
+    /** Test parallel tool use single auto-approve */
+    await newChat();
+    await sendAskLLMMessage(page, " parallel_calls ");
+
+    await expect(
+      page
+        .getByTestId("Chat.messageList")
+        .getByText(
+          'Tool name "fetch--fetch" is not allowed. Must enable it for this chat',
+        ),
+    ).toHaveCount(3);
+
+    await newChat();
+    await toggleMCPTools(["fetch"]);
+    await sendAskLLMMessage(page, " parallel_calls ");
+
+    /** Should not request approval for the other 2 requests */
+    await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+
+    await expect(page.getByTestId("ToolUseMessage")).toHaveCount(3, {
+      timeout: 30e3,
+    });
   });
 
   test("Disable signups", async ({ page: p }) => {

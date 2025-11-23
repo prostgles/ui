@@ -78,8 +78,8 @@ export const FileColumnConfigControls = (
           onClose={() => setEditColumn(undefined)}
           positioning="center"
           persistInitialSize={true}
-          contentClassName="pl-2 p-1 pb-2"
-          contentStyle={{ paddingBottom: "100px" }}
+          clickCatchStyle={{ opacity: 1 }}
+          contentClassName="p-1 "
           footerButtons={[
             {
               label: "Done",

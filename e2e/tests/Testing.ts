@@ -486,6 +486,8 @@ export const COMMANDS = {
   "FunctionColumnList.SearchInput": "",
   "LLMChatOptions.Model.AddCredentials": "",
   QuickFilterGroupsControl: "",
+  LinkedColumn: "",
+  CreateColumn: "",
 } as const satisfies Record<
   string,
   | string

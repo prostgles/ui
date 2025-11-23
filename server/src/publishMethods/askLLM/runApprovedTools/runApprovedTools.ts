@@ -140,11 +140,13 @@ export const runApprovedTools = async (
       }
 
       if (tool.type === "prostgles-ui") {
-        if (tool.tool_name === "suggest_tools_and_prompt") {
+        const needsValidation =
+          tool.tool_name === "suggest_tools_and_prompt" ||
+          tool.tool_name === "suggest_agent_workflow";
+        if (needsValidation) {
           const validation = getJSONBObjectSchemaValidationError(
-            PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
-              "suggest_tools_and_prompt"
-            ].schema.type,
+            PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][tool.tool_name]
+              .schema.type,
             toolUseRequest.input,
             "",
           );
@@ -155,6 +157,7 @@ export const runApprovedTools = async (
             );
           }
         }
+
         return asResponse("Done");
       }
 

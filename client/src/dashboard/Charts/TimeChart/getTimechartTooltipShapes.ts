@@ -168,7 +168,7 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
     // const closerToTop = isDefined(minLabelY) && isDefined(maxLabelY) && minLabelY < h - maxLabelY;
 
     /** Highest value on top */
-    textLabels = textLabels.sort((a, b) => a.coords[1] - b.coords[1]);
+    textLabels = textLabels.toSorted((a, b) => a.coords[1] - b.coords[1]);
 
     const labelHeight = 28;
     const freeHeight = yMax - Math.min(yMax, textLabels.length * labelHeight);

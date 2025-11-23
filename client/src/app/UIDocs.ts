@@ -135,6 +135,10 @@ export type UIDocElement =
   | UIDocBase<{
       type: "popup";
       triggerMode?: "click" | "contextmenu";
+      /**
+       * Used in detecting if popup is shown
+       */
+      contentSelectorCommand?: Command;
       children: UIDocElement[];
     }>
   | UIDocBase<{

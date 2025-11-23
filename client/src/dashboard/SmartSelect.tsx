@@ -153,7 +153,7 @@ export const SmartSelect = <
       ]}
       onClickClose={false}
       contentStyle={{
-        padding: 0,
+        padding: "1em",
       }}
     >
       <SearchList

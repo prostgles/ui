@@ -15,27 +15,36 @@ export const ToolUseChatMessageResult = (
     setAnchorEl: React.Dispatch<
       React.SetStateAction<HTMLButtonElement | undefined>
     >;
-  } & Pick<ToolUseChatMessageState, "toolUseResult" | "fullMessage" | "m">,
+  } & Pick<
+      ToolUseChatMessageState,
+      "toolUseResult" | "toolUseMessage" | "toolUseMessageContent"
+    >,
 ) => {
-  const { toolUseResult, workspaceId, anchorEl, m, fullMessage } = props;
+  const {
+    toolUseResult,
+    workspaceId,
+    anchorEl,
+    toolUseMessageContent,
+    toolUseMessage,
+  } = props;
 
   const toolCallError =
     toolUseResult?.toolUseResultMessage.is_error ?
       toolUseResult.toolUseResultMessage.content
     : undefined;
 
-  const ProstglesTool = MCPToolsWithUI[m.name];
+  const ProstglesTool = MCPToolsWithUI[toolUseMessageContent.name];
   const ProstglesToolComponent = ProstglesTool?.component;
   const { displayMode } = ProstglesTool ?? {};
 
   return (
     <>
-      <FlexCol>
+      <FlexCol className="w-full">
         {(displayMode === "full" || anchorEl) && ProstglesToolComponent && (
           <ProstglesToolComponent
             workspaceId={workspaceId}
-            message={m}
-            chatId={fullMessage.chat_id}
+            message={toolUseMessageContent}
+            chatId={toolUseMessage.chat_id}
             toolUseResult={toolUseResult}
           />
         )}
