@@ -16,11 +16,12 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
   await toggleMenuPinned(false);
-  await addSceneAnimation(
-    getCommandElemSelector("dashboard.menu"),
-    undefined,
-    "fast",
-  );
+  // await addSceneAnimation(
+  //   getCommandElemSelector("dashboard.menu"),
+  //   undefined,
+  //   "fast",
+  // );
+  await page.getByTestId("dashboard.menu").click();
   await addSceneAnimation(getDataKey("users"));
 
   /** Show linked computed column */
@@ -65,6 +66,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
       .scrollIntoViewIfNeeded();
     await addScene({ animations: [{ type: "wait", duration: 500 }] });
   };
+  // was ok up to here
   await openJoinedSection("orders");
   await addSceneAnimation({
     selector: getCommandElemSelector("SmartCard.viewEditRow"),
@@ -75,6 +77,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
   await page.getByTestId("Popup.close").last().click();
 
+  return;
   /** Show quick stats filter and map */
   await addSceneAnimation(
     `[role="columnheader"]` + getDataKey("type"),

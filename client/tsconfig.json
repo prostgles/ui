@@ -27,7 +27,7 @@
       "@common/*": ["../common/*"],
       "@docs/*": ["../docs/*"],
       "@components/*": ["src/components/*"],
-      "@pages/*": ["src/papges/*"],
+      "@pages/*": ["src/pages/*"],
     }
   },
   "include": ["src"],

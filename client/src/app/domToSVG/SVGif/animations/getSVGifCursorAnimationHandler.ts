@@ -134,21 +134,21 @@ export const getSVGifCursorAnimationHandler = ({
     const cursorKeyframes = [`0% { opacity: 0; ${firstTranslate}; }`];
     const cursorMovementsFixed = cursorMovements.map((e) => ({
       ...e,
-      target: e.target.map(toFixed),
+      target: e.target.map((v) => toFixed(v)),
     }));
     cursorMovementsFixed.forEach(
       ({ fromPerc, toPerc, lingerPerc, target: [x, y] }, i, arr) => {
         const translate = `transform: translate(${x}px, ${y}px)`;
-        const prevTarget = arr[i - 1]?.target ?? [x0, y0].map(toFixed);
+        const prevTarget =
+          arr[i - 1]?.target ?? [x0, y0].map((v) => toFixed(v));
         const prevTranslate = `transform: translate(${prevTarget[0]}px, ${prevTarget[1]}px)`;
         cursorKeyframes.push(
           ...[
-            `${toFixed(fromPerc)}% { opacity: 0; ${prevTranslate}; }`,
-            `${toFixed(fromPerc) + 0.1}% { opacity: 1; ${prevTranslate}; }`,
-            `${toFixed(toPerc)}% { opacity: 1; ${translate}; }`,
-            `${toFixed(lingerPerc ?? toPerc)}% { opacity: 1; ${translate}; }`,
-            `${toFixed(lingerPerc ?? toPerc + 0.1)}% { opacity: 0; ${translate}; }`,
-          ],
+            `${toFixed(fromPerc, 4)}% { opacity: 0; ${prevTranslate}; }`,
+            `${toFixed(fromPerc + 0.0001, 4)}% { opacity: 1; ${prevTranslate}; }`,
+            `${toFixed(toPerc - 0.0001, 4)}% { opacity: 1; ${translate}; }`,
+            `${toFixed(lingerPerc ?? toPerc, 4)}% { opacity: 0; ${translate}; }`,
+          ].filter(Boolean),
         );
       },
     );

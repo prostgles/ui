@@ -122,6 +122,7 @@ export const getSVGifTypeAnimation = (
       ${getPercent(zoomOutEndTime)}% { transform: translate(0px, 0px) scale(1); }
       ${toFixed(
         Math.min(100, toPerc + 0.1),
+        4,
       )}% { transform: translate(0px, 0px) scale(1); }
     }
     ${animProp}

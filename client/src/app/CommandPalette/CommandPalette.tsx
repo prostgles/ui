@@ -26,6 +26,7 @@ import "./CommandPalette.css";
 import { Documentation } from "./Documentation";
 import { useGoToUI } from "./useGoToUI";
 import { getItemSearchRank } from "@components/SearchList/searchMatchUtils/getItemSearchRank";
+import { isPlaywrightTest } from "src/i18n/i18nUtils";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
@@ -201,3 +202,29 @@ const UIDocTypeToIcon: Partial<
   canvas: mdiChartLine,
   // page: mdiGrid,
 };
+
+if (isPlaywrightTest) {
+  flatUIDocs.forEach(({ title: searchTerm }) => {
+    let lowestRank = { value: Infinity, title: "" };
+    flatUIDocs.forEach(({ title, description, parentTitles }) => {
+      const rank = getItemSearchRank(
+        {
+          title,
+          subTitle: description,
+          level: parentTitles.length,
+        },
+        searchTerm,
+      );
+
+      if (rank < lowestRank.value) {
+        lowestRank = { value: rank, title };
+      }
+    });
+
+    if (searchTerm !== lowestRank.title) {
+      throw new Error(
+        `Search rank test failed for term "${searchTerm}". Expected "${searchTerm}" to rank highest, but got "${lowestRank.title}"`,
+      );
+    }
+  });
+}

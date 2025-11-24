@@ -56,7 +56,7 @@ export const getSVGif = (
   });
   addSVGifPointer({ cursorKeyframes, g, appendStyle, totalDuration });
 
-  // compressSVGif(svg);
+  compressSVGif(svg);
   svg
     .querySelectorAll("[data-selector]")
     .forEach((el) => el.removeAttribute("data-selector"));

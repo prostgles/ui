@@ -28,7 +28,7 @@ export const getSVGifAnimations = (
     const result = Math.max(0, Math.min(100, perc));
     const resultWithOffset = result + offset;
 
-    return toFixed(resultWithOffset);
+    return toFixed(resultWithOffset, 4);
   };
   const cursorHandler = getSVGifCursorAnimationHandler({
     getPercent,

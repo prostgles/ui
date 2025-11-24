@@ -1,4 +1,4 @@
-import { isDefined } from "src/utils";
+import { isDefined } from "../../../utils";
 
 type SearchItem = { title: string; subTitle: string; level: number };
 export const getItemSearchRank = (
@@ -9,17 +9,19 @@ export const getItemSearchRank = (
 ) => {
   const titleScore = getSearchScore(item.title, query, { level: item.level });
   const descScore = getSearchScore(item.subTitle, query, { level: item.level });
+  const titleScoreWeighted = titleScore * titleWeight;
+  const descScoreWeighted = descScore * descWeight;
   if (titleScore === 0 && descScore === 0) {
     return Infinity;
   }
   if (titleScore === 0) {
-    return 100 - descScore;
+    return 100 - descScoreWeighted;
   }
   if (descScore === 0) {
-    return 100 - titleScore;
+    return 100 - titleScoreWeighted;
   }
 
-  const bestScore = Math.max(titleScore * titleWeight, descScore * descWeight);
+  const bestScore = Math.max(titleScoreWeighted, descScoreWeighted);
 
   // const score = titleScore * titleWeight + descScore * descWeight;
   return 100 - bestScore;
@@ -44,7 +46,7 @@ const levenshtein = (a: string, b: string) => {
 const similarity = (a: string, b: string) => {
   const distance = levenshtein(a, b);
   const maxLen = Math.max(a.length, b.length);
-  return (1 - distance / maxLen) * 100; // 0-100 score
+  return (1 - distance / maxLen) * 100;
 };
 
 const getSearchScore = (
@@ -60,11 +62,11 @@ const getSearchScore = (
   const index = itemValueLower.indexOf(queryLower);
   if (index === -1) return 0;
 
-  let score = similarity(itemValueLower, queryLower); // Math.max(50, 75 - index);
+  let score = similarity(itemValueLower, queryLower);
 
   if (isDefined(levelOpts)) {
     const { level, penalty = 5 } = levelOpts;
-    const levelPenalty = (level - 1) * penalty; // tweak as needed
+    const levelPenalty = (level - 1) * penalty;
     score -= levelPenalty;
   }
 

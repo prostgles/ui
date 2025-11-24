@@ -1,10 +1,8 @@
 import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { addFragmentViewBoxes } from "./addFragmentViewBoxes";
-import { elementToSVG, type SVGContext } from "./containers/elementToSVG";
-import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
 import { tout } from "src/utils";
-import { deduplicateSVGPaths } from "./containers/deduplicateSVGPaths";
+import { elementToSVG, type SVGContext } from "./containers/elementToSVG";
 import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
+import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
@@ -49,10 +47,11 @@ export const domToSVG = async (node: HTMLElement) => {
   /** Does not really seem effective */
   // deduplicateSVGPaths(svg);
   // await addFragmentViewBoxes(svg, 10);
-  repositionAbsoluteAndFixed(svg);
+  repositionAbsoluteFixedAndSticky(svg);
   moveBordersToTop(svg);
+  removeOverflowedElements(svg);
   remove();
-  await tout(1000);
+  await tout(100);
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
@@ -66,8 +65,29 @@ export const domToSVG = async (node: HTMLElement) => {
     throw new Error("Unexpected SVG structure - multiple root elements");
   }
   firstG.setAttribute("id", rootId);
-  // recordDomChanges(node);
   return { svgString, svg, rootId };
+};
+
+const removeOverflowedElements = (svg: SVGGElement) => {
+  svg.querySelectorAll("g").forEach((g) => {
+    if (g._overflowClipPath) {
+      const { x, y, width, height } = g._overflowClipPath;
+      g.childNodes.forEach((child) => {
+        if (child instanceof SVGGElement) {
+          const elBBox = child.getBoundingClientRect();
+          const bboxesOverlap = !(
+            elBBox.x + elBBox.width < x ||
+            elBBox.x > x + width ||
+            elBBox.y + elBBox.height < y ||
+            elBBox.y > y + height
+          );
+          if (!bboxesOverlap) {
+            child.remove();
+          }
+        }
+      });
+    }
+  });
 };
 
 /**
@@ -85,7 +105,7 @@ const moveBordersToTop = (svg: SVGGElement) => {
   });
 };
 
-const repositionAbsoluteAndFixed = (svg: SVGGElement) => {
+const repositionAbsoluteFixedAndSticky = (svg: SVGGElement) => {
   const [gBody, ...other] = Array.from(
     svg.querySelectorAll<SVGGElement>(":scope > g"),
   );
@@ -104,6 +124,14 @@ const repositionAbsoluteAndFixed = (svg: SVGGElement) => {
       const closestParentOrGBody =
         gBody.contains(closestParent) ? closestParent : gBody;
       closestParentOrGBody.appendChild(g);
+    }
+
+    /** Move sticky to end */
+    if (
+      style?.position === "sticky" &&
+      g.parentElement instanceof SVGGElement
+    ) {
+      g.parentElement.appendChild(g);
     }
   });
 };

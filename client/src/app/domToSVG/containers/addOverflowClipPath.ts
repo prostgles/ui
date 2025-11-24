@@ -1,9 +1,7 @@
-import { isDefined } from "prostgles-types";
 import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { SVG_NAMESPACE } from "../domToSVG";
-import type { SVGContext } from "./elementToSVG";
 import type { WhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
 import { isElementNode } from "../utils/isElementVisible";
+import type { SVGContext } from "./elementToSVG";
 
 export const addOverflowClipPath = (
   element: HTMLElement,
@@ -48,16 +46,31 @@ export const addOverflowClipPath = (
   const [transformX = 0, transformY = 0] =
     translate ? translate.split(",").map((v) => parseFloat(v.trim())) : [0, 0];
 
+  const top = y - borderWidth - transformY;
+  const right = context.width - x - width - borderWidth - transformX;
+  const bottom = context.height - y - height - borderWidth - transformY;
+  const left = x - borderWidth - transformX;
+
   const insetValues = [
-    y - borderWidth - transformY,
-    context.width - x - width - borderWidth - transformX,
-    context.height - y - height - borderWidth - transformY,
-    x - borderWidth - transformX,
+    top,
+    right,
+    bottom,
+    left,
+    // y - borderWidth - transformY,
+    // context.width - x - width - borderWidth - transformX,
+    // context.height - y - height - borderWidth - transformY,
+    // x - borderWidth - transformX,
   ]
     .map((v) => (v < 0 ? 0 : v))
     .map((v) => `${v}px`)
     .join(" ");
 
+  g._overflowClipPath = {
+    x,
+    y,
+    width,
+    height,
+  };
   g.style.clipPath = `inset(${insetValues} ${roundProperty}) view-box`;
 };
 

@@ -14,9 +14,9 @@ export const getSVGifRevealKeyframes = ({
       !fromPerc ? "" : (
         `0% { opacity: 0; transform: scale(0.2); transform-origin: center; }`
       ),
-      `${toFixed(fromPerc)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
-      `${toFixed(fromPerc + 0.1)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
-      `${toFixed(toPerc)}% { opacity: 1; transform: scale(1); transform-origin: center; }`,
+      `${toFixed(fromPerc, 4)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
+      `${toFixed(fromPerc + 0.1, 4)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
+      `${toFixed(toPerc, 4)}% { opacity: 1; transform: scale(1); transform-origin: center; }`,
       toPerc === 100 ? "" : (
         `100% { opacity: 1; transform: scale(1); transform-origin: center; }`
       ),
@@ -25,9 +25,9 @@ export const getSVGifRevealKeyframes = ({
   if (mode === "opacity") {
     return [
       !fromPerc ? "" : `0% { opacity: 0; }`,
-      `${toFixed(fromPerc)}% { opacity: 0; }`,
-      `${toFixed(fromPerc + 0.1)}% { opacity: 0; }`,
-      `${toFixed(toPerc)}% { opacity: 1; }`,
+      `${toFixed(fromPerc, 4)}% { opacity: 0; }`,
+      `${toFixed(fromPerc + 0.1, 4)}% { opacity: 0; }`,
+      `${toFixed(toPerc, 4)}% { opacity: 1; }`,
       toPerc === 100 ? "" : `100% { opacity: 1; }`,
     ].filter(Boolean);
   }
@@ -35,9 +35,9 @@ export const getSVGifRevealKeyframes = ({
     mode === "top to bottom" ? `inset(0 0 100% 0)` : `inset(0 100% 0 0)`;
   return [
     !fromPerc ? "" : `0% { opacity: 0; clip-path: ${clippedInset} }`,
-    `${toFixed(fromPerc)}% { opacity: 0; clip-path: ${clippedInset} }`,
-    `${toFixed(fromPerc + 0.1)}% { opacity: 1; clip-path: ${clippedInset} }`,
-    `${toFixed(toPerc)}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
+    `${toFixed(fromPerc, 4)}% { opacity: 0; clip-path: ${clippedInset} }`,
+    `${toFixed(fromPerc + 0.1, 4)}% { opacity: 1; clip-path: ${clippedInset} }`,
+    `${toFixed(toPerc, 4)}% { opacity: 1;  clip-path: inset(0 0 0 0);  }`,
     toPerc === 100 ? "" : `100% { opacity: 1; clip-path: inset(0 0 0 0); }`,
   ].filter(Boolean);
 };
