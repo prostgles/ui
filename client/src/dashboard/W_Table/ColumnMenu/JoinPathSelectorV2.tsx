@@ -9,6 +9,7 @@ import { isDefined } from "../../../utils";
 import CodeExample from "../../CodeExample";
 import { FlexCol } from "@components/Flex";
 import type { BtnProps } from "@components/Btn";
+import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
 type P = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
@@ -85,23 +86,6 @@ export const getAllJoins = ({
   };
 };
 
-export const getRankingFunc = (searchTerm: string, labels: string[]) => {
-  if (searchTerm) {
-    const matchedLabelRank = labels
-      .map((l, i) => {
-        const idx = l.toLowerCase().indexOf(searchTerm.toLowerCase());
-        const rank =
-          idx === -1 ? undefined : (
-            Number(`${i}.${idx.toString().padStart(3, "0")}`)
-          );
-        return rank;
-      })
-      .filter(isDefined)[0];
-    return matchedLabelRank ?? Infinity;
-  }
-  return Infinity;
-};
-
 export const JoinPathSelectorV2 = ({
   tables,
   tableName,
@@ -144,7 +128,7 @@ export const JoinPathSelectorV2 = ({
       key: j.label,
       lastJoinLabel: j.labels.at(-1),
       ranking: (searchTerm) =>
-        getRankingFunc(
+        getSearchRanking(
           searchTerm,
           j.labels.map((l) => l.label),
         ),

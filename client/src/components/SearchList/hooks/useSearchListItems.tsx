@@ -1,16 +1,11 @@
-import { isEqual } from "prostgles-types";
-import React, { useCallback, useMemo } from "react";
-import { FlexRow, FlexRowWrap } from "../../Flex";
-import { getSearchListMatchAndHighlight } from "../getSearchListMatchAndHighlight";
-import type {
-  ParsedListItem,
-  SearchListItem,
-  SearchListProps,
-} from "../SearchList";
-import { getValueAsText } from "../SearchListContent";
-import type { SearchListState } from "./useSearchListSearch";
 import { Icon } from "@components/Icon/Icon";
 import { mdiPlus } from "@mdi/js";
+import { isEqual } from "prostgles-types";
+import React from "react";
+import { FlexRow, FlexRowWrap } from "../../Flex";
+import type { SearchListItem, SearchListProps } from "../SearchList";
+import { useSearchListItemsSorting } from "./useSearchListItemsSorting";
+import type { SearchListState } from "./useSearchListSearch";
 
 export const useSearchListItems = (
   props: Pick<
@@ -26,96 +21,17 @@ export const useSearchListItems = (
       matchCase: boolean;
     },
 ) => {
-  const {
-    rowStyleVariant,
-    searchTerm,
-    onSearchItems,
-    searchItems,
-    items = [],
-    dontHighlight,
-    onSearch,
-    matchCase,
-    limit = 34,
-  } = props;
+  const { rowStyleVariant, items = [] } = props;
   const styles = rowStyleVariant === "row-wrap" ? rowWrapStyle : undefined;
 
-  const getFullItem = useCallback(
-    (d: SearchListItem): ParsedListItem => {
-      const match = getSearchListMatchAndHighlight({
-        matchCase,
-        ranking:
-          typeof d.ranking === "function" ? d.ranking(searchTerm) : d.ranking,
-        term: searchTerm,
-        style: d.styles?.label,
-        subLabelStyle: { ...styles?.subLabel, ...d.styles?.subLabel },
-        rootStyle: {
-          ...styles?.labelRootWrapperStyle,
-          ...d.styles?.labelRootWrapperStyle,
-        },
-        text: getValueAsText(d.label !== undefined ? d.label : d.key) ?? "",
-        key: d.key,
-        subLabel: d.subLabel,
-      });
-      return {
-        ...d,
-        ...match,
-      };
-    },
-    [matchCase, searchTerm, styles],
-  );
-
-  const sortDisabledLast = (a: ParsedListItem, b: ParsedListItem) =>
-    Number(!!a.disabledInfo) - Number(!!b.disabledInfo);
-  const renderedItemsWithoutHeaders: ParsedListItem[] = useMemo(
-    () =>
-      onSearchItems ? searchItems
-      : dontHighlight ? items
-      : onSearch ? items.map(getFullItem)
-      : items
-          .map(getFullItem)
-          .filter((d, i) => d.rank !== Infinity)
-          .sort(
-            (a, b) =>
-              sortDisabledLast(a, b) ||
-              (!searchTerm ? 0 : (
-                (a.parentLabels?.length ?? 0) - (b.parentLabels?.length ?? 0) ||
-                (a.rank ?? 0) - (b.rank ?? 0) ||
-                getLen(a.label) - getLen(b.label)
-              )),
-          )
-          .slice(0, (searchTerm ? 2 : 1) * limit),
-    [
-      dontHighlight,
-      getFullItem,
-      items,
-      limit,
-      onSearch,
-      onSearchItems,
-      searchItems,
-      searchTerm,
-    ],
-  );
+  const { itemGroupHeaders, renderedItemsWithoutHeaders, getFullItem } =
+    useSearchListItemsSorting(props);
 
   const renderedSelected = renderedItemsWithoutHeaders.filter(
     (d) => !d.disabledInfo && d.checked,
   );
 
   const allSelected = items.filter((d) => d.checked);
-  const itemGroupHeaders = renderedItemsWithoutHeaders
-    .reduce((a, v) => {
-      if (
-        !v.parentLabels ||
-        a.some((labels) => isEqual(labels, v.parentLabels))
-      ) {
-        return a;
-      }
-      return [...a, v.parentLabels];
-    }, [] as string[][])
-    .map((parentLabels) => ({
-      header: parentLabels.join(" > "),
-      parentLabels,
-    }));
-  // .sort((a, b) => a.header.localeCompare(b.header));
 
   const renderedItems =
     itemGroupHeaders.length ?
@@ -170,13 +86,6 @@ export const useSearchListItems = (
     styles,
     getFullItem,
   };
-};
-
-const getLen = (v) => {
-  if (typeof v === "string") {
-    return v.length;
-  }
-  return 0;
 };
 
 const rowWrapStyle = {

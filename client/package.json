@@ -31,7 +31,8 @@
     "copyf": "cd ./src && find . -name '*.css' -type f -exec cp --parents {} ../dist/ \\; ",
     "copyf2": "find ./src/. -name '*.css' | cpio -pdm ./dist/",
     "lint": "eslint . --ext .ts,.tsx --quiet --fix",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "test": "tsc --noEmit false --outDir dist && tsc-alias --noEmit false --outDir dist && node --test ./dist/client/src/app/CommandPalette/CommandPaletteSearch.spec.js"
   },
   "browserslist": {
     "production": [
@@ -92,6 +93,7 @@
     "sass-loader": "^16.0.4",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.1",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.8.3",
     "url-loader": "^4.1.1",
     "webpack": "^5.99.7",

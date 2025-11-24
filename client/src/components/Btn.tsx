@@ -1,5 +1,5 @@
 import { mdiAlert, mdiCheck } from "@mdi/js";
-import { omitKeys } from "prostgles-types";
+import { omitKeys, pickKeys } from "prostgles-types";
 import React from "react";
 import { NavLink } from "react-router-dom";
 import RTComp from "../dashboard/RTComp";
@@ -44,6 +44,10 @@ type BtnCustomProps = (
    * If provided then the button is disabled and will display a tooltip with this message
    */
   disabledInfo?: string;
+  /**
+   * no-fade - will not fade out the button when disabled/loading
+   * ignore-loading - button can still be clicked when loading
+   */
   disabledVariant?: "no-fade" | "ignore-loading";
   loading?: boolean;
   fadeIn?: boolean;
@@ -256,7 +260,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       style = {},
       iconStyle = {},
       disabledInfo,
-      disabledVariant = "",
+      disabledVariant,
       title,
       fadeIn,
       variant = "default",
@@ -357,7 +361,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       : loading ?
         <div
           className="min-w-0 ws-nowrap text-ellipsis f-1 o-hidden flex-row"
-          style={{ opacity: disabledVariant !== "ignore-loading" ? 0.5 : 1 }}
+          style={{ opacity: disabledVariant === "ignore-loading" ? 1 : 0.5 }}
         >
           {children}
         </div>
@@ -463,7 +467,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
           className,
         ),
         ref: this.props._ref as any,
-        ...{ "data-id": otherProps["data-id"] },
+        ...pickKeys(otherProps, ["data-id"]),
       };
 
     const withLabel = (content: React.ReactNode) => {
@@ -513,7 +517,8 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       <>
         <button
           {...(finalProps as PropsOf<HTMLButtonElement>)}
-          disabled={disabledInfo ? true : undefined}
+          data-color={color}
+          disabled={isDisabled ? true : undefined}
         >
           {content}
         </button>

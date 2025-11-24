@@ -25,6 +25,7 @@ import { flatUIDocs, type UIDoc, type UIDocInputElement } from "../UIDocs";
 import "./CommandPalette.css";
 import { Documentation } from "./Documentation";
 import { useGoToUI } from "./useGoToUI";
+import { getItemSearchRank } from "@components/SearchList/searchMatchUtils/getItemSearchRank";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
@@ -116,6 +117,15 @@ export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
                       setShowSection(undefined);
                       await goToUIDocItem(data);
                     },
+                    ranking: (searchTerm) =>
+                      getItemSearchRank(
+                        {
+                          title: data.title,
+                          subTitle: data.description,
+                          level: data.parentTitles.length,
+                        },
+                        searchTerm,
+                      ),
                     data,
                   };
                 })}

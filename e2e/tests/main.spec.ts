@@ -2,7 +2,7 @@ import { chromium, expect, test } from "@playwright/test";
 import { authenticator } from "otplib";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { testAskLLMCode } from "./testAskLLM";
-import { getDataKeyElemSelector } from "./Testing";
+import { getCommandElemSelector, getDataKeyElemSelector } from "./Testing";
 import {
   PageWIds,
   clickInsertRow,
@@ -776,10 +776,7 @@ test.describe("Main test", () => {
 
     const newChat = async () => {
       await page.getByTestId("AskLLMChat.NewChat").click();
-      await page
-        .getByTestId("AskLLMChat.NewChat")
-        .waitFor({ state: "detached" });
-      // await page.waitForTimeout(1e3);
+      await page.waitForTimeout(1e3);
     };
 
     /* MCP Docker sandbox */
@@ -897,7 +894,12 @@ test.describe("Main test", () => {
     /** Should not request approval for the other 2 requests */
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
 
-    await expect(page.getByTestId("ToolUseMessage")).toHaveCount(3, {
+    await expect(
+      page.locator(
+        getCommandElemSelector("ToolUseMessage.toggle") +
+          `[data-color="default"]`,
+      ),
+    ).toHaveCount(3, {
       timeout: 30e3,
     });
   });

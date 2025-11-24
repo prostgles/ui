@@ -1,4 +1,7 @@
-import { mdiChartBar, mdiChartLine, mdiMap } from "@mdi/js";
+import Btn, { type BtnProps } from "@components/Btn";
+import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
+import { Select } from "@components/Select/Select";
+import { mdiChartLine, mdiMap } from "@mdi/js";
 import { useMemoDeep } from "prostgles-client/dist/prostgles";
 import {
   _PG_numbers,
@@ -7,8 +10,6 @@ import {
   type ParsedJoinPath,
 } from "prostgles-types";
 import React from "react";
-import Btn, { type BtnProps } from "@components/Btn";
-import { Select } from "@components/Select/Select";
 import { t } from "../../../i18n/i18nUtils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
@@ -19,7 +20,6 @@ import type {
 import { getRandomColor } from "../../Dashboard/dashboardUtils";
 import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
-import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
 import type { ChartColumn, ColInfo } from "./getChartCols";
 import { getChartCols } from "./getChartCols";
 
@@ -288,7 +288,7 @@ export const AddChartMenu = (props: P) => {
                   label:
                     c.type === "joined" ? `> ${c.label} (${c.name})` : c.name,
                   ranking: (searchTerm) =>
-                    getRankingFunc(
+                    getSearchRanking(
                       searchTerm,
                       c.type === "joined" ?
                         c.path.map((p) => p.table)
