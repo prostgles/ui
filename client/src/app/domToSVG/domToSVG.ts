@@ -50,6 +50,7 @@ export const domToSVG = async (node: HTMLElement) => {
   repositionAbsoluteFixedAndSticky(svg);
   moveBordersToTop(svg);
   removeOverflowedElements(svg);
+  repositionMasks(svg);
   remove();
   await tout(100);
 
@@ -68,19 +69,43 @@ export const domToSVG = async (node: HTMLElement) => {
   return { svgString, svg, rootId };
 };
 
+/**
+ * In divs the mask positioning is relative to the div, but in SVG it's relative to the SVG canvas
+ */
+const repositionMasks = (svg: SVGGElement) => {
+  const gElements = svg.querySelectorAll("g");
+  gElements.forEach((g) => {
+    const { elemInfo } = g._whatToRender ?? {};
+    const maskImage = g.style.maskImage;
+    if (maskImage && elemInfo) {
+      const { x, y, width, height } = elemInfo;
+      const gBBox = g.getBoundingClientRect();
+      const offsetX = x - gBBox.left;
+      const offsetY = y - gBBox.top;
+      g.style.maskSize = `${width}px ${height}px`;
+      g.style.maskPosition = `${offsetX}px ${offsetY}px`;
+    }
+  });
+};
+
 const removeOverflowedElements = (svg: SVGGElement) => {
   svg.querySelectorAll("g").forEach((g) => {
     if (g._overflowClipPath) {
       const { x, y, width, height } = g._overflowClipPath;
+      const pXMin = x;
+      const pYMin = y;
+      const pXMax = x + width;
+      const pYMax = y + height;
+
       g.childNodes.forEach((child) => {
         if (child instanceof SVGGElement) {
           const elBBox = child.getBoundingClientRect();
-          const bboxesOverlap = !(
-            elBBox.x + elBBox.width < x ||
-            elBBox.x > x + width ||
-            elBBox.y + elBBox.height < y ||
-            elBBox.y > y + height
-          );
+          const cXMin = elBBox.x;
+          const cYMin = elBBox.y;
+          const cXMax = elBBox.x + elBBox.width;
+          const cYMax = elBBox.y + elBBox.height;
+          const bboxesOverlap =
+            pXMin < cXMax && pXMax > cXMin && pYMin < cYMax && pYMax > cYMin;
           if (!bboxesOverlap) {
             child.remove();
           }

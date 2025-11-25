@@ -1,15 +1,15 @@
+import type { BtnProps } from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
+import type { FullOption } from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
+import type { ParsedJoinPath } from "prostgles-types";
 import React, { useMemo } from "react";
+import { isDefined } from "../../../utils";
+import CodeExample from "../../CodeExample";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import type { TargetPath } from "../tableUtils/getJoinPaths";
 import { getJoinPathStr, getJoinPaths } from "../tableUtils/getJoinPaths";
-import type { ParsedJoinPath } from "prostgles-types";
-import type { FullOption } from "@components/Select/Select";
-import { Select } from "@components/Select/Select";
-import { isDefined } from "../../../utils";
-import CodeExample from "../../CodeExample";
-import { FlexCol } from "@components/Flex";
-import type { BtnProps } from "@components/Btn";
-import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
 type P = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
@@ -86,15 +86,17 @@ export const getAllJoins = ({
   };
 };
 
-export const JoinPathSelectorV2 = ({
-  tables,
-  tableName,
-  value,
-  onChange,
-  variant,
-  getFullOption,
-  btnProps,
-}: P) => {
+export const JoinPathSelectorV2 = (props: P) => {
+  const {
+    tables,
+    tableName,
+    value,
+    onChange,
+    variant,
+    getFullOption,
+    btnProps,
+  } = props;
+
   const { allJoins, targetPathIdx } = useMemo(
     () => getAllJoins({ tableName, tables, value }),
     [tableName, tables, value],
@@ -122,19 +124,24 @@ export const JoinPathSelectorV2 = ({
     ].join("\n");
   }, [value, tableName]);
 
-  const fullOptions = allJoins.map((j) => {
-    return {
-      ...getFullOption?.(j.path),
-      key: j.label,
-      lastJoinLabel: j.labels.at(-1),
-      ranking: (searchTerm) =>
-        getSearchRanking(
-          searchTerm,
-          j.labels.map((l) => l.label),
-        ),
-      subLabel: j.table.columns.map((c) => c.name).join(", "),
-    };
-  });
+  const fullOptions = useMemo(
+    () =>
+      allJoins.map((j) => {
+        return {
+          ...getFullOption?.(j.path),
+          key: j.label,
+          lastJoinLabel: j.labels.at(-1),
+          ranking: (searchTerm) =>
+            getSearchRanking(
+              searchTerm,
+              j.labels.map((l) => l.label),
+            ),
+          subLabel: j.table.columns.map((c) => c.name).join(", "),
+        };
+      }),
+    [allJoins, getFullOption],
+  );
+
   const targetValue =
     isDefined(targetPathIdx) ? fullOptions[targetPathIdx] : undefined;
 

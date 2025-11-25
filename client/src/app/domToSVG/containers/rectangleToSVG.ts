@@ -85,7 +85,7 @@ export const rectangleToSVG = (
 
       g.style.maskImage = style.maskImage;
       g.style.maskSize = `${width}px ${height}px`;
-      // g.style.maskPosition = `${x}px ${0}px`;
+      g.style.maskPosition = `${x}px ${0}px`;
       g.style.maskPosition = `0px 0px`;
 
       // const stops = grad.split("rgb").slice(1);

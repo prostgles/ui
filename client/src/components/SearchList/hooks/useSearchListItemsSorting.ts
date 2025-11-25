@@ -70,7 +70,7 @@ export const useSearchListItemsSorting = (
       : onSearch ? items.map(getFullItem)
       : items
           .map(getFullItem)
-          .filter((d, i) => d.rank !== Infinity)
+          .filter(({ rank }) => !searchTerm || rank !== Infinity)
           .sort(
             (a, b) =>
               sortDisabledLast(a, b) ||

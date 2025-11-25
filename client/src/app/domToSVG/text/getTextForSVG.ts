@@ -57,12 +57,13 @@ export const getTextForSVG = (
     const fontYPadding = Math.max(0, contentHeight - fontSize);
     const borderLeft = parseFloat(style.borderLeftWidth) || 0;
 
-    const yTextOffset = -paddingBottom - borderBottom - fontYPadding / 2 - 2;
+    const yTextOffsetForInput =
+      -paddingBottom - borderBottom - fontYPadding / 2 - 0.5;
     const isTextArea = element instanceof HTMLTextAreaElement;
     const y =
       isTextArea ?
-        inputRect.y + paddingTop + fontSize + borderTop + 2
-      : inputRect.y + inputRect.height + yTextOffset;
+        inputRect.y + paddingTop + fontSize + borderTop + 3
+      : inputRect.y + inputRect.height + yTextOffsetForInput;
     const result = [
       {
         style: actualStyle,
@@ -110,7 +111,7 @@ export const getTextForSVG = (
           },
           textContent,
           x: textRect.x,
-          y: textRect.y,
+          y: textRect.y + 1,
           /** This ensures the actual visible/non overflown size of text is used */
           width: visibleTextWidth,
           height: spanHeight ?? visibleTextHeight,

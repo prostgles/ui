@@ -10,7 +10,12 @@ import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
-import { getSerialisableError, isObject, omitKeys } from "prostgles-types";
+import {
+  getSerialisableError,
+  isObject,
+  omitKeys,
+  tryCatchV2,
+} from "prostgles-types";
 import { type DBS } from "../..";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
@@ -89,13 +94,24 @@ export const askLLM = async (args: AskLLMArgs) => {
     llm_prompt_id,
   } = await getValidatedAskLLMChatOptions(args);
 
-  const toolsWithInfo = await getLLMToolsAllowedInThisChat({
-    userType: user.type,
-    dbs,
-    chat,
-    connectionId,
-    prompt: promptObj,
-  });
+  /** It's crucial we reduce the posibility that a new user message fails to insert due to some non critical error */
+  const {
+    data: toolsWithInfo,
+    error,
+    hasError,
+  } = await tryCatchV2(
+    async () =>
+      await getLLMToolsAllowedInThisChat({
+        userType: user.type,
+        dbs,
+        chat,
+        connectionId,
+        prompt: promptObj,
+      }),
+  );
+  if (hasError) {
+    console.error("LLM Tools fetch error:", error);
+  }
   const tools = toolsWithInfo?.map(
     ({ name, description, input_schema, auto_approve }) => {
       return {

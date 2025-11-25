@@ -1,3 +1,5 @@
+import ErrorComponent from "@components/ErrorComponent";
+import Popup from "@components/Popup/Popup";
 import {
   mdiDownload,
   mdiFullscreen,
@@ -5,11 +7,11 @@ import {
   mdiPlay,
   mdiStop,
 } from "@mdi/js";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { download } from "../../../dashboard/W_SQL/W_SQL";
 import Btn from "../../Btn";
 import { CopyToClipboardBtn } from "../../CopyToClipboardBtn";
-import { FlexRow } from "../../Flex";
+import { FlexCol, FlexRow } from "../../Flex";
 import type { MarkdownMonacoCodeProps } from "./MarkdownMonacoCode";
 import type { useOnRunSQL } from "./useOnRunSQL";
 
@@ -95,7 +97,7 @@ export const MarkdownMonacoCodeHeader = (
               )}
             </>
           )}
-          <OpenHTMLFromStringBtn code={codeString} language={language} />
+          {language === "html" && <OpenHTMLPreviewBtn html={codeString} />}
           <CopyToClipboardBtn
             size="small"
             style={{
@@ -122,38 +124,60 @@ export const MarkdownMonacoCodeHeader = (
   );
 };
 
-const OpenHTMLFromStringBtn = ({
-  code,
-  language,
-}: {
-  code: string;
-  language: string;
-}) => {
-  if (language !== "html") {
-    return null;
-  }
+const OpenHTMLPreviewBtn = ({ html }: { html: string }) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [error, setError] = useState<any>();
 
+  const blobURL = useMemo(() => {
+    const blob = new Blob([html], { type: "text/html" });
+    return URL.createObjectURL(blob);
+  }, [html]);
+  const iframeSandbox =
+    "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation";
   return (
-    <Btn
-      iconPath={mdiOpenInNew}
-      title="Open in new tab..."
-      clickConfirmation={{
-        buttonText: "Open",
-        color: "action",
-        message:
-          "This will open the generated HTML code in a new tab. Proceed with caution!",
-      }}
-      onClick={() => {
-        const newWindow = window.open("about:blank", "_blank");
-        if (!newWindow) {
-          alert(
-            "Failed to open new window. Please allow popups for this site.",
-          );
-          return;
-        }
-        newWindow.document.write(code);
-        newWindow.document.close();
-      }}
-    />
+    <>
+      <Btn
+        iconPath={mdiOpenInNew}
+        title="Open preview..."
+        clickConfirmation={{
+          buttonText: "Open",
+          color: "action",
+          message: (
+            <FlexCol>
+              <p>
+                {" "}
+                This will open the generated HTML code preview in an iframe.
+                Proceed with caution!
+              </p>
+              <span>
+                <strong>iframe sandbox</strong>: {iframeSandbox}
+              </span>
+            </FlexCol>
+          ),
+        }}
+        onClick={({ currentTarget }) => {
+          setAnchorEl(currentTarget);
+        }}
+      />
+      {anchorEl && (
+        <Popup
+          title="HTML Preview"
+          anchorEl={anchorEl}
+          onClose={() => setAnchorEl(null)}
+          positioning="fullscreen"
+        >
+          <iframe
+            title="HTML Preview"
+            style={{ width: "80vw", height: "80vh", border: "none" }}
+            sandbox={iframeSandbox}
+            src={blobURL}
+            onError={() => {
+              setError(new Error("Failed to load HTML preview"));
+            }}
+          />
+          {error && <ErrorComponent error={error} />}
+        </Popup>
+      )}
+    </>
   );
 };

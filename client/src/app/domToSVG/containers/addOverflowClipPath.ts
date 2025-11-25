@@ -51,16 +51,7 @@ export const addOverflowClipPath = (
   const bottom = context.height - y - height - borderWidth - transformY;
   const left = x - borderWidth - transformX;
 
-  const insetValues = [
-    top,
-    right,
-    bottom,
-    left,
-    // y - borderWidth - transformY,
-    // context.width - x - width - borderWidth - transformX,
-    // context.height - y - height - borderWidth - transformY,
-    // x - borderWidth - transformX,
-  ]
+  const insetValues = [top, right, bottom, left]
     .map((v) => (v < 0 ? 0 : v))
     .map((v) => `${v}px`)
     .join(" ");
