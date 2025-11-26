@@ -1,8 +1,13 @@
 import pluginSecurity from "eslint-plugin-security";
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
+import { defineConfig } from "eslint/config";
 
-export default tseslint.config(
+export default defineConfig(
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  pluginSecurity.configs.recommended,
+  eslint.configs.recommended,
+  tseslint.configs.recommendedTypeChecked,
   {
     ignores: [
       "node_modules",
@@ -17,10 +22,6 @@ export default tseslint.config(
       "**/*.js",
     ],
   },
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  pluginSecurity.configs.recommended,
-  eslint.configs.recommended,
-  tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: {
       parserOptions: {
@@ -33,7 +34,6 @@ export default tseslint.config(
   },
   {
     files: ["**/*.js", "**/*.ts"],
-    extends: [tseslint.configs.recommendedTypeChecked],
     rules: {
       "no-cond-assign": "error",
       "@typescript-eslint/no-namespace": "off",

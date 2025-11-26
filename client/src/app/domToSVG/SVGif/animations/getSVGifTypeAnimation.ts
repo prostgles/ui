@@ -84,7 +84,12 @@ export const getSVGifTypeAnimation = (
   });
 
   const adjustedBBox = {
-    ...rawBBox,
+    ...(rawBBox.toJSON() as {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }),
     width: Math.max(rawBBox.width, 600), // Ensure minimum width for better zoom effect
   };
 

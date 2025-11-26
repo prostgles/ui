@@ -161,6 +161,7 @@ export const getSVGifAnimations = (
           );
           sceneNodeAnimations.push(...parsedAnimations.sceneNodeAnimations);
           appendStyle(parsedAnimations.style);
+          throw parsedAnimations.style;
         }
       }
       currentPrevDuration += animation.duration;

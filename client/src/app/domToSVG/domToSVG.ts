@@ -58,7 +58,7 @@ export const domToSVG = async (node: HTMLElement) => {
   const svgString = xmlSerializer.serializeToString(svg);
   const [firstG, otherChild] = Array.from(svg.children).filter(
     (c) => c instanceof SVGGElement,
-  ) as SVGGElement[];
+  );
   if (!firstG) {
     throw new Error("No SVG content generated");
   }
@@ -92,20 +92,23 @@ const removeOverflowedElements = (svg: SVGGElement) => {
   svg.querySelectorAll("g").forEach((g) => {
     if (g._overflowClipPath) {
       const { x, y, width, height } = g._overflowClipPath;
-      const pXMin = x;
-      const pYMin = y;
-      const pXMax = x + width;
-      const pYMax = y + height;
+      const clipXMin = x;
+      const clipYMin = y;
+      const clipXMax = x + width;
+      const clipYMax = y + height;
 
       g.childNodes.forEach((child) => {
-        if (child instanceof SVGGElement) {
+        if (child instanceof SVGGElement || child instanceof SVGTextElement) {
           const elBBox = child.getBoundingClientRect();
           const cXMin = elBBox.x;
           const cYMin = elBBox.y;
           const cXMax = elBBox.x + elBBox.width;
           const cYMax = elBBox.y + elBBox.height;
           const bboxesOverlap =
-            pXMin < cXMax && pXMax > cXMin && pYMin < cYMax && pYMax > cYMin;
+            clipXMin < cXMax &&
+            clipXMax > cXMin &&
+            clipYMin < cYMax &&
+            clipYMax > cYMin;
           if (!bboxesOverlap) {
             child.remove();
           }

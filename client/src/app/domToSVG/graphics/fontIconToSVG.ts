@@ -88,8 +88,8 @@ const addFontFamily = async (familyName: string, context: SVGContext) => {
 
 export const getFontIconElement = (node: Node) => {
   if (!isElementNode(node)) return;
-  const beforeStyle = getComputedStyle(node as HTMLElement, ":before");
-  const afterStyle = getComputedStyle(node as HTMLElement, ":after");
+  const beforeStyle = getComputedStyle(node, ":before");
+  const afterStyle = getComputedStyle(node, ":after");
   const iconStyle =
     beforeStyle.content && !includes(beforeStyle.content, ["", "none"]) ?
       ({ type: "before", style: beforeStyle } as const)

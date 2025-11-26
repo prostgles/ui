@@ -1,6 +1,7 @@
 import type { PageWIds } from "utils/utils";
 import type { SVGifScene } from "./constants";
 import { saveSVGScreenshot } from "./saveSVGScreenshot";
+import type { Locator } from "@playwright/test";
 
 export const getSceneUtils = (
   page: PageWIds,
@@ -68,13 +69,25 @@ export const getSceneUtils = (
     await playwrightLocator.scrollIntoViewIfNeeded();
 
     const elementIsVisible = await playwrightLocator.evaluate((n) => {
-      const isVisible = getComputedStyle(n).opacity != "0";
+      const hoverParent = n.closest(`[class*="hover"]`) as HTMLElement | null;
+      const parentIsNotVisible =
+        hoverParent && getComputedStyle(hoverParent).opacity == "0";
+      const isVisible =
+        getComputedStyle(n).opacity != "0" && !parentIsNotVisible;
 
-      if (!isVisible) {
-        n.style.opacity = "1";
-      }
+      // if (!isVisible) {
+      //   if (parentIsNotVisible) {
+      //     hoverParent!.style.opacity = "1";
+      //   } else {
+      //     n.style.opacity = "1";
+      //   }
+      // }
       return isVisible;
     });
+
+    if (!elementIsVisible) {
+      await moveCursorToElement(page, playwrightLocator);
+    }
 
     await addScene({
       animations: [
@@ -91,11 +104,11 @@ export const getSceneUtils = (
         },
       ],
     });
-    if (!elementIsVisible) {
-      await playwrightLocator.evaluate((n) => {
-        n.style.opacity = "0";
-      });
-    }
+    // if (!elementIsVisible) {
+    //   await playwrightLocator.evaluate((n) => {
+    //     n.style.opacity = "0";
+    //   });
+    // }
     if (action === "click" || action === "rightClick") {
       await playwrightLocator.click({
         button: action === "rightClick" ? "right" : "left",
@@ -142,4 +155,15 @@ export const getSceneUtils = (
     addSceneAnimation,
     svgifScenes,
   };
+};
+
+const moveCursorToElement = async (page: PageWIds, el: Locator) => {
+  const box = await el.boundingBox();
+  if (!box)
+    throw new Error("Element has no bounding box (possibly off-screen).");
+
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+
+  await page.mouse.move(x, y);
 };

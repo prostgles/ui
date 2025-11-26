@@ -1,7 +1,0 @@
-node_modules
-dist
-examples
-**/*.d.ts
-**/*.js
-tests
-.eslintrc.js
