@@ -3,12 +3,13 @@ import { SVG_NAMESPACE } from "../domToSVG";
 import { renderSvg } from "../text/textToSVG";
 import { toFixed } from "../utils/toFixed";
 import { addSVGifCaption } from "./addSVGifCaption";
+import { getSVGifCursorAnimationHandler } from "./animations/getSVGifCursorAnimationHandler";
+import { getSVGifTypeAnimation } from "./animations/getSVGifTypeAnimation";
+import { getSVGifZoomToAnimation } from "./animations/getSVGifZoomToAnimation";
 import { getAnimationProperty } from "./getSVGif";
-import { getSVGifTargetBBox } from "./getSVGifTargetBBox";
 import type { SVGifParsedScene } from "./getSVGifParsedScenes";
 import { getSVGifRevealKeyframes } from "./getSVGifRevealKeyframes";
-import { getSVGifTypeAnimation } from "./animations/getSVGifTypeAnimation";
-import { getSVGifCursorAnimationHandler } from "./animations/getSVGifCursorAnimationHandler";
+import { getSVGifTargetBBox } from "./getSVGifTargetBBox";
 
 /**
  * Given an SVGifScenes, return the animations
@@ -81,20 +82,21 @@ export const getSVGifAnimations = (
     const getDefs = () => {
       let defs = svgDom.querySelector("defs");
       if (!defs) {
-        const newDefs = document.createElementNS(SVG_NAMESPACE, "defs");
-        svgDom.insertBefore(newDefs, svgDom.firstChild);
+        // const newDefs = document.createElementNS(SVG_NAMESPACE, "defs");
+        // svgDom.insertBefore(newDefs, svgDom.firstChild);
         defs = document.createElementNS(SVG_NAMESPACE, "defs");
         svgDom.insertBefore(defs, svgDom.firstChild);
       }
       return defs;
     };
+    let styleElem = svgDom.querySelector<SVGStyleElement>("style");
     const appendStyle = (style: string) => {
-      let styleElem = svgDom.querySelector<SVGStyleElement>("style");
       if (!styleElem) {
         styleElem = document.createElementNS(SVG_NAMESPACE, "style");
         const defs = getDefs();
         defs.appendChild(styleElem);
       }
+      console.log("Appending style:", style);
       styleElem.textContent += style;
     };
     for (const [animationIndex, animation] of animations.entries()) {
@@ -144,7 +146,6 @@ export const getSVGifAnimations = (
               // mode: "top to bottom",
             }),
           });
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         } else if (animation.type === "type") {
           const parsedAnimations = getSVGifTypeAnimation(
             { height, width },
@@ -161,7 +162,23 @@ export const getSVGifAnimations = (
           );
           sceneNodeAnimations.push(...parsedAnimations.sceneNodeAnimations);
           appendStyle(parsedAnimations.style);
-          throw parsedAnimations.style;
+
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        } else if (animation.type === "zoomToElement") {
+          const parsedAnimations = getSVGifZoomToAnimation(
+            { height, width },
+            { bbox },
+            parsedScene,
+            animation,
+            {
+              sceneId,
+              sceneIndex,
+              totalDuration: totalSvgifDuration,
+              getPercent,
+              fromTime,
+            },
+          );
+          appendStyle(parsedAnimations.style);
         }
       }
       currentPrevDuration += animation.duration;

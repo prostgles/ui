@@ -16,12 +16,15 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
   await toggleMenuPinned(false);
-  // await addSceneAnimation(
-  //   getCommandElemSelector("dashboard.menu"),
-  //   undefined,
-  //   "fast",
-  // );
+
   await page.getByTestId("dashboard.menu").click();
+
+  // await addSceneAnimation(
+  //   getCommandElemSelector("dashboard.menu.tablesSearchListInput"),
+  //   { action: "type", text: "users", mode: "fill" },
+  // );
+  // return;
+
   await addSceneAnimation(getDataKey("users"));
 
   /** Show linked computed column */

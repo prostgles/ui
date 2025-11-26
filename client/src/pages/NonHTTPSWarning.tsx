@@ -32,11 +32,11 @@ export const NonHTTPSWarning = ({
           <Btn
             variant="faded"
             onClickPromise={async () => {
-              dbs.users.update(
+              await dbs.users.update(
                 { id: authUser?.id },
                 { options: { $merge: [{ hideNonSSLWarning: true }] } },
               );
-              pageReload("hideNonSSLWarning toggle");
+              await pageReload("hideNonSSLWarning toggle");
             }}
           >
             Do not show again

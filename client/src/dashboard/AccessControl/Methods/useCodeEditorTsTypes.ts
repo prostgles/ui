@@ -33,7 +33,7 @@ export const useCodeEditorTsTypes = (
   const methodOpts = useMemoDeep(() => {
     if (!method) return undefined;
     return {
-      id: id ?? newMethodId,
+      id: id ?? newMethodId.current,
       args,
       desc,
     };
@@ -121,7 +121,7 @@ const fetchMethodDefinitionTypes = async ({
         if (a.lookup.isFullRow) {
           type = `{ ${refT.columns.map((c) => `${c.name}: ${c.tsDataType}`).join("; ")} }`;
         } else {
-          const col = refT.columns.find((c) => c.name === a.lookup!.column);
+          const col = refT.columns.find((c) => c.name === a.lookup.column);
           if (col) {
             type = col.tsDataType;
           }

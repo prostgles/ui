@@ -53,7 +53,7 @@ const naturalType = async (text: string, el: HTMLTextAreaElement) => {
   }
 };
 
-const pressEnter = async (el: HTMLTextAreaElement) => {
+const pressEnter = (el: HTMLTextAreaElement) => {
   el.dispatchEvent(
     new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
   );

@@ -14,7 +14,7 @@ export async function parseCSVFile(
   cols: Col[];
   header: boolean;
 }> {
-  const hasHeaders = async (dataPreview: string[][]) => {
+  const hasHeaders = (dataPreview: string[][]) => {
     /** check if headers are in first row */
     const [r0, r1] = dataPreview;
 

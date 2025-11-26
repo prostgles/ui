@@ -555,6 +555,19 @@ export declare namespace SVGif {
         elementSelector: string;
         duration: number;
         type: "type";
+        /**
+         * Maximum scale to zoom in while typing
+         */
+        maxScale?: number;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "zoomToElement";
+        /**
+         * Maximum scale to zoom in while typing
+         */
+        maxScale?: number;
       }
     | {
         elementSelector: string;

@@ -166,8 +166,8 @@ export class _Dashboard extends RTComp<
             connectionId,
             dbKey,
           };
-          this.loadingSchema = { ...this.loadingSchema!, ...schema };
-          ns.suggestions = { ...this.loadingSchema! };
+          this.loadingSchema = { ...this.loadingSchema, ...schema };
+          ns.suggestions = { ...this.loadingSchema };
         }
       } catch (e) {
         this.loadingSchema = undefined;
@@ -670,7 +670,7 @@ const cloneEditableWorkpsaces = async ({
       []
     : await dbs.workspaces.find({
         published: true,
-        user_id: { $ne: user_id! },
+        user_id: { $ne: user_id },
         layout_mode: { $isDistinctFrom: "fixed" },
         $notExistsJoined: {
           workspaces: {

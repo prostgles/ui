@@ -21,7 +21,7 @@ export const LLMProviderSetup = ({
       },
       fieldConfigs: [
         {
-          name: "llm_providers",
+          name: "llm_providers" as "name",
           select: { logo_url: 1 },
           label: "",
         },

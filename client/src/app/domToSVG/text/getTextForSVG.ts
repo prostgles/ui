@@ -84,7 +84,7 @@ export const getTextForSVG = (
     .map((childTextNode, index) => {
       if (!isTextNode(childTextNode)) return;
       const textContent = childTextNode.textContent;
-      if (!textContent?.trim()) return;
+      if (!textContent || !textContent.trim()) return;
       const range = document.createRange();
       range.selectNodeContents(childTextNode);
       const textRect = range.getBoundingClientRect();
@@ -105,6 +105,7 @@ export const getTextForSVG = (
         const textIndent = edgeRects.startCharRect.left - textRect.x;
         const res: TextForSVG = {
           style: {
+            // eslint-disable-next-line @typescript-eslint/no-misused-spread
             ...style,
             /** This is done to preserve leading spaces between spans of the same text block */
             whiteSpace: textContent.startsWith(" ") ? "pre" : style.whiteSpace,
@@ -156,6 +157,7 @@ const getTextNodes = (
     fontWeight: computedStyles.fontWeight,
     fontStyle: computedStyles.fontStyle,
     color: computedStyles.color,
+    // eslint-disable-next-line @typescript-eslint/no-misused-spread
     ...parentStyles,
   };
 

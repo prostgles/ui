@@ -61,7 +61,9 @@ export type SQLMatcherResultArgs = SQLMatchContext & {
 };
 export type SQLMatcher = {
   match: (cb: CodeBlock) => boolean;
-  result: (args: SQLMatcherResultArgs) => Promise<SQLMatcherResultType>;
+  result: (
+    args: SQLMatcherResultArgs,
+  ) => Promise<SQLMatcherResultType> | SQLMatcherResultType;
 };
 
 type PRGLMetaInfo = {
@@ -320,7 +322,7 @@ export function registerSuggestions(args: Args) {
   sqlFormattingProvider =
     monaco.languages.registerDocumentFormattingEditProvider(LANG, {
       displayName: LANG.toUpperCase(),
-      provideDocumentFormattingEdits: async (model) => {
+      provideDocumentFormattingEdits: (model) => {
         // const newText = await getFormattedSql(model);
 
         const tabWidth = model.getOptions().indentSize || 2;
@@ -362,7 +364,7 @@ export function registerSuggestions(args: Args) {
         const res = await provideCompletionItems(model, position, context);
         return res;
       },
-      resolveCompletionItem: async (item, token) => {
+      resolveCompletionItem: (item, token) => {
         hackyFixMonacoSortFilter(args.editor);
         return item;
       },

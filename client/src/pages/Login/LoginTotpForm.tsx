@@ -20,6 +20,7 @@ export const LoginTotpFormFields = ({
         <p>Open your authentication app and enter the code for Prostgles UI</p>
         <FormField
           id="totp_token"
+          //@ts-ignore
           value={formHandlers.totpToken}
           inputProps={{
             id: "totp_token",
@@ -28,7 +29,7 @@ export const LoginTotpFormFields = ({
           label="6-digit code"
           // error={error}
           onChange={(v) => {
-            formHandlers.setTotpToken(v);
+            formHandlers.setTotpToken(v.toString());
             if (formHandlers.totpToken.length > 5) {
               onAuthCall();
             }

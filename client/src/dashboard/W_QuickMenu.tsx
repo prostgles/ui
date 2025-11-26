@@ -112,7 +112,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
                 "action"
               : undefined
             }
-            onClick={async (e) => {
+            onClick={(e) => {
               const _w = w as SyncDataItem<WindowData<"table">, true>;
               _w.$update(
                 { options: { showFilters: !_w.options?.showFilters } },
@@ -156,7 +156,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
             style={
               firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }
             }
-            onClick={async (e) => {
+            onClick={(e) => {
               setLinkMenu({
                 w: w as WindowSyncItem<"table">,
                 anchorEl: e.currentTarget,

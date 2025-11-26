@@ -24,7 +24,7 @@ type Schema = JSONB.JSONBSchema & { optional?: boolean };
 export type JSONBSchemaCommonProps = Pick<Prgl, "db" | "tables"> & {
   className?: string;
   style?: React.CSSProperties;
-  value: unknown | undefined;
+  value: unknown;
   setHasErrors?: (hasErrors: boolean) => void;
   showErrors?: boolean;
   nestingPath?: (string | number)[];
@@ -120,7 +120,7 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
     node = (
       //@ts-ignore
       <JSONBSchemaOneOfType
-        value={localValue as any}
+        value={localValue}
         schema={schema as any}
         onChange={setLocalValue}
         {...otherProps}

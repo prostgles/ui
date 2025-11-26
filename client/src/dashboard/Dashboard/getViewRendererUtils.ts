@@ -204,7 +204,7 @@ export const getViewRendererUtils = function (
     | { type: "table-row" }
     | { type: "timechart"; value: ActiveRow["timeChart"] }
     | { type: "barchart"; value: ActiveRow["barChart"] };
-  const onClickRow = async (
+  const onClickRow = (
     rowOrFilter: AnyObject | undefined,
     table_name: string,
     wid: string,

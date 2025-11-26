@@ -8,7 +8,7 @@ import {
 import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 import type { FormFieldProps } from "./FormField";
 
-type P = Pick<FormFieldProps, "value" | "onChange" | "readOnly"> & {
+type P = Pick<FormFieldProps<"text">, "value" | "onChange" | "readOnly"> & {
   className?: string;
   style?: React.CSSProperties;
   asJSON: AsJSON;

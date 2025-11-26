@@ -60,7 +60,7 @@ export const useAddComputedColumnState = ({
           const { table: joinTable } = join;
           const joinColumns = getColumnsAcceptedByFunction(
             funcDef,
-            joinTable!.columns,
+            joinTable.columns,
           );
           if (!joinColumns?.length) return;
 

@@ -10,7 +10,7 @@ export type SearchMatch = {
   match: (string | string[])[];
 };
 type P = {
-  matchRow: SearchMatch["match"] | any;
+  matchRow: SearchMatch["match"] | null;
 };
 export const SearchMatchRow = ({ matchRow }: P) => {
   if (!(matchRow && Array.isArray(matchRow))) {

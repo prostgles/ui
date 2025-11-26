@@ -405,7 +405,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
               <SilverGridResizer
                 key={"resizer" + i}
                 layoutMode={layoutMode}
-                type={layout.type as "col" | "row"}
+                type={layout.type}
                 onChange={(prevSize, nextSize) => {
                   this.treeLayout?.update([prevSize, nextSize]);
                 }}

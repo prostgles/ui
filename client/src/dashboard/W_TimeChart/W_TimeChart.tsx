@@ -159,8 +159,7 @@ export class W_TimeChart extends RTComp<
     this.state.wSync?.$unsync?.();
   }
 
-  onDelta = async (dp, ds, dd) => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  onDelta = (dp, ds, dd) => {
     const deltaKeys = getKeys({ ...dp, ...ds, ...dd });
     const filterChanged = dd?.w?.options && "filter" in dd.w.options;
     if (
@@ -430,7 +429,7 @@ export class W_TimeChart extends RTComp<
               }
               onClickRow(undefined, "", undefined);
             }}
-            onClick={async ({ dateMillis, isMinDate }) => {
+            onClick={({ dateMillis, isMinDate }) => {
               if (this.state.addingFilter) return;
               const [firstLink, ...otherLinks] = this.props.myLinks;
               if (

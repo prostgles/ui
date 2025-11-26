@@ -247,8 +247,10 @@ const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (
   editor: editor.IStandaloneCodeEditor,
   expandSuggestionDocs = true,
 ) => {
-  const sc = editor.getContribution("editor.contrib.suggestController") as any;
+  const sc = editor.getContribution("editor.contrib.suggestController");
+  //@ts-ignore
   if (sc?.widget) {
+    //@ts-ignore
     const suggestWidget = sc.widget.value;
     if (suggestWidget && suggestWidget._setDetailsVisible) {
       // This will default to visible details. But when user switches it off

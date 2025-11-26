@@ -256,7 +256,7 @@ export const getWorkspaceTables = async (
       type: "Custom",
       customTables: validMissingWindowTables
         .map(({ table_name, tableWindowColumns, table }) => {
-          const windowFields = tableWindowColumns!.map((c) => c.name);
+          const windowFields = tableWindowColumns.map((c) => c.name);
           const fields =
             windowFields.length === table.columns.length ?
               ("*" as const)

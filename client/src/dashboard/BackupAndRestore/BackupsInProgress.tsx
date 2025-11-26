@@ -36,7 +36,7 @@ export const BackupsInProgress = ({
           render: (val, row) => <RenderBackupStatus row={row} status={val} />,
         },
         {
-          name: "created_ago",
+          name: "created_ago" as "created",
           label: "Started",
           select: { $ageNow: ["created", null, "second"] },
           render: (value) => <StyledInterval value={value} />,

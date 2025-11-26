@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect } from "react";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import React, { useCallback } from "react";
 import Markdown from "react-markdown";
-import { classOverride, FlexCol, type DivProps } from "../Flex";
+import { classOverride, type DivProps } from "../Flex";
 import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,
 } from "./MarkdownMonacoCode/MarkdownMonacoCode";
 import "./Marked.css";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export type MarkedProps = DivProps &
   Pick<
@@ -31,6 +31,7 @@ export const Marked = (props: MarkedProps) => {
     > & { node?: any }) => {
       const match = /language-(\w+)/.exec(className || "");
       const language = match ? match[1] : "";
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
       const codeString = props.children?.toString() ?? "";
 
       if (!codeString || !className || !language) {

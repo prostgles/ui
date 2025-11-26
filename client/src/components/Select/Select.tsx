@@ -278,7 +278,7 @@ export class Select<
       if (value.length) {
         selectedFullOptions = fullOptions.filter((o) => value.includes(o.key));
         const labels = selectedFullOptions.map(
-          (o) => o.label || (o.key as OptionKey),
+          (o) => (o.label as string) || (o.key as OptionKey),
         );
         const firstValues = labels
           .map((v) =>

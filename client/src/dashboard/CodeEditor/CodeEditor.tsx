@@ -109,12 +109,12 @@ export type CodeEditorJsonSchema = { id: string; schema: any };
 
 export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   value: string;
-  onChange?: (newValue: string) => any | void;
+  onChange?: (newValue: string) => void;
   language: LanguageConfig | string;
   /**
    * If true then will allow saving on CTRL+S
    */
-  onSave?: (code: string) => any | void;
+  onSave?: (code: string) => void;
   error?: MonacoError;
   style?: React.CSSProperties;
   className?: string;

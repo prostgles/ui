@@ -55,7 +55,7 @@ export type DBSMethods = Partial<{
     c: "start" | "chunk" | "end",
     id: null | string,
     conId: string | null,
-    chunk: any | undefined,
+    chunk: Buffer | undefined,
     sizeBytes: number | undefined,
     opts?: Backups["restore_options"],
   ) => Promise<any>;
@@ -102,10 +102,12 @@ export type DBSMethods = Partial<{
     username: string;
     password: string;
   }) => Promise<void>;
-  getNodeTypes: () => {
-    filePath: string;
-    content: string;
-  }[];
+  getNodeTypes: () => Promise<
+    {
+      filePath: string;
+      content: string;
+    }[]
+  >;
   getConnectionDBTypes: (
     conId: string | undefined,
   ) => Promise<string | undefined>;

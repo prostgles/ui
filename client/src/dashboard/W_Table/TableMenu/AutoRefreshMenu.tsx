@@ -41,7 +41,7 @@ export const AutoRefreshMenu = ({
     {
       key: "Realtime",
       disabledInfo:
-        w.type === "table" && !db?.[w.table_name!]?.subscribe ?
+        w.type === "table" && !db?.[w.table_name]?.subscribe ?
           "Cannot subscribe"
         : undefined,
     },

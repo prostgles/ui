@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./Chat.css";
 
 import { usePromise } from "prostgles-client/dist/react-hooks";
@@ -98,11 +98,15 @@ export const useChatState = (
     isEngaged,
   };
 };
-function blobToBase64(blob: Blob): Promise<string> {
+function blobToBase64(blob: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       // The result includes the data URL prefix (data:audio/ogg;base64,)
+      if (reader.result && reader.result !== "string") {
+        reject(new Error("Failed to convert blob to base64 string"));
+        return;
+      }
       const base64String = reader.result?.toString() || "";
       resolve(base64String);
     };

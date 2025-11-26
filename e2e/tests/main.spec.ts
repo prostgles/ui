@@ -53,6 +53,7 @@ import {
   USERS,
 } from "utils/constants";
 import exp = require("constants");
+import { isPortFree } from "utils/isPortFree";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -95,6 +96,11 @@ test.describe("Main test", () => {
       await page.waitForTimeout(1e3);
     }
   };
+
+  test("port 3009 must be available for mcpsandbox test", async () => {
+    const free = await isPortFree(3009);
+    expect(free).toBe(true);
+  });
 
   test("Connecting with an existing sid to a fresh instance will ignore the sid IF passwordless admin did not claim a session yet", async ({
     page: p,
@@ -822,8 +828,6 @@ test.describe("Main test", () => {
       await page.getByTestId("ToolUseMessage.toggle").last().click();
       if (inFullscreen) {
         await page.getByTestId("PopupSection.fullscreen").last().click();
-      } else {
-        // await page.getByTestId("Popup.toggleFullscreen").last().click();
       }
       await expect(
         inFullscreen ?
@@ -832,8 +836,9 @@ test.describe("Main test", () => {
       ).toContainText(result, {
         timeout: 10e3,
       });
-      // await page.getByTestId("Popup.toggleFullscreen").last().click();
     };
+    /** Must test to see if port 3009 is free to avoid confusing errors */
+
     await dockerRunAndExpect(`Tool "execute_sql_with_rollback" not found`);
 
     await page.getByTestId("LLMChatOptions.DatabaseAccess").click();

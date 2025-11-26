@@ -47,7 +47,7 @@ export const prepareColsForRender = (
           " jc-end  "
         : " ",
       className: isNumericColumn(c) ? " ta-right " : " ",
-      onResize: async (width) => {
+      onResize: (width: number) => {
         const wcols = getWCols();
         const currentCols = wcols;
 
@@ -62,7 +62,7 @@ export const prepareColsForRender = (
           return { ..._c };
         });
         w.$update({
-          columns: JSON.parse(JSON.stringify(newCols)),
+          columns: JSON.parse(JSON.stringify(newCols)) as typeof newCols,
         });
       },
     }));

@@ -30,7 +30,7 @@ export async function getTimeChartData(
   this: W_TimeChart,
 ): Promise<FetchedLayerData | undefined> {
   let layers: TChartLayers = [];
-  let bin: FetchedLayerData["binSize"] | undefined;
+  let bin: FetchedLayerData["binSize"];
   let erroredLayers: TimeChartLayerWithBinOrError[] = [];
   try {
     const {

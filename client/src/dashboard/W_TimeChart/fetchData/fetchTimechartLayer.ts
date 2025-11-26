@@ -28,7 +28,7 @@ type getTChartLayerArgs = Pick<
 > &
   Pick<ProstglesTimeChartProps, "getLinksAndWindows" | "myLinks" | "tables"> & {
     layer: TimeChartLayerWithBinOrError;
-    bin: FetchedLayerData["binSize"] | undefined;
+    bin: FetchedLayerData["binSize"];
     binSize: FetchedLayerData["binSize"] | "auto";
     desiredBinCount: number;
     db: DBHandlerClient;

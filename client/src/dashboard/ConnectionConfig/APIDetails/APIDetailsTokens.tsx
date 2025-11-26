@@ -112,7 +112,7 @@ export const APIDetailsTokens = ({
                     : undefined
                   }
                   onClickPromise={async () => {
-                    const token = await dbsMethods.generateToken!(+state.days)!;
+                    const token = await dbsMethods.generateToken!(+state.days);
                     setToken(token);
                   }}
                 >

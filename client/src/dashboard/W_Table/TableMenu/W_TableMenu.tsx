@@ -137,7 +137,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
     } = this.props;
     if (w.table_name && db.sql) {
       getTableMeta(db, dbs, databaseId, w.table_name, w.table_oid)
-        .then(async (tableMeta) => {
+        .then((tableMeta) => {
           this.setState({ tableMeta });
         })
         .catch((initError) => {

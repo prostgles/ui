@@ -210,7 +210,7 @@ export class TreeBuilder {
           };
 
           this.layout = target;
-          const newTree = this.makeTree(target!);
+          const newTree = this.makeTree(target);
           this.tree = newTree;
         }
 

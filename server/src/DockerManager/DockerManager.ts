@@ -1,46 +1,22 @@
-import { randomUUID } from "crypto";
-import { pickKeys } from "prostgles-types";
-import { type DBS } from "..";
 import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
-import type { DBSSchema } from "@common/publishUtils";
+import { randomUUID } from "crypto";
+import { type DBS } from "..";
 import { upsertSession } from "../authConfig/upsertSession";
 import { createContainer } from "./createContainer";
 import { type CreateContainerParams } from "./createContainer.schema";
+import { dockerMCPDatabaseRequestRouter } from "./dockerMCPDatabaseRequestRouter";
 import {
-  dockerMCPDatabaseRequestRouter,
-  type GetAuthContext,
-} from "./dockerMCPDatabaseRequestRouter";
-import { getContainerIPs } from "./getContainerIPs";
+  containerAuthStore,
+  type CreateContainerContext,
+} from "./containerAuthStore";
 import { DOCKER_CONTAINER_NAME_PREFIX } from "./getDockerMCP";
-
-export type CreateContainerContext = {
-  userId: string;
-  chatId: number;
-};
-
-const containers: Record<
-  string,
-  CreateContainerContext & { chat: DBSSchema["llm_chats"]; sid_token: string }
-> = {};
-
-const getContainerFromIP: GetAuthContext = (ip: string) => {
-  const containerName = getContainerIPs(containers).find(
-    (c) => c.ip === ip,
-  )?.name;
-
-  const containerInfo = containerName ? containers[containerName] : undefined;
-  if (!containerName || !containerInfo) {
-    return;
-  }
-  return pickKeys(containerInfo, ["chat", "sid_token"]);
-};
 
 let mcpRequestRouter:
   | ReturnType<typeof dockerMCPDatabaseRequestRouter>
   | undefined;
 
 export const getDockerManager = async (dbs: DBS) => {
-  mcpRequestRouter ??= dockerMCPDatabaseRequestRouter(getContainerFromIP);
+  mcpRequestRouter ??= dockerMCPDatabaseRequestRouter();
   const { address, api_url } = await mcpRequestRouter;
 
   const createContainerInChat = async (
@@ -66,11 +42,11 @@ export const getDockerManager = async (dbs: DBS) => {
     if (!sid_token) {
       throw new Error("Failed to create session for Docker MCP");
     }
-    containers[name] = { ...context, chat, sid_token };
+    containerAuthStore.setContainerInfo(name, { ...context, chat, sid_token });
     const containerResult = await createContainer(name, args).catch((error) => {
       console.error("Error creating container:", error);
     });
-    delete containers[name];
+    containerAuthStore.deleteContainerInfo(name);
     return containerResult;
   };
 

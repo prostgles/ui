@@ -81,10 +81,10 @@ export default defineConfig(
       "@typescript-eslint/only-throw-error": "off",
       "@typescript-eslint/prefer-promise-reject-errors": "off",
       "@typescript-eslint/restrict-template-expressions": "warn",
-      // "@typescript-eslint/no-misused-promises": [
-      //   "warn",
-      //   { checksVoidReturn: false },
-      // ],
+      "@typescript-eslint/no-misused-promises": [
+        "warn",
+        { checksVoidReturn: false },
+      ],
       "@typescript-eslint/no-unsafe-assignment": "warn",
       "@typescript-eslint/no-unsafe-argument": "warn",
       "@typescript-eslint/no-unsafe-return": "warn",

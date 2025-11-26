@@ -130,7 +130,7 @@ const InputChip = ({
   onPaste,
 }: InputChipProps) => {
   const numberOfChars =
-    Math.max(2, (((value as any)?.toString() || placeholder) ?? "").length) + 2;
+    Math.max(2, (((value)?.toString() || placeholder) ?? "").length) + 2;
 
   return (
     <Chip

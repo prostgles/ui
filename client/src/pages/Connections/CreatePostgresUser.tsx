@@ -162,9 +162,7 @@ type Args = {
   runConnectionQuery: DBSMethods["runConnectionQuery"];
 };
 export const useCreatePostgresUser = ({ connId, runConnectionQuery }: Args) => {
-  const [newPgUser, setNewPgUser] = useState<
-    NewPostgresUser & { create: boolean }
-  >({
+  const [newPgUser, setNewPgUser] = useState<NewPostgresUser>({
     name: "",
     password: "",
     create: false,

@@ -64,7 +64,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
     onPartialResult?: (
       searchItems: SearchListItem[],
       finished: boolean,
-      cancel: Function,
+      cancel: VoidFunction,
     ) => any,
   ) => Promise<SearchListItem[]>;
   onType?: (term: string, setTerm: (newTerm: string) => void) => void;

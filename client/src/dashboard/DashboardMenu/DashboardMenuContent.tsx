@@ -212,7 +212,7 @@ export const DashboardMenuContent = (props: P) => {
               db={db}
               db_schema_filter={props.prgl.connection.db_schema_filter}
               onChange={(newDbSchemaFilter) => {
-                dbs.connections.update(
+                void dbs.connections.update(
                   {
                     id: prgl.connectionId,
                   },
@@ -237,7 +237,7 @@ export const DashboardMenuContent = (props: P) => {
                 color="action"
                 disabledInfo={!reloadSchema ? "Must be admin" : ""}
                 onClickPromise={async () => {
-                  reloadSchema!(props.prgl.connectionId);
+                  await reloadSchema!(props.prgl.connectionId);
                 }}
                 iconPath={mdiRefresh}
               >

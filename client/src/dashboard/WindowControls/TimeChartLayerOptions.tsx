@@ -208,7 +208,7 @@ export const TimeChartLayerOptions = ({
                     statType: {
                       funcName,
                       numericColumn:
-                        statType.numericColumn ?? numericCols[0]!.name!,
+                        statType.numericColumn ?? numericCols[0]!.name,
                     },
                   });
                 }}

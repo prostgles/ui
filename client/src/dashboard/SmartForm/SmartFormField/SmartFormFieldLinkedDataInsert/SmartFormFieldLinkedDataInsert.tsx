@@ -131,7 +131,7 @@ export const SmartFormFieldLinkedDataInsert = ({
             const newRow =
               Array.isArray(newRowOrRows) ? newRowOrRows[0] : newRowOrRows;
             if (newRow) {
-              newRowDataHandler.setColumnData(column.name, newRow[fcol!]);
+              newRowDataHandler.setColumnData(column.name, newRow[fcol]);
             }
           }}
           onSuccess={(r) => {

@@ -45,8 +45,8 @@ export const FileImporterFooter = (props: P) => {
         {hideOpenTable ? null : (
           <Btn
             className="ml-1"
-            onClick={async () => {
-              openTable(importing!.tableName);
+            onClick={() => {
+              openTable(importing.tableName);
               onCancel();
             }}
             disabledInfo={customHeadersError}
@@ -77,7 +77,7 @@ export const FileImporterFooter = (props: P) => {
               }
             >
               <div style={{ fontSize: "1.5em" }}>
-                {importing.progress?.toFixed(0)}%
+                {importing.progress.toFixed(0)}%
               </div>
             </div>
             <div className="flex-col ai-center">

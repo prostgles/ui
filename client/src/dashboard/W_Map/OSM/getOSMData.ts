@@ -160,7 +160,7 @@ export const getOSMDataAsGeoJson = async (responseData: {
       .flatMap((w) => w.nodes),
   );
   const nodeIds = unique([..._nodeIds, ...wayNodeIds]);
-  const nodes = await fetchElements("node", nodeIds as number[]);
+  const nodes = await fetchElements("node", nodeIds);
 
   const features: GeoJSONFeature[] = responseData.elements
     .flatMap((element) => {

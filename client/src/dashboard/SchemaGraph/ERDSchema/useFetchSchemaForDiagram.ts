@@ -64,7 +64,7 @@ export const useFetchSchemaForDiagram = (
             tableName,
         )
         .map((c) =>
-          relType === "referencedBy" ? c.table_name! : c.ftable_name!,
+          relType === "referencedBy" ? c.table_name : c.ftable_name!,
         );
     };
 

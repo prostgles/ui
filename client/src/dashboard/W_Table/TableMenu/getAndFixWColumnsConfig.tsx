@@ -110,7 +110,7 @@ export const getAndFixWColumnsConfig = async (
     })
     .filter(isDefined);
   if (update) {
-    await w.$update!({ columns });
+    await w.$update({ columns });
   }
   return columns;
 };

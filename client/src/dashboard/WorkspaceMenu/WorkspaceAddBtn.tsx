@@ -12,7 +12,7 @@ import { useIsMounted } from "prostgles-client/dist/react-hooks";
 
 type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> & {
   connection_id: string;
-  setWorkspace(w: Required<WorkspaceSchema>): void;
+  setWorkspace: (w: Required<WorkspaceSchema>) => void;
   btnProps?: BtnProps<void>;
   className?: string;
 };
@@ -23,7 +23,7 @@ export const WorkspaceAddBtn = ({
   btnProps,
   className,
 }: WorkspaceDeleteBtnProps) => {
-  const [error, setError] = useState<any | void>();
+  const [error, setError] = useState<any>();
   const [name, setName] = useState("");
 
   const getIsMounted = useIsMounted();

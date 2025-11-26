@@ -88,7 +88,9 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
         error: `Could not find connection with id: ${connId}`,
       } as const;
     }
-    const databaseId = conState.data.database_configs?.[0]?.id;
+    const databaseId = conState.data.database_configs?.[0]?.id as
+      | number
+      | undefined;
     if (!databaseId) {
       return {
         state: "error",
@@ -146,7 +148,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
 
   const dbPrgl = useProstglesClient(prostglesClientOpts);
 
-  const dbState = usePromise(async () => {
+  const dbState = useMemo(() => {
     try {
       if (connectionInfo.state === "error") {
         return {
@@ -184,7 +186,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     }
   }, [connectionInfo, dbPrgl, pathInfo]);
 
-  const prglProject = usePromise(async () => {
+  const prglProject = useMemo(() => {
     const con = conState.data;
     if (
       !dbState ||

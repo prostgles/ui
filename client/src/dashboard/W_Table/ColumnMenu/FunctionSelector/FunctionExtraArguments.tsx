@@ -80,7 +80,7 @@ export const FunctionExtraArguments = ({
           }
           inputProps={{ autoFocus: true }}
           error={templateStringInfo?.template_string_error}
-          onChange={async ($template_string) => {
+          onChange={($template_string: string) => {
             onChange({ $template_string });
           }}
         />

@@ -32,7 +32,7 @@ const keysToUpdate = [
 
 type P = {
   websiteUrl: string;
-  value: AuthProvidersConfig["email"] | undefined;
+  value: AuthProvidersConfig["email"];
   label: string;
   className?: string;
   onChange: (

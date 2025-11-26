@@ -106,7 +106,7 @@ export const getSqlSuggestions = async (
     );
 
     const extractIndexCols = (def: string) => {
-      return def.split("USING")[1]?.split("(")[1]?.split(")")?.[0];
+      return def.split("USING")[1]?.split("(")[1]?.split(")")[0];
     };
     suggestions = suggestions.concat(
       indexes.map((p) => ({

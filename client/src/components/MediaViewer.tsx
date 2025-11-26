@@ -1,22 +1,10 @@
-import {
-  mdiChevronLeft,
-  mdiCodeBraces,
-  mdiCodeJson,
-  mdiCube,
-  mdiCubeOutline,
-  mdiFileDocumentOutline,
-  mdiFileExcelOutline,
-  mdiFilePowerpointOutline,
-  mdiFileWordOutline,
-  mdiLanguageMarkdown,
-  mdiXml,
-} from "@mdi/js";
+import { sliceText } from "@common/utils";
+import { mdiChevronLeft, mdiFileDocumentOutline } from "@mdi/js";
 import React, { useCallback, useEffect } from "react";
 import Chip from "./Chip";
 import { FlexCol } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import Popup from "./Popup/Popup";
-import { sliceText } from "@common/utils";
 
 export const ContentTypes = ["image", "video", "audio"] as const;
 type ValidContentType = (typeof ContentTypes)[number];
@@ -67,7 +55,7 @@ export const MediaViewer = (props: P) => {
             url.split(":")[1]?.split(";")[0]
           : undefined;
         const mime = mimeFromData ?? (await fetchMimeFromURLHead(url));
-        contentType = mimeFromData ?? mime?.split(";")?.[0]?.trim();
+        contentType = mimeFromData ?? mime?.split(";")[0]?.trim();
       }
 
       setUrlInfo({

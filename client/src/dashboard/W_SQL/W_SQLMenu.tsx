@@ -110,7 +110,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
   wSub?: ReturnType<P["w"]["$cloneSync"]>;
   autoRefresh: any;
   loading = false;
-  onDelta = async (dP?: Partial<P>, dS?: Partial<S>, dD?) => {
+  onDelta = (dP?: Partial<P>, dS?: Partial<S>, dD?) => {
     if (dS && "query" in dS) {
       this.setState({ error: undefined });
     }

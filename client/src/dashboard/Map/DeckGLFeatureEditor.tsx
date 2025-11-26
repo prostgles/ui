@@ -104,12 +104,12 @@ export const DeckGLFeatureEditor = ({
       if (insert && defaultData) {
         try {
           if (isUpdate) {
-            await dbProject![editMode.tableName]!.update!(
+            await dbProject[editMode.tableName]!.update!(
               { $rowhash: editMode.$rowhash },
               defaultData,
             );
           } else {
-            await dbProject![editMode.tableName]!.insert!(defaultData);
+            await dbProject[editMode.tableName]!.insert!(defaultData);
           }
           onInsertOrUpdate();
           setEditMode(undefined);
@@ -191,23 +191,22 @@ export const DeckGLFeatureEditor = ({
       return;
     }
     const onPointerMove = (e: PointerEvent) => {
-      const cursorCoords = deckW.currHover?.coordinate as
-        | [number, number]
-        | undefined;
+      const cursorCoords = deckW.currHover?.coordinate;
       if (!cursorCoords) return;
-      renderShapes(cursorCoords);
+      renderShapes(cursorCoords as [number, number]);
     };
     const onPointerDown = (e: PointerEvent) => {
       const deleteLastPoint = e.ctrlKey;
-      const cursorCoords = deckW.currHover?.coordinate as
-        | [number, number]
-        | undefined;
+      const cursorCoords = deckW.currHover?.coordinate;
       if (!cursorCoords) return;
       const { geometry } = editMode;
       if (editMode.modeKey === "DrawPointMode") {
         setEditMode({
           ...editMode,
-          geometry: { type: "Point", coordinates: cursorCoords },
+          geometry: {
+            type: "Point",
+            coordinates: cursorCoords as [number, number],
+          },
           finished: true,
         });
         return false;
@@ -225,7 +224,10 @@ export const DeckGLFeatureEditor = ({
             ];
         setEditMode({
           ...editMode,
-          geometry: { type: "LineString", coordinates: newCoordinates },
+          geometry: {
+            type: "LineString",
+            coordinates: newCoordinates as [number, number][],
+          },
         });
         return false;
       } else if (editMode.modeKey === "DrawPolygonMode") {
@@ -242,7 +244,10 @@ export const DeckGLFeatureEditor = ({
             ];
         setEditMode({
           ...editMode,
-          geometry: { type: "Polygon", coordinates: [newCoordinates] },
+          geometry: {
+            type: "Polygon",
+            coordinates: [newCoordinates as [number, number][]],
+          },
         });
         return false;
       }

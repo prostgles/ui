@@ -63,7 +63,7 @@ export default class Loading extends RTComp<P, S> {
     const wasShownRecently =
       id !== undefined &&
       loaderIdLastShown[id] &&
-      Date.now() - loaderIdLastShown[id]! < delay;
+      Date.now() - loaderIdLastShown[id] < delay;
     return !delay || wasShownRecently || this.state.ready;
   }
 

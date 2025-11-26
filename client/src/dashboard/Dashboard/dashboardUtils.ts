@@ -152,7 +152,7 @@ export type Query = {
     filterField: string;
     getData: (ext4326: number[]) => Promise<any[]>;
   };
-  layout: { x: number; y: number; w: number; h: number } | any;
+  layout: { x: number; y: number; w: number; h: number };
 };
 
 export type JoinFilter = {

@@ -1,15 +1,16 @@
+import type { DBSSchema } from "@common/publishUtils";
+import { execSync } from "child_process";
 import express, { json, Request, Response, urlencoded } from "express";
 import _http from "http";
 import type { AddressInfo } from "net";
 import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
 import { getSerialisableError, isObject } from "prostgles-types";
 import { isDocker } from "..";
-import type { DBSSchema } from "@common/publishUtils";
 import { getProstglesState } from "../init/tryStartProstgles";
 import { runProstglesDBTool } from "../publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
+import { containerAuthStore } from "./containerAuthStore";
 import { getDockerGatewayIP } from "./getDockerGatewayIP";
 import { isPortFree } from "./isPortFree";
-import { execSync } from "child_process";
 
 const PREFERRED_PORT = 3009;
 export const DOCKER_MCP_ENDPOINT = "/db";
@@ -30,16 +31,16 @@ export type GetAuthContext = (ip: string) => AuhtContext | undefined;
 /**
  * A separate server is used to improve security because we need to bind it to 0.0.0.0 to ensure docker containers can access it.
  */
-export const dockerMCPDatabaseRequestRouter = async (
-  getChat: GetAuthContext,
-) => {
+export const dockerMCPDatabaseRequestRouter = async () => {
   const dockerVersion = execSync("docker --version").toString();
   if (!dockerVersion) throw new Error("Docker not installed");
   const app = express();
 
   app.use(json({ limit: "1000mb" }));
   app.use(urlencoded({ extended: true, limit: "1000mb" }));
-  app.post(ROUTE, (req, res) => requestHandler(req, res, getChat));
+  app.post(ROUTE, (req, res) => {
+    return requestHandler(req, res);
+  });
   const http = _http.createServer(app);
   const usePreferredPort = await isPortFree(PREFERRED_PORT);
 
@@ -72,39 +73,19 @@ export const dockerMCPDatabaseRequestRouter = async (
       },
     );
   });
-  // const { app, http } = connMgr;
-
-  // app.post(route, (req, res) => requestHandler(req, res, getChat));
-  // await tout(100);
-  // const address = http.address();
-  // if (!isObject(address)) {
-  //   throw new Error("Server address is not an object");
-  // }
-  // return {
-  //   app,
-  //   route,
-
-  //   // server: http.serce;
-  //   address,
-  // };
 };
 
-const requestHandler = (
-  req: Request,
-  res: Response,
-  getChat: GetAuthContext,
-) => {
+const requestHandler = (req: Request, res: Response) => {
   const { endpoint = "" } = req.params;
   try {
     const ip = req.ip || req.socket.remoteAddress || "";
 
-    const authContext = getChat(ip);
+    const authContext = containerAuthStore.getContainerFromIP(ip);
     if (!authContext) {
-      return res
-        .status(HTTP_FAIL_CODES.UNAUTHORIZED)
-        .send(
+      return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
+        error:
           "Container and/or Chat not found for the given IP address: " + ip,
-        );
+      });
     }
     const { chat, sid_token } = authContext;
     req.cookies ??= {};

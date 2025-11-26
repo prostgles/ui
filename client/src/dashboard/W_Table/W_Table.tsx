@@ -58,18 +58,17 @@ import type {
   OnClickEditRow,
   RowSiblingData,
 } from "./tableUtils/getEditColumn";
+import { getFullColumnConfig } from "./tableUtils/getFullColumnConfig";
 import { getTableCols } from "./tableUtils/getTableCols";
 import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
 import { getSort, getSortColumn, updateWCols } from "./tableUtils/tableUtils";
-import { getFullColumnConfig } from "./tableUtils/getFullColumnConfig";
-import { stackTrace } from "../Dashboard/debuggingUtils";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
   childWindow: React.ReactNode | undefined;
-  onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => any | void;
+  onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => void;
   onClickRow?: TableProps<ColumnSort>["onRowClick"];
   filter?: any;
   joinFilter?: AnyObject;
@@ -127,7 +126,7 @@ export type ProstglesColumn = TableColumn & { computed?: boolean } & Pick<
 export type W_TableState = {
   rowCount: number;
   rowsLoaded: number;
-  table?: (TableProps<ColumnSort> & Query) | any;
+  table?: TableProps<ColumnSort> & Query;
   sort?: ColumnSortSQL[];
   loading: boolean;
 
@@ -220,7 +219,7 @@ export default class W_Table extends RTComp<
 
   calculatedColWidths = false;
 
-  async onMount() {
+  onMount() {
     const { w } = this.props;
 
     if (!Array.isArray(w.filter)) {
@@ -244,13 +243,13 @@ export default class W_Table extends RTComp<
   static getTableDataRequestSignature(
     args:
       | {
-          select?: AnyObject | any;
-          filter?: AnyObject | any;
-          having?: AnyObject | any;
+          select?: any;
+          filter?: AnyObject;
+          having?: AnyObject;
           barchartVals?: AnyObject;
           joinFilter?: AnyObject;
           externalFilters?: any;
-          orderBy?: AnyObject | any;
+          orderBy?: any;
           limit?: number | null;
           offset?: number;
         }
@@ -776,7 +775,7 @@ export default class W_Table extends RTComp<
                           /** Below the filter search clickcatch */
                           zIndex: ClickCatchOverlayZIndex - 1,
                         }}
-                        onClick={async () => {
+                        onClick={() => {
                           this.rowPanelRState.set({ type: "insert" });
                         }}
                       />

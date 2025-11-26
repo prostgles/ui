@@ -14,7 +14,7 @@ export type W_BarchartProps = Omit<CommonWindowProps, "w"> & {
   onClickRow: (
     row: AnyObject | undefined,
     tableName: string,
-    values: ActiveRow["barChart"] | undefined,
+    values: ActiveRow["barChart"],
   ) => void;
   myActiveRow: ActiveRow | undefined;
   activeRowColor: string | undefined;

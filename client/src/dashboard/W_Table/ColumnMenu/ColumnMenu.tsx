@@ -14,7 +14,7 @@ import {
   mdiViewColumnOutline,
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { TabItems } from "@components/Tabs";
 import Tabs from "@components/Tabs";
 
@@ -151,9 +151,8 @@ export const ColumnMenu = (props: P) => {
   const colName = state?.column;
   const getIsMounted = useIsMounted();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffectAsync(async () => {
-    const wSub = await props.w.$cloneSync(async (wdata) => {
+  useEffect(() => {
+    const wSub = props.w.$cloneSync((wdata) => {
       if (!getIsMounted()) return;
       setW(wdata);
     });
@@ -510,9 +509,7 @@ export const ColumnMenu = (props: P) => {
 };
 
 /** undefined value means filter is disabled (gray col name text) */
-const getDefaultFilter = async (
-  col: ColumnConfigWInfo,
-): Promise<SimpleFilter> => {
+const getDefaultFilter = (col: ColumnConfigWInfo): SimpleFilter => {
   const isNumeric = ["number", "Date"].includes(
     col.info?.tsDataType || (col.computedConfig?.funcDef.tsDataTypeCol as any),
   );

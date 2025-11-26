@@ -60,7 +60,7 @@ export const parseValue = (
 
       try {
         return JSON.stringify(
-          typeof value === "object" ? value : JSON.parse(value as any),
+          typeof value === "object" ? value : JSON.parse(value),
           null,
           2,
         );

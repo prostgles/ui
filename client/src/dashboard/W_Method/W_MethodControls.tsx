@@ -164,7 +164,7 @@ export const W_MethodControls = ({
               schema={argSchema}
               value={args as any}
               onChange={(v) => {
-                setArgs(v as any) as any;
+                setArgs(v) as any;
               }}
               db={db}
               tables={tables}

@@ -266,7 +266,7 @@ const getAccessRuleTableErrors = async (
         if (!tables.some((t) => t.name === tableName)) {
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           result[tableName] ??= {};
-          result[tableName]!.all = `Table ${tableName} could not be found`;
+          result[tableName].all = `Table ${tableName} could not be found`;
         } else if (!result[tableName]?.all) {
           const columnNames = tables
             .find((t) => t.name === tableName)

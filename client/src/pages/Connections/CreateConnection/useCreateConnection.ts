@@ -167,7 +167,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
       }
 
       const validatedConnection = await validateConnection({
-        ...pickKeys(serverInfo!.mainConnection!, [
+        ...pickKeys(serverInfo!.mainConnection, [
           "db_conn",
           "db_host",
           "db_port",
@@ -181,7 +181,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
           "ssl_reject_unauthorized",
         ]),
         name: connectionName,
-        db_name: newDbName!,
+        db_name: newDbName,
         type: "Standard",
         db_conn: null,
         ...newDbOwnerCredentials,

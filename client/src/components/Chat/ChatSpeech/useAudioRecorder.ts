@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 class AudioRecorder {
   mediaOptions?: any;
@@ -14,8 +14,8 @@ class AudioRecorder {
     this.recorder = undefined;
   }
 
-  start(cb: (result: Blob) => any | void) {
-    const chunks: any = [];
+  start(cb: (result: Blob) => void) {
+    const chunks: Buffer[] = [];
     navigator.mediaDevices
       .getUserMedia(this.mediaOptions.gUM)
       .then((stream) => {

@@ -98,7 +98,7 @@ export const getDefaultFieldConfig = (
           .filter((c) => c.references?.length)
           .flatMap((c) =>
             c.references!.map((r) => ({
-              name: r.ftable!,
+              name: r.ftable,
               fieldConfigs: ["*"],
             })),
           ),

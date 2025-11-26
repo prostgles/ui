@@ -19,7 +19,7 @@ export type HoveredObject = {
   };
 };
 
-export async function onMapHover(
+export function onMapHover(
   this: W_Map,
   hoverObj?: AnyObject & HoveredObject,
   hoverCoords?: HoverCoords,
@@ -36,7 +36,7 @@ export async function onMapHover(
     if (this.hovering.hoverObjStr === hoverObjStr) {
       return;
     } else {
-      clearTimeout(this.hovering.timeout!);
+      clearTimeout(this.hovering.timeout);
     }
   }
 

@@ -24,7 +24,7 @@ const ld = {
   DrawEllipseByBoundingBoxMode: 1,
 };
 
-const getNebulaLib = async () => {
+const getNebulaLib = () => {
   // const lib = await import(/* webpackChunkName: "editable_layers" */  "@deck.gl-community/editable-layers");
   const lib = ld; // await import(/* webpackChunkName: "editable_layers" */  "./editable-layers/index");
   return lib;

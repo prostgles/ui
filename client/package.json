@@ -30,7 +30,7 @@
     "lib": "rm -rf ./dist && tsc --project tsconfig_lib.json && npm run copyf",
     "copyf": "cd ./src && find . -name '*.css' -type f -exec cp --parents {} ../dist/ \\; ",
     "copyf2": "find ./src/. -name '*.css' | cpio -pdm ./dist/",
-    "lint": "eslint . --ext .ts,.tsx --quiet --fix",
+    "lint": "eslint . --quiet --fix",
     "tsc": "tsc --noEmit"
   },
   "browserslist": {

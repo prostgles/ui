@@ -177,7 +177,7 @@ export const getCellStyle = (
       const cval =
         isNumeric ? +(condition as string) : (condition as ColumnValue);
       if (operator === "contains") {
-        return val && `${JSON.stringify(val)}`.includes(cval + "");
+        return val && `${JSON.stringify(val)}`.includes(cval?.toString() + "");
       } else if (operator === "=") {
         return val == cval;
       } else if (operator === ">") {

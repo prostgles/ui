@@ -180,7 +180,7 @@ export class NumberOrDateFilter extends RTComp<
       className: "p-p25 mr-p5",
       style: colIs(column, "_PG_date") ? {} : { maxWidth: "125px" },
       inputStyle: { padding: "4px 8px" },
-      type: inputType,
+      type: inputType as "number",
       asColumn: true,
     };
 

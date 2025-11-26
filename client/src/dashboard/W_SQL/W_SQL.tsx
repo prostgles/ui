@@ -194,7 +194,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
 
   calculatedColWidths = false;
 
-  async onMount() {
+  onMount() {
     const { w } = this.props;
 
     if (!this.d.wSync) {
@@ -255,7 +255,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
   dataSubFilter?: any;
   dataAge?: number = 0;
   autoRefresh?: any;
-  onDelta = async (
+  onDelta = (
     dp: DeltaOf<W_SQLProps>,
     ds: DeltaOf<W_SQLState>,
     dd: DeltaOf<D>,
@@ -279,7 +279,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
   };
 
   _queryHashAlias?: string;
-  killQuery = async (terminate: boolean) => {
+  killQuery = (terminate: boolean) => {
     if (this.state.activeQuery?.state !== "running") return;
     this.setState({
       activeQuery: {
@@ -427,7 +427,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             <W_SQLEditor
               value={this.d.w?.sql ?? ""}
               style={hideCodeEditor ? { display: "none" } : {}}
-              sql={db.sql!}
+              sql={db.sql}
               suggestions={
                 !suggestions ? undefined : (
                   {

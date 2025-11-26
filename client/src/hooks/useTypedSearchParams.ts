@@ -55,6 +55,15 @@ export const useTypedSearchParams = <
         if (value == null || value === "") {
           newSearchParams.delete(key);
         } else {
+          if (
+            typeof value !== "string" &&
+            typeof value !== "number" &&
+            typeof value !== "boolean"
+          ) {
+            throw new Error(
+              `useTypedSearchParams Key "${key}" has illegal value`,
+            );
+          }
           newSearchParams.set(key, String(value));
         }
       });

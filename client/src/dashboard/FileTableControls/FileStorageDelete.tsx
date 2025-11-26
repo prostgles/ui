@@ -33,7 +33,7 @@ export const FileStorageDelete = ({
   useEffectAsync(async () => {
     const ftable = database_config.file_table_config?.fileTable;
     const hasFiles =
-      ftable && db[ftable] ? Boolean(await db[ftable]?.count?.()) : false;
+      ftable && db[ftable] ? Boolean(await db[ftable].count?.()) : false;
     setHasFiles(hasFiles);
   }, [database_config.file_table_config?.fileTable, db]);
 

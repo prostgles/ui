@@ -21,7 +21,7 @@ export const recordDomChanges = (targetNode: HTMLElement) => {
         );
         changes.push({
           type: "childList",
-          target: target as HTMLElement,
+          target: target,
           addedNodes: mutation.addedNodes,
           removedNodes: mutation.removedNodes,
           timestamp: Date.now(),
@@ -34,7 +34,7 @@ export const recordDomChanges = (targetNode: HTMLElement) => {
         const styleDiff = getStyleDiff(oldValue, currentStyle, target);
         changes.push({
           type: "style",
-          target: target as HTMLElement,
+          target: target,
           oldValue,
           currentStyle,
           changes: styleDiff,

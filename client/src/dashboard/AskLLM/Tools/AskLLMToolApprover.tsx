@@ -27,7 +27,7 @@ export type AskLLMToolsProps = {
   sendQuery: (
     msg: DBSSchema["llm_messages"]["message"] | undefined,
     isToolApproval: boolean,
-  ) => Promise<void>;
+  ) => void;
   callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
 } & Pick<Prgl, "methods" | "connection">;
 

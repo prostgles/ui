@@ -160,13 +160,13 @@ export const SmartFormFieldForeignKey = (
           media={media}
           maxFileCount={1}
           onAdd={([value]) => {
-            onChange({
+            void onChange({
               type: "nested-file-column",
               value,
             });
           }}
-          onDelete={async () => {
-            onChange({
+          onDelete={() => {
+            void onChange({
               type: "nested-file-column",
               value: undefined,
             });

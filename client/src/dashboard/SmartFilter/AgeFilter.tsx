@@ -1,4 +1,3 @@
-import React from "react";
 import type {
   DetailedFilterBase,
   FilterType,
@@ -8,6 +7,7 @@ import { CORE_FILTER_TYPES, NUMERIC_FILTER_TYPES } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { Select } from "@components/Select/Select";
+import React from "react";
 import type { BaseFilterProps } from "./SmartFilter";
 
 type FilterProps = BaseFilterProps;

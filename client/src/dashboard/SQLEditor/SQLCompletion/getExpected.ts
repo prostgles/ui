@@ -127,7 +127,7 @@ export const getExpected = (
  */
 export const cleanExpectFull = (
   expectRaw?: string,
-  afterExpect?: string | undefined,
+  afterExpect?: string  ,
 ):
   | { expect: SQLSuggestion["type"][]; inParens: boolean; kwd?: string }
   | undefined => {
@@ -156,7 +156,7 @@ export const cleanExpectFull = (
   }
   const cleanExp = [
     SUGGESTION_TYPES.find(
-      (t) => t.toLowerCase() === expect!.toLowerCase().trim(),
+      (t) => t.toLowerCase() === expect.toLowerCase().trim(),
     ),
   ].filter(isDefined);
   return {
@@ -167,7 +167,7 @@ export const cleanExpectFull = (
 
 export const cleanExpect = (
   expectRaw?: string,
-  afterExpect?: string | undefined,
+  afterExpect?: string  ,
 ) => cleanExpectFull(expectRaw, afterExpect)?.expect;
 
 export const parseExpect = (cb: CodeBlock) => {

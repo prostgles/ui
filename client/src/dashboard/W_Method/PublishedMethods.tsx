@@ -130,8 +130,8 @@ const useSmartCardListProps = ({
       className: "trigger-hover",
     };
     const fieldConfigs: FieldConfig<DBSSchema["published_methods"]>[] = [
-      { name: "description", hide: true },
-      { name: "arguments", hide: true },
+      { name: "description" as const, hide: true },
+      { name: "arguments" as const, hide: true },
       {
         name: "name",
         renderMode: "full",
@@ -166,7 +166,7 @@ const useSmartCardListProps = ({
             />,
       } satisfies FieldConfig<DBSSchema["published_methods"]>,
       {
-        name: "id",
+        name: "id" as const,
         label: " ",
         className: "f-1 ",
         render: (v, row: DBSSchema["published_methods"]) => (
@@ -175,7 +175,7 @@ const useSmartCardListProps = ({
               <Btn
                 title="Edit function"
                 iconPath={mdiPencil}
-                onClick={async () => {
+                onClick={() => {
                   setAction({
                     type: "update",
                     existingMethodId: row.id,

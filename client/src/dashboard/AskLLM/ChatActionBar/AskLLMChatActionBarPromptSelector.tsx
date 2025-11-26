@@ -7,9 +7,7 @@ import PopupMenu from "@components/PopupMenu";
 import {
   mdiCheck,
   mdiCircleOutline,
-  mdiEye,
   mdiFileEyeOutline,
-  mdiScriptText,
   mdiViewCarousel,
 } from "@mdi/js";
 import {
@@ -92,9 +90,9 @@ export const AskLLMChatActionBarPromptSelector = (
                   variant="text"
                   iconPath={isActive ? mdiCheck : mdiCircleOutline}
                   iconStyle={isActive ? { opacity: 1 } : { opacity: 0 }}
-                  onClick={async () => {
+                  onClick={() => {
                     if (!activeChatId) return;
-                    dbs.llm_chats.update(
+                    void dbs.llm_chats.update(
                       { id: activeChatId },
                       {
                         llm_prompt_id: id,

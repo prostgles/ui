@@ -41,7 +41,7 @@ export const MatchFirst = async ({
     return {
       suggestions: ss
         .filter((s) => s.type === "dataType")
-        .map((s) => ({ ...s, sortText: s.dataTypeInfo!.priority! })),
+        .map((s) => ({ ...s, sortText: s.dataTypeInfo!.priority })),
     };
   }
 

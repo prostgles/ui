@@ -70,7 +70,7 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
 
   const nested = column.nested && {
     ...column.nested,
-    table: column.nested.path.at(-1)!.table!,
+    table: column.nested.path.at(-1)!.table,
   };
   const nestedCols =
     nested?.chart ?

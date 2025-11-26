@@ -38,7 +38,7 @@ export const isCompleteJSONB = (
     return true;
   } else if (isObject(s.type) && isObject(v)) {
     return getEntries(s.type).every(([propName, propSchema]) =>
-      isCompleteJSONB(v[propName]!, propSchema),
+      isCompleteJSONB(v[propName], propSchema),
     );
   } else if (s.arrayOf || s.arrayOfType) {
     const arrSchema = s.arrayOf ? s.arrayOf : { type: s.arrayOfType };

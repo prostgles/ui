@@ -378,7 +378,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
           //   render: renderStatus
           // },
           {
-            name: "restored_",
+            name: "restored_" as "restore_end",
             label: "Last restored",
             hideIf: (v) => !v,
             select: { $ageNow: ["restore_end", null, "second"] },

@@ -88,7 +88,7 @@ export const clickWhenReady = async (elem: HTMLElement, timeout = 5e3) => {
     }
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (elem.disabled) {
-      throw `Element ${elem} is still disabled after ${timeout}ms`;
+      throw `Element ${elem.nodeName + elem.className} is still disabled after ${timeout}ms`;
     }
   }
   elem.scrollIntoView({ behavior: "smooth" });

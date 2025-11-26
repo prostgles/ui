@@ -169,7 +169,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
         value={style_type}
         variant="div"
         options={STYLE_MODES}
-        onChange={async (type) => {
+        onChange={(type) => {
           if (type === "Conditional") {
             setDefaultConditionalStyle(
               { db, tableName, columnName: column.name, theme: theme },

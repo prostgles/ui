@@ -59,7 +59,7 @@ export const Sessions = ({
   const listProps = useMemo(
     () => ({
       title: tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`,
-      filter: getActiveTokensFilter(displayType, user?.id) as AnyObject,
+      filter: getActiveTokensFilter(displayType, user?.id),
       style: {
         maxHeight: "40vh",
       },

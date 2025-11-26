@@ -9,7 +9,7 @@ import type { ContextDataSchema } from "./OptionControllers/FilterControl";
 
 type P = {
   className?: string;
-  onChange: (contextValue?: ContextValue | undefined) => void;
+  onChange: (contextValue?: ContextValue  ) => void;
   value: ContextValue | undefined;
   contextData: ContextDataSchema;
   column: FilterColumn;

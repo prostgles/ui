@@ -158,7 +158,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
     const { dbsMethods } = prglState;
     this.setState({ status: "" });
     try {
-      const res = await dbsMethods.testDBConnection!(connection!);
+      const res = await dbsMethods.testDBConnection!(connection);
       this.setState({
         status:
           "OK" +
@@ -455,9 +455,10 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                 variant="outline"
                 color="action"
                 iconPath={mdiContentDuplicate}
-                onClick={async (e) => {
-                  if (c.name) updateConnection({ name: c.name + " (copy)" });
-                  updateConnection({ created: null, is_state_db: null });
+                onClick={(e) => {
+                  if (c.name)
+                    void updateConnection({ name: c.name + " (copy)" });
+                  void updateConnection({ created: null, is_state_db: null });
                   this.setState({ mode: "clone" });
                 }}
               >
@@ -486,7 +487,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   setMsg({ loading: 1 });
                   if (
                     c.name &&
-                    (await dbs!.connections.findOne({
+                    (await dbs.connections.findOne({
                       name: c.name,
                       "id.<>": conn.id,
                     }))

@@ -1,3 +1,5 @@
+import { isObject } from "@common/publishUtils";
+import Popup from "@components/Popup/Popup";
 import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import {
   getKeys,
@@ -6,9 +8,6 @@ import {
   reverseParsedPath,
 } from "prostgles-types";
 import React from "react";
-import ErrorComponent from "@components/ErrorComponent";
-import Loading from "@components/Loader/Loading";
-import Popup from "@components/Popup/Popup";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import type {
@@ -21,19 +20,18 @@ import type {
 import { DeckGLMap } from "../Map/DeckGLMap";
 import type { DeltaOfData } from "../RTComp";
 import RTComp from "../RTComp";
+import { SmartForm } from "../SmartForm/SmartForm";
 import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
 import Window from "../Window";
 import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
 import { W_MapMenu } from "./W_MapMenu";
+import { MapInfoSection } from "./controls/MapInfoSection";
+import { fetchMapLayerData } from "./fetchData/fetchMapLayerData";
+import { getMapFilter } from "./fetchData/getMapData";
 import { getMapDataExtent } from "./fetchData/getMapDataExtent";
 import type { HoveredObject } from "./onMapHover";
 import { onMapHover } from "./onMapHover";
-import { fetchMapLayerData } from "./fetchData/fetchMapLayerData";
-import { SmartForm } from "../SmartForm/SmartForm";
-import { isObject } from "@common/publishUtils";
-import { getMapFilter } from "./fetchData/getMapData";
-import { MapInfoSection } from "./controls/MapInfoSection";
 
 export type LayerBase = {
   /**
@@ -233,7 +231,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
 
   autoRefreshInterval;
   gettingExtent = false;
-  onDelta = async (
+  onDelta = (
     dp: Partial<W_MapProps>,
     ds: Partial<W_MapState>,
     dd: DeltaOfData<D>,
@@ -275,7 +273,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         this.setLayerData(this.state.dataAge);
 
         if (changedOpts.includes("refresh")) {
-          const { refresh } = this.d.w.options!;
+          const { refresh } = this.d.w.options;
 
           if (this.autoRefreshInterval) {
             clearInterval(this.autoRefreshInterval);

@@ -59,7 +59,7 @@ export const GeoFilter = ({
       );
     onChange({
       disabled,
-      ...filter!,
+      ...filter,
       value: newValue,
     });
   };
@@ -100,7 +100,7 @@ export const GeoFilter = ({
       row,
       tables.find((t) => t.name === refPoint.table!.name)!,
     );
-    const rowRes = await db[refPoint.table.name!]?.findOne!(filter, { select });
+    const rowRes = await db[refPoint.table.name]?.findOne!(filter, { select });
     if (
       rowRes?.c &&
       Array.isArray(rowRes.c.coordinates) &&

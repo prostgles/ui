@@ -131,7 +131,7 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
           }) + (this.props.layers.length > 1 && l.label ? ` ${l.label}` : "");
 
         const coords: Point = [
-          this.chart!.getDataXY(labelTickCanvasX, 0)[0]!,
+          this.chart!.getDataXY(labelTickCanvasX, 0)[0],
           l.y + 5,
         ];
 

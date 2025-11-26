@@ -30,7 +30,7 @@ export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
         );
         if (!db[tableName]?.findOne) throw `db.${tableName}.find not allowed`;
         _xyExtent =
-          (await db[tableName]?.findOne?.(finalFilterWOextent, {
+          (await db[tableName].findOne(finalFilterWOextent, {
             select: { e: { $ST_Extent: [geomColumn] } },
           })) ?? [];
       } else {

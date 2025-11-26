@@ -97,7 +97,7 @@ export const RenderValue = ({
     value !== null
   ) {
     const maxDecimalsFromValues = getValues?.()
-      ?.map((v) => {
+      .map((v) => {
         if (v === null || v === undefined) return 0;
         const num = +v;
         if (isNaN(num)) return 0;

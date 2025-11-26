@@ -91,7 +91,7 @@ export const ElectronSetupStateDB = ({
                 />
                 <FormField
                   id="pass"
-                  value={c.db_pass}
+                  value={c.db_pass ?? ""}
                   label={t.NewConnectionForm["Password"]}
                   type="text"
                   autoComplete="off"

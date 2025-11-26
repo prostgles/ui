@@ -102,7 +102,7 @@ export const SmartFormFileSection = ({
                 { deleted: true },
                 onSuccess ? { returning: "*" } : {},
               );
-              onSuccess?.("update", res!);
+              onSuccess?.("update", res);
             }
           }
         } else {

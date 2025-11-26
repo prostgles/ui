@@ -235,7 +235,7 @@ const setDemoHandles = (node: HTMLDivElement, dmap: DeckGLMap) => {
     longitude: number;
   }) => {
     const [x = 0, y = 0] = dmap
-      .deckW!.deck.getViewports()![0]!
+      .deckW!.deck.getViewports()[0]!
       .project([place.longitude, place.latitude]);
     const bbox = node.getBoundingClientRect();
     return {

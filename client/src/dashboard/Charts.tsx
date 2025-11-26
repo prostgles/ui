@@ -76,9 +76,9 @@ export const toDateStr = (
   opts: Intl.DateTimeFormatOptions,
 ): string => {
   const key = JSON.stringify({ d: Math.round(+date), opts });
-  if (cachedVals[key]) return cachedVals[key]!;
+  if (cachedVals[key]) return cachedVals[key];
   else cachedVals[key] = date.toLocaleString(navigator.language, opts);
-  return cachedVals[key]!;
+  return cachedVals[key];
 };
 
 export type Point = [number, number];

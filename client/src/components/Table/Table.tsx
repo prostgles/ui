@@ -50,11 +50,7 @@ export type TableColumn = {
   noRightBorder?: boolean;
   /** If it's a joined column then a string array of sortable columns */
   sortable: boolean | ColumnSortMenuProps;
-  onClick?: (
-    row: AnyObject,
-    col: TableColumn,
-    e: React.MouseEvent,
-  ) => void | any;
+  onClick?: (row: AnyObject, col: TableColumn, e: React.MouseEvent) => void;
 
   onRender?: OnColRender;
 
@@ -79,7 +75,7 @@ export type TableColumn = {
   flex?: number;
 };
 
-export type TableProps<Sort extends ColumnSort | ColumnSortSQL> = {
+export type TableProps<Sort extends ColumnSortSQL> = {
   rowKeys?: string[];
   rows: AnyObject[];
   cols: ProstglesColumn[];
@@ -114,7 +110,7 @@ export type TableProps<Sort extends ColumnSort | ColumnSortSQL> = {
 export type TableState = {
   draggedCol?: { node: HTMLDivElement; idx: number; targetIdx?: number };
 };
-export const Table = <Sort extends ColumnSort | ColumnSortSQL>(
+export const Table = <Sort extends ColumnSortSQL>(
   props: TableProps<Sort> & React.HTMLAttributes<HTMLDivElement>,
 ) => {
   const {

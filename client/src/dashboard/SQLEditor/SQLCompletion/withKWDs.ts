@@ -1,4 +1,4 @@
-import { isDefined } from "prostgles-types";
+import { isDefined, isObject } from "prostgles-types";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getCurrentNestingOffsetLimits } from "./completionUtils/getCodeBlock";
 import type { SQLSuggestion } from "../W_SQLEditor";
@@ -407,7 +407,7 @@ export const withKWDs = <KWDD extends KWD>(
             ) {
               firstSuggestions = firstSuggestions.map((s) => ({
                 ...s,
-                insertText: `=${s.label || s.escapedIdentifier || s.escapedName}`,
+                insertText: `=${(isObject(s.label) ? s.label.label : s.label) || s.escapedIdentifier || s.escapedName}`,
               }));
             }
           } else if (typeof options === "function") {

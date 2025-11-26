@@ -22,7 +22,9 @@ import type { JoinedRecordsProps } from "./JoinedRecords/JoinedRecords";
 import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
 
 export type getErrorsHook = (
-  cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,
+  cb: (
+    newRow: AnyObject,
+  ) => Promise<SmartFormState["error"] | void> | SmartFormState["error"] | void,
 ) => void;
 
 export type GetRefHooks = {
@@ -182,7 +184,7 @@ export const SmartForm = (props: SmartFormProps) => {
   }
 
   if (!mode) {
-    return error || "Mode missing";
+    return <> {error || "Mode missing"}</>;
   }
 
   const state: SmartFormState = {
@@ -214,7 +216,7 @@ const SmartFormWithNoError = ({
       mode.currentRow &&
       table.card.headerColumn in mode.currentRow
     ) ?
-      mode.currentRow[table.card.headerColumn]
+      (mode.currentRow[table.card.headerColumn] as string)
     : undefined;
   const headerText =
     label ??

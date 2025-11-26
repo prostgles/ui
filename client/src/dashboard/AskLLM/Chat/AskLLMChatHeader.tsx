@@ -86,7 +86,7 @@ export const AskLLMChatHeader = (
           onClickPromise={async () => {
             if (!preferredPromptId)
               throw new Error(t.AskLLMChatHeader["No prompt found"]);
-            createNewChat(preferredPromptId);
+            await createNewChat(preferredPromptId);
           }}
         />
       </FlexRow>

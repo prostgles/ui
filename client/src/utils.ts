@@ -37,7 +37,7 @@ export function filterObj<T extends AnyObject, K extends keyof T>(
   return obj;
 }
 
-export function ifEmpty(v: any, replaceValue: any) {
+export function ifEmpty<V, R>(v: V, replaceValue: R): R | V {
   return isEmpty(v) ? replaceValue : v;
 }
 

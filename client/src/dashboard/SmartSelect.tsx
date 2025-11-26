@@ -134,7 +134,7 @@ export const SmartSelect = <
               setM({ loading: 1 });
               await tableHandler.insert!({
                 ...filter,
-                [displayField ?? fieldName]: noExactSearchMatch!,
+                [displayField ?? fieldName]: noExactSearchMatch,
               }).catch((err) => setM({ err }));
               setM({ ok: "Created!" }, () => {
                 if (!getIsMounted()) return;

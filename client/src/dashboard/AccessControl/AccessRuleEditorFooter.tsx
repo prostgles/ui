@@ -20,7 +20,7 @@ type P = {
   dbs: DBS;
   connectionId: string;
   database_id: number;
-  error: any | undefined;
+  error: any;
   editedRule: ValidEditedAccessRuleState | undefined;
 };
 export const AccessRuleEditorFooter = (props: P) => {

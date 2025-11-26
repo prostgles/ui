@@ -67,7 +67,7 @@ export const EmailAuthSetup = ({
       <SwitchToggle
         label={t.common.Enabled}
         checked={!!localAuth?.enabled}
-        onChange={async (enabled) => {
+        onChange={(enabled) => {
           setLocalAuth(
             !localAuth ?
               {
@@ -109,7 +109,7 @@ export const EmailAuthSetup = ({
             },
           ] as const
         }
-        onChange={async (signupType) => {
+        onChange={(signupType) => {
           setLocalAuth(
             signupType === "withMagicLink" ?
               {
@@ -136,7 +136,7 @@ export const EmailAuthSetup = ({
           label={t.EmailAuthSetup["Minimum password length"]}
           optional={true}
           value={localAuth.minPasswordLength ?? 8}
-          onChange={async (minPasswordLength) => {
+          onChange={(minPasswordLength: number) => {
             setLocalAuth({
               ...localAuth,
               minPasswordLength,

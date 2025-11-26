@@ -85,8 +85,8 @@ export const JSONBSchemaOneOfType = ({
     /**
      * Create full options schema
      */
-    matchingOneOfSchema![tKey] = {
-      ...omitKeys(matchingOneOfSchema![tKey]! as any, ["enum"]),
+    matchingOneOfSchema[tKey] = {
+      ...omitKeys(matchingOneOfSchema[tKey]! as any, ["enum"]),
       oneOf: s.oneOfType.flatMap((ss) => {
         return {
           title: tKey,

@@ -27,7 +27,7 @@ type P = {
   w: WindowSyncItem<"table">;
   nestedColumnOpts: NestedColumnOpts | undefined;
   tables: CommonWindowProps["tables"];
-  suggestions: CommonWindowProps["suggestions"] | undefined;
+  suggestions: CommonWindowProps["suggestions"];
   onClose: () => any;
   showAddCompute?: { colName?: string };
 };
@@ -97,7 +97,7 @@ export class ColumnsMenu extends RTComp<P, S> {
       const nestedTableName = nestedColumn.nested.path.at(-1)!.table;
       table = tables.find((t) => t.name === nestedTableName);
       cols = getFullColumnConfig(tables, {
-        table_name: nestedTableName!,
+        table_name: nestedTableName,
         columns: nestedColumn.nested.columns,
       });
     }

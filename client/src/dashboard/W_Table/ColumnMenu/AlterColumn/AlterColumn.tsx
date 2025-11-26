@@ -82,9 +82,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
     this.setState({ constraints });
   }, 100);
 
-  async onDeltaCombined(
-    delta: DeltaOf<AlterColumnProps> & DeltaOf<S>,
-  ): Promise<void> {
+  onDeltaCombined(delta: DeltaOf<AlterColumnProps> & DeltaOf<S>) {
     const deltaKeys = getKeys(delta ?? {});
     if (deltaKeys.includes("queryAge") || !this.state.constraints) {
       this.setConstraints();
@@ -235,7 +233,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
       this.setState({ edited: undefined, query: "" });
     };
 
-    const dropConstraint = async (conName: string, endQuery = "") => {
+    const dropConstraint = (conName: string, endQuery = "") => {
       const pkCon = constraints?.find((c) => c.constraint_name === conName);
       if (pkCon) {
         this.setState({

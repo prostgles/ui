@@ -1,8 +1,9 @@
 import { assertJSONBObjectAgainstSchema } from "prostgles-types";
 import type { DBS } from "..";
-import { getDockerManager, type CreateContainerContext } from "./DockerManager";
+import { getDockerManager } from "./DockerManager";
 import { createContainerSchema } from "./createContainer.schema";
 import type { McpToolCallResponse } from "@common/mcp";
+import type { CreateContainerContext } from "./containerAuthStore";
 
 export const getDockerMCPTools = async (dbs: DBS) => {
   const dockerManager = await getDockerManager(dbs);

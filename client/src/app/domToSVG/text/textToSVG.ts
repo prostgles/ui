@@ -208,7 +208,7 @@ const unnestRedundantGElements = (svg: SVGElement) => {
   return svg;
 };
 
-export const wrapAllSVGText = async (svg: SVGElement) => {
+export const wrapAllSVGText = (svg: SVGElement) => {
   if (!svg.isConnected) {
     throw new Error("SVG must be in the DOM for bbox calculations");
   }

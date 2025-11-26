@@ -146,9 +146,9 @@ const getTableJoins = (prevTableTokenIndexes: number[], { ss, cb }: Args) => {
           );
           if (!ftable) return;
           const joinToTableAlias = getStartingLetters(ftable_name);
-          const condition = conkey!
+          const condition = conkey
             .map((ordPos, cidx) => {
-              const toColumnPosition = confkey![cidx];
+              const toColumnPosition = confkey[cidx];
               const fromTableCol = tablesInfo.cols.find(
                 (c) => c.ordinal_position === ordPos,
               )?.escaped_identifier;
@@ -156,7 +156,7 @@ const getTableJoins = (prevTableTokenIndexes: number[], { ss, cb }: Args) => {
               const toTable = ss.find(
                 (s) =>
                   s.type === "table" &&
-                  s.escapedIdentifier?.includes(ftable_name!),
+                  s.escapedIdentifier?.includes(ftable_name),
               );
               const toColumn = toTable?.cols?.find(
                 (c) => c.ordinal_position === toColumnPosition,

@@ -1,20 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useRef } from "react";
 import "./Chat.css";
 
-import { mdiAttachment, mdiClose, mdiSend, mdiStopCircle } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { mdiClose } from "@mdi/js";
 import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
-import Chip from "../Chip";
-import { useDropZone } from "../FileInput/DropZone";
-import { classOverride, FlexCol, FlexRow } from "../Flex";
-import { Icon } from "../Icon/Icon";
+import { classOverride, FlexCol } from "../Flex";
 import { MediaViewer } from "../MediaViewer";
 import { ScrollFade } from "../ScrollFade/ScrollFade";
 import { ChatMessage } from "./ChatMessage";
-import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
-import { useChatOnPaste } from "./useChatOnPaste";
-import Loading from "@components/Loader/Loading";
 import { ChatSendControls } from "./ChatSendControls";
 import { useChatState } from "./useChatState";
 
@@ -31,7 +24,7 @@ export type Message = {
 export type ChatProps = {
   style?: React.CSSProperties;
   className?: string;
-  onSend: (msg?: string, files?: File[]) => Promise<any | void>;
+  onSend: (msg?: string, files?: File[]) => Promise<void>;
   onStopSending: undefined | (() => void);
   messages: Message[];
   allowedMessageTypes?: Partial<{
@@ -169,7 +162,7 @@ export const Chat = (props: ChatProps) => {
                 e.key.toLocaleLowerCase() === "enter"
               ) {
                 e.preventDefault();
-                sendMsg();
+                void sendMsg();
               }
             }}
           />

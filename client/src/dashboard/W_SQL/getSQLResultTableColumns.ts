@@ -34,7 +34,7 @@ export const getSQLResultTableColumns = ({
         maxCellChars: maxCharsPerCell || 1000,
         maximumFractionDigits: 12,
       }),
-      onResize: async (width) => {
+      onResize: (width) => {
         const newCols = cols.map((_c) => {
           if (_c.key === c.key) {
             _c.width = width;

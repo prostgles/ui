@@ -1,20 +1,17 @@
-import { mdiBackupRestore } from "@mdi/js";
-import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
-import React, { useEffect, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
-import type { Prgl } from "../../../App";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Section } from "@components/Section";
-import { Select } from "@components/Select/Select";
+import { mdiBackupRestore } from "@mdi/js";
+import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
+import React, { useState } from "react";
+import type { Prgl } from "../../../App";
+import { t } from "../../../i18n/i18nUtils";
 import type { DBS } from "../../Dashboard/DBS";
 import { CodeConfirmation } from "../CodeConfirmation";
-import { FORMATS } from "../DumpOptions";
 import { DumpRestoreAlerts } from "../DumpRestoreAlerts";
-import { FlexCol } from "@components/Flex";
-import { t } from "../../../i18n/i18nUtils";
 import { RestoreOptions } from "./RestoreOptions";
 
 export type RestoreOpts = DBSSchema["backups"]["restore_options"];
@@ -91,7 +88,7 @@ export const Restore = (props: RestoreProps) => {
       "start",
       f.name,
       connectionId,
-      null,
+      undefined,
       f.size,
       restoreOpts,
     );
@@ -108,7 +105,7 @@ export const Restore = (props: RestoreProps) => {
         }
       },
       async close() {
-        (async () => {
+        await (async () => {
           await streamBackupFile("end", streamId, null, undefined, undefined);
         })();
       },
@@ -202,7 +199,7 @@ export const Restore = (props: RestoreProps) => {
             <FormField
               type="file"
               label="File"
-              onChange={(files) => {
+              onChange={(files: FileList) => {
                 const f: FileOrMaybeItsNothing = files[0];
                 setFile(f);
               }}

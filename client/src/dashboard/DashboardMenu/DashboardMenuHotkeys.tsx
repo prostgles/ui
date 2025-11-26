@@ -14,7 +14,7 @@ export const DashboardMenuHotkeys = ({ loadTable, setShowSearchAll }: P) => {
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      const term = window.getSelection()?.toString()?.trim();
+      const term = window.getSelection()?.toString().trim();
       const mode = getHotkey(e);
       if (mode && !includes(mode, ["rows", "open file", "commands"])) {
         e.preventDefault();
@@ -23,7 +23,7 @@ export const DashboardMenuHotkeys = ({ loadTable, setShowSearchAll }: P) => {
     };
 
     const onKeyUp = (e) => {
-      const term = window.getSelection()?.toString()?.trim();
+      const term = window.getSelection()?.toString().trim();
       const mode = getHotkey(e);
       if (mode === "open file") {
         e.preventDefault();

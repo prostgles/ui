@@ -263,7 +263,7 @@ export const COLORS = {
 
 export const COLOR_PALETTE = Object.values(
   COLORS,
-) as (typeof COLORS)[keyof typeof COLORS][];
+);
 
 export const COLOR_PALETTE_RGB = COLOR_PALETTE.map(
   (c) => asRGB(c).slice(0, 3) as [number, number, number],

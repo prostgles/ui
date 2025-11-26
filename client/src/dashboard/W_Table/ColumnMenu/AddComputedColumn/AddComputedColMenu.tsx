@@ -75,7 +75,7 @@ export class AddComputedColMenu extends RTComp<
     addTo: "start",
   };
 
-  onDelta(deltaP?: Partial<AddComputedColMenuP> | undefined): void {
+  onDelta(deltaP?: Partial<AddComputedColMenuP>  ): void {
     if (deltaP?.selectedColumn && !this.state.column) {
       this.setState({ column: deltaP.selectedColumn });
     }

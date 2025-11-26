@@ -16,12 +16,10 @@ export const useSearchTables = (props: SearchAllProps & SearchAllState) => {
   } = props;
 
   const [matchedRows, setMatchedRows] = useState<
-    {
+    (SearchMatch & {
       $rowhash: any;
-      table: string;
       colName: string;
-      match: SearchMatch;
-    }[]
+    })[]
   >();
 
   const [searchTerm, setSearchTerm] = useState("");

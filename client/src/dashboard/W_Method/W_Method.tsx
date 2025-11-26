@@ -34,7 +34,7 @@ export const W_Method = (allProps: W_MethodProps) => {
       w={w as any}
       layoutMode={props.workspace.layout_mode ?? "editable"}
       getMenu={(w, closeMenu) => (
-        <W_MethodMenu {...allProps} w={w as any} closeMenu={closeMenu} />
+        <W_MethodMenu {...allProps} w={w} closeMenu={closeMenu} />
       )}
     >
       <W_MethodControls

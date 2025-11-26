@@ -15,7 +15,7 @@ import { sqlDemo } from "./scripts/sqlVideoDemo";
 import { schemaDiagramDemo } from "./scripts/schemaDiagramDemo";
 import { AIAssistantDemo } from "./scripts/AIAssistantDemo";
 
-const loadTest = async () => {
+const loadTest = () => {
   const dbs: DBS = (window as any).dbs;
   console.log(dbs);
 };
@@ -35,7 +35,7 @@ type DEMO_NAME = keyof typeof VIDEO_DEMO_SCRIPTS;
 
 const videoTimings: { videoName: string; start: number; end: number }[] = [];
 let currVideo: (typeof videoTimings)[number] | undefined;
-const startVideoDemo = async (videoName: string) => {
+const startVideoDemo = (videoName: string) => {
   if (currVideo) {
     videoTimings.push({ ...currVideo, end: Date.now() });
   }

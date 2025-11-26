@@ -177,9 +177,6 @@ export type MonacoError = Pick<
   length?: number;
 };
 
-import { mdiPlay } from "@mdi/js";
-import { isEqual } from "prostgles-types";
-import type { SQLHandler } from "prostgles-types";
 import Btn from "@components/Btn";
 import { getDataTransferFiles } from "@components/FileInput/DropZone";
 import { FlexCol } from "@components/Flex";
@@ -187,12 +184,16 @@ import {
   MonacoEditor,
   type MonacoEditorProps,
 } from "@components/MonacoEditor/MonacoEditor";
-import { isEmpty, omitKeys } from "prostgles-types";
+import { getSelectedText } from "@components/MonacoEditor/useMonacoEditorAddActions";
+import { mdiPlay } from "@mdi/js";
+import type { IPosition } from "monaco-editor/esm/vs/editor/editor.api.js";
+import type { SQLHandler } from "prostgles-types";
+import { isEmpty, isEqual, omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
-import type { IRange, editor } from "../W_SQL/monacoEditorTypes";
+import type { editor } from "../W_SQL/monacoEditorTypes";
 import type { TopKeyword } from "./SQLCompletion/KEYWORDS";
 import type { CodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
 import {
@@ -215,12 +216,10 @@ import type {
   PG_Trigger,
 } from "./SQLCompletion/getPGObjects";
 import { addSqlEditorFunctions } from "./addSqlEditorFunctions";
-import { defineCustomMonacoSQLTheme } from "./defineCustomMonacoSQLTheme";
 import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
 import { scrollToLineIfNeeded } from "./utils/scrollToLineIfNeeded";
 import { setMonacEditorError } from "./utils/setMonacEditorError";
-import { getSelectedText } from "@components/MonacoEditor/useMonacoEditorAddActions";
 
 export type SQLEditorRef = {
   editor: editor.IStandaloneCodeEditor;
@@ -230,9 +229,9 @@ export type SQLEditorRef = {
 
 type P = {
   value: string;
-  onChange: (newValue: string, cursorPosition: any) => any | void;
+  onChange: (newValue: string, cursorPosition: any) => void;
   debounce?: number;
-  onRun?: (code: string, isSelected: boolean) => any | void;
+  onRun?: (code: string, isSelected: boolean) => void;
   suggestions?: DashboardState["suggestions"] & {
     onLoaded?: VoidFunction;
   };
@@ -245,7 +244,7 @@ type P = {
   sql?: SQLHandler;
   onMount?: (ref: SQLEditorRef) => void;
   onUnmount?: (editor: any, cursorPosition: any) => void | Promise<void>;
-  cursorPosition?: any;
+  cursorPosition?: IPosition;
   onDidSetCursorPosition?: () => void;
   style?: React.CSSProperties;
   className?: string;
@@ -273,7 +272,7 @@ export class W_SQLEditor extends RTComp<P, S> {
     };
   }
 
-  async onMount() {
+  onMount() {
     window.addEventListener(
       "beforeunload",
       async (e) => {
@@ -465,7 +464,7 @@ export class W_SQLEditor extends RTComp<P, S> {
       this.onChange(editor.getValue());
       setActiveCodeBlock.bind(this)(undefined);
     });
-    editor.onDidChangeCursorPosition(async (e) => {
+    editor.onDidChangeCursorPosition((e) => {
       setActiveCodeBlock.bind(this)(e);
     });
 

@@ -251,7 +251,7 @@ export class LinkMenu extends RTComp<P, S> {
     }
   };
 
-  onDelta = async (dP, dS, dD) => {
+  onDelta = (dP, dS, dD) => {
     if (!this.state.shapes) {
       this.loadShapes();
     }

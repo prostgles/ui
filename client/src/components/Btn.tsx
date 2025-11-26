@@ -93,7 +93,7 @@ type BtnCustomProps = (
         onClickMessage?: undefined;
         onClickPromise?: (
           e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-        ) => Promise<void>;
+        ) => Promise<void> | void;
         onClickPromiseMode?: "noTickIcon";
         /**
          * Will display it instead of the error message
@@ -516,7 +516,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     return withLabel(
       <>
         <button
-          {...(finalProps as PropsOf<HTMLButtonElement>)}
+          {...finalProps}
           data-color={color}
           disabled={isDisabled ? true : undefined}
         >

@@ -28,13 +28,14 @@ module.exports = {
   plugins: ["@typescript-eslint"],
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   rules: {
-    "@typescript-eslint/no-misused-spread": "error",
-    "no-restricted-syntax": [
+    "@typescript-eslint/no-misused-spread": [
       "error",
       {
-        selector:
-          "SpreadElement[argument.typeAnnotation.typeName.name='DOMRect']",
-        message: "Do not spread DOMRect — use explicit destructuring.",
+        allow: [
+          "CSSStyleDeclaration",
+          "Partial<CSSStyleDeclaration>",
+          "DOMStringMap",
+        ],
       },
     ],
     "no-cond-assign": "error",

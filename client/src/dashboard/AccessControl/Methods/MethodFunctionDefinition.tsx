@@ -76,7 +76,7 @@ function useCallbackDeep<T extends (...args: any[]) => any>(
     ref.current = {
       deps: dependencies,
       cb: callback,
-      wrapper: callback as T,
+      wrapper: callback,
     };
   }
 

@@ -46,7 +46,7 @@ export const MapBasemapOptions = ({ w, prgl, className, asPopup }: P) => {
     [w, localOptions, asPopup],
   );
   const setBaseImageURL = useCallback(
-    async (url) => {
+    (url: string) => {
       const setBounds = (height = 100, width = 100) => {
         updateOptions({ basemapImage: { url, bounds: [0, 0, width, height] } });
       };

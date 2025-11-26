@@ -212,7 +212,7 @@ export class FilterWrapper extends RTComp<
         onChange={(type) => {
           let newF: DetailedFilterBase = {
             ...filter,
-            type: type as FilterType,
+            type: type,
             fieldName,
           };
 

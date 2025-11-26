@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { Prgl } from "../../App";
 import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
-import { Select } from "@components/Select/Select";
+import React, { useCallback, useEffect } from "react";
+import type { Prgl } from "../../App";
 import { t } from "../../i18n/i18nUtils";
 import { EmailAuthSetup } from "./EmailAuthSetup";
 import { OAuthProviderSetup } from "./OAuthProviderSetup";
@@ -125,8 +124,8 @@ export const AuthProviderSetup = ({
           label={t.AuthProviderSetup["Website URL"]}
           hint={t.AuthProviderSetup["Used for redirect uri"]}
           value={global_settings.auth_providers?.website_url}
-          onChange={async (website_url) => {
-            updateAuth({
+          onChange={(website_url: string) => {
+            void updateAuth({
               ...auth_providers,
               website_url,
             });
@@ -142,7 +141,7 @@ export const AuthProviderSetup = ({
               subLabel: ut.description ?? "",
             })) ?? []
           }
-          onChange={async (default_user_type) => {
+          onChange={(default_user_type: string) => {
             if (default_user_type === "admin") {
               const result = window.confirm(
                 t.AuthProviderSetup[
@@ -151,13 +150,13 @@ export const AuthProviderSetup = ({
               );
               if (!result) return;
             }
-            updateAuth({
+            void updateAuth({
               ...auth_providers,
               created_user_type: default_user_type || undefined,
             });
           }}
           hint={
-            t.AuthProviderSetup[
+            t.ServerSettings[
               "The default user type assigned to new users. Defaults to 'default'"
             ]
           }

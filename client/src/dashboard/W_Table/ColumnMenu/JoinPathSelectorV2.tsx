@@ -42,7 +42,7 @@ export const getJoinPathLabel = (
       : hasMultiFkeys(tables, p.table, prevPath.table);
     let label = p.table;
     if (hasMultipleFkeyConstraints) {
-      label = `(${Object.entries(p.on![0]!)
+      label = `(${Object.entries(p.on[0]!)
         .map(([l, r]) => `${l} = ${r}`)
         .join(" AND ")}) ${p.table}`;
     }
@@ -50,7 +50,7 @@ export const getJoinPathLabel = (
       label,
       multiJoin: hasMultipleFkeyConstraints && {
         value: hasMultipleFkeyConstraints,
-        chosen: Object.entries(p.on![0]!),
+        chosen: Object.entries(p.on[0]!),
       },
     };
   });

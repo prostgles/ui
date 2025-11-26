@@ -34,7 +34,7 @@ export const useSearchListOnKeyUpDown = ({
         return;
       const listItems = [...list.children].filter(
         (el) => el instanceof HTMLLIElement,
-      ) as HTMLLIElement[];
+      );
       const firstListItem = listItems.at(0);
       const lastListItem = listItems.at(-1);
 

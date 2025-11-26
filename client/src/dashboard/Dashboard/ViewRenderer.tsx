@@ -87,7 +87,7 @@ export class ViewRenderer extends RTComp<
         return windows.find((w) => w.id === wid)?.table_name;
       });
       if (tableChain.every(isDefined)) {
-        return tableChain as string[];
+        return tableChain;
       }
     }
     return undefined;
@@ -286,12 +286,7 @@ export class ViewRenderer extends RTComp<
             />
           );
         } else if (w.type === "table") {
-          const crossF = getCrossFilters(
-            w as WindowSyncItem<"table">,
-            active_row,
-            links,
-            windows,
-          );
+          const crossF = getCrossFilters(w, active_row, links, windows);
           result = (
             <W_Table
               setLinkMenu={setLinkMenu}
@@ -302,8 +297,8 @@ export class ViewRenderer extends RTComp<
               onLinkTable={
                 this.props.isReadonly ?
                   undefined
-                : async (tblName, path) => {
-                    onLinkTable(w, tblName, path);
+                : (tblName, path) => {
+                    void onLinkTable(w, tblName, path);
                   }
               }
               joinFilter={crossF.activeRowFilter}
@@ -431,7 +426,7 @@ export class ViewRenderer extends RTComp<
             return 1;
           }}
         >
-          {renderedWindows.map((d) => d.elem!)}
+          {renderedWindows.map((d) => d.elem)}
         </SilverGridReact>
       </div>
     );

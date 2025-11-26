@@ -144,7 +144,7 @@ export const NewConnectionForm = ({
             label={t.NewConnectionForm["Socket URL"]}
             type="url"
             required={true}
-            value={c.prgl_url}
+            value={c.prgl_url || ""}
             onChange={(val: string) => {
               updateConnection({ prgl_url: val });
             }}
@@ -168,7 +168,7 @@ export const NewConnectionForm = ({
             type="text"
             hint="postgres://user:pass@host:port/database?sslmode=require"
             required={true}
-            value={c.db_conn}
+            value={c.db_conn || ""}
             onChange={(db_conn: string) => {
               updateConnection({ db_conn });
             }}
@@ -208,7 +208,7 @@ export const NewConnectionForm = ({
           />
           <FormField
             id="pass"
-            value={c.db_pass}
+            value={c.db_pass ?? ""}
             label={t.NewConnectionForm["Password"]}
             data-command="NewConnectionForm.db_pass"
             type="text"
@@ -225,7 +225,7 @@ export const NewConnectionForm = ({
             options={suggestions?.databases}
             autoComplete="off"
             onChange={(db_name) => {
-              updateConnection({ db_name });
+              void updateConnection({ db_name });
             }}
             rightContentAlwaysShow={true}
             rightIcons={
@@ -252,7 +252,7 @@ export const NewConnectionForm = ({
                     if (action === "clone" && origCon?.db_name) {
                       getDBCloneQuery(
                         origCon.db_name,
-                        c.db_name!,
+                        c.db_name,
                         dbProject.sql!,
                       ).then((newQuery) => {
                         if (newQuery !== query) setState({ query: newQuery });
@@ -354,13 +354,13 @@ export const NewConnectionForm = ({
               fullOptions={SSL_MODES}
               required={true}
               value={c.db_ssl}
-              onChange={async (db_ssl: (typeof SSL_MODES)[number]["key"]) => {
+              onChange={(db_ssl: (typeof SSL_MODES)[number]["key"]) => {
                 // if(c.type === "Connection URI"){
                 //   const con = await dbsMethods?.validateConnection?.({ ...c, db_ssl, type: "Standard" });
                 //   console.log(con);
                 // }
                 /** Switch to standard to ensure the db_conn is updated accordingly */
-                updateConnection({ db_ssl, type: "Standard" });
+                void updateConnection({ db_ssl, type: "Standard" });
               }}
             />
             {[
@@ -369,7 +369,7 @@ export const NewConnectionForm = ({
               "require",
               "prefer",
               "allow",
-            ].includes(sslmode!) && (
+            ].includes(sslmode) && (
               <>
                 <FormField
                   id="ssl_cert"
@@ -377,8 +377,8 @@ export const NewConnectionForm = ({
                   type="file"
                   labelStyle={{ flex: "unset" }}
                   onChange={async (files) => {
-                    const file: File | null = files[0];
-                    updateConnection({
+                    const file = files[0];
+                    void updateConnection({
                       ssl_certificate: (await file?.text()) ?? undefined,
                     });
                   }}
@@ -389,8 +389,8 @@ export const NewConnectionForm = ({
                   type="file"
                   labelStyle={{ flex: "unset" }}
                   onChange={async (files) => {
-                    const file: File | null = files[0];
-                    updateConnection({
+                    const file = files[0];
+                    void updateConnection({
                       ssl_client_certificate: (await file?.text()) ?? undefined,
                     });
                   }}
@@ -401,8 +401,8 @@ export const NewConnectionForm = ({
                   type="file"
                   labelStyle={{ flex: "unset" }}
                   onChange={async (files) => {
-                    const file: File | null = files[0];
-                    updateConnection({
+                    const file = files[0];
+                    void updateConnection({
                       ssl_client_certificate_key:
                         (await file?.text()) ?? undefined,
                     });
@@ -413,6 +413,7 @@ export const NewConnectionForm = ({
                   label={t.NewConnectionForm["Reject unauthorized"]}
                   type="checkbox"
                   labelStyle={{ flex: "unset" }}
+                  nullable={true}
                   value={c.ssl_reject_unauthorized}
                   onChange={(ssl_reject_unauthorized) => {
                     updateConnection({ ssl_reject_unauthorized });

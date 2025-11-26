@@ -80,7 +80,7 @@ export const ChatSendControls = ({
               type="file"
               multiple
               style={{ display: "none" }}
-              onChange={async (e) => {
+              onChange={(e) => {
                 onAddFiles(Array.from(e.target.files || []));
               }}
             />
@@ -108,7 +108,7 @@ export const ChatSendControls = ({
           title={t.common.Send}
           data-command="Chat.send"
           disabledInfo={disabledInfo}
-          onClick={async (e) => {
+          onClick={() => {
             if (!ref.current) return;
             sendMsg();
           }}

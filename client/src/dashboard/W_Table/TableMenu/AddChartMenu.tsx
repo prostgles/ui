@@ -74,17 +74,14 @@ export const AddChartMenu = (props: P) => {
     joinPath: ParsedJoinPath[] | undefined,
   ) => {
     const otherColumns = linkOpts.columns
-      .reduce(
-        (a, v) => {
-          v.otherColumns.forEach((vc) => {
-            if (!a.some((ac) => ac.name === vc.name)) {
-              a.push(vc);
-            }
-          });
-          return a;
-        },
-        [] as (ColInfo & { is_pkey: boolean })[],
-      )
+      .reduce((a, v) => {
+        v.otherColumns.forEach((vc) => {
+          if (!a.some((ac) => ac.name === vc.name)) {
+            a.push(vc);
+          }
+        });
+        return a;
+      }, [] as ColInfo[])
       .map(({ name, udt_name, is_pkey }) => ({ name, udt_name, is_pkey }));
 
     const firstNumericColumn = otherColumns.find(

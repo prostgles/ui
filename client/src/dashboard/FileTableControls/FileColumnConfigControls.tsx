@@ -127,7 +127,7 @@ export const FileColumnConfigControls = (
                 </Btn>
               : <Btn
                   color="danger"
-                  onClickPromise={async () => {
+                  onClickPromise={() => {
                     const newConfig = quickClone({ ...refsConfig });
                     delete newConfig[linkedTable.name]!.referenceColumns[
                       linkedTable.columnName

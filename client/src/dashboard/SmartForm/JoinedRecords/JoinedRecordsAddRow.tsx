@@ -71,7 +71,7 @@ export const JoinedRecordsAddRow = (props: P) => {
           );
         return {
           title: "Add referenced record",
-          onClick: async () => {
+          onClick: () => {
             setInsert({
               type: "manual",
               // onChange: (newRow) => {
@@ -109,7 +109,7 @@ export const JoinedRecordsAddRow = (props: P) => {
       }
       return {
         title: "Add new record",
-        onClick: async () => {
+        onClick: () => {
           if (defaultData) {
             setInsert({
               type: "auto",

@@ -1,11 +1,9 @@
-import { fixIndent } from "@common/utils";
 import type { SVGif } from "src/Testing";
-import { toFixed } from "../../utils/toFixed";
-import { getAnimationProperty } from "../getSVGif";
 import type { SceneNodeAnimation } from "../getSVGifAnimations";
 import type { SVGifParsedScene } from "../getSVGifParsedScenes";
 import { getSVGifRevealKeyframes } from "../getSVGifRevealKeyframes";
 import type { getSVGifTargetBBox } from "../getSVGifTargetBBox";
+import { getSVGifZoomToAnimation } from "./getSVGifZoomToAnimation";
 
 /**
  * Given an SVGifScenes, return the animations
@@ -59,12 +57,8 @@ export const getSVGifTypeAnimation = (
       `Must be at least ${zoomInDuration + zoomOutDuration + waitBeforeZoomOut + 500}ms`,
     ].join("\n");
   }
-  const zoomInStartTime = fromTime;
   const zoomInEndTime = fromTime + zoomInDuration;
   const typingStartTime = zoomInEndTime;
-  const typingEndTime = zoomInEndTime + typingDuration;
-  const zoomOutStartTime = typingEndTime + waitBeforeZoomOut;
-  const zoomOutEndTime = zoomOutStartTime + zoomOutDuration;
 
   const msPerPx = typingDuration / totalWidth;
   let fromTimeLocal = typingStartTime;
@@ -82,55 +76,18 @@ export const getSVGifTypeAnimation = (
     });
     fromTimeLocal += tspanDuration;
   });
-
-  const adjustedBBox = {
-    ...(rawBBox.toJSON() as {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }),
-    width: Math.max(rawBBox.width, 600), // Ensure minimum width for better zoom effect
-  };
-
-  const xPadding = 50;
-  const requiredScale = (svgDom.clientWidth - xPadding) / adjustedBBox.width;
-  const effectiveScale = toFixed(requiredScale);
-  const toPerc = getPercent(fromTime + duration);
-
-  // Calculate center of the element
-  const elementCenterX = toFixed(adjustedBBox.x + adjustedBBox.width / 2);
-  const elementCenterY = toFixed(adjustedBBox.y + adjustedBBox.height / 2);
-
-  // Calculate viewport center
-  const viewportCenterX = toFixed(viewport.width / 2);
-  const viewportCenterY = toFixed(viewport.height / 2);
-
-  // Calculate translation needed to center the element
-  const translateX = toFixed(viewportCenterX - elementCenterX);
-  const translateY = toFixed(viewportCenterY - elementCenterY);
-
-  const transformOrigin = `${elementCenterX}px ${elementCenterY}px`;
-
-  /** Add root svg zoom in-out animation to the typed */
-  const animProp = getAnimationProperty({
-    animName: `scene-${sceneIndex}-type-zoom`,
-    elemSelector: `svg#${sceneId} g#${rootGId}`,
-    totalDuration,
-    otherProps: `transform-origin: ${transformOrigin};`,
-  });
-  const style = fixIndent(`
-    @keyframes scene-${sceneIndex}-type-zoom {
-      ${getPercent(zoomInStartTime)}% { transform: translate(0px, 0px) scale(1);}
-      ${getPercent(zoomInEndTime)}% { transform: translate(${translateX}px, ${translateY}px) scale(${effectiveScale}); }
-      ${getPercent(zoomOutStartTime)}% { transform: translate(${translateX}px, ${translateY}px) scale(${effectiveScale}); }
-      ${getPercent(zoomOutEndTime)}% { transform: translate(0px, 0px) scale(1); }
-      ${toFixed(
-        Math.min(100, toPerc + 0.1),
-        4,
-      )}% { transform: translate(0px, 0px) scale(1); }
-    }
-    ${animProp}
-  `);
-  return { sceneNodeAnimations, style };
+  const { style: zoomToStyle } = getSVGifZoomToAnimation(
+    viewport,
+    { bbox: rawBBox },
+    { svgDom, svgFileName },
+    { ...animation, type: "zoomToElement" },
+    {
+      sceneId,
+      sceneIndex,
+      totalDuration,
+      getPercent,
+      fromTime,
+    },
+  );
+  return { sceneNodeAnimations, style: zoomToStyle };
 };

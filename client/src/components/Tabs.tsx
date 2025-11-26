@@ -17,8 +17,8 @@ export type TabItem = Partial<
   content?: React.ReactNode;
 };
 
-export type TabItems = {
-  [key: string]: TabItem;
+export type TabItems<K extends string = string> = {
+  [P in K]: TabItem;
 };
 
 export type TabsProps<T extends TabItems = TabItems> = {
@@ -47,15 +47,15 @@ export type TabsProps<T extends TabItems = TabItems> = {
    * If true then non active controls will be hidden
    */
   compactMode?: "hide-label" | "hide-inactive";
-  activeKey?: keyof T & string;
-  defaultActiveKey?: keyof T & string;
-  onChange?: (itemLabel: (keyof T & string) | undefined) => void;
+  activeKey?: keyof T;
+  defaultActiveKey?: keyof T;
+  onChange?: (itemLabel: keyof T | undefined) => void;
   contentClass?: string;
   onRender?: (activeItem: TabItem) => React.ReactNode;
 };
 
 type S<T> = {
-  activeKey?: (keyof T & string) | null;
+  activeKey?: keyof T;
   variant?: "horizontal" | "vertical";
   controlsCollapsed: boolean;
 };
@@ -135,18 +135,17 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<
 
     const { variant, controlsCollapsed } = this.state;
 
-    const items: TabItems = this.props.items;
+    const items = this.props.items;
 
     const activeKey =
       this.props.activeKey ??
-      (this.state.activeKey === null ?
-        undefined
-      : (this.state.activeKey ?? this.props.defaultActiveKey));
+      this.state.activeKey ??
+      this.props.defaultActiveKey;
 
     let activeContent: React.ReactNode = null;
     if (typeof activeKey === "string" && items[activeKey]?.content) {
       activeContent =
-        onRender ? onRender(items[activeKey]!) : items[activeKey]!.content;
+        onRender ? onRender(items[activeKey]) : items[activeKey].content;
     }
     const isHoriz = variant === "horizontal";
 
@@ -201,20 +200,16 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<
             <Btn
               iconPath={mdiArrowLeft}
               onClick={() => {
-                this.setState({ activeKey: null });
+                this.setState({ activeKey: undefined });
                 if (onChange) {
                   onChange(undefined);
                 }
               }}
             >
-              {activeKey}
+              {activeKey as string}
             </Btn>
             {activeItemIconPath && (
-              <Icon
-                className="text-2 mr-1"
-                path={activeItemIconPath}
-                size={1}
-              />
+              <Icon className="text-2 mr-1" path={activeItemIconPath} />
             )}
           </div>
         : <MenuList
@@ -235,7 +230,7 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<
               : variant
             }
             compactMode={this.props.compactMode === "hide-label"}
-            activeKey={activeKey}
+            activeKey={activeKey as string | undefined}
             items={Object.keys(items)
               .filter((k) => !items[k]!.hide)
               .map((key) => ({
@@ -270,7 +265,7 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<
 
 export const TabsWithDefaultStyle = (props: Pick<TabsProps, "items">) => {
   const { activeSection, setSection } = useConnectionConfigSearchParams(
-    getKeys(props.items) as any,
+    getKeys(props.items),
   );
   return (
     <div

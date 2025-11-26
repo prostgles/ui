@@ -82,7 +82,7 @@ export const useSearchListSearch = (
   );
 
   const onStartSearch = useCallback(
-    async (term: string) => {
+    (term: string) => {
       if (!onSearchItems) return;
 
       if (searching.current) {
@@ -96,7 +96,7 @@ export const useSearchListSearch = (
       if (typeof term !== "string" || (!searchEmpty && !term)) {
         updateSearchState({ searchItems: [], searchingItems: false });
 
-        onSearchItems(term);
+        void onSearchItems(term);
       } else {
         updateSearchState({ searchingItems: true });
 
@@ -104,12 +104,12 @@ export const useSearchListSearch = (
           dataSignature,
           term,
           cancelCurrentSearch: undefined,
-          timeout: setTimeout(async () => {
+          timeout: setTimeout(() => {
             if (!getIsMounted()) return;
 
             updateSearchState({ searchingItems: true });
             try {
-              onSearchItems(
+              void onSearchItems(
                 term,
                 { matchCase },
                 (searchItems, finished, cancel) => {
@@ -160,7 +160,7 @@ export const useSearchListSearch = (
 
   const onSetTerm = useCallback(
     (
-      searchTerm,
+      searchTerm: string,
       e?:
         | React.ChangeEvent<HTMLInputElement>
         | React.MouseEvent<HTMLDivElement, MouseEvent>,

@@ -102,7 +102,7 @@ const JoinedRecordsSectionCardList = (
     return (
       <SmartCardListJoinedNewRecords
         key={s.path.join(".")}
-        db={db as DBHandlerClient}
+        db={db}
         methods={methods}
         table={s.table}
         tables={tables}

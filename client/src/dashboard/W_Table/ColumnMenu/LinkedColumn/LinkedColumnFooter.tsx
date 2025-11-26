@@ -67,7 +67,7 @@ export const LinkedColumnFooter = ({
             disabledInfo={disabledInfo}
             data-command="LinkedColumn.Add"
             iconPath={mdiCheck}
-            onClickMessage={async (e, setM) => {
+            onClickMessage={(e, setM) => {
               setM({ loading: 1 });
               if (!w.columns) throw "not possible";
               const newColumns =

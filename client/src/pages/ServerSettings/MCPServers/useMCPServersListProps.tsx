@@ -92,14 +92,16 @@ export const useMCPServersListProps = (
             );
           },
         },
-        ...[
-          "installed",
-          "config_schema",
-          "enabled",
-          "source",
-          "command",
-          "icon_path",
-        ].map((name) => ({
+        ...(
+          [
+            "installed",
+            "config_schema",
+            "enabled",
+            "source",
+            "command",
+            "icon_path",
+          ] as const
+        ).map((name) => ({
           name,
           hide: true,
         })),

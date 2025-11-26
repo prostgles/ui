@@ -4,7 +4,7 @@ export type DeepPartial<T> =
   T extends any[] ? T
   : T extends Record<string, any> ?
     {
-      [P in keyof T & string]?: DeepPartial<T[P]>;
+      [P in keyof T]?: DeepPartial<T[P]>;
     }
   : T;
 
@@ -122,8 +122,7 @@ export default class RTComp<
             P,
             S,
             D
-          > &
-            string)[],
+          >)[],
         );
       } catch (e) {
         const error = e instanceof Error ? e : new Error(e as any);
@@ -141,15 +140,15 @@ export default class RTComp<
   /** Helper func */
   onDeltaCombined(
     delta: CombinedPartial<P, S, D>,
-    deltaKeys: (keyof CombinedPartial<P, S, D> & string)[],
+    deltaKeys: (keyof CombinedPartial<P, S, D>)[],
   ) {
     //empty
   }
 
   setState<K extends keyof S>(
     state:
-      | ((prevState: Readonly<S>, props: Readonly<P>) => Pick<S, K> | S | null)
-      | (Pick<S, K> | S | null),
+      | ((prevState: Readonly<S>, props: Readonly<P>) => Pick<S, K> | null)
+      | (Pick<S, K> | null),
     callback?: () => void,
   ): void {
     if (this.mounted) {

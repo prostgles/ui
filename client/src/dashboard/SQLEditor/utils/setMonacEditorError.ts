@@ -71,10 +71,10 @@ export const setMonacEditorError = async (
       const messageContribution = editor.getContribution(
         "editor.contrib.messageController",
       );
+      const pos = editor.getPosition();
       (messageContribution as any).showMessage(error.message, {
-        ...editor.getPosition(),
-        lineNumber: offset.startLineNumber,
-        column: offset.endColumn,
+        lineNumber: offset.startLineNumber ?? pos?.lineNumber,
+        column: offset.endColumn ?? pos?.column,
       });
     }
 

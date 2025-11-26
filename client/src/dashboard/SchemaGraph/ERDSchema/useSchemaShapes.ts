@@ -314,10 +314,7 @@ const getRootTable = <T extends DBSchemaTableWJoins>(
   }
   for (const ref1 of nextReferences) {
     for (const ref2 of ref1 ?? []) {
-      const result = getRootTable([ref2], tables, [
-        ...prevTables,
-        ...ref2.ftable,
-      ]);
+      const result = getRootTable([ref2], tables, [...prevTables, ref2.ftable]);
       if (result) {
         return result;
       }

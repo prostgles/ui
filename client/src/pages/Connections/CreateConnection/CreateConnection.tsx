@@ -23,7 +23,7 @@ export type CreateConnectionProps = Required<
     | "getSampleSchemas"
     | "createConnection"
     | "validateConnection"
-    | "getSampleSchemas"
+     
   >
 > & {
   connId: string;

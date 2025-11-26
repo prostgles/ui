@@ -85,7 +85,7 @@ export const ReferencesDefinition = ({
                     key: t.name,
                     label: t.name,
                     subLabel: t.data_type,
-                  }))!
+                  }))
               }
               onChange={(column) => {
                 const colInfo = refTable.columns.find(

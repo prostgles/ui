@@ -6,28 +6,29 @@ import type { TestSelectors } from "../../Testing";
 import ErrorComponent from "../ErrorComponent";
 import { classOverride, FlexRow, type DivProps } from "../Flex";
 import { InfoRow } from "../InfoRow";
-import { Label } from "../Label";
+import { Label, type LabelPropsNormal } from "../Label";
 import type { FormFieldProps } from "./FormField";
 
 const INPUT_WRAPPER_CLASS = "input-wrapper";
 
+export type FormFieldCommonProps = {
+  className?: string;
+  label?: string | Omit<LabelPropsNormal, "variant">;
+  hint?: string;
+  title?: string;
+  style?: React.CSSProperties;
+  rightContentAlwaysShow?: boolean;
+  rightIcons?: React.ReactNode;
+  rightContent?: React.ReactNode;
+  labelStyle?: React.CSSProperties;
+  disabledInfo?: string;
+  error?: any;
+  maxWidth?: React.CSSProperties["maxWidth"];
+};
+
 type FormFieldSkeletonProps = TestSelectors &
-  Pick<DivProps, "onBlur" | "onKeyDown"> &
-  Pick<
-    FormFieldProps,
-    | "className"
-    | "title"
-    | "label"
-    | "labelStyle"
-    | "disabledInfo"
-    | "error"
-    | "hint"
-    | "style"
-    | "maxWidth"
-    | "rightContentAlwaysShow"
-    | "rightIcons"
-    | "rightContent"
-  > & {
+  FormFieldCommonProps &
+  Pick<DivProps, "onBlur" | "onKeyDown"> & {
     /**
      * Used by the label to identify the input
      */

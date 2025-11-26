@@ -3,7 +3,8 @@ import "./FormField.css";
 
 import { mdiClose, mdiFullscreen } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { isDefined } from "prostgles-types";
+import { includes, isDefined } from "prostgles-types";
+import { scrollIntoViewIfNeeded } from "src/utils";
 import { ChipArrayEditor } from "../../dashboard/SmartForm/ChipArrayEditor";
 import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
@@ -13,79 +14,106 @@ import Btn from "../Btn";
 import Checkbox from "../Checkbox";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { classOverride } from "../Flex";
-import { Label, type LabelPropsNormal } from "../Label";
+import { Label } from "../Label";
 import List from "../List";
 import Popup, { DATA_HAS_VALUE, DATA_NULLABLE } from "../Popup/Popup";
 import { Select, type FullOption } from "../Select/Select";
-import { FormFieldSkeleton } from "./FormFieldSkeleton";
+import {
+  FormFieldSkeleton,
+  type FormFieldCommonProps,
+} from "./FormFieldSkeleton";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
-import { scrollIntoViewIfNeeded } from "src/utils";
 
-export type FormFieldProps = TestSelectors & {
-  onChange?: (val: string | number | any, e?: any) => void;
-  onInput?: (e: React.FormEvent<HTMLInputElement>) => void;
-  error?: any;
-  type?: string;
-  className?: string;
-  label?: string | Omit<LabelPropsNormal, "variant">;
-  labelAsString?: string;
-  id?: string;
-  readOnly?: boolean;
-  /**
-   * Passed to the input
-   */
-  required?: boolean;
-  /**
-   * If true and value is not null will allow setting value to null
-   */
-  nullable?: boolean;
-  /**
-   * If true and value is not undefined will allow setting value to undefined
-   */
-  optional?: boolean;
-  value?: string | number | any;
-  rawValue?: any;
-  defaultValue?: string | number | any;
-  options?: readonly (string | number | null)[];
-  fullOptions?: readonly FullOption[];
-  autoComplete?: string;
-  accept?: string;
-  asTextArea?: boolean;
-  rightContentAlwaysShow?: boolean;
-  rightIcons?: React.ReactNode;
-  rightContent?: React.ReactNode;
-  inputContent?: React.ReactNode;
-  hint?: string;
-  placeholder?: string;
-  autoResize?: boolean;
-  inputClassName?: string;
-  style?: React.CSSProperties;
-  wrapperStyle?: React.CSSProperties;
-  inputStyle?: React.CSSProperties;
-  title?: string;
-  multiSelect?: boolean;
-  labelAsValue?: boolean;
-  onSuggest?: (term?: string) => Promise<string[]>;
-  name?: string;
-  inputProps?: Omit<
-    React.DetailedHTMLProps<
-      React.InputHTMLAttributes<HTMLInputElement>,
-      HTMLInputElement
-    >,
-    "children" | "onChange" | "value" | "defaultValue"
-  >;
-  hideClearButton?: boolean;
-  maxWidth?: React.CSSProperties["maxWidth"];
-  labelStyle?: React.CSSProperties;
+export type FormFieldTypes =
+  | "text"
+  | "number"
+  | "password"
+  | "email"
+  | "file"
+  | "checkbox"
+  | "integer"
+  | "username"
+  | "url"
+  | "color";
+type FormFieldNullOpt<Nullable = false, Optional = false> =
+  Nullable extends true ? null
+  : Optional extends true ? undefined
+  : never;
+type FormFieldValueType<
+  T extends FormFieldTypes,
+  Nullable = false,
+  Optional = false,
+> =
+  | FormFieldNullOpt<Nullable, Optional>
+  | (T extends "number" | "integer" ? number
+    : T extends "text" | "password" | "email" | "url" | "username" ? string
+    : T extends "file" ? FileList
+    : T extends "checkbox" ? boolean
+    : any);
 
-  disabledInfo?: string;
-  asJSON?: AsJSON["component"];
-  arrayType?: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
-  leftIcon?: React.ReactNode;
-  showFullScreenToggle?: boolean;
+export type FormFieldProps<
+  T extends FormFieldTypes,
+  Nullable extends boolean = false,
+  Optional extends boolean = false,
+> = TestSelectors &
+  FormFieldCommonProps & {
+    onChange?: (
+      val: FormFieldValueType<T, Nullable, Optional>,
+      // val: string | boolean | FileList | null | undefined,
+      e?: any,
+    ) => void;
+    onInput?: (e: React.FormEvent<HTMLInputElement>) => void;
+    type?: T;
+    labelAsString?: string;
+    id?: string;
+    readOnly?: boolean;
+    /**
+     * Passed to the input
+     */
+    required?: boolean;
+    /**
+     * If true and value is not null will allow setting value to null
+     */
+    nullable?: Nullable;
+    /**
+     * If true and value is not undefined will allow setting value to undefined
+     */
+    optional?: Optional;
+    value?: FormFieldValueType<T, Nullable, Optional>;
+    rawValue?: any;
+    defaultValue?: string | number;
+    options?: readonly (string | number | null)[];
+    fullOptions?: readonly FullOption[];
+    autoComplete?: string;
+    accept?: string;
+    asTextArea?: boolean;
+    inputContent?: React.ReactNode;
 
-  variant?: "row";
-};
+    placeholder?: string;
+    autoResize?: boolean;
+    inputClassName?: string;
+    wrapperStyle?: React.CSSProperties;
+    inputStyle?: React.CSSProperties;
+    multiSelect?: boolean;
+    labelAsValue?: boolean;
+    onSuggest?: (term?: string) => Promise<string[]>;
+    name?: string;
+    inputProps?: Omit<
+      React.DetailedHTMLProps<
+        React.InputHTMLAttributes<HTMLInputElement>,
+        HTMLInputElement
+      >,
+      "children" | "onChange" | "value" | "defaultValue"
+    >;
+    hideClearButton?: boolean;
+
+    asJSON?: AsJSON["component"];
+    arrayType?: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
+    leftIcon?: React.ReactNode;
+    showFullScreenToggle?: boolean;
+
+    variant?: "row";
+  };
 
 type FormFieldState = {
   activeSuggestionIdx?: number;
@@ -94,8 +122,12 @@ type FormFieldState = {
   numLockAlert?: boolean;
   fullScreen?: boolean;
 };
-export default class FormField extends React.Component<
-  FormFieldProps,
+export default class FormField<
+  T extends FormFieldTypes,
+  Nullable extends boolean = false,
+  Optional extends boolean = false,
+> extends React.Component<
+  FormFieldProps<T, Nullable, Optional>,
   FormFieldState
 > {
   state: FormFieldState = {};
@@ -151,7 +183,7 @@ export default class FormField extends React.Component<
     if (this.textArea)
       this.textArea.removeEventListener("input", this.resize, false);
   }
-  componentDidUpdate(prevProps: FormFieldProps) {
+  componentDidUpdate(prevProps: FormFieldProps<T, Nullable, Optional>) {
     const err = this.props.error,
       preverr = prevProps.error;
     if (this.rootDiv && (err || preverr) && err !== preverr) {
@@ -193,7 +225,7 @@ export default class FormField extends React.Component<
       input.type === "file" ? input.files
       : input.type === "checkbox" ? input.checked
       : input.value;
-    onChange(value);
+    onChange(value as FormFieldValueType<T, Nullable, Optional>);
 
     if (!onSuggest) return;
     if (this.changing) clearTimeout(this.changing.timeout);
@@ -279,7 +311,7 @@ export default class FormField extends React.Component<
             name: name ?? "text",
             ...arrayType,
           }).toLowerCase()}
-          values={(value as any) || ([] as string[])}
+          values={(value || []) as string[]}
           onChange={onChange as any}
         />
       : null;
@@ -311,7 +343,7 @@ export default class FormField extends React.Component<
     }
 
     let valProp: any = {
-      value: [undefined, null].includes(value) ? "" : value,
+      value: includes([undefined, null], value) ? "" : value,
     };
 
     if (readOnly) valProp = { value };
@@ -332,7 +364,7 @@ export default class FormField extends React.Component<
     if (type === "color" && value) {
       wrapperStyle = {
         ...wrapperStyle,
-        backgroundColor: value || "white",
+        backgroundColor: (value as string) || "white",
         cursor: "pointer",
       };
       extraInptStyle = { opacity: 0 };
@@ -404,7 +436,7 @@ export default class FormField extends React.Component<
             }
             _inputProps.onKeyDown?.(e);
             const node = e.target as HTMLInputElement;
-            if (!node.placeholder && !/^-?\d+$/.test(value)) {
+            if (!node.placeholder && !/^-?\d+$/.test(value as string)) {
               node.placeholder = "Numbers only";
             }
           }
@@ -504,7 +536,13 @@ export default class FormField extends React.Component<
               rawValue !== undefined ? "undefined" : undefined,
             ].filter(isDefined)}
             onChange={(v) => {
-              onChange(v === "NULL" ? null : undefined);
+              onChange(
+                (v === "NULL" ? null : undefined) as FormFieldValueType<
+                  T,
+                  Nullable,
+                  Optional
+                >,
+              );
             }}
           />
         );
@@ -523,6 +561,7 @@ export default class FormField extends React.Component<
             }}
             iconPath={mdiClose}
             onClick={(e) => {
+              //@ts-ignore
               onChange(optional ? undefined : null, e);
             }}
             size="small"
@@ -570,6 +609,7 @@ export default class FormField extends React.Component<
             this.setState({ suggestions: undefined });
           }
         }}
+        //@ts-ignore
         onKeyDown={(e) => onFormFieldKeyDown.bind(this)(e, selectSuggestion)}
         hintWrapperStyle={{
           flex: 1,
@@ -653,6 +693,7 @@ export default class FormField extends React.Component<
             onChange={
               !onChange ? undefined : (
                 (val) => {
+                  //@ts-ignore
                   onChange(val);
                 }
               )

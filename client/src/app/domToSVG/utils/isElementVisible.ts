@@ -8,7 +8,11 @@ export const isElementVisible = (element: Element) => {
     return { isVisible: false, style, bbox };
 
   if (isTextNode(element)) {
-    return { isVisible: !!element.textContent?.trim().length, style, bbox };
+    return {
+      isVisible: !!(element.textContent as string | null)?.trim().length,
+      style,
+      bbox,
+    };
   }
   const mightBeVisible = element.checkVisibility({
     checkOpacity: true,

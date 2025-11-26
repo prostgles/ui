@@ -22,7 +22,7 @@ export const Setup2FA = (
     recoveryCode: string;
   }>();
   const [err, setErr] = useState<any>();
-  const [codeConfirm, setCodeConfirm] = useState();
+  const [codeConfirm, setCodeConfirm] = useState<number>();
   const [enabled, setEnabled] = useState(false);
 
   const reset = () => {
@@ -91,7 +91,7 @@ export const Setup2FA = (
                   value={codeConfirm}
                   type="number"
                   label={t.Setup2FA["Confirm code"]}
-                  onChange={(codeConfirm) => {
+                  onChange={(codeConfirm: number) => {
                     setCodeConfirm(codeConfirm);
                   }}
                   rightContentAlwaysShow={true}

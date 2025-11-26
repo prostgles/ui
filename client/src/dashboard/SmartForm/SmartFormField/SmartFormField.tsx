@@ -180,7 +180,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     type = "text";
   }
 
-  let arrayType: FormFieldProps["arrayType"];
+  let arrayType: FormFieldProps<"text">["arrayType"];
   if (column.tsDataType.endsWith("[]") && !column.tsDataType.includes("any")) {
     const elemTSType = tsDataTypeFromUdtName(column.element_udt_name as any);
     arrayType = {
@@ -250,6 +250,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
               <Loading />
             : <FormFieldCodeEditor
                 asJSON={renderAsJSON}
+                //@ts-ignore
                 value={value}
                 onChange={onCheckAndChange}
                 readOnly={readOnly}
@@ -274,6 +275,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         }
         key={column.name}
         placeholder={placeholder}
+        //@ts-ignore
         type={type}
         autoComplete={getInputAutocomplete(column)}
         value={parsedValue ?? null}

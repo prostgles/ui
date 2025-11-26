@@ -234,7 +234,7 @@ export const JSONBSchemaLookup = ({
         if (!colName || !columnValue || !refCol || !filterItem) return;
 
         const finalFilter = getFinalFilter(filterItem);
-        const firstMatchingRow = await db[lookup.table!]?.findOne!(finalFilter);
+        const firstMatchingRow = await db[lookup.table]?.findOne!(finalFilter);
         if (firstMatchingRow) {
           onChange(
             lookup.isFullRow ? firstMatchingRow : firstMatchingRow[refCol],

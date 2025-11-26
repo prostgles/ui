@@ -78,7 +78,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   const isAdmin = user?.type === "admin";
   const { addAlert } = useAlert();
   const sendQuery = useCallback(
-    async (msg: LLMMessage["message"] | undefined, isToolApproval: boolean) => {
+    (msg: LLMMessage["message"] | undefined, isToolApproval: boolean) => {
       if (!msg || !activeChatId) return;
       /** TODO: move dbSchemaForPrompt to server-side */
       void askLLM(

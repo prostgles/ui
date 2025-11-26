@@ -2,7 +2,6 @@ import {
   getSerialisableError,
   isDefined,
   isEmpty,
-  isEqual,
   isObject,
   omitKeys,
   type AnyObject,
@@ -53,7 +52,7 @@ export const useNewRowDataHandler = (args: Args) => {
     setLocalRowFilter,
     parentForm,
   } = args;
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<undefined | string>();
   const [errors, setErrors] = useState<AnyObject>({});
   const columnMap = useMemo(() => {
     const colMap: Map<string, ValidatedColumnInfo> = new Map();
@@ -345,7 +344,7 @@ export const useNewRowDataHandler = (args: Args) => {
       if (!_errors) {
         const errors = await cb(data);
 
-        if (errors && !isEmpty(errors)) {
+        if (errors && typeof errors !== "string" && !isEmpty(errors)) {
           setErrors(errors);
         }
       } else {

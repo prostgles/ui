@@ -35,7 +35,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
     timeout: any;
   };
 
-  setTerm = async (term: string) => {
+  setTerm = (term: string) => {
     if (this.searching) {
       if (this.searching.term === term) {
         return;
@@ -95,7 +95,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
     }
   };
 
-  onDelta = async (dP, dS = {}, dD) => {
+  onDelta = (dP, dS = {}, dD) => {
     const { searchTerm = "" } = this.state;
 
     if (!this.state.options || "searchTerm" in dS) {
@@ -125,7 +125,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
     return {
       key,
       title: key === null ? "NULL" : key?.toString(),
-      data: v as any,
+      data: v,
       checked: checkedValues.includes(key),
     };
   };
@@ -194,7 +194,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
     return (
       <>
         {searchingItems && <Loading variant="cover" />}
-        <SearchList
+        <SearchList<true>
           onSearch={(searchTerm) => {
             this.setState({ searchTerm });
           }}
@@ -224,14 +224,12 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
             });
             this.setState({ searchTerm: "" });
           }}
-          onChange={
-            ((_value: string[]) => {
-              onChange({
-                ...filter,
-                value: !_value.length ? undefined : _value,
-              });
-            }) as any
-          }
+          onChange={(_value) => {
+            onChange({
+              ...filter,
+              value: !_value.length ? undefined : _value,
+            });
+          }}
         />
       </>
     );

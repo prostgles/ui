@@ -75,7 +75,7 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
           />
         )}
         {setupType === "api" && <LLMProviderSetup {...props} />}
-        {setupType && !prompts?.length && (
+        {setupType && !prompts.length && (
           <FlexCol className="mt-2">
             <InfoRow color="info" variant="filled">
               No existing prompts

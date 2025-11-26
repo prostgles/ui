@@ -1,21 +1,20 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import {
-  type ValidatedColumnInfo,
-  type AnyObject,
-  _PG_numbers,
-} from "prostgles-types";
 import {
   getSmartGroupFilter,
   type SmartGroupFilter,
 } from "@common/filterUtils";
-import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
 import { isObject } from "@common/publishUtils";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import {
+  _PG_numbers,
+  type AnyObject,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
+import type { DashboardState } from "../../Dashboard/Dashboard";
+import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
 import {
   getComputedColumnSelect,
   getTableSelect,
 } from "../../W_Table/tableUtils/getTableSelect";
-import type { DashboardState } from "../../Dashboard/Dashboard";
-import type { DBS } from "../../Dashboard/DBS";
 
 type Args = {
   currentlySearchedColumn: string;
@@ -185,23 +184,28 @@ const isFruitlessSearch = (
     if (containsOnlyNumbersOrSymbols) {
       return false;
     }
+    const english = new Intl.DateTimeFormat("en", { weekday: "long" });
     const englishFormatter = {
-      weekDay: new Intl.DateTimeFormat("en", { weekday: "long" }).format,
-      month: new Intl.DateTimeFormat("en", { month: "long" }).format,
+      weekDay: new Intl.DateTimeFormat("en", { weekday: "long" }),
+      month: new Intl.DateTimeFormat("en", { month: "long" }),
     };
     const clientFormatter = {
-      weekDay: new Intl.DateTimeFormat(navigator.language, { weekday: "long" })
-        .format,
-      month: new Intl.DateTimeFormat(navigator.language, { month: "long" })
-        .format,
+      weekDay: new Intl.DateTimeFormat(navigator.language, { weekday: "long" }),
+      month: new Intl.DateTimeFormat(navigator.language, { month: "long" }),
     };
     const weekdays = Array.from({ length: 7 }, (_, i) => {
       const date = new Date(2024, 0, i + 1);
-      return [englishFormatter.weekDay(date), clientFormatter.weekDay(date)];
+      return [
+        englishFormatter.weekDay.format(date),
+        clientFormatter.weekDay.format(date),
+      ];
     }).flat();
     const months = Array.from({ length: 12 }, (_, i) => {
       const date = new Date(2024, i, 1);
-      return [englishFormatter.month(date), clientFormatter.month(date)];
+      return [
+        englishFormatter.month.format(date),
+        clientFormatter.month.format(date),
+      ];
     }).flat();
     if (
       ![...weekdays, ...months].some((name) =>
