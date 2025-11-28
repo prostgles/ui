@@ -158,10 +158,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
         <AskLLMChatHeader
           {...setupState}
           {...chatState}
-          connectionId={connectionId}
-          dbs={dbs}
-          dbsMethods={prgl.dbsMethods}
-          dbsTables={dbsTables}
           chatRootDiv={rootDiv}
         />
       )}

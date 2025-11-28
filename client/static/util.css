@@ -1501,7 +1501,7 @@ button:not(.toggle, .select-button, .btn-color-danger):focus,
 a.btn:focus,
 .focus-border:focus-within {
   -webkit-appearance: none !important;
-  outline: 1px solid var(--focus-color) !important;
+  outline: 2px solid var(--focus-color) !important;
   box-shadow: 0 0 0 2px var(--focus-color) !important;
   border-color: transparent !important;
   z-index: 1;

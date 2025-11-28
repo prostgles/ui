@@ -18,12 +18,14 @@ export const getSVGifAnimations = (
   { height, width }: { width: number; height: number },
   g: SVGGElement,
   parsedScenes: SVGifParsedScene[],
+  appendRootStyle: (s: string) => void,
 ) => {
   const totalSvgifDuration = parsedScenes.reduce(
     (acc, { animations }) =>
       acc + animations.reduce((a, { duration }) => a + duration, 0),
     0,
   );
+
   const getPercent = (ms: number, offset: 0 | 0.1 | -0.1 = 0) => {
     const perc = (ms / totalSvgifDuration) * 100;
     const result = Math.max(0, Math.min(100, perc));
@@ -177,11 +179,13 @@ export const getSVGifAnimations = (
               getPercent,
               fromTime,
             },
+            true,
           );
-          appendStyle(parsedAnimations.style);
+          appendRootStyle(parsedAnimations.style);
         }
       }
-      currentPrevDuration += animation.duration;
+      const isParallelAnimation = animation.type === "zoomToElement";
+      currentPrevDuration += isParallelAnimation ? 0 : animation.duration;
     }
 
     if (sceneNodeAnimations.length) {

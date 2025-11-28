@@ -5,6 +5,7 @@ import type { getWhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
 import { addSpecificBorders, roundedRectPath } from "./bgAndBorderToSVG";
 import type { SVGNodeLayout } from "./elementToSVG";
 import { getBoxShadowAsDropShadow } from "./shadowToSVG";
+export const BORDER_ELEMENT_TYPES = ["rect", "path", "line"] as const;
 
 export const rectangleToSVG = (
   g: SVGGElement,
@@ -61,23 +62,9 @@ export const rectangleToSVG = (
     maskLinearGradients.length > 1 &&
     blendModes.every((b) => b === "source-in")
   ) {
-    // const combinedMask = document.createElementNS(
-    //   SVG_NAMESPACE,
-    //   "mask",
-    // ) as SVGMaskElement;
-    // combinedMask.setAttribute("id", `mask-${context.idCounter++}`);
-    // combinedMask.setAttribute("maskUnits", "userSpaceOnUse");
-    // combinedMask.setAttribute("maskContentUnits", "userSpaceOnUse");
-    // context.defs.appendChild(combinedMask);
-    // g.setAttribute("mask", `url(#${combinedMask.id})`);
-
     const masks = maskLinearGradients.slice(1);
 
     masks.forEach((grad, index) => {
-      const direction =
-        grad.startsWith("to top") ? "toTop"
-        : grad.startsWith("to left") ? "toLeft"
-        : undefined;
       if (index) {
         // Mask combining does not work
         return;
@@ -87,73 +74,6 @@ export const rectangleToSVG = (
       g.style.maskSize = `${width}px ${height}px`;
       g.style.maskPosition = `${x}px ${0}px`;
       g.style.maskPosition = `0px 0px`;
-
-      // const stops = grad.split("rgb").slice(1);
-      // const stopsWithColors = stops.map((stop) => {
-      //   const color = "rgb" + stop.split(")")[0] + ")";
-      //   const offset =
-      //     stop.split(")")[1]?.trim().replace(",", "").replace(")", "") || "0%";
-      //   let percentageOffset = offset;
-      //   if (offset.includes("px")) {
-      //     const pxValue = parseFloat(offset);
-      //     const percentage =
-      //       (pxValue / (direction === "toLeft" ? width : height)) * 100;
-      //     percentageOffset = `${percentage}%`;
-      //   }
-      //   return {
-      //     color,
-      //     offset: percentageOffset,
-      //     opacity: parseFloat(stop.split(")")[0]?.split(",")[3] || "1"),
-      //   };
-      // });
-
-      // const gradient = document.createElementNS(
-      //   SVG_NAMESPACE,
-      //   "linearGradient",
-      // ) as SVGLinearGradientElement;
-      // gradient.setAttribute(
-      //   "id",
-      //   `mask-gradient-${direction}-${context.idCounter++}`,
-      // );
-      // if (direction === "toTop") {
-      //   gradient.setAttribute("x1", "0%");
-      //   gradient.setAttribute("y1", "100%");
-      //   gradient.setAttribute("x2", "0%");
-      //   gradient.setAttribute("y2", "0%");
-      // } else {
-      //   gradient.setAttribute("x1", "100%");
-      //   gradient.setAttribute("y1", "0%");
-      //   gradient.setAttribute("x2", "0%");
-      //   gradient.setAttribute("y2", "0%");
-      // }
-      // stopsWithColors.forEach(({ opacity, offset }) => {
-      //   const stop = document.createElementNS(
-      //     SVG_NAMESPACE,
-      //     "stop",
-      //   ) as SVGStopElement;
-      //   stop.setAttribute(
-      //     "offset",
-      //     offset.includes("px") ? parseFloat(offset) : offset,
-      //   );
-      //   stop.setAttribute("stop-color", "white");
-      //   stop.setAttribute("stop-opacity", opacity);
-      //   gradient.appendChild(stop);
-      // });
-      // context.defs.appendChild(gradient);
-
-      // const rect = document.createElementNS(
-      //   SVG_NAMESPACE,
-      //   "rect",
-      // ) as SVGScreenshotNodeType;
-      // rect.setAttribute("x", String(x));
-      // rect.setAttribute("y", String(y));
-      // rect.setAttribute("width", String(width));
-      // rect.setAttribute("height", String(height));
-      // rect.setAttribute("fill", `url(#${gradient.id})`);
-      // if (index) {
-      //   rect.style.mixBlendMode = "multiply";
-      // }
-      // combinedMask.appendChild(rect);
     });
   }
 
@@ -167,55 +87,49 @@ export const rectangleToSVG = (
   }
 
   if (border) {
-    // if (!background) {
-    //   getPath().path.setAttribute("fill", "none");
-    // }
-
     const { outline } = border;
     if (outline) {
-      const outlinePath = getPath().path.cloneNode(
+      // TODO: outline  must be drawn outside the overflow clip path
+      const outlineNode = getPath().path.cloneNode(
         true,
       ) as SVGScreenshotNodeType;
-      outlinePath.setAttribute("fill", "none");
-      outlinePath.setAttribute("stroke-width", outline.borderWidth + "px");
-      outlinePath.setAttribute("stroke", outline.borderColor);
-      outlinePath.setAttribute("stroke-linejoin", "round");
-      outlinePath.setAttribute("stroke-linecap", "round");
-      g.appendChild(outlinePath);
-      const { path, rtl, rtr, rbr, rbl, showBorder, borderWidth } = getPath();
-      path.setAttribute(
-        "d",
-        roundedRectPath(
-          /** This is to ensure the new-connection connection type radio buttons are aligned */
-          x - outline.borderWidth / 2 + (!showBorder ? borderWidth : 0),
-          y - outline.borderWidth / 2 + (!showBorder ? borderWidth : 0),
-          width + outline.borderWidth,
-          height + outline.borderWidth,
-          [rtl, rtr, rbr, rbl],
-        ),
-      );
+      outlineNode.setAttribute("fill", "none");
+      outlineNode.setAttribute("stroke-width", outline.borderWidth + "px");
+      outlineNode.setAttribute("stroke", outline.borderColor);
+      outlineNode.setAttribute("stroke-linejoin", "round");
+      outlineNode.setAttribute("stroke-linecap", "round");
+      g.appendChild(outlineNode);
+      // const { path, rtl, rtr, rbr, rbl, showBorder, borderWidth } = getPath();
+      // if (path instanceof SVGRectElement) {
+      //   throw new Error("Outline not supported for rect element");
+      // }
+      // path.setAttribute(
+      //   "d",
+      //   roundedRectPath(
+      //     /** This is to ensure the new-connection connection type radio buttons are aligned */
+      //     x - outline.borderWidth / 2 + (!showBorder ? borderWidth : 0),
+      //     y - outline.borderWidth / 2 + (!showBorder ? borderWidth : 0),
+      //     width + outline.borderWidth,
+      //     height + outline.borderWidth,
+      //     [rtl, rtr, rbr, rbl],
+      //   ),
+      // );
     }
 
     if (border.type === "border") {
       getPath().path.setAttribute("stroke-width", border.borderWidth + "px");
       getPath().path.setAttribute("stroke", border.borderColor);
-    } else {
+    } else if (border.type === "borders") {
       addSpecificBorders(g, x, y, width, height, style);
-      // path.setAttribute("stroke", "none");
     }
   }
 };
 
-export const getRectanglePath = (
+const getRectanglePath = (
   style: CSSStyleDeclaration,
   { x, y, width, height }: Pick<SVGNodeLayout, "x" | "y" | "width" | "height">,
   { border }: Pick<Awaited<ReturnType<typeof getWhatToRenderOnSVG>>, "border">,
 ) => {
-  const path = document.createElementNS(SVG_NAMESPACE, "path") as Extract<
-    SVGScreenshotNodeType,
-    SVGPathElement
-  >;
-
   const minDimension = Math.min(width, height);
   const [rtl = 0, rtr = 0, rbr = 0, rbl = 0] = [
     style.borderTopLeftRadius,
@@ -236,17 +150,46 @@ export const getRectanglePath = (
 
   const borderWidth = parseFloat(style.borderWidth);
   const visibleBorderWidth = showBorder ? borderWidth : 0;
+  const adjusted = {
+    x: x + visibleBorderWidth / 2,
+    y: y + visibleBorderWidth / 2,
+    width: width - visibleBorderWidth,
+    height: height - visibleBorderWidth,
+  };
+
+  /** Use recangle if possible */
+  const hasSingleRadius = new Set([rtl, rtr, rbr, rbl]).size === 1;
+  const hasConstantBorder = !border || border.type === "border";
+  if (hasSingleRadius && hasConstantBorder) {
+    const rect = document.createElementNS(SVG_NAMESPACE, "rect") as Extract<
+      SVGScreenshotNodeType,
+      SVGRectElement
+    >;
+    rect.setAttribute("x", adjusted.x);
+    rect.setAttribute("y", adjusted.y);
+    rect.setAttribute("width", adjusted.width);
+    rect.setAttribute("height", adjusted.height);
+    rect.setAttribute("rx", rtl);
+    rect.setAttribute("ry", rtl);
+    return { path: rect, showBorder, rtl, rtr, rbr, rbl, borderWidth };
+  }
+
+  const path = document.createElementNS(SVG_NAMESPACE, "path") as Extract<
+    SVGScreenshotNodeType,
+    SVGPathElement
+  >;
   path.setAttribute(
     "d",
     roundedRectPath(
       /** This is to ensure the new-connection connection type radio buttons are aligned */
-      x + visibleBorderWidth / 2,
-      y + visibleBorderWidth / 2,
-      width - visibleBorderWidth,
-      height - visibleBorderWidth,
+      adjusted.x,
+      adjusted.y,
+      adjusted.width,
+      adjusted.height,
       [rtl, rtr, rbr, rbl],
     ),
   );
 
+  path satisfies SVGElementTagNameMap[(typeof BORDER_ELEMENT_TYPES)[number]];
   return { path, showBorder, rtl, rtr, rbr, rbl, borderWidth };
 };

@@ -44,7 +44,7 @@ export const getSceneUtils = (
           action: "type";
           text: string;
           /** Defaults to charByChar */
-          mode?: "charByChar" | "fill";
+          mode?: "charByChar" | "fill" | "fillZoomTo";
         } = "click",
     duration: "auto" | "fast" = "auto",
   ) => {
@@ -75,13 +75,6 @@ export const getSceneUtils = (
       const isVisible =
         getComputedStyle(n).opacity != "0" && !parentIsNotVisible;
 
-      // if (!isVisible) {
-      //   if (parentIsNotVisible) {
-      //     hoverParent!.style.opacity = "1";
-      //   } else {
-      //     n.style.opacity = "1";
-      //   }
-      // }
       return isVisible;
     });
 
@@ -104,11 +97,6 @@ export const getSceneUtils = (
         },
       ],
     });
-    // if (!elementIsVisible) {
-    //   await playwrightLocator.evaluate((n) => {
-    //     n.style.opacity = "0";
-    //   });
-    // }
     if (action === "click" || action === "rightClick") {
       await playwrightLocator.click({
         button: action === "rightClick" ? "right" : "left",
@@ -126,22 +114,29 @@ export const getSceneUtils = (
           await addScene({ animations: [{ type: "wait", duration: 50 }] });
         }
       } else {
-        await playwrightLocator.fill(action.text);
+        /** Set value without triggering search */
+        await playwrightLocator.evaluate((n, val) => {
+          (n as HTMLInputElement).value = val;
+        }, action.text);
+
         await page.waitForTimeout(100);
         const msPerChar = 30;
         const zoomDurations = 500 + 500 + 300; // zoom in + zoom out + wait before zoom out
 
         await addScene({
           animations: [
-            { type: "wait", duration: duration === "fast" ? 700 : 1000 },
+            // { type: "wait", duration: duration === "fast" ? 700 : 1000 },
             {
               type: "type",
               elementSelector: svgifSelector,
+              zoomToElement: mode === "fillZoomTo",
               duration:
                 zoomDurations + Math.max(500, action.text.length * msPerChar),
             },
           ],
         });
+        await playwrightLocator.fill(action.text);
+        await addScene({ animations: [{ type: "wait", duration: 500 }] });
       }
     }
     /** prevent hover from showing hidden elements */

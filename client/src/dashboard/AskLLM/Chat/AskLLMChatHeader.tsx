@@ -1,9 +1,8 @@
-import { mdiPlus } from "@mdi/js";
-import React from "react";
-import type { Prgl } from "../../../App";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
+import { mdiPlus } from "@mdi/js";
+import React from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import {
@@ -11,13 +10,9 @@ import {
   type LLMChatOptionsProps,
 } from "./AskLLMChatOptions";
 import type { LLMChatState } from "./useLLMChat";
-import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
 
 export const AskLLMChatHeader = (
-  props: LLMChatState &
-    LLMSetupStateReady &
-    LLMChatOptionsProps &
-    Pick<Prgl, "connectionId">,
+  props: LLMChatState & Pick<LLMChatOptionsProps, "chatRootDiv" | "prompts">,
 ) => {
   const {
     activeChat,
@@ -25,13 +20,10 @@ export const AskLLMChatHeader = (
     activeChatId,
     latestChats,
     createNewChat,
-    defaultCredential,
     preferredPromptId,
     setActiveChat,
-    prompts,
     chatRootDiv,
-    connectionId,
-    ...prgl
+    prompts,
   } = props;
 
   return (
@@ -42,10 +34,7 @@ export const AskLLMChatHeader = (
       </FlexCol>
       <FlexRow className="gap-p25 min-w-0">
         <AskLLMChatOptions
-          dbsMethods={prgl.dbsMethods}
-          dbs={prgl.dbs}
-          dbsTables={prgl.dbsTables}
-          prompts={props.prompts}
+          prompts={prompts}
           activeChat={activeChat}
           activeChatId={activeChatId}
           credentials={credentials}

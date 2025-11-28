@@ -678,7 +678,7 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
-    await expect(mcpToolUse).toContain("fetch--fetch url");
+    await expect(mcpToolUse).toContain("successfully fetched the login page");
 
     await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " mcpplaywright ");
@@ -755,7 +755,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(2e3);
     /** Test max consecutive tool call fails */
     await sendAskLLMMessage(page, " mcpfail ");
-    await page.waitForTimeout(2e3);
+    await page.getByTestId("ToolUseMessage.toggleGroup").last().click();
     await expect(
       page
         .getByTestId("Chat.messageList")

@@ -16,6 +16,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
+  throw "aiAssistantSvgif - disabled for now";
   // await goTo(page, "/server-settings?section=llmProviders");
   // await page.getByTestId("dashboard.window.rowInsertTop").click();
   // await page.getByTestId("Popup.content").waitFor({ state: "visible" });

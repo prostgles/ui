@@ -5,7 +5,7 @@ import {
   type JSONB,
   type TableHandler,
 } from "prostgles-types";
-import type { ChatPermissions } from "../../../DockerManager/dockerMCPDatabaseRequestRouter";
+import type { ChatPermissions } from "../../../DockerManager/dockerMCPServerProxy/dockerMCPServerProxy";
 import { connMgr } from "../../../index";
 import { getProstglesDBTools } from "./getProstglesDBTools";
 export const runProstglesDBTool = async (

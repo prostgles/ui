@@ -23,6 +23,7 @@ export const getSVGifZoomToAnimation = (
     getPercent: (time: number, increment?: 0.1 | -0.1) => number;
     fromTime: number;
   },
+  addToRootSvg: boolean,
 ) => {
   const { elementSelector, duration, maxScale = 3 } = animation;
 
@@ -74,10 +75,12 @@ export const getSVGifZoomToAnimation = (
 
   const transformOrigin = `${elementCenterX}px ${elementCenterY}px`;
 
+  const elemSelector = addToRootSvg ? ":scope" : `svg#${sceneId} g#${rootGId}`;
+
   /** Add root svg zoom in-out animation to the typed */
   const animProp = getAnimationProperty({
     animName: `scene-${sceneIndex}-type-zoom`,
-    elemSelector: `svg#${sceneId} g#${rootGId}`,
+    elemSelector,
     totalDuration,
     otherProps: `transform-origin: ${transformOrigin};`,
   });

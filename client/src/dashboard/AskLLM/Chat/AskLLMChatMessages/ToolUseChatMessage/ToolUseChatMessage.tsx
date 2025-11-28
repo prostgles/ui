@@ -78,6 +78,9 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
   );
 };
 
-export type MessageType = DBSSchema["llm_messages"]["message"][number];
-export type ToolUseMessage = Extract<MessageType, { type: "tool_use" }>;
-export type ToolResultMessage = Extract<MessageType, { type: "tool_result" }>;
+export type LLMMessageContent = DBSSchema["llm_messages"]["message"][number];
+export type ToolUseMessage = Extract<LLMMessageContent, { type: "tool_use" }>;
+export type ToolResultMessage = Extract<
+  LLMMessageContent,
+  { type: "tool_result" }
+>;

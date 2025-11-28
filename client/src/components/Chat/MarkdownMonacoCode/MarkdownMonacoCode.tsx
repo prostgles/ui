@@ -14,10 +14,10 @@ import { Table } from "../../Table/Table";
 import { MarkdownMonacoCodeHeader } from "./MarkdownMonacoCodeHeader";
 import { useOnRunSQL } from "./useOnRunSQL";
 
-const LANGUAGE_FALLBACK = {
-  tsx: "typescript",
-  ts: "typescript",
-};
+const LANGUAGE_FALLBACK = new Map<string, string>([
+  ["tsx", "typescript"],
+  ["ts", "typescript"],
+]);
 
 export type MarkdownMonacoCodeProps = {
   title?: string;
@@ -79,7 +79,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
           className={fullscreen ? "f-1" : "f-1"}
           loadedSuggestions={loadedSuggestions}
           value={codeString}
-          language={LANGUAGE_FALLBACK[language] ?? language}
+          language={LANGUAGE_FALLBACK.get(language) ?? language}
           options={monacoOptions}
         />
         {sqlResult?.state === "ok-command-result" ?

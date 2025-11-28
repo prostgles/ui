@@ -1,3 +1,5 @@
+import { McpToolCallResponse } from "@common/mcp";
+import { DBSSchema } from "@common/publishUtils";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import {
@@ -17,18 +19,10 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import { DBS } from "..";
-import { McpToolCallResponse } from "@common/mcp";
-import { DBSSchema } from "@common/publishUtils";
-import {
-  getDockerMCP,
-  getDockerMCPToolSchemas,
-} from "../DockerManager/getDockerMCP";
+import { getDockerMCPToolSchemas } from "../DockerManager/getDockerMCP";
 import { checkMCPServerTools } from "./checkMCPServerTools";
 import { connectToMCPServer } from "./connectToMCPServer";
-import {
-  DefaultMCPServers,
-  ProstglesLocalMCPServers,
-} from "./DefaultMCPServers/DefaultMCPServers";
+import { DefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
 import { fetchMCPResourcesList } from "./fetchMCPResourcesList";
 import { fetchMCPResourceTemplatesList } from "./fetchMCPResourceTemplatesList";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
@@ -39,8 +33,8 @@ import {
   McpServer,
   McpServerEvents,
   ServersConfig,
-  type McpTool,
 } from "./McpTypes";
+import { updateMcpServerTools } from "./reloadMcpServerTools";
 
 export type McpConnection = {
   server: McpServer;
@@ -216,16 +210,21 @@ export class McpHub {
 
 const mcpHub = new McpHub();
 
-let mcpHubInitializing = false;
-let mcpHubReInitializingRequested = false;
+let mcpHubInitPromise: Promise<McpHub> | undefined;
 export const startMcpHub = async (
   dbs: DBS,
   restart = false,
 ): Promise<McpHub> => {
-  mcpHubReInitializingRequested = mcpHubInitializing;
-  mcpHubInitializing = true;
-  const result = await tryCatchV2(async () => {
-    if (restart) await mcpHub.destroy();
+  if (mcpHubInitPromise) {
+    await mcpHubInitPromise;
+    if (!restart) return mcpHubInitPromise;
+    return startMcpHub(dbs, restart);
+  }
+
+  mcpHubInitPromise = (async () => {
+    if (restart) {
+      await mcpHub.destroy();
+    }
     const serversConfig = await fetchMCPServerConfigs(dbs);
     await mcpHub.setServerConnections(serversConfig);
     await checkMCPServerTools(mcpHub);
@@ -242,61 +241,23 @@ export const startMcpHub = async (
           server_name,
         });
         if (!toolCount) {
-          await _reloadMcpServerTools(dbs, server_name, client);
+          await updateMcpServerTools(dbs, server_name, client);
         }
       }
     }
     return mcpHub;
-  });
-  mcpHubInitializing = false;
-  if (mcpHubReInitializingRequested) {
-    mcpHubReInitializingRequested = false;
-    void startMcpHub(dbs);
-  }
-  if (result.hasError) {
-    throw result.error;
-  }
-  return result.data;
-};
+  })();
 
-export const _reloadMcpServerTools = async (
-  dbs: DBS,
-  serverName: string,
-  client: McpConnection["client"] | undefined,
-) => {
-  let tools: McpTool[] = [];
-  if (ProstglesLocalMCPServers.includes(serverName)) {
-    tools = (await getDockerMCP(dbs, undefined)).toolSchemas;
-  } else {
-    if (!client) {
-      throw new Error(
-        `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
-      );
-    }
-    tools = await fetchMCPToolsList(client);
-  }
-
-  await dbs.tx(async (tx) => {
-    await tx.mcp_server_tools.delete({ server_name: serverName });
-    tools.length &&
-      (await tx.mcp_server_tools.insert(
-        tools.map((tool) => ({
-          ...tool,
-          description: tool.description ?? "",
-          server_name: serverName,
-        })),
-      ));
-  });
-  // const   resources = await fetchMCPResourcesList(client);
-  return tools.length;
-};
-
-export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
-  if (!mcpHubInitializing) {
-    await startMcpHub(dbs);
-  }
-  const client = mcpHub.connections[serverName]?.client;
-  return _reloadMcpServerTools(dbs, serverName, client);
+  return mcpHubInitPromise;
+  // mcpHubInitializing = false;
+  // if (mcpHubReInitializingRequested) {
+  //   mcpHubReInitializingRequested = false;
+  //   void startMcpHub(dbs);
+  // }
+  // if (result.hasError) {
+  //   throw result.error;
+  // }
+  // return result.data;
 };
 
 const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {

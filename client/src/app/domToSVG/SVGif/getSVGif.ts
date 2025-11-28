@@ -26,7 +26,7 @@ export const getSVGif = (
   svg.appendChild(g);
 
   const { cursorKeyframes, sceneAnimations, totalDuration } =
-    getSVGifAnimations({ width, height }, g, parsedScenes);
+    getSVGifAnimations({ width, height }, g, parsedScenes, appendStyle);
 
   const getThisAnimationProperty = (
     args: Omit<
@@ -56,11 +56,19 @@ export const getSVGif = (
   });
   addSVGifPointer({ cursorKeyframes, g, appendStyle, totalDuration });
 
-  compressSVGif(svg);
+  compressSVGif(svg, parsedScenes);
+
   svg
     .querySelectorAll("[data-selector]")
     .forEach((el) => el.removeAttribute("data-selector"));
   // document.body.appendChild(svg); // debugging
+
+  /** Remove defs with empty styles */
+  svg.querySelectorAll("defs").forEach((defs) => {
+    if (!defs.textContent || !defs.textContent.trim()) {
+      defs.remove();
+    }
+  });
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
   return svgString;

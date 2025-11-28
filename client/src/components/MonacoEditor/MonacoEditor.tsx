@@ -40,7 +40,7 @@ const useMonacoSingleton = () => {
   const [monaco, setMonaco] = useState(monacoResolved);
   useEffect(() => {
     if (!monacoResolved) {
-      (async () => {
+      void (async () => {
         monacoPromise ??= getMonaco();
         monacoResolved = await monacoPromise;
         await defineCustomMonacoSQLTheme();
@@ -61,7 +61,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const [loadedLanguage, setLoadedLanguage] = useState(false);
   useEffect(() => {
-    loadPSQLLanguage(loadedSuggestions).then(() => {
+    void loadPSQLLanguage(loadedSuggestions).then(() => {
       setLoadedLanguage(true);
     });
   }, [loadedSuggestions]);

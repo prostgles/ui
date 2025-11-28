@@ -1,8 +1,7 @@
-import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
-import type { McpTool } from "./McpTypes";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 
-export const fetchMCPToolsList = async (client: Client): Promise<McpTool[]> => {
+export const fetchMCPToolsList = async (client: Client) => {
   try {
     const response = await client.request(
       { method: "tools/list" },

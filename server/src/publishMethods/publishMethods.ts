@@ -1,27 +1,26 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { authenticator } from "@otplib/preset-default";
 import * as crypto from "crypto";
 import fs from "fs";
 import * as os from "os";
 import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBS } from "../index";
 import { connMgr } from "../index";
 
 export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
+import type { LLMMessage } from "@common/llmUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject } from "prostgles-types";
 import {
-  asName,
   assertJSONBObjectAgainstSchema,
   isEmpty,
   pickKeys,
 } from "prostgles-types";
-import type { LLMMessage } from "@common/llmUtils";
-import type { DBSSchema } from "@common/publishUtils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { checkClientIP, createSessionSecret } from "../authConfig/sessionUtils";
 import type { Backups } from "../BackupManager/BackupManager";
@@ -46,7 +45,6 @@ import {
   getMCPServersStatus,
   installMCPServer,
 } from "../McpHub/installMCPServer";
-import { reloadMcpServerTools } from "../McpHub/McpHub";
 import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
 import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
@@ -58,6 +56,7 @@ import { getLLMToolsAllowedInThisChat } from "./askLLM/getLLMToolsAllowedInThisC
 import { refreshModels } from "./askLLM/refreshModels";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
+import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
 
 export const publishMethods: PublishMethods<
   DBGeneratedSchema,
@@ -284,7 +283,7 @@ export const publishMethods: PublishMethods<
             await killDbConnections();
             await acdb.any(
               `
-              DROP DATABASE ${asName(con.db_name)};
+              DROP DATABASE \${db_name:name};
             `,
               con,
             );

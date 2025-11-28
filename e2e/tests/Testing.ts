@@ -488,6 +488,7 @@ export const COMMANDS = {
   QuickFilterGroupsControl: "",
   LinkedColumn: "",
   CreateColumn: "",
+  "ToolUseMessage.toggleGroup": "",
 } as const satisfies Record<
   string,
   | string
@@ -555,6 +556,7 @@ export declare namespace SVGif {
         elementSelector: string;
         duration: number;
         type: "type";
+        zoomToElement?: boolean;
         /**
          * Maximum scale to zoom in while typing
          */

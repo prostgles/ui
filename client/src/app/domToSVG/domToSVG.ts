@@ -3,6 +3,7 @@ import { tout } from "src/utils";
 import { elementToSVG, type SVGContext } from "./containers/elementToSVG";
 import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
 import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
+import { BORDER_ELEMENT_TYPES } from "./containers/rectangleToSVG";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
@@ -43,7 +44,7 @@ export const domToSVG = async (node: HTMLElement) => {
 
   setBackdropFilters(svg);
   const { remove } = renderSvg(svg);
-  await wrapAllSVGText(svg);
+  wrapAllSVGText(svg);
   /** Does not really seem effective */
   // deduplicateSVGPaths(svg);
   // await addFragmentViewBoxes(svg, 10);
@@ -122,15 +123,17 @@ const removeOverflowedElements = (svg: SVGGElement) => {
  * Hacky (because bg+border case is not handled) approach to ensure row card foreign key select fields rounded border corners are visible
  */
 const moveBordersToTop = (svg: SVGGElement) => {
-  svg.querySelectorAll<SVGScreenshotNodeType>("path").forEach((path) => {
-    if (
-      path._purpose?.border &&
-      !path._purpose.background &&
-      path.parentElement instanceof SVGGElement
-    ) {
-      path.parentElement.appendChild(path);
-    }
-  });
+  svg
+    .querySelectorAll<SVGScreenshotNodeType>(BORDER_ELEMENT_TYPES.join(","))
+    .forEach((path) => {
+      if (
+        path._purpose?.border &&
+        !path._purpose.background &&
+        path.parentElement instanceof SVGGElement
+      ) {
+        path.parentElement.appendChild(path);
+      }
+    });
 };
 
 const repositionAbsoluteFixedAndSticky = (svg: SVGGElement) => {

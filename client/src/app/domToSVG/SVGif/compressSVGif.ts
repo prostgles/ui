@@ -6,8 +6,12 @@
 
 import { isDefined } from "src/utils";
 import { SVG_NAMESPACE } from "../domToSVG";
+import type { SVGifParsedScene } from "./getSVGifParsedScenes";
 
-export const compressSVGif = (svg: SVGSVGElement) => {
+export const compressSVGif = (
+  svg: SVGSVGElement,
+  parsedScenes: SVGifParsedScene[],
+) => {
   const defs = document.createElementNS(SVG_NAMESPACE, "defs");
   svg.appendChild(defs); // to ensure the SVG namespace is defined
 
@@ -43,10 +47,22 @@ export const compressSVGif = (svg: SVGSVGElement) => {
         const [matchingNode, ...others] = scene.querySelectorAll<SVGGElement>(
           `[data-selector=${JSON.stringify(selector)}]`,
         );
+        /** Do not compress nodes that are selected in animations to ensure css selectors still work */
+        const parsedScene = parsedScenes.find((ps) => ps.svgDom === scene);
+        if (!parsedScene) {
+          throw "Could not find parsedScene";
+        }
         if (
           matchingNode &&
           !others.length &&
-          matchingNode.outerHTML === originalNode.outerHTML
+          matchingNode.outerHTML === originalNode.outerHTML &&
+          !parsedScene.animations.some((anim) => {
+            const node =
+              anim.type !== "wait" && anim.type !== "moveTo" ?
+                matchingNode.querySelector(anim.elementSelector)
+              : null;
+            return node;
+          })
         ) {
           return { scene, matchingNode };
         }

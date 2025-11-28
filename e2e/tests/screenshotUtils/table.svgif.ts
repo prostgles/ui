@@ -29,6 +29,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
 
   /** Show linked computed column */
   await addSceneAnimation(getCommandElemSelector("AddColumnMenu"));
+
   await addSceneAnimation(
     getCommandElemSelector("AddColumnMenu") + " " + getDataKey("Computed"),
     undefined,
@@ -37,13 +38,13 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getDataKey("$sum"));
   await addSceneAnimation(
     getCommandElemSelector("FunctionColumnList.SearchInput"),
-    { action: "type", text: "price" },
+    { action: "type", text: "total", mode: "fill" },
   );
 
   await addSceneAnimation(getDataKey("(id = customer_id) orders.Total Price"));
   await addSceneAnimation(
     getCommandElemSelector("QuickAddComputedColumn.name"),
-    { action: "type", text: "Total Spent" },
+    { action: "type", text: "Total Spent", mode: "fill" },
   );
   await addSceneAnimation(getCommandElemSelector("QuickAddComputedColumn.Add"));
   await page.waitForTimeout(2000);

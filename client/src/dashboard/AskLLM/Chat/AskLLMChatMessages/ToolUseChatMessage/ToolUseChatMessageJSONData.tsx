@@ -11,22 +11,22 @@ import type { ToolUseMessageProps } from "./useToolUseChatMessage";
 import { getToolUseResult } from "./utils/getToolUseResult";
 
 export const ToolUseChatMessageJSONData = ({
-  messages,
+  message,
+  nextMessage,
   toolUseMessageContentIndex: toolUseMessageIndex,
-  messageIndex,
   sqlHandler,
   loadedSuggestions,
 }: ToolUseMessageProps) => {
-  const fullMessage = messages[messageIndex];
-  const toolUseMessageContent = fullMessage?.message[toolUseMessageIndex];
+  const toolUseMessage = message;
+  const toolUseMessageContent = toolUseMessage.message[toolUseMessageIndex];
 
-  if (!fullMessage || toolUseMessageContent?.type !== "tool_use") {
+  if (toolUseMessageContent?.type !== "tool_use") {
     return <>Unexpected message tool use message</>;
   }
 
   const toolUseResult = getToolUseResult({
-    messages,
-    toolUseMessageIndex: messageIndex,
+    nextMessage,
+    toolUseMessage: toolUseMessage,
     toolUseMessageContentIndex: toolUseMessageIndex,
   });
   return (

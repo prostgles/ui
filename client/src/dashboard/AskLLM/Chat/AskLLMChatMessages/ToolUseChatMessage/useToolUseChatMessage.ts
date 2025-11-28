@@ -4,44 +4,39 @@ import type { MarkdownMonacoCodeProps } from "@components/Chat/MarkdownMonacoCod
 import type { UseLLMChatProps } from "../../useLLMChat";
 import type { DBSSchema } from "@common/publishUtils";
 import { getToolUseResult } from "./utils/getToolUseResult";
+import type { ToolUseMessage } from "./ToolUseChatMessage";
 
 export type ToolUseMessageProps = Pick<UseLLMChatProps, "mcpServerIcons"> & {
-  messages: DBSSchema["llm_messages"][];
-  messageIndex: number;
+  message: DBSSchema["llm_messages"];
+  nextMessage: DBSSchema["llm_messages"] | undefined;
   toolUseMessageContentIndex: number;
   workspaceId: string | undefined;
 } & Pick<MarkdownMonacoCodeProps, "sqlHandler" | "loadedSuggestions">;
 
 export const useToolUseChatMessage = (props: ToolUseMessageProps) => {
-  const {
-    messages,
-    toolUseMessageContentIndex: toolUseMessageIndex,
-    messageIndex,
-    mcpServerIcons,
-  } = props;
+  const { message, nextMessage, toolUseMessageContentIndex, mcpServerIcons } =
+    props;
 
-  const toolUseMessage = messages[messageIndex];
-  const nextMessage = messages[messageIndex + 1];
-  const toolUseMessageContent = toolUseMessage?.message[toolUseMessageIndex];
+  const toolUseMessage = message;
+  const toolUseMessageContent =
+    toolUseMessage.message[toolUseMessageContentIndex];
 
   const iconName = useMemo(() => {
-    const serverName =
-      toolUseMessageContent?.type !== "tool_use" ?
-        ""
-      : getMCPToolNameParts(toolUseMessageContent.name)?.serverName;
-    return serverName && mcpServerIcons.get(serverName);
+    return toolUseMessageContent?.type === "tool_use" ?
+        getIconForToolUseMessage(toolUseMessageContent, mcpServerIcons)
+      : undefined;
   }, [mcpServerIcons, toolUseMessageContent]);
 
-  if (!toolUseMessage || toolUseMessageContent?.type !== "tool_use") {
+  if (toolUseMessageContent?.type !== "tool_use") {
     return "Unexpected message tool use message";
   }
 
   const toolUseResult =
     nextMessage &&
     getToolUseResult({
-      messages,
-      toolUseMessageIndex: messageIndex,
-      toolUseMessageContentIndex: toolUseMessageIndex,
+      nextMessage,
+      toolUseMessage,
+      toolUseMessageContentIndex: toolUseMessageContentIndex,
     });
 
   return {
@@ -56,3 +51,11 @@ export type ToolUseChatMessageState = Exclude<
   ReturnType<typeof useToolUseChatMessage>,
   string
 >;
+
+export const getIconForToolUseMessage = (
+  { name }: ToolUseMessage,
+  mcpServerIcons: Map<string, string>,
+) => {
+  const serverName = getMCPToolNameParts(name)?.serverName;
+  return serverName && mcpServerIcons.get(serverName);
+};

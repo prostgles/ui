@@ -46,9 +46,8 @@ type BtnCustomProps = (
   disabledInfo?: string;
   /**
    * no-fade - will not fade out the button when disabled/loading
-   * ignore-loading - button can still be clicked when loading
    */
-  disabledVariant?: "no-fade" | "ignore-loading";
+  disabledVariant?: "no-fade";
   loading?: boolean;
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
@@ -287,8 +286,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     if (clickMessage?.replace) return clickMessage.msg;
 
-    const isDisabled =
-      disabledInfo || (loading && disabledVariant !== "ignore-loading");
+    const isDisabled = disabledInfo || loading;
     let _className = "";
     const { size = window.isLowWidthScreen ? "small" : "default" } = this.props;
 
@@ -361,7 +359,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       : loading ?
         <div
           className="min-w-0 ws-nowrap text-ellipsis f-1 o-hidden flex-row"
-          style={{ opacity: disabledVariant === "ignore-loading" ? 1 : 0.5 }}
+          style={{ opacity: 0.5 }}
         >
           {children}
         </div>

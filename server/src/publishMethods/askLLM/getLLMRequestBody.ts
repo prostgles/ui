@@ -189,16 +189,16 @@ export const getLLMRequestBody = ({
         model,
         messages: messages
           .map((m) => {
-            const isToolUse = filterArr(m.content, {
+            const toolUseContent = filterArr(m.content, {
               type: "tool_use" as const,
             });
             const textContent = filterArr(m.content, { type: "text" as const });
 
-            if (isToolUse.length) {
+            if (toolUseContent.length) {
               return {
                 role: "assistant",
                 content: textContent.map((t) => t.text).join("\n") || "",
-                tool_calls: isToolUse.map((tc) => ({
+                tool_calls: toolUseContent.map((tc) => ({
                   id: tc.id,
                   type: "function",
                   function: {
@@ -215,6 +215,9 @@ export const getLLMRequestBody = ({
                   role: "tool",
                   tool_call_id: toolUseResult.tool_use_id,
                   content: toolUseResult.content,
+                  ...(toolUseResult.is_error && {
+                    is_error: toolUseResult.is_error,
+                  }),
                 };
               });
             }

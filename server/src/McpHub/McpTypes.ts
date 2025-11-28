@@ -1,4 +1,5 @@
 import type { StdioServerParameters } from "@modelcontextprotocol/sdk/client/stdio";
+import type { ListToolsResult } from "@modelcontextprotocol/sdk/types";
 
 export type McpMode = "full" | "server-use-only" | "off";
 
@@ -13,12 +14,7 @@ export type McpServer = {
   disabled?: boolean;
 };
 
-export type McpTool = {
-  name: string;
-  description?: string;
-  inputSchema?: object;
-  autoApprove?: boolean;
-};
+export type McpTool = ListToolsResult["tools"][number];
 
 export type McpResource = {
   uri: string;

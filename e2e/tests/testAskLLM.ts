@@ -79,6 +79,7 @@ const mcpToolUse: ToolUse = {
       },
     },
   ],
+  result_content: `I've successfully fetched the login page of the application. Let me know if you need any specific information or actions performed on this page.`,
 };
 const playwrightMCPToolUse: ToolUse = {
   content: `I'll use Playwright to navigate to the login page and take a snapshot of it. This will help us verify that the page loads correctly and looks as expected.`,
@@ -239,7 +240,7 @@ const toolResponses = ${stringify(toolResponses)};
 
 const lastMsg = args.messages.at(-1);
 const lastMsgText = lastMsg?.content?.[0]?.type === "image_url"? " receipt " : lastMsg?.content?.[0]?.text;
-const { tool_call_id } = lastMsg ?? {};
+const { tool_call_id, is_error } = lastMsg ?? {};
 const toolCallKeyResult = typeof tool_call_id === "string"? tool_call_id.split("#")[0] : undefined;
 const toolResult = toolCallKeyResult && toolResponses[toolCallKeyResult];
 const failedToolResult = toolCallKeyResult === "mcpfail";// typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch");
@@ -249,7 +250,7 @@ const toolResponseKey = Object.keys(toolResponses).find(k => msg && msg.includes
 const toolResponse = toolResponses[toolResponseKey];
 
 const defaultContent = !msg && !failedToolResult? undefined : ("free ai assistant" + (msg ?? " empty message") + (failedToolResult ? "... let's retry the failed tool" : ""));
-const content = toolResult?.result_content ?? toolResponse?.content ?? defaultContent;
+const content = is_error? "Tool call failed. Will not retry" : toolResult?.result_content ?? toolResponse?.content ?? defaultContent;
 const tool_calls = toolResponse?.tool.map(tc => ({ ...tc, id: [toolResponseKey + "#", tc.id, tc["function"].name, Math.random(), Date.now()].join("_") })); 
 
 const duration = toolResponse?.duration ?? (3000 + Math.random() * 2000);

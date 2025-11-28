@@ -322,12 +322,16 @@ declare global {
 export type SVGScreenshotNodeType = (
   | SVGPathElement
   | SVGTextElement
+  | SVGRectElement
+  | SVGLineElement
   | SVGForeignObjectElement
 ) & {
   _bboxCode?: string;
-  _purpose?: Record<
-    "border" | "background" | "shadow" | "scrollMask" | "backdropFilter",
-    any
+  _purpose?: Partial<
+    Record<
+      "border" | "background" | "shadow" | "scrollMask" | "backdropFilter",
+      any
+    >
   >;
   _bbox?: DOMRect;
   _gWrapperFor?: HTMLElement;

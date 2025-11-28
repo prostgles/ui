@@ -1,5 +1,5 @@
 import { isDefined, type JSONB } from "prostgles-types";
-import type { ChatPermissions } from "src/DockerManager/dockerMCPDatabaseRequestRouter";
+import type { ChatPermissions } from "@src/DockerManager/dockerMCPServerProxy/dockerMCPServerProxy";
 import {
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,

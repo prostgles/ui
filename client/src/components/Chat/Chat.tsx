@@ -18,7 +18,6 @@ export type Message = {
   sender_id: number | string;
   incoming: boolean;
   isLoading?: boolean;
-  sent: Date;
 };
 
 export type ChatProps = {

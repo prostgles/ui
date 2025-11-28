@@ -4,19 +4,17 @@ import { type DBS } from "..";
 import { upsertSession } from "../authConfig/upsertSession";
 import { createContainer } from "./createContainer";
 import { type CreateContainerParams } from "./createContainer.schema";
-import { dockerMCPDatabaseRequestRouter } from "./dockerMCPDatabaseRequestRouter";
+import { dockerMCPServerProxy } from "./dockerMCPServerProxy/dockerMCPServerProxy";
 import {
-  containerAuthStore,
+  dockerContainerAuthRegistry,
   type CreateContainerContext,
-} from "./containerAuthStore";
+} from "./dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { DOCKER_CONTAINER_NAME_PREFIX } from "./getDockerMCP";
 
-let mcpRequestRouter:
-  | ReturnType<typeof dockerMCPDatabaseRequestRouter>
-  | undefined;
+let mcpRequestRouter: ReturnType<typeof dockerMCPServerProxy> | undefined;
 
 export const getDockerManager = async (dbs: DBS) => {
-  mcpRequestRouter ??= dockerMCPDatabaseRequestRouter();
+  mcpRequestRouter ??= dockerMCPServerProxy();
   const { address, api_url } = await mcpRequestRouter;
 
   const createContainerInChat = async (
@@ -42,11 +40,15 @@ export const getDockerManager = async (dbs: DBS) => {
     if (!sid_token) {
       throw new Error("Failed to create session for Docker MCP");
     }
-    containerAuthStore.setContainerInfo(name, { ...context, chat, sid_token });
+    dockerContainerAuthRegistry.setContainerInfo(name, {
+      ...context,
+      chat,
+      sid_token,
+    });
     const containerResult = await createContainer(name, args).catch((error) => {
       console.error("Error creating container:", error);
     });
-    containerAuthStore.deleteContainerInfo(name);
+    dockerContainerAuthRegistry.deleteContainerInfo(name);
     return containerResult;
   };
 

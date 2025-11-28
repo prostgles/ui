@@ -152,23 +152,20 @@ export const getWhatToRenderOnSVG = async (
   };
 };
 
-const getBorderForSVG = (style: CSSStyleDeclaration) => {
-  const getBorderDetails = (value: string) => {
-    const [width, display, ...colorParts] = value
-      .split(" ")
-      .map((v) => v.trim());
-    const color = colorParts.join(" ");
-    if (display !== "none" && width) {
-      const widthNum = parseFloat(width);
-      if (widthNum && color) {
-        return {
-          borderWidth: widthNum,
-          borderColor: color,
-        };
-      }
+const getBorderDetails = (value: string) => {
+  const [width, display, ...colorParts] = value.split(" ").map((v) => v.trim());
+  const color = colorParts.join(" ");
+  if (display !== "none" && width) {
+    const widthNum = parseFloat(width);
+    if (widthNum && color) {
+      return {
+        borderWidth: widthNum,
+        borderColor: color,
+      };
     }
-  };
-
+  }
+};
+const getBorderForSVG = (style: CSSStyleDeclaration) => {
   const border = getBorderDetails(style.border);
   const outline = getBorderDetails(
     [style.outlineWidth, style.outlineStyle, style.outlineColor].join(" "),

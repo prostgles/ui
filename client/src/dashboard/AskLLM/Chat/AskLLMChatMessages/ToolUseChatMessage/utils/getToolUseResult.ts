@@ -4,23 +4,22 @@ import type { DBSSchema } from "@common/publishUtils";
 import type { ToolResultMessage, ToolUseMessage } from "../ToolUseChatMessage";
 
 export const getToolUseResult = ({
-  messages,
-  toolUseMessageIndex,
+  toolUseMessage,
+  nextMessage,
   toolUseMessageContentIndex,
 }: {
-  toolUseMessageIndex: number;
   toolUseMessageContentIndex: number;
-  messages: DBSSchema["llm_messages"][];
+  toolUseMessage: DBSSchema["llm_messages"];
+  nextMessage: DBSSchema["llm_messages"] | undefined;
 }):
   | undefined
   | {
       toolUseResult: DBSSchema["llm_messages"];
       toolUseResultMessage: ToolResultMessage;
     } => {
-  const toolUseMessageRequest = messages[toolUseMessageIndex]!.message[
+  const toolUseMessageRequest = toolUseMessage.message[
     toolUseMessageContentIndex
   ] as ToolUseMessage;
-  const nextMessage = messages[toolUseMessageIndex + 1];
   if (!nextMessage) return;
 
   const toolResults = filterArr(nextMessage.message, {

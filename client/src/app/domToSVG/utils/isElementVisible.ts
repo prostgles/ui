@@ -38,7 +38,10 @@ const isInViewport = (
   );
 };
 
-export const isInParentViewport = (element: Element, bbox: DOMRect) => {
+export const isInParentViewport = (
+  element: Element,
+  bbox: DOMRect,
+): boolean => {
   const parent = element.parentElement;
   if (!parent) return true;
   const parentHidesOverflow =

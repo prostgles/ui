@@ -3,7 +3,7 @@ import type { DBS } from "..";
 import { getDockerManager } from "./DockerManager";
 import { createContainerSchema } from "./createContainer.schema";
 import type { McpToolCallResponse } from "@common/mcp";
-import type { CreateContainerContext } from "./containerAuthStore";
+import type { CreateContainerContext } from "./dockerMCPServerProxy/dockerContainerAuthRegistry";
 
 export const getDockerMCPTools = async (dbs: DBS) => {
   const dockerManager = await getDockerManager(dbs);

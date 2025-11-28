@@ -76,18 +76,22 @@ export const getSVGifTypeAnimation = (
     });
     fromTimeLocal += tspanDuration;
   });
-  const { style: zoomToStyle } = getSVGifZoomToAnimation(
-    viewport,
-    { bbox: rawBBox },
-    { svgDom, svgFileName },
-    { ...animation, type: "zoomToElement" },
-    {
-      sceneId,
-      sceneIndex,
-      totalDuration,
-      getPercent,
-      fromTime,
-    },
-  );
+  const zoomToStyle =
+    animation.zoomToElement === false ?
+      ""
+    : getSVGifZoomToAnimation(
+        viewport,
+        { bbox: rawBBox },
+        { svgDom, svgFileName },
+        { ...animation, type: "zoomToElement" },
+        {
+          sceneId,
+          sceneIndex,
+          totalDuration,
+          getPercent,
+          fromTime,
+        },
+        false,
+      ).style;
   return { sceneNodeAnimations, style: zoomToStyle };
 };

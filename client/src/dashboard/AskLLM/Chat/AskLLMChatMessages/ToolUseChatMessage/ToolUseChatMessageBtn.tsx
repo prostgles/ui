@@ -31,7 +31,6 @@ export const ToolUseChatMessageBtn = ({
           />
         )
       }
-      // disabledVariant="ignore-loading"
       onClick={onClick}
       variant="faded"
       size="small"

@@ -17,7 +17,7 @@
     "@aws-sdk/client-s3": "^3.627.0",
     "@aws-sdk/lib-storage": "^3.627.0",
     "@aws-sdk/s3-request-presigner": "^3.627.0",
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.23.0",
     "@types/cookie-parser": "^1.4.2",
     "@types/pidusage": "^2.0.5",
     "check-disk-space": "^3.3.1",
