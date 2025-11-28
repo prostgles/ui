@@ -35,7 +35,7 @@ export const MCPServers = (props: MCPServersProps) => {
     filter,
     fieldConfigs,
     llm_chats_allowed_mcp_tools,
-  } = useMCPServersListProps(chatId, dbs, dbsMethods);
+  } = useMCPServersListProps(chatId, dbs);
 
   const someToolsAutoApproved = llm_chats_allowed_mcp_tools?.some(
     (t) => t.auto_approve,

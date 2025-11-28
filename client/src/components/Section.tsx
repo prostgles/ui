@@ -82,7 +82,8 @@ export const Section = (props: SectionProps) => {
         style={
           !open ?
             {
-              borderBottom: "1px solid var(--b-color)",
+              borderBottom: "unset", // "1px solid var(--b-color)", It looks better without border when closed?
+              borderTop: "unset",
             }
           : {
               position: "sticky",

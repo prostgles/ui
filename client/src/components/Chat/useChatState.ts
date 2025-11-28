@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import "./Chat.css";
 
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { useDropZone } from "../FileInput/DropZone";

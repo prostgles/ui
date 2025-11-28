@@ -43,7 +43,7 @@ export const MCPServerFooterActions = ({
   const { onToggle } = useMCPServerEnable({
     dbs,
     mcp_server,
-    dbsMethods,
+    chatId: undefined,
   });
   const { addAlert } = useAlert();
   return (
@@ -55,34 +55,38 @@ export const MCPServerFooterActions = ({
           dbsMethods={dbsMethods}
         />
       )}
-      {logItem && (
-        <PopupMenu
-          title={`MCP Server ${JSON.stringify(mcp_server.name)} stderr logs`}
-          positioning="center"
-          className="mr-auto ml-p25"
-          data-command="MCPServerFooterActions.logs"
-          button={
-            <Btn
-              color={logItem.error ? "danger" : "default"}
-              variant="faded"
-              size="small"
-            >
-              {logItem.error ? "Error" : "Logs"}
-            </Btn>
-          }
-          onClickClose={false}
-          clickCatchStyle={{ opacity: 1 }}
-        >
-          <CodeEditor
-            language={"bash"}
-            value={logItem.log}
-            style={{
-              minWidth: "min(900px, 100vw)",
-              minHeight: "min(900px, 100vh)",
-            }}
-          />
-        </PopupMenu>
-      )}
+      {logItem &&
+        Boolean(
+          logItem.log || logItem.install_log || logItem.install_error,
+        ) && (
+          <PopupMenu
+            title={`MCP Server ${JSON.stringify(mcp_server.name)} stderr logs`}
+            positioning="center"
+            // className="mr-auto ml-p25"
+            data-command="MCPServerFooterActions.logs"
+            showFullscreenToggle={{}}
+            button={
+              <Btn
+                color={logItem.error ? "danger" : "default"}
+                // variant="faded"
+                size="small"
+              >
+                {logItem.error ? "Error" : "Logs"}
+              </Btn>
+            }
+            onClickClose={false}
+            clickCatchStyle={{ opacity: 1 }}
+          >
+            <CodeEditor
+              language={"bash"}
+              value={logItem.log}
+              style={{
+                minWidth: "min(900px, 100vw)",
+                minHeight: "min(900px, 100vh)",
+              }}
+            />
+          </PopupMenu>
+        )}
       {config_schema && config && (
         <MCPServerConfigButton
           dbs={dbs}

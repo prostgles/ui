@@ -1,17 +1,19 @@
-import { mdiCheckAll } from "@mdi/js";
-import React from "react";
-import Checkbox from "@components/Checkbox";
+import { useOnErrorAlert } from "@components/AlertProvider";
+import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
-import type { DBS, DBSMethods } from "../../../dashboard/Dashboard/DBS";
+import { SvgIcon } from "@components/SvgIcon";
+import React, { useCallback } from "react";
+import type { DBS } from "../../../dashboard/Dashboard/DBS";
 import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
+import { MCPServerToolsGroupToggle } from "./MCPServerTools/MCPServerToolsGroupToggle";
 import type { MCPServerWithToolAndConfigs } from "./useMCPServersListProps";
+import { isDefined } from "src/utils";
 
 export const MCPServerHeaderCheckbox = ({
   mcpServer,
   llm_chats_allowed_mcp_tools,
   chatId,
   dbs,
-  dbsMethods,
 }: {
   mcpServer: MCPServerWithToolAndConfigs;
   llm_chats_allowed_mcp_tools:
@@ -22,7 +24,6 @@ export const MCPServerHeaderCheckbox = ({
     | undefined;
   chatId: number | undefined;
   dbs: DBS;
-  dbsMethods: DBSMethods;
 }) => {
   const { mcp_server_tools: mcpServerTools, icon_path } = mcpServer;
   const toolsAllowed = llm_chats_allowed_mcp_tools?.filter((at) =>
@@ -30,54 +31,78 @@ export const MCPServerHeaderCheckbox = ({
   );
   const someToolsAllowed = !!toolsAllowed?.length;
   const name = mcpServer.name;
-  const { onToggle } = useMCPServerEnable({
+  const { onToggle, onToggleTools } = useMCPServerEnable({
     dbs,
     mcp_server: mcpServer,
-    dbsMethods,
+    chatId,
   });
+
+  const { onErrorAlert } = useOnErrorAlert();
+
+  const onToggleServer = useCallback(
+    (chatId: number) => {
+      onErrorAlert(async () => {
+        let wasEnabled = mcpServer.enabled;
+        if (!mcpServer.enabled && !someToolsAllowed) {
+          wasEnabled = await onToggle();
+        }
+        if (someToolsAllowed) {
+          await dbs.llm_chats_allowed_mcp_tools.delete({
+            chat_id: chatId,
+            tool_id: {
+              $in: toolsAllowed.map((t) => t.tool_id),
+            },
+          });
+        } else if (wasEnabled) {
+          await dbs.llm_chats_allowed_mcp_tools.insert(
+            mcpServerTools.map((t) => ({
+              chat_id: chatId,
+              tool_id: t.id,
+            })),
+          );
+        }
+      });
+    },
+    [
+      someToolsAllowed,
+      onToggle,
+      mcpServer.enabled,
+      dbs,
+      toolsAllowed,
+      mcpServerTools,
+      onErrorAlert,
+    ],
+  );
+
   return (
     <FlexRow className="bold mx-p25 w-full">
-      {chatId && llm_chats_allowed_mcp_tools ?
-        <>
-          <Checkbox
-            variant="header"
-            title="Toggle all tools"
-            className="m-0"
-            label={name}
-            checked={someToolsAllowed}
-            iconPath={
-              toolsAllowed?.some((t) => t.auto_approve) ?
-                mdiCheckAll
-              : undefined
-            }
-            disabledInfo={
-              mcpServerTools.length ? undefined : (
-                "No tools available. Press reload"
-              )
-            }
-            onChange={async () => {
-              if (!mcpServer.enabled && !someToolsAllowed) {
-                await onToggle();
-              }
-              if (someToolsAllowed) {
-                dbs.llm_chats_allowed_mcp_tools.delete({
-                  chat_id: chatId,
-                  tool_id: {
-                    $in: toolsAllowed.map((t) => t.tool_id),
-                  },
-                });
-              } else {
-                dbs.llm_chats_allowed_mcp_tools.insert(
-                  mcpServerTools.map((t) => ({
-                    chat_id: chatId,
-                    tool_id: t.id,
-                  })),
-                );
-              }
-            }}
-          />
-        </>
-      : name}
+      <Btn
+        title="Toggle all tools"
+        style={{
+          padding: "0",
+          marginRight: "1em",
+        }}
+        iconNode={icon_path && <SvgIcon icon={icon_path} />}
+        color={someToolsAllowed ? "action" : undefined}
+        disabledInfo={
+          mcpServerTools.length ? undefined : "No tools available. Press reload"
+        }
+        onClick={
+          !chatId || !llm_chats_allowed_mcp_tools ?
+            undefined
+          : () => onToggleServer(chatId)
+        }
+      >
+        {name}
+      </Btn>
+
+      {isDefined(chatId) && (
+        <MCPServerToolsGroupToggle
+          llm_chats_allowed_mcp_tools={llm_chats_allowed_mcp_tools}
+          onToggleTools={onToggleTools}
+          tools={mcpServerTools}
+        />
+      )}
     </FlexRow>
   );
 };

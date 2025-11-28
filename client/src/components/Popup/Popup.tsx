@@ -1,22 +1,22 @@
+import { isObject, pickKeys } from "prostgles-types";
 import React from "react";
 import ReactDOM from "react-dom";
-import "./Popup.css";
-import { isObject, pickKeys } from "prostgles-types";
 import type { Command, TestSelectors } from "../../Testing";
 import RTComp, { type DeltaOf } from "../../dashboard/RTComp";
 import { ClickCatchOverlay } from "../ClickCatchOverlay";
-import ErrorComponent, { ErrorTrap } from "../ErrorComponent";
-import { FlexRow, classOverride } from "../Flex";
+import { ErrorTrap } from "../ErrorComponent";
+import { classOverride } from "../Flex";
 import {
   FooterButtons,
   type FooterButton,
   type FooterButtonsProps,
 } from "./FooterButtons";
+import "./Popup.css";
 import { PopupHeader } from "./PopupHeader";
 import { getPopupStyle } from "./getPopupStyle";
 import { popupCheckPosition } from "./popupCheckPosition";
 
-let modalRoot;
+let modalRoot: HTMLElement | null = null;
 export const getModalRoot = (forPointer = false) => {
   const id = forPointer ? "pointer-root" : "modal-root";
   let node = document.getElementById(id);
@@ -204,16 +204,17 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
           >('input:not([type="hidden"]), textarea, button'),
         );
 
-        const firstFocusable = [...firstInputLike].find(
-          (e) =>
+        const firstFocusable = [...firstInputLike].find((e) => {
+          return (
             getComputedStyle(e).display !== "none" &&
             getComputedStyle(e).opacity !== "0" &&
             !e.closest("." + DATA_NULLABLE) &&
-            !e.closest("." + DATA_HAS_VALUE),
-        );
+            !e.closest("." + DATA_HAS_VALUE)
+          );
+        });
         (firstFocusable ?? container).focus();
       }
-    }, 50);
+    }, 200);
     window.document.body.addEventListener("keydown", this.checkFocus);
 
     if (!this.ref) return;

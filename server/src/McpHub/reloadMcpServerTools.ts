@@ -34,12 +34,13 @@ export const updateMcpServerTools = async (
     if (tools.length) {
       await tx.mcp_server_tools.insert(
         tools.map(
-          ({ name, description, inputSchema }) =>
+          ({ name, description, inputSchema, annotations }) =>
             ({
               description: description ?? "",
               server_name: serverName,
               inputSchema,
               name,
+              annotations,
             }) satisfies DBSSchemaForInsert["mcp_server_tools"],
         ),
       );
@@ -50,7 +51,11 @@ export const updateMcpServerTools = async (
 };
 
 export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
-  const mcpHub = await startMcpHub(dbs);
-  const client = mcpHub.connections[serverName]?.client;
+  let mcpHub = await startMcpHub(dbs);
+  let client = mcpHub.connections[serverName]?.client;
+  if (!client) {
+    mcpHub = await startMcpHub(dbs, true);
+    client = mcpHub.connections[serverName]?.client;
+  }
   return updateMcpServerTools(dbs, serverName, client);
 };

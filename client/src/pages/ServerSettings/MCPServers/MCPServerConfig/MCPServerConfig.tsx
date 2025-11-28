@@ -1,8 +1,9 @@
-import React from "react";
+import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol } from "@components/Flex";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
+import React from "react";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
 import { useEditableData } from "../../useEditableData";
 
@@ -10,7 +11,7 @@ export type MCPServerConfigProps = {
   dbs: DBS;
   serverName: string;
   existingConfig: { id: number; value: Record<string, string> } | undefined;
-  onDone: () => void;
+  onDone: (enabled: boolean) => void;
 };
 
 export const MCPServerConfig = (props: MCPServerConfigProps) => {
@@ -29,6 +30,14 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
     {},
     { skip: !serverName },
   );
+  const existingConfigData = dbs.mcp_server_configs.useSubscribe(
+    {
+      server_name: serverName,
+    },
+    {},
+    { skip: !serverName },
+  );
+  const existingConfigs = existingConfigData.data ?? [];
   const schema = serverInfo.data?.config_schema;
   if (!schema) return null;
 
@@ -36,7 +45,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
     <Popup
       title={`Configure and enable ${JSON.stringify(serverName)} MCP server`}
       positioning="center"
-      onClose={onDone}
+      onClose={() => onDone(false)}
       data-command="MCPServerConfig"
       rootStyle={{
         maxWidth: "min(600px, 100vw)",
@@ -45,7 +54,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
       footerButtons={[
         {
           label: "Cancel",
-          onClick: onDone,
+          onClick: () => onDone(false),
         },
         {
           label: existingConfig ? "Update" : "Enable",
@@ -79,7 +88,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
               }
             })
               .then(() => {
-                onDone();
+                onDone(true);
               })
               .catch((e) => {});
           },
@@ -89,6 +98,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
       <FlexCol>
         {Object.entries(schema).map(([key, schema]) => (
           <FormField
+            type="text"
             key={key}
             label={schema.title ?? key}
             hint={schema.description}
@@ -101,6 +111,36 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
             }
           />
         ))}
+        {Boolean(existingConfigs.length) && (
+          <FlexCol className="pt-1 pb-2 gap-p5">
+            <div className="ta-start">
+              Or select from existing configurations:
+            </div>
+            <FlexRowWrap>
+              {existingConfigs.map((existingConfig) => {
+                const renderableTypes = ["string", "number", "boolean"];
+                const values = Object.values(existingConfig.config)
+                  .map((v) =>
+                    renderableTypes.includes(typeof v) ?
+                      String(v)
+                    : JSON.stringify(v),
+                  )
+                  .join(", ");
+                return (
+                  <Btn
+                    key={existingConfig.id}
+                    variant="faded"
+                    onClick={() => {
+                      setValue(existingConfig.config);
+                    }}
+                  >
+                    {values}
+                  </Btn>
+                );
+              })}
+            </FlexRowWrap>
+          </FlexCol>
+        )}
         {error && <ErrorComponent error={error} />}
       </FlexCol>
     </Popup>
@@ -110,7 +150,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
 export type MCPServerConfigContext = {
   setServerToConfigure: (
     p: Omit<MCPServerConfigProps, "onDone" | "dbs">,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
 };
 
 export const MCPServerConfigContext = React.createContext<
@@ -132,12 +172,12 @@ export const MCPServerConfigProvider = ({
       setServerToConfigure: async (
         props: Omit<MCPServerConfigProps, "onDone" | "dbs">,
       ) => {
-        return new Promise<void>((resolve) => {
+        return new Promise<boolean>((resolve) => {
           setServerToConfigure({
             ...props,
             dbs,
-            onDone: () => {
-              resolve();
+            onDone: (enabled) => {
+              resolve(enabled);
             },
           });
         });
@@ -151,8 +191,8 @@ export const MCPServerConfigProvider = ({
       {serverToConfigure && (
         <MCPServerConfig
           {...serverToConfigure}
-          onDone={() => {
-            serverToConfigure.onDone();
+          onDone={(enabled) => {
+            serverToConfigure.onDone(enabled);
             setServerToConfigure(undefined);
           }}
         />

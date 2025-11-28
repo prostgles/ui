@@ -32,7 +32,5 @@ export const checkMCPServerTools = async (mcpHub: McpHub) => {
 };
 
 const prepareToolsForCompare = (tools: McpTool[]) => {
-  return tools
-    .map((t) => omitKeys(t, ["autoApprove"]))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return tools.sort((a, b) => a.name.localeCompare(b.name));
 };

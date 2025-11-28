@@ -1,10 +1,9 @@
-import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { Prgl } from "../../../App";
+import React, { useMemo, useState } from "react";
 import type { DBS } from "../../../dashboard/Dashboard/DBS";
 import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
 import { MCPServerHeaderCheckbox } from "./MCPServerHeaderCheckbox";
-import { MCPServerTools } from "./MCPServerTools";
+import { MCPServerTools } from "./MCPServerTools/MCPServerTools";
 
 export type MCPServerWithToolAndConfigs = DBSSchema["mcp_servers"] & {
   mcp_server_tools: DBSSchema["mcp_server_tools"][];
@@ -15,7 +14,6 @@ export type MCPServerWithToolAndConfigs = DBSSchema["mcp_servers"] & {
 export const useMCPServersListProps = (
   chatId: number | undefined,
   dbs: DBS,
-  dbsMethods: Prgl["dbsMethods"],
 ) => {
   const [selectedTool, setSelectedTool] =
     useState<DBSSchema["mcp_server_tools"]>();
@@ -52,7 +50,6 @@ export const useMCPServersListProps = (
               mcpServer={mcpServer}
               chatId={chatId}
               dbs={dbs}
-              dbsMethods={dbsMethods}
               llm_chats_allowed_mcp_tools={llm_chats_allowed_mcp_tools}
             />
           ),
@@ -73,6 +70,7 @@ export const useMCPServersListProps = (
             id: 1,
             name: 1,
             description: 1,
+            annotations: 1,
             /** TODO: fix nested joins in prostgles-server */
             // llm_chats_allowed_mcp_tools: "*",
           },
@@ -87,7 +85,6 @@ export const useMCPServersListProps = (
                 selectedToolName={selectedTool?.name}
                 chatId={chatId}
                 dbs={dbs}
-                dbsMethods={dbsMethods}
               />
             );
           },
@@ -106,7 +103,7 @@ export const useMCPServersListProps = (
           hide: true,
         })),
       ] satisfies FieldConfig<MCPServerWithToolAndConfigs>[],
-    [chatId, dbs, dbsMethods, llm_chats_allowed_mcp_tools, selectedTool?.name],
+    [chatId, dbs, llm_chats_allowed_mcp_tools, selectedTool?.name],
   );
   return {
     selectedTool,

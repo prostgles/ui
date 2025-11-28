@@ -64,7 +64,15 @@ export const SmartCardActions = <T extends AnyObject>(
   }
 
   return (
-    <FlexCol className="show-on-parent-hover">
+    <FlexCol
+      className="show-on-parent-hover rounded"
+      style={{
+        position: "absolute",
+        right: 0,
+        top: 0,
+        backdropFilter: "blur(4px)",
+      }}
+    >
       {showViewEditRow && (
         <Btn
           className="f-0 "

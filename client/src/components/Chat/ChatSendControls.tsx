@@ -1,7 +1,6 @@
 import React, { useCallback } from "react";
-import "./Chat.css";
 
-import { mdiAttachment, mdiSend, mdiStopCircle } from "@mdi/js";
+import { mdiArrowUp, mdiAttachment, mdiSend, mdiStopCircle } from "@mdi/js";
 import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
 import { FlexCol, FlexRow } from "../Flex";
@@ -9,6 +8,8 @@ import { Icon } from "../Icon/Icon";
 import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import type { ChatProps } from "./Chat";
 import type { ChatState } from "./useChatState";
+import { useOnErrorAlert } from "@components/AlertProvider";
+import { ChatActionBarBtnStyleProps } from "src/dashboard/AskLLM/ChatActionBar/AskLLMChatActionBar";
 
 const speechFeatureFlagEnabled =
   localStorage.getItem("speechFeatureFlag") === "true";
@@ -34,7 +35,7 @@ export const ChatSendControls = ({
   setCurrentMessage,
   sendMsg,
   sendingMsg,
-  textAreaRef: ref,
+  textAreaRef,
 }: ChatSendControlsProps) => {
   const speech = speechFeatureFlagEnabled && allowedMessageTypes.speech;
 
@@ -66,17 +67,23 @@ export const ChatSendControls = ({
     },
     [files, onAddFiles, onSend, setCurrentMessage],
   );
-
+  const { onErrorAlert } = useOnErrorAlert();
+  const fileRef = React.useRef<HTMLInputElement>(null);
   return (
-    <FlexCol className="as-end gap-2 p-p5">
+    <FlexCol className="as-end jc-center gap-2 ">
       <FlexRow className="gap-0">
         {allowedMessageTypes.file && (
-          <label
-            data-command="Chat.addFiles"
-            className="pointer button bg-transparent bg-active-hover"
-            style={{ background: "transparent", padding: ".5em" }}
-          >
+          <>
+            <Btn
+              data-command="Chat.addFiles"
+              iconPath={mdiAttachment}
+              {...ChatActionBarBtnStyleProps}
+              onClick={() => {
+                fileRef.current?.click();
+              }}
+            />
             <input
+              ref={fileRef}
               type="file"
               multiple
               style={{ display: "none" }}
@@ -84,8 +91,7 @@ export const ChatSendControls = ({
                 onAddFiles(Array.from(e.target.files || []));
               }}
             />
-            <Icon path={mdiAttachment} />
-          </label>
+          </>
         )}
         {speech && (
           <ChatSpeech
@@ -103,14 +109,15 @@ export const ChatSendControls = ({
           iconPath={mdiStopCircle}
         />
       : <Btn
-          iconPath={mdiSend}
+          iconPath={mdiArrowUp}
           loading={sendingMsg}
           title={t.common.Send}
+          className="b bg-color-3 round"
           data-command="Chat.send"
           disabledInfo={disabledInfo}
           onClick={() => {
-            if (!ref.current) return;
-            sendMsg();
+            if (!textAreaRef.current) return;
+            onErrorAlert(() => sendMsg());
           }}
         />
       }

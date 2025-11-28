@@ -34,8 +34,8 @@ export const MCPServersToolbar = ({
           iconPath={
             globalSettings.data?.mcp_servers_disabled ? mdiPlay : mdiStop
           }
-          onClick={() => {
-            dbs.global_settings.update(
+          onClickPromise={async () => {
+            await dbs.global_settings.update(
               {},
               {
                 mcp_servers_disabled:

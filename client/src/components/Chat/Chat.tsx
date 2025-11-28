@@ -1,12 +1,8 @@
 import React, { useRef } from "react";
 import "./Chat.css";
 
-import { mdiClose } from "@mdi/js";
-import { t } from "../../i18n/i18nUtils";
-import Btn from "../Btn";
 import { classOverride, FlexCol } from "../Flex";
-import { MediaViewer } from "../MediaViewer";
-import { ScrollFade } from "../ScrollFade/ScrollFade";
+import { ChatFileAttachments } from "./ChatFileAttachments/ChatFileAttachments";
 import { ChatMessage } from "./ChatMessage";
 import { ChatSendControls } from "./ChatSendControls";
 import { useChatState } from "./useChatState";
@@ -88,60 +84,21 @@ export const Chat = (props: ChatProps) => {
         title={disabledInfo}
         data-command="Chat.sendWrapper"
         className={
-          "send-wrapper relative " +
-          (disabledInfo ? "no-interaction not-allowed" : "")
+          "send-wrapper relative rounded m-p5 p-p5 " +
+          (disabledInfo ? "no-interaction not-allowed" : "") +
+          (isEngaged ? "active-shadow bg-action" : "bg-color-2 ")
         }
       >
         <FlexCol
           className={
-            "f-1 rounded ml-1 p-p5 " +
-            (chatIsLoading ? "no-interaction not-allowed" : "") +
-            (isEngaged ? "active-shadow bg-action" : "bg-color-2 ")
+            "f-1 " + (chatIsLoading ? "no-interaction not-allowed" : "")
           }
           {...divHandlers}
         >
-          {!!filesAsBase64?.length && (
-            <ScrollFade
-              data-command="Chat.attachedFiles"
-              className="flex-row-wrap gap-1 o-auto"
-              style={{ maxHeight: "40vh" }}
-            >
-              {filesAsBase64.map(({ file, base64Data }, index) => (
-                <FlexCol
-                  key={file.name + index}
-                  data-key={file.name}
-                  title={file.name}
-                  className="relative pt-p5 pr-p5 "
-                >
-                  <MediaViewer
-                    url={base64Data}
-                    style={{
-                      maxHeight: "100px",
-                      borderRadius: "var(--rounded)",
-                      boxShadow: "var(--shadow)",
-                    }}
-                  />
-                  <Btn
-                    title={t.common.Remove}
-                    iconPath={mdiClose}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      right: 0,
-                      borderRadius: "50%",
-                    }}
-                    variant="filled"
-                    size="small"
-                    onClick={() => {
-                      setFiles((prev) =>
-                        prev.filter((f, i) => f.name + i !== file.name + index),
-                      );
-                    }}
-                  />
-                </FlexCol>
-              ))}
-            </ScrollFade>
-          )}
+          <ChatFileAttachments
+            filesAsBase64={filesAsBase64}
+            setFiles={setFiles}
+          />
           <textarea
             ref={textAreaRef}
             name="chat-input"

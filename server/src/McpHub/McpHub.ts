@@ -217,8 +217,11 @@ export const startMcpHub = async (
 ): Promise<McpHub> => {
   if (mcpHubInitPromise) {
     await mcpHubInitPromise;
-    if (!restart) return mcpHubInitPromise;
-    return startMcpHub(dbs, restart);
+    if (!restart) {
+      return mcpHubInitPromise;
+    } else {
+      mcpHubInitPromise = undefined;
+    }
   }
 
   mcpHubInitPromise = (async () => {
@@ -249,15 +252,6 @@ export const startMcpHub = async (
   })();
 
   return mcpHubInitPromise;
-  // mcpHubInitializing = false;
-  // if (mcpHubReInitializingRequested) {
-  //   mcpHubReInitializingRequested = false;
-  //   void startMcpHub(dbs);
-  // }
-  // if (result.hasError) {
-  //   throw result.error;
-  // }
-  // return result.data;
 };
 
 const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
@@ -298,7 +292,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
       globalSettingsCallbackCount++;
     }
     if (serversCallbackCount && globalSettingsCallbackCount) {
-      void startMcpHub(dbs);
+      void startMcpHub(dbs, true);
     }
   };
 

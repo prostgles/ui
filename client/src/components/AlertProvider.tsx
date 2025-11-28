@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import Popup, { type PopupProps } from "./Popup/Popup";
+import ErrorComponent from "./ErrorComponent";
+import { useIsMounted } from "src/dashboard/BackupAndRestore/CredentialSelector";
 
 type AlertDialogProps = Pick<
   PopupProps,
@@ -69,4 +71,20 @@ export const useAlert = () => {
     throw new Error("useAlert must be used within an AlertProvider");
   }
   return context;
+};
+
+export const useOnErrorAlert = () => {
+  const alert = useAlert();
+  const getIsMounted = useIsMounted();
+  const onErrorAlert = useCallback(
+    (promiseFunc: () => Promise<void>) => {
+      promiseFunc().catch((error) => {
+        if (!getIsMounted()) return;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        alert.addAlert({ children: <ErrorComponent error={error} /> });
+      });
+    },
+    [alert, getIsMounted],
+  );
+  return { onErrorAlert };
 };

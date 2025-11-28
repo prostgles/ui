@@ -1,6 +1,6 @@
-import React from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import PopupMenu from "@components/PopupMenu";
+import React from "react";
 import { MCPServers } from "../../../pages/ServerSettings/MCPServers/MCPServers";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { AskLLMChatActionBarMCPToolsBtn } from "./AskLLMChatActionBarMCPToolsBtn";
@@ -19,7 +19,7 @@ export const AskLLMChatActionBarMCPTools = (
   return (
     <PopupMenu
       title="Allowed MCP Tools"
-      contentClassName="p-2"
+      contentClassName="py-1"
       clickCatchStyle={{ opacity: 1 }}
       onClickClose={false}
       data-command="LLMChatOptions.MCPTools"

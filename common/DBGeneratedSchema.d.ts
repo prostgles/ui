@@ -575,7 +575,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      annotations?: null | any;
+      annotations?: null | {    title?: string;   readOnlyHint?: boolean;   openWorldHint?: boolean;   idempotentHint?: boolean;   destructiveHint?: boolean;  };
       autoApprove?: null | boolean;
       description: string;
       id?: number;

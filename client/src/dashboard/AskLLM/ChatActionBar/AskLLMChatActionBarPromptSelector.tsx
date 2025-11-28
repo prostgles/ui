@@ -18,7 +18,7 @@ import React, { useMemo } from "react";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
-import { btnStyleProps } from "./AskLLMChatActionBar";
+import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarPromptSelector = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -57,7 +57,7 @@ export const AskLLMChatActionBarPromptSelector = (
       button={
         <Btn
           title="Prompt"
-          {...btnStyleProps}
+          {...ChatActionBarBtnStyleProps}
           iconPath={
             prompt?.options?.prompt_type === "dashboards" ?
               mdiViewCarousel

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
 import Btn from "@components/Btn";
@@ -8,7 +8,7 @@ import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { MCPServerConfig } from "../../../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
 import { mdiClose, mdiTools } from "@mdi/js";
 import type { FilterItem } from "prostgles-types";
-import { btnStyleProps } from "./AskLLMChatActionBar";
+import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarMCPToolsBtn = ({
   dbs,
@@ -35,8 +35,10 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
     },
   );
 
-  const allowedMcpServerNames = Array.from(
-    new Set(allowedTools?.map((tool) => tool.server_name) ?? []),
+  const allowedMcpServerNames = useMemo(
+    () =>
+      Array.from(new Set(allowedTools?.map((tool) => tool.server_name) ?? [])),
+    [allowedTools],
   );
   const [serverToConfigure, setServerToConfigure] =
     useState<DBSSchema["mcp_servers"]>();
@@ -78,7 +80,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
             `: \n\n${allowedTools.map((t) => t.name).join("\n")}`
           : ""
         }`}
-        {...btnStyleProps}
+        {...ChatActionBarBtnStyleProps}
         color={
           mcpServersThatConfiguring?.length ? "danger"
           : allowedTools?.length ?
@@ -99,7 +101,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
             onClose={() => {
               setServerToConfigure(undefined);
             }}
-            positioning="above-center"
+            positioning="center"
             anchorEl={btnRef.current}
             clickCatchStyle={{ opacity: 1 }}
           >

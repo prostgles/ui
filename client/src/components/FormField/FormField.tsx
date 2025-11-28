@@ -342,7 +342,11 @@ export default class FormField<
       };
     }
 
-    let valProp: any = {
+    let valProp: {
+      value?: any;
+      defaultValue?: any;
+      checked?: boolean;
+    } = {
       value: includes([undefined, null], value) ? "" : value,
     };
 
@@ -479,8 +483,7 @@ export default class FormField<
     const inputFinalStyle = {
       ...(inputProps.type !== "file" ?
         {
-          padding:
-            window.isMobileDevice ? "8px 6px 2px 6px" : ".5em .5em 4px .5em",
+          padding: ".4em .5em 4px .5em",
         }
       : {
           paddingBottom: "4px",

@@ -85,6 +85,9 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       created: `TIMESTAMP DEFAULT NOW()`,
       last_updated: `TIMESTAMP DEFAULT NOW()`,
     },
+    constraints: {
+      dwa: { type: "UNIQUE", content: "server_name, config" },
+    },
   },
   mcp_server_tools: {
     columns: {
@@ -93,7 +96,38 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       description: `TEXT NOT NULL`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
       inputSchema: `JSONB`,
-      annotations: `JSONB`,
+      annotations: {
+        jsonbSchemaType: {
+          title: {
+            type: "string",
+            optional: true,
+            title: "Human-readable title for the tool",
+          },
+          readOnlyHint: {
+            type: "boolean",
+            optional: true,
+            title:
+              "If true, tool does not modify its environment (read-only). ",
+          },
+          openWorldHint: {
+            type: "boolean",
+            optional: true,
+            title: "If true, tool interacts with external entities",
+          },
+          idempotentHint: {
+            type: "boolean",
+            optional: true,
+            title:
+              "If true, repeated calls with same args have no additional effect",
+          },
+          destructiveHint: {
+            type: "boolean",
+            optional: true,
+            title: "If true, the tool may perform destructive updates",
+          },
+        },
+        nullable: true,
+      },
       autoApprove: `BOOLEAN DEFAULT FALSE`,
     },
     indexes: {

@@ -44,9 +44,10 @@ export const SmartFormPopupWrapper = ({
     PopupProps,
     "onKeyDown" | "headerRightContent" | "autoFocusFirst"
   > = useMemo(() => {
+    const autoFocusFirstIfIsInsert = !rowFilterObj;
     return !onPrevOrNext ?
         ({
-          autoFocusFirst: "content",
+          autoFocusFirst: autoFocusFirstIfIsInsert ? "content" : undefined,
         } satisfies Pick<PopupProps, "autoFocusFirst">)
       : {
           autoFocusFirst: "header",

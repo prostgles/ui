@@ -6,7 +6,7 @@ import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import { SmartForm } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
-import { btnStyleProps } from "./AskLLMChatActionBar";
+import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarDatabaseAccess = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -42,7 +42,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
       button={
         <Btn
           iconPath={mdiDatabase}
-          {...btnStyleProps}
+          {...ChatActionBarBtnStyleProps}
           title={[
             `Database access for this chat:\n`,
             `Schema read access: ${activeChat.db_schema_permissions?.type ?? "None"}`,

@@ -11,7 +11,7 @@ import { Select, type FullOption } from "@components/Select/Select";
 import { SvgIconFromURL } from "@components/SvgIcon";
 import { SmartForm, SmartFormPopup } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
-import { btnStyleProps } from "./AskLLMChatActionBar";
+import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarModelSelector = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -141,7 +141,7 @@ export const AskLLMChatActionBarModelSelector = (
         }
         size="small"
         btnProps={{
-          ...btnStyleProps,
+          ...ChatActionBarBtnStyleProps,
           iconPath: "",
         }}
         title="Model"
