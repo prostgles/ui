@@ -24,11 +24,9 @@ export const getTimechartTooltipIntersections = function (
     const getSmoothY =
       renderStyle !== "smooth" && layer.variant !== "smooth" ?
         undefined
-      : (xPoint: number) =>
-          getYOnMonotoneXCurve(
-            layer.coords,
-            this.chart!.getScreenXY(xPoint)[0],
-          );
+      : (xPoint: number) => {
+          return getYOnMonotoneXCurve(layer.coords, xPoint);
+        };
     layer.coords.find((coord, i) => {
       const x = coord[0];
 

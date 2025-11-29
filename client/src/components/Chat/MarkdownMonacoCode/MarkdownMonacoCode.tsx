@@ -50,6 +50,32 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
   const runSQLState = useOnRunSQL(props);
   const { sqlResult } = runSQLState;
 
+  const onListenToContentHeightChange = useCallback(
+    (editor: editor.IStandaloneCodeEditor) => {
+      let stoppedScroll = false;
+      function updateScrollHandling() {
+        if (stoppedScroll) return;
+        const contentHeight = editor.getContentHeight();
+        const editorHeight = editor.getLayoutInfo().height;
+        if (editor.getValue() && contentHeight - 20 > editorHeight) {
+          editor.updateOptions({
+            scrollbar: { handleMouseWheel: contentHeight > editorHeight },
+          });
+          stoppedScroll = true;
+        }
+      }
+
+      // call after initial layout and on content change
+      updateScrollHandling();
+      const disposable = editor.onDidChangeModelContent(updateScrollHandling);
+
+      return () => {
+        disposable.dispose();
+      };
+    },
+    [],
+  );
+
   return (
     <FlexCol
       className={classOverride(
@@ -81,6 +107,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
           value={codeString}
           language={LANGUAGE_FALLBACK.get(language) ?? language}
           options={monacoOptions}
+          onMount={onListenToContentHeightChange}
         />
         {sqlResult?.state === "ok-command-result" ?
           <SuccessMessage message={sqlResult.commandResult} />

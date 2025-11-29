@@ -48,6 +48,11 @@ export const getCorrespondingDarkNode = (
           lightNode.parentElement?.dataset.selector
       : n.nodeName === "path" ?
         n.getAttribute("d") === lightNode.getAttribute("d")
+      : n.nodeName === "rect" ?
+        n.getAttribute("x") === lightNode.getAttribute("x") &&
+        n.getAttribute("y") === lightNode.getAttribute("y") &&
+        n.getAttribute("width") === lightNode.getAttribute("width") &&
+        n.getAttribute("height") === lightNode.getAttribute("height")
       : n.nodeName === "line" ?
         n.getAttribute("x1") === lightNode.getAttribute("x1") &&
         n.getAttribute("y1") === lightNode.getAttribute("y1") &&

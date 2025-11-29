@@ -480,7 +480,7 @@ export class W_TimeChart extends RTComp<
             tooltipPosition={w.options.tooltipPosition ?? "auto"}
             renderStyle={w.options.renderStyle ?? "line"}
             showBinLabels={w.options.showBinLabels ?? "off"}
-            showGradient={w.options.showGradient ?? false}
+            showGradient={w.options.showGradient ?? true}
             binValueLabelMaxDecimals={w.options.binValueLabelMaxDecimals}
             binSize={binSize}
           />

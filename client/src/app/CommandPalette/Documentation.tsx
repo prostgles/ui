@@ -35,10 +35,7 @@ export const Documentation = ({ isElectron }: P) => {
 
   return (
     <FlexCol className="Documentation min-s-0 bg-color-0 p-1">
-      <WrappingElement
-        className="ai-start min-s-0 f-1"
-        style={{ alignSelf: "center" }}
-      >
+      <WrappingElement className="ai-start min-s-0 f-1">
         <ScrollFade role="navigation">
           {docFiles.map((docFile) => (
             <Btn

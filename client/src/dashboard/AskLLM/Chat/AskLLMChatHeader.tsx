@@ -30,7 +30,6 @@ export const AskLLMChatHeader = (
     <FlexRow className="AskLLMChatHeader">
       <FlexCol className="gap-p25">
         <div>{t.AskLLM["AI Assistant"]}</div>
-        <span className="text-2 font-14">({t.common.experimental})</span>
       </FlexCol>
       <FlexRow className="gap-p25 min-w-0">
         <AskLLMChatOptions

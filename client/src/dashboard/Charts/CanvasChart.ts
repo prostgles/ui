@@ -7,6 +7,7 @@ import { drawMonotoneXCurve } from "./drawMonotoneXCurve";
 import { type ShapeV2 } from "./drawShapes/drawShapes";
 import { roundRect } from "./roundRect";
 import type { XYFunc } from "./TimeChart/TimeChart";
+import { isDefined } from "@common/filterUtils";
 
 export type StrokeProps = {
   lineWidth: number;
@@ -527,54 +528,84 @@ export class CanvasChart {
       } else if (s.type === "multiline") {
         const coords = getScreenCoords(s.coords);
 
-        if (s.withGradient && coords.length > 3) {
+        if (s.withGradient && coords.length > 2) {
           ctx.save();
 
           let minY = Infinity;
           coords.forEach(([_, y]) => {
             if (y < minY) minY = y;
           });
-          // const peaks: { index: number; y: number }[][] = [];
-          // const yVals = coords.map(([_, y], index) => {
-          //   if (y < minY) minY = y;
-          //   const pastPeak = peaks.at(-1);
-          //   if (!pastPeak?.[0] || pastPeak[0].y < y) {
-          //     // new peak
-          //     peaks.push([{ index, y }]);
-          //   } else if (pastPeak[0].y === y) {
-          //     // same peak
-          //     pastPeak.push({ index, y });
-          //   } else {
-          //     // going down
-          //     pastPeak.push({ index, y });
-          //   }
-          //   return { index, y };
-          // });
 
-          const gradient = ctx.createLinearGradient(0, minY, 0, h);
-          const rgba = asRGB(s.strokeStyle);
-          const rgb = rgba.slice(0, 3).join(", ");
-          gradient.addColorStop(0, `rgba(${rgb}, 0.4)`);
-          gradient.addColorStop(0.1, `rgba(${rgb}, 0.2)`);
-          gradient.addColorStop(0.2, `rgba(${rgb}, 0.1)`);
-          gradient.addColorStop(0.3, `rgba(${rgb}, 0)`);
-          const firstPoint = coords[0]!;
-          const lastPoint = coords.at(-1)!;
+          const gradientLastStep = 0.3;
+          const gradientMaxY = h - gradientLastStep * h;
+          const peakSections: { x: number; y: number; index: number }[][] = [];
+          coords.forEach(([x, y], index) => {
+            if (y > gradientMaxY) {
+              return;
+            }
+            if (!peakSections.length) {
+              peakSections.push([{ x, y, index }]);
+              return;
+            }
+            const currentSection = peakSections.at(-1)!;
+            const lastPoint = currentSection.at(-1)!;
+            const prevPoint = coords[index - 1];
+            const nextPoint = coords[index + 1];
+            if (index === lastPoint.index + 1) {
+              currentSection.push({ x, y, index });
+              if (nextPoint && nextPoint[1] > gradientMaxY) {
+                // Close section
+                currentSection.push({
+                  x: nextPoint[0],
+                  y: nextPoint[1],
+                  index: index + 1,
+                });
+              }
+            } else {
+              peakSections.push(
+                [
+                  prevPoint && {
+                    index: index - 1,
+                    x: prevPoint[0],
+                    y: prevPoint[1],
+                  },
+                  { x, y, index },
+                ].filter(isDefined),
+              );
+            }
+          });
 
-          ctx.beginPath();
-          ctx.moveTo(firstPoint[0], h);
-          ctx.lineTo(firstPoint[0], firstPoint[1]);
-          if (s.variant === "smooth") {
-            drawMonotoneXCurve(ctx, coords);
-          } else {
-            coords.forEach(([x, y]) => {
-              ctx.lineTo(x, y);
-            });
-            ctx.lineTo(lastPoint[0], h);
-          }
-          ctx.closePath();
-          ctx.fillStyle = gradient;
-          ctx.fill();
+          peakSections.forEach((sectionCoords) => {
+            if (sectionCoords.length < 3) return;
+            const gradient = ctx.createLinearGradient(0, minY, 0, h);
+            const rgba = asRGB(s.strokeStyle);
+            const rgb = rgba.slice(0, 3).join(", ");
+            gradient.addColorStop(0, `rgba(${rgb}, 0.4)`);
+            gradient.addColorStop(0.1, `rgba(${rgb}, 0.2)`);
+            gradient.addColorStop(0.2, `rgba(${rgb}, 0.1)`);
+            gradient.addColorStop(gradientLastStep, `rgba(${rgb}, 0)`);
+            const firstPoint = sectionCoords[0]!;
+            const lastPoint = sectionCoords.at(-1)!;
+
+            ctx.beginPath();
+            ctx.moveTo(firstPoint.x, h);
+            ctx.lineTo(firstPoint.x, firstPoint.y);
+            if (s.variant === "smooth" && sectionCoords.length > 2) {
+              drawMonotoneXCurve(
+                ctx,
+                sectionCoords.map(({ x, y }) => [x, y]),
+                true,
+              );
+            } else {
+              sectionCoords.forEach(({ x, y }) => {
+                ctx.lineTo(x, y);
+              });
+            }
+            ctx.lineTo(lastPoint.x, h);
+            ctx.closePath();
+            ctx.fillStyle = gradient;
+            ctx.fill();
+          });
           ctx.restore();
         }
 
@@ -582,21 +613,19 @@ export class CanvasChart {
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
 
+        ctx.beginPath();
         if (s.variant === "smooth" && coords.length > 2) {
-          ctx.beginPath();
           drawMonotoneXCurve(ctx, coords);
-          ctx.stroke();
         } else {
           coords.forEach(([x, y], i) => {
             if (!i) {
-              ctx.beginPath();
               ctx.moveTo(x, y);
             } else {
               ctx.lineTo(x, y);
             }
           });
-          ctx.stroke();
         }
+        ctx.stroke();
       } else if (s.type === "polygon") {
         const coords = getScreenCoords(s.coords);
         ctx.fillStyle = s.fillStyle;

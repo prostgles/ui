@@ -78,7 +78,7 @@ export const domToThemeAwareSVG = async (
     return isVisible;
   };
 
-  const selector = "line, path, text, foreignObject, g, use";
+  const selector = "line, path, text, foreignObject, g, use, rect";
   const lightNodes = svgLight.querySelectorAll<SVGScreenshotNodeType>(selector);
   const darkNodes = svgDark.querySelectorAll<SVGScreenshotNodeType>(selector);
 

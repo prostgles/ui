@@ -89,61 +89,6 @@
   margin-left: unset;
 }
 
-/* .chat-container.chat-component .message:not(.incoming) video::-webkit-media-controls-panel, */
-/* .chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-panel {
-  background: rgb(5, 149, 252);
-}
-
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-mute-button,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-mute-button,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-play-button,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-timeline-container,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-current-time-display,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-time-remaining-display,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-timeline,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-volume-slider,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-seek-back-button,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-seek-forward-button,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-fullscreen-button,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-rewind-button,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-return-to-realtime-button,
-.chat-container.chat-component
-  .message:not(.incoming)
-  audio::-webkit-media-controls-toggle-closed-captions-button,
-.chat-container.chat-component .message:not(.incoming) audio svg * {
-  color: white !important;
-  fill: white !important;
-  stroke: white !important;
-} */
-
 .chat-container.chat-component .message.media {
   padding: 0;
   background: none;

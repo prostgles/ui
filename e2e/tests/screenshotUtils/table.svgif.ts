@@ -46,7 +46,11 @@ export const tableSvgif: OnBeforeScreenshot = async (
     getCommandElemSelector("QuickAddComputedColumn.name"),
     { action: "type", text: "Total Spent", mode: "fill" },
   );
-  await addSceneAnimation(getCommandElemSelector("QuickAddComputedColumn.Add"));
+  await addSceneAnimation(
+    getCommandElemSelector("QuickAddComputedColumn.Add"),
+    undefined,
+    "fast",
+  );
   await page.waitForTimeout(2000);
 
   /** Sort by computed column */

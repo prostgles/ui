@@ -1,11 +1,10 @@
+import type { BtnProps } from "@components/Btn";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React from "react";
 import type { LinkSyncItem, WindowData } from "../Dashboard/dashboardUtils";
-import type { RGBA } from "../W_Table/ColumnMenu/ColorPicker";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
 import { MapLayerStyling } from "./MapLayerStyling";
-import type { BtnProps } from "@components/Btn";
 
 export type LayerColorPickerProps = {
   link: LinkSyncItem;
@@ -31,9 +30,8 @@ export const LayerColorPicker = ({
   if (link.options.type === "table") {
     return null;
   }
-  const rgba: RGBA =
-    link.options.columns.find((c) => c.name === column)?.colorArr ??
-    ([100, 100, 100] as any);
+  const rgba = link.options.columns.find((c) => c.name === column)
+    ?.colorArr ?? [100, 100, 100];
   const opts = link.options;
 
   if (opts.type === "map") {
@@ -59,7 +57,7 @@ export const LayerColorPicker = ({
       title={title}
       required={true}
       className="w-fit m-p5 text-2"
-      value={`rgba(${rgba})`}
+      value={`rgba(${rgba.join(", ")})`}
       onChange={(colorStr, colorArr) => {
         const thisLink = myLinks.find((l) => l.id === link.id);
         if (thisLink && thisLink.options.type !== "table") {

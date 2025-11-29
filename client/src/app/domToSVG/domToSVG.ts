@@ -194,9 +194,15 @@ const setBackdropFilters = (svg: SVGGElement) => {
     if (
       g._whatToRender?.backdropFilter &&
       prevContent &&
-      prevContent instanceof SVGGElement
+      prevContent instanceof SVGGElement &&
+      prevContent._whatToRender?.elemInfo
     ) {
-      prevContent.style.filter = g._whatToRender.backdropFilter;
+      const { width, height } = g._whatToRender.elemInfo;
+      const pBBox = prevContent._whatToRender.elemInfo;
+      // If not fully covering it then ignore it
+      if (width > pBBox.width * 0.8 && height > 0.8 * pBBox.height) {
+        prevContent.style.filter = g._whatToRender.backdropFilter;
+      }
     }
   });
 };
