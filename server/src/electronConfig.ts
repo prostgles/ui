@@ -122,7 +122,7 @@ export const start = async (params: {
   electronConfig.electronSid = params.electronSid;
   electronConfig.safeStorage = params.safeStorage;
   const { startServer } = await import("./index");
-  void startServer(async ({ port: actualPort }) => {
+  const startResult = await startServer(async ({ port: actualPort }) => {
     // const [token] = prostglesTokens;
     // if (token) {
     //   console.log("Setting prostgles tokens");
@@ -138,6 +138,12 @@ export const start = async (params: {
     });
     return onReady(actualPort);
   });
+
+  return {
+    destroy: async () => {
+      return startResult.connMgr.destroy();
+    },
+  };
 };
 
 /**

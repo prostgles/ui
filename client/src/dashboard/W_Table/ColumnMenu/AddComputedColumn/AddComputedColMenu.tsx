@@ -12,7 +12,7 @@ import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { _PG_date, pickKeys } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../../App";
-import { isEmpty } from "../../../../utils";
+import { isEmpty } from "../../../../utils/utils";
 import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
@@ -75,7 +75,7 @@ export class AddComputedColMenu extends RTComp<
     addTo: "start",
   };
 
-  onDelta(deltaP?: Partial<AddComputedColMenuP>  ): void {
+  onDelta(deltaP?: Partial<AddComputedColMenuP>): void {
     if (deltaP?.selectedColumn && !this.state.column) {
       this.setState({ column: deltaP.selectedColumn });
     }

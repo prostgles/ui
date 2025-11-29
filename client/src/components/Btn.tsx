@@ -4,7 +4,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import RTComp from "../dashboard/RTComp";
 import type { TestSelectors } from "../Testing";
-import { tout } from "../utils";
+import { tout } from "../utils/utils";
 import "./Btn.css";
 import { parsedError } from "./ErrorComponent";
 import { classOverride } from "./Flex";

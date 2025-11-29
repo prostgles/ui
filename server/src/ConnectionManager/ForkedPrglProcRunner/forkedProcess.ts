@@ -28,6 +28,10 @@ const initForkedProc = () => {
 
   let lastMsgId = "";
   const sendError = (error: any) => {
+    if (!process.connected) {
+      console.error("Process not connected, exiting");
+      process.exit(1);
+    }
     process.send?.({
       lastMsgId,
       type: "error",

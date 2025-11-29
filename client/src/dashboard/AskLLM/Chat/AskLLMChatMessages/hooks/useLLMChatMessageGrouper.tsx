@@ -1,6 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { useMemo, useState } from "react";
 import { ProstglesMCPToolsWithUI } from "../ProstglesToolUseMessage/ProstglesToolUseMessage";
+import type { LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage";
 
 type P = {
   llmMessages: DBSSchema["llm_messages"][] | undefined;
@@ -37,11 +38,13 @@ export const useLLMChatMessageGrouper = (props: P) => {
             message,
             nextMessage: llmMessages[index + 1],
           });
+          prevItem.messageContentItems.push(...message.message);
         } else {
           /** Start new group */
           result.push({
             type: "tool_call_message_group",
             messages: [{ message, nextMessage: llmMessages[index + 1] }],
+            messageContentItems: message.message,
             firstMessage: message,
             startId: message.id,
             onToggle: () => {
@@ -70,13 +73,12 @@ export const useLLMChatMessageGrouper = (props: P) => {
           return [item];
         }
 
+        const toolCalls = item.messageContentItems.filter(
+          (m) => m.type === "tool_use",
+        );
         const allowMinimise =
-          item.messages.length >= 3 &&
-          !item.messages.some(({ message }) => {
-            return message.message.some(
-              (m) => m.type === "tool_use" && ProstglesMCPToolsWithUI[m.name],
-            );
-          });
+          toolCalls.length >= 3 &&
+          !toolCalls.some((m) => ProstglesMCPToolsWithUI[m.name]);
         const shouldExpand =
           !allowMinimise || toggledSections.has(item.startId);
 
@@ -125,6 +127,7 @@ export type LLMMessageGroup = {
     message: DBSSchema["llm_messages"];
     nextMessage: DBSSchema["llm_messages"] | undefined;
   }[];
+  messageContentItems: LLMMessageContent[];
   firstMessage: DBSSchema["llm_messages"];
   startId: string;
   onToggle: () => void;

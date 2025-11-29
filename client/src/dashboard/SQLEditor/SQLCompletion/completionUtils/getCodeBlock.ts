@@ -4,7 +4,7 @@ import { STARTING_KWDS } from "../KEYWORDS";
 import { getPrevTokensNoParantheses } from "../getPrevTokensNoParantheses";
 import type { TokenInfo } from "./getTokens";
 import { getTokens } from "./getTokens";
-import { isDefined } from "../../../../utils";
+import { isDefined } from "../../../../utils/utils";
 import { getMonaco } from "../../W_SQLEditor";
 import { checkIfInsideDollarFunctionDefinition } from "./checkIfInsideDollarFunctionDefinition";
 import { checkIfUnfinishedParenthesis } from "./checkIfUnfinishedParenthesis";

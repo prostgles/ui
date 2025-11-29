@@ -6,7 +6,7 @@ import { InfoRow } from "@components/InfoRow";
 import Popup from "@components/Popup/Popup";
 import { mdiPlus } from "@mdi/js";
 import React, { useMemo, useState } from "react";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import { SQLSmartEditor } from "../SQLEditor/SQLSmartEditor";
 import type { ColumnOptions } from "../W_Table/ColumnMenu/AlterColumn/ColumnEditor";
 import { ColumnEditor } from "../W_Table/ColumnMenu/AlterColumn/ColumnEditor";

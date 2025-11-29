@@ -6,7 +6,7 @@ import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { InfoRow } from "@components/InfoRow";
 import React, { useEffect, useState } from "react";
 import { getServerCoreInfoStr } from "../../../pages/Connections/useConnectionServersList";
-import { isEmpty } from "../../../utils";
+import { isEmpty } from "../../../utils/utils";
 import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
 import type { StatusMonitorProps } from "../StatusMonitor";
 import { StatusMonitorConnections } from "../StatusMonitorConnections";

@@ -13,7 +13,7 @@ import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";
 import { tryCatchV2, type JSONB } from "prostgles-types";
 import React, { useMemo } from "react";
 import { usePrgl } from "../../../../../../pages/ProjectConnection/PrglContextProvider";
-import { isDefined } from "../../../../../../utils";
+import { isDefined } from "../../../../../../utils/utils";
 import {
   useSetActiveWorkspace,
   useWorkspacesSync,

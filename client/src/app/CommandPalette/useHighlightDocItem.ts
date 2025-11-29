@@ -3,7 +3,7 @@ import { useAlert } from "@components/AlertProvider";
 import { isDefined } from "prostgles-types";
 import { getUIDocElementsAndAlertIfEmpty } from "./utils";
 import type { UIDocNonInfo } from "../UIDocs";
-import { scrollIntoViewIfNeeded, tout } from "../../utils";
+import { scrollIntoViewIfNeeded, tout } from "../../utils/utils";
 import type { CommandSearchHighlight } from "./CommandPalette";
 import { isInParentViewport } from "../domToSVG/utils/isElementVisible";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";

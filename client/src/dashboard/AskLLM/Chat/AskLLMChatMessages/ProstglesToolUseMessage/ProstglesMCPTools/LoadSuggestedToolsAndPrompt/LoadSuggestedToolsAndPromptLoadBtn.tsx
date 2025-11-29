@@ -15,7 +15,7 @@ import {
 import type { JSONB } from "prostgles-types";
 import React from "react";
 import { usePrgl } from "../../../../../../../pages/ProjectConnection/PrglContextProvider";
-import { isDefined } from "../../../../../../../utils";
+import { isDefined } from "../../../../../../../utils/utils";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 
 export const LoadSuggestedToolsAndPromptLoadBtn = ({

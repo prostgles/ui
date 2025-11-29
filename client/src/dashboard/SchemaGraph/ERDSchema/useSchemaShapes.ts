@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type {
   ChartedText,
   Image,

@@ -8,7 +8,7 @@ import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import PopupMenu from "@components/PopupMenu";
 import { t } from "../i18n/i18nUtils";
-import { tout } from "../utils";
+import { tout } from "../utils/utils";
 import { useIsMounted } from "./BackupAndRestore/CredentialSelector";
 
 export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {

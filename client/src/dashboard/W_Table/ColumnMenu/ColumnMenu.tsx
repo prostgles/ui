@@ -196,7 +196,10 @@ export const ColumnMenu = (props: P) => {
   const table = tables.find((t) => t.name === w.table_name);
   const validatedColumn = table?.columns.find((c) => c.name === colName);
 
-  const isComputed = Boolean(column.computedConfig || column.nested);
+  const isComputed = Boolean(
+    column.computedConfig ||
+      column.nested?.columns.some((c) => c.computedConfig),
+  );
   const computedType =
     column.nested ? "nested" : (
       column.computedConfig &&

@@ -7,6 +7,8 @@ import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { AutoRefreshMenu } from "../W_Table/TableMenu/AutoRefreshMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
+import { includes } from "../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 type P = {
   w: WindowSyncItem<"timechart">;
@@ -42,6 +44,7 @@ export type MissingBinsOption = (typeof MissingBinsOptions)[number]["key"];
 export const TimechartRenderStyles = [
   { key: "scatter plot", label: "Scatter plot" },
   { key: "line", label: "Line chart" },
+  { key: "smooth", label: "Smooth line chart" },
   { key: "bars", label: "Bar chart" },
 ] as const;
 export type TimechartRenderStyle =
@@ -54,6 +57,7 @@ export const ProstglesTimeChartMenu = ({ w, autoBinSize }: P) => {
     missingBins = "ignore",
     renderStyle = "line",
     showBinLabels = "off",
+    showGradient = false,
     binValueLabelMaxDecimals = null,
   } = w.options;
 
@@ -92,15 +96,26 @@ export const ProstglesTimeChartMenu = ({ w, autoBinSize }: P) => {
           w.$update({ options: { tooltipPosition } }, { deepMerge: true });
         }}
       />
-
-      <Select
-        label="Chart style"
-        value={renderStyle}
-        fullOptions={TimechartRenderStyles}
-        onChange={(renderStyle) => {
-          w.$update({ options: { renderStyle } }, { deepMerge: true });
-        }}
-      />
+      <FlexRow>
+        <Select
+          label="Chart style"
+          value={renderStyle}
+          fullOptions={TimechartRenderStyles}
+          onChange={(renderStyle) => {
+            w.$update({ options: { renderStyle } }, { deepMerge: true });
+          }}
+        />
+        {includes(renderStyle, ["line", "smooth"]) && (
+          <SwitchToggle
+            label={"Show gradient"}
+            checked={showGradient}
+            variant="col"
+            onChange={(showGradient) => {
+              w.$update({ options: { showGradient } }, { deepMerge: true });
+            }}
+          />
+        )}
+      </FlexRow>
 
       <FlexRow>
         <Select

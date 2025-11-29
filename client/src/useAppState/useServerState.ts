@@ -3,7 +3,7 @@ import { includes } from "prostgles-types";
 import type { ProstglesState } from "@common/electronInitTypes";
 import { SPOOF_TEST_VALUE } from "@common/utils";
 import type { AppState } from "../App";
-import { tout } from "../utils";
+import { tout } from "../utils/utils";
 import { MOCK_ELECTRON_WINDOW_ATTR } from "src/Testing";
 
 /**

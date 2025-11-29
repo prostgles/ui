@@ -1,5 +1,5 @@
 import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type {
   DBSchemaTablesWJoins,
   WindowData,

@@ -8,7 +8,7 @@ import {
   getSmartGroupFilter,
   type SmartGroupFilter,
 } from "@common/filterUtils";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import { getJoinFilter } from "./getJoinFilter";
 import type { JoinedRecordsProps } from "./JoinedRecords";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";

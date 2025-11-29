@@ -12,7 +12,7 @@ import type {
   StyleColumnProps,
 } from "../ColumnStyleControls";
 import { ChipStylePalette } from "./ChipStylePalette";
-import { isDefined } from "../../../../utils";
+import { isDefined } from "../../../../utils/utils";
 
 export const CONDITION_OPERATORS = [
   "=",

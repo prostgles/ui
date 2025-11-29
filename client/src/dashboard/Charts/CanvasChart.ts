@@ -1,3 +1,4 @@
+import { asRGB } from "src/utils/colorUtils";
 import type { Coords, Point } from "../Charts";
 import type { PanListeners } from "../setPan";
 import { setPan } from "../setPan";
@@ -9,7 +10,7 @@ import type { XYFunc } from "./TimeChart/TimeChart";
 
 export type StrokeProps = {
   lineWidth: number;
-  strokeStyle: CanvasGradient | string | CanvasPattern;
+  strokeStyle: string;
 };
 export type FillProps = {
   fillStyle: CanvasGradient | string | CanvasPattern;
@@ -58,6 +59,7 @@ export type MultiLine<T = any> = ShapeBase<T> &
   StrokeProps & {
     type: "multiline";
     coords: Point[];
+    withGradient?: boolean;
     variant?: "smooth";
   };
 export type LinkLine<T = any> = ShapeBase<T> &
@@ -524,12 +526,66 @@ export class CanvasChart {
         ctx.stroke();
       } else if (s.type === "multiline") {
         const coords = getScreenCoords(s.coords);
+
+        if (s.withGradient && coords.length > 3) {
+          ctx.save();
+
+          let minY = Infinity;
+          coords.forEach(([_, y]) => {
+            if (y < minY) minY = y;
+          });
+          // const peaks: { index: number; y: number }[][] = [];
+          // const yVals = coords.map(([_, y], index) => {
+          //   if (y < minY) minY = y;
+          //   const pastPeak = peaks.at(-1);
+          //   if (!pastPeak?.[0] || pastPeak[0].y < y) {
+          //     // new peak
+          //     peaks.push([{ index, y }]);
+          //   } else if (pastPeak[0].y === y) {
+          //     // same peak
+          //     pastPeak.push({ index, y });
+          //   } else {
+          //     // going down
+          //     pastPeak.push({ index, y });
+          //   }
+          //   return { index, y };
+          // });
+
+          const gradient = ctx.createLinearGradient(0, minY, 0, h);
+          const rgba = asRGB(s.strokeStyle);
+          const rgb = rgba.slice(0, 3).join(", ");
+          gradient.addColorStop(0, `rgba(${rgb}, 0.4)`);
+          gradient.addColorStop(0.1, `rgba(${rgb}, 0.2)`);
+          gradient.addColorStop(0.2, `rgba(${rgb}, 0.1)`);
+          gradient.addColorStop(0.3, `rgba(${rgb}, 0)`);
+          const firstPoint = coords[0]!;
+          const lastPoint = coords.at(-1)!;
+
+          ctx.beginPath();
+          ctx.moveTo(firstPoint[0], h);
+          ctx.lineTo(firstPoint[0], firstPoint[1]);
+          if (s.variant === "smooth") {
+            drawMonotoneXCurve(ctx, coords);
+          } else {
+            coords.forEach(([x, y]) => {
+              ctx.lineTo(x, y);
+            });
+            ctx.lineTo(lastPoint[0], h);
+          }
+          ctx.closePath();
+          ctx.fillStyle = gradient;
+          ctx.fill();
+          ctx.restore();
+        }
+
         ctx.lineCap = "round";
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
 
         if (s.variant === "smooth" && coords.length > 2) {
+          ctx.beginPath();
           drawMonotoneXCurve(ctx, coords);
+          ctx.stroke();
         } else {
           coords.forEach(([x, y], i) => {
             if (!i) {

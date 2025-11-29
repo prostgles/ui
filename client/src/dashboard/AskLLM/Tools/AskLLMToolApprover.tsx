@@ -8,7 +8,7 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 import type { Prgl } from "../../../App";
-import { isEmpty } from "../../../utils";
+import { isEmpty } from "../../../utils/utils";
 import type { DBS } from "../../Dashboard/DBS";
 import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
 import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";

@@ -3,16 +3,12 @@ type ChartDate = { v: number; x: number; date: Date };
 import type { ScaleLinear } from "d3";
 import type { ValidatedColumnInfo } from "prostgles-types";
 
-import React from "react";
 import { classOverride } from "@components/Flex";
+import React from "react";
+import type { ChartOptions } from "src/dashboard/Dashboard/dashboardUtils";
 import type { Point } from "../../Charts";
-import type { CanvasChart, Shape } from "../CanvasChart";
 import RTComp from "../../RTComp";
-import type {
-  ShowBinLabelsMode,
-  TimechartRenderStyle,
-  TooltipPosition,
-} from "../../W_TimeChart/W_TimeChartMenu";
+import type { CanvasChart, Shape } from "../CanvasChart";
 import type { DateExtent } from "./getTimechartBinSize";
 import { getTimechartTooltipIntersections } from "./getTimechartTooltipIntersections";
 import { onDeltaTimechart } from "./onDeltaTimechart";
@@ -50,7 +46,14 @@ export type TimeChartLayer = {
   groupByValue?: any;
 };
 
-export type TimeChartProps = {
+export type TimeChartProps = Pick<
+  ChartOptions<"timechart">,
+  | "renderStyle"
+  | "showBinLabels"
+  | "showGradient"
+  | "tooltipPosition"
+  | "binValueLabelMaxDecimals"
+> & {
   layers: Omit<TimeChartLayer, "yScale">[];
   className?: string;
   onExtentChange?: (visibleData: DateExtent, viewPort: DateExtent) => void;
@@ -61,10 +64,6 @@ export type TimeChartProps = {
   ) => void;
   chartRef?: (ref: TimeChart) => void;
   style?: React.CSSProperties;
-  tooltipPosition?: TooltipPosition;
-  renderStyle?: TimechartRenderStyle;
-  showBinLabels?: ShowBinLabelsMode;
-  binValueLabelMaxDecimals?: number | null;
   binSize: number | undefined;
   showXAxis?: boolean;
   zoomPanDisabled?: boolean;

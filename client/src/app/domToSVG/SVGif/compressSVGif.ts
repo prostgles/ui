@@ -4,7 +4,7 @@
  * compress them by only keeping one instance and replacing the others with <use> elements referencing the first.
  */
 
-import { isDefined } from "src/utils";
+import { isDefined } from "src/utils/utils";
 import { SVG_NAMESPACE } from "../domToSVG";
 import type { SVGifParsedScene } from "./getSVGifParsedScenes";
 

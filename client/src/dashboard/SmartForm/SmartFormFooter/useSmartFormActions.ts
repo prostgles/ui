@@ -4,7 +4,7 @@ import type { ConfirmDialogProps } from "@components/ConfirmationDialog";
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormNewRowState } from "../useNewRowDataHandler";
 import type { SmartFormState } from "../useSmartForm";
-import { areEqual } from "../../../utils";
+import { areEqual } from "../../../utils/utils";
 
 type ConfirmationPopup = Pick<
   ConfirmDialogProps,

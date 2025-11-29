@@ -113,7 +113,9 @@ export const drawShapes = (
       ctx.lineCap = "round";
 
       if (s.variant === "smooth" && coords.length > 2) {
+        ctx.beginPath();
         drawMonotoneXCurve(ctx, coords);
+        ctx.stroke();
       } else {
         coords.forEach(([x, y], i) => {
           if (!i) {

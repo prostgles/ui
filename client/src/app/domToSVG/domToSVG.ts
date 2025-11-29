@@ -1,5 +1,5 @@
 import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { tout } from "src/utils";
+import { tout } from "src/utils/utils";
 import { elementToSVG, type SVGContext } from "./containers/elementToSVG";
 import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
 import { renderSvg, wrapAllSVGText } from "./text/textToSVG";

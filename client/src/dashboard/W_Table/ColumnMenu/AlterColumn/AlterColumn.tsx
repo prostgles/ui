@@ -6,7 +6,7 @@ import type { DBSchemaTable } from "prostgles-types";
 import { asName, getKeys } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../../App";
-import { getStringFormat } from "../../../../utils";
+import { getStringFormat } from "../../../../utils/utils";
 import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
 import { debounce } from "../../../Map/DeckGLWrapped";
 import type { DeltaOf } from "../../../RTComp";

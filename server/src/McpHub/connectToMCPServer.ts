@@ -14,7 +14,7 @@ const AutoApproveSchema = z.array(z.string()).default([]);
 const StdioConfigSchema = z.object({
   command: z.string(),
   args: z.array(z.string()).optional(),
-  env: z.record(z.string()).optional(),
+  env: z.record(z.string(), z.string()).optional(),
   autoApprove: AutoApproveSchema.optional(),
   disabled: z.boolean().optional(),
 });
@@ -31,7 +31,7 @@ export const connectToMCPServer = (
       const parsedConfig = StdioConfigSchema.safeParse(config);
       if (!parsedConfig.success)
         throw new Error(
-          parsedConfig.error.errors.map((e) => e.message).join("\n"),
+          parsedConfig.error.issues.map((e) => e.message).join("\n"),
         );
       /** Clear previous logs and errors */
       await onLog("stderr", "", log);

@@ -7,7 +7,7 @@ import type { DBS } from "../../../dashboard/Dashboard/DBS";
 import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
 import { MCPServerToolsGroupToggle } from "./MCPServerTools/MCPServerToolsGroupToggle";
 import type { MCPServerWithToolAndConfigs } from "./useMCPServersListProps";
-import { isDefined } from "src/utils";
+import { isDefined } from "src/utils/utils";
 
 export const MCPServerHeaderCheckbox = ({
   mcpServer,

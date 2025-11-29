@@ -12,7 +12,7 @@ import { Table } from "@components/Table/Table";
 import { type AnyObject, type SubscriptionHandler } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../App";
-import { quickClone } from "../utils";
+import { quickClone } from "../utils/utils";
 import RTComp from "./RTComp";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
 import { SmartForm } from "./SmartForm/SmartForm";

@@ -27,7 +27,7 @@ import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { MapOpacityMenu } from "../W_Map/controls/MapOpacityMenu";
 import { MapBasemapOptions } from "../W_Map/controls/MapBasemapOptions";
 import { OSMLayerOptions } from "./OSMLayerOptions";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import { SQLSmartEditor } from "../SQLEditor/SQLSmartEditor";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import { LANG } from "../SQLEditor/W_SQLEditor";

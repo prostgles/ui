@@ -1,7 +1,7 @@
 import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import { reverseParsedPath } from "prostgles-types";
 import { getFinalFilter } from "@common/filterUtils";
-import { isDefined } from "../utils";
+import { isDefined } from "../utils/utils";
 import type {
   Link,
   WindowData,

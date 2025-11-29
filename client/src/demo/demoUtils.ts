@@ -1,4 +1,4 @@
-import { scrollIntoViewIfNeeded } from "src/utils";
+import { scrollIntoViewIfNeeded } from "src/utils/utils";
 import {
   type Command,
   getCommandElemSelector,

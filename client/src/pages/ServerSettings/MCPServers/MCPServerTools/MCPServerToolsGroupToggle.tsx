@@ -5,7 +5,7 @@ import Checkbox from "@components/Checkbox";
 import { FlexRow } from "@components/Flex";
 import { pickKeys } from "prostgles-types";
 import React, { useMemo } from "react";
-import { isEmpty } from "src/utils";
+import { isEmpty } from "src/utils/utils";
 
 export const MCPServerToolsGroupToggle = ({
   tools,

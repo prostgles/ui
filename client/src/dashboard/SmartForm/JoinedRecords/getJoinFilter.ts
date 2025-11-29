@@ -3,7 +3,7 @@ import type {
   SimpleFilter,
   SmartGroupFilter,
 } from "@common/filterUtils";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 
 export const getJoinFilter = function (
   path: string[],

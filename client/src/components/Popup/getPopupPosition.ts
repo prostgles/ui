@@ -1,4 +1,4 @@
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import type Popup from "./Popup";
 import { POPUP_CLASSES, type PopupProps } from "./Popup";
 

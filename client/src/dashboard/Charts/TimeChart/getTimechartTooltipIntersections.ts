@@ -1,3 +1,4 @@
+import { getYOnMonotoneXCurve } from "../drawMonotoneXCurve";
 import type { DataItem, TimeChart, TimeChartLayer } from "./TimeChart";
 
 type IntersectedLayers = {
@@ -20,6 +21,14 @@ export const getTimechartTooltipIntersections = function (
   const SNAP_DISTANCE =
     this.lineLayers?.some((layer) => layer.coords.length < 3) ? 10 : 5;
   this.lineLayers?.forEach((layer) => {
+    const getSmoothY =
+      renderStyle !== "smooth" && layer.variant !== "smooth" ?
+        undefined
+      : (xPoint: number) =>
+          getYOnMonotoneXCurve(
+            layer.coords,
+            this.chart!.getScreenXY(xPoint)[0],
+          );
     layer.coords.find((coord, i) => {
       const x = coord[0];
 
@@ -42,7 +51,7 @@ export const getTimechartTooltipIntersections = function (
 
           layers.push({
             ...layer,
-            y,
+            y: getSmoothY?.(x) ?? y,
             snapped_data: layer.data[i],
           });
           return true;
@@ -55,7 +64,8 @@ export const getTimechartTooltipIntersections = function (
             snappedX = xNext;
             const layerSnapData = {
               ...layer,
-              y: yNext,
+              // y: yNext,
+              y: getSmoothY?.(xNext) ?? yNext,
               snapped_data: layer.data[i + 1],
             };
             layers.push(layerSnapData);

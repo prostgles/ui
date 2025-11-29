@@ -6,7 +6,7 @@ import {
   type SQLMatcherResultArgs,
   getKind,
 } from "./monacoSQLSetup/registerSuggestions";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 export const jsonbPathSuggest = async ({
   cb,
   ss,

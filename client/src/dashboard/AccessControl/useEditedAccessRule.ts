@@ -3,7 +3,7 @@ import { isEmpty } from "prostgles-types";
 import { useMemo, useState } from "react";
 import type { ContextDataObject, TableRulesErrors } from "@common/publishUtils";
 import { getTableRulesErrors } from "@common/publishUtils";
-import { areEqual, quickClone } from "../../utils";
+import { areEqual, quickClone } from "../../utils/utils";
 import type { AccessControlAction, EditedAccessRule } from "./AccessControl";
 import { ACCESS_CONTROL_SELECT } from "./AccessControl";
 import type { PermissionEditProps } from "./AccessControlRuleEditor";

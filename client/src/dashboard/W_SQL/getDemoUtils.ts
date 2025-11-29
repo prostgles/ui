@@ -1,6 +1,6 @@
 import { includes, type SQLHandler } from "prostgles-types";
 import { getCommandElemSelector } from "../../Testing";
-import { tout } from "../../utils";
+import { tout } from "../../utils/utils";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { triggerCharacters } from "../SQLEditor/SQLCompletion/monacoSQLSetup/registerSuggestions";
 

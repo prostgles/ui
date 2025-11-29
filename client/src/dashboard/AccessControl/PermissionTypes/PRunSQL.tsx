@@ -3,7 +3,7 @@ import { LabeledRow } from "@components/LabeledRow";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React from "react";
-import { areEqual } from "../../../utils";
+import { areEqual } from "../../../utils/utils";
 import type { DBPermissionEditorProps } from "./PCustomTables";
 
 export const PRunSQL = ({

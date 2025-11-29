@@ -7,7 +7,7 @@ import { FlexCol, FlexRow, classOverride } from "@components/Flex";
 import { FooterButtons } from "@components/Popup/FooterButtons";
 import Popup from "@components/Popup/Popup";
 import { CodeEditor, type CodeEditorProps } from "./CodeEditor";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import { Label } from "@components/Label";
 
 type P = {

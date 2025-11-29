@@ -2,7 +2,7 @@ import { getFinalFilterInfo } from "@common/filterUtils";
 import { FlexRowWrap } from "@components/Flex";
 import { Select } from "@components/Select/Select";
 import React from "react";
-import { isEmpty } from "src/utils";
+import { isEmpty } from "src/utils/utils";
 import type { W_TableProps } from "./W_Table";
 
 export const QuickFilterGroupsControl = ({ w }: W_TableProps) => {

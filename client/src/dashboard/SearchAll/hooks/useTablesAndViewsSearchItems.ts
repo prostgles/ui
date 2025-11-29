@@ -1,4 +1,4 @@
-import { isDefined } from "src/utils";
+import { isDefined } from "src/utils/utils";
 import type { SearchAllProps, SearchAllSuggestion } from "../SearchAll";
 import { useMemo } from "react";
 

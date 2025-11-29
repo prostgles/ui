@@ -1,4 +1,4 @@
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import { nameMatches } from "./CommonMatchImports";
 import { getParentFunction } from "./MatchSelect";
 import type {

@@ -1,4 +1,4 @@
-import { tout } from "src/utils";
+import { tout } from "src/utils/utils";
 import { click, movePointer, openConnection } from "../demoUtils";
 
 export const schemaDiagramDemo = async () => {

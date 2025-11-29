@@ -9,7 +9,7 @@ import { API_ENDPOINTS, ROUTES } from "@common/utils";
 import type { ClientUser } from "../App";
 import { pageReload } from "@components/Loader/Loading";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
-import { playwrightTestLogs } from "../utils";
+import { playwrightTestLogs } from "../utils/utils";
 
 export const useDBSClient = (
   onDisconnect: (isDisconnected: boolean) => void,

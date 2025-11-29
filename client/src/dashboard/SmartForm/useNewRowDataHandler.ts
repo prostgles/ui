@@ -9,7 +9,7 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getKeys } from "../../utils";
+import { getKeys } from "../../utils/utils";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import type { getErrorsHook, SmartFormProps } from "./SmartForm";
 import { parseDefaultValue } from "./SmartFormField/fieldUtils";

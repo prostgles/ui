@@ -1,6 +1,6 @@
 import { getSmartGroupFilter } from "@common/filterUtils";
 import { useCallback, useEffect, useRef } from "react";
-import { isEmpty } from "../../../utils";
+import { isEmpty } from "../../../utils/utils";
 import { getDistanceBetweenBoxes } from "../../SilverGrid/SilverGridChild";
 import { getRowFilter } from "../tableUtils/getRowFilter";
 import type { KanBanDraggedRow } from "./CardViewRow";

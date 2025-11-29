@@ -4,7 +4,7 @@ import "./FormField.css";
 import { mdiClose, mdiFullscreen } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { includes, isDefined } from "prostgles-types";
-import { scrollIntoViewIfNeeded } from "src/utils";
+import { scrollIntoViewIfNeeded } from "src/utils/utils";
 import { ChipArrayEditor } from "../../dashboard/SmartForm/ChipArrayEditor";
 import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";

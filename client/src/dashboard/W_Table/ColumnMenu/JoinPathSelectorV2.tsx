@@ -5,7 +5,7 @@ import type { FullOption } from "@components/Select/Select";
 import { Select } from "@components/Select/Select";
 import type { ParsedJoinPath } from "prostgles-types";
 import React, { useMemo } from "react";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import CodeExample from "../../CodeExample";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import type { TargetPath } from "../tableUtils/getJoinPaths";

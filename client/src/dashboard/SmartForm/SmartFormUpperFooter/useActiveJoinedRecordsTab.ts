@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { SmartFormMode } from "../useSmartFormMode";
 

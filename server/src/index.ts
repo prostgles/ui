@@ -258,6 +258,7 @@ export const startServer = async (
 
   const startupResult = await waitForInitialisation();
   void onReady?.({ port: actualPort }, startupResult);
+  return { connMgr };
 };
 
 /**

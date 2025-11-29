@@ -1,4 +1,4 @@
-import { isDefined } from "src/utils";
+import { isDefined } from "src/utils/utils";
 
 export const getSearchRanking = (searchTerm: string, labels: string[]) => {
   if (searchTerm) {

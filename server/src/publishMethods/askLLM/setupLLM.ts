@@ -23,6 +23,8 @@ export const setupLLM = async (dbs: DBS) => {
           "Assist user with any queries they might have. Do not add empty lines in your sql response.",
           "Reply with a full and concise answer that does not require further clarification or revisions.",
           "Below is the database schema they're currently working with:",
+          "When asked to add or generate data DO NOT CREATE IT YOURSELF. ",
+          "USE PUBLIC SOURCES OR GENERATE IT THORUGH TOOLS. NEVER PROVIDE THE VALUES YOURSELF UNLESS SPECIFICALLY ASKED.",
           "",
           LLM_PROMPT_VARIABLES.SCHEMA,
         ].join("\n"),

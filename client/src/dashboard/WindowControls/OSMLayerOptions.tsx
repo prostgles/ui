@@ -4,7 +4,7 @@ import PopupMenu from "@components/PopupMenu";
 import Btn from "@components/Btn";
 import { mdiMap } from "@mdi/js";
 import { OverpassQuery } from "../W_Map/OSM/OverpassQuery";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import { FlexRow } from "@components/Flex";
 
 type P = {

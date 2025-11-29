@@ -4,7 +4,7 @@ import type { TextForSVG } from "./text/getTextForSVG";
 import { setThemeForSVGScreenshot } from "./setThemeForSVGScreenshot";
 import { renderSvg } from "./text/textToSVG";
 import type { getWhatToRenderOnSVG } from "./utils/getWhatToRenderOnSVG";
-import { isDefined } from "src/utils";
+import { isDefined } from "src/utils/utils";
 import { addNewChildren } from "./utils/addNewChildren";
 export const displayNoneIfDark = "--dark-theme-hide";
 export const displayNoneIfLight = "--light-theme-hide";

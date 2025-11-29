@@ -2,7 +2,7 @@ import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
 import { useRef } from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";
 import { dboLib, pgPromiseDb } from "../../CodeEditor/monacoTsLibs";
 import type { MethodDefinitionProps } from "./MethodDefinition";

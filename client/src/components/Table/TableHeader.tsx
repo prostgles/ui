@@ -9,7 +9,7 @@ import {
 } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import { getSortColumn } from "../../dashboard/W_Table/tableUtils/tableUtils";
 import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
-import { quickClone } from "../../utils";
+import { quickClone } from "../../utils/utils";
 import { classOverride } from "../Flex";
 import { Pan } from "../Pan";
 import type { PopupProps } from "../Popup/Popup";

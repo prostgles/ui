@@ -9,7 +9,7 @@ import { Icon } from "./Icon/Icon";
 import type { MenuListitem } from "./MenuListItem";
 import { MenuList } from "./MenuList";
 import { useConnectionConfigSearchParams } from "../dashboard/ConnectionConfig/useConnectionConfigSearchParams";
-import { getKeys } from "../utils";
+import { getKeys } from "../utils/utils";
 
 export type TabItem = Partial<
   Omit<MenuListitem, "contentRight" | "onPress">

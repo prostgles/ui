@@ -1,5 +1,5 @@
 /* eslint-disable no-useless-escape */
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
 import { getMonaco, LANG } from "../SQLEditor/W_SQLEditor";

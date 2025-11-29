@@ -5,7 +5,7 @@ import type { AlertContext } from "@components/AlertProvider";
 import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { waitForElement } from "../../demo/demoUtils";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import type { UIDoc, UIDocNonInfo, UIDocPage } from "../UIDocs";
 
 export const focusElement = async (

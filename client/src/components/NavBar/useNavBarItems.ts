@@ -7,7 +7,7 @@ import {
 import { useMemo } from "react";
 import type { PrglState } from "src/App";
 import { t } from "src/i18n/i18nUtils";
-import { isDefined } from "src/utils";
+import { isDefined } from "src/utils/utils";
 
 export const useNavBarItems = ({ user, serverState }: PrglState) => {
   return useMemo(() => {

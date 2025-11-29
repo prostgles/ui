@@ -1,4 +1,4 @@
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type { Point } from "../../Charts";
 import { DAY, HOUR, MINUTE, MONTH, SECOND, toDateStr } from "../../Charts";
 import type { ChartedText, Circle, MultiLine } from "../../Charts/CanvasChart";
@@ -39,7 +39,7 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
     }
 
     const tooltipDate = new Date(this.data.xScale.invert(x));
-    let tooltipBottomDateText;
+    let tooltipBottomDateText: string;
     // const { leftX, rightX } = this.chart.getExtent();
     const getMinOffset = () => {
       const minOffset = this.data?.dates.reduce(
@@ -209,7 +209,7 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
     if (tooltipPosition === "auto") {
       const lowestOnTop = textLabels.slice(0).reverse();
       textLabels = [];
-      lowestOnTop.forEach((l, i, arr) => {
+      lowestOnTop.forEach((l, i) => {
         const y = l.coords[1];
         if (!i) {
           l.coords[1] = Math.min(y, yMax);

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import type { LayoutConfig, LayoutGroup, LayoutItem } from "./SilverGrid";
 
 export type TreeLayout = LayoutConfig & { parent?: TreeLayout };

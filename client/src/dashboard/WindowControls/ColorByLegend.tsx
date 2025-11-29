@@ -3,7 +3,7 @@ import React from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { DivProps } from "@components/Flex";
 import { FlexRow, classOverride } from "@components/Flex";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { PALETTE } from "../Dashboard/dashboardUtils";

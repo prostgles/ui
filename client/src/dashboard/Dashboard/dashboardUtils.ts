@@ -258,6 +258,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
       missingBins?: MissingBinsOption;
       renderStyle?: TimechartRenderStyle;
       showBinLabels?: ShowBinLabelsMode;
+      showGradient?: boolean;
       binValueLabelMaxDecimals?: number | null;
       filter?: { min: number; max: number } | null;
     }

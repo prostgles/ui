@@ -6,7 +6,7 @@ import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import type { DBS } from "../dashboard/Dashboard/DBS";
 import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
-import { getKeys } from "../utils";
+import { getKeys } from "../utils/utils";
 import { accessControlDemo } from "./scripts/accessControlDemo";
 import { backupDemo } from "./scripts/backupDemo";
 import { dashboardDemo } from "./scripts/dashboardDemo";

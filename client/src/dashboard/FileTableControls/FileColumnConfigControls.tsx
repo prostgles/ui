@@ -9,7 +9,7 @@ import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
 import { type CommonWindowProps } from "../Dashboard/Dashboard";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
-import { quickClone } from "../../utils";
+import { quickClone } from "../../utils/utils";
 
 export type FileTableConfigReferences = Record<
   string,

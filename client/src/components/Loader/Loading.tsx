@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Loading.css";
 import RTComp from "../../dashboard/RTComp";
 import { classOverride, FlexRow } from "../Flex";
-import { tout } from "../../utils";
+import { tout } from "../../utils/utils";
 import { SpinnerV2 } from "./SpinnerV2";
 import { SpinnerV4 } from "./SpinnerV4";
 import { SpinnerV3 } from "./SpinnerV3";

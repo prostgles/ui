@@ -4,7 +4,7 @@ import type { ROUTES } from "@common/utils";
 import type { Route } from "react-router-dom";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import type { Command } from "../Testing";
-import { isDefined } from "../utils";
+import { isDefined } from "../utils/utils";
 import { domToThemeAwareSVG } from "./domToSVG/domToThemeAwareSVG";
 import { accountUIDoc } from "./UIDocs/accountUIDoc";
 import { commandPaletteUIDoc } from "./UIDocs/commandPaletteUIDoc";

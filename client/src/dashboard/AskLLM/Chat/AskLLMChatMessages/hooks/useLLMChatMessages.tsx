@@ -4,10 +4,10 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import React, { useMemo } from "react";
-import { isDefined } from "../../../../../utils";
+import { isDefined } from "../../../../../utils/utils";
 import type { UseLLMChatProps } from "../../useLLMChat";
-import { LLMChatMessage } from "../LLMChatMessage";
-import { LLMChatMessageHeader } from "../LLMChatMessageHeader";
+import { LLMChatMessage } from "../LLMChatMessage/LLMChatMessage";
+import { LLMChatMessageHeader } from "../LLMChatMessage/LLMChatMessageHeader";
 import { useLLMChatMessageGrouper } from "./useLLMChatMessageGrouper";
 
 type P = UseLLMChatProps & {

@@ -5,7 +5,7 @@ import type {
 } from "@components/SearchList/SearchList";
 import React from "react";
 import { SearchMatchRow } from "src/dashboard/SearchAll/SearchMatchRow";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type { SmartSearch } from "./SmartSearch";
 import { getSmartSearchRows } from "./getSmartSearchRows";
 

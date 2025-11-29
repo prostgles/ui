@@ -8,7 +8,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import { InfoRow } from "@components/InfoRow";
 import { Select } from "@components/Select/Select";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { LayerTable, W_MapProps } from "../W_Map/W_Map";
 import type { GeoJSONFeature, GeoJsonLayerProps } from "./DeckGLMap";

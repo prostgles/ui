@@ -1,6 +1,6 @@
 import React from "react";
 import { FlexCol, type DivProps } from "../Flex";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 
 export const DropZone = ({
   onChange,

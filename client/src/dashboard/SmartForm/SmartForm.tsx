@@ -7,7 +7,7 @@ import { SuccessMessage } from "@components/Animations";
 import ErrorComponent from "@components/ErrorComponent";
 import { classOverride } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
-import { ifEmpty } from "../../utils";
+import { ifEmpty } from "../../utils/utils";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { SmartFormFieldList } from "./SmartFormFieldList";
 import { SmartFormFooterButtons } from "./SmartFormFooter/SmartFormFooterButtons";

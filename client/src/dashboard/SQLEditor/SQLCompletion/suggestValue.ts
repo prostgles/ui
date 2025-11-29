@@ -1,4 +1,4 @@
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type { ColInfo } from "../../W_Table/TableMenu/getChartCols";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";

@@ -116,6 +116,12 @@ export class ConnectionManager {
     await this.conSub?.unsubscribe();
     await this.dbConfSub?.unsubscribe();
     await this.userSub?.unsubscribe();
+    Object.values(this.prglConnections).forEach((c) => {
+      c.methodRunner?.destroy();
+      c.tableConfigRunner?.destroy();
+      c.onMountRunner?.destroy();
+      void c.prgl?.destroy();
+    });
     await Promise.all(
       this.accessControlListeners?.map((l) => l.unsubscribe()) ?? [],
     );

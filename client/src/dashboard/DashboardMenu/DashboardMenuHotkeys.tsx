@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { getFileText } from "../W_SQL/W_SQLMenu";
 import type { DashboardMenuProps, DashboardMenuState } from "./DashboardMenu";
-import { getKeys } from "../../utils";
+import { getKeys } from "../../utils/utils";
 import { includes } from "../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 type P = Pick<DashboardMenuProps, "loadTable"> & {

@@ -3,7 +3,7 @@ import type { TestSelectors } from "../../Testing";
 import { classOverride, type DivProps } from "../Flex";
 import { useResizeObserver } from "./useResizeObserver";
 import { fixIndent, getEntries } from "@common/utils";
-import { isDefined, scrollIntoViewIfNeeded } from "../../utils";
+import { isDefined, scrollIntoViewIfNeeded } from "../../utils/utils";
 import { isEqual } from "prostgles-types";
 import { useLocation } from "react-router-dom";
 

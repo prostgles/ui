@@ -1,7 +1,7 @@
 import { type TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import { asName, isEqual, tryCatchV2 } from "prostgles-types";
-import { isDefined, quickClone } from "../../../utils";
+import { isDefined, quickClone } from "../../../utils/utils";
 import type {
   WindowData,
   WindowSyncItem,

@@ -1,4 +1,4 @@
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 
 type SearchItem = { title: string; subTitle: string; level: number };
 export const getItemSearchRank = (

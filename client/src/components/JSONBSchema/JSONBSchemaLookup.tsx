@@ -2,7 +2,7 @@ import type { JSONB } from "prostgles-types";
 import { getKeys, isEmpty, isObject, pickKeys } from "prostgles-types";
 import React from "react";
 import { SmartSearch } from "../../dashboard/SmartFilter/SmartSearch/SmartSearch";
-import { areEqual } from "../../utils";
+import { areEqual } from "../../utils/utils";
 import ErrorComponent from "../ErrorComponent";
 import { Select } from "../Select/Select";
 import { isCompleteJSONB } from "./isCompleteJSONB";

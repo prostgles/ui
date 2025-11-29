@@ -1,7 +1,7 @@
 import type { Deck, MapView, OrthographicView } from "deck.gl";
 import { useCallback, useEffect, useRef } from "react";
 import { createHiPPICanvas } from "src/dashboard/Charts/createHiPPICanvas";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
 import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { getCssVariableValue } from "../../Charts/TimeChart/onRenderTimechart";

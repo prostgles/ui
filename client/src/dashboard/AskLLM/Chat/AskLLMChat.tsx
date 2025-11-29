@@ -8,7 +8,7 @@ import Btn from "@components/Btn";
 import { Chat, type ChatProps } from "@components/Chat/Chat";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import { CHAT_WIDTH } from "../AskLLM";
 import { AskLLMChatActionBar } from "../ChatActionBar/AskLLMChatActionBar";

@@ -1,5 +1,5 @@
 import React from "react";
-import { isDefined } from "src/utils";
+import { isDefined } from "src/utils/utils";
 
 export const getSearchListMatchAndHighlight = (args: {
   ranking?: number;

@@ -1,5 +1,5 @@
 import { isDefined, pickKeys } from "prostgles-types";
-import { nFormatter } from "../../../utils";
+import { nFormatter } from "../../../utils/utils";
 import type { Point } from "../../Charts";
 import type {
   ChartedText,
@@ -38,6 +38,7 @@ export function onRenderTimechart(
       return;
     }
     const { layers } = this.data;
+    const { renderStyle = "line", binValueLabelMaxDecimals } = this.props;
     layers.map((layer, layerIndex) => {
       const { sortedParsedData: _data } = layer;
       const firstDataItem = _data?.[0];
@@ -70,9 +71,10 @@ export function onRenderTimechart(
         const line: MultiLine = {
           id: 1,
           type: "multiline",
-          variant: layer.variant,
+          variant: renderStyle === "smooth" ? "smooth" : layer.variant,
           strokeStyle: layer.color,
           lineWidth: 2,
+          withGradient: this.props.showGradient,
           coords: circles.map((c) => c.coords),
           data: circles.map((c) => c.data),
         };
@@ -94,7 +96,6 @@ export function onRenderTimechart(
           }
         });
 
-        const { renderStyle = "line", binValueLabelMaxDecimals } = this.props;
         lineTooShort = lineLength < 4;
         const showCircles =
           renderStyle === "scatter plot" ||

@@ -16,7 +16,6 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
-  throw "aiAssistantSvgif - disabled for now";
   // await goTo(page, "/server-settings?section=llmProviders");
   // await page.getByTestId("dashboard.window.rowInsertTop").click();
   // await page.getByTestId("Popup.content").waitFor({ state: "visible" });
@@ -131,7 +130,10 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Alert").getByText("OK").click();
   await page.waitForTimeout(4000);
   const { filePath } = await createReceipt(page);
-  await page.getByTestId("Chat.addFiles").setInputFiles(filePath);
+  const fileChooserPromise = page.waitForEvent("filechooser");
+  await page.getByTestId("Chat.addFiles").click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles(filePath);
 
   await typeSendAddScenes(
     page,

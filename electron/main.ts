@@ -47,7 +47,7 @@ type StartParams = {
 };
 process.env.NODE_ENV = "production";
 const expressApp = require("../ui/server/dist/server/src/electronConfig") as {
-  start: (params: StartParams) => Promise<void>;
+  start: (params: StartParams) => Promise<{ destroy: () => Promise<void> }>;
 };
 const iconPath = path.join(__dirname, "/../images/icon.ico");
 
@@ -78,6 +78,7 @@ if (!gotTheLock) {
   initApp();
 }
 
+let onDestroy: (() => Promise<void>) | undefined;
 function initApp() {
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
@@ -103,7 +104,7 @@ function initApp() {
         ),
     );
 
-    expressApp
+    const hooks = await expressApp
       .start({
         safeStorage,
         rootDir: app.getPath("userData"),
@@ -141,6 +142,11 @@ function initApp() {
       .catch((err: any) => {
         console.error("Failed to start expressApp.start", err);
       });
+    onDestroy = hooks?.destroy;
+
+    app.on("before-quit", async (e) => {
+      onDestroy?.();
+    });
   });
 
   // Quit when all windows are closed, except on macOS. There, it's common

@@ -308,7 +308,13 @@ export class W_TimeChart extends RTComp<
         });
       }
     };
-    const binSize = getMainTimeBinSizes()[this.state.binSize as string]?.size;
+
+    const binSizeName = this.state.binSize;
+    const binSize =
+      !binSizeName || binSizeName === "auto" ?
+        undefined
+      : // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        getMainTimeBinSizes()[binSizeName]?.size;
     const onCancelActiveRow = () => onClickRow(undefined, "", undefined);
     const infoSection = (
       <FlexRow
@@ -474,6 +480,7 @@ export class W_TimeChart extends RTComp<
             tooltipPosition={w.options.tooltipPosition ?? "auto"}
             renderStyle={w.options.renderStyle ?? "line"}
             showBinLabels={w.options.showBinLabels ?? "off"}
+            showGradient={w.options.showGradient ?? false}
             binValueLabelMaxDecimals={w.options.binValueLabelMaxDecimals}
             binSize={binSize}
           />

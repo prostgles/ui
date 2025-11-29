@@ -19,7 +19,7 @@ import { getColumnDataColor } from "../SmartForm/SmartFormField/RenderValue";
 import { AddJoinFilter } from "./AddJoinFilter";
 import { getFilterableCols } from "./SmartSearch/SmartSearch";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import { getComputedColumnSelect } from "../W_Table/tableUtils/getTableSelect";
 import { getJoinPaths } from "../W_Table/tableUtils/getJoinPaths";
 import { FlexRow } from "@components/Flex";

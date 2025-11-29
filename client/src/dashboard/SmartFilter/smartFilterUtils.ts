@@ -9,7 +9,7 @@ import type {
   SmartGroupFilter,
 } from "@common/filterUtils";
 import { getFinalFilter, simplifyFilter } from "@common/filterUtils";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { FilterWrapperProps } from "./FilterWrapper";

@@ -1,6 +1,6 @@
 import type { AnyObject } from "prostgles-types";
 import { asName } from "prostgles-types";
-import { getStringFormat } from "../../utils";
+import { getStringFormat } from "../../utils/utils";
 import type { FileImporterState } from "./FileImporter";
 import { getCSVFirstChunk, getPapa } from "./FileImporter";
 

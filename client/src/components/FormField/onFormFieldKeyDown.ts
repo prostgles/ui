@@ -1,4 +1,4 @@
-import { getStringFormat } from "../../utils";
+import { getStringFormat } from "../../utils/utils";
 import type FormField from "./FormField";
 
 export function onFormFieldKeyDown(

@@ -18,7 +18,7 @@ import { isObject } from "@common/publishUtils";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { getPapa } from "../FileImporter/FileImporter";
 import { sliceText } from "@common/utils";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 
 const getValidPGColumnNames = async (v: string[], sql: SQLHandler) => {
   return sql(

@@ -1,4 +1,4 @@
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type { UIDocElement } from "../../UIDocs";
 
 export const getCommonViewHeaderUIDoc = (

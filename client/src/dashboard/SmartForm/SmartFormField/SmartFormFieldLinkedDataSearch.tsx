@@ -1,7 +1,7 @@
 import { mdiCheckCircle, mdiCheckCircleOutline } from "@mdi/js";
 import React, { useMemo } from "react";
 import Btn from "@components/Btn";
-import { tout } from "../../../utils";
+import { tout } from "../../../utils/utils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
 import {

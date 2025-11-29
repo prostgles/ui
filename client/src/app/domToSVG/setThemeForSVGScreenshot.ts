@@ -1,5 +1,5 @@
 import { localSettings } from "../../dashboard/localSettings";
-import { tout } from "../../utils";
+import { tout } from "../../utils/utils";
 
 export const setThemeForSVGScreenshot = async (theme: undefined | "dark") => {
   const resetUICallbacks: (() => void)[] = [];

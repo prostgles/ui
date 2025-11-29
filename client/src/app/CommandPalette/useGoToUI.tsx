@@ -4,7 +4,7 @@ import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "../../Testing";
 import { useAlert } from "@components/AlertProvider";
 import { click } from "../../demo/demoUtils";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import { tout } from "../../utils";
+import { tout } from "../../utils/utils";
 import {
   flatUIDocs,
   type UIDoc,
