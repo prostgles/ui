@@ -31,7 +31,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import type { PGDumpParams } from "@common/utils";
 import FormField from "@components/FormField/FormField";
 import { CredentialSelector } from "./CredentialSelector";
-import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
+import { DEFAULT_DUMP_OPTS, PGDumpOptions } from "./PGDumpOptions";
 
 type P = Pick<Prgl, "db" | "dbs" | "dbsMethods" | "dbsTables"> & {
   connectionId: string;
@@ -194,7 +194,7 @@ export const AutomaticBackups = ({
                   }}
                 />
               )}
-              <DumpOptions
+              <PGDumpOptions
                 connectionId={connection_id}
                 dbsMethods={dbsMethods}
                 dbs={dbs}

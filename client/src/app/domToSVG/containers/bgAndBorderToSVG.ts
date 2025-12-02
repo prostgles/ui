@@ -108,7 +108,20 @@ export const addSpecificBorders = (
 };
 
 export function getBackgroundColor(style: CSSStyleDeclaration) {
-  const { backgroundColor } = style;
+  const { backgroundColor, backgroundImage } = style;
+  if (backgroundImage.includes("gradient")) {
+    return backgroundImage
+      .split("var(--")
+      .map((cssVar, index) => {
+        if (!index) return cssVar;
+        const [varName, ...endParts] = cssVar.split(")");
+        const value = getComputedStyle(document.documentElement)
+          .getPropertyValue("--" + varName)
+          .trim();
+        return value + endParts.join(")");
+      })
+      .join("");
+  }
   if (backgroundColor.startsWith("rgba") && backgroundColor.endsWith("0)")) {
     return undefined;
   }

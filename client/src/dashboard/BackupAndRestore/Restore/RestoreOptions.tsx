@@ -2,7 +2,7 @@ import React from "react";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Select } from "@components/Select/Select";
-import { FORMATS } from "../DumpOptions";
+import { FORMATS } from "../PGDumpOptions";
 import type { RestoreOpts } from "./Restore";
 
 type P = {

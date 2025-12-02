@@ -78,7 +78,7 @@ export const rectangleToSVG = (
   }
 
   if (background) {
-    getPath().path.setAttribute("fill", style.backgroundColor);
+    getPath().path.setAttribute("fill", background); //style.backgroundColor);
   }
 
   // TODO: shadow and border must be drawn outside the overflow clip path

@@ -46,9 +46,11 @@ export const getSVGifTypeAnimation = (
     (acc, tspan) => acc + tspan.getComputedTextLength(),
     0,
   );
-  const zoomInDuration = 500;
-  const zoomOutDuration = 500;
-  const waitBeforeZoomOut = 300;
+
+  const { zoomToElement } = animation;
+  const zoomInDuration = zoomToElement ? 500 : 0;
+  const zoomOutDuration = zoomToElement ? 500 : 0;
+  const waitBeforeZoomOut = zoomToElement ? 300 : 0;
   const typingDuration =
     duration - zoomInDuration - zoomOutDuration - waitBeforeZoomOut;
   if (typingDuration < 500) {

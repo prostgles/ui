@@ -7,47 +7,47 @@ type P = {
   message?: React.ReactNode;
   value: number;
   totalValue: number;
-  variant?: "responsive-barchart";
 };
-export const MINI_BARCHART_COLOR = "#05b0df";
+export const MINI_BARCHART_COLOR = "var(--active)";
 
-export const ProgressBar = ({ message, value, totalValue, variant }: P) => {
-  const isBarchart = variant === "responsive-barchart";
+export const ProgressBar = ({ message, value, totalValue }: P) => {
   const perc = totalValue > value ? Math.round((100 * value) / totalValue) : -1;
-  const lightColor = "#ddf8ff";
-  const height = isBarchart ? 8 : 2;
-  const progressBar = (
-    <div
-      className={isBarchart ? "shadow" : ""}
-      style={{
-        borderRadius: `${height / 2}px`,
-        height: `${height}px`,
-        ...(isBarchart ?
-          {
-            background: MINI_BARCHART_COLOR,
-            flex: 1,
-            minHeight: `${height}px`,
-            width: `${perc}%`,
-          }
-        : {
-            backgroundImage:
-              perc > -1 ?
-                `linear-gradient(90deg,  ${MINI_BARCHART_COLOR} 0%, ${MINI_BARCHART_COLOR} ${perc}%, ${lightColor} ${perc}%, ${lightColor})`
-              : `linear-gradient(90deg,  ${MINI_BARCHART_COLOR} 40%,  ${lightColor} 40%, ${lightColor})`,
-            width: "200px",
-            animation:
-              perc > -1 ? undefined : (
-                "indeterminateAnimation 1s infinite linear"
-              ),
-          }),
-      }}
-    ></div>
-  );
+  const lightColor = "var(--bg-action)";
+  const height = 4;
+  const isIndeterminate = perc === -1;
 
   return (
     <div className="ProgressBar flex-col gap-p25">
-      {progressBar}
-      <div className={"text-1 " + (isBarchart ? "ta-left" : "")}>{message}</div>
+      {isIndeterminate ?
+        <div
+          style={{
+            borderRadius: `${height / 2}px`,
+            height: `${height}px`,
+            backgroundImage: `linear-gradient(90deg,  ${MINI_BARCHART_COLOR} 40%,  ${lightColor} 40%, ${lightColor})`,
+            width: "200px",
+            animation: "indeterminateAnimation 1s infinite linear",
+          }}
+        />
+      : <div
+          style={{
+            background: lightColor,
+          }}
+        >
+          <div
+            className="shadow"
+            style={{
+              borderRadius: `${height / 2}px`,
+              height: `${height}px`,
+              background: MINI_BARCHART_COLOR,
+              flex: 1,
+              minHeight: `${height}px`,
+              width: `${perc}%`,
+              minWidth: "2px",
+            }}
+          ></div>
+        </div>
+      }
+      <div className={"text-1 "}>{message}</div>
     </div>
   );
 };

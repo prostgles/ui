@@ -100,7 +100,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         sqlDefinition: `NUMERIC`,
         info: { hint: "Lowest number is used in new chats" },
       },
-      model_created: `TIMESTAMP DEFAULT NOW()`,
+      model_created: `TIMESTAMPTZ DEFAULT NOW()`,
       mcp_tool_support: `BOOLEAN DEFAULT FALSE`,
       context_length: ` INTEGER NOT NULL DEFAULT 0`,
       architecture: {
@@ -173,7 +173,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         },
       },
       created: {
-        sqlDefinition: `TIMESTAMP DEFAULT NOW()`,
+        sqlDefinition: `TIMESTAMPTZ DEFAULT NOW()`,
       },
     },
     indexes: {
@@ -202,7 +202,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           },
         },
       },
-      created: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
     },
     indexes: {
       unique_llm_prompt: {
@@ -273,7 +273,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         },
       },
       meta: "JSONB",
-      created: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
     },
   },
   llm_chats_allowed_functions: {

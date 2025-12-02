@@ -83,7 +83,7 @@ export const tableConfigUsers = {
           hint: "If true and status is active: enables passwordless access for default install. First connected client will have perpetual admin access and no other users are allowed ",
         },
       },
-      created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      created: { sqlDefinition: `TIMESTAMPTZ DEFAULT NOW()` },
       last_updated: {
         sqlDefinition: `BIGINT DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000`,
       },

@@ -1,7 +1,7 @@
 import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
-import { saveSVGs } from "./screenshotUtils/utils/saveSVGs";
+import { saveSVGs } from "./svgScreenshots/utils/saveSVGs";
 import {
   login,
   MINUTE,
@@ -10,8 +10,8 @@ import {
   restoreFromBackup,
   runDbsSql,
 } from "./utils/utils";
-import { DOCS_DIR } from "screenshotUtils/utils/constants";
-import { svgScreenshotsCompleteReferenced } from "screenshotUtils/utils/svgScreenshotsCompleteReferenced";
+import { DOCS_DIR } from "svgScreenshots/utils/constants";
+import { svgScreenshotsCompleteReferenced } from "svgScreenshots/utils/svgScreenshotsCompleteReferenced";
 import { USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
 

@@ -1,6 +1,6 @@
-import { sliceText } from "@common/utils";
-import { mdiMenuDown } from "@mdi/js";
 import React from "react";
+import "./Select.css";
+import { sliceText } from "@common/utils";
 import type { TestSelectors } from "../../Testing";
 import RTComp from "../../dashboard/RTComp";
 import type { BtnProps } from "../Btn";
@@ -14,7 +14,7 @@ import Popup from "../Popup/Popup";
 import type { SearchListItem, SearchListProps } from "../SearchList/SearchList";
 import { SearchList } from "../SearchList/SearchList";
 import { SelectTriggerButton } from "./SelectTriggerButton";
-import "./Select.css";
+import Btn from "../Btn";
 
 export type OptionKey = string | number | boolean | Date | null | undefined;
 export type FullOption<O extends OptionKey = string> = Pick<
@@ -81,7 +81,7 @@ export type SelectProps<
   showIconOnly?: boolean;
   title?: string;
   placeholder?: string;
-  variant?: "search-list-only" | "div" | "chips-lg";
+  variant?: "search-list-only" | "div" | "chips-lg" | "button-group";
   multiSelect?: Multi;
   labelAsValue?: boolean;
   emptyLabel?: string;
@@ -435,28 +435,67 @@ export class Select<
       return searchList;
     }
 
-    select = (
-      <>
-        {chips || trigger}
-        {popupAnchor && (
-          <Popup
-            rootStyle={{
-              padding: 0,
-              maxWidth: "min(99vw, 600px)",
-              boxSizing: "border-box",
-            }}
-            anchorEl={popupAnchor}
-            positioning="beneath-left-minfill"
-            clickCatchStyle={{ opacity: 0 }}
-            onClose={closeDropDown}
-            contentClassName="rounded p-0"
-            persistInitialSize={true}
-          >
-            {searchList}
-          </Popup>
-        )}
-      </>
-    );
+    if (variant === "button-group") {
+      select = (
+        <FlexRow className="rounded gap-0 b b-color">
+          {fullOptions.map((fullOption, index) => {
+            const hasPrevItem = index > 0;
+            const hasNextItem = index < fullOptions.length - 1;
+            const { key, label, disabledInfo, ...otherProps } = fullOption;
+            return (
+              <Btn
+                key={key}
+                data-key={otherProps["data-key"] ?? key}
+                style={{
+                  ...(hasPrevItem && {
+                    borderTopLeftRadius: 0,
+                    borderBottomLeftRadius: 0,
+                  }),
+                  ...(hasNextItem && {
+                    borderTopRightRadius: 0,
+                    borderBottomRightRadius: 0,
+                  }),
+                }}
+                color="default"
+                size={this.props.size}
+                variant={value === key ? "faded" : undefined}
+                disabledInfo={disabledInfo}
+                onClick={(e) => {
+                  //@ts-ignore
+                  onChange(key, e, fullOption);
+                }}
+                value={key.toString()}
+              >
+                {label ?? key}
+              </Btn>
+            );
+          })}
+        </FlexRow>
+      );
+    } else {
+      select = (
+        <>
+          {chips || trigger}
+          {popupAnchor && (
+            <Popup
+              rootStyle={{
+                padding: 0,
+                maxWidth: "min(99vw, 600px)",
+                boxSizing: "border-box",
+              }}
+              anchorEl={popupAnchor}
+              positioning="beneath-left-minfill"
+              clickCatchStyle={{ opacity: 0 }}
+              onClose={closeDropDown}
+              contentClassName="rounded p-0"
+              persistInitialSize={true}
+            >
+              {searchList}
+            </Popup>
+          )}
+        </>
+      );
+    }
 
     const [selectedFullOption] = selectedFullOptions;
     if (!label) {

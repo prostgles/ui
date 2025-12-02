@@ -58,7 +58,7 @@ export type DBSMethods = Partial<{
     chunk: Buffer | undefined,
     sizeBytes: number | undefined,
     opts?: Backups["restore_options"],
-  ) => Promise<any>;
+  ) => Promise<string>;
   bkpDelete: (bkpId: string, force?: boolean) => Promise<string>;
   getFileFolderSizeInBytes: (conId?: string) => Promise<string>;
   reloadSchema: (conId: string) => Promise<void>;

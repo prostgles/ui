@@ -189,6 +189,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      description?: null | string;
       id: string;
     };
   };
@@ -200,12 +201,13 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       bucket?: null | string;
+      endpoint_url: string;
       id?: number;
       key_id: string;
       key_secret: string;
-      name?: string;
+      name?: null | string;
       region?: null | string;
-      type?: string;
+      type: string;
       user_id?: null | string;
     };
   };

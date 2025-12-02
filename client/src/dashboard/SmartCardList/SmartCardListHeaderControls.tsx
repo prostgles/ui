@@ -16,8 +16,15 @@ export const SmartCardListHeaderControls = (
     tableControls: SmartCardListState["tableControls"];
   },
 ) => {
-  const { title, totalRows, db, tables, methods, tableControls, showTopBar } =
-    props;
+  const {
+    title,
+    totalRows,
+    db,
+    tables,
+    methods,
+    tableControls,
+    showTopBar = true,
+  } = props;
 
   const titleNode =
     typeof title === "string" ? <h4 className="m-0">{title}</h4>
@@ -39,8 +46,10 @@ export const SmartCardListHeaderControls = (
 
   const showSort = isObject(showTopBar) ? showTopBar.sort : showTopBar;
   if (
-    !showTopBar ||
-    (!titleNode && !showSearch && !tableControls?.willShowInsert)
+    !showTopBar &&
+    !titleNode &&
+    !showSearch &&
+    !tableControls?.willShowInsert
   ) {
     return null;
   }
@@ -48,45 +57,47 @@ export const SmartCardListHeaderControls = (
     <FlexCol className="SmartCardListControls gap-p5 aid-end py-p25">
       {titleNode}
 
-      <FlexRowWrap className=" ">
-        {isObject(showTopBar) && showTopBar.leftContent}
-        {tableControls?.willShowInsert && (
-          <InsertButton
-            buttonProps={{
-              children: "Add",
-            }}
-            {...(isObject(showTopBar) && isObject(showTopBar.insert) ?
-              showTopBar.insert
-            : {})}
-            db={db}
-            tables={tables}
-            methods={methods}
-            tableName={tableControls.tableName}
-          />
-        )}
-        {showSearch && tableControls && (
-          <SmartFilterBarSearch
-            db={db}
-            tableName={tableControls.tableName}
-            tables={tables}
-            onFilterChange={tableControls.setLocalFilter}
-            filter={tableControls.localFilter ?? []}
-            extraFilters={undefined}
-            style={{
-              width: "unset",
-              margin: "unset",
-              flex: "1",
-            }}
-          />
-        )}
-        {tableControls?.setLocalOrderBy && showSort && (
-          <SortByControl
-            value={tableControls.localOrderBy}
-            columns={props.columns}
-            onChange={tableControls.setLocalOrderBy}
-          />
-        )}
-      </FlexRowWrap>
+      {showTopBar && (
+        <FlexRowWrap className=" ">
+          {isObject(showTopBar) && showTopBar.leftContent}
+          {tableControls?.willShowInsert && (
+            <InsertButton
+              buttonProps={{
+                children: "Add",
+              }}
+              {...(isObject(showTopBar) && isObject(showTopBar.insert) ?
+                showTopBar.insert
+              : {})}
+              db={db}
+              tables={tables}
+              methods={methods}
+              tableName={tableControls.tableName}
+            />
+          )}
+          {showSearch && tableControls && (
+            <SmartFilterBarSearch
+              db={db}
+              tableName={tableControls.tableName}
+              tables={tables}
+              onFilterChange={tableControls.setLocalFilter}
+              filter={tableControls.localFilter ?? []}
+              extraFilters={undefined}
+              style={{
+                width: "unset",
+                margin: "unset",
+                flex: "1",
+              }}
+            />
+          )}
+          {tableControls?.setLocalOrderBy && showSort && (
+            <SortByControl
+              value={tableControls.localOrderBy}
+              columns={props.columns}
+              onChange={tableControls.setLocalOrderBy}
+            />
+          )}
+        </FlexRowWrap>
+      )}
 
       {filterProps && (
         <RenderFilter

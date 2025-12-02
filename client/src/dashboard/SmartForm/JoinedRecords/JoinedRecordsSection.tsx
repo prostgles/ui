@@ -1,9 +1,8 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { isDefined } from "prostgles-types";
-import React, { useMemo } from "react";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
+import { isDefined } from "prostgles-types";
+import React, { useMemo } from "react";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { SmartCardListJoinedNewRecords } from "../../SmartCardList/SmartCardListJoinedNewRecords";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";

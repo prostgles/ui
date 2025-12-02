@@ -30,16 +30,18 @@ export const BackupsInProgress = ({
         { name: "id", hide: true },
         { name: "sizeInBytes", hide: true },
         { name: "dbSizeInBytes", hide: true },
-        {
-          name: "status",
-          label: "Dump status",
-          render: (val, row) => <RenderBackupStatus row={row} status={val} />,
-        },
+        { name: "name" },
         {
           name: "created_ago" as "created",
           label: "Started",
           select: { $ageNow: ["created", null, "second"] },
           render: (value) => <StyledInterval value={value} />,
+        },
+        {
+          name: "status",
+          className: "gap-p25",
+          label: "Dump status",
+          render: (val, row) => <RenderBackupStatus row={row} status={val} />,
         },
         {
           name: "dump_logs",

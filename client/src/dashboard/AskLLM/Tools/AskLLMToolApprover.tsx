@@ -140,6 +140,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       }
       showFullscreenToggle={{}}
       onClose={() => {
+        mustApprove.onResponse("deny");
         setMustApprove(undefined);
       }}
       clickCatchStyle={{ opacity: 1 }}

@@ -84,6 +84,6 @@ const insertCodeSnippetAtCursor = (
   textarea.value = beforeText + text + afterText;
 
   // Move the cursor to after the inserted text
-  const newCursorPos = startPos + text.length;
+  const newCursorPos = startPos + text.length + 1; // +1 for the added newline
   textarea.setSelectionRange(newCursorPos, newCursorPos);
 };

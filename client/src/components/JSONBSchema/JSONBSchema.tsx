@@ -121,7 +121,7 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
       //@ts-ignore
       <JSONBSchemaOneOfType
         value={localValue}
-        schema={schema as any}
+        schema={schema}
         onChange={setLocalValue}
         {...otherProps}
       />

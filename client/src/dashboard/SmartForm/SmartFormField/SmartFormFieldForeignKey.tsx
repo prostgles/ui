@@ -89,7 +89,7 @@ export const SmartFormFieldForeignKey = (
   );
 
   useEffect(() => {
-    onSearchOptions("");
+    void onSearchOptions("");
   }, [value, onSearchOptions]);
 
   const valueStyle = {

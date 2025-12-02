@@ -32,7 +32,7 @@ export const LLMProviderSetup = ({
         {
           name: "name",
           label: "",
-          render: (name, row) => name || row.provider_id,
+          render: (name: string | null, row) => name || row.provider_id,
         },
         {
           name: "is_default",

@@ -1,16 +1,17 @@
-import { mdiInformationOutline, mdiPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import React, { useCallback, useEffect, useRef } from "react";
 import Btn from "@components/Btn";
 import { Icon } from "@components/Icon/Icon";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
+import { mdiInformationOutline, mdiPlus } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { usePromise } from "prostgles-client/dist/react-hooks";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import { SmartForm } from "../SmartForm/SmartForm";
+import { ViewMoreSmartCardList } from "../SmartForm/SmartFormField/ViewMoreSmartCardList";
 
 type P = {
   pickFirst?: boolean;
@@ -21,7 +22,6 @@ type P = {
   selectedId?: number | null;
   onChange: (credentialId: number) => void;
 };
-const defaultCredentialsData = { type: "s3" };
 
 export function CredentialSelector({
   selectedId,
@@ -32,7 +32,15 @@ export function CredentialSelector({
   dbsMethods,
   pickFirstIfNoOthers,
 }: P) {
-  const { data: credentials } = dbs.credentials.useSubscribe({ type: "s3" });
+  const { data: credentials } = dbs.credentials.useSubscribe(
+    {},
+    { select: { id: 1, name: 1, type: 1, key_id: 1 } },
+  );
+
+  const credentialsTable = useMemo(
+    () => dbsTables.find((t) => t.name === "credentials"),
+    [dbsTables],
+  );
 
   useEffect(() => {
     const [firstCredential] = credentials ?? [];
@@ -55,10 +63,10 @@ export function CredentialSelector({
     <div className="flex-row-wrap ai-end gap-1">
       <Select
         className=" "
-        label="S3 credentials"
+        label="Cloud credential"
         fullOptions={(credentials ?? []).map((c) => ({
           key: c.id,
-          label: `${c.name || c.id}`,
+          label: `${c.name || `${c.type} - ${c.id}`}`,
           subLabel: `${c.key_id}`,
         }))}
         value={selectedId}
@@ -66,6 +74,16 @@ export function CredentialSelector({
           onChange(o);
         }}
       />
+      {credentialsTable && (
+        <ViewMoreSmartCardList
+          db={dbs as DBHandlerClient}
+          methods={dbsMethods}
+          ftable={credentialsTable}
+          tables={dbsTables}
+          getActions={undefined}
+          searchFilter={[]}
+        />
+      )}
       <PopupMenu
         button={
           <Btn
@@ -77,16 +95,16 @@ export function CredentialSelector({
           />
         }
         positioning="center"
+        clickCatchStyle={{ opacity: 1 }}
         contentStyle={{ padding: 0 }}
         render={(popupClose) => (
           <SmartForm
             methods={dbsMethods}
             db={dbs as DBHandlerClient}
-            label="Add Cloud credentials"
+            label="Add cloud storage credential"
             tableName="credentials"
             tables={dbsTables}
             showJoinedTables={false}
-            defaultData={defaultCredentialsData}
             onClose={popupClose}
           />
         )}

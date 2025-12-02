@@ -135,13 +135,14 @@ export function quickClone<T>(obj: T): T {
     return window.structuredClone(obj);
   }
   if (isObject(obj)) {
-    const result = {} as any;
+    const result = {} as T;
     getKeys(obj).map((k) => {
+      //@ts-ignore
       result[k] = quickClone(obj[k]);
     });
     return result;
   } else if (Array.isArray(obj)) {
-    return obj.slice(0).map((v) => quickClone(v)) as any;
+    return obj.slice(0).map((v) => quickClone(v)) as T;
   }
   return obj;
 }

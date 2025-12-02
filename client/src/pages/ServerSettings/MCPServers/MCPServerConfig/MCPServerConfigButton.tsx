@@ -1,12 +1,12 @@
-import React from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
+import React from "react";
 import {
-  MCPServerConfig,
   useMCPServerConfig,
   type MCPServerConfigProps,
 } from "./MCPServerConfig";
+import { mdiCog } from "@mdi/js";
 
 export const MCPServerConfigButton = (
   props: Omit<MCPServerConfigProps, "onDone" | "variant"> & {
@@ -18,12 +18,13 @@ export const MCPServerConfigButton = (
   return (
     <Btn
       onClick={() => {
-        setServerToConfigure({
+        void setServerToConfigure({
           existingConfig,
           serverName,
         });
       }}
       style={{ flexShrink: 1 }}
+      iconPath={mdiCog}
       data-command="MCPServerConfigButton"
     >
       {Object.entries(schema).map(([key, schema]) => (

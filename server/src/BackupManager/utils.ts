@@ -18,7 +18,7 @@ export async function getFileMgr(dbs: DBS, credId: number | null) {
 
   let cred;
   if (credId) {
-    cred = await dbs.credentials.findOne({ id: credId, type: "s3" });
+    cred = await dbs.credentials.findOne({ id: credId });
     if (!cred) throw new Error("Could not find the credentials");
   }
   const fileMgr = new FileManager(
@@ -27,7 +27,8 @@ export async function getFileMgr(dbs: DBS, credId: number | null) {
         accessKeyId: cred.key_id,
         secretAccessKey: cred.key_secret,
         Bucket: cred.bucket!,
-        region: cred.region!,
+        region: cred.region || "auto",
+        endpoint: cred.endpoint_url,
       })
     : { localFolderPath },
   );

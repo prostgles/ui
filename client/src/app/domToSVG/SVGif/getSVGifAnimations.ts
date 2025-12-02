@@ -84,8 +84,6 @@ export const getSVGifAnimations = (
     const getDefs = () => {
       let defs = svgDom.querySelector("defs");
       if (!defs) {
-        // const newDefs = document.createElementNS(SVG_NAMESPACE, "defs");
-        // svgDom.insertBefore(newDefs, svgDom.firstChild);
         defs = document.createElementNS(SVG_NAMESPACE, "defs");
         svgDom.insertBefore(defs, svgDom.firstChild);
       }

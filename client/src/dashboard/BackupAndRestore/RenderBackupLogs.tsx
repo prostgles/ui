@@ -17,6 +17,7 @@ export const RenderBackupLogs = ({
     showFullscreenToggle={{}}
     clickCatchStyle={{ opacity: 1 }}
     title="Logs"
+    data-command="BackupLogs"
     button={
       !logs ?
         <div></div>

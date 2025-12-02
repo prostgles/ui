@@ -63,11 +63,10 @@ export const parseTableConfig = async ({
     tableConfig = newTableConfig;
   }
   let cloudClient: CloudClient | undefined;
-  if (tableConfig?.storageType.type === "S3") {
+  if (tableConfig && tableConfig.storageType.type !== "local") {
     if (tableConfig.storageType.credential_id) {
       const s3Creds = await dbs.credentials.findOne({
         id: tableConfig.storageType.credential_id,
-        type: "s3",
       });
       if (s3Creds) {
         tableConfigOk = true;
@@ -75,13 +74,14 @@ export const parseTableConfig = async ({
           accessKeyId: s3Creds.key_id,
           secretAccessKey: s3Creds.key_secret,
           Bucket: s3Creds.bucket!,
-          region: s3Creds.region!,
+          region: s3Creds.region || "auto",
+          endpoint: s3Creds.endpoint_url,
         });
       }
     }
     if (!tableConfigOk) {
       console.error(
-        "Could not find S3 credentials for fileTable config. File storage will not be set up",
+        "Could not find cloud credentials for fileTable config. File storage will not be set up ",
       );
     }
   } else if (

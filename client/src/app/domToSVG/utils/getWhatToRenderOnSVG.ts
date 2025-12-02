@@ -78,6 +78,7 @@ export const getWhatToRenderOnSVG = async (
     background &&
     element.parentElement &&
     getBackgroundColor(getComputedStyle(element.parentElement));
+
   /**
    * Used to prevent drawing over rounded input border corners
    */

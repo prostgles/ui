@@ -36,7 +36,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
         label: "Prompt",
         sqlDefinition: `INTEGER REFERENCES llm_prompts(id) ON DELETE SET NULL`,
       },
-      created: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
       disabled_message: {
         sqlDefinition: `TEXT`,
         info: { hint: "Message shown when chat is disabled" },

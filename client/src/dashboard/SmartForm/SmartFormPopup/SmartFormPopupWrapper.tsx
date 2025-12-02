@@ -40,11 +40,11 @@ export const SmartFormPopupWrapper = ({
 }: P) => {
   const prevNextClass = "smartformprevnext";
 
+  const autoFocusFirstIfIsInsert = !rowFilterObj;
   const extraProps: Pick<
     PopupProps,
     "onKeyDown" | "headerRightContent" | "autoFocusFirst"
   > = useMemo(() => {
-    const autoFocusFirstIfIsInsert = !rowFilterObj;
     return !onPrevOrNext ?
         ({
           autoFocusFirst: autoFocusFirstIfIsInsert ? "content" : undefined,
@@ -68,6 +68,7 @@ export const SmartFormPopupWrapper = ({
                 disabledInfo={
                   prevNext?.prev === false ? "Reached end" : undefined
                 }
+                data-command="SmartForm.header.previousRow"
                 onClick={({ currentTarget }) => {
                   currentTarget.focus();
                   onPrevOrNext(-1);
@@ -75,6 +76,7 @@ export const SmartFormPopupWrapper = ({
               />
               <Btn
                 iconPath={mdiChevronRight}
+                data-command="SmartForm.header.nextRow"
                 disabledInfo={
                   prevNext?.next === false ? "Reached end" : undefined
                 }
@@ -86,7 +88,7 @@ export const SmartFormPopupWrapper = ({
             </div>
           ),
         };
-  }, [onPrevOrNext, prevNext]);
+  }, [autoFocusFirstIfIsInsert, onPrevOrNext, prevNext?.next, prevNext?.prev]);
 
   const { subTitle } = useMemo(() => {
     const filterKeys =
@@ -119,7 +121,10 @@ export const SmartFormPopupWrapper = ({
   return (
     <Popup
       title={
-        <FlexRow className="gap-1">
+        <FlexRow
+          data-command="SmartForm.header.tableIconAndName"
+          className="gap-1"
+        >
           {table.icon && <SvgIcon size={34} icon={table.icon} />}
           {headerText}
         </FlexRow>

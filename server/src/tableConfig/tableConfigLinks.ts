@@ -236,7 +236,7 @@ export const tableConfigLinks: TableConfig<{ en: 1 }> = {
       },
       closed: `BOOLEAN DEFAULT FALSE`,
       deleted: `BOOLEAN DEFAULT FALSE`,
-      created: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
       last_updated: `BIGINT NOT NULL`,
     },
   },

@@ -77,22 +77,22 @@ export const getTimeChartLayer = ({
         }
 
         /** Map will always join to the same table name. Use that table */
-        const jf = getCrossFilters(w, active_row, links, windows as any);
+        const jf = getCrossFilters(w, active_row, links, windows);
 
         const layer: ProstglesTimeChartLayer = {
           ...commonOpts,
           type: "table",
           tableName: parentWindow.table_name,
           path: joinPath,
-          // activeRowFilter: jf.activeRowFilter,
-          tableFilter: undefined, // getSmartGroupFilter(tbl.filter || []),
+          tableFilter: undefined,
           externalFilters: jf.all,
           color,
         };
 
         return layer;
       } else if (parentWindow) {
-        if ((parentWindow as any).type !== "sql" || !lOpts.sql) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (parentWindow.type !== "sql" || !lOpts.sql) {
           throw "Unexpected: wTable or table_name missing";
         }
         // const latestW = tbl.$get();

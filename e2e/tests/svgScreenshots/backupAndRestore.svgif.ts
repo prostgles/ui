@@ -1,0 +1,73 @@
+import { getCommandElemSelector } from "Testing";
+import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
+import { runDbsSql } from "utils/utils";
+
+export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
+  page,
+  { openConnection },
+  { addSceneAnimation, addScene },
+) => {
+  await openConnection("prostgles_video_demo");
+  await addSceneAnimation(getCommandElemSelector("dashboard.goToConnConfig"));
+  await addSceneAnimation(getCommandElemSelector("config.bkp"));
+
+  await addScene();
+  const {
+    rows: [existingDemoBackup],
+  } = await runDbsSql(page, "SELECT * FROM backups WHERE name = 'Demo'");
+  if (!existingDemoBackup) {
+    throw new Error("Expected existing backup named 'Demo'");
+  }
+
+  const logLines = (existingDemoBackup.dump_logs as string).split("\n");
+  const totalSize = Number(existingDemoBackup.sizeInBytes);
+  const originalCreated = existingDemoBackup.created;
+  const created = new Date(originalCreated).toISOString();
+  for (const [indexFromEnd] of logLines.slice(-3).entries()) {
+    const index = logLines.length - 1 - indexFromEnd;
+    const currentPercentage = (index + 1) / logLines.length;
+    await runDbsSql(
+      page,
+      `
+        UPDATE backups
+        SET status = \${status},
+            dump_logs = \${dump_logs},
+            created = \${created}
+        WHERE name = 'Demo'
+      `,
+      {
+        dump_logs: logLines.slice(0, index).join("\n"),
+        created,
+        status: {
+          loading: { loaded: currentPercentage * totalSize, total: totalSize },
+        },
+      },
+    );
+    await page.waitForTimeout(1500);
+    await addScene();
+  }
+
+  await runDbsSql(
+    page,
+    `
+        UPDATE backups
+        SET status = \${status},
+            dump_logs = \${dump_logs},
+            created = \${created}
+        WHERE name = 'Demo'
+      `,
+    {
+      dump_logs: logLines.join("\n"),
+      created: originalCreated,
+      status: {
+        ok: "1",
+      },
+    },
+  );
+
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(1500);
+  await addScene();
+  // await page.getByTestId("config.bkp.create").click();
+  // await page.getByTestId("config.bkp.create.start").click();
+};

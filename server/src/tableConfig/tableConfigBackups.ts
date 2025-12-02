@@ -87,7 +87,7 @@ export const tableConfigBackups: TableConfig<{ en: 1 }> = {
           ],
         },
       },
-      uploaded: { sqlDefinition: `TIMESTAMP` },
+      uploaded: { sqlDefinition: `TIMESTAMPTZ` },
       restore_status: {
         nullable: true,
         jsonbSchema: {
@@ -105,8 +105,8 @@ export const tableConfigBackups: TableConfig<{ en: 1 }> = {
           ],
         },
       },
-      restore_start: { sqlDefinition: `TIMESTAMP` },
-      restore_end: { sqlDefinition: `TIMESTAMP` },
+      restore_start: { sqlDefinition: `TIMESTAMPTZ` },
+      restore_end: { sqlDefinition: `TIMESTAMPTZ` },
       restore_logs: { sqlDefinition: `TEXT` },
       dump_logs: { sqlDefinition: `TEXT` },
       dbSizeInBytes: {
@@ -114,8 +114,8 @@ export const tableConfigBackups: TableConfig<{ en: 1 }> = {
         label: "Database size on disk",
       },
       sizeInBytes: { sqlDefinition: `BIGINT`, label: "Backup file size" },
-      created: { sqlDefinition: `TIMESTAMP NOT NULL DEFAULT NOW()` },
-      last_updated: { sqlDefinition: `TIMESTAMP NOT NULL DEFAULT NOW()` },
+      created: { sqlDefinition: `TIMESTAMPTZ NOT NULL DEFAULT NOW()` },
+      last_updated: { sqlDefinition: `TIMESTAMPTZ NOT NULL DEFAULT NOW()` },
       options: DUMP_OPTIONS_SCHEMA,
       restore_options: {
         jsonbSchemaType: {

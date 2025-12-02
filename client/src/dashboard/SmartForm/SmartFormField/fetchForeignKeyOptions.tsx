@@ -291,7 +291,6 @@ const fetchSearchResults = async ({
 };
 
 const isTextColumn = (col: ValidatedColumnInfo) =>
-  !col.is_nullable &&
   (["text", "varchar", "citext", "char"] as const).some(
     (textType) => textType === col.udt_name,
   );
@@ -312,9 +311,16 @@ export const getBestTextColumns = (
   }
   const nonSelectableNullableTextCols = table.columns
     .filter(isTextColumn)
-    .filter((c) => c.select);
+    .filter((c) => c.select && !excludeCols.includes(c.name));
+  const hasNonNullableTextCol = nonSelectableNullableTextCols.some(
+    (c) => !c.is_nullable,
+  );
   const fTableTextColumns = nonSelectableNullableTextCols
-    .filter((c) => !excludeCols.includes(c.name))
+    .filter(
+      (c) =>
+        /** Allow non nullable text cols if we don't have other options */
+        !hasNonNullableTextCol || !c.is_nullable,
+    )
     .map((column) => {
       const shortestUnique = table.info.uniqueColumnGroups
         ?.filter((g) => g.includes(column.name))

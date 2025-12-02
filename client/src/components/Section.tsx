@@ -122,6 +122,7 @@ export const Section = (props: SectionProps) => {
           <Btn
             className={fullscreen ? "" : "show-on-parent-hover"}
             iconPath={mdiFullscreen}
+            data-command="Section.toggleFullscreen"
             onClick={() => setFullscreen(!fullscreen)}
             color={fullscreen ? "action" : undefined}
           />

@@ -69,6 +69,7 @@ export const getSVGif = (
       defs.remove();
     }
   });
+  svg.setAttribute("data-duration", totalDuration);
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
   return svgString;

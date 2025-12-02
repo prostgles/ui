@@ -213,7 +213,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
     }
   : CType extends "map" ?
     Partial<{
-      extent: number[];
+      extent: [number, number, number, number];
       latitude: number;
       longitude: number;
       zoom: number;

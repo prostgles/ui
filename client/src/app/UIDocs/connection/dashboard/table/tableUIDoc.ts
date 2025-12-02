@@ -6,6 +6,7 @@ import { smartFilterBarUIDoc } from "./smartFilterBarUIDoc";
 import { tableMenuUIDoc } from "./tableMenuUIDoc";
 import { addColumnMenuUIDoc } from "./addColumnMenuUIDoc";
 import { columnMenuUIDoc } from "./columnMenuUIDoc";
+import { smartFormUIDoc } from "./smartFormUIDoc";
 
 export const tableUIDoc = {
   type: "section",
@@ -55,14 +56,7 @@ export const tableUIDoc = {
               description:
                 "Allows users to resize the column width by dragging the handle.",
             },
-            {
-              type: "popup",
-              selectorCommand: "dashboard.window.viewEditRow",
-              title: "Edit row",
-              description:
-                "Opens the row edit menu, allowing users to view/edit/delete the selected row.",
-              children: [],
-            },
+            smartFormUIDoc,
             {
               selectorCommand: "dashboard.window.rowInsert",
               type: "popup",

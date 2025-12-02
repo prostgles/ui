@@ -543,13 +543,27 @@ export class CanvasChart {
             if (y > gradientMaxY) {
               return;
             }
+
+            const startNewSection = () => {
+              const prevPoint = coords[index - 1];
+              peakSections.push(
+                [
+                  prevPoint && {
+                    index: index - 1,
+                    x: prevPoint[0],
+                    y: prevPoint[1],
+                  },
+                  { x, y, index },
+                ].filter(isDefined),
+              );
+            };
+
             if (!peakSections.length) {
-              peakSections.push([{ x, y, index }]);
+              startNewSection();
               return;
             }
             const currentSection = peakSections.at(-1)!;
             const lastPoint = currentSection.at(-1)!;
-            const prevPoint = coords[index - 1];
             const nextPoint = coords[index + 1];
             if (index === lastPoint.index + 1) {
               currentSection.push({ x, y, index });
@@ -562,21 +576,12 @@ export class CanvasChart {
                 });
               }
             } else {
-              peakSections.push(
-                [
-                  prevPoint && {
-                    index: index - 1,
-                    x: prevPoint[0],
-                    y: prevPoint[1],
-                  },
-                  { x, y, index },
-                ].filter(isDefined),
-              );
+              startNewSection();
             }
           });
 
           peakSections.forEach((sectionCoords) => {
-            if (sectionCoords.length < 3) return;
+            if (sectionCoords.length < 2) return;
             const gradient = ctx.createLinearGradient(0, minY, 0, h);
             const rgba = asRGB(s.strokeStyle);
             const rgb = rgba.slice(0, 3).join(", ");

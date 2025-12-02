@@ -1,3 +1,4 @@
+import { hashCode } from "src/utils/hashCode";
 import type { SVGContext, SVGNodeLayout } from "../containers/elementToSVG";
 import { SVG_NAMESPACE } from "../domToSVG";
 import { canvasToDataURL } from "../utils/canvasToDataURL";
@@ -59,7 +60,7 @@ export const imgToSVG = async (
 ) => {
   const loadedImage = await loadImage(imgElement);
 
-  const dataUrl = await convertImageToDataURL(loadedImage);
+  const dataUrl = convertImageToDataURL(loadedImage);
   addImageFromDataURL(g, dataUrl, context, layout);
 };
 
@@ -97,13 +98,4 @@ const convertImageToDataURL = (img: HTMLImageElement): string => {
     // Fallback to original source if conversion fails
     return img.src;
   }
-};
-
-const hashCode = (str: string) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(36);
 };

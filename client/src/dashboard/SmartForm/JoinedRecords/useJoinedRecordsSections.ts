@@ -94,7 +94,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
             d.type === "nested-table" ? [k, d.value] : undefined,
           )
           .filter(isDefined),
-      ),
+      ) as Record<string, AnyObject[]>,
     [newRowData],
   );
 
@@ -127,7 +127,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
 
         const count =
           (isInsert ?
-            nestedInsertData?.[j.tableName]?.length
+            nestedInsertData[j.tableName]?.length
           : existingDataCount) ?? 0;
 
         const table = tablesMap.get(j.tableName);

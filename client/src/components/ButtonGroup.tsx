@@ -9,7 +9,7 @@ import { Select } from "./Select/Select";
 import { pickKeys } from "prostgles-types";
 import type { TestSelectors } from "../Testing";
 
-type P<Option extends string = never> = TestSelectors & {
+type P<Option extends string> = TestSelectors & {
   onChange: (val: Option, e: any) => void;
   value?: Option;
   style?: object;
@@ -17,6 +17,7 @@ type P<Option extends string = never> = TestSelectors & {
   id?: string;
   variant?: "dense" | "select";
   size?: "small";
+  color?: "default" | "action" | "warn" | "danger";
   label?: string | LabelProps;
 } & (
     | {
@@ -38,20 +39,20 @@ export default class ButtonGroup<Option extends string> extends React.Component<
       onChange,
       className = "",
       value,
-      id = "",
       style = {},
       size,
       variant,
       label,
+      color = "action",
       fullOptions: _fullOptions,
       options: _options,
       ...testSelectors
     } = this.props;
     const br = ".375rem";
 
-    const fullOptions: readonly FullOption[] =
+    const fullOptions: readonly FullOption<Option>[] =
       _fullOptions ?? _options.map((key) => ({ key, label: key }));
-    const getStyle = (i: number, isActive = false) => {
+    const getStyle = (i: number) => {
       const nb: React.CSSProperties = {
         borderTopLeftRadius: 0,
         borderBottomLeftRadius: 0,
@@ -88,7 +89,8 @@ export default class ButtonGroup<Option extends string> extends React.Component<
           className="shadow"
           fullOptions={fullOptions}
           value={value}
-          onChange={(val, e) => onChange(val as any, e)}
+          //@ts-ignore
+          onChange={(val, e) => onChange(val, e)}
         />
       );
     }
@@ -99,14 +101,12 @@ export default class ButtonGroup<Option extends string> extends React.Component<
           <Btn
             key={key}
             data-key={otherProps["data-key"] ?? key}
-            color="action"
+            color={color}
             size={size}
-            style={{ ...getStyle(i, value === key) }}
+            style={{ ...getStyle(i) }}
             variant={value === key ? "filled" : "outline"}
             disabledInfo={disabledInfo}
-            onClick={(e) =>
-              key === value ? undefined : onChange(key as any, e)
-            }
+            onClick={(e) => (key === value ? undefined : onChange(key, e))}
             value={key.toString()}
             {...pickKeys(otherProps, ["data-command", "id"])}
           >

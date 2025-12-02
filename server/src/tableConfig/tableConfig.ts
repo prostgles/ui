@@ -181,8 +181,8 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       ip_address: `INET NOT NULL`,
       type: `TEXT NOT NULL REFERENCES session_types`,
       user_agent: "TEXT",
-      created: `TIMESTAMP DEFAULT NOW()`,
-      last_used: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
+      last_used: `TIMESTAMPTZ DEFAULT NOW()`,
       expires: `BIGINT NOT NULL`,
     },
   },
@@ -205,7 +205,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         ],
       },
       username: "TEXT",
-      created: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
       failed: "BOOLEAN",
       magic_link_id: "TEXT",
       sid: "TEXT",
@@ -380,7 +380,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       connection_id: "UUID REFERENCES connections(id) ON DELETE SET NULL",
       section: { enum: CONNECTION_CONFIG_SECTIONS, nullable: true },
       data: "JSONB",
-      created: "TIMESTAMP DEFAULT NOW()",
+      created: "TIMESTAMPTZ DEFAULT NOW()",
     },
   },
   alert_viewed_by: {
@@ -388,7 +388,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       id: `BIGSERIAL PRIMARY KEY`,
       alert_id: "BIGINT REFERENCES alerts(id) ON DELETE CASCADE",
       user_id: "UUID REFERENCES users(id) ON DELETE CASCADE",
-      viewed: "TIMESTAMP DEFAULT NOW()",
+      viewed: "TIMESTAMPTZ DEFAULT NOW()",
     },
   },
 
@@ -543,7 +543,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         },
       },
 
-      created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      created: { sqlDefinition: `TIMESTAMPTZ DEFAULT NOW()` },
     },
   },
 
@@ -590,16 +590,23 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       id: `TEXT PRIMARY KEY DEFAULT gen_random_uuid()`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       magic_link: `TEXT`,
-      magic_link_used: `TIMESTAMP`,
+      magic_link_used: `TIMESTAMPTZ`,
       expires: `BIGINT NOT NULL`,
       session_expires: `BIGINT NOT NULL DEFAULT 0`,
     },
   },
 
   credential_types: {
-    // dropIfExists: true,
+    // dropIfExistsCascade: true,
     isLookupTable: {
-      values: { s3: {} },
+      values: {
+        AWS: {
+          description: "S3",
+        },
+        Cloudflare: {
+          description: "R2",
+        },
+      },
     },
   },
 
@@ -607,17 +614,17 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     // dropIfExists: true,
     columns: {
       id: `SERIAL PRIMARY KEY`,
-      name: `TEXT NOT NULL DEFAULT ''`,
+      name: { sqlDefinition: `TEXT`, info: { hint: "optional" } },
       user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
-      type: `TEXT NOT NULL REFERENCES credential_types(id) DEFAULT 's3'`,
+      type: {
+        label: "Provider",
+        sqlDefinition: `TEXT NOT NULL REFERENCES credential_types(id) `,
+      },
       key_id: `TEXT NOT NULL`,
       key_secret: `TEXT NOT NULL`,
-      bucket: `TEXT`,
-      region: `TEXT`,
-    },
-    constraints: {
-      "Bucket or Region missing":
-        "CHECK(type <> 's3' OR (bucket IS NOT NULL AND region IS NOT NULL))",
+      endpoint_url: `TEXT NOT NULL`,
+      bucket: { sqlDefinition: `TEXT` },
+      region: { sqlDefinition: `TEXT`, info: { hint: "e.g. auto, us-east-1" } },
     },
   },
 
@@ -646,7 +653,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
       connection_id: `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE`,
       name: `TEXT NOT NULL DEFAULT 'default workspace'`,
-      created: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
       active_row: `JSONB DEFAULT '{}'::jsonb`,
       layout: `JSONB`,
       icon: `TEXT`,
@@ -690,7 +697,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         },
       },
       last_updated: `BIGINT NOT NULL`,
-      last_used: `TIMESTAMP NOT NULL DEFAULT now()`,
+      last_used: `TIMESTAMPTZ NOT NULL DEFAULT now()`,
       deleted: `BOOLEAN NOT NULL DEFAULT FALSE`,
       url_path: `TEXT`,
       published: {
@@ -771,7 +778,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         },
       },
       query_start: {
-        sqlDefinition: "TIMESTAMP",
+        sqlDefinition: "TIMESTAMPTZ",
         info: {
           hint: `Time when the currently active query was started, or if state is not active, when the last query was started`,
         },
@@ -856,7 +863,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         info: { hint: `Command with all its arguments as a string` },
       },
       sampled_at: {
-        sqlDefinition: "TIMESTAMP NOT NULL DEFAULT NOW()",
+        sqlDefinition: "TIMESTAMPTZ NOT NULL DEFAULT NOW()",
         info: { hint: `When the statistics were collected` },
       },
     },

@@ -196,7 +196,7 @@ export const FormFieldSkeleton = forwardRef(
             )}
           </div>
           {Boolean(hint) && (
-            <p className="ta-left text-2 m-0 text-sm noselect ws-pre-line">
+            <p className="FormFieldHint ta-left text-2 m-0 text-sm noselect ws-pre-line">
               {hint}
             </p>
           )}

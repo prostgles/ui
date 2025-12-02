@@ -66,7 +66,7 @@ It supports computed columns, linked fields, and various actions for managing th
         - **Hide Others**: Hide all other columns except this one, providing a focused view of the data in this column.  
       - **Column header**: Pressing the header will toggle sorting state (if the column is sortable). Right clicking (or long press on mobile) will open column menu. Dragging the header will allow reordering the columns.  
       - **Resize column**: Allows users to resize the column width by dragging the handle.  
-      - **Edit row**: Opens the row edit menu, allowing users to view/edit/delete the selected row.  
+      - <a href="#view/edit_data">View/edit data</a>: Opens the row card, allowing users to view/edit/delete the selected row.  
       - **Insert row**: Opens the row insert menu, allowing users to add new rows to the table.  
   - **Pagination Controls**: Navigation controls for paginated data.  
     - **First Page**: Navigate to the first page of results.  
@@ -133,4 +133,55 @@ It provides a user-friendly interface to add filters, search for data, and perfo
     - **Insert row**: Opens the row insert menu, allowing users to add new rows to the table.  
   - **Filters**: Filters applied to the data  
   - **Having Filters**: Filters applied after aggregation (HAVING clause in SQL).  
+
+<h1 id="view/edit_data"> Row card </h1> 
+
+SmartForm is an intelligent, auto-generated form system that adapts to your database schema.
+It provides a user-friendly interface for inserting and updating data with automatic validation,
+foreign key handling, and support for complex data types.
+
+<img src="./screenshots/smartform.svg" alt="SmartForm screenshot" style="border: 1px solid; margin: 1em 0;" />
+
+## Features
+- **Auto-generated fields** based on table schema
+- **Data type validation** (text, numbers, dates, JSON, etc.)
+- **Foreign key support** with searchable dropdowns
+- **File upload** for media and document columns
+- **Linked data management** - insert related records inline
+- **JSON/JSONB editor** with syntax highlighting
+- **Geometry/Geography** support for spatial data
+- **Array types** with dynamic add/remove
+- **Default values** and constraints enforcement
+- **Required field** indicators
+- **Custom field rendering** based on column configuration
+
+## Field Types
+- Text inputs (single/multi-line)
+- Number inputs (integer, decimal)
+- Date/Time/Timestamp pickers
+- Boolean checkboxes
+- Select dropdowns (enums, foreign keys)
+- File upload fields
+- JSON/JSONB editors
+- Geometry/Geography mappers
+- Array editors
+
+  - **Smart Form**: The smart form displays the details of a single row from the table, allowing users to view and edit the data in a structured format.  
+    - **Table icon in header**: Table icon and table name. Table icon is configurable through the table menu settings.  
+    - **Previous row button**: Navigate to the previous row in the dataset. Only shown for tables with primary key. Disabled when there is no previous row available.  
+    - **Next row button**: Navigate to the next row in the dataset. Only shown for tables with primary key. Disabled when there is no next row available.  
+    - **Fullscreen toggle button**: Toggles the fullscreen mode of the SmartForm popup for an expanded view.  
+    - **Close button**: Closes the SmartForm popup without saving any data.  
+    - **Form field**: Each form field represents a column from the table, displaying the column name and the corresponding value for the selected row. Users can edit the value if the field is editable.  
+      - **Field label**: Displays the name of the column.  
+      - **Field input area**: The input area where users can view and edit the value of the column. The input type varies based on the column's data type.  
+      - **Field hint**: Additional information or guidance about the field, displayed below the input area.  
+      - **View more linked records**: For foreign key fields a 'View more' button appears to open a detailed list of all linked records in a separate popup. This is useful to browse and search all columns from the referenced table.  
+      - **Insert linked record**: If the column is a foreign key a 'Insert new record' button will appear on hover which allows inserting data into the referenced table. Useful when the desired value does not exist yet (foreign key columns only show existing values).  
+      - **Clear field value button**: Clear the current value of the field, resetting it to null. Only shown if the field is nullable and the user is allowed to update it.  
+    - **Joined records section**: If the current table has other tables referencing it via foreign keys, a section will appear at the bottom of the form showing lists of those related records. This allows users to view and manage data that is linked to the current row.  
+      - **Toggle joined records section**: Expand or collapse the joined records section to show or hide the list of related records.  
+      - **View more joined records**: Open a detailed list of all joined records in a separate popup. Useful to browse and search all columns from the joined table.  
+      - **Add joined record**: Open the SmartForm to insert a new joined record into the related table, automatically linking it to the current row.  
+      - **Toggle fullscreen mode**: Expand the section to fullscreen for better visibility and interaction with the joined records.  
 

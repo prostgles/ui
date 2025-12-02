@@ -43,6 +43,7 @@ export const ViewMoreSmartCardList = ({
       <Btn
         iconPath={mdiSearchWeb}
         title="View more"
+        data-command="ViewMoreSmartCardList"
         onClick={({ currentTarget }) => setAnchorEl(currentTarget)}
       />
       {anchorEl && (
@@ -51,7 +52,7 @@ export const ViewMoreSmartCardList = ({
           onClose={() => setAnchorEl(undefined)}
           anchorEl={anchorEl}
           onClickClose={false}
-          positioning="left"
+          positioning="center"
           showFullscreenToggle={{}}
           clickCatchStyle={{ opacity: 1 }}
           rootChildStyle={{

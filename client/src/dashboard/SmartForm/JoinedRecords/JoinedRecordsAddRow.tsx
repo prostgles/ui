@@ -168,10 +168,8 @@ export const JoinedRecordsAddRow = (props: P) => {
         {...props.btnProps}
         data-command="JoinedRecords.AddRow"
         data-key={section.tableName}
-        // variant="filled"
         color="action"
         iconPath={mdiPlus}
-        // children="Add"
         {...btnProps}
       />
     </>

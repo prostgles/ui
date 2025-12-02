@@ -19,7 +19,7 @@ export const loggerTableConfig: TableConfig<{ en: 1 }> = {
       data: "JSONB",
       error: "JSON",
       has_error: "BOOLEAN",
-      created: "TIMESTAMP DEFAULT NOW()",
+      created: "TIMESTAMPTZ DEFAULT NOW()",
     },
   },
 };

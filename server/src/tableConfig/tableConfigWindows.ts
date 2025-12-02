@@ -119,7 +119,7 @@ export const tableConfigWindows = {
       },
       columns: `JSONB`,
       nested_tables: `JSONB`,
-      created: `TIMESTAMP NOT NULL DEFAULT NOW()`,
+      created: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
       last_updated: `BIGINT NOT NULL`,
     },
   },

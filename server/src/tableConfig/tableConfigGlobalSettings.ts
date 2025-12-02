@@ -97,7 +97,7 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
         defaultValue: "app",
       },
       updated_at: {
-        sqlDefinition: "TIMESTAMP NOT NULL DEFAULT now()",
+        sqlDefinition: "TIMESTAMPTZ NOT NULL DEFAULT now()",
       },
       pass_process_env_vars_to_server_side_functions: {
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,

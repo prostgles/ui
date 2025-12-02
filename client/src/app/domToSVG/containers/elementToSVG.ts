@@ -102,7 +102,19 @@ export const elementToSVG = async (
       const transformedG = document.createElementNS(SVG_NAMESPACE, "g");
       g.setAttribute("transform", `translate(${x}, ${y})`);
       g.appendChild(transformedG);
-      drawShapesOnSVG(shapes, context, transformedG, { scale, translate });
+      drawShapesOnSVG(
+        shapes,
+        context,
+        transformedG,
+        {
+          scale,
+          translate,
+        },
+        {
+          width,
+          height,
+        },
+      );
     } else {
       element._deckgl?.redraw("screenshot");
       const canvas = element._deckgl?.getCanvas() || element;

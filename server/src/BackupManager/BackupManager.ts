@@ -209,7 +209,7 @@ export default class BackupManager {
         /* Allow access to file for a period equivalent to a download rate of 50KBps */
         const presignedURL = await fileMgr.getFileCloudDownloadURL(
           bkp.id,
-          +(bkp.sizeInBytes ?? 1e6) / 50,
+          1 * 60, // 1 minute
         );
         if (!presignedURL) {
           res.sendStatus(404);
