@@ -227,14 +227,27 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     this.rObserver.observe(this.ref);
   }
 
+  /**
+   * Added to improve performance when rendering a monaco editor with a lot of content fullscreen
+   */
+  setMainNodeVisibility = (visible: boolean) => {
+    const mainNode = document.querySelector("main")!;
+    const isVisible = mainNode.style.visibility !== "hidden";
+    if (isVisible !== visible) {
+      mainNode.style.visibility = visible ? "visible" : "hidden";
+    }
+  };
+
   toggledFullScreen = 0;
   onDelta(deltaP: DeltaOf<PopupProps>, deltaS: DeltaOf<PopupState>): void {
     if (deltaS && "fullScreen" in deltaS) {
       this.toggledFullScreen = Date.now();
     }
+    this.setMainNodeVisibility(this.state.fullScreen !== true);
   }
 
   onUnmount() {
+    this.setMainNodeVisibility(true);
     if (modalRoot) {
       try {
         modalRoot.removeChild(this.el);

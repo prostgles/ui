@@ -6,6 +6,7 @@ import type { LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage
 import { getIconForToolUseMessage } from "../ToolUseChatMessage/useToolUseChatMessage";
 import type { LLMChatMessageCommonProps } from "./LLMChatMessage";
 import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
+import type { LLMMessageGroup } from "../hooks/useLLMChatMessageGrouper";
 
 export const LLMGroupedToolCallsMessage = ({
   messageContentItems,
@@ -13,7 +14,12 @@ export const LLMGroupedToolCallsMessage = ({
   db,
   loadedSuggestions,
   onToggle,
-}: { messageContentItems: LLMMessageContent[]; onToggle: VoidFunction } & Pick<
+  messages,
+}: {
+  messageContentItems: LLMMessageContent[];
+  messages: LLMMessageGroup["messages"];
+  onToggle: VoidFunction;
+} & Pick<
   LLMChatMessageCommonProps,
   "mcpServerIcons" | "db" | "loadedSuggestions"
 >) => {
@@ -34,14 +40,34 @@ export const LLMGroupedToolCallsMessage = ({
     };
   }, [messageContentItems, mcpServerIcons]);
 
+  const allMessagesAreErrored = useMemo(() => {
+    let totalToolResultMessages = 0;
+    let erroredToolResultMessages = 0;
+    messages.forEach(({ nextMessage }) => {
+      nextMessage?.message.forEach((m) => {
+        if (m.type === "tool_result") {
+          totalToolResultMessages++;
+          if (m.is_error) {
+            erroredToolResultMessages++;
+          }
+        }
+      });
+    });
+    return (
+      totalToolResultMessages > 0 &&
+      totalToolResultMessages === erroredToolResultMessages
+    );
+  }, [messages]);
+
   const textMessages = useMemo(() => {
-    return messageContentItems
+    const textMessages = messageContentItems
       .map((m) => {
         if (m.type === "text" && "text" in m && m.text) {
           return m;
         }
       })
       .filter(isDefined);
+    return textMessages;
   }, [messageContentItems]);
   const firstTextMessage = textMessages[0];
   const lastTextMessage = textMessages.at(-1);
@@ -58,6 +84,7 @@ export const LLMGroupedToolCallsMessage = ({
       <Btn
         variant="faded"
         size="small"
+        color={allMessagesAreErrored ? "danger" : undefined}
         onClick={onToggle}
         data-command="ToolUseMessage.toggleGroup"
       >

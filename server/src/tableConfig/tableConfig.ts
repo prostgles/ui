@@ -652,7 +652,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       parent_workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
       user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
       connection_id: `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE`,
-      name: `TEXT NOT NULL DEFAULT 'default workspace'`,
+      name: `TEXT NOT NULL DEFAULT 'default workspace' CHECK(length(BTRIM(name)) > 0)`,
       created: `TIMESTAMPTZ DEFAULT NOW()`,
       active_row: `JSONB DEFAULT '{}'::jsonb`,
       layout: `JSONB`,

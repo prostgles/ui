@@ -41,13 +41,13 @@ type StartArguments = {
   host: string;
 };
 
-let bkpManager: BackupManager | undefined;
+let backupManager: BackupManager | undefined;
 export const initBackupManager = async (db: DB, dbs: DBS) => {
-  bkpManager ??= await BackupManager.create(db, dbs, connMgr);
-  return bkpManager;
+  backupManager ??= await BackupManager.create(db, dbs, connMgr);
+  return backupManager;
 };
 
-export const getBackupManager = () => bkpManager;
+export const getBackupManager = () => backupManager;
 
 export let statePrgl: InitResult<DBGeneratedSchema, SUser> | undefined;
 export type InitExtra = {
@@ -218,8 +218,8 @@ export const startProstgles = async ({
         await connMgr.destroy();
         await connMgr.init(db, _db);
 
-        await bkpManager?.destroy();
-        bkpManager ??= await BackupManager.create(_db, db, connMgr);
+        await backupManager?.destroy();
+        backupManager ??= await BackupManager.create(_db, db, connMgr);
 
         const newAuthSetupDataListener = subscribeToAuthSetupChanges(
           db,

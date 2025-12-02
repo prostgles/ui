@@ -1,7 +1,7 @@
 import {
-  MarkdownMonacoCode,
-  type MarkdownMonacoCodeProps,
-} from "@components/Chat/MarkdownMonacoCode/MarkdownMonacoCode";
+  MonacoCodeInMarkdown,
+  type MonacoCodeInMarkdownProps,
+} from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import { MediaViewer } from "@components/MediaViewer";
 import { isEmpty, tryCatchV2 } from "prostgles-types";
 import React, { useMemo } from "react";
@@ -32,7 +32,7 @@ export const ToolUseChatMessageJSONData = ({
   return (
     <ErrorTrap>
       {toolUseMessageContent.input && !isEmpty(toolUseMessageContent.input) && (
-        <MarkdownMonacoCode
+        <MonacoCodeInMarkdown
           key={`${toolUseMessageContent.type}-input`}
           title="Arguments:"
           codeString={
@@ -64,7 +64,7 @@ const ContentRender = ({
   loadedSuggestions,
 }: {
   toolUseResult: ReturnType<typeof getToolUseResult>;
-} & Pick<MarkdownMonacoCodeProps, "sqlHandler" | "loadedSuggestions">) => {
+} & Pick<MonacoCodeInMarkdownProps, "sqlHandler" | "loadedSuggestions">) => {
   const content = useMemo(() => {
     if (!toolUseResult) return undefined;
     const { content: contentRaw } = toolUseResult.toolUseResultMessage;
@@ -92,7 +92,7 @@ const ContentRender = ({
             JSON_START_CHARS.some((c) => value.trim().startsWith(c)) ? "json"
             : "text";
           return (
-            <MarkdownMonacoCode
+            <MonacoCodeInMarkdown
               key={`${m.type}${idx}`}
               title={
                 toolUseResult?.toolUseResultMessage.is_error ?

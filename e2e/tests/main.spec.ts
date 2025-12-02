@@ -885,12 +885,22 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, " parallel_calls ");
 
     await expect(
+      page.getByTestId("ToolUseMessage.toggleGroup").last(),
+    ).toContainText("3 tool calls");
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "Tool call failed. Will not retry",
+      {
+        timeout: 30e3,
+      },
+    );
+    await page.getByTestId("ToolUseMessage.toggleGroup").last().click();
+    await expect(
       page
         .getByTestId("Chat.messageList")
         .getByText(
           'Tool name "fetch--fetch" is not allowed. Must enable it for this chat',
         ),
-    ).toHaveCount(3);
+    ).toHaveCount(3, { timeout: 30e3 });
 
     await newChat();
     await toggleMCPTools(["fetch"]);
@@ -898,6 +908,14 @@ test.describe("Main test", () => {
 
     /** Should not request approval for the other 2 requests */
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "Fetched in parallel successfully",
+      {
+        timeout: 30e3,
+      },
+    );
+    await page.getByTestId("ToolUseMessage.toggleGroup").last().click();
 
     await expect(
       page.locator(
@@ -1183,6 +1201,7 @@ test.describe("Main test", () => {
       .locator("#totp_recovery_code")
       .textContent();
     const createAndFillCode = async () => {
+      await page.waitForTimeout(1200);
       const code = authenticator.generate(Base64Secret ?? "");
       await page
         .getByTestId("Setup2FA.Enable.ConfirmCode")
@@ -1190,7 +1209,7 @@ test.describe("Main test", () => {
         .fill(code);
       await page.getByTestId("Setup2FA.Enable.Confirm").click();
     };
-    createAndFillCode();
+    await createAndFillCode();
 
     /** Allow 1 invalid code */
     const INVALID_CODE = "Invalid code";
@@ -1200,7 +1219,7 @@ test.describe("Main test", () => {
       (await setupErrorNode.count()) &&
       (await setupErrorNode.textContent())?.includes(INVALID_CODE)
     ) {
-      createAndFillCode();
+      await createAndFillCode();
     }
 
     /** Using token */

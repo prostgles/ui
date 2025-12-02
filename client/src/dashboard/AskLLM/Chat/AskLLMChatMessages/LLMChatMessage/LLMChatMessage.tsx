@@ -47,6 +47,7 @@ export const LLMChatMessage = memo(
             loadedSuggestions={loadedSuggestions}
           />
         : <LLMGroupedToolCallsMessage
+            messages={messageItem.messages}
             messageContentItems={messageItem.messageContentItems}
             onToggle={messageItem.onToggle}
             mcpServerIcons={mcpServerIcons}

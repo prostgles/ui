@@ -1,6 +1,6 @@
 import { type PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import Btn from "@components/Btn";
-import { MarkdownMonacoCode } from "@components/Chat/MarkdownMonacoCode/MarkdownMonacoCode";
+import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { mdiDatabaseEdit, mdiLanguageTypescript, mdiTools } from "@mdi/js";
@@ -41,7 +41,7 @@ export const LoadSuggestedWorkflow = ({
             </Chip>
           );
         })} */}
-        <MarkdownMonacoCode
+        <MonacoCodeInMarkdown
           key={"agent_definitions"}
           className="f-1 h-full"
           language={"json"}
@@ -55,7 +55,7 @@ export const LoadSuggestedWorkflow = ({
           loadedSuggestions={undefined}
           codeString={JSON.stringify(data.agent_definitions, null, 2)}
         />
-        <MarkdownMonacoCode
+        <MonacoCodeInMarkdown
           key={"workflow_function_definition"}
           className="f-1 h-full"
           language={"typescript"}

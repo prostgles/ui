@@ -52,7 +52,7 @@ export default class BackupManager {
     this.connMgr = connMgr;
     this.installedPrograms = installedPrograms;
 
-    const checkAutomaticBkps = async () => {
+    const checkAutomaticBackupsForEachConnection = async () => {
       const connections = await this.dbs.connections.find({
         $existsJoined: {
           database_configs: { "backups_config->>enabled": "true" },
@@ -63,14 +63,14 @@ export default class BackupManager {
       }
     };
     this.automaticBackupInterval = setInterval(() => {
-      void checkAutomaticBkps();
+      void checkAutomaticBackupsForEachConnection();
     }, HOUR / 4);
     void (async () => {
       await this.dbConfSub?.unsubscribe();
       this.dbConfSub = await dbs.database_configs.subscribe(
         {},
         { select: { backups_config: 1 }, limit: 0 },
-        checkAutomaticBkps,
+        checkAutomaticBackupsForEachConnection,
       );
     })();
   }
@@ -150,7 +150,7 @@ export default class BackupManager {
           clean: true,
           format: "c",
         },
-        status: { ok: `${new Date()}` },
+        status: { ok: new Date().toISOString() },
       },
       { returning: "*" },
     );
@@ -195,38 +195,38 @@ export default class BackupManager {
       res.sendStatus(401);
       return;
     }
-    const bkpId = req.path.slice(ROUTES.BACKUPS.length + 1);
-    if (!bkpId) {
+    const backupId = req.path.slice(ROUTES.BACKUPS.length + 1);
+    if (!backupId) {
       res.sendStatus(404);
       return;
     }
-    const bkp = await this.dbs.backups.findOne({ id: bkpId });
-    if (!bkp) {
+    const backup = await this.dbs.backups.findOne({ id: backupId });
+    if (!backup) {
       res.sendStatus(404);
-    } else {
-      const { fileMgr } = await getFileMgr(this.dbs, bkp.credential_id);
-      if (bkp.credential_id) {
-        /* Allow access to file for a period equivalent to a download rate of 50KBps */
-        const presignedURL = await fileMgr.getFileCloudDownloadURL(
-          bkp.id,
-          1 * 60, // 1 minute
-        );
-        if (!presignedURL) {
-          res.sendStatus(404);
-        } else {
-          res.redirect(presignedURL);
-        }
+      return;
+    }
+    const { fileMgr } = await getFileMgr(this.dbs, backup.credential_id);
+    if (backup.credential_id) {
+      /* Allow access to file for a period equivalent to a download rate of 50KBps */
+      const presignedURL = await fileMgr.getFileCloudDownloadURL(
+        backup.id,
+        1 * 60, // 1 minute
+      );
+      if (!presignedURL) {
+        res.sendStatus(404);
       } else {
-        try {
-          res.type(bkp.content_type);
-          res.sendFile(
-            path.resolve(
-              path.join(getRootDir() + ROUTES.BACKUPS + "/" + bkp.id),
-            ),
-          );
-        } catch (err) {
-          res.sendStatus(404);
-        }
+        res.redirect(presignedURL);
+      }
+    } else {
+      try {
+        res.type(backup.content_type);
+        res.sendFile(
+          path.resolve(
+            path.join(getRootDir() + ROUTES.BACKUPS + "/" + backup.id),
+          ),
+        );
+      } catch (err) {
+        res.sendStatus(404);
       }
     }
   };

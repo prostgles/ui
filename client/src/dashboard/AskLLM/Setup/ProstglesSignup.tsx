@@ -61,7 +61,7 @@ export const ProstglesSignup = ({
         color="action"
         className="mt-1"
         data-command="ProstglesSignup.continue"
-        onClick={async () => {
+        onClickPromise={async () => {
           setError(undefined);
           try {
             const { token, host, error, hasError } =
@@ -83,7 +83,8 @@ export const ProstglesSignup = ({
             await dbs.llm_credentials.insert({
               provider_id: "Prostgles",
               api_key,
-              user_id: undefined as any,
+              //@ts-ignore
+              user_id: undefined,
             });
             /** This will trigger a page reload. Keep it last to ensure any errors during token validation are shown */
             await dbs.global_settings.update(

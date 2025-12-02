@@ -86,7 +86,10 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       last_updated: `TIMESTAMPTZ DEFAULT NOW()`,
     },
     constraints: {
-      dwa: { type: "UNIQUE", content: "server_name, config" },
+      unique_server_and_config: {
+        type: "UNIQUE",
+        content: "server_name, config",
+      },
     },
   },
   mcp_server_tools: {

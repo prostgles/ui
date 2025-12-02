@@ -3,14 +3,14 @@ import React, { useCallback } from "react";
 import Markdown from "react-markdown";
 import { classOverride, type DivProps } from "../Flex";
 import {
-  MarkdownMonacoCode,
-  type MarkdownMonacoCodeProps,
-} from "./MarkdownMonacoCode/MarkdownMonacoCode";
+  MonacoCodeInMarkdown,
+  type MonacoCodeInMarkdownProps,
+} from "./MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import "./Marked.css";
 
 export type MarkedProps = DivProps &
   Pick<
-    MarkdownMonacoCodeProps,
+    MonacoCodeInMarkdownProps,
     "codeHeader" | "sqlHandler" | "loadedSuggestions"
   > & {
     content: string;
@@ -46,7 +46,7 @@ export const Marked = (props: MarkedProps) => {
         );
       }
       return (
-        <MarkdownMonacoCode
+        <MonacoCodeInMarkdown
           className="my-1"
           key={codeString}
           codeHeader={codeHeader}

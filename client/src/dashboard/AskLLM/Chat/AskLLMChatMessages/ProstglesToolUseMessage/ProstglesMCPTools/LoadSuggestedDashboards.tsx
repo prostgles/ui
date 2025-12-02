@@ -3,7 +3,7 @@ import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { isObject } from "@common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
-import { MarkdownMonacoCode } from "@components/Chat/MarkdownMonacoCode/MarkdownMonacoCode";
+import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import Chip from "@components/Chip";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { pageReload } from "@components/Loader/Loading";
@@ -78,7 +78,7 @@ export const LoadSuggestedDashboards = ({
               </Chip>
             }
           >
-            <MarkdownMonacoCode
+            <MonacoCodeInMarkdown
               codeString={
                 tryCatchV2(() => JSON.stringify(w, null, 2)).data ?? ""
               }

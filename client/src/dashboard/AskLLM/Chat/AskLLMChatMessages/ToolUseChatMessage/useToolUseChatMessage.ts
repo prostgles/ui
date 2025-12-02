@@ -1,6 +1,6 @@
 import { getMCPToolNameParts } from "@common/prostglesMcp";
 import { useMemo } from "react";
-import type { MarkdownMonacoCodeProps } from "@components/Chat/MarkdownMonacoCode/MarkdownMonacoCode";
+import type { MonacoCodeInMarkdownProps } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import type { UseLLMChatProps } from "../../useLLMChat";
 import type { DBSSchema } from "@common/publishUtils";
 import { getToolUseResult } from "./utils/getToolUseResult";
@@ -11,7 +11,7 @@ export type ToolUseMessageProps = Pick<UseLLMChatProps, "mcpServerIcons"> & {
   nextMessage: DBSSchema["llm_messages"] | undefined;
   toolUseMessageContentIndex: number;
   workspaceId: string | undefined;
-} & Pick<MarkdownMonacoCodeProps, "sqlHandler" | "loadedSuggestions">;
+} & Pick<MonacoCodeInMarkdownProps, "sqlHandler" | "loadedSuggestions">;
 
 export const useToolUseChatMessage = (props: ToolUseMessageProps) => {
   const { message, nextMessage, toolUseMessageContentIndex, mcpServerIcons } =

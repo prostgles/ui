@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
-import type { MarkdownMonacoCodeProps } from "./MarkdownMonacoCode";
+import type { MonacoCodeInMarkdownProps } from "./MonacoCodeInMarkdown";
 import { getFieldsWithActions } from "src/dashboard/W_SQL/parseSqlResultCols";
 import { getSQLResultTableColumns } from "src/dashboard/W_SQL/getSQLResultTableColumns";
 
 export const useOnRunSQL = ({
   codeString,
   sqlHandler,
-}: MarkdownMonacoCodeProps) => {
+}: MonacoCodeInMarkdownProps) => {
   const [sqlResult, setSqlResult] = useState<SQLResult | undefined>(undefined);
 
   const onRunSQL = useCallback(
@@ -64,5 +64,5 @@ export const useOnRunSQL = ({
 type SQLResult =
   | { state: "ok"; rows: any[]; columns: any[] }
   | { state: "ok-command-result"; commandResult: string }
-  | { state: "error"; error: any }
+  | { state: "error"; error: unknown }
   | { state: "loading"; query: string; withCommit: boolean };

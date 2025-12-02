@@ -79,8 +79,15 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
 
       onFinish(undefined, uploadedFile);
     } catch (error: unknown) {
-      //@ts-ignore
-      onFinish(error ?? new Error("Error"), undefined);
+      if (error instanceof Error) {
+        onFinish(error, undefined);
+      } else {
+        console.error("Unknown error in uploadToS3 ", error);
+        onFinish(
+          new Error("Unknown error in uploadToS3. Check logs"),
+          undefined,
+        );
+      }
     }
   };
 
@@ -129,4 +136,4 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
   };
 };
 
-export const getCloudClient = (config: S3Config) => getS3CloudClient(config);
+export const getCloudClient = getS3CloudClient;

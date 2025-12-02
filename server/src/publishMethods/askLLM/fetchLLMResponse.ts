@@ -49,18 +49,26 @@ export const fetchLLMResponse = async (
     const serialisableError = getSerialisableError(err);
     return Promise.reject(serialisableError);
   });
+  if (!res.ok) {
+    const contentType = res.headers.get("content-type");
+    const errorData = {
+      statusText: res.statusText,
+      statusCode: res.status,
+      error: "" as unknown,
+    };
+    if (contentType?.includes("application/json")) {
+      errorData.error = await res.json();
+    } else {
+      errorData.error = await res.text();
+    }
 
+    throw new Error(
+      `Failed to fetch LLM response: ${res.statusText} ${JSON.stringify(errorData)}`,
+    );
+  }
   const responseClone = res.clone();
 
   const responseData = (await readFetchStream(res)) as AnyObject | undefined;
-  if (!res.ok) {
-    if (isObject(responseData)) {
-      throw responseData;
-    }
-    throw new Error(
-      `Failed to fetch LLM response: ${res.statusText} ${JSON.stringify(responseData)}`,
-    );
-  }
   if (!responseData) {
     throw new Error("No response data from LLM");
   }

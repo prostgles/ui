@@ -1,5 +1,5 @@
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import { MarkdownMonacoCode } from "@components/Chat/MarkdownMonacoCode/MarkdownMonacoCode";
+import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import { FlexCol } from "@components/Flex";
 import { type JSONB } from "prostgles-types";
 import React from "react";
@@ -17,7 +17,7 @@ export const ExecuteSQL = ({ message }: ProstglesMCPToolsProps) => {
   const codeString = initialData.sql;
   return (
     <FlexCol className="ExecuteSQL ai-start gap-0 f-1">
-      <MarkdownMonacoCode
+      <MonacoCodeInMarkdown
         key={codeString}
         codeHeader={undefined}
         language={LANG}

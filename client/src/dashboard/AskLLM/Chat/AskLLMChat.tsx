@@ -173,6 +173,9 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       rootChildStyle={{
         flex: 1,
       }}
+      contentStyle={{
+        width: "100%",
+      }}
       rootChildClassname="AskLLMChat"
     >
       {activeChat && (
@@ -180,8 +183,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           className="min-h-0 f-1"
           style={{
             whiteSpace: "pre-line",
-            maxWidth: `min(100vw, ${CHAT_WIDTH}px)`,
-            width: `${CHAT_WIDTH - 100}px`,
+            minWidth: "max(800px, 100%)",
+            width: "100%",
           }}
         >
           <Chat

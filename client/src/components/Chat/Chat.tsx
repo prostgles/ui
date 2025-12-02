@@ -29,6 +29,10 @@ export type ChatProps = {
   disabledInfo?: string;
   isLoading: boolean;
   actionBar?: React.ReactNode;
+  /**
+   * Defaults to 800
+   */
+  maxWidth?: number;
 };
 
 export const Chat = (props: ChatProps) => {
@@ -42,6 +46,7 @@ export const Chat = (props: ChatProps) => {
     actionBar,
     isLoading,
     allowedMessageTypes,
+    maxWidth = 800,
   } = props;
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -66,77 +71,91 @@ export const Chat = (props: ChatProps) => {
       className={classOverride("chat-container chat-component ", className)}
       style={style}
     >
-      <div
-        className="message-list "
-        data-command="Chat.messageList"
-        ref={(e) => {
-          if (e) {
-            setScrollRef(e);
-          }
-        }}
-      >
-        {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
-        ))}
-      </div>
-
-      <div
-        title={disabledInfo}
-        data-command="Chat.sendWrapper"
-        className={
-          "send-wrapper relative rounded m-p5 p-p5 " +
-          (disabledInfo ? "no-interaction not-allowed" : "") +
-          (isEngaged ? "active-shadow bg-action" : "bg-color-2 ")
-        }
-      >
-        <FlexCol
-          className={
-            "f-1 " + (chatIsLoading ? "no-interaction not-allowed" : "")
-          }
-          {...divHandlers}
+      <FlexCol className="chat-scroll-wrapper w-full o-auto f-1">
+        <div
+          className="message-list"
+          style={{
+            maxWidth: `min(${maxWidth}px, 100%)`,
+            width: "100%",
+            margin: "0 auto",
+          }}
+          data-command="Chat.messageList"
+          ref={(e) => {
+            if (e) {
+              setScrollRef(e);
+            }
+          }}
         >
-          <ChatFileAttachments
-            filesAsBase64={filesAsBase64}
-            setFiles={setFiles}
+          {messages.map((message) => (
+            <ChatMessage key={message.id} message={message} />
+          ))}
+        </div>
+      </FlexCol>
+
+      <FlexCol className="chat-scroll-wrapper w-full p-p5">
+        <div
+          title={disabledInfo}
+          data-command="Chat.sendWrapper"
+          style={{
+            maxWidth: `min(${maxWidth}px, 100%)`,
+            alignSelf: "center",
+            width: "100%",
+          }}
+          className={
+            "send-wrapper relative rounded p-p5 " +
+            (disabledInfo ? "no-interaction not-allowed" : "") +
+            (isEngaged ? "active-shadow bg-action" : "bg-color-2 ")
+          }
+        >
+          <FlexCol
+            className={
+              "f-1 " + (chatIsLoading ? "no-interaction not-allowed" : "")
+            }
+            {...divHandlers}
+          >
+            <ChatFileAttachments
+              filesAsBase64={filesAsBase64}
+              setFiles={setFiles}
+            />
+            <textarea
+              ref={textAreaRef}
+              name="chat-input"
+              data-command={"Chat.textarea"}
+              className="no-scroll-bar text-0 bg-transparent"
+              rows={1}
+              style={{
+                maxHeight: "50vh",
+              }}
+              disabled={!!disabledInfo || chatIsLoading}
+              defaultValue={getCurrentMessage()}
+              onPaste={handleOnPaste}
+              onKeyDown={(e) => {
+                if (
+                  textAreaRef.current &&
+                  !e.shiftKey &&
+                  e.key.toLocaleLowerCase() === "enter"
+                ) {
+                  e.preventDefault();
+                  void sendMsg();
+                }
+              }}
+            />
+            {actionBar}
+          </FlexCol>
+          <ChatSendControls
+            allowedMessageTypes={allowedMessageTypes}
+            onStopSending={onStopSending}
+            onAddFiles={onAddFiles}
+            disabledInfo={disabledInfo}
+            files={files}
+            onSend={onSend}
+            sendMsg={sendMsg}
+            sendingMsg={sendingMsg}
+            setCurrentMessage={setCurrentMessage}
+            textAreaRef={textAreaRef}
           />
-          <textarea
-            ref={textAreaRef}
-            name="chat-input"
-            data-command={"Chat.textarea"}
-            className="no-scroll-bar text-0 bg-transparent"
-            rows={1}
-            style={{
-              maxHeight: "50vh",
-            }}
-            disabled={!!disabledInfo || chatIsLoading}
-            defaultValue={getCurrentMessage()}
-            onPaste={handleOnPaste}
-            onKeyDown={(e) => {
-              if (
-                textAreaRef.current &&
-                !e.shiftKey &&
-                e.key.toLocaleLowerCase() === "enter"
-              ) {
-                e.preventDefault();
-                void sendMsg();
-              }
-            }}
-          />
-          {actionBar}
-        </FlexCol>
-        <ChatSendControls
-          allowedMessageTypes={allowedMessageTypes}
-          onStopSending={onStopSending}
-          onAddFiles={onAddFiles}
-          disabledInfo={disabledInfo}
-          files={files}
-          onSend={onSend}
-          sendMsg={sendMsg}
-          sendingMsg={sendingMsg}
-          setCurrentMessage={setCurrentMessage}
-          textAreaRef={textAreaRef}
-        />
-      </div>
+        </div>
+      </FlexCol>
     </div>
   );
 };

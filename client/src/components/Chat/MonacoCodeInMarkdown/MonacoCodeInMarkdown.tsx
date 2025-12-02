@@ -19,7 +19,7 @@ const LANGUAGE_FALLBACK = new Map<string, string>([
   ["ts", "typescript"],
 ]);
 
-export type MarkdownMonacoCodeProps = {
+export type MonacoCodeInMarkdownProps = {
   title?: string;
   className?: string;
   language: string;
@@ -30,7 +30,7 @@ export type MarkdownMonacoCodeProps = {
   sqlHandler: DBHandlerClient["sql"];
   loadedSuggestions: LoadedSuggestions | undefined;
 };
-export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
+export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
   const { language, codeString, title, loadedSuggestions, className } = props;
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -52,18 +52,19 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
 
   const onListenToContentHeightChange = useCallback(
     (editor: editor.IStandaloneCodeEditor) => {
-      let stoppedScroll = false;
-      function updateScrollHandling() {
-        if (stoppedScroll) return;
+      const updateScrollHandling = () => {
         const contentHeight = editor.getContentHeight();
         const editorHeight = editor.getLayoutInfo().height;
-        if (editor.getValue() && contentHeight - 20 > editorHeight) {
-          editor.updateOptions({
-            scrollbar: { handleMouseWheel: contentHeight > editorHeight },
-          });
-          stoppedScroll = true;
-        }
-      }
+        const allowScroll = Boolean(
+          editor.getValue() && contentHeight - 20 > editorHeight,
+        );
+        editor.updateOptions({
+          scrollbar: {
+            handleMouseWheel: allowScroll,
+            alwaysConsumeMouseWheel: allowScroll,
+          },
+        });
+      };
 
       // call after initial layout and on content change
       updateScrollHandling();

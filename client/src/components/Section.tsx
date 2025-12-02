@@ -100,7 +100,6 @@ export const Section = (props: SectionProps) => {
             " p-p5 ta-left font-20 bold jc-start mr-1"
           }
           title="Expand section"
-          variant="text"
           disabledInfo={disabledInfo}
           style={{
             width: undefined,

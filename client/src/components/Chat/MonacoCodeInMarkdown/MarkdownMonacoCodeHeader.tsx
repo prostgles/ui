@@ -12,11 +12,11 @@ import { download } from "../../../dashboard/W_SQL/W_SQL";
 import Btn from "../../Btn";
 import { CopyToClipboardBtn } from "../../CopyToClipboardBtn";
 import { FlexCol, FlexRow } from "../../Flex";
-import type { MarkdownMonacoCodeProps } from "./MarkdownMonacoCode";
+import type { MonacoCodeInMarkdownProps } from "./MonacoCodeInMarkdown";
 import type { useOnRunSQL } from "./useOnRunSQL";
 
 export const MarkdownMonacoCodeHeader = (
-  props: MarkdownMonacoCodeProps & {
+  props: MonacoCodeInMarkdownProps & {
     titleOrLanguage: string;
     fullscreen: boolean;
     setFullscreen: (val: boolean) => void;

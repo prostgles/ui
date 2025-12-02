@@ -9,7 +9,7 @@ import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import { getKeys } from "prostgles-types";
+import { getKeys, type FilterItem } from "prostgles-types";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
 import { checkClientIP } from "../authConfig/sessionUtils";
@@ -194,8 +194,8 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
                   $existsJoined: {
                     "database_configs.access_control.access_control_user_types":
                       userTypeFilter["access_control_user_types"],
-                  } as any,
-                },
+                  },
+                } as FilterItem,
                 { $existsJoined: { access_control_connections: {} } },
               ],
             },

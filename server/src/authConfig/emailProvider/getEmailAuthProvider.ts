@@ -17,14 +17,21 @@ export const getEmailAuthProvider = async (
     !emailAuthConfig?.enabled ||
     !dbs ||
     emailAuthConfig.signupType !== "withPassword"
-  )
+  ) {
     return undefined;
+  }
   if (!website_url) throw "website_url is required for email auth";
 
   const mailClient = await getEmailSenderWithMockTest(auth_providers);
+
   return {
-    minPasswordLength: emailAuthConfig.minPasswordLength,
-    requirePassword: true,
+    minPasswordLength:
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      emailAuthConfig.signupType === "withPassword" ?
+        emailAuthConfig.minPasswordLength
+      : undefined,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    requirePassword: emailAuthConfig.signupType === "withPassword",
     onRegister: async (args) =>
       onEmailRegistration(args, {
         mailClient,
