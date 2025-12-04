@@ -11,7 +11,7 @@ import { InfoRow } from "@components/InfoRow";
 import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { pickKeys } from "prostgles-types";
-import { CredentialSelector } from "../BackupAndRestore/CredentialSelector";
+import { CloudStorageCredentialSelector } from "../BackupAndRestore/CloudStorageCredentialSelector";
 import { FileStorageDelete } from "./FileStorageDelete";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 
@@ -204,7 +204,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
 
         {storageType === "S3" ?
           <div className="flex-row-wrap gap-2 h-fit">
-            <CredentialSelector
+            <CloudStorageCredentialSelector
               dbs={dbs}
               dbsMethods={dbsMethods}
               dbsTables={dbsTables}

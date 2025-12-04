@@ -20,7 +20,7 @@ type P = ReturnType<typeof useAccessControlSearchParams> & {
 
 export type AccessRule = Required<DBSSchema["access_control"]> & {
   access_control_user_types: {
-    ids: string[];
+    ids: DBSSchema["user_types"]["id"][];
   }[];
   isApplied: boolean | undefined;
   published_methods: Required<DBSSchema["published_methods"]>[];

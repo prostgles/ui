@@ -11,6 +11,7 @@ import {
   Tray,
   type SafeStorage,
 } from "electron";
+import { setContextMenu } from "./setContextMenu";
 import * as fs from "fs";
 import * as path from "path";
 // import { getProtocolHandler } from "./getProtocolHandler";
@@ -181,6 +182,7 @@ const createWindow = () => {
     height: startupHeight,
     icon: iconPath,
   });
+  setContextMenu(mainWindow);
   mainWindow.setMenuBarVisibility(false);
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     // open url in a browser and prevent default

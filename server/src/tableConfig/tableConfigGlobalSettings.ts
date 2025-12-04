@@ -130,6 +130,12 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
         label: "Failed login rate limit options",
         info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" },
       },
+      auth_created_user_type: {
+        info: {
+          hint: "User type assigned to new users. Defaults to 'default'",
+        },
+        sqlDefinition: `TEXT REFERENCES user_types`,
+      },
       auth_providers: {
         info: {
           hint: "The provided credentials will allow users to register and sign in. The redirect uri format is {website_url}/auth/{providerName}/callback",
@@ -137,11 +143,6 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
         nullable: true,
         jsonbSchemaType: {
           website_url: { type: "string", title: "Website URL" },
-          created_user_type: {
-            type: "string",
-            optional: true,
-            title: "User type assigned to new users. Defaults to 'default'",
-          },
           email: {
             optional: true,
             oneOfType: [

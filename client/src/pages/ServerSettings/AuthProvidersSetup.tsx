@@ -110,7 +110,7 @@ export const AuthProviderSetup = ({
     return <Loading />;
   }
 
-  const { auth_providers } = global_settings;
+  const { auth_providers, auth_created_user_type } = global_settings;
 
   return (
     <FlexCol className="AuthProviderSetup f-1">
@@ -134,14 +134,14 @@ export const AuthProviderSetup = ({
         <FormField
           label={t.AuthProviderSetup["Default user type"]}
           data-command="AuthProviderSetup.defaultUserType"
-          value={auth_providers?.created_user_type ?? "default"}
+          value={auth_created_user_type ?? "default"}
           fullOptions={
             userTypes?.map((ut) => ({
               key: ut.id,
               subLabel: ut.description ?? "",
             })) ?? []
           }
-          onChange={(default_user_type: string) => {
+          onChange={(default_user_type: DBSSchema["user_types"]["id"]) => {
             if (default_user_type === "admin") {
               const result = window.confirm(
                 t.AuthProviderSetup[
@@ -150,10 +150,13 @@ export const AuthProviderSetup = ({
               );
               if (!result) return;
             }
-            void updateAuth({
-              ...auth_providers,
-              created_user_type: default_user_type || undefined,
-            });
+
+            void dbs.global_settings.update(
+              {},
+              {
+                auth_created_user_type: default_user_type,
+              },
+            );
           }}
           hint={
             t.ServerSettings[
@@ -161,7 +164,7 @@ export const AuthProviderSetup = ({
             ]
           }
         />
-        {auth_providers?.created_user_type === "admin" && (
+        {auth_created_user_type === "admin" && (
           <InfoRow variant="filled" color="danger">
             {
               t.AuthProviderSetup[

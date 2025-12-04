@@ -98,7 +98,7 @@ export const getWhatToRenderOnSVG = async (
     childAffectingStyles.position = style.position;
   }
 
-  const foreignObject = await getForeignObject(element, style, bbox, x, y);
+  const foreignObject = await getForeignObject(element, style, x, y);
   const fontIcon = getFontIconElement(element);
   const image =
     isSVGNode(element) ?

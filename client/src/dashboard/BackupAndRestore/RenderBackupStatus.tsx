@@ -42,10 +42,13 @@ export const RenderBackupStatus = ({
       <div className="text-1p5">
         <ProgressBar
           message={
-            !status.loading.loaded ?
+            !status.loading.loaded || status.loading.loaded < 0 ?
               "Preparing..."
             : `Processed ${bytesToSize(status.loading.loaded || 0)}/${total ? bytesToSize(total) : "unknown"}`
           }
+          style={{
+            minWidth: "150px",
+          }}
           value={status.loading.loaded || 0}
           totalValue={status.loading.total || 0}
         />

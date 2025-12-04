@@ -2,8 +2,13 @@ import { dashboardSvgif } from "svgScreenshots/dashboard.svgif";
 import { fileImporter } from "svgScreenshots/fileImporter.svgif";
 import { schemaDiagramSvgif } from "svgScreenshots/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
-import { getDataKeyElemSelector } from "../Testing";
-import { getDashboardUtils, openTable, type PageWIds } from "../utils/utils";
+import { getCommandElemSelector, getDataKeyElemSelector } from "../Testing";
+import {
+  closeWorkspaceWindows,
+  getDashboardUtils,
+  openTable,
+  type PageWIds,
+} from "../utils/utils";
 import { accountSvgif } from "./account.svgif";
 import { aiAssistantSvgif } from "./aiAssistant.svgif";
 import { commandPaletteSvgif } from "./commandPalette.svgif";
@@ -24,15 +29,18 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
-  backup_and_restore: backupAndRestoreSvgif,
-  table: tableSvgif,
-  smartform: async (page, { openConnection }, { addSceneAnimation }) => {
+  smart_form: async (page, { openConnection }, { addSceneAnimation }) => {
     await openConnection("food_delivery");
+    await closeWorkspaceWindows(page);
     await openTable(page, "orders");
-    await addSceneAnimation(getDataKeyElemSelector("dashboard.goToConnConfig"));
-    await addSceneAnimation(getDataKeyElemSelector("config.smartform"));
+    await addSceneAnimation({
+      selector: getCommandElemSelector("dashboard.window.viewEditRow"),
+      nth: 0,
+    });
     await page.waitForTimeout(1500);
   },
+  backup_and_restore: backupAndRestoreSvgif,
+  table: tableSvgif,
   ai_assistant: aiAssistantSvgif,
   timechart: timechartSvgif,
   account: accountSvgif,

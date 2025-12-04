@@ -190,7 +190,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       description?: null | string;
-      id: string;
+      id: "AWS" | "Cloudflare"
     };
   };
   credentials: {
@@ -201,13 +201,13 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       bucket?: null | string;
-      endpoint_url: string;
+      endpoint_url?: string;
       id?: number;
       key_id: string;
       key_secret: string;
       name?: null | string;
       region?: null | string;
-      type: string;
+      type: "AWS" | "Cloudflare"
       user_id?: null | string;
     };
   };
@@ -260,7 +260,8 @@ export type DBGeneratedSchema = {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
-      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: "withMagicLink";  enabled?: boolean;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
+      auth_created_user_type?: null | "admin" | "public" | "default"
+      auth_providers?: null | {    website_url: string;   email?: |  {  signupType: "withMagicLink";  enabled?: boolean;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
  |  {  signupType: "withPassword";  enabled?: boolean;  minPasswordLength?: number;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: "login" | "none" | "consent" | "select_account" | "create";  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };   customOAuth?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  displayName: string;  displayIconPath?: string;  authorizationURL: string;  tokenURL: string;  authOpts?: {  scope: string[]; }; };  };
       enable_logs?: boolean;
       id?: number;
@@ -653,7 +654,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      id: string;
+      id: "web" | "api_token" | "mobile"
     };
   };
   sessions: {
@@ -727,7 +728,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      id: string;
+      id: "active" | "disabled"
     };
   };
   user_types: {
@@ -738,7 +739,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       description?: null | string;
-      id: string;
+      id: "admin" | "public" | "default"
     };
   };
   users: {
@@ -766,8 +767,8 @@ export type DBGeneratedSchema = {
        |  {  type: "password-w-email-confirmation";  email_confirmation: |  {  status: "confirmed";  date: string; } |  {  status: "pending";  confirmation_code: string;  date: string; }; }
        |  {  type: "magic-link";  otp_code: string;  date: string;  used_on?: string; }
        |  {  type: "OAuth";  provider: "google" | "facebook" | "github" | "microsoft" | "customOAuth";  user_id: string;  profile: any; }
-      status?: string;
-      type?: string;
+      status?: "active" | "disabled"
+      type?: "admin" | "public" | "default"
       username: string;
     };
   };
@@ -816,7 +817,7 @@ export type DBGeneratedSchema = {
     columns: {
       description?: null | string;
       en?: null | string;
-      id: string;
+      id: "fixed" | "editable"
     };
   };
   workspaces: {

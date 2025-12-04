@@ -15,10 +15,12 @@ import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMo
 import { checkClientIP } from "../authConfig/sessionUtils";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
 import { getPublishLLM } from "./getPublishLLM";
+import type { DBSSchema } from "@common/publishUtils";
 
-export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
-  params,
-) => {
+export const publish: Publish<
+  DBGeneratedSchema,
+  SessionUser<DBSSchema["users"]>
+> = async (params) => {
   const { dbo: db, user, db: _db, clientReq } = params;
 
   if (!user || !user.id) {
@@ -169,6 +171,11 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
       insert: {
         fields: { id: 0 },
         forcedData,
+        postValidate: ({ row }) => {
+          if (row.type !== "AWS" && !row.endpoint_url) {
+            throw "Endpoint URL is required for non-AWS credentials";
+          }
+        },
       },
       update: "*",
     },

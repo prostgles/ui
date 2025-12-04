@@ -3,13 +3,10 @@ import { drawShapesOnSVG } from "../../../dashboard/Charts/drawShapes/drawShapes
 import { SVG_NAMESPACE } from "../domToSVG";
 import { getBBoxCode, type SVGScreenshotNodeType } from "../domToThemeAwareSVG";
 import { fontIconToSVG } from "../graphics/fontIconToSVG";
-import {
-  cloneAnimations,
-  copyAnimationStyles,
-} from "../graphics/getForeignObject";
 import { addImageFromDataURL, imgToSVG } from "../graphics/imgToSVG";
 import { textToSVG } from "../text/textToSVG";
 import { canvasToDataURL } from "../utils/canvasToDataURL";
+import { getAnimationsHandler } from "../utils/copyAnimationStylesToSvg";
 import { getWhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
 import { isElementNode } from "../utils/isElementVisible";
 import { toFixed } from "../utils/toFixed";
@@ -40,6 +37,10 @@ export const elementToSVG = async (
   parentSvg: SVGElement | SVGGElement,
   context: SVGContext,
 ) => {
+  /** Ensures bbox calculations are stable */
+
+  const copyAnimations = getAnimationsHandler(element);
+
   const _whatToRender = await getWhatToRenderOnSVG(element, context, parentSvg);
 
   const { elemInfo, ...whatToRender } = _whatToRender;
@@ -82,13 +83,14 @@ export const elementToSVG = async (
     }
   });
 
-  // if (
-  //   element instanceof HTMLButtonElement &&
-  //   element.className.includes("SmartFormFieldForeignKey")
-  // ) {
-  //   debugger;
-  // }
-  rectangleToSVG(g, element, style, elemInfo, whatToRender, bboxCode);
+  const rectElem = rectangleToSVG(
+    g,
+    element,
+    style,
+    elemInfo,
+    whatToRender,
+    bboxCode,
+  );
 
   if (whatToRender.text?.length) {
     whatToRender.text.forEach((textForSVG) => {
@@ -155,11 +157,6 @@ export const elementToSVG = async (
   } else if (image?.type === "img") {
     await imgToSVG(g, image.element, elemInfo, context);
   } else if (image?.type === "maskedElement") {
-    /** Ensures bbox calculations are stable */
-    element.getAnimations().forEach((animation) => {
-      animation.pause();
-      animation.currentTime = 0;
-    });
     const { width, height, x, y } = element.getBoundingClientRect();
     const dataUrl = decodeURIComponent(
       style.maskImage.split(",")[1]!.slice(0, -2),
@@ -183,14 +180,13 @@ export const elementToSVG = async (
       );
     }
 
-    // Extract keyframes from the original element's styles
-    copyAnimationStyles(style, wrapperG);
-    const animationStyles = cloneAnimations(element);
-    if (animationStyles) {
-      context.defs.appendChild(animationStyles);
-    }
+    copyAnimations?.(style, wrapperG, context.cssDeclarations);
 
     parentSvg.appendChild(wrapperG);
+  }
+
+  if (image?.type !== "maskedElement") {
+    copyAnimations?.(style, rectElem?.path ?? g, context.cssDeclarations);
   }
 
   for (const child of getChildrenSortedByZIndex(element)) {

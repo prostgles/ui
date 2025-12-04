@@ -5,7 +5,6 @@ import type { Express } from "express";
 import type { Server as httpServer } from "http";
 import path from "path";
 import type pg from "pg-promise/typescript/pg-subset";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type {
@@ -32,6 +31,7 @@ import {
 } from "./connectionManagerUtils";
 import { initConnectionManager } from "./initConnectionManager";
 import { startConnection } from "./startConnection";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
@@ -246,7 +246,7 @@ export class ConnectionManager {
 
   syncUsers = async (
     db: DBWithUsers,
-    userTypes: string[],
+    userTypes: DBSSchema["users"]["type"][],
     syncableColumns: (keyof DBSSchema["users"])[],
   ) => {
     if (!db.users || !this.dbs || !syncableColumns.length) return;
@@ -327,7 +327,11 @@ export class ConnectionManager {
               userTypes &&
               requiredColumns.every((c) => syncableColumns.includes(c))
             ) {
-              void this.syncUsers(db, userTypes, syncableColumns);
+              void this.syncUsers(
+                db,
+                userTypes as DBSSchema["users"]["type"][],
+                syncableColumns,
+              );
             }
           }
         }

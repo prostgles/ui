@@ -175,6 +175,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       }}
       contentStyle={{
         width: "100%",
+        overflow: "unset",
       }}
       rootChildClassname="AskLLMChat"
     >
@@ -183,7 +184,10 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           className="min-h-0 f-1"
           style={{
             whiteSpace: "pre-line",
-            minWidth: "max(800px, 100%)",
+            /**
+             * Expand to 800px but shrink on smaller screens
+             */
+            minWidth: "min(100%, max(800px, 100%))",
             width: "100%",
           }}
         >
@@ -198,6 +202,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               },
               file: true,
             }}
+            maxWidth={CHAT_WIDTH}
             onSend={sendMessage}
             isLoading={chatIsLoading}
             onStopSending={onStopSending}

@@ -622,7 +622,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       },
       key_id: `TEXT NOT NULL`,
       key_secret: `TEXT NOT NULL`,
-      endpoint_url: `TEXT NOT NULL`,
+      endpoint_url: `TEXT NOT NULL DEFAULT ''`,
       bucket: { sqlDefinition: `TEXT` },
       region: { sqlDefinition: `TEXT`, info: { hint: "e.g. auto, us-east-1" } },
     },

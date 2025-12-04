@@ -2,7 +2,7 @@ import type { PGDumpParams } from "@common/utils";
 import { DESTINATIONS } from "@common/utils";
 import { Select } from "@components/Select/Select";
 import React from "react";
-import { CredentialSelector } from "./CredentialSelector";
+import { CloudStorageCredentialSelector } from "./CloudStorageCredentialSelector";
 import type { DumpOptionsProps } from "./PGDumpOptions";
 
 type P = Pick<DumpOptionsProps, "dbs" | "dbsTables" | "dbsMethods"> & {
@@ -34,7 +34,7 @@ export const DumpLocationOptions = ({
         }}
       />
       {destination === "Cloud" && (
-        <CredentialSelector
+        <CloudStorageCredentialSelector
           dbs={dbs}
           dbsTables={dbsTables}
           dbsMethods={dbsMethods}

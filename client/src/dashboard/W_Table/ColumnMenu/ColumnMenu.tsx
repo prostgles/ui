@@ -41,7 +41,7 @@ import {
 import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
 import { useReactiveState } from "../../../appUtils";
 import Popup from "@components/Popup/Popup";
-import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
+import { useIsMounted } from "../../BackupAndRestore/CloudStorageCredentialSelector";
 import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";

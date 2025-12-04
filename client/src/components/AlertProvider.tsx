@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import Popup, { type PopupProps } from "./Popup/Popup";
 import ErrorComponent from "./ErrorComponent";
-import { useIsMounted } from "src/dashboard/BackupAndRestore/CredentialSelector";
+import { useIsMounted } from "src/dashboard/BackupAndRestore/CloudStorageCredentialSelector";
 
 type AlertDialogProps = Pick<
   PopupProps,

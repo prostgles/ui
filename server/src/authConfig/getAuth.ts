@@ -59,7 +59,8 @@ export const getAuth = async (
 ) => {
   const { globalSettings } = authSetupData;
   setExpressAppOptions(app, { globalSettings });
-  const authProviders = globalSettings?.auth_providers;
+  const { auth_providers, auth_created_user_type = null } =
+    globalSettings ?? {};
   const auth = {
     sidKeyName,
     onUseOrSocketConnected: getOnUseOrSocketConnected(dbs, authSetupData),
@@ -76,7 +77,7 @@ export const getAuth = async (
     loginSignupConfig: {
       app,
 
-      login: await getLogin(authProviders),
+      login: await getLogin(auth_providers),
 
       logout: async (sid, db, _db: DB) => {
         if (!sid) throw "err";
@@ -123,13 +124,19 @@ export const getAuth = async (
       onMagicLinkOrOTP,
       localLoginMode:
         (
-          authProviders?.email?.signupType === "withMagicLink" &&
-          authProviders.email.enabled
+          auth_providers?.email?.signupType === "withMagicLink" &&
+          auth_providers.email.enabled
         ) ?
           "email"
         : "email+password",
-      signupWithEmail: await getEmailAuthProvider(authProviders, dbs),
-      loginWithOAuth: getOAuthLoginProviders(authProviders),
+      signupWithEmail:
+        !auth_providers ? undefined : (
+          await getEmailAuthProvider(
+            { auth_providers, auth_created_user_type },
+            dbs,
+          )
+        ),
+      loginWithOAuth: getOAuthLoginProviders(auth_providers),
     },
   } satisfies AuthConfig<DBGeneratedSchema, SUser>;
   return auth;

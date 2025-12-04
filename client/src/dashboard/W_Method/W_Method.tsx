@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
+import { useIsMounted } from "../BackupAndRestore/CloudStorageCredentialSelector";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";

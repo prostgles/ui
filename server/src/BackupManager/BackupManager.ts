@@ -16,7 +16,7 @@ type DBS = DBOFullyTyped<DBGeneratedSchema>;
 
 import checkDiskSpace from "check-disk-space";
 import type { Request, Response } from "express";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { FilterItem, SubscriptionHandler } from "prostgles-types";
@@ -26,7 +26,7 @@ import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import { getRootDir } from "../electronConfig";
 import { checkAutomaticBackup } from "./checkAutomaticBackup";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 
 export const HOUR = 3600 * 1000;
 

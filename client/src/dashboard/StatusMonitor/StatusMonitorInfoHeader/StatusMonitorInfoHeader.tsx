@@ -7,7 +7,7 @@ import { InfoRow } from "@components/InfoRow";
 import React, { useEffect, useState } from "react";
 import { getServerCoreInfoStr } from "../../../pages/Connections/useConnectionServersList";
 import { isEmpty } from "../../../utils/utils";
-import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
+import { useIsMounted } from "../../BackupAndRestore/CloudStorageCredentialSelector";
 import type { StatusMonitorProps } from "../StatusMonitor";
 import { StatusMonitorConnections } from "../StatusMonitorConnections";
 import { StatusMonitorInfoHeaderCpu } from "./StatusMonitorInfoHeaderCpu";

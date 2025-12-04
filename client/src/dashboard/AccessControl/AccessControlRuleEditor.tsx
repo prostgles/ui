@@ -70,18 +70,15 @@ export const AccessControlRuleEditor = ({
   dbsConnection,
   onCancel,
 }: UserGroupRuleEditorProps) => {
-  const { dbs, dbsTables, dbsMethods, connection, tables } = prgl;
+  const { db, dbs, dbsTables, dbsMethods, connection, tables } = prgl;
   const editedRule = useEditedAccessRule({ action, prgl });
   const { setAction } = useAccessControlSearchParams();
   const [wspErrors, setWspErrors] = useState<string>();
 
   const currentSQLUser: string | undefined = usePromise(
     async () =>
-      await prgl.db.sql?.(
-        `SELECT "current_user"()`,
-        {},
-        { returnType: "value" },
-      ),
+      await db.sql?.(`SELECT "current_user"()`, {}, { returnType: "value" }),
+    [db],
   );
   const type = editedRule?.type;
   if (!editedRule) {

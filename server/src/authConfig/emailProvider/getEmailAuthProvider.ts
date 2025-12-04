@@ -1,18 +1,20 @@
+import type { DBSSchema } from "@common/publishUtils";
 import type { SignupWithEmail } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBS } from "../..";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getEmailSenderWithMockTest } from "./getEmailSenderWithMockTest";
 import { onEmailRegistration } from "./onEmailRegistration";
 
 export const getEmailAuthProvider = async (
-  auth_providers: DBGeneratedSchema["global_settings"]["columns"]["auth_providers"],
+  {
+    auth_providers,
+    auth_created_user_type,
+  }: Pick<
+    DBSSchema["global_settings"],
+    "auth_providers" | "auth_created_user_type"
+  >,
   dbs: DBS | undefined,
 ): Promise<SignupWithEmail | undefined> => {
-  const {
-    email: emailAuthConfig,
-    created_user_type,
-    website_url,
-  } = auth_providers ?? {};
+  const { email: emailAuthConfig, website_url } = auth_providers ?? {};
   if (
     !emailAuthConfig?.enabled ||
     !dbs ||
@@ -37,7 +39,7 @@ export const getEmailAuthProvider = async (
         mailClient,
         dbs,
         websiteUrl: website_url,
-        newUserType: created_user_type || "default",
+        newUserType: auth_created_user_type ?? "default",
       }),
   };
 };

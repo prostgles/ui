@@ -30,7 +30,7 @@ const DAYS_OF_WEEK = [
 import type { DBSSchema } from "@common/publishUtils";
 import type { PGDumpParams } from "@common/utils";
 import FormField from "@components/FormField/FormField";
-import { CredentialSelector } from "./CredentialSelector";
+import { CloudStorageCredentialSelector } from "./CloudStorageCredentialSelector";
 import { DEFAULT_DUMP_OPTS, PGDumpOptions } from "./PGDumpOptions";
 
 type P = Pick<Prgl, "db" | "dbs" | "dbsMethods" | "dbsTables"> & {
@@ -128,7 +128,7 @@ export const AutomaticBackups = ({
             }}
           />
           {!!database_config?.backups_config?.cloudConfig && (
-            <CredentialSelector
+            <CloudStorageCredentialSelector
               dbs={dbs}
               dbsTables={dbsTables}
               dbsMethods={dbsMethods}

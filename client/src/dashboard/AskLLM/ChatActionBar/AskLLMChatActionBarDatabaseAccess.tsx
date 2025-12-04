@@ -1,6 +1,12 @@
-import { mdiDatabase } from "@mdi/js";
+import {
+  mdiDatabase,
+  mdiDatabaseEdit,
+  mdiDatabaseSearch,
+  mdiTable,
+  mdiTableSearch,
+} from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React from "react";
+import React, { useMemo } from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
@@ -30,9 +36,33 @@ export const AskLLMChatActionBarDatabaseAccess = (
     dataPermission?.Mode === "Custom" ?
       dataPermission.tables.map(
         (t) =>
-          `${t.tableName}: ${["select", "update", "insert", "delete"].filter((v) => t[v])}`,
+          `${t.tableName}: ${["select", "update", "insert", "delete"].filter((v) => t[v]).join(", ")}`,
       )
     : undefined;
+
+  const schemaPermission = activeChat.db_schema_permissions;
+  const schemaActiveIcon = useMemo(() => {
+    if (!schemaPermission || schemaPermission.type === "None") {
+      return;
+    }
+    return mdiDatabase;
+  }, [schemaPermission]);
+  const databaseActiveIcon = useMemo(() => {
+    if (!dataPermission || dataPermission.Mode === "None") {
+      return;
+    }
+
+    const { Mode } = dataPermission;
+    const canEditData =
+      dataPermission.Mode === "Custom" &&
+      dataPermission.tables.some((t) => t.update || t.insert || t.delete);
+    return {
+      "Run readonly SQL": mdiDatabaseSearch,
+      Custom: canEditData ? mdiTable : mdiTableSearch,
+      "Run commited SQL": mdiDatabaseEdit,
+    }[Mode];
+  }, [dataPermission]);
+
   return (
     <PopupMenu
       data-command="LLMChatOptions.DatabaseAccess"
@@ -41,17 +71,17 @@ export const AskLLMChatActionBarDatabaseAccess = (
       title="Database access"
       button={
         <Btn
-          iconPath={mdiDatabase}
           {...ChatActionBarBtnStyleProps}
+          iconPath={databaseActiveIcon ?? schemaActiveIcon ?? mdiDatabase}
           title={[
             `Database access for this chat:\n`,
             `Schema read access: ${activeChat.db_schema_permissions?.type ?? "None"}`,
-            `Data: \n ${(tablePermissionInfo || dataPermission?.Mode) ?? "None"}`,
+            `Data: \n ${(tablePermissionInfo?.join(", ") || dataPermission?.Mode) ?? "None"}`,
             allowedFunctions ? `Allowed Functions: ${allowedFunctions}` : "",
           ].join("\n")}
           color={
             (
-              (dataPermission && dataPermission.Mode !== "None") ||
+              (schemaActiveIcon ?? mdiDatabase) ||
               llm_chats_allowed_functions?.length
             ) ?
               "action"

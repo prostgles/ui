@@ -1,9 +1,9 @@
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import type { Users } from "..";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { DAY } from "@common/utils";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
+import type { Users } from "..";
 import { getActiveSession } from "./getActiveSession";
 import { makeSession, parseAsBasicSession } from "./sessionUtils";
-import { DAY } from "@common/utils";
 
 type CreateSessionArgs = {
   user: Users;

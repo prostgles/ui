@@ -1,3 +1,4 @@
+import { fileName } from "utils/utils";
 import type { SVG_SCREENSHOT_DETAILS } from "./SVG_SCREENSHOT_DETAILS";
 import type { SVGifScene } from "./utils/constants";
 import type { SVGIfSpec } from "./utils/saveSVGifs";
@@ -72,9 +73,9 @@ export const getOverviewSvgifSpecs = async (
 
     /** Backup and restore section */
     {
-      fileName: "backup_and_restore",
+      fileName: "backup_and_restore_overview",
       usedExternally: true,
-      scenes: [...sliceScenes("backup_and_restore", 0)],
+      scenes: [...sliceScenes("backup_and_restore", 2)],
     },
 
     {

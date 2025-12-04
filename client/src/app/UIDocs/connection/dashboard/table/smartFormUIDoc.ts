@@ -8,11 +8,11 @@ export const smartFormUIDoc: UIDocElement = {
     "Opens the row card, allowing users to view/edit/delete the selected row.",
   docOptions: { title: "Row card" },
   docs: `
-    SmartForm is an intelligent, auto-generated form system that adapts to your database schema.
+    Smart form is an intelligent, auto-generated form system that adapts to your database schema.
     It provides a user-friendly interface for inserting and updating data with automatic validation,
     foreign key handling, and support for complex data types.
 
-    <img src="./screenshots/smartform.svg" alt="SmartForm screenshot" />
+    <img src="./screenshots/smart_form.svg" alt="SmartForm screenshot" />
 
     ## Features
     - **Auto-generated fields** based on table schema

@@ -65,7 +65,7 @@ export const getSVGif = (
 
   /** Remove defs with empty styles */
   svg.querySelectorAll("defs").forEach((defs) => {
-    if (!defs.textContent || !defs.textContent.trim()) {
+    if (!defs.innerHTML || !defs.innerHTML.trim()) {
       defs.remove();
     }
   });

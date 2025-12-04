@@ -5,48 +5,47 @@ import { classOverride } from "./Flex";
 
 type P = {
   message?: React.ReactNode;
+  style?: React.CSSProperties;
   value: number;
   totalValue: number;
 };
 export const MINI_BARCHART_COLOR = "var(--active)";
 
-export const ProgressBar = ({ message, value, totalValue }: P) => {
+export const ProgressBar = ({ message, value, totalValue, style }: P) => {
   const perc = totalValue > value ? Math.round((100 * value) / totalValue) : -1;
   const lightColor = "var(--bg-action)";
   const height = 4;
   const isIndeterminate = perc === -1;
 
   return (
-    <div className="ProgressBar flex-col gap-p25">
-      {isIndeterminate ?
+    <div className="ProgressBar flex-col gap-p25" style={style}>
+      <div
+        className="ProgressBarOuter shadow"
+        style={{
+          background: lightColor,
+          overflow: "hidden",
+        }}
+      >
         <div
+          className="ProgressBarInner shadow"
           style={{
             borderRadius: `${height / 2}px`,
             height: `${height}px`,
-            backgroundImage: `linear-gradient(90deg,  ${MINI_BARCHART_COLOR} 40%,  ${lightColor} 40%, ${lightColor})`,
-            width: "200px",
-            animation: "indeterminateAnimation 1s infinite linear",
+            background: MINI_BARCHART_COLOR,
+            minHeight: `${height}px`,
+            minWidth: "2px",
+            ...(isIndeterminate ?
+              {
+                animation: "indeterminateTranslateX 1s infinite linear",
+                willChange: "transform",
+                width: `${50}%`,
+              }
+            : {
+                width: `${perc}%`,
+              }),
           }}
         />
-      : <div
-          style={{
-            background: lightColor,
-          }}
-        >
-          <div
-            className="shadow"
-            style={{
-              borderRadius: `${height / 2}px`,
-              height: `${height}px`,
-              background: MINI_BARCHART_COLOR,
-              flex: 1,
-              minHeight: `${height}px`,
-              width: `${perc}%`,
-              minWidth: "2px",
-            }}
-          ></div>
-        </div>
-      }
+      </div>
       <div className={"text-1 "}>{message}</div>
     </div>
   );

@@ -1,7 +1,7 @@
 import type { editor } from "monaco-editor";
 import type { CodeEditorProps, LanguageConfig } from "../CodeEditor";
 import { useEffect } from "react";
-import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
+import { useIsMounted } from "../../BackupAndRestore/CloudStorageCredentialSelector";
 import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 
 export type MonacoEditorImport = typeof import("monaco-editor");

@@ -97,8 +97,11 @@ const removeOverflowedElements = (svg: SVGGElement) => {
       const clipYMin = y;
       const clipXMax = x + width;
       const clipYMax = y + height;
-
+      if (g.querySelector(`[style*=animation]`)) {
+        return;
+      }
       g.childNodes.forEach((child) => {
+        /** Ignore animated elements */
         if (child instanceof SVGGElement || child instanceof SVGTextElement) {
           const elBBox = child.getBoundingClientRect();
           const cXMin = elBBox.x;

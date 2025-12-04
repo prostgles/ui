@@ -1,10 +1,10 @@
-import path from "path";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { FileManager } from "prostgles-server/dist/FileManager/FileManager";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import path from "path";
+import { FileManager } from "prostgles-server/dist/FileManager/FileManager";
 
-import type { Connections, DBS } from "..";
 import { getAge, ROUTES } from "@common/utils";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
+import type { Connections, DBS } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import { getConnectionDetails } from "../connectionUtils/getConnectionDetails";
 import { getRootDir } from "../electronConfig";

@@ -1,7 +1,11 @@
 import { useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
 import { isEmpty } from "prostgles-types";
 import { useMemo, useState } from "react";
-import type { ContextDataObject, TableRulesErrors } from "@common/publishUtils";
+import type {
+  ContextDataObject,
+  DBSSchema,
+  TableRulesErrors,
+} from "@common/publishUtils";
 import { getTableRulesErrors } from "@common/publishUtils";
 import { areEqual, quickClone } from "../../utils/utils";
 import type { AccessControlAction, EditedAccessRule } from "./AccessControl";
@@ -31,11 +35,13 @@ const defaultRule: EditedAccessRule = {
   access_control_methods: [],
 };
 
+export type UserType = DBSSchema["user_types"]["id"];
+
 export type ValidEditedAccessRuleState = (
   | (Extract<AccessControlAction, { type: "edit" }> & {
       rule: EditedAccessRule;
       newRule: EditedAccessRule;
-      initialUserTypes: string[];
+      initialUserTypes: UserType[];
     })
   | {
       type: "create";
@@ -65,7 +71,7 @@ export type ValidEditedAccessRuleState = (
   tableErrors: TableErrors | undefined;
   contextData: ContextDataObject | undefined;
   onChange: (newRule: Partial<Omit<EditedAccessRule, "">>) => void;
-  userTypes: string[];
+  userTypes: UserType[];
   ruleWasEdited: boolean;
   ruleErrorMessage: string | undefined;
   worspaceTableAndColumns: WorspaceTableAndColumns[] | undefined;

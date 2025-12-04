@@ -23,7 +23,7 @@ type P = {
   onChange: (credentialId: number) => void;
 };
 
-export function CredentialSelector({
+export function CloudStorageCredentialSelector({
   selectedId,
   onChange,
   dbs,
@@ -64,6 +64,7 @@ export function CredentialSelector({
       <Select
         className=" "
         label="Cloud credential"
+        data-command="CloudStorageCredentialSelector.selectCredential"
         fullOptions={(credentials ?? []).map((c) => ({
           key: c.id,
           label: `${c.name || `${c.type} - ${c.id}`}`,
@@ -74,7 +75,7 @@ export function CredentialSelector({
           onChange(o);
         }}
       />
-      {credentialsTable && (
+      {credentialsTable && Boolean(credentials?.length) && (
         <ViewMoreSmartCardList
           db={dbs as DBHandlerClient}
           methods={dbsMethods}

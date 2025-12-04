@@ -5,7 +5,7 @@ process.on("unhandledRejection", (reason, p) => {
 import { spawn } from "child_process";
 import type { NextFunction, Request, Response } from "express";
 import path from "path";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
@@ -27,6 +27,7 @@ import {
   tryStartProstgles,
 } from "./init/tryStartProstgles";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 
 const { app, http, io } = initExpressAndIOServers();
 

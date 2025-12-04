@@ -65,27 +65,27 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
           className: "ml-auto",
           onClickPromise: async () => {
             await onSave?.(async () => {
-              if (existingConfig) {
-                await dbs.mcp_server_configs.update(
-                  {
-                    id: existingConfig.id,
-                  },
-                  {
-                    config,
-                  },
-                );
-              } else {
-                await dbs.mcp_server_configs.insert({
-                  server_name: serverName,
-                  config,
-                });
-                await dbs.mcp_servers.update(
-                  {
-                    name: serverName,
-                  },
-                  { enabled: true },
-                );
-              }
+              // if (existingConfig) {
+              // await dbs.mcp_server_configs.update(
+              //   {
+              //     id: existingConfig.id,
+              //   },
+              //   {
+              //     config,
+              //   },
+              // );
+              // } else {
+              await dbs.mcp_server_configs.insert({
+                server_name: serverName,
+                config,
+              });
+              await dbs.mcp_servers.update(
+                {
+                  name: serverName,
+                },
+                { enabled: true },
+              );
+              // }
             })
               .then(() => {
                 onDone(true);

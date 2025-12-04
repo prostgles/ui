@@ -9,7 +9,7 @@ import {
   SmartCardList,
   type SmartCardListProps,
 } from "../SmartCardList/SmartCardList";
-import { StyledInterval } from "../W_SQL/customRenderers";
+import { StyledInterval, type PG_Interval } from "../W_SQL/customRenderers";
 import { orderByCreated } from "./BackupsControls";
 import { RenderBackupLogs } from "./RenderBackupLogs";
 import { RenderBackupStatus } from "./RenderBackupStatus";
@@ -35,7 +35,7 @@ export const BackupsInProgress = ({
           name: "created_ago" as "created",
           label: "Started",
           select: { $ageNow: ["created", null, "second"] },
-          render: (value) => <StyledInterval value={value} />,
+          render: (value: PG_Interval) => <StyledInterval value={value} />,
         },
         {
           name: "status",
@@ -45,7 +45,7 @@ export const BackupsInProgress = ({
         },
         {
           name: "dump_logs",
-          render: (logs, row) => (
+          render: (logs: string, row) => (
             <RenderBackupLogs
               logs={logs}
               completed={!(row.status as any)?.loading}
@@ -81,6 +81,7 @@ export const BackupsInProgress = ({
       tableName="backups"
       btnColor="gray"
       title="Backup in progress:"
+      showTopBar={false}
       tables={dbsTables}
       realtime={true}
       className="mt-2"

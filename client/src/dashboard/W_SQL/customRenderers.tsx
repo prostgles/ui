@@ -14,7 +14,9 @@ const SHORT_NAMES = [
   ["milliseconds", "ms"],
 ] as const;
 
-type PG_Interval = Partial<Record<(typeof SHORT_NAMES)[number][0], number>>;
+export type PG_Interval = Partial<
+  Record<(typeof SHORT_NAMES)[number][0], number>
+>;
 
 export const getPGIntervalAsText = (
   v: AnyObject = {},
