@@ -363,6 +363,8 @@ export type DBGeneratedSchema = {
     columns: {
       auto_approve?: null | boolean;
       chat_id: number;
+      server_config_id?: null | number;
+      server_name: string;
       tool_id: number;
     };
   };
@@ -565,8 +567,9 @@ export type DBGeneratedSchema = {
       error?: null | any;
       id?: number;
       input?: null | any;
+      mcp_server_config_id?: null | number;
       mcp_server_name?: null | string;
-      mcp_tool_name?: null | string;
+      mcp_tool_name: string;
       output?: null | any;
       user_id?: null | string;
     };

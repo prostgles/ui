@@ -7,11 +7,27 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addSceneAnimation, addScene },
 ) => {
-  await openConnection("prostgles_video_demo");
+  await openConnection("crypto");
   await closeWorkspaceWindows(page);
   await addSceneAnimation(getCommandElemSelector("dashboard.goToConnConfig"));
   await addSceneAnimation(getCommandElemSelector("config.bkp"));
-  await addScene();
+
+  /** Delete existing */
+  const deleteAllBtn = page.getByTestId("BackupControls.DeleteAll");
+  if (await deleteAllBtn.count()) {
+    await deleteAllBtn.click();
+    const codeConfirmation = await page
+      .getByTitle("confirmation-code")
+      .textContent();
+
+    if (!codeConfirmation) {
+      throw new Error("Expected confirmation code to be present");
+    }
+    const input = page.locator('input[name="confirmation"]');
+    await input.fill(codeConfirmation);
+    await page.getByTestId("BackupControls.DeleteAll.Confirm").click();
+    await page.waitForTimeout(1000);
+  }
 
   /** Add random credentials */
   await runDbsSql(
@@ -42,70 +58,85 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
       `,
   );
   await addSceneAnimation(getCommandElemSelector("config.bkp.create"));
-  await addSceneAnimation(getDataKey("Cloud"));
-  await addScene();
+  const backupName = "Test";
 
+  await addSceneAnimation(getDataKey("Cloud"));
+  await addSceneAnimation(
+    getCommandElemSelector("CloudStorageCredentialSelector.selectCredential"),
+    undefined,
+    "fast",
+  );
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
   await page.keyboard.press("Escape");
-  await page.keyboard.press("Escape");
+  await addSceneAnimation(getDataKey("Local"), undefined, "fast");
+  await addSceneAnimation(
+    getCommandElemSelector("config.bkp.create.name"),
+    {
+      action: "type",
+      text: backupName,
+    },
+    "fast",
+  );
+  await addSceneAnimation(
+    getCommandElemSelector("config.bkp.create.start"),
+    undefined,
+    "fast",
+  );
+  await page
+    .getByTestId("BackupControls.DeleteAll")
+    .waitFor({ state: "visible", timeout: 20_000 });
 
   const {
     rows: [existingDemoBackup],
-  } = await runDbsSql(page, "SELECT * FROM backups WHERE name = 'Demo'");
+  } = await runDbsSql(
+    page,
+    "SELECT * FROM backups WHERE name = ${backupName} ",
+    { backupName },
+  );
   if (!existingDemoBackup) {
-    throw new Error("Expected existing backup named 'Demo'");
+    throw new Error("Expected existing backup named " + backupName);
   }
 
   const logLines = (existingDemoBackup.dump_logs as string).split("\n");
-  const totalSize = Number(existingDemoBackup.sizeInBytes);
+  const totalSize = Number(existingDemoBackup.dbSizeInBytes);
   const originalCreated = existingDemoBackup.created;
   const created = new Date(originalCreated).toISOString();
   const steps = 3;
+  const query = `
+        UPDATE backups
+        SET status = \${status},
+            dump_logs = \${dump_logs},
+            created = \${created}
+        WHERE name = \${backupName}
+      `;
   for (const [indexFromEnd] of logLines.slice(-steps).entries()) {
     const index = logLines.length - 1 - indexFromEnd;
     const currentPercentage =
-      (logLines.length - steps + index + 1) / logLines.length;
-    await runDbsSql(
-      page,
-      `
-        UPDATE backups
-        SET status = \${status},
-            dump_logs = \${dump_logs},
-            created = \${created}
-        WHERE name = 'Demo'
-      `,
-      {
-        dump_logs: logLines.slice(0, index).join("\n"),
-        created,
-        status: {
-          loading: { loaded: currentPercentage * totalSize, total: totalSize },
-        },
+      !indexFromEnd ? 1 : (
+        -0.6 + (logLines.length - steps + indexFromEnd + 1) / logLines.length
+      );
+    await runDbsSql(page, query, {
+      dump_logs: logLines.slice(0, index).join("\n"),
+      created,
+      status: {
+        loading: { loaded: currentPercentage * totalSize, total: totalSize },
       },
-    );
+      backupName,
+    });
     await page.waitForTimeout(1500);
-    await addScene();
+    await addScene({ animations: [{ type: "wait", duration: 1500 }] });
   }
 
-  await runDbsSql(
-    page,
-    `
-        UPDATE backups
-        SET status = \${status},
-            dump_logs = \${dump_logs},
-            created = \${created}
-        WHERE name = 'Demo'
-      `,
-    {
-      dump_logs: logLines.join("\n"),
-      created: originalCreated,
-      status: {
-        ok: "1",
-      },
+  await runDbsSql(page, query, {
+    dump_logs: logLines.join("\n"),
+    created: originalCreated,
+    status: {
+      ok: "1",
     },
-  );
+    backupName,
+  });
 
   await page.mouse.move(0, 0);
   await page.waitForTimeout(1500);
   await addScene();
-  // await page.getByTestId("config.bkp.create").click();
-  // await page.getByTestId("config.bkp.create.start").click();
 };

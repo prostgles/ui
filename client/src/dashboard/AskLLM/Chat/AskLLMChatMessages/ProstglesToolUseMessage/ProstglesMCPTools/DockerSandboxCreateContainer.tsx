@@ -37,6 +37,7 @@ import {
 import {
   getJSONBObjectSchemaValidationError,
   omitKeys,
+  pickKeys,
   type JSONB,
 } from "prostgles-types";
 import React, { useMemo, useState } from "react";
@@ -248,11 +249,14 @@ const useToolUseResultData = (toolUseResult: ToolResultMessage | undefined) => {
             findArr(content, { type: "text" } as const)?.text
           );
         if (!stringContent) return undefined;
-        const parseResult = getJSONBObjectSchemaValidationError(
+        const schema =
           PROSTGLES_MCP_SERVERS_AND_TOOLS["docker-sandbox"]["create_container"][
             "outputSchema"
-          ]["type"],
-          JSON.parse(stringContent).result,
+          ]["type"];
+        const schemaKeys = Object.keys(schema);
+        const parseResult = getJSONBObjectSchemaValidationError(
+          schema,
+          pickKeys(JSON.parse(stringContent).result, schemaKeys),
           "DockerSandboxCreateContainer output",
         );
         return parseResult.data;

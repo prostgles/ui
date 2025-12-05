@@ -180,13 +180,13 @@ export const elementToSVG = async (
       );
     }
 
-    copyAnimations?.(style, wrapperG, context.cssDeclarations);
+    copyAnimations?.(style, wrapperG, context.cssDeclarations, false);
 
     parentSvg.appendChild(wrapperG);
   }
 
   if (image?.type !== "maskedElement") {
-    copyAnimations?.(style, rectElem?.path ?? g, context.cssDeclarations);
+    copyAnimations?.(style, rectElem?.path ?? g, context.cssDeclarations, true);
   }
 
   for (const child of getChildrenSortedByZIndex(element)) {

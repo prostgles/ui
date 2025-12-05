@@ -1,13 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { Prgl } from "../../../App";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
-import { MCPServerConfig } from "../../../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
 import { mdiClose, mdiTools } from "@mdi/js";
 import type { FilterItem } from "prostgles-types";
+import React, { useEffect, useMemo, useState } from "react";
+import type { Prgl } from "../../../App";
+import { MCPServerConfig } from "../../../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarMCPToolsBtn = ({
@@ -40,8 +40,10 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
       Array.from(new Set(allowedTools?.map((tool) => tool.server_name) ?? [])),
     [allowedTools],
   );
+
   const [serverToConfigure, setServerToConfigure] =
     useState<DBSSchema["mcp_servers"]>();
+
   const { data: mcpServersThatNeedEnabling } = dbs.mcp_servers.useFind(
     {
       enabled: false,
@@ -65,6 +67,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
       { enabled: true },
     );
   }, [dbs.mcp_servers, mcpServersThatNeedEnabling]);
+
   const mcpServersThatConfiguring = mcpServersThatNeedEnabling?.filter(
     (server) => server.config_schema,
   );
@@ -149,6 +152,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
         )}
       {serverToConfigure && (
         <MCPServerConfig
+          chatId={activeChat.id}
           existingConfig={undefined}
           dbs={dbs}
           onDone={() => {

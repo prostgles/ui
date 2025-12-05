@@ -1,11 +1,6 @@
 import { McpToolCallResponse } from "@common/mcp";
-import { DBSSchema } from "@common/publishUtils";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import {
-  StdioClientTransport,
-  StdioServerParameters,
-} from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
   CallToolResultSchema,
@@ -20,29 +15,28 @@ import {
 } from "prostgles-types";
 import { DBS } from "..";
 import { getDockerMCPToolSchemas } from "../DockerManager/getDockerMCP";
-import { checkMCPServerTools } from "./checkMCPServerTools";
-import { connectToMCPServer } from "./connectToMCPServer";
+import {
+  connectToMCPServer,
+  type MCPServerInitInfo,
+} from "./connectToMCPServer";
 import { DefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
 import { fetchMCPResourcesList } from "./fetchMCPResourcesList";
 import { fetchMCPResourceTemplatesList } from "./fetchMCPResourceTemplatesList";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
 import { fetchMCPToolsList } from "./fetchMCPToolsList";
 import { getMCPDirectory } from "./installMCPServer";
-import {
-  McpResourceResponse,
-  McpServer,
-  McpServerEvents,
-  ServersConfig,
-} from "./McpTypes";
+import { McpResourceResponse, McpServer, ServersConfig } from "./McpTypes";
 import { updateMcpServerTools } from "./reloadMcpServerTools";
 
 export type McpConnection = {
+  /**
+   * Actual MCP server name.
+   * server.name is concatenated with config id instance
+   */
+  server_name: string;
   server: McpServer;
   client: Client;
-  transport:
-    | StdioClientTransport
-    | SSEClientTransport
-    | StreamableHTTPClientTransport;
+  transport: StdioClientTransport | StreamableHTTPClientTransport;
   destroy: () => Promise<void>;
 };
 
@@ -52,6 +46,12 @@ export class McpHub {
 
   constructor() {}
 
+  getClient = (serverName: string): Client | undefined => {
+    return Object.values(this.connections).find(
+      (conn) => conn.server_name === serverName,
+    )?.client;
+  };
+
   getServers(): McpServer[] {
     // Only return enabled servers
     return Object.values(this.connections)
@@ -59,14 +59,11 @@ export class McpHub {
       .map((conn) => conn.server);
   }
 
-  private async connectToServer(
-    name: string,
-    config: StdioServerParameters,
-    evs: McpServerEvents,
-  ): Promise<void> {
+  private async connectToServer(initInfo: MCPServerInitInfo): Promise<void> {
+    const { name } = initInfo;
     delete this.connections[name];
     const { data: connection, error } = await tryCatchV2(
-      async () => await connectToMCPServer(name, config, evs),
+      async () => await connectToMCPServer(initInfo),
     );
     if (connection) {
       connection.server.tools = await fetchMCPToolsList(connection.client);
@@ -121,7 +118,12 @@ export class McpHub {
               delete this.connections[name];
             },
           };
-          await this.connectToServer(name, config, eventOptions);
+          await this.connectToServer({
+            name,
+            config,
+            server_name: config.server_name,
+            ...eventOptions,
+          });
         } catch (error) {
           void onLog("error", JSON.stringify(getSerialisableError(error)), "");
           if (isRunningDifferentConfig) {
@@ -218,7 +220,8 @@ export const startMcpHub = async (
   if (mcpHubInitPromise) {
     await mcpHubInitPromise;
     if (!restart) {
-      return mcpHubInitPromise;
+      const res = await mcpHubInitPromise;
+      return res;
     } else {
       mcpHubInitPromise = undefined;
     }
@@ -229,16 +232,18 @@ export const startMcpHub = async (
       await mcpHub.destroy();
     }
     const serversConfig = await fetchMCPServerConfigs(dbs);
+    const serverNames = Array.from(
+      new Set(Object.values(serversConfig).map((s) => s.server_name)),
+    );
     await mcpHub.setServerConnections(serversConfig);
-    await checkMCPServerTools(mcpHub);
-    const serverNames = Object.keys(mcpHub.connections);
     if (serverNames.length) {
+      const serverNamesWithConfig = Object.keys(serversConfig);
       console.log(
-        `McpHub started. Enabled servers (${serverNames.length}): ${serverNames.join()}`,
+        `McpHub started. Enabled servers (${serverNamesWithConfig.length}): ${serverNamesWithConfig.join()}`,
       );
     }
-    for (const [server_name] of Object.entries(serversConfig)) {
-      const client = mcpHub.connections[server_name]?.client;
+    for (const server_name of serverNames) {
+      const client = mcpHub.getClient(server_name); // mcpHub.connections[server_name]?.client;
       if (client) {
         const toolCount = await dbs.mcp_server_tools.count({
           server_name,
@@ -264,7 +269,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
   if (!servers.length) {
     const dockerMCPTools = await getDockerMCPToolSchemas(dbs, undefined);
     const defaultServers = Object.entries(DefaultMCPServers).map(
-      ([name, { mcp_server_tools = [], ...server }]) => {
+      ([name, { ...server }]) => {
         return {
           name,
           cwd:
@@ -272,8 +277,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
               path.join(getMCPDirectory(), name)
             : getMCPDirectory(),
           ...server,
-          mcp_server_tools:
-            name === "docker-sandbox" ? dockerMCPTools : mcp_server_tools,
+          mcp_server_tools: name === "docker-sandbox" ? dockerMCPTools : [],
         };
       },
     );
@@ -310,18 +314,4 @@ export const setupMCPServerHub = async (dbs: DBS) => {
       onCallback("globalSettings");
     },
   );
-};
-
-export const testMCPServerConfig = async (
-  dbs: DBS,
-  config: DBSSchema["mcp_server_configs"],
-) => {
-  const mcpConfig = await fetchMCPServerConfigs(dbs, config);
-  return (
-    await connectToMCPServer(
-      config.server_name,
-      mcpConfig[config.server_name]!,
-      { onLog: () => {}, onTransportClose: () => {} },
-    )
-  ).destroy();
 };

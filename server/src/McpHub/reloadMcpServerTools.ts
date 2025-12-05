@@ -52,10 +52,13 @@ export const updateMcpServerTools = async (
 
 export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
   let mcpHub = await startMcpHub(dbs);
-  let client = mcpHub.connections[serverName]?.client;
+  const connection = Object.values(mcpHub.connections).find(
+    (c) => c.server_name === serverName,
+  );
+  let client = connection?.client;
   if (!client) {
     mcpHub = await startMcpHub(dbs, true);
-    client = mcpHub.connections[serverName]?.client;
+    client = connection?.client;
   }
   return updateMcpServerTools(dbs, serverName, client);
 };

@@ -47,7 +47,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     connectionId,
     connection,
     dbs,
-    dbsTables,
     methods,
     dbsMethods: { stopAskLLM },
   } = prgl;

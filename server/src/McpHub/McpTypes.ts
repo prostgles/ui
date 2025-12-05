@@ -89,5 +89,7 @@ export type McpConfigWithEvents = StdioServerParameters & McpServerEvents;
 
 export type ServersConfig = Record<
   string,
-  Omit<McpConfigWithEvents, "onTransportClose">
+  Omit<McpConfigWithEvents, "onTransportClose"> & {
+    server_name: string;
+  }
 >;

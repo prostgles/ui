@@ -140,7 +140,7 @@ Smart form is an intelligent, auto-generated form system that adapts to your dat
 It provides a user-friendly interface for inserting and updating data with automatic validation,
 foreign key handling, and support for complex data types.
 
-<img src="./screenshots/smart_form.svg" alt="SmartForm screenshot" style="border: 1px solid; margin: 1em 0;" />
+<img src="./screenshots/smart_form.svgif.svg" alt="SmartForm screenshot" style="border: 1px solid; margin: 1em 0;" />
 
 ## Features
 - **Auto-generated fields** based on table schema

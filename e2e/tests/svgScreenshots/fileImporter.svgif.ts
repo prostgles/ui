@@ -1,5 +1,6 @@
 import { getCommandElemSelector, getDataKeyElemSelector } from "Testing";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
+import { runDbSql } from "utils/utils";
 
 export const fileImporter: OnBeforeScreenshot = async (
   page,
@@ -12,6 +13,9 @@ export const fileImporter: OnBeforeScreenshot = async (
 
   await addSceneAnimation(getDataKeyElemSelector("import file"));
 
+  const tableName = "contacts.csv";
+  await runDbSql(page, "DROP TABLE IF EXISTS ${tableName:name}", { tableName });
+  await page.waitForTimeout(500);
   const csvContent = `Name,Email,Age,Department
     Alice Wilson,alice@example.com,28,Engineering
     Charlie Brown,charlie@example.com,32,Marketing
@@ -22,10 +26,11 @@ export const fileImporter: OnBeforeScreenshot = async (
   await addSceneAnimation(getCommandElemSelector("FileBtn"));
 
   await page.getByTestId("FileBtn").setInputFiles({
-    name: "contacts.csv",
+    name: tableName,
     mimeType: "text/plain",
     buffer: Buffer.from(csvContent),
   });
   await page.waitForTimeout(1500);
-  await addScene();
+  await addScene({ animations: [{ type: "wait", duration: 2000 }] });
+  await addSceneAnimation(getCommandElemSelector("FileImporterFooter.import"));
 };

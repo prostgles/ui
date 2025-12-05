@@ -90,6 +90,10 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         type: "UNIQUE",
         content: "server_name, config",
       },
+      unique_server_and_id: {
+        type: "UNIQUE",
+        content: "server_name, id",
+      },
     },
   },
   mcp_server_tools: {
@@ -153,16 +157,23 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   },
   mcp_server_tool_calls: {
     columns: {
-      id: `SERIAL PRIMARY KEY`,
+      id: `SERIAL PRIMARY KEY `,
       chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE SET NULL`,
       user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
       mcp_server_name: `TEXT REFERENCES mcp_servers(name) ON DELETE SET NULL`,
-      mcp_tool_name: `TEXT, FOREIGN KEY  (mcp_server_name, mcp_tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE SET NULL`,
+      mcp_tool_name: `TEXT NOT NULL`,
+      mcp_server_config_id: `INTEGER`,
       input: `JSONB`,
       output: `JSONB`,
       error: `JSON`,
       called: `TIMESTAMPTZ DEFAULT NOW()`,
       duration: `INTERVAL NOT NULL`,
+    },
+    constraints: {
+      mcp_tool_name_server_name_fk:
+        "FOREIGN KEY (mcp_server_name, mcp_tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE SET NULL",
+      mcp_server_config_id_fk:
+        "FOREIGN KEY (mcp_server_name, mcp_server_config_id) REFERENCES mcp_server_configs(server_name, id) ON DELETE SET NULL",
     },
   },
   llm_chats_allowed_mcp_tools: {
@@ -171,7 +182,9 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     },
     columns: {
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      server_name: `TEXT NOT NULL REFERENCES mcp_servers ON DELETE CASCADE`,
       tool_id: `INTEGER NOT NULL REFERENCES mcp_server_tools(id) ON DELETE CASCADE`,
+      server_config_id: `INTEGER REFERENCES mcp_server_configs ON DELETE CASCADE`,
       auto_approve: `BOOLEAN DEFAULT FALSE`,
     },
     indexes: {

@@ -638,6 +638,17 @@ test.describe("Main test", () => {
     await setPromptByText(page, "Create task");
     await sendAskLLMMessage(page, " task ");
 
+    /** Refresh tools */
+    await runDbsSql(
+      page,
+      `UPDATE mcp_servers SET enabled = true WHERE name = 'fetch';`,
+    );
+    await page.waitForTimeout(5e3);
+    await runDbsSql(
+      page,
+      `UPDATE mcp_servers SET enabled = false WHERE name = 'fetch';`,
+    );
+
     await page
       .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
       .click({ timeout: 10e3 });

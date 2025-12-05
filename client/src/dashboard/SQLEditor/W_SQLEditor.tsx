@@ -178,7 +178,7 @@ export type MonacoError = Pick<
 };
 
 import Btn from "@components/Btn";
-import { getDataTransferFiles } from "@components/FileInput/DropZone";
+import { getDataTransferFiles } from "@components/FileInput/useFileDropZone";
 import { FlexCol } from "@components/Flex";
 import {
   MonacoEditor,

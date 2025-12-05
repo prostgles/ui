@@ -19,10 +19,15 @@ const StdioConfigSchema = z.object({
   disabled: z.boolean().optional(),
 });
 
+export type MCPServerInitInfo = McpServerEvents & {
+  name: string;
+  server_name: string;
+  config: StdioServerParameters;
+};
+
 export const connectToMCPServer = (
-  name: string,
-  config: StdioServerParameters,
-  { onLog, onTransportClose }: McpServerEvents,
+  { name, server_name, config, onLog, onTransportClose }: MCPServerInitInfo,
+  // { onLog, onTransportClose }: McpServerEvents,
 ): Promise<McpConnection> => {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise(async (resolve, reject) => {
@@ -75,8 +80,8 @@ export const connectToMCPServer = (
         reject(new Error(`Transport closed`));
       };
 
-      // valid schema
       const connection: McpConnection = {
+        server_name,
         server: {
           name,
           config,

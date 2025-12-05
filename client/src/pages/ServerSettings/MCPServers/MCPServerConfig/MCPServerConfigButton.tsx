@@ -13,7 +13,7 @@ export const MCPServerConfigButton = (
     schema: NonNullable<DBSSchema["mcp_servers"]["config_schema"]>;
   },
 ) => {
-  const { schema, existingConfig, serverName } = props;
+  const { schema, existingConfig, serverName, chatId } = props;
   const { setServerToConfigure } = useMCPServerConfig();
   return (
     <Btn
@@ -21,6 +21,7 @@ export const MCPServerConfigButton = (
         void setServerToConfigure({
           existingConfig,
           serverName,
+          chatId,
         });
       }}
       style={{ flexShrink: 1 }}

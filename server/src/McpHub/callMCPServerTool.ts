@@ -70,16 +70,15 @@ export const callMCPServerTool = async (
         `MCP server ${serverName} ProstglesLocalMCPServers not implemented`,
       );
     }
-    // if (
-    //   chatAllowedMCPTool.allowed_inputs?.length &&
-    //   !chatAllowedMCPTool.allowed_inputs.some((allowedArgs) =>
-    //     isEqual(allowedArgs, toolArguments),
-    //   )
-    // ) {
-    //   throw new Error("Invalid/dissalowed arguments");
-    // }
+
     const mcpHub = await startMcpHub(dbs);
-    const res = await mcpHub.callTool(serverName, toolName, toolArguments);
+    const res = await mcpHub.callTool(
+      [serverName, chatAllowedMCPTool.server_config_id]
+        .filter(Boolean)
+        .join("_"),
+      toolName,
+      toolArguments,
+    );
     return res;
   });
 

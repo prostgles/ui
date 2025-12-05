@@ -4,75 +4,59 @@ import { FlexRow } from "@components/Flex";
 import { SvgIcon } from "@components/SvgIcon";
 import React, { useCallback } from "react";
 import type { DBS } from "../../../dashboard/Dashboard/DBS";
-import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
+import {
+  useMCPServerEnable,
+  type MCPServerChatContext,
+} from "./MCPServerConfig/useMCPServerEnable";
 import { MCPServerToolsGroupToggle } from "./MCPServerTools/MCPServerToolsGroupToggle";
 import type { MCPServerWithToolAndConfigs } from "./useMCPServersListProps";
 import { isDefined } from "src/utils/utils";
 
 export const MCPServerHeaderCheckbox = ({
   mcpServer,
-  llm_chats_allowed_mcp_tools,
-  chatId,
   dbs,
+  chatContext,
 }: {
   mcpServer: MCPServerWithToolAndConfigs;
-  llm_chats_allowed_mcp_tools:
-    | {
-        auto_approve: boolean | null;
-        tool_id: number;
-      }[]
-    | undefined;
-  chatId: number | undefined;
+  chatContext: MCPServerChatContext | undefined;
   dbs: DBS;
 }) => {
   const { mcp_server_tools: mcpServerTools, icon_path } = mcpServer;
+  const { llm_chats_allowed_mcp_tools, chatId } = chatContext ?? {};
   const toolsAllowed = llm_chats_allowed_mcp_tools?.filter((at) =>
     mcpServerTools.some((t) => t.id === at.tool_id),
   );
   const someToolsAllowed = !!toolsAllowed?.length;
   const name = mcpServer.name;
-  const { onToggle, onToggleTools } = useMCPServerEnable({
+  const { onToggleTools } = useMCPServerEnable({
     dbs,
     mcp_server: mcpServer,
-    chatId,
+    chatContext,
   });
 
   const { onErrorAlert } = useOnErrorAlert();
 
-  const onToggleServer = useCallback(
-    (chatId: number) => {
-      onErrorAlert(async () => {
-        let wasEnabled = mcpServer.enabled;
-        if (!mcpServer.enabled && !someToolsAllowed) {
-          wasEnabled = await onToggle();
-        }
-        if (someToolsAllowed) {
-          await dbs.llm_chats_allowed_mcp_tools.delete({
-            chat_id: chatId,
-            tool_id: {
-              $in: toolsAllowed.map((t) => t.tool_id),
-            },
-          });
-        } else if (wasEnabled) {
-          await dbs.llm_chats_allowed_mcp_tools.insert(
-            mcpServerTools.map((t) => ({
-              chat_id: chatId,
-              tool_id: t.id,
-            })),
-          );
-        }
-      });
-    },
-    [
-      someToolsAllowed,
-      onToggle,
-      mcpServer.enabled,
-      dbs,
-      toolsAllowed,
-      mcpServerTools,
-      onErrorAlert,
-    ],
-  );
+  const onToggleServer = useCallback(() => {
+    onErrorAlert(async () => {
+      if (someToolsAllowed) {
+        await onToggleTools(
+          toolsAllowed.map((t) => t.tool_id),
+          "remove",
+        );
+      } else {
+        await onToggleTools(
+          mcpServerTools.map((t) => t.id),
+          "approve",
+        );
+      }
+    });
+  }, [
+    mcpServerTools,
+    onErrorAlert,
+    onToggleTools,
+    someToolsAllowed,
+    toolsAllowed,
+  ]);
 
   return (
     <FlexRow className="bold mx-p25 w-full">
@@ -90,7 +74,7 @@ export const MCPServerHeaderCheckbox = ({
         onClick={
           !chatId || !llm_chats_allowed_mcp_tools ?
             undefined
-          : () => onToggleServer(chatId)
+          : () => onToggleServer()
         }
       >
         {name}

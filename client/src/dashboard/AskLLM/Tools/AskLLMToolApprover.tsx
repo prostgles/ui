@@ -41,7 +41,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     } & ApproveRequest
   >();
 
-  const onRequestToolUse = useCallback(
+  const { db_data_permissions } = activeChat;
+  const requestApproval = useCallback(
     async (req: ApproveRequest, toolUseMessage: ToolUseMessage) => {
       return new Promise<ToolApproval>((resolve) => {
         setMustApprove({
@@ -68,10 +69,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                     auto_approve,
                   },
                 );
-              } else if (
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                req.type === "prostgles-db"
-              ) {
+              } else if (req.type === "prostgles-db") {
                 await dbs.llm_chats.update(
                   {
                     id: activeChatId,
@@ -89,8 +87,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                           auto_approve,
                         }
                       : {
-                          ...(activeChat.db_data_permissions as Extract<
-                            typeof activeChat.db_data_permissions,
+                          ...(db_data_permissions as Extract<
+                            typeof db_data_permissions,
                             { Mode: "Custom" }
                           >),
                           auto_approve,
@@ -116,7 +114,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       dbs.llm_chats_allowed_functions,
       dbs.llm_chats,
       activeChatId,
-      activeChat,
+      db_data_permissions,
     ],
   );
   const nameParts = useMemo(
@@ -124,7 +122,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     [mustApprove],
   );
 
-  useLLMToolsApprover({ ...props, requestApproval: onRequestToolUse });
+  useLLMToolsApprover({ ...props, requestApproval });
 
   if (!mustApprove) return null;
 

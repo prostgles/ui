@@ -120,6 +120,7 @@ export const SearchInput = (props: SearchInputProps) => {
             iconPath={mdiFormatLetterCase}
             style={{
               margin: "1px",
+              visibility: isLoading ? "hidden" : "visible",
             }}
             color={matchCase.value ? "action" : undefined}
             onClick={() => {

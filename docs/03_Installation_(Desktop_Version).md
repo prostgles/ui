@@ -1,6 +1,6 @@
 <h1 id="installation_(desktop_version)"> Installation (Desktop Version) </h1> 
 
-To get started with Prostgles Desktop, download and install the binary file that's appropriate for your operating system (Windows, macOS, or Linux) from [our website](/desktop-download).
+To get started with Prostgles Desktop, download and install the binary file that's appropriate for your operating system (Windows, macOS, or Linux) from [our website](/download).
 
 - **Linux**: We provide **.deb**, **.rpm** or **.AppImage** files to suit your distribution,
 - **macOS**: Open the downloaded **.dmg** file, drag the Prostgles Desktop icon into your Applications folder, and launch the application.

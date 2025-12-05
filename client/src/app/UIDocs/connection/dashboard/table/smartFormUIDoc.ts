@@ -12,7 +12,7 @@ export const smartFormUIDoc: UIDocElement = {
     It provides a user-friendly interface for inserting and updating data with automatic validation,
     foreign key handling, and support for complex data types.
 
-    <img src="./screenshots/smart_form.svg" alt="SmartForm screenshot" />
+    <img src="./screenshots/smart_form.svgif.svg" alt="SmartForm screenshot" />
 
     ## Features
     - **Auto-generated fields** based on table schema

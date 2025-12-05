@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import { useDropZone } from "../FileInput/DropZone";
+import { useFileDropZone } from "../FileInput/useFileDropZone";
 import type { ChatProps } from "./Chat";
 import { useChatOnPaste } from "./useChatOnPaste";
 
@@ -77,7 +77,7 @@ export const useChatState = (
     setCurrentMessage,
   });
 
-  const { isEngaged, ...divHandlers } = useDropZone(onAddFiles);
+  const { isEngaged, ...divHandlers } = useFileDropZone(onAddFiles);
 
   return {
     files,
@@ -97,6 +97,7 @@ export const useChatState = (
     isEngaged,
   };
 };
+
 function blobToBase64(blob: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

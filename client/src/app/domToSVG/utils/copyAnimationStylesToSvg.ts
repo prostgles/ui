@@ -65,11 +65,6 @@ const copyAnimationStylesToSvg = (
       target.style[prop] = value;
     }
   });
-  /**
-   * Important for correct animation scaling in SVG. Otherwise percentages are
-   * calculated based on the viewport, not the element's bounding box.
-   */
-  target.style.transformBox = "fill-box";
   return true;
 };
 
@@ -113,5 +108,20 @@ export const getAnimationsHandler = (sourceElement: Element) => {
     sourceCss: CSSStyleDeclaration,
     wrapperG: SVGElement,
     cssDeclarations: SVGContext["cssDeclarations"],
-  ) => copyAnimationsToSvg(sourceElement, sourceCss, wrapperG, cssDeclarations);
+    /**
+     * Important for correct animation scaling in SVG. Otherwise percentages are
+     * calculated based on the viewport, not the element's bounding box.
+     */
+    addFillBox: boolean,
+  ) => {
+    if (addFillBox) {
+      wrapperG.style.transformBox = "fill-box";
+    }
+    return copyAnimationsToSvg(
+      sourceElement,
+      sourceCss,
+      wrapperG,
+      cssDeclarations,
+    );
+  };
 };

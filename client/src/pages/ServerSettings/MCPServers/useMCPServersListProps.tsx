@@ -4,6 +4,8 @@ import type { DBS } from "../../../dashboard/Dashboard/DBS";
 import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
 import { MCPServerHeaderCheckbox } from "./MCPServerHeaderCheckbox";
 import { MCPServerTools } from "./MCPServerTools/MCPServerTools";
+import { useMCPChatAllowedTools } from "./useMCPChatAllowedTools";
+import { isDefined } from "@common/filterUtils";
 
 export type MCPServerWithToolAndConfigs = DBSSchema["mcp_servers"] & {
   mcp_server_tools: DBSSchema["mcp_server_tools"][];
@@ -18,18 +20,17 @@ export const useMCPServersListProps = (
   const [selectedTool, setSelectedTool] =
     useState<DBSSchema["mcp_server_tools"]>();
 
-  const { data: llm_chats_allowed_mcp_tools } =
-    dbs.llm_chats_allowed_mcp_tools.useSubscribe(
-      {
-        chat_id: chatId,
-      },
-      {
-        select: {
-          tool_id: 1,
-          auto_approve: 1,
-        },
-      },
-    );
+  const { llm_chats_allowed_mcp_tools } = useMCPChatAllowedTools(dbs, chatId);
+  const chatContext = useMemo(() => {
+    if (isDefined(chatId) && llm_chats_allowed_mcp_tools) {
+      return {
+        chatId,
+        llm_chats_allowed_mcp_tools,
+      };
+    }
+    return undefined;
+  }, [chatId, llm_chats_allowed_mcp_tools]);
+
   const filter = useMemo(() => {
     return (
       selectedTool && {
@@ -48,9 +49,8 @@ export const useMCPServersListProps = (
           render: (_, mcpServer) => (
             <MCPServerHeaderCheckbox
               mcpServer={mcpServer}
-              chatId={chatId}
+              chatContext={chatContext}
               dbs={dbs}
-              llm_chats_allowed_mcp_tools={llm_chats_allowed_mcp_tools}
             />
           ),
         },
@@ -80,10 +80,9 @@ export const useMCPServersListProps = (
             return (
               <MCPServerTools
                 server={server}
-                llm_chats_allowed_mcp_tools={llm_chats_allowed_mcp_tools}
                 tools={tools}
                 selectedToolName={selectedTool?.name}
-                chatId={chatId}
+                chatContext={chatContext}
                 dbs={dbs}
               />
             );
@@ -103,13 +102,14 @@ export const useMCPServersListProps = (
           hide: true,
         })),
       ] satisfies FieldConfig<MCPServerWithToolAndConfigs>[],
-    [chatId, dbs, llm_chats_allowed_mcp_tools, selectedTool?.name],
+    [chatContext, dbs, selectedTool?.name],
   );
+
   return {
     selectedTool,
     setSelectedTool,
     filter,
     fieldConfigs,
-    llm_chats_allowed_mcp_tools,
+    chatContext,
   };
 };

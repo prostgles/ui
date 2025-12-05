@@ -68,11 +68,12 @@ export const getConnectionPublishMethods = ({
                 if (arg.type === "Lookup" || arg.type === "Lookup[]") {
                   argType = {
                     ...omitKeys(arg, ["type", "name", "optional"]),
+                    //@ts-ignore
                     lookup: {
                       ...arg.lookup,
                       type: "data",
                     },
-                  } as any;
+                  };
                 }
                 const partialArgSchema: JSONBColumnDef["jsonbSchema"] = {
                   //@ts-ignore

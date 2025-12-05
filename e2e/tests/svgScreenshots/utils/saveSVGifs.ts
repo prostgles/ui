@@ -15,6 +15,7 @@ export type SVGIfSpec = {
 export const saveSVGifs = async (
   page: PageWIds,
   svgifSpecs: { fileName: string; scenes: SVGifScene[] }[],
+  svgifCovers: { fileName: string; svgSceneFileName: string }[],
 ) => {
   await goTo(page, "/invalid-url-to-avoid-loading-anything");
   const svgSceneFiles = getFilesFromDir(SVGIF_SCENES_DIR, ".svg", false);
@@ -38,11 +39,23 @@ export const saveSVGifs = async (
     { svgFiles: svgSceneFiles, svgifSpecs },
   );
 
+  const savePath = SVG_SCREENSHOT_DIR;
+  if (!fs.existsSync(savePath)) {
+    fs.mkdirSync(savePath, { recursive: true });
+  }
   svgifs.forEach(({ fileName, content, scenes }) => {
-    const savePath = SVG_SCREENSHOT_DIR;
-    if (!fs.existsSync(savePath)) {
-      fs.mkdirSync(savePath, { recursive: true });
-    }
     fs.writeFileSync(path.join(savePath, fileName), content);
+  });
+
+  svgifCovers.forEach(({ fileName, svgSceneFileName }) => {
+    const svgFile = svgSceneFiles.find(
+      (f) => f.fileName === svgSceneFileName + ".svg",
+    );
+    if (!svgFile) {
+      throw new Error(
+        `SVG scene file not found: ${svgSceneFileName}. Expecting one of ${svgSceneFiles.map((f) => f.fileName).join(", ")}`,
+      );
+    }
+    fs.writeFileSync(path.join(savePath, fileName + ".svg"), svgFile.content);
   });
 };

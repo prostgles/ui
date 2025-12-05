@@ -110,7 +110,7 @@ export const PGDumpOptions = (props: DumpOptionsProps) => {
   return (
     <div
       className="DumpOptions flex-col gap-1 min-s-0 o-auto bg-inherit"
-      style={{ maxHeight: "800px" }}
+      style={{ maxHeight: "800px", minWidth: "min(500px, 99vw)" }}
     >
       <DumpRestoreAlerts {...{ dbsMethods, connectionId, dbProject }} />
       <Select

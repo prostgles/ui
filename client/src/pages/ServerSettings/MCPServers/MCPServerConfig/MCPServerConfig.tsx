@@ -1,27 +1,29 @@
 import Btn from "@components/Btn";
-import ErrorComponent from "@components/ErrorComponent";
+import { isEqual } from "prostgles-types";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
-import React from "react";
+import React, { useContext, useMemo, useState } from "react";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
-import { useEditableData } from "../../useEditableData";
+import { useOnErrorAlert } from "@components/AlertProvider";
+
+export type MCPServerEnabledConfig = { configId: number };
 
 export type MCPServerConfigProps = {
   dbs: DBS;
   serverName: string;
   existingConfig: { id: number; value: Record<string, string> } | undefined;
-  onDone: (enabled: boolean) => void;
+  chatId: number | undefined;
+  onDone: (res: void | MCPServerEnabledConfig) => void;
 };
 
 export const MCPServerConfig = (props: MCPServerConfigProps) => {
-  const { serverName, existingConfig, dbs, onDone } = props;
-  const {
-    error,
-    onSave,
-    setValue,
-    value: config,
-  } = useEditableData(existingConfig?.value ?? {});
+  const { serverName, existingConfig, dbs, onDone, chatId } = props;
+  const [config, setConfig] = useState(existingConfig?.value ?? {});
+  const canSave = useMemo(
+    () => !isEqual(config, existingConfig?.value),
+    [config, existingConfig?.value],
+  );
 
   const serverInfo = dbs.mcp_servers.useSubscribeOne(
     {
@@ -39,13 +41,14 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
   );
   const existingConfigs = existingConfigData.data ?? [];
   const schema = serverInfo.data?.config_schema;
+  const { onErrorAlert } = useOnErrorAlert();
   if (!schema) return null;
 
   return (
     <Popup
       title={`Configure and enable ${JSON.stringify(serverName)} MCP server`}
       positioning="center"
-      onClose={() => onDone(false)}
+      onClose={() => onDone()}
       data-command="MCPServerConfig"
       rootStyle={{
         maxWidth: "min(600px, 100vw)",
@@ -54,43 +57,59 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
       footerButtons={[
         {
           label: "Cancel",
-          onClick: () => onDone(false),
+          onClick: () => onDone(),
         },
         {
           label: existingConfig ? "Update" : "Enable",
           "data-command": "MCPServerConfig.save",
-          disabledInfo: onSave ? undefined : "No changes",
+          disabledInfo: canSave ? undefined : "No changes",
           variant: "filled",
           color: "action",
           className: "ml-auto",
           onClickPromise: async () => {
-            await onSave?.(async () => {
-              // if (existingConfig) {
-              // await dbs.mcp_server_configs.update(
-              //   {
-              //     id: existingConfig.id,
-              //   },
-              //   {
-              //     config,
-              //   },
-              // );
-              // } else {
-              await dbs.mcp_server_configs.insert({
-                server_name: serverName,
-                config,
-              });
+            await onErrorAlert(async () => {
+              const matchingConfig = existingConfigs.find(
+                (ec) =>
+                  ec.server_name === serverName && isEqual(ec.config, config),
+              );
+
+              const upsertedConfig =
+                matchingConfig ??
+                (await dbs.mcp_server_configs.insert(
+                  {
+                    server_name: serverName,
+                    config,
+                  },
+                  {
+                    returning: "*",
+                  },
+                ));
+              const configId = upsertedConfig.id;
+
+              if (!configId) {
+                throw new Error("Failed to save configuration.");
+              }
               await dbs.mcp_servers.update(
                 {
                   name: serverName,
                 },
                 { enabled: true },
               );
-              // }
-            })
-              .then(() => {
-                onDone(true);
-              })
-              .catch((e) => {});
+              if (chatId) {
+                await dbs.llm_chats_allowed_mcp_tools.update(
+                  {
+                    chat_id: chatId,
+                    server_name: serverName,
+                  },
+                  {
+                    server_config_id: configId,
+                  },
+                );
+              }
+              onDone({ configId });
+            }).catch((e) => {
+              onDone();
+            });
           },
         },
       ]}
@@ -104,7 +123,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
             hint={schema.description}
             value={config[key]}
             onChange={(v) =>
-              setValue({
+              setConfig({
                 ...config,
                 [key]: v,
               })
@@ -131,7 +150,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
                     key={existingConfig.id}
                     variant="faded"
                     onClick={() => {
-                      setValue(existingConfig.config);
+                      setConfig(existingConfig.config);
                     }}
                   >
                     {values}
@@ -141,7 +160,6 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
             </FlexRowWrap>
           </FlexCol>
         )}
-        {error && <ErrorComponent error={error} />}
       </FlexCol>
     </Popup>
   );
@@ -150,7 +168,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
 export type MCPServerConfigContext = {
   setServerToConfigure: (
     p: Omit<MCPServerConfigProps, "onDone" | "dbs">,
-  ) => Promise<boolean>;
+  ) => Promise<void | MCPServerEnabledConfig>;
 };
 
 export const MCPServerConfigContext = React.createContext<
@@ -165,14 +183,14 @@ export const MCPServerConfigProvider = ({
   dbs: DBS;
 }) => {
   const [serverToConfigure, setServerToConfigure] =
-    React.useState<MCPServerConfigProps>();
+    useState<MCPServerConfigProps>();
 
   const value = React.useMemo(() => {
     return {
       setServerToConfigure: async (
         props: Omit<MCPServerConfigProps, "onDone" | "dbs">,
       ) => {
-        return new Promise<boolean>((resolve) => {
+        return new Promise<MCPServerEnabledConfig | void>((resolve) => {
           setServerToConfigure({
             ...props,
             dbs,
@@ -202,7 +220,7 @@ export const MCPServerConfigProvider = ({
 };
 
 export const useMCPServerConfig = () => {
-  const context = React.useContext(MCPServerConfigContext);
+  const context = useContext(MCPServerConfigContext);
   if (!context) {
     throw new Error(
       "useMCPServerConfig must be used within a MCPServerConfigProvider",

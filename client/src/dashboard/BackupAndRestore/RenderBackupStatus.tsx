@@ -50,7 +50,7 @@ export const RenderBackupStatus = ({
             minWidth: "150px",
           }}
           value={status.loading.loaded || 0}
-          totalValue={status.loading.total || 0}
+          totalValue={total || 0}
         />
       </div>
     : null

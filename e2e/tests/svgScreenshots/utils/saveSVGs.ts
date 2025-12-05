@@ -31,17 +31,24 @@ export const saveSVGs = async (page: PageWIds) => {
       svgifSpecs.push(svgifSpec);
       console.time(`Generated SVGif: ${fileName}.svgif.svg`);
 
-      await saveSVGifs(page, [svgifSpec]);
+      await saveSVGifs(page, [svgifSpec], []);
       console.timeEnd(`Generated SVGif: ${fileName}.svgif.svg`);
     } else {
       await saveSVGScreenshot(page, fileName, undefined);
     }
   }
-  const svgifSpecsObj = Object.fromEntries(
+  const svgifSpecsObj = fromEntriesTyped(
     svgifSpecs.map((s) => [s.fileName, s.scenes]),
   );
-  const overviewSvgifSpecs = await getOverviewSvgifSpecs(svgifSpecsObj);
-  await saveSVGifs(page, overviewSvgifSpecs);
+  const { overviewSvgifSpecs, svgifCovers } =
+    await getOverviewSvgifSpecs(svgifSpecsObj);
+  await saveSVGifs(page, overviewSvgifSpecs, svgifCovers);
   await page.waitForTimeout(100);
-  return { svgifSpecs, overviewSvgifSpecs };
+  return { svgifSpecs, overviewSvgifSpecs, svgifCovers };
+};
+
+const fromEntriesTyped = <K extends string, V>(
+  entries: [K, V][],
+): Record<K, V> => {
+  return Object.fromEntries(entries) as Record<K, V>;
 };

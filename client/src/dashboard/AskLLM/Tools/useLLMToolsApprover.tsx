@@ -1,7 +1,6 @@
 import {
   getLLMMessageToolUse,
   isAssistantMessageRequestingToolUse,
-  type LLMMessage,
 } from "@common/llmUtils";
 import type { ProstglesMcpTool } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
@@ -37,7 +36,7 @@ export const useLLMToolsApprover = ({
   usePromise(async () => {
     const lastToolUseMessage = messages
       .slice(-1)
-      .reverse()
+      .toReversed()
       .find(isAssistantMessageRequestingToolUse);
     if (!lastToolUseMessage) {
       return;
@@ -90,7 +89,7 @@ export const useLLMToolsApprover = ({
       }
     }
     if (toolUseRequestsThatNeedApproval.length) {
-      await sendQuery(toolApprovalReponses.filter(isDefined), true);
+      sendQuery(toolApprovalReponses.filter(isDefined), true);
     }
   }, [messages, dbsMethods, activeChat.id, requestApproval, sendQuery]);
 };

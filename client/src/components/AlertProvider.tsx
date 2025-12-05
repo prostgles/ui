@@ -77,8 +77,8 @@ export const useOnErrorAlert = () => {
   const alert = useAlert();
   const getIsMounted = useIsMounted();
   const onErrorAlert = useCallback(
-    (promiseFunc: () => Promise<void>) => {
-      promiseFunc().catch((error) => {
+    async (promiseFunc: () => Promise<void>) => {
+      await promiseFunc().catch((error) => {
         if (!getIsMounted()) return;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         alert.addAlert({ children: <ErrorComponent error={error} /> });

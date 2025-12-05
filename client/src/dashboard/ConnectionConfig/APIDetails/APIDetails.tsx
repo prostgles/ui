@@ -8,6 +8,7 @@ import { APIDetailsTokens } from "./APIDetailsTokens";
 import { APIDetailsWs } from "./APIDetailsWs";
 import { AllowedOriginCheck } from "./AllowedOriginCheck";
 import { ELECTRON_USER_AGENT } from "@common/OAuthUtils";
+import { useOnErrorAlert } from "@components/AlertProvider";
 
 export type APIDetailsProps = PrglState & {
   connection: Prgl["connection"];
@@ -28,6 +29,7 @@ export const APIDetails = (props: APIDetailsProps) => {
     const urlPathCol = table?.columns.find((c) => c.name === "url_path");
     return { table, urlPathCol };
   }, [dbsTables]);
+  const { onErrorAlert } = useOnErrorAlert();
   return (
     <FlexCol className="APIDetails f-1 min-s-0 o-auto gap-2">
       {table && urlPathCol && (
@@ -41,11 +43,13 @@ export const APIDetails = (props: APIDetailsProps) => {
             maxWidth: "300px",
           }}
           onChange={(v) => {
-            if (typeof v !== "string") return;
-            props.dbs.connections.update(
-              { id: props.connection.id },
-              { url_path: v },
-            );
+            void onErrorAlert(async () => {
+              if (typeof v !== "string") return;
+              await dbs.connections.update(
+                { id: props.connection.id },
+                { url_path: v },
+              );
+            });
           }}
         />
       )}

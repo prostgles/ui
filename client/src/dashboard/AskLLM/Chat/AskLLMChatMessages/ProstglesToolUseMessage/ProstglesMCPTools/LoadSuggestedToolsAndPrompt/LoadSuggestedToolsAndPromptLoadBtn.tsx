@@ -56,6 +56,7 @@ export const LoadSuggestedToolsAndPromptLoadBtn = ({
               return {
                 chat_id: chatId,
                 tool_id: t.id,
+                server_name: t.server_name,
                 auto_approve: true,
               };
             }),

@@ -4,33 +4,30 @@ import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { mdiCheck, mdiCheckAll, mdiCheckboxBlankOutline } from "@mdi/js";
 import React, { useMemo } from "react";
 import type { Prgl } from "../../../../App";
-import { useMCPServerEnable } from "../MCPServerConfig/useMCPServerEnable";
+import {
+  useMCPServerEnable,
+  type MCPServerChatContext,
+} from "../MCPServerConfig/useMCPServerEnable";
 
 export const MCPServerTools = ({
   server,
   tools,
-  llm_chats_allowed_mcp_tools,
-  chatId,
+  chatContext,
   dbs,
 }: {
   server: DBSSchema["mcp_servers"] & {
     mcp_server_configs: DBSSchema["mcp_server_configs"][];
   };
   tools: DBSSchema["mcp_server_tools"][];
-  llm_chats_allowed_mcp_tools:
-    | {
-        tool_id: number;
-        auto_approve: boolean | null;
-      }[]
-    | undefined;
+  chatContext: MCPServerChatContext | undefined;
   selectedToolName: string | undefined;
-  chatId: number | undefined;
 } & Pick<Prgl, "dbs">) => {
-  const { onToggle } = useMCPServerEnable({
+  const { onToggleTools } = useMCPServerEnable({
     dbs,
     mcp_server: server,
-    chatId,
+    chatContext,
   });
+  const { llm_chats_allowed_mcp_tools, chatId } = chatContext ?? {};
 
   const toolsSortedByReadonly = useMemo(
     () =>
@@ -81,19 +78,25 @@ export const MCPServerTools = ({
             onClick={
               !chatId ? undefined : (
                 async () => {
+                  const checked = !allowedTool;
                   const data = {
                     tool_id: tool.id,
                     chat_id: chatId,
+                    server_name: server.name,
                   };
-                  await dbs.llm_chats_allowed_mcp_tools.delete(data);
-                  const checked = !allowedTool;
-                  let wasEnabled = server.enabled;
-                  if (!server.enabled) {
-                    wasEnabled = await onToggle();
-                  }
-                  if (checked && wasEnabled) {
-                    await dbs.llm_chats_allowed_mcp_tools.insert(data);
-                  }
+                  // await dbs.llm_chats_allowed_mcp_tools.delete(data);
+                  // const checked = !allowedTool;
+                  // let wasEnabled = server.enabled;
+                  // if (!server.enabled) {
+                  //   wasEnabled = await onToggle();
+                  // }
+                  // if (checked && wasEnabled) {
+                  //   await dbs.llm_chats_allowed_mcp_tools.insert(data);
+                  // }
+                  await onToggleTools(
+                    [tool.id],
+                    checked ? "approve" : "remove",
+                  );
                 }
               )
             }

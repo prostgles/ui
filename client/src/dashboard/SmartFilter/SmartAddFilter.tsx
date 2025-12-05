@@ -228,10 +228,10 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
           {!joinOpts && (
             <SwitchToggle
               data-command="SmartAddFilter.toggleIncludeLinkedColumns"
-              className="mx-p5"
+              className="mx-p5 f-1"
               variant="row-reverse"
               label={{
-                label: "Related/Linked columns",
+                label: "Linked columns",
                 info: "Include columns from tables that can be joined (through existing constraints) to this table",
               }}
               checked={includeLinkedColumns}
@@ -242,9 +242,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
             tableName={tableName}
             tables={tables}
             disabledInfo={
-              includeLinkedColumns ?
-                `Must disable Related/Linked columns`
-              : undefined
+              includeLinkedColumns ? `Must disable Linked columns` : undefined
             }
             {...joinOpts}
             onChange={(jo) => {

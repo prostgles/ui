@@ -43,7 +43,7 @@ export const tableConfigBackups: TableConfig<{ en: 1 }> = {
         info: { hint: "Format: dbname_datetime_uuid" },
       },
       name: {
-        sqlDefinition: `TEXT UNIQUE`,
+        sqlDefinition: `TEXT`,
         info: { hint: "Name of the backup" },
       },
       connection_id: {
@@ -134,6 +134,12 @@ export const tableConfigBackups: TableConfig<{ en: 1 }> = {
           keepLogs: { type: "boolean", optional: true },
         },
         defaultValue: `{ "clean": true, "format": "c", "command": "pg_restore" }`,
+      },
+    },
+    indexes: {
+      unique_name_per_connection: {
+        columns: "name, connection_id",
+        unique: true,
       },
     },
   },

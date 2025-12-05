@@ -16,6 +16,7 @@ import {
   type MCPServerWithToolAndConfigs,
 } from "./useMCPServersListProps";
 import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfig";
+import { isDefined } from "@common/filterUtils";
 
 export type MCPServersProps = Omit<ServerSettingsProps, "auth"> & {
   chatId: number | undefined;
@@ -29,14 +30,9 @@ export const MCPServers = (props: MCPServersProps) => {
   const globalSettings = dbs.global_settings.useSubscribeOne();
   const { mcp_servers_disabled } = globalSettings.data ?? {};
 
-  const {
-    selectedTool,
-    setSelectedTool,
-    filter,
-    fieldConfigs,
-    llm_chats_allowed_mcp_tools,
-  } = useMCPServersListProps(chatId, dbs);
-
+  const { selectedTool, setSelectedTool, filter, fieldConfigs, chatContext } =
+    useMCPServersListProps(chatId, dbs);
+  const { llm_chats_allowed_mcp_tools } = chatContext || {};
   const someToolsAutoApproved = llm_chats_allowed_mcp_tools?.some(
     (t) => t.auto_approve,
   );
@@ -112,6 +108,7 @@ export const MCPServers = (props: MCPServersProps) => {
                 dbs={dbs}
                 dbsMethods={dbsMethods}
                 envInfo={envInfo}
+                chatContext={chatContext}
               />
             )}
           />

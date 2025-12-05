@@ -25,6 +25,7 @@ export const useLLMChatMessages = (props: P) => {
     mcpServerIcons,
   } = props;
   const { status } = activeChat ?? {};
+  // TODO: llmMessages is changed on each render
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChat?.id },
     { orderBy: { created: 1 } },

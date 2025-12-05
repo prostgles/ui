@@ -21,6 +21,7 @@ type P = {
   dbsMethods: DBSMethods;
   selectedId?: number | null;
   onChange: (credentialId: number) => void;
+  style?: React.CSSProperties;
 };
 
 export function CloudStorageCredentialSelector({
@@ -31,6 +32,7 @@ export function CloudStorageCredentialSelector({
   pickFirst,
   dbsMethods,
   pickFirstIfNoOthers,
+  style,
 }: P) {
   const { data: credentials } = dbs.credentials.useSubscribe(
     {},
@@ -60,7 +62,7 @@ export function CloudStorageCredentialSelector({
   if (!MarkerSeverity) return null;
 
   return (
-    <div className="flex-row-wrap ai-end gap-1">
+    <div className="flex-row-wrap ai-end gap-1" style={style}>
       <Select
         className=" "
         label="Cloud credential"
@@ -120,7 +122,7 @@ export function CloudStorageCredentialSelector({
         positioning="top-center"
         title={
           <div className="flex-row ai-center p-p5  w-full gap-1">
-            <Icon path={mdiInformationOutline} size={1} />
+            <Icon path={mdiInformationOutline} />
             <h4 className="m-0 ta-center ">Suggested bucket policy</h4>
           </div>
         }

@@ -238,25 +238,21 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   await runDbSql(page, `CREATE EXTENSION IF NOT EXISTS "postgis"`);
   await page.waitForTimeout(1500);
   /** Map */
-  await monacoType(
-    page,
-    `.ProstglesSQL`,
-    [
-      `SELECT id,`,
-      `ST_SetSRID(`,
-      `  ST_MakePoint(`,
-      `    CAST( 144.9 + (random() - 0.5) * 0.5 AS double precision),  `,
-      `    CAST( -37.8 + (random() - 0.5) * 0.5 AS double precision)  `,
-      `  ),`,
-      `  4326`,
-      `) AS geom`,
-      `FROM generate_series(1, 100) AS id`,
-    ].join("\n"),
-    {
-      deleteAllAndFill: true,
-      keyPressDelay: 0,
-    },
-  );
+  const mapQuery = [
+    `SELECT id,`,
+    `ST_SetSRID(`,
+    `  ST_MakePoint(`,
+    `    CAST( 144.9 + (random() - 0.5) * 0.5 AS double precision),  `,
+    `    CAST( -37.8 + (random() - 0.5) * 0.5 AS double precision)  `,
+    `  ),`,
+    `  4326`,
+    `) AS geom`,
+    `FROM generate_series(1, 100) AS id`,
+  ].join("\n");
+  await monacoType(page, `.ProstglesSQL`, mapQuery, {
+    deleteAllAndFill: true,
+    keyPressDelay: 0,
+  });
   await addScene({
     svgFileName: "map_btn",
     animations: [
@@ -272,6 +268,15 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(2500);
   await addScene({
     svgFileName: "map",
+    caption: "Map visualization",
+  });
+  await monacoType(page, `.ProstglesSQL`, `${mapQuery}\nINNER JOIN `, {
+    deleteAllAndFill: false,
+    keyPressDelay: 0,
+    pressAfterTyping: ["Control+Space"],
+  });
+  await addScene({
+    svgFileName: "map_with_suggestions",
     caption: "Map visualization",
   });
   await page.getByTestId("dashboard.window.closeChart").click();

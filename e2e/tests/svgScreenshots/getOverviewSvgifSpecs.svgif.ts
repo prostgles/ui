@@ -1,11 +1,9 @@
-import { fileName } from "utils/utils";
 import type { SVG_SCREENSHOT_DETAILS } from "./SVG_SCREENSHOT_DETAILS";
 import type { SVGifScene } from "./utils/constants";
-import type { SVGIfSpec } from "./utils/saveSVGifs";
 
 export const getOverviewSvgifSpecs = async (
-  existing: Record<string, SVGifScene[]>,
-): Promise<(SVGIfSpec & { usedExternally?: boolean })[]> => {
+  existing: Record<keyof typeof SVG_SCREENSHOT_DETAILS, SVGifScene[]>,
+) => {
   const sliceScenes = (
     fileName: keyof typeof SVG_SCREENSHOT_DETAILS,
     start: number,
@@ -21,7 +19,7 @@ export const getOverviewSvgifSpecs = async (
     lastScene.animations.push({ type: "wait", duration: 4000 });
     return scenes;
   };
-  const overviewCuts = [
+  const overviewSvgifSpecs = [
     /** Overview section */
     {
       fileName: "linked_data",
@@ -92,5 +90,30 @@ export const getOverviewSvgifSpecs = async (
       ],
     },
   ];
-  return overviewCuts;
+
+  const svgifCovers: { fileName: string; svgSceneFileName: string }[] = [
+    {
+      fileName: "linked_data",
+      svgSceneFileName: existing.dashboard[20]!.svgFileName,
+    },
+    {
+      fileName: "sql_editor",
+      svgSceneFileName: existing.sql_editor[13]!.svgFileName,
+    },
+    {
+      fileName: "sql_editor1",
+      svgSceneFileName: existing.sql_editor[19]!.svgFileName,
+    },
+    {
+      fileName: "backups",
+      svgSceneFileName: existing.backup_and_restore[16]!.svgFileName,
+    },
+
+    {
+      fileName: "ai_assistant",
+      svgSceneFileName: existing.ai_assistant[4]!.svgFileName,
+    },
+  ];
+
+  return { svgifCovers, overviewSvgifSpecs };
 };

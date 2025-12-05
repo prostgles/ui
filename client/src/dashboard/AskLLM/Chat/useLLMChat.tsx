@@ -25,6 +25,7 @@ export const useLLMChat = (props: UseLLMChatProps) => {
     select: { "*": 1, created_ago: { $ageNow: ["created"] } },
     orderBy: { created: -1 },
   });
+
   const latestChat = latestChats?.[0];
   /**
    * Always show the selected chat if it exists otherwise show latest

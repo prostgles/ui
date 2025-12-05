@@ -16,8 +16,10 @@ export const overviewUIDoc = {
     - User authentication (email, third-party OAuth and two-factor authentication)
     - Role-based access control
     - Database management
-    - File storage and management
-    - API integration
+    - File storage and backups (locally or to AWS S3 compatible storage)
+    - TypeScript API with database schema types and end to end type safety
+    - LISTEN NOTIFY support
+    - Mobile friendly
 
     It comes in two versions: 
     - **Prostgles UI** - a web-based application with the complete feature set accessible through any modern browser.

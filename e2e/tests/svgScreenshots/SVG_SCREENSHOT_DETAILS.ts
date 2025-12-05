@@ -3,24 +3,20 @@ import { fileImporter } from "svgScreenshots/fileImporter.svgif";
 import { schemaDiagramSvgif } from "svgScreenshots/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../Testing";
-import {
-  closeWorkspaceWindows,
-  getDashboardUtils,
-  openTable,
-  type PageWIds,
-} from "../utils/utils";
+import { getDashboardUtils, getDataKey, type PageWIds } from "../utils/utils";
 import { accountSvgif } from "./account.svgif";
 import { aiAssistantSvgif } from "./aiAssistant.svgif";
+import { backupAndRestoreSvgif } from "./backupAndRestore.svgif";
 import { commandPaletteSvgif } from "./commandPalette.svgif";
 import { electronSetupSvgif } from "./electronSetup.svgif";
 import { mapSvgif } from "./map.svgif";
 import { navbarSvgif } from "./navbar.svgif";
 import { newConnectionSvgif } from "./newConnection.svgif";
+import { smartFormSvgif } from "./smartForm.svgif";
 import { sqlEditorSvgif } from "./sqlEditor.svgif";
 import { tableSvgif } from "./table.svgif";
 import { timechartSvgif } from "./timechart.svgif";
 import type { getSceneUtils } from "./utils/getSceneUtils";
-import { backupAndRestoreSvgif } from "./backupAndRestore.svgif";
 
 export type OnBeforeScreenshot = (
   page: PageWIds,
@@ -29,16 +25,7 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
-  smart_form: async (page, { openConnection }, { addSceneAnimation }) => {
-    await openConnection("food_delivery");
-    await closeWorkspaceWindows(page);
-    await openTable(page, "orders");
-    await addSceneAnimation({
-      selector: getCommandElemSelector("dashboard.window.viewEditRow"),
-      nth: 0,
-    });
-    await page.waitForTimeout(1500);
-  },
+  smart_form: smartFormSvgif,
   backup_and_restore: backupAndRestoreSvgif,
   table: tableSvgif,
   ai_assistant: aiAssistantSvgif,
@@ -67,10 +54,11 @@ export const SVG_SCREENSHOT_DETAILS = {
     await page.mouse.move(0, 0);
     await page.waitForTimeout(1500);
   },
-  access_control: async (page, { openConnection }) => {
+  access_control: async (page, { openConnection }, { addSceneAnimation }) => {
     await openConnection("prostgles_video_demo");
-    await page.getByTestId("dashboard.goToConnConfig").click();
-    await page.getByTestId("config.ac").click();
+    await addSceneAnimation(getCommandElemSelector("dashboard.goToConnConfig"));
+    await addSceneAnimation(getCommandElemSelector("config.ac"));
+    await addSceneAnimation(getDataKey("default"));
     await page.mouse.move(0, 0);
     await page.waitForTimeout(1500);
   },
@@ -90,15 +78,21 @@ export const SVG_SCREENSHOT_DETAILS = {
       .click();
     await page.waitForTimeout(1500);
   },
-  connection_config: async (page, { openConnection }) => {
+  connection_config: async (
+    page,
+    { openConnection },
+    { addScene, addSceneAnimation },
+  ) => {
     await openConnection("prostgles_video_demo");
-    await page.getByTestId("dashboard.goToConnConfig").click();
-    await page.waitForTimeout(1500);
-  },
-  connection_config_expanded: async (page, { openConnection }) => {
-    await openConnection("prostgles_video_demo");
-    await page.getByTestId("dashboard.goToConnConfig").click();
-    await page.getByTestId("config.files").click();
+    await addSceneAnimation(getCommandElemSelector("dashboard.goToConnConfig"));
+    await addSceneAnimation(getCommandElemSelector("config.status"));
+    await addSceneAnimation(getCommandElemSelector("config.ac"));
+    await addSceneAnimation(getCommandElemSelector("config.files"));
+    await addSceneAnimation(getCommandElemSelector("config.bkp"));
+    await addSceneAnimation(getCommandElemSelector("config.api"));
+    await addSceneAnimation(getCommandElemSelector("config.tableConfig"));
+    await addSceneAnimation(getCommandElemSelector("config.methods"));
+    await addScene();
     await page.waitForTimeout(1500);
   },
 } satisfies Record<
