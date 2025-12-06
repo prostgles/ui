@@ -1,15 +1,14 @@
 import React, { useCallback } from "react";
 
-import { mdiArrowUp, mdiAttachment, mdiSend, mdiStopCircle } from "@mdi/js";
+import { useOnErrorAlert } from "@components/AlertProvider";
+import { mdiArrowUp, mdiAttachment, mdiStopCircle } from "@mdi/js";
+import { ChatActionBarBtnStyleProps } from "src/dashboard/AskLLM/ChatActionBar/AskLLMChatActionBar";
 import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
 import { FlexCol, FlexRow } from "../Flex";
-import { Icon } from "../Icon/Icon";
-import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import type { ChatProps } from "./Chat";
+import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import type { ChatState } from "./useChatState";
-import { useOnErrorAlert } from "@components/AlertProvider";
-import { ChatActionBarBtnStyleProps } from "src/dashboard/AskLLM/ChatActionBar/AskLLMChatActionBar";
 
 const speechFeatureFlagEnabled =
   localStorage.getItem("speechFeatureFlag") === "true";
@@ -44,7 +43,6 @@ export const ChatSendControls = ({
       if (typeof audioOrTranscript === "string") {
         if (autoSend) {
           await onSend(audioOrTranscript, files);
-          setCurrentMessage("");
         } else {
           setCurrentMessage(audioOrTranscript);
         }
@@ -117,7 +115,7 @@ export const ChatSendControls = ({
           disabledInfo={disabledInfo}
           onClick={() => {
             if (!textAreaRef.current) return;
-            onErrorAlert(() => sendMsg());
+            void onErrorAlert(() => sendMsg());
           }}
         />
       }

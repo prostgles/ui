@@ -15,8 +15,8 @@ export const HeaderList = ({ title, iconPath, items }: P) => {
         <div className=" ">{title}</div>
       </FlexRow>
       <ul className="no-decor" style={{ paddingLeft: "2em" }}>
-        {items.map((item) => (
-          <li key={title} className="bold flex-row gap-p5 ai-center m-0 p-0">
+        {items.map((item, index) => (
+          <li key={index} className="bold flex-row gap-p5 ai-center m-0 p-0">
             {item}
           </li>
         ))}

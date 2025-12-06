@@ -148,7 +148,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           isFullscreen ?
             {}
           : {
-              // width: `${CHAT_WIDTH}px`,
+              width: `min(100vw, ${CHAT_WIDTH}px)`,
               minWidth: "0",
               maxWidth: `${CHAT_WIDTH}px`,
             },
@@ -203,6 +203,13 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             }}
             maxWidth={CHAT_WIDTH}
             onSend={sendMessage}
+            currentlyTypedMessage={activeChat.currently_typed_message}
+            onCurrentlyTypedMessageChange={(currently_typed_message) => {
+              void dbs.llm_chats.update(
+                { id: activeChat.id },
+                { currently_typed_message },
+              );
+            }}
             isLoading={chatIsLoading}
             onStopSending={onStopSending}
             actionBar={

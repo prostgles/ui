@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import "./Chat.css";
 
 import { classOverride, FlexCol } from "../Flex";
@@ -33,6 +33,8 @@ export type ChatProps = {
    * Defaults to 800
    */
   maxWidth?: number;
+  currentlyTypedMessage: string | null | undefined;
+  onCurrentlyTypedMessageChange: (currentlyTypedMessage: string) => void;
 };
 
 export const Chat = (props: ChatProps) => {
@@ -47,6 +49,8 @@ export const Chat = (props: ChatProps) => {
     isLoading,
     allowedMessageTypes,
     maxWidth = 800,
+    currentlyTypedMessage,
+    onCurrentlyTypedMessageChange,
   } = props;
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -64,7 +68,25 @@ export const Chat = (props: ChatProps) => {
     divHandlers,
     handleOnPaste,
     isEngaged,
-  } = useChatState({ isLoading, messages, onSend, textAreaRef });
+  } = useChatState({
+    isLoading,
+    messages,
+    onSend,
+    textAreaRef,
+    currentlyTypedMessage,
+    onCurrentlyTypedMessageChange,
+  });
+
+  const onCurrentlyTypedMessageChangeDebounced = useCallback(
+    (value: string) => {
+      const timeoutId = setTimeout(() => {
+        onCurrentlyTypedMessageChange(value);
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    },
+    [onCurrentlyTypedMessageChange],
+  );
 
   return (
     <div
@@ -127,8 +149,11 @@ export const Chat = (props: ChatProps) => {
                 maxHeight: "50vh",
               }}
               disabled={!!disabledInfo || chatIsLoading}
-              defaultValue={getCurrentMessage()}
+              defaultValue={getCurrentMessage() || currentlyTypedMessage || ""}
               onPaste={handleOnPaste}
+              onChange={({ currentTarget }) => {
+                onCurrentlyTypedMessageChangeDebounced(currentTarget.value);
+              }}
               onKeyDown={(e) => {
                 if (
                   textAreaRef.current &&

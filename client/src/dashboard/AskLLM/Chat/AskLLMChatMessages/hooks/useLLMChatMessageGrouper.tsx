@@ -44,7 +44,7 @@ export const useLLMChatMessageGrouper = (props: P) => {
           result.push({
             type: "tool_call_message_group",
             messages: [{ message, nextMessage: llmMessages[index + 1] }],
-            messageContentItems: message.message,
+            messageContentItems: [...message.message],
             firstMessage: message,
             startId: message.id,
             onToggle: () => {

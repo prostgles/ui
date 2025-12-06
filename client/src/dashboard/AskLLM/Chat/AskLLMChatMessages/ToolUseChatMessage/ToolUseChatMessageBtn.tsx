@@ -18,6 +18,7 @@ export const ToolUseChatMessageBtn = ({
   onClick: MouseEventHandler<HTMLButtonElement>;
 }) => {
   const needsResult = displayMode !== "full";
+  const isLoading = !toolUseResult && needsResult;
   return (
     <Btn
       iconPath={!iconName ? mdiTools : undefined}
@@ -44,7 +45,7 @@ export const ToolUseChatMessageBtn = ({
       }
       className="f-1 max-w-fit"
       data-command="ToolUseMessage.toggle"
-      loading={!toolUseResult && needsResult}
+      loading={isLoading}
       children={
         displayMode === "full" ? undefined : (
           <FlexRow className="f-1 min-w-0">

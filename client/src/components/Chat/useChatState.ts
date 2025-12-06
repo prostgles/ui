@@ -7,11 +7,25 @@ import { useChatOnPaste } from "./useChatOnPaste";
 
 export type ChatState = ReturnType<typeof useChatState>;
 export const useChatState = (
-  props: Pick<ChatProps, "messages" | "onSend" | "isLoading"> & {
+  props: Pick<
+    ChatProps,
+    | "messages"
+    | "onSend"
+    | "isLoading"
+    | "currentlyTypedMessage"
+    | "onCurrentlyTypedMessageChange"
+  > & {
     textAreaRef: React.RefObject<HTMLTextAreaElement>;
   },
 ) => {
-  const { messages, onSend, isLoading, textAreaRef: ref } = props;
+  const {
+    messages,
+    onSend,
+    isLoading,
+    textAreaRef,
+    currentlyTypedMessage,
+    onCurrentlyTypedMessageChange,
+  } = props;
 
   const [files, setFiles] = useState<File[]>([]);
   const onAddFiles = useCallback(
@@ -32,15 +46,28 @@ export const useChatState = (
     }
   }, [messages, scrollRef]);
 
-  const getCurrentMessage = useCallback(() => ref.current?.value ?? "", [ref]);
+  const getCurrentMessage = useCallback(
+    () => textAreaRef.current?.value || currentlyTypedMessage || "",
+    [currentlyTypedMessage, textAreaRef],
+  );
   const setCurrentMessage = useCallback(
     (msg: string) => {
-      if (!ref.current) return;
-      ref.current.value = msg;
+      if (!textAreaRef.current) return;
+      textAreaRef.current.value = msg;
     },
-    [ref],
+    [textAreaRef],
   );
 
+  const onCurrentlyTypedMessageChangeDebounced = useCallback(
+    (value: string) => {
+      const timeoutId = setTimeout(() => {
+        onCurrentlyTypedMessageChange(value);
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    },
+    [onCurrentlyTypedMessageChange],
+  );
   const [sendingMsg, setSendingMsg] = useState(false);
 
   const sendMsg = useCallback(async () => {
@@ -52,6 +79,7 @@ export const useChatState = (
     setSendingMsg(true);
     try {
       await onSend(msg, files);
+      setCurrentMessage("");
       setCurrentMessage("");
       setFiles([]);
     } catch (e) {
@@ -72,7 +100,7 @@ export const useChatState = (
   }, [files]);
 
   const { handleOnPaste } = useChatOnPaste({
-    textAreaRef: ref,
+    textAreaRef: textAreaRef,
     onAddFiles,
     setCurrentMessage,
   });
@@ -91,10 +119,10 @@ export const useChatState = (
     setCurrentMessage,
     onAddFiles,
     getCurrentMessage,
-    ref,
     handleOnPaste,
     divHandlers,
     isEngaged,
+    onCurrentlyTypedMessageChangeDebounced,
   };
 };
 

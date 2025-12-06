@@ -186,6 +186,9 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
           hint: "Maximum total cost of the chat in USD. If set to 0 then no limit is applied",
         },
       },
+      currently_typed_message: {
+        sqlDefinition: `TEXT`,
+      },
       ...extraRequestData,
     },
     indexes: {

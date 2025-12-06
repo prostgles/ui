@@ -4,6 +4,7 @@ import {
   isEmpty,
   isObject,
   omitKeys,
+  pickKeys,
   type AnyObject,
   type ProstglesError,
   type ValidatedColumnInfo,
@@ -209,7 +210,14 @@ export const useNewRowDataHandler = (args: Args) => {
     setError(undefined);
   }, [newRowData, newRowDataHandler]);
 
-  const clonedRow = mode?.type === "insert" ? mode.clonedRow : undefined;
+  const maybeClonedRow = mode?.type === "insert" ? mode.clonedRow : undefined;
+  const clonedRow = useMemo(() => {
+    if (!maybeClonedRow) return;
+    const insertableFields = displayedColumns
+      .filter((c) => c.insert)
+      .map((c) => c.name);
+    return pickKeys(maybeClonedRow, insertableFields);
+  }, [displayedColumns, maybeClonedRow]);
 
   useEffect(() => {
     if (mode?.type !== "insert") {
@@ -223,11 +231,14 @@ export const useNewRowDataHandler = (args: Args) => {
         return;
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const defaultColumnData = Object.fromEntries(
       columns
         .map((c) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const value = parseDefaultValue(c, undefined, false);
           if (value === undefined) return;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return [c.name, value];
         })
         .filter(isDefined),

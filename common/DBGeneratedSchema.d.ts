@@ -311,6 +311,7 @@ export type DBGeneratedSchema = {
     columns: {
       connection_id?: null | string;
       created?: null | string;
+      currently_typed_message?: null | string;
       db_data_permissions?: 
        | null
        |  {  Mode: "None"; }
