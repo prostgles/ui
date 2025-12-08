@@ -9,10 +9,9 @@ import {
 } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
-import { getDockerMCP } from "../../DockerManager/getDockerMCP";
+import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
 import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
 import { getPublishedMethodsTools } from "./prostglesLLMTools/getPublishedMethodsTools";
-import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
 
 export type GetLLMToolsArgs = {
   userType: string;
@@ -67,27 +66,23 @@ export const getLLMToolsAllowedInThisChat = async ({
     },
   });
   const tools: Record<string, MCPToolSchemaWithApproveInfo> = {};
-  const dockerMCP = await getDockerMCP(dbs, chat);
+  // const dockerMCP = await getDockerMCP(dbs, chat);
   const mcpToolsWithInfo = mcpTools
     .map(({ id, ...tool }) => {
       const info = llm_chats_allowed_mcp_tools.find(
         ({ tool_id }) => tool_id === id,
       );
-      const toolInfo = dockerMCP.toolSchemas.find((t) => t.name === tool.name);
       if (!info) return;
       return {
         type: "mcp" as const,
         ...tool,
         ...info,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        input_schema: toolInfo?.inputSchema ?? tool.input_schema,
-        description: toolInfo?.description ?? tool.description,
         auto_approve: Boolean(info.auto_approve),
       };
     })
     .filter(isDefined);
 
-  const { mcpToolsWithDocker, prostglesDBTools } = await getProstglesLLMTools({
+  const { prostglesMCPTools, prostglesDBTools } = await getProstglesLLMTools({
     userType,
     dbs,
     chat,
@@ -98,7 +93,7 @@ export const getLLMToolsAllowedInThisChat = async ({
 
   /** Check for name collisions */
   [
-    ...mcpToolsWithDocker,
+    ...prostglesMCPTools,
     ...serverSideFuncTools
       .map(({ id, ...t }) => {
         const info = llm_chats_allowed_functions.find(

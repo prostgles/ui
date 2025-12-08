@@ -2,17 +2,18 @@ process.on("unhandledRejection", (reason, p) => {
   console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
 });
 
-import { spawn } from "child_process";
-import type { NextFunction, Request, Response } from "express";
-import path from "path";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
-import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
-import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesState } from "@common/electronInitTypes";
 import { isObject, type DBSSchema } from "@common/publishUtils";
 import { SPOOF_TEST_VALUE } from "@common/utils";
+import { spawn } from "child_process";
+import type { NextFunction, Request, Response } from "express";
+import path from "path";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
+import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
+import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
 import { sidKeyName } from "./authConfig/sessionUtils";
+import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
@@ -26,8 +27,6 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
-import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 
 const { app, http, io } = initExpressAndIOServers();
 
@@ -258,7 +257,7 @@ export const startServer = async (
   });
 
   const startupResult = await waitForInitialisation();
-  void onReady?.({ port: actualPort }, startupResult);
+  await onReady?.({ port: actualPort }, startupResult);
   return { connMgr };
 };
 

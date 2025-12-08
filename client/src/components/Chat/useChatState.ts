@@ -80,13 +80,19 @@ export const useChatState = (
     try {
       await onSend(msg, files);
       setCurrentMessage("");
-      setCurrentMessage("");
+      onCurrentlyTypedMessageChange("");
       setFiles([]);
     } catch (e) {
       console.error(e);
     }
     setSendingMsg(false);
-  }, [getCurrentMessage, onSend, setCurrentMessage, files]);
+  }, [
+    getCurrentMessage,
+    onSend,
+    setCurrentMessage,
+    files,
+    onCurrentlyTypedMessageChange,
+  ]);
   const chatIsLoading = isLoading || sendingMsg;
 
   const filesAsBase64 = usePromise(async () => {

@@ -116,7 +116,7 @@ export const start = async (params: {
     typeof electronSid !== "string" ||
     typeof onReady !== "function"
   ) {
-    throw "Must provide a valid electronSid: string and onSidWasSet: ()=>void";
+    throw "Must provide a valid electronSid: string and onSidWasSet: () => void";
   }
   electronConfig.isElectron = true;
   electronConfig.electronSid = params.electronSid;

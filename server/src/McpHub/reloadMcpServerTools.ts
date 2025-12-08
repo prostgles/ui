@@ -1,7 +1,6 @@
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { DBS } from "..";
-import { getDockerMCP } from "../DockerManager/getDockerMCP";
-import { ProstglesLocalMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
+import { getProstglesMCPServerWithTools } from "./DefaultMCPServers/ProstglesMCPServers";
 import { fetchMCPToolsList } from "./fetchMCPToolsList";
 import { startMcpHub, type McpConnection } from "./McpHub";
 import { type McpTool } from "./McpTypes";
@@ -12,14 +11,9 @@ export const updateMcpServerTools = async (
   client: McpConnection["client"] | undefined,
 ) => {
   let tools: McpTool[] = [];
-  if (ProstglesLocalMCPServers.includes(serverName)) {
-    tools = (await getDockerMCP(dbs, undefined)).toolSchemas.map(
-      ({ inputSchema, ...tool }) => ({
-        ...tool,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        inputSchema: inputSchema as any,
-      }),
-    );
+  const prostglesMCP = getProstglesMCPServerWithTools(serverName);
+  if (prostglesMCP) {
+    tools = await prostglesMCP.fetchTools(dbs, undefined);
   } else {
     if (!client) {
       throw new Error(

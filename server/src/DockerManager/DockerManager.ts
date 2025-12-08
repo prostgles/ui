@@ -6,10 +6,10 @@ import { createContainer } from "./createContainer";
 import { type CreateContainerParams } from "./createContainer.schema";
 import { dockerMCPServerProxy } from "./dockerMCPServerProxy/dockerMCPServerProxy";
 import {
+  DOCKER_CONTAINER_NAME_PREFIX,
   dockerContainerAuthRegistry,
   type CreateContainerContext,
 } from "./dockerMCPServerProxy/dockerContainerAuthRegistry";
-import { DOCKER_CONTAINER_NAME_PREFIX } from "./getDockerMCP";
 
 let mcpRequestRouter: ReturnType<typeof dockerMCPServerProxy> | undefined;
 

@@ -68,7 +68,7 @@ export const ChatSendControls = ({
   const { onErrorAlert } = useOnErrorAlert();
   const fileRef = React.useRef<HTMLInputElement>(null);
   return (
-    <FlexCol className="as-end jc-center gap-2 ">
+    <FlexCol className="ChatSendControls as-end ai-center jc-center gap-p5">
       <FlexRow className="gap-0">
         {allowedMessageTypes.file && (
           <>

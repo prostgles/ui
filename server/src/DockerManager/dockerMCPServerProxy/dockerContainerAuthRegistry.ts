@@ -1,8 +1,8 @@
 import { execSync } from "child_process";
 import { getKeys, isDefined, pickKeys } from "prostgles-types";
-import { DOCKER_CONTAINER_NAME_PREFIX } from "../getDockerMCP";
 import type { DBSSchema } from "@common/publishUtils";
 import type { GetAuthContext } from "./dockerMCPServerProxy";
+export const DOCKER_CONTAINER_NAME_PREFIX = "prostgles-docker-mcp-sandbox";
 
 export type CreateContainerContext = {
   userId: string;

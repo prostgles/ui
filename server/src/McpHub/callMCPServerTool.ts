@@ -1,14 +1,14 @@
+import type { McpToolCallResponse } from "@common/mcp";
+import type { DBSSchema } from "@common/publishUtils";
 import {
   getJSONBObjectSchemaValidationError,
   getSerialisableError,
   tryCatchV2,
 } from "prostgles-types";
 import type { DBS } from "..";
-import type { McpToolCallResponse } from "@common/mcp";
-import type { DBSSchema } from "@common/publishUtils";
-import { startMcpHub } from "./McpHub";
-import { ProstglesLocalMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
 import { getDockerMCP } from "../DockerManager/getDockerMCP";
+import { getProstglesMCPServerWithTools } from "./DefaultMCPServers/ProstglesMCPServers";
+import { startMcpHub } from "./McpHub";
 
 export const callMCPServerTool = async (
   user: Pick<DBSSchema["users"], "id">,
@@ -52,7 +52,8 @@ export const callMCPServerTool = async (
       throw new Error("Tool invalid or not allowed for this chat");
     }
 
-    if (ProstglesLocalMCPServers.includes(serverName)) {
+    const prostglesMcp = getProstglesMCPServerWithTools(serverName);
+    if (prostglesMcp) {
       if (serverName === "docker-sandbox") {
         const dockerMCP = await getDockerMCP(dbs, chat);
         if (toolName === "create_container") {
@@ -65,6 +66,10 @@ export const callMCPServerTool = async (
         throw new Error(
           `MCP server ${serverName}.${toolName} not implemented for tool ${toolName}`,
         );
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (serverName === "web-search") {
+        throw new Error(`MCP server ${serverName} not implemented yet`);
       }
       throw new Error(
         `MCP server ${serverName} ProstglesLocalMCPServers not implemented`,

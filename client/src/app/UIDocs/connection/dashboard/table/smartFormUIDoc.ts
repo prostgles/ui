@@ -1,4 +1,5 @@
 import type { UIDocElement } from "src/app/UIDocs";
+import { getCommandElemSelector } from "src/Testing";
 
 export const smartFormUIDoc: UIDocElement = {
   type: "popup",
@@ -143,7 +144,7 @@ export const smartFormUIDoc: UIDocElement = {
           title: "Joined records section",
           description:
             "If the current table has other tables referencing it via foreign keys, a section will appear at the bottom of the form showing lists of those related records. This allows users to view and manage data that is linked to the current row.",
-          itemSelector: "[data-command=JoinedRecords.Section]",
+          itemSelector: getCommandElemSelector("JoinedRecords.Section"),
           itemContent: [
             {
               selectorCommand: "JoinedRecords.SectionToggle",

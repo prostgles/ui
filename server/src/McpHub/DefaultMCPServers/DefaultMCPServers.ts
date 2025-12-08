@@ -1,14 +1,48 @@
 import type { MCPServerInfo } from "@common/mcp";
 import { mcpGithub } from "./mcpGithub";
+import { ProstglesMCPServers } from "./ProstglesMCPServers";
 
 export const DefaultMCPServers: Record<
   string,
   Omit<MCPServerInfo, "mcp_server_tools">
 > = {
-  "duckduckgo-search": {
+  filesystem: {
+    icon_path: "FolderOutline",
+    command: "npx",
+    args: [
+      "-y",
+      "@modelcontextprotocol/server-filesystem",
+      "${dir:/path/to/other/allowed/dir}",
+    ],
+    config_schema: {
+      allowedDir: {
+        title: "Allowed Directory",
+        description: "Directory path to allow access to",
+        type: "arg",
+      },
+    },
+  },
+  searxng: {
     icon_path: "Web",
-    command: "uvx",
-    args: ["duckduckgo-mcp-server"],
+    command: "docker",
+    args: [
+      "run",
+      "-i",
+      "--rm",
+      "-e",
+      "SEARXNG_URL",
+      "isokoliuk/mcp-searxng:latest",
+    ],
+    env: {
+      SEARXNG_URL: "YOUR_SEARXNG_INSTANCE_URL",
+    },
+    config_schema: {
+      SEARXNG_URL: {
+        title: "SearXNG instance URL",
+        description: "Example: http://localhost:8080",
+        type: "env",
+      },
+    },
   },
   "brave-search": {
     icon_path: "Web",
@@ -30,22 +64,6 @@ export const DefaultMCPServers: Record<
     command: "uvx",
     args: ["mcp-server-fetch"],
   },
-  filesystem: {
-    icon_path: "FolderOutline",
-    command: "npx",
-    args: [
-      "-y",
-      "@modelcontextprotocol/server-filesystem",
-      "${dir:/path/to/other/allowed/dir}",
-    ],
-    config_schema: {
-      allowedDir: {
-        title: "Allowed Directory",
-        description: "Directory path to allow access to",
-        type: "arg",
-      },
-    },
-  },
   git: {
     icon_path: "Git",
     command: "uvx",
@@ -55,27 +73,6 @@ export const DefaultMCPServers: Record<
         title: "Repository Path",
         description: "Path to the git repository",
         type: "arg",
-      },
-    },
-  },
-  gitlab: {
-    icon_path: "Gitlab",
-    command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-gitlab"],
-    env: {
-      GITLAB_PERSONAL_ACCESS_TOKEN: "<YOUR_TOKEN>",
-      GITLAB_API_URL: "${default:https://gitlab.com/api/v4}",
-    },
-    config_schema: {
-      GITLAB_PERSONAL_ACCESS_TOKEN: {
-        title: "GitLab Personal Access Token",
-        description: "Personal access token for GitLab",
-        type: "env",
-      },
-      GITLAB_API_URL: {
-        title: "GitLab API URL",
-        description: "URL for the GitLab API",
-        type: "env",
       },
     },
   },
@@ -104,12 +101,6 @@ export const DefaultMCPServers: Record<
     command: "npx",
     args: ["@playwright/mcp@latest"],
   },
-  puppeteer: {
-    icon_path: "Web",
-    command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-puppeteer"],
-    env_from_main_process: ["DISPLAY"],
-  },
   slack: {
     icon_path: "Slack",
     command: "npx",
@@ -131,38 +122,5 @@ export const DefaultMCPServers: Record<
       },
     },
   },
-  sqlite: {
-    command: "uv",
-    args: [
-      "--directory",
-      "${dir:parent_of_servers_repo/servers/src/sqlite}",
-      "run",
-      "mcp-server-sqlite",
-      "--db-path",
-      "${path:~/test.db}",
-    ],
-    config_schema: {
-      directory: {
-        title: "Directory",
-        description: "Directory path for SQLite database",
-        type: "arg",
-        index: 0,
-      },
-      dbPath: {
-        title: "Database Path",
-        description: "Path to the SQLite database",
-        type: "arg",
-        index: 1,
-      },
-    },
-  },
-  "docker-sandbox": {
-    icon_path: "Docker",
-    command: "prostgles-local",
-    args: [],
-  },
+  ...ProstglesMCPServers,
 };
-
-export const ProstglesLocalMCPServers = Object.keys(DefaultMCPServers).filter(
-  (server) => DefaultMCPServers[server]?.command === "prostgles-local",
-);

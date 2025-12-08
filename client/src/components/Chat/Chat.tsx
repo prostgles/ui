@@ -126,12 +126,15 @@ export const Chat = (props: ChatProps) => {
           className={
             "send-wrapper relative rounded p-p5 " +
             (disabledInfo ? "no-interaction not-allowed" : "") +
-            (isEngaged ? "active-shadow bg-action" : "bg-color-2 ")
+            (isEngaged ?
+              "active-shadow bg-action"
+            : "bg-colord-2 shadow b b-color-0  ")
           }
         >
           <FlexCol
             className={
-              "f-1 " + (chatIsLoading ? "no-interaction not-allowed" : "")
+              "f-1 gap-p5 " +
+              (chatIsLoading ? "no-interaction not-allowed" : "")
             }
             {...divHandlers}
           >

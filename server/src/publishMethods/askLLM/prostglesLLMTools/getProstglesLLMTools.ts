@@ -5,7 +5,6 @@ import {
   getMCPToolNameParts,
   getProstglesMCPFullToolName,
 } from "@common/prostglesMcp";
-import { getDockerMCP } from "../../../DockerManager/getDockerMCP";
 
 import {
   type GetLLMToolsArgs,
@@ -20,6 +19,7 @@ import {
   getAddWorkflowTools,
   suggestDashboardsTool,
 } from "./prostglesMcpTools";
+import { getProstglesMCPServerWithTools } from "@src/McpHub/DefaultMCPServers/ProstglesMCPServers";
 
 export const getProstglesLLMTools = async ({
   userType,
@@ -107,23 +107,16 @@ export const getProstglesLLMTools = async ({
       } satisfies MCPToolSchemaWithApproveInfo),
   ].filter(isDefined);
 
-  let mcpToolsWithDocker = mcpToolsWithInfo;
-  if (
-    mcpToolsWithInfo.some(
-      ({ name }) =>
-        getMCPToolNameParts(name)?.serverName === getDockerMCP.serverName,
-    )
-  ) {
-    const dockerMCP = await getDockerMCP(dbs, chat);
-
-    mcpToolsWithDocker = mcpToolsWithInfo
-      .map((tool) => {
+  const prostglesMCPTools = await Promise.all(
+    mcpToolsWithInfo
+      .map(async (tool) => {
         const toolNameParts = getMCPToolNameParts(tool.name);
-        if (
+        const prostglesMCP =
           toolNameParts &&
-          toolNameParts.serverName === dockerMCP.serverName
-        ) {
-          const matchingTool = dockerMCP.toolSchemas.find(
+          getProstglesMCPServerWithTools(toolNameParts.serverName);
+        if (toolNameParts && prostglesMCP) {
+          const prostglesMCPTools = await prostglesMCP.fetchTools(dbs, chat);
+          const matchingTool = prostglesMCPTools.find(
             (ts) => ts.name === toolNameParts.toolName,
           );
           if (!matchingTool) {
@@ -131,14 +124,15 @@ export const getProstglesLLMTools = async ({
           }
           return {
             ...tool,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             input_schema: matchingTool.inputSchema,
             description: matchingTool.description,
           };
         }
         return tool;
       })
-      .filter(isDefined);
-  }
+      .filter(isDefined),
+  );
 
-  return { mcpToolsWithDocker, prostglesDBTools };
+  return { prostglesMCPTools, prostglesDBTools };
 };

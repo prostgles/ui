@@ -14,12 +14,12 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import { DBS } from "..";
-import { getDockerMCPToolSchemas } from "../DockerManager/getDockerMCP";
 import {
   connectToMCPServer,
   type MCPServerInitInfo,
 } from "./connectToMCPServer";
 import { DefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
+import { getProstglesMCPServerWithTools } from "./DefaultMCPServers/ProstglesMCPServers";
 import { fetchMCPResourcesList } from "./fetchMCPResourcesList";
 import { fetchMCPResourceTemplatesList } from "./fetchMCPResourceTemplatesList";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
@@ -267,9 +267,9 @@ const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
 export const setupMCPServerHub = async (dbs: DBS) => {
   const servers = await dbs.mcp_servers.find();
   if (!servers.length) {
-    const dockerMCPTools = await getDockerMCPToolSchemas(dbs, undefined);
-    const defaultServers = Object.entries(DefaultMCPServers).map(
-      ([name, { ...server }]) => {
+    const defaultServers = await Promise.all(
+      Object.entries(DefaultMCPServers).map(async ([name, { ...server }]) => {
+        const prostglesMCP = getProstglesMCPServerWithTools(name);
         return {
           name,
           cwd:
@@ -277,9 +277,10 @@ export const setupMCPServerHub = async (dbs: DBS) => {
               path.join(getMCPDirectory(), name)
             : getMCPDirectory(),
           ...server,
-          mcp_server_tools: name === "docker-sandbox" ? dockerMCPTools : [],
+          mcp_server_tools:
+            prostglesMCP ? await prostglesMCP.fetchTools(dbs, undefined) : [],
         };
-      },
+      }),
     );
     await dbs.mcp_servers.insert(defaultServers);
   }
