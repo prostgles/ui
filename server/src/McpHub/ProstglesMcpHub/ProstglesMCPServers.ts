@@ -13,15 +13,15 @@ export type ProstglesMcpServerDefinition = {
     string,
     {
       description: string;
-      inputSchema: JSONB.JSONBSchema | undefined;
-      outputSchema: JSONB.JSONBSchema | undefined;
+      inputSchema: JSONB.FieldType | undefined;
+      outputSchema: JSONB.FieldType | undefined;
     }
   >;
-  config_schema: JSONB.JSONBSchema | undefined;
+  config_schema: JSONB.FieldType | undefined;
 };
 
-type JSONBTypeIfDefined<Schema extends JSONB.JSONBSchema | undefined> =
-  Schema extends JSONB.JSONBSchema ? JSONB.GetType<Schema> : undefined;
+export type JSONBTypeIfDefined<Schema extends JSONB.FieldType | undefined> =
+  Schema extends JSONB.FieldType ? JSONB.GetType<Schema> : undefined;
 
 type MaybePromise<T> = T | Promise<T>;
 

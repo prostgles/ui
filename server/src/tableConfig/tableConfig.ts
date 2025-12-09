@@ -193,6 +193,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       description: `TEXT`,
       icon: `TEXT NOT NULL`,
       default_port: `INTEGER NOT NULL`,
+      build_hash: `TEXT`,
       status: {
         enum: [
           "stopped",

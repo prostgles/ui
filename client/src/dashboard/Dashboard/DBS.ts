@@ -185,6 +185,19 @@ export type DBSMethods = Partial<{
       }[]
     | undefined
   >;
+  transcribeAudio: (
+    audio: Blob,
+    language?: string,
+  ) => Promise<
+    | { error: string }
+    | {
+        success: true;
+        transcription: string;
+        language: string;
+        language_probability: number;
+        segments: { start: number; end: number; text: string }[];
+      }
+  >;
 }>;
 
 const AdminTableNames = ["connections", "global_settings"] as const;

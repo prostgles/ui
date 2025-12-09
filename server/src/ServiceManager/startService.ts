@@ -7,11 +7,15 @@ import type { ServiceManager } from "./ServiceManager";
 import {
   prostglesServices,
   type OnServiceLogs,
+  type ProstglesService,
+  type RunningServiceInstance,
   type ServiceInstance,
 } from "./ServiceManagerTypes";
 import { camelCaseToSkewerCase } from "./buildService";
 import { tout } from "..";
 import { spawn } from "child_process";
+import { getServiceEndoints } from "./getServiceEndoints";
+import { isEqual } from "prostgles-types";
 
 export async function startService(
   this: ServiceManager,
@@ -22,9 +26,12 @@ export async function startService(
     onLogs(logs);
     this.onServiceLog(serviceName, logs);
   };
-  this.getActiveService(serviceName, "building-done");
+  const { labels, labelArgs } = this.getActiveService(
+    serviceName,
+    "building-done",
+  );
 
-  const serviceConfig = prostglesServices[serviceName];
+  const serviceConfig: ProstglesService = prostglesServices[serviceName];
   const abortController = new AbortController();
   let logs: ProcessLog[] = [];
   const getLogs = () => {
@@ -32,7 +39,37 @@ export async function startService(
   };
   const stop = () => abortController.abort();
   this.activeServices.set(serviceName, { getLogs, stop, status: "starting" });
-  const containerName = `prostgles-service-${camelCaseToSkewerCase(serviceName)}`;
+  const imageName = camelCaseToSkewerCase(serviceName);
+  const containerName = `prostgles-service-${imageName}`;
+
+  const existingContainerInfo = await executeDockerCommand(
+    ["inspect", containerName],
+    { timeout: 30_000 },
+  );
+  const [containerInfo, ...others] = JSON.parse(
+    existingContainerInfo.log.find((d) => d.type === "stdout")?.text || "[]",
+  ) as {
+    Id: string;
+    State: {
+      Status: "running" | "exited" | "paused" | "restarting" | "created";
+    };
+    Config: {
+      Image: string;
+      Labels: Record<string, string>;
+    };
+  }[];
+
+  /** Check if we can reuse existing container */
+  // let reuseExistingContainer = false;
+  // if (containerInfo && !others.length) {
+  //   if (isEqual(labels, containerInfo.Config.Labels)) {
+  //     await executeDockerCommand(
+  //       ["start", containerName],
+  //       { timeout: 30_000 },
+  //     );
+  //     reuseExistingContainer = true;
+  //   }
+  // }
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise(async (resolve, reject) => {
@@ -54,30 +91,40 @@ export async function startService(
     };
 
     const cleanup = () => {
-      spawn("docker", ["rm", "-f", containerName], { stdio: "ignore" });
+      spawn("docker", ["stop", "-t", "0", containerName], { stdio: "ignore" });
     };
     process.once("exit", cleanup);
     process.once("SIGINT", cleanup);
     process.once("SIGTERM", cleanup);
     process.once("uncaughtException", cleanup);
 
+    const volumeArgs: string[] = [];
+    for (const [volumeName, containerPath] of Object.entries(
+      serviceConfig.volumes || {},
+    )) {
+      const hostPath = `prostgles-service-${imageName}-${volumeName}`;
+      await executeDockerCommand(["volume", "create", hostPath], {
+        timeout: 10_000,
+      });
+      volumeArgs.push("-v", `${hostPath}:${containerPath}`);
+    }
+
     executeDockerCommand(
       [
         "run",
         "-i",
-        "--rm",
         "--init",
-        "--label",
-        "prostgles",
+        ...labelArgs,
         "--name",
         containerName,
         "-p",
         `127.0.0.1:${serviceConfig.port}:${serviceConfig.port}`,
+        ...volumeArgs,
         ...Object.entries(serviceConfig.env || {}).flatMap(([key, value]) => [
           "-e",
           `${key}=${value}`,
         ]),
-        camelCaseToSkewerCase(serviceName),
+        imageName,
       ],
       {
         timeout: 300_000,
@@ -105,11 +152,13 @@ export async function startService(
       await tout(1000);
     }
 
-    const runningService = {
+    const runningService: RunningServiceInstance = {
       status: "running",
       getLogs,
       stop,
-    } satisfies ServiceInstance;
+      endpoints: getServiceEndoints(serviceName, serviceConfig),
+    };
+    //@ts-ignore
     this.activeServices.set(serviceName, runningService);
     this.onServiceLog(serviceName, logs);
 

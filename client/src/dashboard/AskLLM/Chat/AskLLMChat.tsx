@@ -191,6 +191,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           }}
         >
           <Chat
+            chat={activeChat}
             style={chatStyle}
             messages={messages}
             disabledInfo={activeChat.disabled_message ?? undefined}

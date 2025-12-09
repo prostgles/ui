@@ -43,16 +43,27 @@ export class ServiceManager {
   };
   activeServices: Map<string, ServiceInstance> = new Map();
 
-  getActiveService(
+  getActiveService<Status extends ServiceInstance["status"]>(
     serviceName: keyof typeof prostglesServices,
-    expectedStatus: ServiceInstance["status"],
-  ): Extract<ServiceInstance, { status: typeof expectedStatus }> {
+    expectedStatus: Status,
+  ) {
     const activeInstance = this.activeServices.get(serviceName);
     if (!activeInstance || activeInstance.status !== expectedStatus) {
       throw new Error(
         `Unexpected: service ${serviceName} is not in expected status ${expectedStatus}`,
       );
     }
+    return activeInstance as Extract<ServiceInstance, { status: Status }>;
+  }
+
+  getService<
+    ServiceName extends keyof typeof prostglesServices,
+    ExistingServices extends typeof prostglesServices,
+  >(
+    serviceName: ServiceName,
+  ): ServiceInstance<ExistingServices[ServiceName]> | undefined {
+    const activeInstance = this.activeServices.get(serviceName);
+    //@ts-ignore
     return activeInstance;
   }
 
@@ -66,9 +77,17 @@ export class ServiceManager {
   ) => {
     await this.stopAndRemoveContainer(serviceName);
     const buildResult = await this.buildService(serviceName, onLogs);
-    if (buildResult?.state !== "close") {
+    if (buildResult !== "close") {
       throw new Error(
-        `Service ${serviceName} build failed with state: ${buildResult?.state}`,
+        `Service ${serviceName} build failed with state: ${buildResult}`,
+      );
+    }
+
+    const buildServiceInstance = this.activeServices.get(serviceName);
+    if (buildServiceInstance?.status === "building-done") {
+      await this.dbs?.services.update(
+        { name: serviceName },
+        { build_hash: buildServiceInstance.buildHash },
       );
     }
 

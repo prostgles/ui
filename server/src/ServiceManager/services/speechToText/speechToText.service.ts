@@ -1,10 +1,15 @@
 import type { ProstglesService } from "../../ServiceManagerTypes";
 
-export const speechToTextService: ProstglesService = {
+export const speechToTextService = {
   icon: "MicrophoneMessage",
   port: 8000,
   env: {
     WHISPER_MODEL: "small",
+    MODEL_CACHE_DIR: "/app/models",
+    HF_HOME: "/app/models",
+  },
+  volumes: {
+    "whisper-models": "/app/models",
   },
   healthCheckEndpoint: "/health",
   description:
@@ -22,13 +27,15 @@ export const speechToTextService: ProstglesService = {
       method: "POST",
       description: "Audio file upload for speech-to-text transcription",
       inputSchema: {
-        type: {
-          audio: {
-            type: "string",
-            description:
-              "Audio file as multipart/form-data (webm, mp3, wav, etc.)",
-          },
-        },
+        type: "any",
+        description: "Audio file as multipart/form-data (webm, mp3, wav, etc.)",
+        // type: {
+        //   audio: {
+        //     type: "any",
+        //     description:
+        //       "Audio file as multipart/form-data (webm, mp3, wav, etc.)",
+        //   },
+        // },
       },
       outputSchema: {
         oneOf: [
@@ -36,7 +43,6 @@ export const speechToTextService: ProstglesService = {
             type: {
               success: {
                 type: "boolean",
-                allowedValues: [true],
               },
               transcription: {
                 type: "string",
@@ -98,4 +104,4 @@ export const speechToTextService: ProstglesService = {
       },
     },
   },
-};
+} as const satisfies ProstglesService;

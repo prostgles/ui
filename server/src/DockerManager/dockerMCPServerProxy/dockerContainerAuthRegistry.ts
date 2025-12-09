@@ -36,10 +36,10 @@ const getIPToContainerName = () => {
   if (containerIpCache.containerNames === containerNames) {
     return containerIpCache.ipToContainerName;
   }
-  const res = execSync(
+  const containerNamesToIPs = execSync(
     "docker inspect   -f '{{.Name}} {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq)",
-  ).toString();
-  const ipToContainerName = res
+  )
+    .toString()
     .split("\n")
     .map((line) => {
       // Skip slash at the beginning of the container name
@@ -50,13 +50,13 @@ const getIPToContainerName = () => {
     })
     .filter(isDefined);
 
-  const containerNamesWithIPs = ipToContainerName
+  const containerNamesWithIPs = containerNamesToIPs
     .map((c) => c.name)
     .sort()
     .join();
   containerIpCache.containerNames = containerNamesWithIPs;
   containerIpCache.ipToContainerName = new Map(
-    ipToContainerName.map((c) => [c.ip, c.name]),
+    containerNamesToIPs.map((c) => [c.ip, c.name]),
   );
   return containerIpCache.ipToContainerName;
 };

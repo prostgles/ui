@@ -4,6 +4,7 @@ import type {
   ExecutionResult,
   ProcessLog,
 } from "@src/DockerManager/executeDockerCommand";
+import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers";
 
 export type ProstglesService = {
   icon: string;
@@ -11,13 +12,14 @@ export type ProstglesService = {
   port: number;
   env?: Record<string, string>;
   healthCheckEndpoint: string;
+  volumes?: Record<string, string>;
   endpoints: Record<
     string,
     {
       method: "GET" | "POST";
       description: string;
-      inputSchema: JSONB.JSONBSchema | undefined;
-      outputSchema: JSONB.JSONBSchema | undefined;
+      inputSchema: JSONB.FieldType | undefined;
+      outputSchema: JSONB.FieldType | undefined;
     }
   >;
 };
@@ -26,7 +28,24 @@ export const prostglesServices = {
   speechToText: speechToTextService,
 };
 
-export type ServiceInstance =
+export type RunningServiceInstance<
+  Service extends ProstglesService = ProstglesService,
+> = {
+  status: "running";
+  getLogs: () => ProcessLog[];
+  stop: () => void;
+  endpoints: {
+    [endpoint in keyof Service["endpoints"]]: (
+      args: JSONBTypeIfDefined<Service["endpoints"][endpoint]["inputSchema"]>,
+    ) => Promise<
+      JSONBTypeIfDefined<Service["endpoints"][endpoint]["outputSchema"]>
+    >;
+  };
+};
+
+export type ServiceInstance<
+  Service extends ProstglesService = ProstglesService,
+> =
   | {
       status: "building";
       building: Promise<ExecutionResult>;
@@ -34,6 +53,9 @@ export type ServiceInstance =
     }
   | {
       status: "building-done";
+      buildHash: string;
+      labels: Record<string, string>;
+      labelArgs: string[];
     }
   | {
       status: "build-error";
@@ -44,11 +66,7 @@ export type ServiceInstance =
       getLogs: () => ProcessLog[];
       stop: () => void;
     }
-  | {
-      status: "running";
-      getLogs: () => ProcessLog[];
-      stop: () => void;
-    }
+  | RunningServiceInstance<Service>
   | {
       status: "error";
       error: unknown;

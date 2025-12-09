@@ -335,6 +335,7 @@ export type DBGeneratedSchema = {
       model?: null | number;
       name?: string;
       parent_chat_id?: null | number;
+      speech_mode?: null | "off" | "stt-local" | "stt-web" | "audio"
       status?: 
        | null
        |  {  state: "stopped"; }
@@ -658,6 +659,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      build_hash?: null | string;
       created?: null | string;
       default_port: number;
       description?: null | string;

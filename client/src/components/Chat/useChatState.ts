@@ -4,6 +4,7 @@ import { usePromise } from "prostgles-client/dist/react-hooks";
 import { useFileDropZone } from "../FileInput/useFileDropZone";
 import type { ChatProps } from "./Chat";
 import { useChatOnPaste } from "./useChatOnPaste";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 
 export type ChatState = ReturnType<typeof useChatState>;
 export const useChatState = (
@@ -58,17 +59,15 @@ export const useChatState = (
     [textAreaRef],
   );
 
-  const onCurrentlyTypedMessageChangeDebounced = useCallback(
-    (value: string) => {
-      const timeoutId = setTimeout(() => {
-        onCurrentlyTypedMessageChange(value);
-      }, 300);
-
-      return () => clearTimeout(timeoutId);
-    },
-    [onCurrentlyTypedMessageChange],
-  );
   const [sendingMsg, setSendingMsg] = useState(false);
+
+  const onCurrentlyTypedMessageChangeDebounced = useDebouncedCallback(
+    (value: string) => {
+      if (sendingMsg) return;
+      onCurrentlyTypedMessageChange(value);
+    },
+    [onCurrentlyTypedMessageChange, sendingMsg],
+  );
 
   const sendMsg = useCallback(async () => {
     const msg = getCurrentMessage();
@@ -78,9 +77,9 @@ export const useChatState = (
     }
     setSendingMsg(true);
     try {
+      onCurrentlyTypedMessageChange("");
       await onSend(msg, files);
       setCurrentMessage("");
-      onCurrentlyTypedMessageChange("");
       setFiles([]);
     } catch (e) {
       console.error(e);

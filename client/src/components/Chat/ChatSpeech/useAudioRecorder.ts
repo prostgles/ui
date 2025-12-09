@@ -1,28 +1,28 @@
 import { useState } from "react";
 
 class AudioRecorder {
-  mediaOptions?: any;
+  mediaOptions: {
+    tag: string;
+    type: string;
+    ext: string;
+    gUM: MediaStreamConstraints;
+  } = {
+    tag: "audio",
+    type: "audio/ogg",
+    ext: ".ogg",
+    gUM: { audio: true },
+  };
   recorder?: MediaRecorder;
 
-  constructor() {
-    this.mediaOptions = {
-      tag: "audio",
-      type: "audio/ogg",
-      ext: ".ogg",
-      gUM: { audio: true },
-    };
-    this.recorder = undefined;
-  }
-
   start(cb: (result: Blob) => void) {
-    const chunks: Buffer[] = [];
+    const chunks: BlobPart[] = [];
     navigator.mediaDevices
       .getUserMedia(this.mediaOptions.gUM)
       .then((stream) => {
         this.recorder = new MediaRecorder(stream, {
           mimeType: "audio/webm;codecs=opus",
         });
-        this.recorder.ondataavailable = (e: any) => {
+        this.recorder.ondataavailable = (e) => {
           chunks.push(e.data);
           if (this.recorder && this.recorder.state == "inactive") {
             cb(new Blob(chunks, { type: this.mediaOptions.type }));
@@ -45,22 +45,22 @@ class AudioRecorder {
 const audioRec = new AudioRecorder();
 
 export const useAudioRecorder = (onSend: (audioBlob: Blob) => void) => {
-  const [isRecording, setIsRecording] = useState(false);
-  const startRecording = () => {
+  const [isListening, setIsRecording] = useState(false);
+  const start = () => {
     audioRec.start((blob) => {
       onSend(blob);
     });
     setIsRecording(true);
   };
-  const stopRecording = () => {
-    if (isRecording) {
+  const stop = () => {
+    if (isListening) {
       audioRec.stop();
       setIsRecording(false);
     }
   };
   return {
-    startRecording,
-    stopRecording,
-    isRecording,
+    start,
+    stop,
+    isListening,
   };
 };

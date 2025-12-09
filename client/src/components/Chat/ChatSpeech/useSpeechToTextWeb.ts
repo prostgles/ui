@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
-type SpeechToTextState =
+export type SpeechToTextState =
   | {
       isListening: false;
       text: string | undefined;
@@ -14,7 +14,7 @@ type SpeechToTextState =
 
 let confirmed = false;
 
-export const useSpeechToText = (
+export const useSpeechToTextWeb = (
   onFinished: (audioOrTranscript: Blob | string) => void,
 ): SpeechToTextState => {
   const [isListening, setIsListening] = useState(false);

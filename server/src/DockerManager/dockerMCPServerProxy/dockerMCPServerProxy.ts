@@ -45,7 +45,7 @@ export const dockerMCPServerProxy = async () => {
   const usePreferredPort = await isPortFree(PREFERRED_PORT);
 
   const dockerGatewayIP = getDockerGatewayIP();
-  const host =
+  const hostname =
     isDocker || getProstglesState().isElectron ? "0.0.0.0" : dockerGatewayIP;
 
   return new Promise<{
@@ -56,7 +56,7 @@ export const dockerMCPServerProxy = async () => {
   }>((resolve, reject) => {
     const server = http.listen(
       usePreferredPort ? PREFERRED_PORT : undefined,
-      host,
+      hostname,
       () => {
         const address = server.address();
         console.log("Docker MCP Router listening on", address);

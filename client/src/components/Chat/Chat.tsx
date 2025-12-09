@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useRef } from "react";
 import "./Chat.css";
 
 import { classOverride, FlexCol } from "../Flex";
@@ -6,6 +6,7 @@ import { ChatFileAttachments } from "./ChatFileAttachments/ChatFileAttachments";
 import { ChatMessage } from "./ChatMessage";
 import { ChatSendControls } from "./ChatSendControls";
 import { useChatState } from "./useChatState";
+import type { DBSSchema } from "@common/publishUtils";
 
 export type Message = {
   id: number | string;
@@ -35,6 +36,7 @@ export type ChatProps = {
   maxWidth?: number;
   currentlyTypedMessage: string | null | undefined;
   onCurrentlyTypedMessageChange: (currentlyTypedMessage: string) => void;
+  chat: DBSSchema["llm_chats"];
 };
 
 export const Chat = (props: ChatProps) => {
@@ -51,6 +53,7 @@ export const Chat = (props: ChatProps) => {
     maxWidth = 800,
     currentlyTypedMessage,
     onCurrentlyTypedMessageChange,
+    chat,
   } = props;
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -68,6 +71,7 @@ export const Chat = (props: ChatProps) => {
     divHandlers,
     handleOnPaste,
     isEngaged,
+    onCurrentlyTypedMessageChangeDebounced,
   } = useChatState({
     isLoading,
     messages,
@@ -76,17 +80,6 @@ export const Chat = (props: ChatProps) => {
     currentlyTypedMessage,
     onCurrentlyTypedMessageChange,
   });
-
-  const onCurrentlyTypedMessageChangeDebounced = useCallback(
-    (value: string) => {
-      const timeoutId = setTimeout(() => {
-        onCurrentlyTypedMessageChange(value);
-      }, 300);
-
-      return () => clearTimeout(timeoutId);
-    },
-    [onCurrentlyTypedMessageChange],
-  );
 
   return (
     <div
@@ -181,6 +174,7 @@ export const Chat = (props: ChatProps) => {
             sendingMsg={sendingMsg}
             setCurrentMessage={setCurrentMessage}
             textAreaRef={textAreaRef}
+            chat={chat}
           />
         </div>
       </FlexCol>

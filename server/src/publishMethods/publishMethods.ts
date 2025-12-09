@@ -67,6 +67,8 @@ export const publishMethods: PublishMethods<
     return {};
   }
 
+  const servicesManager = getServiceManager(dbs);
+
   const adminMethods: ReturnType<PublishMethods> = {
     disablePasswordless: async (newAdmin: {
       username: string;
@@ -334,6 +336,22 @@ export const publishMethods: PublishMethods<
     reloadMcpServerTools: async (serverName: string) =>
       reloadMcpServerTools(dbs, serverName),
     getMcpHostInfo,
+    ...(servicesManager.getService("speechToText") && {
+      transcribeAudio: async (audioBlob: Blob) => {
+        const speechToTextService = servicesManager.getService("speechToText");
+        if (speechToTextService?.status !== "running") {
+          throw "Speech to Text service is not running";
+        }
+        const formData = new FormData();
+        const audioBlobWithMime = new Blob([audioBlob], { type: "audio/webm" });
+
+        formData.append("audio", audioBlobWithMime, "recording.webm");
+        const result =
+          await speechToTextService.endpoints["/transcribe"](formData);
+
+        return result;
+      },
+    }),
   };
 
   const isAdmin = user.type === "admin";

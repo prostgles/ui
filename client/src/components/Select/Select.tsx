@@ -6,7 +6,7 @@ import RTComp from "../../dashboard/RTComp";
 import type { BtnProps } from "../Btn";
 import Chip from "../Chip";
 import { generateUniqueID } from "../FileInput/FileInput";
-import { FlexRow } from "../Flex";
+import { FlexCol, FlexRow } from "../Flex";
 import { Icon } from "../Icon/Icon";
 import type { LabelProps } from "../Label";
 import { Label } from "../Label";
@@ -81,7 +81,12 @@ export type SelectProps<
   showIconOnly?: boolean;
   title?: string;
   placeholder?: string;
-  variant?: "search-list-only" | "div" | "chips-lg" | "button-group";
+  variant?:
+    | "search-list-only"
+    | "div"
+    | "chips-lg"
+    | "button-group"
+    | "button-group-vertical";
   multiSelect?: Multi;
   labelAsValue?: boolean;
   emptyLabel?: string;
@@ -359,7 +364,13 @@ export class Select<
     const searchList = (
       <SearchList
         id={id}
-        style={{ maxHeight: "500px" }}
+        style={{
+          maxHeight: "500px",
+          ...(variant === "button-group-vertical" && {
+            border: "1px solid var(--b-color)",
+            borderRadius: "var(--rounded)",
+          }),
+        }}
         searchStyle={
           variant === "search-list-only" ?
             {}
@@ -435,6 +446,25 @@ export class Select<
       return searchList;
     }
 
+    const labelNode =
+      typeof label === "string" ?
+        <label
+          htmlFor={id}
+          className={
+            "noselect f-0 text-1 ta-left " + (asRow ? " mr-p5 " : " mb-p5 ")
+          }
+        >
+          {label}
+        </label>
+      : <Label {...label} variant="normal" className={"mb-p5"} />;
+    if (variant === "button-group-vertical") {
+      return (
+        <FlexCol className="gap-p25">
+          {labelNode}
+          {searchList}
+        </FlexCol>
+      );
+    }
     if (variant === "button-group") {
       select = (
         <FlexRow className="rounded gap-0 b b-color">
@@ -511,16 +541,7 @@ export class Select<
         }
         style={style}
       >
-        {typeof label === "string" ?
-          <label
-            htmlFor={id}
-            className={
-              "noselect f-0 text-1 ta-left " + (asRow ? " mr-p5 " : " mb-p5 ")
-            }
-          >
-            {label}
-          </label>
-        : <Label {...label} variant="normal" className={"mb-p5"} />}
+        {labelNode}
         {select}
         {showSelectedSublabel &&
           selectedFullOption &&

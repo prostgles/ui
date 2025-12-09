@@ -9,6 +9,7 @@ import { FlexCol, FlexRow } from "../Flex";
 import type { ChatProps } from "./Chat";
 import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import type { ChatState } from "./useChatState";
+import type { DBSSchema } from "@common/publishUtils";
 
 type ChatSendControlsProps = Pick<
   ChatProps,
@@ -19,6 +20,7 @@ type ChatSendControlsProps = Pick<
     "onAddFiles" | "files" | "setCurrentMessage" | "sendMsg" | "sendingMsg"
   > & {
     textAreaRef: React.RefObject<HTMLTextAreaElement>;
+    chat: DBSSchema["llm_chats"];
   };
 export const ChatSendControls = ({
   allowedMessageTypes = {
@@ -34,6 +36,7 @@ export const ChatSendControls = ({
   sendMsg,
   sendingMsg,
   textAreaRef,
+  chat,
 }: ChatSendControlsProps) => {
   const speech = allowedMessageTypes.speech;
   const onSpeech = useCallback(
@@ -89,13 +92,7 @@ export const ChatSendControls = ({
             />
           </>
         )}
-        {speech && (
-          <ChatSpeech
-            onFinished={onSpeech}
-            audio={speech.audio}
-            tts={speech.tts}
-          />
-        )}
+        {speech && <ChatSpeech onFinished={onSpeech} chat={chat} />}
       </FlexRow>
       {onStopSending ?
         <Btn

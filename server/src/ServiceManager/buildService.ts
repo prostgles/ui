@@ -1,19 +1,24 @@
-import { executeDockerCommand } from "@src/DockerManager/executeDockerCommand";
+import {
+  executeDockerCommand,
+  type ExecutionResult,
+} from "@src/DockerManager/executeDockerCommand";
+import { getRootDir } from "@src/electronConfig";
+import { join } from "path";
+import { getDockerBuildHash } from "./getDockerBuildHash";
 import type { ServiceManager } from "./ServiceManager";
 import type {
   OnServiceLogs,
   prostglesServices,
   ServiceInstance,
 } from "./ServiceManagerTypes";
-import { join } from "path";
-import { existsSync } from "fs";
-import { getRootDir } from "@src/electronConfig";
+import { isEqual } from "prostgles-types";
+import { getEntries } from "@common/utils";
 
 export async function buildService(
   this: ServiceManager,
   serviceName: keyof typeof prostglesServices,
   onLogs: OnServiceLogs,
-) {
+): Promise<ExecutionResult["state"]> {
   const onLogsCombined: OnServiceLogs = (logs) => {
     onLogs(logs);
     this.onServiceLog(serviceName, logs);
@@ -21,10 +26,11 @@ export async function buildService(
   const existingService = this.activeServices.get(serviceName);
   if (existingService) {
     if (existingService.status === "building") {
-      return existingService.building;
+      const res = await existingService.building;
+      return res.state;
     }
     if (existingService.status === "running") {
-      return;
+      return "close";
     }
     this.activeServices.delete(serviceName);
   }
@@ -39,20 +45,48 @@ export async function buildService(
     serviceName,
     "src",
   );
-  if (!existsSync(join(serviceCwd, "Dockerfile"))) {
-    throw new Error(`Service Dockerfile not found in: ${serviceCwd}`);
+
+  const imageName = camelCaseToSkewerCase(serviceName);
+
+  /** Only rebuild if hash differs */
+  const buildHash = await getDockerBuildHash(serviceCwd);
+  const buildLabels = {
+    "prostgles-build-hash": buildHash,
+    app: "prostgles",
+  };
+  const labelArgs = getEntries(buildLabels).flatMap(([key, value]) => [
+    "--label",
+    `${key}=${value}`,
+  ]);
+  const matchingDockerImage = await executeDockerCommand(
+    ["inspect", imageName],
+    { timeout: 10_000 },
+  );
+  const infoStr = matchingDockerImage.log.at(-1)?.text;
+  if (infoStr) {
+    const [image, ...otherImages] = JSON.parse(infoStr) as {
+      Id: string;
+      Config: { Labels: { [key: string]: string } };
+    }[];
+    if (
+      image &&
+      !otherImages.length &&
+      isEqual(image.Config.Labels, buildLabels)
+    ) {
+      this.activeServices.set(serviceName, {
+        status: "building-done",
+        buildHash,
+        labels: buildLabels,
+        labelArgs,
+      });
+      return "close";
+    }
   }
+
   const instance: ServiceInstance = {
     status: "building",
     building: executeDockerCommand(
-      [
-        "build",
-        "-t",
-        camelCaseToSkewerCase(serviceName),
-        "--label",
-        "prostgles",
-        ".",
-      ],
+      ["build", "-t", imageName, ...labelArgs, "."],
       {
         timeout: 600_000,
         signal: abortController.signal,
@@ -62,7 +96,12 @@ export async function buildService(
     )
       .then((result) => {
         this.getActiveService(serviceName, "building");
-        this.activeServices.set(serviceName, { status: "building-done" });
+        this.activeServices.set(serviceName, {
+          status: "building-done",
+          buildHash,
+          labels: buildLabels,
+          labelArgs,
+        });
         return result;
       })
       .catch((err) => {
@@ -77,7 +116,8 @@ export async function buildService(
     stop,
   };
   this.activeServices.set(serviceName, instance);
-  return instance.building;
+  const { state } = await instance.building;
+  return state;
 }
 
 export const camelCaseToSkewerCase = (str: string) => {
