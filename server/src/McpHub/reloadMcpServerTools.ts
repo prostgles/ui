@@ -1,6 +1,6 @@
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { DBS } from "..";
-import { getProstglesMCPServerWithTools } from "./DefaultMCPServers/ProstglesMCPServers";
+import { getProstglesMCPServerWithTools } from "./ProstglesMcpHub/ProstglesMCPServers";
 import { fetchMCPToolsList } from "./fetchMCPToolsList";
 import { startMcpHub, type McpConnection } from "./McpHub";
 import { type McpTool } from "./McpTypes";

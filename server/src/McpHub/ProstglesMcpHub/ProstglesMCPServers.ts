@@ -2,9 +2,47 @@ import type { MCPServerInfo } from "@common/mcp";
 import type { JsonSchemaType } from "@modelcontextprotocol/sdk/validation/types";
 import { getDockerMCP } from "@src/DockerManager/getDockerMCP";
 import { tout, type DBS } from "@src/index";
-import { getKeys, includes, omitKeys } from "prostgles-types";
+import { getKeys, includes, omitKeys, type JSONB } from "prostgles-types";
 import type { McpTool } from "../McpTypes";
 import type { DBSSchema } from "@common/publishUtils";
+
+export type ProstglesMcpServerDefinition = {
+  icon_path: string;
+  description: string;
+  tools: Record<
+    string,
+    {
+      description: string;
+      inputSchema: JSONB.JSONBSchema | undefined;
+      outputSchema: JSONB.JSONBSchema | undefined;
+    }
+  >;
+  config_schema: JSONB.JSONBSchema | undefined;
+};
+
+type JSONBTypeIfDefined<Schema extends JSONB.JSONBSchema | undefined> =
+  Schema extends JSONB.JSONBSchema ? JSONB.GetType<Schema> : undefined;
+
+type MaybePromise<T> = T | Promise<T>;
+
+export type ProstglesMcpServerHandler<
+  ServerDefinition extends ProstglesMcpServerDefinition,
+> = {
+  start: (
+    config: JSONBTypeIfDefined<ServerDefinition["config_schema"]>,
+  ) => MaybePromise<{
+    stop: () => MaybePromise<void>;
+    callTool: <ToolName extends keyof ServerDefinition["tools"]>(
+      toolName: ToolName,
+      toolArguments: JSONBTypeIfDefined<
+        ServerDefinition["tools"][ToolName]["inputSchema"]
+      >,
+      context: { chat: DBSSchema["llm_chats"]; user: DBSSchema["users"] },
+    ) => MaybePromise<
+      JSONBTypeIfDefined<ServerDefinition["tools"][ToolName]["outputSchema"]>
+    >;
+  }>;
+};
 
 const ProstglesMCPServersWithTools = {
   "docker-sandbox": {

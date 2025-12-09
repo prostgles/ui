@@ -19,7 +19,7 @@ import {
   type MCPServerInitInfo,
 } from "./connectToMCPServer";
 import { DefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
-import { getProstglesMCPServerWithTools } from "./DefaultMCPServers/ProstglesMCPServers";
+import { getProstglesMCPServerWithTools } from "./ProstglesMcpHub/ProstglesMCPServers";
 import { fetchMCPResourcesList } from "./fetchMCPResourcesList";
 import { fetchMCPResourceTemplatesList } from "./fetchMCPResourceTemplatesList";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";

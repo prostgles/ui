@@ -9,6 +9,7 @@ import { Label } from "@components/Label";
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { getPGIntervalAsText } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";
+import type { FilterItem } from "prostgles-types";
 
 type P = Pick<Prgl, "dbsMethods" | "connectionId" | "dbs"> & {
   type: "tableConfig" | "onMount" | "methods";
@@ -18,13 +19,13 @@ export const ProcessLogs = (props: P) => {
   const { dbsMethods, connectionId, dbs, type } = props;
   const { data: conn } = dbs.connections.useSubscribeOne({ id: connectionId });
   const { data: dbConf } = dbs.database_configs.useSubscribeOne({
-    $existsJoined: { connections: { id: connectionId } } as any,
-  });
+    $existsJoined: { connections: { id: connectionId } },
+  } as FilterItem);
   const { data: dbConfLogs } = dbs.database_config_logs.useSubscribeOne({
     $existsJoined: {
       "database_configs.connections": { id: connectionId },
-    } as any,
-  });
+    },
+  } as FilterItem);
   const getIsMounted = useIsMounted();
   const [editorKey, setEditorKey] = useState(Date.now().toString());
   const [procStats, setProcStats] = useState<ProcStats & { error?: any }>();
@@ -127,7 +128,6 @@ export const ProcessLogs = (props: P) => {
         }
         onMount={onMonacoEditorMount}
         options={options}
-        // style={{ minHeight: "200px", maxHeight: noMaxHeight? undefined : "300px" }}
         language="bash"
         value={logs ?? ""}
       />

@@ -1,4 +1,3 @@
-import { execSync } from "child_process";
 import type { CreateContainerParams } from "./createContainer.schema";
 
 const CUSTOM_BRIDGE_NETWORK_NAME = "prostgles-bridge-net";

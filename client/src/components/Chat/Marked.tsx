@@ -34,17 +34,14 @@ export const Marked = (props: MarkedProps) => {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
       const codeString = props.children?.toString() ?? "";
 
-      if (!codeString || !className || !language) {
-        return <code {...props} />;
-      }
-
-      if (language === "markdown") {
+      if (!codeString || !className || !language || language === "markdown") {
         return (
           <pre>
             <code {...props} />
           </pre>
         );
       }
+
       return (
         <MonacoCodeInMarkdown
           className="my-1"

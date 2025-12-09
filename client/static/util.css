@@ -134,6 +134,21 @@
 
   --bg-li-selected: var(--blue-100);
   --formfield-bg-color: var(--bg-color-0);
+
+  --green: #009264;
+  --faded-green: #00c46e33;
+
+  --blue: var(--blue-600);
+  --faded-blue: #00b2ff33;
+
+  --red: #dc0000;
+  --faded-red: var(--red-100);
+
+  --yellow: #723b13;
+  --faded-yellow: #fff2a8;
+
+  --gray: var(--gray-600);
+  --faded-gray: var(--gray-100);
 }
 
 :root.dark-theme {
@@ -195,6 +210,21 @@
 
   --bg-li-selected: #2465d463;
   --formfield-bg-color: var(--bg-color-2);
+
+  --green: #08c489;
+  --faded-green: #00b96821;
+
+  --blue: #31c1ff;
+  --faded-blue: #00b2ff33;
+
+  --red: #e35d5d;
+  --faded-red: #fd343429;
+
+  --yellow: #dabb8c;
+  --faded-yellow: #e4ce0538;
+
+  --gray: #bfbfbf;
+  --faded-gray: #ffffff17;
 }
 
 .formfield-bg-color {
@@ -854,6 +884,9 @@ textarea:focus {
 .w-full {
   width: 100%;
 }
+.min-w-full {
+  min-width: 100%;
+}
 .h-full {
   height: 100%;
 }
@@ -1177,6 +1210,10 @@ textarea:focus {
 }
 .o-auto:hover ::-webkit-scrollbar {
   opacity: 0.5;
+}
+
+.o-unset {
+  overflow: unset;
 }
 
 .ox-auto {

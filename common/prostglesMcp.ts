@@ -11,7 +11,6 @@ const runSQLSchema = {
       optional: true,
       description:
         "Maximum time in milliseconds the query will be allowed to run. Defaults to 30000.",
-      // default: 30000,
     },
     query_params: {
       optional: true,

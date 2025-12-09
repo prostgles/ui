@@ -1,11 +1,11 @@
-import { spawn } from "child_process";
+import { spawn, type SpawnOptionsWithoutStdio } from "child_process";
 
 export type ProcessLog = {
   type: "stdout" | "stderr" | "error";
   text: string;
 };
 export interface ExecutionResult {
-  state: "close" | "error" | "timed-out";
+  state: "close" | "error" | "timed-out" | "aborted";
   command: string;
   exitCode: number;
   timedOut: boolean;
@@ -18,34 +18,56 @@ export interface ExecutionResult {
  */
 export const executeDockerCommand = async (
   args: string[] = [],
-  options: {
-    timeout: number;
-    environment?: Record<string, string>;
-  },
+  options: Pick<SpawnOptionsWithoutStdio, "cwd" | "env" | "timeout" | "signal">,
+  onLogs?: (logs: ProcessLog[]) => void,
 ): Promise<ExecutionResult> => {
   const startTime = Date.now();
   const timeout = options.timeout;
 
   return new Promise((resolve) => {
+    // Check if already aborted before starting
+    if (options.signal?.aborted) {
+      resolve({
+        state: "error",
+        command: `docker ${args.join(" ")}`,
+        exitCode: -1,
+        timedOut: false,
+        executionTime: 0,
+        log: [{ type: "error", text: "Execution aborted" }],
+      });
+      return;
+    }
     const child = spawn("docker", args, {
+      ...options,
       stdio: ["pipe", "pipe", "pipe"],
-      // env: { ...process.env, ...options.environment },
-      env: { ...options.environment },
     });
     const command = `docker ${args.join(" ")}`;
+    // TODO: move timeout handling to spawn options
     let timedOut = false;
     let ended = false;
 
     const log: ProcessLog[] = [];
 
+    const timeoutId =
+      timeout === undefined ? undefined : (
+        setTimeout(() => {
+          timedOut = true;
+          child.kill("SIGKILL");
+          onEnd({ type: "timed-out", error: new Error("Execution timed out") });
+        }, timeout)
+      );
+
     const onEnd = (
       reason:
         | { type: "close"; code: number | null }
-        | { type: "error" | "timed-out"; error: Error },
+        | { type: "error" | "timed-out" | "aborted"; error: Error },
     ) => {
       if (ended) return;
       ended = true;
-      clearTimeout(timeoutId);
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+
       const executionTime = Date.now() - startTime;
       if (reason.type === "error") {
         log.push({
@@ -67,18 +89,14 @@ export const executeDockerCommand = async (
       }
     };
 
-    const timeoutId = setTimeout(() => {
-      timedOut = true;
-      child.kill("SIGKILL");
-      onEnd({ type: "timed-out", error: new Error("Execution timed out") });
-    }, timeout);
-
     child.stdout.on("data", (data: Buffer) => {
       log.push({ type: "stdout", text: data.toString() });
+      onLogs?.(log);
     });
 
     child.stderr.on("data", (data: Buffer) => {
       log.push({ type: "stderr", text: data.toString() });
+      onLogs?.(log);
     });
 
     child.on("close", (code) => {
@@ -95,7 +113,13 @@ export const executeDockerCommand = async (
     });
 
     child.on("error", (error) => {
-      onEnd({ type: "error", error });
+      if (options.signal?.aborted) {
+        onEnd({ type: "aborted", error });
+        // If aborted, kill the process
+        child.kill("SIGKILL");
+      } else {
+        onEnd({ type: "error", error });
+      }
     });
   });
 };

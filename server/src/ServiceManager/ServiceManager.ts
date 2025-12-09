@@ -1,0 +1,104 @@
+import type { DBSSchemaForInsert } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
+import {
+  executeDockerCommand,
+  type ProcessLog,
+} from "@src/DockerManager/executeDockerCommand";
+import type { DBS } from "..";
+import { buildService } from "./buildService";
+import { prostglesServices, ServiceInstance } from "./ServiceManagerTypes";
+import { getContainerName, startService } from "./startService";
+
+export class ServiceManager {
+  dbs: DBS | undefined;
+  constructor(dbs: DBS | undefined) {
+    this.dbs = dbs;
+    void dbs?.services.delete();
+    void dbs?.services.insert(
+      getEntries(prostglesServices).map(
+        ([name, service]) =>
+          ({
+            icon: service.icon,
+            name,
+            default_port: service.port,
+            description: service.description,
+            status: "stopped",
+          }) satisfies DBSSchemaForInsert["services"],
+      ),
+    );
+  }
+  onServiceLog = (
+    serviceName: keyof typeof prostglesServices,
+    logItems: ProcessLog[],
+  ) => {
+    const serviceStatus = this.activeServices.get(serviceName)?.status;
+    const logs = logItems
+      .slice(-100)
+      .map((l) => l.text)
+      .join("");
+    void this.dbs?.services.update(
+      { name: serviceName },
+      { logs, status: serviceStatus || "stopped" },
+    );
+  };
+  activeServices: Map<string, ServiceInstance> = new Map();
+
+  getActiveService(
+    serviceName: keyof typeof prostglesServices,
+    expectedStatus: ServiceInstance["status"],
+  ): Extract<ServiceInstance, { status: typeof expectedStatus }> {
+    const activeInstance = this.activeServices.get(serviceName);
+    if (!activeInstance || activeInstance.status !== expectedStatus) {
+      throw new Error(
+        `Unexpected: service ${serviceName} is not in expected status ${expectedStatus}`,
+      );
+    }
+    return activeInstance;
+  }
+
+  buildService = buildService.bind(this);
+
+  startService = startService.bind(this);
+
+  enableService = async (
+    serviceName: keyof typeof prostglesServices,
+    onLogs: (logs: ProcessLog[]) => void,
+  ) => {
+    await this.stopAndRemoveContainer(serviceName);
+    const buildResult = await this.buildService(serviceName, onLogs);
+    if (buildResult?.state !== "close") {
+      throw new Error(
+        `Service ${serviceName} build failed with state: ${buildResult?.state}`,
+      );
+    }
+
+    return this.startService(serviceName, onLogs);
+  };
+
+  stopAndRemoveContainer = async (
+    serviceName: keyof typeof prostglesServices,
+  ) => {
+    const containerName = getContainerName(serviceName);
+    await executeDockerCommand(["stop", containerName], {
+      timeout: 10000,
+    }).catch(() => {});
+    await executeDockerCommand(["rm", "-f", containerName], { timeout: 10000 });
+    this.activeServices.delete(serviceName);
+    this.onServiceLog(serviceName, []);
+  };
+
+  destroy = () => {
+    this.activeServices.forEach((service) => {
+      if (service.status === "running" || service.status === "starting") {
+        service.stop();
+      }
+    });
+    this.activeServices = new Map();
+  };
+}
+
+let serviceManager: ServiceManager | undefined = undefined;
+export const getServiceManager = (dbs: DBS | undefined) => {
+  serviceManager ??= new ServiceManager(dbs);
+  return serviceManager;
+};

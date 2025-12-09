@@ -10,6 +10,7 @@ import {
   mdiAccountKey,
   mdiAssistant,
   mdiCloudKeyOutline,
+  mdiDocker,
   mdiLaptop,
   mdiSecurity,
 } from "@mdi/js";
@@ -23,6 +24,7 @@ import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 import { MCPServers } from "./MCPServers/MCPServers";
+import { Services } from "./Services";
 
 export type ServerSettingsProps = Pick<
   Prgl,
@@ -231,6 +233,18 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       Configure LLM provider credentials used in Ask AI chat.
                     </InfoRow>
                     <LLMProviderSetup {...props} />
+                  </FlexCol>
+                ),
+              },
+              services: {
+                leftIconPath: mdiDocker,
+                label: "Services",
+                content: (
+                  <FlexCol className="p-1 pt-0 min-w-0">
+                    <InfoRow variant="naked" color="info" iconPath="">
+                      Configure LLM provider credentials used in Ask AI chat.
+                    </InfoRow>
+                    <Services {...props} />
                   </FlexCol>
                 ),
               },

@@ -10,8 +10,6 @@ import type { ChatProps } from "./Chat";
 import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import type { ChatState } from "./useChatState";
 
-const speechFeatureFlagEnabled =
-  localStorage.getItem("speechFeatureFlag") === "true";
 type ChatSendControlsProps = Pick<
   ChatProps,
   "allowedMessageTypes" | "onStopSending" | "disabledInfo" | "onSend"
@@ -25,6 +23,7 @@ type ChatSendControlsProps = Pick<
 export const ChatSendControls = ({
   allowedMessageTypes = {
     file: false,
+    speech: { tts: true, audio: false },
   },
   onStopSending,
   onAddFiles,
@@ -36,8 +35,7 @@ export const ChatSendControls = ({
   sendingMsg,
   textAreaRef,
 }: ChatSendControlsProps) => {
-  const speech = speechFeatureFlagEnabled && allowedMessageTypes.speech;
-
+  const speech = allowedMessageTypes.speech;
   const onSpeech = useCallback(
     async (audioOrTranscript: Blob | string, autoSend: boolean) => {
       if (typeof audioOrTranscript === "string") {

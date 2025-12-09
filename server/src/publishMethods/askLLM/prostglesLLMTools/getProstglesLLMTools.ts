@@ -19,7 +19,7 @@ import {
   getAddWorkflowTools,
   suggestDashboardsTool,
 } from "./prostglesMcpTools";
-import { getProstglesMCPServerWithTools } from "@src/McpHub/DefaultMCPServers/ProstglesMCPServers";
+import { getProstglesMCPServerWithTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers";
 
 export const getProstglesLLMTools = async ({
   userType,

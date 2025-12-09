@@ -32,6 +32,7 @@ import { insertStateDatabase } from "./insertStateDatabase";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { getProstglesState } from "./tryStartProstgles";
 import { getSerialisableError } from "prostgles-types";
+import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 
 type StartArguments = {
   app: Express;
@@ -217,6 +218,7 @@ export const startProstgles = async ({
 
         await connMgr.destroy();
         await connMgr.init(db, _db);
+        void getServiceManager(db);
 
         await backupManager?.destroy();
         backupManager ??= await BackupManager.create(_db, db, connMgr);

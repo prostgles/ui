@@ -187,6 +187,28 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     },
   },
 
+  services: {
+    columns: {
+      name: `TEXT PRIMARY KEY`,
+      description: `TEXT`,
+      icon: `TEXT NOT NULL`,
+      default_port: `INTEGER NOT NULL`,
+      status: {
+        enum: [
+          "stopped",
+          "starting",
+          "running",
+          "error",
+          "building",
+          "building-done",
+          "build-error",
+        ],
+      },
+      logs: `TEXT`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
+    },
+  },
+
   login_attempts: {
     // dropIfExists: true,
     columns: {

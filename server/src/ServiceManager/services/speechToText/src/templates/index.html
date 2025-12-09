@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Recorder - Speech to Text</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .recorder-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #recordBtn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        #recordBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(231, 76, 60, 0.5);
+        }
+
+        #recordBtn.recording {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            box-shadow: 0 10px 30px rgba(39, 174, 96, 0.4);
+            animation: pulse 1.5s infinite;
+        }
+
+        #recordBtn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            box-shadow: none;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .mic-icon {
+            font-size: 2rem;
+        }
+
+        #status {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            min-height: 24px;
+        }
+
+        #status.error {
+            color: #e74c3c;
+        }
+
+        #status.success {
+            color: #27ae60;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result-section.visible {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-header h2 {
+            color: #1a1a2e;
+            font-size: 1.2rem;
+        }
+
+        .language-badge {
+            background: #3498db;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        #transcriptionResult {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 100px;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .loading-dot {
+            width: 10px;
+            height: 10px;
+            background: #3498db;
+            border-radius: 50%;
+            animation: loadingBounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes loadingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .timer {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            margin-top: 10px;
+        }
+
+        .copy-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Voice Recorder</h1>
+        <p class="subtitle">Click the button to record your voice and convert it to text</p>
+        
+        <div class="recorder-section">
+            <button id="recordBtn">
+                <span class="mic-icon">🎙️</span>
+                <span id="btnText">Record</span>
+            </button>
+            <div class="timer" id="timer">00:00</div>
+            <p id="status">Click the button to start recording</p>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <div class="result-header">
+                <h2>Transcription</h2>
+                <span class="language-badge" id="languageBadge">en</span>
+            </div>
+            <div id="transcriptionResult"></div>
+            <button class="copy-btn" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let timerInterval;
+        let seconds = 0;
+
+        const recordBtn = document.getElementById('recordBtn');
+        const btnText = document.getElementById('btnText');
+        const status = document.getElementById('status');
+        const timer = document.getElementById('timer');
+        const resultSection = document.getElementById('resultSection');
+        const transcriptionResult = document.getElementById('transcriptionResult');
+        const languageBadge = document.getElementById('languageBadge');
+
+        recordBtn.addEventListener('click', toggleRecording);
+
+        async function toggleRecording() {
+            if (!isRecording) {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    sendAudioForTranscription(audioBlob);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                recordBtn.classList.add('recording');
+                btnText.textContent = 'Stop';
+                status.textContent = 'Recording... Click to stop';
+                status.className = '';
+                startTimer();
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                status.textContent = 'Error: Could not access microphone. Please allow microphone access.';
+                status.className = 'error';
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.classList.remove('recording');
+                btnText.textContent = 'Record';
+                stopTimer();
+            }
+        }
+
+        function startTimer() {
+            seconds = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            timer.textContent = `${mins}:${secs}`;
+        }
+
+        async function sendAudioForTranscription(audioBlob) {
+            status.innerHTML = '<div class="loading"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>';
+            status.className = '';
+            recordBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            try {
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    transcriptionResult.textContent = data.transcription || '(No speech detected)';
+                    languageBadge.textContent = `${data.language} (${Math.round(data.language_probability * 100)}%)`;
+                    resultSection.classList.add('visible');
+                    status.textContent = 'Transcription complete!';
+                    status.className = 'success';
+                } else {
+                    status.textContent = `Error: ${data.error}`;
+                    status.className = 'error';
+                }
+            } catch (err) {
+                console.error('Error sending audio:', err);
+                status.textContent = 'Error: Could not connect to server';
+                status.className = 'error';
+            } finally {
+                recordBtn.disabled = false;
+            }
+        }
+
+        function copyToClipboard() {
+            const text = transcriptionResult.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy to Clipboard';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

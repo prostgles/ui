@@ -651,6 +651,22 @@ export type DBGeneratedSchema = {
       table_config: any;
     };
   };
+  services: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | string;
+      default_port: number;
+      description?: null | string;
+      icon: string;
+      logs?: null | string;
+      name: string;
+      status: "stopped" | "starting" | "running" | "error" | "building" | "building-done" | "build-error"
+    };
+  };
   session_types: {
     is_view: false;
     select: true;

@@ -7,7 +7,7 @@ import {
 } from "prostgles-types";
 import type { DBS } from "..";
 import { getDockerMCP } from "../DockerManager/getDockerMCP";
-import { getProstglesMCPServerWithTools } from "./DefaultMCPServers/ProstglesMCPServers";
+import { getProstglesMCPServerWithTools } from "./ProstglesMcpHub/ProstglesMCPServers";
 import { startMcpHub } from "./McpHub";
 
 export const callMCPServerTool = async (
@@ -30,7 +30,7 @@ export const callMCPServerTool = async (
       toolName,
       chat_id,
     },
-    "",
+    undefined,
     false,
   );
   if (argErrors.error) throw new Error(argErrors.error);
@@ -67,7 +67,6 @@ export const callMCPServerTool = async (
           `MCP server ${serverName}.${toolName} not implemented for tool ${toolName}`,
         );
       }
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (serverName === "web-search") {
         throw new Error(`MCP server ${serverName} not implemented yet`);
       }

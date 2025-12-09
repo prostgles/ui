@@ -38,6 +38,9 @@ const electronConfig: {
 
 export const actualRootDir = path.join(__dirname, "/../../..");
 let rootDir = actualRootDir;
+/**
+ * server root directory
+ */
 export const getRootDir = () => rootDir;
 
 export const getElectronConfig = () => {

@@ -1,6 +1,6 @@
 import type { MCPServerInfo } from "@common/mcp";
 import { mcpGithub } from "./mcpGithub";
-import { ProstglesMCPServers } from "./ProstglesMCPServers";
+import { ProstglesMCPServers } from "../ProstglesMcpHub/ProstglesMCPServers";
 
 export const DefaultMCPServers: Record<
   string,

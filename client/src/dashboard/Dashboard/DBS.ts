@@ -88,6 +88,7 @@ export type DBSMethods = Partial<{
   }>;
   enable2FA: (confirmationCode: string) => Promise<string>;
   disable2FA: () => Promise<string>;
+  toggleService: (serviceName: string, enable: boolean) => Promise<void>;
   setFileStorage: (
     connId: string,
     tableConfig?:

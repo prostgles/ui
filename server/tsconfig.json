@@ -33,6 +33,7 @@
 		"prostgles_mcp"
 	],
 	"include": [
-		"src"
+		"src",
+		"**/*.spec.ts"
 	]
 }

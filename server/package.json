@@ -5,8 +5,7 @@
   "scripts": {
     "build": "npm i && cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias && npm prune --omit=dev",
     "start": "npm run build && node dist/server/src/index.js",
-    "test": "npm run build && node --test dist/server/src/**/*.spec.js",
-    "rollup": "rollup -c",
+    "test": "npm run build && node --test dist/server/**/**/*.spec.js",
     "lint": "eslint . --ext .ts --quiet --fix",
     "dev": "npm i --no-audit && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"nodemon  --delay 500ms --trace-warnings --inspect dist/server/src/index.js\"",
     "dev:electron": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"nodemon  --delay 500ms --trace-warnings --inspect dist/server/src/testElectron.js\""

@@ -107,7 +107,10 @@ export type LanguageConfig =
 
 export type CodeEditorJsonSchema = { id: string; schema: any };
 
-export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
+export type CodeEditorProps = Pick<
+  MonacoEditorProps,
+  "options" | "value" | "minHeight"
+> & {
   value: string;
   onChange?: (newValue: string) => void;
   language: LanguageConfig | string;
@@ -124,10 +127,6 @@ export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   contentTop?: React.ReactNode;
 };
 
-const getSelectedText = (
-  editor: editor.IStandaloneCodeEditor | editor.ICodeEditor,
-) => editor.getModel()?.getValueInRange(editor.getSelection()!);
-
 export const CodeEditor = (props: CodeEditorProps) => {
   const {
     value = "",
@@ -142,6 +141,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
     error,
     onTSLibraryChange,
     contentTop,
+    minHeight,
   } = props;
 
   const language =
@@ -261,6 +261,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
         options={monacoOptions}
         onChange={onChange}
         onMount={onMountMonacoEditor}
+        minHeight={minHeight}
       />
     </div>
   );

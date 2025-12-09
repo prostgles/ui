@@ -8,7 +8,7 @@ import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
 
 type CreateContainerResult = {
-  state: "finished" | "error" | "build-error" | "timed-out";
+  state: "finished" | "error" | "build-error" | "timed-out" | "aborted";
   log: ProcessLog[];
 } & JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["outputSchema"]["type"]
