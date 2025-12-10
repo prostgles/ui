@@ -2,18 +2,26 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import type { SpeechToTextState } from "./useSpeechToTextWeb";
 
 interface VoiceDetectionConfig {
-  /** Threshold for detecting speech (0-255). Default: 15 */
+  /**
+   * The audio level threshold above which speech is considered detected.
+   */
   speechThreshold?: number;
-  /** Duration of silence before stopping (ms). Default: 2000 */
+  /**
+   * The duration (in milliseconds) of continuous silence after speech detection to consider the speech ended.
+   */
   silenceDuration?: number;
-  /** Max recording duration (ms). Default: 60000 */
+  /**
+   * The maximum duration (in milliseconds) to record audio before automatically stopping.
+   */
   maxDuration?: number;
-  /** Initial delay before silence detection starts (ms). Default: 3000 */
+  /**
+   * The initial grace period (in milliseconds) to wait for speech before considering it as "no speech detected".
+   */
   initialGracePeriod?: number;
 }
 
-export const useSpeechToTextLocal = (
-  onFinished: (audio: Blob) => void,
+export const useSpeechAudio = (
+  onFinished: (audio: Blob, startListening: () => void) => void,
   config: VoiceDetectionConfig = {},
 ): SpeechToTextState => {
   const {
@@ -25,7 +33,7 @@ export const useSpeechToTextLocal = (
 
   const [isListening, setIsListening] = useState(false);
   const [statusText, setStatusText] = useState<string | undefined>(undefined);
-
+  console.log(statusText);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -37,7 +45,9 @@ export const useSpeechToTextLocal = (
   const hasDetectedSpeechRef = useRef<boolean>(false);
   const isStoppingRef = useRef<boolean>(false);
 
-  // Cleanup all resources
+  // Store isListening in a ref so the animation loop can access current value
+  const isListeningRef = useRef<boolean>(false);
+
   const cleanup = useCallback(() => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -73,7 +83,6 @@ export const useSpeechToTextLocal = (
     isStoppingRef.current = false;
   }, []);
 
-  // Stop recording and process audio
   const stopRecording = useCallback(() => {
     if (isStoppingRef.current) return;
     isStoppingRef.current = true;
@@ -91,87 +100,92 @@ export const useSpeechToTextLocal = (
     }
 
     setIsListening(false);
+    isListeningRef.current = false;
   }, []);
 
-  // Calculate audio level from analyser
   const getAudioLevel = useCallback((): number => {
     if (!analyserRef.current) return 0;
 
     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
     analyserRef.current.getByteFrequencyData(dataArray);
 
-    // Calculate RMS (root mean square) for better voice detection
     const sum = dataArray.reduce((acc, value) => acc + value * value, 0);
     return Math.sqrt(sum / dataArray.length);
   }, []);
 
-  // Monitor audio levels for voice activity detection
-  const monitorAudioLevel = useCallback(() => {
-    if (!isListening || isStoppingRef.current) return;
+  // Use a ref to store the latest version of the monitor function
+  const monitorAudioLevelRef = useRef<() => void>();
 
-    const currentTime = Date.now();
-    const elapsedTime =
-      currentTime - (recordingStartRef.current ?? currentTime);
-    const audioLevel = getAudioLevel();
-    const isSpeaking = audioLevel > speechThreshold;
+  // Update the ref whenever dependencies change
+  useEffect(() => {
+    monitorAudioLevelRef.current = () => {
+      // Check the REF, not the state
+      if (!isListeningRef.current || isStoppingRef.current) return;
 
-    // Update status text with visual feedback
-    const levelBar = "█".repeat(Math.min(Math.floor(audioLevel / 10), 20));
-    const silenceRemaining =
-      silenceStartRef.current ?
-        Math.max(0, silenceDuration - (currentTime - silenceStartRef.current))
-      : silenceDuration;
+      const currentTime = Date.now();
+      const elapsedTime =
+        currentTime - (recordingStartRef.current ?? currentTime);
+      const audioLevel = getAudioLevel();
+      const isSpeaking = audioLevel > speechThreshold;
 
-    if (isSpeaking) {
-      hasDetectedSpeechRef.current = true;
-      silenceStartRef.current = null;
-      setStatusText(`Speaking... ${levelBar}`);
-    } else if (hasDetectedSpeechRef.current) {
-      if (silenceStartRef.current === null) {
-        silenceStartRef.current = currentTime;
-      }
-      setStatusText(
-        `Waiting... ${Math.ceil(silenceRemaining / 1000)}s ${levelBar}`,
-      );
-    } else {
-      setStatusText(`Listening... ${levelBar}`);
-    }
+      const levelBar = "█".repeat(Math.min(Math.floor(audioLevel / 10), 20));
+      const silenceRemaining =
+        silenceStartRef.current ?
+          Math.max(0, silenceDuration - (currentTime - silenceStartRef.current))
+        : silenceDuration;
 
-    // Check for silence timeout (only after speech has been detected and grace period)
-    if (
-      hasDetectedSpeechRef.current &&
-      silenceStartRef.current !== null &&
-      currentTime - silenceStartRef.current >= silenceDuration
-    ) {
-      setStatusText("Processing...");
-      stopRecording();
-      return;
-    }
-
-    // Check for max duration
-    if (elapsedTime >= maxDuration) {
-      setStatusText("Max duration reached");
-      stopRecording();
-      return;
-    }
-
-    // Check for no speech detected within grace period
-    if (!hasDetectedSpeechRef.current && elapsedTime >= initialGracePeriod) {
-      // Start silence timer if no speech detected
-      if (silenceStartRef.current === null) {
-        silenceStartRef.current = currentTime;
+      if (isSpeaking) {
+        hasDetectedSpeechRef.current = true;
+        silenceStartRef.current = null;
+        setStatusText(`Speaking... ${levelBar}`);
+      } else if (hasDetectedSpeechRef.current) {
+        if (silenceStartRef.current === null) {
+          silenceStartRef.current = currentTime;
+        }
+        setStatusText(
+          `Waiting... ${Math.ceil(silenceRemaining / 1000)}s ${levelBar}`,
+        );
+      } else {
+        setStatusText(`Listening... ${levelBar}`);
       }
 
-      if (currentTime - silenceStartRef.current >= silenceDuration) {
-        setStatusText("No speech detected");
+      // Check for silence timeout after speech detected
+      if (
+        hasDetectedSpeechRef.current &&
+        silenceStartRef.current !== null &&
+        currentTime - silenceStartRef.current >= silenceDuration
+      ) {
+        setStatusText("Processing...");
         stopRecording();
         return;
       }
-    }
 
-    animationFrameRef.current = requestAnimationFrame(monitorAudioLevel);
+      // Check for max duration
+      if (elapsedTime >= maxDuration) {
+        setStatusText("Max duration reached");
+        stopRecording();
+        return;
+      }
+
+      // Check for no speech detected within grace period
+      if (!hasDetectedSpeechRef.current && elapsedTime >= initialGracePeriod) {
+        if (silenceStartRef.current === null) {
+          silenceStartRef.current = currentTime;
+        }
+
+        if (currentTime - silenceStartRef.current >= silenceDuration) {
+          setStatusText("No speech detected");
+          stopRecording();
+          return;
+        }
+      }
+
+      // Schedule next frame using the ref wrapper
+      animationFrameRef.current = requestAnimationFrame(() => {
+        monitorAudioLevelRef.current?.();
+      });
+    };
   }, [
-    isListening,
     getAudioLevel,
     speechThreshold,
     silenceDuration,
@@ -180,17 +194,14 @@ export const useSpeechToTextLocal = (
     stopRecording,
   ]);
 
-  // Start recording
   const start = useCallback(async () => {
     try {
-      // Reset state
       audioChunksRef.current = [];
       hasDetectedSpeechRef.current = false;
       silenceStartRef.current = null;
       isStoppingRef.current = false;
       setStatusText("Starting...");
 
-      // Get microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -200,7 +211,6 @@ export const useSpeechToTextLocal = (
       });
       streamRef.current = stream;
 
-      // Set up audio analysis (local only - no data leaves the browser)
       const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
 
@@ -211,9 +221,7 @@ export const useSpeechToTextLocal = (
 
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
-      // Note: We don't connect to audioContext.destination to avoid feedback
 
-      // Set up MediaRecorder
       const mimeType =
         MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ?
           "audio/webm;codecs=opus"
@@ -230,10 +238,10 @@ export const useSpeechToTextLocal = (
       };
 
       mediaRecorder.onstop = () => {
-        // Create audio blob
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: mimeType,
+        });
 
-        // Cleanup resources
         if (
           audioContextRef.current &&
           audioContextRef.current.state !== "closed"
@@ -247,9 +255,8 @@ export const useSpeechToTextLocal = (
           streamRef.current = null;
         }
 
-        // Only send if we have meaningful audio data
         if (audioChunksRef.current.length > 0 && audioBlob.size > 0) {
-          onFinished(audioBlob);
+          onFinished(audioBlob, start);
         }
 
         setStatusText(
@@ -261,49 +268,40 @@ export const useSpeechToTextLocal = (
         console.error("MediaRecorder error:", event);
         cleanup();
         setIsListening(false);
+        isListeningRef.current = false;
         setStatusText("Recording error");
       };
 
-      // Start recording
       mediaRecorder.start(100);
       recordingStartRef.current = Date.now();
       setIsListening(true);
+      isListeningRef.current = true; // Set the ref too!
       setStatusText("Listening...");
 
-      // Start monitoring audio levels
-      animationFrameRef.current = requestAnimationFrame(monitorAudioLevel);
+      // Start monitoring using the ref wrapper
+      animationFrameRef.current = requestAnimationFrame(() => {
+        monitorAudioLevelRef.current?.();
+      });
     } catch (error) {
       console.error("Error starting recording:", error);
       cleanup();
       setIsListening(false);
+      isListeningRef.current = false;
       setStatusText("Microphone access denied");
     }
-  }, [onFinished, cleanup, monitorAudioLevel]);
+  }, [cleanup, onFinished]);
 
-  // Manual stop function
-  const stop = useCallback(() => {
-    stopRecording();
-  }, [stopRecording]);
-
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       cleanup();
     };
   }, [cleanup]);
 
-  // Restart monitoring when isListening changes
-  useEffect(() => {
-    if (isListening && !animationFrameRef.current && !isStoppingRef.current) {
-      animationFrameRef.current = requestAnimationFrame(monitorAudioLevel);
-    }
-  }, [isListening, monitorAudioLevel]);
-
   if (isListening) {
     return {
       isListening: true,
       text: statusText ?? "Listening...",
-      stop,
+      stop: stopRecording,
     };
   }
 

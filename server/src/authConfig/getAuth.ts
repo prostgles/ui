@@ -9,7 +9,6 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { API_ENDPOINTS, ROUTES } from "@common/utils";
 import { actualRootDir } from "../electronConfig";
 import type { DBS } from "../index";
-import { initBackupManager } from "../init/startProstgles";
 import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
 import { getLogin } from "./getLogin";
 import { getGetUser } from "./getUser";
@@ -23,6 +22,7 @@ import {
   type SUser,
 } from "./sessionUtils";
 import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import { initBackupManager } from "@src/init/onProstglesReady";
 
 let globalSettings: AuthSetupData["globalSettings"] | undefined;
 

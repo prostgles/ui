@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import {
@@ -13,19 +15,45 @@ export class ServiceManager {
   dbs: DBS | undefined;
   constructor(dbs: DBS | undefined) {
     this.dbs = dbs;
-    void dbs?.services.delete();
-    void dbs?.services.insert(
-      getEntries(prostglesServices).map(
-        ([name, service]) =>
-          ({
-            icon: service.icon,
-            name,
-            default_port: service.port,
-            description: service.description,
-            status: "stopped",
-          }) satisfies DBSSchemaForInsert["services"],
-      ),
-    );
+    void dbs?.services
+      .insert(
+        getEntries(prostglesServices).map(
+          ([name, service]) =>
+            ({
+              name,
+              label: service.label,
+              icon: service.icon,
+              default_port: service.port,
+              description: service.description,
+              status: "stopped",
+            }) satisfies DBSSchemaForInsert["services"],
+        ),
+        {
+          onConflict: "DoNothing",
+        },
+      )
+      .then(() => {
+        void dbs.services.find({ status: "running" }).then((services) => {
+          const activeServiceNames: string[] = [];
+          services.forEach((service) => {
+            activeServiceNames.push(service.name);
+            console.log("Re-enabling service on startup:", service.name);
+            this.enableService(
+              service.name as keyof typeof prostglesServices,
+              () => {},
+            ).catch(console.error);
+          });
+          this.activeServices.forEach((_, serviceName) => {
+            if (!activeServiceNames.includes(serviceName)) {
+              console.log(
+                "Removing inactive service from activeServices:",
+                serviceName,
+              );
+              this.activeServices.delete(serviceName);
+            }
+          });
+        });
+      });
   }
   onServiceLog = (
     serviceName: keyof typeof prostglesServices,

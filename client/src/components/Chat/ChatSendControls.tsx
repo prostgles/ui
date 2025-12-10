@@ -5,28 +5,22 @@ import { mdiArrowUp, mdiAttachment, mdiStopCircle } from "@mdi/js";
 import { ChatActionBarBtnStyleProps } from "src/dashboard/AskLLM/ChatActionBar/AskLLMChatActionBar";
 import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
-import { FlexCol, FlexRow } from "../Flex";
+import { FlexRow } from "../Flex";
 import type { ChatProps } from "./Chat";
 import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import type { ChatState } from "./useChatState";
-import type { DBSSchema } from "@common/publishUtils";
 
 type ChatSendControlsProps = Pick<
   ChatProps,
-  "allowedMessageTypes" | "onStopSending" | "disabledInfo" | "onSend"
+  "onStopSending" | "disabledInfo" | "onSend"
 > &
   Pick<
     ChatState,
     "onAddFiles" | "files" | "setCurrentMessage" | "sendMsg" | "sendingMsg"
   > & {
     textAreaRef: React.RefObject<HTMLTextAreaElement>;
-    chat: DBSSchema["llm_chats"];
   };
 export const ChatSendControls = ({
-  allowedMessageTypes = {
-    file: false,
-    speech: { tts: true, audio: false },
-  },
   onStopSending,
   onAddFiles,
   onSend,
@@ -36,9 +30,7 @@ export const ChatSendControls = ({
   sendMsg,
   sendingMsg,
   textAreaRef,
-  chat,
 }: ChatSendControlsProps) => {
-  const speech = allowedMessageTypes.speech;
   const onSpeech = useCallback(
     async (audioOrTranscript: Blob | string, autoSend: boolean) => {
       if (typeof audioOrTranscript === "string") {
@@ -69,30 +61,30 @@ export const ChatSendControls = ({
   const { onErrorAlert } = useOnErrorAlert();
   const fileRef = React.useRef<HTMLInputElement>(null);
   return (
-    <FlexCol className="ChatSendControls as-end ai-center jc-center gap-p5">
+    <div
+      className={`ChatSendControls ${window.isMobile ? "flex-col" : "flex-row"} as-end ai-center jc-center gap-p5`}
+    >
       <FlexRow className="gap-0">
-        {allowedMessageTypes.file && (
-          <>
-            <Btn
-              data-command="Chat.addFiles"
-              iconPath={mdiAttachment}
-              {...ChatActionBarBtnStyleProps}
-              onClick={() => {
-                fileRef.current?.click();
-              }}
-            />
-            <input
-              ref={fileRef}
-              type="file"
-              multiple
-              style={{ display: "none" }}
-              onChange={(e) => {
-                onAddFiles(Array.from(e.target.files || []));
-              }}
-            />
-          </>
-        )}
-        {speech && <ChatSpeech onFinished={onSpeech} chat={chat} />}
+        <>
+          <Btn
+            data-command="Chat.addFiles"
+            iconPath={mdiAttachment}
+            {...ChatActionBarBtnStyleProps}
+            onClick={() => {
+              fileRef.current?.click();
+            }}
+          />
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            style={{ display: "none" }}
+            onChange={(e) => {
+              onAddFiles(Array.from(e.target.files || []));
+            }}
+          />
+        </>
+        <ChatSpeech onFinished={onSpeech} isSending={Boolean(onStopSending)} />
       </FlexRow>
       {onStopSending ?
         <Btn
@@ -114,6 +106,6 @@ export const ChatSendControls = ({
           }}
         />
       }
-    </FlexCol>
+    </div>
   );
 };

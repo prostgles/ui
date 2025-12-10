@@ -13,14 +13,17 @@ import PopupMenu from "@components/PopupMenu";
 import { SmartForm } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
+import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
 
 export const AskLLMChatActionBarDatabaseAccess = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
+    prompt: DBSSchema["llm_prompts"] | undefined;
   },
 ) => {
   const { prgl, activeChat } = props;
+  const prompt = props.prompt?.prompt;
   const activeChatId = activeChat.id;
   const { dbs, dbsMethods, dbsTables } = prgl;
 
@@ -41,13 +44,20 @@ export const AskLLMChatActionBarDatabaseAccess = (
     : undefined;
 
   const schemaPermission = activeChat.db_schema_permissions;
-  const schemaActiveIcon = useMemo(() => {
+  const schemaReadAccess = useMemo(() => {
     if (!schemaPermission || schemaPermission.type === "None") {
       return;
     }
-    return mdiDatabase;
-  }, [schemaPermission]);
-  const databaseActiveIcon = useMemo(() => {
+    /**
+     * db_schema_permissions simply allows the backend to replace the schema variable from the prompt with actual schema before sending.
+     * If the prompt doesn't use the schema variable then no point showing the icon
+     */
+    if (!prompt?.includes(LLM_PROMPT_VARIABLES.SCHEMA)) {
+      return;
+    }
+    return { icon: mdiDatabase, type: schemaPermission.type };
+  }, [prompt, schemaPermission]);
+  const databaseAccess = useMemo(() => {
     if (!dataPermission || dataPermission.Mode === "None") {
       return;
     }
@@ -56,11 +66,12 @@ export const AskLLMChatActionBarDatabaseAccess = (
     const canEditData =
       dataPermission.Mode === "Custom" &&
       dataPermission.tables.some((t) => t.update || t.insert || t.delete);
-    return {
+    const icon = {
       "Run readonly SQL": mdiDatabaseSearch,
       Custom: canEditData ? mdiTable : mdiTableSearch,
       "Run commited SQL": mdiDatabaseEdit,
     }[Mode];
+    return { icon, Mode };
   }, [dataPermission]);
 
   return (
@@ -72,18 +83,17 @@ export const AskLLMChatActionBarDatabaseAccess = (
       button={
         <Btn
           {...ChatActionBarBtnStyleProps}
-          iconPath={databaseActiveIcon ?? schemaActiveIcon ?? mdiDatabase}
+          iconPath={
+            databaseAccess?.icon ?? schemaReadAccess?.icon ?? mdiDatabase
+          }
           title={[
             `Database access for this chat:\n`,
-            `Schema read access: ${activeChat.db_schema_permissions?.type ?? "None"}`,
+            `Schema read access: ${schemaReadAccess?.type ?? "None"}`,
             `Data: \n ${(tablePermissionInfo?.join(", ") || dataPermission?.Mode) ?? "None"}`,
             allowedFunctions ? `Allowed Functions: ${allowedFunctions}` : "",
           ].join("\n")}
           color={
-            (
-              (schemaActiveIcon ?? mdiDatabase) ||
-              llm_chats_allowed_functions?.length
-            ) ?
+            schemaReadAccess?.icon || llm_chats_allowed_functions?.length ?
               "action"
             : undefined
           }

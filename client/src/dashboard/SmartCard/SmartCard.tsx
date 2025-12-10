@@ -55,7 +55,7 @@ export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
   FieldConfigBase<T> & {
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     select?: "*" | number | AnyObject | keyof T;
-    hideIf?: (value, row) => boolean;
+    hideIf?: (value, row: T) => boolean;
     render?: FieldConfigRender<T>;
     /**
      * Defaults to "value"

@@ -1,53 +1,81 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
+import { useOnErrorAlert } from "@components/AlertProvider";
 import { mdiMicrophone, mdiMicrophoneMessage, mdiStop } from "@mdi/js";
+import { ChatActionBarBtnStyleProps } from "src/dashboard/AskLLM/ChatActionBar/AskLLMChatActionBar";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import { t } from "../../../i18n/i18nUtils";
 import Btn from "../../Btn";
 import { ChatSpeechSetup } from "./ChatSpeechSetup";
-import { useAudioRecorder } from "./useAudioRecorder";
+import { useSpeechAudio } from "./hooks/useSpeechAudio";
+import { useSpeechToTextWeb } from "./hooks/useSpeechToTextWeb";
 import { useChatSpeechSetup } from "./useChatSpeechSetup";
-import { useSpeechToTextWeb } from "./useSpeechToTextWeb";
-import { useSpeechToTextLocal } from "./useSpeechToTextLocal";
-import { useOnErrorAlert } from "@components/AlertProvider";
-import type { DBSSchema } from "@common/publishUtils";
 
 type P = {
   onFinished: (audioOrTranscript: Blob | string, autoSend: boolean) => void;
-  chat: DBSSchema["llm_chats"];
+  isSending: boolean;
 };
-export const ChatSpeech = ({ onFinished, chat }: P) => {
+export const ChatSpeech = ({ onFinished, isSending }: P) => {
+  const [firstRecordingDone, setFirstRecordingDone] = useState(false);
   const { onErrorAlert } = useOnErrorAlert();
-  const chatSpeechSetupState = useChatSpeechSetup(chat.speech_mode ?? "off");
-  const { speechToTextMode, transcribeAudio, autosend } = chatSpeechSetupState;
+  const chatSpeechSetupState = useChatSpeechSetup();
+  const { speechToTextMode, transcribeAudio, sendMode, speechEnabledErrors } =
+    chatSpeechSetupState;
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const onFinishedWithOptions = useCallback(
     async (audioOrTranscript: Blob | string) => {
-      if (speechToTextMode === "stt-local" && transcribeAudio) {
-        await onErrorAlert(async () => {
+      await onErrorAlert(async () => {
+        const autoSend = sendMode === "auto";
+        if (speechToTextMode === "stt-local") {
+          if (!transcribeAudio) {
+            throw new Error("Transcription service is not available");
+          }
+          setIsTranscribing(true);
+          setFirstRecordingDone(true);
           const sttResult = await transcribeAudio(audioOrTranscript as Blob);
           if ("success" in sttResult) {
             if (sttResult.transcription) {
-              onFinished(sttResult.transcription, autosend);
+              onFinished(sttResult.transcription, autoSend);
             }
           } else throw sttResult.error;
-        });
-      } else {
-        onFinished(audioOrTranscript, autosend);
-      }
+        } else {
+          onFinished(audioOrTranscript, autoSend);
+        }
+      }).finally(() => {
+        setIsTranscribing(false);
+      });
     },
-    [speechToTextMode, transcribeAudio, onErrorAlert, onFinished, autosend],
+    [speechToTextMode, transcribeAudio, onErrorAlert, onFinished, sendMode],
   );
-  const speechToAudio = useAudioRecorder(onFinishedWithOptions);
+
   const speechToTextWeb = useSpeechToTextWeb(onFinishedWithOptions);
-  const speechToTextLocal = useSpeechToTextLocal(onFinishedWithOptions);
+  const speechAudio = useSpeechAudio(onFinishedWithOptions);
   const isSpeechToTextEnabled =
     speechToTextMode === "stt-local" || speechToTextMode === "stt-web";
   const speechHooks = {
     "stt-web": speechToTextWeb,
-    "stt-local": speechToTextLocal,
-    audio: speechToAudio,
+    "stt-local": speechAudio,
+    audio: speechAudio,
     off: undefined,
   }[speechToTextMode];
   const { isListening } = speechHooks ?? {};
+
+  const startRecording =
+    speechHooks?.isListening ? undefined : speechHooks?.start;
+  const debouncedStart = useDebouncedCallback(
+    () => {
+      if (!startRecording) return;
+      startRecording();
+    },
+    [startRecording],
+    1500,
+  );
+
+  useEffect(() => {
+    if (!firstRecordingDone || sendMode !== "auto" || isSending) return;
+
+    debouncedStart();
+  }, [debouncedStart, firstRecordingDone, isSending, isTranscribing, sendMode]);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
 
@@ -55,23 +83,34 @@ export const ChatSpeech = ({ onFinished, chat }: P) => {
     <>
       <Btn
         className=" bg-transparent"
+        disabledInfo={isSending ? "Waiting for response ..." : undefined}
+        data-command="Chat.speech"
+        loading={isTranscribing}
         onClick={({ currentTarget }) => {
-          if (!speechHooks) {
+          if (!speechHooks || speechEnabledErrors) {
             setAnchorEl(currentTarget);
           } else {
             if (speechHooks.isListening) {
               speechHooks.stop();
+              setFirstRecordingDone(false);
             } else {
               speechHooks.start();
             }
           }
         }}
-        color={isListening ? "action" : "default"}
+        {...ChatActionBarBtnStyleProps}
+        size={undefined}
+        color={
+          speechEnabledErrors ? "warn"
+          : isListening ?
+            "action"
+          : undefined
+        }
         title={
-          isListening ? t.common["Stop recording"]
-          : isSpeechToTextEnabled ?
-            t.common["Speech to text"]
-          : t.common["Record audio"]
+          speechEnabledErrors ??
+          (isListening ? t.common["Stop recording"]
+          : isSpeechToTextEnabled ? t.common["Speech to text"]
+          : t.common["Record audio"]) + " (right click for options)"
         }
         iconPath={
           isListening ? mdiStop

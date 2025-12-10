@@ -13,6 +13,7 @@ import type {
 } from "./ServiceManagerTypes";
 import { isEqual } from "prostgles-types";
 import { getEntries } from "@common/utils";
+import { dockerInspect } from "./dockerInspect";
 
 export async function buildService(
   this: ServiceManager,
@@ -40,7 +41,8 @@ export async function buildService(
     abortController.abort();
   };
   const serviceCwd = join(
-    getRootDir(),
+    __dirname,
+    "../../../../",
     "/src/ServiceManager/services",
     serviceName,
     "src",
@@ -58,29 +60,18 @@ export async function buildService(
     "--label",
     `${key}=${value}`,
   ]);
-  const matchingDockerImage = await executeDockerCommand(
-    ["inspect", imageName],
-    { timeout: 10_000 },
-  );
-  const infoStr = matchingDockerImage.log.at(-1)?.text;
-  if (infoStr) {
-    const [image, ...otherImages] = JSON.parse(infoStr) as {
-      Id: string;
-      Config: { Labels: { [key: string]: string } };
-    }[];
-    if (
-      image &&
-      !otherImages.length &&
-      isEqual(image.Config.Labels, buildLabels)
-    ) {
-      this.activeServices.set(serviceName, {
-        status: "building-done",
-        buildHash,
-        labels: buildLabels,
-        labelArgs,
-      });
-      return "close";
-    }
+  const matchingDockerImage = await dockerInspect(imageName);
+  if (
+    matchingDockerImage &&
+    isEqual(matchingDockerImage.Config.Labels, buildLabels)
+  ) {
+    this.activeServices.set(serviceName, {
+      status: "building-done",
+      buildHash,
+      labels: buildLabels,
+      labelArgs,
+    });
+    return "close";
   }
 
   const instance: ServiceInstance = {

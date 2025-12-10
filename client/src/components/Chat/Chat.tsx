@@ -6,7 +6,6 @@ import { ChatFileAttachments } from "./ChatFileAttachments/ChatFileAttachments";
 import { ChatMessage } from "./ChatMessage";
 import { ChatSendControls } from "./ChatSendControls";
 import { useChatState } from "./useChatState";
-import type { DBSSchema } from "@common/publishUtils";
 
 export type Message = {
   id: number | string;
@@ -23,10 +22,6 @@ export type ChatProps = {
   onSend: (msg?: string, files?: File[]) => Promise<void>;
   onStopSending: undefined | (() => void);
   messages: Message[];
-  allowedMessageTypes?: Partial<{
-    speech: { tts: boolean; audio: boolean };
-    file: boolean;
-  }>;
   disabledInfo?: string;
   isLoading: boolean;
   actionBar?: React.ReactNode;
@@ -36,7 +31,6 @@ export type ChatProps = {
   maxWidth?: number;
   currentlyTypedMessage: string | null | undefined;
   onCurrentlyTypedMessageChange: (currentlyTypedMessage: string) => void;
-  chat: DBSSchema["llm_chats"];
 };
 
 export const Chat = (props: ChatProps) => {
@@ -49,11 +43,9 @@ export const Chat = (props: ChatProps) => {
     disabledInfo,
     actionBar,
     isLoading,
-    allowedMessageTypes,
     maxWidth = 800,
     currentlyTypedMessage,
     onCurrentlyTypedMessageChange,
-    chat,
   } = props;
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -164,7 +156,6 @@ export const Chat = (props: ChatProps) => {
             {actionBar}
           </FlexCol>
           <ChatSendControls
-            allowedMessageTypes={allowedMessageTypes}
             onStopSending={onStopSending}
             onAddFiles={onAddFiles}
             disabledInfo={disabledInfo}
@@ -174,7 +165,6 @@ export const Chat = (props: ChatProps) => {
             sendingMsg={sendingMsg}
             setCurrentMessage={setCurrentMessage}
             textAreaRef={textAreaRef}
-            chat={chat}
           />
         </div>
       </FlexCol>

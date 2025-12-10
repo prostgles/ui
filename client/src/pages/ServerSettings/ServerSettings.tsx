@@ -244,7 +244,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                     <InfoRow variant="naked" color="info" iconPath="">
                       Configure LLM provider credentials used in Ask AI chat.
                     </InfoRow>
-                    <Services {...props} />
+                    <Services {...props} showSpecificService={undefined} />
                   </FlexCol>
                 ),
               },

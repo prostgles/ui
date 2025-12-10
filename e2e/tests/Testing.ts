@@ -358,6 +358,7 @@ export const COMMANDS = {
   "Chat.sendStop": "",
   "Chat.addFiles": "",
   "Chat.textarea": "",
+  "Chat.speech": "",
   AskLLM: "",
   "AskLLM.popup": "",
   SetupLLMCredentials: "",

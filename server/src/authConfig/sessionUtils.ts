@@ -29,7 +29,7 @@ export const createSessionSecret = () => {
 };
 
 export const makeSession = async (
-  user: Users | undefined,
+  user: Pick<Users, "id" | "type"> | undefined,
   client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & {
     sid?: string;
   },

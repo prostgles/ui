@@ -28,7 +28,6 @@ export type AskLLMToolsProps = {
     msg: DBSSchema["llm_messages"]["message"] | undefined,
     isToolApproval: boolean,
   ) => void;
-  callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
 } & Pick<Prgl, "methods" | "connection">;
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {

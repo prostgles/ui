@@ -136,11 +136,12 @@ function blobToBase64(blob: File): Promise<string> {
     const reader = new FileReader();
     reader.onloadend = () => {
       // The result includes the data URL prefix (data:audio/ogg;base64,)
-      if (reader.result && reader.result !== "string") {
+      const { result } = reader;
+      if (result && typeof result !== "string") {
         reject(new Error("Failed to convert blob to base64 string"));
         return;
       }
-      const base64String = reader.result?.toString() || "";
+      const base64String = result?.toString() || "";
       resolve(base64String);
     };
     reader.onerror = reject;

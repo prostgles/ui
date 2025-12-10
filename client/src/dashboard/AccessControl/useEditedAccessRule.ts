@@ -250,7 +250,7 @@ const getRuleErrorMessage = (
 const getAccessRuleTableErrors = async (
   { prgl: { dbs, tables } }: Pick<P, "prgl">,
   rule: Partial<EditedAccessRule>,
-  userTypes: string[],
+  userTypes: DBSSchema["user_types"]["id"][],
 ) => {
   if (
     rule.dbPermissions?.type !== "Custom" ||

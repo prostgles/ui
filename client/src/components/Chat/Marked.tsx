@@ -35,6 +35,11 @@ export const Marked = (props: MarkedProps) => {
       const codeString = props.children?.toString() ?? "";
 
       if (!codeString || !className || !language || language === "markdown") {
+        const isSingleWord =
+          !codeString.includes("\n") && !codeString.includes(" ");
+        if (isSingleWord) {
+          return <code {...props} />;
+        }
         return (
           <pre>
             <code {...props} />

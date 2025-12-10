@@ -12,10 +12,13 @@ export const AskLLMChatActionBar = (
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
     llmMessages: DBSSchema["llm_messages"][];
+    prompt: DBSSchema["llm_prompts"] | undefined;
   },
 ) => {
   return (
-    <FlexRow className="gap-p5 pr-1">
+    <FlexRow
+      className={`AskLLMChatActionBar pr-1 ${window.isMobile ? "gap-0" : "gap-p5"}`}
+    >
       <AskLLMChatActionBarMCPTools {...props} />
       <AskLLMChatActionBarDatabaseAccess {...props} />
       <AskLLMChatActionBarPromptSelector {...props} />

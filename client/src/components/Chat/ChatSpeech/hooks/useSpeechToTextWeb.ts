@@ -15,18 +15,11 @@ export type SpeechToTextState =
 let confirmed = false;
 
 export const useSpeechToTextWeb = (
-  onFinished: (audioOrTranscript: Blob | string) => void,
+  onFinished: (audioOrTranscript: Blob | string, start: VoidFunction) => void,
 ): SpeechToTextState => {
   const [isListening, setIsListening] = useState(false);
   const [text, setText] = useState("");
   const recognitionRef = useRef<SpeechRecognition>();
-  useEffect(() => {
-    if (text.length) {
-      //!isListening &&
-      onFinished(text);
-      setText("");
-    }
-  }, [isListening, text, onFinished]);
   const initializeRecognition = useCallback(() => {
     const SpeechRecognitionAPI =
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -98,6 +91,13 @@ export const useSpeechToTextWeb = (
       }
     }
   }, [initializeRecognition, isListening]);
+
+  useEffect(() => {
+    if (text.length) {
+      onFinished(text, start);
+      setText("");
+    }
+  }, [isListening, text, onFinished, start]);
 
   const stop = useCallback((): void => {
     if (recognitionRef.current && isListening) {

@@ -154,7 +154,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   },
   user_statuses: {
     isLookupTable: {
-      values: { active: {}, disabled: {} },
+      values: { active: {}, disabled: {}, public: {} },
     },
   },
 
@@ -190,6 +190,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   services: {
     columns: {
       name: `TEXT PRIMARY KEY`,
+      label: `TEXT NOT NULL UNIQUE`,
       description: `TEXT`,
       icon: `TEXT NOT NULL`,
       default_port: `INTEGER NOT NULL`,

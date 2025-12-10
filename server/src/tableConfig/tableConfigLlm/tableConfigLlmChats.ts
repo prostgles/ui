@@ -190,10 +190,6 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
         sqlDefinition: `TEXT`,
       },
       ...extraRequestData,
-      speech_mode: {
-        nullable: true,
-        enum: ["off", "stt-local", "stt-web", "audio"],
-      },
     },
     indexes: {
       unique_chat_for_connection: {

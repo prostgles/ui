@@ -1,6 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import PopupMenu from "@components/PopupMenu";
-import React from "react";
+import React, { useState } from "react";
 import { MCPServers } from "../../../pages/ServerSettings/MCPServers/MCPServers";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { AskLLMChatActionBarMCPToolsBtn } from "./AskLLMChatActionBarMCPToolsBtn";
@@ -14,7 +14,7 @@ export const AskLLMChatActionBarMCPTools = (
   const { prgl, activeChat } = props;
   const { dbs } = prgl;
 
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = useState(false);
 
   return (
     <PopupMenu
@@ -23,6 +23,7 @@ export const AskLLMChatActionBarMCPTools = (
       clickCatchStyle={{ opacity: 1 }}
       onClickClose={false}
       data-command="LLMChatOptions.MCPTools"
+      style={loading ? { visibility: "hidden" } : undefined}
       onContentFinishedResizing={() => setLoading(false)}
       button={
         <AskLLMChatActionBarMCPToolsBtn

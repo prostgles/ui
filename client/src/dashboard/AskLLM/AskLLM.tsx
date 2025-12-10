@@ -8,8 +8,6 @@ import { AskLLMChat } from "./Chat/AskLLMChat";
 import { SetupLLMCredentials } from "./Setup/SetupLLMCredentials";
 import { useLLMSetupState } from "./Setup/useLLMSetupState";
 
-export const CHAT_WIDTH = 900;
-
 type P = Prgl & {
   workspaceId: string | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
@@ -18,7 +16,7 @@ type P = Prgl & {
 export const AskLLM = (props: P) => {
   const { workspaceId, loadedSuggestions, ...prgl } = props;
   const { dbsMethods } = prgl;
-  const { askLLM, callMCPServerTool } = dbsMethods;
+  const { askLLM, stopAskLLM } = dbsMethods;
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const onClose = () => {
@@ -49,7 +47,7 @@ export const AskLLM = (props: P) => {
         {window.isMediumWidthScreen ? null : t.AskLLM["AI Assistant"]}
       </Btn>
 
-      {!anchorEl || !askLLM ?
+      {!anchorEl || !askLLM || !stopAskLLM ?
         null
       : state.state !== "ready" ?
         <SetupLLMCredentials
@@ -61,8 +59,8 @@ export const AskLLM = (props: P) => {
       : <AskLLMChat
           loadedSuggestions={loadedSuggestions}
           prgl={prgl}
-          callMCPServerTool={callMCPServerTool}
           askLLM={askLLM}
+          stopAskLLM={stopAskLLM}
           workspaceId={workspaceId}
           setupState={state}
           anchorEl={anchorEl}

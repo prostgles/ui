@@ -112,6 +112,14 @@ export const tableConfigUsers = {
             description: "Will hide passwordless user tips if true",
           },
           theme: { enum: ["dark", "light", "from-system"], optional: true },
+          speech_mode: {
+            optional: true,
+            enum: ["off", "stt-local", "stt-web", "audio"],
+          },
+          speech_send_mode: {
+            optional: true,
+            enum: ["manual", "auto"],
+          },
         },
       },
       "2fa": {

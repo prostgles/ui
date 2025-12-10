@@ -17,6 +17,7 @@ type P = Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables"> & {
     | undefined
     | {
         title: string;
+        color?: "red";
         serviceName: string;
       };
 };
@@ -36,7 +37,12 @@ export const Services = ({
       db={dbs as DBHandlerClient}
       title={
         showSpecificService && (
-          <Label variant="normal">{showSpecificService.title}</Label>
+          <Label
+            variant="normal"
+            style={showSpecificService.color && { color: "var(--red)" }}
+          >
+            {showSpecificService.title}
+          </Label>
         )
       }
       filter={
@@ -68,14 +74,20 @@ const useServicesFieldConfigs = ({
         hide: true,
       },
       {
+        name: "label",
+        hide: true,
+      },
+      {
         name: "name",
         renderMode: "full",
-        render: (_, { name, icon, status }: DBSSchema["services"]) => {
+        render: (_, { name, label, icon, status }: DBSSchema["services"]) => {
           const isRunning = status === "running";
           return (
-            <FlexRow className="w-full">
-              <SvgIcon icon={icon} size={24} />
-              <Label variant="header">{name}</Label>
+            <FlexRow className="w-full gap-0">
+              <SvgIcon className="f-0" icon={icon} size={24} />
+              <Label variant="header" className="ta-left mr-1">
+                {label}
+              </Label>
               <StatusChip
                 color={
                   status === "running" ? "green"
@@ -114,7 +126,12 @@ const useServicesFieldConfigs = ({
       },
       {
         name: "logs",
-        // hide: !!showSpecificService,
+        hideIf: (v, { status }) =>
+          !v ||
+          Boolean(
+            showSpecificService &&
+              (status === "running" || status === "stopped"),
+          ),
         renderMode: "full",
         render: (_, { logs }) => (
           <FlexCol

@@ -335,7 +335,6 @@ export type DBGeneratedSchema = {
       model?: null | number;
       name?: string;
       parent_chat_id?: null | number;
-      speech_mode?: null | "off" | "stt-local" | "stt-web" | "audio"
       status?: 
        | null
        |  {  state: "stopped"; }
@@ -664,6 +663,7 @@ export type DBGeneratedSchema = {
       default_port: number;
       description?: null | string;
       icon: string;
+      label: string;
       logs?: null | string;
       name: string;
       status: "stopped" | "starting" | "running" | "error" | "building" | "building-done" | "build-error"
@@ -750,7 +750,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      id: "active" | "disabled"
+      id: "active" | "disabled" | "public"
     };
   };
   user_types: {
@@ -781,7 +781,7 @@ export type DBGeneratedSchema = {
       id?: string;
       last_updated?: null | string;
       name?: null | string;
-      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";  };
+      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";   speech_mode?: "off" | "stt-local" | "stt-web" | "audio";   speech_send_mode?: "manual" | "auto";  };
       password: string;
       passwordless_admin?: null | boolean;
       registration?: 
@@ -789,7 +789,7 @@ export type DBGeneratedSchema = {
        |  {  type: "password-w-email-confirmation";  email_confirmation: |  {  status: "confirmed";  date: string; } |  {  status: "pending";  confirmation_code: string;  date: string; }; }
        |  {  type: "magic-link";  otp_code: string;  date: string;  used_on?: string; }
        |  {  type: "OAuth";  provider: "google" | "facebook" | "github" | "microsoft" | "customOAuth";  user_id: string;  profile: any; }
-      status?: "active" | "disabled"
+      status?: "active" | "disabled" | "public"
       type?: "admin" | "public" | "default"
       username: string;
     };

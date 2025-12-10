@@ -1,38 +1,25 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { ProstglesInitState } from "@common/electronInitTypes";
 import type { Express } from "express";
 import path from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
-import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
-import type { DB } from "prostgles-server/dist/Prostgles";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
+import { getSerialisableError } from "prostgles-types";
 import type { Server } from "socket.io";
 import type { DBS } from "..";
-import { connMgr } from "..";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import type { ProstglesInitState } from "@common/electronInitTypes";
-import BackupManager from "../BackupManager/BackupManager";
-import { addLog, setLoggerDBS } from "../Logger";
-import { setupMCPServerHub } from "../McpHub/McpHub";
-import { initUsers } from "../SecurityManager/initUsers";
-import { getAuth } from "../authConfig/getAuth";
+import { addLog } from "../Logger";
 import type { SUser } from "../authConfig/sessionUtils";
-import {
-  subscribeToAuthSetupChanges,
-  type AuthSetupDataListener,
-} from "../authConfig/subscribeToAuthSetupChanges";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { actualRootDir, getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
 import { publish } from "../publish/publish";
-import { setupLLM } from "../publishMethods/askLLM/setupLLM";
 import { publishMethods } from "../publishMethods/publishMethods";
 import { tableConfig } from "../tableConfig/tableConfig";
-import { insertStateDatabase } from "./insertStateDatabase";
+import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
+import { onProstglesReady } from "./onProstglesReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
-import { getProstglesState } from "./tryStartProstgles";
-import { getSerialisableError } from "prostgles-types";
-import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 
 type StartArguments = {
   app: Express;
@@ -42,20 +29,11 @@ type StartArguments = {
   host: string;
 };
 
-let backupManager: BackupManager | undefined;
-export const initBackupManager = async (db: DB, dbs: DBS) => {
-  backupManager ??= await BackupManager.create(db, dbs, connMgr);
-  return backupManager;
-};
-
-export const getBackupManager = () => backupManager;
-
 export let statePrgl: InitResult<DBGeneratedSchema, SUser> | undefined;
 export type InitExtra = {
   dbs: DBS;
 };
 export type ProstglesInitStateWithDBS = ProstglesInitState<InitExtra>;
-let authSetupDataListener: AuthSetupDataListener | undefined;
 
 export const startProstgles = async ({
   app,
@@ -204,36 +182,8 @@ export const startProstgles = async ({
       publishMethods,
       publish,
       joins: "inferred",
-      onReady: async (params) => {
-        const { dbo: db } = params;
-        const _db: DB = params.db;
-
-        setLoggerDBS(params.dbo);
-
-        await initUsers(db, _db);
-
-        await insertStateDatabase(db, _db, con, getProstglesState().isElectron);
-        await setupLLM(db);
-        await setupMCPServerHub(db);
-
-        await connMgr.destroy();
-        await connMgr.init(db, _db);
-        void getServiceManager(db);
-
-        await backupManager?.destroy();
-        backupManager ??= await BackupManager.create(_db, db, connMgr);
-
-        const newAuthSetupDataListener = subscribeToAuthSetupChanges(
-          db,
-          async (authData) => {
-            const auth = await getAuth(app, db, authData);
-            void prgl.update({
-              auth,
-            });
-          },
-          authSetupDataListener,
-        );
-        authSetupDataListener = newAuthSetupDataListener;
+      onReady: async (params, update) => {
+        await onProstglesReady(params, update, app, con);
       },
     });
 

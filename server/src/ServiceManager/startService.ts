@@ -3,6 +3,8 @@ import {
   type ExecutionResult,
   type ProcessLog,
 } from "@src/DockerManager/executeDockerCommand";
+import { spawn } from "child_process";
+import { tout } from "..";
 import type { ServiceManager } from "./ServiceManager";
 import {
   prostglesServices,
@@ -12,10 +14,7 @@ import {
   type ServiceInstance,
 } from "./ServiceManagerTypes";
 import { camelCaseToSkewerCase } from "./buildService";
-import { tout } from "..";
-import { spawn } from "child_process";
 import { getServiceEndoints } from "./getServiceEndoints";
-import { isEqual } from "prostgles-types";
 
 export async function startService(
   this: ServiceManager,
@@ -41,35 +40,6 @@ export async function startService(
   this.activeServices.set(serviceName, { getLogs, stop, status: "starting" });
   const imageName = camelCaseToSkewerCase(serviceName);
   const containerName = `prostgles-service-${imageName}`;
-
-  const existingContainerInfo = await executeDockerCommand(
-    ["inspect", containerName],
-    { timeout: 30_000 },
-  );
-  const [containerInfo, ...others] = JSON.parse(
-    existingContainerInfo.log.find((d) => d.type === "stdout")?.text || "[]",
-  ) as {
-    Id: string;
-    State: {
-      Status: "running" | "exited" | "paused" | "restarting" | "created";
-    };
-    Config: {
-      Image: string;
-      Labels: Record<string, string>;
-    };
-  }[];
-
-  /** Check if we can reuse existing container */
-  // let reuseExistingContainer = false;
-  // if (containerInfo && !others.length) {
-  //   if (isEqual(labels, containerInfo.Config.Labels)) {
-  //     await executeDockerCommand(
-  //       ["start", containerName],
-  //       { timeout: 30_000 },
-  //     );
-  //     reuseExistingContainer = true;
-  //   }
-  // }
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise(async (resolve, reject) => {
@@ -113,6 +83,7 @@ export async function startService(
       [
         "run",
         "-i",
+        "--rm",
         "--init",
         ...labelArgs,
         "--name",
@@ -127,7 +98,6 @@ export async function startService(
         imageName,
       ],
       {
-        timeout: 300_000,
         signal: abortController.signal,
       },
       (newLogs) => {

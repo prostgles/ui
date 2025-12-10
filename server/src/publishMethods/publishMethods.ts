@@ -34,7 +34,6 @@ import { getCompiledTS } from "../ConnectionManager/connectionManagerUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { getElectronConfig } from "../electronConfig";
-import { initBackupManager, statePrgl } from "../init/startProstgles";
 import { callMCPServerTool } from "../McpHub/callMCPServerTool";
 import {
   getMcpHostInfo,
@@ -55,6 +54,8 @@ import { getConnectionAndDatabaseConfig } from "./getConnectionAndDatabaseConfig
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
 import { setFileStorage } from "./setFileStorage";
+import { initBackupManager } from "@src/init/onProstglesReady";
+import { statePrgl } from "@src/init/startProstgles";
 
 export const publishMethods: PublishMethods<
   DBGeneratedSchema,

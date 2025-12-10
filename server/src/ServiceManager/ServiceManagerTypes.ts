@@ -8,6 +8,7 @@ import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMC
 
 export type ProstglesService = {
   icon: string;
+  label: string;
   description: string;
   port: number;
   env?: Record<string, string>;

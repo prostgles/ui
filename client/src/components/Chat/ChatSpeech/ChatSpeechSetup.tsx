@@ -1,27 +1,25 @@
-import React, { useState } from "react";
+import React from "react";
 
 import { Select } from "@components/Select/Select";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { Services } from "@pages/ServerSettings/Services";
 import Popup from "../../Popup/Popup";
-import { SwitchToggle } from "../../SwitchToggle";
 import {
   SpeechModeOptions,
+  SpeechToTextSendModes,
   type ChatSpeechSetupState,
 } from "./useChatSpeechSetup";
 
 export const ChatSpeechSetup = ({
   onClose,
-  autosend,
-  setAutosend,
+  sendMode,
+  setSendMode,
   setSpeechToTextMode,
   speechToTextMode,
   anchorEl,
   transcribeAudio,
 }: { onClose: VoidFunction; anchorEl: HTMLElement } & ChatSpeechSetupState) => {
-  const { user, dbs, dbsMethods, dbsTables } = usePrgl();
-  // const [localSpeechToTextMode, setLocalSpeechToTextMode] =
-  //   useState(speechToTextMode);
+  const { dbs, dbsMethods, dbsTables } = usePrgl();
   return (
     <Popup
       title={"Microphone options"}
@@ -35,14 +33,18 @@ export const ChatSpeechSetup = ({
       <Select
         label={"Speech mode"}
         value={speechToTextMode}
-        onChange={setSpeechToTextMode}
+        onChange={(newMode) => setSpeechToTextMode(newMode)}
         fullOptions={SpeechModeOptions}
         variant="button-group-vertical"
       />
       {speechToTextMode === "stt-local" && (
         <Services
           showSpecificService={{
-            title: !transcribeAudio ? "Must enable Speech to Text Service" : "",
+            color: !transcribeAudio ? "red" : undefined,
+            title:
+              !transcribeAudio ?
+                "Must enable Speech to Text Service"
+              : "Transcription service",
             serviceName: "speechToText",
           }}
           dbs={dbs}
@@ -51,10 +53,12 @@ export const ChatSpeechSetup = ({
         />
       )}
       {speechToTextMode !== "off" && (
-        <SwitchToggle
-          label={"Send automatically"}
-          checked={autosend}
-          onChange={(v) => setAutosend(v)}
+        <Select
+          fullOptions={SpeechToTextSendModes}
+          label={"Send mode"}
+          value={sendMode}
+          onChange={setSendMode}
+          variant="button-group-vertical"
         />
       )}
     </Popup>

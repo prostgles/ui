@@ -1,3 +1,4 @@
+import { useOnErrorAlert } from "@components/AlertProvider";
 import type { FullOption } from "@components/Select/Select";
 import {
   mdiGoogleChrome,
@@ -6,7 +7,7 @@ import {
   mdiWaveform,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 export const SpeechModeOptions = [
   {
@@ -35,21 +36,62 @@ export const SpeechModeOptions = [
   },
 ] as const satisfies FullOption[];
 
-type SpeechToTextMode = (typeof SpeechModeOptions)[number]["key"];
+export const SpeechToTextSendModes = [
+  {
+    key: "manual",
+    label: "Manual",
+    subLabel: "Press send button to send the message.",
+  },
+  {
+    key: "auto",
+    label: "Auto",
+    subLabel:
+      "Automatically sends messages when you stop speaking for a moment.",
+  },
+] as const satisfies FullOption[];
 
-export const useChatSpeechSetup = (mode: SpeechToTextMode) => {
-  const { dbsMethods } = usePrgl();
+export const useChatSpeechSetup = () => {
+  const { dbsMethods, user, dbs } = usePrgl();
   const { transcribeAudio } = dbsMethods;
-  const [autosend, setAutosend] = useState(false);
-  const [speechToTextMode, setSpeechToTextMode] =
-    useState<SpeechToTextMode>(mode);
+  const speechToTextMode = user?.options?.speech_mode ?? "off";
+  const sendMode = user?.options?.speech_send_mode ?? "manual";
+  const { onErrorAlert } = useOnErrorAlert();
+  const setSpeechToTextMode = useCallback(
+    (newMode = speechToTextMode, newSendMode = sendMode) => {
+      void onErrorAlert(async () => {
+        if (!user) throw new Error("No user logged in");
+        await dbs.users.update(
+          { id: user.id },
+          {
+            options: {
+              $merge: [{ speech_mode: newMode, speech_send_mode: newSendMode }],
+            },
+          },
+        );
+      });
+    },
+    [speechToTextMode, sendMode, onErrorAlert, user, dbs.users],
+  );
+
+  const setSendMode = useCallback(
+    (newSendMode: typeof sendMode) => {
+      setSpeechToTextMode(undefined, newSendMode);
+    },
+    [setSpeechToTextMode],
+  );
+
+  const speechEnabledErrors =
+    speechToTextMode === "stt-local" && !transcribeAudio ?
+      "Must enable speech to text service"
+    : undefined;
 
   return {
-    autosend,
-    setAutosend,
+    sendMode,
+    setSendMode,
     speechToTextMode,
     setSpeechToTextMode,
     transcribeAudio,
+    speechEnabledErrors,
   };
 };
 

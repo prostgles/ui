@@ -2,6 +2,7 @@ import type { ProstglesService } from "../../ServiceManagerTypes";
 
 export const speechToTextService = {
   icon: "MicrophoneMessage",
+  label: "Speech to Text",
   port: 8000,
   env: {
     WHISPER_MODEL: "small",
