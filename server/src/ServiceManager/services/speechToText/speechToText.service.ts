@@ -52,7 +52,7 @@ export const speechToTextService = {
         cuda: {
           env: { WHISPER_DEVICE: "cuda" },
           buildArgs: {
-            BASE_IMAGE: "nvidia/cuda:12.2.0-cudnn8-runtime-ubuntu22.04",
+            BASE_IMAGE: "nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04",
           },
         },
       },
