@@ -659,6 +659,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       build_hash?: null | string;
+      configs?: null | Record<string,  {  label: string;  description: string;  defaultOption: string;  options: Record<string,  {  label?: string;  env: Record<string, string>; }>; }>
       created?: null | string;
       default_port: number;
       description?: null | string;
@@ -666,6 +667,7 @@ export type DBGeneratedSchema = {
       label: string;
       logs?: null | string;
       name: string;
+      selected_config_options?: null | Record<string, string>
       status: "stopped" | "starting" | "running" | "error" | "building" | "building-done" | "build-error"
     };
   };

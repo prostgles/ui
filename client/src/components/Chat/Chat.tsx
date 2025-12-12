@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import "./Chat.css";
 
 import { classOverride, FlexCol } from "../Flex";
@@ -73,12 +73,21 @@ export const Chat = (props: ChatProps) => {
     onCurrentlyTypedMessageChange,
   });
 
+  useEffect(() => {
+    if (!isLoading && textAreaRef.current) {
+      textAreaRef.current.focus();
+    }
+  }, [isLoading]);
+
   return (
     <div
       className={classOverride("chat-container chat-component ", className)}
       style={style}
     >
-      <FlexCol className="chat-scroll-wrapper w-full o-auto f-1">
+      <FlexCol
+        className="chat-scroll-wrapper w-full o-auto f-1"
+        ref={setScrollRef}
+      >
         <div
           className="message-list"
           style={{
@@ -87,11 +96,6 @@ export const Chat = (props: ChatProps) => {
             margin: "0 auto",
           }}
           data-command="Chat.messageList"
-          ref={(e) => {
-            if (e) {
-              setScrollRef(e);
-            }
-          }}
         >
           {messages.map((message) => (
             <ChatMessage key={message.id} message={message} />

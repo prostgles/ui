@@ -33,7 +33,7 @@ export const useDBSClient = (
       onReconnect: () => {
         onDisconnect(false);
         if (window.location.pathname.startsWith(ROUTES.CONNECTIONS + "/")) {
-          pageReload("sync reconnect bug");
+          void pageReload("sync reconnect bug");
         }
       },
     };
@@ -53,11 +53,12 @@ export const useDBSClient = (
     socket.on("infolog", console.log);
     socket.on("server-restart-request", (_sure) => {
       setTimeout(() => {
-        pageReload("server-restart-request");
+        void pageReload("server-restart-request");
       }, 2000);
     });
     socket.on("redirect", (newLocation) => {
-      window.location = newLocation;
+      if (typeof newLocation !== "string") return;
+      window.location.href = newLocation;
     });
   }, [socket]);
 

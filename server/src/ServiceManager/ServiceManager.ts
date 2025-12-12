@@ -1,14 +1,17 @@
 //@ts-nocheck
 
 import type { DBSSchemaForInsert } from "@common/publishUtils";
-import { getEntries } from "@common/utils";
 import {
   executeDockerCommand,
   type ProcessLog,
 } from "@src/DockerManager/executeDockerCommand";
 import type { DBS } from "..";
 import { buildService } from "./buildService";
-import { prostglesServices, ServiceInstance } from "./ServiceManagerTypes";
+import {
+  prostglesServices,
+  ServiceInstance,
+  type ProstglesService,
+} from "./ServiceManagerTypes";
 import { getContainerName, startService } from "./startService";
 
 export class ServiceManager {
@@ -17,14 +20,17 @@ export class ServiceManager {
     this.dbs = dbs;
     void dbs?.services
       .insert(
-        getEntries(prostglesServices).map(
+        Object.entries(
+          prostglesServices as Record<string, ProstglesService>,
+        ).map(
           ([name, service]) =>
             ({
               name,
               label: service.label,
               icon: service.icon,
-              default_port: service.port,
+              default_port: service.hostPort ?? service.port,
               description: service.description,
+              configs: service.configs,
               status: "stopped",
             }) satisfies DBSSchemaForInsert["services"],
         ),
@@ -66,7 +72,7 @@ export class ServiceManager {
       .join("");
     void this.dbs?.services.update(
       { name: serviceName },
-      { logs, status: serviceStatus || "stopped" },
+      { logs, status: serviceStatus ?? "stopped" },
     );
   };
   activeServices: Map<string, ServiceInstance> = new Map();
@@ -125,6 +131,12 @@ export class ServiceManager {
   stopAndRemoveContainer = async (
     serviceName: keyof typeof prostglesServices,
   ) => {
+    try {
+      const service = this.getService(serviceName);
+      if ("stop" in service) {
+        service.stop();
+      }
+    } catch {}
     const containerName = getContainerName(serviceName);
     await executeDockerCommand(["stop", containerName], {
       timeout: 10000,

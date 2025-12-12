@@ -2,7 +2,7 @@ import {
   MonacoCodeInMarkdown,
   type MonacoCodeInMarkdownProps,
 } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
-import { MediaViewer } from "@components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { isEmpty, tryCatchV2 } from "prostgles-types";
 import React, { useMemo } from "react";
 

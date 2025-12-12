@@ -5,12 +5,17 @@ import type {
   RunningServiceInstance,
 } from "./ServiceManagerTypes";
 
-export const getServiceEndoints = <S extends ProstglesService>(
-  serviceName: string,
-  serviceConfig: ProstglesService,
-): RunningServiceInstance<S>["endpoints"] => {
+export const getServiceEndoints = <S extends ProstglesService>({
+  serviceName,
+  endpoints,
+  baseUrl,
+}: {
+  serviceName: string;
+  baseUrl: string;
+  endpoints: ProstglesService["endpoints"];
+}): RunningServiceInstance<S>["endpoints"] => {
   return Object.fromEntries(
-    getEntries(serviceConfig.endpoints).map(
+    getEntries(endpoints).map(
       ([endpoint, { inputSchema, outputSchema, method }]) => [
         endpoint,
         async (args: unknown) => {
@@ -27,7 +32,7 @@ export const getServiceEndoints = <S extends ProstglesService>(
             );
           }
           const response = await fetch(
-            `http://127.0.0.1:${serviceConfig.port}${endpoint}`,
+            `${baseUrl}${endpoint}`,
             validatedInput ?
               {
                 body: validatedInput.data as unknown as string,

@@ -8,13 +8,14 @@ import {
 import React from "react";
 import sanitizeHtml from "sanitize-html";
 import { getAge } from "@common/utils";
-import { ContentTypes, MediaViewer } from "@components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { QRCodeImage } from "@components/QRCodeImage";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { StyledInterval } from "../../../W_SQL/customRenderers";
 import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
 import type { ColumnConfig } from "../ColumnMenu";
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
+import { ContentTypes } from "@components/MediaViewer/RenderMedia";
 
 const CurrencySchema = {
   type: {

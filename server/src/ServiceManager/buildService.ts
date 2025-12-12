@@ -6,7 +6,7 @@ import { getRootDir } from "@src/electronConfig";
 import { join } from "path";
 import { getDockerBuildHash } from "./getDockerBuildHash";
 import type { ServiceManager } from "./ServiceManager";
-import type {
+import {
   OnServiceLogs,
   prostglesServices,
   ServiceInstance,
@@ -14,6 +14,7 @@ import type {
 import { isEqual } from "prostgles-types";
 import { getEntries } from "@common/utils";
 import { dockerInspect } from "./dockerInspect";
+import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 
 export async function buildService(
   this: ServiceManager,
@@ -50,8 +51,9 @@ export async function buildService(
 
   const imageName = camelCaseToSkewerCase(serviceName);
 
+  const { buildArgs } = await getSelectedConfigEnvs(this.dbs, serviceName);
   /** Only rebuild if hash differs */
-  const buildHash = await getDockerBuildHash(serviceCwd);
+  const buildHash = await getDockerBuildHash(serviceCwd, buildArgs);
   const buildLabels = {
     "prostgles-build-hash": buildHash,
     app: "prostgles",
@@ -77,7 +79,14 @@ export async function buildService(
   const instance: ServiceInstance = {
     status: "building",
     building: executeDockerCommand(
-      ["build", "-t", imageName, ...labelArgs, "."],
+      [
+        "build",
+        ...buildArgs.map((arg) => ["--build-arg", arg]).flat(),
+        "-t",
+        imageName,
+        ...labelArgs,
+        ".",
+      ],
       {
         timeout: 600_000,
         signal: abortController.signal,

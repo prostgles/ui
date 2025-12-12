@@ -15,6 +15,9 @@ import {
 } from "./ServiceManagerTypes";
 import { camelCaseToSkewerCase } from "./buildService";
 import { getServiceEndoints } from "./getServiceEndoints";
+import { getFreePort } from "@src/DockerManager/dockerMCPServerProxy/isPortFree";
+import type { DBSSchema } from "@common/publishUtils";
+import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 
 export async function startService(
   this: ServiceManager,
@@ -25,10 +28,7 @@ export async function startService(
     onLogs(logs);
     this.onServiceLog(serviceName, logs);
   };
-  const { labels, labelArgs } = this.getActiveService(
-    serviceName,
-    "building-done",
-  );
+  const { labelArgs } = this.getActiveService(serviceName, "building-done");
 
   const serviceConfig: ProstglesService = prostglesServices[serviceName];
   const abortController = new AbortController();
@@ -40,6 +40,36 @@ export async function startService(
   this.activeServices.set(serviceName, { getLogs, stop, status: "starting" });
   const imageName = camelCaseToSkewerCase(serviceName);
   const containerName = `prostgles-service-${imageName}`;
+
+  const cleanup = () => {
+    spawn("docker", ["stop", "-t", "0", containerName], { stdio: "ignore" });
+  };
+  process.once("exit", cleanup);
+  process.once("SIGINT", cleanup);
+  process.once("SIGTERM", cleanup);
+  process.once("uncaughtException", cleanup);
+
+  const {
+    port,
+    hostPort: preferredHostPort = port,
+    volumes = {},
+    healthCheck,
+    endpoints,
+    useGPU,
+  } = serviceConfig;
+  const hostPort = await getFreePort(preferredHostPort);
+  const volumeArgs: string[] = [];
+  for (const [volumeName, containerPath] of Object.entries(volumes)) {
+    const hostPath = `prostgles-service-${imageName}-${volumeName}`;
+    await executeDockerCommand(["volume", "create", hostPath], {
+      timeout: 10_000,
+    });
+    volumeArgs.push("-v", `${hostPath}:${containerPath}`);
+  }
+
+  const { env } = await getSelectedConfigEnvs(this.dbs, serviceName);
+
+  const baseHost = `127.0.0.1:${hostPort}`;
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise(async (resolve, reject) => {
@@ -53,31 +83,13 @@ export async function startService(
           `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
         ),
       });
+      this.onServiceLog(serviceName, logs);
       return reject(
         new Error(
           `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
         ),
       );
     };
-
-    const cleanup = () => {
-      spawn("docker", ["stop", "-t", "0", containerName], { stdio: "ignore" });
-    };
-    process.once("exit", cleanup);
-    process.once("SIGINT", cleanup);
-    process.once("SIGTERM", cleanup);
-    process.once("uncaughtException", cleanup);
-
-    const volumeArgs: string[] = [];
-    for (const [volumeName, containerPath] of Object.entries(
-      serviceConfig.volumes || {},
-    )) {
-      const hostPath = `prostgles-service-${imageName}-${volumeName}`;
-      await executeDockerCommand(["volume", "create", hostPath], {
-        timeout: 10_000,
-      });
-      volumeArgs.push("-v", `${hostPath}:${containerPath}`);
-    }
 
     executeDockerCommand(
       [
@@ -88,10 +100,11 @@ export async function startService(
         ...labelArgs,
         "--name",
         containerName,
+        ...(useGPU ? ["--gpus", "all"] : []),
         "-p",
-        `127.0.0.1:${serviceConfig.port}:${serviceConfig.port}`,
+        `${baseHost}:${port}`,
         ...volumeArgs,
-        ...Object.entries(serviceConfig.env || {}).flatMap(([key, value]) => [
+        ...Object.entries(env).flatMap(([key, value]) => [
           "-e",
           `${key}=${value}`,
         ]),
@@ -108,25 +121,33 @@ export async function startService(
       .then((res) => {
         onStopped(res);
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         onStopped({ type: "error", error });
       });
 
+    const baseUrl = `http://${baseHost}`;
     while (this.activeServices.get(serviceName)?.status === "starting") {
-      const healthCheck = await fetch(
-        `http://127.0.0.1:${serviceConfig.port}${serviceConfig.healthCheckEndpoint}`,
+      const healthCheckResponse = await fetch(
+        `${baseUrl}${healthCheck.endpoint}`,
+        {
+          method: healthCheck.method ?? "GET",
+        },
       ).catch(() => null);
-      if (healthCheck?.ok) {
+      if (healthCheckResponse?.ok) {
         break;
       }
       await tout(1000);
+    }
+
+    if (this.activeServices.get(serviceName)?.status !== "starting") {
+      return;
     }
 
     const runningService: RunningServiceInstance = {
       status: "running",
       getLogs,
       stop,
-      endpoints: getServiceEndoints(serviceName, serviceConfig),
+      endpoints: getServiceEndoints({ serviceName, baseUrl, endpoints }),
     };
     //@ts-ignore
     this.activeServices.set(serviceName, runningService);

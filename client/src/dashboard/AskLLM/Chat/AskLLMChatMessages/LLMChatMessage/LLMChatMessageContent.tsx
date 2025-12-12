@@ -1,5 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { MediaViewer } from "@components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
@@ -45,7 +45,7 @@ export const LLMChatMessageContent = ({
         style={{
           maxHeight: "200px",
           maxWidth: "fit-content",
-          border: "1px solid var(--b-color)",
+          // border: "1px solid var(--b-color)",
         }}
       />
     );

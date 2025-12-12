@@ -6,7 +6,8 @@ import type {
 
 export const WebSearchMCPServerDefinition = {
   icon_path: "WebSearch",
-  description: "Web Search MCP Server",
+  label: "Web Search",
+  description: "Performs web searches using searxng",
   tools: {
     web_search: {
       description: "Perform a web search and return results",

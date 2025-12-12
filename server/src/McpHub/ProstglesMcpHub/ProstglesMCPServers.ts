@@ -8,6 +8,7 @@ import type { DBSSchema } from "@common/publishUtils";
 
 export type ProstglesMcpServerDefinition = {
   icon_path: string;
+  label: string;
   description: string;
   tools: Record<
     string,

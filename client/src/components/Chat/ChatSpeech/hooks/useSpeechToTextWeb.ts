@@ -3,12 +3,10 @@ import { useState, useRef, useCallback, useEffect } from "react";
 export type SpeechToTextState =
   | {
       isListening: false;
-      text: string | undefined;
       start: () => void;
     }
   | {
       isListening: true;
-      text: string;
       stop: () => void;
     };
 
@@ -95,7 +93,6 @@ export const useSpeechToTextWeb = (
   useEffect(() => {
     if (text.length) {
       onFinished(text, start);
-      setText("");
     }
   }, [isListening, text, onFinished, start]);
 
@@ -117,14 +114,12 @@ export const useSpeechToTextWeb = (
   if (isListening) {
     return {
       isListening: true,
-      text,
       stop,
     };
   }
 
   return {
     isListening: false,
-    text,
     start,
   };
 };

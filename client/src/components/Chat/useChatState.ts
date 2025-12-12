@@ -36,7 +36,7 @@ export const useChatState = (
     [setFiles],
   );
 
-  const [scrollRef, setScrollRef] = useState<HTMLDivElement>();
+  const [scrollRef, setScrollRef] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (scrollRef) {

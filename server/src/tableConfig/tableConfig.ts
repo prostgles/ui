@@ -206,6 +206,38 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
           "build-error",
         ],
       },
+      configs: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: {
+              type: {
+                label: "string",
+                description: "string",
+                defaultOption: "string",
+                options: {
+                  record: {
+                    values: {
+                      type: {
+                        label: { type: "string", optional: true },
+                        env: { record: { values: "string" } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      selected_config_options: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: { type: "string" },
+          },
+        },
+      },
       logs: `TEXT`,
       created: `TIMESTAMPTZ DEFAULT NOW()`,
     },

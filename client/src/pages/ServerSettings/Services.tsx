@@ -1,8 +1,10 @@
 import type { DBSSchema } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
 import { useOnErrorAlert } from "@components/AlertProvider";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import { MonacoLogRenderer } from "@components/MonacoLogRenderer/MonacoLogRenderer";
+import { Select } from "@components/Select/Select";
 import { StatusChip } from "@components/StatusChip";
 import { SvgIcon } from "@components/SvgIcon";
 import { SwitchToggle } from "@components/SwitchToggle";
@@ -29,6 +31,7 @@ export const Services = ({
   showSpecificService,
 }: P) => {
   const { servicesFieldConfigs } = useServicesFieldConfigs({
+    dbs,
     dbsMethods,
     showSpecificService,
   });
@@ -50,6 +53,7 @@ export const Services = ({
           name: showSpecificService.serviceName,
         }
       }
+      orderBy={{ key: "label" }}
       tableName={"services"}
       methods={dbsMethods}
       tables={dbsTables}
@@ -62,9 +66,10 @@ export const Services = ({
 };
 
 const useServicesFieldConfigs = ({
+  dbs,
   dbsMethods,
   showSpecificService,
-}: Pick<P, "dbsMethods" | "showSpecificService">) => {
+}: Pick<P, "dbsMethods" | "dbs" | "showSpecificService">) => {
   const { toggleService } = dbsMethods;
   const { onErrorAlert } = useOnErrorAlert();
   const servicesFieldConfigs = useMemo(() => {
@@ -78,37 +83,97 @@ const useServicesFieldConfigs = ({
         hide: true,
       },
       {
+        name: "configs",
+        hide: true,
+      },
+      {
+        name: "selected_config_options",
+        hide: true,
+      },
+      {
         name: "name",
         renderMode: "full",
-        render: (_, { name, label, icon, status }: DBSSchema["services"]) => {
+        render: (
+          _,
+          {
+            name,
+            label,
+            icon,
+            status,
+            configs,
+            selected_config_options,
+          }: DBSSchema["services"],
+        ) => {
           const isRunning = status === "running";
           return (
-            <FlexRow className="w-full gap-0">
-              <SvgIcon className="f-0" icon={icon} size={24} />
-              <Label variant="header" className="ta-left mr-1">
-                {label}
-              </Label>
-              <StatusChip
-                color={
-                  status === "running" ? "green"
-                  : status === "stopped" ?
-                    "gray"
-                  : "yellow"
-                }
-                text={status}
-              />
-              {toggleService && (
-                <SwitchToggle
-                  className="ml-auto"
-                  checked={status !== "stopped"}
-                  onChange={() =>
-                    void onErrorAlert(() => {
-                      return toggleService(name, !isRunning);
-                    })
+            <FlexCol className="w-full gap-p5">
+              <FlexRow className="w-full gap-0">
+                <SvgIcon className="f-0" icon={icon} size={24} />
+                <Label variant="header" className="ta-left mx-1">
+                  {label}
+                </Label>
+                <StatusChip
+                  color={
+                    status === "running" ? "green"
+                    : status === "stopped" ?
+                      "gray"
+                    : "yellow"
                   }
+                  text={status}
                 />
-              )}
-            </FlexRow>
+                {toggleService && (
+                  <SwitchToggle
+                    className="ml-auto"
+                    checked={status !== "stopped" && status !== "error"}
+                    onChange={() =>
+                      void onErrorAlert(async () => {
+                        await toggleService(name, !isRunning);
+                      })
+                    }
+                  />
+                )}
+              </FlexRow>
+              <FlexRow>
+                {Object.entries(configs ?? {}).map(([configKey, config]) => {
+                  return (
+                    <Select
+                      key={configKey}
+                      title={config.label || configKey}
+                      btnProps={{
+                        size: "small",
+                      }}
+                      disabledInfo={
+                        isRunning ?
+                          "Stop the service to change this setting."
+                        : ""
+                      }
+                      value={
+                        selected_config_options?.[configKey] ||
+                        config.defaultOption
+                      }
+                      fullOptions={getEntries(config.options).map(
+                        ([optionKey, option]) => ({
+                          key: optionKey,
+                          label: option.label ?? optionKey,
+                        }),
+                      )}
+                      onChange={(configValue) => {
+                        void dbs.services.update(
+                          {
+                            name,
+                          },
+                          {
+                            selected_config_options: {
+                              $merge: [{ [configKey]: configValue }],
+                            },
+                          },
+                        );
+                      }}
+                    />
+                  );
+                })}
+              </FlexRow>
+            </FlexCol>
           );
         },
       },
@@ -145,7 +210,7 @@ const useServicesFieldConfigs = ({
         ),
       },
     ] satisfies FieldConfig<DBSSchema["services"]>[];
-  }, [onErrorAlert, showSpecificService, toggleService]);
+  }, [dbs.services, onErrorAlert, showSpecificService, toggleService]);
 
   return { servicesFieldConfigs };
 };

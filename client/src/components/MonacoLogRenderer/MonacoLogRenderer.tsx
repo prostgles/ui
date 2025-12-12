@@ -60,7 +60,7 @@ export const MonacoLogRenderer = ({
       }
     >
       <FlexRow>
-        <Label variant="normal" className="f-1">
+        <Label variant="normal" className={"f-1" + (fullscreen ? " px-1" : "")}>
           {label}
         </Label>
         <Btn

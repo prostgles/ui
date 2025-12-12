@@ -1,4 +1,4 @@
-import { MediaViewer } from "@components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { isDefined, isObject, type AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";

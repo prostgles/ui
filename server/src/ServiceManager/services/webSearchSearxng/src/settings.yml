@@ -1,0 +1,11 @@
+use_default_settings: true
+
+search:
+  formats:
+    - html
+    - json
+
+server:
+  secret_key: "changeme" # Change this to a random string
+  limiter: false
+  image_proxy: true

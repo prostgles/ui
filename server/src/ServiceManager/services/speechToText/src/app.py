@@ -11,9 +11,14 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Configuration
-MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")  # Options: tiny, base, small, medium, large-v3
-DEVICE = os.environ.get("WHISPER_DEVICE", "cpu")  # cpu or cuda
-COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE", "int8")  # int8, float16, float32
+
+# Options: tiny, base, small, medium, large-v2,  large-v3, whisper-large-v3-ct2, distil-whisper-large-v3
+MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")  
+# cpu or cuda
+DEVICE = os.environ.get("WHISPER_DEVICE", "cpu")  
+# int8, float16
+# COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE", "int8")  
+COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE", "float16" if DEVICE == "cuda" else "int8")
 
 # Initialize the model (lazy loading)
 model = None
@@ -50,7 +55,7 @@ def transcribe():
         
         # Get the model and transcribe
         whisper_model = get_model()
-        segments, info = whisper_model.transcribe(tmp_path, beam_size=5)
+        segments, info = whisper_model.transcribe(tmp_path, beam_size=5, vad_filter=True)
         
         # Collect all segments
         transcription = ""

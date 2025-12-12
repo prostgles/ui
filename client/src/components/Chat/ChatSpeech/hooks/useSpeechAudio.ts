@@ -25,15 +25,12 @@ export const useSpeechAudio = (
   config: VoiceDetectionConfig = {},
 ): SpeechToTextState => {
   const {
-    speechThreshold = 15,
-    silenceDuration = 2000,
-    maxDuration = 60000,
-    initialGracePeriod = 3000,
+    silenceDuration = 1_500,
+    maxDuration = 60_000,
+    initialGracePeriod = 3_000,
   } = config;
 
   const [isListening, setIsListening] = useState(false);
-  const [statusText, setStatusText] = useState<string | undefined>(undefined);
-  console.log(statusText);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -47,6 +44,17 @@ export const useSpeechAudio = (
 
   // Store isListening in a ref so the animation loop can access current value
   const isListeningRef = useRef<boolean>(false);
+
+  /**
+   * An array to store audio levels during the first recording session for calibration purposes.
+   */
+  const recordingCountRef = useRef<number>(0);
+  const firstRecordingRef = useRef<{
+    audioLevels: number[];
+    speechThreshold: number | undefined;
+  }>();
+  const speechThreshold =
+    config.speechThreshold ?? firstRecordingRef.current?.speechThreshold ?? 15;
 
   const cleanup = useCallback(() => {
     if (animationFrameRef.current) {
@@ -128,25 +136,16 @@ export const useSpeechAudio = (
       const audioLevel = getAudioLevel();
       const isSpeaking = audioLevel > speechThreshold;
 
-      const levelBar = "█".repeat(Math.min(Math.floor(audioLevel / 10), 20));
-      const silenceRemaining =
-        silenceStartRef.current ?
-          Math.max(0, silenceDuration - (currentTime - silenceStartRef.current))
-        : silenceDuration;
+      console.log({ audioLevel, speechThreshold, isSpeaking });
 
       if (isSpeaking) {
         hasDetectedSpeechRef.current = true;
         silenceStartRef.current = null;
-        setStatusText(`Speaking... ${levelBar}`);
+        // setStatusText(`Speaking... ${levelBar}`);
       } else if (hasDetectedSpeechRef.current) {
         if (silenceStartRef.current === null) {
           silenceStartRef.current = currentTime;
         }
-        setStatusText(
-          `Waiting... ${Math.ceil(silenceRemaining / 1000)}s ${levelBar}`,
-        );
-      } else {
-        setStatusText(`Listening... ${levelBar}`);
       }
 
       // Check for silence timeout after speech detected
@@ -155,14 +154,14 @@ export const useSpeechAudio = (
         silenceStartRef.current !== null &&
         currentTime - silenceStartRef.current >= silenceDuration
       ) {
-        setStatusText("Processing...");
+        console.log("Processing...");
         stopRecording();
         return;
       }
 
       // Check for max duration
       if (elapsedTime >= maxDuration) {
-        setStatusText("Max duration reached");
+        console.log("Max duration reached");
         stopRecording();
         return;
       }
@@ -174,7 +173,7 @@ export const useSpeechAudio = (
         }
 
         if (currentTime - silenceStartRef.current >= silenceDuration) {
-          setStatusText("No speech detected");
+          console.log("No speech detected");
           stopRecording();
           return;
         }
@@ -200,7 +199,7 @@ export const useSpeechAudio = (
       hasDetectedSpeechRef.current = false;
       silenceStartRef.current = null;
       isStoppingRef.current = false;
-      setStatusText("Starting...");
+      console.log("Starting...");
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -222,17 +221,19 @@ export const useSpeechAudio = (
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
 
-      const mimeType =
-        MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ?
-          "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
-        : "audio/mp4";
-
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          if (!recordingCountRef.current) {
+            firstRecordingRef.current ??= {
+              audioLevels: [],
+              speechThreshold: undefined,
+            };
+            const level = getAudioLevel();
+            firstRecordingRef.current.audioLevels.push(level);
+          }
           audioChunksRef.current.push(event.data);
         }
       };
@@ -256,10 +257,26 @@ export const useSpeechAudio = (
         }
 
         if (audioChunksRef.current.length > 0 && audioBlob.size > 0) {
+          recordingCountRef.current++;
           onFinished(audioBlob, start);
+          if (
+            firstRecordingRef.current?.audioLevels.length &&
+            firstRecordingRef.current.speechThreshold === undefined
+          ) {
+            const levels = firstRecordingRef.current.audioLevels;
+            const avgLevel =
+              levels.reduce((sum, level) => sum + level, 0) / levels.length;
+            // Set speech threshold slightly above average background level
+            firstRecordingRef.current.speechThreshold = avgLevel * 1.5;
+            console.log(
+              `Calibrated speech threshold: ${firstRecordingRef.current.speechThreshold.toFixed(
+                2,
+              )}`,
+            );
+          }
         }
 
-        setStatusText(
+        console.log(
           hasDetectedSpeechRef.current ? "Completed" : "No speech detected",
         );
       };
@@ -269,14 +286,14 @@ export const useSpeechAudio = (
         cleanup();
         setIsListening(false);
         isListeningRef.current = false;
-        setStatusText("Recording error");
+        console.log("Recording error");
       };
 
       mediaRecorder.start(100);
       recordingStartRef.current = Date.now();
       setIsListening(true);
       isListeningRef.current = true; // Set the ref too!
-      setStatusText("Listening...");
+      console.log("Listening...");
 
       // Start monitoring using the ref wrapper
       animationFrameRef.current = requestAnimationFrame(() => {
@@ -287,9 +304,9 @@ export const useSpeechAudio = (
       cleanup();
       setIsListening(false);
       isListeningRef.current = false;
-      setStatusText("Microphone access denied");
+      console.log("Microphone access denied");
     }
-  }, [cleanup, onFinished]);
+  }, [cleanup, getAudioLevel, onFinished]);
 
   useEffect(() => {
     return () => {
@@ -300,14 +317,18 @@ export const useSpeechAudio = (
   if (isListening) {
     return {
       isListening: true,
-      text: statusText ?? "Listening...",
       stop: stopRecording,
     };
   }
 
   return {
     isListening: false,
-    text: statusText,
     start,
   };
 };
+
+const mimeType =
+  MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ?
+    "audio/webm;codecs=opus"
+  : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
+  : "audio/mp4";

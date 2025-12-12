@@ -5,14 +5,33 @@ import type {
   ProcessLog,
 } from "@src/DockerManager/executeDockerCommand";
 import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers";
+import { webSearchSearxngService } from "./services/webSearchSearxng/webSearchSearxng.service";
 
 export type ProstglesService = {
   icon: string;
   label: string;
   description: string;
   port: number;
+  /**
+   * Defaults to port.
+   * If the port is already in use on the host, a different port will be chosen.
+   */
+  hostPort?: number;
   env?: Record<string, string>;
-  healthCheckEndpoint: string;
+  configs?: Record<
+    string,
+    {
+      label: string;
+      description: string;
+      defaultOption: string;
+      options: Record<
+        string,
+        { env: Record<string, string>; buildArgs?: Record<string, string> }
+      >;
+    }
+  >;
+  useGPU?: boolean;
+  healthCheck: { endpoint: string; method?: "GET" | "POST" };
   volumes?: Record<string, string>;
   endpoints: Record<
     string,
@@ -27,6 +46,7 @@ export type ProstglesService = {
 
 export const prostglesServices = {
   speechToText: speechToTextService,
+  webSearchSearxng: webSearchSearxngService,
 };
 
 export type RunningServiceInstance<

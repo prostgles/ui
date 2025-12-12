@@ -1,5 +1,5 @@
 import type { FileTable } from "@common/utils";
-import { MediaViewer } from "@components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { type FullOption } from "@components/Select/Select";
 import { SvgIconFromURL } from "@components/SvgIcon";
 import { type DBHandlerClient } from "prostgles-client/dist/prostgles";

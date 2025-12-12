@@ -4,6 +4,7 @@ import { join, relative } from "path";
 
 export const getDockerBuildHash = async (
   contextDir: string,
+  buildArgs: string[],
 ): Promise<string> => {
   if (!existsSync(join(contextDir, "Dockerfile"))) {
     throw new Error(`Service Dockerfile not found in: ${contextDir}`);
@@ -13,20 +14,18 @@ export const getDockerBuildHash = async (
   const files = await getFilesRecursively(contextDir);
   files.sort();
 
-  // Hash each file
   for (const file of files) {
     const fullPath = join(contextDir, file);
     hashes.set(file, calculateFileHash(fullPath));
   }
 
-  // Create combined hash from all file hashes
-  const combinedHashInput = Object.entries(hashes)
+  const combinedHashInput = Array.from(hashes.entries())
     .map(([file, hash]) => `${file}:${hash}`)
     .join("\n");
 
   const contextHash = crypto
     .createHash("sha256")
-    .update(combinedHashInput)
+    .update(combinedHashInput + JSON.stringify(buildArgs))
     .digest("hex");
 
   return contextHash;

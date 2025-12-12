@@ -76,7 +76,7 @@ export const ERDSchema = ({
         {} as Record<string, { x: number; y: number }>,
       );
     if (!dbConfId || displayMode !== "all") return;
-    dbs.database_configs.update(
+    void dbs.database_configs.update(
       {
         id: dbConfId,
       },

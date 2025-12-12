@@ -3,7 +3,7 @@ import { mdiClose } from "@mdi/js";
 import type { ChatState } from "../useChatState";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { FlexCol } from "@components/Flex";
-import { MediaViewer } from "@components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { t } from "src/i18n/i18nUtils";
 import Btn from "@components/Btn";
 

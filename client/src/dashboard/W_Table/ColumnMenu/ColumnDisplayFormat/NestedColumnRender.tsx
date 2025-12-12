@@ -2,7 +2,7 @@ import type { AnyObject } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
 import React, { useMemo } from "react";
 import { FlexRowWrap } from "@components/Flex";
-import { MediaViewer } from "@components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import {
   TimeChart,
   type TimeChartLayer,

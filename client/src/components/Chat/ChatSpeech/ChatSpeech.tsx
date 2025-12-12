@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useOnErrorAlert } from "@components/AlertProvider";
 import { mdiMicrophone, mdiMicrophoneMessage, mdiStop } from "@mdi/js";
@@ -7,16 +13,22 @@ import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import { t } from "../../../i18n/i18nUtils";
 import Btn from "../../Btn";
 import { ChatSpeechSetup } from "./ChatSpeechSetup";
-import { useSpeechAudio } from "./hooks/useSpeechAudio";
+import { renderSpeechAudioLevelsIcon } from "./hooks/renderSpeechAudioLevelsIcon";
+import { useSpeechRecorder } from "./hooks/useSpeechRecorder";
 import { useSpeechToTextWeb } from "./hooks/useSpeechToTextWeb";
 import { useChatSpeechSetup } from "./useChatSpeechSetup";
+import { Icon } from "@components/Icon/Icon";
+import { useThrottledCallback } from "src/hooks/useThrottledCallback";
 
 type P = {
-  onFinished: (audioOrTranscript: Blob | string, autoSend: boolean) => void;
+  onFinished: (
+    audioOrTranscript: Blob | string,
+    autoSend: boolean,
+  ) => Promise<void>;
   isSending: boolean;
 };
 export const ChatSpeech = ({ onFinished, isSending }: P) => {
-  const [firstRecordingDone, setFirstRecordingDone] = useState(false);
+  const [sessionState, setSessionState] = useState<"recorded" | "stopped">();
   const { onErrorAlert } = useOnErrorAlert();
   const chatSpeechSetupState = useChatSpeechSetup();
   const { speechToTextMode, transcribeAudio, sendMode, speechEnabledErrors } =
@@ -31,16 +43,16 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
             throw new Error("Transcription service is not available");
           }
           setIsTranscribing(true);
-          setFirstRecordingDone(true);
           const sttResult = await transcribeAudio(audioOrTranscript as Blob);
           if ("success" in sttResult) {
             if (sttResult.transcription) {
-              onFinished(sttResult.transcription, autoSend);
+              await onFinished(sttResult.transcription, autoSend);
             }
           } else throw sttResult.error;
         } else {
-          onFinished(audioOrTranscript, autoSend);
+          await onFinished(audioOrTranscript, autoSend);
         }
+        setSessionState("recorded");
       }).finally(() => {
         setIsTranscribing(false);
       });
@@ -49,7 +61,31 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
   );
 
   const speechToTextWeb = useSpeechToTextWeb(onFinishedWithOptions);
-  const speechAudio = useSpeechAudio(onFinishedWithOptions);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement>();
+  const listeningCanvasRef = useRef<HTMLCanvasElement>(null);
+  const onSoundLevelChange = useThrottledCallback(
+    (recentLevels: number[], max: number, isSpeaking: boolean) => {
+      if (listeningCanvasRef.current) {
+        renderSpeechAudioLevelsIcon(
+          listeningCanvasRef.current,
+          recentLevels,
+          max,
+          isSpeaking,
+        );
+      }
+    },
+    [],
+    50,
+  );
+
+  const opts = useMemo(
+    () => ({
+      onSoundLevel: onSoundLevelChange,
+    }),
+    [onSoundLevelChange],
+  );
+  const speechAudio = useSpeechRecorder(onFinishedWithOptions, opts);
+
   const isSpeechToTextEnabled =
     speechToTextMode === "stt-local" || speechToTextMode === "stt-web";
   const speechHooks = {
@@ -72,17 +108,18 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
   );
 
   useEffect(() => {
-    if (!firstRecordingDone || sendMode !== "auto" || isSending) return;
+    if (sessionState !== "recorded" || sendMode !== "auto" || isSending) return;
 
     debouncedStart();
-  }, [debouncedStart, firstRecordingDone, isSending, isTranscribing, sendMode]);
-
-  const [anchorEl, setAnchorEl] = useState<HTMLElement>();
+  }, [debouncedStart, sessionState, isSending, isTranscribing, sendMode]);
 
   return (
     <>
       <Btn
-        className=" bg-transparent"
+        className={
+          "ChatSpeech relative bg-transparent round " +
+          (isListening ? "bdb-action" : "")
+        }
         disabledInfo={isSending ? "Waiting for response ..." : undefined}
         data-command="Chat.speech"
         loading={isTranscribing}
@@ -92,13 +129,17 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
           } else {
             if (speechHooks.isListening) {
               speechHooks.stop();
-              setFirstRecordingDone(false);
+              setSessionState("stopped");
             } else {
               speechHooks.start();
             }
           }
         }}
         {...ChatActionBarBtnStyleProps}
+        style={{
+          ...ChatActionBarBtnStyleProps.style,
+          borderRadius: "50%",
+        }}
         size={undefined}
         color={
           speechEnabledErrors ? "warn"
@@ -113,10 +154,21 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
           : t.common["Record audio"]) + " (right click for options)"
         }
         iconPath={
-          isListening ? mdiStop
+          isListening ? undefined
           : isSpeechToTextEnabled ?
             mdiMicrophoneMessage
           : mdiMicrophone
+        }
+        iconNode={
+          isListening ?
+            <>
+              <canvas
+                ref={listeningCanvasRef}
+                style={{ position: "absolute", inset: 0, borderRadius: "50%" }}
+              />
+              <Icon path={mdiStop} style={{ visibility: "hidden" }} />
+            </>
+          : undefined
         }
         onContextMenu={(e) => {
           e.preventDefault();
