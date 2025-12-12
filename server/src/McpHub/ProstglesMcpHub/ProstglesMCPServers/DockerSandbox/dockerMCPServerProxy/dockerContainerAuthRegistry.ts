@@ -9,7 +9,7 @@ export type CreateContainerContext = {
   chatId: number;
 };
 
-export type ContainerAuthInfo = CreateContainerContext & {
+export type ContainerAuthInfo = {
   chat: DBSSchema["llm_chats"];
   sid_token: string;
 };

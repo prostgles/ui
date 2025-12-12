@@ -1,6 +1,6 @@
 import { findArr } from "@common/llmUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import { sliceText } from "@common/utils";
+import { getEntries, sliceText } from "@common/utils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
@@ -256,7 +256,7 @@ const useToolUseResultData = (toolUseResult: ToolResultMessage | undefined) => {
         const schemaKeys = Object.keys(schema);
         const parseResult = getJSONBObjectSchemaValidationError(
           schema,
-          pickKeys(JSON.parse(stringContent).result, schemaKeys),
+          pickKeys(JSON.parse(stringContent), schemaKeys),
           "DockerSandboxCreateContainer output",
         );
         return parseResult.data;
@@ -298,11 +298,11 @@ const getMillisecondsAsSingleInterval = (ms: number) => {
     h: hours,
   };
 
-  const entries = Object.entries(result);
+  const entries = getEntries(result);
 
   return (
     entries
-      .filter(([n, v]) => v >= 1)
+      .filter(([_n, v]) => v >= 1)
       .map(([n, v]) => `${v}${n}`)
       .at(-1) || `${seconds}s`
   );

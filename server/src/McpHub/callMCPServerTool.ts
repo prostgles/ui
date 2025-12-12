@@ -6,9 +6,9 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import type { DBS } from "..";
-import { getDockerMCP } from "../DockerManager/getDockerMCP";
-import { getProstglesMCPServerWithTools } from "./ProstglesMcpHub/ProstglesMCPServers";
-import { startMcpHub } from "./McpHub";
+import { startMcpHub } from "./AnthropicMcpHub/McpHub";
+import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
+import { getProstglesMcpHub } from "./ProstglesMcpHub/ProstglesMcpHub";
 
 export const callMCPServerTool = async (
   user: Pick<DBSSchema["users"], "id">,
@@ -52,27 +52,32 @@ export const callMCPServerTool = async (
       throw new Error("Tool invalid or not allowed for this chat");
     }
 
-    const prostglesMcp = getProstglesMCPServerWithTools(serverName);
+    const prostglesMcp = getProstglesMCPServer(serverName);
     if (prostglesMcp) {
-      if (serverName === "docker-sandbox") {
-        const dockerMCP = await getDockerMCP(dbs, chat);
-        if (toolName === "create_container") {
-          const result = await dockerMCP.tools.createContainer(toolArguments, {
-            chatId: chat.id,
-            userId: user.id,
-          });
-          return result;
-        }
-        throw new Error(
-          `MCP server ${serverName}.${toolName} not implemented for tool ${toolName}`,
-        );
-      }
-      if (serverName === "web-search") {
-        throw new Error(`MCP server ${serverName} not implemented yet`);
-      }
-      throw new Error(
-        `MCP server ${serverName} ProstglesLocalMCPServers not implemented`,
-      );
+      const prglMcpHub = await getProstglesMcpHub(dbs);
+      return prglMcpHub.callTool(serverName, toolName, toolArguments, {
+        chat_id,
+        user_id: user.id,
+      });
+      // if (serverName === "docker-sandbox") {
+      //   const dockerMCP = await getDockerMCP(dbs, chat);
+      //   if (toolName === "create_container") {
+      //     const result = await dockerMCP.tools.createContainer(toolArguments, {
+      //       chatId: chat.id,
+      //       userId: user.id,
+      //     });
+      //     return result;
+      //   }
+      //   throw new Error(
+      //     `MCP server ${serverName}.${toolName} not implemented for tool ${toolName}`,
+      //   );
+      // }
+      // if (serverName === "web-search") {
+      //   throw new Error(`MCP server ${serverName} not implemented yet`);
+      // }
+      // throw new Error(
+      //   `MCP server ${serverName} ProstglesLocalMCPServers not implemented`,
+      // );
     }
 
     const mcpHub = await startMcpHub(dbs);

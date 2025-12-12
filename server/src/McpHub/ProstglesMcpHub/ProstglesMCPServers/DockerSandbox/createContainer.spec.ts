@@ -1,7 +1,7 @@
 import { strict } from "assert";
 import { test } from "node:test";
 import { createContainer } from "./createContainer.js";
-import type { CreateContainerParams } from "./createContainer.schema.js";
+import type { CreateContainerParams } from "./fetchTools.js";
 
 const testContainerName = `test-container-${Date.now()}`;
 void test("createContainer build error", async () => {

@@ -1,17 +1,14 @@
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
-import type { JSONB } from "prostgles-types";
-import type { CreateContainerParams } from "./createContainer.schema";
-import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
+import { executeDockerCommand } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
+import type { CreateContainerParams } from "./fetchTools";
 
-type CreateContainerResult = {
-  state: "finished" | "error" | "build-error" | "timed-out" | "aborted";
-  log: ProcessLog[];
-} & JSONB.GetObjectType<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["outputSchema"]["type"]
+type CreateContainerResult = JSONBTypeIfDefined<
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["outputSchema"]
 >;
 
 export const createContainer = async (

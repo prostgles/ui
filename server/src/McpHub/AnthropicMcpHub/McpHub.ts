@@ -6,27 +6,24 @@ import {
   CallToolResultSchema,
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import * as path from "path";
 import {
   getSerialisableError,
   isEqual,
   SubscriptionHandler,
   tryCatchV2,
 } from "prostgles-types";
-import { DBS } from "..";
+import { DBS } from "../..";
 import {
   connectToMCPServer,
   type MCPServerInitInfo,
 } from "./connectToMCPServer";
-import { DefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
-import { getProstglesMCPServerWithTools } from "./ProstglesMcpHub/ProstglesMCPServers";
 import { fetchMCPResourcesList } from "./fetchMCPResourcesList";
 import { fetchMCPResourceTemplatesList } from "./fetchMCPResourceTemplatesList";
-import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
+import { fetchMCPServerConfigs } from "../fetchMCPServerConfigs";
 import { fetchMCPToolsList } from "./fetchMCPToolsList";
-import { getMCPDirectory } from "./installMCPServer";
 import { McpResourceResponse, McpServer, ServersConfig } from "./McpTypes";
-import { updateMcpServerTools } from "./reloadMcpServerTools";
+import { insertServerList } from "../insertServerList";
+import { updateMcpServerTools } from "../reloadMcpServerTools";
 
 export type McpConnection = {
   /**
@@ -40,7 +37,7 @@ export type McpConnection = {
   destroy: () => Promise<void>;
 };
 
-export class McpHub {
+class McpHub {
   connections: Record<string, McpConnection> = {};
   isConnecting = false;
 
@@ -265,25 +262,7 @@ const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
 };
 
 export const setupMCPServerHub = async (dbs: DBS) => {
-  const servers = await dbs.mcp_servers.find();
-  if (!servers.length) {
-    const defaultServers = await Promise.all(
-      Object.entries(DefaultMCPServers).map(async ([name, { ...server }]) => {
-        const prostglesMCP = getProstglesMCPServerWithTools(name);
-        return {
-          name,
-          cwd:
-            server.source ?
-              path.join(getMCPDirectory(), name)
-            : getMCPDirectory(),
-          ...server,
-          mcp_server_tools:
-            prostglesMCP ? await prostglesMCP.fetchTools(dbs, undefined) : [],
-        };
-      }),
-    );
-    await dbs.mcp_servers.insert(defaultServers);
-  }
+  await insertServerList(dbs);
   for (const sub of Object.values(mcpSubscriptions)) {
     await sub?.unsubscribe();
   }

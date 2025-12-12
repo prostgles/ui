@@ -6,6 +6,7 @@ import {
   getProstglesMCPFullToolName,
 } from "@common/prostglesMcp";
 
+import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
 import {
   type GetLLMToolsArgs,
   type MCPToolSchema,
@@ -19,7 +20,6 @@ import {
   getAddWorkflowTools,
   suggestDashboardsTool,
 } from "./prostglesMcpTools";
-import { getProstglesMCPServerWithTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers";
 
 export const getProstglesLLMTools = async ({
   userType,
@@ -107,15 +107,19 @@ export const getProstglesLLMTools = async ({
       } satisfies MCPToolSchemaWithApproveInfo),
   ].filter(isDefined);
 
+  const prostglesMCPHub = await getProstglesMcpHub(dbs);
   const prostglesMCPTools = await Promise.all(
     mcpToolsWithInfo
       .map(async (tool) => {
         const toolNameParts = getMCPToolNameParts(tool.name);
-        const prostglesMCP =
+        const prostglesMcpServer =
           toolNameParts &&
-          getProstglesMCPServerWithTools(toolNameParts.serverName);
-        if (toolNameParts && prostglesMCP) {
-          const prostglesMCPTools = await prostglesMCP.fetchTools(dbs, chat);
+          prostglesMCPHub.getServer(toolNameParts.serverName).server;
+        if (toolNameParts && prostglesMcpServer) {
+          const prostglesMCPTools = await prostglesMcpServer.fetchTools(dbs, {
+            chat_id: chat.id,
+            user_id: chat.user_id,
+          });
           const matchingTool = prostglesMCPTools.find(
             (ts) => ts.name === toolNameParts.toolName,
           );
@@ -124,7 +128,6 @@ export const getProstglesLLMTools = async ({
           }
           return {
             ...tool,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             input_schema: matchingTool.inputSchema,
             description: matchingTool.description,
           };

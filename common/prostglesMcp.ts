@@ -255,9 +255,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   },
   "docker-sandbox": {
     create_container: {
+      description:
+        "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.",
       schema: {
-        description:
-          "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.",
         type: {
           files: filesSchema,
           timeout: {
@@ -294,6 +294,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       },
       outputSchema: {
         type: {
+          state: {
+            enum: ["finished", "error", "build-error", "timed-out", "aborted"],
+          },
           name: "string",
           command: "string",
           log: {
@@ -305,6 +308,24 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           exitCode: "number",
           runDuration: "number",
           buildDuration: "number",
+        },
+      },
+    },
+  },
+  "web-search": {
+    web_search: {
+      description: "Perform a web search and return results",
+      schema: {
+        type: {
+          query: { type: "string" },
+          max_results: { type: "integer", optional: true },
+        },
+      },
+      outputSchema: {
+        arrayOfType: {
+          title: { type: "string" },
+          url: { type: "string" },
+          snippet: { type: "string" },
         },
       },
     },

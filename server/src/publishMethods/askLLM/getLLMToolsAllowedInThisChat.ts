@@ -66,7 +66,6 @@ export const getLLMToolsAllowedInThisChat = async ({
     },
   });
   const tools: Record<string, MCPToolSchemaWithApproveInfo> = {};
-  // const dockerMCP = await getDockerMCP(dbs, chat);
   const mcpToolsWithInfo = mcpTools
     .map(({ id, ...tool }) => {
       const info = llm_chats_allowed_mcp_tools.find(

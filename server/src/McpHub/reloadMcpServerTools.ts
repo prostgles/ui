@@ -1,9 +1,11 @@
 import type { DBSSchemaForInsert } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
+import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import { DBS } from "..";
-import { getProstglesMCPServerWithTools } from "./ProstglesMcpHub/ProstglesMCPServers";
-import { fetchMCPToolsList } from "./fetchMCPToolsList";
-import { startMcpHub, type McpConnection } from "./McpHub";
-import { type McpTool } from "./McpTypes";
+import { fetchMCPToolsList } from "./AnthropicMcpHub/fetchMCPToolsList";
+import { startMcpHub, type McpConnection } from "./AnthropicMcpHub/McpHub";
+import { type McpTool } from "./AnthropicMcpHub/McpTypes";
+import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
 
 export const updateMcpServerTools = async (
   dbs: DBS,
@@ -11,9 +13,19 @@ export const updateMcpServerTools = async (
   client: McpConnection["client"] | undefined,
 ) => {
   let tools: McpTool[] = [];
-  const prostglesMCP = getProstglesMCPServerWithTools(serverName);
+  const prostglesMCP = getProstglesMCPServer(serverName);
   if (prostglesMCP) {
-    tools = await prostglesMCP.fetchTools(dbs, undefined);
+    tools = getEntries(prostglesMCP.definition.tools).map(
+      ([name, { schema, description }]) => {
+        const inputSchema =
+          !schema ? undefined : getJSONBSchemaAsJSONSchema("", "", schema);
+        return {
+          name,
+          description,
+          inputSchema: inputSchema as unknown as McpTool["inputSchema"],
+        };
+      },
+    );
   } else {
     if (!client) {
       throw new Error(

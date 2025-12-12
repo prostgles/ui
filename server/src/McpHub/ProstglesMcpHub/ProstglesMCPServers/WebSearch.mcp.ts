@@ -1,65 +1,59 @@
-import { spawn } from "node:child_process";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { getEntries } from "@common/utils";
+import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
+import { getServiceManager } from "@src/ServiceManager/ServiceManager";
+import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
-} from "../ProstglesMCPServers";
+  ProstglesMcpServerHandlerTyped,
+} from "../ProstglesMCPServerTypes";
 
-export const WebSearchMCPServerDefinition = {
-  icon_path: "WebSearch",
+const definition = {
+  icon_path: "Web",
   label: "Web Search",
-  description: "Performs web searches using searxng",
-  tools: {
-    web_search: {
-      description: "Perform a web search and return results",
-      inputSchema: {
-        type: {
-          query: { type: "string" },
-          max_results: { type: "integer", optional: true },
+  description: "Search the web for information",
+  tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["web-search"],
+} as const satisfies ProstglesMcpServerDefinition;
+
+const handler = {
+  start: async (dbs) => {
+    const searXngService = getServiceManager(dbs);
+    await searXngService.enableService("webSearchSearxng", () => {});
+    const serviceInstance = searXngService.getService("webSearchSearxng");
+    if (serviceInstance?.status !== "running") {
+      throw new Error(
+        "Failed to start SearXNG service for Web Search MCP Server",
+      );
+    }
+
+    return {
+      stop: async () => {
+        await searXngService.stopService("webSearchSearxng");
+      },
+      tools: {
+        web_search: (toolArguments) => {
+          return serviceInstance.endpoints["/search"](toolArguments);
         },
       },
-      outputSchema: {
-        arrayOfType: {
-          title: { type: "string" },
-          url: { type: "string" },
-          snippet: { type: "string" },
-        },
+      fetchTools: () => {
+        return getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["web-search"]).map(
+          ([name, { schema, description }]) => ({
+            name,
+            description,
+            inputSchema: getJSONBSchemaAsJSONSchema(
+              "",
+              "",
+              schema,
+            ) as McpTool["inputSchema"],
+          }),
+        );
       },
-    },
+    };
   },
-  config_schema: {
-    type: {
-      searxng_url: { type: "string", optional: true },
-    },
-  },
-} satisfies ProstglesMcpServerDefinition;
+} satisfies ProstglesMcpServerHandlerTyped<typeof definition>;
 
-// export const WebSearchMCPServer: ProstglesMcpServerHandler<
-//   typeof WebSearchMCPServerDefinition
-// > = {
-//   start: async (config) => {
-//     let searxngUrl = config.searxng_url;
-//     if (!searxngUrl) {
-//       // spawn docker searxng instance or use default
-//       const spawnedDocker = spawn("docker", [
-//         "run",
-//         "--rm",
-//         "-d",
-//         "-p",
-//         "localhost:8888:8888",
-//         "searxng/searxng:latest",
-//       ]);
-//       searxngUrl = "http://localhost:8888";
-//     }
-
-//     return {
-//       stop: () => {
-//         // Cleanup resources if needed
-//       },
-//       callTool: (toolName, toolArguments, context) => {
-//         throw new Error(
-//           `Tool ${toolName} not implemented yet in Web Search MCP Server`,
-//         );
-//       },
-//     };
-//   },
-// };
+export const WebSearchMCPServer = {
+  definition,
+  handler: handler as ProstglesMcpServerHandler,
+};

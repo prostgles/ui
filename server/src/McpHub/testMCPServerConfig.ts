@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import type { DBS } from "..";
-import { connectToMCPServer } from "./connectToMCPServer";
+import { connectToMCPServer } from "./AnthropicMcpHub/connectToMCPServer";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
 
 export const testMCPServerConfig = async (

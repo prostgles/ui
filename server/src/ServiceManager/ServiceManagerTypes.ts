@@ -1,11 +1,11 @@
 import type { JSONB } from "prostgles-types";
 import { speechToTextService } from "./services/speechToText/speechToText.service";
+import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
+import { webSearchSearxngService } from "./services/webSearchSearxng/webSearchSearxng.service";
 import type {
   ExecutionResult,
   ProcessLog,
-} from "@src/DockerManager/executeDockerCommand";
-import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers";
-import { webSearchSearxngService } from "./services/webSearchSearxng/webSearchSearxng.service";
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
 
 export type ProstglesService = {
   icon: string;

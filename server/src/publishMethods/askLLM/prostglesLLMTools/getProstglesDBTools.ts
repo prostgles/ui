@@ -1,11 +1,11 @@
 import { isDefined, type JSONB } from "prostgles-types";
-import type { ChatPermissions } from "@src/DockerManager/dockerMCPServerProxy/dockerMCPServerProxy";
 import {
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
   type ProstglesMcpTool,
 } from "@common/prostglesMcp";
 import { getEntries } from "@common/utils";
+import type { ChatPermissions } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 
 export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
   name: string;

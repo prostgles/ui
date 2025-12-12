@@ -1,8 +1,3 @@
-import {
-  executeDockerCommand,
-  type ExecutionResult,
-} from "@src/DockerManager/executeDockerCommand";
-import { getRootDir } from "@src/electronConfig";
 import { join } from "path";
 import { getDockerBuildHash } from "./getDockerBuildHash";
 import type { ServiceManager } from "./ServiceManager";
@@ -15,6 +10,10 @@ import { isEqual } from "prostgles-types";
 import { getEntries } from "@common/utils";
 import { dockerInspect } from "./dockerInspect";
 import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
+import {
+  executeDockerCommand,
+  type ExecutionResult,
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
 
 export async function buildService(
   this: ServiceManager,

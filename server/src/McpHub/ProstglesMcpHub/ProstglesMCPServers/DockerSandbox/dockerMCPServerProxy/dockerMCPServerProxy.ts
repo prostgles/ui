@@ -5,12 +5,12 @@ import _http from "http";
 import type { AddressInfo } from "net";
 import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
 import { getSerialisableError, isObject } from "prostgles-types";
-import { isDocker } from "../..";
-import { getProstglesState } from "../../init/tryStartProstgles";
-import { runProstglesDBTool } from "../../publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
 import { dockerContainerAuthRegistry } from "./dockerContainerAuthRegistry";
 import { getDockerGatewayIP } from "../getDockerGatewayIP";
 import { isPortFree } from "./isPortFree";
+import { getProstglesState } from "@src/init/tryStartProstgles";
+import { isDocker } from "@src/index";
+import { runProstglesDBTool } from "@src/publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
 
 const PREFERRED_PORT = 3009;
 export const DOCKER_MCP_ENDPOINT = "/db";
@@ -53,6 +53,7 @@ export const dockerMCPServerProxy = async () => {
     server: _http.Server;
     address: AddressInfo;
     api_url: string;
+    destroy: () => void;
   }>((resolve, reject) => {
     const server = http.listen(
       usePreferredPort ? PREFERRED_PORT : undefined,
@@ -68,7 +69,13 @@ export const dockerMCPServerProxy = async () => {
             isDocker ?
               `http://prostgles-ui-docker-mcp:${actualPort}${ROUTE}`
             : `http://${dockerGatewayIP}:${actualPort}${ROUTE}`;
-          resolve({ app, server, address, api_url });
+          resolve({
+            app,
+            server,
+            address,
+            api_url,
+            destroy: () => server.close(),
+          });
         }
       },
     );

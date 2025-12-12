@@ -12,6 +12,7 @@ export const prepareTimechartData = function (this: TimeChart) {
         type: "text",
         fillStyle: getCssVariableValue("--text-1"),
         textAlign: "center",
+        textBaseline: "middle",
         font: "18px arial",
         background: {
           fillStyle: getCssVariableValue("--bg-color-0"),

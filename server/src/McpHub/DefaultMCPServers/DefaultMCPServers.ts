@@ -1,11 +1,9 @@
 import type { MCPServerInfo } from "@common/mcp";
 import { mcpGithub } from "./mcpGithub";
 import { ProstglesMCPServers } from "../ProstglesMcpHub/ProstglesMCPServers";
+import { fromEntries, getEntries } from "@common/utils";
 
-export const DefaultMCPServers: Record<
-  string,
-  Omit<MCPServerInfo, "mcp_server_tools">
-> = {
+export const DefaultMCPServers: Record<string, MCPServerInfo> = {
   filesystem: {
     icon_path: "FolderOutline",
     command: "npx",
@@ -122,5 +120,28 @@ export const DefaultMCPServers: Record<
       },
     },
   },
-  ...ProstglesMCPServers,
+  ...fromEntries(
+    getEntries(ProstglesMCPServers).map(
+      ([
+        serverName,
+        {
+          definition: { icon_path, tools },
+        },
+      ]) => [
+        serverName,
+        {
+          command: "prostgles-local",
+          config_schema: undefined,
+          icon_path,
+          mcp_server_tools: getEntries(tools).map(
+            ([name, { schema, description }]) => ({
+              name,
+              description,
+              inputSchema: schema,
+            }),
+          ),
+        } satisfies MCPServerInfo,
+      ],
+    ),
+  ),
 };

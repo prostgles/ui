@@ -1,4 +1,4 @@
-import type { CreateContainerParams } from "./createContainer.schema";
+import type { CreateContainerParams } from "./fetchTools";
 
 const CUSTOM_BRIDGE_NETWORK_NAME = "prostgles-bridge-net";
 const LABEL = "prostgles-docker-sandbox";

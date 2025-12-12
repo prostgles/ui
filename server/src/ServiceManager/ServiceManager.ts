@@ -4,7 +4,7 @@ import type { DBSSchemaForInsert } from "@common/publishUtils";
 import {
   executeDockerCommand,
   type ProcessLog,
-} from "@src/DockerManager/executeDockerCommand";
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/DockerManager/executeDockerCommand";
 import type { DBS } from "..";
 import { buildService } from "./buildService";
 import {
@@ -109,7 +109,7 @@ export class ServiceManager {
     serviceName: keyof typeof prostglesServices,
     onLogs: (logs: ProcessLog[]) => void,
   ) => {
-    await this.stopAndRemoveContainer(serviceName);
+    await this.stopService(serviceName);
     const buildResult = await this.buildService(serviceName, onLogs);
     if (buildResult !== "close") {
       throw new Error(
@@ -128,9 +128,7 @@ export class ServiceManager {
     return this.startService(serviceName, onLogs);
   };
 
-  stopAndRemoveContainer = async (
-    serviceName: keyof typeof prostglesServices,
-  ) => {
+  stopService = async (serviceName: keyof typeof prostglesServices) => {
     try {
       const service = this.getService(serviceName);
       if ("stop" in service) {

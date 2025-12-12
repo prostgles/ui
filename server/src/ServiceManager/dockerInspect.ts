@@ -1,4 +1,4 @@
-import { executeDockerCommand } from "@src/DockerManager/executeDockerCommand";
+import { executeDockerCommand } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
 
 export const dockerInspect = async (
   containerOrImageName: string,

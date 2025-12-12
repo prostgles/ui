@@ -1,8 +1,3 @@
-import {
-  executeDockerCommand,
-  type ExecutionResult,
-  type ProcessLog,
-} from "@src/DockerManager/executeDockerCommand";
 import { spawn } from "child_process";
 import { tout } from "..";
 import type { ServiceManager } from "./ServiceManager";
@@ -15,9 +10,13 @@ import {
 } from "./ServiceManagerTypes";
 import { camelCaseToSkewerCase } from "./buildService";
 import { getServiceEndoints } from "./getServiceEndoints";
-import { getFreePort } from "@src/DockerManager/dockerMCPServerProxy/isPortFree";
-import type { DBSSchema } from "@common/publishUtils";
 import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
+import {
+  executeDockerCommand,
+  type ExecutionResult,
+  type ProcessLog,
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
+import { getFreePort } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/isPortFree";
 
 export async function startService(
   this: ServiceManager,

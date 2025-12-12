@@ -39,7 +39,7 @@ import {
   getMcpHostInfo,
   getMCPServersStatus,
   installMCPServer,
-} from "../McpHub/installMCPServer";
+} from "../McpHub/AnthropicMcpHub/installMCPServer";
 import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
 import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
@@ -133,7 +133,7 @@ export const publishMethods: PublishMethods<
       if (enable) {
         return serviceManager.enableService(serviceName, () => {});
       } else {
-        return serviceManager.stopAndRemoveContainer(serviceName);
+        return serviceManager.stopService(serviceName);
       }
     },
     getDBSize: async (conId: string) => {

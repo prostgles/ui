@@ -8,7 +8,7 @@ import type { OnReadyCallback } from "prostgles-server/dist/initProstgles";
 import { connMgr, type DBS } from "..";
 import BackupManager from "../BackupManager/BackupManager";
 import { setLoggerDBS } from "../Logger";
-import { setupMCPServerHub } from "../McpHub/McpHub";
+import { setupMCPServerHub } from "../McpHub/AnthropicMcpHub/McpHub";
 import { initUsers } from "../SecurityManager/initUsers";
 import { getAuth } from "../authConfig/getAuth";
 import {
