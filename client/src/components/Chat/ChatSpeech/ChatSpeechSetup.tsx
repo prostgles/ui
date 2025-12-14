@@ -17,8 +17,12 @@ export const ChatSpeechSetup = ({
   setSpeechToTextMode,
   speechToTextMode,
   anchorEl,
-  transcribeAudio,
-}: { onClose: VoidFunction; anchorEl: HTMLElement } & ChatSpeechSetupState) => {
+  mustEnableTranscriptionService,
+}: {
+  onClose: VoidFunction;
+  anchorEl: HTMLElement;
+  mustEnableTranscriptionService: boolean;
+} & ChatSpeechSetupState) => {
   const { dbs, dbsMethods, dbsTables } = usePrgl();
   return (
     <Popup
@@ -40,9 +44,9 @@ export const ChatSpeechSetup = ({
       {speechToTextMode === "stt-local" && (
         <Services
           showSpecificService={{
-            color: !transcribeAudio ? "red" : undefined,
+            color: mustEnableTranscriptionService ? "red" : undefined,
             title:
-              !transcribeAudio ?
+              mustEnableTranscriptionService ?
                 "Must enable Speech to Text Service"
               : "Transcription service",
             serviceName: "speechToText",

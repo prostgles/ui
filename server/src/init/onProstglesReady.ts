@@ -1,4 +1,5 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
 import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type { DBSConnectionInfo } from "@src/electronConfig";
@@ -8,7 +9,7 @@ import type { OnReadyCallback } from "prostgles-server/dist/initProstgles";
 import { connMgr, type DBS } from "..";
 import BackupManager from "../BackupManager/BackupManager";
 import { setLoggerDBS } from "../Logger";
-import { setupMCPServerHub } from "../McpHub/AnthropicMcpHub/McpHub";
+import { setupMCPServerHub } from "../McpHub/AnthropicMcpHub/startMcpHub";
 import { initUsers } from "../SecurityManager/initUsers";
 import { getAuth } from "../authConfig/getAuth";
 import {
@@ -16,7 +17,6 @@ import {
   type AuthSetupDataListener,
 } from "../authConfig/subscribeToAuthSetupChanges";
 import { setupLLM } from "../publishMethods/askLLM/setupLLM";
-import { publishMethods } from "../publishMethods/publishMethods";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
 
@@ -43,18 +43,6 @@ export const onProstglesReady = async (
     setLoggerDBS(params.dbo);
 
     await initUsers(db, _db);
-    const servicesSub = await db.services.subscribe(
-      { status: "running" },
-      { select: { status: 1 } },
-      () => {
-        void update(
-          {
-            publishMethods,
-          },
-          true,
-        );
-      },
-    );
 
     await insertStateDatabase(db, _db, con, getProstglesState().isElectron);
     await setupLLM(db);
@@ -64,7 +52,6 @@ export const onProstglesReady = async (
     await connMgr.init(db, _db);
     getServiceManager(db);
 
-    // await backupManager?.destroy();
     backupManager ??= await BackupManager.create(_db, db, connMgr);
 
     const newAuthSetupDataListener = subscribeToAuthSetupChanges(
@@ -79,10 +66,12 @@ export const onProstglesReady = async (
     );
     authSetupDataListener = newAuthSetupDataListener;
 
+    const prostglesMCPHub = await getProstglesMcpHub(db);
+
     return {
       cleanup: async () => {
-        await servicesSub.unsubscribe();
         await backupManager?.destroy();
+        await prostglesMCPHub.destroy();
       },
     };
   });

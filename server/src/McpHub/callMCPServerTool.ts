@@ -6,9 +6,10 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import type { DBS } from "..";
-import { startMcpHub } from "./AnthropicMcpHub/McpHub";
+import { startMcpHub } from "./AnthropicMcpHub/startMcpHub";
 import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
 import { getProstglesMcpHub } from "./ProstglesMcpHub/ProstglesMcpHub";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export const callMCPServerTool = async (
   user: Pick<DBSSchema["users"], "id">,
@@ -17,6 +18,7 @@ export const callMCPServerTool = async (
   serverName: string,
   toolName: string,
   toolArguments: Record<string, unknown> | undefined,
+  clientReq: AuthClientRequest,
 ): Promise<McpToolCallResponse> => {
   const start = new Date();
   const argErrors = getJSONBObjectSchemaValidationError(
@@ -58,26 +60,8 @@ export const callMCPServerTool = async (
       return prglMcpHub.callTool(serverName, toolName, toolArguments, {
         chat_id,
         user_id: user.id,
+        clientReq,
       });
-      // if (serverName === "docker-sandbox") {
-      //   const dockerMCP = await getDockerMCP(dbs, chat);
-      //   if (toolName === "create_container") {
-      //     const result = await dockerMCP.tools.createContainer(toolArguments, {
-      //       chatId: chat.id,
-      //       userId: user.id,
-      //     });
-      //     return result;
-      //   }
-      //   throw new Error(
-      //     `MCP server ${serverName}.${toolName} not implemented for tool ${toolName}`,
-      //   );
-      // }
-      // if (serverName === "web-search") {
-      //   throw new Error(`MCP server ${serverName} not implemented yet`);
-      // }
-      // throw new Error(
-      //   `MCP server ${serverName} ProstglesLocalMCPServers not implemented`,
-      // );
     }
 
     const mcpHub = await startMcpHub(dbs);

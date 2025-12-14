@@ -16,9 +16,9 @@ export const getServiceEndoints = <S extends ProstglesService>({
 }): RunningServiceInstance<S>["endpoints"] => {
   return Object.fromEntries(
     getEntries(endpoints).map(
-      ([endpoint, { inputSchema, outputSchema, method }]) => [
+      ([endpoint, { inputSchema, outputSchema, method, inputType }]) => [
         endpoint,
-        async (args: unknown) => {
+        async (args: unknown, fetchOptions) => {
           if (!inputSchema && args) {
             throw new Error("No input expected");
           }
@@ -31,15 +31,25 @@ export const getServiceEndoints = <S extends ProstglesService>({
               `Invalid input for endpoint ${endpoint} of service ${serviceName}: ${validatedInput.error}`,
             );
           }
-          const response = await fetch(
-            `${baseUrl}${endpoint}`,
-            validatedInput ?
-              {
-                body: validatedInput.data as unknown as string,
-                method,
-              }
-            : undefined,
-          );
+
+          const { data } = validatedInput ?? {};
+          const asQueryOrBody =
+            (inputType ?? method === "POST") ? "body" : "query";
+          const query =
+            asQueryOrBody === "query" && data ?
+              `?${new URLSearchParams(
+                data as Record<string, string>,
+              ).toString()}`
+            : "";
+
+          const response = await fetch(`${baseUrl}${endpoint}${query}`, {
+            ...fetchOptions,
+            body:
+              asQueryOrBody === "body" && data ?
+                JSON.stringify(data)
+              : undefined,
+            method: method,
+          });
           if (!response.ok) {
             const errorText = await response.text().catch(() => "");
             throw new Error(
@@ -52,6 +62,9 @@ export const getServiceEndoints = <S extends ProstglesService>({
             const validatedOutput = getJSONBSchemaValidationError(
               outputSchema,
               responseData,
+              {
+                allowExtraProperties: true,
+              },
             );
             if (validatedOutput.error !== undefined) {
               throw new Error(

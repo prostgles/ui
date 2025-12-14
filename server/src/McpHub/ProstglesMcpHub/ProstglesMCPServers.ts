@@ -14,7 +14,7 @@ export const ProstglesMCPServers: Record<
   }
 > = {
   "docker-sandbox": DockerSandboxMCPServer,
-  "web-search": WebSearchMCPServer,
+  websearch: WebSearchMCPServer,
 };
 export const getProstglesMCPServer = (serverName: string) => {
   if (includes(getKeys(ProstglesMCPServers), serverName)) {

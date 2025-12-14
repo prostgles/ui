@@ -21,7 +21,7 @@ export const MCPServerHeaderCheckbox = ({
   chatContext: MCPServerChatContext | undefined;
   dbs: DBS;
 }) => {
-  const { mcp_server_tools: mcpServerTools, icon_path } = mcpServer;
+  const { mcp_server_tools: mcpServerTools, icon_path, enabled } = mcpServer;
   const { llm_chats_allowed_mcp_tools, chatId } = chatContext ?? {};
   const toolsAllowed = llm_chats_allowed_mcp_tools?.filter((at) =>
     mcpServerTools.some((t) => t.id === at.tool_id),
@@ -37,7 +37,7 @@ export const MCPServerHeaderCheckbox = ({
   const { onErrorAlert } = useOnErrorAlert();
 
   const onToggleServer = useCallback(() => {
-    onErrorAlert(async () => {
+    void onErrorAlert(async () => {
       if (someToolsAllowed) {
         await onToggleTools(
           toolsAllowed.map((t) => t.tool_id),
@@ -69,7 +69,9 @@ export const MCPServerHeaderCheckbox = ({
         iconNode={icon_path && <SvgIcon icon={icon_path} />}
         color={someToolsAllowed ? "action" : undefined}
         disabledInfo={
-          mcpServerTools.length ? undefined : "No tools available. Press reload"
+          mcpServerTools.length ? undefined : (
+            `No tools available. ${enabled ? "Press reload" : "Enable the server first"}.`
+          )
         }
         onClick={
           !chatId || !llm_chats_allowed_mcp_tools ?

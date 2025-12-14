@@ -3,9 +3,10 @@ import { getEntries } from "@common/utils";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import { DBS } from "..";
 import { fetchMCPToolsList } from "./AnthropicMcpHub/fetchMCPToolsList";
-import { startMcpHub, type McpConnection } from "./AnthropicMcpHub/McpHub";
+import { startMcpHub } from "./AnthropicMcpHub/startMcpHub";
 import { type McpTool } from "./AnthropicMcpHub/McpTypes";
 import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
+import type { McpConnection } from "./AnthropicMcpHub/McpHub";
 
 export const updateMcpServerTools = async (
   dbs: DBS,
@@ -36,7 +37,17 @@ export const updateMcpServerTools = async (
   }
 
   await dbs.tx(async (tx) => {
-    await tx.mcp_server_tools.delete({ server_name: serverName });
+    await tx.mcp_server_tools
+      .delete({
+        server_name: serverName,
+        name: { $nin: tools.map((t) => t.name) },
+      })
+      .catch((e) => {
+        console.error(
+          `Error deleting MCP server tools for server ${serverName}:`,
+          e,
+        );
+      });
     if (tools.length) {
       await tx.mcp_server_tools.insert(
         tools.map(
@@ -49,6 +60,9 @@ export const updateMcpServerTools = async (
               annotations,
             }) satisfies DBSSchemaForInsert["mcp_server_tools"],
         ),
+        {
+          onConflict: "DoUpdate",
+        },
       );
     }
   });

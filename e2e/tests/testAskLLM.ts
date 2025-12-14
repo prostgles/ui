@@ -51,6 +51,33 @@ const taskToolUse: ToolUse = {
   ],
 };
 
+const webSearchToolUse: ToolUse = {
+  content: `To provide you with the most accurate and up-to-date information, I'll use the web search tool to look up recent data related to your query.`,
+  tool: [
+    {
+      id: "websearch-tool-use",
+      type: "function",
+      function: {
+        name: "websearch--websearch",
+        arguments: stringify({
+          q: '"prostgles websearch"',
+        }),
+      },
+    },
+    {
+      id: "websearch-tool-use-snapshot",
+      type: "function",
+      function: {
+        name: "websearch--get_snapshot",
+        arguments: stringify({
+          url: "http://127.0.0.1:3004/login",
+        }),
+      },
+    },
+  ],
+  result_content: `Search done.`,
+};
+
 const dashboardToolUse: ToolUse = {
   content: `I analyzed your schema for what appears to be a food delivery platform. Let me suggest several workspaces that would provide valuable insights into different aspects of your business.`,
   tool: [
@@ -170,6 +197,7 @@ const toolResponses: Record<string, ToolUse> = {
     duration: 2000,
     result_content: "Fetched in parallel successfully",
   },
+  websearch: webSearchToolUse,
   weather: {
     content:
       "I'll create a container with a script that fetches real historical weather data from a free API source.",

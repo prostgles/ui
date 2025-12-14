@@ -7,7 +7,7 @@ import {
   mdiWaveform,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
 export const SpeechModeOptions = [
   {
@@ -79,9 +79,16 @@ export const useChatSpeechSetup = () => {
     },
     [setSpeechToTextMode],
   );
-
+  const { data: transcriptionService } = dbs.services.useSubscribeOne({
+    name: "speechToText",
+  });
+  const mustEnableTranscriptionService = Boolean(
+    speechToTextMode === "stt-local" &&
+      transcriptionService &&
+      transcriptionService.status !== "running",
+  );
   const speechEnabledErrors =
-    speechToTextMode === "stt-local" && !transcribeAudio ?
+    mustEnableTranscriptionService ?
       "Must enable speech to text service"
     : undefined;
 
@@ -92,6 +99,7 @@ export const useChatSpeechSetup = () => {
     setSpeechToTextMode,
     transcribeAudio,
     speechEnabledErrors,
+    mustEnableTranscriptionService,
   };
 };
 

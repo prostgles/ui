@@ -2,6 +2,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { type DBS } from "@src/index";
 import { type JSONB } from "prostgles-types";
 import type { McpTool } from "../AnthropicMcpHub/McpTypes";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export type ProstglesMcpServerDefinition = {
   icon_path: string;
@@ -26,6 +27,7 @@ type MaybePromise<T> = T | Promise<T>;
 export type McpCallContext = {
   chat_id: DBSSchema["llm_chats"]["id"];
   user_id: DBSSchema["users"]["id"];
+  clientReq: AuthClientRequest;
 };
 
 export type ProstglesMcpServerHandler = {

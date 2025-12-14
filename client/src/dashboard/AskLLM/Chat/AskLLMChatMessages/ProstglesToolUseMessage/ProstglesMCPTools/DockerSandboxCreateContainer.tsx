@@ -1,4 +1,3 @@
-import { findArr } from "@common/llmUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getEntries, sliceText } from "@common/utils";
 import { useAlert } from "@components/AlertProvider";
@@ -34,17 +33,12 @@ import {
   mdiText,
   mdiTimerLockOutline,
 } from "@mdi/js";
-import {
-  getJSONBObjectSchemaValidationError,
-  omitKeys,
-  pickKeys,
-  type JSONB,
-} from "prostgles-types";
-import React, { useMemo, useState } from "react";
-import type { ToolResultMessage } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
+import { omitKeys, type JSONB } from "prostgles-types";
+import React, { useState } from "react";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { PopupSection } from "../../ToolUseChatMessage/PopupSection";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
+import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["schema"]["type"]
@@ -72,7 +66,12 @@ export const DockerSandboxCreateContainer = ({
       ...editedFiles,
     },
   };
-  const { resultObj } = useToolUseResultData(toolUseResult);
+
+  const schema =
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["docker-sandbox"]["create_container"][
+      "outputSchema"
+    ];
+  const resultObj = useTypedToolUseResultData(toolUseResult, schema);
   const [showLogs, setShowLogs] = useState(Boolean(resultObj?.log.length));
   const [activeFilePath, setActiveFilePath] = useState(
     Object.keys(data.files)[0],
@@ -237,37 +236,6 @@ export const DockerSandboxCreateContainer = ({
       </FlexCol>
     </PopupSection>
   );
-};
-
-const useToolUseResultData = (toolUseResult: ToolResultMessage | undefined) => {
-  const resultObj = useMemo(() => {
-    try {
-      if (toolUseResult && !toolUseResult.is_error) {
-        const { content } = toolUseResult;
-        const stringContent =
-          typeof content === "string" ? content : (
-            findArr(content, { type: "text" } as const)?.text
-          );
-        if (!stringContent) return undefined;
-        const schema =
-          PROSTGLES_MCP_SERVERS_AND_TOOLS["docker-sandbox"]["create_container"][
-            "outputSchema"
-          ]["type"];
-        const schemaKeys = Object.keys(schema);
-        const parseResult = getJSONBObjectSchemaValidationError(
-          schema,
-          pickKeys(JSON.parse(stringContent), schemaKeys),
-          "DockerSandboxCreateContainer output",
-        );
-        return parseResult.data;
-      }
-    } catch (error) {
-      console.error("Error parsing tool use result content:", error);
-    }
-    return undefined;
-  }, [toolUseResult]);
-
-  return { resultObj };
 };
 
 const extensionToInfo: Record<string, { label: string; iconPath?: string }> = {

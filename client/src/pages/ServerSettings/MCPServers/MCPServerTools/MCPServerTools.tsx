@@ -52,7 +52,7 @@ export const MCPServerTools = ({
           <Chip
             key={`${tool.name}${i}`}
             title={tool.description}
-            className={"pointer " + (allowedTool ? "bdb-active noselect" : "")}
+            className={"pointer " + (allowedTool ? "noselect" : "")}
             leftIcon={
               !chatId ? undefined
               : allowedTool ?
@@ -79,20 +79,6 @@ export const MCPServerTools = ({
               !chatId ? undefined : (
                 async () => {
                   const checked = !allowedTool;
-                  const data = {
-                    tool_id: tool.id,
-                    chat_id: chatId,
-                    server_name: server.name,
-                  };
-                  // await dbs.llm_chats_allowed_mcp_tools.delete(data);
-                  // const checked = !allowedTool;
-                  // let wasEnabled = server.enabled;
-                  // if (!server.enabled) {
-                  //   wasEnabled = await onToggle();
-                  // }
-                  // if (checked && wasEnabled) {
-                  //   await dbs.llm_chats_allowed_mcp_tools.insert(data);
-                  // }
                   await onToggleTools(
                     [tool.id],
                     checked ? "approve" : "remove",

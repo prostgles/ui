@@ -12,6 +12,7 @@ import { getEntries } from "@common/utils";
 import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
 import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
 import { getPublishedMethodsTools } from "./prostglesLLMTools/getPublishedMethodsTools";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export type GetLLMToolsArgs = {
   userType: string;
@@ -19,6 +20,7 @@ export type GetLLMToolsArgs = {
   prompt: DBSSchema["llm_prompts"];
   dbs: DBS;
   connectionId: string;
+  clientReq: AuthClientRequest;
 };
 
 export type MCPToolSchema = {
@@ -43,6 +45,7 @@ export const getLLMToolsAllowedInThisChat = async ({
   chat,
   connectionId,
   prompt,
+  clientReq,
 }: GetLLMToolsArgs): Promise<undefined | MCPToolSchemaWithApproveInfo[]> => {
   const { id: chatId } = chat;
   const { serverSideFuncTools } = await getPublishedMethodsTools(dbs, {
@@ -88,6 +91,7 @@ export const getLLMToolsAllowedInThisChat = async ({
     prompt,
     mcpToolsWithInfo,
     connectionId,
+    clientReq,
   });
 
   /** Check for name collisions */

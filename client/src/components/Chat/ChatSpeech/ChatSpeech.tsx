@@ -7,9 +7,11 @@ import React, {
 } from "react";
 
 import { useOnErrorAlert } from "@components/AlertProvider";
+import { Icon } from "@components/Icon/Icon";
 import { mdiMicrophone, mdiMicrophoneMessage, mdiStop } from "@mdi/js";
 import { ChatActionBarBtnStyleProps } from "src/dashboard/AskLLM/ChatActionBar/AskLLMChatActionBar";
 import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
+import { useThrottledCallback } from "src/hooks/useThrottledCallback";
 import { t } from "../../../i18n/i18nUtils";
 import Btn from "../../Btn";
 import { ChatSpeechSetup } from "./ChatSpeechSetup";
@@ -17,8 +19,6 @@ import { renderSpeechAudioLevelsIcon } from "./hooks/renderSpeechAudioLevelsIcon
 import { useSpeechRecorder } from "./hooks/useSpeechRecorder";
 import { useSpeechToTextWeb } from "./hooks/useSpeechToTextWeb";
 import { useChatSpeechSetup } from "./useChatSpeechSetup";
-import { Icon } from "@components/Icon/Icon";
-import { useThrottledCallback } from "src/hooks/useThrottledCallback";
 
 type P = {
   onFinished: (
@@ -31,8 +31,14 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
   const [sessionState, setSessionState] = useState<"recorded" | "stopped">();
   const { onErrorAlert } = useOnErrorAlert();
   const chatSpeechSetupState = useChatSpeechSetup();
-  const { speechToTextMode, transcribeAudio, sendMode, speechEnabledErrors } =
-    chatSpeechSetupState;
+  const {
+    speechToTextMode,
+    transcribeAudio,
+    sendMode,
+    speechEnabledErrors,
+    mustEnableTranscriptionService,
+  } = chatSpeechSetupState;
+
   const [isTranscribing, setIsTranscribing] = useState(false);
   const onFinishedWithOptions = useCallback(
     async (audioOrTranscript: Blob | string) => {

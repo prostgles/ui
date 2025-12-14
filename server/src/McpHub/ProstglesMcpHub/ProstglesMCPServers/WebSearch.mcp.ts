@@ -8,18 +8,35 @@ import type {
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
+import { McpHub } from "@src/McpHub/AnthropicMcpHub/McpHub";
 
 const definition = {
   icon_path: "Web",
   label: "Web Search",
   description: "Search the web for information",
-  tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["web-search"],
+  tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"],
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {
   start: async (dbs) => {
     const searXngService = getServiceManager(dbs);
+    const mcpHub = new McpHub();
+    await mcpHub.setServerConnections({
+      fetch: {
+        command: "uvx",
+        args: ["mcp-server-fetch"],
+        server_name: "fetch",
+        onLog: () => {},
+      },
+      playwright: {
+        command: "npx",
+        args: ["@playwright/mcp@latest"],
+        onLog: () => {},
+        server_name: "playwright",
+      },
+    });
     await searXngService.enableService("webSearchSearxng", () => {});
+
     const serviceInstance = searXngService.getService("webSearchSearxng");
     if (serviceInstance?.status !== "running") {
       throw new Error(
@@ -32,12 +49,52 @@ const handler = {
         await searXngService.stopService("webSearchSearxng");
       },
       tools: {
-        web_search: (toolArguments) => {
-          return serviceInstance.endpoints["/search"](toolArguments);
+        websearch: async (toolArguments, { clientReq }) => {
+          const clientIp =
+            clientReq.httpReq?.ip ||
+            clientReq.socket?.handshake.address ||
+            "127.0.0.1";
+          const result = await serviceInstance.endpoints["/search"](
+            { ...toolArguments, format: "json" },
+            {
+              headers: {
+                "X-Forwarded-For": clientIp,
+                "X-Real-IP": clientIp,
+              },
+            },
+          );
+
+          return result.results;
+        },
+        get_snapshot: async (toolArguments) => {
+          const result1 = await mcpHub.callTool(
+            "playwright",
+            "browser_navigate",
+            toolArguments,
+          );
+          if (result1.isError) {
+            throw new Error(
+              `Failed to get snapshot: ${JSON.stringify(result1.content)}`,
+            );
+          }
+          const result2 = await mcpHub.callTool(
+            "playwright",
+            "browser_snapshot",
+          );
+          if (result2.isError) {
+            throw new Error(
+              `Failed to get snapshot: ${JSON.stringify(result2.content)}`,
+            );
+          }
+          return (
+            result2.content
+              .map((item) => (item.type === "text" ? item.text : ""))
+              .join("\n") || ""
+          );
         },
       },
       fetchTools: () => {
-        return getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["web-search"]).map(
+        return getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]).map(
           ([name, { schema, description }]) => ({
             name,
             description,

@@ -115,6 +115,8 @@ const useServicesFieldConfigs = ({
                 <StatusChip
                   color={
                     status === "running" ? "green"
+                    : status === "error" || status === "build-error" ?
+                      "red"
                     : status === "stopped" ?
                       "gray"
                     : "yellow"

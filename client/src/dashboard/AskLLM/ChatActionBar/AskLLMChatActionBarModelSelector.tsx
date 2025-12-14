@@ -151,7 +151,7 @@ export const AskLLMChatActionBarModelSelector = (
         value={activeChat.model}
         onChange={(model) => {
           if (!activeChatId) return;
-          dbs.llm_chats.update(
+          void dbs.llm_chats.update(
             { id: activeChatId },
             {
               model,

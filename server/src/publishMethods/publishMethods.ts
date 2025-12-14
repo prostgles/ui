@@ -331,28 +331,27 @@ export const publishMethods: PublishMethods<
         serverName,
         toolName,
         args,
+        clientReq,
       );
       return res;
     },
     reloadMcpServerTools: async (serverName: string) =>
       reloadMcpServerTools(dbs, serverName),
     getMcpHostInfo,
-    ...(servicesManager.getService("speechToText") && {
-      transcribeAudio: async (audioBlob: Blob) => {
-        const speechToTextService = servicesManager.getService("speechToText");
-        if (speechToTextService?.status !== "running") {
-          throw "Speech to Text service is not running";
-        }
-        const formData = new FormData();
-        const audioBlobWithMime = new Blob([audioBlob], { type: "audio/webm" });
+    transcribeAudio: async (audioBlob: Blob) => {
+      const speechToTextService = servicesManager.getService("speechToText");
+      if (speechToTextService?.status !== "running") {
+        throw "Speech to Text service is not enabled/running";
+      }
+      const formData = new FormData();
+      const audioBlobWithMime = new Blob([audioBlob], { type: "audio/webm" });
 
-        formData.append("audio", audioBlobWithMime, "recording.webm");
-        const result =
-          await speechToTextService.endpoints["/transcribe"](formData);
+      formData.append("audio", audioBlobWithMime, "recording.webm");
+      const result =
+        await speechToTextService.endpoints["/transcribe"](formData);
 
-        return result;
-      },
-    }),
+      return result;
+    },
   };
 
   const isAdmin = user.type === "admin";
@@ -502,6 +501,7 @@ export const publishMethods: PublishMethods<
         dbs,
         prompt,
         connectionId,
+        clientReq,
       });
       return allowedTools;
     },

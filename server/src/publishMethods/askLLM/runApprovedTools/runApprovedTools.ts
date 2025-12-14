@@ -19,6 +19,7 @@ import {
   runProstglesDBTool,
 } from "../prostglesLLMTools/runProstglesDBTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
@@ -47,6 +48,7 @@ export const runApprovedTools = async (
   toolUseRequestMessages: ToolUseMessage[],
   userApprovals: LLMMessage | undefined,
   aborter: AbortController,
+  clientReq: AuthClientRequest,
 ) => {
   const { user, chatId, dbs } = args;
   if (!toolUseRequestMessages.length) {
@@ -181,6 +183,7 @@ export const runApprovedTools = async (
           toolName,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           toolUseRequest.input,
+          clientReq,
         ).catch((e) => ({
           content: e instanceof Error ? e.message : JSON.stringify(e),
           isError: true,

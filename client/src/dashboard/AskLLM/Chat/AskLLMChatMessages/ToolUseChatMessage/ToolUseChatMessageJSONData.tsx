@@ -91,6 +91,14 @@ const ContentRender = ({
           const language =
             JSON_START_CHARS.some((c) => value.trim().startsWith(c)) ? "json"
             : "text";
+
+          const formatedValue =
+            tryCatchV2(() => {
+              if (language === "json") {
+                return JSON.stringify(JSON.parse(value), null, 2);
+              }
+              return value;
+            }).data ?? value;
           return (
             <MonacoCodeInMarkdown
               key={`${m.type}${idx}`}
@@ -100,7 +108,7 @@ const ContentRender = ({
                 : "Output:"
               }
               className="f-1"
-              codeString={value}
+              codeString={formatedValue}
               language={language}
               codeHeader={undefined}
               sqlHandler={sqlHandler}

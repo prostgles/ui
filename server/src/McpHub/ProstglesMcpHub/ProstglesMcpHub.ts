@@ -31,7 +31,8 @@ const init = async (dbs: DBS) => {
     },
     (serverRecords) => {
       for (const serverRecord of serverRecords) {
-        if (!servers.has(serverRecord.name) && serverRecord.enabled) {
+        const serverInstance = servers.get(serverRecord.name);
+        if (!serverInstance && serverRecord.enabled) {
           const serverInfo = getProstglesMCPServer(serverRecord.name);
           if (!serverInfo) {
             console.error(
@@ -39,6 +40,7 @@ const init = async (dbs: DBS) => {
             );
           } else {
             const { handler } = serverInfo;
+            // TODO: implement configs
             // const { config_schema } = definition;
             // const configs =
             //   serverRecord.mcp_server_configs as DBSSchema["mcp_server_configs"][];
@@ -58,8 +60,9 @@ const init = async (dbs: DBS) => {
               servers.set(serverRecord.name, instance);
             })();
           }
-        } else if (servers.has(serverRecord.name) && !serverRecord.enabled) {
-          void servers.get(serverRecord.name)?.stop();
+        } else if (serverInstance && !serverRecord.enabled) {
+          void serverInstance.stop();
+          servers.delete(serverRecord.name);
         }
       }
     },

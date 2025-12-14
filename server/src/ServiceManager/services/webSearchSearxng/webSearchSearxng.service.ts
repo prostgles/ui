@@ -1,5 +1,13 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { JSONB } from "prostgles-types";
 import type { ProstglesService } from "../../ServiceManagerTypes";
+
+const inputSchema = {
+  type: {
+    ...PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]["websearch"]["schema"].type,
+    format: { enum: ["json"] },
+  },
+} as const satisfies JSONB.FieldType;
 
 export const webSearchSearxngService = {
   icon: "Web",
@@ -13,12 +21,16 @@ export const webSearchSearxngService = {
       method: "GET",
       description: "SearXNG search endpoint",
 
-      inputSchema:
-        PROSTGLES_MCP_SERVERS_AND_TOOLS["web-search"]["web_search"]["schema"],
-      outputSchema:
-        PROSTGLES_MCP_SERVERS_AND_TOOLS["web-search"]["web_search"][
-          "outputSchema"
-        ],
+      inputSchema: inputSchema,
+      outputSchema: {
+        type: {
+          results: {
+            ...PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]["websearch"][
+              "outputSchema"
+            ],
+          },
+        },
+      },
     },
   },
 } as const satisfies ProstglesService;

@@ -38,6 +38,8 @@ export type ProstglesService = {
     {
       method: "GET" | "POST";
       description: string;
+      /* Defaults to 'body' for POST and 'query' for GET */
+      inputType?: "body" | "query";
       inputSchema: JSONB.FieldType | undefined;
       outputSchema: JSONB.FieldType | undefined;
     }
@@ -58,6 +60,7 @@ export type RunningServiceInstance<
   endpoints: {
     [endpoint in keyof Service["endpoints"]]: (
       args: JSONBTypeIfDefined<Service["endpoints"][endpoint]["inputSchema"]>,
+      fetchOptions?: Omit<RequestInit, "method" | "body">,
     ) => Promise<
       JSONBTypeIfDefined<Service["endpoints"][endpoint]["outputSchema"]>
     >;

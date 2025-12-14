@@ -6,6 +6,7 @@ import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
 import { LoadSuggestedWorkflow } from "./ProstglesMCPTools/LoadSuggestedWorkflow";
 import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
+import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 
 export const ProstglesMCPToolsWithUI = {
   [getProstglesMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]:
@@ -43,6 +44,10 @@ export const ProstglesMCPToolsWithUI = {
     "execute_sql_with_rollback",
   ) as string]: {
     component: ExecuteSQL,
+    displayMode: "inline",
+  },
+  [getProstglesMCPFullToolName("websearch", "websearch") as string]: {
+    component: WebSearch,
     displayMode: "inline",
   },
 } satisfies Record<

@@ -3,7 +3,7 @@ import { mcpGithub } from "./mcpGithub";
 import { ProstglesMCPServers } from "../ProstglesMcpHub/ProstglesMCPServers";
 import { fromEntries, getEntries } from "@common/utils";
 
-export const DefaultMCPServers: Record<string, MCPServerInfo> = {
+export const getDefaultMCPServers = (): Record<string, MCPServerInfo> => ({
   filesystem: {
     icon_path: "FolderOutline",
     command: "npx",
@@ -17,43 +17,6 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
         title: "Allowed Directory",
         description: "Directory path to allow access to",
         type: "arg",
-      },
-    },
-  },
-  searxng: {
-    icon_path: "Web",
-    command: "docker",
-    args: [
-      "run",
-      "-i",
-      "--rm",
-      "-e",
-      "SEARXNG_URL",
-      "isokoliuk/mcp-searxng:latest",
-    ],
-    env: {
-      SEARXNG_URL: "YOUR_SEARXNG_INSTANCE_URL",
-    },
-    config_schema: {
-      SEARXNG_URL: {
-        title: "SearXNG instance URL",
-        description: "Example: http://localhost:8080",
-        type: "env",
-      },
-    },
-  },
-  "brave-search": {
-    icon_path: "Web",
-    command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-brave-search"],
-    env: {
-      BRAVE_API_KEY: "YOUR_API_KEY_HERE",
-    },
-    config_schema: {
-      BRAVE_API_KEY: {
-        title: "Brave API Key",
-        description: "API key for Brave search",
-        type: "env",
       },
     },
   },
@@ -144,4 +107,4 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
       ],
     ),
   ),
-};
+});

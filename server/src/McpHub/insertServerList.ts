@@ -2,12 +2,12 @@ import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { join } from "path";
 import type { DBS } from "..";
 import { getMCPDirectory } from "./AnthropicMcpHub/installMCPServer";
-import { DefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
+import { getDefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
 
 export const insertServerList = async (dbs: DBS) => {
   const servers = await dbs.mcp_servers.find();
   if (!servers.length) {
-    const defaultServers = Object.entries(DefaultMCPServers).map(
+    const defaultServers = Object.entries(getDefaultMCPServers()).map(
       ([name, { ...server }]) => {
         return {
           name,

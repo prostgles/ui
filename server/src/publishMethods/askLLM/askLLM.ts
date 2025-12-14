@@ -82,6 +82,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     schema,
     userMessage,
     type,
+    clientReq,
   } = args;
 
   const {
@@ -107,6 +108,7 @@ export const askLLM = async (args: AskLLMArgs) => {
         chat,
         connectionId,
         prompt: promptObj,
+        clientReq,
       }),
   );
   if (hasError) {
@@ -141,6 +143,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       toolUseMessages,
       userMessage,
       aborter,
+      clientReq,
     );
   }
 
@@ -402,6 +405,7 @@ export const askLLM = async (args: AskLLMArgs) => {
         newToolUseMessages,
         undefined,
         aborter,
+        clientReq,
       );
     }
   } catch (err) {

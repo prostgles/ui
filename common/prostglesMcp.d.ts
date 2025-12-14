@@ -249,8 +249,8 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     };
     readonly "docker-sandbox": {
         readonly create_container: {
+            readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.";
             readonly schema: {
-                readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.";
                 readonly type: {
                     readonly files: {
                         readonly description: "Files to copy into the container. Must include a Dockerfile. Example { \"index.ts\": \"import type { JSONB } from \"prostgles-types\";\" }";
@@ -294,6 +294,9 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
             readonly outputSchema: {
                 readonly type: {
+                    readonly state: {
+                        readonly enum: readonly ["finished", "error", "build-error", "timed-out", "aborted"];
+                    };
                     readonly name: "string";
                     readonly command: "string";
                     readonly log: {
@@ -307,6 +310,72 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly exitCode: "number";
                     readonly runDuration: "number";
                     readonly buildDuration: "number";
+                };
+            };
+        };
+    };
+    readonly websearch: {
+        readonly websearch: {
+            readonly description: "Perform a web search and return results";
+            readonly schema: {
+                readonly type: {
+                    readonly q: {
+                        readonly type: "string";
+                        readonly description: "The search query. This string is passed to external search services. Supports service-specific syntax (e.g., \"site:github.com SearXNG\" for Google)";
+                    };
+                    readonly categories: {
+                        readonly type: "string";
+                        readonly optional: true;
+                        readonly description: " Comma-separated list of active search categories. Categories to search in (e.g., 'general,images,videos')";
+                    };
+                    readonly engines: {
+                        readonly type: "string";
+                        readonly optional: true;
+                        readonly description: "Comma-separated list of active search engines (e.g., 'google,bing,duckduckgo')";
+                    };
+                    readonly language: {
+                        readonly type: "string";
+                        readonly optional: true;
+                        readonly description: "Language code for the search results (e.g., 'en' for English, 'fr' for French)";
+                    };
+                    readonly pageno: {
+                        readonly type: "integer";
+                        readonly optional: true;
+                        readonly description: "Search result page number. Defaults to 1.";
+                    };
+                    readonly time_range: {
+                        readonly enum: readonly ["day", "month", "year"];
+                        readonly optional: true;
+                        readonly description: "Time range filter for results ('day' = past day, 'month' = past month, 'year' = past year). Only supported by engines that implement time range filtering";
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly arrayOfType: {
+                    readonly title: "string";
+                    readonly content: "string";
+                    readonly url: "string";
+                    readonly score: "number";
+                    readonly category: "string";
+                    readonly engine: "string";
+                    readonly img_src: "string";
+                    readonly thumbnail: "string";
+                };
+            };
+        };
+        readonly get_snapshot: {
+            readonly description: "Get a snapshot of a web page";
+            readonly schema: {
+                readonly type: {
+                    readonly url: {
+                        readonly type: "string";
+                        readonly description: "URL of the web page to snapshot";
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly type: {
+                    readonly content: "string";
                 };
             };
         };

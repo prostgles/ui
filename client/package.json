@@ -8,7 +8,7 @@
     "loaders.gl": "^0.3.5",
     "monaco-editor": "^0.53.0",
     "papaparse": "^5.4.1",
-    "prostgles-client": "^4.0.260",
+    "prostgles-client": "^4.0.262",
     "qrcode": "^1.5.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

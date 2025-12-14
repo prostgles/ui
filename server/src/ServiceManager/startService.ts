@@ -126,10 +126,15 @@ export async function startService(
 
     const baseUrl = `http://${baseHost}`;
     while (this.activeServices.get(serviceName)?.status === "starting") {
+      const clientIp = "127.0.0.1";
       const healthCheckResponse = await fetch(
         `${baseUrl}${healthCheck.endpoint}`,
         {
           method: healthCheck.method ?? "GET",
+          headers: {
+            "X-Forwarded-For": clientIp,
+            "X-Real-IP": clientIp,
+          },
         },
       ).catch(() => null);
       if (healthCheckResponse?.ok) {

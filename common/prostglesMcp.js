@@ -9,7 +9,6 @@ const runSQLSchema = {
             type: "number",
             optional: true,
             description: "Maximum time in milliseconds the query will be allowed to run. Defaults to 30000.",
-            // default: 30000,
         },
         query_params: {
             optional: true,
@@ -225,8 +224,8 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     },
     "docker-sandbox": {
         create_container: {
+            description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.",
             schema: {
-                description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.",
                 type: {
                     files: filesSchema,
                     timeout: {
@@ -262,6 +261,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             },
             outputSchema: {
                 type: {
+                    state: {
+                        enum: ["finished", "error", "build-error", "timed-out", "aborted"],
+                    },
                     name: "string",
                     command: "string",
                     log: {
@@ -273,6 +275,72 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     exitCode: "number",
                     runDuration: "number",
                     buildDuration: "number",
+                },
+            },
+        },
+    },
+    websearch: {
+        websearch: {
+            description: "Perform a web search and return results",
+            schema: {
+                type: {
+                    q: {
+                        type: "string",
+                        description: 'The search query. This string is passed to external search services. Supports service-specific syntax (e.g., "site:github.com SearXNG" for Google)',
+                    },
+                    categories: {
+                        type: "string",
+                        optional: true,
+                        description: " Comma-separated list of active search categories. Categories to search in (e.g., 'general,images,videos')",
+                    },
+                    engines: {
+                        type: "string",
+                        optional: true,
+                        description: "Comma-separated list of active search engines (e.g., 'google,bing,duckduckgo')",
+                    },
+                    language: {
+                        type: "string",
+                        optional: true,
+                        description: "Language code for the search results (e.g., 'en' for English, 'fr' for French)",
+                    },
+                    pageno: {
+                        type: "integer",
+                        optional: true,
+                        description: "Search result page number. Defaults to 1.",
+                    },
+                    time_range: {
+                        enum: ["day", "month", "year"],
+                        optional: true,
+                        description: "Time range filter for results ('day' = past day, 'month' = past month, 'year' = past year). Only supported by engines that implement time range filtering",
+                    },
+                },
+            },
+            outputSchema: {
+                arrayOfType: {
+                    title: "string",
+                    content: "string",
+                    url: "string",
+                    score: "number",
+                    category: "string",
+                    engine: "string",
+                    img_src: "string",
+                    thumbnail: "string",
+                },
+            },
+        },
+        get_snapshot: {
+            description: "Get a snapshot of a web page",
+            schema: {
+                type: {
+                    url: {
+                        type: "string",
+                        description: "URL of the web page to snapshot",
+                    },
+                },
+            },
+            outputSchema: {
+                type: {
+                    content: "string",
                 },
             },
         },

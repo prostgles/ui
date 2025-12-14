@@ -44,6 +44,13 @@ export const useMCPServerEnable = ({
         chatId,
       });
     } else {
+      /** This ensures we don't re-enable the server through the logic in AskLLMChatActionBarMCPToolsBtn */
+      if (!newEnabled) {
+        await dbs.llm_chats_allowed_mcp_tools.delete({
+          chat_id: chatId,
+          server_name: mcp_server.name,
+        });
+      }
       await dbs.mcp_servers.update(
         { name: mcp_server.name },
         { enabled: newEnabled },
@@ -51,13 +58,14 @@ export const useMCPServerEnable = ({
       return { configId: lastConfigId };
     }
   }, [
-    chatId,
-    config_schema,
-    dbs.mcp_servers,
     enabled,
-    mcp_server.name,
+    config_schema,
     mcp_server_configs.length,
     setServerToConfigure,
+    mcp_server.name,
+    chatId,
+    dbs.mcp_servers,
+    dbs.llm_chats_allowed_mcp_tools,
     lastConfigId,
   ]);
 

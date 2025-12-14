@@ -20,6 +20,7 @@ import {
   getAddWorkflowTools,
   suggestDashboardsTool,
 } from "./prostglesMcpTools";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export const getProstglesLLMTools = async ({
   userType,
@@ -28,6 +29,7 @@ export const getProstglesLLMTools = async ({
   prompt,
   mcpToolsWithInfo,
   connectionId,
+  clientReq,
 }: Omit<GetLLMToolsArgs, "connectionId"> & {
   mcpToolsWithInfo: {
     input_schema: any;
@@ -39,6 +41,7 @@ export const getProstglesLLMTools = async ({
     type: "mcp";
   }[];
   connectionId: string;
+  clientReq: AuthClientRequest;
 }) => {
   const isAdmin = userType === "admin";
   const { prompt_type } = prompt.options ?? {};
@@ -119,6 +122,7 @@ export const getProstglesLLMTools = async ({
           const prostglesMCPTools = await prostglesMcpServer.fetchTools(dbs, {
             chat_id: chat.id,
             user_id: chat.user_id,
+            clientReq,
           });
           const matchingTool = prostglesMCPTools.find(
             (ts) => ts.name === toolNameParts.toolName,

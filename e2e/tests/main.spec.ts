@@ -699,7 +699,7 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_snapshot" is invalid. Try enabling and reloading the tools`,
     );
-    await page.getByTestId("LLMChatOptions.MCPTools").click();
+    await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
 
     const toggleBtn = await page
       .locator(getDataKeyElemSelector("playwright"))
@@ -936,6 +936,28 @@ test.describe("Main test", () => {
     ).toHaveCount(3, {
       timeout: 30e3,
     });
+
+    await newChat();
+    await toggleMCPTools(["websearch", "get_snapshot"]);
+    await sendAskLLMMessage(page, " websearch ");
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "Search done.",
+      {
+        timeout: 30e3,
+      },
+    );
+
+    await page.getByTestId("ToolUseMessage.toggle").first().click();
+    await expect(page.getByTestId("ToolUseMessage").first()).toContainText(
+      "https://www.postgresql.org/",
+    );
+    await page.getByTestId("ToolUseMessage.toggle").first().click();
+    await page.getByTestId("ToolUseMessage.toggle").last().click();
+    await expect(page.getByTestId("ToolUseMessage").last()).toContainText(
+      "Page Title: Prostgles UI",
+    );
   });
 
   test("Disable signups", async ({ page: p }) => {

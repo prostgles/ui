@@ -402,6 +402,20 @@ export const publish: Publish<
         },
       },
     },
+    services:
+      isAdmin ? "*" : (
+        {
+          select: {
+            fields: {
+              name: 1,
+              status: 1,
+              icon: 1,
+              label: 1,
+              description: 1,
+            },
+          },
+        }
+      ),
   };
 
   const curTables = Object.keys(dashboardTables);
