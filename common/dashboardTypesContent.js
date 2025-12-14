@@ -318,6 +318,7 @@ type CardLayoutRowColumnValue = {
    */
   hideLabel?: boolean;
 };
+
 /**
  * Renders a div element with specified style and contents.
  * Used to arrange children in flex row/column/row-wrapped layouts for efficient content density.
@@ -417,8 +418,8 @@ export type TimechartWindowInsertModel = {
     yAxis:
       | "count(*)"
       | {
-          column: string;
           aggregation: "sum" | "avg" | "min" | "max" | "count";
+          column: string;
         };
   })[];
 };
@@ -433,12 +434,15 @@ export type BarchartWindowInsertModel = (
   id: string;
   type: "barchart";
   title?: string;
-  xAxis:
-    | "count(*)"
-    | {
-        column: string;
-        aggregation: "sum" | "avg" | "min" | "max" | "count";
-      };
+  xAxis: {
+    column: string;
+    aggregation: "sum" | "avg" | "min" | "max" | "count" | "count(*)";
+    /**
+     * Join to linked table (table_name is root table).
+     * The xAxis.column must be from the end table while the filters are from the root table (table_name).
+     */
+    joinPath?: TableJoin[];
+  };
   yAxisColumn: string;
 };
 

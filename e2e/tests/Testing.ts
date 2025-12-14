@@ -238,6 +238,7 @@ export const COMMANDS = {
   "WorkspaceMenuDropDown.WorkspaceAddBtn": "",
   "WorkspaceMenu.SearchList": "",
   "WorkspaceMenu.CloneWorkspace": "",
+  "WorkspaceMenu.toggleWorkspaceLayoutMode": "",
   WorkspaceDeleteBtn: "",
   "WorkspaceDeleteBtn.Confirm": "",
 

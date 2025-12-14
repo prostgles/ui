@@ -5,6 +5,7 @@ import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
 import ErrorComponent from "@components/ErrorComponent";
+import { FILE_EXTENSION_TO_ICON_INFO } from "@components/FileBrowser/FileBrowser";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { MenuList } from "@components/MenuList";
@@ -14,20 +15,10 @@ import {
 } from "@components/MonacoEditor/MonacoEditor";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import {
-  mdiBash,
   mdiChevronDown,
   mdiChevronUp,
   mdiChip,
-  mdiCodeJson,
-  mdiDocker,
   mdiLanConnect,
-  mdiLanguageGo,
-  mdiLanguageHtml5,
-  mdiLanguageJavascript,
-  mdiLanguageMarkdown,
-  mdiLanguagePython,
-  mdiLanguageRuby,
-  mdiLanguageTypescript,
   mdiMemory,
   mdiReload,
   mdiText,
@@ -175,7 +166,8 @@ export const DockerSandboxCreateContainer = ({
               return {
                 key: filePath,
                 label: filePath,
-                leftIconPath: extensionToInfo[ext]?.iconPath ?? mdiText,
+                leftIconPath:
+                  FILE_EXTENSION_TO_ICON_INFO[ext]?.iconPath ?? mdiText,
                 iconStyle: { opacity: 0.7 },
                 onPress: () => setActiveFilePath(filePath),
               };
@@ -188,7 +180,9 @@ export const DockerSandboxCreateContainer = ({
             {activeFilePath && (
               <MonacoEditor
                 className="f-1 h-full"
-                language={extensionToInfo[extension]?.label ?? "plaintext"}
+                language={
+                  FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext"
+                }
                 loadedSuggestions={undefined}
                 value={activeContent}
                 style={{ width: "min(600px, 100%)", minHeight: 200 }}
@@ -236,24 +230,6 @@ export const DockerSandboxCreateContainer = ({
       </FlexCol>
     </PopupSection>
   );
-};
-
-const extensionToInfo: Record<string, { label: string; iconPath?: string }> = {
-  ts: { iconPath: mdiLanguageTypescript, label: "typescript" },
-  js: { iconPath: mdiLanguageJavascript, label: "javascript" },
-  py: { iconPath: mdiLanguagePython, label: "python" },
-  rb: { iconPath: mdiLanguageRuby, label: "ruby" },
-  go: { iconPath: mdiLanguageGo, label: "go" },
-  sh: { iconPath: mdiBash, label: "shell" },
-  dockerfile: { iconPath: mdiDocker, label: "dockerfile" },
-  txt: { label: "plaintext" },
-  json: { iconPath: mdiCodeJson, label: "json" },
-  yaml: { label: "yaml" },
-  css: { label: "css" },
-  html: { label: "html", iconPath: mdiLanguageHtml5 },
-  md: { iconPath: mdiLanguageMarkdown, label: "markdown" },
-  sql: { label: "sql" },
-  Dockerfile: { iconPath: mdiDocker, label: "dockerfile" },
 };
 
 const getMillisecondsAsSingleInterval = (ms: number) => {

@@ -9,6 +9,7 @@ import {
 } from "prostgles-types";
 import type {
   McpCallContext,
+  ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
 import { getProstglesMCPServer } from "./ProstglesMCPServers";
@@ -98,7 +99,7 @@ const init = async (dbs: DBS) => {
     const result = await tryCatchV2(async () => {
       const { server, serverDefinition } = getExpectedServer(serverName);
       const toolDefinition = getProperty(
-        serverDefinition.definition.tools,
+        (serverDefinition.definition as ProstglesMcpServerDefinition).tools,
         toolName,
       );
       const toolMethod = getProperty(server.tools, toolName);

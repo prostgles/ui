@@ -131,7 +131,8 @@ const CUSTOM_ATTRS: OmmitedKeys[] = [
   "onClickPromise",
   "onClickPromiseMessage",
   "onClickPromiseMode",
-  "asNavLink" as any,
+  //@ts-ignore
+  "asNavLink",
   "iconStyle",
   "titleAsLabel",
   "clickConfirmation",
@@ -456,8 +457,8 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
           display: "flex",
           lineHeight: "1em",
           width: "fit-content",
-          ...style,
           fontSize: FontSizeMap[size],
+          ...style,
         },
         onMouseDown: (e) => e.preventDefault(),
         className: classOverride(

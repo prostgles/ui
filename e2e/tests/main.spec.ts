@@ -726,7 +726,9 @@ test.describe("Main test", () => {
       `Tool name "playwright--browser_snapshot" is not allowed`,
     );
     const toggleMCPTools = async (toolNames: string[]) => {
-      await page.getByTestId("LLMChatOptions.MCPTools").click();
+      await page
+        .getByTestId("LLMChatOptions.MCPTools")
+        .click({ timeout: 10e3 });
       await page.waitForTimeout(1000);
       for (const toolName of toolNames) {
         await page

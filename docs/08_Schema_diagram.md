@@ -30,6 +30,7 @@ The menu also includes options to clone existing workspaces and delete them if t
   - **Create new workspace**: Opens the form to create a new workspace for the selected connection.  
     - **Workspace name**: Name of the new workspace.  
     - **Create workspace**: Create and switch to the new workspace with the specified name.  
+  - **Toggle layout mode**: Switches between fixed and editable layout modes for the current workspace.  
 
 <h2 id="workspace_area"> Workspace area </h2> 
 

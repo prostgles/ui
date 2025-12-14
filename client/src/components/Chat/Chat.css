@@ -82,6 +82,7 @@
 }
 .chat-container.chat-component .message:not(.incoming) .content-wrapper {
   background: var(--bg-color-2);
+  margin-bottom: 0.5em;
 }
 
 .chat-container.chat-component .message.incoming {

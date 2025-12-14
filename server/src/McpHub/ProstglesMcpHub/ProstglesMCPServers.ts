@@ -6,16 +6,16 @@ import type {
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
 
-export const ProstglesMCPServers: Record<
+export const ProstglesMCPServers = {
+  "docker-sandbox": DockerSandboxMCPServer,
+  websearch: WebSearchMCPServer,
+} as const satisfies Record<
   string,
   {
     definition: ProstglesMcpServerDefinition;
     handler: ProstglesMcpServerHandler;
   }
-> = {
-  "docker-sandbox": DockerSandboxMCPServer,
-  websearch: WebSearchMCPServer,
-};
+>;
 export const getProstglesMCPServer = (serverName: string) => {
   if (includes(getKeys(ProstglesMCPServers), serverName)) {
     return ProstglesMCPServers[serverName];

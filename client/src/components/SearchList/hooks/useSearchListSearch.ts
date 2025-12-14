@@ -42,7 +42,7 @@ export const useSearchListSearch = (
     searchItems: SearchListItem[];
     searchingItems: boolean;
     searchClosed: boolean;
-    error?: any;
+    error?: unknown;
     dataSignature?: string;
     term?: string;
   }>({

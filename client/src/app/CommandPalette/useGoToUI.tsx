@@ -17,9 +17,9 @@ import {
   getDocPagePath,
   getUIDocElements,
   getUIDocElementsAndAlertIfEmpty,
-  getUIDocShorterPath,
 } from "./utils";
 import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { getUIDocShortestPath } from "./getUIDocShortestPath";
 
 export type DocItemHighlightItemPosition = "mid" | "last";
 
@@ -114,7 +114,9 @@ export const useGoToUI = (
     async (data: UIDocFlat) => {
       const prevParents = data.parentDocs;
       const shortcut =
-        currentPage ? getUIDocShorterPath(currentPage, prevParents) : undefined;
+        currentPage ?
+          getUIDocShortestPath(currentPage, prevParents)
+        : undefined;
       const pathItems = shortcut ?? prevParents;
       const shouldBeOpened = includes(data.type, [
         "link",

@@ -17,6 +17,7 @@ import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfig
 import type { Backups } from "./dashboardUtils";
 
 export type DBSMethods = Partial<{
+  mkdir: (path: string, folderName: string) => Promise<string>;
   glob: (
     pattern?: string,
     timeout?: number,

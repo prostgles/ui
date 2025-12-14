@@ -2,6 +2,7 @@ import { mdiMagnify, mdiPlus, mdiStop, mdiTools } from "@mdi/js";
 import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocElement } from "../../UIDocs";
+import { DEFAULT_MCP_SERVER_NAMES } from "@common/mcp";
 
 export const AIAssistantUIDoc = {
   type: "popup",
@@ -101,7 +102,10 @@ export const AIAssistantUIDoc = {
           type: "popup",
           title: "MCP tools allowed",
           iconPath: mdiTools,
-          description: "Opens the MCP tools menu for the current chat.",
+          description: `Opens the MCP tools menu for the current chat. Default tools: ${DEFAULT_MCP_SERVER_NAMES.join(", ")}`,
+          docs: `
+            MCP Servers extend the capabilities of the AI assistant by providing custom tools and integrations.
+          `,
           selector: getCommandElemSelector("LLMChatOptions.MCPTools"),
           children: [
             {

@@ -34,23 +34,24 @@ export type ProstglesMcpServerHandler = {
   start: (
     // config: unknown,
     dbs: DBS,
-  ) => MaybePromise<{
-    stop: () => MaybePromise<void>;
-    fetchTools: (
-      dbs: DBS,
-      context: McpCallContext,
-    ) => MaybePromise<
-      {
-        name: string;
-        description: string;
-        inputSchema: McpTool["inputSchema"];
-      }[]
-    >;
-    tools: Record<
-      string,
-      (toolArguments: unknown, context: McpCallContext) => MaybePromise<unknown>
-    >;
-  }>;
+  ) => MaybePromise<ProstglesMcpServerHandlerInstance>;
+};
+export type ProstglesMcpServerHandlerInstance = {
+  stop: () => MaybePromise<void>;
+  fetchTools: (
+    dbs: DBS,
+    context: McpCallContext,
+  ) => MaybePromise<
+    {
+      name: string;
+      description: string;
+      inputSchema: McpTool["inputSchema"];
+    }[]
+  >;
+  tools: Record<
+    string,
+    (toolArguments: unknown, context: McpCallContext) => MaybePromise<unknown>
+  >;
 };
 
 export type ProstglesMcpServerHandlerTyped<

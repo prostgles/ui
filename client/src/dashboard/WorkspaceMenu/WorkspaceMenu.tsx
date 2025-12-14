@@ -93,11 +93,6 @@ export const WorkspaceMenu = (props: P) => {
           </li>
         ))}
       </ul>
-      <WorkspaceMenuDropDown
-        {...props}
-        setWorkspace={setWorkspace}
-        workspaces={workspaces}
-      />
 
       {user?.type === "admin" && (
         <Btn
@@ -107,8 +102,8 @@ export const WorkspaceMenu = (props: P) => {
             : mdiViewDashboard
           }
           title={"Toggle Layout Mode"}
-          variant="faded"
-          color={"action"}
+          // variant="faded"
+          // color={"action"}
           data-command="WorkspaceMenu.toggleWorkspaceLayoutMode"
           // color={workspace.layout_mode !== "fixed" ? "action" : undefined}
           // size="small"
@@ -119,9 +114,14 @@ export const WorkspaceMenu = (props: P) => {
             });
           }}
         >
-          {workspace.layout_mode === "fixed" ? "Edit" : "Preview"}
+          {/* {workspace.layout_mode === "fixed" ? "Edit" : "Preview"} */}
         </Btn>
       )}
+      <WorkspaceMenuDropDown
+        {...props}
+        setWorkspace={setWorkspace}
+        workspaces={workspaces}
+      />
     </FlexRow>
   );
 };

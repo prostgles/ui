@@ -57,6 +57,7 @@ import { setFileStorage } from "./setFileStorage";
 import { initBackupManager } from "@src/init/onProstglesReady";
 import { statePrgl } from "@src/init/startProstgles";
 import { glob } from "glob";
+import { mkdir } from "fs/promises";
 
 export const publishMethods: PublishMethods<
   DBGeneratedSchema,
@@ -72,6 +73,13 @@ export const publishMethods: PublishMethods<
   const servicesManager = getServiceManager(dbs);
 
   const adminMethods: ReturnType<PublishMethods> = {
+    mkdir: async (path: string, folderName: string) => {
+      if (!path) throw "Path is required";
+      if (!folderName) throw "Folder name is required";
+      const fullPath = join(path, folderName);
+      await mkdir(fullPath);
+      return fullPath;
+    },
     glob: async (path?: string, timeout: number = 10_000) => {
       const currentPath = os.homedir();
       const pattern = join(path || currentPath, "*");

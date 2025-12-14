@@ -73,7 +73,7 @@ export const SearchListContent = <M extends boolean = false>(
     matchCase,
   });
 
-  const noList = isSearch ? searchClosed : !renderedItems.length && !searchTerm;
+  const noList = isSearch ? searchClosed : false; // !renderedItems.length && !searchTerm;
 
   const wrapperStyleFinal = useMemo(() => {
     if (noBorder) {
@@ -265,5 +265,5 @@ export const SearchListContent = <M extends boolean = false>(
   );
 };
 
-export const getValueAsText = (v): string | null | undefined =>
+export const getValueAsText = (v: unknown): string | null | undefined =>
   v && (isObject(v) || Array.isArray(v)) ? JSON.stringify(v) : v?.toString();

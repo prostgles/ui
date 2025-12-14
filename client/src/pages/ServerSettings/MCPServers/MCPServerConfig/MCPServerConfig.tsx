@@ -1,12 +1,12 @@
 import Btn from "@components/Btn";
-import { isEqual } from "prostgles-types";
-import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { FileBrowser } from "@components/FileBrowser/FileBrowser";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useState } from "react";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
-import { useOnErrorAlert } from "@components/AlertProvider";
-import { FileBrowser } from "@components/FileBrowser/FileBrowser";
+import { useMCPServerConfigState } from "./useMCPServerConfigState";
+import { mdiDelete } from "@mdi/js";
 
 export type MCPServerEnabledConfig = { configId: number };
 
@@ -19,30 +19,9 @@ export type MCPServerConfigProps = {
 };
 
 export const MCPServerConfig = (props: MCPServerConfigProps) => {
-  const { serverName, existingConfig, dbs, onDone, chatId } = props;
-  const [config, setConfig] = useState(existingConfig?.value ?? {});
-  const canSave = useMemo(
-    () => !isEqual(config, existingConfig?.value),
-    [config, existingConfig?.value],
-  );
-
-  const serverInfo = dbs.mcp_servers.useSubscribeOne(
-    {
-      name: serverName,
-    },
-    {},
-    { skip: !serverName },
-  );
-  const existingConfigData = dbs.mcp_server_configs.useSubscribe(
-    {
-      server_name: serverName,
-    },
-    {},
-    { skip: !serverName },
-  );
-  const existingConfigs = existingConfigData.data ?? [];
-  const schema = serverInfo.data?.config_schema;
-  const { onErrorAlert } = useOnErrorAlert();
+  const { serverName, existingConfig, onDone } = props;
+  const { upsertConfig, canSave, schema, setConfig, config, existingConfigs } =
+    useMCPServerConfigState(props);
   if (!schema) return null;
 
   return (
@@ -55,6 +34,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
         maxWidth: "min(600px, 100vw)",
       }}
       clickCatchStyle={{ opacity: 1 }}
+      contentClassName="p-1"
       footerButtons={[
         {
           label: "Cancel",
@@ -67,51 +47,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
           variant: "filled",
           color: "action",
           className: "ml-auto",
-          onClickPromise: async () => {
-            await onErrorAlert(async () => {
-              const matchingConfig = existingConfigs.find(
-                (ec) =>
-                  ec.server_name === serverName && isEqual(ec.config, config),
-              );
-
-              const upsertedConfig =
-                matchingConfig ??
-                (await dbs.mcp_server_configs.insert(
-                  {
-                    server_name: serverName,
-                    config,
-                  },
-                  {
-                    returning: "*",
-                  },
-                ));
-              const configId = upsertedConfig.id;
-
-              if (!configId) {
-                throw new Error("Failed to save configuration.");
-              }
-              await dbs.mcp_servers.update(
-                {
-                  name: serverName,
-                },
-                { enabled: true },
-              );
-              if (chatId) {
-                await dbs.llm_chats_allowed_mcp_tools.update(
-                  {
-                    chat_id: chatId,
-                    server_name: serverName,
-                  },
-                  {
-                    server_config_id: configId,
-                  },
-                );
-              }
-              onDone({ configId });
-            }).catch((e) => {
-              onDone();
-            });
-          },
+          onClickPromise: upsertConfig,
         },
       ]}
     >
@@ -121,6 +57,8 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
             return (
               <FileBrowser
                 key={key}
+                title={schema.title ?? key}
+                path={config[key]}
                 onChange={(v) => {
                   setConfig({
                     ...config,
@@ -162,15 +100,25 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
                   )
                   .join(", ");
                 return (
-                  <Btn
-                    key={existingConfig.id}
-                    variant="faded"
-                    onClick={() => {
-                      setConfig(existingConfig.config);
-                    }}
-                  >
-                    {values}
-                  </Btn>
+                  <FlexRow key={existingConfig.id} className="gap-0">
+                    <Btn
+                      variant="faded"
+                      onClick={() => {
+                        setConfig(existingConfig.config);
+                      }}
+                    >
+                      {values}
+                    </Btn>
+                    <Btn
+                      iconPath={mdiDelete}
+                      title="Delete existing config (if not used in other chats)"
+                      onClickPromise={async () => {
+                        await props.dbs.mcp_server_configs.delete({
+                          id: existingConfig.id,
+                        });
+                      }}
+                    />
+                  </FlexRow>
                 );
               })}
             </FlexRowWrap>
