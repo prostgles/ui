@@ -6,7 +6,7 @@ import Tabs from "@components/Tabs";
 import { t } from "../../i18n/i18nUtils";
 import { NewConnectionForm } from "../NewConnection/NewConnectionFormFields";
 import type { useElectronSetup } from "./useElectronSetup";
-import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
+import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
 import ErrorComponent from "@components/ErrorComponent";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 

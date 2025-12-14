@@ -109,7 +109,7 @@ export const TopControls = (props: TopControlsProps) => {
               asNavLink={true}
               iconPath={mdiArrowLeft}
             >
-              {window.isMediumWidthScreen ? null : t.TopControls.Connections}
+              {/* {window.isMediumWidthScreen ? null : t.TopControls.Connections} */}
             </Btn>
           </FlexRow>
         </>,

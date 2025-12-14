@@ -17,6 +17,7 @@ export const getDefaultMCPServers = (): Record<string, MCPServerInfo> => ({
         title: "Allowed Directory",
         description: "Directory path to allow access to",
         type: "arg",
+        renderWithComponent: "FileBrowser",
       },
     },
   },

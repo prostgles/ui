@@ -2,7 +2,12 @@
  * Generated file. Do not edit.
  * https://github.com/electron-userland/electron-builder/issues/5064
  */
-export const dashboardTypesContent = `export type LayoutItem = {
+export const dashboardTypesContent = `/**
+ * IMPORTANT: all table names in this file MUST be after quote_ident() has been applied.
+ * For example, MY_Table will appear as '"MY_Table"' in any of the table name related properties below.
+ */
+
+export type LayoutItem = {
   /**
    * UUID of the window
    */
@@ -203,28 +208,6 @@ type Filtering = {
   };
 };
 
-/**
- * Represents a rendered cell in a card layout
- */
-type CardLayoutRowColumnValue = {
-  type: "row-column";
-  columnName: string;
-  /**
-   * If true, label will be hidden and only value will be shown
-   */
-  hideLabel?: boolean;
-};
-/**
- * Renders a div element with specified style and contents
- */
-export type CardLayout = {
-  /**
-   * React.CSSProperties;
-   */
-  style?: Record<string, string | number>;
-  children: (CardLayout | CardLayoutRowColumnValue)[];
-};
-
 type TableColumn = {
   /**
    * Column name as it appears in the database.
@@ -320,6 +303,34 @@ type TableColumn = {
       };
 };
 
+/**
+ * Represents a rendered cell in a card layout
+ */
+type CardLayoutRowColumnValue = {
+  type: "node";
+  columnName: string;
+  /**
+   * React.CSSProperties;
+   */
+  style?: Record<string, string | number>;
+  /**
+   * If true, label will be hidden and only value will be shown
+   */
+  hideLabel?: boolean;
+};
+/**
+ * Renders a div element with specified style and contents.
+ * Used to arrange children in flex row/column/row-wrapped layouts for efficient content density.
+ */
+export type CardLayout = {
+  type?: "container";
+  /**
+   * React.CSSProperties;
+   */
+  style?: Record<string, string | number>;
+  children: (CardLayout | CardLayoutRowColumnValue)[];
+};
+
 export type TableWindowInsertModel = Filtering & {
   id: string;
   type: "table";
@@ -346,9 +357,9 @@ export type TableWindowInsertModel = Filtering & {
       }[];
 
   /**
-   * If set, will render the table in a card layout where each row is shown as a card.
+   * Layout used when the table is switched to the card list view mode, where each row is shown as a card.
    */
-  cardLayout?: CardLayout;
+  cardLayout: CardLayout;
 };
 
 type LayerDataSource =

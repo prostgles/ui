@@ -2,7 +2,7 @@ import Btn from "@components/Btn";
 import { FlexRow, classOverride } from "@components/Flex";
 import { SvgIcon } from "@components/SvgIcon";
 import { onWheelScroll } from "@components/Table/Table";
-import { mdiPencil } from "@mdi/js";
+import { mdiPencil, mdiViewDashboard, mdiViewDashboardEdit } from "@mdi/js";
 import React, { useEffect, useRef } from "react";
 import type { Prgl } from "../../App";
 import type { Command } from "../../Testing";
@@ -99,20 +99,29 @@ export const WorkspaceMenu = (props: P) => {
         workspaces={workspaces}
       />
 
-      {/* <Btn
-        iconPath={mdiPencil}
-        title="Finish editing workspace layout"
-        variant="faded"
-        color={workspace.layout_mode !== "fixed" ? "action" : undefined}
-        onClick={() => {
-          workspace.$update({
-            layout_mode:
-              workspace.layout_mode === "fixed" ? "editable" : "fixed",
-          });
-        }}
-      >
-        Edit mode
-      </Btn> */}
+      {user?.type === "admin" && (
+        <Btn
+          iconPath={
+            workspace.layout_mode === "fixed" ?
+              mdiViewDashboardEdit
+            : mdiViewDashboard
+          }
+          title={"Toggle Layout Mode"}
+          variant="faded"
+          color={"action"}
+          data-command="WorkspaceMenu.toggleWorkspaceLayoutMode"
+          // color={workspace.layout_mode !== "fixed" ? "action" : undefined}
+          // size="small"
+          onClick={() => {
+            workspace.$update({
+              layout_mode:
+                workspace.layout_mode === "fixed" ? "editable" : "fixed",
+            });
+          }}
+        >
+          {workspace.layout_mode === "fixed" ? "Edit" : "Preview"}
+        </Btn>
+      )}
     </FlexRow>
   );
 };

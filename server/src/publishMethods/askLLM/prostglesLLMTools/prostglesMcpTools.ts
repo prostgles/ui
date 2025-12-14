@@ -129,6 +129,7 @@ export const suggestDashboardsTool = {
     "",
     "Using dashboard structure below create workspaces with useful views my current schema.",
     "Return a json of this format: `{ prostglesWorkspaces: WorkspaceInsertModel[] }`",
+    "Do not return more than 3 workspaces, each with no more than 5 views.",
     "",
     "```typescript",
     dashboardTypesContent,

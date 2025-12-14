@@ -535,7 +535,7 @@ export async function getTablesViewsAndCols(
         pg_size_pretty(pg_relation_size(relid::regclass)) AS table_size,
           (50 * seq_scan > idx_scan -- more than 2%
           AND n_live_tup > 10000
-          AND pg_relation_size(relname :: regclass) > 5000000) as might_need_index
+          AND pg_relation_size(relid::regclass) > 5000000) as might_need_index
       FROM pg_stat_all_tables
       WHERE schemaname <> 'information_schema'
       AND schemaname NOT ILIKE 'pg_%';

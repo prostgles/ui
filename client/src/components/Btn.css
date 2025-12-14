@@ -225,3 +225,7 @@ button.fade-in,
 .btn.btn-faded:hover {
   background-color: var(--faded-bg-hover);
 }
+
+.underline-on-hover:hover {
+  text-decoration: underline;
+}

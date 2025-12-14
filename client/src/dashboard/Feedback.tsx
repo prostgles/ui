@@ -47,7 +47,7 @@ export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
           data-command="Feedback"
           iconPath={mdiMessageBookmarkOutline}
         >
-          {window.isMediumWidthScreen ? null : t.Feedback.Feedback}
+          {/* {window.isMediumWidthScreen ? null : t.Feedback.Feedback} */}
         </Btn>
       }
       footerButtons={

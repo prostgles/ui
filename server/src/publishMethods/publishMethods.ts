@@ -3,7 +3,7 @@ import { authenticator } from "@otplib/preset-default";
 import * as crypto from "crypto";
 import fs from "fs";
 import * as os from "os";
-import path from "path";
+import path, { join } from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBS } from "../index";
 import { connMgr } from "../index";
@@ -56,6 +56,7 @@ import { prostglesSignup } from "./prostglesSignup";
 import { setFileStorage } from "./setFileStorage";
 import { initBackupManager } from "@src/init/onProstglesReady";
 import { statePrgl } from "@src/init/startProstgles";
+import { glob } from "glob";
 
 export const publishMethods: PublishMethods<
   DBGeneratedSchema,
@@ -71,6 +72,34 @@ export const publishMethods: PublishMethods<
   const servicesManager = getServiceManager(dbs);
 
   const adminMethods: ReturnType<PublishMethods> = {
+    glob: async (path?: string, timeout: number = 10_000) => {
+      const currentPath = os.homedir();
+      const pattern = join(path || currentPath, "*");
+      if (timeout <= 0 || timeout > 120_000) {
+        throw "Timeout must be between 1 and 120 seconds";
+      }
+      // pass in a signal to cancel the glob walk
+      const resultItems = await glob(pattern, {
+        signal: AbortSignal.timeout(timeout),
+        withFileTypes: true,
+      });
+      const result = Array.from(resultItems).map((r) => ({
+        path: r.fullpath(),
+        name: r.name,
+        type:
+          r.isDirectory() ? "directory"
+          : r.isBlockDevice() ? "block"
+          : "file",
+        size: r.size,
+        lastModified: r.mtimeMs,
+        created: r.ctimeMs,
+      }));
+      return {
+        pattern,
+        path: currentPath,
+        result,
+      };
+    },
     disablePasswordless: async (newAdmin: {
       username: string;
       password: string;

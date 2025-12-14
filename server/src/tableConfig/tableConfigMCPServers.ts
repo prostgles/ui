@@ -43,12 +43,14 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
               oneOfType: [
                 {
                   type: { enum: ["env"] },
+                  renderWithComponent: { type: "string", optional: true },
                   title: { type: "string", optional: true },
                   optional: { type: "boolean", optional: true },
                   description: { type: "string", optional: true },
                 },
                 {
                   type: { enum: ["arg"] },
+                  renderWithComponent: { type: "string", optional: true },
                   title: { type: "string", optional: true },
                   optional: { type: "boolean", optional: true },
                   description: { type: "string", optional: true },

@@ -179,7 +179,7 @@ export const publish: Publish<
       },
       update: "*",
     },
-    ...getPublishLLM(user_id, isAdmin, accessRules),
+    ...getPublishLLM(user_id, isAdmin, accessRules, db),
     credential_types: isAdmin && { select: "*" },
     access_control: isAdmin ? "*" : undefined, // { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
     database_configs:

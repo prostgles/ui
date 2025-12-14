@@ -601,8 +601,8 @@ export type DBGeneratedSchema = {
       args?: null | string[];
       command: "npx" | "npm" | "uvx" | "uv" | "docker" | "prostgles-local"
       config_schema?: null | Record<string, 
- |  {  type: "env";  title?: string;  optional?: boolean;  description?: string; }
- |  {  type: "arg";  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
+ |  {  type: "env";  renderWithComponent?: string;  title?: string;  optional?: boolean;  description?: string; }
+ |  {  type: "arg";  renderWithComponent?: string;  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
       created?: null | string;
       cwd?: null | string;
       enabled?: boolean;

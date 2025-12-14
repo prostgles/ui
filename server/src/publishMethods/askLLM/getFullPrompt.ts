@@ -24,10 +24,10 @@ export const getFullPrompt = ({
       schema ?
         wrapCode("sql", schema)
       : "Schema is empty: there are no tables or views in the database",
-    )
-    .replace(
-      LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,
-      wrapCode("typescript", dashboardTypesContent),
     );
+  // .replace(
+  //   LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,
+  //   wrapCode("typescript", dashboardTypesContent),
+  // );
   return promptWithContext;
 };

@@ -138,6 +138,13 @@ export const dashboardUIDoc = {
             },
           ],
         },
+        {
+          type: "button",
+          selectorCommand: "WorkspaceMenu.toggleWorkspaceLayoutMode",
+          title: "Toggle layout mode",
+          description:
+            "Switches between fixed and editable layout modes for the current workspace.",
+        },
       ],
     },
     dashboardContentUIDoc,

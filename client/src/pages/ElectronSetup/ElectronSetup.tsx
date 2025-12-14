@@ -5,7 +5,7 @@ import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
-import type { OS } from "../PostgresInstallationInstructions";
+import type { OS } from "../../components/PostgresInstallationInstructions";
 import { ElectronSetupStateDB } from "./ElectronSetupStateDB";
 import { useElectronSetup } from "./useElectronSetup";
 

@@ -63,6 +63,7 @@ export const LoadSuggestedDashboards = ({
           <PopupMenu
             key={`${w.name}${i}-input`}
             title={`Suggested Dashboard: ${w.name}`}
+            positioning="fullscreen"
             onClickClose={false}
             button={
               <Chip

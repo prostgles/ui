@@ -26,7 +26,7 @@ import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRec
 import { t } from "../../i18n/i18nUtils";
 import { get } from "../../utils/utils";
 import { getBrowserOS } from "../ElectronSetup/ElectronSetup";
-import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
+import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionFormFields";
 import { ROUTES } from "@common/utils";

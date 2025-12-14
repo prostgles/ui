@@ -6,6 +6,7 @@ import Popup from "@components/Popup/Popup";
 import React, { useContext, useMemo, useState } from "react";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
 import { useOnErrorAlert } from "@components/AlertProvider";
+import { FileBrowser } from "@components/FileBrowser/FileBrowser";
 
 export type MCPServerEnabledConfig = { configId: number };
 
@@ -114,22 +115,37 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
         },
       ]}
     >
-      <FlexCol>
-        {Object.entries(schema).map(([key, schema]) => (
-          <FormField
-            type="text"
-            key={key}
-            label={schema.title ?? key}
-            hint={schema.description}
-            value={config[key]}
-            onChange={(v) =>
-              setConfig({
-                ...config,
-                [key]: v,
-              })
-            }
-          />
-        ))}
+      <FlexCol className="min-h-0">
+        {Object.entries(schema).map(([key, schema]) => {
+          if (schema.renderWithComponent === "FileBrowser") {
+            return (
+              <FileBrowser
+                key={key}
+                onChange={(v) => {
+                  setConfig({
+                    ...config,
+                    [key]: v,
+                  });
+                }}
+              />
+            );
+          }
+          return (
+            <FormField
+              type="text"
+              key={key}
+              label={schema.title ?? key}
+              hint={schema.description}
+              value={config[key]}
+              onChange={(v) =>
+                setConfig({
+                  ...config,
+                  [key]: v,
+                })
+              }
+            />
+          );
+        })}
         {Boolean(existingConfigs.length) && (
           <FlexCol className="pt-1 pb-2 gap-p5">
             <div className="ta-start">

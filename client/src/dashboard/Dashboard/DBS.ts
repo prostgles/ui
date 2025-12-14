@@ -17,6 +17,21 @@ import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfig
 import type { Backups } from "./dashboardUtils";
 
 export type DBSMethods = Partial<{
+  glob: (
+    pattern?: string,
+    timeout?: number,
+  ) => Promise<{
+    result: {
+      path: string;
+      name: string;
+      type: string;
+      size: number | undefined;
+      lastModified: number | undefined;
+      created: number | undefined;
+    }[];
+    pattern: string;
+    path: string;
+  }>;
   sendFeedback: (feedback: {
     details: string;
     email?: string;

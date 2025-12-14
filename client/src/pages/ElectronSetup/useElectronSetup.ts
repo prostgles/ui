@@ -5,7 +5,7 @@ import type { AppState } from "../../App";
 import { pageReload } from "@components/Loader/Loading";
 import type { Connection } from "../NewConnection/NewConnnectionForm";
 import { DEFAULT_CONNECTION } from "../NewConnection/NewConnnectionForm";
-import type { OS } from "../PostgresInstallationInstructions";
+import type { OS } from "../../components/PostgresInstallationInstructions";
 import { tout } from "./ElectronSetup";
 
 type ElectronSetup = {
