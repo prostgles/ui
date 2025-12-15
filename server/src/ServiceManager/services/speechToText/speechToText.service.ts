@@ -4,7 +4,6 @@ export const speechToTextService = {
   icon: "MicrophoneMessage",
   label: "Speech to Text",
   port: 8000,
-  gpus: "all",
   env: {
     WHISPER_MODEL: "small",
     MODEL_CACHE_DIR: "/app/models",
