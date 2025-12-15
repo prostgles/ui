@@ -1,10 +1,5 @@
-//@ts-nocheck
-
 import type { DBSSchemaForInsert } from "@common/publishUtils";
-import {
-  executeDockerCommand,
-  type ProcessLog,
-} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/DockerManager/executeDockerCommand";
+
 import type { DBS } from "..";
 import { buildService } from "./buildService";
 import {
@@ -13,6 +8,10 @@ import {
   type ProstglesService,
 } from "./ServiceManagerTypes";
 import { getContainerName, startService } from "./startService";
+import {
+  executeDockerCommand,
+  type ProcessLog,
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
 
 export class ServiceManager {
   dbs: DBS | undefined;
@@ -131,7 +130,7 @@ export class ServiceManager {
   stopService = async (serviceName: keyof typeof prostglesServices) => {
     try {
       const service = this.getService(serviceName);
-      if ("stop" in service) {
+      if (service && "stop" in service) {
         service.stop();
       }
     } catch {}
