@@ -193,7 +193,7 @@ export class SpeechRecorder {
     if (this.recentLevels.length > 1000) this.recentLevels.shift();
 
     // Calculate variance (speech has high variance, fan noise is steady)
-    const variance = this.getVariance(this.recentLevels.slice(-5));
+    const variance = this.getVariance(this.recentLevels.slice(-10));
 
     const varianceThreshold = calibratedVariance ?? MINIMUM_VARIANCE;
     const speechThreshold = calibratedThreshold ?? MINIMUM_SPEECH_THRESHOLD;

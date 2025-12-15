@@ -4,7 +4,7 @@ export const speechToTextService = {
   icon: "MicrophoneMessage",
   label: "Speech to Text",
   port: 8000,
-  useGPU: true,
+  gpus: "all",
   env: {
     WHISPER_MODEL: "small",
     MODEL_CACHE_DIR: "/app/models",
@@ -54,6 +54,7 @@ export const speechToTextService = {
           buildArgs: {
             BASE_IMAGE: "nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04",
           },
+          gpus: "all",
         },
       },
     },

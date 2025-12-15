@@ -54,7 +54,7 @@ export async function startService(
     volumes = {},
     healthCheck,
     endpoints,
-    useGPU,
+    gpus = "none",
   } = serviceConfig;
   const hostPort = await getFreePort(preferredHostPort);
   const volumeArgs: string[] = [];
@@ -99,7 +99,14 @@ export async function startService(
         ...labelArgs,
         "--name",
         containerName,
-        ...(useGPU ? ["--gpus", "all"] : []),
+        ...(gpus !== "none" ?
+          [
+            "--gpus",
+            Array.isArray(gpus) ?
+              `"device=${gpus.join(",")}"`
+            : gpus.toString(),
+          ]
+        : []),
         "-p",
         `${baseHost}:${port}`,
         ...volumeArgs,

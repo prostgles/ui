@@ -7,6 +7,8 @@ import type {
   ProcessLog,
 } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
 
+type GPUS = "none" | "all" | number | number[];
+
 export type ProstglesService = {
   icon: string;
   label: string;
@@ -26,11 +28,15 @@ export type ProstglesService = {
       defaultOption: string;
       options: Record<
         string,
-        { env: Record<string, string>; buildArgs?: Record<string, string> }
+        {
+          env: Record<string, string>;
+          buildArgs?: Record<string, string>;
+          gpus?: GPUS;
+        }
       >;
     }
   >;
-  useGPU?: boolean;
+  gpus?: GPUS;
   healthCheck: { endpoint: string; method?: "GET" | "POST" };
   volumes?: Record<string, string>;
   endpoints: Record<
