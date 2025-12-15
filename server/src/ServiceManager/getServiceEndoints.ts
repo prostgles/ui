@@ -44,10 +44,7 @@ export const getServiceEndoints = <S extends ProstglesService>({
 
           const response = await fetch(`${baseUrl}${endpoint}${query}`, {
             ...fetchOptions,
-            body:
-              asQueryOrBody === "body" && data ?
-                JSON.stringify(data)
-              : undefined,
+            body: asQueryOrBody === "body" ? (data as string) : undefined,
             method: method,
           });
           if (!response.ok) {

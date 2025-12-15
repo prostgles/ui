@@ -9,6 +9,7 @@ import {
   SpeechToTextSendModes,
   type ChatSpeechSetupState,
 } from "./useChatSpeechSetup";
+import ErrorComponent from "@components/ErrorComponent";
 
 export const ChatSpeechSetup = ({
   onClose,
@@ -23,7 +24,7 @@ export const ChatSpeechSetup = ({
   anchorEl: HTMLElement;
   mustEnableTranscriptionService: boolean;
 } & ChatSpeechSetupState) => {
-  const { dbs, dbsMethods, dbsTables } = usePrgl();
+  const { dbs, dbsMethods, dbsTables, user } = usePrgl();
   return (
     <Popup
       title={"Microphone options"}
@@ -41,7 +42,14 @@ export const ChatSpeechSetup = ({
         fullOptions={SpeechModeOptions}
         variant="button-group-vertical"
       />
-      {speechToTextMode === "stt-local" && (
+      {speechToTextMode === "stt-local" &&
+        user?.type !== "admin" &&
+        mustEnableTranscriptionService && (
+          <ErrorComponent
+            error={"Transcription service must be enabled by an admin user."}
+          />
+        )}
+      {speechToTextMode === "stt-local" && user?.type === "admin" && (
         <Services
           showSpecificService={{
             color: mustEnableTranscriptionService ? "red" : undefined,

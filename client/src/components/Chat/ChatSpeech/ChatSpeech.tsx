@@ -8,7 +8,7 @@ import React, {
 
 import { useOnErrorAlert } from "@components/AlertProvider";
 import { Icon } from "@components/Icon/Icon";
-import { mdiMicrophone, mdiMicrophoneMessage, mdiStop } from "@mdi/js";
+import { mdiMicrophone, mdiMicrophoneSettings, mdiStop } from "@mdi/js";
 import { ChatActionBarBtnStyleProps } from "src/dashboard/AskLLM/ChatActionBar/AskLLMChatActionBar";
 import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import { useThrottledCallback } from "src/hooks/useThrottledCallback";
@@ -31,13 +31,8 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
   const [sessionState, setSessionState] = useState<"recorded" | "stopped">();
   const { onErrorAlert } = useOnErrorAlert();
   const chatSpeechSetupState = useChatSpeechSetup();
-  const {
-    speechToTextMode,
-    transcribeAudio,
-    sendMode,
-    speechEnabledErrors,
-    mustEnableTranscriptionService,
-  } = chatSpeechSetupState;
+  const { speechToTextMode, transcribeAudio, sendMode, speechEnabledErrors } =
+    chatSpeechSetupState;
 
   const [isTranscribing, setIsTranscribing] = useState(false);
   const onFinishedWithOptions = useCallback(
@@ -159,22 +154,28 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
           : isSpeechToTextEnabled ? t.common["Speech to text"]
           : t.common["Record audio"]) + " (right click for options)"
         }
-        iconPath={
-          isListening ? undefined
-          : isSpeechToTextEnabled ?
-            mdiMicrophoneMessage
-          : mdiMicrophone
-        }
         iconNode={
-          isListening ?
-            <>
-              <canvas
-                ref={listeningCanvasRef}
-                style={{ position: "absolute", inset: 0, borderRadius: "50%" }}
-              />
-              <Icon path={mdiStop} style={{ visibility: "hidden" }} />
-            </>
-          : undefined
+          <>
+            <canvas
+              ref={listeningCanvasRef}
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                visibility: isListening ? "visible" : "hidden",
+              }}
+            />
+            {/** Just to take up space */}
+            <Icon
+              path={
+                isListening ? mdiStop
+                : speechToTextMode === "off" ?
+                  mdiMicrophoneSettings
+                : mdiMicrophone
+              }
+              style={{ visibility: isListening ? "hidden" : "visible" }}
+            />
+          </>
         }
         onContextMenu={(e) => {
           e.preventDefault();

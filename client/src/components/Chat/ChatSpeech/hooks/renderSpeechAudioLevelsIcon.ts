@@ -22,17 +22,8 @@ export const renderSpeechAudioLevelsIcon = (
   ctx.canvas.width = w;
   ctx.canvas.height = h;
   createHiPPICanvas(canvas, w, h);
-
   const netWidth = w - X_PADDING * 2 - (BAR_COUNT - 1) * BAR_SPACING;
   const barWidth = Math.floor(netWidth / BAR_COUNT);
-
-  const barPositionRatio = {
-    0: -0.25,
-    1: +0.25,
-    2: +0.5,
-    3: +0.25,
-    4: -0.25,
-  };
 
   drawShapes(
     [
@@ -49,15 +40,11 @@ export const renderSpeechAudioLevelsIcon = (
             )
           ),
         lineWidth: 0,
-        strokeStyle: "rgba(0,0,0,0)",
+        strokeStyle: "transparent",
       },
-      ...recentLevels.map((_audioLevel, index) => {
-        const audioLevel = isSpeaking ? _audioLevel : _audioLevel * 0.3;
-        const max = levelThreshold * 5;
-        const levelHeight = Math.min(
-          h,
-          (audioLevel / max) * h + barPositionRatio[index] * h,
-        );
+      ...recentLevels.map((audioLevel, index) => {
+        const max = levelThreshold * 2;
+        const levelHeight = Math.min(h, (audioLevel / max) * h);
         const edgeDiff = (h - levelHeight) / 2;
         const x = X_PADDING + index * (barWidth + BAR_SPACING);
         return {
@@ -71,7 +58,7 @@ export const renderSpeechAudioLevelsIcon = (
             document.documentElement,
           ).getPropertyValue(isSpeaking ? "--blue" : "--gray"),
           lineWidth: 0,
-          strokeStyle: "rgba(0,0,0,0)",
+          strokeStyle: "transparent",
         } satisfies ShapeV2;
       }),
     ],

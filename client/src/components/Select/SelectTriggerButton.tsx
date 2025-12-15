@@ -107,6 +107,7 @@ export const SelectTriggerButton = <
       }}
       /** Use "data-command" for content when button not needed anymore */
       data-command={popupAnchor ? undefined : props["data-command"]}
+      data-key={popupAnchor ? undefined : props["data-key"]}
       size={size}
       variant={chipMode ? "icon" : "faded"}
       color={chipMode ? "action" : "default"}

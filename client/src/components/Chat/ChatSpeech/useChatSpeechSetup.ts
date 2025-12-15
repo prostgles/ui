@@ -2,7 +2,7 @@ import { useOnErrorAlert } from "@components/AlertProvider";
 import type { FullOption } from "@components/Select/Select";
 import {
   mdiGoogleChrome,
-  mdiMicrophone,
+  mdiMicrophoneMessage,
   mdiMicrophoneOff,
   mdiWaveform,
 } from "@mdi/js";
@@ -17,7 +17,7 @@ export const SpeechModeOptions = [
     subLabel: "Disable speech input",
   },
   {
-    iconPath: mdiMicrophone,
+    iconPath: mdiMicrophoneMessage,
     key: "stt-local",
     label: "Local Speech Recognition",
     subLabel: "Uses a local model for private transcription",

@@ -1,15 +1,18 @@
 import React from "react";
 import { FlexRow } from "./Flex";
+import type { TestSelectors } from "src/Testing";
 
 export const StatusChip = ({
   text,
   color,
+  ...testSelectors
 }: {
   text: string;
   color: "yellow" | "red" | "green" | "blue" | "gray";
-}) => {
+} & TestSelectors) => {
   return (
     <FlexRow
+      {...testSelectors}
       className="gap-p25 px-p5 py-p25 "
       style={{
         backgroundColor: `var(--faded-${color})`,

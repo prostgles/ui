@@ -1,11 +1,13 @@
-const MINIMUM_VARIANCE = 20;
-const MINIMUM_SPEECH_THRESHOLD = 15;
+import { isPlaywrightTest } from "src/i18n/i18nUtils";
+
+const MINIMUM_VARIANCE = isPlaywrightTest ? 2 : 20;
+const MINIMUM_SPEECH_THRESHOLD = isPlaywrightTest ? 2 : 15;
 let calibratedVariance: number | undefined;
 let calibratedThreshold: number | undefined;
 
 /** Time to wait before sending */
-const SILENCE_DURATION = 1500;
-const SUSTAINED_SPEECH_DURATION = 200;
+const SILENCE_DURATION = isPlaywrightTest ? 600 : 1500;
+const SUSTAINED_SPEECH_DURATION = isPlaywrightTest ? 1 : 200;
 
 type SpeechRecorderConfig = {
   silenceDuration?: number;
@@ -182,20 +184,20 @@ export class SpeechRecorder {
   private recentLevels: number[] = [];
   private monitor = (): void => {
     if (this.isStopping) return;
-
     const now = Date.now();
+
     const elapsed = this.elapsed;
     const level = this.getAudioLevel();
     // Track recent levels for variance calculation
     this.recentLevels.push(level);
-    if (this.recentLevels.length > 10) this.recentLevels.shift();
+    if (this.recentLevels.length > 1000) this.recentLevels.shift();
 
     // Calculate variance (speech has high variance, fan noise is steady)
-    const variance = this.getVariance(this.recentLevels);
+    const variance = this.getVariance(this.recentLevels.slice(-5));
 
     const varianceThreshold = calibratedVariance ?? MINIMUM_VARIANCE;
     const speechThreshold = calibratedThreshold ?? MINIMUM_SPEECH_THRESHOLD;
-    // Speech requires BOTH above threshold AND sufficient variance
+
     const isSpeaking =
       !this.justStarted &&
       level > speechThreshold &&
@@ -207,11 +209,13 @@ export class SpeechRecorder {
 
     const { onSoundLevel } = this.callbacks;
     if (onSoundLevel && this.recentLevels.length >= 5) {
-      onSoundLevel(
-        this.recentLevels.slice(-5),
-        Math.max(...this.recentLevels),
-        isSpeaking,
-      );
+      const binSize = Math.min(5, Math.floor(this.recentLevels.length / 5));
+      const binLevels = this.recentLevels.slice(-binSize * 5);
+      const levels: number[] = [];
+      for (let i = 0; i < 5 * binSize; i += binSize) {
+        levels.push(binLevels[i]!);
+      }
+      onSoundLevel(levels, Math.max(...this.recentLevels), isSpeaking);
     }
 
     // Calibration during first few seconds

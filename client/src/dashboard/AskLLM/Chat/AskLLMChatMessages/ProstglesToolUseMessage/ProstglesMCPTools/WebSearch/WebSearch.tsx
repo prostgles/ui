@@ -17,6 +17,9 @@ export const WebSearch = ({
 
   return (
     <FlexCol>
+      {toolUseResult && toolUseResult.length === 0 && (
+        <div style={{ color: "var(--gray)" }}>No results found.</div>
+      )}
       {toolUseResult?.map((result, index) => {
         return (
           <FlexCol

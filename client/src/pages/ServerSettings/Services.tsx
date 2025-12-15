@@ -113,6 +113,7 @@ const useServicesFieldConfigs = ({
                   {label}
                 </Label>
                 <StatusChip
+                  data-key="service-status"
                   color={
                     status === "running" ? "green"
                     : status === "error" || status === "build-error" ?
@@ -126,6 +127,7 @@ const useServicesFieldConfigs = ({
                 {toggleService && (
                   <SwitchToggle
                     className="ml-auto"
+                    data-key="service-toggle"
                     checked={status !== "stopped" && status !== "error"}
                     onChange={() =>
                       void onErrorAlert(async () => {
@@ -141,6 +143,7 @@ const useServicesFieldConfigs = ({
                     <Select
                       key={configKey}
                       title={config.label || configKey}
+                      data-key={configKey}
                       btnProps={{
                         size: "small",
                       }}

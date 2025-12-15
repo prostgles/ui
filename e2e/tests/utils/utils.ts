@@ -826,10 +826,16 @@ const waitForAllMatchingLocatorsToDisappear = async (
   timeout = 30_000,
 ) => {
   const start = Date.now();
+  let tries = 0;
   while (true) {
     const count = await locator.count();
-    if (!count) return;
-    if (Date.now() - start > timeout) {
+    if (!count) {
+      if (tries > 2) {
+        return;
+      } else {
+        tries++;
+      }
+    } else if (Date.now() - start > timeout) {
       throw new Error(
         `Timeout waiting for locators to disappear. Still ${count} remaining.`,
       );
