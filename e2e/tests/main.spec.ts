@@ -942,6 +942,7 @@ test.describe("Main test", () => {
 
     await newChat();
     await toggleMCPTools(["websearch", "get_snapshot"]);
+    await page.waitForTimeout(7e3); // wait for the server to start
     await sendAskLLMMessage(page, " websearch ");
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();

@@ -42,6 +42,16 @@ export const getUIDocShortestPath = (
         return { index };
       }
       return { matchingLink, index };
+    } else if (doc.type !== "info") {
+      if (
+        (doc.selector &&
+          document.querySelectorAll(doc.selector).length === 1) ||
+        (doc.selectorCommand &&
+          document.querySelectorAll(getCommandElemSelector(doc.selectorCommand))
+            .length === 1)
+      ) {
+        return { index };
+      }
     }
   });
   const bestShortcut = shortcut.findLast(isDefined);

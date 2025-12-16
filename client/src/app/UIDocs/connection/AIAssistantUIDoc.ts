@@ -89,14 +89,9 @@ export const AIAssistantUIDoc = {
           type: "input",
           inputType: "text",
           title: "Message input",
-          description: "Input field for entering messages to the AI assistant.",
+          description:
+            "Input field for entering messages to the AI assistant. Pressing Shift+Enter creates a new line.",
           selector: getCommandElemSelector("Chat.textarea"),
-        },
-        {
-          type: "button",
-          title: "Send message",
-          description: "Sends the entered message to the AI assistant.",
-          selector: getCommandElemSelector("Chat.send"),
         },
         {
           type: "popup",
@@ -276,6 +271,28 @@ export const AIAssistantUIDoc = {
               tableName: "llm_credentials",
             },
           ],
+        },
+        {
+          type: "input",
+          inputType: "file",
+          selectorCommand: "Chat.addFiles",
+          title: "Attach files",
+          description:
+            "Attaches files to be sent to the AI assistant along with the message. Supported file types may vary depending on the AI model and configuration.",
+        },
+        {
+          type: "popup",
+          title: "Speech to Text",
+          selectorCommand: "Chat.speech",
+          description:
+            "Opens the speech-to-text input options, allowing you to send audio recordings or transcribe audio messages to send to the AI assistant. Right click to open speech-to-text settings.",
+          children: [],
+        },
+        {
+          type: "button",
+          title: "Send message",
+          description: "Sends the entered message to the AI assistant.",
+          selector: getCommandElemSelector("Chat.send"),
         },
       ],
     },
