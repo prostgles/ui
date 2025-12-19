@@ -142,5 +142,12 @@ export const serverSettingsUIDoc = {
         "Manage LLM providers, credentials and models to be used in the Ask AI chat",
       children: [],
     },
+    {
+      type: "tab",
+      title: "Services",
+      selector: getDataKeyElemSelector("services"),
+      description: "Manage services",
+      children: [],
+    },
   ],
 } satisfies UIDocContainers;

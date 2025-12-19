@@ -32,6 +32,7 @@ import { getMapFilter } from "./fetchData/getMapData";
 import { getMapDataExtent } from "./fetchData/getMapDataExtent";
 import type { HoveredObject } from "./onMapHover";
 import { onMapHover } from "./onMapHover";
+import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
 
 export type LayerBase = {
   /**
@@ -131,11 +132,11 @@ export type ClickedItem = GeoJSONFeature & {
 export type W_MapState = {
   loading: boolean;
   loadingLayers: boolean;
-  wSync: any;
+  wSync: SingleSyncHandles<Required<WindowData<"map">>, true> | null;
   minimised: boolean;
   layers?: GeoJsonLayerProps[];
   lqs: LayerQuery[];
-  error: any;
+  error: unknown;
   hoverObj?: any;
   hoverCoords?: HoverCoords;
   hovData?: any;
@@ -201,7 +202,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     }
   }
   onUnmount() {
-    this.state.wSync?.$unsync?.();
+    this.state.wSync?.$unsync();
     this.layerSubs.map((s) => {
       s.sub.unsubscribe();
     });
@@ -229,7 +230,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     }
   };
 
-  autoRefreshInterval;
+  autoRefreshInterval: NodeJS.Timeout | undefined;
   gettingExtent = false;
   onDelta = (
     dp: Partial<W_MapProps>,
@@ -237,8 +238,6 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     dd: DeltaOfData<D>,
   ) => {
     const delta = { ...dp, ...ds, ...dd };
-
-    // console.log(delta)
 
     const ns: any = {};
 
@@ -270,7 +269,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         changedOpts.includes("refresh") ||
         changedOpts.includes("aggregationMode")
       ) {
-        this.setLayerData(this.state.dataAge);
+        void this.setLayerData(this.state.dataAge);
 
         if (changedOpts.includes("refresh")) {
           const { refresh } = this.d.w.options;
@@ -552,7 +551,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
             />
             <DeckGLMap
               onLoad={(map) => {
-                this.setLayerData(this.state.dataAge);
+                void this.setLayerData(this.state.dataAge);
                 this.map = map;
               }}
               geoJsonLayersDataFilterSignature={

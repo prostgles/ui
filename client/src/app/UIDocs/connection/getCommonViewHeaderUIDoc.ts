@@ -13,7 +13,7 @@ export const getCommonViewHeaderUIDoc = (
 ): UIDocElement => ({
   type: "section",
   selector: ".silver-grid-item-header",
-  title: "View header",
+  title: "Header section",
   description:
     "Contains menu button, title and window minimise/fullscreen controls.",
   children: (

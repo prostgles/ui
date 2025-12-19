@@ -57,9 +57,13 @@ export const WorkspaceMenuDropDown = ({
           iconPath={mdiChevronDown}
           className={"text-0"}
           data-command="WorkspaceMenuDropDown"
-          style={{
-            padding: "12px",
-          }}
+          style={
+            window.isLowWidthScreen ?
+              {}
+            : {
+                padding: "12px",
+              }
+          }
         />
       }
       contentStyle={{

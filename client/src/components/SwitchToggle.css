@@ -90,6 +90,9 @@
   height: 20px;
   border-radius: 50%;
 }
+.Switch-thumb.loading {
+  background-color: color-mix(in srgb, currentColor 50%, transparent);
+}
 
 .Switch-track {
   font-size: 1rem;

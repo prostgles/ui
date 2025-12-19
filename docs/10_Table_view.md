@@ -1,10 +1,25 @@
 <h1 id="table_view"> Table view </h1> 
 
-The table view displays data from a database table or view, allowing users to interact with the data, including sorting, filtering, and editing.
-It supports computed columns, linked fields, and various actions for managing the data.
+The table view allows you to explore, filter, and edit your Postgres data with ease.
+Instantly sort and search, build computed columns, pull in linked data through automatic joins, and create charts, maps, and cross-filtered views in a couple of clicks.
+With smart forms for row editing, rich column controls, and deep schema-aware features, the table view turns your database into an interactive workspace for analysis, tooling, and rapid iteration.
+
+
+## Features
+
+- **Smart filtering**: Use the smart filter bar to quickly filter your data based on column types and values.
+- **Computed columns**: Add calculations or transformations of existing data.
+- **Automatic joins**: Show related data from linked tables with automatic joins and summarise if needed.
+- **Charts and maps**: Timechart and map visualisations with multi-layer support.
+- **Cross-filtered views**: Create additional table or chart views that are cross-filtered by the current table.
+- **Smart forms**: Edit rows using smart forms that adapt to your schema and data types.
+- **Conditional styling**: Style your columns based on row data.
+
 <img src="./screenshots/table.svgif.svg" alt="Table view screenshot" style="border: 1px solid; margin: 1em 0;" />
 
-  - **View header**: Contains menu button, title and window minimise/fullscreen controls.  
+## Components
+
+  - **Header section**: Contains menu button, title and window minimise/fullscreen controls.  
     - **Quick actions**: Quick actions for the view, providing easy access to charting and joins.  
       - **Toggle filter bar**: Shows or hides the filter bar, allowing users to filter the data displayed in the table.  
       - **Add cross-filtered table**: Adds a new table view that is cross-filtered by the current table. This allows you to explore related data in a new table view.  

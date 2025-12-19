@@ -27,6 +27,7 @@ import { Documentation } from "./Documentation";
 import { useGoToUI } from "./useGoToUI";
 import { getItemSearchRank } from "@components/SearchList/searchMatchUtils/getItemSearchRank";
 import { isPlaywrightTest } from "src/i18n/i18nUtils";
+import { getProperty } from "@common/utils";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
@@ -97,7 +98,8 @@ export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
                     data.type === "input" ?
                       `${data.type}-${data.inputType}`
                     : data.type;
-                  const iconPath = data.iconPath ?? UIDocTypeToIcon[iconKey];
+                  const iconPath =
+                    data.iconPath ?? getProperty(UIDocTypeToIcon, iconKey);
                   if (!iconPath) {
                     console.warn("No icon for UIDoc type", iconKey, data);
                   }

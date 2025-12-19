@@ -97,14 +97,16 @@ export function CloudStorageCredentialSelector({
             iconPath={mdiPlus}
           />
         }
+        title="Add cloud storage credential"
         positioning="center"
         clickCatchStyle={{ opacity: 1 }}
         contentStyle={{ padding: 0 }}
         render={(popupClose) => (
           <SmartForm
+            label=""
+            contentClassname="p-1"
             methods={dbsMethods}
             db={dbs as DBHandlerClient}
-            label="Add cloud storage credential"
             tableName="credentials"
             tables={dbsTables}
             showJoinedTables={false}

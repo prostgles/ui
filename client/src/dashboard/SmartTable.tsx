@@ -275,7 +275,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             tableName={tableName}
             rowFilter={editRowFilter}
             onSuccess={() => {
-              this.getData();
+              void this.getData();
             }}
             onClose={() => {
               this.setState({ editRowFilter: undefined });

@@ -1,10 +1,27 @@
 <h1 id="sql_editor"> SQL editor </h1> 
 
-The SQL editor is a powerful tool for executing SQL queries against your database. It supports syntax highlighting, auto-completion, and various options for managing queries.
+The SQL editor is a powerful tool for executing SQL queries against your PostgreSQL database. 
+
+### Core Features
+- **Intelligent auto-completion** with context-aware suggestions based on your schema and data with JSONB property access support
+- **Rich suggestion details** with related objects, usage examples and documentation extracts, reducing the need to switch context
+- **Execute current statement** functionality to run only the SQL statement where the cursor is located
+- **Charting options** to visualize query results as timecharts or maps directly from the editor
+- **Multiple result display modes** including table, JSON, and CSV formats
+
+To make it easier working with multiple queries, the default query execution behaviour is to execute the current statement.
+It is highlighted by the blue vertical line to the left of the code. Press <kbd>Alt+E</kbd> or <kbd>Ctrl+Enter</kbd> or <kbd>F5</kbd> to execute it.
+
+The editor is based on [Monaco Editor](https://microsoft.github.io/monaco-editor/), which powers VS Code. 
+It supports multi-cursor editing, find and replace, and many other advanced editing features.
+
+Realtime query resource usage can be enabled in the settings to monitor CPU and memory consumption.
 
 <img src="./screenshots/sql_editor.svgif.svg" alt="SQL editor screenshot" style="border: 1px solid; margin: 1em 0;" />
 
-  - **View header**: Contains menu button, title and window minimise/fullscreen controls.  
+## Components:
+
+  - **Header section**: Contains menu button, title and window minimise/fullscreen controls.  
     - **Quick actions**: Quick actions for the view, providing easy access to charting and joins.  
       - **Add timechart**: Adds a timechart visualization based on the current SQL statement. Visible only when the last executed statement returned at least one timestamp column.  
       - **Add map**: Adds a map visualization based on the current SQL statement. Visible only when the last executed statement returned at least one geometry/geography column (postgis extension must be enabled).  

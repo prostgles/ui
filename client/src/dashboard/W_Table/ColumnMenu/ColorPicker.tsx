@@ -121,6 +121,7 @@ export class ColorPicker extends React.Component<
               {COLOR_PALETTE.map((c, ci) => (
                 <Btn
                   key={ci}
+                  data-key={c}
                   className={"pointer shadow"}
                   style={{
                     width: "24px",
@@ -139,7 +140,7 @@ export class ColorPicker extends React.Component<
               <FormField
                 label="Other"
                 type="color"
-                value={`rgb(${rgba.slice(0, -1).join(",")})`}
+                value={asHex(`rgb(${rgba.slice(0, -1).join(",")})`)}
                 style={{ opacity }}
                 onChange={(c) => this.onChange(c)}
               />

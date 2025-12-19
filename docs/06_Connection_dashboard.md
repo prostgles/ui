@@ -1,28 +1,39 @@
 <h1 id="connection_dashboard"> Connection dashboard </h1> 
 
-Main interface for interacting with a selected database connection. 
-Browse data, execute SQL queries, manage database objects, and access various tools.
+The connection dashboard is your command center for exploring and managing your Postgres database. 
+Open tables, run SQL, visualize schema relationships, switch workspaces, and launch tools—all in one flexible, customizable workspace.
+With quick search, saved queries, AI-powered assistance, and instant access to every database object, the dashboard gives you a fast, intuitive way to navigate your data and build the tools you need.
+
+## Features
+
+- **Unified workspace**: View tables, SQL editors, charts, and tools together in a flexible layout. Save and switch between different layouts and sets of opened views for different tasks or projects.
+- **AI Assistant**: Generate SQL, explore data, and get help directly within the dashboard.
+- **Flexible layout**: Drag, resize, and arrange views in a tiled layout to create a workspace that fits your needs.
+- **Global search**: Search across all tables, views, and functions in a single, fast search bar.
+- **Schema diagram**: Visualize relationships between tables and schemas to better understand your database structure.
+- **Import data**: Easily import data from CSV/JSON files into your database tables.
 
 <img src="./screenshots/dashboard.svgif.svg" alt="Connection dashboard" style="border: 1px solid; margin: 1em 0;" />
 
-### Dashboard elements:
-- <a href="#dashboard_menu">Dashboard menu</a>: Main menu for navigating and managing the database tables and views.  
+## Components
+
+### Dashboard elements
+- <a href="#dashboard_menu">Dashboard menu</a>: Allows opening tables and views, schema diagram, importing files, managing saved queries, and accessing dashboard settings.  
 - **Dashboard menu toggle**: Opens or closes the dashboard menu unless the menu is pinned.  
 - **Go to configuration**: Opens the configuration page for the selected connection.  
-- **Change connection**: Changes the current connection.  
-- **Workspaces**: List of available workspaces for the selected connection. Each workspace represents a separate environment for data analysis  
+- **Change connection**: Switch to a different database connection.  
+- **Workspaces**: List of available workspaces for the selected connection. Each workspace stores opened views and their layout.  
 - <a href="#workspaces_menu">Workspaces menu</a>: Opens the workspaces menu, allowing you to create, manage, and switch between workspaces.  
-- <a href="#workspace_area">Workspace area</a>: Main content area of the dashboard, where the SQL editor and other components are displayed.  
+- <a href="#workspace_area">Workspace area</a>: Main content area of the dashboard, where the tables, views, SQL editors and other visualisations are displayed.  
 - <a href="#ai_assistant">AI Assistant</a>: Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.  
 - **Feedback**: Opens the feedback form, allowing you to provide feedback about the application.  
 - **Go to Connections**: Opens the connections list page.  
 
 <h2 id="dashboard_menu"> Dashboard menu </h2> 
 
-The dashboard menu provides access to various tools and features for managing your database tables and views.
-It includes options for executing SQL queries, searching for tables and views, managing saved queries, and configuring dashboard settings.
-You can also pin the menu to keep it open, resize it, and access server-side functions.
-The menu is designed to be user-friendly and provides quick access to essential features for efficient database management.
+The dashboard menu is the entry point in exploring your database.
+The layout adapts to the screen size by pinning the menu to keep it open when there is enough space. 
+For wider screens the centered layout mode can be enabled through the settings.
 
   - **Open an SQL editor**: Opens an SQL editor view in the workspace area.  
   - **Quick search**: Opens the quick search menu for searching across all available tables and views from the current database.  
@@ -34,7 +45,7 @@ The menu is designed to be user-friendly and provides quick access to essential 
   - **Tables and views**: List of tables and views from the current database. Click to open a table or view. By default only the tables from the public schema are shown. Schema list from the connection settings controls which schemas are shown.  
   - **Server-side functions**: List of server-side functions for the current database. Click to open a function.  
   - <a href="#create/import">Create/Import</a>: Opens the menu for creating new tables, server-side functions or importing csv/json files.  
-  - <a href="#schema_diagram">Schema diagram</a>: Opens the schema diagram for visualizing the relationships between tables and views in the current database.  
+  - <a href="#schema_diagram">Schema diagram</a>: Opens the schema diagram for visualizing the relationships between tables in the current database.  
 
 <h3 id="create/import"> Create/Import </h3> 
 

@@ -1,4 +1,3 @@
-import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
 import {
   getDataKeyElemSelector,
   getDataLabelElemSelector,
@@ -10,12 +9,12 @@ export const dashboardMenuUIDoc = {
   selector: ".DashboardMenuContent",
   title: "Dashboard menu",
   description:
-    "Main menu for navigating and managing the database tables and views.",
+    "Allows opening tables and views, schema diagram, importing files, managing saved queries, and accessing dashboard settings.",
   docs: `
-    The dashboard menu provides access to various tools and features for managing your database tables and views.
-    It includes options for executing SQL queries, searching for tables and views, managing saved queries, and configuring dashboard settings.
-    You can also pin the menu to keep it open, resize it, and access server-side functions.
-    The menu is designed to be user-friendly and provides quick access to essential features for efficient database management.
+    The dashboard menu is the entry point in exploring your database.
+    The layout adapts to the screen size by pinning the menu to keep it open when there is enough space. 
+    For wider screens the centered layout mode can be enabled through the settings. 
+
     `,
   children: [
     {
@@ -189,13 +188,23 @@ export const dashboardMenuUIDoc = {
       selectorCommand: "SchemaGraph",
       title: "Schema diagram",
       description:
-        "Opens the schema diagram for visualizing the relationships between tables and views in the current database.",
+        "Opens the schema diagram for visualizing the relationships between tables in the current database.",
       docs: `
-        The schema diagram provides a visual representation of the relationships between tables and views in the current database.
+        Explore your database structure visually through the schema diagram. This tool lets you:
+        - **Select schemas** — Choose one or multiple schemas to display
+        - **Navigate freely** — Pan and zoom to focus on specific areas
+        - **View table relationships** — See how tables connect through foreign keys
+        - **Filter your view** — Show or hide tables and columns by relationship type
+        - **Color links by root table** — Trace relationships back to their source at a glance. Links inherit the color of the table that defines the relationship (e.g., all user_id foreign keys match the users table color)
+        - **Reset the layout** — Return to the default view which auto-arranges tables ensuring the most linked tables are central
+
         It allows you to explore the schema structure, view table relationships, and manage the layout of the schema diagram.
-        You can filter tables and columns based on their relationship types, reset the layout, and close the schema diagram to return to the dashboard menu.
+        You can pan and zoom the diagram, select schemas, filter tables and columns based on their relationship types, reset the layout.
+        Link color modes allow you to better understand related tables and foreign key properties.
         
         <img src="./screenshots/schema_diagram.svgif.svg" alt="Schema diagram screenshot" />
+
+        ## Controls
       `,
       docOptions: "asSeparateFile",
       childrenTitle: "Top controls",

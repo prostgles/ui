@@ -6,7 +6,7 @@ import {
   prostglesServices,
   ServiceInstance,
 } from "./ServiceManagerTypes";
-import { isEqual } from "prostgles-types";
+import { isEqual, pickKeys } from "prostgles-types";
 import { getEntries } from "@common/utils";
 import { dockerInspect } from "./dockerInspect";
 import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
@@ -14,6 +14,7 @@ import {
   executeDockerCommand,
   type ExecutionResult,
 } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
+import { filterArr } from "@common/llmUtils";
 
 export async function buildService(
   this: ServiceManager,
@@ -64,7 +65,11 @@ export async function buildService(
   const matchingDockerImage = await dockerInspect(imageName);
   if (
     matchingDockerImage &&
-    isEqual(matchingDockerImage.Config.Labels, buildLabels)
+    isEqual(
+      /** Some labels end up populated  (e.g.: org.opencontainers....)  */
+      pickKeys(matchingDockerImage.Config.Labels, Object.keys(buildLabels)),
+      buildLabels,
+    )
   ) {
     this.activeServices.set(serviceName, {
       status: "building-done",
@@ -95,12 +100,24 @@ export async function buildService(
     )
       .then((result) => {
         this.getActiveService(serviceName, "building");
-        this.activeServices.set(serviceName, {
-          status: "building-done",
-          buildHash,
-          labels: buildLabels,
-          labelArgs,
-        });
+        if (result.state !== "close") {
+          this.activeServices.set(serviceName, {
+            status: "build-error",
+            error:
+              result.state === "aborted" ? "aborted"
+              : result.state === "timed-out" ? "timed-out"
+              : (filterArr(result.log, { type: "error" })[0] ??
+                result.log.at(-1)),
+          });
+          return result;
+        } else {
+          this.activeServices.set(serviceName, {
+            status: "building-done",
+            buildHash,
+            labels: buildLabels,
+            labelArgs,
+          });
+        }
         return result;
       })
       .catch((err) => {
@@ -115,7 +132,8 @@ export async function buildService(
     stop,
   };
   this.activeServices.set(serviceName, instance);
-  const { state } = await instance.building;
+  const { state, log } = await instance.building;
+  onLogsCombined(log);
   return state;
 }
 

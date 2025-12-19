@@ -57,6 +57,7 @@ export const Documentation = ({ isElectron }: P) => {
             gap: 0,
             height: "100%",
             overflowY: "auto",
+            lineHeight: 1.5,
           }}
         >
           {!currentDocFile ? null : (

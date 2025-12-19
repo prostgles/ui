@@ -1,7 +1,7 @@
 import os
 import tempfile
 import logging
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
 from faster_whisper import WhisperModel
 
 # Configure logging
@@ -30,10 +30,6 @@ def get_model():
         model = WhisperModel(MODEL_SIZE, device=DEVICE, compute_type=COMPUTE_TYPE)
         logger.info("Model loaded successfully")
     return model
-
-@app.route('/')
-def index():
-    return render_template('index.html')
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe():

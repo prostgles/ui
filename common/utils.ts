@@ -383,17 +383,6 @@ export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 
 export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC" as const;
 
-type ValueOf<T> = T[keyof T];
-export const getProperty = <
-  O extends AnyObject,
-  K extends (keyof O & string) | string,
->(
-  o: O,
-  k: K,
-): ValueOf<O> | undefined => {
-  return o[k] as ValueOf<O> | undefined;
-};
-
 export function debouncePromise<Args extends any[], T>(
   promiseFuncDef: (...pArgs: Args) => Promise<T>,
 ): (...args: Args) => Promise<T> {
@@ -426,4 +415,13 @@ export const getCaller = () => {
 //TODO: add file table column info to prostgles-types
 export type FileTable = {
   original_name: string;
+};
+
+export const getProperty = <T extends object, K extends string>(
+  obj: T,
+  key: K | string,
+): K extends keyof T ? T[K] : undefined => {
+  if (!Object.keys(obj).includes(key))
+    return undefined as K extends keyof T ? T[K] : undefined;
+  return obj[key as keyof T] as K extends keyof T ? T[K] : undefined;
 };

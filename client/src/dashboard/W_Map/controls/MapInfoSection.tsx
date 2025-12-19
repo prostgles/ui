@@ -1,6 +1,6 @@
 import ErrorComponent from "@components/ErrorComponent";
 import Loading from "@components/Loader/Loading";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { GeoJsonLayerProps } from "src/dashboard/Map/DeckGLMap";
 import type { W_MapProps } from "../W_Map";
 import { classOverride } from "@components/Flex";
@@ -8,15 +8,22 @@ import { classOverride } from "@components/Flex";
 type P = {
   loadingLayers: boolean;
   fetchedLayers: GeoJsonLayerProps[];
-  error: any;
+  error: unknown;
 } & Pick<W_MapProps, "active_row" | "w">;
-export const MapInfoSection = ({
-  loadingLayers,
-  w,
-  active_row,
-  fetchedLayers,
-  error,
-}: P) => {
+export const MapInfoSection = (props: P) => {
+  const { loadingLayers, w, active_row, fetchedLayers, error } = props;
+  const [show, setShow] = useState(false);
+  /** Debounce show */
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setShow(true);
+    }, 1000);
+    return () => {
+      setShow(false);
+      clearTimeout(timeout);
+    };
+  }, [props]);
+
   if (error) {
     return (
       <Wrapper className="relative flex-row m-2 p-2 bg-color-0 rounded max-h-fit ">
@@ -33,11 +40,12 @@ export const MapInfoSection = ({
     );
   }
 
-  if (
-    !loadingLayers &&
-    active_row &&
-    !fetchedLayers.some((l) => l.features.length)
-  ) {
+  if (!show) return null;
+  if (!loadingLayers && fetchedLayers.every((l) => !l.features.length)) {
+    const message =
+      active_row ?
+        "No location data found for the selected row."
+      : "No location data to display.";
     return (
       <Wrapper className="w-full h-full ">
         <div
@@ -47,7 +55,7 @@ export const MapInfoSection = ({
             backdropFilter: "blur(4px)",
           }}
         >
-          No location data for the active row selection.
+          {message}
         </div>
       </Wrapper>
     );

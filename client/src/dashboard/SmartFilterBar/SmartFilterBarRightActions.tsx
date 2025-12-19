@@ -133,6 +133,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
 
             {!!tableHandler.update && showupdate && (
               <PopupMenu
+                title={`Update ${rowCount} rows`}
                 positioning="right-panel"
                 button={
                   <Btn
@@ -146,11 +147,12 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                 contentStyle={{
                   padding: 0,
                 }}
-                render={(pClose) => (
+                render={() => (
                   <>
                     <SmartForm
-                      label={`Update ${rowCount} rows`}
                       db={db}
+                      label=""
+                      contentClassname="pt-1"
                       rowFilter={[]}
                       tableName={table_name}
                       tables={tables}

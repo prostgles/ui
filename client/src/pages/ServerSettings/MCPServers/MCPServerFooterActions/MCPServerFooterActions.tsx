@@ -148,7 +148,9 @@ export const MCPServerFooterActions = ({
           : undefined
         }
         checked={!!mcp_server.enabled}
-        onChange={onToggle}
+        onChange={async () => {
+          await onToggle();
+        }}
       />
     </FlexRow>
   );

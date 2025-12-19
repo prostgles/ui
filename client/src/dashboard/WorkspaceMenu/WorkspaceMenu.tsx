@@ -94,7 +94,7 @@ export const WorkspaceMenu = (props: P) => {
         ))}
       </ul>
 
-      {user?.type === "admin" && (
+      {user?.type === "admin" && !window.isLowWidthScreen && (
         <Btn
           iconPath={
             workspace.layout_mode === "fixed" ?
@@ -102,20 +102,14 @@ export const WorkspaceMenu = (props: P) => {
             : mdiViewDashboard
           }
           title={"Toggle Layout Mode"}
-          // variant="faded"
-          // color={"action"}
           data-command="WorkspaceMenu.toggleWorkspaceLayoutMode"
-          // color={workspace.layout_mode !== "fixed" ? "action" : undefined}
-          // size="small"
           onClick={() => {
             workspace.$update({
               layout_mode:
                 workspace.layout_mode === "fixed" ? "editable" : "fixed",
             });
           }}
-        >
-          {/* {workspace.layout_mode === "fixed" ? "Edit" : "Preview"} */}
-        </Btn>
+        />
       )}
       <WorkspaceMenuDropDown
         {...props}

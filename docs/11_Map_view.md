@@ -7,7 +7,7 @@ It supports multiple layers, custom basemaps, and various map controls for inter
 
 <img src="./screenshots/map.svg" alt="Map view screenshot" style="border: 1px solid; margin: 1em 0;" />
 
-  - **View header**: Contains menu button, title and window minimise/fullscreen controls.  
+  - **Header section**: Contains menu button, title and window minimise/fullscreen controls.  
     - **View title. Drag to re-arrange layout**: Shows the table/view name together with the geometry/geography column name used for the map visualization.  
     - **Collapse the view**: Collapses the view, minimizing it to temporarily save space on the dashboard.   
     - **Fullscreen**: Expands the view to fill the entire screen.  

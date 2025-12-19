@@ -1,12 +1,22 @@
 <h1 id="schema_diagram"> Schema diagram </h1> 
 
-The schema diagram provides a visual representation of the relationships between tables and views in the current database.
+Explore your database structure visually through the schema diagram. This tool lets you:
+- **Select schemas** — Choose one or multiple schemas to display
+- **Navigate freely** — Pan and zoom to focus on specific areas
+- **View table relationships** — See how tables connect through foreign keys
+- **Filter your view** — Show or hide tables and columns by relationship type
+- **Color links by root table** — Trace relationships back to their source at a glance. Links inherit the color of the table that defines the relationship (e.g., all user_id foreign keys match the users table color)
+- **Reset the layout** — Return to the default view which auto-arranges tables ensuring the most linked tables are central
+
 It allows you to explore the schema structure, view table relationships, and manage the layout of the schema diagram.
-You can filter tables and columns based on their relationship types, reset the layout, and close the schema diagram to return to the dashboard menu.
+You can pan and zoom the diagram, select schemas, filter tables and columns based on their relationship types, reset the layout.
+Link color modes allow you to better understand related tables and foreign key properties.
 
 <img src="./screenshots/schema_diagram.svgif.svg" alt="Schema diagram screenshot" style="border: 1px solid; margin: 1em 0;" />
 
-### Top controls:
+## Controls
+
+### Top controls
   - **Table relationship filter**: Display tables based on their relationship type. Options include: all, linked (with relationships), orphaned (without relationships).  
   - **Column relationship filter**: Display columns based on their relationship type. Options include: all, references (with relationships), none (no columns/only table names will be shown).  
   - **Link colour mode**: Colour links by: default (fixed colour), root table (the colour of the table the relationship tree originates from), on-delete/on-update (colour based on constraint referential action).  
@@ -30,11 +40,11 @@ The menu also includes options to clone existing workspaces and delete them if t
   - **Create new workspace**: Opens the form to create a new workspace for the selected connection.  
     - **Workspace name**: Name of the new workspace.  
     - **Create workspace**: Create and switch to the new workspace with the specified name.  
-  - **Toggle layout mode**: Switches between fixed and editable layout modes for the current workspace.  
+  - **Toggle layout mode**: Switches between fixed and editable layout modes for the current workspace. Fixed mode locks the layout, preventing it from being changed by the user.  
 
 <h2 id="workspace_area"> Workspace area </h2> 
 
-The workspace area is where you interact with your database connection. 
+The workspace area is the main place for interacting with your data. 
 It includes the SQL editor, data tables, maps, and timecharts, allowing you to execute queries, visualize data, and manage database objects.
 
   - <a href="#sql_editor">SQL editor</a>: The SQL editor allows users to write and execute SQL queries against the selected database. It provides a user-friendly interface for interacting with the database.  

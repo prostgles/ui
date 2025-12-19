@@ -12,6 +12,7 @@ Manage server settings to enhance security, configure authentication methods, an
   - **Third-party login providers**: Third-party login providers (OAuth2)  
 - **MCP Servers**: Manage MCP servers and tools that can then be used in the Ask AI chat  
 - **LLM Providers**: Manage LLM providers, credentials and models to be used in the Ask AI chat  
+- **Services**: Manage services  
 
 <h3 id="email_signup"> Email signup </h3> 
 

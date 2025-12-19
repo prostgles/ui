@@ -36,7 +36,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
     -180, -90, 180, 90,
   ];
 
-  let result: W_MapState = {} as any,
+  let result: Pick<W_MapState, "layers"> = {},
     error;
   const AGG_LIMIT = 100000;
 
@@ -298,10 +298,10 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                   .domain([20, 14, 10, 1])
                   .clamp(true);
 
-                rows = (await tableHandler.find(f.finalFilter, opts)) as any;
+                rows = await tableHandler.find(f.finalFilter, opts);
 
                 const radius = scale(zoom);
-                rows = rows?.map((r) => ({ ...r, type: "table", radius }));
+                rows = rows.map((r) => ({ ...r, type: "table", radius }));
               }
               if (aggs)
                 aggs = aggs.filter(
@@ -379,7 +379,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
           }),
       );
 
-      result = { layers } as any;
+      result = { layers };
     } catch (err) {
       error = err;
     }

@@ -37,13 +37,12 @@ export const Marked = (props: MarkedProps) => {
       if (!codeString || !className || !language || language === "markdown") {
         const isSingleWord =
           !codeString.includes("\n") && !codeString.includes(" ");
+
         if (isSingleWord) {
-          return <code {...props} />;
+          <code {...props} />;
         }
         return (
-          <pre>
-            <code {...props} />
-          </pre>
+          <code {...props} style={{ ...props.style, whiteSpace: "pre-line" }} />
         );
       }
 

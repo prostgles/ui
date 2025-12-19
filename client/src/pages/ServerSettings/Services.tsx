@@ -104,7 +104,10 @@ const useServicesFieldConfigs = ({
             selected_config_options,
           }: DBSSchema["services"],
         ) => {
-          const isRunning = status === "running";
+          const isRunning =
+            status === "building" ||
+            status === "starting" ||
+            status === "running";
           return (
             <FlexCol className="w-full gap-p5">
               <FlexRow className="w-full gap-0">
@@ -128,7 +131,8 @@ const useServicesFieldConfigs = ({
                   <SwitchToggle
                     className="ml-auto"
                     data-key="service-toggle"
-                    checked={status !== "stopped" && status !== "error"}
+                    title={isRunning ? "Stop service" : "Start service"}
+                    checked={isRunning}
                     onChange={() =>
                       void onErrorAlert(async () => {
                         await toggleService(name, !isRunning);

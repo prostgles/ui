@@ -8,6 +8,7 @@ import type { ShapeV2 } from "./drawShapes";
 import { isDefined } from "@common/filterUtils";
 import { asRGB } from "src/utils/colorUtils";
 import { hashCode } from "src/utils/hashCode";
+import { getTimechartGradientPeakSections } from "./getTimechartGradientPeakSections";
 
 export const drawShapesOnSVG = (
   shapes: ShapeV2<any>[],
@@ -172,57 +173,8 @@ export const drawShapesOnSVG = (
 
       // g.appendChild(pathElement);
       if (s.withGradient && s.coords.length > 2) {
-        // Calculate minY for gradient positioning
-        let minY = Infinity;
-        s.coords.forEach(([_, y]) => {
-          if (y < minY) minY = y;
-        });
-
-        const gradientLastStep = 0.3;
-        const gradientMaxY = height - gradientLastStep * height;
-        const peakSections: { x: number; y: number; index: number }[][] = [];
-
-        s.coords.forEach(([x, y], index) => {
-          if (y > gradientMaxY) {
-            return;
-          }
-
-          const startNewSection = () => {
-            const prevPoint = s.coords[index - 1];
-            peakSections.push(
-              [
-                prevPoint && {
-                  index: index - 1,
-                  x: prevPoint[0],
-                  y: prevPoint[1],
-                },
-                { x, y, index },
-              ].filter(isDefined),
-            );
-          };
-
-          if (!peakSections.length) {
-            startNewSection();
-            return;
-          }
-          const currentSection = peakSections.at(-1)!;
-          const lastPoint = currentSection.at(-1)!;
-          const nextPoint = s.coords[index + 1];
-          if (index === lastPoint.index + 1) {
-            currentSection.push({ x, y, index });
-            if (nextPoint && nextPoint[1] > gradientMaxY) {
-              // Close section
-              currentSection.push({
-                x: nextPoint[0],
-                y: nextPoint[1],
-                index: index + 1,
-              });
-            }
-          } else {
-            startNewSection();
-          }
-        });
-
+        const { peakSections, minY, gradientLastStep } =
+          getTimechartGradientPeakSections(s.coords, height);
         peakSections.forEach((sectionCoords) => {
           if (sectionCoords.length < 2) return;
 

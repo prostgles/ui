@@ -17,10 +17,22 @@ export const dashboardUIDoc = {
   description: "Database exploration and management interface",
   iconPath: mdiMonitorDashboard,
   docs: `
-    Main interface for interacting with a selected database connection. 
-    Browse data, execute SQL queries, manage database objects, and access various tools.
+    The connection dashboard is your command center for exploring and managing your Postgres database. 
+    Open tables, run SQL, visualize schema relationships, switch workspaces, and launch tools—all in one flexible, customizable workspace.
+    With quick search, saved queries, AI-powered assistance, and instant access to every database object, the dashboard gives you a fast, intuitive way to navigate your data and build the tools you need.
     
+    ## Features
+    
+    - **Unified workspace**: View tables, SQL editors, charts, and tools together in a flexible layout. Save and switch between different layouts and sets of opened views for different tasks or projects.
+    - **AI Assistant**: Generate SQL, explore data, and get help directly within the dashboard.
+    - **Flexible layout**: Drag, resize, and arrange views in a tiled layout to create a workspace that fits your needs.
+    - **Global search**: Search across all tables, views, and functions in a single, fast search bar.
+    - **Schema diagram**: Visualize relationships between tables and schemas to better understand your database structure.
+    - **Import data**: Easily import data from CSV/JSON files into your database tables.
+
     <img src="./screenshots/dashboard.svgif.svg" alt="Connection dashboard" />
+
+    ## Components
     `,
   childrenTitle: "Dashboard elements",
   children: [
@@ -30,13 +42,13 @@ export const dashboardUIDoc = {
       title: "Dashboard menu toggle",
       description:
         "Opens or closes the dashboard menu unless the menu is pinned.",
-      selector: getCommandElemSelector("dashboard.menu"),
+      selectorCommand: "dashboard.menu",
     },
     {
       type: "link",
       title: "Go to configuration",
       description: "Opens the configuration page for the selected connection.",
-      selector: getCommandElemSelector("dashboard.goToConnConfig"),
+      selectorCommand: "dashboard.goToConnConfig",
       path: ROUTES.CONFIG,
       pathItem: {
         tableName: "connections",
@@ -46,19 +58,19 @@ export const dashboardUIDoc = {
       type: "input",
       inputType: "select",
       title: "Change connection",
-      description: "Changes the current connection.",
-      selector: getCommandElemSelector("ConnectionSelector"),
+      description: "Switch to a different database connection.",
+      selectorCommand: "ConnectionSelector",
     },
     {
       type: "select",
       title: "Workspaces",
       description:
-        "List of available workspaces for the selected connection. Each workspace represents a separate environment for data analysis",
-      selector: getCommandElemSelector("WorkspaceMenu.list"),
+        "List of available workspaces for the selected connection. Each workspace stores opened views and their layout.",
+      selectorCommand: "WorkspaceMenu.list",
     },
     {
       type: "popup",
-      selector: getCommandElemSelector("WorkspaceMenuDropDown"),
+      selectorCommand: "WorkspaceMenuDropDown",
       title: "Workspaces menu",
       description:
         "Opens the workspaces menu, allowing you to create, manage, and switch between workspaces.",
@@ -81,7 +93,7 @@ export const dashboardUIDoc = {
           itemContent: [
             {
               type: "popup",
-              selector: getCommandElemSelector("WorkspaceDeleteBtn"),
+              selectorCommand: "WorkspaceDeleteBtn",
               title: "Delete workspace",
               description: "Opens the delete workspace confirmation dialog",
               children: [
@@ -90,21 +102,19 @@ export const dashboardUIDoc = {
                   title: "Delete workspace",
                   description:
                     "Confirms the deletion of the selected workspace.",
-                  selector: getCommandElemSelector(
-                    "WorkspaceDeleteBtn.Confirm",
-                  ),
+                  selectorCommand: "WorkspaceDeleteBtn.Confirm",
                 },
               ],
             },
             {
               type: "button",
-              selector: getCommandElemSelector("WorkspaceMenu.CloneWorkspace"),
+              selectorCommand: "WorkspaceMenu.CloneWorkspace",
               title: "Clone workspace",
               description:
                 "Creates a copy of the selected workspace with a new name.",
             },
             {
-              selector: getCommandElemSelector("WorkspaceSettings"),
+              selectorCommand: "WorkspaceSettings",
               type: "smartform-popup",
               tableName: "workspaces",
               title: "Workspace settings",
@@ -118,9 +128,7 @@ export const dashboardUIDoc = {
           title: "Create new workspace",
           description:
             "Opens the form to create a new workspace for the selected connection.",
-          selector: getCommandElemSelector(
-            "WorkspaceMenuDropDown.WorkspaceAddBtn",
-          ),
+          selectorCommand: "WorkspaceMenuDropDown.WorkspaceAddBtn",
           children: [
             {
               type: "input",
@@ -134,7 +142,7 @@ export const dashboardUIDoc = {
               title: "Create workspace",
               description:
                 "Create and switch to the new workspace with the specified name.",
-              selector: getCommandElemSelector("WorkspaceAddBtn.Create"),
+              selectorCommand: "WorkspaceAddBtn.Create",
             },
           ],
         },
@@ -143,7 +151,7 @@ export const dashboardUIDoc = {
           selectorCommand: "WorkspaceMenu.toggleWorkspaceLayoutMode",
           title: "Toggle layout mode",
           description:
-            "Switches between fixed and editable layout modes for the current workspace.",
+            "Switches between fixed and editable layout modes for the current workspace. Fixed mode locks the layout, preventing it from being changed by the user.",
         },
       ],
     },
@@ -151,7 +159,7 @@ export const dashboardUIDoc = {
     AIAssistantUIDoc,
     {
       type: "popup",
-      selector: getCommandElemSelector("Feedback"),
+      selectorCommand: "Feedback",
       title: "Feedback",
       description:
         "Opens the feedback form, allowing you to provide feedback about the application.",
@@ -159,7 +167,7 @@ export const dashboardUIDoc = {
     },
     {
       type: "link",
-      selector: getCommandElemSelector("dashboard.goToConnections"),
+      selectorCommand: "dashboard.goToConnections",
       title: "Go to Connections",
       description: "Opens the connections list page.",
       path: ROUTES.CONNECTIONS,

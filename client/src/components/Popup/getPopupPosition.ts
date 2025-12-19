@@ -1,6 +1,6 @@
 import { isDefined } from "../../utils/utils";
 import type Popup from "./Popup";
-import { POPUP_CLASSES, type PopupProps } from "./Popup";
+import { POPUP_CLASSES } from "./Popup";
 
 type Args = {
   anchorX: number;
@@ -83,15 +83,11 @@ export const getPopupPosition = ({
   const contentWidth = Math.round(width);
   const widthOverflow = x + contentWidth - window.innerWidth;
   const heightOverflow = y + contentHeight - window.innerHeight;
-  let right: number | undefined;
-  let bottom: number | undefined;
   if (widthOverflow > 0) {
     x -= widthOverflow;
-    right = 0;
   }
   if (heightOverflow > 0) {
     y -= heightOverflow;
-    bottom = 0;
   }
 
   x = Math.max(0, x);
@@ -118,12 +114,13 @@ export const getPopupPosition = ({
     };
   }
 
+  const top = `${y}px`;
+  const left = `${x}px`;
   const stateStyle = {
-    top: `${y}px`,
-    left: `${x}px`,
-    /** Where is this used?! This is breaking column menu expand for last column */
-    // right: isDefined(right) ? `${right}px` : undefined,
-    bottom: isDefined(bottom) ? `${bottom}px` : undefined,
+    top,
+    left,
+    maxHeight: `calc(100vh - ${top})`,
+    maxWidth: `calc(100vw - ${left})`,
   };
 
   popup.setState({

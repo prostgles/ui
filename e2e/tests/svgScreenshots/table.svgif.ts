@@ -85,7 +85,6 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
   await page.getByTestId("Popup.close").last().click();
 
-  return;
   /** Show quick stats filter and map */
   await addSceneAnimation(
     `[role="columnheader"]` + getDataKey("type"),
@@ -95,13 +94,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getDataKey("rider"));
   await page.getByTestId("Popup.close").click();
 
-  await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
-  await addSceneAnimation(
-    getCommandElemSelector("AddChartMenu.Map") + " " + getDataKey("location"),
-  );
-  await page.waitForTimeout(3000);
-  await addScene();
-
+  return;
   // await addSceneAnimation(getDataKey("orders"));
   // await addSceneAnimation(
   //   getCommandElemSelector("JoinedRecords.SectionToggle") +

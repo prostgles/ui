@@ -1,6 +1,6 @@
 import { getCommandElemSelector, getDataKeyElemSelector } from "Testing";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
-import { runDbSql } from "utils/utils";
+import { closeWorkspaceWindows, runDbSql } from "utils/utils";
 
 export const fileImporter: OnBeforeScreenshot = async (
   page,
@@ -8,6 +8,7 @@ export const fileImporter: OnBeforeScreenshot = async (
   { addScene, addSceneAnimation },
 ) => {
   await openConnection("prostgles_video_demo");
+  await closeWorkspaceWindows(page);
   await openMenuIfClosed();
   await addSceneAnimation(getCommandElemSelector("dashboard.menu.create"));
 

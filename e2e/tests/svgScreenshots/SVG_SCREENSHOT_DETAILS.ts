@@ -28,6 +28,7 @@ export const SVG_SCREENSHOT_DETAILS = {
   smart_form: smartFormSvgif,
   backup_and_restore: backupAndRestoreSvgif,
   table: tableSvgif,
+  map: mapSvgif,
   ai_assistant: aiAssistantSvgif,
   timechart: timechartSvgif,
   account: accountSvgif,
@@ -38,7 +39,6 @@ export const SVG_SCREENSHOT_DETAILS = {
   command_palette: commandPaletteSvgif,
   sql_editor: sqlEditorSvgif,
   file_importer: fileImporter,
-  map: mapSvgif,
   new_connection: newConnectionSvgif,
   connections: async (page) => {
     await goTo(page, "/connections");
