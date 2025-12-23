@@ -13,6 +13,7 @@ type P = {
 export const MapInfoSection = (props: P) => {
   const { loadingLayers, w, active_row, fetchedLayers, error } = props;
   const [show, setShow] = useState(false);
+  const { extentBehavior } = w.options;
   /** Debounce show */
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -44,7 +45,9 @@ export const MapInfoSection = (props: P) => {
   if (!loadingLayers && fetchedLayers.every((l) => !l.features.length)) {
     const message =
       active_row ?
-        "No location data found for the selected row."
+        extentBehavior === "autoZoomToData" ?
+          "No location data found for the selected row."
+        : "Data not within the current bounds. Set map extent behaviour to 'Follow data'"
       : "No location data to display.";
     return (
       <Wrapper className="w-full h-full ">

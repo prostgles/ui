@@ -27,6 +27,9 @@ export const mapSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getCommandElemSelector("MapExtentBehavior"));
   await addSceneAnimation(getDataKey("autoZoomToData"));
 
+  /** Ensure only records with location are at the top */
+  await addSceneAnimation(getDataKey("location"));
+
   const pageParams = { page, addSceneAnimation, addScene };
   await clickTableRow(pageParams, 1, undefined, 2);
   await clickTableRow(pageParams, 2, undefined, 2);

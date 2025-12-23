@@ -29,6 +29,9 @@ import { Counter, SQL_NOT_ALLOWED } from "../W_SQL";
 import { W_SQLBottomBarProcStats } from "./W_SQLBottomBarProcStats";
 import { t } from "../../../i18n/i18nUtils";
 
+/**
+ * @deprecated use from prostgles-types
+ */
 export const includes = <T extends string | undefined, ArrV extends T>(
   v: T | undefined,
   arr: ArrV[] | readonly ArrV[],

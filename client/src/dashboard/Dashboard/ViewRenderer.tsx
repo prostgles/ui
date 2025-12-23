@@ -1,6 +1,6 @@
 import ErrorComponent, { ErrorTrap } from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
-import { isDefined } from "prostgles-types";
+import { isDefined, isEqual } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
@@ -405,9 +405,7 @@ export class ViewRenderer extends RTComp<
           className="min-h-0 relative"
           layout={workspace.layout}
           onChange={(newLayout) => {
-            if (
-              JSON.stringify(newLayout) !== JSON.stringify(workspace.layout)
-            ) {
+            if (!isEqual(newLayout, workspace.layout)) {
               workspace.$update({ layout: newLayout });
             }
           }}

@@ -12,7 +12,7 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("AddChartMenu.Timechart").click();
   await page.getByTestId("LayerColorPicker").click();
   await page.locator(getDataKey("#CB11F0")).click();
-  await page.getByTestId("Popup.close").click();
+
   await page.getByTestId("dashboard.window.detachChart");
   await toggleMenuPinned(false);
   await page.waitForTimeout(1500);
