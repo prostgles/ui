@@ -54,7 +54,6 @@ export async function startService(
     volumes = {},
     healthCheck,
     endpoints,
-    gpus = "none",
   } = serviceConfig;
   const hostPort = await getFreePort(preferredHostPort);
   const volumeArgs: string[] = [];
@@ -66,106 +65,105 @@ export async function startService(
     volumeArgs.push("-v", `${hostPath}:${containerPath}`);
   }
 
-  const { env } = await getSelectedConfigEnvs(this.dbs, serviceName);
+  const { env, gpus = "none" } = await getSelectedConfigEnvs(
+    this.dbs,
+    serviceName,
+  );
 
   const baseHost = `127.0.0.1:${hostPort}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  return new Promise(async (resolve, reject) => {
-    const onStopped = (
-      res: ExecutionResult | { type: "error"; error: any },
-    ) => {
-      const stopReason = "type" in res ? res.type : res.state;
-      this.activeServices.set(serviceName, {
-        status: "error",
-        error: new Error(
-          `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
-        ),
-      });
-      this.onServiceLog(serviceName, logs);
-      return reject(
-        new Error(
-          `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
-        ),
-      );
-    };
-
-    executeDockerCommand(
-      [
-        "run",
-        "-i",
-        "--rm",
-        "--init",
-        ...labelArgs,
-        "--name",
-        containerName,
-        ...(gpus !== "none" ?
-          [
-            "--gpus",
-            Array.isArray(gpus) ?
-              `"device=${gpus.join(",")}"`
-            : gpus.toString(),
-          ]
-        : []),
-        "-p",
-        `${baseHost}:${port}`,
-        ...volumeArgs,
-        ...Object.entries(env).flatMap(([key, value]) => [
-          "-e",
-          `${key}=${value}`,
-        ]),
-        imageName,
-      ],
-      {
-        signal: abortController.signal,
-      },
-      (newLogs) => {
-        logs = newLogs;
-        onLogsCombined(logs);
-      },
-    )
-      .then((res) => {
-        onStopped(res);
-      })
-      .catch((error: unknown) => {
-        onStopped({ type: "error", error });
-      });
-
-    const baseUrl = `http://${baseHost}`;
-    while (this.activeServices.get(serviceName)?.status === "starting") {
-      const clientIp = "127.0.0.1";
-      const healthCheckResponse = await fetch(
-        `${baseUrl}${healthCheck.endpoint}`,
-        {
-          method: healthCheck.method ?? "GET",
-          headers: {
-            "X-Forwarded-For": clientIp,
-            "X-Real-IP": clientIp,
-          },
-        },
-      ).catch(() => null);
-      if (healthCheckResponse?.ok) {
-        break;
-      }
-      await tout(1000);
-    }
-
-    if (this.activeServices.get(serviceName)?.status !== "starting") {
-      return;
-    }
-
-    const runningService: RunningServiceInstance = {
-      status: "running",
-      getLogs,
-      stop,
-      endpoints: getServiceEndoints({ serviceName, baseUrl, endpoints }),
-    };
-    //@ts-ignore
-    this.activeServices.set(serviceName, runningService);
+  const onStopped = (res: ExecutionResult | { type: "error"; error: any }) => {
+    const stopReason = "type" in res ? res.type : res.state;
+    this.activeServices.set(serviceName, {
+      status: "error",
+      error: new Error(
+        `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
+      ),
+    });
     this.onServiceLog(serviceName, logs);
+  };
 
-    resolve(runningService);
-  });
+  executeDockerCommand(
+    [
+      "run",
+      "-i",
+      "--rm",
+      "--init",
+      ...labelArgs,
+      "--name",
+      containerName,
+      ...(gpus !== "none" ?
+        [
+          "--gpus",
+          Array.isArray(gpus) ? `"device=${gpus.join(",")}"` : gpus.toString(),
+        ]
+      : []),
+      "-p",
+      `${baseHost}:${port}`,
+      ...volumeArgs,
+      ...Object.entries(env).flatMap(([key, value]) => [
+        "-e",
+        `${key}=${value}`,
+      ]),
+      imageName,
+    ],
+    {
+      signal: abortController.signal,
+    },
+    (newLogs) => {
+      logs = newLogs;
+      onLogsCombined(logs);
+    },
+  )
+    .then((res) => {
+      onStopped(res);
+    })
+    .catch((error: unknown) => {
+      onStopped({ type: "error", error });
+    });
+
+  const baseUrl = `http://${baseHost}`;
+  while (this.activeServices.get(serviceName)?.status === "starting") {
+    const clientIp = "127.0.0.1";
+    const healthCheckResponse = await fetch(
+      `${baseUrl}${healthCheck.endpoint}`,
+      {
+        method: healthCheck.method ?? "GET",
+        headers: {
+          "X-Forwarded-For": clientIp,
+          "X-Real-IP": clientIp,
+        },
+      },
+    ).catch(() => null);
+    if (healthCheckResponse?.ok) {
+      break;
+    }
+    await tout(1000);
+  }
+
+  const serviceInstance = this.activeServices.get(serviceName);
+  if (serviceInstance?.status !== "starting") {
+    const error = new Error(
+      "Healthcheck not finished. Service failed to start",
+    );
+    onStopped({
+      type: "error",
+      error,
+    });
+    throw error;
+  }
+
+  const runningService: RunningServiceInstance = {
+    status: "running",
+    getLogs,
+    stop,
+    endpoints: getServiceEndoints({ serviceName, baseUrl, endpoints }),
+  };
+  //@ts-ignore
+  this.activeServices.set(serviceName, runningService);
+  this.onServiceLog(serviceName, logs);
+
+  return runningService;
 }
 
 export const getContainerName = (

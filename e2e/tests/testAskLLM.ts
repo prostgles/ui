@@ -1,7 +1,13 @@
+import { join } from "path";
 import { prostglesUIDashboardSample } from "sampleToolUseData";
 import { dockerWeatherToolUse } from "sampleToolUseData";
 
 const stringify = (obj: any) => JSON.stringify(obj, null, 2);
+export const clientNodeModulesDirectory = join(
+  __dirname,
+  "../../../../client/node_modules",
+);
+console.log("Client node modules dir:", clientNodeModulesDirectory);
 
 const taskToolArguments = {
   suggested_prompt:
@@ -259,6 +265,20 @@ const toolResponses: Record<string, ToolUse> = {
     ],
     result_content:
       "Inserted receipt data for Item1 $10.00, Item2 $15.00, Total $25.00 into the receipts table at Grand Ocean Hotel.",
+  },
+  estimated_cost: {
+    tool: [
+      {
+        id: "filesystem-tool-use",
+        type: "function",
+        function: {
+          name: "filesystem--directory_tree",
+          arguments: stringify({
+            path: clientNodeModulesDirectory,
+          }),
+        },
+      },
+    ],
   },
 };
 

@@ -27,7 +27,9 @@ import {
 } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getFullPrompt } from "./getFullPrompt";
+import { getUserMessageCost } from "./getUserMessageCost";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
+import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -275,23 +277,6 @@ export const askLLM = async (args: AskLLMArgs) => {
     { returning: "*" },
   );
   try {
-    const { maximum_consecutive_tool_fails, max_total_cost_usd } = chat;
-    const maxTotalCost = parseFloat(max_total_cost_usd || "0");
-    if (maxTotalCost && maxTotalCost > 0) {
-      const chatCost = pastMessages.reduce(
-        (acc, m) => acc + parseFloat(m.cost),
-        0,
-      );
-      if (chatCost > maxTotalCost) {
-        throw `Maximum total cost of the chat (${maxTotalCost}) reached. Current cost: ${chatCost}`;
-      }
-    }
-    const promptWithContext = getFullPrompt({
-      prompt,
-      schema,
-      dashboardTypesContent,
-    });
-
     const modelData = (await dbs.llm_models.findOne(
       { id: chat.model },
       {
@@ -307,6 +292,15 @@ export const askLLM = async (args: AskLLMArgs) => {
       | undefined;
 
     if (!modelData) throw "Model not found";
+
+    checkMaxCostLimitForChat(chat, modelData, pastMessages, userMessage);
+
+    const promptWithContext = getFullPrompt({
+      prompt,
+      schema,
+      dashboardTypesContent,
+    });
+
     const {
       llm_providers: [llm_provider],
       ...llm_model
@@ -378,6 +372,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       },
     );
 
+    const { maximum_consecutive_tool_fails } = chat;
     if (
       maximum_consecutive_tool_fails &&
       args.type !== "approve-tool-use" &&

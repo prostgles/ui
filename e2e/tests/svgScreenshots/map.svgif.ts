@@ -28,11 +28,13 @@ export const mapSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getDataKey("autoZoomToData"));
 
   /** Ensure only records with location are at the top */
-  await addSceneAnimation(getDataKey("location"));
+  await page.locator(getDataKey("location")).click();
 
   const pageParams = { page, addSceneAnimation, addScene };
   await clickTableRow(pageParams, 1, undefined, 2);
   await clickTableRow(pageParams, 2, undefined, 2);
+  await clickTableRow(pageParams, 3, undefined, 2);
+  await addScene();
 
   // let getUsersTableView = await page.locator(`[data-table-name="users"]`);
 

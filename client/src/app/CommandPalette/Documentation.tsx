@@ -25,9 +25,10 @@ export const Documentation = ({ isElectron }: P) => {
     };
   }, [isElectron]);
 
-  const [{ section = docFiles[0]?.id }, setParams] = useTypedSearchParams({
-    section: { type: "string", optional: true },
-  });
+  const [{ documentation_section: section = docFiles[0]?.id }, setParams] =
+    useTypedSearchParams({
+      documentation_section: { type: "string", optional: true },
+    });
 
   const currentDocFile = section ? docFilesMap.get(section) : undefined;
 
@@ -44,7 +45,7 @@ export const Documentation = ({ isElectron }: P) => {
               key={docFile.id}
               aria-current={section === docFile.id}
               variant={section === docFile.id ? "faded" : undefined}
-              onClick={() => setParams({ section: docFile.id })}
+              onClick={() => setParams({ documentation_section: docFile.id })}
             >
               {docFile.title}
             </Btn>

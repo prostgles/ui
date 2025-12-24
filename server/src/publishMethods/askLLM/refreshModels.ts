@@ -32,6 +32,7 @@ export const refreshModels = async (dbs: DBS) => {
           output: Number(completion || "0") * 1e6,
           cachedInput: Number(input_cache_read || "0") * 1e6,
           cachedOutput: Number(input_cache_write || "0") * 1e6,
+          // No threshold pricing info available from OpenRouter
         },
         architecture: m.architecture,
         supported_parameters: m.supported_parameters,

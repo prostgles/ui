@@ -12,7 +12,7 @@ export const getSelectedConfigEnvs = async (
   const serviceRecord = await dbs?.services.findOne({ name: serviceName });
   let env = serviceConfig.env || {};
   const buildArgs: string[] = [];
-
+  let gpus = serviceConfig.gpus;
   const { configs } = serviceConfig;
   if (configs && serviceRecord?.selected_config_options) {
     for (const [configKey, configValue] of Object.entries(
@@ -33,12 +33,16 @@ export const getSelectedConfigEnvs = async (
               buildArgs.push(`--build-arg`, `${buildArgKey}=${buildArgValue}`);
             }
           }
+          if ("gpus" in option) {
+            gpus = option.gpus;
+          }
         }
       }
     }
   }
 
   return {
+    gpus,
     env,
     buildArgs,
   };

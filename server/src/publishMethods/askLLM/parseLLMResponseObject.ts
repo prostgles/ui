@@ -102,7 +102,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       .flatMap((c) => {
         const toolCalls =
           c.message.tool_calls?.map((toolCall) => {
-            let input: any = {};
+            let input: unknown = {};
             if (toolCall.function.arguments) {
               try {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -142,13 +142,17 @@ export const parseLLMResponseObject: LLMResponseParser = ({
         ];
       })
       .filter(isDefined);
+    const metaCost = meta.usage?.cost;
     return {
       content,
       meta: {
         ...meta,
         finish_reason: choices[0]?.finish_reason,
       },
-      cost: getLLMUsageCost(model, { type: "OpenAI", meta }),
+      cost:
+        Number.isFinite(metaCost) ? metaCost : (
+          getLLMUsageCost(model, { type: "OpenAI", meta })
+        ),
     };
   } else {
     const path = ["choices", 0, "message", "content"];

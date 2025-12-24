@@ -5,6 +5,11 @@ import type { AnyObject } from "prostgles-types";
  */
 type CompletionUsage = {
   /**
+   * Only shown in anthropic responses.
+   */
+  cost?: number;
+
+  /**
    * Number of tokens in the generated completion.
    */
   completion_tokens: number;
