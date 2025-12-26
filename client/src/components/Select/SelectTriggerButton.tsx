@@ -1,10 +1,10 @@
+import { classOverride } from "@components/Flex";
 import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
 import React from "react";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
-import Btn from "../Btn";
-import type { FullOption, OptionKey, SelectProps, SelectState } from "./Select";
 import { getCommandElemSelector } from "../../Testing";
-import { classOverride } from "@components/Flex";
+import Btn from "../Btn";
+import type { FullOption, OptionKey, SelectProps } from "./Select";
 
 type P<
   O extends OptionKey,
@@ -73,13 +73,7 @@ export const SelectTriggerButton = <
     : iconPath || btnProps?.children !== undefined ?
       (btnProps?.children ?? null)
     : <>
-        <div
-          className={
-            " text-ellipsis " +
-            (value !== undefined ? "text-color-0" : "text-1")
-          }
-          style={{ lineHeight: "18px" }}
-        >
+        <div className={" text-ellipsis "} style={{ lineHeight: "18px" }}>
           {!labelAsValue ?
             btnText
           : <RenderValue
@@ -115,12 +109,6 @@ export const SelectTriggerButton = <
         showSelectedIcon ?? iconPath ?? (chipMode ? mdiPencil : mdiMenuDown)
       }
       iconPosition={!btnProps?.iconPath ? "right" : "left"}
-      iconClassname={
-        btnProps?.iconPath || showSelectedIcon ? ""
-        : chipMode ?
-          undefined
-        : "text-2"
-      }
       disabledInfo={
         disabledInfo ?? (noOtherOption ? "No other option" : undefined)
       }

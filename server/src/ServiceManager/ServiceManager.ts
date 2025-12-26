@@ -38,7 +38,7 @@ export class ServiceManager {
     const activeInstance = this.activeServices.get(serviceName);
     if (!activeInstance || activeInstance.status !== expectedStatus) {
       throw new Error(
-        `Unexpected: service ${serviceName} is not in expected status ${expectedStatus}`,
+        `Unexpected: service ${serviceName} is not in expected status ${expectedStatus}. Actual status: ${activeInstance?.status}`,
       );
     }
     return activeInstance as Extract<ServiceInstance, { status: Status }>;

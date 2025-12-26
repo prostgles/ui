@@ -1,21 +1,21 @@
-import { mdiSearchWeb } from "@mdi/js";
-import React, { useState } from "react";
-import type { SmartGroupFilter } from "@common/filterUtils";
+import type { DetailedFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { InfoRow } from "@components/InfoRow";
 import Popup from "@components/Popup/Popup";
+import { mdiSearchWeb } from "@mdi/js";
+import type { AnyObject } from "prostgles-types";
+import React, { useState } from "react";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { useJoinedSectionFieldConfigs } from "../JoinedRecords/useJoinedSectionFieldConfigs";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
-import type { AnyObject } from "prostgles-types";
 
 export type ViewMoreSmartCardListProps = Pick<
   SmartFormFieldLinkedDataProps,
   "db" | "methods" | "tables"
 > & {
   ftable: DBSchemaTableWJoins;
-  searchFilter: SmartGroupFilter | undefined;
+  searchFilter: DetailedFilter[] | undefined;
   getActions:
     | ((row: AnyObject, onClosePopup: VoidFunction) => React.ReactNode)
     | undefined;

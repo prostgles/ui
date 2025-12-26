@@ -3,31 +3,33 @@ import { getEntries } from "@common/utils";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import { DBS } from "..";
 import { fetchMCPToolsList } from "./AnthropicMcpHub/fetchMCPToolsList";
-import { startMcpHub } from "./AnthropicMcpHub/startMcpHub";
+import type { McpHub } from "./AnthropicMcpHub/McpHub";
 import { type McpTool } from "./AnthropicMcpHub/McpTypes";
+import { startMcpHub } from "./AnthropicMcpHub/startMcpHub";
 import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
-import type { McpConnection } from "./AnthropicMcpHub/McpHub";
+import type { ProstglesMcpServerDefinition } from "./ProstglesMcpHub/ProstglesMCPServerTypes";
 
 export const updateMcpServerTools = async (
   dbs: DBS,
   serverName: string,
-  client: McpConnection["client"] | undefined,
+  mcpHub: McpHub,
 ) => {
   let tools: McpTool[] = [];
   const prostglesMCP = getProstglesMCPServer(serverName);
   if (prostglesMCP) {
-    tools = getEntries(prostglesMCP.definition.tools).map(
-      ([name, { schema, description }]) => {
-        const inputSchema =
-          !schema ? undefined : getJSONBSchemaAsJSONSchema("", "", schema);
-        return {
-          name,
-          description,
-          inputSchema: inputSchema as unknown as McpTool["inputSchema"],
-        };
-      },
-    );
+    tools = getEntries(
+      prostglesMCP.definition.tools as ProstglesMcpServerDefinition["tools"],
+    ).map(([name, { schema, description }]) => {
+      const inputSchema =
+        !schema ? undefined : getJSONBSchemaAsJSONSchema("", "", schema);
+      return {
+        name,
+        description,
+        inputSchema: inputSchema as unknown as McpTool["inputSchema"],
+      };
+    });
   } else {
+    const client = mcpHub.getClient(serverName);
     if (!client) {
       throw new Error(
         `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
@@ -71,14 +73,6 @@ export const updateMcpServerTools = async (
 };
 
 export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
-  let mcpHub = await startMcpHub(dbs);
-  const connection = Object.values(mcpHub.connections).find(
-    (c) => c.server_name === serverName,
-  );
-  let client = connection?.client;
-  if (!client) {
-    mcpHub = await startMcpHub(dbs, true);
-    client = connection?.client;
-  }
-  return updateMcpServerTools(dbs, serverName, client);
+  const mcpHub = await startMcpHub(dbs);
+  return updateMcpServerTools(dbs, serverName, mcpHub);
 };

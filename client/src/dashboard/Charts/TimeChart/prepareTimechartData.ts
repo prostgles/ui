@@ -25,7 +25,7 @@ export const prepareTimechartData = function (this: TimeChart) {
   };
 
   const { w } = this.chart!.getWH();
-  const { layers } = this.props;
+  const { layers, yAxisScaleMode = "multiple" } = this.props;
   if (!this.ref) {
     return;
   }
@@ -42,12 +42,15 @@ export const prepareTimechartData = function (this: TimeChart) {
   const dates: { x: number; v: number; date: Date }[] = [];
 
   const { xMin, xMax, yMin, yMax, xForYLabels } = this.getMargins();
-  let tcLayers: TimeChartLayer[] = (layers as TimeChartLayer[]).map((l) => {
+  let tcLayers: TimeChartLayer[] = layers.map((l) => {
     const maxDataCount = 1e4;
     const data = l.data.slice(0, maxDataCount);
     if (l.data.length > data.length) {
       console.error("Too much data. slicing to " + maxDataCount);
     }
+
+    let layerMinVal: number | undefined;
+    let layerMaxVal: number | undefined;
 
     minDate ??= +l.fullExtent[0];
     maxDate ??= +l.fullExtent[1];
@@ -94,13 +97,22 @@ export const prepareTimechartData = function (this: TimeChart) {
     // }
 
     filledData.forEach((d, i) => {
-      (minVal ??= d.value), (maxVal ??= d.value);
+      ((minVal ??= d.value), (maxVal ??= d.value));
       minVal = Math.min(minVal, d.value);
       maxVal = Math.max(maxVal, d.value);
+
+      layerMinVal ??= d.value;
+      layerMaxVal ??= d.value;
+      layerMinVal = Math.min(layerMinVal, d.value);
+      layerMaxVal = Math.max(layerMaxVal, d.value);
     });
 
-    l.sortedParsedData = filledData;
-    return l;
+    return {
+      ...l,
+      sortedParsedData: filledData,
+      minVal: layerMinVal,
+      maxVal: layerMaxVal,
+    };
   });
 
   if (
@@ -109,10 +121,6 @@ export const prepareTimechartData = function (this: TimeChart) {
     maxVal === null ||
     minVal === null
   ) {
-    minDate ??= 0;
-    maxDate ??= Date.now();
-    minVal ??= 0;
-    maxVal ??= 0;
     renderMessage("No Data");
 
     return;
@@ -126,10 +134,8 @@ export const prepareTimechartData = function (this: TimeChart) {
     .domain([minDate, maxDate])
     .range([xForYLabels, xMax])
     .clamp(true);
-  const yScale = scaleLinear()
-    .domain([maxVal, minVal])
-    .range([yMin, yMax])
-    .clamp(false);
+  const getYScale = ({ maxVal, minVal }: { maxVal: number; minVal: number }) =>
+    scaleLinear().domain([maxVal, minVal]).range([yMin, yMax]).clamp(false);
 
   tcLayers = tcLayers.map((l) => {
     l.sortedParsedData = l.sortedParsedData?.map((d) => {
@@ -137,6 +143,10 @@ export const prepareTimechartData = function (this: TimeChart) {
       if (!dates.find((d) => d.v === +d.date)) {
         dates.push({ x, v: d.date, date: new Date(d.date) });
       }
+      const yScale =
+        yAxisScaleMode === "single" ?
+          getYScale({ maxVal: maxVal!, minVal: minVal! })
+        : getYScale({ maxVal: l.maxVal!, minVal: l.minVal! });
       return {
         ...d,
         x,
@@ -158,7 +168,15 @@ export const prepareTimechartData = function (this: TimeChart) {
     layers: tcLayers,
     dates,
     xScale,
-    yScale,
+    getYScale: (layerIndex: number) => {
+      if (yAxisScaleMode === "multiple") {
+        return getYScale({
+          maxVal: tcLayers[layerIndex]!.maxVal!,
+          minVal: tcLayers[layerIndex]!.minVal!,
+        });
+      }
+      return getYScale({ maxVal: maxVal!, minVal: minVal! });
+    },
     xScaleYLabels,
 
     minDate,

@@ -173,6 +173,13 @@ export const tableConfigLinks: TableConfig<{ en: 1 }> = {
                 optional: true,
                 description: "Used by timechart",
               },
+              groupByColumnColors: {
+                optional: true,
+                arrayOfType: {
+                  value: "any",
+                  color: "string",
+                },
+              },
               otherColumns: {
                 arrayOfType: {
                   name: "string",
@@ -190,7 +197,14 @@ export const tableConfigLinks: TableConfig<{ en: 1 }> = {
                     optional: true,
                     type: {
                       funcName: {
-                        enum: ["$min", "$max", "$countAll", "$avg", "$sum"],
+                        enum: [
+                          "$min",
+                          "$max",
+                          "$countAll",
+                          "$avg",
+                          "$sum",
+                          "$count",
+                        ],
                       },
                       numericColumn: "string",
                     },

@@ -3,7 +3,7 @@ import {
   GroupedDetailedFilter,
   getFinalFilter,
   isDefined,
-  SimpleFilter,
+  DetailedFilter,
 } from "./filterUtils";
 
 export type CustomTableRules = {
@@ -271,7 +271,7 @@ export const parseFullFilter = (
 ): { $and: AnyObject[] } | { $or: AnyObject[] } | undefined => {
   const isAnd = "$and" in filter;
   const filters = isAnd ? filter.$and : filter.$or;
-  const finalFilters = (filters as SimpleFilter[])
+  const finalFilters = (filters as DetailedFilter[])
     .map((f) => getFinalFilter(f, context, { columns }))
     .filter(isDefined);
   const f = isAnd ? { $and: finalFilters } : { $or: finalFilters };
@@ -357,7 +357,7 @@ const parseForcedData = (
     if (value?.checkFilterDetailed) {
       const checkFilter = value?.checkFilterDetailed;
       if ("$and" in checkFilter && checkFilter.$and.length) {
-        const forcedContextData = (checkFilter.$and as SimpleFilter[])
+        const forcedContextData = (checkFilter.$and as DetailedFilter[])
           .map((f) => {
             if (f.type !== "=") return undefined;
 

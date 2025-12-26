@@ -1,13 +1,19 @@
 import { isPlaywrightTest } from "src/i18n/i18nUtils";
 
-const MINIMUM_VARIANCE = isPlaywrightTest ? 2 : 20;
-const MINIMUM_SPEECH_THRESHOLD = isPlaywrightTest ? 2 : 15;
-let calibratedVariance: number | undefined;
-let calibratedThreshold: number | undefined;
+const MINIMUM_VARIANCE = 20;
+const MINIMUM_SPEECH_THRESHOLD = 15;
+let calibrated:
+  | undefined
+  | {
+      variance: number;
+      threshold: number;
+    };
+let calibrationLevels: number[] = [];
 
 /** Time to wait before sending */
-const SILENCE_DURATION = isPlaywrightTest ? 600 : 1500;
-const SUSTAINED_SPEECH_DURATION = isPlaywrightTest ? 1 : 200;
+const SILENCE_DURATION = 1500;
+const SUSTAINED_SPEECH_DURATION = 200;
+const INITIAL_PAUSE_DURATION = isPlaywrightTest ? 100 : 1000;
 
 type SpeechRecorderConfig = {
   silenceDuration?: number;
@@ -49,9 +55,6 @@ export class SpeechRecorder {
   private sustainedSpeechStart: number | null = null;
   private hasConfirmedSpeech = false;
   private isStopping = false;
-
-  // Calibration
-  private calibrationLevels: number[] = [];
 
   constructor(
     callbacks: SpeechRecorderCallbacks,
@@ -120,7 +123,7 @@ export class SpeechRecorder {
     this.sustainedSpeechStart = null;
     this.hasConfirmedSpeech = false;
     this.isStopping = false;
-    this.calibrationLevels = [];
+    calibrationLevels = [];
     this.recentLevels = [];
   }
 
@@ -178,7 +181,7 @@ export class SpeechRecorder {
    * initial microphone adjustments or ambient noise calibration.
    */
   get justStarted(): boolean {
-    return this.elapsed < 1000;
+    return this.elapsed < INITIAL_PAUSE_DURATION;
   }
 
   private recentLevels: number[] = [];
@@ -195,17 +198,29 @@ export class SpeechRecorder {
     // Calculate variance (speech has high variance, fan noise is steady)
     const variance = this.getVariance(this.recentLevels.slice(-10));
 
-    const varianceThreshold = calibratedVariance ?? MINIMUM_VARIANCE;
-    const speechThreshold = calibratedThreshold ?? MINIMUM_SPEECH_THRESHOLD;
+    const varianceThreshold = calibrated?.variance ?? MINIMUM_VARIANCE;
+    const speechThreshold = calibrated?.threshold ?? MINIMUM_SPEECH_THRESHOLD;
 
     const isSpeaking =
       !this.justStarted &&
       level > speechThreshold &&
       variance > varianceThreshold;
 
-    // console[isSpeaking ? "warn" : "log"](
-    //   `Audio level: ${level.toFixed(2)} Variance: ${variance} CalibVar: ${calibratedVariance} (Threshold: ${speechThreshold.toFixed(2)})`,
-    // );
+    if (isPlaywrightTest) {
+      console[isSpeaking ? "warn" : "log"](
+        [
+          `sustained:${now - (this.sustainedSpeechStart ?? now)}`,
+          `elapsed:${elapsed}`,
+          `isSpeaking:${isSpeaking}`,
+          `level: ${level.toFixed(2)}`,
+          `levelT: ${speechThreshold.toFixed(2)}`,
+          `variance: ${variance}`,
+          `varianceT: ${varianceThreshold.toFixed(2)}`,
+          `varianceC: ${calibrated?.variance}`,
+          `(Threshold: ${speechThreshold.toFixed(2)})`,
+        ].join(" "),
+      );
+    }
 
     const { onSoundLevel } = this.callbacks;
     if (onSoundLevel && this.recentLevels.length >= 5) {
@@ -219,22 +234,20 @@ export class SpeechRecorder {
     }
 
     // Calibration during first few seconds
-    if (!calibratedThreshold) {
+    if (!calibrated) {
       if (elapsed > 500 && elapsed < 3000) {
-        this.calibrationLevels.push(level);
-      } else if (this.calibrationLevels.length) {
+        calibrationLevels.push(level);
+      } else if (calibrationLevels.length) {
         const avg =
-          this.calibrationLevels.reduce((a, b) => a + b, 0) /
-          this.calibrationLevels.length;
-        const max = Math.max(...this.calibrationLevels);
-        calibratedThreshold ??= Math.max(
-          15,
-          0.5 * (avg + (max - avg) * 0.5 + 5),
-        );
-        calibratedVariance ??= Math.max(
+          calibrationLevels.reduce((a, b) => a + b, 0) /
+          calibrationLevels.length;
+        const max = Math.max(...calibrationLevels);
+        const threshold = Math.max(15, 0.5 * (avg + (max - avg) * 0.5 + 5));
+        const variance = Math.max(
           MINIMUM_VARIANCE,
-          0.01 * this.getVariance(this.calibrationLevels),
+          0.01 * this.getVariance(calibrationLevels),
         );
+        calibrated = { variance, threshold };
       }
     }
 

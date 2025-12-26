@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 
-import type { SmartGroupFilter } from "@common/filterUtils";
+import type { DetailedFilter } from "@common/filterUtils";
 import ErrorComponent from "@components/ErrorComponent";
 import { classOverride } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
@@ -97,7 +97,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
     | FilterItem<T>
     | { $and: FilterItem<T>[] }
     | { $or: FilterItem<T>[] };
-  searchFilter?: SmartGroupFilter;
+  searchFilter?: DetailedFilter[];
   orderBy?: ColumnSort | ColumnSort[];
   realtime?: boolean;
   throttle?: number;

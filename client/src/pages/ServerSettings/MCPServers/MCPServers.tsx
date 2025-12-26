@@ -62,6 +62,7 @@ export const MCPServers = (props: MCPServersProps) => {
           {chatId && llm_chats_allowed_mcp_tools && (
             <Btn
               variant="faded"
+              data-command="MCPServers.toggleAutoApprove"
               title="Toggle auto-approve for selected tools. When enabled, all selected tools can be called without user approval"
               iconPath={someToolsAutoApproved ? mdiCheckAll : mdiCheck}
               color={"action"}

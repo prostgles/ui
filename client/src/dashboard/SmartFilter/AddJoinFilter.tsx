@@ -1,5 +1,8 @@
 import React from "react";
-import type { JOINED_FILTER_TYPES, JoinedFilter } from "@common/filterUtils";
+import type {
+  JOINED_FILTER_TYPES,
+  DetailedJoinedFilter,
+} from "@common/filterUtils";
 import type { DBSchemaTablesWJoins, JoinV2 } from "../Dashboard/dashboardUtils";
 import {
   JoinPathSelector,
@@ -11,12 +14,12 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import Btn from "@components/Btn";
 import { mdiSetCenter, mdiSetNone } from "@mdi/js";
 
-type JoinOpts = { path: JoinV2[]; type: JoinedFilter["type"] };
+type JoinOpts = { path: JoinV2[]; type: DetailedJoinedFilter["type"] };
 type AddJoinFilterProps = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
   path?: JoinV2[];
-  type?: JoinedFilter["type"];
+  type?: DetailedJoinedFilter["type"];
   onChange: (joinOpts: undefined | JoinOpts) => void;
   disabledInfo?: string;
 };

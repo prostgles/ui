@@ -57,6 +57,12 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
     };
     const dateDelta = binSize ?? getMinOffset() ?? HOUR; //(this.data.xScale.invert(rightX) - this.data.xScale.invert(leftX));
 
+    const dateText = [
+      tooltipDate.getFullYear(),
+      tooltipDate.getMonth() + 1,
+      tooltipDate.getDate(),
+    ].join("-");
+
     if (
       dateDelta <= SECOND ||
       (tooltipDate.getMilliseconds() !== 0 && snapped_x !== undefined)
@@ -64,31 +70,30 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
       tooltipBottomDateText =
         toDateStr(tooltipDate, HoursMinutesSeconds) +
         "." +
-        tooltipDate.getMilliseconds();
+        tooltipDate.getMilliseconds() +
+        " " +
+        dateText;
     } else if (dateDelta <= MINUTE) {
-      tooltipBottomDateText = toDateStr(tooltipDate, HoursMinutesSeconds);
-      // } else if(dateDelta <= HOUR){
-      //   tooltipBottomDateText = toDateStr(tooltipDate, HoursMinutes);
+      tooltipBottomDateText =
+        toDateStr(tooltipDate, HoursMinutesSeconds) + " " + dateText;
     } else if (dateDelta <= DAY) {
-      tooltipBottomDateText = toDateStr(tooltipDate, HoursMinutes);
+      tooltipBottomDateText =
+        toDateStr(tooltipDate, HoursMinutes) + " " + dateText;
     } else if (dateDelta <= MONTH) {
-      tooltipBottomDateText = toDateStr(tooltipDate, {
-        ...HoursMinutes,
-        day: "numeric",
-        month: "short",
-        year: "2-digit",
-      });
+      tooltipBottomDateText =
+        toDateStr(tooltipDate, {
+          ...HoursMinutes,
+        }) +
+        " " +
+        dateText;
     } else {
-      tooltipBottomDateText = toDateStr(tooltipDate, {
-        day: "numeric",
-        month: "short",
-        year: "2-digit",
-      });
+      tooltipBottomDateText = dateText;
     }
 
     const tooltipBottomDateLabel: ChartedText = {
       id: "tooltipBottomDateLabel",
       type: "text",
+      // font: "20px " + getComputedStyle(this.canv || document.body).fontFamily,
       fillStyle: getCssVarValue("--text-0"),
       textAlign: "center",
       text: tooltipBottomDateText,
@@ -99,6 +104,7 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
         padding: 6,
         borderRadius: 3,
       },
+      elevation: 8,
       coords: [x, h - 10],
     };
 
@@ -115,19 +121,20 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
     let maxLabelY: number | undefined;
     const labelTickCanvasX = xCursor + 14;
     let textLabels = layers
-      .map((l) => {
+      .map((l, layerIndex) => {
         if (!this.data || l.snapped_data?.value === undefined) {
           return undefined;
         }
+        const yScale = this.data.getYScale(layerIndex);
         const text =
           l.getYLabel({
             // value: +(l.snapped_data?.value ?? this.data.yScale.invert(l.y)), // Showing yScale.invert might not be useful and needs rounding/max length in some cases
             value: l.snapped_data.value,
-            min: this.data.yScale.invert(yMin),
-            max: this.data.yScale.invert(yMax),
+            min: yScale.invert(yMin),
+            max: yScale.invert(yMax),
 
-            prev: this.data.yScale.invert(l.y),
-            next: this.data.yScale.invert(l.y),
+            prev: yScale.invert(l.y),
+            next: yScale.invert(l.y),
           }) + (this.props.layers.length > 1 && l.label ? ` ${l.label}` : "");
 
         const coords: Point = [

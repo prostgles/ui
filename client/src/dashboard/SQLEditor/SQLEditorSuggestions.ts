@@ -1,7 +1,12 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, SQLHandler } from "prostgles-types";
-import { getKeys } from "prostgles-types";
-import { isDefined, omitKeys, pickKeys } from "prostgles-types";
+import {
+  getKeys,
+  isDefined,
+  omitKeys,
+  pickKeys,
+  tryCatchV2,
+} from "prostgles-types";
 import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
 import {
   type PG_Policy,
@@ -9,9 +14,8 @@ import {
   getPGObjects,
 } from "./SQLCompletion/getPGObjects";
 import type { ParsedSQLSuggestion } from "./SQLCompletion/monacoSQLSetup/registerSuggestions";
-import type { SQLSuggestion } from "./W_SQLEditor";
 import { SQL_SNIPPETS } from "./SQL_SNIPPETS";
-import { tryCatchV2 } from "../WindowControls/TimeChartLayerOptions";
+import type { SQLSuggestion } from "./W_SQLEditor";
 
 type DB = { sql: SQLHandler };
 
@@ -199,12 +203,7 @@ export const getSqlSuggestions = async (
     );
 
     const { data: columnStats } = await tryCatchV2(async () => {
-      const vals: {
-        schemaname: string;
-        tablename: string;
-        attname: string;
-        most_common_vals: string[] | null;
-      }[] = (await db.sql(
+      const vals = (await db.sql(
         `
           SELECT 
               schemaname
@@ -216,7 +215,12 @@ export const getSqlSuggestions = async (
       `,
         {},
         { returnType: "rows" },
-      )) as any;
+      )) as {
+        schemaname: string;
+        tablename: string;
+        attname: string;
+        most_common_vals: string[] | null;
+      }[];
 
       return vals;
     });

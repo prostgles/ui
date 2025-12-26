@@ -9,7 +9,7 @@ import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { type LabelProps } from "@components/Label";
 import Popup from "@components/Popup/Popup";
 import type { Command } from "../../../Testing";
-import { getRandomElement } from "./ColumnStyleControls";
+import { getRandomElement } from "./ColumnStyleControls/ColumnStyleControls";
 import { rgba2hex } from "./rgba2hex";
 import { asHex, asRGB, type RGBA } from "src/utils/colorUtils";
 
@@ -207,9 +207,9 @@ export const COLORS = {
   "dark blue": "#174CFA",
   blue: "#0AA1FA",
   cyan: "#00D5FF",
-  green: "#36E00B",
+  green: "#089981",
   orange: "#F79800",
-  red: "#ff004a",
+  red: "#f23645",
   purple: "#CB11F0",
   indigo: "#7430F0",
   gray: "#cecece",

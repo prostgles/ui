@@ -7,7 +7,7 @@ export async function enableService(
   serviceName: keyof typeof prostglesServices,
   onLogs: (logs: ProcessLog[]) => void,
 ) {
-  await this.stopService(serviceName);
+  // await this.stopService(serviceName);
   const buildResult = await this.buildService(serviceName, onLogs);
   if (buildResult !== "close") {
     throw new Error(

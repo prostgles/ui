@@ -1,4 +1,4 @@
-import { isDefined } from "prostgles-types";
+import { isDefined, tryCatchV2 } from "prostgles-types";
 import type {
   LinkSyncItem,
   WindowSyncItem,
@@ -6,7 +6,6 @@ import type {
 import { getCrossFilters } from "../../joinUtils";
 import { getLinkColor } from "../../W_Map/fetchData/getMapLayerQueries";
 import type { ActiveRow } from "../../W_Table/W_Table";
-import { tryCatchV2 } from "../../WindowControls/TimeChartLayerOptions";
 import type { ProstglesTimeChartLayer } from "../W_TimeChart";
 
 type Args = {
@@ -60,14 +59,12 @@ export const getTimeChartLayer = ({
       const joinPath =
         dataSource?.type === "table" ? dataSource.joinPath : lOpts.joinPath;
       if (parentWindow?.type === "table" || localTableName) {
-        if (localTableName) {
+        if (dataSource?.type === "local-table") {
           return {
             ...commonOpts,
-            type: "table",
-            tableName: localTableName,
-            path: joinPath,
-            tableFilter: undefined,
-            externalFilters: [],
+            type: "local-table",
+            localTableName: dataSource.localTableName,
+            smartGroupFilter: dataSource.smartGroupFilter,
             color,
           } satisfies ProstglesTimeChartLayer;
         }
@@ -83,8 +80,7 @@ export const getTimeChartLayer = ({
           ...commonOpts,
           type: "table",
           tableName: parentWindow.table_name,
-          path: joinPath,
-          tableFilter: undefined,
+          joinPath,
           externalFilters: jf.all,
           color,
         };

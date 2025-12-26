@@ -1,10 +1,18 @@
 import { chromium, expect, test } from "@playwright/test";
 import { authenticator } from "otplib";
+import { speechToTextTest } from "speechToTextTest";
+import {
+  localNoAuthSetup,
+  QUERIES,
+  TEST_DB_NAME,
+  USERS,
+} from "utils/constants";
+import { goTo } from "utils/goTo";
+import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { testAskLLMCode } from "./testAskLLM";
 import { getCommandElemSelector, getDataKeyElemSelector } from "./Testing";
 import {
-  PageWIds,
   clickInsertRow,
   closeWorkspaceWindows,
   createAccessRule,
@@ -32,6 +40,7 @@ import {
   monacoType,
   openConnection,
   openTable,
+  PageWIds,
   restoreFromBackup,
   runDbSql,
   runDbsSql,
@@ -45,16 +54,7 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
-import { goTo } from "utils/goTo";
-import {
-  localNoAuthSetup,
-  QUERIES,
-  TEST_DB_NAME,
-  USERS,
-} from "utils/constants";
 import exp = require("constants");
-import { isPortFree } from "utils/isPortFree";
-import { speechToTextTest } from "speechToTextTest";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -700,19 +700,24 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_snapshot" is invalid. Try enabling and reloading the tools`,
     );
-    await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
 
-    const toggleBtn = await page
-      .locator(getDataKeyElemSelector("playwright"))
-      .getByTestId("MCPServerFooterActions.enableToggle");
+    const enableMCPServers = async (serverNames: string[]) => {
+      await page
+        .getByTestId("LLMChatOptions.MCPTools")
+        .click({ timeout: 10e3 });
+      for (const serverName of serverNames) {
+        const toggleBtn = await page
+          .locator(getDataKeyElemSelector(serverName))
+          .getByTestId("MCPServerFooterActions.enableToggle");
 
-    await toggleBtn.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(500);
-    await toggleBtn.click();
-    await page.waitForTimeout(500);
-    await page
-      .locator(getDataKeyElemSelector("playwright"))
-      .getByTestId("MCPServerFooterActions.refreshTools");
+        await toggleBtn.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(500);
+        await toggleBtn.click();
+        await page.waitForTimeout(500);
+      }
+    };
+
+    await enableMCPServers(["playwright"]);
     await page
       .getByText("browser_tabs")
       .waitFor({ state: "visible", timeout: 10e3 }); // wait for tools list to refresh
@@ -726,7 +731,10 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_snapshot" is not allowed`,
     );
-    const toggleMCPTools = async (toolNames: string[]) => {
+    const toggleMCPTools = async (
+      toolNames: string[],
+      toggleAutoApprove?: boolean,
+    ) => {
       await page
         .getByTestId("LLMChatOptions.MCPTools")
         .click({ timeout: 10e3 });
@@ -738,6 +746,9 @@ test.describe("Main test", () => {
           .getByText(toolName, { exact: true })
           .click({ force: true });
         await page.waitForTimeout(500);
+      }
+      if (toggleAutoApprove) {
+        await page.getByTestId("MCPServers.toggleAutoApprove").click();
       }
       await page.getByTestId("Popup.close").last().click();
       await page.waitForTimeout(500);
@@ -779,15 +790,8 @@ test.describe("Main test", () => {
       `failed consecutive tool requests reached`,
     );
 
-    /** Test max cost */
-    await page.getByTestId("LLMChatOptions.toggle").click();
-    const maxCost = 5;
-    const costPerMsg = 1.5;
-    await fillSmartForm(page, "llm_chats", {
-      max_total_cost_usd: maxCost.toString(),
-    });
-    await page.getByTestId("Popup.close").last().click();
-    for (let step = 1; step <= Math.ceil(maxCost / costPerMsg); step++) {
+    /** Test max consecutive tool call fails */
+    for (let step = 0; step < 5; step++) {
       await sendAskLLMMessage(page, " cost ");
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
@@ -799,6 +803,48 @@ test.describe("Main test", () => {
       await page.waitForTimeout(1e3);
     };
 
+    /** Test max chat cost */
+    const defaultMaxCost = 5;
+    const costPerMsg = 1.8;
+    await newChat();
+    for (
+      let step = 0;
+      step < Math.ceil(defaultMaxCost / costPerMsg) + 1;
+      step++
+    ) {
+      await sendAskLLMMessage(page, "cost");
+    }
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Maximum total cost of the chat (5) reached. Current cost: 5.4`,
+    );
+
+    const maxCost = 4;
+    await page.getByTestId("LLMChatOptions.toggle").click();
+    await fillSmartForm(page, "llm_chats", {
+      max_total_cost_usd: maxCost.toString(),
+    });
+    await page.getByTestId("Popup.close").last().click();
+    /** Test max speculative chat cost */
+    await newChat();
+    await enableMCPServers(["filesystem"]);
+    await page.locator(`[data-label="ui"]`).click();
+    await page.waitForTimeout(1e3);
+    await page.locator(`[data-label="client"]`).click();
+    await page.waitForTimeout(1e3);
+    await page.locator(`[data-label="node_modules"]`).click();
+    await page.waitForTimeout(1e3);
+    await page.getByTestId("MCPServerConfig.save").click();
+    await page.getByTestId("Popup.close").last().click();
+    await toggleMCPTools(["directory_tree"], true);
+    for (let step = 0; step < Math.floor(maxCost / costPerMsg); step++) {
+      await sendAskLLMMessage(page, "cost");
+    }
+    await sendAskLLMMessage(page, " estimated_cost ");
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Maximum total cost of the chat (5) will be reached after sending this message`,
+      { timeout: 15e3 },
+    );
+
     /* MCP Docker sandbox */
     await newChat();
     /* Prompt persists from the prev chat */
@@ -806,16 +852,17 @@ test.describe("Main test", () => {
       "Create dashboards",
     );
 
-    await page.getByTestId("LLMChatOptions.MCPTools").click();
+    await enableMCPServers(["docker-sandbox"]);
+    await page.waitForTimeout(2e3);
+    /** Tools are loaded after enabling */
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByTestId("MCPServerFooterActions.enableToggle")
-      .click();
+      .getByText("create_container", { exact: true })
+      .waitFor({ state: "visible", timeout: 15e3 });
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
-    await page.waitForTimeout(2e3);
     await expect(page.getByTestId("Popup.content").last()).toContainText(
       `Reloaded 1 tool for "docker-sandbox" server`,
     );

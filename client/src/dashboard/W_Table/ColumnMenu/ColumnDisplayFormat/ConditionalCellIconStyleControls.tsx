@@ -7,7 +7,7 @@ import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
 import type {
   ConditionalStyleIcons,
   StyleColumnProps,
-} from "../ColumnStyleControls";
+} from "../ColumnStyleControls/ColumnStyleControls";
 import FormField from "@components/FormField/FormField";
 
 type P = StyleColumnProps & {

@@ -91,11 +91,12 @@ export const fetchAndSetTimechartLayerData = async function (
           }
         }
 
-        if (this.ref && this.chartRef) {
+        const { ref, chartRef } = this;
+        if (ref && chartRef) {
           setTimeout(() => {
             const renderedData = filledData.map((d) => {
               const [x, y] =
-                this.chartRef!.getPointXY({
+                chartRef.getPointXY({
                   date: new Date(d.date),
                   value: +d.value,
                 }) ?? [];
@@ -105,7 +106,7 @@ export const fetchAndSetTimechartLayerData = async function (
                 value: d.value,
               };
             });
-            (this.ref as any)._renderedData = renderedData;
+            ref._renderedData = renderedData;
           }, 0);
         }
 
@@ -128,3 +129,13 @@ export const fetchAndSetTimechartLayerData = async function (
     this.setState({ loading: false, error, loadingData: false });
   }
 };
+
+declare global {
+  interface HTMLElement {
+    _renderedData?: {
+      x: number | undefined;
+      y: number | undefined;
+      value: number;
+    }[];
+  }
+}

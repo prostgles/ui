@@ -438,6 +438,7 @@ export const COMMANDS = {
   MCPServerConfigButton: "",
   MCPServerConfig: "",
   "MCPServerConfig.save": "",
+  "MCPServers.toggleAutoApprove": "",
   Feedback: "",
   "FileImporterFooter.import": "",
 

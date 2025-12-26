@@ -1,32 +1,30 @@
-import { mdiFilterPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { ValidatedColumnInfo } from "prostgles-types";
-import { _PG_date, _PG_numbers } from "prostgles-types";
-import React, { useState } from "react";
 import type {
+  DetailedFilter,
+  DetailedJoinedFilter,
   FilterType,
-  JoinedFilter,
-  SimpleFilter,
-  SmartGroupFilter,
 } from "@common/filterUtils";
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
+import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiFilterPlus } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import { _PG_date, _PG_numbers, includes } from "prostgles-types";
+import React, { useState } from "react";
+import { isDefined } from "../../utils/utils";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { JoinV2 } from "../Dashboard/dashboardUtils";
 import { getColumnDataColor } from "../SmartForm/SmartFormField/RenderValue";
-import { AddJoinFilter } from "./AddJoinFilter";
-import { getFilterableCols } from "./SmartSearch/SmartSearch";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
-import { isDefined } from "../../utils/utils";
-import { getComputedColumnSelect } from "../W_Table/tableUtils/getTableSelect";
-import { getJoinPaths } from "../W_Table/tableUtils/getJoinPaths";
-import { FlexRow } from "@components/Flex";
-import { SwitchToggle } from "@components/SwitchToggle";
 import { getJoinPathLabel } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
-import { getDefaultAgeFilter } from "./AgeFilter";
-import { includes } from "prostgles-types";
+import { getJoinPaths } from "../W_Table/tableUtils/getJoinPaths";
+import { getComputedColumnSelect } from "../W_Table/tableUtils/getTableSelect";
+import { AddJoinFilter } from "./AddJoinFilter";
+import { getDefaultAgeFilter } from "../DetailedFilterControl/DetailedFilterBaseTypes/AgeFilter";
+import { getFilterableCols } from "./SmartSearch/SmartSearch";
 
 export type SmartAddFilterProps = {
   db: DBHandlerClient;
@@ -34,16 +32,15 @@ export type SmartAddFilterProps = {
   tables: CommonWindowProps["tables"];
   selectedColumns: ColumnConfig[] | undefined;
   onChange: (
-    filter: SmartGroupFilter,
-    addedFilter: SimpleFilter,
+    filter: DetailedFilter[],
+    addedFilter: DetailedFilter,
     isAggregate: boolean,
   ) => void;
-  detailedFilter?: SmartGroupFilter;
+  detailedFilter?: DetailedFilter[];
   className?: string;
   style?: React.CSSProperties;
   filterFields?: string[];
   variant?: "full";
-  defaultType?: FilterType;
   btnProps?: BtnProps;
   itemName?: "filter" | "condition";
 };
@@ -51,11 +48,11 @@ export type SmartAddFilterProps = {
 export const SmartAddFilter = (props: SmartAddFilterProps) => {
   const [addFilter, setAddFilter] = useState<{
     fieldName?: string;
-    type?: SimpleFilter["type"];
+    type?: DetailedFilter["type"];
   }>();
   const [joinOpts, setJoinOpts] = useState<{
     path: JoinV2[];
-    type: JoinedFilter["type"];
+    type: DetailedJoinedFilter["type"];
   }>();
   const [popupAnchor, setPopupAnchor] = useState<HTMLElement>();
   const {
@@ -66,7 +63,6 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
     style = {},
     tables,
     filterFields,
-    defaultType,
     btnProps,
     itemName = "filter",
     variant,
@@ -79,7 +75,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
   ) =>
     Boolean(
       col.references?.length ||
-        ![..._PG_date, ..._PG_numbers].includes(col.udt_name as any),
+      ![..._PG_date, ..._PG_numbers].includes(col.udt_name as any),
     );
   const lastPathItem = joinOpts?.path.at(-1);
   const currentTable = lastPathItem?.tableName ?? tableName;
@@ -174,11 +170,10 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
       const type =
         isGeo ? "$ST_DWithin"
         : includes(_PG_numbers, c.udt_name) && !c.is_pkey ? "$between"
-        : (defaultType ??
-          (joinPath ? "not null"
-          : isCategorical(c) ? "$in"
-          : "$between"));
-      const innerFilter: SimpleFilter =
+        : joinPath ? "not null"
+        : isCategorical(c) ? "$in"
+        : "$between";
+      const innerFilter: DetailedFilter =
         includes(_PG_date, c.udt_name) ?
           getDefaultAgeFilter(fieldName, "$ageNow")
         : {
@@ -194,7 +189,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
               : undefined,
           };
 
-      const newFilter: SimpleFilter =
+      const newFilter: DetailedFilter =
         joinPath && joinType ?
           {
             type: joinType,

@@ -1,4 +1,4 @@
-import type { SQLHandler } from "prostgles-types";
+import type { AnyObject, SQLHandler } from "prostgles-types";
 import { asName, includes, tryCatchV2 } from "prostgles-types";
 import type { ColType } from "@common/utils";
 
@@ -96,7 +96,7 @@ const getTableExpressionReturnTypeWithTableOIDs = async (
 
 type ExpressionResult =
   | { colTypes: ColType[]; error?: undefined }
-  | { colTypes?: undefined; error: any };
+  | { colTypes?: undefined; error: unknown };
 const cached = new Map<string, ExpressionResult>();
 
 export const getTableExpressionReturnType = async (
@@ -121,7 +121,9 @@ export const getTableExpressionReturnType = async (
     let colTypes = result.data?.colTypes;
     const { error } = result;
     if (!colTypes) {
-      if (includes(["42701", "42P16"], (error as any)?.code)) {
+      if (
+        includes(["42701", "42P16"], (error as AnyObject | undefined)?.code)
+      ) {
         colTypes = await getTableExpressionReturnTypeWithTableOIDs(
           expression,
           sql,

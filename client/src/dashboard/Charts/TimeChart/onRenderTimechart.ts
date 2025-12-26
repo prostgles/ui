@@ -185,10 +185,10 @@ export function onRenderTimechart(
         maxDate,
         dates,
         xScale,
-        yScale,
         minVal,
         maxVal,
         layers,
+        getYScale,
       } = this.data;
 
       if (!dates.length) return [];
@@ -235,6 +235,10 @@ export function onRenderTimechart(
 
       const [xForPercYTicks] = this.chart.getDataXY(xMax, 0);
       yTickValues.forEach((v, i) => {
+        if (this.props.yAxisScaleMode === "multiple") {
+          return;
+        }
+        const yScale = getYScale(0);
         const yTick: ChartedText = {
           id: `y${i}`,
           text: `${cannotShorten ? v.toLocaleString() : nFormatter(v, 1)}`,

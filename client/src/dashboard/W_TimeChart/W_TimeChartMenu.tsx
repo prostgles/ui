@@ -18,6 +18,7 @@ type P = {
 const BIN_LABEL_OPTIONS = [
   { key: "off", label: "Off" },
   { key: "all points", label: "All points" },
+  { key: "peaks and troughs", label: "Peaks and troughs" },
   { key: "latest point", label: "Last point" },
 ] as const;
 export type ShowBinLabelsMode = (typeof BIN_LABEL_OPTIONS)[number]["key"];

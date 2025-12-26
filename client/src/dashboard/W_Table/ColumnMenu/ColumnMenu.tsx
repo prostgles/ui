@@ -1,3 +1,5 @@
+import type { TabItems } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import {
   mdiChartBar,
   mdiEye,
@@ -15,8 +17,6 @@ import {
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useEffect, useState } from "react";
-import type { TabItems } from "@components/Tabs";
-import Tabs from "@components/Tabs";
 
 import type {
   TIMECHART_STAT_TYPES,
@@ -29,18 +29,18 @@ import type {
   ConditionalStyleIcons,
   FixedStyle,
   ScaleStyle,
-} from "./ColumnStyleControls";
-import { ColumnStyleControls } from "./ColumnStyleControls";
+} from "./ColumnStyleControls/ColumnStyleControls";
+import { ColumnStyleControls } from "./ColumnStyleControls/ColumnStyleControls";
 
+import type { DetailedFilter } from "@common/filterUtils";
+import Popup from "@components/Popup/Popup";
 import {
   includes,
   pickKeys,
   type ParsedJoinPath,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
 import { useReactiveState } from "../../../appUtils";
-import Popup from "@components/Popup/Popup";
 import { useIsMounted } from "../../BackupAndRestore/CloudStorageCredentialSelector";
 import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
@@ -49,20 +49,20 @@ import { useEffectAsync } from "../../DashboardMenu/DashboardMenuSettings";
 import { getAndFixWColumnsConfig } from "../TableMenu/getAndFixWColumnsConfig";
 import type W_Table from "../W_Table";
 import type { ColumnConfigWInfo } from "../W_Table";
+import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
 import { updateWCols } from "../tableUtils/tableUtils";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
+import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
 import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
 import type { ColumnFormat } from "./ColumnDisplayFormat/columnFormatUtils";
 import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
+import { ColumnQuickStats } from "./ColumnQuickStats/ColumnQuickStats";
 import { ColumnSortMenu } from "./ColumnSortMenu";
 import { ColumnsMenu } from "./ColumnsMenu";
-import type { FuncDef } from "./FunctionSelector/functions";
 import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
+import type { FuncDef } from "./FunctionSelector/functions";
 import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
-import { ColumnQuickStats } from "./ColumnQuickStats/ColumnQuickStats";
-import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
-import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
 
 export type ColumnConfig = {
   idx?: number;
@@ -75,8 +75,8 @@ export type ColumnConfig = {
     displayMode?: (typeof NESTED_COLUMN_DISPLAY_MODES)[number]["key"];
     limit?: number;
     sort?: ColumnSort;
-    detailedFilter?: SmartGroupFilter;
-    detailedHaving?: SmartGroupFilter;
+    detailedFilter?: DetailedFilter[];
+    detailedHaving?: DetailedFilter[];
     chart?: {
       type: "time";
       dateCol: string;
@@ -198,7 +198,7 @@ export const ColumnMenu = (props: P) => {
 
   const isComputed = Boolean(
     column.computedConfig ||
-      column.nested?.columns.some((c) => c.computedConfig),
+    column.nested?.columns.some((c) => c.computedConfig),
   );
   const computedType =
     column.nested ? "nested" : (
@@ -452,7 +452,7 @@ export const ColumnMenu = (props: P) => {
           if (v === "Add Computed Column") {
             // onClose();
           } else if (v === "Filter") {
-            const nf: SimpleFilter = await getDefaultFilter(column);
+            const nf: DetailedFilter = await getDefaultFilter(column);
             w.$update({ filter: [nf, ...w.filter] });
             onClose();
           } else if (v === "Remove") {
@@ -512,11 +512,11 @@ export const ColumnMenu = (props: P) => {
 };
 
 /** undefined value means filter is disabled (gray col name text) */
-const getDefaultFilter = (col: ColumnConfigWInfo): SimpleFilter => {
+const getDefaultFilter = (col: ColumnConfigWInfo): DetailedFilter => {
   const isNumeric = ["number", "Date"].includes(
     col.info?.tsDataType || (col.computedConfig?.funcDef.tsDataTypeCol as any),
   );
-  const nf: SimpleFilter = {
+  const nf: DetailedFilter = {
     fieldName: col.name,
     type:
       col.info?.is_pkey || col.info?.references?.length ? "="

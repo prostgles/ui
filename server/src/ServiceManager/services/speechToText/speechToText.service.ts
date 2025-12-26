@@ -57,6 +57,27 @@ export const speechToTextService = {
         },
       },
     },
+    language: {
+      label: "Language",
+      description:
+        "Select the language for transcription. 'auto' will auto-detect the language.",
+      defaultOption: "auto",
+      options: {
+        auto: { env: { WHISPER_LANGUAGE: "" } },
+        en: { env: { WHISPER_LANGUAGE: "en" } },
+        es: { env: { WHISPER_LANGUAGE: "es" } },
+        fr: { env: { WHISPER_LANGUAGE: "fr" } },
+        de: { env: { WHISPER_LANGUAGE: "de" } },
+        zh: { env: { WHISPER_LANGUAGE: "zh" } },
+        ja: { env: { WHISPER_LANGUAGE: "ja" } },
+        ru: { env: { WHISPER_LANGUAGE: "ru" } },
+        ro: { env: { WHISPER_LANGUAGE: "ro" } },
+        it: { env: { WHISPER_LANGUAGE: "it" } },
+        pt: { env: { WHISPER_LANGUAGE: "pt" } },
+        ar: { env: { WHISPER_LANGUAGE: "ar" } },
+        hi: { env: { WHISPER_LANGUAGE: "hi" } },
+      },
+    },
   },
   volumes: {
     "whisper-models": "/app/models",

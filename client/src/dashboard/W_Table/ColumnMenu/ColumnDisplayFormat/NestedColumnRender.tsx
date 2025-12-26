@@ -37,7 +37,7 @@ export const NestedColumnRender = ({
   const isMedia = table?.info.isFileTable;
   const nestedColumns =
     c.nested && table ? getColWInfo(table, c.nested.columns) : undefined;
-  const layers: Omit<TimeChartLayer, "yScale">[] = useMemo(
+  const layers: TimeChartLayer[] = useMemo(
     () =>
       !c.nested?.chart || !nestedTimeChartMeta ?
         []

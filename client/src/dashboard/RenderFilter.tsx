@@ -1,7 +1,10 @@
 import { mdiFilter } from "@mdi/js";
 import { pickKeys } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { GroupedDetailedFilter, SimpleFilter } from "@common/filterUtils";
+import type {
+  GroupedDetailedFilter,
+  DetailedFilter,
+} from "@common/filterUtils";
 import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import type {
@@ -67,7 +70,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
       | "onOperandChange"
       | "onChange"
     > & {
-      filters: SimpleFilter[];
+      filters: DetailedFilter[];
     };
   }, [f, minimised, onChange]);
 
@@ -157,12 +160,12 @@ export const RenderFilter = (props: RenderFilterProps) => {
 };
 
 const isSimpleFilter = (
-  f: SimpleFilter | GroupedDetailedFilter,
-): f is SimpleFilter => {
+  f: DetailedFilter | GroupedDetailedFilter,
+): f is DetailedFilter => {
   return !("$and" in f || "$or" in f);
 };
 const isNotSimpleFilter = (
-  f: SimpleFilter | GroupedDetailedFilter,
+  f: DetailedFilter | GroupedDetailedFilter,
 ): f is GroupedDetailedFilter => {
   return !isSimpleFilter(f);
 };

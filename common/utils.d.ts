@@ -216,6 +216,6 @@ export declare const getCaller: () => string[];
 export type FileTable = {
     original_name: string;
 };
-export declare const getProperty: <T extends object, K extends string>(obj: T, key: K | string) => K extends keyof T ? T[K] : undefined;
+export declare const getProperty: <T extends object, K extends string>(obj: T, key: K | string) => K extends keyof T ? T[K] : K extends string ? T[keyof T] | undefined : undefined;
 export {};
 //# sourceMappingURL=utils.d.ts.map

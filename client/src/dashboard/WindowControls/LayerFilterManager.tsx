@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import React from "react";
 import { RenderFilter } from "../RenderFilter";
-import type { MapLayerManagerProps } from "./ChartLayerManager";
+import type { MapLayerManagerProps } from "./ChartLayerManager/ChartLayerManager";
 
 export const LayerFilterManager = (
   props: MapLayerManagerProps & { linkId: string },
@@ -46,7 +46,7 @@ export const LayerFilterManager = (
       contextData={undefined}
       filter={andOrFilter}
       onChange={(andOrFilter) => {
-        setFilter(andOrFilter);
+        void setFilter(andOrFilter);
       }}
     />
   );

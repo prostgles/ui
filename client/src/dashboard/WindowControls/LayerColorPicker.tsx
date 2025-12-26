@@ -3,7 +3,7 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import React from "react";
 import type { LinkSyncItem, WindowData } from "../Dashboard/dashboardUtils";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
-import type { MapLayerManagerProps } from "./ChartLayerManager";
+import type { MapLayerManagerProps } from "./ChartLayerManager/ChartLayerManager";
 import { MapLayerStyling } from "./MapLayerStyling";
 
 export type LayerColorPickerProps = {
@@ -62,14 +62,15 @@ export const LayerColorPicker = ({
         const thisLink = myLinks.find((l) => l.id === link.id);
         if (thisLink && thisLink.options.type !== "table") {
           const opts = thisLink.options;
+          const updatedColumns = opts.columns.map((c) => ({
+            ...c,
+            colorArr: c.name === column ? colorArr : c.colorArr,
+          }));
           thisLink.$update(
             {
               options: {
                 ...opts,
-                columns: opts.columns.map((c) => ({
-                  ...c,
-                  colorArr: c.name === column ? colorArr : c.colorArr,
-                })),
+                columns: updatedColumns,
               },
             },
             { deepMerge: true },
@@ -79,3 +80,13 @@ export const LayerColorPicker = ({
     />
   );
 };
+
+declare global {
+  interface Array<T> {
+    // Override map to handle union array types better
+    map<U>(
+      callbackfn: (value: T, index: number, array: T[]) => U,
+      thisArg?: any,
+    ): U[];
+  }
+}

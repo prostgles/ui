@@ -3,7 +3,7 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/prostgles";
 import { quickClone } from "../../../utils/utils";
 import { Select } from "@components/Select/Select";
-import { getSmartGroupFilter, type SimpleFilter } from "@common/filterUtils";
+import { getSmartGroupFilter, type DetailedFilter } from "@common/filterUtils";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
 import {
   omitKeys,
@@ -27,8 +27,8 @@ export type ContextDataSchema = {
 }[];
 
 export type SingleGroupFilter =
-  | { $and: SimpleFilter[] }
-  | { $or: SimpleFilter[] };
+  | { $and: DetailedFilter[] }
+  | { $or: DetailedFilter[] };
 
 export type ForcedFilterControlProps = {
   detailedFilter?: SingleGroupFilter;

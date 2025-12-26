@@ -10,7 +10,7 @@ import { ColorPicker } from "../ColorPicker";
 import type {
   ConditionalStyle,
   StyleColumnProps,
-} from "../ColumnStyleControls";
+} from "../ColumnStyleControls/ColumnStyleControls";
 import { ChipStylePalette } from "./ChipStylePalette";
 import { isDefined } from "../../../../utils/utils";
 
@@ -58,7 +58,7 @@ export const ConditionalCellStyleControls = ({
       newConditions = newConditions.map((cs, i) => {
         if (i === idx) return { ...cs, ...newStyle };
         return cs;
-      }) as any;
+      }) as typeof newConditions;
     }
     updateStyle({ conditions: newConditions });
   };
@@ -112,7 +112,7 @@ export const ConditionalCellStyleControls = ({
             <Btn
               title="Remove style"
               iconPath={mdiClose}
-              onClick={(e) => {
+              onClick={() => {
                 updateCondStyle(null, condIdx);
               }}
             />

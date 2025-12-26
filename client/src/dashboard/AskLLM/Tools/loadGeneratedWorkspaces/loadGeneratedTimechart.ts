@@ -24,7 +24,7 @@ export const loadGeneratedTimechart = (
           l.yAxis === "count(*)" ?
             undefined
           : {
-              funcName: `$${l.yAxis.aggregation}` as any,
+              funcName: `$${l.yAxis.aggregation}` as const,
               numericColumn: l.yAxis.column,
             },
 

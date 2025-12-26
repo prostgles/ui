@@ -8,14 +8,14 @@ import { registerSuggestions } from "./SQLCompletion/monacoSQLSetup/registerSugg
 export const LANG = "sql";
 
 let monacoPromise:
-  | Promise<typeof import("monaco-editor/esm/vs/editor/editor.api.js")>
+  | Promise<typeof import("monaco-editor/esm/vs/editor/editor.api")>
   | undefined;
 /**
  * This option seems to start downloading monaco (870.js) from the start: webpackPrefetch: true
  */
 export const getMonaco = async () => {
   monacoPromise ??= import(
-    /* webpackChunkName: "monaco_editor" */ /*  webpackPrefetch: 99 */ "monaco-editor/esm/vs/editor/editor.api.js"
+    /* webpackChunkName: "monaco_editor" */ /*  webpackPrefetch: 99 */ "monaco-editor/esm/vs/editor/editor.api"
   );
   const monaco = await monacoPromise;
   return monaco;
@@ -186,7 +186,7 @@ import {
 } from "@components/MonacoEditor/MonacoEditor";
 import { getSelectedText } from "@components/MonacoEditor/useMonacoEditorAddActions";
 import { mdiPlay } from "@mdi/js";
-import type { IPosition } from "monaco-editor/esm/vs/editor/editor.api.js";
+import type { IPosition } from "monaco-editor/esm/vs/editor/editor.api";
 import type { SQLHandler } from "prostgles-types";
 import { isEmpty, isEqual, omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";

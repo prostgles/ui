@@ -27,6 +27,7 @@ export async function startService(
     onLogs(logs);
     this.onServiceLog(serviceName, logs);
   };
+  console.log("starting Service " + serviceName);
   const { labelArgs } = this.getActiveService(serviceName, "building-done");
 
   const serviceConfig: ProstglesService = prostglesServices[serviceName];
@@ -72,14 +73,17 @@ export async function startService(
 
   const baseHost = `127.0.0.1:${hostPort}`;
 
-  const onStopped = (res: ExecutionResult | { type: "error"; error: any }) => {
+  const onStopped = (
+    res: ExecutionResult | { type: "error"; error: unknown },
+  ) => {
     const stopReason = "type" in res ? res.type : res.state;
-    this.activeServices.set(serviceName, {
+    const instance: ServiceInstance = {
       status: "error",
       error: new Error(
         `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
       ),
-    });
+    };
+    this.activeServices.set(serviceName, instance);
     this.onServiceLog(serviceName, logs);
   };
 
@@ -144,7 +148,8 @@ export async function startService(
   const serviceInstance = this.activeServices.get(serviceName);
   if (serviceInstance?.status !== "starting") {
     const error = new Error(
-      "Healthcheck not finished. Service failed to start",
+      "Healthcheck not finished. Service failed to start. Current status:" +
+        serviceInstance?.status,
     );
     onStopped({
       type: "error",
@@ -163,6 +168,7 @@ export async function startService(
   this.activeServices.set(serviceName, runningService);
   this.onServiceLog(serviceName, logs);
 
+  console.log("started Service " + serviceName);
   return runningService;
 }
 

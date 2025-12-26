@@ -24,7 +24,7 @@ import { SmartForm } from "../SmartForm/SmartForm";
 import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
 import Window from "../Window";
-import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
+import { ChartLayerManager } from "../WindowControls/ChartLayerManager/ChartLayerManager";
 import { W_MapMenu } from "./W_MapMenu";
 import { MapInfoSection } from "./controls/MapInfoSection";
 import { fetchMapLayerData } from "./fetchData/fetchMapLayerData";
@@ -196,7 +196,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     const { w } = this.props;
     if (!this.state.wSync) {
       const wSync = w.$cloneSync((w, delta) => {
-        this.setData({ w }, { w: delta as any });
+        this.setData({ w }, { w: delta });
       });
       this.setState({ wSync });
     }

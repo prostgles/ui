@@ -1,9 +1,9 @@
-import { executeDockerCommand } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
+import { spawn } from "node:child_process";
 import type { ServiceManager } from "./ServiceManager";
 import type { prostglesServices } from "./ServiceManagerTypes";
 import { getContainerName } from "./startService";
 
-export async function stopService(
+export function stopService(
   this: ServiceManager,
   serviceName: keyof typeof prostglesServices,
 ) {
@@ -14,10 +14,7 @@ export async function stopService(
     }
   } catch {}
   const containerName = getContainerName(serviceName);
-  await executeDockerCommand(["stop", containerName], {
-    timeout: 10000,
-  }).catch(() => {});
-  await executeDockerCommand(["rm", "-f", containerName], { timeout: 10000 });
+  spawn("docker", ["stop", "-t", "0", containerName], { stdio: "ignore" });
   this.activeServices.delete(serviceName);
   this.onServiceLog(serviceName, []);
 }

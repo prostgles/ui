@@ -2,7 +2,7 @@ import { mdiPlus } from "@mdi/js";
 import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { Select } from "@components/Select/Select";
-import type { MapLayerManagerProps } from "./ChartLayerManager";
+import type { MapLayerManagerProps } from "./ChartLayerManager/ChartLayerManager";
 import { FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
 import Btn from "@components/Btn";
@@ -19,7 +19,7 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
     w,
   } = props;
   const isMap = type === "map";
-  let osmBbox = ""; // w.type === "map"? w.options.extent?.join(",") : "";
+  let osmBbox = "";
   if (w.type === "map") {
     const [b, a, b1, a1] = w.options.extent ?? defaultWorldExtent;
     osmBbox = [a, b, a1, b1].join(",");
@@ -111,7 +111,7 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
               {...props}
               bbox={osmBbox}
               onData={(_, osmLayerQuery) => {
-                dbs.links.insert({
+                void dbs.links.insert({
                   w1_id: w.id,
                   w2_id: w.id,
                   workspace_id: w.workspace_id,
@@ -130,101 +130,4 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
       )}
     </FlexRow>
   );
-};
-
-type Linkz = {
-  is_view: false;
-  select: true;
-  insert: true;
-  update: true;
-  delete: true;
-  columns: {
-    closed?: null | boolean;
-    created?: null | string;
-    deleted?: null | boolean;
-    disabled?: null | boolean;
-    id?: string;
-    last_updated: string;
-    options:
-      | {
-          type: "table";
-          colorArr?: number[];
-          tablePath: { table: string; on: Record<string, any>[] }[];
-        }
-      | {
-          type: "map";
-          dataSource?:
-            | { type: "sql"; sql: string; withStatement: string }
-            | {
-                type: "table";
-                joinPath?: { table: string; on: Record<string, any>[] }[];
-              }
-            | {
-                type: "local-table";
-                localTableName: string;
-                smartGroupFilter?: { $and: any[] } | { $or: any[] };
-              };
-          smartGroupFilter?: { $and: any[] } | { $or: any[] };
-          joinPath?: { table: string; on: Record<string, any>[] }[];
-          localTableName?: string;
-          sql?: string;
-          osmLayerQuery?: string;
-          mapIcons?:
-            | { type: "fixed"; iconPath: string }
-            | {
-                type: "conditional";
-                columnName: string;
-                conditions: { value: any; iconPath: string }[];
-              };
-          mapColorMode?:
-            | { type: "fixed"; colorArr: number[] }
-            | {
-                type: "scale";
-                columnName: string;
-                min: number;
-                max: number;
-                minColorArr: number[];
-                maxColorArr: number[];
-              }
-            | {
-                type: "conditional";
-                columnName: string;
-                conditions: { value: any; colorArr: number[] }[];
-              };
-          mapShowText?: { columnName: string };
-          columns: { name: string; colorArr: number[] }[];
-        }
-      | {
-          type: "timechart";
-          dataSource?:
-            | { type: "sql"; sql: string; withStatement: string }
-            | {
-                type: "table";
-                joinPath?: { table: string; on: Record<string, any>[] }[];
-              }
-            | {
-                type: "local-table";
-                localTableName: string;
-                smartGroupFilter?: { $and: any[] } | { $or: any[] };
-              };
-          smartGroupFilter?: { $and: any[] } | { $or: any[] };
-          joinPath?: { table: string; on: Record<string, any>[] }[];
-          localTableName?: string;
-          sql?: string;
-          groupByColumn?: string;
-          otherColumns?: { name: string; label?: string; udt_name: string }[];
-          columns: {
-            name: string;
-            colorArr: number[];
-            statType?: {
-              funcName: "$min" | "$max" | "$countAll" | "$avg" | "$sum";
-              numericColumn: string;
-            };
-          }[];
-        };
-    user_id: string;
-    w1_id: string;
-    w2_id: string;
-    workspace_id?: null | string;
-  };
 };

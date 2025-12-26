@@ -20,13 +20,15 @@ DEVICE = os.environ.get("WHISPER_DEVICE", "cpu")
 # COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE", "int8")  
 COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE", "float16" if DEVICE == "cuda" else "int8")
 
+LANGUAGE = os.environ.get("WHISPER_LANGUAGE", None)  # e.g., "en" for English, None for auto-detect
+
 # Initialize the model (lazy loading)
 model = None
 
 def get_model():
     global model
     if model is None:
-        logger.info(f"Loading Whisper model: {MODEL_SIZE} on {DEVICE} with {COMPUTE_TYPE}")
+        logger.info(f"Loading Whisper model: {MODEL_SIZE} on {DEVICE} with {COMPUTE_TYPE}. Language: {LANGUAGE}")
         model = WhisperModel(MODEL_SIZE, device=DEVICE, compute_type=COMPUTE_TYPE)
         logger.info("Model loaded successfully")
     return model
@@ -41,7 +43,13 @@ def transcribe():
     if audio_file.filename == '':
         return jsonify({'error': 'No audio file selected'}), 400
     
+
     try:
+        # Parse user options from form data
+        task = request.form.get('task', 'transcribe')  # transcribe or translate
+        initial_prompt = request.form.get('initial_prompt', None)
+        word_timestamps = request.form.get('word_timestamps', 'false').lower() == 'true'
+
         # Save the uploaded file temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as tmp_file:
             audio_file.save(tmp_file.name)
@@ -51,7 +59,15 @@ def transcribe():
         
         # Get the model and transcribe
         whisper_model = get_model()
-        segments, info = whisper_model.transcribe(tmp_path, beam_size=5, vad_filter=True)
+        segments, info = whisper_model.transcribe(
+            tmp_path, 
+            language=LANGUAGE,
+            task=task,
+            beam_size=5,
+            vad_filter=True,
+            initial_prompt=initial_prompt,
+            word_timestamps=word_timestamps
+        )
         
         # Collect all segments
         transcription = ""

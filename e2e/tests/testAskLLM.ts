@@ -5,7 +5,7 @@ import { dockerWeatherToolUse } from "sampleToolUseData";
 const stringify = (obj: any) => JSON.stringify(obj, null, 2);
 export const clientNodeModulesDirectory = join(
   __dirname,
-  "../../../../client/node_modules",
+  "../../client/node_modules",
 );
 console.log("Client node modules dir:", clientNodeModulesDirectory);
 
@@ -316,9 +316,10 @@ return {
   choices: [
     choicesItem
   ],
+  type: "Anthropic",
   usage: {
     completion_tokens: msg === "cost"? 1e5 : 0, 
-    prompt_tokens: 0, 
+    prompt_tokens: msg === "cost"? 1e5 : 0, 
     total_tokens: 0, 
   },
 };//`;

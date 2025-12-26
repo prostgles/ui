@@ -67,7 +67,6 @@ export const PopupHeader = ({
         <h4
           className="m-0"
           style={{
-            // justifyItems: "start", Why was this here?
             ...(collapsible ? { paddingLeft: 0 } : {}),
           }}
           title={typeof title === "string" ? title : undefined}

@@ -1,18 +1,15 @@
+import { getSmartGroupFilter, type DetailedFilter } from "@common/filterUtils";
 import type {
   TableHandlerClient,
   ViewHandlerClient,
 } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
+import type { AnyObject } from "prostgles-types";
 import { useMemo, useRef, useState } from "react";
-import {
-  getSmartGroupFilter,
-  type SmartGroupFilter,
-} from "@common/filterUtils";
 import { isDefined } from "../../../utils/utils";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { getJoinFilter } from "./getJoinFilter";
 import type { JoinedRecordsProps } from "./JoinedRecords";
-import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
-import type { AnyObject } from "prostgles-types";
 
 const getAllParentTableNames = (
   parentForm: JoinedRecordsProps["parentForm"],
@@ -33,7 +30,7 @@ export type JoinedRecordSection = {
   canInsert?: boolean;
   error?: string;
   joinFilter: AnyObject;
-  detailedJoinFilter: SmartGroupFilter;
+  detailedJoinFilter: DetailedFilter[];
   count: number;
   table: DBSchemaTableWJoins;
   tableHandler: Partial<TableHandlerClient> | undefined;

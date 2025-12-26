@@ -493,7 +493,7 @@ export class CanvasChart {
 
     const getScreenCoords = <C extends Coords>(coords: C): C => {
       if (Array.isArray(coords[0])) {
-        return coords.map((p) => getScreenCoords(p)) as C;
+        return coords.map((p) => getScreenCoords(p as Point)) as C;
       }
       const point = coords as Point;
       const [x, y] = this.getScreenXY(point[0], point[1]);
@@ -532,18 +532,17 @@ export class CanvasChart {
         if (s.withGradient && coords.length > 2) {
           ctx.save();
 
-          const { peakSections, minY, gradientLastStep } =
-            getTimechartGradientPeakSections(coords, h);
+          const { peakSections, minY, stops } =
+            getTimechartGradientPeakSections(coords);
 
           peakSections.forEach((sectionCoords) => {
             if (sectionCoords.length < 2) return;
             const gradient = ctx.createLinearGradient(0, minY, 0, h);
             const rgba = asRGB(s.strokeStyle);
             const rgb = rgba.slice(0, 3).join(", ");
-            gradient.addColorStop(0, `rgba(${rgb}, 0.4)`);
-            gradient.addColorStop(0.1, `rgba(${rgb}, 0.2)`);
-            gradient.addColorStop(0.2, `rgba(${rgb}, 0.1)`);
-            gradient.addColorStop(gradientLastStep, `rgba(${rgb}, 0)`);
+            stops.forEach(({ offset, opacity }) => {
+              gradient.addColorStop(offset, `rgba(${rgb}, ${opacity})`);
+            });
             const firstPoint = sectionCoords[0]!;
             const lastPoint = sectionCoords.at(-1)!;
 
@@ -672,7 +671,7 @@ export class CanvasChart {
 const PIXEL_STEP = 10;
 const LINE_HEIGHT = 40;
 const PAGE_HEIGHT = 800;
-function normalizeWheel(event): {
+function normalizeWheel(event: WheelEvent): {
   spinX: number;
   spinY: number;
   pixelX: number;
@@ -683,21 +682,8 @@ function normalizeWheel(event): {
     pX = 0,
     pY = 0; // pixelX, pixelY
 
-  // Legacy
-  if ("detail" in event) {
-    sY = event.detail;
-  }
-  if ("wheelDelta" in event) {
-    sY = -event.wheelDelta / 120;
-  }
-  if ("wheelDeltaY" in event) {
-    sY = -event.wheelDeltaY / 120;
-  }
-  if ("wheelDeltaX" in event) {
-    sX = -event.wheelDeltaX / 120;
-  }
-
   // side scrolling on FF with DOMMouseScroll
+  //@ts-ignore
   if ("axis" in event && event.axis === event.HORIZONTAL_AXIS) {
     sX = sY;
     sY = 0;

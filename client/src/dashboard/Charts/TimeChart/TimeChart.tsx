@@ -13,6 +13,7 @@ import type { DateExtent } from "./getTimechartBinSize";
 import { getTimechartTooltipIntersections } from "./getTimechartTooltipIntersections";
 import { onDeltaTimechart } from "./onDeltaTimechart";
 import { prepareTimechartData } from "./prepareTimechartData";
+import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 
 export type DataItem = {
   date: number | string;
@@ -30,7 +31,6 @@ export type TimeChartLayer = {
   }) => string;
   /** Raw data */
   data: DataItem[];
-  // yScale: ScaleLinear<number, number, never>;
   sortedParsedData?: {
     date: number;
     value: number;
@@ -43,7 +43,9 @@ export type TimeChartLayer = {
     ValidatedColumnInfo,
     "name" | "label" | "tsDataType" | "udt_name"
   >[];
-  groupByValue?: any;
+  groupByValue?: ColumnValue;
+  minVal?: number;
+  maxVal?: number;
 };
 
 export type TimeChartProps = Pick<
@@ -54,7 +56,7 @@ export type TimeChartProps = Pick<
   | "tooltipPosition"
   | "binValueLabelMaxDecimals"
 > & {
-  layers: Omit<TimeChartLayer, "yScale">[];
+  layers: TimeChartLayer[];
   className?: string;
   onExtentChange?: (visibleData: DateExtent, viewPort: DateExtent) => void;
   onExtentChanged?: (
@@ -79,6 +81,7 @@ export type TimeChartProps = Pick<
     bottom?: number;
   };
   yAxisVariant?: "compact";
+  yAxisScaleMode?: "single" | "multiple";
   onClick?: (ev: { dateMillis: number; isMinDate: boolean }) => void;
 };
 
@@ -113,7 +116,7 @@ export class TimeChart extends RTComp<
     dates: ChartDate[];
     xScale: ScaleLinear<number, number, never>;
     xScaleYLabels: ScaleLinear<number, number, never>;
-    yScale: ScaleLinear<number, number, never>;
+    getYScale: (layerIndex: number) => ScaleLinear<number, number, never>;
 
     minDate: number;
     maxDate: number;

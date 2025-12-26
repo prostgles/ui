@@ -1,4 +1,4 @@
-import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
+import type { DetailedFilter } from "@common/filterUtils";
 import type {
   SearchListItem,
   SearchListProps,
@@ -105,13 +105,13 @@ export async function onSearchItems(
             //   type: "$term_highlight",
             //   value: columnTermValue ?? term,
             // };
-            const newFilter: SimpleFilter = {
+            const newFilter: DetailedFilter = {
               fieldName: colName,
               type: "$in",
               value: [columnValue],
               minimised: true,
             };
-            const result: SmartGroupFilter = [
+            const result: DetailedFilter[] = [
               ...(this.props.detailedFilter ?? []),
               newFilter,
             ];

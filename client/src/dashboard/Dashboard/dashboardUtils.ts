@@ -16,98 +16,14 @@ import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
 
 import type { CardLayout } from "@common/DashboardTypes";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import type { SmartGroupFilter } from "@common/filterUtils";
-import type { OmitDistributive } from "@common/utils";
+import type { DetailedFilter } from "@common/filterUtils";
+import { type OmitDistributive } from "@common/utils";
 import type { Extent, MapExtentBehavior } from "../Map/DeckGLMap";
 import type {
   ColumnConfig,
   ColumnSort,
   ColumnSortSQL,
 } from "../W_Table/ColumnMenu/ColumnMenu";
-const getRandomElement = <Arr>(
-  items: Arr[],
-): { elem: Arr | undefined; index: number } => {
-  const randomIndex = Math.floor(Math.random() * items.length);
-  return { elem: items[randomIndex], index: randomIndex };
-};
-type ColorFunc = {
-  (opacity: number, target: "deck"): [number, number, number, number];
-  (opacity?: number, target?: "css"): string;
-};
-export type GetColor = { get: ColorFunc };
-
-export const PALETTE = {
-  c1: {
-    get: (opacity = 1, target: "deck" | "css" = "css") => {
-      const v = [
-        0,
-        129,
-        167,
-        target === "css" ? opacity : Math.round(opacity * 255),
-      ];
-      return target === "deck" ? v : (`rgba(${v.join(", ")})` as any);
-    },
-  },
-  c2: {
-    get: (opacity = 1, target: "deck" | "css" = "css") => {
-      const v = [
-        240,
-        113,
-        103,
-        target === "css" ? opacity : Math.round(opacity * 255),
-      ];
-      return target === "deck" ? v : (`rgba(${v.join(", ")})` as any);
-    },
-  },
-  c3: {
-    get: (opacity = 1, target: "deck" | "css" = "css") => {
-      const v = [
-        58,
-        134,
-        255,
-        target === "css" ? opacity : Math.round(opacity * 255),
-      ];
-      return target === "deck" ? v : (`rgba(${v.join(", ")})` as any);
-    },
-  },
-  c4: {
-    get: (opacity = 1, target: "deck" | "css" = "css") => {
-      const v = [
-        131,
-        56,
-        236,
-        target === "css" ? opacity : Math.round(opacity * 255),
-      ];
-      return target === "deck" ? v : (`rgba(${v.join(", ")})` as any);
-    },
-  },
-  c5: {
-    get: (opacity = 1, target: "deck" | "css" = "css") => {
-      const v = [
-        203,
-        149,
-        0,
-        target === "css" ? opacity : Math.round(opacity * 255),
-      ];
-      return target === "deck" ? v : (`rgba(${v.join(", ")})` as any);
-    },
-  },
-} as const satisfies Record<string, GetColor>;
-
-export const getRandomColor = (
-  opacity = 1,
-  target: "deck" | "css" = "css",
-  usedColors?: any[],
-) => {
-  const results = Object.values(PALETTE).map((p) => p.get(opacity, target));
-  const nonUsedColors = results.filter(
-    (c) =>
-      !usedColors?.some((uc) =>
-        typeof uc === "string" ? uc === c : uc.join() === c.join(),
-      ),
-  );
-  return getRandomElement(nonUsedColors).elem ?? results[0];
-};
 
 export type ChartType =
   | "table"
@@ -247,12 +163,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
     }>
   : CType extends "timechart" ?
     {
-      //@deprecated - moving this to each layer
-      statType: StatType;
-      /**
-       * @deprecated
-       */
-      dateColumn?: string;
+      yScaleMode?: "single" | "multiple";
       binSize?: TimeChartBinSize;
       tooltipPosition?: TooltipPosition;
       missingBins?: MissingBinsOption;
@@ -350,8 +261,8 @@ export type WindowData<CType extends ChartType = ChartType> = Omit<
   deleted: boolean;
   workspace_id?: string;
   options?: RefreshOptions & ChartOptions<CType>;
-  filter?: SmartGroupFilter;
-  having?: SmartGroupFilter;
+  filter?: DetailedFilter[];
+  having?: DetailedFilter[];
   columns?: ColumnConfig[] | null;
   /**
    * This is either the sql user has selected OR the current code block

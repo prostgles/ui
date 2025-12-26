@@ -1,7 +1,7 @@
 import {
   getSmartGroupFilter,
+  type DetailedFilter,
   type DetailedFilterBase,
-  type SmartGroupFilter,
 } from "@common/filterUtils";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -23,7 +23,7 @@ import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
 import type { ProstglesColumn } from "./W_Table/W_Table";
 
 type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
-  filter?: SmartGroupFilter;
+  filter?: DetailedFilter[];
   tableName: string;
   tableCols?: ProstglesColumn[];
   onClosePopup?: () => void;
@@ -39,7 +39,7 @@ type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   allowEdit?: boolean;
   className?: string;
   noDataComponent?: React.ReactNode;
-  onFilterChange?: (filter: SmartGroupFilter) => void;
+  onFilterChange?: (filter: DetailedFilter[]) => void;
   filterOperand?: "and" | "or";
   realtime?: { throttle?: number };
 };
@@ -48,7 +48,7 @@ type S = {
   error?: any;
   rows: AnyObject[];
   sort: ColumnSort[];
-  filter?: SmartGroupFilter;
+  filter?: DetailedFilter[];
   editRowFilter?: DetailedFilterBase[];
   loadedData: boolean;
   filteredRows: number;
@@ -173,7 +173,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
   }
 
   getData = async (
-    filter: SmartGroupFilter = this.filter,
+    filter: DetailedFilter[] = this.filter,
     sort: ColumnSort[] = this.state.sort,
     page: number = this.state.page,
     pageSize: PaginationProps["pageSize"] = this.state.pageSize,

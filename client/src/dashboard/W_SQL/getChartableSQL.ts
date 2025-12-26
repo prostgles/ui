@@ -8,7 +8,6 @@ import {
 } from "../W_Table/TableMenu/getChartCols";
 import { getTableExpressionReturnType } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
-import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
 
 export type ChartableSQL = {
   /**

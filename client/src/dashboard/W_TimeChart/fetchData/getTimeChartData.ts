@@ -22,7 +22,7 @@ type TChartLayers = TChartLayer[];
 export type FetchedLayerData = {
   layers: TChartLayers;
   erroredLayers: TimeChartLayerWithBinOrError[];
-  error: any;
+  error: unknown;
   binSize: keyof ReturnType<typeof getMainTimeBinSizes> | undefined;
 };
 
@@ -160,32 +160,3 @@ export const getYLabelFunc = (
     return result + endText;
   };
 };
-
-// console.log(this.state.visibleDataExtent);
-// console.log({rows}, await tableHandler.find(finalFilter, { select: { [dateColumn]: 1 } }))
-/**
- * Ensure we add outside edges when zoomed in
- */
-// if (extentFilter) {
-//   const left = rows[0];
-//   const right = rows[rows.length - 1];
-
-//   if (!left || +left.value >= +extentFilter.paddedEdges[0]) {
-//     const leftOutsidePoint = await tableHandler.findOne(tableFilters, { select, orderBy: { date: -1 } });
-//     if (leftOutsidePoint) {
-//       rows = [
-//         leftOutsidePoint,
-//         ...rows
-//       ]
-//     }
-//   }
-//   if (!right || +right.value <= +extentFilter.paddedEdges[1]) {
-//     const rightOutsidePoint = await tableHandler.findOne(tableFilters, { select, orderBy: { date: 1 } });
-//     if (rightOutsidePoint) {
-//       rows = [
-//         ...rows,
-//         rightOutsidePoint
-//       ]
-//     }
-//   }
-// }

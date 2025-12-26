@@ -30,14 +30,30 @@ export const speechToTextTest = async (page: PageWIds) => {
   ).toContainText("running", { timeout: 5 * 60_000 });
 
   // Used to debug
-  // await page.locator(getDataKey("audio")).click();
+  await page.locator(getDataKey("audio")).click();
+  await page.getByTestId("Popup.close").last().click();
 
+  await page.getByTestId("Chat.speech").click();
+  await page.waitForTimeout(2000);
+  await page
+    .getByTestId("Chat.sendWrapper")
+    .locator("audio")
+    .waitFor({ state: "visible" });
+  await page.getByTestId("Chat.send").click();
+  await page
+    .getByTestId("Chat.messageList")
+    .locator("audio")
+    .waitFor({ state: "visible" });
+
+  await page
+    .getByTestId("Chat.speech")
+    .click({ button: "right", timeout: 10_000 });
+  await page.locator(getDataKey("stt-local")).click();
   await page.getByTestId("Popup.close").last().click();
 
   await page.getByTestId("Chat.speech").click();
   await page.waitForTimeout(2000);
   await page.waitForTimeout(2000);
-
   await expect(page.getByTestId("Chat.textarea")).toHaveValue("Hello.", {
     timeout: 10000,
   });

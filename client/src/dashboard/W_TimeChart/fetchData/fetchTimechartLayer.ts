@@ -1,13 +1,13 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { asName } from "prostgles-types";
+import { asName, type PG_COLUMN_UDT_DATA_TYPE } from "prostgles-types";
 import type {
   DataItem,
   TimeChartLayer,
 } from "../../Charts/TimeChart/TimeChart";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { getSQLQuerySemicolon } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
-import { getGroupByValueColor } from "../../WindowControls/ColorByLegend";
+import { getGroupByValueColor } from "../../WindowControls/ColorByLegend/getGroupByValueColor";
 import type {
   ProstglesTimeChartProps,
   ProstglesTimeChartState,
@@ -21,6 +21,7 @@ import { getTimeChartSelectParams } from "./getTimeChartSelectParams";
 import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
 import { getTimechartExtentFilter } from "./getTimechartExtentFilter";
 import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
+import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 
 type getTChartLayerArgs = Pick<
   ProstglesTimeChartState,
@@ -62,17 +63,17 @@ export async function fetchTimechartLayer({
     throw layer.error;
   }
   const { dateColumn, statType, groupByColumn, type } = layer;
-  if (layer.type === "table") {
-    const { path } = layer;
-    const tableName = path?.length ? path.at(-1)!.table : layer.tableName;
+  if (layer.type === "table" || layer.type === "local-table") {
+    const tableName =
+      layer.type === "table" ?
+        (layer.joinPath?.at(-1)?.table ?? layer.tableName)
+      : layer.localTableName;
 
     const tableHandler = db[tableName];
     if (!tableHandler?.findOne || !tableHandler.find) {
       throw `Cannot query table ${tableName}: Missing or disallowed`;
     }
 
-    // const cachedLayers = this.state.layers.filter(l => l.dataSignature === dataSignature);
-    // extentFilter = getExtentFilter(extent, dateColumn);
     const { request } = layer;
     const { tableFilters } = request;
     const { select, orderBy } = getTimeChartSelectParams({
@@ -169,7 +170,7 @@ export async function fetchTimechartLayer({
       key: f.name,
       label: f.name,
       subLabel: f.dataType,
-      udt_name: f.dataType as any,
+      udt_name: f.dataType as PG_COLUMN_UDT_DATA_TYPE,
     }));
 
     let statField = "COUNT(*)";
@@ -190,7 +191,8 @@ export async function fetchTimechartLayer({
       second: "minute",
       minute: "hour",
       hour: "day",
-      day: "month",
+      day: "week",
+      week: "month",
       month: "year",
       year: "year",
     }[binUnit];
@@ -203,7 +205,7 @@ export async function fetchTimechartLayer({
     const dateBinCol =
       binInfo.increment === 1 ?
         `date_trunc(\${bin}, ${escDateCol}::TIMESTAMPTZ)`
-      : `date_bin('${binInfo.increment}${binInfo.unit}', ${escDateCol}::TIMESTAMPTZ, date_trunc('${prevBinUnit ?? binUnit}', ${escDateCol}::TIMESTAMPTZ))`;
+      : `date_bin('${binInfo.increment}${binInfo.unit}', ${escDateCol}::TIMESTAMPTZ, date_trunc('${prevBinUnit}', ${escDateCol}::TIMESTAMPTZ))`;
     const topSelect = [
       `${dateBinCol} as ${JSON.stringify(TIMECHART_FIELD_NAMES.date)}`,
       escGroupByCol &&
@@ -239,7 +241,9 @@ export async function fetchTimechartLayer({
     fullExtent: [layer.request.min, layer.request.max],
     label:
       layer.title ??
-      (layer.type === "table" ? layer.tableName : layer.sql.slice(0, 50)),
+      (layer.type === "sql" ? layer.sql.slice(0, 50)
+      : layer.type === "local-table" ? layer.localTableName
+      : (layer.joinPath?.at(-1)?.table ?? layer.tableName)),
     extFilter: extentFilter,
     dataSignature,
   };
@@ -253,16 +257,21 @@ export async function fetchTimechartLayer({
     });
     const groupByColumnDataKey =
       type === "table" ? groupByColumn : TIMECHART_FIELD_NAMES.group_by;
-    const groupByVals = Array.from(
-      new Set(renderedLayer.data.map((d) => d[groupByColumnDataKey])),
+    const groupByValues = Array.from(
+      new Set(
+        renderedLayer.data.map((d) => d[groupByColumnDataKey] as ColumnValue),
+      ),
     );
-    return groupByVals.map((gbVal, gbi) => {
+    return groupByValues.map((groupByValue, gbi) => {
       return {
         ...renderedLayer,
-        getYLabel: getYLabelFunc(`  ${gbVal}`, !layer.statType),
-        data: rows.filter((r) => r[groupByColumnDataKey] === gbVal),
-        color: getColor(gbVal, gbi),
-        groupByValue: gbVal,
+        getYLabel: getYLabelFunc(
+          `  ${groupByValue?.toString()}`,
+          !layer.statType,
+        ),
+        data: rows.filter((r) => r[groupByColumnDataKey] === groupByValue),
+        color: getColor(groupByValue, gbi),
+        groupByValue,
       } satisfies TimeChartLayer;
     });
   }

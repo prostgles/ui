@@ -1,11 +1,12 @@
 import React from "react";
-import { getRandomColor, type LinkSyncItem } from "../Dashboard/dashboardUtils";
+import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import PopupMenu from "@components/PopupMenu";
 import Btn from "@components/Btn";
 import { mdiMap } from "@mdi/js";
 import { OverpassQuery } from "../W_Map/OSM/OverpassQuery";
 import { isDefined } from "../../utils/utils";
 import { FlexRow } from "@components/Flex";
+import { getRandomColor } from "../Dashboard/PALETTE";
 
 type P = {
   link: LinkSyncItem;
@@ -41,7 +42,7 @@ export const OSMLayerOptions = ({ link }: P) => {
                 osmLayerQuery,
                 mapColorMode: {
                   type: "fixed",
-                  colorArr: getRandomColor(1, "deck"),
+                  colorArr: getRandomColor(1),
                 },
               },
             },

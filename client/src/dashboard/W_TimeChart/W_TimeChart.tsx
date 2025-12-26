@@ -1,44 +1,50 @@
-import { mdiAlertCircleOutline, mdiUndo } from "@mdi/js";
-import type {
-  AnyObject,
-  ParsedJoinPath,
-  SubscriptionHandler,
-} from "prostgles-types";
-import { getKeys } from "prostgles-types";
-import React from "react";
+import type { DBSSchema } from "@common/publishUtils";
 import { throttle } from "@common/utils";
-import { createReactiveState } from "../../appUtils";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
+import { FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
+import { mdiAlertCircleOutline, mdiUndo } from "@mdi/js";
+import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { AnyObject, SubscriptionHandler } from "prostgles-types";
+import { getKeys } from "prostgles-types";
+import React from "react";
+import { createReactiveState } from "../../appUtils";
 import type { Command } from "../../Testing";
 import type { DateExtent } from "../Charts/TimeChart/getTimechartBinSize";
 import { getMainTimeBinSizes } from "../Charts/TimeChart/getTimechartBinSize";
 import type { TimeChartLayer } from "../Charts/TimeChart/TimeChart";
 import { TimeChart } from "../Charts/TimeChart/TimeChart";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import RTComp from "../RTComp";
+import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import RTComp, { type DeltaOf, type DeltaOfData } from "../RTComp";
 import type { LayerBase } from "../W_Map/W_Map";
 import type { ActiveRow } from "../W_Table/W_Table";
 import Window from "../Window";
-import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
+import { ChartLayerManager } from "../WindowControls/ChartLayerManager/ChartLayerManager";
 import { AddTimeChartFilter } from "./AddTimeChartFilter";
 import { fetchAndSetTimechartLayerData } from "./fetchData/fetchAndSetTimechartLayerData";
 import { getTimeChartLayerQueries } from "./fetchData/getTimeChartLayers";
 import type { TimeChartLayerWithBinOrError } from "./fetchData/getTimeChartLayersWithBins";
+import { getTimeChartSelectDate } from "./fetchData/getTimeChartSelectParams";
 import { W_TimeChartLayerLegend } from "./W_TimeChartLayerLegend";
 import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
-import { FlexRow } from "@components/Flex";
-import type { DBSSchema } from "@common/publishUtils";
-import { getTimeChartSelectDate } from "./fetchData/getTimeChartSelectParams";
 
-type ChartColumn = Extract<
+export type TimeChartLinkOptions = Extract<
   DBSSchema["links"]["options"],
   { type: "timechart" }
 >;
+
+type LinkDataOptions =
+  | Extract<TimeChartLinkOptions["dataSource"], { type: "sql" }>
+  | (Extract<TimeChartLinkOptions["dataSource"], { type: "table" }> & {
+      tableName: string;
+      externalFilters: AnyObject[];
+    })
+  | Extract<TimeChartLinkOptions["dataSource"], { type: "local-table" }>;
+
 export type ProstglesTimeChartLayer = Pick<
   LayerBase,
   "_id" | "linkId" | "disabled"
@@ -53,27 +59,14 @@ export type ProstglesTimeChartLayer = Pick<
   statType:
     | {
         funcName: Required<
-          ChartColumn["columns"][number]
+          TimeChartLinkOptions["columns"][number]
         >["statType"]["funcName"];
         numericColumn: string;
       }
     | undefined;
   color?: string;
   updateOptions: (newOptions: Partial<ProstglesTimeChartLayer>) => Promise<any>;
-} & (
-    | {
-        type: "sql";
-        sql: string;
-        withStatement: string;
-      }
-    | {
-        type: "table";
-        tableName: string;
-        path: ParsedJoinPath[] | undefined;
-        externalFilters: AnyObject[];
-        tableFilter?: AnyObject;
-      }
-  );
+} & LinkDataOptions;
 
 export type ProstglesTimeChartProps = Omit<CommonWindowProps, "w"> & {
   onClickRow: (
@@ -99,8 +92,8 @@ export type ProstglesTimeChartStateLayer = Omit<TimeChartLayer, "yScale"> & {
 
 export type ProstglesTimeChartState = {
   loading: boolean;
-  wSync: any;
-  error?: any;
+  wSync: SingleSyncHandles<Required<WindowData<"timechart">>, true> | null;
+  error?: unknown;
   layers: ProstglesTimeChartStateLayer[];
   erroredLayers?: TimeChartLayerWithBinOrError[];
   columns: any[];
@@ -144,10 +137,10 @@ export class W_TimeChart extends RTComp<
     columns: [],
   };
 
-  async onMount() {
+  onMount() {
     const { w } = this.props;
     if (!this.state.wSync) {
-      const wSync = await w.$cloneSync((w, delta) => {
+      const wSync = w.$cloneSync((w, delta) => {
         this.setData({ w }, { w: delta });
       });
 
@@ -156,11 +149,18 @@ export class W_TimeChart extends RTComp<
   }
 
   onUnmount() {
-    this.state.wSync?.$unsync?.();
+    this.state.wSync?.$unsync();
+    Object.values(this.layerSubscriptions).forEach(({ sub }) => {
+      void sub?.unsubscribe();
+    });
   }
 
-  onDelta = (dp, ds, dd) => {
-    const deltaKeys = getKeys({ ...dp, ...ds, ...dd });
+  onDelta(
+    dp: DeltaOf<ProstglesTimeChartProps>,
+    ds: DeltaOf<ProstglesTimeChartState>,
+    dd: DeltaOfData<D>,
+  ): void {
+    const deltaKeys = getKeys({ ...dp!, ...ds!, ...dd! });
     const filterChanged = dd?.w?.options && "filter" in dd.w.options;
     if (
       filterChanged ||
@@ -176,13 +176,13 @@ export class W_TimeChart extends RTComp<
         ] as const
       ).find((k) => deltaKeys.includes(k))
     ) {
-      this.setLayerData();
+      void this.setLayerData();
     }
 
     if (filterChanged) {
       this.props.onForceUpdate();
     }
-  };
+  }
 
   d: D = {
     lCols: {},
@@ -222,7 +222,7 @@ export class W_TimeChart extends RTComp<
   dataStr?: string;
   setLayerData = fetchAndSetTimechartLayerData.bind(this);
 
-  settingExtent: any;
+  settingExtent: NodeJS.Timeout | null = null;
   private visibleDataExtent?: DateExtent;
   private viewPortExtent?: DateExtent;
   setVisibleExtent(
@@ -252,6 +252,10 @@ export class W_TimeChart extends RTComp<
 
   getMenu = (w: WindowSyncItem<"timechart">) => {
     return <ProstglesTimeChartMenu w={w} autoBinSize={this.state.binSize} />;
+  };
+
+  onColorLegendChanged = () => {
+    this.setData({ dataAge: Date.now() });
   };
 
   addingFilter = createReactiveState<
@@ -336,13 +340,6 @@ export class W_TimeChart extends RTComp<
           asMenuBtn={{}}
           layerQueries={layerQueries}
         />
-        {/* {loadingLayers && 
-        <Loading 
-          className="m-auto f-1" 
-          delay={1500} 
-          variant="cover" 
-        />
-      } */}
         {errorPopup}
         <Btn
           title="Reset extent"
@@ -363,9 +360,7 @@ export class W_TimeChart extends RTComp<
           {...this.props}
           layers={layers}
           layerQueries={this.layerQueries}
-          onChanged={() => {
-            this.setData({ dataAge: Date.now() });
-          }}
+          onChanged={this.onColorLegendChanged}
         />
       </FlexRow>
     );
@@ -427,6 +422,7 @@ export class W_TimeChart extends RTComp<
             chartRef={(ref) => {
               this.chartRef = ref;
             }}
+            yAxisScaleMode={w.options.yScaleMode}
             onExtentChanged={(extent, viewPort, opts) => {
               if (opts.resetExtent) {
                 resetExtent();

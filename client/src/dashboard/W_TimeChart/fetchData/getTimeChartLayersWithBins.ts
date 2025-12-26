@@ -15,6 +15,10 @@ import {
   getTimechartBinSize,
   type DateExtent,
 } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
+import {
+  getSmartGroupFilter,
+  getTableFilterFromDetailedGroupFilter,
+} from "@common/filterUtils";
 
 export const getTimeChartFilters = (
   w: WindowData<"timechart"> | WindowSyncItem<"timechart">,
@@ -30,7 +34,7 @@ export const getTimeChartFilters = (
 
 export type TimeChartLayerWithBinError = ProstglesTimeChartLayer & {
   hasError: true;
-  error: any;
+  error: unknown;
   request?: undefined;
 };
 export type TimeChartLayerWithBin = ProstglesTimeChartLayer & {
@@ -63,9 +67,12 @@ async function getTimeChartLayerWithBin(
   const dataSignature = getTimeLayerDataSignature(layer, w, [extentFilter]);
   const layerSubscription = this.layerSubscriptions[layer._id];
   if (layerSubscription) layerSubscription.isLoading = true;
-  if (layer.type === "table") {
-    const { dateColumn, externalFilters, tableFilter, path } = layer;
-    const tableName = path?.length ? path.at(-1)!.table : layer.tableName;
+  if (layer.type === "table" || layer.type === "local-table") {
+    const tableName =
+      layer.type === "table" ?
+        (layer.joinPath?.at(-1)?.table ?? layer.tableName)
+      : layer.localTableName;
+    const { dateColumn } = layer;
 
     const tableHandler = db[tableName];
     if (!tableHandler?.findOne || !tableHandler.find) {
@@ -77,11 +84,13 @@ async function getTimeChartLayerWithBin(
     // extentFilter = getExtentFilter(extent, dateColumn);
 
     /** Subscribe */
+    const externalFilters =
+      layer.type === "table" ? layer.externalFilters
+      : !layer.smartGroupFilter ? []
+      : [getTableFilterFromDetailedGroupFilter(layer.smartGroupFilter)];
     const timeChartFilters = getTimeChartFilters(w, dateColumn);
     const tableFilters = {
-      $and: [...externalFilters, ...timeChartFilters, tableFilter].filter(
-        isDefined,
-      ),
+      $and: [...externalFilters, ...timeChartFilters].filter(isDefined),
     };
     const existingSubscription = this.layerSubscriptions[layer._id];
     const realtimeOpts = w.options.refresh;
@@ -107,6 +116,11 @@ async function getTimeChartLayerWithBin(
                 throttle: +realtimeOpts.throttleSeconds * 1000,
               },
               () => {
+                if (!this.mounted) {
+                  void this.layerSubscriptions[layer._id]?.sub?.unsubscribe();
+                  console.error("TOOD: refactor w_timechart to hooks");
+                  return;
+                }
                 const now = Date.now();
                 const prevAge =
                   this.layerSubscriptions[layer._id]?.latestDataAge;
@@ -190,11 +204,12 @@ async function getTimeChartLayerWithBin(
       { dateColumn },
       { returnType: "rows" },
     );
-    if (!rows.length) {
+    const [firstRow] = rows;
+    if (!firstRow) {
       console.warn("No min max");
+      return;
     }
-    const minMaxDateStr = rows[0] ?? {};
-    // const bin = optsBinSize ?? getTimechartBinSize({ minDate: new Date(min), maxDate: new Date(max)}, extent, bin_count).key;
+    const minMaxDateStr = firstRow as { min: number; max: number };
     const min = new Date(minMaxDateStr.min);
     const max = new Date(minMaxDateStr.max);
 

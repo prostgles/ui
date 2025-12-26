@@ -1,3 +1,8 @@
+import type { DetailedFilter } from "@common/filterUtils";
+import { isJoinedFilter } from "@common/filterUtils";
+import Btn, { type BtnProps } from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow, FlexRowWrap, classOverride } from "@components/Flex";
 import {
   mdiTableColumn,
   mdiTableRow,
@@ -6,12 +11,7 @@ import {
 } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
-import { isJoinedFilter } from "@common/filterUtils";
 import type { PrglCore } from "../../App";
-import Btn, { type BtnProps } from "@components/Btn";
-import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol, FlexRow, FlexRowWrap, classOverride } from "@components/Flex";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { SmartAddFilter } from "../SmartFilter/SmartAddFilter";
 import type {
@@ -46,11 +46,11 @@ export type SmartFilterBarProps = PrglCore & {
         w: WindowSyncItem<"table"> | WindowSyncItem<"card">;
       }
     | {
-        filter?: SmartGroupFilter;
-        having?: SmartGroupFilter;
+        filter?: DetailedFilter[];
+        having?: DetailedFilter[];
         table_name: string;
-        onChange: (newFilter: SmartGroupFilter, isAggregate?: boolean) => any;
-        onHavingChange?: (newFilter: SmartGroupFilter) => any;
+        onChange: (newFilter: DetailedFilter[], isAggregate?: boolean) => any;
+        onHavingChange?: (newFilter: DetailedFilter[]) => any;
 
         onSortChange: undefined | ((newSort: ColumnSort | undefined) => void);
         sort?: ColumnSort;
@@ -163,7 +163,7 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
   );
 };
 
-const toggleAllFilters = (filters: SimpleFilter[], minimised?: boolean) => {
+const toggleAllFilters = (filters: DetailedFilter[], minimised?: boolean) => {
   const someFiltersExpanded = minimised ?? filters.some((f) => !f.minimised);
 
   return filters.map((f) => {

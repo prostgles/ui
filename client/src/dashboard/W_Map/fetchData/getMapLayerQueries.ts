@@ -5,13 +5,14 @@ import type {
   LinkSyncItem,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
-import { PALETTE, windowIs } from "../../Dashboard/dashboardUtils";
+import { windowIs } from "../../Dashboard/dashboardUtils";
 import type { CrossFilters } from "../../joinUtils";
 import { getCrossFilters } from "../../joinUtils";
 import type { LayerOSM, LayerQuery, LayerSQL, LayerTable } from "../W_Map";
 import type { ActiveRow } from "../../W_Table/W_Table";
 import type { DeckGlColor } from "../../Map/DeckGLMap";
 import { getSmartGroupFilter } from "@common/filterUtils";
+import { PALETTE } from "src/dashboard/Dashboard/PALETTE";
 
 type Args = {
   links: LinkSyncItem[];
@@ -30,17 +31,21 @@ export const getLinkColorV2 = (l?: Link, opacity?: number) => {
   return getLinkColor(colorArr, opacity);
 };
 
-export const getLinkColor = (value: number[] | undefined, opacity?: number) => {
+export const getLinkColor = (
+  colorValue: number[] | undefined,
+  opacity?: number,
+) => {
+  const value = colorValue as [number, number, number, number] | undefined;
   const parseVal = (v: number) => {
     if (typeof v === "number" && v >= 0 && v <= 255) return v;
     return 99;
   };
-  const defaultVal = PALETTE.c1.get(1, "deck");
+  const defaultVal = PALETTE.c1.getDeckRGBA();
   const colorArrRaw = value ?? defaultVal;
-  const colorArrParsed = colorArrRaw.map(parseVal);
+  const colorArrParsed = colorArrRaw.map(parseVal) as typeof colorArrRaw;
   const [r, g, b, a] = colorArrParsed;
   const colorOpacity =
-    Number.isFinite(opacity) ? opacity
+    Number.isFinite(opacity) ? opacity!
     : Number.isFinite(a) ? a
     : 1;
   const colorArr: DeckGlColor = [r, g, b, colorOpacity * 255];

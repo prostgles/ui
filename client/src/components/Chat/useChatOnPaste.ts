@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { tryCatchV2 } from "../../dashboard/WindowControls/TimeChartLayerOptions";
+import { tryCatchV2 } from "prostgles-types";
 import { fixIndent } from "../../demo/scripts/sqlVideoDemo";
 
 export const useChatOnPaste = ({

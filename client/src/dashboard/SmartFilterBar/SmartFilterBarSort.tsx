@@ -56,7 +56,7 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
         value={orderByKey}
         fullOptions={orderableFields.map((f) => ({
           key: f.name,
-          label: f.label || f.name,
+          label: "label" in f ? f.label || f.name : f.name,
         }))}
         onChange={(orderByKey) => {
           setSort(orderByKey, orderAsc);

@@ -1,7 +1,4 @@
-import {
-  getSmartGroupFilter,
-  type SmartGroupFilter,
-} from "@common/filterUtils";
+import { getSmartGroupFilter, type DetailedFilter } from "@common/filterUtils";
 import { isObject } from "@common/publishUtils";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import {
@@ -23,7 +20,7 @@ type Args = {
   db: DBHandlerClient;
   tableName: string;
   columns: Pick<ValidatedColumnInfo, "name" | "is_pkey" | "udt_name">[];
-  detailedFilter: SmartGroupFilter;
+  detailedFilter: DetailedFilter[];
   extraFilters: AnyObject[] | undefined;
   column?: string | ColumnConfig | undefined;
   selectedColumns: ColumnConfig[] | undefined;

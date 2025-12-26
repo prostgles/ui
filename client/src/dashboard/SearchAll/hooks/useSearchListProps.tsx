@@ -16,7 +16,7 @@ import type { SearchAllState } from "./useSearchAllState";
 import type { MethodFullDef } from "prostgles-types";
 import type { useSearchTables } from "./useSearchTables";
 import { SearchMatchRow } from "../SearchMatchRow";
-import type { SimpleFilter } from "@common/filterUtils";
+import type { DetailedFilter } from "@common/filterUtils";
 
 export const useSearchAllListProps = ({
   mode,
@@ -163,7 +163,7 @@ export const useSearchAllListProps = ({
           </div>
         ),
         onPress: () => {
-          const filter: SimpleFilter[] = [];
+          const filter: DetailedFilter[] = [];
           if (m.colName) {
             filter.push({
               fieldName: m.colName,

@@ -17,6 +17,7 @@
 		"skipLibCheck": true,
 		"noUncheckedIndexedAccess": true,
 		"baseUrl": ".",
+		"noImplicitAny": false,
 		"paths": {
 			"@common/*": [
 				"../common/*"

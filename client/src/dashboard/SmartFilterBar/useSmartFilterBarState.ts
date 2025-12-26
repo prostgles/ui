@@ -1,8 +1,8 @@
+import type { DetailedFilter } from "@common/filterUtils";
 import { useMemo, useState } from "react";
-import type { SmartFilterBarProps } from "./SmartFilterBar";
 import { IsTable, type WindowSyncItem } from "../Dashboard/dashboardUtils";
-import type { SimpleFilter, SmartGroupFilter } from "@common/filterUtils";
 import type { Operand } from "../SmartFilter/SmartFilter";
+import type { SmartFilterBarProps } from "./SmartFilterBar";
 
 export const useSmartFilterBarState = (props: SmartFilterBarProps) => {
   const [colFilterLayout, setColFilterLayout] = useState(false);
@@ -28,12 +28,12 @@ export const useSmartFilterBarState = (props: SmartFilterBarProps) => {
         (having) => {
           props.w.$update({ having }, { deepMerge: true });
         }
-      : (havingFilter: SmartGroupFilter) => {
+      : (havingFilter: DetailedFilter[]) => {
           props.onHavingChange?.(havingFilter);
         };
     const onFilterChange = (
-      filter: SmartGroupFilter,
-      addedFilter?: SimpleFilter,
+      filter: DetailedFilter[],
+      addedFilter?: DetailedFilter,
       isAggregate?: boolean,
     ) => {
       if (isAggregate && addedFilter) {
@@ -52,8 +52,8 @@ export const useSmartFilterBarState = (props: SmartFilterBarProps) => {
       "w" in props ? props.w : undefined;
     const selectedColumns = "w" in props ? w?.columns : props.columns;
 
-    const filter: SmartGroupFilter = _fltr.map((f) => ({ ...f }));
-    const having: SmartGroupFilter = _having.map((f) => ({ ...f }));
+    const filter: DetailedFilter[] = _fltr.map((f) => ({ ...f }));
+    const having: DetailedFilter[] = _having.map((f) => ({ ...f }));
 
     const filterLayoutClass = colFilterLayout ? "flex-col" : "flex-row-wrap";
     const hasFilters = !!filter.length;

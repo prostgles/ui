@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { tryCatchV2 } from "src/dashboard/WindowControls/TimeChartLayerOptions";
+import { tryCatchV2 } from "prostgles-types";
 
 export const Favicon = ({ url }: { url: string }) => {
   const faviconUrl = useMemo(

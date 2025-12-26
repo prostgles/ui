@@ -1,13 +1,12 @@
 import { toFixed } from "src/app/domToSVG/utils/toFixed";
+import { asRGB } from "src/utils/colorUtils";
+import { hashCode } from "src/utils/hashCode";
 import type { SVGContext } from "../../../app/domToSVG/containers/elementToSVG";
 import { addImageFromDataURL } from "../../../app/domToSVG/graphics/imgToSVG";
 import type { Point } from "../../Charts";
 import type { LinkLine, Rectangle } from "../CanvasChart";
 import { DEFAULT_SHADOW } from "../roundRect";
 import type { ShapeV2 } from "./drawShapes";
-import { isDefined } from "@common/filterUtils";
-import { asRGB } from "src/utils/colorUtils";
-import { hashCode } from "src/utils/hashCode";
 import { getTimechartGradientPeakSections } from "./getTimechartGradientPeakSections";
 
 export const drawShapesOnSVG = (
@@ -144,37 +143,10 @@ export const drawShapesOnSVG = (
 
       g.appendChild(circleElement);
     } else if (s.type === "multiline") {
-      // const pathElement = createSvgElement("path");
-
-      // if (s.variant === "smooth" && s.coords.length > 2) {
-      //   pathElement.setAttribute("d", drawSvgMonotoneXCurve(s.coords));
-      // } else {
-      //   let pathData = "";
-      //   s.coords.forEach((point, i) => {
-      //     const [x, y] = point.map((v) => toFixed(v)) as typeof point;
-      //     if (i === 0) {
-      //       pathData = `M ${x},${y}`;
-      //     } else {
-      //       pathData += ` L ${x},${y}`;
-      //     }
-      //   });
-      //   pathElement.setAttribute("d", pathData);
-      // }
-
-      // pathElement.setAttribute("fill", "none");
-      // if (s.strokeStyle) {
-      //   pathElement.setAttribute("stroke", s.strokeStyle);
-      // }
-      // if (s.lineWidth) {
-      //   pathElement.setAttribute("stroke-width", s.lineWidth.toString());
-      // }
-      // pathElement.setAttribute("opacity", opacity.toString());
-      // pathElement.setAttribute("stroke-linecap", "round");
-
-      // g.appendChild(pathElement);
       if (s.withGradient && s.coords.length > 2) {
-        const { peakSections, minY, gradientLastStep } =
-          getTimechartGradientPeakSections(s.coords, height);
+        const { peakSections, minY, stops } = getTimechartGradientPeakSections(
+          s.coords,
+        );
         peakSections.forEach((sectionCoords) => {
           if (sectionCoords.length < 2) return;
 
@@ -198,13 +170,6 @@ export const drawShapesOnSVG = (
 
           const rgba = asRGB(s.strokeStyle);
           const rgb = rgba.slice(0, 3).join(", ");
-
-          const stops = [
-            { offset: "0", opacity: "0.4" },
-            { offset: "0.1", opacity: "0.2" },
-            { offset: "0.2", opacity: "0.1" },
-            { offset: gradientLastStep.toString(), opacity: "0" },
-          ];
 
           stops.forEach(({ offset, opacity: stopOpacity }) => {
             const stopElement = createSvgElement("stop");

@@ -6,7 +6,10 @@ import { CellBarchart } from "@components/ProgressBar";
 import type { OnColRenderRowInfo } from "@components/Table/Table";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
-import type { ChipStyle, ColumnValue } from "../ColumnMenu/ColumnStyleControls";
+import type {
+  ChipStyle,
+  ColumnValue,
+} from "../ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 import { kFormatter, type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";

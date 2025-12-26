@@ -17,7 +17,7 @@ import type {
   OnAddChart,
   WindowData,
 } from "../../Dashboard/dashboardUtils";
-import { getRandomColor } from "../../Dashboard/dashboardUtils";
+import { getRandomColor } from "../../Dashboard/PALETTE";
 import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 import type { ChartColumn, ColInfo } from "./getChartCols";
@@ -92,12 +92,14 @@ export const AddChartMenu = (props: P) => {
       joinPath ?
         `${[tableName, ...joinPath.slice(0).map((p) => p.table)].join(" > ")} ${columnList}`
       : `${tableName || ""} ${columnList}`;
-    const usedColors = myLinks.flatMap((l) =>
-      l.options.type !== "table" ?
-        l.options.columns.map((c) => c.colorArr)
-      : undefined,
-    );
-    const colorArr = getRandomColor(1, "deck", usedColors);
+    const usedColors = myLinks
+      .flatMap((l) =>
+        l.options.type !== "table" ?
+          l.options.columns.map((c) => c.colorArr)
+        : undefined,
+      )
+      .filter(isDefined);
+    const colorArr = getRandomColor(1, usedColors);
     const type = linkOpts.type;
     onAddChart({
       name,

@@ -1,4 +1,4 @@
-import type { SimpleFilter } from "@common/filterUtils";
+import type { DetailedFilter } from "@common/filterUtils";
 import Popup from "@components/Popup/Popup";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React from "react";
@@ -33,7 +33,7 @@ export type SearchAllSuggestion = Pick<
 export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables"> & {
   suggestions: SQLSuggestion[] | undefined;
   onClose: () => void;
-  onOpen: (arg: { table: string; filter: SimpleFilter[] }) => void;
+  onOpen: (arg: { table: string; filter: DetailedFilter[] }) => void;
   onOpenDBObject: (
     suggestion: SearchAllSuggestion | undefined,
     method_name?: string,
