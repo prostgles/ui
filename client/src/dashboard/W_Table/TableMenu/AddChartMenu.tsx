@@ -144,7 +144,6 @@ export const AddChartMenu = (props: P) => {
               colorArr,
             })),
           }),
-        joinPath,
         dataSource:
           sql ?
             {
@@ -154,9 +153,9 @@ export const AddChartMenu = (props: P) => {
             }
           : {
               type: "table",
+              tableName: w.table_name!,
               joinPath,
             },
-        sql,
       },
     });
   };
@@ -219,9 +218,13 @@ export const AddChartMenu = (props: P) => {
               }
 
               const linkColumns = linkOpts.columns.map((col) => col.name);
+              const linkSql =
+                linkOpts.dataSource?.type === "sql" ?
+                  linkOpts.dataSource.sql
+                : undefined;
               const matches =
                 linkOpts.type === c.label.toLowerCase() &&
-                ((w.type === "sql" && sql?.trim() === linkOpts.sql?.trim()) ||
+                ((w.type === "sql" && sql?.trim() === linkSql?.trim()) ||
                   (w.type === "table" &&
                     c.cols.some((col) => linkColumns.includes(col.name))));
               if (matches) {

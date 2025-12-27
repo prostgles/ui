@@ -3,16 +3,18 @@ import type { LinkSyncItem } from "src/dashboard/Dashboard/dashboardUtils";
 import type { LayerQuery } from "src/dashboard/W_Map/W_Map";
 import type { ProstglesTimeChartLayer } from "src/dashboard/W_TimeChart/W_TimeChart";
 
-type Args<T extends ProstglesTimeChartLayer | LayerQuery> = {
-  layerQueries: T[];
+type Args<T extends ProstglesTimeChartLayer[] | LayerQuery[]> = {
+  layerQueries: T;
   myLinks: LinkSyncItem[];
 };
 export const useSortedLayerQueries = <
-  T extends ProstglesTimeChartLayer | LayerQuery,
+  T extends ProstglesTimeChartLayer[] | LayerQuery[],
 >({
   layerQueries,
   myLinks,
-}: Args<T>) => {
+}: Args<T>): (T[number] & {
+  link: LinkSyncItem;
+})[] => {
   return layerQueries
     .map((lq) => {
       const link = myLinks.find((l) => l.id === lq.linkId);

@@ -80,7 +80,15 @@ export default defineConfig(
       "no-empty": "off",
       "@typescript-eslint/only-throw-error": "off",
       "@typescript-eslint/prefer-promise-reject-errors": "off",
-      "@typescript-eslint/restrict-template-expressions": "warn",
+      "@typescript-eslint/restrict-template-expressions": [
+        "warn",
+        {
+          allowNumber: true,
+          allowBoolean: true,
+          allowNullish: true,
+          allowArray: true,
+        },
+      ],
       "@typescript-eslint/no-misused-promises": [
         "warn",
         { checksVoidReturn: false },

@@ -2,13 +2,13 @@ import React from "react";
 import { FlexRow } from "@components/Flex";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { useSortedLayerQueries } from "../WindowControls/ChartLayerManager/useSortedLayerQueries";
+import { useSortedLayerQueries } from "../WindowControls/DataLayerManager/useSortedLayerQueries";
 import { ColorByLegend } from "../WindowControls/ColorByLegend/ColorByLegend";
 import { LayerColorPicker } from "../WindowControls/LayerColorPicker";
 import { TimeChartLayerOptions } from "../WindowControls/TimeChartLayerOptions";
 import type {
   ProstglesTimeChartLayer,
-  ProstglesTimeChartStateLayer,
+  W_TimeChartStateLayer,
 } from "./W_TimeChart";
 import Btn from "@components/Btn";
 import { mdiClose } from "@mdi/js";
@@ -16,7 +16,7 @@ import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 type P = Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl"> & {
   layerQueries: ProstglesTimeChartLayer[];
-  layers: ProstglesTimeChartStateLayer[];
+  layers: W_TimeChartStateLayer[];
   onChanged: VoidFunction;
   w: WindowSyncItem<"timechart">;
 };
@@ -53,7 +53,6 @@ export const W_TimeChartLayerLegend = ({
                   myLinks={myLinks}
                   tables={tables}
                   w={w}
-                  getLinksAndWindows={props.getLinksAndWindows}
                 />
               )}
 

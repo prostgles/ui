@@ -1,6 +1,6 @@
+import { getFinalFilter } from "@common/filterUtils";
 import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import { reverseParsedPath } from "prostgles-types";
-import { getFinalFilter } from "@common/filterUtils";
 import { isDefined, quickClone } from "../utils/utils";
 import type {
   Link,
@@ -10,7 +10,6 @@ import type {
 import W_Map from "./W_Map/W_Map";
 import type { ActiveRow } from "./W_Table/W_Table";
 import { getTimeChartFilters } from "./W_TimeChart/fetchData/getTimeChartLayersWithBins";
-import { clone } from "./SQLEditor/SQLCompletion/MatchInsert";
 
 type SyncWindow =
   | WindowSyncItem<"table">
@@ -69,7 +68,9 @@ export const getJoinFilters = (
           reverseToTable: string | undefined,
         ) => {
           if (l.options.type === "map" || l.options.type === "timechart") {
-            const { joinPath } = l.options;
+            const { dataSource } = l.options;
+            const joinPath =
+              dataSource?.type === "table" ? dataSource.joinPath : undefined;
             if (joinPath?.length || previousPath.length) {
               const parsedPath =
                 !joinPath ? []

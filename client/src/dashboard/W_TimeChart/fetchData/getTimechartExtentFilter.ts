@@ -1,6 +1,6 @@
 import type { AnyObject } from "prostgles-types";
 import { SECOND } from "../../Charts";
-import type { ProstglesTimeChartState } from "../W_TimeChart";
+import type { W_TimeChartState } from "../W_TimeChart";
 import { TIMECHART_FIELD_NAMES } from "./constants";
 
 export type TimechartExtentFilter = {
@@ -9,7 +9,7 @@ export type TimechartExtentFilter = {
 };
 
 export const getTimechartExtentFilter = (
-  state: Pick<ProstglesTimeChartState, "viewPortExtent" | "visibleDataExtent">,
+  state: Pick<W_TimeChartState, "viewPortExtent" | "visibleDataExtent">,
   binSize: number | undefined,
 ): TimechartExtentFilter | undefined => {
   const { visibleDataExtent, viewPortExtent } = state;

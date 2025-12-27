@@ -376,6 +376,29 @@ export const setTableRule = async (
 ) => {
   const tableRow = await page.locator(getDataKey(tableName));
 
+  const addSmartFilter = async ({
+    fieldName,
+    value,
+  }: {
+    fieldName: string;
+    value: string;
+  }) => {
+    await page.getByTestId("SmartAddFilter").click();
+    await page.locator(getDataKey(fieldName)).click();
+    const filterWrapperSelector = `${getTestId("FilterWrapper")}${getDataKey(fieldName)}`;
+    await page
+      .locator(filterWrapperSelector)
+      .getByTestId("FilterWrapper.typeSelect")
+      .click();
+    await page.locator(getDataKey("=")).click();
+    await page
+      .locator(`${filterWrapperSelector} input[type="text"]`)
+      .fill(value);
+    await page.waitForTimeout(500);
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(200);
+  };
+
   const setForcedFilter = async (forcedFilter?: FFilter) => {
     if (!forcedFilter) return;
 
@@ -383,15 +406,7 @@ export const setTableRule = async (
     await page.getByTestId("ForcedFilterControl.type.enabled").click();
 
     for (const { fieldName, value } of forcedFilter) {
-      await page.getByTestId("SmartAddFilter").click();
-      await page.locator(getDataKey(fieldName)).click();
-      await page
-        .getByTestId("FilterWrapper")
-        .locator(`input#search-all`)
-        .type(value);
-      await page.waitForTimeout(500);
-      await page.keyboard.press("Enter");
-      await page.waitForTimeout(200);
+      await addSmartFilter({ fieldName, value });
     }
   };
 
@@ -424,14 +439,7 @@ export const setTableRule = async (
     await page.getByTestId("CheckFilterControl.type.enabled").click();
 
     for (const [fieldName, value] of Object.entries(forcedData)) {
-      await page.getByTestId("SmartAddFilter").click();
-      await page.locator(getDataKey(fieldName)).click();
-      await page
-        .locator(`${getTestId("FilterWrapper")}${getDataKey(fieldName)} input`)
-        .type(value);
-      await page.waitForTimeout(500);
-      await page.keyboard.press("Enter");
-      await page.waitForTimeout(200);
+      await addSmartFilter({ fieldName, value });
     }
   };
 

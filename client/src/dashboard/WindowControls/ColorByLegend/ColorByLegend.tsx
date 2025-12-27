@@ -12,7 +12,7 @@ import { isDefined } from "../../../utils/utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { ColorPicker } from "../../W_Table/ColumnMenu/ColorPicker";
 import { type ColumnValue } from "../../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
-import type { ProstglesTimeChartStateLayer } from "../../W_TimeChart/W_TimeChart";
+import type { W_TimeChartStateLayer } from "../../W_TimeChart/W_TimeChart";
 import { getGroupByValueColor } from "./getGroupByValueColor";
 
 type P = DivProps &
@@ -20,7 +20,7 @@ type P = DivProps &
     layerLinkId: string;
     groupByColumn: string;
     onChanged: VoidFunction;
-    layers: ProstglesTimeChartStateLayer[];
+    layers: W_TimeChartStateLayer[];
   };
 export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
   const { groupByColumn, layers } = props;

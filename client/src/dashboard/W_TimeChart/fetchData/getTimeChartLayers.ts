@@ -48,16 +48,14 @@ export const getTimeChartLayer = ({
         groupByColumn: lOpts.groupByColumn,
         statType,
         dateColumn,
-        updateOptions: (newOptions) =>
-          l.$update({ options: { ...lOpts, ...newOptions } }),
       } as const;
 
       const localTableName =
         dataSource?.type === "local-table" ?
           dataSource.localTableName
-        : lOpts.localTableName;
+        : undefined;
       const joinPath =
-        dataSource?.type === "table" ? dataSource.joinPath : lOpts.joinPath;
+        dataSource?.type === "table" ? dataSource.joinPath : undefined;
       if (parentWindow?.type === "table" || localTableName) {
         if (dataSource?.type === "local-table") {
           return {
@@ -87,15 +85,17 @@ export const getTimeChartLayer = ({
 
         return layer;
       } else if (parentWindow) {
+        const linkSql =
+          lOpts.dataSource?.type === "sql" ? lOpts.dataSource.sql : undefined;
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (parentWindow.type !== "sql" || !lOpts.sql) {
-          throw "Unexpected: wTable or table_name missing";
+        if (parentWindow.type !== "sql" || !linkSql) {
+          throw "Unexpected: sql/window missing";
         }
         // const latestW = tbl.$get();
         const layer: ProstglesTimeChartLayer = {
           ...commonOpts,
           type: "sql",
-          sql: lOpts.sql,
+          sql: linkSql,
           withStatement:
             lOpts.dataSource?.type === "sql" ?
               lOpts.dataSource.withStatement

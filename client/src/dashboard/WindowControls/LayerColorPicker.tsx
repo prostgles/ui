@@ -3,7 +3,7 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import React from "react";
 import type { LinkSyncItem, WindowData } from "../Dashboard/dashboardUtils";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
-import type { MapLayerManagerProps } from "./ChartLayerManager/ChartLayerManager";
+import type { MapLayerManagerProps } from "./DataLayerManager/DataLayerManager";
 import { MapLayerStyling } from "./MapLayerStyling";
 
 export type LayerColorPickerProps = {
@@ -15,7 +15,7 @@ export type LayerColorPickerProps = {
     | SyncDataItem<Required<WindowData<"timechart">>, true>
     | SyncDataItem<Required<WindowData<"map">>, true>;
   btnProps?: BtnProps;
-} & Pick<MapLayerManagerProps, "tables" | "w" | "getLinksAndWindows">;
+} & Pick<MapLayerManagerProps, "tables" | "w">;
 
 export const LayerColorPicker = ({
   link,
@@ -24,7 +24,6 @@ export const LayerColorPicker = ({
   title,
   tables,
   w,
-  getLinksAndWindows,
   btnProps,
 }: LayerColorPickerProps) => {
   if (link.options.type === "table") {
@@ -42,7 +41,6 @@ export const LayerColorPicker = ({
         link={link}
         tables={tables}
         w={w}
-        getLinksAndWindows={getLinksAndWindows}
         column={column}
         title={title}
       />

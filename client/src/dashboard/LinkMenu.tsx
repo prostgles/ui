@@ -129,11 +129,12 @@ export class LinkMenu extends RTComp<P, S> {
             if (l.options.type === "table") {
               return w.table_name!;
             } else {
+              const { dataSource } = l.options;
               const chartedColumnsLabel = l.options.columns.map((c) => c.name);
               const chartedTableLabel =
-                l.options.joinPath?.at(-1)?.table ??
-                w.table_name ??
-                otherW?.table_name;
+                dataSource?.type === "table" ?
+                  (dataSource.joinPath?.at(-1)?.table ?? dataSource.tableName)
+                : (w.table_name ?? otherW?.table_name);
               return `${chartedTableLabel} (${chartedColumnsLabel})`;
             }
           };
@@ -191,9 +192,10 @@ export class LinkMenu extends RTComp<P, S> {
             Math.abs(w1r.y - w2r.y) > Math.abs(w1r.x - w2r.x) ? "y" : "x";
 
           const parsedPath =
-            l.options.type === "table" ?
-              l.options.tablePath
-            : l.options.joinPath;
+            l.options.type === "table" ? l.options.tablePath
+            : l.options.dataSource?.type === "table" ?
+              l.options.dataSource.joinPath
+            : undefined;
           joinTextLines =
             parsedPath?.flatMap((p) => [
               {

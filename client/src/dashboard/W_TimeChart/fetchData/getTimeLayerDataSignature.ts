@@ -1,6 +1,5 @@
 import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
 import type { ProstglesTimeChartLayer } from "../W_TimeChart";
-import { omitKeys } from "prostgles-types";
 
 export const getTimeLayerDataSignature = (
   l: ProstglesTimeChartLayer,
@@ -9,13 +8,13 @@ export const getTimeLayerDataSignature = (
 ) => {
   if (l.type === "table") {
     return JSON.stringify({
-      ...omitKeys(l, ["updateOptions"]),
+      ...l,
       wopts: w.options,
       dependencies,
     });
   } else {
     return JSON.stringify({
-      ...omitKeys(l, ["updateOptions"]),
+      ...l,
       wopts: w.options,
       dependencies,
     });

@@ -177,6 +177,7 @@ export class FilterWrapper extends RTComp<
     const FilterTypeSelector = (
       <Select
         className="FilterWrapper_Type"
+        data-command="FilterWrapper.typeSelect"
         title="Choose filter type"
         iconPath=""
         fullOptions={allowedTypes.map((ft) => ({ ...ft }))}

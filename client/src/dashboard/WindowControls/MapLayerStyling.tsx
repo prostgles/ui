@@ -1,21 +1,15 @@
-import React from "react";
 import { FlexRow } from "@components/Flex";
 import { IconPalette } from "@components/IconPalette/IconPalette";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
+import React from "react";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import { ColorCircle, ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { LayerColorPickerProps } from "./LayerColorPicker";
 
 type P = Pick<
   LayerColorPickerProps,
-  | "link"
-  | "myLinks"
-  | "getLinksAndWindows"
-  | "tables"
-  | "w"
-  | "column"
-  | "title"
+  "link" | "myLinks" | "tables" | "w" | "column" | "title"
 > & {
   linkOptions: Extract<LinkSyncItem["options"], { type: "map" }>;
 };
@@ -24,18 +18,18 @@ export const MapLayerStyling = ({
   myLinks,
   link,
   tables,
-  getLinksAndWindows,
   column,
   title,
   w,
 }: P) => {
-  const otherW = getLinksAndWindows().windows.find(
-    (ow) => [link.w1_id, link.w2_id].includes(ow.id) && w.id !== ow.id,
-  );
-  const table = tables.find(
-    (t) => t.name === (opts.localTableName ?? otherW?.table_name),
-  );
-  const updateLink = (updates: Partial<LinkSyncItem["options"]>) => {
+  const { dataSource } = opts;
+  const tableName =
+    dataSource?.type === "table" ? dataSource.tableName
+    : dataSource?.type === "local-table" ? dataSource.localTableName
+    : undefined;
+  const table =
+    !tableName ? undefined : tables.find((t) => t.name === tableName);
+  const updateLink = (updates: Partial<typeof opts>) => {
     const thisLink = myLinks.find((l) => l.id === link.id);
     if (thisLink?.options.type !== "map") {
       throw new Error("Invalid map link type");

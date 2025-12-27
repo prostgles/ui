@@ -14,7 +14,7 @@ import { RenderFilter } from "../RenderFilter";
 import { getTableExpressionReturnType } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getTimeChartLayer } from "../W_TimeChart/fetchData/getTimeChartLayers";
 import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
-import type { MapLayerManagerProps } from "./ChartLayerManager/ChartLayerManager";
+import type { MapLayerManagerProps } from "./DataLayerManager/DataLayerManager";
 import { SQLChartLayerEditor } from "./SQLChartLayerEditor";
 
 type TimeChartLayerOptionsProps = Pick<

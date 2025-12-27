@@ -10,11 +10,15 @@ import { getRandomColor } from "../Dashboard/PALETTE";
 
 type P = {
   link: LinkSyncItem;
+  dataSource: Extract<
+    Extract<LinkSyncItem["options"], { type: "map" }>["dataSource"],
+    { type: "osm" }
+  >;
 };
-export const OSMLayerOptions = ({ link }: P) => {
+export const OSMLayerOptions = ({ link, dataSource }: P) => {
   const opts = link.options;
   if (opts.type !== "map") return null;
-  const query = opts.osmLayerQuery;
+  const query = dataSource.osmLayerQuery;
   if (!isDefined(query)) return null;
   return (
     <PopupMenu
@@ -39,7 +43,10 @@ export const OSMLayerOptions = ({ link }: P) => {
           link.$update(
             {
               options: {
-                osmLayerQuery,
+                dataSource: {
+                  ...dataSource,
+                  osmLayerQuery,
+                },
                 mapColorMode: {
                   type: "fixed",
                   colorArr: getRandomColor(1),

@@ -9,9 +9,9 @@ import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { getSQLQuerySemicolon } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getGroupByValueColor } from "../../WindowControls/ColorByLegend/getGroupByValueColor";
 import type {
-  ProstglesTimeChartProps,
-  ProstglesTimeChartState,
-  ProstglesTimeChartStateLayer,
+  W_TimeChartProps,
+  W_TimeChartState,
+  W_TimeChartStateLayer,
 } from "../W_TimeChart";
 import { TIMECHART_STAT_TYPES } from "../W_TimeChartMenu";
 import { TIMECHART_FIELD_NAMES } from "./constants";
@@ -24,10 +24,10 @@ import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechart
 import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 
 type getTChartLayerArgs = Pick<
-  ProstglesTimeChartState,
+  W_TimeChartState,
   "viewPortExtent" | "visibleDataExtent"
 > &
-  Pick<ProstglesTimeChartProps, "getLinksAndWindows" | "myLinks" | "tables"> & {
+  Pick<W_TimeChartProps, "getLinksAndWindows" | "myLinks" | "tables"> & {
     layer: TimeChartLayerWithBinOrError;
     bin: FetchedLayerData["binSize"];
     binSize: FetchedLayerData["binSize"] | "auto";
@@ -48,7 +48,7 @@ export async function fetchTimechartLayer({
   viewPortExtent,
   visibleDataExtent,
 }: getTChartLayerArgs): Promise<
-  undefined | ProstglesTimeChartStateLayer | ProstglesTimeChartStateLayer[]
+  undefined | W_TimeChartStateLayer | W_TimeChartStateLayer[]
 > {
   let rows: DataItem[] = [];
   let cols: TimeChartLayer["cols"] = [];
@@ -233,7 +233,7 @@ export async function fetchTimechartLayer({
   }
 
   const color = layer.color || "red";
-  const renderedLayer: ProstglesTimeChartStateLayer = {
+  const renderedLayer: W_TimeChartStateLayer = {
     color,
     getYLabel: getYLabelFunc("", !layer.statType),
     data: rows,

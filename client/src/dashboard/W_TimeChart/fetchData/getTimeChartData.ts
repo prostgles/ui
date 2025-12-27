@@ -4,8 +4,8 @@ import type {
   getMainTimeBinSizes,
 } from "../../Charts/TimeChart/getTimechartBinSize";
 import type {
-  ProstglesTimeChartState,
-  ProstglesTimeChartStateLayer,
+  W_TimeChartState,
+  W_TimeChartStateLayer,
   W_TimeChart,
 } from "../W_TimeChart";
 import { fetchTimechartLayer } from "./fetchTimechartLayer";
@@ -16,7 +16,7 @@ import {
   type TimeChartLayerWithBinOrError,
 } from "./getTimeChartLayersWithBins";
 
-type TChartLayer = ProstglesTimeChartState["layers"][number];
+type TChartLayer = W_TimeChartState["layers"][number];
 type TChartLayers = TChartLayer[];
 
 export type FetchedLayerData = {
@@ -144,7 +144,7 @@ export async function getTimeChartData(
 export const getYLabelFunc = (
   endText: string,
   asIs?: boolean,
-): ProstglesTimeChartStateLayer["getYLabel"] => {
+): W_TimeChartStateLayer["getYLabel"] => {
   return ({ value, min, max }) => {
     const result =
       Math.abs(min - max) > 1 || min === max || asIs ?

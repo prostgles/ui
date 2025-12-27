@@ -192,7 +192,7 @@ export const COMMANDS = {
   SearchAll: "",
   SmartAddFilter: "",
   FilterWrapper: "",
-
+  "FilterWrapper.typeSelect": "",
   FileBtn: "",
 
   "ForcedDataControl.toggle": "",

@@ -60,7 +60,11 @@ export const parseSqlResultCols = function (
           options: {
             ...l.options,
             columns: newCols,
-            sql,
+            dataSource: {
+              type: "sql",
+              sql,
+              withStatement: "",
+            },
           },
         });
       }

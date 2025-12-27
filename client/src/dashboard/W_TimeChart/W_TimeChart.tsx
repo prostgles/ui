@@ -22,7 +22,7 @@ import RTComp, { type DeltaOf, type DeltaOfData } from "../RTComp";
 import type { LayerBase } from "../W_Map/W_Map";
 import type { ActiveRow } from "../W_Table/W_Table";
 import Window from "../Window";
-import { ChartLayerManager } from "../WindowControls/ChartLayerManager/ChartLayerManager";
+import { DataLayerManager } from "../WindowControls/DataLayerManager/DataLayerManager";
 import { AddTimeChartFilter } from "./AddTimeChartFilter";
 import { fetchAndSetTimechartLayerData } from "./fetchData/fetchAndSetTimechartLayerData";
 import { getTimeChartLayerQueries } from "./fetchData/getTimeChartLayers";
@@ -65,10 +65,9 @@ export type ProstglesTimeChartLayer = Pick<
       }
     | undefined;
   color?: string;
-  updateOptions: (newOptions: Partial<ProstglesTimeChartLayer>) => Promise<any>;
 } & LinkDataOptions;
 
-export type ProstglesTimeChartProps = Omit<CommonWindowProps, "w"> & {
+export type W_TimeChartProps = Omit<CommonWindowProps, "w"> & {
   onClickRow: (
     row: AnyObject | undefined,
     tableName: string,
@@ -79,7 +78,7 @@ export type ProstglesTimeChartProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"timechart">;
 };
 
-export type ProstglesTimeChartStateLayer = Omit<TimeChartLayer, "yScale"> & {
+export type W_TimeChartStateLayer = TimeChartLayer & {
   extFilter:
     | {
         filter: any;
@@ -90,11 +89,11 @@ export type ProstglesTimeChartStateLayer = Omit<TimeChartLayer, "yScale"> & {
   dataSignature: string;
 };
 
-export type ProstglesTimeChartState = {
+export type W_TimeChartState = {
   loading: boolean;
   wSync: SingleSyncHandles<Required<WindowData<"timechart">>, true> | null;
   error?: unknown;
-  layers: ProstglesTimeChartStateLayer[];
+  layers: W_TimeChartStateLayer[];
   erroredLayers?: TimeChartLayerWithBinOrError[];
   columns: any[];
   xExtent?: [Date, Date];
@@ -111,21 +110,17 @@ type D = {
   extent?: DateExtent;
   w?: WindowSyncItem<"timechart">;
   lCols: {
-    [key: string]: ProstglesTimeChartProps["tables"][number]["columns"];
+    [key: string]: W_TimeChartProps["tables"][number]["columns"];
   };
   dataAge: number;
 };
 
-export class W_TimeChart extends RTComp<
-  ProstglesTimeChartProps,
-  ProstglesTimeChartState,
-  D
-> {
+export class W_TimeChart extends RTComp<W_TimeChartProps, W_TimeChartState, D> {
   refHeader?: HTMLDivElement;
   refResize?: HTMLElement;
   ref?: HTMLElement;
 
-  state: ProstglesTimeChartState = {
+  state: W_TimeChartState = {
     resetExtent: 0,
     xExtent: undefined,
     visibleDataExtent: undefined,
@@ -156,8 +151,8 @@ export class W_TimeChart extends RTComp<
   }
 
   onDelta(
-    dp: DeltaOf<ProstglesTimeChartProps>,
-    ds: DeltaOf<ProstglesTimeChartState>,
+    dp: DeltaOf<W_TimeChartProps>,
+    ds: DeltaOf<W_TimeChartState>,
     dd: DeltaOfData<D>,
   ): void {
     const deltaKeys = getKeys({ ...dp!, ...ds!, ...dd! });
@@ -226,7 +221,7 @@ export class W_TimeChart extends RTComp<
   private visibleDataExtent?: DateExtent;
   private viewPortExtent?: DateExtent;
   setVisibleExtent(
-    data: ProstglesTimeChartState["visibleDataExtent"],
+    data: W_TimeChartState["visibleDataExtent"],
     viewPort: DateExtent,
   ) {
     this.visibleDataExtent = data;
@@ -333,7 +328,7 @@ export class W_TimeChart extends RTComp<
           zIndex: 1,
         }}
       >
-        <ChartLayerManager
+        <DataLayerManager
           {...this.props}
           w={w}
           type="timechart"
@@ -365,8 +360,12 @@ export class W_TimeChart extends RTComp<
       </FlexRow>
     );
 
-    const content = (
-      <>
+    return (
+      <Window
+        w={w}
+        getMenu={this.getMenu}
+        layoutMode={workspace.layout_mode ?? "editable"}
+      >
         <div
           ref={(r) => {
             if (r) this.menuAnchor = r;
@@ -481,16 +480,6 @@ export class W_TimeChart extends RTComp<
             binSize={binSize}
           />
         </div>
-      </>
-    );
-
-    return (
-      <Window
-        w={w}
-        getMenu={this.getMenu}
-        layoutMode={workspace.layout_mode ?? "editable"}
-      >
-        {content}
       </Window>
     );
   }

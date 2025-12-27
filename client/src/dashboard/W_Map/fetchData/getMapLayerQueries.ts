@@ -70,7 +70,8 @@ export const getMapLayerQueries = ({
       const lOpts = l.options;
       if (
         lOpts.type !== "map" ||
-        (!lOpts.columns.length && !lOpts.osmLayerQuery)
+        (!lOpts.columns.length &&
+          (lOpts.dataSource?.type !== "osm" || !lOpts.dataSource.osmLayerQuery))
       ) {
         throw "columns/OSM query missing from link";
       }
@@ -88,17 +89,17 @@ export const getMapLayerQueries = ({
         lOpts.dataSource?.type === "table" ?
           lOpts.dataSource.joinPath
         : undefined;
-      const joinEndTable = (_joinEndTable ?? lOpts.joinPath)?.at(-1);
+      const joinEndTable = _joinEndTable?.at(-1);
       const _localTableName =
         lOpts.dataSource?.type === "local-table" ?
           lOpts.dataSource.localTableName
         : undefined;
       const tableName =
-        isLocalLayerLink ?
-          (_localTableName ?? lOpts.localTableName)
-        : (joinEndTable?.table ?? linkW?.table_name);
+        isLocalLayerLink ? _localTableName : (
+          (joinEndTable?.table ?? linkW?.table_name)
+        );
 
-      if (lOpts.osmLayerQuery) {
+      if (lOpts.dataSource?.type === "osm") {
         const { colorArr, colorStr } = getLinkColor(
           lOpts.mapColorMode?.type === "fixed" ?
             lOpts.mapColorMode.colorArr
@@ -107,7 +108,7 @@ export const getMapLayerQueries = ({
         const fillColor = colorArr;
         const lineColor = colorArr;
         const color = colorStr;
-        const query = lOpts.osmLayerQuery;
+        const query = lOpts.dataSource.osmLayerQuery;
         return {
           ...l.options,
           disabled: !!l.disabled,
@@ -154,7 +155,7 @@ export const getMapLayerQueries = ({
             const smartGroupFilter =
               lOpts.dataSource?.type === "local-table" ?
                 lOpts.dataSource.smartGroupFilter
-              : lOpts.smartGroupFilter;
+              : undefined;
             const localLayerFilter =
               (!smartGroupFilter ? undefined : (
                 parseFullFilter(smartGroupFilter, undefined, undefined)
@@ -162,7 +163,7 @@ export const getMapLayerQueries = ({
             const joinPath =
               lOpts.dataSource?.type === "table" ?
                 lOpts.dataSource.joinPath
-              : lOpts.joinPath;
+              : undefined;
             const joinInfo =
               joinPath && w.table_name && joinEndTable ?
                 {
@@ -189,14 +190,17 @@ export const getMapLayerQueries = ({
             /** Must be sql */
           } else if (linkW?.type === "sql") {
             const latestW = linkW.$get();
-
-            if (!lOpts.sql) {
+            const sql =
+              lOpts.dataSource?.type === "sql" ?
+                lOpts.dataSource.sql
+              : undefined;
+            if (!sql) {
               throw "Unexpected: sql missing";
             }
             const lsql: LayerSQL = {
               ...commonOpts,
               type: "sql",
-              sql: lOpts.sql,
+              sql,
               withStatement:
                 lOpts.dataSource?.type === "sql" ?
                   lOpts.dataSource.withStatement

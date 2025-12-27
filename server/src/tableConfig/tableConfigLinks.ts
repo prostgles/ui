@@ -28,7 +28,7 @@ const CommonChartLinkOpts = {
         type: {
           enum: ["sql"],
           description:
-            "Show data from an SQL query within an editor. Will not reflect latest changes to that query (must be re-added)",
+            "Shows data from an SQL query within an editor. Will not reflect latest changes to that query (must be re-added)",
         },
         sql: "string",
         withStatement: "string",
@@ -39,13 +39,14 @@ const CommonChartLinkOpts = {
           description:
             "Shows data from an opened table window. Any filters from that table will apply to the chart as well",
         },
+        tableName: "string",
         joinPath,
       },
       {
         type: {
           enum: ["local-table"],
           description:
-            "Shows data from postgres table not connected to any window (w1_id === w2_id === current chart window). Custom filters can be added",
+            "Shows data from a table not connected to any window (w1_id === w2_id === current chart window). Custom filters can be added",
         },
         localTableName: {
           type: "string",
@@ -55,19 +56,18 @@ const CommonChartLinkOpts = {
       },
     ],
   },
-  smartGroupFilter: filter,
-  joinPath,
-  localTableName: {
-    type: "string",
-    optional: true,
-    description:
-      "If provided then this is a local layer (w1_id === w2_id === current chart window)",
-  },
-  sql: {
-    description: "Defined if chart links to SQL statement",
-    optional: true,
-    type: "string",
-  },
+  // joinPath,
+  // localTableName: {
+  //   type: "string",
+  //   optional: true,
+  //   description:
+  //     "If provided then this is a local layer (w1_id === w2_id === current chart window)",
+  // },
+  // sql: {
+  //   description: "Defined if chart links to SQL statement",
+  //   optional: true,
+  //   type: "string",
+  // },
   title: { type: "string", optional: true },
 } as const satisfies JSONB.ObjectType["type"];
 
@@ -84,22 +84,34 @@ export const tableConfigLinks: TableConfig<{ en: 1 }> = {
         jsonbSchema: {
           oneOfType: [
             {
-              type: { enum: ["table"] },
+              type: { enum: ["table"], description: "Table cross-filter link" },
               ...CommonLinkOpts,
               tablePath: {
                 ...joinPath,
                 optional: false,
-                description: "Table path from w1.table_name to w2.table_name",
+                description:
+                  "Table join path from w1.table_name to w2.table_name",
               },
             },
             {
-              type: { enum: ["map"] },
+              type: { enum: ["map"], description: "Map layer link" },
               ...CommonChartLinkOpts,
-              osmLayerQuery: {
-                type: "string",
-                optional: true,
-                description:
-                  "If provided then this is a OSM layer (w1_id === w2_id === current chart window)",
+              dataSource: {
+                ...CommonChartLinkOpts.dataSource,
+                oneOfType: [
+                  ...CommonChartLinkOpts.dataSource.oneOfType,
+                  {
+                    type: {
+                      enum: ["osm"],
+                      description: "Shows data from OpenStreetMap. Map only",
+                    },
+                    osmLayerQuery: {
+                      type: "string",
+                      description:
+                        "OSM layer (w1_id === w2_id === current chart window)",
+                    },
+                  },
+                ],
               },
               mapIcons: {
                 optional: true,

@@ -295,7 +295,7 @@ type ChartsObj = {
 type ChartsObjOfUnion<U extends ChartType> = { [K in U]: ChartsObj[K] }[U];
 
 export type WindowSyncItem<T extends ChartType = ChartType> =
-  ChartsObjOfUnion<T>; // SyncDataItem<Required<WindowData<T>>, true>;
+  ChartsObjOfUnion<T>;
 export type LinkSyncItem = SyncDataItem<Link, true>;
 
 export type WorkspaceSchema = DBSSchema["workspaces"];

@@ -24,7 +24,7 @@ import { SmartForm } from "../SmartForm/SmartForm";
 import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
 import Window from "../Window";
-import { ChartLayerManager } from "../WindowControls/ChartLayerManager/ChartLayerManager";
+import { DataLayerManager } from "../WindowControls/DataLayerManager/DataLayerManager";
 import { W_MapMenu } from "./W_MapMenu";
 import { MapInfoSection } from "./controls/MapInfoSection";
 import { fetchMapLayerData } from "./fetchData/fetchMapLayerData";
@@ -559,7 +559,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
               }
               topLeftContent={
                 !w.options.hideLayersBtn && (
-                  <ChartLayerManager
+                  <DataLayerManager
                     {...this.props}
                     w={w}
                     type="map"

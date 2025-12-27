@@ -5,22 +5,23 @@ import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import { mdiLayers } from "@mdi/js";
 import React from "react";
+import type { LinkSyncItem } from "src/dashboard/Dashboard/dashboardUtils";
 import { MapBasemapOptions } from "../../W_Map/controls/MapBasemapOptions";
 import { MapOpacityMenu } from "../../W_Map/controls/MapOpacityMenu";
 import type { LayerQuery, W_MapProps } from "../../W_Map/W_Map";
 import type {
   ProstglesTimeChartLayer,
-  ProstglesTimeChartProps,
+  W_TimeChartProps,
 } from "../../W_TimeChart/W_TimeChart";
 import { AddChartLayer } from "../AddChartLayer";
-import { ChartLayerManagerLayer } from "./ChartLayerManagerLayer";
+import { DataLayer } from "./DataLayer";
 import { useSortedLayerQueries } from "./useSortedLayerQueries";
 
 export type MapLayerManagerProps = (
   | ({
       type: "timechart";
       layerQueries: ProstglesTimeChartLayer[];
-    } & ProstglesTimeChartProps)
+    } & W_TimeChartProps)
   | ({
       type: "map";
     } & W_MapProps)
@@ -29,20 +30,36 @@ export type MapLayerManagerProps = (
 };
 
 // TODO: Show columns grouped by their link
-export const ChartLayerManager = (props: MapLayerManagerProps) => {
-  const { myLinks, type, asMenuBtn, w } = props;
+export const DataLayerManager = (props: MapLayerManagerProps) => {
+  const { myLinks, type, asMenuBtn, w, layerQueries = [] } = props;
 
-  const layerQueries = (props.layerQueries ?? []) as (
-    | ProstglesTimeChartLayer
-    | LayerQuery
-  )[];
-  const sortedLayerQueries = useSortedLayerQueries({ layerQueries, myLinks });
+  const sortedLayerQueries = useSortedLayerQueries({
+    layerQueries,
+    myLinks,
+  });
   const content = (
     <FlexCol>
       <FlexCol className="ChartLayerManager_LayerList">
-        {sortedLayerQueries.map((lqRaw) => {
+        {sortedLayerQueries.map((layer) => {
+          if (props.type === "timechart") {
+            return (
+              <DataLayer
+                {...props}
+                type="timechart"
+                key={layer._id}
+                layer={
+                  layer as ProstglesTimeChartLayer & { link: LinkSyncItem }
+                }
+              />
+            );
+          }
           return (
-            <ChartLayerManagerLayer {...props} key={lqRaw._id} layer={lqRaw} />
+            <DataLayer
+              {...props}
+              type="map"
+              key={layer._id}
+              layer={layer as LayerQuery & { link: LinkSyncItem }}
+            />
           );
         })}
       </FlexCol>
