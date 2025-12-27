@@ -387,11 +387,6 @@ export const setTableRule = async (
     await page.locator(getDataKey(fieldName)).click();
     const filterWrapperSelector = `${getTestId("FilterWrapper")}${getDataKey(fieldName)}`;
     await page
-      .locator(filterWrapperSelector)
-      .getByTestId("FilterWrapper.typeSelect")
-      .click();
-    await page.locator(getDataKey("=")).click();
-    await page
       .locator(`${filterWrapperSelector} input[type="text"]`)
       .fill(value);
     await page.waitForTimeout(500);

@@ -43,6 +43,7 @@ export type SmartAddFilterProps = {
   variant?: "full";
   btnProps?: BtnProps;
   itemName?: "filter" | "condition";
+  newFilterType?: FilterType;
 };
 
 export const SmartAddFilter = (props: SmartAddFilterProps) => {
@@ -67,6 +68,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
     itemName = "filter",
     variant,
     selectedColumns = [],
+    newFilterType,
   } = props;
 
   const [includeLinkedColumns, setIncludeLinkedColumns] = useState(false);
@@ -75,7 +77,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
   ) =>
     Boolean(
       col.references?.length ||
-      ![..._PG_date, ..._PG_numbers].includes(col.udt_name as any),
+      !includes([..._PG_date, ..._PG_numbers], col.udt_name),
     );
   const lastPathItem = joinOpts?.path.at(-1);
   const currentTable = lastPathItem?.tableName ?? tableName;
@@ -168,7 +170,8 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
         (joinOpts?.type ?? c.joinInfo) ? "$existsJoined" : undefined;
 
       const type =
-        isGeo ? "$ST_DWithin"
+        newFilterType ? newFilterType
+        : isGeo ? "$ST_DWithin"
         : includes(_PG_numbers, c.udt_name) && !c.is_pkey ? "$between"
         : joinPath ? "not null"
         : isCategorical(c) ? "$in"

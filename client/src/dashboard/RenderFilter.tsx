@@ -1,12 +1,11 @@
-import { mdiFilter } from "@mdi/js";
-import { pickKeys } from "prostgles-types";
-import React, { useMemo } from "react";
 import type {
-  GroupedDetailedFilter,
   DetailedFilter,
+  GroupedDetailedFilter,
 } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
+import { mdiFilter } from "@mdi/js";
+import React, { useMemo } from "react";
 import type {
   ContextDataSchema,
   ForcedFilterControlProps,
@@ -34,7 +33,11 @@ export const RenderFilter = (props: RenderFilterProps) => {
     mode,
     title = `Edit ${props.itemName}s`,
     itemName,
-    ...otherProps
+    db,
+    tableName,
+    tables,
+    selectedColumns,
+    hideOperand,
   } = props;
   const isAndOrFilter = "$and" in f || "$or" in f;
   const minimised = mode && mode === "minimised";
@@ -72,7 +75,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
     > & {
       filters: DetailedFilter[];
     };
-  }, [f, minimised, onChange]);
+  }, [f, onChange]);
 
   if (!isAndOrFilter) {
     return <>Unexpected {itemName}. Expecting $and / $or</>;
@@ -90,14 +93,13 @@ export const RenderFilter = (props: RenderFilterProps) => {
             undefined
           : "row"
         }
-        {...pickKeys(otherProps, [
-          "db",
-          "tableName",
-          "tables",
-          "selectedColumns",
-          "hideOperand",
-        ])}
+        db={db}
+        tableName={tableName}
+        tables={tables}
+        selectedColumns={selectedColumns}
+        hideOperand={hideOperand}
         {...filterProps}
+        newFilterType={contextData ? "=" : undefined}
         hideToggle={true}
         minimised={minimised}
         showAddFilter={showAddFilter}

@@ -121,6 +121,13 @@ export const getPopupPosition = ({
     left,
     maxHeight: `calc(100vh - ${top})`,
     maxWidth: `calc(100vw - ${left})`,
+    /** This prevents a weird slow height growth for position beneath */
+    ...(heightOverflow > 0 && {
+      bottom: 0,
+    }),
+    ...(widthOverflow > 0 && {
+      right: 0,
+    }),
   };
 
   popup.setState({

@@ -1,17 +1,16 @@
-import type { DetailedFilter } from "@common/filterUtils";
+import type { DetailedFilter, FilterType } from "@common/filterUtils";
 import { isJoinedFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { FlexCol, classOverride } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
-import { pickKeys } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { DetailedFilterControl } from "../DetailedFilterControl/DetailedFilterControl";
-import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
+import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import { SmartAddFilter } from "./SmartAddFilter";
 export * from "./smartFilterUtils";
 
@@ -37,6 +36,7 @@ export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
   type: "having" | "where";
   selectedColumns: ColumnConfig[] | undefined;
   extraFilters: AnyObject[] | undefined;
+  newFilterType?: FilterType;
 };
 
 export const SmartFilter = (props: SmartFilterProps) => {
@@ -60,6 +60,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
     showNoFilterInfoRow = false,
     itemName,
     hideOperand,
+    newFilterType,
   } = props;
 
   const table = useMemo(
@@ -156,17 +157,16 @@ export const SmartFilter = (props: SmartFilterProps) => {
       )}
       {showAddFilter && (
         <SmartAddFilter
-          {...pickKeys(props, [
-            "db",
-            "tableName",
-            "tables",
-            "itemName",
-            "selectedColumns",
-          ])}
+          className="w-full mt-1 text-active"
+          db={db}
+          tableName={tableName}
+          tables={tables}
+          itemName={itemName}
+          selectedColumns={selectedColumns}
+          newFilterType={newFilterType}
           style={{
             boxShadow: "unset",
           }}
-          className="w-full mt-1 text-active"
           variant="full"
           onChange={(newF) => {
             onChange([...detailedFilter, ...newF]);
