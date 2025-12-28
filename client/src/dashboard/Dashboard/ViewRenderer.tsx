@@ -207,7 +207,8 @@ export class ViewRenderer extends RTComp<
       };
       const setLinkMenu =
         isReadonly ? undefined : (
-          (linkMenuWindow) => this.setState({ linkMenuWindow })
+          (linkMenuWindow: ViewRendererState["linkMenuWindow"]) =>
+            this.setState({ linkMenuWindow })
         );
 
       let result: Required<SilverGridProps>["children"][number] | null = null;

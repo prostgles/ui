@@ -91,7 +91,6 @@ export const getTimeChartLayer = ({
         if (parentWindow.type !== "sql" || !linkSql) {
           throw "Unexpected: sql/window missing";
         }
-        // const latestW = tbl.$get();
         const layer: ProstglesTimeChartLayer = {
           ...commonOpts,
           type: "sql",

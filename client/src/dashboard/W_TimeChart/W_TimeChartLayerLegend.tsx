@@ -1,20 +1,21 @@
-import React from "react";
+import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { mdiClose } from "@mdi/js";
+import React from "react";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { useSortedLayerQueries } from "../WindowControls/DataLayerManager/useSortedLayerQueries";
 import { ColorByLegend } from "../WindowControls/ColorByLegend/ColorByLegend";
+import type { ChartLinkOptions } from "../WindowControls/DataLayerManager/DataLayer";
+import { useSortedLayerQueries } from "../WindowControls/DataLayerManager/useSortedLayerQueries";
 import { LayerColorPicker } from "../WindowControls/LayerColorPicker";
 import { TimeChartLayerOptions } from "../WindowControls/TimeChartLayerOptions";
 import type {
   ProstglesTimeChartLayer,
   W_TimeChartStateLayer,
 } from "./W_TimeChart";
-import Btn from "@components/Btn";
-import { mdiClose } from "@mdi/js";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
-type P = Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl"> & {
+type P = Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks"> & {
   layerQueries: ProstglesTimeChartLayer[];
   layers: W_TimeChartStateLayer[];
   onChanged: VoidFunction;
@@ -27,11 +28,7 @@ export const W_TimeChartLayerLegend = ({
   onChanged,
   ...props
 }: P) => {
-  const {
-    w,
-    myLinks,
-    prgl: { tables },
-  } = props;
+  const { w, myLinks } = props;
 
   const activeLayerQueries = useSortedLayerQueries({
     layerQueries,
@@ -49,10 +46,10 @@ export const W_TimeChartLayerLegend = ({
                   btnProps={{ size: "micro" }}
                   title={"layerDesc"}
                   column={dateColumn}
-                  link={link}
-                  myLinks={myLinks}
-                  tables={tables}
-                  w={w}
+                  linkOptions={link.options as ChartLinkOptions}
+                  onChange={(newOptions) => {
+                    link.$update({ options: newOptions }, { deepMerge: true });
+                  }}
                 />
               )}
 
@@ -61,7 +58,6 @@ export const W_TimeChartLayerLegend = ({
                 getLinksAndWindows={props.getLinksAndWindows}
                 link={link}
                 myLinks={myLinks}
-                tables={tables}
                 column={dateColumn}
                 mode="on-screen"
               />

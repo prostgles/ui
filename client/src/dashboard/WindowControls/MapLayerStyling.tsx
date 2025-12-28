@@ -6,52 +6,35 @@ import React from "react";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import { ColorCircle, ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { LayerColorPickerProps } from "./LayerColorPicker";
+import type { ChartLinkOptions } from "./DataLayerManager/DataLayer";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
-type P = Pick<
-  LayerColorPickerProps,
-  "link" | "myLinks" | "tables" | "w" | "column" | "title"
-> & {
+type P = Pick<LayerColorPickerProps, "column" | "title"> & {
   linkOptions: Extract<LinkSyncItem["options"], { type: "map" }>;
+  onChange: (newOptions: ChartLinkOptions) => void;
 };
 export const MapLayerStyling = ({
-  linkOptions: opts,
-  myLinks,
-  link,
-  tables,
+  linkOptions,
+  onChange,
   column,
   title,
-  w,
 }: P) => {
-  const { dataSource } = opts;
+  const { tables } = usePrgl();
+  const { dataSource } = linkOptions;
   const tableName =
     dataSource?.type === "table" ? dataSource.tableName
     : dataSource?.type === "local-table" ? dataSource.localTableName
     : undefined;
   const table =
     !tableName ? undefined : tables.find((t) => t.name === tableName);
-  const updateLink = (updates: Partial<typeof opts>) => {
-    const thisLink = myLinks.find((l) => l.id === link.id);
-    if (thisLink?.options.type !== "map") {
-      throw new Error("Invalid map link type");
-    }
-    thisLink.$update(
-      {
-        options: {
-          ...thisLink.options,
-          ...updates,
-        },
-      },
-      { deepMerge: true },
-    );
-  };
 
-  const linkColor = `rgba(${getLinkColor(link)})`;
+  const linkColor = `rgba(${getLinkColor(linkOptions)})`;
 
   return (
     <PopupMenu
       title={title}
       button={<ColorCircle color={linkColor} />}
-      render={(pClose) => (
+      render={() => (
         <FlexRow>
           <ColorPicker
             style={{ flex: "none" }}
@@ -65,13 +48,14 @@ export const MapLayerStyling = ({
             className="w-fit m-p5 text-2"
             value={linkColor}
             onChange={(__, _, colorArr) => {
-              updateLink({
+              onChange({
+                ...linkOptions,
                 mapColorMode: {
                   type: "fixed",
                   colorArr,
                 },
                 /** Is this used only for timechart? */
-                columns: opts.columns.map((c) => ({
+                columns: linkOptions.columns.map((c) => ({
                   ...c,
                   colorArr: c.name === column ? colorArr : c.colorArr,
                 })),
@@ -81,12 +65,13 @@ export const MapLayerStyling = ({
           <IconPalette
             label={{ label: "Icon", variant: "normal", className: "mb-p5" }}
             iconName={
-              opts.mapIcons?.type === "fixed" ?
-                opts.mapIcons.iconPath
+              linkOptions.mapIcons?.type === "fixed" ?
+                linkOptions.mapIcons.iconPath
               : undefined
             }
             onChange={(iconPath) => {
-              updateLink({
+              onChange({
+                ...linkOptions,
                 mapIcons:
                   !iconPath ? undefined : (
                     {
@@ -97,17 +82,20 @@ export const MapLayerStyling = ({
               });
             }}
           />
-          {opts.mapIcons && (
+          {linkOptions.mapIcons && (
             <Select
               label={"Display"}
               fullOptions={[{ key: "Circle and Icon" }, { key: "Icon" }]}
               value={
-                opts.mapIcons.display === "icon" ? "Icon" : "Circle and Icon"
+                linkOptions.mapIcons.display === "icon" ?
+                  "Icon"
+                : "Circle and Icon"
               }
               onChange={(v) => {
-                updateLink({
+                onChange({
+                  ...linkOptions,
                   mapIcons: {
-                    ...opts.mapIcons!,
+                    ...linkOptions.mapIcons!,
                     display: v === "Icon" ? "icon" : "icon+circle",
                   },
                 });
@@ -117,7 +105,7 @@ export const MapLayerStyling = ({
           {table && (
             <Select
               label={"Labels"}
-              value={opts.mapShowText?.columnName}
+              value={linkOptions.mapShowText?.columnName}
               fullOptions={table.columns.map((c) => ({
                 key: c.name,
                 subLabel: c.data_type,
@@ -138,7 +126,8 @@ export const MapLayerStyling = ({
               }))}
               optional={true}
               onChange={(columnName) => {
-                updateLink({
+                onChange({
+                  ...linkOptions,
                   mapShowText:
                     columnName ?
                       {
@@ -155,20 +144,20 @@ export const MapLayerStyling = ({
   );
 };
 
-const getLinkColor = (link: LinkSyncItem) => {
-  if (link.options.type === "table") return;
-  if (link.options.type === "map") {
-    if (link.options.mapColorMode?.type === "fixed") {
-      return link.options.mapColorMode.colorArr;
-    }
-    if (link.options.mapColorMode?.type === "scale") {
-      return link.options.mapColorMode.minColorArr;
-    }
-    if (link.options.mapColorMode?.type === "conditional") {
-      return link.options.mapColorMode.conditions[0]?.colorArr;
-    }
-    return link.options.columns[0]?.colorArr;
-  } else {
-    return link.options.columns[0]?.colorArr;
+const getLinkColor = (options: LinkSyncItem["options"]) => {
+  if (options.type === "table") {
+    return options.colorArr;
   }
+  if (options.type === "map") {
+    if (options.mapColorMode?.type === "fixed") {
+      return options.mapColorMode.colorArr;
+    }
+    if (options.mapColorMode?.type === "scale") {
+      return options.mapColorMode.minColorArr;
+    }
+    if (options.mapColorMode?.type === "conditional") {
+      return options.mapColorMode.conditions[0]?.colorArr;
+    }
+  }
+  return options.columns[0]?.colorArr;
 };

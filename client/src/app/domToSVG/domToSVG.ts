@@ -1,4 +1,4 @@
-import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { includes } from "prostgles-types";
 import { tout } from "src/utils/utils";
 import { elementToSVG, type SVGContext } from "./containers/elementToSVG";
 import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
@@ -175,7 +175,7 @@ const getClosestRelativeOrAbsoluteParent = (g: SVGGElement) => {
   while (parentG && parentG instanceof SVGGElement && parentG._domElement) {
     const position = getComputedStyle(parentG._domElement).position;
     if (
-      includes(position, ["relative", "absolute"]) &&
+      includes(["relative", "absolute"] as const, position) &&
       parentG._domElement !== g._domElement
     ) {
       return parentG;

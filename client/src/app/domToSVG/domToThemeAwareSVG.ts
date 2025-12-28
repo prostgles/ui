@@ -279,9 +279,9 @@ export const domToThemeAwareSVG = async (
 
 document.body.addEventListener("keydown", (e) => {
   if (e.key === "F2") {
-    domToThemeAwareSVG(document.body, "light");
+    void domToThemeAwareSVG(document.body, "light");
   } else if (e.key === "F4") {
-    domToThemeAwareSVG(document.body, "both");
+    void domToThemeAwareSVG(document.body, "both");
   } else if (e.key === "F6") {
     // eslint-disable-next-line no-debugger
     debugger;

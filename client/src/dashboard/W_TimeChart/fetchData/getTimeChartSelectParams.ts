@@ -22,16 +22,12 @@ export const getTimeChartSelectParams = ({
   dateColumn,
   bin,
 }: GetTimeChartSelectArgs) => {
-  let statField: any = { $countAll: [] };
-  if (statType) {
-    const stat = TIMECHART_STAT_TYPES.find((s) => s.func === statType.funcName);
-    if (stat) {
-      statField = { [stat.func]: [statType.numericColumn] };
-    }
-  }
-
+  const stat =
+    statType && TIMECHART_STAT_TYPES.find((s) => s.func === statType.funcName);
+  const valueSelect =
+    stat ? { [stat.func]: [statType.numericColumn] } : { $countAll: [] };
   const select = {
-    [TIMECHART_FIELD_NAMES.value]: statField,
+    [TIMECHART_FIELD_NAMES.value]: valueSelect,
     ...(groupByColumn && { [groupByColumn]: 1 }),
     [TIMECHART_FIELD_NAMES.date]: getTimeChartSelectDate({ bin, dateColumn }),
   };

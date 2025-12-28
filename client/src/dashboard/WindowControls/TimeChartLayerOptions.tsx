@@ -19,7 +19,7 @@ import { SQLChartLayerEditor } from "./SQLChartLayerEditor";
 
 type TimeChartLayerOptionsProps = Pick<
   MapLayerManagerProps,
-  "tables" | "myLinks" | "getLinksAndWindows"
+  "myLinks" | "getLinksAndWindows"
 > & {
   link: LinkSyncItem;
   column: string;
@@ -29,13 +29,12 @@ type TimeChartLayerOptionsProps = Pick<
 export const TimeChartLayerOptions = ({
   link,
   column,
-  tables,
   getLinksAndWindows,
   myLinks,
   w: wMapOrTimechart,
   mode,
 }: TimeChartLayerOptionsProps) => {
-  const { db } = usePrgl();
+  const { db, tables } = usePrgl();
   const sqlHandler = db.sql;
   const linkOpts = link.options;
   const sqlDataSourceColumns = usePromise(async () => {

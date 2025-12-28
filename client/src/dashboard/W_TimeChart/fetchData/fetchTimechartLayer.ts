@@ -234,6 +234,7 @@ export async function fetchTimechartLayer({
 
   const color = layer.color || "red";
   const renderedLayer: W_TimeChartStateLayer = {
+    linkId: layer._id,
     color,
     getYLabel: getYLabelFunc("", !layer.statType),
     data: rows,

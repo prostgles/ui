@@ -35,11 +35,8 @@ export const compressSVGif = (
       clonedNode.removeAttribute("data-selector");
       defs.appendChild(clonedNode);
     }
-    const bbox = node.getBBox();
     const useElem = document.createElementNS(SVG_NAMESPACE, "use");
     useElem.setAttribute("href", `#${id}`);
-    useElem.setAttribute("width", bbox.width);
-    useElem.setAttribute("height", bbox.height);
     node.replaceWith(useElem);
   };
   const scenes = Array.from(svg.querySelectorAll(`#all-scenes > svg`));

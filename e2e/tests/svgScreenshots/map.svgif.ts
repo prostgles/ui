@@ -1,11 +1,6 @@
-import {
-  closeWorkspaceWindows,
-  getDataKey,
-  openConnection,
-  openTable,
-} from "utils/utils";
-import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { getCommandElemSelector } from "Testing";
+import { getDataKey, openConnection } from "utils/utils";
+import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { clickTableRow } from "./table.svgif";
 
 export const mapSvgif: OnBeforeScreenshot = async (

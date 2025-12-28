@@ -21,10 +21,13 @@ export type MapLayerManagerProps = (
   | ({
       type: "timechart";
       layerQueries: ProstglesTimeChartLayer[];
-    } & W_TimeChartProps)
+    } & Pick<W_TimeChartProps, "myLinks" | "w" | "getLinksAndWindows">)
   | ({
       type: "map";
-    } & W_MapProps)
+    } & Pick<
+      W_MapProps,
+      "myLinks" | "w" | "getLinksAndWindows" | "layerQueries"
+    >)
 ) & {
   asMenuBtn?: BtnProps<void>;
 };
@@ -96,7 +99,7 @@ export const DataLayerManager = (props: MapLayerManagerProps) => {
       </FlexRow>
       {type === "map" && (
         <FlexCol className="mt-2">
-          <MapBasemapOptions {...props} asPopup={{ prgl: props.prgl }} />
+          <MapBasemapOptions {...props} asPopup={true} />
           <MapOpacityMenu {...props} />
         </FlexCol>
       )}

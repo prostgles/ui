@@ -1,30 +1,28 @@
-import { mdiDelete, mdiMap, mdiPlus, mdiSearchWeb } from "@mdi/js";
-import React, { useCallback, useState } from "react";
 import Btn from "@components/Btn";
 import ButtonGroup from "@components/ButtonGroup";
 import Chip from "@components/Chip";
 import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
+import { mdiDelete, mdiMap, mdiPlus, mdiSearchWeb } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import { isDefined, isEqual } from "prostgles-types";
+import React, { useCallback, useState } from "react";
+import type { WindowData } from "../../Dashboard/dashboardUtils";
+import { DEFAULT_TILE_URLS } from "../../Map/mapUtils";
 import SmartTable from "../../SmartTable";
 import { MAP_PROJECTIONS } from "../W_MapMenu";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
-import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { Prgl } from "../../../App";
-import { DEFAULT_TILE_URLS } from "../../Map/mapUtils";
-import { Label } from "@components/Label";
-import { InfoRow } from "@components/InfoRow";
-import { isEqual, isDefined } from "prostgles-types";
 
 type P = {
   w: SyncDataItem<Required<WindowData<"map">>, true>;
   className?: string;
-  prgl: Prgl;
-  asPopup?: {
-    prgl: Prgl;
-  };
+  asPopup?: boolean;
 };
-export const MapBasemapOptions = ({ w, prgl, className, asPopup }: P) => {
+export const MapBasemapOptions = ({ w, className, asPopup }: P) => {
+  const prgl = usePrgl();
   const { tables } = prgl;
   const mediaTable = tables.find((t) => t.info.isFileTable);
   const [localOptions, setLocalOptions] = useState(w.options);

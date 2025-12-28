@@ -216,3 +216,4 @@ export const TIMECHART_STAT_TYPES = [
   { label: "Avg", func: "$avg" },
 ] as const;
 export type StatType = (typeof TIMECHART_STAT_TYPES)[number]["label"];
+export type StatFunction = (typeof TIMECHART_STAT_TYPES)[number]["func"];

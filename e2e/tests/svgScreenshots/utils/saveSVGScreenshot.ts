@@ -25,6 +25,13 @@ export const saveSVGScreenshot = async (
   if (!svg) throw "SVG missing";
   const dir = svgifScene ? SVGIF_SCENES_DIR : SVG_SCREENSHOT_DIR;
   fs.mkdirSync(dir, { recursive: true });
+  /**
+   * Fallback to png screenshot for ios
+   */
+  await page.screenshot({
+    path: path.join(dir, fileName + ".png"),
+    fullPage: true,
+  });
   const filePath = path.join(dir, fileName + ".svg");
 
   fs.writeFileSync(filePath, svg, {

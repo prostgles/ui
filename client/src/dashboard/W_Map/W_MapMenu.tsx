@@ -71,7 +71,7 @@ export const W_MapMenu = (props: ProstglesMapMenuProps) => {
         },
         Basemap: {
           leftIconPath: mdiMap,
-          content: <MapBasemapOptions w={w} prgl={props.prgl} />,
+          content: <MapBasemapOptions w={w} />,
         },
         Layers: {
           leftIconPath: mdiLayersOutline,

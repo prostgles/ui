@@ -11,7 +11,7 @@ import {
   mdiTable,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React from "react";
+import React, { useCallback } from "react";
 import { RenderFilter } from "src/dashboard/RenderFilter";
 import type { Link, LinkSyncItem } from "../../Dashboard/dashboardUtils";
 import type { LayerQuery, W_MapProps } from "../../W_Map/W_Map";
@@ -48,7 +48,7 @@ type P =
       >;
     });
 export const DataLayer = (props: P) => {
-  const { dbs, tables, db } = usePrgl();
+  const { tables, db } = usePrgl();
   const { myLinks, layer, w, getLinksAndWindows } = props;
 
   const thisLink = myLinks.find((l) => l.id === layer.linkId);
@@ -61,6 +61,8 @@ export const DataLayer = (props: P) => {
     props.layer.type === "table" ? props.layer.tableName
     : props.layer.type === "local-table" ? props.layer.localTableName
     : undefined;
+  const joinPath =
+    dataSource?.type === "table" ? dataSource.joinPath : undefined;
   const column =
     props.type === "map" ? props.layer.geomColumn : props.layer.dateColumn;
   const osmOrSQLQuery =
@@ -68,22 +70,30 @@ export const DataLayer = (props: P) => {
     : dataSource?.type === "sql" ? dataSource.sql
     : undefined;
   const layerDesc =
-    dataSource?.type === "table" ?
-      `${dataSource.joinPath?.at(-1)?.table || tableName} (${column})`
-    : osmOrSQLQuery;
+    osmOrSQLQuery ?? `${joinPath?.at(-1)?.table || tableName} (${column})`;
 
+  const updateOptions = useCallback(
+    (newOptions: ChartLinkOptions) => {
+      if (thisLink.options.type === "table") return;
+      thisLink.$update(
+        {
+          options: newOptions,
+        },
+        { deepMerge: true },
+      );
+    },
+    [thisLink],
+  );
   return (
     <FlexRowWrap
       key={layer._id}
       className={`LayerQuery bg-color-0 ai-center gap-1 ta-left b b-color rounded ${window.isMobileDevice ? "p-p5" : "p-1"}`}
     >
       <LayerColorPicker
+        onChange={updateOptions}
         title={layerDesc}
         column={column}
-        link={thisLink}
-        myLinks={myLinks}
-        tables={tables}
-        w={w}
+        linkOptions={linkOptions}
       />
 
       {dataSource?.type === "osm" ?
@@ -118,7 +128,6 @@ export const DataLayer = (props: P) => {
         getLinksAndWindows={getLinksAndWindows}
         link={thisLink}
         myLinks={myLinks}
-        tables={tables}
         column={column}
       />
 
@@ -134,18 +143,13 @@ export const DataLayer = (props: P) => {
           contextData={undefined}
           filter={dataSource.smartGroupFilter}
           onChange={(andOrFilter) => {
-            thisLink.$update(
-              {
-                options: {
-                  ...linkOptions,
-                  dataSource: {
-                    ...dataSource,
-                    smartGroupFilter: andOrFilter,
-                  },
-                },
+            updateOptions({
+              ...linkOptions,
+              dataSource: {
+                ...dataSource,
+                smartGroupFilter: andOrFilter,
               },
-              { deepMerge: true },
-            );
+            });
           }}
         />
       )}
@@ -167,7 +171,7 @@ export const DataLayer = (props: P) => {
         title="Remove layer"
         data-command="ChartLayerManager.removeLayer"
         className="show-on-parent-hover"
-        onClickPromise={async () => {
+        onClickPromise={() => {
           if (thisLink.options.type === "table") return;
           const opts = thisLink.options;
           const newOpts: Link["options"] = {
@@ -175,12 +179,9 @@ export const DataLayer = (props: P) => {
             columns: opts.columns.filter((c) => c.name !== column),
           };
           if (newOpts.columns.length === 0) {
-            await dbs.links.update(
-              { id: layer.linkId },
-              { closed: true, last_updated: Date.now() },
-            );
+            thisLink.$update({ closed: true });
           } else {
-            await thisLink.$update({ options: newOpts }, { deepMerge: true });
+            updateOptions(newOpts);
           }
         }}
         iconPath={mdiClose}
