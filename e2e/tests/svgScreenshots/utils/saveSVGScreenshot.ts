@@ -17,12 +17,12 @@ export const saveSVGScreenshot = async (
     async () => {
       //@ts-ignore
       const result = await window.toSVG(document.body);
-      return result;
+      return result as { light: string; dark: string };
     },
   );
 
-  const svg = svgStrings.light;
-  if (!svg) throw "SVG missing";
+  const { light, dark } = svgStrings;
+  if (!light || !dark) throw "SVG missing";
   const dir = svgifScene ? SVGIF_SCENES_DIR : SVG_SCREENSHOT_DIR;
   fs.mkdirSync(dir, { recursive: true });
   /**
@@ -33,8 +33,12 @@ export const saveSVGScreenshot = async (
     fullPage: true,
   });
   const filePath = path.join(dir, fileName + ".svg");
+  const filePathDark = path.join(dir, fileName + ".dark.svg");
 
-  fs.writeFileSync(filePath, svg, {
+  fs.writeFileSync(filePath, light, {
+    encoding: "utf8",
+  });
+  fs.writeFileSync(filePathDark, dark, {
     encoding: "utf8",
   });
   console.log(

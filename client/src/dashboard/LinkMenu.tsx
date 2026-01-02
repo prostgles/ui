@@ -292,12 +292,11 @@ export class LinkMenu extends RTComp<P, S> {
           anchorEl={anchorEl}
           positioning="beneath-left"
           clickCatchStyle={{ opacity: 0, zIndex: 14 }}
-          contentStyle={canJoin ? { padding: 0 } : { display: "none" }}
+          contentStyle={canJoin ? { padding: "1em" } : { display: "none" }}
           rootStyle={{ zIndex: 14, maxWidth: "500px" }}
         >
           {canJoin && (
             <JoinPathSelectorV2
-              // className="w-full"
               tableName={w.table_name!}
               value={undefined}
               tables={tables}

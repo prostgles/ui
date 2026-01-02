@@ -1008,9 +1008,11 @@ ON "london_restaurants.geojson" USING gist (geometry);
 /* 
   To include tag values in the CSV must ensure add "out meta" or "out body"
   https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#CSV_output_mode 
-*/
+
+  Retired due to intermittent failures due to Overpass API server load
+
 COPY "london_restaurants.geojson" (id, "type", lat, lon, name, postcode, amenity, website) FROM PROGRAM $$
-  curl --retry 5 --retry-delay 10 -d "
+  curl --retry 5 --retry-all-errors --retry-delay 10 -d "
     [out:csv(
       ::id, 
       ::type, 
@@ -1030,6 +1032,11 @@ COPY "london_restaurants.geojson" (id, "type", lat, lon, name, postcode, amenity
         0.053558349609375
       )[amenity~\"pub|restaurant|bar|cafe|fast_food\"][name];
     ); out meta;"  -X POST http://overpass-api.de/api/interpreter
+$$;
+*/
+
+COPY "london_restaurants.geojson" (id, "type", lat, lon, name, postcode, amenity, website) FROM PROGRAM $$
+  curl -f --silent --retry 5 --retry-all-errors --retry-delay 10 https://prostgles.com/static/london_restaurants.csv
 $$;
 
 UPDATE "london_restaurants.geojson"

@@ -42,18 +42,6 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getCommandElemSelector("dashboard.menu.sqlEditor"));
   await page.waitForTimeout(500);
   await toggleMenuPinned();
-  await addScene({
-    animations: [
-      {
-        type: "click",
-        elementSelector: getCommandElemSelector("MonacoEditor"),
-        lingerMs: 200,
-        // offset: { x: 50, y: 20 },
-        duration: 500,
-      },
-      { type: "wait", duration: 700 },
-    ],
-  });
 
   await sqlSuggestionsScene({
     svgFileName: "keywords",

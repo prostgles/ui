@@ -1,7 +1,7 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useState } from "react";
 import ButtonGroup from "@components/ButtonGroup";
-import Checkbox from "@components/Checkbox";
+import { Checkbox } from "@components/Checkbox";
 import { FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";

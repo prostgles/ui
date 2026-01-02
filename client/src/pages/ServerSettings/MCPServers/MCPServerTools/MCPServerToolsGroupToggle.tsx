@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import { useOnErrorAlert } from "@components/AlertProvider";
-import Checkbox from "@components/Checkbox";
+import { Checkbox } from "@components/Checkbox";
 import { FlexRow } from "@components/Flex";
 import { pickKeys } from "prostgles-types";
 import React, { useMemo } from "react";

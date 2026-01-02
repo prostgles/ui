@@ -222,7 +222,7 @@ export class Select<
       : "";
     let selectedFullOptions: typeof fullOptions = [];
 
-    const onChange: typeof _onChange = (newValue, e: any) => {
+    const onChange: typeof _onChange = (newValue, e: E) => {
       if (JSON.stringify(value) === JSON.stringify(newValue)) {
         return;
       }
@@ -234,24 +234,38 @@ export class Select<
           newValue,
           e,
           Array.isArray(newValue) ? undefined : (
-            (fullOptions.find((fo) => fo.key === newValue) as any)
+            (fullOptions.find((fo) => fo.key === newValue) as
+              | FullOption<O>
+              | undefined)
           ),
         );
       }
     };
-    const toggleOne = (key: string, e) => {
+    const toggleOne = (key: string, e: E) => {
       if (multiSelect) {
         const selected = fullOptions.filter((d) => d.checked).map((d) => d.key);
         if (selected.includes(key)) {
-          onChange(selected.filter((k) => k !== key) as any, e, undefined);
+          onChange(
+            selected.filter((k) => k !== key) as Multi extends true ? O[]
+            : O | Optional extends true ? undefined
+            : O,
+            e,
+            undefined,
+          );
         } else {
-          onChange([...selected, key] as any, e, undefined);
+          onChange(
+            [...selected, key] as Multi extends true ? O[]
+            : O | Optional extends true ? undefined
+            : O,
+            e,
+            undefined,
+          );
         }
       } else {
         onChange(
           key as any,
           e,
-          fullOptions.find((fo) => fo.key === key) as any,
+          fullOptions.find((fo) => fo.key === key) as FullOption<O> | undefined,
         );
       }
     };
@@ -371,11 +385,7 @@ export class Select<
             borderRadius: "var(--rounded)",
           }),
         }}
-        searchStyle={
-          variant === "search-list-only" ?
-            {}
-          : { margin: "0.5em 0.5em 0 0.5em" }
-        }
+        searchStyle={variant === "search-list-only" ? {} : { margin: "0.5em" }}
         placeholder={placeholder}
         defaultSearch={defaultSearch}
         noSearchLimit={noSearchLimit}
@@ -389,7 +399,11 @@ export class Select<
           multiSelect ?
             (items, e) => {
               onChange(
-                items.filter((d) => d.checked).map((d) => d.key) as any,
+                items
+                  .filter((d) => d.checked)
+                  .map((d) => d.key) as Multi extends true ? O[]
+                : O | Optional extends true ? undefined
+                : O,
                 e,
                 undefined,
               );
@@ -418,7 +432,7 @@ export class Select<
               ranking,
               contentLeft:
                 leftContent ? leftContent
-                : iconPath ? <Icon path={iconPath} className="text-1 mr-p5" />
+                : iconPath ? <Icon path={iconPath} className="text-1" />
                 : undefined,
               contentRight: rightContent,
               styles: {

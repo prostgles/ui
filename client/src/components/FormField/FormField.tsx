@@ -11,7 +11,7 @@ import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValu
 import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 import type { TestSelectors } from "../../Testing";
 import Btn from "../Btn";
-import Checkbox from "../Checkbox";
+import { Checkbox } from "../Checkbox";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { classOverride } from "../Flex";
 import { Label } from "../Label";

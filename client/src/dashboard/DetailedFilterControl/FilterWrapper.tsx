@@ -266,7 +266,7 @@ export class FilterWrapper extends RTComp<
         }}
       >
         <FlexRow
-          className={`gap-0 ${
+          className={`gap-0 mx-p5 ${
             isWithoutControls ? " "
             : rowVariant ? " ai-center"
             : " ai-start mt-p5 "
@@ -296,9 +296,10 @@ export class FilterWrapper extends RTComp<
                 />
               )}
               <Btn
-                className={`FilterWrapper_Field ${!hideToggle || rootFilter ? "rounded-r" : ""} flex-row `}
+                className={`FilterWrapper_Field flex-row `}
+                data-command="FilterWrapper_Field"
                 onClick={toggle}
-                variant="default"
+                variant="text"
                 title={toggleTitle}
                 color={btnColor}
               >

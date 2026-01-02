@@ -519,6 +519,8 @@ export const COMMANDS = {
   "BackupsControls.Completed.deleteAll": "",
   "BackupsControls.restoreFromFile": "",
   BackupLogs: "",
+  FilterWrapper_FieldName: "",
+  FilterWrapper_Field: "",
   "CloudStorageCredentialSelector.selectCredential": "",
 } as const satisfies Record<
   string,

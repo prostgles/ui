@@ -45,6 +45,22 @@ export const domToSVG = async (node: HTMLElement) => {
   setBackdropFilters(svg);
   const { remove } = renderSvg(svg);
   wrapAllSVGText(svg);
+
+  /** Add textLength to prevent bugs in ios (It uses a different font which is wider and overflows the existing rects and clip paths) */
+  svg.querySelectorAll("text,tspan").forEach((text) => {
+    const isMultiLine = text.textContent.includes("\n");
+    if (
+      isMultiLine ||
+      /** Has tspans that we'll handle separately */
+      (text instanceof SVGTextElement && text.children.length)
+    ) {
+      return;
+    }
+    const bbox = text.getBoundingClientRect();
+    text.setAttribute("textLength", bbox.width);
+    text.setAttribute("lengthAdjust", "spacingAndGlyphs");
+  });
+
   /** Does not really seem effective */
   // deduplicateSVGPaths(svg);
   // await addFragmentViewBoxes(svg, 10);

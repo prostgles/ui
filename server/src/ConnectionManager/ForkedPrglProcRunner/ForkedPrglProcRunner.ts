@@ -197,7 +197,11 @@ export class ForkedPrglProcRunner {
         //   return;
         // }
 
-        console.error("ForkedPrglProc error ", msg.error);
+        console.error(
+          "ForkedPrglProc error ",
+          this.opts.prglInitOpts.dbConnection,
+          msg.error,
+        );
         updateLogs(getError(msg.error));
         /** Database was dropped */
         if (msg.error.code === "3D000") {

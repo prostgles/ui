@@ -113,7 +113,7 @@ export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
                         <Icon
                           path={iconPath}
                           title={data.type}
-                          className="text-1 mr-p5"
+                          className="text-1 f-0"
                         />
                       : undefined,
                     onPress: async () => {

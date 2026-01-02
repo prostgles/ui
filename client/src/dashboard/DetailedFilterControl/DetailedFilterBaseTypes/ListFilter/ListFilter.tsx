@@ -197,9 +197,10 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
           onSearch={(searchTerm) => {
             this.setState({ searchTerm });
           }}
-          className="ml-p5"
+          searchStyle={{
+            margin: "0 .5em",
+          }}
           noSearchLimit={0}
-          id="values"
           items={items}
           onMultiToggle={(items) => {
             const vals = items.filter((d) => d.checked);
@@ -214,7 +215,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
               <div className="text-2">Press enter to add</div>
             </FlexRow>
           }
-          onPressEnter={(term) => {
+          onPressEnter={() => {
             const currentValues =
               Array.isArray(filter.value) ? filter.value : [];
             onChange({
@@ -223,10 +224,10 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
             });
             this.setState({ searchTerm: "" });
           }}
-          onChange={(_value) => {
+          onChange={(newOptions) => {
             onChange({
               ...filter,
-              value: !_value.length ? undefined : _value,
+              value: !newOptions.length ? undefined : newOptions,
             });
           }}
         />

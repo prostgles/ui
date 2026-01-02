@@ -34,8 +34,8 @@ export const DashboardMenuHeader = ({
         {...dataCommand("dashboard.menu.sqlEditor")}
         className="f-1 jc-start max-w-fit"
         title={t.DashboardMenuHeader["Opens SQL Query editor"]}
-        onClick={(e) => {
-          loadTable({ type: "sql", name: "SQL Query" });
+        onClickPromise={async () => {
+          await loadTable({ type: "sql", name: "SQL Query" });
           onClose?.();
         }}
         color="action"
@@ -65,6 +65,7 @@ export const DashboardMenuHeader = ({
         }
         title={t.DashboardMenuHeader["Pin/Unpin"]}
         data-command="DashboardMenuHeader.togglePinned"
+        data-key={pinnedMenu ? "pinned" : "unpinned"}
         className="ml-p25"
         onClick={() => {
           workspace.$update(

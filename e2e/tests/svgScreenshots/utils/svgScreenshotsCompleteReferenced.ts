@@ -1,13 +1,11 @@
-import { rmSync } from "fs";
+import { SVG_SCREENSHOT_DETAILS } from "svgScreenshots/SVG_SCREENSHOT_DETAILS";
 import {
   DOCS_DIR,
   SCREENSHOTS_PATH,
   SVG_SCREENSHOT_DIR,
-  SVGIF_SCENES_DIR,
   type SVGifScene,
 } from "./constants";
 import { getFilesFromDir } from "./getFilesFromDir";
-import { SVG_SCREENSHOT_DETAILS } from "svgScreenshots/SVG_SCREENSHOT_DETAILS";
 
 const getSavedSVGFiles = () => {
   const savedSVGFiles = getFilesFromDir(SVG_SCREENSHOT_DIR, ".svg");
@@ -62,6 +60,8 @@ export const svgScreenshotsCompleteReferenced = async (
   const svgFilesNotUsedAnywhere = savedSVGFiles
     .map((f) => f.fileName.slice(0, -4))
     .filter((fileName) => {
+      /** Exclude dark variants */
+      if (fileName.includes(".dark")) return false;
       const isUsed =
         usedSrcValues.includes(fileName) ||
         svgifFilesUsedExternally.includes(fileName);
@@ -95,8 +95,4 @@ export const svgScreenshotsCompleteReferenced = async (
       }
     }
   }
-
-  return;
-  /** Delete scenes folder */
-  rmSync(SVGIF_SCENES_DIR, { recursive: true, force: true });
 };

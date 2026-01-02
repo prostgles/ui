@@ -13,7 +13,7 @@ export const timechartUIDoc = {
     It supports multiple layers, each with its own data source and style.
     You can add filters to the timechart to narrow down the data displayed.
 
-    <img src="./screenshots/timechart.svg" alt="Timechart view screenshot" />
+    <img src="./screenshots/timechart.svgif.svg" alt="Timechart view screenshot" />
   
     ## Components
     `,

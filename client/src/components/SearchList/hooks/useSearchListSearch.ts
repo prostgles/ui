@@ -14,9 +14,8 @@ export const useSearchListSearch = (
     | "matchCase"
     | "defaultValue"
     | "defaultSearch"
-  > & {
-    isSearch: boolean | undefined;
-  },
+    | "variant"
+  >,
 ) => {
   const [searchTerm, setSearchTerm] = useState("");
   const getIsMounted = useIsMounted();
@@ -26,10 +25,11 @@ export const useSearchListSearch = (
     dataSignature,
     onSearch,
     onType,
-    isSearch,
+    variant,
     defaultValue,
     defaultSearch,
   } = props;
+  const isSearch = variant?.startsWith("search");
 
   const searching = useRef<{
     term: string;
@@ -204,6 +204,7 @@ export const useSearchListSearch = (
     searchTerm,
     endSearch,
     setSearchClosed,
+    isSearch,
     ...searchState,
   };
 };

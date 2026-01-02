@@ -135,6 +135,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
           is_pkey: false,
           computedConfig: c.computedConfig,
           joinInfo: undefined,
+          references: undefined,
         };
       })
       .filter(isDefined),
@@ -146,6 +147,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
       subLabel: undefined,
       computedConfig: undefined,
       joinInfo: undefined,
+      references: c.references,
     })),
     ...joinColumns,
   ];
@@ -172,7 +174,12 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
       const type =
         newFilterType ? newFilterType
         : isGeo ? "$ST_DWithin"
-        : includes(_PG_numbers, c.udt_name) && !c.is_pkey ? "$between"
+        : (
+          includes(_PG_numbers, c.udt_name) &&
+          !c.is_pkey &&
+          !c.references?.length
+        ) ?
+          "$between"
         : joinPath ? "not null"
         : isCategorical(c) ? "$in"
         : "$between";

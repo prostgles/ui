@@ -67,13 +67,16 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     return;
   }
 
-  const { elements } = await fetch("http://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: "[out:json];(way(51.31087184032102,-0.33782958984375,51.723200166800346,0.053558349609375)[highway];); out 200000 ids geom;",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  }).then((res) => res.json());
+  // const { elements } = await fetch("http://overpass-api.de/api/interpreter", {
+  //   method: "POST",
+  //   body: "[out:json];(way(51.31087184032102,-0.33782958984375,51.723200166800346,0.053558349609375)[highway];); out 200000 ids geom;",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  // }).then((res) => res.json());
+  const { elements } = await fetch(
+    "https://prostgles.com/static/routes.json",
+  ).then((res) => res.json());
 
   await dbo.routes.insert(
     elements.map((d) => ({

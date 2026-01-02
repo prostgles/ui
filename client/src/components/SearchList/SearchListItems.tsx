@@ -33,7 +33,6 @@ export type SearchListItemsProps = Pick<
   inputWrapperRef: React.RefObject<HTMLDivElement>;
   searchingItems: boolean;
   endSearch: (force?: boolean) => void;
-  id: string;
   showHover: boolean;
 };
 export const SearchListItems = forwardRef<
@@ -176,7 +175,7 @@ export const SearchListItems = forwardRef<
                     items={items.slice(0)}
                     onReorder={onReorder}
                     className={classOverride(
-                      "noselect bg-li flex-row ai-start p-p5 pl-1 min-w-0 " +
+                      "noselect bg-li flex-row ai-start p-p5 min-w-0 " +
                         (renderedItem.selected ? " selected " : "") +
                         (renderedItem.disabledInfo ? " not-allowed "
                         : renderedItem.onPress ? " pointer "

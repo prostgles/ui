@@ -60,11 +60,9 @@ export const SearchInput = (props: SearchInputProps) => {
       }
       style={{
         ...wrapperStyle,
-        ...(mode ?
-          { zIndex: mode["!listNode"] ? "unset" : SearchInputZIndex }
-        : {
-            marginBottom: "8px",
-          }),
+        ...(mode && {
+          zIndex: mode["!listNode"] ? "unset" : SearchInputZIndex,
+        }),
       }}
       onClick={onClickWrapper}
     >
@@ -88,8 +86,11 @@ export const SearchInput = (props: SearchInputProps) => {
           }),
           ...style,
           ...(size !== "small" && {
-            padding: "8px 1em",
+            padding: "0.75em",
             paddingRight: 0,
+          }),
+          ...(leftContent && {
+            paddingLeft: 0,
           }),
         }}
         autoComplete="off"

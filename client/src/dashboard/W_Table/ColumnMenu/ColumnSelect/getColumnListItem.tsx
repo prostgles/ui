@@ -60,9 +60,8 @@ export const getColumnListItem = (
     title: columnWInfo?.nested ? "referenced data" : c.udt_name || "computed",
     contentLeft: (
       <Icon
-        size={1}
-        className="mr-1 text-2"
-        style={{ color: getColumnDataColor(c, "var(--gray-500)") }}
+        className="text-2"
+        style={{ color: getColumnDataColor(c, "var(--text-2)") }}
         path={getColumnIconPath(c, columnWInfo)}
       />
     ),

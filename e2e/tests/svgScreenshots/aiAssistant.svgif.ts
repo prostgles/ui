@@ -248,6 +248,5 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
     "SELECT * FROM orders",
   );
-  await page.getByTestId("Popup.close").last().click();
   await addScene({ svgFileName: "sql" });
 };

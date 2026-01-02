@@ -1,6 +1,6 @@
 import { isObject } from "@common/publishUtils";
 import React, { useEffect, useMemo } from "react";
-import Checkbox from "../Checkbox";
+import { Checkbox } from "../Checkbox";
 import ErrorComponent from "../ErrorComponent";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { Label } from "../Label";
@@ -42,13 +42,12 @@ export const SearchListContent = <M extends boolean = false>(
     noBorder,
   } = props;
   const multiSelect = !!onMultiToggle;
-  const isSearch = variant?.startsWith("search");
   const noShadow = variant?.includes("no-shadow");
   const rootRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const inputWrapperRef = React.useRef<HTMLDivElement>(null);
   const refList = React.useRef<HTMLUListElement>(null);
-  const idRef = React.useRef(props.id ?? generateUniqueID());
+  const idRef = React.useRef(props.id ?? inputID ?? generateUniqueID());
   const id = idRef.current;
   const showHover = Boolean(onChange || onMultiToggle || onPressEnter);
   const {
@@ -64,7 +63,8 @@ export const SearchListContent = <M extends boolean = false>(
     onStartSearch,
     searching,
     setSearchClosed,
-  } = useSearchListSearch({ ...props, isSearch });
+    isSearch,
+  } = useSearchListSearch(props);
 
   const { renderedItems, allSelected, renderedSelected } = useSearchListItems({
     ...props,
@@ -139,7 +139,6 @@ export const SearchListContent = <M extends boolean = false>(
     : noList ? null
     : <SearchListItems
         {...props}
-        id={id}
         ref={refList}
         renderedItems={renderedItems}
         isSearch={isSearch}
@@ -155,7 +154,7 @@ export const SearchListContent = <M extends boolean = false>(
       className={"SearchList list-comp ta-left flex-col min-h-0 " + className}
       ref={rootRef}
       onKeyDown={onKeyDown}
-      style={{ ...style, ...(!isSearch ? rootStyle : {}) }} // maxHeight: "50vh",
+      style={{ ...style, ...(!isSearch ? rootStyle : {}) }}
     >
       {!!label && (
         <Label className="mb-p25" variant="normal">
@@ -164,13 +163,43 @@ export const SearchListContent = <M extends boolean = false>(
       )}
       <div
         className={
-          "SearchListInput f-0 min-h-0 min-w-0 flex-row jc-start relative " +
+          "SearchListInput f-0 min-h-0 min-w-0 flex-row gap-p5 jc-start relative " +
           (!hasSearch && multiSelect ? " bg-color-2 " : "") +
           (isSearch ? " " : "  ai-center  ") +
           (!hasSearch && !multiSelect ? " hidden" : "")
         }
         style={searchStyle}
       >
+        {!!multiSelect && (
+          <Checkbox
+            title="Toggle all"
+            className={!renderedItems.length ? "hidden" : ""}
+            data-command="SearchList.toggleAll"
+            checked={Boolean(renderedSelected.length)}
+            onChange={(e) => {
+              const checked = e.currentTarget.checked;
+
+              const newItems = items.map((d) => {
+                /** If filteted then only update the visible items */
+                const filteredItem =
+                  !searchTerm ? d : (
+                    renderedItems.find((_d) => _d.key === d.key)
+                  );
+                return {
+                  ...d,
+                  checked:
+                    filteredItem ?
+                      d.disabledInfo ?
+                        d.checked
+                      : checked
+                    : d.checked,
+                };
+              });
+
+              onMultiToggle(newItems, e);
+            }}
+          />
+        )}
         {!hasSearch ?
           multiSelect ?
             <div className="pl-1 py-p5 noselect text-1p5 ws-nowrap">
@@ -178,7 +207,7 @@ export const SearchListContent = <M extends boolean = false>(
             </div>
           : null
         : <SearchInput
-            id={inputID}
+            id={id}
             leftContent={leftContent}
             withShadow={isSearch && !noShadow}
             inputRef={inputRef}
@@ -224,41 +253,6 @@ export const SearchListContent = <M extends boolean = false>(
             isLoading={isSearch && searchingItems}
           />
         }
-        {!!multiSelect && (
-          <Checkbox
-            id={id}
-            style={{
-              paddingLeft: "1em",
-              paddingRight: "20px",
-              marginLeft: "auto",
-            }}
-            className={!renderedItems.length ? "hidden" : ""}
-            data-command="SearchList.toggleAll"
-            checked={Boolean(renderedSelected.length)}
-            onChange={(e) => {
-              const checked = e.currentTarget.checked;
-
-              const newItems = items.map((d) => {
-                /** If filteted then only update the visible items */
-                const filteredItem =
-                  !searchTerm ? d : (
-                    renderedItems.find((_d) => _d.key === d.key)
-                  );
-                return {
-                  ...d,
-                  checked:
-                    filteredItem ?
-                      d.disabledInfo ?
-                        d.checked
-                      : checked
-                    : d.checked,
-                };
-              });
-
-              onMultiToggle(newItems, e);
-            }}
-          />
-        )}
       </div>
       {listNode}
     </div>

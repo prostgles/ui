@@ -41,6 +41,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   // await setOrAddWorkspace(page, "Default Grid Layout");
   await toggleMenuPinned(false);
+  await openMenuIfClosed(true);
 
   /** Search all */
   await addScene({ caption: "Search all tables (Ctrl+Shift+F)" });
@@ -98,6 +99,16 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
     .scrollIntoViewIfNeeded();
   await addScene();
   await page.getByTestId("Popup.close").click();
+
+  /* Ensure location is populated */
+  await addSceneAnimation(
+    getCommandElemSelector("dashboard.window.toggleFilterBar"),
+  );
+  await page.getByTestId("SearchList.Input").fill("picked");
+  await page.locator(`[data-label="picked_up"]`).waitFor({ state: "visible" });
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await page.getByTestId("dashboard.window.toggleFilterBar").click();
 
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
 

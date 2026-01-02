@@ -1,4 +1,4 @@
-import { sliceText } from "@common/utils";
+import { getProperty, sliceText } from "@common/utils";
 import type { LocalMedia } from "@components/FileInput/FileInput";
 import { ShorterText } from "@components/ShorterText";
 import type { ValidatedColumnInfo } from "prostgles-types";
@@ -244,7 +244,7 @@ export const getColumnDataColor = (
     return "var(--color-date)";
   }
 
-  if (c && _PG_numbers.includes(c.udt_name as any)) {
+  if (c && includes(_PG_numbers, c.udt_name)) {
     return "var(--color-number)";
   }
 
@@ -254,7 +254,8 @@ export const getColumnDataColor = (
   } as const;
 
   return (
-    (c?.tsDataType ? TS_COL_TYPE_TO_COLOR[c.tsDataType] : undefined) ??
-    fallBackColor
+    (c?.tsDataType ?
+      getProperty(TS_COL_TYPE_TO_COLOR, c.tsDataType)
+    : undefined) ?? fallBackColor
   );
 };

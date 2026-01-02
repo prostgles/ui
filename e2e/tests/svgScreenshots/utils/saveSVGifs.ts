@@ -20,6 +20,13 @@ export const saveSVGifs = async (
   await goTo(page, "/invalid-url-to-avoid-loading-anything");
   const svgSceneFiles = getFilesFromDir(SVGIF_SCENES_DIR, ".svg", false);
 
+  const svgifSpecsDark = svgifSpecs.map(({ fileName, scenes }) => ({
+    fileName: fileName + ".dark",
+    scenes: scenes.map((scene) => ({
+      ...scene,
+      svgFileName: scene.svgFileName + ".dark",
+    })),
+  }));
   const svgifs = await page.evaluate(
     async ({ svgFiles, svgifSpecs }) => {
       const filesMap = new Map<string, string>(
@@ -36,7 +43,7 @@ export const saveSVGifs = async (
 
       return result;
     },
-    { svgFiles: svgSceneFiles, svgifSpecs },
+    { svgFiles: svgSceneFiles, svgifSpecs: [...svgifSpecs, ...svgifSpecsDark] },
   );
 
   const savePath = SVG_SCREENSHOT_DIR;
@@ -47,15 +54,21 @@ export const saveSVGifs = async (
     fs.writeFileSync(path.join(savePath, fileName), content);
   });
 
-  svgifCovers.forEach(({ fileName, svgSceneFileName }) => {
-    const svgFile = svgSceneFiles.find(
-      (f) => f.fileName === svgSceneFileName + ".svg",
-    );
-    if (!svgFile) {
-      throw new Error(
-        `SVG scene file not found: ${svgSceneFileName}. Expecting one of ${svgSceneFiles.map((f) => f.fileName).join(", ")}`,
+  const svgifCoversDark = svgifCovers.map(({ fileName, svgSceneFileName }) => ({
+    fileName: fileName + ".dark",
+    svgSceneFileName: svgSceneFileName + ".dark",
+  }));
+  [...svgifCovers, ...svgifCoversDark].forEach(
+    ({ fileName, svgSceneFileName }) => {
+      const svgFile = svgSceneFiles.find(
+        (f) => f.fileName === svgSceneFileName + ".svg",
       );
-    }
-    fs.writeFileSync(path.join(savePath, fileName + ".svg"), svgFile.content);
-  });
+      if (!svgFile) {
+        throw new Error(
+          `SVG scene file not found: ${svgSceneFileName}. Expecting one of ${svgSceneFiles.map((f) => f.fileName).join(", ")}`,
+        );
+      }
+      fs.writeFileSync(path.join(savePath, fileName + ".svg"), svgFile.content);
+    },
+  );
 };

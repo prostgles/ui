@@ -20,8 +20,9 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     "wss://fstream.binance.com/ws/!markPrice@arr@1s",
   );
 
+  let futuresCount: number | undefined;
   socket.onmessage = async (rawData) => {
-    const dataItems = JSON.parse(rawData.data as string);
+    const dataItems = JSON.parse(rawData.data as string) as any[];
     const data = dataItems.map((data) => ({
       symbol: data.s,
       price: data.p,
@@ -31,6 +32,11 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
       data.map(({ symbol }) => ({ pair: symbol })),
       { onConflict: "DoNothing" },
     );
+
+    futuresCount ??= await dbo.futures.count();
+    if (!futuresCount) {
+      await loadHistorcalFutures(dbo);
+    }
     await dbo.futures.insert(data);
   };
 
@@ -129,7 +135,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
         { returnType: "row" },
       );
       let truncateQuery = "";
-      if (futures_id > 1e5) {
+      if (futures_id > 1e6) {
         truncateQuery += `TRUNCATE futures RESTART IDENTITY;\n`;
       }
       if (gas_id > 1e5) {
@@ -143,6 +149,55 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
   );
 };
 
+const loadHistorcalFutures = async (dbo) => {
+  for (const pair of ["BTCUSDT", "ETHUSDT"]) {
+    const data = await fetchHistoricalFutures(
+      pair,
+      "1m",
+      Date.now() - 7 * 24 * 60 * 60 * 1000,
+      Date.now(),
+    );
+    await dbo.futures.insert(data);
+  }
+};
+
+const fetchHistoricalFutures = async (
+  symbol: string,
+  interval: string,
+  startTime: number,
+  endTime: number,
+) => {
+  const allData: any[][] = [];
+  let currentStart = startTime;
+
+  while (currentStart < endTime) {
+    const url = `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${interval}&startTime=${currentStart}&endTime=${endTime}&limit=1500`;
+    const res = await fetch(url);
+    const data = (await res.json()) as any[];
+
+    if (!data.length) break;
+
+    allData.push(...data);
+
+    // Move start to after the last candle
+    const lastCandleOpenTime = data[data.length - 1][0];
+    currentStart = lastCandleOpenTime + 1;
+
+    // Avoid rate limits
+    await new Promise((r) => setTimeout(r, 50));
+  }
+
+  return allData.map(([openTime, open, high, low, close, volume]) => ({
+    timestamp: new Date(openTime),
+    // open: parseFloat(open),
+    // high: parseFloat(high),
+    // low: parseFloat(low),
+    symbol,
+    // close: parseFloat(close),
+    price: parseFloat(close),
+    // volume: parseFloat(volume),
+  }));
+};
 const MARKETS = {
   btc: {
     symbol: "BTC",

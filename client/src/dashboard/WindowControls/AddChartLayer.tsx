@@ -8,18 +8,15 @@ import PopupMenu from "@components/PopupMenu";
 import Btn from "@components/Btn";
 import { MapOSMQuery } from "../W_Map/controls/MapOSMQuery";
 import type { Extent } from "../Map/DeckGLMap";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const defaultWorldExtent: Extent = [-180, -90, 180, 90];
 
 export const AddChartLayer = (props: MapLayerManagerProps) => {
-  const {
-    tables,
-    type,
-    prgl: { dbs },
-    w,
-  } = props;
+  const { type, w } = props;
   const isMap = type === "map";
   let osmBbox = "";
+  const { dbs, tables } = usePrgl();
   if (w.type === "map") {
     const [b, a, b1, a1] = w.options.extent ?? defaultWorldExtent;
     osmBbox = [a, b, a1, b1].join(",");

@@ -165,6 +165,7 @@ export const MinimisedFilter = ({
           className={"flex-row ai-center noselect pointer relative o-hidden "}
         >
           <div
+            data-command="FilterWrapper_FieldName"
             className={"FilterWrapper_FieldName  font-18 mr-p25 "}
             style={{ fontWeight: 600 }}
           >

@@ -171,7 +171,7 @@ export const DashboardMenuContent = (props: P) => {
             .map((t, i) => ({
               key: i,
               contentLeft: (
-                <div className="flex-col ai-start f-0 mr-p5 text-1">
+                <div className="flex-col ai-start f-0 text-1">
                   <Icon path={mdiScriptTextPlay} size={1} />
                 </div>
               ),
@@ -249,7 +249,7 @@ export const DashboardMenuContent = (props: P) => {
             return {
               contentLeft: (
                 <div
-                  className="flex-col ai-start f-0 mr-p5 text-1"
+                  className="flex-col ai-start f-0 text-1"
                   {...(t.info.isFileTable ?
                     dataCommand("dashboard.menu.fileTable")
                   : {})}
@@ -300,14 +300,14 @@ export const DashboardMenuContent = (props: P) => {
           placeholder={"Search " + detailedMethods.length + " functions"}
           items={detailedMethods.map((t, i) => ({
             contentLeft: (
-              <div className="flex-col ai-start f-0 mr-p5 text-1">
-                <Icon path={mdiFunction} size={1} />
+              <div className="flex-col ai-start f-0 text-1">
+                <Icon path={mdiFunction} />
               </div>
             ),
             key: t.name,
             label: t.name,
             onPress: () => {
-              loadTable({ type: "method", method_name: t.name });
+              void loadTable({ type: "method", method_name: t.name });
               onClose?.();
             },
           }))}

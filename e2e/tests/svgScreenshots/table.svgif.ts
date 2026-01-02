@@ -9,7 +9,7 @@ import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 
 export const tableSvgif: OnBeforeScreenshot = async (
   page,
-  { openConnection, toggleMenuPinned },
+  { openConnection, toggleMenuPinned, openMenuIfClosed },
   { addScene, addSceneAnimation },
 ) => {
   await openConnection("food_delivery");
@@ -24,7 +24,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
   //   { action: "type", text: "users", mode: "fill" },
   // );
   // return;
-
+  await openMenuIfClosed();
   await addSceneAnimation(getDataKey("users"));
 
   /** Show linked computed column */

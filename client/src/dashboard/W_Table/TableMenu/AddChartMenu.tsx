@@ -282,7 +282,7 @@ export const AddChartMenu = (props: P) => {
                 data-command={btnProps["data-command"]}
                 btnProps={{
                   children: "",
-                  variant: "default",
+                  variant: "icon",
                   ...btnProps,
                 }}
                 fullOptions={c.cols.map((c, i) => ({

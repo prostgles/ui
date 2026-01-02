@@ -1,6 +1,10 @@
 import { Locator, Page as PG, expect } from "@playwright/test";
 import * as path from "path";
-import { Command, getDataKeyElemSelector } from "../Testing";
+import {
+  Command,
+  getCommandElemSelector,
+  getDataKeyElemSelector,
+} from "../Testing";
 import { goTo } from "./goTo";
 import { TEST_DB_NAME, USERS } from "./constants";
 
@@ -954,16 +958,24 @@ export const getDashboardUtils = (page: PageWIds) => {
   const _open = openConnection.bind(null, page);
   const openMenuIfClosed = async (closeMenu = false) => {
     await page.waitForTimeout(1500);
-    const menuContentButton = await page.getByTestId(
-      "dashboard.menu.quickSearch",
+    const menuCloseButton = await page
+      .getByTestId("DashboardMenu")
+      .getByTestId("Popup.close");
+    const menuPinnedButton = await page.locator(
+      getCommandElemSelector("DashboardMenuHeader.togglePinned") +
+        getDataKey("pinned"),
     );
-    const menuIsOpen = await menuContentButton.count();
+    const menuIsOpen =
+      (await menuCloseButton.count()) ? "close"
+      : (await menuPinnedButton.count()) ? "unpinn"
+      : undefined;
     if (menuIsOpen) {
       if (closeMenu) {
-        await page
-          .getByTestId("DashboardMenu")
-          .getByTestId("Popup.close")
-          .click();
+        if (menuIsOpen === "close") {
+          await menuCloseButton.click();
+        } else {
+          await menuPinnedButton.click();
+        }
       }
       return;
     }

@@ -4,7 +4,7 @@ The timechart view allows you to visualize time-series data from your database.
 It supports multiple layers, each with its own data source and style.
 You can add filters to the timechart to narrow down the data displayed.
 
-<img src="./screenshots/timechart.svg" alt="Timechart view screenshot" style="border: 1px solid; margin: 1em 0;" />
+<img src="./screenshots/timechart.svgif.svg" alt="Timechart view screenshot" style="border: 1px solid; margin: 1em 0;" />
 
 ## Components
 

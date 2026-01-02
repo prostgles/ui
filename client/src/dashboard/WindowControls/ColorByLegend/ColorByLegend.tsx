@@ -4,14 +4,18 @@ import { FlexRow, classOverride } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useMemo } from "react";
+import { chipColors } from "src/dashboard/W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
 import {
   DefaultConditionalStyleLimit,
-  getValueColors,
+  fetchColumnValues,
 } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/getValueColors";
 import { isDefined } from "../../../utils/utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { ColorPicker } from "../../W_Table/ColumnMenu/ColorPicker";
-import { type ColumnValue } from "../../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import {
+  getRandomElement,
+  type ColumnValue,
+} from "../../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 import type { W_TimeChartStateLayer } from "../../W_TimeChart/W_TimeChart";
 import { getGroupByValueColor } from "./getGroupByValueColor";
 
@@ -73,7 +77,7 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
         .getLinksAndWindows()
         .windows.find((w) => w.id === props.w.parent_window_id);
       const filter = getSmartGroupFilter(parentW?.filter || []);
-      void getValueColors(
+      void fetchColumnValues(
         linkOptions?.dataSource?.type === "sql" ?
           {
             type: "sql",
@@ -90,15 +94,24 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
             filter,
             theme,
           },
-        (newStyle) => {
-          updateGroupByColumnColors(
-            newStyle.conditions.map((c) => ({
-              color: c.textColor!,
-              value: c.condition,
-            })),
-          );
-        },
-      );
+      ).then((values) => {
+        if (!values) return;
+        const prevSyleIndexes = new Set<number>();
+        updateGroupByColumnColors(
+          values.map((value) => {
+            const nonPickedStyles =
+              prevSyleIndexes.size === chipColors.length ?
+                chipColors
+              : chipColors.filter((_, i) => !prevSyleIndexes.has(i));
+            const { elem: style, index } = getRandomElement(nonPickedStyles);
+            prevSyleIndexes.add(index);
+            return {
+              color: style.color,
+              value,
+            };
+          }),
+        );
+      });
     }
   }, [
     db,

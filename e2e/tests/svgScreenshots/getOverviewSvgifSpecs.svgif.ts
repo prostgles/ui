@@ -30,7 +30,7 @@ export const getOverviewSvgifSpecs = async (
       fileName: "interactive_dashboards",
       usedExternally: true,
       scenes: [
-        ...sliceScenes("dashboard", 10),
+        ...sliceScenes("dashboard", 15),
         ...sliceScenes("ai_assistant", 0),
 
         ...sliceScenes("sql_editor", 8, 10),
@@ -50,6 +50,23 @@ export const getOverviewSvgifSpecs = async (
         ...sliceScenes("sql_editor", 8, 10),
         ...sliceScenes("sql_editor", 18, 19),
       ],
+    },
+
+    {
+      fileName: "ai_assistant_questions",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 20)],
+    },
+
+    {
+      fileName: "ai_assistant_dashboards",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 1, 5)],
+    },
+    {
+      fileName: "ai_assistant_mcp_tools",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 6, 13)],
     },
 
     /** SQL section */
@@ -102,7 +119,7 @@ export const getOverviewSvgifSpecs = async (
     },
     {
       fileName: "sql_editor1",
-      svgSceneFileName: existing.sql_editor[19]!.svgFileName,
+      svgSceneFileName: existing.sql_editor[18]!.svgFileName,
     },
     {
       fileName: "backups",

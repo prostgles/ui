@@ -140,7 +140,7 @@ export const useSearchAllListProps = ({
         label: m.table,
         content: (
           <div className="f-1 flex-row ai-start" title="Open table">
-            <div className="flex-col ai-start f-0 mr-p5 text-1">
+            <div className="flex-col ai-start f-0 text-1">
               {icon ?
                 <SvgIcon icon={icon} />
               : <Icon path={db[m.table]?.insert ? mdiTableEdit : mdiTable} />}

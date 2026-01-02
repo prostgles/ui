@@ -169,14 +169,7 @@ export const playwrightTestLogs: InitOptions["onDebug"] = (ev) => {
   window.prostgles_logs ??= [];
   //@ts-ignore
   window.prostgles_logs.push({ ...ev, ts: new Date() });
-  const trackedTableNames = [
-    "global_settings",
-    "llm_chats",
-    "llm_messages",
-    "llm_prompts",
-    "llm_credentials",
-    "table_name",
-  ];
+  const trackedTableNames: string[] = [];
   if (ev.type === "table" && trackedTableNames.includes(ev.tableName)) {
     // if(ev.command === "unsubscribe") debugger;
     console.log(Date.now(), "DBS client", ev);

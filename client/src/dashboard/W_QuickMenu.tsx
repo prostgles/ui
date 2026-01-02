@@ -1,19 +1,15 @@
 import {
   mdiChartBoxMultipleOutline,
   mdiFilter,
+  mdiMagnify,
   mdiSetLeftCenter,
 } from "@mdi/js";
 
-import React from "react";
 import Btn from "@components/Btn";
+import React from "react";
 import type { CommonWindowProps } from "./Dashboard/Dashboard";
-import type {
-  OnAddChart,
-  WindowData,
-  WindowSyncItem,
-} from "./Dashboard/dashboardUtils";
+import type { OnAddChart, WindowSyncItem } from "./Dashboard/dashboardUtils";
 
-import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { isJoinedFilter } from "@common/filterUtils";
 import { classOverride } from "@components/Flex";
 import { t } from "../i18n/i18nUtils";
@@ -57,7 +53,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     (!show || show.link) &&
     Boolean(
       (setLinkMenu && w.table_name && table?.joinsV2.length) ||
-        (w.type !== "sql" && !!myLinks.length),
+      (w.type !== "sql" && !!myLinks.length),
     );
 
   const [firstLink] = myLinks;
@@ -84,19 +80,65 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
       <div
         data-command="Window.W_QuickMenu"
         className={classOverride(
-          "W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 o-auto no-scroll-bar ",
-          bgColorClass,
+          "W_QuickMenu flex-row ai-center rounded bb-color h-fit w-fit m-auto f-1 min-w-0 o-auto no-scroll-bar ",
         )}
         style={{ maxWidth: "fit-content", margin: "2px 0" }}
         ref={divRef}
       >
-        {table && (!show || show.filter) && (
+        {onAddChart && addChartProps && !show && (
+          <AddChartMenu
+            {...addChartProps}
+            tables={tables}
+            childWindows={childWindows}
+            myLinks={myLinks}
+            onAddChart={onAddChart}
+          />
+        )}
+        {hasMinimisedCharts && (
+          <Btn
+            iconPath={mdiChartBoxMultipleOutline}
+            title={t.W_QuickMenu["Restore minimised charts"]}
+            data-command="dashboard.window.restoreMinimisedCharts"
+            color="action"
+            variant="icon"
+            size="small"
+            onClick={() => {
+              minimisedCharts.forEach((w) => {
+                w.$update({ minimised: false });
+              });
+            }}
+          />
+        )}
+        {showLinks &&
+          !window.isMobileDevice &&
+          !!setLinkMenu &&
+          w.type === "table" && (
+            <Btn
+              title={t.W_QuickMenu["Cross filter tables"]}
+              data-command="Window.W_QuickMenu.addCrossFilteredTable"
+              size="small"
+              variant="icon"
+              iconPath={mdiSetLeftCenter}
+              style={
+                firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }
+              }
+              onClick={(e) => {
+                setLinkMenu({
+                  w,
+                  anchorEl: e.currentTarget,
+                });
+              }}
+            />
+          )}
+        {table && (!show || show.filter) && w.type === "table" && (
           <Btn
             title={t.W_QuickMenu["Show/Hide filtering"]}
-            className={bgColorClass}
+            // className={bgColorClass}
             data-command="dashboard.window.toggleFilterBar"
             size="small"
-            iconPath={mdiFilter}
+            variant="faded"
+            // iconPath={mdiFilter}
+            iconPath={mdiMagnify}
             color={
               (
                 w.filter.some(
@@ -112,55 +154,11 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
                 "action"
               : undefined
             }
-            onClick={(e) => {
-              const _w = w as SyncDataItem<WindowData<"table">, true>;
-              _w.$update(
-                { options: { showFilters: !_w.options?.showFilters } },
+            onClick={() => {
+              w.$update(
+                { options: { showFilters: !w.options.showFilters } },
                 { deepMerge: true },
               );
-            }}
-          />
-        )}
-        {onAddChart && addChartProps && !show && (
-          <AddChartMenu
-            {...addChartProps}
-            tables={tables}
-            childWindows={childWindows}
-            myLinks={myLinks}
-            onAddChart={onAddChart}
-            btnClassName={bgColorClass}
-          />
-        )}
-        {hasMinimisedCharts && (
-          <Btn
-            iconPath={mdiChartBoxMultipleOutline}
-            title={t.W_QuickMenu["Restore minimised charts"]}
-            data-command="dashboard.window.restoreMinimisedCharts"
-            color="action"
-            className={bgColorClass}
-            size="small"
-            onClick={() => {
-              minimisedCharts.forEach((w) => {
-                w.$update({ minimised: false });
-              });
-            }}
-          />
-        )}
-        {showLinks && !window.isMobileDevice && !!setLinkMenu && (
-          <Btn
-            title={t.W_QuickMenu["Cross filter tables"]}
-            data-command="Window.W_QuickMenu.addCrossFilteredTable"
-            className={bgColorClass}
-            size="small"
-            iconPath={mdiSetLeftCenter}
-            style={
-              firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }
-            }
-            onClick={(e) => {
-              setLinkMenu({
-                w: w as WindowSyncItem<"table">,
-                anchorEl: e.currentTarget,
-              });
             }}
           />
         )}

@@ -83,10 +83,7 @@ export class NumberOrDateFilter extends RTComp<
     }
   };
 
-  setValue = (
-    val: { min?: number; max?: number; _val?: number },
-    fromUser = false,
-  ) => {
+  setValue = (val: { min?: number; max?: number; _val?: number }) => {
     const { column, filter } = this.props;
     let {
       min = filter?.value?.[0],
@@ -185,7 +182,7 @@ export class NumberOrDateFilter extends RTComp<
     };
 
     return (
-      <FlexRowWrap className="gap-0 f-1 p-p5" style={{ minWidth: "150px" }}>
+      <FlexRowWrap className="gap-0 f-1 " style={{ minWidth: "150px" }}>
         <FormFieldDebounced
           {...commonProps}
           value={parseValue(column, min)}

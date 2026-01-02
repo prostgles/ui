@@ -25,32 +25,8 @@ export const getValueColors = async (
   args: DefaultConditionalStyleArgs,
   setStyle: (newStyle: ConditionalStyle) => void,
 ) => {
-  const { theme, db } = args;
-  const values = await (async () => {
-    if (args.type === "table") {
-      const { columnName, db, tableName, filter = {} } = args;
-      const tableHandler = db[tableName];
-      if (!tableHandler?.find) return undefined;
-      const rows = await tableHandler.find(filter, {
-        select: { [columnName]: 1 },
-        limit: DefaultConditionalStyleLimit,
-        groupBy: true,
-      });
-      const values = rows.map((v) => v[columnName]) as string[];
-      return values;
-    }
-
-    const values = await db.sql!(
-      `SELECT DISTINCT \${columnName:name} 
-      FROM (
-        ${args.query}
-      ) t 
-      LIMIT ${DefaultConditionalStyleLimit}`,
-      { columnName: args.columnName },
-      { returnType: "values" },
-    );
-    return values as string[];
-  })();
+  const { theme } = args;
+  const values = await fetchColumnValues(args);
   if (!values) return;
   const prevSyleIndexes = new Set<number>();
   setStyle({
@@ -71,4 +47,31 @@ export const getValueColors = async (
       };
     }),
   });
+};
+
+export const fetchColumnValues = async (args: DefaultConditionalStyleArgs) => {
+  const { db } = args;
+  if (args.type === "table") {
+    const { columnName, db, tableName, filter = {} } = args;
+    const tableHandler = db[tableName];
+    if (!tableHandler?.find) return undefined;
+    const rows = await tableHandler.find(filter, {
+      select: { [columnName]: 1 },
+      limit: DefaultConditionalStyleLimit,
+      groupBy: true,
+    });
+    const values = rows.map((v) => v[columnName]) as string[];
+    return values;
+  }
+
+  const values = await db.sql!(
+    `SELECT DISTINCT \${columnName:name} 
+      FROM (
+        ${args.query}
+      ) t 
+      LIMIT ${DefaultConditionalStyleLimit}`,
+    { columnName: args.columnName },
+    { returnType: "values" },
+  );
+  return values as string[];
 };

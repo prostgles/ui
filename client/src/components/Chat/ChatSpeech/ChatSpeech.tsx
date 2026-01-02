@@ -162,7 +162,7 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
                 position: "absolute",
                 inset: 0,
                 borderRadius: "50%",
-                visibility: isListening ? "visible" : "hidden",
+                opacity: isListening ? 1 : 0,
               }}
             />
             {/** Just to take up space */}
@@ -173,7 +173,7 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
                   mdiMicrophoneSettings
                 : mdiMicrophone
               }
-              style={{ visibility: isListening ? "hidden" : "visible" }}
+              style={{ opacity: isListening ? 0 : 1 }}
             />
           </>
         }

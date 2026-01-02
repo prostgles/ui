@@ -7,6 +7,7 @@ import type { SearchListItem, SearchListProps } from "../SearchList";
 import { useSearchListItemsSorting } from "./useSearchListItemsSorting";
 import type { SearchListState } from "./useSearchListSearch";
 
+export type SearchListItemsState = ReturnType<typeof useSearchListItems>;
 export const useSearchListItems = (
   props: Pick<
     SearchListProps,
