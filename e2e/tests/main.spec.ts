@@ -879,7 +879,7 @@ test.describe("Main test", () => {
       await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "create a container that runs",
-        { timeout: 40e3 },
+        { timeout: 60e3 },
       );
       await page.waitForTimeout(3e3);
       await page

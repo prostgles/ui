@@ -1,4 +1,4 @@
-import { useEffectDeep, useMemoDeep } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep, useMemoDeep } from "prostgles-client";
 import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";

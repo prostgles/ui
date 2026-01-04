@@ -1,4 +1,4 @@
-import { useIsMounted } from "prostgles-client/dist/react-hooks";
+import { useIsMounted } from "prostgles-client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { ProcStats } from "@common/utils";
 import { getAgeFromDiff } from "@common/utils";
@@ -10,6 +10,7 @@ import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton
 import { getPGIntervalAsText } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";
 import type { FilterItem } from "prostgles-types";
+import { LOG_LANGUAGE_ID } from "../CodeEditor/registerLogLang";
 
 type P = Pick<Prgl, "dbsMethods" | "connectionId" | "dbs"> & {
   type: "tableConfig" | "onMount" | "methods";
@@ -128,7 +129,7 @@ export const ProcessLogs = (props: P) => {
         }
         onMount={onMonacoEditorMount}
         options={options}
-        language="bash"
+        language={LOG_LANGUAGE_ID}
         value={logs ?? ""}
       />
     </FlexCol>

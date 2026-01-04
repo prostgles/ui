@@ -47,7 +47,8 @@ export const domToSVG = async (node: HTMLElement) => {
   wrapAllSVGText(svg);
 
   /** Add textLength to prevent bugs in ios (It uses a different font which is wider and overflows the existing rects and clip paths) */
-  svg.querySelectorAll("text,tspan").forEach((text) => {
+  svg.querySelectorAll("text,tspan").forEach((_text) => {
+    const text = _text as SVGTextElement | SVGTSpanElement;
     const isMultiLine = text.textContent.includes("\n");
     if (
       isMultiLine ||
@@ -57,7 +58,9 @@ export const domToSVG = async (node: HTMLElement) => {
       return;
     }
     const bbox = text.getBoundingClientRect();
-    text.setAttribute("textLength", bbox.width);
+    const ctm = text.getCTM();
+    const scaleX = !ctm ? 1 : Math.hypot(ctm.a, ctm.c);
+    text.setAttribute("textLength", bbox.width / scaleX);
     text.setAttribute("lengthAdjust", "spacingAndGlyphs");
   });
 

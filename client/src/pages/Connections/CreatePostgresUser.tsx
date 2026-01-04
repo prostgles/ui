@@ -1,4 +1,4 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useState } from "react";
 import ButtonGroup from "@components/ButtonGroup";
 import { Checkbox } from "@components/Checkbox";

@@ -1,5 +1,5 @@
 import { mdiSync } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import type { Prgl } from "../../App";

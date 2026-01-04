@@ -1,4 +1,4 @@
-import { useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
+import { useIsMounted, usePromise } from "prostgles-client";
 import { isEmpty } from "prostgles-types";
 import { useMemo, useState } from "react";
 import type {
@@ -174,15 +174,15 @@ export const useEditedAccessRule = ({
       action.type === "create" ||
       Boolean(
         ruleData.rule &&
-          !areEqual(newRule, ruleData.rule, [
-            "access_control_user_types",
-            "access_control_allowed_llm",
-            "access_control_methods",
-            "dbPermissions",
-            "dbsPermissions",
-            "published_methods",
-            "llm_daily_limit",
-          ]),
+        !areEqual(newRule, ruleData.rule, [
+          "access_control_user_types",
+          "access_control_allowed_llm",
+          "access_control_methods",
+          "dbPermissions",
+          "dbsPermissions",
+          "published_methods",
+          "llm_daily_limit",
+        ]),
       )
     );
 

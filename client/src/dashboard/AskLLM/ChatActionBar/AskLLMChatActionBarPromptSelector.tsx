@@ -10,10 +10,7 @@ import {
   mdiFileEyeOutline,
   mdiViewCarousel,
 } from "@mdi/js";
-import {
-  usePromise,
-  type DBHandlerClient,
-} from "prostgles-client/dist/prostgles";
+import { usePromise, type DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";

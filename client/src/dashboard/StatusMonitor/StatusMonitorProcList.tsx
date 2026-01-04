@@ -1,6 +1,6 @@
 import { mdiCancel, mdiStopCircleOutline } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import type { PrglState } from "../../App";

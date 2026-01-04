@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useMemo } from "react";
 import FormField from "@components/FormField/FormField";
 import { Select, type SelectProps } from "@components/Select/Select";

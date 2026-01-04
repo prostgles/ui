@@ -1,4 +1,4 @@
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep } from "prostgles-client";
 import React, { useState } from "react";
 import { FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";

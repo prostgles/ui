@@ -109,6 +109,8 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await page.getByTestId("dashboard.window.toggleFilterBar").click();
+  await page.reload();
+  await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
 
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
 

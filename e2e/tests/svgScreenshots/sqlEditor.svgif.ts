@@ -35,6 +35,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     await addScene({
       svgFileName,
       caption,
+      animations: [{ type: "wait", duration: 1000 }],
     });
   };
 

@@ -12,9 +12,9 @@ import {
 
 /** Close previous windows */
 export const closeAllViews = async () => {
-  let windowCloseBtn;
+  let windowCloseBtn: HTMLElement | null;
   do {
-    windowCloseBtn = getElement("dashboard.window.close");
+    windowCloseBtn = getElement("dashboard.window.close") as HTMLElement | null;
     windowCloseBtn?.click();
     await tout(400);
     const deleteSql = getElement<HTMLButtonElement>("CloseSaveSQLPopup.delete");
@@ -188,6 +188,7 @@ export const dashboardDemo = async () => {
 
   await click("", `[title="Expand/Collapse filters"]`);
   await click("AddChartMenu.Timechart");
+  await click("AddChartMenu.Timechart", `[data-key="timestamp"]`);
   await click("ChartLayerManager");
   await click("TimeChartLayerOptions.aggFunc");
   await click("TimeChartLayerOptions.aggFunc.select");

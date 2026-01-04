@@ -18,7 +18,7 @@ import {
   mdiLanguageTypescript,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React from "react";
 import { bytesToSize } from "src/dashboard/BackupAndRestore/BackupsControls";
 import { FileBrowserCurrentDirectory } from "./FileBrowserCurrentDirectory";

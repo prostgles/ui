@@ -1,5 +1,5 @@
 import { mdiFileCogOutline } from "@mdi/js";
-import { useIsMounted } from "prostgles-client/dist/react-hooks";
+import { useIsMounted } from "prostgles-client";
 import React, { useState } from "react";
 import { type Prgl } from "../../../../App";
 import Btn from "@components/Btn";

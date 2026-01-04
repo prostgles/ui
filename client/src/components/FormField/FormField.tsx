@@ -64,7 +64,6 @@ export type FormFieldProps<
     ) => void;
     onInput?: (e: React.FormEvent<HTMLInputElement>) => void;
     type?: T;
-    labelAsString?: string;
     id?: string;
     readOnly?: boolean;
     /**
@@ -135,7 +134,7 @@ export default class FormField<
   rootDiv?: HTMLDivElement;
   refWrapper?: HTMLDivElement;
 
-  textArea: any;
+  textArea: HTMLTextAreaElement | null = null;
   setResizer = () => {
     const { asTextArea, autoResize = true } = this.props;
     if (this.rootDiv && asTextArea && autoResize && !this.textArea) {
@@ -281,7 +280,6 @@ export default class FormField<
       optional = false,
       multiSelect,
       labelAsValue,
-      labelAsString,
       options = this.state.options,
       fullOptions,
       name = this.props.type,
@@ -394,21 +392,23 @@ export default class FormField<
     const onDragStop = (e: React.DragEvent<HTMLInputElement>) => {
       e.currentTarget.classList.toggle("active-drop-target", false);
     };
+
+    const ref = (e: HTMLInputElement | null) => {
+      if (e) {
+        this.inputRef = e;
+        //@ts-ignore
+        e.forceDemoValue = (val: any) => {
+          this.props.onChange?.(val);
+        };
+      }
+    };
+
     const inputProps: React.DetailedHTMLProps<
       React.InputHTMLAttributes<HTMLInputElement>,
       HTMLInputElement
     > = {
       id,
       key: id,
-      ref: (e) => {
-        if (e) {
-          this.inputRef = e;
-          //@ts-ignore
-          e.forceDemoValue = (val: any) => {
-            this.props.onChange?.(val);
-          };
-        }
-      },
       required,
       readOnly,
       className: inptClass,
@@ -508,11 +508,13 @@ export default class FormField<
         </div>
       : asTextArea ?
         <textarea
+          ref={ref}
           {...(inputProps as any)}
           className={classOverride(inputProps.className ?? "", " text-0")}
           style={textareaStyle}
         />
       : <input
+          ref={ref}
           {...inputProps}
           {...(rval === null && { placeholder: "NULL" })}
           style={inputFinalStyle}

@@ -1,5 +1,5 @@
 import { mdiFullscreen } from "@mdi/js";
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep } from "prostgles-client";
 import React, { useCallback, useRef } from "react";
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";

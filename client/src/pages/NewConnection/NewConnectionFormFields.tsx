@@ -1,5 +1,5 @@
 import { mdiConnection, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useEffect, useRef } from "react";
 import Btn from "@components/Btn";
 import ButtonGroup from "@components/ButtonGroup";

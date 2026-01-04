@@ -4,7 +4,7 @@ import { FileInput } from "@components/FileInput/FileInput";
 import { FlexRow, FlexRowWrap } from "@components/Flex";
 import { Select, type FullOption } from "@components/Select/Select";
 import { mdiClose } from "@mdi/js";
-import { useIsMounted, useMemoDeep } from "prostgles-client/dist/prostgles";
+import { useMemoDeep } from "prostgles-client/dist/prostgles";
 import {
   isDefined,
   isObject,
@@ -20,6 +20,7 @@ import { RenderValue } from "./RenderValue";
 import type { SmartColumnInfo, SmartFormFieldProps } from "./SmartFormField";
 import { type SmartFormFieldLinkedDataInsertState } from "./SmartFormFieldLinkedData";
 import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
+import { useIsMounted } from "prostgles-client";
 
 export type SmartFormFieldForeignKeyProps = Pick<
   SmartFormFieldProps,

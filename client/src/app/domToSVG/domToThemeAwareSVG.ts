@@ -10,10 +10,10 @@ export const displayNoneIfDark = "--dark-theme-hide";
 export const displayNoneIfLight = "--light-theme-hide";
 export const domToThemeAwareSVG = async (
   node: HTMLElement,
-  debugMode?: "light" | "both",
+  themes?: "current" | "both",
 ) => {
   const { svg: svgLight, rootId: svgLightRootId } = await domToSVG(node);
-  if (debugMode === "light") {
+  if (themes === "current") {
     renderSvg(svgLight);
     return;
   }
@@ -267,7 +267,7 @@ export const domToThemeAwareSVG = async (
   await setThemeForSVGScreenshot(undefined);
   document.body.removeChild(svgLight);
 
-  if (debugMode === "both") {
+  if (themes === "both") {
     renderSvg(svgLight);
     return;
   }
@@ -279,7 +279,7 @@ export const domToThemeAwareSVG = async (
 
 document.body.addEventListener("keydown", (e) => {
   if (e.key === "F2") {
-    void domToThemeAwareSVG(document.body, "light");
+    void domToThemeAwareSVG(document.body, "current");
   } else if (e.key === "F4") {
     void domToThemeAwareSVG(document.body, "both");
   } else if (e.key === "F6") {

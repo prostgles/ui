@@ -2,7 +2,7 @@ import React from "react";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import { getSqlRowsAsCSV } from "./CopyResultBtn";
 import type { W_SQLState } from "./W_SQL";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 
 type P = Pick<W_SQLState, "cols" | "rows">;
 export const CSVRender = ({ rows, cols }: P) => {

@@ -1,4 +1,4 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { includes } from "prostgles-types";
 import type { ProstglesState } from "@common/electronInitTypes";
 import { SPOOF_TEST_VALUE } from "@common/utils";

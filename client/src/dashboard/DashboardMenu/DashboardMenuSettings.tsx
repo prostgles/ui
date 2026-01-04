@@ -1,6 +1,6 @@
 import { mdiCog, mdiTable, mdiViewGridPlus } from "@mdi/js";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { useEffectAsync, usePromise } from "prostgles-client/dist/react-hooks";
+import { useEffectAsync, usePromise } from "prostgles-client";
 import React from "react";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";

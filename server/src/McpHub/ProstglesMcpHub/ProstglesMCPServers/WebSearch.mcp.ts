@@ -20,7 +20,9 @@ const definition = {
 const handler = {
   start: async (dbs) => {
     const searXngService = getServiceManager(dbs);
-    await searXngService.enableService("webSearchSearxng", () => {});
+    await searXngService
+      .enableService("webSearchSearxng", () => {})
+      .catch(console.error);
 
     const serviceInstance = searXngService.getService("webSearchSearxng");
     if (serviceInstance?.status !== "running") {
@@ -30,8 +32,8 @@ const handler = {
     }
 
     return {
-      stop: async () => {
-        await searXngService.stopService("webSearchSearxng");
+      stop: () => {
+        searXngService.stopService("webSearchSearxng");
       },
       tools: {
         websearch: async (toolArguments, { clientReq }) => {

@@ -8,6 +8,7 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { useTypedSearchParams } from "src/hooks/useTypedSearchParams";
 import { getDocumentationFiles } from "./getDocumentation";
+import remarkGfm from "remark-gfm";
 
 type P = {
   isElectron: boolean;
@@ -62,7 +63,7 @@ export const Documentation = ({ isElectron }: P) => {
           }}
         >
           {!currentDocFile ? null : (
-            <Markdown rehypePlugins={[rehypeRaw]}>
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
               {currentDocFile.text}
             </Markdown>
           )}

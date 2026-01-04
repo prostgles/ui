@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from "react";
-import { useIsMounted } from "../../BackupAndRestore/CloudStorageCredentialSelector";
 import type { SearchAllProps } from "../SearchAll";
 import { type SearchMatch } from "../SearchMatchRow";
 import type { SearchAllState } from "./useSearchAllState";
+import { useIsMounted } from "prostgles-client";
 
 export const useSearchTables = (props: SearchAllProps & SearchAllState) => {
   const {

@@ -9,7 +9,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import { mdiClose, mdiPlus, mdiTableFilter } from "@mdi/js";
-import { useEffectAsync } from "prostgles-client/dist/react-hooks";
+import { useEffectAsync } from "prostgles-client";
 import React, { useEffect, useState } from "react";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { FieldFilterControl } from "./FieldFilterControl";

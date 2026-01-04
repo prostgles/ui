@@ -15,7 +15,7 @@ import {
   mdiSecurity,
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
 import { LLMProviderSetup } from "../../dashboard/AskLLM/Setup/LLMProviderSetup";

@@ -155,7 +155,7 @@ export async function startService(
       type: "error",
       error,
     });
-    throw error;
+    return Promise.reject(error);
   }
 
   const runningService: RunningServiceInstance = {

@@ -1,4 +1,4 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React from "react";
 import type { Prgl } from "../../../App";
 import Btn from "@components/Btn";

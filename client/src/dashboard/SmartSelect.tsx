@@ -16,8 +16,8 @@ import {
   type SearchListItemContent,
   type SearchListItem,
 } from "@components/SearchList/SearchList";
-import { useIsMounted } from "./BackupAndRestore/CloudStorageCredentialSelector";
 import { InfoRow } from "@components/InfoRow";
+import { useIsMounted } from "prostgles-client";
 
 type SmartSelectProps<
   THandler extends TableHandlerClient = TableHandlerClient,

@@ -1,7 +1,7 @@
 import { InfoRow } from "@components/InfoRow";
 import { LabeledRow } from "@components/LabeledRow";
 import { SwitchToggle } from "@components/SwitchToggle";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React from "react";
 import { areEqual } from "../../../utils/utils";
 import type { DBPermissionEditorProps } from "./PCustomTables";

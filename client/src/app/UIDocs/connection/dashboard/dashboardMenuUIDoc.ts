@@ -5,8 +5,8 @@ import {
 import type { UIDocElement } from "../../../UIDocs";
 
 export const dashboardMenuUIDoc = {
-  type: "section",
-  selector: ".DashboardMenuContent",
+  type: "popup",
+  selectorCommand: "dashboard.menu",
   title: "Dashboard menu",
   description:
     "Allows opening tables and views, schema diagram, importing files, managing saved queries, and accessing dashboard settings.",
@@ -16,6 +16,7 @@ export const dashboardMenuUIDoc = {
     For wider screens the centered layout mode can be enabled through the settings. 
 
     `,
+  contentSelectorCommand: "DashboardMenuContent",
   children: [
     {
       type: "button",

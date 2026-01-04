@@ -1,4 +1,4 @@
-import { useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
+import { useIsMounted, usePromise } from "prostgles-client";
 import type { SQLHandler } from "prostgles-types";
 import React, { useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";

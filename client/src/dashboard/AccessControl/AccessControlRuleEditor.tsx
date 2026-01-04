@@ -8,7 +8,7 @@ import {
   mdiTableAccount,
   mdiTableLock,
 } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import type {
   ContextDataObject,
   DBSSchema,

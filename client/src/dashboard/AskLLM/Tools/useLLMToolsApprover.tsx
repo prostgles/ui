@@ -4,7 +4,7 @@ import {
 } from "@common/llmUtils";
 import type { ProstglesMcpTool } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../utils/utils";
 import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";

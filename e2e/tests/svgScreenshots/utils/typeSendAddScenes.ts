@@ -14,17 +14,25 @@ export const typeSendAddScenes = async (
   await page.waitForTimeout(1000);
   const msPerChar = 30;
   const zoomDurations = 500 + 500 + 300; // zoom in + zoom out + wait before zoom out
+  const typeAnimation: SVGif.Animation | undefined =
+    !text ? undefined : (
+      {
+        type: "type",
+        elementSelector: getCommandElemSelector("Chat.textarea"),
+        duration: zoomDurations + text.length * msPerChar,
+        extraAnimation: {
+          type: "bringToFront",
+          elementSelector: getCommandElemSelector("Chat.sendWrapper"),
+        },
+      }
+    );
+  const waitAnimation: SVGif.Animation = {
+    type: "wait",
+    duration: 500,
+  };
   await addScene({
-    animations: [
-      text ?
-        {
-          type: "type",
-          elementSelector: getCommandElemSelector("Chat.textarea"),
-          duration: zoomDurations + text.length * msPerChar,
-        }
-      : undefined,
-      { type: "wait", duration: 500 },
-    ].filter((a): a is SVGif.Animation => Boolean(a)),
+    animations:
+      typeAnimation ? [typeAnimation, waitAnimation] : [waitAnimation],
   });
   await page.getByTestId("Chat.send").click();
   await page.waitForTimeout(2000);

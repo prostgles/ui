@@ -522,6 +522,7 @@ export const COMMANDS = {
   FilterWrapper_FieldName: "",
   FilterWrapper_Field: "",
   "CloudStorageCredentialSelector.selectCredential": "",
+  DashboardMenuContent: "",
 } as const satisfies Record<
   string,
   | string
@@ -589,7 +590,9 @@ export declare namespace SVGif {
         elementSelector: string;
         duration: number;
         type: "type";
-        zoomToElement?: boolean;
+        extraAnimation?:
+          | { type: "zoomToElement" }
+          | { type: "bringToFront"; elementSelector: string };
         /**
          * Maximum scale to zoom in while typing
          */
@@ -598,9 +601,10 @@ export declare namespace SVGif {
     | {
         elementSelector: string;
         duration: number;
-        type: "zoomToElement";
+        type: "zoomToElement" | "bringToFront";
+        bringToFrontSelector?: string;
         /**
-         * Maximum scale to zoom in while typing
+         * Maximum scale to zoom in
          */
         maxScale?: number;
       }

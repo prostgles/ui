@@ -4,6 +4,7 @@ import { createReceipt } from "createReceipt";
 import {
   closeWorkspaceWindows,
   deleteExistingLLMChat,
+  getDataKey,
   runDbSql,
   setModelByText,
   setPromptByText,
@@ -126,7 +127,10 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
 
   await page.getByTestId("Alert").getByText("OK").waitFor({ state: "visible" });
   await page.waitForTimeout(1000);
-  await addScene({ svgFileName: "tasks" });
+  await addScene({
+    svgFileName: "tasks",
+    animations: [{ type: "wait", duration: 1000 }],
+  });
   await page.getByTestId("Alert").getByText("OK").click();
   await page.waitForTimeout(4000);
   const { filePath } = await createReceipt(page);
@@ -151,7 +155,10 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   );
 
   await page.waitForTimeout(2000);
-  await addScene({ svgFileName: "vision_ocr" });
+  await addScene({
+    svgFileName: "vision_ocr",
+    animations: [{ type: "wait", duration: 1000 }],
+  });
 
   await page.getByTestId("ToolUseMessage.toggle").last().click();
   await expect(page.getByTestId("Popup.content").last()).toContainText(
@@ -205,7 +212,10 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   //   ],
   // });
 
-  await addScene({ svgFileName: "docker" });
+  await addScene({
+    svgFileName: "docker",
+    animations: [{ type: "wait", duration: 1000 }],
+  });
 
   await page.getByTestId("Popup.close").last().click();
   await deleteExistingLLMChat(page);
@@ -248,5 +258,12 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
     "SELECT * FROM orders",
   );
-  await addScene({ svgFileName: "sql" });
+  await page.waitForTimeout(2000);
+  await addScene({ svgFileName: "sql_result" });
+
+  await deletePreviousMessages();
+  await addSceneAnimation(getCommandElemSelector("Chat.speech"), "rightClick");
+  await addSceneAnimation(getDataKey("stt-local"));
+  await addScene({ svgFileName: "stt" });
+  await page.keyboard.press("Escape");
 };

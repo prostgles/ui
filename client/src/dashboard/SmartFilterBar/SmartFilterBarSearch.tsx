@@ -1,7 +1,7 @@
 import type { DetailedFilter } from "@common/filterUtils";
 import { isJoinedFilter } from "@common/filterUtils";
 import ErrorComponent from "@components/ErrorComponent";
-import { useMemoDeep } from "prostgles-client/dist/react-hooks";
+import { useMemoDeep } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
 import { SmartSearch } from "../SmartFilter/SmartSearch/SmartSearch";

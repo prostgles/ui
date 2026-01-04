@@ -144,15 +144,15 @@ export const DashboardMenu = ({
           loadTable={loadTable}
           onOpenDBObject={(s, method_name) => {
             if (method_name) {
-              loadTable({ type: "method", method_name });
+              void loadTable({ type: "method", method_name });
             } else if (!s) {
             } else if (s.type === "function") {
-              loadTable({ type: "sql", sql: s.definition, name: s.name });
+              void loadTable({ type: "sql", sql: s.definition, name: s.name });
             } else if ((s as any).type === "table") {
               if (db[s.name]) {
-                loadTable({ type: "table", table: s.name, name: s.name });
+                void loadTable({ type: "table", table: s.name, name: s.name });
               } else {
-                loadTable({
+                void loadTable({
                   type: "sql",
                   sql: `SELECT *\nFROM ${s.escapedIdentifier}\nLIMIT 25`,
                   name: s.name,
@@ -163,7 +163,7 @@ export const DashboardMenu = ({
             }
           }}
           onOpen={({ filter, table }) => {
-            loadTable({ type: "table", table, filter });
+            void loadTable({ type: "table", table, filter });
           }}
           onClose={() => {
             setShowSearchAll(undefined);

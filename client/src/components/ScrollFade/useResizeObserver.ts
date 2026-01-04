@@ -1,4 +1,4 @@
-import { useIsMounted } from "prostgles-client/dist/react-hooks";
+import { useIsMounted } from "prostgles-client";
 import { useEffect, useRef, useState } from "react";
 
 type Size = {

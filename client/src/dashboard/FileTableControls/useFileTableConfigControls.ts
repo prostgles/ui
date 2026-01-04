@@ -1,4 +1,4 @@
-import { useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
+import { useIsMounted, usePromise } from "prostgles-client";
 import type { Prgl } from "../../App";
 import { getCanCreateTables } from "./FileTableConfigControls";
 import { useState } from "react";

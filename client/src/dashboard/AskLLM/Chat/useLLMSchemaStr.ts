@@ -1,4 +1,4 @@
-import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
+import { useMemoDeep, usePromise } from "prostgles-client";
 import { useMemo } from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";

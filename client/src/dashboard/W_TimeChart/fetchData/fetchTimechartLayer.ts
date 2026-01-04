@@ -62,7 +62,7 @@ export async function fetchTimechartLayer({
   if (layer.hasError) {
     throw layer.error;
   }
-  const { dateColumn, statType, groupByColumn, type } = layer;
+  const { dateColumn, statType, groupByColumn } = layer;
   if (layer.type === "table" || layer.type === "local-table") {
     const tableName =
       layer.type === "table" ?
@@ -256,11 +256,12 @@ export async function fetchTimechartLayer({
       layerLinkId: layer.linkId,
       groupByColumn,
     });
-    const groupByColumnDataKey =
-      type === "table" ? groupByColumn : TIMECHART_FIELD_NAMES.group_by;
+
     const groupByValues = Array.from(
       new Set(
-        renderedLayer.data.map((d) => d[groupByColumnDataKey] as ColumnValue),
+        renderedLayer.data.map(
+          (d) => d[TIMECHART_FIELD_NAMES.group_by] as ColumnValue,
+        ),
       ),
     );
     return groupByValues.map((groupByValue, gbi) => {
@@ -270,7 +271,9 @@ export async function fetchTimechartLayer({
           `  ${groupByValue?.toString()}`,
           !layer.statType,
         ),
-        data: rows.filter((r) => r[groupByColumnDataKey] === groupByValue),
+        data: rows.filter(
+          (r) => r[TIMECHART_FIELD_NAMES.group_by] === groupByValue,
+        ),
         color: getColor(groupByValue, gbi),
         groupByValue,
       } satisfies TimeChartLayer;

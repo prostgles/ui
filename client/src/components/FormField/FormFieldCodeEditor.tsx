@@ -1,4 +1,4 @@
-import { useMemoDeep } from "prostgles-client/dist/react-hooks";
+import { useMemoDeep } from "prostgles-client";
 import React, { useCallback, useMemo } from "react";
 import { isObject } from "@common/publishUtils";
 import {

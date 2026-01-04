@@ -38,6 +38,11 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getCommandElemSelector("FilterWrapper_Field"));
 
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Timechart"));
+  await addSceneAnimation(
+    getCommandElemSelector("AddChartMenu.Timechart") +
+      " " +
+      getDataKey("timestamp"),
+  );
   await page.getByTestId("LayerColorPicker").click();
   await page.locator(getDataKey("#CB11F0")).click();
 

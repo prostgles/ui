@@ -3,15 +3,14 @@ import Chip from "@components/Chip";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexRow } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
-import { InfoRow } from "@components/InfoRow";
 import React, { useEffect, useState } from "react";
 import { getServerCoreInfoStr } from "../../../pages/Connections/useConnectionServersList";
 import { isEmpty } from "../../../utils/utils";
-import { useIsMounted } from "../../BackupAndRestore/CloudStorageCredentialSelector";
 import type { StatusMonitorProps } from "../StatusMonitor";
 import { StatusMonitorConnections } from "../StatusMonitorConnections";
 import { StatusMonitorInfoHeaderCpu } from "./StatusMonitorInfoHeaderCpu";
 import { StatusMonitorInfoHeaderMemory } from "./StatusMonitorInfoHeaderMemory";
+import { useIsMounted } from "prostgles-client";
 
 export const StatusMonitorInfoHeader = (
   props: StatusMonitorProps & {

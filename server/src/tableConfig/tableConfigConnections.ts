@@ -17,7 +17,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
     columns: {
       id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
       url_path: {
-        sqlDefinition: `TEXT CHECK(LENGTH(url_path) > 0 AND url_path ~ '^[a-z0-9-]+$')`,
+        sqlDefinition: `TEXT CHECK(LENGTH(url_path) = 0 OR url_path ~ '^[a-z_0-9-]+$')`,
         info: {
           hint: `URL path to be used instead of the connection uuid`,
         },

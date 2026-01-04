@@ -7,6 +7,8 @@ import {
   type MonacoCodeInMarkdownProps,
 } from "./MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import "./Marked.css";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 export type MarkedProps = DivProps &
   Pick<
@@ -70,8 +72,10 @@ export const Marked = (props: MarkedProps) => {
       )}
     >
       <Markdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
         components={{
-          pre: React.Fragment as any,
+          pre: React.Fragment,
           code: CodeComponent,
           a: (props) => (
             <a

@@ -4,7 +4,7 @@ import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import { mdiInformationOutline, mdiPlus } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
@@ -217,14 +217,3 @@ const SAMPLE_BUCKET_POLICY = `
 		}
 	]
 }`;
-
-export function useIsMounted() {
-  const isMountedRef = useRef(true);
-  const isMounted = useCallback(() => isMountedRef.current, []);
-
-  useEffect(() => {
-    return () => void (isMountedRef.current = false);
-  }, []);
-
-  return isMounted;
-}

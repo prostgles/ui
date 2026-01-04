@@ -5,7 +5,7 @@ import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Section } from "@components/Section";
 import { mdiBackupRestore } from "@mdi/js";
-import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep, usePromise } from "prostgles-client";
 import React, { useState } from "react";
 import type { Prgl } from "../../../App";
 import { t } from "../../../i18n/i18nUtils";

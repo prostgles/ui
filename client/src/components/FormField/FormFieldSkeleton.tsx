@@ -7,7 +7,6 @@ import ErrorComponent from "../ErrorComponent";
 import { classOverride, FlexRow, type DivProps } from "../Flex";
 import { InfoRow } from "../InfoRow";
 import { Label, type LabelPropsNormal } from "../Label";
-import type { FormFieldProps } from "./FormField";
 
 const INPUT_WRAPPER_CLASS = "input-wrapper";
 
@@ -22,7 +21,7 @@ export type FormFieldCommonProps = {
   rightContent?: React.ReactNode;
   labelStyle?: React.CSSProperties;
   disabledInfo?: string;
-  error?: any;
+  error?: unknown;
   maxWidth?: React.CSSProperties["maxWidth"];
 };
 

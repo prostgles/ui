@@ -1,6 +1,6 @@
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useState } from "react";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";

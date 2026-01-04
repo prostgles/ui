@@ -8,7 +8,7 @@ import { Select } from "@components/Select/Select";
 import { StatusChip } from "@components/StatusChip";
 import { SvgIcon } from "@components/SvgIcon";
 import { SwitchToggle } from "@components/SwitchToggle";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
 import type { Prgl } from "src/App";
 import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
@@ -204,7 +204,7 @@ const useServicesFieldConfigs = ({
           !v ||
           Boolean(
             showSpecificService &&
-              (status === "running" || status === "stopped"),
+            (status === "running" || status === "stopped"),
           ),
         renderMode: "full",
         render: (_, { logs }) => (

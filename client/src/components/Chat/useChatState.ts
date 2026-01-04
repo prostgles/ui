@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { useFileDropZone } from "../FileInput/useFileDropZone";
 import type { ChatProps } from "./Chat";
 import { useChatOnPaste } from "./useChatOnPaste";

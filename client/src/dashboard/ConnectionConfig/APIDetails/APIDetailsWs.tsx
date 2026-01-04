@@ -1,5 +1,5 @@
 import { mdiCodeBraces, mdiLanguageTypescript } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useMemo } from "react";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";

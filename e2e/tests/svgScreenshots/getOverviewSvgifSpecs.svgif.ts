@@ -29,14 +29,7 @@ export const getOverviewSvgifSpecs = async (
     {
       fileName: "interactive_dashboards",
       usedExternally: true,
-      scenes: [
-        ...sliceScenes("dashboard", 15),
-        ...sliceScenes("ai_assistant", 0),
-
-        ...sliceScenes("sql_editor", 8, 10),
-        ...sliceScenes("sql_editor", 18, 19),
-        ...sliceScenes("file_importer", 0),
-      ],
+      scenes: [...sliceScenes("dashboard", 15)],
     },
     {
       fileName: "ai_assistant_overview",
@@ -47,7 +40,7 @@ export const getOverviewSvgifSpecs = async (
       fileName: "sql_editor_overview",
       usedExternally: true,
       scenes: [
-        ...sliceScenes("sql_editor", 8, 10),
+        ...sliceScenes("sql_editor", 1, 10),
         ...sliceScenes("sql_editor", 18, 19),
       ],
     },
@@ -55,35 +48,40 @@ export const getOverviewSvgifSpecs = async (
     {
       fileName: "ai_assistant_questions",
       usedExternally: true,
-      scenes: [...sliceScenes("ai_assistant", 20)],
+      scenes: [...sliceScenes("ai_assistant", 20, 25)],
     },
 
     {
       fileName: "ai_assistant_dashboards",
       usedExternally: true,
-      scenes: [...sliceScenes("ai_assistant", 1, 5)],
+      scenes: [...sliceScenes("ai_assistant", 1, 6)],
     },
     {
       fileName: "ai_assistant_mcp_tools",
       usedExternally: true,
       scenes: [...sliceScenes("ai_assistant", 6, 13)],
     },
+    {
+      fileName: "ai_assistant_stt",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 24)],
+    },
 
     /** SQL section */
     {
       fileName: "sql_editor_suggestions",
       usedExternally: true,
-      scenes: [...sliceScenes("sql_editor", 7, 8)],
+      scenes: [...sliceScenes("sql_editor", 1, 8)],
     },
     {
       fileName: "sql_editor_charts",
       usedExternally: true,
-      scenes: [...sliceScenes("sql_editor", 14)],
+      scenes: [...sliceScenes("sql_editor", 12)],
     },
     {
       fileName: "sql_editor_jsonb",
       usedExternally: true,
-      scenes: [...sliceScenes("sql_editor", 8, 10)],
+      scenes: [...sliceScenes("sql_editor", 7, 10)],
     },
 
     /** Backup and restore section */
@@ -129,6 +127,11 @@ export const getOverviewSvgifSpecs = async (
     {
       fileName: "ai_assistant",
       svgSceneFileName: existing.ai_assistant[4]!.svgFileName,
+    },
+
+    {
+      fileName: "timechart_cover",
+      svgSceneFileName: existing.timechart[19]!.svgFileName,
     },
   ];
 

@@ -69,6 +69,14 @@ export const ProstglesTimeChartMenu = ({ w, autoBinSize }: P) => {
 
   return (
     <FlexCol className="p-1">
+      <FormField
+        type="text"
+        label={"Name"}
+        value={w.name || ""}
+        onChange={(newTitle) => {
+          w.$update({ name: newTitle });
+        }}
+      />
       <Select
         className="w-fit"
         label="Bin size"

@@ -1,4 +1,4 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { isEmpty } from "prostgles-types";
 import { fetchNamedSVG } from "@components/SvgIcon";
 import { getCssVariableValue } from "../../Charts/TimeChart/onRenderTimechart";

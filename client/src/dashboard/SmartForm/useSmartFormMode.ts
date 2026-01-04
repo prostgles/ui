@@ -2,7 +2,7 @@ import {
   useAsyncEffectQueue,
   useEffectDeep,
   type TableHandlerClient,
-} from "prostgles-client/dist/prostgles";
+} from "prostgles-client";
 import { type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
 import {

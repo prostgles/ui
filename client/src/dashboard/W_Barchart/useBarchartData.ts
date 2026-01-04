@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { W_BarchartProps } from "./W_Barchart";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import {
   getSerialisableError,
   includes,

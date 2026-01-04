@@ -1,4 +1,4 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { getKeys, isDefined } from "prostgles-types";
 import { useMemo } from "react";

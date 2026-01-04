@@ -9,7 +9,10 @@ export const getSVGifZoomToAnimation = (
   viewport: { width: number; height: number },
   { bbox: rawBBox }: Pick<ReturnType<typeof getSVGifTargetBBox>, "bbox">,
   { svgDom, svgFileName }: Pick<SVGifParsedScene, "svgDom" | "svgFileName">,
-  animation: Extract<SVGif.Animation, { type: "zoomToElement" }>,
+  animation: Extract<
+    SVGif.Animation,
+    { type: "zoomToElement" | "bringToFront" }
+  >,
   {
     sceneId,
     sceneIndex,
@@ -25,7 +28,13 @@ export const getSVGifZoomToAnimation = (
   },
   addToRootSvg: boolean,
 ) => {
-  const { elementSelector, duration, maxScale = 3 } = animation;
+  const {
+    elementSelector,
+    duration,
+    maxScale = 3,
+    type,
+    bringToFrontSelector,
+  } = animation;
 
   const rootGId = svgDom.querySelector(":scope > g")?.id;
   if (!rootGId) {
@@ -75,12 +84,16 @@ export const getSVGifZoomToAnimation = (
 
   const transformOrigin = `${elementCenterX}px ${elementCenterY}px`;
 
-  const elemSelector = addToRootSvg ? ":scope" : `svg#${sceneId} g#${rootGId}`;
+  const rootGSelector = `svg#${sceneId} g#${rootGId}`;
+  const animatedElementSelector =
+    type === "bringToFront" ? `${rootGSelector} ${bringToFrontSelector}`
+    : addToRootSvg ? ":scope"
+    : rootGSelector;
 
   /** Add root svg zoom in-out animation to the typed */
   const animProp = getAnimationProperty({
     animName: `scene-${sceneIndex}-type-zoom`,
-    elemSelector,
+    elemSelector: animatedElementSelector,
     totalDuration,
     otherProps: `transform-origin: ${transformOrigin};`,
   });

@@ -1,4 +1,4 @@
-import { useMemoDeep } from "prostgles-client/dist/react-hooks";
+import { useMemoDeep } from "prostgles-client";
 import { useCallback, useEffect, useMemo } from "react";
 
 type RowNodeWithInfo = HTMLDivElement & {

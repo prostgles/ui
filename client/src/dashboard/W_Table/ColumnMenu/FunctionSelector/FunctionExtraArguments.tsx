@@ -2,7 +2,7 @@ import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { SearchList } from "@components/SearchList/SearchList";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { _PG_date } from "prostgles-types";
 import React, { useEffect } from "react";
 import type { Prgl } from "src/App";

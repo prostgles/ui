@@ -4,7 +4,7 @@ import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import { mdiSigma, mdiTableColumn } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { _PG_numbers, includes, tryCatchV2 } from "prostgles-types";
 import React from "react";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
@@ -16,6 +16,7 @@ import { getTimeChartLayer } from "../W_TimeChart/fetchData/getTimeChartLayers";
 import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
 import type { MapLayerManagerProps } from "./DataLayerManager/DataLayerManager";
 import { SQLChartLayerEditor } from "./SQLChartLayerEditor";
+import FormField from "@components/FormField/FormField";
 
 type TimeChartLayerOptionsProps = Pick<
   MapLayerManagerProps,
@@ -186,6 +187,14 @@ export const TimeChartLayerOptions = ({
         }
         render={() => (
           <FlexCol className="gap-2 f-1 ">
+            <FormField
+              type="text"
+              label={"Title (optional)"}
+              value={linkOpts.title}
+              onChange={(newTitle) => {
+                updateLinkOpts({ title: newTitle });
+              }}
+            />
             <FlexRowWrap>
               <Select
                 label="Aggregation type"

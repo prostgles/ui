@@ -9,18 +9,19 @@ const showBriefly = {
 
 export const commandPaletteSvgif: OnBeforeScreenshot = async (
   page,
-  _,
+  { toggleMenuPinned },
   { addScene },
 ) => {
   await openConnection(page, "Prostgles UI automated tests database");
   await closeWorkspaceWindows(page);
-
+  await toggleMenuPinned(false);
   await page.keyboard.press("Control+KeyK");
-  await page.getByTestId("Popup.content").waitFor({ state: "visible" });
-  await addScene({
-    svgFileName: "empty",
-    caption: "Command palette (Ctrl+K)...",
-  });
+  await page.getByTestId("CommandPalette").waitFor({ state: "visible" });
+  await page.waitForTimeout(1000);
+  // await addScene({
+  //   svgFileName: "empty",
+  //   caption: "Command palette (Ctrl+K)...",
+  // });
   await addScene({
     animations: [
       {
@@ -30,11 +31,19 @@ export const commandPaletteSvgif: OnBeforeScreenshot = async (
       },
       ...showBriefly.animations,
     ],
+    caption: "Command palette (Ctrl+K)...",
   });
   for (const char of "add mc") {
     await page.keyboard.press(char);
     await page.waitForTimeout(200);
-    await addScene(showBriefly);
+    await addScene({
+      animations: [
+        {
+          type: "wait",
+          duration: 100,
+        },
+      ],
+    });
   }
   await page.keyboard.press("ArrowDown");
   await addScene(showBriefly);
@@ -54,8 +63,7 @@ export const commandPaletteSvgif: OnBeforeScreenshot = async (
         duration: 500,
         elementSelector: getCommandElemSelector("AddMCPServer"),
       },
-      ...showBriefly.animations,
-      ...showBriefly.animations,
+      { type: "wait", duration: 1000 },
     ],
   });
 };

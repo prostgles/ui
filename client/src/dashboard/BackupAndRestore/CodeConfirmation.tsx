@@ -4,8 +4,8 @@ import FormField from "@components/FormField/FormField";
 import Loading from "@components/Loader/Loading";
 import type { PopupProps } from "@components/Popup/Popup";
 import PopupMenu from "@components/PopupMenu";
-import { useIsMounted } from "./CloudStorageCredentialSelector";
 import type { TestSelectors } from "../../Testing";
+import { useIsMounted } from "prostgles-client";
 
 type CodeConfirmationProps = TestSelectors & {
   button: React.ReactNode;

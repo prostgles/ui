@@ -1,27 +1,27 @@
+import Loading from "@components/Loader/Loading";
 import type {
   MultiSyncHandles,
   SingleSyncHandles,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React from "react";
-import Loading from "@components/Loader/Loading";
 import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll/SearchAll";
 
+import { ROUTES } from "@common/utils";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../appUtils";
-import Btn from "@components/Btn";
-import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import { TopControls } from "../../pages/TopControls";
 import { DashboardMenu } from "../DashboardMenu/DashboardMenu";
 import type { ActiveRow } from "../W_Table/W_Table";
-import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
 import { getWorkspacePath } from "../WorkspaceMenu/useWorkspaces";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";
@@ -43,10 +43,8 @@ import type {
   WorkspaceSyncItem,
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
-import { loadTable, type LoadTableArgs } from "./loadTable";
-import { ROUTES } from "@common/utils";
-import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import { getTables } from "./getTables";
+import { loadTable, type LoadTableArgs } from "./loadTable";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -81,7 +79,7 @@ export type DashboardState = {
 };
 export type DashboardData = {
   links: LinkSyncItem[];
-  linksSync?: any;
+  linksSync?: MultiSyncHandles<LinkSyncItem>;
   closedWindows: WindowSyncItem[];
   allWindows: WindowSyncItem[];
   windows: WindowSyncItem[];
@@ -105,15 +103,15 @@ export class _Dashboard extends RTComp<
     allWindows: [],
     windows: [],
     links: [],
-    linksSync: null,
+    linksSync: undefined,
   };
 
   onUnmount() {
     const { workspaceSync, windowsSync, linksSync } = this.d;
 
-    [workspaceSync, windowsSync, linksSync].map((s) => {
-      if (s && s.unsync) s.unsync();
-    });
+    workspaceSync?.$unsync();
+    windowsSync?.$unsync();
+    linksSync?.$unsync();
   }
 
   loadingSchema: DashboardState["suggestions"];
@@ -341,7 +339,7 @@ export class _Dashboard extends RTComp<
       workspace &&
       (schemaChanged || needToRecalculateCounts || dataWasImported)
     ) {
-      this.loadSchema();
+      void this.loadSchema();
     }
 
     if (dd) {

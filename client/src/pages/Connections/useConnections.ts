@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { PrglState } from "../../App";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import type { DBSSchema } from "@common/publishUtils";
 import type { Workspace } from "../../dashboard/Dashboard/dashboardUtils";
 import type { FilterItem } from "prostgles-types";

@@ -1,7 +1,4 @@
-import {
-  type DBHandlerClient,
-  useAsyncEffectQueue,
-} from "prostgles-client/dist/prostgles";
+import { type DBHandlerClient, useAsyncEffectQueue } from "prostgles-client";
 import { includes } from "prostgles-types";
 import { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";

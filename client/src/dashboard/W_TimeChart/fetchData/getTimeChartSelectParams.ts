@@ -28,7 +28,9 @@ export const getTimeChartSelectParams = ({
     stat ? { [stat.func]: [statType.numericColumn] } : { $countAll: [] };
   const select = {
     [TIMECHART_FIELD_NAMES.value]: valueSelect,
-    ...(groupByColumn && { [groupByColumn]: 1 }),
+    ...(groupByColumn && {
+      [TIMECHART_FIELD_NAMES.group_by]: { $column: [groupByColumn] },
+    }),
     [TIMECHART_FIELD_NAMES.date]: getTimeChartSelectDate({ bin, dateColumn }),
   };
 

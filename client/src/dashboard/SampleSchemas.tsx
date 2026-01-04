@@ -5,7 +5,7 @@ import { FlexCol } from "@components/Flex";
 import { W_SQLEditor } from "./SQLEditor/W_SQLEditor";
 import CodeExample from "./CodeExample";
 import type { SampleSchema } from "@common/utils";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 
 type P = {
   name?: string;

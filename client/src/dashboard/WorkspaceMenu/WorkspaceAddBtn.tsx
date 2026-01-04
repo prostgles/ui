@@ -8,7 +8,7 @@ import PopupMenu from "@components/PopupMenu";
 import type { WorkspaceSchema } from "../Dashboard/dashboardUtils";
 import type { Prgl } from "../../App";
 import type { DBSSchema } from "@common/publishUtils";
-import { useIsMounted } from "prostgles-client/dist/react-hooks";
+import { useIsMounted } from "prostgles-client";
 
 type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> & {
   connection_id: string;

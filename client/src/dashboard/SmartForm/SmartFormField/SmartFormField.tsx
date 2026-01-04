@@ -223,7 +223,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
             )
         }
         label={column.hideLabel ? "" : column.label}
-        labelAsString={column.label || column.name}
         data-command="SmartFormField"
         style={style}
         className={cantUpdate ? " cursor-default " : ""}

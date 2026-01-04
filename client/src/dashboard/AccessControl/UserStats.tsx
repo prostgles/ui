@@ -1,5 +1,5 @@
 import { mdiMagnify } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React from "react";
 import type { ExtraProps } from "../../App";
 import Btn from "@components/Btn";

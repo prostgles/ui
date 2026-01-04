@@ -1,5 +1,5 @@
 import { getSmartGroupFilter } from "@common/filterUtils";
-import { usePromise } from "prostgles-client/dist/prostgles";
+import { usePromise } from "prostgles-client";
 import {
   _PG_numbers,
   includes,

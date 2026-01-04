@@ -88,8 +88,9 @@ export const DashboardMenuContent = (props: P) => {
 
   return (
     <FlexCol
+      data-command="DashboardMenuContent"
       className={
-        "DashboardMenuContent relative f-1 min-h-0 " +
+        "relative f-1 min-h-0 " +
         bgColorClass +
         (window.isMobileDevice ? " p-p25 " : " p-1  ")
       }

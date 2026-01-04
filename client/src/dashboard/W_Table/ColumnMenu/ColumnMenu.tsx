@@ -41,7 +41,6 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import { useReactiveState } from "../../../appUtils";
-import { useIsMounted } from "../../BackupAndRestore/CloudStorageCredentialSelector";
 import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
@@ -63,6 +62,7 @@ import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import type { FuncDef } from "./FunctionSelector/functions";
 import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
+import { useIsMounted } from "prostgles-client";
 
 export type ColumnConfig = {
   idx?: number;

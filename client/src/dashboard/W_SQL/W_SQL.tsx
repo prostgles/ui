@@ -30,7 +30,7 @@ import type { DBEventHandles, ValidatedColumnInfo } from "prostgles-types/lib";
 import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 
 import { Icon } from "@components/Icon/Icon";
-import { useIsMounted } from "prostgles-client/dist/react-hooks";
+import { useIsMounted } from "prostgles-client";
 import { createReactiveState } from "../../appUtils";
 import type { TestSelectors } from "../../Testing";
 import type { CommonWindowProps, DashboardState } from "../Dashboard/Dashboard";

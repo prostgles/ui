@@ -5,8 +5,8 @@ import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
+import { usePromise } from "prostgles-client";
 import {
   omitKeys,
   type MethodHandler,

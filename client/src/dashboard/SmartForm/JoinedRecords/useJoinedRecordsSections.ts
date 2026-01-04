@@ -3,7 +3,7 @@ import type {
   TableHandlerClient,
   ViewHandlerClient,
 } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import { useMemo, useRef, useState } from "react";
 import { isDefined } from "../../../utils/utils";

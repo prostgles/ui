@@ -1,6 +1,6 @@
 import type { LocalMedia } from "@components/FileInput/FileInput";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { type DBSchemaTable } from "prostgles-types";
 import React from "react";
 import type { SmartFormProps } from "../SmartForm";

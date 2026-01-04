@@ -47,10 +47,10 @@ export const getSVGifTypeAnimation = (
     0,
   );
 
-  const { zoomToElement } = animation;
-  const zoomInDuration = zoomToElement ? 500 : 0;
-  const zoomOutDuration = zoomToElement ? 500 : 0;
-  const waitBeforeZoomOut = zoomToElement ? 300 : 0;
+  const { extraAnimation } = animation;
+  const zoomInDuration = extraAnimation ? 500 : 0;
+  const zoomOutDuration = extraAnimation ? 500 : 0;
+  const waitBeforeZoomOut = extraAnimation ? 300 : 0;
   const typingDuration =
     duration - zoomInDuration - zoomOutDuration - waitBeforeZoomOut;
   if (typingDuration < 500) {
@@ -79,13 +79,18 @@ export const getSVGifTypeAnimation = (
     fromTimeLocal += tspanDuration;
   });
   const zoomToStyle =
-    animation.zoomToElement === false ?
-      ""
-    : getSVGifZoomToAnimation(
+    !animation.extraAnimation ? "" : (
+      getSVGifZoomToAnimation(
         viewport,
         { bbox: rawBBox },
         { svgDom, svgFileName },
-        { ...animation, type: "zoomToElement" },
+        animation.extraAnimation.type === "zoomToElement" ?
+          { ...animation, type: "zoomToElement" }
+        : {
+            ...animation,
+            type: "bringToFront",
+            bringToFrontSelector: animation.extraAnimation.elementSelector,
+          },
         {
           sceneId,
           sceneIndex,
@@ -94,6 +99,7 @@ export const getSVGifTypeAnimation = (
           fromTime,
         },
         false,
-      ).style;
+      ).style
+    );
   return { sceneNodeAnimations, style: zoomToStyle };
 };

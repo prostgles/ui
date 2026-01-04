@@ -1,9 +1,10 @@
 import {
+  useMemoDeep,
+  usePromise,
   useProstglesClient,
-  type DBHandlerClient,
   type UseProstglesClientProps,
-} from "prostgles-client/dist/prostgles";
-import { useMemoDeep, usePromise } from "prostgles-client/dist/react-hooks";
+} from "prostgles-client";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { useEffect, useMemo } from "react";
 import type { PrglProject, PrglState } from "../../App";
 import { getTables } from "../../dashboard/Dashboard/getTables";

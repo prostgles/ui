@@ -1,4 +1,4 @@
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep } from "prostgles-client";
 import React, { useState } from "react";
 import { isObject } from "@common/publishUtils";
 import Btn from "@components/Btn";
