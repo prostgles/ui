@@ -1,15 +1,18 @@
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { testMCPServerConfig } from "../McpHub/McpHub";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
 import { getBestLLMChatModel } from "../publishMethods/askLLM/askLLM";
 import { fetchLLMResponse } from "../publishMethods/askLLM/fetchLLMResponse";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
+import { refreshModels } from "@src/publishMethods/askLLM/refreshModels";
+import type { DBS } from "..";
 
 export const getPublishLLM = (
   user_id: string,
   isAdmin: boolean,
   accessRules: undefined | DBSSchema["access_control"][],
+  dbs: DBS,
 ) => {
   const forcedData = { user_id };
   const forcedFilter = { user_id };
@@ -95,7 +98,12 @@ export const getPublishLLM = (
                 content: [{ type: "text", text: "Hey" }],
               },
             ],
+            aborter: new AbortController(),
           });
+
+          if (row.provider_id === "OpenRouter") {
+            void refreshModels(dbs);
+          }
         },
       },
       update: isAdmin && {

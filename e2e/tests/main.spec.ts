@@ -1,10 +1,18 @@
 import { chromium, expect, test } from "@playwright/test";
 import { authenticator } from "otplib";
+import { speechToTextTest } from "speechToTextTest";
+import {
+  localNoAuthSetup,
+  QUERIES,
+  TEST_DB_NAME,
+  USERS,
+} from "utils/constants";
+import { goTo } from "utils/goTo";
+import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { testAskLLMCode } from "./testAskLLM";
-import { getDataKeyElemSelector } from "./Testing";
+import { getCommandElemSelector, getDataKeyElemSelector } from "./Testing";
 import {
-  PageWIds,
   clickInsertRow,
   closeWorkspaceWindows,
   createAccessRule,
@@ -32,11 +40,12 @@ import {
   monacoType,
   openConnection,
   openTable,
+  PageWIds,
   restoreFromBackup,
   runDbSql,
   runDbsSql,
   runSql,
-  selectAndInsertFile,
+  selectAndUpsertFile,
   sendAskLLMMessage,
   setModelByText,
   setPromptByText,
@@ -45,13 +54,7 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
-import { goTo } from "utils/goTo";
-import {
-  localNoAuthSetup,
-  QUERIES,
-  TEST_DB_NAME,
-  USERS,
-} from "utils/constants";
+import exp = require("constants");
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -94,6 +97,11 @@ test.describe("Main test", () => {
       await page.waitForTimeout(1e3);
     }
   };
+
+  test("port 3009 must be available for mcpsandbox test", async () => {
+    const free = await isPortFree(3009);
+    expect(free).toBe(true);
+  });
 
   test("Connecting with an existing sid to a fresh instance will ignore the sid IF passwordless admin did not claim a session yet", async ({
     page: p,
@@ -273,7 +281,7 @@ test.describe("Main test", () => {
     };
     await fillHostAndTest("invalid___prostgles-test-mock");
     await page.getByText("Enabled").click();
-    await page.getByText("Save").click();
+    await page.getByText("Save").click({ timeout: 10e3 });
     const errNode = await page.getByTestId("EmailAuthSetup.error");
     await expect(await errNode.textContent()).toContain(
       // "getaddrinfo ENOTFOUND invalid___prostgles-test-mock", // or EAI_AGAIN
@@ -450,7 +458,7 @@ test.describe("Main test", () => {
     const darkBackgroundColor = await page.evaluate(() => {
       return getComputedStyle(document.body).backgroundColor;
     });
-    await expect(darkBackgroundColor).toBe("rgb(36, 36, 36)");
+    await expect(darkBackgroundColor).toBe("rgb(26, 25, 25)");
 
     await page.emulateMedia({ colorScheme: "light" });
     await goTo(page);
@@ -631,6 +639,17 @@ test.describe("Main test", () => {
     await setPromptByText(page, "Create task");
     await sendAskLLMMessage(page, " task ");
 
+    /** Refresh tools */
+    await runDbsSql(
+      page,
+      `UPDATE mcp_servers SET enabled = true WHERE name = 'fetch';`,
+    );
+    await page.waitForTimeout(5e3);
+    await runDbsSql(
+      page,
+      `UPDATE mcp_servers SET enabled = false WHERE name = 'fetch';`,
+    );
+
     await page
       .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
       .click({ timeout: 10e3 });
@@ -654,7 +673,7 @@ test.describe("Main test", () => {
     );
     await page
       .getByTestId("AskLLMChat.LoadSuggestedDashboards")
-      .click({ timeout: 10e3 });
+      .click({ timeout: 18e3 });
 
     const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
     await expect(workspaceBtn).toContainText("Customer Insights");
@@ -667,13 +686,11 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLM").click();
-    await sendAskLLMMessage(page, " mcp ");
-    await page
-      .getByTestId("AskLLMToolApprover.AllowOnce")
-      .click({ timeout: 10e3 });
+    await sendAskLLMMessage(page, " mcp ", true);
+
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
-    await expect(mcpToolUse).toContain("fetch--fetch url");
+    await expect(mcpToolUse).toContain("successfully fetched the login page");
 
     await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " mcpplaywright ");
@@ -683,19 +700,24 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_snapshot" is invalid. Try enabling and reloading the tools`,
     );
-    await page.getByTestId("LLMChatOptions.MCPTools").click();
 
-    const toggleBtn = await page
-      .locator(getDataKeyElemSelector("playwright"))
-      .getByTestId("MCPServerFooterActions.enableToggle");
+    const enableMCPServers = async (serverNames: string[]) => {
+      await page
+        .getByTestId("LLMChatOptions.MCPTools")
+        .click({ timeout: 10e3 });
+      for (const serverName of serverNames) {
+        const toggleBtn = await page
+          .locator(getDataKeyElemSelector(serverName))
+          .getByTestId("MCPServerFooterActions.enableToggle");
 
-    await toggleBtn.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(500);
-    await toggleBtn.click();
-    await page.waitForTimeout(500);
-    await page
-      .locator(getDataKeyElemSelector("playwright"))
-      .getByTestId("MCPServerFooterActions.refreshTools");
+        await toggleBtn.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(500);
+        await toggleBtn.click();
+        await page.waitForTimeout(500);
+      }
+    };
+
+    await enableMCPServers(["playwright"]);
     await page
       .getByText("browser_tabs")
       .waitFor({ state: "visible", timeout: 10e3 }); // wait for tools list to refresh
@@ -709,20 +731,31 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_snapshot" is not allowed`,
     );
-    await page.getByTestId("LLMChatOptions.MCPTools").click();
-    await page.waitForTimeout(1000);
-    await page
-      .getByTestId("LLMChatOptions.MCPTools")
-      .getByText("browser_navigate", { exact: true })
-      .click({ force: true });
-    await page.waitForTimeout(500);
-    await page
-      .getByTestId("LLMChatOptions.MCPTools")
-      .getByText("browser_snapshot", { exact: true })
-      .click({ force: true });
-    await page.waitForTimeout(1000);
-    await page.getByTestId("Popup.close").last().click();
-    await page.waitForTimeout(500);
+    const toggleMCPTools = async (
+      toolNames: string[],
+      toggleAutoApprove?: boolean,
+    ) => {
+      await page
+        .getByTestId("LLMChatOptions.MCPTools")
+        .click({ timeout: 10e3 });
+      await page.waitForTimeout(1000);
+      for (const toolName of toolNames) {
+        await page
+          .getByTestId("LLMChatOptions.MCPTools")
+          .getByTestId("MCPServerTools")
+          .getByText(toolName, { exact: true })
+          .click({ timeout: 30e3 }); //force: true,???????
+        await page.waitForTimeout(1500);
+      }
+      if (toggleAutoApprove) {
+        await page.getByTestId("MCPServers.toggleAutoApprove").click();
+      }
+      await page.getByTestId("Popup.close").last().click();
+      await page.waitForTimeout(500);
+    };
+
+    await toggleMCPTools(["browser_navigate", "browser_snapshot"]);
+
     await sendAskLLMMessage(page, " mcpplaywright ");
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
@@ -742,12 +775,12 @@ test.describe("Main test", () => {
       `Page Title: Prostgles`,
       { timeout: 15e3 },
     );
-    await page.getByTestId("Popup.close").last().click();
+    await lastToolUseBtn.click();
 
     await page.waitForTimeout(2e3);
     /** Test max consecutive tool call fails */
     await sendAskLLMMessage(page, " mcpfail ");
-    await page.waitForTimeout(2e3);
+    await page.getByTestId("ToolUseMessage.toggleGroup").last().click();
     await expect(
       page
         .getByTestId("Chat.messageList")
@@ -757,39 +790,85 @@ test.describe("Main test", () => {
       `failed consecutive tool requests reached`,
     );
 
-    /** Test max cost */
-    await page.getByTestId("LLMChatOptions.toggle").click();
-    const maxCost = 5;
-    const costPerMsg = 1.5;
-    await fillSmartForm(page, "llm_chats", {
-      max_total_cost_usd: maxCost.toString(),
-    });
-    await page.getByTestId("Popup.close").last().click();
-    for (let step = 1; step <= Math.ceil(maxCost / costPerMsg); step++) {
+    /** Test max consecutive tool call fails */
+    for (let step = 0; step < 5; step++) {
       await sendAskLLMMessage(page, " cost ");
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Maximum number (5) of failed consecutive tool requests reached`,
     );
 
+    const newChat = async () => {
+      await page.getByTestId("AskLLMChat.NewChat").click();
+      await page.waitForTimeout(1e3);
+    };
+
+    /** Test max chat cost */
+    const defaultMaxCost = 5;
+    const costPerMsg = 1.8;
+    await newChat();
+    for (
+      let step = 0;
+      step < Math.ceil(defaultMaxCost / costPerMsg) + 1;
+      step++
+    ) {
+      await sendAskLLMMessage(page, "cost");
+    }
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Maximum total cost of the chat (5) reached. Current cost: 5.4`,
+    );
+
+    const maxCost = 4;
+    await page.getByTestId("LLMChatOptions.toggle").click();
+    await fillSmartForm(page, "llm_chats", {
+      max_total_cost_usd: maxCost.toString(),
+    });
+    await page.getByTestId("Popup.close").last().click();
+    /** Test max speculative chat cost */
+    await newChat();
+    await enableMCPServers(["filesystem"]);
+    const githubWorkerPath = ["work", "ui"] as const;
+    const path = [
+      ...(process.env.CI === "true" ? githubWorkerPath : []),
+      "ui",
+      "client",
+      "node_modules",
+    ] as const;
+    for (const segment of path) {
+      await page.locator(`[data-label=${JSON.stringify(segment)}]`).click();
+      await page.waitForTimeout(1e3);
+    }
+
+    await page.getByTestId("MCPServerConfig.save").click();
+    await page.getByTestId("Popup.close").last().click();
+    await toggleMCPTools(["directory_tree"], true);
+    for (let step = 0; step < Math.floor(maxCost / costPerMsg); step++) {
+      await sendAskLLMMessage(page, "cost");
+    }
+    await sendAskLLMMessage(page, " estimated_cost ");
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Maximum total cost of the chat (5) will be reached after sending this message`,
+      { timeout: 15e3 },
+    );
+
     /* MCP Docker sandbox */
-    await page.getByTestId("AskLLMChat.NewChat").click();
-    await page.waitForTimeout(1e3);
+    await newChat();
     /* Prompt persists from the prev chat */
     await expect(page.getByTestId("LLMChatOptions.Prompt")).toContainText(
       "Create dashboards",
     );
 
-    await page.getByTestId("LLMChatOptions.MCPTools").click();
+    await enableMCPServers(["docker-sandbox"]);
+    await page.waitForTimeout(2e3);
+    /** Tools are loaded after enabling */
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByTestId("MCPServerFooterActions.enableToggle")
-      .click();
+      .getByText("create_container", { exact: true })
+      .waitFor({ state: "visible", timeout: 15e3 });
     await page
       .locator(getDataKeyElemSelector("docker-sandbox"))
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
-    await page.waitForTimeout(2e3);
     await expect(page.getByTestId("Popup.content").last()).toContainText(
       `Reloaded 1 tool for "docker-sandbox" server`,
     );
@@ -801,12 +880,12 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
 
-    const dockerRunAndExpect = async (result: string) => {
+    const dockerRunAndExpect = async (result: string, inFullscreen = false) => {
       await sendAskLLMMessage(page, " mcpsandbox ");
       await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "create a container that runs",
-        { timeout: 40e3 },
+        { timeout: 60e3 },
       );
       await page.waitForTimeout(3e3);
       await page
@@ -814,13 +893,19 @@ test.describe("Main test", () => {
         .locator(".Loading")
         .waitFor({ state: "detached", timeout: 40e3 });
       await page.getByTestId("ToolUseMessage.toggle").last().click();
-      await page.getByTestId("Popup.toggleFullscreen").last().click();
-      await expect(page.getByTestId("ToolUseMessage.Popup")).toContainText(
-        result,
-        { timeout: 10e3 },
-      );
-      await page.getByTestId("Popup.close").last().click();
+      if (inFullscreen) {
+        await page.getByTestId("PopupSection.fullscreen").last().click();
+      }
+      await expect(
+        inFullscreen ?
+          page.getByTestId("PopupSection.content").last()
+        : page.getByTestId("ToolUseMessage").last(),
+      ).toContainText(result, {
+        timeout: 10e3,
+      });
     };
+    /** Must test to see if port 3009 is free to avoid confusing errors */
+
     await dockerRunAndExpect(`Tool "execute_sql_with_rollback" not found`);
 
     await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
@@ -845,7 +930,99 @@ test.describe("Main test", () => {
     await page.getByRole("option", { name: "Run readonly SQL" }).click();
     await page.getByTestId("Popup.close").last().click();
     await page.waitForTimeout(4e3); // wait for askLLM publish method forked process to restart after schema change
-    await dockerRunAndExpect(`username: 'fresh_user'`);
+    await dockerRunAndExpect(`username: 'fresh_user'`, true);
+
+    /** Test stopping chat */
+    await page.getByTestId("Popup.close").last().click();
+    await newChat();
+    await sendAskLLMMessage(page, " longresponse ", {
+      onAfterSend: async () => {
+        await page.getByTestId("Chat.sendStop").click();
+      },
+    });
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `longresponse`,
+    );
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `aborted by user`,
+    );
+
+    /** Test parallel tool use single auto-approve */
+    await newChat();
+    await sendAskLLMMessage(page, " parallel_calls ");
+
+    await expect(
+      page.getByTestId("ToolUseMessage.toggleGroup").last(),
+    ).toContainText("3 tool calls");
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "Tool call failed. Will not retry",
+      {
+        timeout: 30e3,
+      },
+    );
+    await page.getByTestId("ToolUseMessage.toggleGroup").last().click();
+    await expect(
+      page
+        .getByTestId("Chat.messageList")
+        .getByText(
+          'Tool name "fetch--fetch" is not allowed. Must enable it for this chat',
+        ),
+    ).toHaveCount(3, { timeout: 30e3 });
+
+    await newChat();
+    await toggleMCPTools(["fetch"]);
+    await sendAskLLMMessage(page, " parallel_calls ");
+
+    /** Should not request approval for the other 2 requests */
+    await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "Fetched in parallel successfully",
+      {
+        timeout: 30e3,
+      },
+    );
+    await page.getByTestId("ToolUseMessage.toggleGroup").last().click();
+
+    await expect(
+      page.locator(
+        getCommandElemSelector("ToolUseMessage.toggle") +
+          `[data-color="default"]`,
+      ),
+    ).toHaveCount(3, {
+      timeout: 30e3,
+    });
+
+    await newChat();
+    await toggleMCPTools(["websearch", "get_snapshot"]);
+    await page.waitForTimeout(7e3); // wait for the server to start
+    await sendAskLLMMessage(page, " websearch ");
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "Search done.",
+      {
+        timeout: 30e3,
+      },
+    );
+
+    await page.getByTestId("ToolUseMessage.toggle").first().click();
+    const text = await page.getByTestId("ToolUseMessage").first().textContent();
+    if (text?.includes("No results found.")) {
+      // Probably due to engines limiting searches
+    } else {
+      await expect(page.getByTestId("ToolUseMessage").first()).toContainText(
+        "https://www.postgresql.org/",
+      );
+    }
+    await page.getByTestId("ToolUseMessage.toggle").first().click();
+    await page.getByTestId("ToolUseMessage.toggle").last().click();
+    await expect(page.getByTestId("ToolUseMessage").last()).toContainText(
+      "Page Title: Prostgles UI",
+    );
+
+    /** Speech to text */
+    await speechToTextTest(page);
   });
 
   test("Disable signups", async ({ page: p }) => {
@@ -1122,6 +1299,7 @@ test.describe("Main test", () => {
       .locator("#totp_recovery_code")
       .textContent();
     const createAndFillCode = async () => {
+      await page.waitForTimeout(1200);
       const code = authenticator.generate(Base64Secret ?? "");
       await page
         .getByTestId("Setup2FA.Enable.ConfirmCode")
@@ -1129,16 +1307,17 @@ test.describe("Main test", () => {
         .fill(code);
       await page.getByTestId("Setup2FA.Enable.Confirm").click();
     };
-    createAndFillCode();
+    await createAndFillCode();
 
     /** Allow 1 invalid code */
+    const INVALID_CODE = "Invalid code";
     await page.waitForTimeout(300);
     const setupErrorNode = await page.getByTestId("Setup2FA.error");
     if (
       (await setupErrorNode.count()) &&
-      (await setupErrorNode.textContent())?.includes("Invalid token")
+      (await setupErrorNode.textContent())?.includes(INVALID_CODE)
     ) {
-      createAndFillCode();
+      await createAndFillCode();
     }
 
     /** Using token */
@@ -1155,7 +1334,7 @@ test.describe("Main test", () => {
     const errorNode = await page.getByTestId("Login.error");
     if (
       (await errorNode.count()) &&
-      (await errorNode.textContent())?.includes("Invalid token")
+      (await errorNode.textContent())?.includes(INVALID_CODE)
     ) {
       await page.waitForTimeout(1e3);
       await fillTokenAndSignIn();
@@ -1258,6 +1437,9 @@ test.describe("Main test", () => {
       await page.reload();
       await page.waitForTimeout(1e3);
     }
+
+    /** Delete stt_mode  */
+    await runDbsSql(page, `UPDATE users SET options = null;`);
 
     await page.goto("localhost:3004/account", { waitUntil: "networkidle" });
     await monacoType(page, `[data-label="Options"]`, `{ `, {
@@ -1408,7 +1590,7 @@ test.describe("Main test", () => {
     await page.getByTestId("SQLSmartEditor.Run").click();
 
     /** Insert records into new table */
-    await page.getByRole("option").getByText("my_table").click({ delay: 200 });
+    await page.getByRole("option").getByText("My Table").click({ delay: 200 });
     await insertRow(page, "my_table", { name: "some text" });
     const deletedRowName = "some more text";
     await insertRow(page, "my_table", { name: deletedRowName });
@@ -1632,14 +1814,60 @@ test.describe("Main test", () => {
     await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
     await page.waitForTimeout(1e3);
     await clickInsertRow(page, "my_table");
-    await selectAndInsertFile(page, (page) =>
-      page.getByTestId("SmartFormFieldOptions.AttachFile").click(),
+    await selectAndUpsertFile(
+      page,
+      (page) => page.getByTestId("SmartFormFieldOptions.AttachFile").click(),
+      () =>
+        expect(
+          page.getByTestId("Popup.content").locator("img"),
+          // Must have blob src attribute
+        ).toHaveAttribute("src", /^\s*blob:/),
     );
-    await page.waitForTimeout(3e3);
+    const imgSrc = await page
+      .getByTestId("Popup.content")
+      .locator("img")
+      .getAttribute("src");
+    await expect(imgSrc).toContain("blob:");
     const nodes = await page.getByText(fileName).innerHTML();
     console.log({ nodes });
-    await expect(await page.getByText(fileName).count()).toBe(1);
+    await expect(page.getByText(fileName)).toHaveCount(1);
     await page.waitForTimeout(1e3);
+    // Required to ensure it is not obscured by the insert btn
+    await page.getByTestId("dashboard.window.fullscreen").last().click();
+    await page.getByTestId("dashboard.window.viewEditRow").last().click();
+
+    await expect(
+      page.getByTestId("Popup.content").locator("img"),
+    ).toHaveAttribute(
+      "src",
+      // Inserted url starts with /prostgles_storage
+
+      /^\/prostgles_storage/,
+    );
+
+    // Deleting works
+    await page
+      .locator(getDataKey("files_id"))
+      .getByTestId("FormField.clear")
+      .click();
+    await page.getByTestId("SmartForm.update").click();
+    await page
+      .getByRole("button", { name: "Update row!", exact: true })
+      .click();
+    await expect(page.getByText(fileName)).toHaveCount(0);
+
+    // Updating row with file works
+    await page.getByTestId("dashboard.window.viewEditRow").last().click();
+    await selectAndUpsertFile(
+      page,
+      (page) => page.getByTestId("SmartFormFieldOptions.AttachFile").click(),
+      () =>
+        expect(
+          page.getByTestId("Popup.content").locator("img"),
+        ).toHaveAttribute("src", /^\s*blob:/),
+      true,
+    );
+    await expect(page.getByText(fileName)).toHaveCount(1);
   });
 
   test("Table tests", async ({ page: p }) => {

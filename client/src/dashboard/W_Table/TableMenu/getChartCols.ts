@@ -1,5 +1,5 @@
 import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type {
   DBSchemaTablesWJoins,
   WindowData,
@@ -47,6 +47,7 @@ export const getChartCols = (
 ): {
   geoCols: ChartColumn[];
   dateCols: ChartColumn[];
+  barCols: ChartColumn[];
   sql?: string;
   withStatement?: string;
 } => {
@@ -54,9 +55,10 @@ export const getChartCols = (
     return args.chartableSQL;
   }
   const { w, tables } = args;
+  const table = tables.find((t) => t.name === w.table_name);
 
   const getOtherCols = (cols: ValidatedColumnInfo[]): ColInfo[] =>
-    cols.sort((b, a) => {
+    cols.toSorted((b, a) => {
       /** Sort primary keys down */
       return (
         Number(b.is_pkey || false) - Number(a.is_pkey || false) ||
@@ -102,12 +104,14 @@ export const getChartCols = (
     )
     .filter(isDefined);
 
-  const cols = getColWInfo(tables, w).map((c) => ({
-    ...c,
-    is_pkey: Boolean(c.info?.is_pkey),
-    udt_name:
-      c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text",
-  }));
+  const cols =
+    !table ?
+      []
+    : getColWInfo(table, w.columns).map((c) => ({
+        ...c,
+        is_pkey: Boolean(c.info?.is_pkey),
+        udt_name: c.info?.udt_name || c.computedConfig?.udt_name || "text",
+      }));
 
   const windowDateCols: ChartColumn[] = cols.filter(isDateCol).map((c) => ({
     ...c,
@@ -126,9 +130,17 @@ export const getChartCols = (
 
   const dateCols: ChartColumn[] = [...windowDateCols, ...dateColsJoined];
   const geoCols: ChartColumn[] = [...windowGeoCols, ...geoColsJoined];
+  const barCols: ChartColumn[] = cols.map((c) => ({
+    ...c,
+    type: "normal",
+    otherColumns: getOtherCols(
+      tables.find((t) => t.name === w.table_name)?.columns || [],
+    ),
+  }));
 
   return {
     dateCols,
     geoCols,
+    barCols,
   };
 };

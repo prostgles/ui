@@ -1,7 +1,7 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React, { useMemo, useState } from "react";
-import type { PaginationProps } from "../../components/Table/Pagination";
-import { Table } from "../../components/Table/Table";
+import type { PaginationProps } from "@components/Table/Pagination";
+import { Table } from "@components/Table/Table";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
@@ -73,11 +73,9 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
       tables,
       maxCharsPerCell,
       onResize,
+      rows,
     });
-  }, [cols, tables, maxCharsPerCell, onResize]);
-  // if (activeQuery?.state === "running" && !rows.length) {
-  //   return null;
-  // }
+  }, [cols, tables, maxCharsPerCell, onResize, rows]);
 
   const pagination = useMemo(() => {
     if (!isSelect) return;

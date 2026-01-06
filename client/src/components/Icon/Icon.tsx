@@ -13,7 +13,7 @@ export type IconProps = {
    */
   size?: number;
   sizePx?: number;
-  sizeName?: "micro" | "small" | "default" | "large";
+  sizeName?: "nano" | "micro" | "small" | "default" | "large";
   color?: string;
   rotate?: number;
   spin?: boolean | number;
@@ -58,6 +58,7 @@ export const Icon = React.forwardRef<SVGSVGElement, IconProps>(
         default: 22,
         small: 18,
         micro: 16,
+        nano: 14,
       }[sizeName];
       style.width = `${sizePx}px`;
       style.height = style.width;

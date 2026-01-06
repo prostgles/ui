@@ -2,15 +2,15 @@ import {
   getSerialisableError,
   isDefined,
   isEmpty,
-  isEqual,
   isObject,
   omitKeys,
+  pickKeys,
   type AnyObject,
   type ProstglesError,
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getKeys } from "../../utils";
+import { getKeys } from "../../utils/utils";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import type { getErrorsHook, SmartFormProps } from "./SmartForm";
 import { parseDefaultValue } from "./SmartFormField/fieldUtils";
@@ -53,7 +53,7 @@ export const useNewRowDataHandler = (args: Args) => {
     setLocalRowFilter,
     parentForm,
   } = args;
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<undefined | string>();
   const [errors, setErrors] = useState<AnyObject>({});
   const columnMap = useMemo(() => {
     const colMap: Map<string, ValidatedColumnInfo> = new Map();
@@ -150,7 +150,9 @@ export const useNewRowDataHandler = (args: Args) => {
           onSuccess?.("update", newRow as any);
         } catch (_e: any) {
           parseError(_e);
-          return newRow;
+          throw _e;
+          // This triggered clearing the error before it could be shown
+          // return newRow;
         }
       }
 
@@ -195,6 +197,11 @@ export const useNewRowDataHandler = (args: Args) => {
       onChanged: setNewRowData,
     }),
   );
+  newRowDataHandler.setHandlers({
+    onChange: onSetColumnData,
+    onChanged: (newRow) => setNewRowData({ ...newRow }),
+  });
+
   const [newRow, setNewRow] = useState<AnyObject>();
   useEffect(() => {
     const newRow = newRowDataHandler.getRow();
@@ -203,7 +210,14 @@ export const useNewRowDataHandler = (args: Args) => {
     setError(undefined);
   }, [newRowData, newRowDataHandler]);
 
-  const clonedRow = mode?.type === "insert" ? mode.clonedRow : undefined;
+  const maybeClonedRow = mode?.type === "insert" ? mode.clonedRow : undefined;
+  const clonedRow = useMemo(() => {
+    if (!maybeClonedRow) return;
+    const insertableFields = displayedColumns
+      .filter((c) => c.insert)
+      .map((c) => c.name);
+    return pickKeys(maybeClonedRow, insertableFields);
+  }, [displayedColumns, maybeClonedRow]);
 
   useEffect(() => {
     if (mode?.type !== "insert") {
@@ -217,11 +231,14 @@ export const useNewRowDataHandler = (args: Args) => {
         return;
       }
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const defaultColumnData = Object.fromEntries(
       columns
         .map((c) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const value = parseDefaultValue(c, undefined, false);
           if (value === undefined) return;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return [c.name, value];
         })
         .filter(isDefined),
@@ -338,7 +355,7 @@ export const useNewRowDataHandler = (args: Args) => {
       if (!_errors) {
         const errors = await cb(data);
 
-        if (errors && !isEmpty(errors)) {
+        if (errors && typeof errors !== "string" && !isEmpty(errors)) {
           setErrors(errors);
         }
       } else {

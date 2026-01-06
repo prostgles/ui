@@ -1,10 +1,7 @@
-import {
-  useAsyncEffectQueue,
-  usePromise,
-} from "prostgles-client/dist/react-hooks";
+import { useAsyncEffectQueue, usePromise } from "prostgles-client";
 import { isObject, type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
-import { getSmartGroupFilter } from "../../../../common/filterUtils";
+import { getSmartGroupFilter } from "@common/filterUtils";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
 import { getSmartCardColumns } from "../SmartCard/getSmartCardColumns";
 import type { SmartCardListProps } from "./SmartCardList";

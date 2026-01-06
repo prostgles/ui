@@ -1,4 +1,4 @@
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import {
   isElementNode,
   isInputOrTextAreaNode,
@@ -43,7 +43,7 @@ export const getTextForSVG = (
       } catch {}
     }
     const isPlaceholder = !element.value;
-    if (!textContent) return;
+    if (!textContent.trim()) return;
     const paddingLeft = parseFloat(style.paddingLeft) || 0;
     const paddingTop = parseFloat(style.paddingTop) || 0;
     const paddingBottom = parseFloat(style.paddingBottom) || 0;
@@ -57,12 +57,13 @@ export const getTextForSVG = (
     const fontYPadding = Math.max(0, contentHeight - fontSize);
     const borderLeft = parseFloat(style.borderLeftWidth) || 0;
 
-    const yTextOffset = -paddingBottom - borderBottom - fontYPadding / 2 - 2;
+    const yTextOffsetForInput =
+      -paddingBottom - borderBottom - fontYPadding / 2 - 0.5;
     const isTextArea = element instanceof HTMLTextAreaElement;
     const y =
       isTextArea ?
-        inputRect.y + paddingTop + fontSize + borderTop + 2
-      : inputRect.y + inputRect.height + yTextOffset;
+        inputRect.y + paddingTop + fontSize + borderTop + 3
+      : inputRect.y + inputRect.height + yTextOffsetForInput;
     const result = [
       {
         style: actualStyle,
@@ -83,7 +84,7 @@ export const getTextForSVG = (
     .map((childTextNode, index) => {
       if (!isTextNode(childTextNode)) return;
       const textContent = childTextNode.textContent;
-      if (!textContent) return;
+      if (!textContent || !textContent.trim()) return;
       const range = document.createRange();
       range.selectNodeContents(childTextNode);
       const textRect = range.getBoundingClientRect();
@@ -104,13 +105,14 @@ export const getTextForSVG = (
         const textIndent = edgeRects.startCharRect.left - textRect.x;
         const res: TextForSVG = {
           style: {
+            // eslint-disable-next-line @typescript-eslint/no-misused-spread
             ...style,
             /** This is done to preserve leading spaces between spans of the same text block */
-            whiteSpace: index ? "pre" : style.whiteSpace,
+            whiteSpace: textContent.startsWith(" ") ? "pre" : style.whiteSpace,
           },
           textContent,
           x: textRect.x,
-          y: textRect.y,
+          y: textRect.y + 1,
           /** This ensures the actual visible/non overflown size of text is used */
           width: visibleTextWidth,
           height: spanHeight ?? visibleTextHeight,
@@ -155,6 +157,7 @@ const getTextNodes = (
     fontWeight: computedStyles.fontWeight,
     fontStyle: computedStyles.fontStyle,
     color: computedStyles.color,
+    // eslint-disable-next-line @typescript-eslint/no-misused-spread
     ...parentStyles,
   };
 

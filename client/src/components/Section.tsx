@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { omitKeys } from "prostgles-types";
 import type { BtnProps } from "./Btn";
 import Btn from "./Btn";
-import { classOverride } from "./Flex";
+import { classOverride, FlexRow } from "./Flex";
 import Popup from "./Popup/Popup";
 import type { Command, TestSelectors } from "../Testing";
 
@@ -55,14 +55,16 @@ export const Section = (props: SectionProps) => {
     titleIconPath,
     btnProps,
     "data-command": dataCommand,
+    "data-key": dataKey,
     ...otherProps
   } = props;
   const [open, toggle] = useState(oDef);
   const [fullscreen, setFullscreen] = useState(false);
 
-  const content = (
+  return (
     <div
       data-command={dataCommand satisfies Command | undefined}
+      data-key={dataKey}
       className={classOverride(
         "Section flex-col min-h-0 f-0 relative bg-inherit " +
           (open ? "bb b-color" : ""),
@@ -80,7 +82,8 @@ export const Section = (props: SectionProps) => {
         style={
           !open ?
             {
-              borderBottom: "1px solid var(--b-color)",
+              borderBottom: "unset", // "1px solid var(--b-color)", It looks better without border when closed?
+              borderTop: "unset",
             }
           : {
               position: "sticky",
@@ -97,7 +100,6 @@ export const Section = (props: SectionProps) => {
             " p-p5 ta-left font-20 bold jc-start mr-1"
           }
           title="Expand section"
-          variant="text"
           disabledInfo={disabledInfo}
           style={{
             width: undefined,
@@ -109,7 +111,7 @@ export const Section = (props: SectionProps) => {
             )
           }
           iconNode={titleIcon}
-          {...(omitKeys(btnProps ?? {}, ["onClick"]) as any)}
+          {...(omitKeys(btnProps ?? {}, ["onClick"]) as BtnProps<void>)}
           onClick={fullscreen ? undefined : () => toggle(!open)}
         >
           {title}
@@ -119,6 +121,7 @@ export const Section = (props: SectionProps) => {
           <Btn
             className={fullscreen ? "" : "show-on-parent-hover"}
             iconPath={mdiFullscreen}
+            data-command="Section.toggleFullscreen"
             onClick={() => setFullscreen(!fullscreen)}
             color={fullscreen ? "action" : undefined}
           />
@@ -130,21 +133,26 @@ export const Section = (props: SectionProps) => {
           {children}
         </div>
       )}
+
+      {fullscreen && (
+        <Popup
+          positioning="fullscreen"
+          title={
+            <FlexRow className="trigger-hover-force">
+              {titleIcon}
+              {title}
+              {titleRightContent}
+            </FlexRow>
+          }
+          contentClassName={contentClassName}
+          contentStyle={contentStyle}
+          onClose={() => {
+            setFullscreen(false);
+          }}
+        >
+          {children}
+        </Popup>
+      )}
     </div>
   );
-
-  if (fullscreen) {
-    return (
-      <Popup
-        positioning="fullscreen"
-        onClose={() => {
-          setFullscreen(false);
-        }}
-      >
-        {content}
-      </Popup>
-    );
-  }
-
-  return content;
 };

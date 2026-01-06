@@ -78,11 +78,10 @@ export const suggestTableLike = async (
     })
     .map((s) => ({ ...s, sortText: "c" }));
 
-  const { joinSuggestions = [] } = getJoinSuggestions({
+  const joinSuggestions = getJoinSuggestions({
     ss,
     rawExpect: "tableOrView",
     cb,
-    tableSuggestions: ss.filter((s) => s.type === "table"),
   });
 
   return {

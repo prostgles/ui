@@ -5,11 +5,10 @@ import path from "path";
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import { upsertNamedExpressMiddleware } from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { API_ENDPOINTS, ROUTES } from "@common/utils";
 import { actualRootDir } from "../electronConfig";
 import type { DBS } from "../index";
-import { initBackupManager } from "../init/startProstgles";
 import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
 import { getLogin } from "./getLogin";
 import { getGetUser } from "./getUser";
@@ -23,6 +22,7 @@ import {
   type SUser,
 } from "./sessionUtils";
 import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import { initBackupManager } from "@src/init/onProstglesReady";
 
 let globalSettings: AuthSetupData["globalSettings"] | undefined;
 
@@ -59,7 +59,8 @@ export const getAuth = async (
 ) => {
   const { globalSettings } = authSetupData;
   setExpressAppOptions(app, { globalSettings });
-  const authProviders = globalSettings?.auth_providers;
+  const { auth_providers, auth_created_user_type = null } =
+    globalSettings ?? {};
   const auth = {
     sidKeyName,
     onUseOrSocketConnected: getOnUseOrSocketConnected(dbs, authSetupData),
@@ -76,7 +77,7 @@ export const getAuth = async (
     loginSignupConfig: {
       app,
 
-      login: await getLogin(authProviders),
+      login: await getLogin(auth_providers),
 
       logout: async (sid, db, _db: DB) => {
         if (!sid) throw "err";
@@ -123,13 +124,19 @@ export const getAuth = async (
       onMagicLinkOrOTP,
       localLoginMode:
         (
-          authProviders?.email?.signupType === "withMagicLink" &&
-          authProviders.email.enabled
+          auth_providers?.email?.signupType === "withMagicLink" &&
+          auth_providers.email.enabled
         ) ?
           "email"
         : "email+password",
-      signupWithEmail: await getEmailAuthProvider(authProviders, dbs),
-      loginWithOAuth: getOAuthLoginProviders(authProviders),
+      signupWithEmail:
+        !auth_providers ? undefined : (
+          await getEmailAuthProvider(
+            { auth_providers, auth_created_user_type },
+            dbs,
+          )
+        ),
+      loginWithOAuth: getOAuthLoginProviders(auth_providers),
     },
   } satisfies AuthConfig<DBGeneratedSchema, SUser>;
   return auth;

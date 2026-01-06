@@ -1,9 +1,9 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
-import Chip from "../../../components/Chip";
-import { InfoRow } from "../../../components/InfoRow";
+import Chip from "@components/Chip";
+import { InfoRow } from "@components/InfoRow";
 import {
   SmartCardList,
   type SmartCardListProps,
@@ -21,7 +21,7 @@ export const LLMProviderSetup = ({
       },
       fieldConfigs: [
         {
-          name: "llm_providers",
+          name: "llm_providers" as "name",
           select: { logo_url: 1 },
           label: "",
         },
@@ -32,7 +32,7 @@ export const LLMProviderSetup = ({
         {
           name: "name",
           label: "",
-          render: (name, row) => name || row.provider_id,
+          render: (name: string | null, row) => name || row.provider_id,
         },
         {
           name: "is_default",

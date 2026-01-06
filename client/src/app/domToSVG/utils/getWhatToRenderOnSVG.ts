@@ -1,4 +1,4 @@
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import {
   getBackdropFilter,
   getBackgroundColor,
@@ -10,7 +10,12 @@ import { isElementVisible, isImgNode, isSVGNode } from "./isElementVisible";
 import { getForeignObject } from "../graphics/getForeignObject";
 import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
-const attributesToKeep = ["data-command", "data-key", "data-label"] as const;
+const attributesToKeep = [
+  "data-command",
+  "data-key",
+  "data-label",
+  "role",
+] as const;
 export type WhatToRenderOnSVG = Awaited<
   ReturnType<typeof getWhatToRenderOnSVG>
 >;
@@ -34,7 +39,6 @@ export const getWhatToRenderOnSVG = async (
     bbox,
     isVisible,
   };
-  if (!isVisible) return { elemInfo };
 
   /** Used to highlight so will render as a rectangle */
   const attributeData = attributesToKeep.reduce(
@@ -45,14 +49,36 @@ export const getWhatToRenderOnSVG = async (
       }
       return acc;
     },
-    {} as Partial<Record<(typeof attributesToKeep)[number], string>>,
+    undefined as
+      | Partial<Record<(typeof attributesToKeep)[number], string>>
+      | undefined,
   );
+
+  let mightBeHovered = false;
+  if (!isVisible) {
+    const hoverClasses = [
+      "show-on-row-hover",
+      "show-on-hover",
+      "show-on-parent-hover",
+      "show-on-trigger-hover",
+    ];
+    if (
+      hoverClasses.some(
+        (cls) => element.classList.contains(cls) || element.closest(`.${cls}`),
+      ) &&
+      (attributeData ||
+        element.querySelector(`[data-command], [data-key], [data-label]`))
+    ) {
+      mightBeHovered = true;
+    } else return { elemInfo };
+  }
 
   const background = getBackgroundColor(style);
   const parentBackground =
     background &&
     element.parentElement &&
     getBackgroundColor(getComputedStyle(element.parentElement));
+
   /**
    * Used to prevent drawing over rounded input border corners
    */
@@ -72,7 +98,7 @@ export const getWhatToRenderOnSVG = async (
     childAffectingStyles.position = style.position;
   }
 
-  const foreignObject = await getForeignObject(element, style, bbox, x, y);
+  const foreignObject = await getForeignObject(element, style, x, y);
   const fontIcon = getFontIconElement(element);
   const image =
     isSVGNode(element) ?
@@ -112,8 +138,11 @@ export const getWhatToRenderOnSVG = async (
   return {
     elemInfo,
     attributeData,
+    mightBeHovered,
     background:
-      backgroundSameAsRenderedParent || image?.type === "maskedElement" ?
+      /** TODO: addNewChildren should be fixed. This is a workaround when non transparent bg appears after dark theme switch */
+      element instanceof HTMLBodyElement ? style.backgroundColor
+      : backgroundSameAsRenderedParent || image?.type === "maskedElement" ?
         undefined
       : background,
     backdropFilter,
@@ -124,23 +153,20 @@ export const getWhatToRenderOnSVG = async (
   };
 };
 
-const getBorderForSVG = (style: CSSStyleDeclaration) => {
-  const getBorderDetails = (value: string) => {
-    const [width, display, ...colorParts] = value
-      .split(" ")
-      .map((v) => v.trim());
-    const color = colorParts.join(" ");
-    if (display !== "none" && width) {
-      const widthNum = parseFloat(width);
-      if (widthNum && color) {
-        return {
-          borderWidth: widthNum,
-          borderColor: color,
-        };
-      }
+const getBorderDetails = (value: string) => {
+  const [width, display, ...colorParts] = value.split(" ").map((v) => v.trim());
+  const color = colorParts.join(" ");
+  if (display !== "none" && width) {
+    const widthNum = parseFloat(width);
+    if (widthNum && color) {
+      return {
+        borderWidth: widthNum,
+        borderColor: color,
+      };
     }
-  };
-
+  }
+};
+const getBorderForSVG = (style: CSSStyleDeclaration) => {
   const border = getBorderDetails(style.border);
   const outline = getBorderDetails(
     [style.outlineWidth, style.outlineStyle, style.outlineColor].join(" "),

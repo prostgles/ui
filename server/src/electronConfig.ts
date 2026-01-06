@@ -1,7 +1,7 @@
 /* eslint-disable security/detect-non-literal-fs-filename */
 import * as fs from "fs";
 import * as path from "path";
-import type { DBGeneratedSchema } from "../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
@@ -38,6 +38,9 @@ const electronConfig: {
 
 export const actualRootDir = path.join(__dirname, "/../../..");
 let rootDir = actualRootDir;
+/**
+ * server root directory
+ */
 export const getRootDir = () => rootDir;
 
 export const getElectronConfig = () => {
@@ -116,13 +119,13 @@ export const start = async (params: {
     typeof electronSid !== "string" ||
     typeof onReady !== "function"
   ) {
-    throw "Must provide a valid electronSid: string and onSidWasSet: ()=>void";
+    throw "Must provide a valid electronSid: string and onSidWasSet: () => void";
   }
   electronConfig.isElectron = true;
   electronConfig.electronSid = params.electronSid;
   electronConfig.safeStorage = params.safeStorage;
   const { startServer } = await import("./index");
-  void startServer(async ({ port: actualPort }) => {
+  const startResult = await startServer(async ({ port: actualPort }) => {
     // const [token] = prostglesTokens;
     // if (token) {
     //   console.log("Setting prostgles tokens");
@@ -138,6 +141,12 @@ export const start = async (params: {
     });
     return onReady(actualPort);
   });
+
+  return {
+    destroy: async () => {
+      return startResult.connMgr.destroy();
+    },
+  };
 };
 
 /**

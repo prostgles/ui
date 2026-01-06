@@ -1,8 +1,8 @@
 import type { AnyObject, DBSchemaTable } from "prostgles-types";
 import { isEmpty } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { Media } from "../../components/FileInput/FileInput";
-import { FileInput } from "../../components/FileInput/FileInput";
+import type { Media } from "@components/FileInput/FileInput";
+import { FileInput } from "@components/FileInput/FileInput";
 import type { SmartFormProps } from "./SmartForm";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
@@ -66,7 +66,7 @@ export const SmartFormFileSection = ({
       key={tableName}
       className={"mt-p5 f-0 " + (tableInfo.isFileTable ? " min-w-300" : "")}
       media={media}
-      minSize={isFileTable ? 470 : 450}
+      // minSize={isFileTable ? 470 : 450}
       maxFileCount={1}
       onAdd={([file]) => {
         // const currentRow = action.type === "update" ? action.currentRow : {};
@@ -102,7 +102,7 @@ export const SmartFormFileSection = ({
                 { deleted: true },
                 onSuccess ? { returning: "*" } : {},
               );
-              onSuccess?.("update", res!);
+              onSuccess?.("update", res);
             }
           }
         } else {

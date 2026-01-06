@@ -2,9 +2,9 @@ import { mdiArrowLeft, mdiDatabaseCog } from "@mdi/js";
 import React from "react";
 import type { Prgl } from "../App";
 import { dataCommand } from "../Testing";
-import type { BtnProps } from "../components/Btn";
-import Btn from "../components/Btn";
-import { FlexRow } from "../components/Flex";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
 import { ConnectionSelector } from "../dashboard/ConnectionSelector";
 import { getIsPinnedMenu } from "../dashboard/Dashboard/Dashboard";
 import type {
@@ -20,7 +20,7 @@ import type {
   FullExtraProps,
 } from "./ProjectConnection/ProjectConnection";
 import { AskLLM } from "../dashboard/AskLLM/AskLLM";
-import { ROUTES } from "../../../common/utils";
+import { ROUTES } from "@common/utils";
 import { t } from "../i18n/i18nUtils";
 
 type TopControlsProps = {
@@ -109,7 +109,7 @@ export const TopControls = (props: TopControlsProps) => {
               asNavLink={true}
               iconPath={mdiArrowLeft}
             >
-              {window.isMediumWidthScreen ? null : t.TopControls.Connections}
+              {/* {window.isMediumWidthScreen ? null : t.TopControls.Connections} */}
             </Btn>
           </FlexRow>
         </>,

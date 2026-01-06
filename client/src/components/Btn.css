@@ -136,8 +136,11 @@ button.fade-in,
   --filled-bg: var(--yellow-500);
   --border-color: var(--yellow-700);
   --color: var(--yellow-800);
-  --faded-bg: #f2eaa0;
+  --faded-bg: #e4ce0559;
   --faded-bg-hover: #e6d96c;
+}
+.dark-theme .btn-color-warn {
+  --color: #dabb8c;
 }
 .dark-theme .btn-color-danger {
   --filled-bg: #890808;
@@ -221,4 +224,8 @@ button.fade-in,
 
 .btn.btn-faded:hover {
   background-color: var(--faded-bg-hover);
+}
+
+.underline-on-hover:hover {
+  text-decoration: underline;
 }

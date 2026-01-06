@@ -4,11 +4,11 @@ import type { DBS, Users } from "..";
 import {
   ELECTRON_USER_AGENT,
   PASSWORDLESS_ADMIN_USERNAME,
-} from "../../../common/OAuthUtils";
+} from "@common/OAuthUtils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getElectronConfig } from "../electronConfig";
 import { makeSession } from "../authConfig/sessionUtils";
-import { YEAR } from "../../../common/utils";
+import { YEAR } from "@common/utils";
 
 const EMPTY_PASSWORD = "";
 

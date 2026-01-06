@@ -1,11 +1,11 @@
-import { mdiFilter, mdiMagnify, mdiPlay, mdiPlayBox, mdiStop } from "@mdi/js";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import { Select } from "@components/Select/Select";
+import { mdiFilter, mdiMagnify, mdiPlay, mdiStop } from "@mdi/js";
 import React from "react";
-import type { DBSSchema } from "../../../../../../common/publishUtils";
-import Btn from "../../../../components/Btn";
-import { FlexRow } from "../../../../components/Flex";
-import Select from "../../../../components/Select/Select";
-import { AddMCPServer } from "./AddMCPServer";
 import type { MCPServersProps } from "../MCPServers";
+import { AddMCPServer } from "./AddMCPServer";
 
 export const MCPServersToolbar = ({
   dbs,
@@ -34,8 +34,8 @@ export const MCPServersToolbar = ({
           iconPath={
             globalSettings.data?.mcp_servers_disabled ? mdiPlay : mdiStop
           }
-          onClick={() => {
-            dbs.global_settings.update(
+          onClickPromise={async () => {
+            await dbs.global_settings.update(
               {},
               {
                 mcp_servers_disabled:

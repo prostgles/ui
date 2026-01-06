@@ -1,6 +1,6 @@
 import { getKeys, isEqual } from "prostgles-types";
-import { DOCKER_USER_AGENT } from "../../../common/OAuthUtils";
-import type { DBSSchema } from "../../../common/publishUtils";
+import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { tout, type DBS } from "../index";
 import {
   activePasswordlessAdminFilter,
@@ -11,7 +11,7 @@ import { tableConfig } from "../tableConfig/tableConfig";
 export type AuthSetupData = {
   globalSettings: DBSSchema["global_settings"] | undefined;
   passwordlessAdmin:
-    | (DBSSchema["users"] & {
+    | (Pick<DBSSchema["users"], "id" | "type"> & {
         sessions: DBSSchema["sessions"][];
         activeSessions: DBSSchema["sessions"][];
       })
@@ -83,7 +83,8 @@ export const subscribeToAuthSetupChanges = async (
     activePasswordlessAdminFilter,
     {
       select: {
-        "*": 1,
+        id: 1,
+        type: 1,
         sessions: {
           $leftJoin: "sessions",
           select: "*",

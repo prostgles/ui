@@ -11,7 +11,7 @@ const table_schema_positions = {
     x: -408.59482334284866,
     y: -414.0255935352699,
   },
-  v_users: {
+  customers: {
     x: 968.6312623730562,
     y: -424.00150372798294,
   },
@@ -43,7 +43,7 @@ const table_schema_positions = {
     x: -755.0858767099027,
     y: -524.7197305176628,
   },
-  fake_contacts: {
+  customers_info: {
     x: 883,
     y: 682,
   },
@@ -59,7 +59,7 @@ const table_schema_positions = {
     x: -750.203925184484,
     y: -1095.6041244601697,
   },
-  '"roads.geojson"': {
+  routes: {
     x: 980,
     y: 444,
   },
@@ -83,7 +83,7 @@ const table_schema_positions = {
     x: -419.5108671726053,
     y: -587.9239333420907,
   },
-  random_fake_contacts: {
+  customers_info_view: {
     x: -30,
     y: 920,
   },

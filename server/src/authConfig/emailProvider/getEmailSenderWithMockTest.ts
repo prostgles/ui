@@ -4,8 +4,8 @@ import {
   getMagicLinkEmailFromTemplate,
   getVerificationEmailFromTemplate,
   MOCK_SMTP_HOST,
-} from "../../../../common/OAuthUtils";
-import type { DBSSchema } from "../../../../common/publishUtils";
+} from "@common/OAuthUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Unpromise } from "../../ConnectionManager/ConnectionManager";
 import { tout } from "../..";
 

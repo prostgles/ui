@@ -1,9 +1,9 @@
-import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { addFragmentViewBoxes } from "./addFragmentViewBoxes";
+import { includes } from "prostgles-types";
+import { tout } from "src/utils/utils";
 import { elementToSVG, type SVGContext } from "./containers/elementToSVG";
+import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
 import { renderSvg, wrapAllSVGText } from "./text/textToSVG";
-import { tout } from "src/utils";
-import { deduplicateSVGPaths } from "./containers/deduplicateSVGPaths";
+import { BORDER_ELEMENT_TYPES } from "./containers/rectangleToSVG";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
@@ -22,24 +22,13 @@ export const domToSVG = async (node: HTMLElement) => {
   const defs = document.createElementNS(SVG_NAMESPACE, "defs");
   svg.appendChild(defs);
 
-  // Process the node and all its children recursively
-  const nodeComputedStyle = window.getComputedStyle(node);
-
-  // Add background to root SVG if needed
-  if (
-    nodeComputedStyle.backgroundColor &&
-    nodeComputedStyle.backgroundColor !== "rgba(0, 0, 0, 0)"
-  ) {
-    const bgRect = document.createElementNS(SVG_NAMESPACE, "rect");
-    bgRect.setAttribute("width", "100%");
-    bgRect.setAttribute("height", "100%");
-    bgRect.setAttribute("fill", nodeComputedStyle.backgroundColor);
-    svg.appendChild(bgRect);
-  }
-
+  const rootId = "id-" + crypto.randomUUID().split("-")[0];
   const context: SVGContext = {
+    docId: rootId,
     offsetX: -nodeBBox.left,
     offsetY: -nodeBBox.top,
+    width: nodeBBox.width,
+    height: nodeBBox.height,
     defs: defs,
     idCounter: 0,
     cssDeclarations,
@@ -55,21 +44,121 @@ export const domToSVG = async (node: HTMLElement) => {
 
   setBackdropFilters(svg);
   const { remove } = renderSvg(svg);
-  await wrapAllSVGText(svg);
+  wrapAllSVGText(svg);
+
+  /** Add textLength to prevent bugs in ios (It uses a different font which is wider and overflows the existing rects and clip paths) */
+  svg.querySelectorAll("text,tspan").forEach((_text) => {
+    const text = _text as SVGTextElement | SVGTSpanElement;
+    const isMultiLine = text.textContent.includes("\n");
+    if (
+      isMultiLine ||
+      /** Has tspans that we'll handle separately */
+      (text instanceof SVGTextElement && text.children.length)
+    ) {
+      return;
+    }
+    const bbox = text.getBoundingClientRect();
+    const ctm = text.getCTM();
+    const scaleX = !ctm ? 1 : Math.hypot(ctm.a, ctm.c);
+    text.setAttribute("textLength", bbox.width / scaleX);
+    text.setAttribute("lengthAdjust", "spacingAndGlyphs");
+  });
+
   /** Does not really seem effective */
   // deduplicateSVGPaths(svg);
-  await addFragmentViewBoxes(svg, 10);
-  repositionAbsoluteAndFixed(svg);
+  // await addFragmentViewBoxes(svg, 10);
+  repositionAbsoluteFixedAndSticky(svg);
+  moveBordersToTop(svg);
+  removeOverflowedElements(svg);
+  repositionMasks(svg);
   remove();
-  await tout(1000);
+  await tout(100);
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
-  // recordDomChanges(node);
-  return { svgString, svg };
+  const [firstG, otherChild] = Array.from(svg.children).filter(
+    (c) => c instanceof SVGGElement,
+  );
+  if (!firstG) {
+    throw new Error("No SVG content generated");
+  }
+  if (otherChild) {
+    throw new Error("Unexpected SVG structure - multiple root elements");
+  }
+  firstG.setAttribute("id", rootId);
+  return { svgString, svg, rootId };
 };
 
-const repositionAbsoluteAndFixed = (svg: SVGGElement) => {
+/**
+ * In divs the mask positioning is relative to the div, but in SVG it's relative to the SVG canvas
+ */
+const repositionMasks = (svg: SVGGElement) => {
+  const gElements = svg.querySelectorAll("g");
+  gElements.forEach((g) => {
+    const { elemInfo } = g._whatToRender ?? {};
+    const maskImage = g.style.maskImage;
+    if (maskImage && elemInfo) {
+      const { x, y, width, height } = elemInfo;
+      const gBBox = g.getBoundingClientRect();
+      const offsetX = x - gBBox.left;
+      const offsetY = y - gBBox.top;
+      g.style.maskSize = `${width}px ${height}px`;
+      g.style.maskPosition = `${offsetX}px ${offsetY}px`;
+    }
+  });
+};
+
+const removeOverflowedElements = (svg: SVGGElement) => {
+  svg.querySelectorAll("g").forEach((g) => {
+    if (g._overflowClipPath) {
+      const { x, y, width, height } = g._overflowClipPath;
+      const clipXMin = x;
+      const clipYMin = y;
+      const clipXMax = x + width;
+      const clipYMax = y + height;
+      if (g.querySelector(`[style*=animation]`)) {
+        return;
+      }
+      g.childNodes.forEach((child) => {
+        /** Ignore animated elements */
+        if (child instanceof SVGGElement || child instanceof SVGTextElement) {
+          const elBBox = child.getBoundingClientRect();
+          const cXMin = elBBox.x;
+          const cYMin = elBBox.y;
+          const cXMax = elBBox.x + elBBox.width;
+          const cYMax = elBBox.y + elBBox.height;
+          const bboxesOverlap =
+            clipXMin < cXMax &&
+            clipXMax > cXMin &&
+            clipYMin < cYMax &&
+            clipYMax > cYMin;
+          if (!bboxesOverlap) {
+            child.remove();
+          }
+        }
+      });
+    }
+  });
+};
+
+/**
+ * Hacky (because bg+border case is not handled) approach to ensure row card foreign key select fields rounded border corners are visible
+ */
+const moveBordersToTop = (svg: SVGGElement) => {
+  svg
+    .querySelectorAll<SVGScreenshotNodeType>(BORDER_ELEMENT_TYPES.join(","))
+    .forEach((path) => {
+      if (
+        path._purpose?.border &&
+        !path._purpose.background &&
+        path.parentElement instanceof SVGGElement
+      ) {
+        path.parentElement.appendChild(path);
+      }
+    });
+};
+
+const repositionAbsoluteFixedAndSticky = (svg: SVGGElement) => {
   const [gBody, ...other] = Array.from(
     svg.querySelectorAll<SVGGElement>(":scope > g"),
   );
@@ -89,6 +178,14 @@ const repositionAbsoluteAndFixed = (svg: SVGGElement) => {
         gBody.contains(closestParent) ? closestParent : gBody;
       closestParentOrGBody.appendChild(g);
     }
+
+    /** Move sticky to end */
+    if (
+      style?.position === "sticky" &&
+      g.parentElement instanceof SVGGElement
+    ) {
+      g.parentElement.appendChild(g);
+    }
   });
 };
 
@@ -97,7 +194,7 @@ const getClosestRelativeOrAbsoluteParent = (g: SVGGElement) => {
   while (parentG && parentG instanceof SVGGElement && parentG._domElement) {
     const position = getComputedStyle(parentG._domElement).position;
     if (
-      includes(position, ["relative", "absolute"]) &&
+      includes(["relative", "absolute"] as const, position) &&
       parentG._domElement !== g._domElement
     ) {
       return parentG;
@@ -119,9 +216,15 @@ const setBackdropFilters = (svg: SVGGElement) => {
     if (
       g._whatToRender?.backdropFilter &&
       prevContent &&
-      prevContent instanceof SVGGElement
+      prevContent instanceof SVGGElement &&
+      prevContent._whatToRender?.elemInfo
     ) {
-      prevContent.style.filter = g._whatToRender.backdropFilter;
+      const { width, height } = g._whatToRender.elemInfo;
+      const pBBox = prevContent._whatToRender.elemInfo;
+      // If not fully covering it then ignore it
+      if (width > pBBox.width * 0.8 && height > 0.8 * pBBox.height) {
+        prevContent.style.filter = g._whatToRender.backdropFilter;
+      }
     }
   });
 };

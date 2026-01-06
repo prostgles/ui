@@ -1,6 +1,10 @@
-import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
+import type {
+  AnyObject,
+  DBSchemaTable,
+  ValidatedColumnInfo,
+} from "prostgles-types";
 import React from "react";
-import { MediaViewer } from "@components/MediaViewer";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import type { NestedTimeChartMeta } from "../ColumnMenu/ColumnDisplayFormat/NestedColumnRender";
@@ -16,20 +20,23 @@ export type RenderedColumn = ColumnConfigWInfo &
   Pick<ProstglesTableColumn, "format">; // | "noSanitize" | "contentConfig" | "allowedHTMLTags">;
 export type OnRenderColumnProps = {
   c: RenderedColumn;
+  getValues: () => any[];
   tables: DBSchemaTablesWJoins;
   table: DBSchemaTable | undefined;
   maxCellChars?: number;
   barchartVals: MinMaxVals | undefined;
   maximumFractionDigits?: number | undefined;
 };
-export const onRenderColumn = ({
-  c,
-  table,
-  tables,
-  maxCellChars = 500,
-  barchartVals,
-  maximumFractionDigits,
-}: OnRenderColumnProps) => {
+export const onRenderColumn = (args: OnRenderColumnProps) => {
+  const {
+    c,
+    table,
+    tables,
+    maxCellChars = 500,
+    barchartVals,
+    getValues,
+    maximumFractionDigits,
+  } = args;
   const formatRender = DISPLAY_FORMATS.find(
     (df) =>
       df.type !== "NONE" &&
@@ -103,11 +110,12 @@ export const onRenderColumn = ({
     : /** c.tsDataType and c.udt_name SHOULD NOT BE MISSING AT THIS POINT! */
       ({ value }) => (
         <RenderValue
-          column={c.computedConfig?.funcDef.outType ?? c}
+          column={c.computedConfig ?? c}
           value={value}
           showTitle={true}
           maxLength={maxCellChars}
           maximumFractionDigits={maximumFractionDigits}
+          getValues={getValues}
         />
       );
 

@@ -5,8 +5,8 @@ import type {
 } from "prostgles-types";
 import { _PG_date } from "prostgles-types";
 import React, { useState } from "react";
-import Chip from "../../components/Chip";
-import { DraggableLI } from "../../components/DraggableLI";
+import Chip from "@components/Chip";
+import { DraggableLI } from "@components/DraggableLI";
 
 type P = {
   inputType: string;
@@ -130,7 +130,7 @@ const InputChip = ({
   onPaste,
 }: InputChipProps) => {
   const numberOfChars =
-    Math.max(2, (((value as any)?.toString() || placeholder) ?? "").length) + 2;
+    Math.max(2, (((value)?.toString() || placeholder) ?? "").length) + 2;
 
   return (
     <Chip

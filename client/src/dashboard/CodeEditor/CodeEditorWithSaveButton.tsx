@@ -1,14 +1,14 @@
 import { mdiFullscreen } from "@mdi/js";
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep } from "prostgles-client";
 import React, { useCallback, useRef } from "react";
-import type { BtnProps } from "../../components/Btn";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
-import { FooterButtons } from "../../components/Popup/FooterButtons";
-import Popup from "../../components/Popup/Popup";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, classOverride } from "@components/Flex";
+import { FooterButtons } from "@components/Popup/FooterButtons";
+import Popup from "@components/Popup/Popup";
 import { CodeEditor, type CodeEditorProps } from "./CodeEditor";
-import { isDefined } from "../../utils";
-import { Label } from "../../components/Label";
+import { isDefined } from "../../utils/utils";
+import { Label } from "@components/Label";
 
 type P = {
   label: React.ReactNode;

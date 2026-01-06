@@ -17,7 +17,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
     columns: {
       id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
       url_path: {
-        sqlDefinition: `TEXT CHECK(LENGTH(url_path) > 0 AND url_path ~ '^[a-z0-9-]+$')`,
+        sqlDefinition: `TEXT CHECK(LENGTH(url_path) = 0 OR url_path ~ '^[a-z_0-9-]+$')`,
         info: {
           hint: `URL path to be used instead of the connection uuid`,
         },
@@ -120,11 +120,22 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
           },
         },
       },
+      display_options: {
+        nullable: true,
+        jsonbSchemaType: {
+          prettyTableAndColumnNames: {
+            type: "boolean",
+            title: "Pretty table and column names",
+            description:
+              "Defaults to true. Whether to show pretty table names by converting underscores to spaces and capitalising words",
+          },
+        },
+      },
       config: {
         jsonbSchemaType: { enabled: "boolean", path: "string" },
         nullable: true,
       },
-      created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      created: { sqlDefinition: `TIMESTAMPTZ DEFAULT NOW()` },
       last_updated: { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
     },
     constraints: {

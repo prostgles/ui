@@ -1,21 +1,21 @@
+import type { DetailedFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { InfoRow } from "@components/InfoRow";
+import Popup from "@components/Popup/Popup";
 import { mdiSearchWeb } from "@mdi/js";
+import type { AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import type { SmartGroupFilter } from "../../../../../common/filterUtils";
-import Btn from "../../../components/Btn";
-import { InfoRow } from "../../../components/InfoRow";
-import Popup from "../../../components/Popup/Popup";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { useJoinedSectionFieldConfigs } from "../JoinedRecords/useJoinedSectionFieldConfigs";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
-import type { AnyObject } from "prostgles-types";
 
 export type ViewMoreSmartCardListProps = Pick<
   SmartFormFieldLinkedDataProps,
   "db" | "methods" | "tables"
 > & {
   ftable: DBSchemaTableWJoins;
-  searchFilter: SmartGroupFilter | undefined;
+  searchFilter: DetailedFilter[] | undefined;
   getActions:
     | ((row: AnyObject, onClosePopup: VoidFunction) => React.ReactNode)
     | undefined;
@@ -43,6 +43,7 @@ export const ViewMoreSmartCardList = ({
       <Btn
         iconPath={mdiSearchWeb}
         title="View more"
+        data-command="ViewMoreSmartCardList"
         onClick={({ currentTarget }) => setAnchorEl(currentTarget)}
       />
       {anchorEl && (
@@ -51,12 +52,17 @@ export const ViewMoreSmartCardList = ({
           onClose={() => setAnchorEl(undefined)}
           anchorEl={anchorEl}
           onClickClose={false}
-          positioning="left"
-          showFullscreenToggle={{}}
+          positioning="fullscreen"
+          showFullscreenToggle={
+            {
+              // getStyle: () => ({ maxWidth: "800px" }),
+            }
+          }
           clickCatchStyle={{ opacity: 1 }}
-          rootChildStyle={{
-            maxWidth: "min(100vw, 800px)",
-          }}
+
+          // rootChildStyle={{
+          //   maxWidth: "min(100vw, 800px)",
+          // }}
         >
           <SmartCardList
             showTopBar={true}

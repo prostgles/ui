@@ -1,15 +1,43 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
 import { isDefined } from "prostgles-types";
 import React, { useMemo } from "react";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { FlexCol } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { SmartCardListJoinedNewRecords } from "../../SmartCardList/SmartCardListJoinedNewRecords";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { JoinedRecordsProps } from "./JoinedRecords";
 import type { JoinedRecordSection } from "./useJoinedRecordsSections";
 import { useJoinedSectionFieldConfigs } from "./useJoinedSectionFieldConfigs";
+
+export const JoinedRecordsSection = ({
+  section,
+  descendants,
+  isInsert,
+  ...props
+}: JoinedRecordsProps & {
+  section: JoinedRecordSection;
+  isInsert: boolean;
+  descendants: JoinedRecordsProps["tables"];
+}) => {
+  return (
+    <FlexCol className=" p-1 " data-command="JoinedRecords.Section">
+      {section.error && (
+        <ErrorComponent
+          error={section.error}
+          variant="outlined"
+          className=" f-1"
+        />
+      )}
+      <JoinedRecordsSectionCardList
+        {...props}
+        section={section}
+        descendants={descendants}
+        isInsert={isInsert}
+      />
+    </FlexCol>
+  );
+};
 
 const JoinedRecordsSectionCardList = (
   props: JoinedRecordsProps & {
@@ -73,7 +101,7 @@ const JoinedRecordsSectionCardList = (
     return (
       <SmartCardListJoinedNewRecords
         key={s.path.join(".")}
-        db={db as DBHandlerClient}
+        db={db}
         methods={methods}
         table={s.table}
         tables={tables}
@@ -118,34 +146,5 @@ const JoinedRecordsSectionCardList = (
         fieldConfigs={fieldConfigs}
       />
     </div>
-  );
-};
-
-export const JoinedRecordsSection = ({
-  section,
-  descendants,
-  isInsert,
-  ...props
-}: JoinedRecordsProps & {
-  section: JoinedRecordSection;
-  isInsert: boolean;
-  descendants: JoinedRecordsProps["tables"];
-}) => {
-  return (
-    <FlexCol className=" p-1 ">
-      {section.error && (
-        <ErrorComponent
-          error={section.error}
-          variant="outlined"
-          className=" f-1"
-        />
-      )}
-      <JoinedRecordsSectionCardList
-        {...props}
-        section={section}
-        descendants={descendants}
-        isInsert={isInsert}
-      />
-    </FlexCol>
   );
 };

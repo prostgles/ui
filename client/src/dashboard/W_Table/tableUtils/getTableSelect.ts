@@ -1,18 +1,18 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import { isDefined } from "prostgles-types";
-import { getSmartGroupFilter } from "../../../../../common/filterUtils";
-import { isEmpty } from "../../../utils";
+import { getSmartGroupFilter } from "@common/filterUtils";
+import { isEmpty } from "../../../utils/utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
-import { getTimeChartSelectParams } from "../../W_TimeChart/getTimeChartData";
+import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
 import {
   getDesiredTimeChartBinSize,
   getTimeChartMinMax,
-} from "../../W_TimeChart/getTimeChartLayersWithBins";
+} from "../../W_TimeChart/fetchData/getTimeChartLayersWithBins";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type { MinMax, MinMaxVals } from "../W_Table";
-import { getFullColumnConfig } from "./tableUtils";
+import { getFullColumnConfig } from "./getFullColumnConfig";
 
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
@@ -23,6 +23,7 @@ export const getTableSelect = async (
 ): Promise<{ barchartVals?: AnyObject; select: AnyObject }> => {
   let select: AnyObject = {};
   let barchartVals: MinMaxVals | undefined;
+
   if (w.columns && Array.isArray(w.columns)) {
     const fullColumns = getFullColumnConfig(tables, w);
     await Promise.all(

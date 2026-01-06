@@ -1,12 +1,11 @@
-import { mdiFilter } from "@mdi/js";
-import { pickKeys } from "prostgles-types";
-import React, { useMemo } from "react";
 import type {
+  DetailedFilter,
   GroupedDetailedFilter,
-  SimpleFilter,
-} from "../../../common/filterUtils";
-import Btn from "../components/Btn";
-import PopupMenu from "../components/PopupMenu";
+} from "@common/filterUtils";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
+import { mdiFilter } from "@mdi/js";
+import React, { useMemo } from "react";
 import type {
   ContextDataSchema,
   ForcedFilterControlProps,
@@ -34,7 +33,11 @@ export const RenderFilter = (props: RenderFilterProps) => {
     mode,
     title = `Edit ${props.itemName}s`,
     itemName,
-    ...otherProps
+    db,
+    tableName,
+    tables,
+    selectedColumns,
+    hideOperand,
   } = props;
   const isAndOrFilter = "$and" in f || "$or" in f;
   const minimised = mode && mode === "minimised";
@@ -70,9 +73,9 @@ export const RenderFilter = (props: RenderFilterProps) => {
       | "onOperandChange"
       | "onChange"
     > & {
-      filters: SimpleFilter[];
+      filters: DetailedFilter[];
     };
-  }, [f, minimised, onChange]);
+  }, [f, onChange]);
 
   if (!isAndOrFilter) {
     return <>Unexpected {itemName}. Expecting $and / $or</>;
@@ -90,14 +93,13 @@ export const RenderFilter = (props: RenderFilterProps) => {
             undefined
           : "row"
         }
-        {...pickKeys(otherProps, [
-          "db",
-          "tableName",
-          "tables",
-          "selectedColumns",
-          "hideOperand",
-        ])}
+        db={db}
+        tableName={tableName}
+        tables={tables}
+        selectedColumns={selectedColumns}
+        hideOperand={hideOperand}
         {...filterProps}
+        newFilterType={contextData ? "=" : undefined}
         hideToggle={true}
         minimised={minimised}
         showAddFilter={showAddFilter}
@@ -160,12 +162,12 @@ export const RenderFilter = (props: RenderFilterProps) => {
 };
 
 const isSimpleFilter = (
-  f: SimpleFilter | GroupedDetailedFilter,
-): f is SimpleFilter => {
+  f: DetailedFilter | GroupedDetailedFilter,
+): f is DetailedFilter => {
   return !("$and" in f || "$or" in f);
 };
 const isNotSimpleFilter = (
-  f: SimpleFilter | GroupedDetailedFilter,
+  f: DetailedFilter | GroupedDetailedFilter,
 ): f is GroupedDetailedFilter => {
   return !isSimpleFilter(f);
 };

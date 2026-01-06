@@ -1,12 +1,14 @@
 import { mdiPanHorizontal, mdiSyncCircle } from "@mdi/js";
 import React from "react";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import PopupMenu from "@components/PopupMenu";
+import { Select } from "@components/Select/Select";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { AutoRefreshMenu } from "../W_Table/TableMenu/AutoRefreshMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
+import { includes } from "../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 type P = {
   w: WindowSyncItem<"timechart">;
@@ -16,6 +18,7 @@ type P = {
 const BIN_LABEL_OPTIONS = [
   { key: "off", label: "Off" },
   { key: "all points", label: "All points" },
+  { key: "peaks and troughs", label: "Peaks and troughs" },
   { key: "latest point", label: "Last point" },
 ] as const;
 export type ShowBinLabelsMode = (typeof BIN_LABEL_OPTIONS)[number]["key"];
@@ -42,6 +45,7 @@ export type MissingBinsOption = (typeof MissingBinsOptions)[number]["key"];
 export const TimechartRenderStyles = [
   { key: "scatter plot", label: "Scatter plot" },
   { key: "line", label: "Line chart" },
+  { key: "smooth", label: "Smooth line chart" },
   { key: "bars", label: "Bar chart" },
 ] as const;
 export type TimechartRenderStyle =
@@ -54,6 +58,7 @@ export const ProstglesTimeChartMenu = ({ w, autoBinSize }: P) => {
     missingBins = "ignore",
     renderStyle = "line",
     showBinLabels = "off",
+    showGradient = true,
     binValueLabelMaxDecimals = null,
   } = w.options;
 
@@ -64,6 +69,14 @@ export const ProstglesTimeChartMenu = ({ w, autoBinSize }: P) => {
 
   return (
     <FlexCol className="p-1">
+      <FormField
+        type="text"
+        label={"Name"}
+        value={w.name || ""}
+        onChange={(newTitle) => {
+          w.$update({ name: newTitle });
+        }}
+      />
       <Select
         className="w-fit"
         label="Bin size"
@@ -92,15 +105,26 @@ export const ProstglesTimeChartMenu = ({ w, autoBinSize }: P) => {
           w.$update({ options: { tooltipPosition } }, { deepMerge: true });
         }}
       />
-
-      <Select
-        label="Chart style"
-        value={renderStyle}
-        fullOptions={TimechartRenderStyles}
-        onChange={(renderStyle) => {
-          w.$update({ options: { renderStyle } }, { deepMerge: true });
-        }}
-      />
+      <FlexRow>
+        <Select
+          label="Chart style"
+          value={renderStyle}
+          fullOptions={TimechartRenderStyles}
+          onChange={(renderStyle) => {
+            w.$update({ options: { renderStyle } }, { deepMerge: true });
+          }}
+        />
+        {includes(renderStyle, ["line", "smooth"]) && (
+          <SwitchToggle
+            label={"Show gradient"}
+            checked={showGradient}
+            variant="col"
+            onChange={(showGradient) => {
+              w.$update({ options: { showGradient } }, { deepMerge: true });
+            }}
+          />
+        )}
+      </FlexRow>
 
       <FlexRow>
         <Select
@@ -200,3 +224,4 @@ export const TIMECHART_STAT_TYPES = [
   { label: "Avg", func: "$avg" },
 ] as const;
 export type StatType = (typeof TIMECHART_STAT_TYPES)[number]["label"];
+export type StatFunction = (typeof TIMECHART_STAT_TYPES)[number]["func"];

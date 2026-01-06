@@ -1,4 +1,4 @@
-import type { ColType } from "../../../../../../common/utils";
+import type { ColType } from "@common/utils";
 import { getColumnSuggestionLabel } from "../../SQLEditorSuggestions";
 import { asSQL } from "../KEYWORDS";
 import {
@@ -137,14 +137,13 @@ export const getTableExpressionSuggestions = async (
       const s: ParsedSQLSuggestion = {
         kind: getKind("table"),
         documentation: {
-          value:
-            `**Expression**\n\n` +
-            asSQL(
-              `${e.alias}(\n` +
-                colTypesWithDefs.map((c) => "  " + c.definition).join(", \n") +
-                "\n)",
-            ),
+          value: asSQL(
+            `${e.alias} (\n` +
+              colTypesWithDefs.map((c) => "  " + c.definition).join(", \n") +
+              "\n)",
+          ),
         },
+        detail: `(expression) ${e.alias}`,
         insertText: e.alias,
         label: e.alias,
         name: e.alias,

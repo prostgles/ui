@@ -1,13 +1,13 @@
 import React from "react";
-import { FlexCol } from "../../../components/Flex";
-import Select from "../../../components/Select/Select";
+import { FlexCol } from "@components/Flex";
+import { Select } from "@components/Select/Select";
 import type { ColumnSort } from "./ColumnMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
 import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
-import FormField from "../../../components/FormField/FormField";
+import FormField from "@components/FormField/FormField";
 
 const SORT_NULLS_OPTIONS = [
   { key: "first", label: "First" },
@@ -50,7 +50,7 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
   };
   const colIsText =
     column.info?.tsDataType === "string" ||
-    column.computedConfig?.funcDef.outType.tsDataType === "string";
+    column.computedConfig?.tsDataType === "string";
   const updateSort = (newColSort: ColumnSort) => {
     let matched = false;
     let newSort = (w.sort || []).map((s) => {
@@ -70,7 +70,7 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
 
   const nested = column.nested && {
     ...column.nested,
-    table: column.nested.path.at(-1)!.table!,
+    table: column.nested.path.at(-1)!.table,
   };
   const nestedCols =
     nested?.chart ?

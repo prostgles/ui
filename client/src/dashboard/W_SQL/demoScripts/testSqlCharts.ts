@@ -38,7 +38,9 @@ export const testSqlCharts: DemoScript = async ({
     moveCursor.lineEnd();
     moveCursor.up(1);
     moveCursor.down(2);
-    await click(`AddChartMenu.${chartType}`);
+    await click(
+      chartType === "Map" ? "AddChartMenu.Map" : "AddChartMenu.Timechart",
+    );
     await tout(500);
   };
   await addChart("Timechart");

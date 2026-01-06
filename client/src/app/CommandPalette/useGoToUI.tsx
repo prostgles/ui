@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "../../Testing";
-import { useAlert } from "../../components/AlertProvider";
+import { useAlert } from "@components/AlertProvider";
 import { click } from "../../demo/demoUtils";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import { tout } from "../../utils";
+import { tout } from "../../utils/utils";
 import {
   flatUIDocs,
   type UIDoc,
@@ -17,9 +17,9 @@ import {
   getDocPagePath,
   getUIDocElements,
   getUIDocElementsAndAlertIfEmpty,
-  getUIDocShorterPath,
 } from "./utils";
 import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { getUIDocShortestPath } from "./getUIDocShortestPath";
 
 export type DocItemHighlightItemPosition = "mid" | "last";
 
@@ -114,9 +114,17 @@ export const useGoToUI = (
     async (data: UIDocFlat) => {
       const prevParents = data.parentDocs;
       const shortcut =
-        currentPage ? getUIDocShorterPath(currentPage, prevParents) : undefined;
+        currentPage ?
+          getUIDocShortestPath(currentPage, prevParents)
+        : undefined;
       const pathItems = shortcut ?? prevParents;
-      const shouldBeOpened = includes(data.type, ["link", "page", "tab"]);
+      const shouldBeOpened = includes(data.type, [
+        "link",
+        "page",
+        "tab",
+        "popup",
+        "smartform-popup",
+      ]);
       const finalPathItems =
         data.type === "hotkey-popup" ? [data]
         : shouldBeOpened ? [...pathItems, data]

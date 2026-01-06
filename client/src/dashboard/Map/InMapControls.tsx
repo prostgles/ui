@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 
 import { mdiImageFilterCenterFocus, mdiTargetVariant } from "@mdi/js";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import Select from "../../components/Select/Select";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { Select } from "@components/Select/Select";
 import { MapExtentBehavior, type DecKGLMapProps } from "./DeckGLMap";
 import { DeckGLFeatureEditor } from "./DeckGLFeatureEditor";
 import type { DeckGlLibs, DeckWrapped } from "./DeckGLWrapped";

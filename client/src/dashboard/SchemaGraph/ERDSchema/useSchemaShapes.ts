@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type {
   ChartedText,
   Image,
   LinkLine,
   Rectangle,
 } from "../../Charts/CanvasChart";
-import { measureText } from "../../Charts/measureText";
-import { getCssVariableValue } from "../../Charts/onRenderTimechart";
+import { measureText } from "../../Charts/TimeChart/measureText";
+import { getCssVariableValue } from "../../Charts/TimeChart/onRenderTimechart";
 import type {
   DBSchemaTableColumn,
   DBSchemaTableWJoins,
@@ -314,10 +314,7 @@ const getRootTable = <T extends DBSchemaTableWJoins>(
   }
   for (const ref1 of nextReferences) {
     for (const ref2 of ref1 ?? []) {
-      const result = getRootTable([ref2], tables, [
-        ...prevTables,
-        ...ref2.ftable,
-      ]);
+      const result = getRootTable([ref2], tables, [...prevTables, ref2.ftable]);
       if (result) {
         return result;
       }

@@ -2,7 +2,7 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import {
   OAuthProviderOptions,
   PASSWORDLESS_ADMIN_USERNAME,
-} from "../../../common/OAuthUtils";
+} from "@common/OAuthUtils";
 
 export const tableConfigUsers = {
   users: {
@@ -83,7 +83,7 @@ export const tableConfigUsers = {
           hint: "If true and status is active: enables passwordless access for default install. First connected client will have perpetual admin access and no other users are allowed ",
         },
       },
-      created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      created: { sqlDefinition: `TIMESTAMPTZ DEFAULT NOW()` },
       last_updated: {
         sqlDefinition: `BIGINT DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000`,
       },
@@ -112,6 +112,14 @@ export const tableConfigUsers = {
             description: "Will hide passwordless user tips if true",
           },
           theme: { enum: ["dark", "light", "from-system"], optional: true },
+          speech_mode: {
+            optional: true,
+            enum: ["off", "stt-local", "stt-web", "audio"],
+          },
+          speech_send_mode: {
+            optional: true,
+            enum: ["manual", "auto"],
+          },
         },
       },
       "2fa": {

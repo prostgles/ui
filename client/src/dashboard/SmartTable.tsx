@@ -1,37 +1,29 @@
-import React from "react";
-import Loading from "../components/Loader/Loading";
-import Popup from "../components/Popup/Popup";
-import { Table } from "../components/Table/Table";
-import type {
-  ColumnSort,
-  ColumnSortSQL,
-} from "./W_Table/ColumnMenu/ColumnMenu";
-import type { ProstglesColumn } from "./W_Table/W_Table";
-import RTComp from "./RTComp";
 import {
   getSmartGroupFilter,
+  type DetailedFilter,
   type DetailedFilterBase,
-  type SmartGroupFilter,
-} from "../../../common/filterUtils";
-import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
-import { SmartForm, type SmartFormProps } from "./SmartForm/SmartForm";
-import ErrorComponent from "../components/ErrorComponent";
-import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
-import {
-  _PG_numbers,
-  includes,
-  type AnyObject,
-  type SubscriptionHandler,
-} from "prostgles-types";
-import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
+} from "@common/filterUtils";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
+import Popup from "@components/Popup/Popup";
+import type { PaginationProps } from "@components/Table/Pagination";
+import { Table } from "@components/Table/Table";
+import { type AnyObject, type SubscriptionHandler } from "prostgles-types";
+import React from "react";
 import type { Prgl } from "../App";
-import { quickClone } from "../utils";
-import type { PaginationProps } from "../components/Table/Pagination";
-import { FlexCol } from "../components/Flex";
+import { quickClone } from "../utils/utils";
+import RTComp from "./RTComp";
+import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
+import { SmartForm } from "./SmartForm/SmartForm";
 import { isNumericColumn } from "./W_SQL/getSQLResultTableColumns";
+import type { ColumnSort } from "./W_Table/ColumnMenu/ColumnMenu";
+import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
+import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
+import type { ProstglesColumn } from "./W_Table/W_Table";
 
 type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
-  filter?: SmartGroupFilter;
+  filter?: DetailedFilter[];
   tableName: string;
   tableCols?: ProstglesColumn[];
   onClosePopup?: () => void;
@@ -47,7 +39,7 @@ type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   allowEdit?: boolean;
   className?: string;
   noDataComponent?: React.ReactNode;
-  onFilterChange?: (filter: SmartGroupFilter) => void;
+  onFilterChange?: (filter: DetailedFilter[]) => void;
   filterOperand?: "and" | "or";
   realtime?: { throttle?: number };
 };
@@ -56,7 +48,7 @@ type S = {
   error?: any;
   rows: AnyObject[];
   sort: ColumnSort[];
-  filter?: SmartGroupFilter;
+  filter?: DetailedFilter[];
   editRowFilter?: DetailedFilterBase[];
   loadedData: boolean;
   filteredRows: number;
@@ -112,6 +104,9 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
               table,
               tables,
               barchartVals: undefined,
+              getValues: () => {
+                return this.state.rows.map((r) => r[c.name]);
+              },
             }),
           };
         });
@@ -131,7 +126,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     return _tableCols;
   }
 
-  async onMount() {
+  onMount() {
     this.getData();
   }
 
@@ -143,7 +138,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
   onDelta(deltaP: Partial<SmartTableProps> | undefined): void {
     const { filter = {}, tableName, db, realtime } = this.props;
 
-    (async () => {
+    void (async () => {
       const tableHandler = db[tableName];
       if (
         tableHandler?.subscribe &&
@@ -162,13 +157,13 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
               throttle: this.props.realtime?.throttle ?? 100,
             },
             () => {
-              this.getData();
+              void this.getData();
             },
           ),
           filter,
         };
       } else if (deltaP?.filter) {
-        this.getData();
+        void this.getData();
       }
     })();
   }
@@ -178,7 +173,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
   }
 
   getData = async (
-    filter: SmartGroupFilter = this.filter,
+    filter: DetailedFilter[] = this.filter,
     sort: ColumnSort[] = this.state.sort,
     page: number = this.state.page,
     pageSize: PaginationProps["pageSize"] = this.state.pageSize,
@@ -280,7 +275,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             tableName={tableName}
             rowFilter={editRowFilter}
             onSuccess={() => {
-              this.getData();
+              void this.getData();
             }}
             onClose={() => {
               this.setState({ editRowFilter: undefined });

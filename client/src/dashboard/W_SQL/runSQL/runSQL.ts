@@ -1,21 +1,16 @@
 import type { SQLResult } from "prostgles-client/dist/prostgles";
-import type {
-  SQLHandler,
-  SQLResultInfo,
-  SocketSQLStreamHandlers,
-} from "prostgles-types";
+import type { SocketSQLStreamHandlers, SQLResultInfo } from "prostgles-types";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../../SQLEditor/SQLCompletion/CommonMatchImports";
 import type { ColumnSortSQL } from "../../W_Table/ColumnMenu/ColumnMenu";
-import type { W_SQL_ActiveQuery, W_SQLState } from "../W_SQL";
-import type { W_SQL } from "../W_SQL";
+import type { W_SQL, W_SQLState } from "../W_SQL";
 import { SQL_NOT_ALLOWED } from "../W_SQL";
+import { parseExplainResult } from "../parseExplainResult";
 import { parseSQLError } from "../parseSQLError";
 import {
   getFieldsWithActions,
   parseSqlResultCols,
 } from "../parseSqlResultCols";
-import { parseExplainResult } from "../parseExplainResult";
 import { getQueryTotalRowCount } from "./getQueryTotalRowCount";
 
 export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
@@ -195,7 +190,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
       };
       const { trimmedSql, hashedSQL } = runningQuery ?? defaultRunningQuery;
       if (packet.type === "error") {
-        this.state.handler?.stop();
+        void this.state.handler?.stop();
         const sqlError = await parseSQLError.bind(this)({
           sql: trimmedSql,
           err: packet.error,
@@ -225,7 +220,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
          */
         if (packet.fields) fields = packet.fields;
         if (fields || packet.ended) {
-          let cols: typeof this.state.cols | undefined = this.state.cols;
+          let cols: typeof this.state.cols = this.state.cols;
 
           /* For WITH command must wait for response command to work out if it's a SELECT  */
           isSelect = isSelect || packet.info?.command === "SELECT";
@@ -273,7 +268,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
                   dataType: "json",
                   udt_name: "json",
                   tsDataType: "any",
-                };
+                } as const;
 
                 this.setState({
                   cols: getFieldsWithActions(
@@ -342,23 +337,25 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
             if (limit && rowCount && limit > rowCount) {
               activeQuery.totalRowCount = rowCount;
             } else {
-              getQueryTotalRowCount(db.sql!, activeQuery, limit, isSelect).then(
-                (fetchedTotalRowCount) => {
-                  if (
-                    isFinite(fetchedTotalRowCount) &&
-                    activeQuery.hashedSQL ===
-                      this.state.activeQuery?.hashedSQL &&
-                    this.state.activeQuery.state === "ended"
-                  ) {
-                    this.setState({
-                      activeQuery: {
-                        ...this.state.activeQuery,
-                        totalRowCount: fetchedTotalRowCount,
-                      },
-                    });
-                  }
-                },
-              );
+              void getQueryTotalRowCount(
+                db.sql!,
+                activeQuery,
+                limit,
+                isSelect,
+              ).then((fetchedTotalRowCount) => {
+                if (
+                  isFinite(fetchedTotalRowCount) &&
+                  activeQuery.hashedSQL === this.state.activeQuery?.hashedSQL &&
+                  this.state.activeQuery.state === "ended"
+                ) {
+                  this.setState({
+                    activeQuery: {
+                      ...this.state.activeQuery,
+                      totalRowCount: fetchedTotalRowCount,
+                    },
+                  });
+                }
+              });
             }
 
             this.setState({
@@ -378,7 +375,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
     setRunningQuery({ handler });
   } catch (err: any) {
     const started = this.state.activeQuery?.started || new Date();
-    this.state.handler?.stop();
+    void this.state.handler?.stop();
     this.setState({
       isSelect: false,
       notifEventSub: undefined,

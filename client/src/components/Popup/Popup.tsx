@@ -1,22 +1,22 @@
+import { isObject, pickKeys } from "prostgles-types";
 import React from "react";
 import ReactDOM from "react-dom";
-import "./Popup.css";
-import { pickKeys } from "prostgles-types";
 import type { Command, TestSelectors } from "../../Testing";
 import RTComp, { type DeltaOf } from "../../dashboard/RTComp";
 import { ClickCatchOverlay } from "../ClickCatchOverlay";
-import ErrorComponent, { ErrorTrap } from "../ErrorComponent";
-import { FlexRow, classOverride } from "../Flex";
+import { ErrorTrap } from "../ErrorComponent";
+import { classOverride } from "../Flex";
 import {
   FooterButtons,
   type FooterButton,
   type FooterButtonsProps,
 } from "./FooterButtons";
+import "./Popup.css";
 import { PopupHeader } from "./PopupHeader";
 import { getPopupStyle } from "./getPopupStyle";
 import { popupCheckPosition } from "./popupCheckPosition";
 
-let modalRoot;
+let modalRoot: HTMLElement | null = null;
 export const getModalRoot = (forPointer = false) => {
   const id = forPointer ? "pointer-root" : "modal-root";
   let node = document.getElementById(id);
@@ -102,7 +102,11 @@ export type PopupProps = TestSelectors & {
   fixedTopLeft?: boolean;
   autoFocusFirst?: "header" | "content" | { selector: string };
   onKeyDown?: (e: KeyboardEvent, section: "header" | "content") => void;
-  collapsible?: boolean;
+  collapsible?:
+    | boolean
+    | {
+        defaultValue: boolean;
+      };
   showFullscreenToggle?: {
     defaultValue?: boolean;
     getStyle?: (fullscreen: boolean) => React.CSSProperties;
@@ -133,7 +137,6 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     stateStyle: {
       opacity: 0,
     },
-    collapsed: false,
   };
 
   checkFocus = (e: KeyboardEvent) => {
@@ -200,17 +203,18 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
             HTMLButtonElement | HTMLSelectElement | HTMLTextAreaElement
           >('input:not([type="hidden"]), textarea, button'),
         );
-        // const firstBtn = Array.from(container.querySelectorAll<HTMLButtonElement>('button:not([data-close-popup]),  a, [tabindex]:not([tabindex="-1"])'))
 
-        const firstFocusable = [...firstInputLike].find(
-          (e) =>
+        const firstFocusable = [...firstInputLike].find((e) => {
+          return (
             getComputedStyle(e).display !== "none" &&
             getComputedStyle(e).opacity !== "0" &&
-            !e.closest("." + DATA_NULLABLE),
-        );
+            !e.closest("." + DATA_NULLABLE) &&
+            !e.closest("." + DATA_HAS_VALUE)
+          );
+        });
         (firstFocusable ?? container).focus();
       }
-    }, 50);
+    }, 200);
     window.document.body.addEventListener("keydown", this.checkFocus);
 
     if (!this.ref) return;
@@ -223,14 +227,27 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     this.rObserver.observe(this.ref);
   }
 
+  /**
+   * Added to improve performance when rendering a monaco editor with a lot of content fullscreen
+   */
+  setMainNodeVisibility = (visible: boolean) => {
+    const mainNode = document.querySelector("main")!;
+    const isVisible = mainNode.style.visibility !== "hidden";
+    if (isVisible !== visible) {
+      mainNode.style.visibility = visible ? "visible" : "hidden";
+    }
+  };
+
   toggledFullScreen = 0;
   onDelta(deltaP: DeltaOf<PopupProps>, deltaS: DeltaOf<PopupState>): void {
     if (deltaS && "fullScreen" in deltaS) {
       this.toggledFullScreen = Date.now();
     }
+    this.setMainNodeVisibility(this.state.fullScreen !== true);
   }
 
   onUnmount() {
+    this.setMainNodeVisibility(true);
     if (modalRoot) {
       try {
         modalRoot.removeChild(this.el);
@@ -287,11 +304,15 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
       contentClassName = defaultContentClassName,
       contentStyle = {},
       showFullscreenToggle,
+      collapsible,
     } = this.props;
+
+    const collapsedDefaultValue =
+      isObject(collapsible) ? collapsible.defaultValue : false;
 
     const {
       stateStyle,
-      collapsed = false,
+      collapsed = collapsedDefaultValue,
       fullScreen = showFullscreenToggle?.defaultValue,
     } = this.state;
     const toggleContent = () => {
@@ -415,40 +436,4 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
 }
 
 export const DATA_NULLABLE = "data-nullable";
-
-type FooterProps = TestSelectors & {
-  children: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-  error?: any;
-};
-export const Footer = ({
-  children,
-  className,
-  style,
-  error,
-  ...testSelectors
-}: FooterProps) => {
-  return (
-    <ErrorTrap>
-      <footer
-        {...testSelectors}
-        style={style}
-        className={classOverride(
-          "popup-footer bt b-color flex-row-wrap p-1 jc-end " +
-            (window.isMobileDevice ? " gap-p5 " : " gap-1 "),
-          className,
-        )}
-      >
-        <ErrorComponent
-          className="f-1"
-          withIcon={true}
-          variant="outlined"
-          error={error}
-          style={{ maxHeight: "150px", minHeight: 0, overflow: "auto" }}
-        />
-        <FlexRow className="f-1">{children}</FlexRow>
-      </footer>
-    </ErrorTrap>
-  );
-};
+export const DATA_HAS_VALUE = "data-has-value";

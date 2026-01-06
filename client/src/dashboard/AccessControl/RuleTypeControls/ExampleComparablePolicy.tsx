@@ -1,14 +1,14 @@
 import { mdiShieldLockOutline } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React from "react";
 import type {
   DeleteRule,
   InsertRule,
   SelectRule,
   UpdateRule,
-} from "../../../../../common/publishUtils";
-import { FlexCol } from "../../../components/Flex";
-import { Label } from "../../../components/Label";
+} from "@common/publishUtils";
+import { FlexCol } from "@components/Flex";
+import { Label } from "@components/Label";
 import CodeExample from "../../CodeExample";
 import type { SelectRuleControlProps } from "./SelectRuleControl";
 import { getComparablePGPolicy } from "./getComparablePGPolicy";

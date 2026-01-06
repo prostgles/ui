@@ -2,6 +2,8 @@
 
 Manage your account settings, security preferences, and API access.
 
+<img src="./screenshots/account.svgif.svg" alt="Account Page" style="border: 1px solid; margin: 1em 0;" />
+
 - **Account details**: View and update your account information.  
   - **Account information**: View all account details and associated data (workspaces, dashboards, views, etc.)  
 - **Security**: Manage your account security settings.  

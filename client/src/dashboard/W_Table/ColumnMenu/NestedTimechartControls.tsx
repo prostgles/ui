@@ -1,33 +1,28 @@
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { Select } from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiChartTimelineVariant } from "@mdi/js";
+import { _PG_numbers } from "prostgles-types";
 import React from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import Select from "../../../components/Select/Select";
-import { SwitchToggle } from "../../../components/SwitchToggle";
-import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import {
   TIMECHART_STAT_TYPES,
   TimechartRenderStyles,
 } from "../../W_TimeChart/W_TimeChartMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
-import { _PG_numbers } from "prostgles-types";
 
 export const SORTABLE_CHART_COLUMNS = ["date", "value"];
 
 export type ColTimeChart = Required<ColumnConfigWInfo>["nested"]["chart"];
 type P = {
   tableName: string | undefined;
-  tables: DBSchemaTablesWJoins;
-  chart: ColTimeChart | undefined;
-  onChange: (newCol: ColTimeChart | undefined) => void;
+  chart: ColTimeChart;
+  onChange: (newCol: ColTimeChart) => void;
 };
-export const NestedTimechartControls = ({
-  tableName,
-  chart,
-  tables,
-  onChange,
-}: P) => {
+export const NestedTimechartControls = ({ tableName, chart, onChange }: P) => {
+  const { tables } = usePrgl();
   if (!tableName) return null;
 
   const table = tables.find((t) => t.name === tableName);

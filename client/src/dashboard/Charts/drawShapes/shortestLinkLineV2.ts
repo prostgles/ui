@@ -1,7 +1,6 @@
 import type { Point } from "../../Charts";
-import type { Image, LinkLine, Rectangle, Shape } from "../CanvasChart";
+import type { LinkLine, Rectangle } from "../CanvasChart";
 import { drawShapes, type ShapeV2 } from "./drawShapes";
-import { findShortestPathAroundRectangles } from "./findShortestPathAroundRectangles";
 
 export const getCtx = (canvas: HTMLCanvasElement) => {
   return canvas.getContext("2d");

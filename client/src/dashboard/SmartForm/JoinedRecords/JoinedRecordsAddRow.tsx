@@ -1,6 +1,6 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useCallback, useMemo, useState } from "react";
-import Btn, { type BtnProps } from "../../../components/Btn";
+import Btn, { type BtnProps } from "@components/Btn";
 import { SmartForm, type SmartFormProps } from "../SmartForm";
 import { useNestedInsertDefaultData } from "../SmartFormField/useNestedInsertDefaultData";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
@@ -71,7 +71,7 @@ export const JoinedRecordsAddRow = (props: P) => {
           );
         return {
           title: "Add referenced record",
-          onClick: async () => {
+          onClick: () => {
             setInsert({
               type: "manual",
               // onChange: (newRow) => {
@@ -109,7 +109,7 @@ export const JoinedRecordsAddRow = (props: P) => {
       }
       return {
         title: "Add new record",
-        onClick: async () => {
+        onClick: () => {
           if (defaultData) {
             setInsert({
               type: "auto",
@@ -168,10 +168,8 @@ export const JoinedRecordsAddRow = (props: P) => {
         {...props.btnProps}
         data-command="JoinedRecords.AddRow"
         data-key={section.tableName}
-        variant="filled"
         color="action"
         iconPath={mdiPlus}
-        children="Add"
         {...btnProps}
       />
     </>

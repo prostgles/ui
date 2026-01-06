@@ -1,20 +1,20 @@
-import { mdiClose, mdiPlus, mdiTableFilter } from "@mdi/js";
-import React, { useEffect, useState } from "react";
 import type {
   ContextDataObject,
   TableRules,
   UpdateRule,
-} from "../../../../../common/publishUtils";
-import { validateDynamicFields } from "../../../../../common/publishUtils";
-import Btn from "../../../components/Btn";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { Label } from "../../../components/Label";
+} from "@common/publishUtils";
+import { validateDynamicFields } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexRow } from "@components/Flex";
+import { Label } from "@components/Label";
+import { mdiClose, mdiPlus, mdiTableFilter } from "@mdi/js";
+import { useEffectAsync } from "prostgles-client";
+import React, { useEffect, useState } from "react";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { FieldFilterControl } from "./FieldFilterControl";
 import type { ContextDataSchema } from "./FilterControl";
 import { FilterControl } from "./FilterControl";
-import { FlexRow } from "../../../components/Flex";
-import { useEffectAsync } from "prostgles-client/dist/react-hooks";
 
 type P = Pick<
   Required<TablePermissionControlsProps>,
@@ -50,12 +50,11 @@ export const DynamicFields = ({
   };
 
   const [error, setError] = useState<any>();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffectAsync(async () => {
-    (async () => {
+  useEffect(() => {
+    void (async () => {
       const valid = await validateDynamicFields(
         rule.dynamicFields,
-        db[table.name] as any,
+        db[table.name],
         contextData,
         table.columns.map((c) => c.name),
       );

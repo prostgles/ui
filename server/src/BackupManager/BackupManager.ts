@@ -1,6 +1,6 @@
 import path from "path";
 import { PassThrough } from "stream";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getInstalledPsqlVersions } from "./getInstalledPrograms";
 import { pgDump } from "./pgDump";
 import { pgRestore } from "./pgRestore";
@@ -16,17 +16,17 @@ type DBS = DBOFullyTyped<DBGeneratedSchema>;
 
 import checkDiskSpace from "check-disk-space";
 import type { Request, Response } from "express";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { FilterItem, SubscriptionHandler } from "prostgles-types";
-import type { InstalledPrograms } from "../../../common/electronInitTypes";
-import { ROUTES } from "../../../common/utils";
+import type { InstalledPrograms } from "@common/electronInitTypes";
+import { ROUTES } from "@common/utils";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import { getRootDir } from "../electronConfig";
 import { checkAutomaticBackup } from "./checkAutomaticBackup";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 
 export const HOUR = 3600 * 1000;
 
@@ -52,7 +52,7 @@ export default class BackupManager {
     this.connMgr = connMgr;
     this.installedPrograms = installedPrograms;
 
-    const checkAutomaticBkps = async () => {
+    const checkAutomaticBackupsForEachConnection = async () => {
       const connections = await this.dbs.connections.find({
         $existsJoined: {
           database_configs: { "backups_config->>enabled": "true" },
@@ -63,14 +63,14 @@ export default class BackupManager {
       }
     };
     this.automaticBackupInterval = setInterval(() => {
-      void checkAutomaticBkps();
+      void checkAutomaticBackupsForEachConnection();
     }, HOUR / 4);
     void (async () => {
       await this.dbConfSub?.unsubscribe();
       this.dbConfSub = await dbs.database_configs.subscribe(
         {},
         { select: { backups_config: 1 }, limit: 0 },
-        checkAutomaticBkps,
+        checkAutomaticBackupsForEachConnection,
       );
     })();
   }
@@ -150,7 +150,7 @@ export default class BackupManager {
           clean: true,
           format: "c",
         },
-        status: { ok: `${new Date()}` },
+        status: { ok: new Date().toISOString() },
       },
       { returning: "*" },
     );
@@ -195,38 +195,38 @@ export default class BackupManager {
       res.sendStatus(401);
       return;
     }
-    const bkpId = req.path.slice(ROUTES.BACKUPS.length + 1);
-    if (!bkpId) {
+    const backupId = req.path.slice(ROUTES.BACKUPS.length + 1);
+    if (!backupId) {
       res.sendStatus(404);
       return;
     }
-    const bkp = await this.dbs.backups.findOne({ id: bkpId });
-    if (!bkp) {
+    const backup = await this.dbs.backups.findOne({ id: backupId });
+    if (!backup) {
       res.sendStatus(404);
-    } else {
-      const { fileMgr } = await getFileMgr(this.dbs, bkp.credential_id);
-      if (bkp.credential_id) {
-        /* Allow access to file for a period equivalent to a download rate of 50KBps */
-        const presignedURL = await fileMgr.getFileCloudDownloadURL(
-          bkp.id,
-          +(bkp.sizeInBytes ?? 1e6) / 50,
-        );
-        if (!presignedURL) {
-          res.sendStatus(404);
-        } else {
-          res.redirect(presignedURL);
-        }
+      return;
+    }
+    const { fileMgr } = await getFileMgr(this.dbs, backup.credential_id);
+    if (backup.credential_id) {
+      /* Allow access to file for a period equivalent to a download rate of 50KBps */
+      const presignedURL = await fileMgr.getFileCloudDownloadURL(
+        backup.id,
+        1 * 60, // 1 minute
+      );
+      if (!presignedURL) {
+        res.sendStatus(404);
       } else {
-        try {
-          res.type(bkp.content_type);
-          res.sendFile(
-            path.resolve(
-              path.join(getRootDir() + ROUTES.BACKUPS + "/" + bkp.id),
-            ),
-          );
-        } catch (err) {
-          res.sendStatus(404);
-        }
+        res.redirect(presignedURL);
+      }
+    } else {
+      try {
+        res.type(backup.content_type);
+        res.sendFile(
+          path.resolve(
+            path.join(getRootDir() + ROUTES.BACKUPS + "/" + backup.id),
+          ),
+        );
+      } catch (err) {
+        res.sendStatus(404);
       }
     }
   };

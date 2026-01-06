@@ -1,7 +1,7 @@
 import { mdiChevronDown, mdiClose } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/prostgles";
+import { usePromise } from "prostgles-client";
 import React, { useEffect, useMemo, useState } from "react";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import Btn from "../Btn";
 import type { BtnProps } from "../Btn";
 import { FlexCol, FlexRow } from "../Flex";

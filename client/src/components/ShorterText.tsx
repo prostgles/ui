@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { getColumnDataColor } from "../dashboard/SmartForm/SmartFormField/RenderValue";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { useIsMounted } from "prostgles-client/dist/react-hooks";
+import { useIsMounted } from "prostgles-client";
 
 type P = {
   column?: Pick<

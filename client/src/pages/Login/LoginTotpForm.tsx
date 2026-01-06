@@ -1,7 +1,7 @@
 import React from "react";
 import type { useLoginState } from "./useLoginState";
-import FormField from "../../components/FormField/FormField";
-import Btn from "../../components/Btn";
+import FormField from "@components/FormField/FormField";
+import Btn from "@components/Btn";
 
 export const LoginTotpFormFields = ({
   formHandlers,
@@ -20,6 +20,7 @@ export const LoginTotpFormFields = ({
         <p>Open your authentication app and enter the code for Prostgles UI</p>
         <FormField
           id="totp_token"
+          //@ts-ignore
           value={formHandlers.totpToken}
           inputProps={{
             id: "totp_token",
@@ -28,7 +29,7 @@ export const LoginTotpFormFields = ({
           label="6-digit code"
           // error={error}
           onChange={(v) => {
-            formHandlers.setTotpToken(v);
+            formHandlers.setTotpToken(v.toString());
             if (formHandlers.totpToken.length > 5) {
               onAuthCall();
             }

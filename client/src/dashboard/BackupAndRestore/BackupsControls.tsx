@@ -1,27 +1,20 @@
+import type { PGDumpParams } from "@common/utils";
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import {
-  mdiBackupRestore,
   mdiDatabasePlusOutline,
   mdiDelete,
-  mdiDownload,
   mdiFileUploadOutline,
-  mdiGestureTapButton,
-  mdiRefreshAuto,
   mdiStop,
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import type { PGDumpParams } from "../../../../common/utils";
-import { ROUTES, sliceText } from "../../../../common/utils";
 import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
-import Btn from "../../components/Btn";
-import ButtonGroup from "../../components/ButtonGroup";
-import FormField from "../../components/FormField/FormField";
-import { Icon } from "../../components/Icon/Icon";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { Backups } from "../Dashboard/dashboardUtils";
 import type { FieldConfig } from "../SmartCard/SmartCard";
@@ -30,16 +23,12 @@ import { StyledInterval } from "../W_SQL/customRenderers";
 import { AutomaticBackups } from "./AutomaticBackups";
 import { BackupsInProgress } from "./BackupsInProgress";
 import { CodeConfirmation } from "./CodeConfirmation";
-import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
+import { CompletedBackups } from "./CompletedBackups";
+import { DEFAULT_DUMP_OPTS, PGDumpOptions } from "./PGDumpOptions";
 import { RenderBackupLogs } from "./RenderBackupLogs";
 import { RenderBackupStatus } from "./RenderBackupStatus";
 import { Restore } from "./Restore/Restore";
-
-const BACKUP_FILTER_OPTS = [
-  { key: "This connection" },
-  { key: "Deleted connections" },
-  { key: "All connections" },
-] as const;
+import { useBackupsControlsState } from "./useBackupsControlsState";
 
 export const orderByCreated = {
   key: "created",
@@ -49,16 +38,18 @@ export const orderByCreated = {
 
 export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
   const { connectionId, serverState, dbs, dbsTables, dbsMethods, db } = prgl;
-  const { getInstalledPsqlVersions, getDBSize, pgDump, pgRestore, bkpDelete } =
-    dbsMethods;
+  const { getInstalledPsqlVersions, getDBSize, pgDump } = dbsMethods;
   const connection_id = connectionId;
 
-  const [backupsFilterType, setBackupsFilterType] = useState<
-    (typeof BACKUP_FILTER_OPTS)[number]["key"]
-  >(BACKUP_FILTER_OPTS[0].key);
-
+  const {
+    backupFilter,
+    backupsFilterType,
+    completedBackupsFilter,
+    hasBackups,
+    setBackupsFilterType,
+    setHasBackups,
+  } = useBackupsControlsState(connection_id);
   const [dumpOpts, setDumpOpts] = useState<PGDumpParams>(DEFAULT_DUMP_OPTS);
-  const [hasBackups, sethasBackups] = useState(false);
 
   const dbSize = usePromise(
     async () => getDBSize?.(connection_id),
@@ -79,12 +70,6 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
       />
     ),
   };
-  const dumpLogsFConf: FieldConfig<Backups> = {
-    name: "dump_logs",
-    render: (logs, row) => (
-      <RenderBackupLogs logs={logs} completed={!(row.status as any)?.loading} />
-    ),
-  };
 
   if (!installedPrograms) {
     return null;
@@ -102,14 +87,6 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
   }
 
   const restoreStoppedError = "Stopped by user";
-
-  const backupFilter =
-    backupsFilterType === "This connection" ? { connection_id }
-    : backupsFilterType === "Deleted connections" ? { connection_id: null }
-    : {};
-  const completedBackupsFilter = {
-    $and: [backupFilter, { "status->ok": { "<>": null } }],
-  };
 
   return (
     <div className="flex-col gap-2 f-1 min-h-0 w-fit">
@@ -129,6 +106,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
             </Btn>
           }
           title="Create backup"
+          positioning="center"
           clickCatchStyle={{ opacity: 1 }}
           footerButtons={(popupClose) => [
             {
@@ -139,6 +117,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
               label: "Start backup",
               variant: "filled",
               color: "action",
+              className: "ml-auto",
               ...dataCommand("config.bkp.create.start"),
               onClickPromise: async (e) => {
                 try {
@@ -157,10 +136,11 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
               },
             },
           ]}
-          render={(popupClose) => (
+          render={() => (
             <div className="flex-col gap-1 f-1 min-s-0 bg-inherit">
               <FormField
                 label={"Name"}
+                type="text"
                 hint="Optional, will be used to identify the backup"
                 value={dumpOpts.name}
                 inputProps={{
@@ -170,7 +150,8 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
                   setDumpOpts((o) => ({ ...o, name }));
                 }}
               />
-              <DumpOptions
+
+              <PGDumpOptions
                 connectionId={connection_id}
                 dbsMethods={dbsMethods}
                 dbs={dbs}
@@ -202,7 +183,11 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
           dbsMethods={dbsMethods}
           fromFile={true}
           button={
-            <Btn color="action" iconPath={mdiFileUploadOutline}>
+            <Btn
+              color="action"
+              iconPath={mdiFileUploadOutline}
+              data-command="BackupsControls.restoreFromFile"
+            >
               Restore from file...
             </Btn>
           }
@@ -214,6 +199,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
         tableName="backups"
         btnColor="gray"
         style={{ minHeight: "250px" }}
+        data-command="BackupControls.backupsInProgress"
         title="Restore in progress:"
         tables={dbsTables}
         filter={{
@@ -273,215 +259,11 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
 
       <BackupsInProgress {...prgl} backupFilter={backupFilter} />
 
-      <SmartCardList
-        data-command="BackupsControls.Completed"
-        btnColor="gray"
-        title={
-          <div className="mt-1 flex-col gap-1">
-            <label className="font-16 bold">Completed backups</label>
-            <div className="flex-row ai-center gap-p5">
-              {/* <Btn iconPath={mdiFilter} variant="text" size="small" color="action" />  */}
-              <ButtonGroup
-                variant="select"
-                options={BACKUP_FILTER_OPTS.map((v) => v.key)}
-                value={backupsFilterType}
-                onChange={(v) => setBackupsFilterType(v)}
-              />
-            </div>
-          </div>
-        }
-        onSetData={(items) => sethasBackups(!!items.length)}
-        db={dbs as DBHandlerClient}
-        methods={dbsMethods}
-        tableName="backups"
-        tables={dbsTables}
-        filter={completedBackupsFilter}
-        realtime={true}
-        // className="mt-2"
-        orderBy={orderByCreated}
-        excludeNulls={true}
-        fieldConfigs={[
-          { name: "id", hide: true },
-          {
-            name: "initiator",
-            label: " ",
-            render: (v) => (
-              <div title={v}>
-                {v === "automatic_backups" ?
-                  <Icon path={mdiRefreshAuto} />
-                : v === "manual_backup" ?
-                  <Icon path={mdiGestureTapButton} />
-                : v}
-              </div>
-            ),
-          },
-          {
-            name: "name",
-            hideIf: (name) => !name,
-            label: "Backup name",
-            render: (v, row) => (
-              <span title={v} className="text-ellipsis">
-                {sliceText(v, 30)}
-              </span>
-            ),
-          },
-          {
-            name: "created",
-            label: "Created",
-            select: { $ageNow: ["created", null, "second"] },
-            render: (value) => <StyledInterval value={value} />,
-          },
-          {
-            name: "dbSizeInBytes",
-            label: "DB size",
-            render: (val) => bytesToSize(val),
-          },
-          {
-            name: "dump_command",
-            label: "Dump command",
-            hide: true,
-            render: (val) => (
-              <span title={val} className="text-ellipsis">
-                {sliceText(val, 50)}
-              </span>
-            ),
-          },
-          // "connection_id",
-          // "credential_id",
-          "destination",
-          // "created",
-          { name: "uploaded", hide: true },
-          // "dbSizeInBytes",
-          // {
-          //   name: "Upload Duration", label: "Upload Duration",
-          //   select: { $age: ["uploaded", "created"] },
-          //   render: renderInterval
-          // },
-          {
-            name: "sizeInBytes",
-            render: (val) => (
-              <span title={(+val || 0).toLocaleString() + " Bytes"}>
-                {bytesToSize(+val || 0)}
-              </span>
-            ),
-          },
-          // "dump_command",
-          {
-            name: "status",
-            label: "Dump status",
-            render: (val, row) => <RenderBackupStatus row={row} status={val} />,
-          },
-          dumpLogsFConf,
-          // "restore_command",
-          // {
-          //   name: "restore_status",
-          //   render: renderStatus
-          // },
-          {
-            name: "restored_",
-            label: "Last restored",
-            hideIf: (v) => !v,
-            select: { $ageNow: ["restore_end", null, "second"] },
-            render: (value) => <StyledInterval value={value} />,
-          },
-          restoreLogsFConf,
-        ]}
-        getRowFooter={(row: Backups) => (
-          <div className="flex-row-wrap gap-1 jc-end ai-center show-on-parent-hoverdd">
-            <CodeConfirmation
-              title={"Delete the backup file from storage"}
-              show={!row.uploaded ? "confirmButton" : undefined}
-              button={
-                <Btn iconPath={mdiDelete} title="Will need to confirm">
-                  Delete
-                </Btn>
-              }
-              message={
-                <InfoRow color="warning">
-                  This action is not reversible!
-                </InfoRow>
-              }
-              confirmButton={(popupClose) => (
-                <>
-                  <Btn
-                    iconPath={mdiDelete}
-                    variant="outline"
-                    color="danger"
-                    onClickPromise={() => bkpDelete!(row.id).then(popupClose)}
-                  >
-                    Delete
-                  </Btn>
-                  <Btn
-                    iconPath={mdiDelete}
-                    variant="outline"
-                    color="danger"
-                    onClickPromise={() =>
-                      bkpDelete!(row.id, true).then(popupClose)
-                    }
-                  >
-                    Force delete
-                  </Btn>
-                </>
-              )}
-            />
-
-            <Btn
-              iconPath={mdiDownload}
-              href={ROUTES.BACKUPS + "/" + row.id}
-              color="action"
-              title="Right click and 'Save link as...' to download"
-              download
-            >
-              Download
-            </Btn>
-
-            <Restore
-              dbs={dbs}
-              db={db}
-              backupId={row.id}
-              connectionId={connection_id}
-              dbsMethods={dbsMethods}
-              button={
-                <Btn
-                  iconPath={mdiBackupRestore}
-                  title="Will need to confirm"
-                  variant="filled"
-                  color="action"
-                  data-command="BackupControls.Restore"
-                >
-                  Restore...
-                </Btn>
-              }
-              onReadyButton={(restoreOpts, popupClose) => (
-                <Btn
-                  iconPath={mdiBackupRestore}
-                  variant="filled"
-                  color="action"
-                  onClickPromise={() =>
-                    pgRestore!(
-                      { bkpId: row.id, connId: connectionId },
-                      restoreOpts,
-                    ).then(popupClose)
-                  }
-                >
-                  Restore
-                </Btn>
-              )}
-            />
-          </div>
-        )}
-        noDataComponent={
-          <InfoRow
-            className=""
-            variant="filled"
-            color="info"
-            iconPath=""
-            style={{ padding: "2em 2em" }}
-          >
-            No completed backups
-          </InfoRow>
-        }
-        // noDataComponentMode="hide-all"
+      <CompletedBackups
+        setHasBackups={setHasBackups}
+        backupsFilterType={backupsFilterType}
+        completedBackupsFilter={completedBackupsFilter}
+        setBackupsFilterType={setBackupsFilterType}
       />
 
       {hasBackups && (
@@ -490,6 +272,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
           dbsMethods={dbsMethods}
           filter={completedBackupsFilter}
           filterName={backupsFilterType}
+          data-command="BackupsControls.Completed.deleteAll"
         />
       )}
     </div>
@@ -554,7 +337,7 @@ const DeleteAllBackups = ({
   );
 };
 
-export function bytesToSize(bytes, _precision = 2) {
+export const bytesToSize = (bytes, _precision = 2) => {
   const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
   if (bytes == 0) return "0 Byte";
   const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) + "");
@@ -563,33 +346,4 @@ export function bytesToSize(bytes, _precision = 2) {
   const precision = i > 0 ? _precision : 0;
   const valueStr = value.toFixed(precision);
   return `${valueStr} ${unit}`;
-}
-
-// const renderInterval: FieldConfigRender<Backups> = (v: any, row) => {
-//   const res = (isEmpty(v))? ["", ""] :
-//     "years" in v? [`${v.years}y`, "-red-500"] :
-//     "months" in v? [`${v.months}mo`, "-red-500"] :
-//     "weeks" in v? [`${v.weeks}w`, "-yellow-500"] :
-//     "days" in v? [`${v.days}d`, "-yellow-500"] :
-//     "hours" in v? [`${v.hours}h`, "-green-500"] :
-//     "minutes" in v? [`${v.minutes}min`, "-green-500"] :
-//     "seconds" in v? [`${v.seconds}s`, "-green-500"] :
-//     "milliseconds" in v? [`${v.milliseconds}ms`, "-green-500"] :
-//     [getKeys(v).map(k => `${v[k]} ${k}`).join(","), "-gray-500"] as const;
-
-//   return <span title={JSON.stringify(v).slice(1, -1)} className={`text${res[1]}`}>{res[0] || "0s"} ago</span>
-// }
-
-// {
-//   name: "Restore Duration", label: "Restore Duration",
-//   select: { $age: ["restore_end", "restore_start"] },
-//   render: val => !val? "" : getKeys(val).map(k => `${val[k]} ${k}`).join(", ")
-
-// },
-// { name: "last_updated", hide: true},
-// {
-//   name: "last_updated_ago",
-//   label: "Last updated",
-//   select: { $ageNow: ["last_updated", null, "second"] },
-//   render: (val, row) => <span title={row.last_updated.toString()}>{renderInterval(val, row)}</span>
-// }
+};

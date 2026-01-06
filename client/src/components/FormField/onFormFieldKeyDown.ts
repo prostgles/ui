@@ -1,8 +1,8 @@
-import { getStringFormat } from "../../utils";
+import { getStringFormat } from "../../utils/utils";
 import type FormField from "./FormField";
 
 export function onFormFieldKeyDown(
-  this: FormField,
+  this: FormField<"text">,
   e: React.KeyboardEvent<HTMLDivElement>,
   selectSuggestion: (key: any) => void,
 ) {

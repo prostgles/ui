@@ -108,7 +108,6 @@ export const MenuListItem = ({
           <Icon
             className="mr-p5 f-0"
             path={item.leftIconPath}
-            size={1}
             style={item.iconStyle}
           />
         )}

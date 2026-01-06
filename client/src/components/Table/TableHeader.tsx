@@ -1,26 +1,23 @@
-import React from "react";
-import type { TableProps, TableState } from "./Table";
-import { TableRootClassname, onWheelScroll } from "./Table";
 import { isObject } from "prostgles-types";
+import React from "react";
 import { vibrateFeedback } from "../../dashboard/Dashboard/dashboardUtils";
-import { quickClone } from "../../utils";
-import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
+import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import {
   ColumnSortMenu,
   getDefaultSort,
 } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
+import { getSortColumn } from "../../dashboard/W_Table/tableUtils/tableUtils";
+import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
+import { quickClone } from "../../utils/utils";
+import { classOverride } from "../Flex";
+import { Pan } from "../Pan";
 import type { PopupProps } from "../Popup/Popup";
 import Popup from "../Popup/Popup";
-import { classOverride } from "../Flex";
-import { getSortColumn } from "../../dashboard/W_Table/tableUtils/tableUtils";
-import type {
-  ColumnSort,
-  ColumnSortSQL,
-} from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
-import { Pan } from "../Pan";
+import type { TableProps, TableState } from "./Table";
+import { TableRootClassname, onWheelScroll } from "./Table";
 
-type TableHeaderProps<Sort extends ColumnSort | ColumnSortSQL> = Pick<
+type TableHeaderProps<Sort extends ColumnSortSQL> = Pick<
   TableProps<Sort>,
   "cols" | "sort" | "onSort" | "onColumnReorder" | "showSubLabel"
 > & {
@@ -34,9 +31,10 @@ export type TableHeaderState = Pick<TableState, "draggedCol"> & {
     anchorEl: HTMLElement;
   } & ColumnSortMenuProps;
 };
-export class TableHeader<
-  Sort extends ColumnSort | ColumnSortSQL,
-> extends React.Component<TableHeaderProps<Sort>, TableHeaderState> {
+export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
+  TableHeaderProps<Sort>,
+  TableHeaderState
+> {
   state: Readonly<TableHeaderState> = {
     draggedCol: undefined,
   };
@@ -130,6 +128,7 @@ export class TableHeader<
                     }
                   )
                 }
+                data-key={col.key}
                 role="columnheader"
                 style={{
                   ...getDraggedTableColStyle(col, iCol, draggedCol),
@@ -449,7 +448,7 @@ function iosContextMenuPolyfill(): {
         e.preventDefault();
         element._isPressed = setTimeout(() => {
           // const element = e.currentTarget;
-          if ((element as any)._isPressed) {
+          if (element._isPressed) {
             const ev3 = new MouseEvent("contextmenu", {
               bubbles: true,
               cancelable: false,

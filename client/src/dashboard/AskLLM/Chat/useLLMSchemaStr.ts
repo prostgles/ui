@@ -1,6 +1,6 @@
-import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
+import { useMemoDeep, usePromise } from "prostgles-client";
 import { useMemo } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
 
 type P = Pick<Prgl, "connection" | "db" | "tables"> & {
@@ -12,6 +12,7 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
     () => db_schema_permissions || undefined,
     [db_schema_permissions],
   );
+
   const tableConstraints = usePromise(async () => {
     if (!db.sql) return;
 
@@ -19,7 +20,9 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
       .filter(([k, v]) => v)
       .map(([k, v]) => k);
     if (!schemas.includes("public")) schemas.push("public");
-    const query = `SELECT conname,
+    const query = `SELECT  
+      rel.oid as table_oid, 
+      conname,
       quote_ident(conname) as escaped_conname,
       conkey ,  
       pg_get_constraintdef(c.oid) as definition, 
@@ -38,11 +41,12 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
     `;
 
     const res = (await db.sql(query, { schemas }, { returnType: "rows" })) as {
+      table_oid: number;
       conname: string;
       escaped_conname: string;
       conkey: number[];
       definition: string;
-      contype: string;
+      contype: "c" | "f" | "p" | "u" | "e";
       table_name: string;
       escaped_table_name: string;
       schema: string;
@@ -69,20 +73,32 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
     const res = allowedTables
       .map((t) => {
         const constraints = tableConstraints.filter(
-          (c) => c.table_name === t.name,
+          (c) => c.table_oid === t.info.oid,
         );
+
+        const singlePkeyConstraints = new Set<string>();
+        const singlePkeyColPositions = new Set<number>();
+        constraints
+          .filter((c) => c.contype === "p" && c.conkey.length === 1)
+          .forEach((c) => {
+            singlePkeyConstraints.add(c.conname);
+            singlePkeyColPositions.add(c.conkey[0]!);
+          });
 
         const colDefs = t.columns
           .sort((a, b) => a.ordinal_position - b.ordinal_position)
           .map((c) => {
+            const dataTypePrecisionInfo =
+              c.udt_name.startsWith("int") ? ""
+              : c.character_maximum_length ? `(${c.character_maximum_length})`
+              : c.numeric_precision ?
+                `(${c.numeric_precision}${c.numeric_scale ? `, ${c.numeric_scale}` : ""})`
+              : "";
             return [
-              `  ${JSON.stringify(c.name)} ${c.udt_name}${
-                c.udt_name.startsWith("int") ? ""
-                : c.character_maximum_length ? `(${c.character_maximum_length})`
-                : c.numeric_precision ?
-                  `(${c.numeric_precision}${c.numeric_scale ? `, ${c.numeric_scale}` : ""})`
-                : ""
-              }`,
+              `  ${addDoubleQuotesIfNeeded(c.name)} ${c.udt_name}${dataTypePrecisionInfo}`,
+              c.is_pkey && singlePkeyColPositions.has(c.ordinal_position) ?
+                "PRIMARY KEY"
+              : "",
               !c.is_pkey && !c.is_nullable ? "NOT NULL" : "",
               !c.is_pkey && c.has_default ? `DEFAULT ${c.column_default}` : "",
             ]
@@ -90,9 +106,9 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
               .join(" ");
           })
           .concat(
-            constraints.map(
-              (c) => `CONSTRAINT ${c.escaped_conname} ${c.definition}`,
-            ),
+            constraints
+              .filter((c) => !singlePkeyConstraints.has(c.conname))
+              .map((c) => `CONSTRAINT ${c.escaped_conname} ${c.definition}`),
           )
           .join(",\n ");
         const query = `CREATE TABLE ${t.name} (\n${colDefs}\n)`;
@@ -114,4 +130,10 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
   }, [tables, tableConstraints, cachedSchemaPermissions]);
 
   return { dbSchemaForPrompt };
+};
+
+const addDoubleQuotesIfNeeded = (name: string) => {
+  const identifierRegex = /^[a-z_][a-z0-9_]*$/;
+  const needsDoubleQuotes = !identifierRegex.test(name);
+  return needsDoubleQuotes ? JSON.stringify(name) : name;
 };

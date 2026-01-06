@@ -5,12 +5,12 @@ import {
   mdiViewCarousel,
 } from "@mdi/js";
 import React, { useMemo } from "react";
-import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import PopupMenu from "../../components/PopupMenu";
-import { SearchList } from "../../components/SearchList/SearchList";
-import { SvgIcon } from "../../components/SvgIcon";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import PopupMenu from "@components/PopupMenu";
+import { SearchList } from "@components/SearchList/SearchList";
+import { SvgIcon } from "@components/SvgIcon";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
 import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
 import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
@@ -57,9 +57,13 @@ export const WorkspaceMenuDropDown = ({
           iconPath={mdiChevronDown}
           className={"text-0"}
           data-command="WorkspaceMenuDropDown"
-          style={{
-            padding: "12px",
-          }}
+          style={
+            window.isLowWidthScreen ?
+              {}
+            : {
+                padding: "12px",
+              }
+          }
         />
       }
       contentStyle={{

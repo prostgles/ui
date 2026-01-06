@@ -1,13 +1,10 @@
-import {
-  type DBHandlerClient,
-  useAsyncEffectQueue,
-} from "prostgles-client/dist/prostgles";
+import { type DBHandlerClient, useAsyncEffectQueue } from "prostgles-client";
 import { includes } from "prostgles-types";
 import { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { AppState } from "../App";
 import type { DBS, DBSMethods } from "../dashboard/Dashboard/DBS";
-import { getTables } from "../dashboard/Dashboard/Dashboard";
+import { getTables } from "../dashboard/Dashboard/getTables";
 import { dbsConnectionOptions } from "./dbsConnectionOptions";
 import { useDBSClient } from "./useDBSClient";
 import { useServerState } from "./useServerState";

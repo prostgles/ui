@@ -162,6 +162,7 @@ export type DBGeneratedSchema = {
       db_user?: string;
       db_watch_shema?: null | boolean;
       disable_realtime?: null | boolean;
+      display_options?: null | {    prettyTableAndColumnNames: boolean;  };
       id?: string;
       info?: null | {    canCreateDb?: boolean;  };
       is_state_db?: null | boolean;
@@ -188,7 +189,8 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      id: string;
+      description?: null | string;
+      id: "AWS" | "Cloudflare"
     };
   };
   credentials: {
@@ -199,12 +201,13 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       bucket?: null | string;
+      endpoint_url?: string;
       id?: number;
       key_id: string;
       key_secret: string;
-      name?: string;
+      name?: null | string;
       region?: null | string;
-      type?: string;
+      type: "AWS" | "Cloudflare"
       user_id?: null | string;
     };
   };
@@ -257,7 +260,8 @@ export type DBGeneratedSchema = {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
-      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: "withMagicLink";  enabled?: boolean;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
+      auth_created_user_type?: null | "admin" | "public" | "default"
+      auth_providers?: null | {    website_url: string;   email?: |  {  signupType: "withMagicLink";  enabled?: boolean;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
  |  {  signupType: "withPassword";  enabled?: boolean;  minPasswordLength?: number;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: "login" | "none" | "consent" | "select_account" | "create";  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };   customOAuth?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  displayName: string;  displayIconPath?: string;  authorizationURL: string;  tokenURL: string;  authOpts?: {  scope: string[]; }; };  };
       enable_logs?: boolean;
       id?: number;
@@ -289,8 +293,9 @@ export type DBGeneratedSchema = {
       last_updated: string;
       options: 
        |  {  type: "table";  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
-       |  {  type: "map";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  title?: string;  osmLayerQuery?: string;  mapIcons?: |  {  type: "fixed";  display?: "icon" | "icon+circle";  iconPath: string; } |  {  type: "conditional";  display?: "icon" | "icon+circle";  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: "fixed";  colorArr: number[]; } |  {  type: "scale";  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: "conditional";  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
-       |  {  type: "timechart";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  title?: string;  groupByColumn?: string;  otherColumns?: (  {  name: string;  label?: string;  udt_name: string;  is_pkey?: boolean; } )[];  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: "$min" | "$max" | "$countAll" | "$avg" | "$sum";  numericColumn: string; }; } )[]; }
+       |  {  type: "map";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  tableName: string;  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; } |  {  type: "osm";  osmLayerQuery: string; };  title?: string;  mapIcons?: |  {  type: "fixed";  display?: "icon" | "icon+circle";  iconPath: string; } |  {  type: "conditional";  display?: "icon" | "icon+circle";  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: "fixed";  colorArr: number[]; } |  {  type: "scale";  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: "conditional";  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
+       |  {  type: "timechart";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  tableName: string;  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  title?: string;  groupByColumn?: string;  groupByColumnColors?: (  {  value: any;  color: string; } )[];  otherColumns?: (  {  name: string;  label?: string;  udt_name: string;  is_pkey?: boolean; } )[];  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: "$min" | "$max" | "$countAll" | "$avg" | "$sum" | "$count";  numericColumn: string; }; } )[]; }
+       |  {  type: "barchart";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  tableName: string;  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  title?: string;  statType?: {  funcName: "$min" | "$max" | "$count" | "$countAll" | "$avg" | "$sum";  numericColumn: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
       user_id: string;
       w1_id: string;
       w2_id: string;
@@ -306,6 +311,7 @@ export type DBGeneratedSchema = {
     columns: {
       connection_id?: null | string;
       created?: null | string;
+      currently_typed_message?: null | string;
       db_data_permissions?: 
        | null
        |  {  Mode: "None"; }
@@ -328,6 +334,7 @@ export type DBGeneratedSchema = {
       maximum_consecutive_tool_fails?: number;
       model?: null | number;
       name?: string;
+      parent_chat_id?: null | number;
       status?: 
        | null
        |  {  state: "stopped"; }
@@ -357,6 +364,8 @@ export type DBGeneratedSchema = {
     columns: {
       auto_approve?: null | boolean;
       chat_id: number;
+      server_config_id?: null | number;
+      server_name: string;
       tool_id: number;
     };
   };
@@ -434,7 +443,7 @@ export type DBGeneratedSchema = {
       description?: null | string;
       id?: number;
       name?: string;
-      options?: null | {    prompt_type?: "dashboards" | "tasks";  };
+      options?: null | {    prompt_type?: "dashboards" | "tasks" | "agent_workflow";  };
       prompt?: string;
       user_id?: null | string;
     };
@@ -559,8 +568,9 @@ export type DBGeneratedSchema = {
       error?: null | any;
       id?: number;
       input?: null | any;
+      mcp_server_config_id?: null | number;
       mcp_server_name?: null | string;
-      mcp_tool_name?: null | string;
+      mcp_tool_name: string;
       output?: null | any;
       user_id?: null | string;
     };
@@ -572,7 +582,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      annotations?: null | any;
+      annotations?: null | {    title?: string;   readOnlyHint?: boolean;   openWorldHint?: boolean;   idempotentHint?: boolean;   destructiveHint?: boolean;  };
       autoApprove?: null | boolean;
       description: string;
       id?: number;
@@ -591,8 +601,8 @@ export type DBGeneratedSchema = {
       args?: null | string[];
       command: "npx" | "npm" | "uvx" | "uv" | "docker" | "prostgles-local"
       config_schema?: null | Record<string, 
- |  {  type: "env";  title?: string;  optional?: boolean;  description?: string; }
- |  {  type: "arg";  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
+ |  {  type: "env";  renderWithComponent?: string;  title?: string;  optional?: boolean;  description?: string; }
+ |  {  type: "arg";  renderWithComponent?: string;  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
       created?: null | string;
       cwd?: null | string;
       enabled?: boolean;
@@ -641,6 +651,26 @@ export type DBGeneratedSchema = {
       table_config: any;
     };
   };
+  services: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      build_hash?: null | string;
+      configs?: null | Record<string,  {  label: string;  description: string;  defaultOption: string;  options: Record<string,  {  label?: string;  env: Record<string, string>; }>; }>
+      created?: null | string;
+      default_port: number;
+      description?: null | string;
+      icon: string;
+      label: string;
+      logs?: null | string;
+      name: string;
+      selected_config_options?: null | Record<string, string>
+      status: "stopped" | "starting" | "running" | "error" | "building" | "building-done" | "build-error"
+    };
+  };
   session_types: {
     is_view: false;
     select: true;
@@ -648,7 +678,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      id: string;
+      id: "web" | "api_token" | "mobile"
     };
   };
   sessions: {
@@ -722,7 +752,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      id: string;
+      id: "active" | "disabled" | "public"
     };
   };
   user_types: {
@@ -733,7 +763,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       description?: null | string;
-      id: string;
+      id: "admin" | "public" | "default"
     };
   };
   users: {
@@ -753,7 +783,7 @@ export type DBGeneratedSchema = {
       id?: string;
       last_updated?: null | string;
       name?: null | string;
-      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";  };
+      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";   speech_mode?: "off" | "stt-local" | "stt-web" | "audio";   speech_send_mode?: "manual" | "auto";  };
       password: string;
       passwordless_admin?: null | boolean;
       registration?: 
@@ -761,8 +791,8 @@ export type DBGeneratedSchema = {
        |  {  type: "password-w-email-confirmation";  email_confirmation: |  {  status: "confirmed";  date: string; } |  {  status: "pending";  confirmation_code: string;  date: string; }; }
        |  {  type: "magic-link";  otp_code: string;  date: string;  used_on?: string; }
        |  {  type: "OAuth";  provider: "google" | "facebook" | "github" | "microsoft" | "customOAuth";  user_id: string;  profile: any; }
-      status?: string;
-      type?: string;
+      status?: "active" | "disabled" | "public"
+      type?: "admin" | "public" | "default"
       username: string;
     };
   };
@@ -797,7 +827,7 @@ export type DBGeneratedSchema = {
       table_name?: null | string;
       table_oid?: null | number;
       title?: null | string;
-      type?: null | "map" | "sql" | "table" | "timechart" | "card" | "method"
+      type?: null | "map" | "sql" | "table" | "timechart" | "card" | "method" | "barchart"
       user_id: string;
       workspace_id?: null | string;
     };
@@ -811,7 +841,7 @@ export type DBGeneratedSchema = {
     columns: {
       description?: null | string;
       en?: null | string;
-      id: string;
+      id: "fixed" | "editable"
     };
   };
   workspaces: {

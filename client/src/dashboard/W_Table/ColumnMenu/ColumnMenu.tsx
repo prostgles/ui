@@ -1,4 +1,7 @@
+import type { TabItems } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import {
+  mdiChartBar,
   mdiEye,
   mdiEyeOff,
   mdiEyeRemove,
@@ -13,9 +16,7 @@ import {
   mdiViewColumnOutline,
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useState } from "react";
-import type { TabItems } from "../../../components/Tabs";
-import Tabs from "../../../components/Tabs";
+import React, { useEffect, useState } from "react";
 
 import type {
   TIMECHART_STAT_TYPES,
@@ -28,17 +29,18 @@ import type {
   ConditionalStyleIcons,
   FixedStyle,
   ScaleStyle,
-} from "./ColumnStyleControls";
-import { ColumnStyleControls } from "./ColumnStyleControls";
+} from "./ColumnStyleControls/ColumnStyleControls";
+import { ColumnStyleControls } from "./ColumnStyleControls/ColumnStyleControls";
 
-import type { ParsedJoinPath } from "prostgles-types";
-import type {
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../../common/filterUtils";
+import type { DetailedFilter } from "@common/filterUtils";
+import Popup from "@components/Popup/Popup";
+import {
+  includes,
+  pickKeys,
+  type ParsedJoinPath,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
 import { useReactiveState } from "../../../appUtils";
-import Popup from "../../../components/Popup/Popup";
-import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
 import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
@@ -46,17 +48,21 @@ import { useEffectAsync } from "../../DashboardMenu/DashboardMenuSettings";
 import { getAndFixWColumnsConfig } from "../TableMenu/getAndFixWColumnsConfig";
 import type W_Table from "../W_Table";
 import type { ColumnConfigWInfo } from "../W_Table";
-import { getFullColumnConfig, updateWCols } from "../tableUtils/tableUtils";
+import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
+import { updateWCols } from "../tableUtils/tableUtils";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
+import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
 import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
 import type { ColumnFormat } from "./ColumnDisplayFormat/columnFormatUtils";
 import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
+import { ColumnQuickStats } from "./ColumnQuickStats/ColumnQuickStats";
 import { ColumnSortMenu } from "./ColumnSortMenu";
 import { ColumnsMenu } from "./ColumnsMenu";
-import type { FuncDef } from "./FunctionSelector";
-import { FunctionSelector } from "./FunctionSelector";
+import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
+import type { FuncDef } from "./FunctionSelector/functions";
 import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
+import { useIsMounted } from "prostgles-client";
 
 export type ColumnConfig = {
   idx?: number;
@@ -69,8 +75,8 @@ export type ColumnConfig = {
     displayMode?: (typeof NESTED_COLUMN_DISPLAY_MODES)[number]["key"];
     limit?: number;
     sort?: ColumnSort;
-    detailedFilter?: SmartGroupFilter;
-    detailedHaving?: SmartGroupFilter;
+    detailedFilter?: DetailedFilter[];
+    detailedHaving?: DetailedFilter[];
     chart?: {
       type: "time";
       dateCol: string;
@@ -96,12 +102,14 @@ export type ColumnConfig = {
   format?: ColumnFormat;
 
   /** If present then this is a computed column */
-  computedConfig?: {
+  computedConfig?: Pick<ValidatedColumnInfo, "tsDataType" | "udt_name"> & {
     /**
      * If true then this (name === computedConfig.column) represents an actual column and should not be removed
      */
     isColumn?: boolean;
-    funcDef: FuncDef;
+
+    /** Out type removed to prevent confusion */
+    funcDef: Omit<FuncDef, "outType">;
 
     /**
      * In case of functions that don't need cols column will be undefined
@@ -143,9 +151,8 @@ export const ColumnMenu = (props: P) => {
   const colName = state?.column;
   const getIsMounted = useIsMounted();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffectAsync(async () => {
-    const wSub = await props.w.$cloneSync(async (wdata) => {
+  useEffect(() => {
+    const wSub = props.w.$cloneSync((wdata) => {
       if (!getIsMounted()) return;
       setW(wdata);
     });
@@ -189,7 +196,10 @@ export const ColumnMenu = (props: P) => {
   const table = tables.find((t) => t.name === w.table_name);
   const validatedColumn = table?.columns.find((c) => c.name === colName);
 
-  const isComputed = Boolean(column.computedConfig || column.nested);
+  const isComputed = Boolean(
+    column.computedConfig ||
+    column.nested?.columns.some((c) => c.computedConfig),
+  );
   const computedType =
     column.nested ? "nested" : (
       column.computedConfig &&
@@ -230,13 +240,11 @@ export const ColumnMenu = (props: P) => {
           onUpdate={onUpdate}
           tsDataType={
             column.info?.tsDataType ||
-            column.computedConfig?.funcDef.outType.tsDataType ||
+            column.computedConfig?.tsDataType ||
             "any"
           }
           udt_name={
-            column.info?.udt_name ||
-            column.computedConfig?.funcDef.outType.udt_name ||
-            "text"
+            column.info?.udt_name || column.computedConfig?.udt_name || "text"
           }
         />
       ),
@@ -249,15 +257,12 @@ export const ColumnMenu = (props: P) => {
       leftIconPath: mdiFormatText,
       hide: !!column.nested,
       disabledText:
-        (
-          getFormatOptions(
-            column.info || column.computedConfig?.funcDef.outType,
-          ).length <= 1
-        ) ?
+        getFormatOptions(column.info || column.computedConfig).length <= 1 ?
           "Only text columns can have custom formats at the moment"
         : undefined,
       content: (
         <ColumnDisplayFormat
+          db={db}
           column={column}
           tables={props.tables}
           table={props.tables.find((t) => t.name === tableName)!}
@@ -279,6 +284,21 @@ export const ColumnMenu = (props: P) => {
           { color: "var(--active)" }
         : {},
     },
+    "Quick Stats": {
+      leftIconPath: mdiChartBar,
+      hide: !!column.nested,
+      disabledText:
+        isComputed ? "Cannot add quick stats on a computed column"
+        : (
+          validatedColumn?.udt_name.startsWith("geo") ||
+          includes(["json", "xml"], validatedColumn?.udt_name)
+        ) ?
+          `Not supported for ${validatedColumn.udt_name} columns`
+        : undefined,
+      content: table && w.columns && validatedColumn && (
+        <ColumnQuickStats column={validatedColumn} db={db} w={w} />
+      ),
+    },
     Columns: {
       leftIconPath: mdiViewColumnOutline,
       content: (
@@ -293,7 +313,7 @@ export const ColumnMenu = (props: P) => {
       ),
     },
     "Add Computed Column": {
-      hide: !!column.nested,
+      hide: !!column.nested || isComputed,
       disabledText: isComputed ? "Not allowed on computed columns" : undefined,
       leftIconPath: mdiTableColumnPlusAfter,
       content: (
@@ -308,6 +328,32 @@ export const ColumnMenu = (props: P) => {
           db={db}
           selectedColumn={column.name}
           tableHandler={db[tableName]}
+        />
+      ),
+    },
+    "Edit Computed Column": {
+      hide: !isComputed,
+      leftIconPath: mdiTableColumnPlusAfter,
+      style: { color: "var(--active)" },
+      content: (
+        <QuickAddComputedColumn
+          existingColumn={column}
+          onAddColumn={(newCol) => {
+            updateWCols(
+              w,
+              (w.columns ?? []).map((c) => {
+                if (c.name === column.name) {
+                  return {
+                    ...c,
+                    ...newCol,
+                  };
+                }
+                return c;
+              }),
+            );
+            onClose();
+          }}
+          tableName={tableName}
         />
       ),
     },
@@ -332,6 +378,7 @@ export const ColumnMenu = (props: P) => {
           onSelect={(funcDef) =>
             onUpdate({
               computedConfig: funcDef && {
+                ...pickKeys(validatedColumn, ["tsDataType", "udt_name"]),
                 funcDef,
                 isColumn: column.computedConfig?.isColumn ?? true,
                 column: validatedColumn.name,
@@ -349,15 +396,7 @@ export const ColumnMenu = (props: P) => {
           "No foreign keys to/from this table"
         : undefined,
       label: `${column.nested ? "Edit" : "Add"} Linked Columns`,
-      content: (
-        <LinkedColumn
-          w={w}
-          tables={tables}
-          column={column}
-          db={db}
-          onClose={onClose}
-        />
-      ),
+      content: <LinkedColumn w={w} column={column} onClose={onClose} />,
     },
     Alter: {
       leftIconPath: mdiTools,
@@ -368,10 +407,8 @@ export const ColumnMenu = (props: P) => {
       hide: isComputed,
       content: !!table && (
         <AlterColumn
-          db={db}
           table={table}
           field={column.name}
-          tables={tables}
           prgl={prgl}
           suggestions={props.suggestions}
           onClose={onClose}
@@ -415,7 +452,7 @@ export const ColumnMenu = (props: P) => {
           if (v === "Add Computed Column") {
             // onClose();
           } else if (v === "Filter") {
-            const nf: SimpleFilter = await getDefaultFilter(column);
+            const nf: DetailedFilter = await getDefaultFilter(column);
             w.$update({ filter: [nf, ...w.filter] });
             onClose();
           } else if (v === "Remove") {
@@ -462,11 +499,12 @@ export const ColumnMenu = (props: P) => {
       clickCatchStyle={{ opacity: 0.5 }}
       key="columnMenu"
       rootStyle={{ padding: 0 }}
-      contentClassName={"p-0 "}
+      contentClassName={"p-0 o-none"}
       showFullscreenToggle={{}}
       title={colName}
       positioning="beneath-left"
       onClose={onClose}
+      fixedTopLeft={false}
     >
       {content}
     </Popup>
@@ -474,13 +512,11 @@ export const ColumnMenu = (props: P) => {
 };
 
 /** undefined value means filter is disabled (gray col name text) */
-const getDefaultFilter = async (
-  col: ColumnConfigWInfo,
-): Promise<SimpleFilter> => {
+const getDefaultFilter = (col: ColumnConfigWInfo): DetailedFilter => {
   const isNumeric = ["number", "Date"].includes(
     col.info?.tsDataType || (col.computedConfig?.funcDef.tsDataTypeCol as any),
   );
-  const nf: SimpleFilter = {
+  const nf: DetailedFilter = {
     fieldName: col.name,
     type:
       col.info?.is_pkey || col.info?.references?.length ? "="

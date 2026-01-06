@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { useLocalSettings } from "../localSettings";
 import { debounce } from "../Map/DeckGLWrapped";
 import { CENTERED_WIDTH_CSS_VAR } from "./Dashboard";
-import { Pan } from "../../components/Pan";
+import { Pan } from "@components/Pan";
 
 export const DashboardCenteredLayoutResizer = () => {
   const localSettings = useLocalSettings();

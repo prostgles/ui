@@ -1,5 +1,5 @@
 import { mdiThemeLightDark, mdiTranslate } from "@mdi/js";
-import { ROUTES } from "../../../../common/utils";
+import { ROUTES } from "@common/utils";
 import type { UIDocNavbar } from "../UIDocs";
 
 export const navbarUIDoc = {
@@ -13,7 +13,7 @@ export const navbarUIDoc = {
     Located at the top of the interface, it allows you to switch between database connections, manage users and server settings, and access your account preferences. 
     The navigation adapts to your user role, showing admin-only sections like Users and Server Settings only to authorized users.
 
-    Key sections of the app:
+    ## Key sections of the app
 
     ### Connections
 
@@ -31,6 +31,8 @@ export const navbarUIDoc = {
     This allows you to return to the same views later, even after closing the application.
     You can create multiple workspaces to organize your views by project, team, task, or any other criteria.
 
+
+    <img src="./screenshots/navbar.svgif.svg" alt="Navigation" />
 `,
   children: [
     // {

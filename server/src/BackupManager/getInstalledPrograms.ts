@@ -2,11 +2,8 @@ import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import {
-  programList,
-  type InstalledPrograms,
-} from "../../../common/electronInitTypes";
-import type { WithUndef } from "../../../common/utils";
+import { programList, type InstalledPrograms } from "@common/electronInitTypes";
+import type { WithUndef } from "@common/utils";
 import { isDefined } from "prostgles-types";
 import { EOL } from "os";
 

@@ -1,19 +1,31 @@
+import { toFixed } from "src/app/domToSVG/utils/toFixed";
+import { asRGB } from "src/utils/colorUtils";
+import { hashCode } from "src/utils/hashCode";
 import type { SVGContext } from "../../../app/domToSVG/containers/elementToSVG";
 import { addImageFromDataURL } from "../../../app/domToSVG/graphics/imgToSVG";
 import type { Point } from "../../Charts";
 import type { LinkLine, Rectangle } from "../CanvasChart";
-import { measureText } from "../measureText";
 import { DEFAULT_SHADOW } from "../roundRect";
 import type { ShapeV2 } from "./drawShapes";
+import { getTimechartGradientPeakSections } from "./getTimechartGradientPeakSections";
 
 export const drawShapesOnSVG = (
   shapes: ShapeV2<any>[],
   context: SVGContext,
   g: SVGGElement,
-  opts?: {
-    scale?: number;
-    translate?: { x: number; y: number };
-    isChild?: boolean;
+  opts:
+    | undefined
+    | {
+        scale?: number;
+        translate?: { x: number; y: number };
+        isChild?: boolean;
+      },
+  {
+    width,
+    height,
+  }: {
+    width: number;
+    height: number;
   },
 ) => {
   let transform = "";
@@ -49,26 +61,18 @@ export const drawShapesOnSVG = (
     } else if (s.type === "linkline") {
       drawSvgLinkLine(shapes, g as SVGElement, s);
     } else if (s.type === "rectangle") {
-      const [x, y] = s.coords;
-      const width = s.w;
-      const height = s.h;
+      const [x, y] = s.coords.map((v) => toFixed(v)) as typeof s.coords;
+      const width = toFixed(s.w);
+      const height = toFixed(s.h);
 
-      let rectElement;
-      if (s.borderRadius) {
-        const pathElement = createSvgElement("path");
-        pathElement.setAttribute(
-          "d",
-          createRoundedRect(x, y, width, height, s.borderRadius),
-        );
-        rectElement = pathElement;
-      } else {
-        rectElement = createSvgElement("rect", {
-          x: x.toString(),
-          y: y.toString(),
-          width: width.toString(),
-          height: height.toString(),
-        });
-      }
+      const rectElement = createRoundedRect(
+        x,
+        y,
+        width,
+        height,
+        s.borderRadius,
+      );
+
       if (s.elevation !== 0) {
         rectElement.setAttribute(
           "filter",
@@ -111,8 +115,9 @@ export const drawShapesOnSVG = (
             };
           }),
           context,
-          childGroup as SVGGElement,
+          childGroup,
           { isChild: true },
+          { width, height },
         );
 
         g.appendChild(childGroup);
@@ -120,9 +125,9 @@ export const drawShapesOnSVG = (
     } else if (s.type === "circle") {
       const [cx, cy] = s.coords;
       const circleElement = createSvgElement("circle", {
-        cx: cx.toString(),
-        cy: cy.toString(),
-        r: s.r.toString(),
+        cx: toFixed(cx),
+        cy: toFixed(cy),
+        r: toFixed(s.r),
       });
 
       if (s.fillStyle) {
@@ -138,13 +143,85 @@ export const drawShapesOnSVG = (
 
       g.appendChild(circleElement);
     } else if (s.type === "multiline") {
+      if (s.withGradient && s.coords.length > 2) {
+        const { peakSections, minY, stops } = getTimechartGradientPeakSections(
+          s.coords,
+        );
+        peakSections.forEach((sectionCoords) => {
+          if (sectionCoords.length < 2) return;
+
+          const uniqueShapeIdentifier = hashCode(
+            sectionCoords
+              .map((s) => {
+                return [Math.round(s.x), Math.round(s.y)];
+              })
+              .join("") + s.strokeStyle,
+          );
+          const gradientId = `gradient-${uniqueShapeIdentifier}`;
+          const defsElement = context.defs;
+
+          const gradientElement = createSvgElement("linearGradient");
+          gradientElement.setAttribute("id", gradientId);
+          gradientElement.setAttribute("x1", "0");
+          gradientElement.setAttribute("y1", toFixed(minY));
+          gradientElement.setAttribute("x2", "0");
+          gradientElement.setAttribute("y2", height);
+          gradientElement.setAttribute("gradientUnits", "userSpaceOnUse");
+
+          const rgba = asRGB(s.strokeStyle);
+          const rgb = rgba.slice(0, 3).join(", ");
+
+          stops.forEach(({ offset, opacity: stopOpacity }) => {
+            const stopElement = createSvgElement("stop");
+            stopElement.setAttribute("offset", offset);
+            stopElement.setAttribute("stop-color", `rgb(${rgb})`);
+            stopElement.setAttribute("stop-opacity", stopOpacity);
+            gradientElement.appendChild(stopElement);
+          });
+
+          defsElement.appendChild(gradientElement);
+
+          // Create gradient path
+          const firstPoint = sectionCoords[0]!;
+          const lastPoint = sectionCoords.at(-1)!;
+
+          let pathData = `M ${toFixed(firstPoint.x)},${height}`;
+          pathData += ` L ${toFixed(firstPoint.x)},${toFixed(firstPoint.y)}`;
+
+          if (s.variant === "smooth" && sectionCoords.length > 2) {
+            pathData +=
+              " " +
+              drawSvgMonotoneXCurve(
+                sectionCoords.map(({ x, y }) => [x, y]),
+                // true,
+              ).substring(2); // Remove the initial "M x,y"
+          } else {
+            sectionCoords.forEach(({ x, y }) => {
+              pathData += ` L ${toFixed(x)},${toFixed(y)}`;
+            });
+          }
+
+          pathData += ` L ${toFixed(lastPoint.x)},${height}`;
+          pathData += " Z";
+
+          const gradientPath = createSvgElement("path");
+          gradientPath.setAttribute("d", pathData);
+          gradientPath.setAttribute("fill", `url(#${gradientId})`);
+          gradientPath.setAttribute("opacity", opacity.toString());
+
+          g.appendChild(gradientPath);
+        });
+      }
+
+      // Draw the main line
       const pathElement = createSvgElement("path");
 
       if (s.variant === "smooth" && s.coords.length > 2) {
         pathElement.setAttribute("d", drawSvgMonotoneXCurve(s.coords));
       } else {
         let pathData = "";
-        s.coords.forEach(([x, y], i) => {
+        s.coords.forEach((point, i) => {
+          const [x, y] = point.map((v) => toFixed(v)) as typeof point;
           if (i === 0) {
             pathData = `M ${x},${y}`;
           } else {
@@ -169,7 +246,8 @@ export const drawShapesOnSVG = (
       const pathElement = createSvgElement("path");
 
       let pathData = "";
-      s.coords.forEach(([x, y], i) => {
+      s.coords.forEach((point, i) => {
+        const [x, y] = point.map((v) => toFixed(v)) as typeof point;
         if (i === 0) {
           pathData = `M ${x},${y}`;
         } else {
@@ -192,11 +270,11 @@ export const drawShapesOnSVG = (
       pathElement.setAttribute("opacity", opacity.toString());
 
       g.appendChild(pathElement);
-    } else if ((s.type as any) === "text") {
+    } else if ((s.type as unknown) === "text") {
       const [x, y] = s.coords;
       const textElement = createSvgElement("text", {
-        x: x.toString(),
-        y: y.toString(),
+        x,
+        y,
         "text-anchor":
           s.textAlign === "center" ? "middle"
           : s.textAlign === "right" || s.textAlign === "end" ? "end"
@@ -204,12 +282,7 @@ export const drawShapesOnSVG = (
       });
 
       if (s.font) {
-        const span = document.createElement("span");
-        span.style.font = s.font;
-        const { fontSize, fontWeight, fontFamily } = span.style;
-        textElement.setAttribute("font-family", fontFamily);
-        textElement.setAttribute("font-size", fontSize);
-        textElement.setAttribute("font-weight", fontWeight);
+        textElement.style.font = s.font;
       }
       if (s.fillStyle) {
         textElement.setAttribute("fill", s.fillStyle);
@@ -235,11 +308,12 @@ export const drawShapesOnSVG = (
         const bgHeight = txtSize.actualHeight + 2 * txtPadding;
         const radius = s.background.borderRadius || 0;
 
-        const rectBg = createSvgElement("path");
-        rectBg.setAttribute(
-          "d",
-          createRoundedRect(bgX, bgY, bgWidth, bgHeight, radius),
-        );
+        // const rectBg = createSvgElement("path");
+        // rectBg.setAttribute(
+        //   "d",
+        //   createRoundedRect(bgX, bgY, bgWidth, bgHeight, radius),
+        // );
+        const rectBg = createRoundedRect(bgX, bgY, bgWidth, bgHeight, radius);
 
         if (s.background.fillStyle) {
           rectBg.setAttribute("fill", s.background.fillStyle);
@@ -305,7 +379,12 @@ export const drawSvgLinkLine = (
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute(
     "d",
-    `M ${startPoint.x},${startPoint.y} C ${controlPoint1.x},${controlPoint1.y} ${controlPoint2.x},${controlPoint2.y} ${endPoint.x},${endPoint.y}`,
+    [
+      `M ${startPoint.x},${startPoint.y}`,
+      `C ${controlPoint1.x},${controlPoint1.y}`,
+      `${controlPoint2.x},${controlPoint2.y}`,
+      `${endPoint.x},${endPoint.y}`,
+    ].join(" "),
   );
 
   if (linkLine.strokeStyle) {
@@ -323,11 +402,11 @@ export const drawSvgLinkLine = (
 };
 
 // Helper function to create SVG elements
-const createSvgElement = (
-  tagName: string,
-  attrs: Record<string, string> = {},
+const createSvgElement = <T extends keyof SVGElementTagNameMap>(
+  tagName: T,
+  attrs: Record<string, string | number> = {},
 ) => {
-  const element = document.createElementNS(
+  const element = document.createElementNS<T>(
     "http://www.w3.org/2000/svg",
     tagName,
   );
@@ -368,36 +447,45 @@ export const createRoundedRect = (
   y: number,
   width: number,
   height: number,
-  radius: number,
+  radius: number | undefined,
 ) => {
-  if (radius === 0) {
-    return `M ${x},${y} h ${width} v ${height} h ${-width} z`;
-  }
-
-  return `
-    M ${x + radius},${y}
-    h ${width - 2 * radius}
-    a ${radius},${radius} 0 0 1 ${radius},${radius}
-    v ${height - 2 * radius}
-    a ${radius},${radius} 0 0 1 ${-radius},${radius}
-    h ${-(width - 2 * radius)}
-    a ${radius},${radius} 0 0 1 ${-radius},${-radius}
-    v ${-(height - 2 * radius)}
-    a ${radius},${radius} 0 0 1 ${radius},${-radius}
-    z
-  `;
+  const rect = createSvgElement("rect", {
+    x: toFixed(x),
+    y: toFixed(y),
+    width: toFixed(width),
+    height: toFixed(height),
+    ...(radius && {
+      rx: toFixed(radius),
+      ry: toFixed(radius),
+    }),
+  });
+  return rect;
 };
 
-// Draw monotone X curve for SVG
 export const drawSvgMonotoneXCurve = (coords: Point[]) => {
   if (coords.length < 2) return "";
 
   let path = `M ${coords[0]![0]},${coords[0]![1]}`;
 
-  // Simple line segments for now (this would need to be replaced with actual monotone X curve algorithm)
-  for (let i = 1; i < coords.length; i++) {
-    path += ` L ${coords[i]![0]},${coords[i]![1]}`;
+  if (coords.length === 2) {
+    path += ` L ${coords[1]![0]},${coords[1]![1]}`;
+    return path;
   }
+
+  // Draw curves through all intermediate points
+  for (let i = 0; i < coords.length - 1; i++) {
+    const point = coords[i]!;
+    const nextPoint = coords[i + 1]!;
+
+    const xc = (point[0] + nextPoint[0]) / 2;
+    const yc = (point[1] + nextPoint[1]) / 2;
+
+    path += ` Q ${point[0]},${point[1]} ${xc},${yc}`;
+  }
+
+  // Complete the curve to the last point
+  const lastPoint = coords[coords.length - 1]!;
+  path += ` L ${lastPoint[0]},${lastPoint[1]}`;
 
   return path;
 };

@@ -86,7 +86,7 @@ const getFullOptions = (
       isMulti: typeof s.type === "string" && s.type.endsWith("[]"),
     };
   } else if (s.oneOf?.every((ss) => isObject(ss) && ss.enum)) {
-    const fullOptions = s.oneOf!.flatMap((_ss) => {
+    const fullOptions = s.oneOf.flatMap((_ss) => {
       const ss = _ss as JSONB.EnumType;
       return ss.enum.map((key) => {
         return {

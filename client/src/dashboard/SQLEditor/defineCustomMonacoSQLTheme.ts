@@ -1,4 +1,4 @@
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import { LANG, getMonaco } from "./W_SQLEditor";
 
 export const CUSTOM_MONACO_SQL_THEMES = {

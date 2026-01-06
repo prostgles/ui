@@ -1,22 +1,39 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types/lib";
-import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
-import type { InstalledPrograms } from "../../../../common/electronInitTypes";
-import type { LLMMessage } from "../../../../common/llmUtils";
-import type { McpToolCallResponse } from "../../../../common/mcp";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { InstalledPrograms } from "@common/electronInitTypes";
+import type { LLMMessage } from "@common/llmUtils";
+import type { McpToolCallResponse } from "@common/mcp";
+import type { DBSSchema } from "@common/publishUtils";
 import type {
   ConnectionStatus,
   PGDumpParams,
   ProcStats,
   SampleSchema,
-} from "../../../../common/utils";
+} from "@common/utils";
 import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 import type { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
 import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
 import type { Backups } from "./dashboardUtils";
+import type { AllowedChatTool } from "@common/prostglesMcp";
 
 export type DBSMethods = Partial<{
+  mkdir: (path: string, folderName: string) => Promise<string>;
+  glob: (
+    pattern?: string,
+    timeout?: number,
+  ) => Promise<{
+    result: {
+      path: string;
+      name: string;
+      type: string;
+      size: number | undefined;
+      lastModified: number | undefined;
+      created: number | undefined;
+    }[];
+    pattern: string;
+    path: string;
+  }>;
   sendFeedback: (feedback: {
     details: string;
     email?: string;
@@ -55,10 +72,10 @@ export type DBSMethods = Partial<{
     c: "start" | "chunk" | "end",
     id: null | string,
     conId: string | null,
-    chunk: any | undefined,
+    chunk: Buffer | undefined,
     sizeBytes: number | undefined,
     opts?: Backups["restore_options"],
-  ) => Promise<any>;
+  ) => Promise<string>;
   bkpDelete: (bkpId: string, force?: boolean) => Promise<string>;
   getFileFolderSizeInBytes: (conId?: string) => Promise<string>;
   reloadSchema: (conId: string) => Promise<void>;
@@ -88,6 +105,7 @@ export type DBSMethods = Partial<{
   }>;
   enable2FA: (confirmationCode: string) => Promise<string>;
   disable2FA: () => Promise<string>;
+  toggleService: (serviceName: string, enable: boolean) => Promise<void>;
   setFileStorage: (
     connId: string,
     tableConfig?:
@@ -102,10 +120,12 @@ export type DBSMethods = Partial<{
     username: string;
     password: string;
   }) => Promise<void>;
-  getNodeTypes: () => {
-    filePath: string;
-    content: string;
-  }[];
+  getNodeTypes: () => Promise<
+    {
+      filePath: string;
+      content: string;
+    }[]
+  >;
   getConnectionDBTypes: (
     conId: string | undefined,
   ) => Promise<string | undefined>;
@@ -166,21 +186,21 @@ export type DBSMethods = Partial<{
     uvxVersion: string;
   }>;
   refreshModels: () => Promise<void>;
-  getLLMAllowedChatTools: (chatId: number) => Promise<
+  getLLMAllowedChatTools: (
+    chatId: number,
+  ) => Promise<AllowedChatTool[] | undefined>;
+  transcribeAudio: (
+    audio: Blob,
+    language?: string,
+  ) => Promise<
+    | { error: string }
     | {
-        type:
-          | "mcp"
-          | "prostgles-db-methods"
-          | "prostgles-db"
-          | "prostgles-ui"
-          | "docker-sandbox";
-        name: string;
-        description: string;
-        input_schema: any;
-        tool_name: string;
-        auto_approve: boolean;
-      }[]
-    | undefined
+        success: true;
+        transcription: string;
+        language: string;
+        language_probability: number;
+        segments: { start: number; end: number; text: string }[];
+      }
   >;
 }>;
 

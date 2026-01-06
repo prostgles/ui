@@ -1,12 +1,13 @@
-import { useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
+import { useIsMounted, usePromise } from "prostgles-client";
 import { isEmpty } from "prostgles-types";
 import { useMemo, useState } from "react";
 import type {
   ContextDataObject,
+  DBSSchema,
   TableRulesErrors,
-} from "../../../../common/publishUtils";
-import { getTableRulesErrors } from "../../../../common/publishUtils";
-import { areEqual, quickClone } from "../../utils";
+} from "@common/publishUtils";
+import { getTableRulesErrors } from "@common/publishUtils";
+import { areEqual, quickClone } from "../../utils/utils";
 import type { AccessControlAction, EditedAccessRule } from "./AccessControl";
 import { ACCESS_CONTROL_SELECT } from "./AccessControl";
 import type { PermissionEditProps } from "./AccessControlRuleEditor";
@@ -34,11 +35,13 @@ const defaultRule: EditedAccessRule = {
   access_control_methods: [],
 };
 
+export type UserType = DBSSchema["user_types"]["id"];
+
 export type ValidEditedAccessRuleState = (
   | (Extract<AccessControlAction, { type: "edit" }> & {
       rule: EditedAccessRule;
       newRule: EditedAccessRule;
-      initialUserTypes: string[];
+      initialUserTypes: UserType[];
     })
   | {
       type: "create";
@@ -68,7 +71,7 @@ export type ValidEditedAccessRuleState = (
   tableErrors: TableErrors | undefined;
   contextData: ContextDataObject | undefined;
   onChange: (newRule: Partial<Omit<EditedAccessRule, "">>) => void;
-  userTypes: string[];
+  userTypes: UserType[];
   ruleWasEdited: boolean;
   ruleErrorMessage: string | undefined;
   worspaceTableAndColumns: WorspaceTableAndColumns[] | undefined;
@@ -171,15 +174,15 @@ export const useEditedAccessRule = ({
       action.type === "create" ||
       Boolean(
         ruleData.rule &&
-          !areEqual(newRule, ruleData.rule, [
-            "access_control_user_types",
-            "access_control_allowed_llm",
-            "access_control_methods",
-            "dbPermissions",
-            "dbsPermissions",
-            "published_methods",
-            "llm_daily_limit",
-          ]),
+        !areEqual(newRule, ruleData.rule, [
+          "access_control_user_types",
+          "access_control_allowed_llm",
+          "access_control_methods",
+          "dbPermissions",
+          "dbsPermissions",
+          "published_methods",
+          "llm_daily_limit",
+        ]),
       )
     );
 
@@ -247,7 +250,7 @@ const getRuleErrorMessage = (
 const getAccessRuleTableErrors = async (
   { prgl: { dbs, tables } }: Pick<P, "prgl">,
   rule: Partial<EditedAccessRule>,
-  userTypes: string[],
+  userTypes: DBSSchema["user_types"]["id"][],
 ) => {
   if (
     rule.dbPermissions?.type !== "Custom" ||
@@ -269,7 +272,7 @@ const getAccessRuleTableErrors = async (
         if (!tables.some((t) => t.name === tableName)) {
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           result[tableName] ??= {};
-          result[tableName]!.all = `Table ${tableName} could not be found`;
+          result[tableName].all = `Table ${tableName} could not be found`;
         } else if (!result[tableName]?.all) {
           const columnNames = tables
             .find((t) => t.name === tableName)

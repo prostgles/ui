@@ -218,6 +218,7 @@ export const mainTestScripts: DemoScript = async ({
       triggerMode: "off",
     });
     await tout(200);
+
     await typeAuto(`\nALTER TABLE some_table \nALTER COLUMN `, {
       nth: -1,
       msPerChar: 10,
@@ -236,7 +237,6 @@ export const mainTestScripts: DemoScript = async ({
       throw "Realtime not working: col_4 not found";
     }
   };
-
   await createPolicy();
   await schemaInspect();
   await jsonB();

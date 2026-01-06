@@ -1,7 +1,7 @@
 import type { Point } from "../../Charts";
 import type { Image, LinkLine, Shape } from "../CanvasChart";
 import { drawMonotoneXCurve } from "../drawMonotoneXCurve";
-import { measureText } from "../measureText";
+import { measureText } from "../TimeChart/measureText";
 import { roundRect } from "../roundRect";
 import { drawLinkLine } from "./drawLinkLine";
 // import { drawLinkLine } from "./shortestLinkLineV2";
@@ -113,7 +113,9 @@ export const drawShapes = (
       ctx.lineCap = "round";
 
       if (s.variant === "smooth" && coords.length > 2) {
+        ctx.beginPath();
         drawMonotoneXCurve(ctx, coords);
+        ctx.stroke();
       } else {
         coords.forEach(([x, y], i) => {
           if (!i) {

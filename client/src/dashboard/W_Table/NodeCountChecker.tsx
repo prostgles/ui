@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import PopupMenu from "../../components/PopupMenu";
-import Btn from "../../components/Btn";
+import PopupMenu from "@components/PopupMenu";
+import Btn from "@components/Btn";
 import { mdiAlertOutline } from "@mdi/js";
-import { InfoRow } from "../../components/InfoRow";
+import { InfoRow } from "@components/InfoRow";
 
 export const NodeCountChecker = ({
   parentNode,

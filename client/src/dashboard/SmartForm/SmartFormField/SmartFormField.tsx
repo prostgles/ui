@@ -1,12 +1,14 @@
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import type { FormFieldProps } from "@components/FormField/FormField";
+import FormField from "@components/FormField/FormField";
+import { FormFieldCodeEditor } from "@components/FormField/FormFieldCodeEditor";
+import { JSONBSchemaA } from "@components/JSONBSchema/JSONBSchema";
+import Loading from "@components/Loader/Loading";
+import { SvgIcon } from "@components/SvgIcon";
 import { mdiDotsHorizontal } from "@mdi/js";
 import { isObject, type AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import Btn from "../../../components/Btn";
-import type { FormFieldProps } from "../../../components/FormField/FormField";
-import FormField from "../../../components/FormField/FormField";
-import { FormFieldCodeEditor } from "../../../components/FormField/FormFieldCodeEditor";
-import { JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
-import { SvgIcon } from "../../../components/SvgIcon";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { DBSchemaTableColumn } from "../../Dashboard/dashboardUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
@@ -34,7 +36,6 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
-import Loading from "@components/Loader/Loading";
 
 type SmartFormFieldValue =
   | string
@@ -42,7 +43,7 @@ type SmartFormFieldValue =
   | {
       data: File;
       name: string;
-    }[]
+    }
   | null;
 
 export type SmartFormFieldProps = Pick<
@@ -179,7 +180,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     type = "text";
   }
 
-  let arrayType: FormFieldProps["arrayType"];
+  let arrayType: FormFieldProps<"text">["arrayType"];
   if (column.tsDataType.endsWith("[]") && !column.tsDataType.includes("any")) {
     const elemTSType = tsDataTypeFromUdtName(column.element_udt_name as any);
     arrayType = {
@@ -221,8 +222,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
               />
             )
         }
-        label={column.label}
-        labelAsString={column.label || column.name}
+        label={column.hideLabel ? "" : column.label}
         data-command="SmartFormField"
         style={style}
         className={cantUpdate ? " cursor-default " : ""}
@@ -237,7 +237,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         inputContent={
           renderAsJSON?.component === "JSONBSchema" ?
             <JSONBSchemaA
-              // className={renderAsJSON.noLabels ? "" : "m-p5"}
               db={db}
               schema={renderAsJSON.jsonbSchema}
               tables={tables}
@@ -250,6 +249,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
               <Loading />
             : <FormFieldCodeEditor
                 asJSON={renderAsJSON}
+                //@ts-ignore
                 value={value}
                 onChange={onCheckAndChange}
                 readOnly={readOnly}
@@ -274,6 +274,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         }
         key={column.name}
         placeholder={placeholder}
+        //@ts-ignore
         type={type}
         autoComplete={getInputAutocomplete(column)}
         value={parsedValue ?? null}
@@ -315,13 +316,11 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         hint={hint}
         hideClearButton={hideNullBtn}
       />
-      {column.file && (
-        <SmartFormFieldFileSection
-          db={db}
-          table={table}
-          mediaId={typeof value === "string" ? value : undefined}
-        />
-      )}
+      {column.file ?
+        typeof value === "number" ?
+          <ErrorComponent error={"Unexpected number data type"} />
+        : <SmartFormFieldFileSection db={db} table={table} media={value} />
+      : null}
     </>
   );
 };

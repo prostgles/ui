@@ -12,12 +12,12 @@ import type { MethodFullDef } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import React, { useRef } from "react";
 import { dataCommand } from "../../Testing";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRowWrap } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import { InfoRow } from "../../components/InfoRow";
-import { SearchList } from "../../components/SearchList/SearchList";
-import { SvgIcon } from "../../components/SvgIcon";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { InfoRow } from "@components/InfoRow";
+import { SearchList } from "@components/SearchList/SearchList";
+import { SvgIcon } from "@components/SvgIcon";
 import { t } from "../../i18n/i18nUtils";
 import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
@@ -88,8 +88,9 @@ export const DashboardMenuContent = (props: P) => {
 
   return (
     <FlexCol
+      data-command="DashboardMenuContent"
       className={
-        "DashboardMenuContent relative f-1 min-h-0 " +
+        "relative f-1 min-h-0 " +
         bgColorClass +
         (window.isMobileDevice ? " p-p25 " : " p-1  ")
       }
@@ -171,7 +172,7 @@ export const DashboardMenuContent = (props: P) => {
             .map((t, i) => ({
               key: i,
               contentLeft: (
-                <div className="flex-col ai-start f-0 mr-p5 text-1">
+                <div className="flex-col ai-start f-0 text-1">
                   <Icon path={mdiScriptTextPlay} size={1} />
                 </div>
               ),
@@ -212,7 +213,7 @@ export const DashboardMenuContent = (props: P) => {
               db={db}
               db_schema_filter={props.prgl.connection.db_schema_filter}
               onChange={(newDbSchemaFilter) => {
-                dbs.connections.update(
+                void dbs.connections.update(
                   {
                     id: prgl.connectionId,
                   },
@@ -237,7 +238,7 @@ export const DashboardMenuContent = (props: P) => {
                 color="action"
                 disabledInfo={!reloadSchema ? "Must be admin" : ""}
                 onClickPromise={async () => {
-                  reloadSchema!(props.prgl.connectionId);
+                  await reloadSchema!(props.prgl.connectionId);
                 }}
                 iconPath={mdiRefresh}
               >
@@ -249,7 +250,7 @@ export const DashboardMenuContent = (props: P) => {
             return {
               contentLeft: (
                 <div
-                  className="flex-col ai-start f-0 mr-p5 text-1"
+                  className="flex-col ai-start f-0 text-1"
                   {...(t.info.isFileTable ?
                     dataCommand("dashboard.menu.fileTable")
                   : {})}
@@ -300,14 +301,14 @@ export const DashboardMenuContent = (props: P) => {
           placeholder={"Search " + detailedMethods.length + " functions"}
           items={detailedMethods.map((t, i) => ({
             contentLeft: (
-              <div className="flex-col ai-start f-0 mr-p5 text-1">
-                <Icon path={mdiFunction} size={1} />
+              <div className="flex-col ai-start f-0 text-1">
+                <Icon path={mdiFunction} />
               </div>
             ),
             key: t.name,
             label: t.name,
             onPress: () => {
-              loadTable({ type: "method", method_name: t.name });
+              void loadTable({ type: "method", method_name: t.name });
               onClose?.();
             },
           }))}

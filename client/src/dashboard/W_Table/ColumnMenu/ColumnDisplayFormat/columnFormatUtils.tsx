@@ -1,19 +1,21 @@
-import type {
-  AnyObject,
-  DBSchemaTable,
-  JSONB,
-  ValidatedColumnInfo,
+import {
+  includes,
+  type AnyObject,
+  type DBSchemaTable,
+  type JSONB,
+  type ValidatedColumnInfo,
 } from "prostgles-types";
 import React from "react";
 import sanitizeHtml from "sanitize-html";
-import { getAge } from "../../../../../../common/utils";
-import { ContentTypes, MediaViewer } from "../../../../components/MediaViewer";
-import { QRCodeImage } from "../../../../components/QRCodeImage";
+import { getAge } from "@common/utils";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import { QRCodeImage } from "@components/QRCodeImage";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { StyledInterval } from "../../../W_SQL/customRenderers";
 import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
 import type { ColumnConfig } from "../ColumnMenu";
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
+import { ContentTypes } from "@components/MediaViewer/RenderMedia";
 
 const CurrencySchema = {
   type: {
@@ -216,10 +218,11 @@ export const ColumnFormatSchema = {
 
 export type ColumnFormat = JSONB.GetSchemaType<typeof ColumnFormatSchema>;
 
-const ensureAITypesAreInSync = {} as Exclude<
+const _ensureAITypesAreInSync = {} as Exclude<
   ColumnFormat,
   { type: "NONE" | "UNIX Timestamp" }
 > satisfies NonNullable<TableWindowInsertModel["columns"]>[number]["format"];
+_ensureAITypesAreInSync;
 
 type ColumnRenderer = {
   type: ColumnFormat["type"];
@@ -231,7 +234,7 @@ type ColumnRenderer = {
     c: RenderedColumn,
     format: ColumnFormat,
     maxCellChars: number,
-  ) => any;
+  ) => React.ReactNode;
 };
 
 type FormattedColRender<F extends ColumnFormat> = Pick<
@@ -439,6 +442,6 @@ export function getFormatOptions(
   if (!colInfo) return [];
 
   return DISPLAY_FORMATS.filter(
-    (r) => !r.tsDataType || r.tsDataType.includes(colInfo.tsDataType as any),
+    (r) => !r.tsDataType || includes(r.tsDataType, colInfo.tsDataType),
   );
 }

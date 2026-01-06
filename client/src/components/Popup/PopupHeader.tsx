@@ -59,7 +59,7 @@ export const PopupHeader = ({
       <FlexCol
         id="modal-headline"
         className={
-          "ai-none jc-none f-1 font-20 noselect font-medium text-0 o-hidden text-ellipsis ta-left m-0 ws-nowrap py-p25 " +
+          "ai-none jc-none f-1 font-20 noselect font-medium text-0 o-hidden text-ellipsis ta-left m-0 ws-nowrap " +
           (collapsible ? " pointer " : " ")
         }
         onClick={collapsible ? toggleContent : undefined}
@@ -67,7 +67,6 @@ export const PopupHeader = ({
         <h4
           className="m-0"
           style={{
-            // justifyItems: "start", Why was this here?
             ...(collapsible ? { paddingLeft: 0 } : {}),
           }}
           title={typeof title === "string" ? title : undefined}

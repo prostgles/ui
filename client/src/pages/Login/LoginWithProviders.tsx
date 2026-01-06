@@ -1,8 +1,8 @@
 import { getObjectEntries } from "prostgles-types";
 import React from "react";
 import type { PrglState } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import {
   FacebookIcon,
   GithubIcon,

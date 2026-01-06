@@ -1,37 +1,97 @@
 /* eslint-disable no-useless-escape */
-import { isDefined, tout } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
-import { getMonaco } from "../SQLEditor/W_SQLEditor";
+import { getMonaco, LANG } from "../SQLEditor/W_SQLEditor";
 import type { languages } from "./monacoEditorTypes";
 
-export const monacoSQLConfig = {
-  comments: {
-    lineComment: "--",
-    blockComment: ["/*", "*/"],
-  },
-  brackets: [
-    ["{", "}"],
-    ["[", "]"],
-    ["(", ")"],
-  ],
-  autoClosingPairs: [
-    { open: "{", close: "}" },
-    { open: "[", close: "]" },
-    { open: "(", close: ")" },
-    { open: '"', close: '"' },
-    { open: "'", close: "'" },
-  ],
-  surroundingPairs: [
-    { open: "{", close: "}" },
-    { open: "[", close: "]" },
-    { open: "(", close: ")" },
-    { open: '"', close: '"' },
-    { open: "'", close: "'" },
-  ],
+let loadedPSQLLanguage = false;
+export const loadPSQLLanguage = async (
+  loadedSuggestions: LoadedSuggestions | undefined,
+) => {
+  if (loadedPSQLLanguage) {
+    return false;
+  }
+  loadedPSQLLanguage = true;
+  const monaco = await getMonaco();
+  const monacoLanguages = monaco.languages.getLanguages();
+  for await (const lang of monacoLanguages) {
+    if (LANG === lang.id && "loader" in lang) {
+      const oldLoader = lang.loader as () => Promise<{
+        language: languages.IMonarchLanguage;
+      }>;
+
+      const langModule = await oldLoader();
+      lang.loader = () => {
+        langModule.language.operators = Array.from(
+          new Set([...operators, ...langModule.language.operators]),
+        );
+
+        /** Remove rule that matches $ to number */
+        //@ts-ignore
+        langModule.language.tokenizer.numbers =
+          langModule.language.tokenizer.numbers?.filter(
+            //@ts-ignore
+            ([ruleRegex], i) => !"$".match(ruleRegex),
+          );
+
+        const dataTypes =
+          loadedSuggestions?.suggestions
+            .flatMap(
+              (s) =>
+                s.dataTypeInfo && [
+                  s.dataTypeInfo.name,
+                  s.dataTypeInfo.udt_name,
+                ],
+            )
+            .filter(isDefined) ?? [];
+        // langModule.language.keywords = Array.from(
+        //   new Set([...STARTING_KEYWORDS, ...keywords, ...dataTypes]),
+        // );
+
+        const pgKeywords = loadedSuggestions?.suggestions
+          .filter((s) => {
+            const { keywordInfo, topKwd } = s;
+            if (!keywordInfo) return false;
+            const { catcode, barelabel } = keywordInfo;
+            return topKwd || !barelabel || catcode === "R" || catcode === "C";
+          })
+          .map((s) => s.name);
+
+        langModule.language.keywords = Array.from(
+          new Set([
+            ...STARTING_KEYWORDS,
+            ...(pgKeywords ?? keywords),
+            ...dataTypes,
+          ]),
+        );
+
+        langModule.language.builtinFunctions =
+          loadedSuggestions?.suggestions
+            .filter(
+              (s) =>
+                s.type === "function" &&
+                s.schema === "pg_catalog" &&
+                !dataTypes.includes(s.name),
+            )
+            .map((s) => s.name)
+            .filter(isDefined) ?? sqlLanguageDefinition.builtinFunctions;
+
+        // langModule.language.tokenizer.string!.push([/\$\$/, 'string']);
+        // langModule.language.tokenizer.strings!.push([/\$\$/, 'string']);
+        langModule.language.tokenizer.strings!.push([
+          new RegExp("\\$\\$[^$]*\\$\\$"),
+          "string",
+        ]);
+        return Promise.resolve(langModule);
+      };
+    }
+  }
+
+  return true;
 };
 
-export const language = {
+const sqlLanguageDefinition = {
   defaultToken: "",
   tokenPostfix: ".sql",
   ignoreCase: true,
@@ -41,468 +101,6 @@ export const language = {
     { open: "(", close: ")", token: "delimiter.parenthesis" },
   ],
 
-  keywords: [
-    "abort",
-    "absolute",
-    "access",
-    "action",
-    "add",
-    "admin",
-    "after",
-    "aggregate",
-    "all",
-    "also",
-    "alter",
-    "always",
-    "analyse",
-    "analyze",
-    "and",
-    "any",
-    "array",
-    "as",
-    "asc",
-    "asensitive",
-    "assertion",
-    "assignment",
-    "asymmetric",
-    "at",
-    "atomic",
-    "attach",
-    "attribute",
-    "authorization",
-    "backward",
-    "before",
-    "begin",
-    "between",
-    "bigint",
-    "binary",
-    "bit",
-    "boolean",
-    "both",
-    "breadth",
-    "by",
-    "cache",
-    "call",
-    "called",
-    "cascade",
-    "cascaded",
-    "case",
-    "cast",
-    "catalog",
-    "chain",
-    "char",
-    "character",
-    "characteristics",
-    "check",
-    "checkpoint",
-    "class",
-    "close",
-    "cluster",
-    "coalesce",
-    "collate",
-    "collation",
-    "column",
-    "columns",
-    "comment",
-    "comments",
-    "commit",
-    "committed",
-    "compression",
-    "concurrently",
-    "configuration",
-    "conflict",
-    "connection",
-    "constraint",
-    "constraints",
-    "content",
-    "continue",
-    "conversion",
-    "copy",
-    "cost",
-    "create",
-    "cross",
-    "csv",
-    "cube",
-    "current",
-    "current_catalog",
-    "current_date",
-    "current_role",
-    "current_schema",
-    "current_time",
-    "current_timestamp",
-    "current_user",
-    "cursor",
-    "cycle",
-    "data",
-    "database",
-    "day",
-    "deallocate",
-    "dec",
-    "decimal",
-    "declare",
-    "default",
-    "defaults",
-    "deferrable",
-    "deferred",
-    "definer",
-    "delete",
-    "delimiter",
-    "delimiters",
-    "depends",
-    "depth",
-    "desc",
-    "detach",
-    "dictionary",
-    "disable",
-    "discard",
-    "distinct",
-    "do",
-    "document",
-    "domain",
-    "double",
-    "drop",
-    "each",
-    "else",
-    "enable",
-    "encoding",
-    "encrypted",
-    "end",
-    "enum",
-    "escape",
-    "event",
-    "except",
-    "exclude",
-    "excluding",
-    "exclusive",
-    "execute",
-    "exists",
-    "explain",
-    "expression",
-    "extension",
-    "external",
-    "extract",
-    "false",
-    "family",
-    "fetch",
-    "filter",
-    "finalize",
-    "first",
-    "float",
-    "following",
-    "for",
-    "force",
-    "foreign",
-    "forward",
-    "freeze",
-    "from",
-    "full",
-    "function",
-    "functions",
-    "generated",
-    "global",
-    "grant",
-    "granted",
-    "greatest",
-    "group",
-    "grouping",
-    "groups",
-    "handler",
-    "having",
-    "header",
-    "hold",
-    "hour",
-    "identity",
-    "if",
-    "ilike",
-    "immediate",
-    "immutable",
-    "implicit",
-    "import",
-    "in",
-    "include",
-    "including",
-    "increment",
-    "index",
-    "indexes",
-    "inherit",
-    "inherits",
-    "initially",
-    "inline",
-    "inner",
-    "inout",
-    "input",
-    "insensitive",
-    "insert",
-    "instead",
-    "int",
-    "integer",
-    "intersect",
-    "interval",
-    "into",
-    "invoker",
-    "is",
-    "isnull",
-    "isolation",
-    "join",
-    "key",
-    "label",
-    "language",
-    "large",
-    "last",
-    "lateral",
-    "leading",
-    "leakproof",
-    "least",
-    "left",
-    "level",
-    "like",
-    "limit",
-    "listen",
-    "load",
-    "local",
-    "localtime",
-    "localtimestamp",
-    "location",
-    "lock",
-    "locked",
-    "logged",
-    "mapping",
-    "match",
-    "matched",
-    "materialized",
-    "maxvalue",
-    "merge",
-    "method",
-    "minute",
-    "minvalue",
-    "mode",
-    "month",
-    "move",
-    "name",
-    "names",
-    "national",
-    "natural",
-    "nchar",
-    "new",
-    "next",
-    "nfc",
-    "nfd",
-    "nfkc",
-    "nfkd",
-    "no",
-    "none",
-    "normalize",
-    "normalized",
-    "not",
-    "nothing",
-    "notify",
-    "notnull",
-    "nowait",
-    "null",
-    "nullif",
-    "nulls",
-    "numeric",
-    "object",
-    "of",
-    "off",
-    "offset",
-    "oids",
-    "old",
-    "on",
-    "only",
-    "operator",
-    "option",
-    "options",
-    "or",
-    "order",
-    "ordinality",
-    "others",
-    "out",
-    "outer",
-    "over",
-    "overlaps",
-    "overlay",
-    "overriding",
-    "owned",
-    "owner",
-    "parallel",
-    "parameter",
-    "parser",
-    "partial",
-    "partition",
-    "passing",
-    "password",
-    "placing",
-    "plans",
-    "policy",
-    "position",
-    "preceding",
-    "precision",
-    "prepare",
-    "prepared",
-    "preserve",
-    "primary",
-    "prior",
-    "privileges",
-    "procedural",
-    "procedure",
-    "procedures",
-    "program",
-    "publication",
-    "quote",
-    "range",
-    "read",
-    "real",
-    "reassign",
-    "recheck",
-    "recursive",
-    "ref",
-    "references",
-    "referencing",
-    "refresh",
-    "reindex",
-    "relative",
-    "release",
-    "rename",
-    "repeatable",
-    "replace",
-    "replica",
-    "reset",
-    "restart",
-    "restrict",
-    "return",
-    "returning",
-    "returns",
-    "revoke",
-    "right",
-    "role",
-    "rollback",
-    "rollup",
-    "routine",
-    "routines",
-    "row",
-    "rows",
-    "rule",
-    "savepoint",
-    "schema",
-    "schemas",
-    "scroll",
-    "search",
-    "second",
-    "security",
-    "select",
-    "sequence",
-    "sequences",
-    "serializable",
-    "server",
-    "session",
-    "session_user",
-    "set",
-    "setof",
-    "sets",
-    "share",
-    "show",
-    "similar",
-    "simple",
-    "skip",
-    "smallint",
-    "snapshot",
-    "some",
-    "sql",
-    "stable",
-    "standalone",
-    "start",
-    "statement",
-    "statistics",
-    "stdin",
-    "stdout",
-    "storage",
-    "stored",
-    "strict",
-    "strip",
-    "subscription",
-    "substring",
-    "support",
-    "symmetric",
-    "sysid",
-    "system",
-    "table",
-    "tables",
-    "tablesample",
-    "tablespace",
-    "temp",
-    "template",
-    "temporary",
-    "text",
-    "then",
-    "ties",
-    "time",
-    "timestamp",
-    "to",
-    "trailing",
-    "transaction",
-    "transform",
-    "treat",
-    "trigger",
-    "trim",
-    "true",
-    "truncate",
-    "trusted",
-    "type",
-    "types",
-    "uescape",
-    "unbounded",
-    "uncommitted",
-    "unencrypted",
-    "union",
-    "unique",
-    "unknown",
-    "unlisten",
-    "unlogged",
-    "until",
-    "update",
-    "user",
-    "using",
-    "vacuum",
-    "valid",
-    "validate",
-    "validator",
-    "value",
-    "values",
-    "varchar",
-    "variadic",
-    "varying",
-    "verbose",
-    "version",
-    "view",
-    "views",
-    "volatile",
-    "when",
-    "where",
-    "whitespace",
-    "window",
-    "with",
-    "within",
-    "without",
-    "work",
-    "wrapper",
-    "write",
-    "xml",
-    "xmlattributes",
-    "xmlconcat",
-    "xmlelement",
-    "xmlexists",
-    "xmlforest",
-    "xmlnamespaces",
-    "xmlparse",
-    "xmlpi",
-    "xmlroot",
-    "xmlserialize",
-    "xmltable",
-    "year",
-    "yes",
-    "zone",
-  ],
   operators: [
     // Logical
     "ALL",
@@ -1101,70 +699,3 @@ const operators = [
   "ILIKE",
   "NOT ILIKE",
 ];
-
-let loadedPSQLLanguage = false;
-export const loadPSQLLanguage = async (
-  loadedSuggestions: LoadedSuggestions | undefined,
-) => {
-  if (loadedPSQLLanguage) {
-    return false;
-  }
-  loadedPSQLLanguage = true;
-  const monaco = await getMonaco();
-  const monacoLanguages = monaco.languages.getLanguages();
-  for await (const lang of monacoLanguages) {
-    if (["sql"].includes(lang.id) && "loader" in lang) {
-      const oldLoader = lang.loader as () => Promise<{
-        language: languages.IMonarchLanguage;
-      }>;
-      const langModule = await oldLoader();
-      lang.loader = () => {
-        langModule.language.operators = Array.from(
-          new Set([...operators, ...langModule.language.operators]),
-        );
-
-        /** Remove rule that matches $ to number */
-        //@ts-ignore
-        langModule.language.tokenizer.numbers =
-          langModule.language.tokenizer.numbers?.filter(
-            //@ts-ignore
-            ([ruleRegex], i) => !"$".match(ruleRegex),
-          );
-
-        // langModule.language.keywords = Array.from(new Set([...STARTING_KEYWORDS, ...langModule.language.keywords]));
-        const dataTypes =
-          loadedSuggestions?.suggestions
-            .flatMap(
-              (s) =>
-                s.dataTypeInfo && [
-                  s.dataTypeInfo.name,
-                  s.dataTypeInfo.udt_name,
-                ],
-            )
-            .filter(isDefined) ?? [];
-        langModule.language.keywords = Array.from(
-          new Set([...STARTING_KEYWORDS, ...keywords, ...dataTypes]),
-        );
-        langModule.language.builtinFunctions =
-          loadedSuggestions?.suggestions
-            .filter(
-              (s) =>
-                s.type === "function" &&
-                s.schema === "pg_catalog" &&
-                !dataTypes.includes(s.name),
-            )
-            .map((s) => s.name)
-            .filter(isDefined) ?? language.builtinFunctions;
-
-        // langModule.language.tokenizer.string!.push([/\$\$/, 'string']);
-        // langModule.language.tokenizer.strings!.push([/\$\$/, 'string']);
-        langModule.language.tokenizer.strings!.push([
-          new RegExp("\\$\\$[^$]*\\$\\$"),
-          "string",
-        ]);
-        return Promise.resolve(langModule);
-      };
-    }
-  }
-  return true;
-};

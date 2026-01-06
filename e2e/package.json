@@ -7,6 +7,7 @@
     "setup": "cp ../client/src/Testing.ts ./tests",
     "test": "npm run setup && playwright test main.spec.ts && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts && playwright test create_docs.spec.ts && playwright test command_palette.spec.ts",
     "create-docs": "npm run setup && npx playwright test create_docs.spec.ts ",
+    "command-palette": "npm run setup && npx playwright test command_palette.spec.ts ",
     "test-local": "bash test-local.sh",
     "test-debug": "npm run setup && playwright test --debug"
   },
@@ -14,12 +15,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.54.1",
+    "@playwright/test": "^1.56.1",
     "@types/node": "^20.4.4",
-    "@types/smtp-server": "^3.5.10",
+    "@types/smtp-server": "^3.5.12",
     "otplib": "^12.0.1"
   },
   "dependencies": {
-    "smtp-server": "^3.13.6"
+    "smtp-server": "^3.16.1"
   }
 }

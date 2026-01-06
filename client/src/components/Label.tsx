@@ -1,7 +1,7 @@
 import { mdiHelp, mdiInformationOutline } from "@mdi/js";
 import React from "react";
 import Btn from "./Btn";
-import Checkbox from "./Checkbox";
+import { Checkbox } from "./Checkbox";
 import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import "./Label.css";

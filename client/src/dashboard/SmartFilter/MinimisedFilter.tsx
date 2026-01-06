@@ -1,13 +1,10 @@
 import { mdiSetCenter } from "@mdi/js";
 import { includes } from "prostgles-types";
-import React from "react";
-import {
-  getFinalFilterInfo,
-  TEXT_FILTER_TYPES,
-} from "../../../../common/filterUtils";
-import { sliceText } from "../../../../common/utils";
-import { Icon } from "../../components/Icon/Icon";
-import type { FilterWrapperProps } from "./FilterWrapper";
+import React, { type ReactNode } from "react";
+import { getFinalFilterInfo, TEXT_FILTER_TYPES } from "@common/filterUtils";
+import { sliceText } from "@common/utils";
+import { Icon } from "@components/Icon/Icon";
+import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
 import "./MinimisedFilter.css";
 
 type P = FilterWrapperProps &
@@ -34,68 +31,76 @@ export const MinimisedFilter = ({
 
   const maxLen = 26;
   const getValueForDisplay = <AsText extends boolean>(
-    v,
+    filterValue: unknown,
     asFullText: AsText,
   ): AsText extends true ? string : React.ReactNode => {
     if (filter.contextValue) {
       return `{{${filter.contextValue.objectName}.${filter.contextValue.objectPropertyName}}}`;
     }
-    if (Array.isArray(v)) {
+    if (Array.isArray(filterValue)) {
       if (filter.type === "$between") {
         if (asFullText) {
           return [
-            getValueForDisplay(filter.value[0], asFullText),
+            getValueForDisplay(filterValue[0], asFullText),
             "AND",
-            getValueForDisplay(filter.value[1], asFullText),
+            getValueForDisplay(filterValue[1], asFullText),
           ].join(" ");
         }
         return (
           <>
-            {getValueForDisplay(filter.value[0], asFullText)}
+            {getValueForDisplay(filterValue[0], asFullText)}
             <span className="ws-pre text-1p5 font-normal font-14"> AND </span>
-            {getValueForDisplay(filter.value[1], asFullText)}
+            {getValueForDisplay(filterValue[1], asFullText)}
           </>
-        ) as any;
+        ) as AsText extends true ? string : ReactNode;
       } else {
         if (asFullText) {
-          return "(\n" + v.map((v) => JSON.stringify(v)).join(", \n") + "\n)";
+          return (
+            "(\n" +
+            filterValue.map((v) => JSON.stringify(v)).join(", \n") +
+            "\n)"
+          );
         }
-        const willEllipse = v.join().length > maxLen;
-        if (willEllipse && v.length < 5) {
-          return `( ${v.map((v) => JSON.stringify(sliceText(v, 10))).join(", ")} ) `;
+        const willEllipse = filterValue.join().length > maxLen;
+        if (willEllipse && filterValue.length < 5) {
+          return `( ${filterValue.map((v) => JSON.stringify(sliceText(v, 10))).join(", ")} ) `;
         }
 
         return (
           <>
-            ( {sliceText(JSON.stringify(v).slice(1, -1), maxLen, "...")} )
-            {v.length > 2 && (
+            ({" "}
+            {sliceText(JSON.stringify(filterValue).slice(1, -1), maxLen, "...")}{" "}
+            )
+            {filterValue.length > 2 && (
               <div
                 className="min-w-0 min-h-0 o-hidden text-1p5 ml-p5 flex-row ai-center "
                 style={{ fontWeight: 600 }}
               >
                 {" "}
-                ({v.length})
+                ({filterValue.length})
               </div>
             )}
           </>
-        ) as any;
+        ) as AsText extends true ? string : ReactNode;
       }
     }
 
-    if (!v && includes(["$in", "$nin"], filter.type)) {
+    if (!filterValue && includes(["$in", "$nin"], filter.type)) {
       return `( )`;
     }
 
     const isStringDate =
       !TEXT_FILTER_TYPES.some(({ key }) => filter.type === key) &&
       column.udt_name === "date" &&
-      typeof v === "string" &&
-      v;
+      typeof filterValue === "string" &&
+      filterValue;
     if (
-      (v && v instanceof Date && (v as any).toLocaleDateString) ||
+      (filterValue &&
+        filterValue instanceof Date &&
+        (filterValue as any).toLocaleDateString) ||
       isStringDate
     ) {
-      const date = new Date(v);
+      const date = new Date(filterValue);
       if (
         column.udt_name === "date" ||
         date.toISOString().endsWith("00:00:00.000Z")
@@ -108,7 +113,7 @@ export const MinimisedFilter = ({
       return getFinalFilterInfo(filter);
     }
 
-    return JSON.stringify(v || "");
+    return JSON.stringify(filterValue || "");
   };
   const { disabled, value } = filter;
 
@@ -160,6 +165,7 @@ export const MinimisedFilter = ({
           className={"flex-row ai-center noselect pointer relative o-hidden "}
         >
           <div
+            data-command="FilterWrapper_FieldName"
             className={"FilterWrapper_FieldName  font-18 mr-p25 "}
             style={{ fontWeight: 600 }}
           >

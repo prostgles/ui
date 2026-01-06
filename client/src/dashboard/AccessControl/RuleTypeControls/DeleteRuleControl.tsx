@@ -1,11 +1,8 @@
 import { getKeys, isObject } from "prostgles-types";
 import React from "react";
-import ErrorComponent from "../../../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 
-import type {
-  DeleteRule,
-  TableRules,
-} from "../../../../../common/publishUtils";
+import type { DeleteRule, TableRules } from "@common/publishUtils";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
 import type {
   ContextDataSchema,

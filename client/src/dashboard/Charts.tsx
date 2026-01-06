@@ -2,7 +2,7 @@ import React from "react";
 import type { CanvasChartViewDataExtent } from "./Charts/CanvasChart";
 import { CanvasChart } from "./Charts/CanvasChart";
 import RTComp from "./RTComp";
-import { classOverride } from "../components/Flex";
+import { classOverride } from "@components/Flex";
 
 export const MILLISECOND = 1;
 export const SECOND = MILLISECOND * 1000;
@@ -76,9 +76,9 @@ export const toDateStr = (
   opts: Intl.DateTimeFormatOptions,
 ): string => {
   const key = JSON.stringify({ d: Math.round(+date), opts });
-  if (cachedVals[key]) return cachedVals[key]!;
+  if (cachedVals[key]) return cachedVals[key];
   else cachedVals[key] = date.toLocaleString(navigator.language, opts);
-  return cachedVals[key]!;
+  return cachedVals[key];
 };
 
 export type Point = [number, number];

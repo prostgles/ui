@@ -3,21 +3,21 @@ import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { isDefined } from "prostgles-types";
 import React, { useState } from "react";
 import type { TestSelectors } from "../Testing";
-import Btn from "../components/Btn";
-import Chip from "../components/Chip";
-import { FlexCol, FlexRowWrap } from "../components/Flex";
-import { Icon } from "../components/Icon/Icon";
-import type { LabelProps } from "../components/Label";
-import { Label } from "../components/Label";
-import Loading from "../components/Loader/Loading";
-import PopupMenu from "../components/PopupMenu";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import type { LabelProps } from "@components/Label";
+import { Label } from "@components/Label";
+import Loading from "@components/Loader/Loading";
+import PopupMenu from "@components/PopupMenu";
 import {
   SearchList,
   type SearchListItemContent,
   type SearchListItem,
-} from "../components/SearchList/SearchList";
-import { useIsMounted } from "./BackupAndRestore/CredentialSelector";
-import { InfoRow } from "../components/InfoRow";
+} from "@components/SearchList/SearchList";
+import { InfoRow } from "@components/InfoRow";
+import { useIsMounted } from "prostgles-client";
 
 type SmartSelectProps<
   THandler extends TableHandlerClient = TableHandlerClient,
@@ -134,7 +134,7 @@ export const SmartSelect = <
               setM({ loading: 1 });
               await tableHandler.insert!({
                 ...filter,
-                [displayField ?? fieldName]: noExactSearchMatch!,
+                [displayField ?? fieldName]: noExactSearchMatch,
               }).catch((err) => setM({ err }));
               setM({ ok: "Created!" }, () => {
                 if (!getIsMounted()) return;
@@ -153,7 +153,7 @@ export const SmartSelect = <
       ]}
       onClickClose={false}
       contentStyle={{
-        padding: 0,
+        padding: "1em",
       }}
     >
       <SearchList

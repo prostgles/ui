@@ -141,6 +141,10 @@ export const COMMANDS = {
   "FormField.clear": "Clear a FormField",
 
   SmartForm: "",
+  "SmartForm.header.tableIconAndName": "",
+  "SmartForm.header.previousRow": "",
+  "SmartForm.header.nextRow": "",
+
   "SmartForm.close": "Close dialog",
   "SmartForm.delete": "Deletes row",
   "SmartForm.delete.confirm": "Confirms Deleting a row",
@@ -154,7 +158,8 @@ export const COMMANDS = {
   "SearchList.toggleAll": "",
   "SearchList.List": "",
   "SearchList.Input": "",
-
+  ViewMoreSmartCardList: "",
+  "Section.toggleFullscreen": "",
   FieldFilterControl: "",
   "FieldFilterControl.type": "",
   "FieldFilterControl.type.custom": "",
@@ -187,7 +192,7 @@ export const COMMANDS = {
   SearchAll: "",
   SmartAddFilter: "",
   FilterWrapper: "",
-
+  "FilterWrapper.typeSelect": "",
   FileBtn: "",
 
   "ForcedDataControl.toggle": "",
@@ -233,6 +238,7 @@ export const COMMANDS = {
   "WorkspaceMenuDropDown.WorkspaceAddBtn": "",
   "WorkspaceMenu.SearchList": "",
   "WorkspaceMenu.CloneWorkspace": "",
+  "WorkspaceMenu.toggleWorkspaceLayoutMode": "",
   WorkspaceDeleteBtn: "",
   "WorkspaceDeleteBtn.Confirm": "",
 
@@ -248,6 +254,8 @@ export const COMMANDS = {
   "Popup.content": "",
   "Popup.footer": "",
   "Popup.toggleFullscreen": "",
+  "PopupSection.fullscreen": "",
+  "PopupSection.content": "",
   "LinkedColumn.ColumnListMenu": "",
   "AddChartMenu.Map": "",
   "AddChartMenu.Timechart": "",
@@ -333,6 +341,7 @@ export const COMMANDS = {
   JoinedRecords: "",
   "JoinedRecords.AddRow": "",
   "JoinedRecords.SectionToggle": "",
+  "JoinedRecords.Section": "",
   "SmartCard.viewEditRow": "",
   "TimeChartLayerOptions.yAxis": "",
   "TimeChartLayerOptions.aggFunc": "",
@@ -347,8 +356,10 @@ export const COMMANDS = {
   "Chat.messageList": "",
   "Chat.sendWrapper": "",
   "Chat.send": "",
+  "Chat.sendStop": "",
   "Chat.addFiles": "",
   "Chat.textarea": "",
+  "Chat.speech": "",
   AskLLM: "",
   "AskLLM.popup": "",
   SetupLLMCredentials: "",
@@ -427,6 +438,7 @@ export const COMMANDS = {
   MCPServerConfigButton: "",
   MCPServerConfig: "",
   "MCPServerConfig.save": "",
+  "MCPServers.toggleAutoApprove": "",
   Feedback: "",
   "FileImporterFooter.import": "",
 
@@ -440,6 +452,7 @@ export const COMMANDS = {
   "Window.W_QuickMenu.addCrossFilteredTable": "Add cross-filtered table",
   Alert: "Alert popup",
   ErrorComponent: "",
+  ToolUseMessage: "",
   "ToolUseMessage.toggle": "",
   "ToolUseMessage.Popup": "",
   MarkdownMonacoCode: "",
@@ -456,6 +469,60 @@ export const COMMANDS = {
   APIDetailsTokens: "",
   "AskLLM.DeleteMessage": "",
   "DockerSandboxCreateContainer.Logs": "",
+  TableBody: "",
+  "ServerSideFunctions.onMountEnabled": "",
+  DashboardMenu: "",
+  "SearchAll.Popup": "",
+
+  AddComputedColMenu: "",
+  "AddComputedColMenu.countOfAllRows": "",
+  "AddComputedColMenu.addBtn": "",
+  "AddComputedColMenu.name": "",
+  "AddComputedColMenu.addTo": "",
+  "LinkedColumn.joinType": "",
+  "LinkedColumn.layoutType": "",
+  "CreateColumn.next": "",
+  FileColumnConfigEditor: "",
+  "FileColumnConfigEditor.maxFileSizeMB": "",
+  "FileColumnConfigEditor.contentMode": "",
+  CreateFileColumn: "",
+  ColumnQuickStats: "",
+  "ColumnQuickStats.addFilter": "",
+  "QuickAddComputedColumn.Add": "",
+  "QuickAddComputedColumn.name": "",
+  "LLMChatOptions.Prompt.Preview": "",
+  "FunctionColumnList.SearchInput": "",
+  "LLMChatOptions.Model.AddCredentials": "",
+  QuickFilterGroupsControl: "",
+  LinkedColumn: "",
+  CreateColumn: "",
+  "ToolUseMessage.toggleGroup": "",
+  "PGDumpOptions.format": "",
+  "PGDumpOptions.destination": "",
+  "PGDumpOptions.numberOfJobs": "",
+  "PGDumpOptions.compressionLevel": "",
+  "PGDumpOptions.excludeSchema": "",
+  "PGDumpOptions.noOwner": "",
+  "PGDumpOptions.create": "",
+  "PGDumpOptions.globalsOnly": "",
+  "PGDumpOptions.rolesOnly": "",
+  "PGDumpOptions.schemaOnly": "",
+  "PGDumpOptions.encoding": "",
+  "PGDumpOptions.clean": "",
+  "PGDumpOptions.dataOnly": "",
+  "PGDumpOptions.ifExists": "",
+  "PGDumpOptions.keepLogs": "",
+  "BackupControls.backupsInProgress": "",
+  "BackupsControls.Completed.delete": "",
+  "BackupsControls.Completed.download": "",
+  "BackupsControls.Completed.restore": "",
+  "BackupsControls.Completed.deleteAll": "",
+  "BackupsControls.restoreFromFile": "",
+  BackupLogs: "",
+  FilterWrapper_FieldName: "",
+  FilterWrapper_Field: "",
+  "CloudStorageCredentialSelector.selectCredential": "",
+  DashboardMenuContent: "",
 } as const satisfies Record<
   string,
   | string
@@ -487,6 +554,8 @@ export const getDataLabelElemSelector = (key: string) => {
 
 export const COMMAND_SEARCH_ATTRIBUTE_NAME = "data-command-search-ended";
 
+export const MOCK_ELECTRON_WINDOW_ATTR = "MOCK_ELECTRON_WINDOW_ATTR" as const;
+
 declare module "react" {
   interface HTMLAttributes<T> {
     "data-command"?: Command;
@@ -494,12 +563,12 @@ declare module "react" {
 }
 
 export declare namespace SVGif {
-  export type Animation =
+  export type CursorAnimation =
     | {
         elementSelector: string;
         offset?: { x: number; y: number };
         duration: number;
-        type: "click" | "zoomTo" | "type" | "reveal-list";
+        type: "click" | "clickAppearOnHover";
 
         /**
          * Time to wait before clicking after reaching the final position
@@ -509,6 +578,40 @@ export declare namespace SVGif {
          * Time to stay on the final position after clicking
          */
         lingerMs?: number;
+      }
+    | {
+        type: "moveTo";
+        xy: [number, number];
+        duration: number;
+      };
+  export type Animation =
+    | CursorAnimation
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "type";
+        extraAnimation?:
+          | { type: "zoomToElement" }
+          | { type: "bringToFront"; elementSelector: string };
+        /**
+         * Maximum scale to zoom in while typing
+         */
+        maxScale?: number;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "zoomToElement" | "bringToFront";
+        bringToFrontSelector?: string;
+        /**
+         * Maximum scale to zoom in
+         */
+        maxScale?: number;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "fadeIn" | "growIn";
       }
     | {
         type: "wait";
@@ -522,5 +625,5 @@ export declare namespace SVGif {
 }
 
 /**
- * Forbid imports to ensure this file is portable
+ * TODO: Forbid imports to ensure this file is portable
  */

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
 import CodeExample from "../../CodeExample";
 import { getTableFilter } from "../getTableData/getTableFilter";
 import { getTableSelect } from "../tableUtils/getTableSelect";

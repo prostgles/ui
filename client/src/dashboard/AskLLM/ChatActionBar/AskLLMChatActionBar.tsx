@@ -1,6 +1,6 @@
 import React from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import { FlexRow } from "../../../components/Flex";
+import type { DBSSchema } from "@common/publishUtils";
+import { FlexRow } from "@components/Flex";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { AskLLMChatActionBarDatabaseAccess } from "./AskLLMChatActionBarDatabaseAccess";
 import { AskLLMChatActionBarMCPTools } from "./AskLLMChatActionBarMCPTools";
@@ -12,10 +12,13 @@ export const AskLLMChatActionBar = (
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
     llmMessages: DBSSchema["llm_messages"][];
+    prompt: DBSSchema["llm_prompts"] | undefined;
   },
 ) => {
   return (
-    <FlexRow className="gap-p5 pr-1">
+    <FlexRow
+      className={`AskLLMChatActionBar pr-1 ${window.isMobile ? "gap-0" : "gap-p5"}`}
+    >
       <AskLLMChatActionBarMCPTools {...props} />
       <AskLLMChatActionBarDatabaseAccess {...props} />
       <AskLLMChatActionBarPromptSelector {...props} />
@@ -24,7 +27,7 @@ export const AskLLMChatActionBar = (
   );
 };
 
-export const btnStyleProps = {
+export const ChatActionBarBtnStyleProps = {
   variant: "icon",
   size: "small",
   style: { opacity: 0.75, flex: 1, maxWidth: "fit-content", minWidth: "0" },

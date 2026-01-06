@@ -1,7 +1,12 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, SQLHandler } from "prostgles-types";
-import { getKeys } from "prostgles-types";
-import { isDefined, omitKeys, pickKeys } from "prostgles-types";
+import {
+  getKeys,
+  isDefined,
+  omitKeys,
+  pickKeys,
+  tryCatchV2,
+} from "prostgles-types";
 import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
 import {
   type PG_Policy,
@@ -9,9 +14,8 @@ import {
   getPGObjects,
 } from "./SQLCompletion/getPGObjects";
 import type { ParsedSQLSuggestion } from "./SQLCompletion/monacoSQLSetup/registerSuggestions";
-import type { SQLSuggestion } from "./W_SQLEditor";
 import { SQL_SNIPPETS } from "./SQL_SNIPPETS";
-import { tryCatchV2 } from "../WindowControls/TimeChartLayerOptions";
+import type { SQLSuggestion } from "./W_SQLEditor";
 
 type DB = { sql: SQLHandler };
 
@@ -106,7 +110,7 @@ export const getSqlSuggestions = async (
     );
 
     const extractIndexCols = (def: string) => {
-      return def.split("USING")[1]?.split("(")[1]?.split(")")?.[0];
+      return def.split("USING")[1]?.split("(")[1]?.split(")")[0];
     };
     suggestions = suggestions.concat(
       indexes.map((p) => ({
@@ -199,12 +203,7 @@ export const getSqlSuggestions = async (
     );
 
     const { data: columnStats } = await tryCatchV2(async () => {
-      const vals: {
-        schemaname: string;
-        tablename: string;
-        attname: string;
-        most_common_vals: string[] | null;
-      }[] = (await db.sql(
+      const vals = (await db.sql(
         `
           SELECT 
               schemaname
@@ -216,12 +215,17 @@ export const getSqlSuggestions = async (
       `,
         {},
         { returnType: "rows" },
-      )) as any;
+      )) as {
+        schemaname: string;
+        tablename: string;
+        attname: string;
+        most_common_vals: string[] | null;
+      }[];
 
       return vals;
     });
 
-    tables.map((t) => {
+    tables.forEach((t) => {
       const type =
         t.relkind === "r" ? "table"
         : t.relkind === "v" ? "view"
@@ -297,11 +301,14 @@ export const getSqlSuggestions = async (
       const documentation =
         t.is_view ?
           `**Definition:**  \n\n${asSQL(t.view_definition || "")}`
-        : `${t.comment ? `\n**Comment:** \n\n ${t.comment}` : ""}\n\n**Columns (${cols.length}):**  \n${asSQL(cols.map((c) => c.definition).join(",  \n"))} \n` +
-          `\n**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map((c) => c.definition + ";").join("\n"))} \n` +
-          `**Indexes (${tIndexes.length}):** \n ${asSQL(tIndexes.map((d) => d.indexdef + ";").join("\n"))}  \n` +
-          `**Triggers (${tableTriggers.length}):** \n ${asSQL(tableTriggers.map((d) => d.trigger_name + ";").join("\n"))}  \n` +
-          `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map((p) => p.definition + ";").join("\n\n"))} \n` +
+        : [
+            `${t.comment ? `**Comment:** \n\n ${t.comment}` : ""}`,
+            `**Columns (${cols.length}):**  \n${asSQL(cols.map((c) => c.definition).join(",  \n"))} `,
+            `**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map((c) => c.definition + ";").join("\n"))} `,
+            `**Indexes (${tIndexes.length}):** \n ${asSQL(tIndexes.map((d) => d.indexdef + ";").join("\n"))}  `,
+            `**Triggers (${tableTriggers.length}):** \n ${asSQL(tableTriggers.map((d) => d.trigger_name + ";").join("\n"))}  `,
+            `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map((p) => p.definition + ";").join("\n\n"))} `,
+          ].join("\n") +
           (!t.tableStats ? "" : (
             `\n ${asListObject({
               oid: t.tableStats.relid,
@@ -315,6 +322,7 @@ export const getSqlSuggestions = async (
             })}\n`
           ));
       suggestions.push({
+        OID: t.oid,
         type,
         label: { label: t.name, description: t.schema },
         // name: t.escaped_identifier,
@@ -325,13 +333,13 @@ export const getSqlSuggestions = async (
         schema: t.schema,
         insertText: t.escaped_identifier,
         detail:
-          t.relkind === "m" ? `(materialized view)`
-          : t.is_view ? `(view)`
-          : `(table)`,
+          t.relkind === "m" ? `(materialized view) ${t.name}`
+          : t.is_view ? `(view) ${t.name}`
+          : `(table) ${t.name}`,
         view: t.is_view ? { definition: t.view_definition! } : undefined,
         relkind: t.relkind,
         documentation,
-        tablesInfo: t,
+        tablesInfo: { ...t, constraints: tConstraints },
         cols,
       });
       suggestions = suggestions.concat(
@@ -567,6 +575,7 @@ export const getSqlSuggestions = async (
         detail: `(keyword)`,
         type: "keyword",
         ...kwd,
+        keywordInfo: kwd,
         name: kwd.label,
       })),
     );

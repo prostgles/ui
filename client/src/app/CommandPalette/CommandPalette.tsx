@@ -1,4 +1,7 @@
+import { FlashMessage } from "@components/FlashMessage";
 import { Icon } from "@components/Icon/Icon";
+import Popup from "@components/Popup/Popup";
+import { SearchList } from "@components/SearchList/SearchList";
 import {
   mdiArrowSplitVertical,
   mdiButtonPointer,
@@ -9,7 +12,6 @@ import {
   mdiFormatListBulleted,
   mdiFormSelect,
   mdiFormTextbox,
-  mdiGrid,
   mdiKeyboard,
   mdiLink,
   mdiListBoxOutline,
@@ -19,14 +21,13 @@ import {
 } from "@mdi/js";
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FlashMessage } from "../../components/FlashMessage";
-import Popup from "../../components/Popup/Popup";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
-import { SearchList } from "../../components/SearchList/SearchList";
 import { flatUIDocs, type UIDoc, type UIDocInputElement } from "../UIDocs";
 import "./CommandPalette.css";
 import { Documentation } from "./Documentation";
 import { useGoToUI } from "./useGoToUI";
+import { getItemSearchRank } from "@components/SearchList/searchMatchUtils/getItemSearchRank";
+import { isPlaywrightTest } from "src/i18n/i18nUtils";
+import { getProperty } from "@common/utils";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
@@ -97,7 +98,8 @@ export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
                     data.type === "input" ?
                       `${data.type}-${data.inputType}`
                     : data.type;
-                  const iconPath = data.iconPath ?? UIDocTypeToIcon[iconKey];
+                  const iconPath =
+                    data.iconPath ?? getProperty(UIDocTypeToIcon, iconKey);
                   if (!iconPath) {
                     console.warn("No icon for UIDoc type", iconKey, data);
                   }
@@ -111,13 +113,22 @@ export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
                         <Icon
                           path={iconPath}
                           title={data.type}
-                          className="text-1 mr-p5"
+                          className="text-1 f-0"
                         />
                       : undefined,
                     onPress: async () => {
                       setShowSection(undefined);
                       await goToUIDocItem(data);
                     },
+                    ranking: (searchTerm) =>
+                      getItemSearchRank(
+                        {
+                          title: data.title,
+                          subTitle: data.description,
+                          level: data.parentTitles.length,
+                        },
+                        searchTerm,
+                      ),
                     data,
                   };
                 })}
@@ -193,3 +204,29 @@ const UIDocTypeToIcon: Partial<
   canvas: mdiChartLine,
   // page: mdiGrid,
 };
+
+if (isPlaywrightTest) {
+  flatUIDocs.forEach(({ title: searchTerm }) => {
+    let lowestRank = { value: Infinity, title: "" };
+    flatUIDocs.forEach(({ title, description, parentTitles }) => {
+      const rank = getItemSearchRank(
+        {
+          title,
+          subTitle: description,
+          level: parentTitles.length,
+        },
+        searchTerm,
+      );
+
+      if (rank < lowestRank.value) {
+        lowestRank = { value: rank, title };
+      }
+    });
+
+    if (searchTerm !== lowestRank.title) {
+      throw new Error(
+        `Search rank test failed for term "${searchTerm}". Expected "${searchTerm}" to rank highest, but got "${lowestRank.title}"`,
+      );
+    }
+  });
+}

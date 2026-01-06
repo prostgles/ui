@@ -1,4 +1,4 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import type { DashboardMenuProps } from "./DashboardMenu";
 import { kFormatter } from "../W_Table/W_Table";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";

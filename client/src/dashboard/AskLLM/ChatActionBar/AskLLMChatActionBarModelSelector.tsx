@@ -2,16 +2,16 @@ import { mdiAccountKey, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DetailedJoinSelect } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import type { DetailedFilterBase } from "../../../../../common/filterUtils";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import Btn from "../../../components/Btn";
-import Chip from "../../../components/Chip";
-import { FlexCol, FlexRowWrap } from "../../../components/Flex";
-import Select, { type FullOption } from "../../../components/Select/Select";
-import { SvgIconFromURL } from "../../../components/SvgIcon";
+import type { DetailedFilterBase } from "@common/filterUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { Select, type FullOption } from "@components/Select/Select";
+import { SvgIconFromURL } from "@components/SvgIcon";
 import { SmartForm, SmartFormPopup } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
-import { btnStyleProps } from "./AskLLMChatActionBar";
+import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarModelSelector = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -116,6 +116,7 @@ export const AskLLMChatActionBarModelSelector = (
                         title="Add provider API Key"
                         onClick={() => setAddProviderCredentials(provider_id)}
                         color="action"
+                        data-command="LLMChatOptions.Model.AddCredentials"
                         iconPath={mdiAccountKey}
                       />
                     : <Btn
@@ -140,7 +141,7 @@ export const AskLLMChatActionBarModelSelector = (
         }
         size="small"
         btnProps={{
-          ...btnStyleProps,
+          ...ChatActionBarBtnStyleProps,
           iconPath: "",
         }}
         title="Model"
@@ -150,7 +151,7 @@ export const AskLLMChatActionBarModelSelector = (
         value={activeChat.model}
         onChange={(model) => {
           if (!activeChatId) return;
-          dbs.llm_chats.update(
+          void dbs.llm_chats.update(
             { id: activeChatId },
             {
               model,

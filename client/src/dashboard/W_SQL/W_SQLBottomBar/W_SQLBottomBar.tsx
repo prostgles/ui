@@ -11,15 +11,15 @@ import React, { useEffect, useRef, useState } from "react";
 import type { Prgl } from "../../../App";
 import { dataCommand } from "../../../Testing";
 import { useReactiveState } from "../../../appUtils";
-import Btn from "../../../components/Btn";
-import ButtonGroup from "../../../components/ButtonGroup";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
-import Loading from "../../../components/Loader/Loading";
-import Popup from "../../../components/Popup/Popup";
-import PopupMenu from "../../../components/PopupMenu";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import ButtonGroup from "@components/ButtonGroup";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
+import Popup from "@components/Popup/Popup";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import type { DBS, DBSMethods } from "../../Dashboard/DBS";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { CopyResultBtn } from "../CopyResultBtn";
@@ -29,6 +29,9 @@ import { Counter, SQL_NOT_ALLOWED } from "../W_SQL";
 import { W_SQLBottomBarProcStats } from "./W_SQLBottomBarProcStats";
 import { t } from "../../../i18n/i18nUtils";
 
+/**
+ * @deprecated use from prostgles-types
+ */
 export const includes = <T extends string | undefined, ArrV extends T>(
   v: T | undefined,
   arr: ArrV[] | readonly ArrV[],

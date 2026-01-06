@@ -1,17 +1,19 @@
 import { mdiAccountOutline, mdiAccountQuestion, mdiAccountStar } from "@mdi/js";
 import React from "react";
 import type { TestSelectors } from "../../Testing";
-import { Icon } from "../../components/Icon/Icon";
+import { Icon } from "@components/Icon/Icon";
 import type { DBS } from "../Dashboard/DBS";
 import { SmartSelect } from "../SmartSelect";
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBSSchema } from "@common/publishUtils";
+import type { UserType } from "./useEditedAccessRule";
 
 type P = {
   dbs: DBS;
-  userTypes: string[];
+  userTypes: DBSSchema["user_types"]["id"][];
   connectionId: string;
   database_id: number;
-  onChange: (userTypes: string[]) => void;
+  onChange: (userTypes: DBSSchema["user_types"]["id"][]) => void;
 
   /**
    * Excluded from disabledInfo
@@ -41,10 +43,12 @@ export const UserTypeSelect = (props: P) => {
       popupTitle="User types"
       placeholder="New or existing user type"
       fieldName="id"
+      //@ts-ignore
       onChange={onChange}
       tableHandler={dbs.user_types as TableHandlerClient}
       values={userTypes}
-      getLabel={(id) => {
+      getLabel={(_id) => {
+        const id = _id as UserType;
         let subLabel = "",
           disabledInfo = "";
         if (id === "admin") {
@@ -79,7 +83,6 @@ export const UserTypeSelect = (props: P) => {
                   mdiAccountQuestion
                 : mdiAccountOutline
               }
-              size={1}
             />
           ),
         };

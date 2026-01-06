@@ -1,10 +1,9 @@
 import { mdiViewQuilt } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useEffect } from "react";
-import { FlexCol } from "../../components/Flex";
-import { SwitchToggle } from "../../components/SwitchToggle";
-import { isDefined } from "../../utils";
-import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
+import { FlexCol } from "@components/Flex";
+import { SwitchToggle } from "@components/SwitchToggle";
+import { isDefined } from "../../utils/utils";
 import type { DBS } from "../Dashboard/DBS";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type {
@@ -15,6 +14,7 @@ import type { DeepPartial } from "../RTComp";
 import { SmartSelect } from "../SmartSelect";
 import type { AccessRule } from "./AccessControl";
 import { SectionHeader } from "./AccessControlRuleEditor";
+import { useIsMounted } from "prostgles-client";
 
 type P = Pick<CommonWindowProps, "prgl"> & {
   dbsPermissions: DeepPartial<AccessRule["dbsPermissions"]>;
@@ -46,7 +46,7 @@ export const PublishedWorkspaceSelector = ({
   const getIsMounted = useIsMounted();
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       let wspErrors: string | undefined = undefined;
       const workspaceIds =
         dbsPermissions?.viewPublishedWorkspaces?.workspaceIds ?? [];
@@ -256,7 +256,7 @@ export const getWorkspaceTables = async (
       type: "Custom",
       customTables: validMissingWindowTables
         .map(({ table_name, tableWindowColumns, table }) => {
-          const windowFields = tableWindowColumns!.map((c) => c.name);
+          const windowFields = tableWindowColumns.map((c) => c.name);
           const fields =
             windowFields.length === table.columns.length ?
               ("*" as const)

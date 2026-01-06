@@ -1,28 +1,30 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { getCIDRRangesQuery } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import { TabsWithDefaultStyle } from "@components/Tabs";
 import {
   mdiAccountKey,
   mdiAssistant,
   mdiCloudKeyOutline,
+  mdiDocker,
   mdiLaptop,
   mdiSecurity,
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useState } from "react";
-import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
-import { getCIDRRangesQuery } from "../../../../common/publishUtils";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import Chip from "../../components/Chip";
-import { FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
-import { TabsWithDefaultStyle } from "../../components/Tabs";
 import { LLMProviderSetup } from "../../dashboard/AskLLM/Setup/LLMProviderSetup";
 import { SmartCardList } from "../../dashboard/SmartCardList/SmartCardList";
 import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 import { MCPServers } from "./MCPServers/MCPServers";
+import { Services } from "./Services";
 
 export type ServerSettingsProps = Pick<
   Prgl,
@@ -31,28 +33,27 @@ export type ServerSettingsProps = Pick<
 export const ServerSettings = (props: ServerSettingsProps) => {
   const { dbsMethods, dbs, dbsTables, serverState } = props;
 
-  const [testCIDR, setCIDR] = useState<{ cidr?: string }>({});
+  const [testCIDR, setCIDR] = useState<string>();
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   const myIP = usePromise(() => dbsMethods.getMyIP!());
 
   const ipRanges = usePromise(async () => {
     try {
-      const cidr = testCIDR.cidr;
+      if (!testCIDR) return;
+      const cidr = testCIDR;
       const ranges =
-        !cidr ? undefined : (
-          ((await dbs.sql!(
-            getCIDRRangesQuery({ cidr, returns: ["from", "to"] }),
-            { cidr },
-            { returnType: "row" },
-          )) ?? ({} as any))
-        );
+        ((await dbs.sql!(
+          getCIDRRangesQuery({ cidr, returns: ["from", "to"] }),
+          { cidr },
+          { returnType: "row" },
+        )) as { from?: string; to?: string } | undefined) ?? {};
 
       return {
-        ...(ranges as { from?: string; to?: string }),
+        ...ranges,
         error: undefined,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { error, to: undefined, from: undefined };
     }
   }, [testCIDR, dbs.sql]);
@@ -116,17 +117,18 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                         >
                       }
                       tables={dbsTables}
-                      rowFilter={[{} as any]}
+                      rowFilter={[{ fieldName: "id", type: "not null" }]}
                       confirmUpdates={true}
                       hideNonUpdateableColumns={true}
                       onLoaded={() => setSettingsLoaded(true)}
                     />
                     <FlexCol className="p-1 bg-color-0 shadow ">
                       <FormField
+                        type="text"
                         label={t.ServerSettings["Validate a CIDR"]}
-                        value={testCIDR.cidr ?? ""}
+                        value={testCIDR ?? ""}
                         onChange={(cidr) => {
-                          setCIDR({ cidr });
+                          setCIDR(cidr);
                         }}
                         placeholder="127.1.1.1/32"
                         hint={
@@ -139,7 +141,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                           <Btn
                             title={t.ServerSettings["Add your current IP"]}
                             iconPath={mdiLaptop}
-                            onClick={() => setCIDR({ cidr: myIP.ip + "/128" })}
+                            onClick={() => setCIDR(myIP.ip + "/128")}
                           ></Btn>
                         }
                       />
@@ -187,14 +189,9 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 leftIconPath: mdiCloudKeyOutline,
                 label: t.ServerSettings["Cloud credentials"],
                 content: (
-                  <FlexCol>
+                  <FlexCol className="p-1">
                     {" "}
-                    <InfoRow
-                      className="mx-1"
-                      variant="naked"
-                      color="info"
-                      iconPath=""
-                    >
+                    <InfoRow variant="naked" color="info" iconPath="">
                       Configure AWS S3 cloud credentials for file storage
                     </InfoRow>
                     <SmartCardList
@@ -203,6 +200,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       tableName="credentials"
                       tables={dbsTables}
                       realtime={true}
+                      excludeNulls={true}
                       noDataComponentMode="hide-all"
                       noDataComponent={
                         <InfoRow color="info" className="m-1 h-fit">
@@ -228,9 +226,22 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 content: (
                   <FlexCol className="p-1 pt-0 min-w-0">
                     <InfoRow variant="naked" color="info" iconPath="">
-                      Configure LLM provider credentials used in Ask AI chat.
+                      Configure LLM provider credentials used in AI Assistant
+                      chat.
                     </InfoRow>
                     <LLMProviderSetup {...props} />
+                  </FlexCol>
+                ),
+              },
+              services: {
+                leftIconPath: mdiDocker,
+                label: "Services",
+                content: (
+                  <FlexCol className="p-1 pt-0 min-w-0">
+                    <InfoRow variant="naked" color="info" iconPath="">
+                      Configure services used by AI Assistant.
+                    </InfoRow>
+                    <Services {...props} showSpecificService={undefined} />
                   </FlexCol>
                 ),
               },

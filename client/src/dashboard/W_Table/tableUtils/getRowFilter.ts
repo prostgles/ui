@@ -1,11 +1,11 @@
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
-import { isEmpty } from "../../../utils";
+import { isEmpty } from "../../../utils/utils";
 
 import {
   getSmartGroupFilter,
   type DetailedFilterBase,
-} from "../../../../../common/filterUtils";
+} from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 
 export const getRowFilter = async (

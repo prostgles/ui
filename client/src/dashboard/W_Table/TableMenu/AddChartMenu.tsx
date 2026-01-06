@@ -1,3 +1,6 @@
+import Btn, { type BtnProps } from "@components/Btn";
+import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
+import { Select } from "@components/Select/Select";
 import { mdiChartLine, mdiMap } from "@mdi/js";
 import { useMemoDeep } from "prostgles-client/dist/prostgles";
 import {
@@ -7,8 +10,6 @@ import {
   type ParsedJoinPath,
 } from "prostgles-types";
 import React from "react";
-import Btn, { type BtnProps } from "../../../components/Btn";
-import Select from "../../../components/Select/Select";
 import { t } from "../../../i18n/i18nUtils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
@@ -16,10 +17,9 @@ import type {
   OnAddChart,
   WindowData,
 } from "../../Dashboard/dashboardUtils";
-import { getRandomColor } from "../../Dashboard/dashboardUtils";
+import { getRandomColor } from "../../Dashboard/PALETTE";
 import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
-import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
 import type { ChartColumn, ColInfo } from "./getChartCols";
 import { getChartCols } from "./getChartCols";
 
@@ -63,25 +63,25 @@ export const AddChartMenu = (props: P) => {
     return res;
   }, [chartableSQL, tables, w, type]);
 
-  const { geoCols, dateCols, sql, withStatement = "" } = chartCols;
+  const { geoCols, dateCols, barCols, sql, withStatement = "" } = chartCols;
 
   const tableName = w.table_name;
   const onAdd = (
-    linkOpts: { type: "map" | "timechart"; columns: ChartColumn[] },
+    linkOpts: {
+      type: "map" | "timechart" | "barchart";
+      columns: ChartColumn[];
+    },
     joinPath: ParsedJoinPath[] | undefined,
   ) => {
     const otherColumns = linkOpts.columns
-      .reduce(
-        (a, v) => {
-          v.otherColumns.forEach((vc) => {
-            if (!a.some((ac) => ac.name === vc.name)) {
-              a.push(vc);
-            }
-          });
-          return a;
-        },
-        [] as (ColInfo & { is_pkey: boolean })[],
-      )
+      .reduce((a, v) => {
+        v.otherColumns.forEach((vc) => {
+          if (!a.some((ac) => ac.name === vc.name)) {
+            a.push(vc);
+          }
+        });
+        return a;
+      }, [] as ColInfo[])
       .map(({ name, udt_name, is_pkey }) => ({ name, udt_name, is_pkey }));
 
     const firstNumericColumn = otherColumns.find(
@@ -92,12 +92,14 @@ export const AddChartMenu = (props: P) => {
       joinPath ?
         `${[tableName, ...joinPath.slice(0).map((p) => p.table)].join(" > ")} ${columnList}`
       : `${tableName || ""} ${columnList}`;
-    const usedColors = myLinks.flatMap((l) =>
-      l.options.type !== "table" ?
-        l.options.columns.map((c) => c.colorArr)
-      : undefined,
-    );
-    const colorArr = getRandomColor(1, "deck", usedColors);
+    const usedColors = myLinks
+      .flatMap((l) =>
+        l.options.type !== "table" ?
+          l.options.columns.map((c) => c.colorArr)
+        : undefined,
+      )
+      .filter(isDefined);
+    const colorArr = getRandomColor(1, usedColors);
     const type = linkOpts.type;
     onAddChart({
       name,
@@ -120,6 +122,21 @@ export const AddChartMenu = (props: P) => {
               },
             ],
           }
+        : type === "barchart" ?
+          {
+            type: "barchart",
+            statType:
+              firstNumericColumn ?
+                {
+                  funcName: "$sum",
+                  numericColumn: firstNumericColumn,
+                }
+              : undefined,
+            columns: linkOpts.columns.map(({ name }, i) => ({
+              name,
+              colorArr,
+            })),
+          }
         : {
             type,
             columns: linkOpts.columns.map(({ name }, i) => ({
@@ -127,7 +144,6 @@ export const AddChartMenu = (props: P) => {
               colorArr,
             })),
           }),
-        joinPath,
         dataSource:
           sql ?
             {
@@ -137,9 +153,9 @@ export const AddChartMenu = (props: P) => {
             }
           : {
               type: "table",
+              tableName: w.table_name!,
               joinPath,
             },
-        sql,
       },
     });
   };
@@ -147,7 +163,7 @@ export const AddChartMenu = (props: P) => {
   const charts: {
     cols: ChartColumn[];
     onAdd: (cols: ChartColumn[], path: ParsedJoinPath[] | undefined) => any;
-    label: "Map" | "Timechart";
+    label: "Map" | "Timechart" | "Barchart";
     iconPath: string;
   }[] = [
     {
@@ -172,6 +188,20 @@ export const AddChartMenu = (props: P) => {
         );
       },
     },
+    // {
+    //   label: "Barchart",
+    //   iconPath: mdiChartBar,
+    //   cols: barCols,
+    //   onAdd: (cols, path) => {
+    //     onAdd(
+    //       {
+    //         type: "barchart",
+    //         columns: cols,
+    //       },
+    //       path,
+    //     );
+    //   },
+    // },
   ];
 
   return (
@@ -187,14 +217,19 @@ export const AddChartMenu = (props: P) => {
                 return undefined;
               }
 
+              const linkColumns = linkOpts.columns.map((col) => col.name);
+              const linkSql =
+                linkOpts.dataSource?.type === "sql" ?
+                  linkOpts.dataSource.sql
+                : undefined;
               const matches =
                 linkOpts.type === c.label.toLowerCase() &&
-                ((w.type === "sql" && sql?.trim() === linkOpts.sql?.trim()) ||
+                ((w.type === "sql" && sql?.trim() === linkSql?.trim()) ||
                   (w.type === "table" &&
-                    c.cols.some((col) =>
-                      linkOpts.columns.some((c) => c.name === col.name),
-                    )));
-              if (matches) return linkOpts.columns[0]?.colorArr;
+                    c.cols.some((col) => linkColumns.includes(col.name))));
+              if (matches) {
+                return linkOpts.columns[0]?.colorArr;
+              }
             })
             .find(isDefined);
 
@@ -227,7 +262,8 @@ export const AddChartMenu = (props: P) => {
                   rgbaToString(layerAlreadyAdded as any)
                 : undefined,
             },
-            "data-command": `AddChartMenu.${c.label}`,
+            "data-command":
+              c.label === "Map" ? "AddChartMenu.Map" : "AddChartMenu.Timechart",
           };
 
           /**
@@ -246,7 +282,7 @@ export const AddChartMenu = (props: P) => {
                 data-command={btnProps["data-command"]}
                 btnProps={{
                   children: "",
-                  variant: "default",
+                  variant: "icon",
                   ...btnProps,
                 }}
                 fullOptions={c.cols.map((c, i) => ({
@@ -254,7 +290,7 @@ export const AddChartMenu = (props: P) => {
                   label:
                     c.type === "joined" ? `> ${c.label} (${c.name})` : c.name,
                   ranking: (searchTerm) =>
-                    getRankingFunc(
+                    getSearchRanking(
                       searchTerm,
                       c.type === "joined" ?
                         c.path.map((p) => p.table)

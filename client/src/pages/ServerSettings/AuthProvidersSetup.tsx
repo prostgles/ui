@@ -1,11 +1,10 @@
+import type { DBSSchema } from "@common/publishUtils";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
 import React, { useCallback, useEffect } from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
 import type { Prgl } from "../../App";
-import { FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loader/Loading";
-import Select from "../../components/Select/Select";
 import { t } from "../../i18n/i18nUtils";
 import { EmailAuthSetup } from "./EmailAuthSetup";
 import { OAuthProviderSetup } from "./OAuthProviderSetup";
@@ -111,7 +110,7 @@ export const AuthProviderSetup = ({
     return <Loading />;
   }
 
-  const { auth_providers } = global_settings;
+  const { auth_providers, auth_created_user_type } = global_settings;
 
   return (
     <FlexCol className="AuthProviderSetup f-1">
@@ -125,24 +124,24 @@ export const AuthProviderSetup = ({
           label={t.AuthProviderSetup["Website URL"]}
           hint={t.AuthProviderSetup["Used for redirect uri"]}
           value={global_settings.auth_providers?.website_url}
-          onChange={async (website_url) => {
-            updateAuth({
+          onChange={(website_url: string) => {
+            void updateAuth({
               ...auth_providers,
               website_url,
             });
           }}
         />
-        <Select
+        <FormField
           label={t.AuthProviderSetup["Default user type"]}
           data-command="AuthProviderSetup.defaultUserType"
-          value={auth_providers?.created_user_type ?? "default"}
+          value={auth_created_user_type ?? "default"}
           fullOptions={
             userTypes?.map((ut) => ({
               key: ut.id,
               subLabel: ut.description ?? "",
             })) ?? []
           }
-          onChange={async (default_user_type) => {
+          onChange={(default_user_type: DBSSchema["user_types"]["id"]) => {
             if (default_user_type === "admin") {
               const result = window.confirm(
                 t.AuthProviderSetup[
@@ -151,20 +150,21 @@ export const AuthProviderSetup = ({
               );
               if (!result) return;
             }
-            updateAuth({
-              ...auth_providers,
-              created_user_type: default_user_type || undefined,
-            });
+
+            void dbs.global_settings.update(
+              {},
+              {
+                auth_created_user_type: default_user_type,
+              },
+            );
           }}
-        />
-        <InfoRow variant="naked" iconPath={""} color="info">
-          {
-            t.AuthProviderSetup[
+          hint={
+            t.ServerSettings[
               "The default user type assigned to new users. Defaults to 'default'"
             ]
           }
-        </InfoRow>
-        {auth_providers?.created_user_type === "admin" && (
+        />
+        {auth_created_user_type === "admin" && (
           <InfoRow variant="filled" color="danger">
             {
               t.AuthProviderSetup[

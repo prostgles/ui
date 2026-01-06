@@ -1,13 +1,13 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type {
   LoginClientInfo,
   LoginParams,
   LoginSignupConfig,
 } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
-import { upsertSession } from "../upsertSession";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { SUser } from "../sessionUtils";
 import { startRateLimitedLoginAttempt } from "../startRateLimitedLoginAttempt";
+import { upsertSession } from "../upsertSession";
 
 type LoginReturnType = ReturnType<
   Required<LoginSignupConfig<DBGeneratedSchema, SUser>>["login"]
@@ -70,7 +70,7 @@ export const loginWithProvider = async (
             profile,
             user_id: auth_provider_user_id,
           },
-          type: globalSettings?.auth_providers?.created_user_type || "default",
+          type: globalSettings?.auth_created_user_type ?? "default",
           status: "active",
           password: "",
         },

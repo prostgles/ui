@@ -1,44 +1,42 @@
-import { mdiAlertCircleOutline, mdiUndo } from "@mdi/js";
-import type {
-  AnyObject,
-  ParsedJoinPath,
-  SubscriptionHandler,
-} from "prostgles-types";
+import type { DBSSchema } from "@common/publishUtils";
+import { throttle } from "@common/utils";
+import Loading from "@components/Loader/Loading";
+import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { AnyObject, SubscriptionHandler } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 import React from "react";
-import { throttle } from "../../../../common/utils";
-import { createReactiveState } from "../../appUtils";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import Loading from "../../components/Loader/Loading";
-import PopupMenu from "../../components/PopupMenu";
 import type { Command } from "../../Testing";
-import type { DateExtent } from "../Charts/getTimechartBinSize";
-import { getMainTimeBinSizes } from "../Charts/getTimechartBinSize";
-import type { TimeChartLayer } from "../Charts/TimeChart";
-import { TimeChart } from "../Charts/TimeChart";
+import type { DateExtent } from "../Charts/TimeChart/getTimechartBinSize";
+import { getMainTimeBinSizes } from "../Charts/TimeChart/getTimechartBinSize";
+import type { TimeChartLayer } from "../Charts/TimeChart/TimeChart";
+import { TimeChart } from "../Charts/TimeChart/TimeChart";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import RTComp from "../RTComp";
+import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import RTComp, { type DeltaOf, type DeltaOfData } from "../RTComp";
 import type { LayerBase } from "../W_Map/W_Map";
 import type { ActiveRow } from "../W_Table/W_Table";
 import Window from "../Window";
-import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
-import { AddTimeChartFilter } from "./AddTimeChartFilter";
-import { fetchAndSetTimechartLayerData } from "./fetchAndSetTimechartLayerData";
-import { getTimeChartSelectDate } from "./getTimeChartData";
-import { getTimeChartLayerQueries } from "./getTimeChartLayers";
-import type { TimeChartLayerWithBinOrError } from "./getTimeChartLayersWithBins";
-import { W_TimeChartLayerLegend } from "./W_TimeChartLayerLegend";
+import { fetchAndSetTimechartLayerData } from "./fetchData/fetchAndSetTimechartLayerData";
+import { getTimeChartLayerQueries } from "./fetchData/getTimeChartLayers";
+import type { TimeChartLayerWithBinOrError } from "./fetchData/getTimeChartLayersWithBins";
+import { getTimeChartSelectDate } from "./fetchData/getTimeChartSelectParams";
+import { W_TimeChartHeaderControls } from "./W_TimeChartHeaderControls";
 import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
-import { FlexRow } from "../../components/Flex";
-import type { DBSSchema } from "../../../../common/publishUtils";
 
-type ChartColumn = Extract<
+export type TimeChartLinkOptions = Extract<
   DBSSchema["links"]["options"],
   { type: "timechart" }
 >;
+
+type LinkDataOptions =
+  | Extract<TimeChartLinkOptions["dataSource"], { type: "sql" }>
+  | (Extract<TimeChartLinkOptions["dataSource"], { type: "table" }> & {
+      tableName: string;
+      externalFilters: AnyObject[];
+    })
+  | Extract<TimeChartLinkOptions["dataSource"], { type: "local-table" }>;
+
 export type ProstglesTimeChartLayer = Pick<
   LayerBase,
   "_id" | "linkId" | "disabled"
@@ -53,29 +51,15 @@ export type ProstglesTimeChartLayer = Pick<
   statType:
     | {
         funcName: Required<
-          ChartColumn["columns"][number]
+          TimeChartLinkOptions["columns"][number]
         >["statType"]["funcName"];
         numericColumn: string;
       }
     | undefined;
   color?: string;
-  updateOptions: (newOptions: Partial<ProstglesTimeChartLayer>) => Promise<any>;
-} & (
-    | {
-        type: "sql";
-        sql: string;
-        withStatement: string;
-      }
-    | {
-        type: "table";
-        tableName: string;
-        path: ParsedJoinPath[] | undefined;
-        externalFilters: AnyObject[];
-        tableFilter?: AnyObject;
-      }
-  );
+} & LinkDataOptions;
 
-export type ProstglesTimeChartProps = Omit<CommonWindowProps, "w"> & {
+export type W_TimeChartProps = Omit<CommonWindowProps, "w"> & {
   onClickRow: (
     row: AnyObject | undefined,
     tableName: string,
@@ -86,7 +70,8 @@ export type ProstglesTimeChartProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"timechart">;
 };
 
-export type ProstglesTimeChartStateLayer = Omit<TimeChartLayer, "yScale"> & {
+export type W_TimeChartStateLayer = TimeChartLayer & {
+  linkId: string;
   extFilter:
     | {
         filter: any;
@@ -97,11 +82,11 @@ export type ProstglesTimeChartStateLayer = Omit<TimeChartLayer, "yScale"> & {
   dataSignature: string;
 };
 
-export type ProstglesTimeChartState = {
+export type W_TimeChartState = {
   loading: boolean;
-  wSync: any;
-  error?: any;
-  layers: ProstglesTimeChartStateLayer[];
+  wSync: SingleSyncHandles<Required<WindowData<"timechart">>, true> | null;
+  error?: unknown;
+  layers: W_TimeChartStateLayer[];
   erroredLayers?: TimeChartLayerWithBinOrError[];
   columns: any[];
   xExtent?: [Date, Date];
@@ -109,7 +94,6 @@ export type ProstglesTimeChartState = {
   viewPortExtent?: DateExtent;
   resetExtent?: number;
   binSize?: TimeChartBinSize;
-  showError?: boolean;
   loadingData: boolean;
   addingFilter?: boolean;
 };
@@ -118,21 +102,17 @@ type D = {
   extent?: DateExtent;
   w?: WindowSyncItem<"timechart">;
   lCols: {
-    [key: string]: ProstglesTimeChartProps["tables"][number]["columns"];
+    [key: string]: W_TimeChartProps["tables"][number]["columns"];
   };
   dataAge: number;
 };
 
-export class W_TimeChart extends RTComp<
-  ProstglesTimeChartProps,
-  ProstglesTimeChartState,
-  D
-> {
+export class W_TimeChart extends RTComp<W_TimeChartProps, W_TimeChartState, D> {
   refHeader?: HTMLDivElement;
   refResize?: HTMLElement;
   ref?: HTMLElement;
 
-  state: ProstglesTimeChartState = {
+  state: W_TimeChartState = {
     resetExtent: 0,
     xExtent: undefined,
     visibleDataExtent: undefined,
@@ -144,10 +124,10 @@ export class W_TimeChart extends RTComp<
     columns: [],
   };
 
-  async onMount() {
+  onMount() {
     const { w } = this.props;
     if (!this.state.wSync) {
-      const wSync = await w.$cloneSync((w, delta) => {
+      const wSync = w.$cloneSync((w, delta) => {
         this.setData({ w }, { w: delta });
       });
 
@@ -156,12 +136,18 @@ export class W_TimeChart extends RTComp<
   }
 
   onUnmount() {
-    this.state.wSync?.$unsync?.();
+    this.state.wSync?.$unsync();
+    Object.values(this.layerSubscriptions).forEach(({ sub }) => {
+      void sub?.unsubscribe();
+    });
   }
 
-  onDelta = async (dp, ds, dd) => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const deltaKeys = getKeys({ ...dp, ...ds, ...dd });
+  onDelta(
+    dp: DeltaOf<W_TimeChartProps>,
+    ds: DeltaOf<W_TimeChartState>,
+    dd: DeltaOfData<D>,
+  ): void {
+    const deltaKeys = getKeys({ ...dp!, ...ds!, ...dd! });
     const filterChanged = dd?.w?.options && "filter" in dd.w.options;
     if (
       filterChanged ||
@@ -177,13 +163,13 @@ export class W_TimeChart extends RTComp<
         ] as const
       ).find((k) => deltaKeys.includes(k))
     ) {
-      this.setLayerData();
+      void this.setLayerData();
     }
 
     if (filterChanged) {
       this.props.onForceUpdate();
     }
-  };
+  }
 
   d: D = {
     lCols: {},
@@ -223,11 +209,11 @@ export class W_TimeChart extends RTComp<
   dataStr?: string;
   setLayerData = fetchAndSetTimechartLayerData.bind(this);
 
-  settingExtent: any;
+  settingExtent: NodeJS.Timeout | null = null;
   private visibleDataExtent?: DateExtent;
   private viewPortExtent?: DateExtent;
   setVisibleExtent(
-    data: ProstglesTimeChartState["visibleDataExtent"],
+    data: W_TimeChartState["visibleDataExtent"],
     viewPort: DateExtent,
   ) {
     this.visibleDataExtent = data;
@@ -255,118 +241,57 @@ export class W_TimeChart extends RTComp<
     return <ProstglesTimeChartMenu w={w} autoBinSize={this.state.binSize} />;
   };
 
-  addingFilter = createReactiveState<
-    { startX?: number; endX?: number } | undefined
-  >(undefined, (newState) => {
-    const isAddingFilter = !!newState;
-    if (isAddingFilter !== this.state.addingFilter) {
-      this.setState({ addingFilter: isAddingFilter });
-    }
-  });
+  onColorLegendChanged = () => {
+    this.setData({ dataAge: Date.now() });
+  };
 
   menuAnchor?: HTMLDivElement;
   chartRef?: TimeChart;
   render() {
     const {
-      layers = [],
+      layers: fetchedLayers = [],
       erroredLayers,
       error: fetchingError,
       loadingData,
       addingFilter = false,
     } = this.state;
 
-    const { onClickRow, myActiveRow, activeRowColor, workspace } = this.props;
+    const { onClickRow, workspace } = this.props;
     const { w } = this.d;
     if (!w) return <Loading className="m-auto f-1" />;
 
-    let errorPopup;
-
     const { layerQueries } = this;
+    /** This ensures layers are removed instantly */
+    const layers = fetchedLayers.filter((l) =>
+      layerQueries.find((lq) => lq._id === l.linkId),
+    );
 
-    const error =
-      fetchingError ?? (erroredLayers?.[0]?.hasError && erroredLayers[0].error);
-    if (error) {
-      errorPopup = (
-        <PopupMenu
-          button={<Btn color="danger" iconPath={mdiAlertCircleOutline} />}
-          onClose={() => {
-            this.setState({ showError: false });
-          }}
-        >
-          <div className="bg-color-0">
-            <ErrorComponent error={error} findMsg={true} />
-          </div>
-        </PopupMenu>
-      );
-    }
-
-    const resetExtent = () => {
+    const resetExtent = (refetchData?: true) => {
       if (this.chartRef?.chart) {
         this.chartRef.chart.setView({ xO: 0, xScale: 1, yO: 0, yScale: 1 });
         this.setState({
           visibleDataExtent: undefined,
           viewPortExtent: undefined,
+          ...(refetchData && {
+            resetExtent: Date.now(),
+          }),
         });
       }
     };
-    const binSize = getMainTimeBinSizes()[this.state.binSize as string]?.size;
-    const onCancelActiveRow = () => onClickRow(undefined, "", undefined);
-    const infoSection = (
-      <FlexRow
-        className="W_TimeChart_TopBar gap-0 relative f-1 m-auto "
-        style={{
-          position: "absolute",
-          top: "0",
-          left: "0",
-          /** Ensure it doesn't clash with right add filter button */
-          maxWidth: "calc(100% - 60px)",
-          /* Ensure it doesn't cover the tooltip active row brush */
-          zIndex: 1,
-        }}
-      >
-        <ChartLayerManager
-          {...this.props}
-          w={w}
-          type="timechart"
-          asMenuBtn={{}}
-          layerQueries={layerQueries}
-        />
-        {/* {loadingLayers && 
-        <Loading 
-          className="m-auto f-1" 
-          delay={1500} 
-          variant="cover" 
-        />
-      } */}
-        {errorPopup}
-        <Btn
-          title="Reset extent"
-          data-command="W_TimeChart.resetExtent"
-          style={{
-            opacity: this.state.visibleDataExtent ? 1 : 0,
-          }}
-          iconPath={mdiUndo}
-          onClick={() =>
-            this.setState({
-              visibleDataExtent: undefined,
-              viewPortExtent: undefined,
-              resetExtent: Date.now(),
-            })
-          }
-        />
-        <W_TimeChartLayerLegend
-          {...this.props}
-          layers={layers}
-          layerQueries={this.layerQueries}
-          onChanged={() => {
-            this.setData({ dataAge: Date.now() });
-          }}
-        />
-      </FlexRow>
-    );
 
-    const content = (
-      <>
+    const binSizeName = this.state.binSize;
+    const binSize =
+      !binSizeName || binSizeName === "auto" ?
+        undefined
+      : // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        getMainTimeBinSizes()[binSizeName]?.size;
+
+    return (
+      <Window
+        w={w}
+        getMenu={this.getMenu}
+        layoutMode={workspace.layout_mode ?? "editable"}
+      >
         <div
           ref={(r) => {
             if (r) this.menuAnchor = r;
@@ -384,36 +309,22 @@ export class W_TimeChart extends RTComp<
             if (r) this.ref = r;
           }}
         >
-          {loadingData && this.d.w?.options.refresh?.type !== "Realtime" && (
-            <Loading variant="cover" delay={1500} />
-          )}
-          {infoSection}
-
           {this.chartRef && (
-            <AddTimeChartFilter
-              activeRowColor={activeRowColor}
-              myActiveRow={myActiveRow}
-              filter={w.options.filter}
+            <W_TimeChartHeaderControls
+              {...this.props}
+              w={w}
+              layers={layers}
+              loadingData={loadingData}
+              onColorLegendChanged={this.onColorLegendChanged}
+              fetchingError={fetchingError}
+              layerQueries={layerQueries}
+              erroredLayers={erroredLayers}
               chartRef={this.chartRef}
-              onCancelActiveRow={onCancelActiveRow}
-              onStart={() => {
-                onCancelActiveRow();
-                this.setState({ addingFilter: true });
+              visibleDataExtent={this.state.visibleDataExtent}
+              setAddingFilter={(addingFilter) => {
+                this.setState({ addingFilter });
               }}
-              onEnd={(filter) => {
-                const newFilter =
-                  !filter ? null : (
-                    {
-                      min: +filter.min,
-                      max: +filter.max,
-                    }
-                  );
-                this.d.w?.$update({
-                  options: { ...this.d.w.options, filter: newFilter },
-                });
-                this.setState({ addingFilter: false });
-                resetExtent();
-              }}
+              resetExtent={resetExtent}
             />
           )}
           <TimeChart
@@ -422,6 +333,7 @@ export class W_TimeChart extends RTComp<
             chartRef={(ref) => {
               this.chartRef = ref;
             }}
+            yAxisScaleMode={w.options.yScaleMode}
             onExtentChanged={(extent, viewPort, opts) => {
               if (opts.resetExtent) {
                 resetExtent();
@@ -430,7 +342,7 @@ export class W_TimeChart extends RTComp<
               }
               onClickRow(undefined, "", undefined);
             }}
-            onClick={async ({ dateMillis, isMinDate }) => {
+            onClick={({ dateMillis, isMinDate }) => {
               if (this.state.addingFilter) return;
               const [firstLink, ...otherLinks] = this.props.myLinks;
               if (
@@ -475,20 +387,11 @@ export class W_TimeChart extends RTComp<
             tooltipPosition={w.options.tooltipPosition ?? "auto"}
             renderStyle={w.options.renderStyle ?? "line"}
             showBinLabels={w.options.showBinLabels ?? "off"}
+            showGradient={w.options.showGradient ?? true}
             binValueLabelMaxDecimals={w.options.binValueLabelMaxDecimals}
             binSize={binSize}
           />
         </div>
-      </>
-    );
-
-    return (
-      <Window
-        w={w}
-        getMenu={this.getMenu}
-        layoutMode={workspace.layout_mode ?? "editable"}
-      >
-        {content}
       </Window>
     );
   }

@@ -1,17 +1,28 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { includes } from "prostgles-types";
-import type { ProstglesState } from "../../../common/electronInitTypes";
-import { SPOOF_TEST_VALUE } from "../../../common/utils";
+import type { ProstglesState } from "@common/electronInitTypes";
+import { SPOOF_TEST_VALUE } from "@common/utils";
 import type { AppState } from "../App";
-import { tout } from "../utils";
+import { tout } from "../utils/utils";
+import { MOCK_ELECTRON_WINDOW_ATTR } from "src/Testing";
 
 /**
  * Check if state database is setup
  */
 const fetchServerState = async () => {
-  const serverState: AppState["serverState"] = await fetch("/dbs", {
-    headers: { "x-real-ip": SPOOF_TEST_VALUE },
-  }).then((r) => r.json());
+  // window.MOCK_ELECTRON_WINDOW_ATTR = true;
+  const serverState: AppState["serverState"] =
+    window[MOCK_ELECTRON_WINDOW_ATTR] ?
+      {
+        isElectron: true,
+        initState: {
+          state: "ok",
+        },
+        electronCredsProvided: false,
+      }
+    : await fetch("/dbs", {
+        headers: { "x-real-ip": SPOOF_TEST_VALUE },
+      }).then((r) => r.json());
   return serverState;
 };
 

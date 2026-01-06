@@ -99,7 +99,7 @@ export const MatchDrop: SQLMatcher = {
   },
 };
 
-const getKWDS = (rawExpect: string, afterExpect?: string | undefined) => {
+const getKWDS = (rawExpect: string, afterExpect?: string  ) => {
   if (rawExpect.toLowerCase() === "owned") {
     const kwd = "OWNED BY";
     return [

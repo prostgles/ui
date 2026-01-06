@@ -1,5 +1,5 @@
 import React from "react";
-import Loading from "../../components/Loader/Loading";
+import Loading from "@components/Loader/Loading";
 
 import type { CommonWindowProps } from "../../dashboard/Dashboard/Dashboard";
 import { Dashboard } from "../../dashboard/Dashboard/Dashboard";
@@ -11,7 +11,7 @@ import type {
 import type { ExtraProps, Prgl, PrglState } from "../../App";
 
 import { useParams, useSearchParams } from "react-router-dom";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionConfig";
 import { ProjectConnectionError } from "./ProjectConnectionError";
 import { useProjectDb } from "./useProjectDb";

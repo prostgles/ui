@@ -36,7 +36,12 @@ export const addSVGifPointer = ({
     @keyframes ${cursorAnimationName} {
     ${cursorKeyframes.map((v) => `  ${v}`).join("\n")}
     } 
-    ${getAnimationProperty({ totalDuration, elemSelector: `#${pointerId}`, animName: cursorAnimationName })}
+    ${getAnimationProperty({
+      totalDuration,
+      elemSelector: `#${pointerId}`,
+      animName: cursorAnimationName,
+      easeFunction: "ease-out",
+    })}
   `);
   g.appendChild(pointerCircle);
 };

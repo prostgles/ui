@@ -1,6 +1,6 @@
 import React from "react";
-import { classOverride } from "../../components/Flex";
-import { Label } from "../../components/Label";
+import { classOverride } from "@components/Flex";
+import { Label } from "@components/Label";
 import type { ParsedFieldConfig } from "./SmartCard";
 
 type SmartCardColumnProps = {
@@ -31,7 +31,13 @@ export const SmartCardColumn = ({
       style={{ maxHeight: "250px", ...style }}
     >
       {Boolean(labelText?.length) && (
-        <Label size="small" variant="normal" title={labelTitle} info={info}>
+        <Label
+          size="small"
+          variant="normal"
+          title={labelTitle}
+          info={info}
+          style={{ opacity: 0.7 }}
+        >
           {labelText}
         </Label>
       )}

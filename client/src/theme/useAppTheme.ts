@@ -29,12 +29,8 @@ export const useAppTheme = (state: Pick<AppState, "serverState" | "user">) => {
     document.documentElement.classList.remove("dark-theme", "light-theme");
     document.documentElement.classList.add(`${theme}-theme`);
     document.body.classList.add("text-0");
-    if (
-      state.serverState &&
-      (!state.serverState.isElectron || state.serverState.electronCredsProvided)
-    ) {
-      document.body.classList.add("bg-color-2");
-    }
+    document.body.classList.toggle("bg-color-2", theme === "light");
+    document.body.classList.toggle("bg-color-3", theme === "dark");
   }, [theme, state.serverState]);
 
   return { theme, userThemeOption: userThemeOption ?? "from-system" };

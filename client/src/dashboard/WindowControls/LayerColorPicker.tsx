@@ -1,50 +1,33 @@
-import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { BtnProps } from "@components/Btn";
 import React from "react";
-import type { LinkSyncItem, WindowData } from "../Dashboard/dashboardUtils";
-import type { RGBA } from "../W_Table/ColumnMenu/ColorPicker";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
-import type { MapLayerManagerProps } from "./ChartLayerManager";
+import type { ChartLinkOptions } from "./DataLayerManager/DataLayer";
 import { MapLayerStyling } from "./MapLayerStyling";
-import type { BtnProps } from "../../components/Btn";
 
 export type LayerColorPickerProps = {
-  link: LinkSyncItem;
+  linkOptions: ChartLinkOptions;
+  onChange: (newOptions: ChartLinkOptions) => void;
   column: string;
-  myLinks: LinkSyncItem[];
   title?: string;
-  w:
-    | SyncDataItem<Required<WindowData<"timechart">>, true>
-    | SyncDataItem<Required<WindowData<"map">>, true>;
   btnProps?: BtnProps;
-} & Pick<MapLayerManagerProps, "tables" | "w" | "getLinksAndWindows">;
+};
 
 export const LayerColorPicker = ({
-  link,
+  linkOptions,
   column,
-  myLinks,
   title,
-  tables,
-  w,
-  getLinksAndWindows,
   btnProps,
+  onChange,
 }: LayerColorPickerProps) => {
-  if (link.options.type === "table") {
-    return null;
-  }
-  const rgba: RGBA =
-    link.options.columns.find((c) => c.name === column)?.colorArr ??
-    ([100, 100, 100] as any);
-  const opts = link.options;
+  const rgba = linkOptions.columns.find((c) => c.name === column)?.colorArr ?? [
+    100, 100, 100,
+  ];
 
-  if (opts.type === "map") {
+  if (linkOptions.type === "map") {
     return (
       <MapLayerStyling
-        linkOptions={opts}
-        myLinks={myLinks}
-        link={link}
-        tables={tables}
-        w={w}
-        getLinksAndWindows={getLinksAndWindows}
+        linkOptions={linkOptions}
+        onChange={onChange}
         column={column}
         title={title}
       />
@@ -59,25 +42,27 @@ export const LayerColorPicker = ({
       title={title}
       required={true}
       className="w-fit m-p5 text-2"
-      value={`rgba(${rgba})`}
+      value={`rgba(${rgba.join(", ")})`}
       onChange={(colorStr, colorArr) => {
-        const thisLink = myLinks.find((l) => l.id === link.id);
-        if (thisLink && thisLink.options.type !== "table") {
-          const opts = thisLink.options;
-          thisLink.$update(
-            {
-              options: {
-                ...opts,
-                columns: opts.columns.map((c) => ({
-                  ...c,
-                  colorArr: c.name === column ? colorArr : c.colorArr,
-                })),
-              },
-            },
-            { deepMerge: true },
-          );
-        }
+        const updatedColumns = linkOptions.columns.map((c) => ({
+          ...c,
+          colorArr: c.name === column ? colorArr : c.colorArr,
+        }));
+        onChange({
+          ...linkOptions,
+          columns: updatedColumns,
+        });
       }}
     />
   );
 };
+
+declare global {
+  interface Array<T> {
+    // Override map to handle union array types better
+    map<U>(
+      callbackfn: (value: T, index: number, array: T[]) => U,
+      thisArg?: any,
+    ): U[];
+  }
+}

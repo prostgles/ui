@@ -133,17 +133,21 @@ type JoinPath = {
     table: string;
     on?: Record<string, string>[] | undefined;
 };
-export type JoinedFilter = BaseFilter & {
+export type DetailedJoinedFilter = BaseFilter & {
     type: (typeof JOINED_FILTER_TYPES)[number];
     path: (string | JoinPath)[];
     filter: DetailedFilterBase;
 };
-export type SimpleFilter = DetailedFilterBase | JoinedFilter;
-export type SmartGroupFilter = SimpleFilter[];
-export declare const isJoinedFilter: (f: SimpleFilter) => f is JoinedFilter;
-export declare const isDetailedFilter: (f: SimpleFilter) => f is DetailedFilterBase;
+export type DetailedFilter = DetailedFilterBase | DetailedJoinedFilter;
+export type DetailedGroupFilter = {
+    $and: DetailedFilter[];
+} | {
+    $or: DetailedFilter[];
+};
+export declare const isJoinedFilter: (f: DetailedFilter) => f is DetailedJoinedFilter;
+export declare const isDetailedFilter: (f: DetailedFilter) => f is DetailedFilterBase;
 type InfoType = "pg";
-export declare const getFinalFilterInfo: (fullFilter?: GroupedDetailedFilter | SimpleFilter, context?: ContextDataObject, depth?: number, opts?: {
+export declare const getFinalFilterInfo: (fullFilter?: GroupedDetailedFilter | DetailedFilter, context?: ContextDataObject, depth?: number, opts?: {
     for: InfoType;
 }) => string;
 export declare const parseContextVal: (f: DetailedFilterBase, context: ContextDataObject | undefined, { forInfoOnly }?: GetFinalFilterOpts) => any;
@@ -151,16 +155,17 @@ type GetFinalFilterOpts = {
     forInfoOnly?: boolean | InfoType;
     columns?: string[];
 };
-export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: ContextDataObject, opts?: GetFinalFilterOpts) => Record<string, any> | undefined;
+export declare const getFinalFilter: (detailedFilter: DetailedFilter, context?: ContextDataObject, opts?: GetFinalFilterOpts) => Record<string, any> | undefined;
 export declare const simplifyFilter: (f: AnyObject | undefined) => AnyObject | undefined;
-export declare const getSmartGroupFilter: (detailedFilter?: SmartGroupFilter, extraFilters?: {
-    detailed?: SmartGroupFilter;
+export declare const getSmartGroupFilter: (detailedFilter?: DetailedFilter[], extraFilters?: {
+    detailed?: DetailedFilter[];
     filters?: AnyObject[];
 }, operand?: "and" | "or") => AnyObject;
+export declare const getTableFilterFromDetailedGroupFilter: (detailedGroupFilter: DetailedGroupFilter) => AnyObject;
 export type GroupedDetailedFilter = {
-    $and: (SimpleFilter | GroupedDetailedFilter)[];
+    $and: (DetailedFilter | GroupedDetailedFilter)[];
 } | {
-    $or: (SimpleFilter | GroupedDetailedFilter)[];
+    $or: (DetailedFilter | GroupedDetailedFilter)[];
 };
 export {};
 //# sourceMappingURL=filterUtils.d.ts.map

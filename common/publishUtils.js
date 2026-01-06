@@ -194,19 +194,19 @@ export const getTableRulesErrors = async (rules, tableColumns, contextData) => {
     }));
     return result;
 };
-export const validateDynamicFields = async (dynamicFields, db, context, columns) => {
-    if (!dynamicFields)
+export const validateDynamicFields = async (dynamicFields, tableHandler, context, columns) => {
+    if (!dynamicFields || !tableHandler)
         return {};
     for (const [dfIndex, dfRule] of dynamicFields.entries()) {
         const filter = await parseFullFilter(dfRule.filterDetailed, context, columns);
         if (!filter)
             throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
-        await db.find(filter, { limit: 0 });
+        await tableHandler.find(filter, { limit: 0 });
         /** Ensure dynamicFields filters do not overlap */
         for (const [_dfIndex, _dfRule] of dynamicFields.entries()) {
             if (dfIndex !== _dfIndex) {
                 const _filter = await parseFullFilter(_dfRule.filterDetailed, context, columns);
-                if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
+                if (await tableHandler.findOne({ $and: [filter, _filter] }, { select: "" })) {
                     const error = `dynamicFields.filter cannot overlap each other. \n
           Overlapping dynamicFields rules:
               ${JSON.stringify(dfRule)} 

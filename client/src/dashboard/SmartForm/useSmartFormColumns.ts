@@ -1,4 +1,4 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { getKeys, isDefined } from "prostgles-types";
 import { useMemo } from "react";
@@ -27,6 +27,7 @@ export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
 
   const dynamicValidatedColumns = usePromise(async () => {
     if (!mode) return undefined;
+    /** TODO: merge with display_options?.prettyTableAndColumnNames */
     const result =
       mode.type !== "update" ?
         table?.columns

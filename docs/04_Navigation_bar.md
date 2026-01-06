@@ -4,7 +4,7 @@ The top navigation bar provides quick access to all major sections of Prostgles 
 Located at the top of the interface, it allows you to switch between database connections, manage users and server settings, and access your account preferences. 
 The navigation adapts to your user role, showing admin-only sections like Users and Server Settings only to authorized users.
 
-Key sections of the app:
+## Key sections of the app
 
 ### Connections
 
@@ -22,7 +22,10 @@ The views you open in the dashboard are saved automatically to the current works
 This allows you to return to the same views later, even after closing the application.
 You can create multiple workspaces to organize your views by project, team, task, or any other criteria.
 
-### Navbar items:
+
+<img src="./screenshots/navbar.svgif.svg" alt="Navigation" style="border: 1px solid; margin: 1em 0;" />
+
+### Navbar items
 - **Connections**: Manage database connections  
 - **Users**: Manage user accounts (admin only)  
 - **Server Settings**: Configure server settings (admin only)  

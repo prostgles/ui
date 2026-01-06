@@ -14,6 +14,7 @@ import type {
   LayoutConfig,
   LayoutGroup,
 } from "@common/DashboardTypes";
+import { includes } from "prostgles-types";
 
 export type {
   LayoutItem,
@@ -64,7 +65,7 @@ export type SilverGridProps = {
   /**
    * Defaults to col
    */
-  defaultLayoutType?: LayoutGroup["type"];
+  defaultLayoutType: undefined | LayoutGroup["type"];
 };
 
 type S = {
@@ -151,8 +152,17 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
 
       if (orphans.length) {
         setTimeout(() => {
+          /** TODO: this logic should apply to any view that is linked to other views. */
+          const newLayoutType =
+            (
+              orphans.some((o) =>
+                includes(["map", "timechart"], o.props["data-view-type"]),
+              )
+            ) ?
+              "col"
+            : defaultLayoutType;
           let newLayout = { ...layout };
-          if (newLayout.type === defaultLayoutType) {
+          if (newLayout.type === newLayoutType) {
             const totalSize = (newLayout.items as LayoutConfig[]).reduce(
               (a, v) => a + v.size,
               0,
@@ -179,8 +189,8 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
             newLayout.size = 50;
             newLayout = {
               id: "1",
-              ...(defaultLayoutType === "tab" && { activeTabKey: undefined }),
-              type: defaultLayoutType as any,
+              ...(newLayoutType === "tab" && { activeTabKey: undefined }),
+              type: newLayoutType as any,
               size: 100,
               isRoot: true,
               items: orphans
@@ -266,7 +276,9 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
     const children = React.Children.toArray(c) as ReactSilverGridNode[];
     let content: React.ReactNode = null;
 
-    if (!children.length || !layout) return null;
+    if (!children.length || !layout) {
+      return null;
+    }
     const onChange = _onChange ?? this.onChange;
     const key = _key ?? layout.id;
 
@@ -403,7 +415,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
               <SilverGridResizer
                 key={"resizer" + i}
                 layoutMode={layoutMode}
-                type={layout.type as "col" | "row"}
+                type={layout.type}
                 onChange={(prevSize, nextSize) => {
                   this.treeLayout?.update([prevSize, nextSize]);
                 }}
@@ -467,11 +479,11 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
       >
         {this.renderGrid()}
         <div
-          key={"silver-grid-target"}
+          key={"silver-grid-view-move-target"}
           ref={(r) => {
             if (r) this.refTarget = r;
           }}
-          className={" absolute silver-grid-target b"}
+          className={" absolute silver-grid-view-move-target b"}
           style={{
             ...targetStyle,
             zIndex: 232,

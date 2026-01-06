@@ -1,11 +1,11 @@
 import { type AnyObject } from "prostgles-types";
 import React, { useEffect } from "react";
-import { type DetailedFilterBase } from "../../../../../common/filterUtils";
+import { type DetailedFilterBase } from "@common/filterUtils";
 import type { Prgl } from "../../../App";
-import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
-import Loading from "../../../components/Loader/Loading";
-import { Section } from "../../../components/Section";
-import { SvgIcon } from "../../../components/SvgIcon";
+import { FlexCol, FlexRow, classOverride } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
+import { Section } from "@components/Section";
+import { SvgIcon } from "@components/SvgIcon";
 import type { SmartFormProps } from "../SmartForm";
 import { ViewMoreSmartCardList } from "../SmartFormField/ViewMoreSmartCardList";
 import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
@@ -92,11 +92,14 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
         return (
           <Section
             key={path.join(".")}
-            className="trigger-hover pl-p5"
+            className="trigger-hover pl-1"
             btnProps={{
               ["data-command"]: "JoinedRecords.SectionToggle",
               ["data-key"]: path.join("."),
+              style: { flex: 1 },
             }}
+            data-command="JoinedRecords.Section"
+            data-key={path.join(".")}
             titleIcon={icon && <SvgIcon icon={icon} />}
             title={
               <FlexRow data-key={path.join(".")}>
@@ -108,7 +111,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
             }
             titleRightContent={
               props.newRowDataHandler && (
-                <FlexRow className="show-on-trigger-hover">
+                <FlexRow className="show-on-trigger-hover ml-auto gap-0">
                   {!isInsert && (
                     <ViewMoreSmartCardList
                       db={db}

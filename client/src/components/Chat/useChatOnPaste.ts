@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { tryCatchV2 } from "../../dashboard/WindowControls/TimeChartLayerOptions";
+import { tryCatchV2 } from "prostgles-types";
 import { fixIndent } from "../../demo/scripts/sqlVideoDemo";
 
 export const useChatOnPaste = ({
@@ -28,8 +28,8 @@ export const useChatOnPaste = ({
           const text = e.clipboardData.getData("text/plain");
           const vsData = e.clipboardData.getData("vscode-editor-data");
           const { data: languageRaw = "" } = tryCatchV2(() => {
-            const result = JSON.parse(vsData).mode;
-            return result as string;
+            const result = JSON.parse(vsData).mode as string;
+            return result;
           });
           /** Ignore single line of text */
           if (text.trim().split("\n").length < 2) {
@@ -41,13 +41,13 @@ export const useChatOnPaste = ({
               {
                 typescriptreact: "tsx",
               } as const
-            )[languageRaw] ?? languageRaw;
+            )[languageRaw] ??
+            (languageRaw || "");
 
-          const codeSnippetText = [
-            "```" + language,
-            fixIndent(text),
-            "```",
-          ].join("\n");
+          const codeSnippetText =
+            text.trim().startsWith("```") ?
+              text
+            : ["```" + language, fixIndent(text), "```"].join("\n");
           /** If existing text then place correctly */
           if (textAreaRef.current) {
             insertCodeSnippetAtCursor(textAreaRef.current, codeSnippetText);
@@ -84,6 +84,6 @@ const insertCodeSnippetAtCursor = (
   textarea.value = beforeText + text + afterText;
 
   // Move the cursor to after the inserted text
-  const newCursorPos = startPos + text.length;
+  const newCursorPos = startPos + text.length + 1; // +1 for the added newline
   textarea.setSelectionRange(newCursorPos, newCursorPos);
 };

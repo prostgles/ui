@@ -5,12 +5,12 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useMemo } from "react";
-import { sliceText } from "../../../../../common/utils";
-import Btn from "../../../components/Btn";
-import { FlexRow } from "../../../components/Flex";
-import type { PopupProps } from "../../../components/Popup/Popup";
-import Popup from "../../../components/Popup/Popup";
-import { SvgIcon } from "../../../components/SvgIcon";
+import { sliceText } from "@common/utils";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import type { PopupProps } from "@components/Popup/Popup";
+import Popup from "@components/Popup/Popup";
+import { SvgIcon } from "@components/SvgIcon";
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormState } from "../useSmartForm";
 
@@ -40,13 +40,14 @@ export const SmartFormPopupWrapper = ({
 }: P) => {
   const prevNextClass = "smartformprevnext";
 
+  const autoFocusFirstIfIsInsert = !rowFilterObj;
   const extraProps: Pick<
     PopupProps,
     "onKeyDown" | "headerRightContent" | "autoFocusFirst"
   > = useMemo(() => {
     return !onPrevOrNext ?
         ({
-          autoFocusFirst: "content",
+          autoFocusFirst: autoFocusFirstIfIsInsert ? "content" : undefined,
         } satisfies Pick<PopupProps, "autoFocusFirst">)
       : {
           autoFocusFirst: "header",
@@ -67,6 +68,7 @@ export const SmartFormPopupWrapper = ({
                 disabledInfo={
                   prevNext?.prev === false ? "Reached end" : undefined
                 }
+                data-command="SmartForm.header.previousRow"
                 onClick={({ currentTarget }) => {
                   currentTarget.focus();
                   onPrevOrNext(-1);
@@ -74,6 +76,7 @@ export const SmartFormPopupWrapper = ({
               />
               <Btn
                 iconPath={mdiChevronRight}
+                data-command="SmartForm.header.nextRow"
                 disabledInfo={
                   prevNext?.next === false ? "Reached end" : undefined
                 }
@@ -85,7 +88,7 @@ export const SmartFormPopupWrapper = ({
             </div>
           ),
         };
-  }, [onPrevOrNext, prevNext]);
+  }, [autoFocusFirstIfIsInsert, onPrevOrNext, prevNext?.next, prevNext?.prev]);
 
   const { subTitle } = useMemo(() => {
     const filterKeys =
@@ -118,7 +121,10 @@ export const SmartFormPopupWrapper = ({
   return (
     <Popup
       title={
-        <FlexRow className="gap-1">
+        <FlexRow
+          data-command="SmartForm.header.tableIconAndName"
+          className="gap-1"
+        >
           {table.icon && <SvgIcon size={34} icon={table.icon} />}
           {headerText}
         </FlexRow>
@@ -130,7 +136,8 @@ export const SmartFormPopupWrapper = ({
       onClose={onClose}
       clickCatchStyle={{ opacity: 0.2 }}
       showFullscreenToggle={{
-        getStyle: (fullscreen) => (fullscreen ? {} : { maxWidth: "600px" }),
+        getStyle: (fullscreen) =>
+          fullscreen ? {} : { width: "min(600px, 100vw)" },
       }}
     >
       {children}

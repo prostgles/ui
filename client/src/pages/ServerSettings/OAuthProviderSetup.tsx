@@ -1,14 +1,14 @@
 import { mdiLock } from "@mdi/js";
 import { isEqual } from "prostgles-types";
 import React, { useState } from "react";
-import { OAuthProviderOptions } from "../../../../common/OAuthUtils";
-import { CopyToClipboardBtn } from "../../components/CopyToClipboardBtn";
-import ErrorComponent from "../../components/ErrorComponent";
-import FormField from "../../components/FormField/FormField";
-import { Icon } from "../../components/Icon/Icon";
-import { FooterButtons } from "../../components/Popup/FooterButtons";
-import { Section } from "../../components/Section";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import { OAuthProviderOptions } from "@common/OAuthUtils";
+import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
+import ErrorComponent from "@components/ErrorComponent";
+import FormField from "@components/FormField/FormField";
+import { Icon } from "@components/Icon/Icon";
+import { FooterButtons } from "@components/Popup/FooterButtons";
+import { Section } from "@components/Section";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { t } from "../../i18n/i18nUtils";
 import { tout } from "../ElectronSetup/ElectronSetup";
 import {
@@ -40,7 +40,7 @@ export const OAuthProviderSetup = ({
     localAuth: any,
   ): localAuth is typeof authProviders.customOAuth =>
     provider === "customOAuth";
-  const setLocalAuth = async (update: Partial<typeof auth>) => {
+  const setLocalAuth = (update: Partial<typeof auth>) => {
     if (!update) return _setLocalAuth(undefined);
     _setLocalAuth({
       ...(localAuth as any),
@@ -105,7 +105,7 @@ export const OAuthProviderSetup = ({
           !localAuth?.clientSecret &&
           t.OAuthProviderSetup["Must provide a client ID and secret"]
         }
-        onChange={async (enabled) => {
+        onChange={(enabled) => {
           setLocalAuth({
             enabled,
           });
@@ -116,8 +116,8 @@ export const OAuthProviderSetup = ({
           <FormField
             label={t.OAuthProviderSetup["Display Name"]}
             value={localAuth?.displayName}
-            onChange={async (displayName) => {
-              setLocalAuth({
+            onChange={(displayName: string) => {
+              void setLocalAuth({
                 displayName,
               });
             }}
@@ -125,8 +125,8 @@ export const OAuthProviderSetup = ({
           <FormField
             label={t.OAuthProviderSetup["Display Icon"]}
             value={localAuth?.displayIconPath}
-            onChange={async (displayIconPath) => {
-              setLocalAuth({
+            onChange={(displayIconPath: string) => {
+              void setLocalAuth({
                 displayIconPath,
               });
             }}
@@ -134,8 +134,8 @@ export const OAuthProviderSetup = ({
           <FormField
             label={t.OAuthProviderSetup["Authorization URL"]}
             value={localAuth?.authorizationURL}
-            onChange={async (authorizationURL) => {
-              setLocalAuth({
+            onChange={(authorizationURL: string) => {
+              void setLocalAuth({
                 authorizationURL,
               });
             }}
@@ -143,8 +143,8 @@ export const OAuthProviderSetup = ({
           <FormField
             label={t.OAuthProviderSetup["Token URL"]}
             value={localAuth?.tokenURL}
-            onChange={async (tokenURL) => {
-              setLocalAuth({
+            onChange={(tokenURL: string) => {
+              void setLocalAuth({
                 tokenURL,
               });
             }}
@@ -154,7 +154,7 @@ export const OAuthProviderSetup = ({
       <FormField
         label={t.OAuthProviderSetup["Client ID"]}
         value={localAuth?.clientID}
-        onChange={async (clientID) => {
+        onChange={(clientID: string) => {
           setLocalAuth({
             clientID,
           });
@@ -163,8 +163,8 @@ export const OAuthProviderSetup = ({
       <FormField
         label={t.OAuthProviderSetup["Client Secret"]}
         value={localAuth?.clientSecret}
-        onChange={async (clientSecret) => {
-          setLocalAuth({
+        onChange={(clientSecret: string) => {
+          void setLocalAuth({
             clientSecret,
           });
         }}
@@ -174,9 +174,9 @@ export const OAuthProviderSetup = ({
         fullOptions={PROVIDER_INFO[provider].scopes}
         multiSelect={true}
         value={localAuth?.authOpts?.scope}
-        onChange={async (scopes) => {
+        onChange={(scopes: string[]) => {
           console.log("scopes", scopes);
-          setLocalAuth({
+          void setLocalAuth({
             authOpts: {
               ...localAuth?.authOpts,
               scope: scopes,

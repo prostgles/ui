@@ -1,11 +1,10 @@
 import React from "react";
 
+import Btn from "@components/Btn";
+import { classOverride, FlexCol } from "@components/Flex";
 import { mdiDelete } from "@mdi/js";
-import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { classOverride, FlexCol } from "../../components/Flex";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { SmartCard } from "../SmartCard/SmartCard";
@@ -67,7 +66,7 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
         return (
           <div key={getKeyForRowData(defaultData, keyCols)}>
             <SmartCard
-              db={db as DBHandlerClient}
+              db={db}
               methods={methods}
               tables={tables}
               tableName={table.name}

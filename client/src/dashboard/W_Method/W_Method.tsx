@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
 import Window from "../Window";
 import { W_MethodMenu } from "./W_MethodMenu";
 import { W_MethodControls } from "./W_MethodControls";
+import { useIsMounted } from "prostgles-client";
 
 export type W_MethodProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"method">;
@@ -34,7 +34,7 @@ export const W_Method = (allProps: W_MethodProps) => {
       w={w as any}
       layoutMode={props.workspace.layout_mode ?? "editable"}
       getMenu={(w, closeMenu) => (
-        <W_MethodMenu {...allProps} w={w as any} closeMenu={closeMenu} />
+        <W_MethodMenu {...allProps} w={w} closeMenu={closeMenu} />
       )}
     >
       <W_MethodControls

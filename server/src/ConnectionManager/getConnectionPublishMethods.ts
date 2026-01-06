@@ -6,13 +6,13 @@ import {
   type AnyObject,
   type MethodFullDef,
 } from "prostgles-types";
-import type { DBSSchema } from "../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { getCompiledTS } from "./connectionManagerUtils";
 import { getAccessRule } from "./startConnection";
 import type { DBS } from "..";
 import type { JSONBColumnDef } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { DB } from "prostgles-server/dist/initProstgles";
-import type { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
+import type { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 
 type Args = {
   dbs: DBS;
@@ -68,11 +68,12 @@ export const getConnectionPublishMethods = ({
                 if (arg.type === "Lookup" || arg.type === "Lookup[]") {
                   argType = {
                     ...omitKeys(arg, ["type", "name", "optional"]),
+                    //@ts-ignore
                     lookup: {
                       ...arg.lookup,
                       type: "data",
                     },
-                  } as any;
+                  };
                 }
                 const partialArgSchema: JSONBColumnDef["jsonbSchema"] = {
                   //@ts-ignore

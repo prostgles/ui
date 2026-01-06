@@ -1,6 +1,6 @@
 import React from "react";
 import type { PopupProps } from "./Popup";
-import { Footer } from "./Popup";
+import { Footer } from "./Footer";
 import { isDefined, omitKeys } from "prostgles-types";
 import Btn, { type BtnProps } from "../Btn";
 import type { TestSelectors } from "../../Testing";
@@ -35,7 +35,7 @@ export const FooterButtons = ({
     return null;
   }
   return (
-    <Footer {...divProps}>
+    <Footer {...divProps} style={{ padding: "1em" }}>
       {footer}
       {bottomBtns.map((b, i: any) => {
         if ("node" in b)

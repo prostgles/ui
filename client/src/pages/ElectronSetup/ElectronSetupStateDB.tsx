@@ -1,14 +1,14 @@
 import React from "react";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../../common/electronInitTypes";
-import { FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import Tabs from "../../components/Tabs";
+import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import Tabs from "@components/Tabs";
 import { t } from "../../i18n/i18nUtils";
 import { NewConnectionForm } from "../NewConnection/NewConnectionFormFields";
 import type { useElectronSetup } from "./useElectronSetup";
-import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
-import ErrorComponent from "../../components/ErrorComponent";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
+import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
+import ErrorComponent from "@components/ErrorComponent";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export const ElectronSetupStateDB = ({
   state,
@@ -25,16 +25,12 @@ export const ElectronSetupStateDB = ({
   } = state;
 
   return (
-    <ScrollFade className="px-p25 min-s-0 flex-col f-1 oy-auto">
+    <ScrollFade className="px-p25 min-s-0 flex-col f-1 oy-auto no-scroll-bar">
       <h2>State database</h2>
       <section className="ta-left font-18">
-        <strong>Prostgles Desktop</strong> requires full access to a postgres
-        database.
-        <p>
-          This database will be used to manage and store all connection and
-          state data (database connection details, sql queries, workspaces,
-          etc).
-        </p>
+        <strong>Prostgles Desktop</strong> needs a PostgreSQL database to
+        securely store your workspace and connection settings. (This will not
+        affect your existing databases.)
         <p className="m-0 mt-p5">
           For best experience we recommend using a locally installed database
         </p>
@@ -58,8 +54,9 @@ export const ElectronSetupStateDB = ({
             content: (
               <FlexCol>
                 <div>
-                  Provide superuser credentials for the locally running postgres
-                  server.
+                  Enter the credentials of your local PostgreSQL superuser
+                  (often postgres). These will be used once to create the
+                  Prostgles Desktop database.
                 </div>
                 <div>
                   Will create a{" "}
@@ -94,7 +91,7 @@ export const ElectronSetupStateDB = ({
                 />
                 <FormField
                   id="pass"
-                  value={c.db_pass}
+                  value={c.db_pass ?? ""}
                   label={t.NewConnectionForm["Password"]}
                   type="text"
                   autoComplete="off"

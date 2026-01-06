@@ -1,20 +1,16 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import type { DetailedFilterBase } from "@common/filterUtils";
+import { classOverride } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
 import {
-  isDefined,
   type AnyObject,
   type TableInfo,
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useState } from "react";
-import type { DetailedFilterBase } from "../../../../common/filterUtils";
 import type { Prgl } from "../../App";
-import { classOverride } from "../../components/Flex";
-import Loading from "../../components/Loader/Loading";
 import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
-import { getSmartCardColumns } from "./getSmartCardColumns";
-import { getDefaultFieldConfig, parseFieldConfigs } from "./parseFieldConfigs";
 import { SmartCardActions } from "./SmartCardActions";
 import { SmartCardColumn } from "./SmartCardColumn";
 import { useFieldConfigParser } from "./useFieldConfigParser";
@@ -42,7 +38,7 @@ export type ParsedNestedFieldConfig = ParsedFieldConfig | FieldConfigTable;
 
 export type FieldConfigBase<T extends AnyObject | void = void> = {
   /* Is the column or table name */
-  name: T extends AnyObject ? keyof T | string : string;
+  name: T extends AnyObject ? keyof T : string;
   style?: React.CSSProperties;
   className?: string;
 
@@ -57,8 +53,9 @@ export type FieldConfigRender<T extends AnyObject = AnyObject> = (
 
 export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
   FieldConfigBase<T> & {
-    select?: number | AnyObject | (keyof T & string) | "*";
-    hideIf?: (value, row) => boolean;
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+    select?: "*" | number | AnyObject | keyof T;
+    hideIf?: (value, row: T) => boolean;
     render?: FieldConfigRender<T>;
     /**
      * Defaults to "value"

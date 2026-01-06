@@ -19,7 +19,7 @@ export const prepareColsForRender = (
       }
       return !c.hidden;
     })
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       const wcols = getWCols();
       if (Array.isArray(wcols)) {
         const _a = wcols.findIndex((c) => c.name === a.name),
@@ -40,14 +40,14 @@ export const prepareColsForRender = (
           c.nested?.columns.filter(
             (nc) =>
               nc.show &&
-              nc.computedConfig?.funcDef.outType &&
-              isNumericColumn(nc.computedConfig.funcDef.outType),
+              nc.computedConfig &&
+              isNumericColumn(nc.computedConfig),
           ).length === 1
         ) ?
           " jc-end  "
         : " ",
       className: isNumericColumn(c) ? " ta-right " : " ",
-      onResize: async (width) => {
+      onResize: (width: number) => {
         const wcols = getWCols();
         const currentCols = wcols;
 
@@ -62,7 +62,7 @@ export const prepareColsForRender = (
           return { ..._c };
         });
         w.$update({
-          columns: JSON.parse(JSON.stringify(newCols)),
+          columns: JSON.parse(JSON.stringify(newCols)) as typeof newCols,
         });
       },
     }));

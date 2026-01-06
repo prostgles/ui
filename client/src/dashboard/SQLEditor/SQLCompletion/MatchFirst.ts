@@ -1,4 +1,4 @@
-import PSQL_COMMANDS from "../../../../../common/psql_queries.json";
+import PSQL_COMMANDS from "@common/psql_queries.json";
 import {
   getMonaco,
   SUGGESTION_TYPE_DOCS,
@@ -41,7 +41,7 @@ export const MatchFirst = async ({
     return {
       suggestions: ss
         .filter((s) => s.type === "dataType")
-        .map((s) => ({ ...s, sortText: s.dataTypeInfo!.priority! })),
+        .map((s) => ({ ...s, sortText: s.dataTypeInfo!.priority })),
     };
   }
 

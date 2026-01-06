@@ -1,22 +1,22 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useCallback, useMemo } from "react";
 
-import type { DBSSchema } from "../../../../../common/publishUtils";
+import { getMCPToolNameParts } from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
+import { Marked } from "@components/Chat/Marked";
+import { FlexCol, FlexRow } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
+import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 import type { Prgl } from "../../../App";
-import { FlexCol, FlexRow } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
-import Popup from "../../../components/Popup/Popup";
-import { isEmpty } from "../../../utils";
-import { CodeEditor } from "../../CodeEditor/CodeEditor";
+import { isEmpty } from "../../../utils/utils";
 import type { DBS } from "../../Dashboard/DBS";
+import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
+import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
 import {
   useLLMToolsApprover,
   type ApproveRequest,
+  type ToolApproval,
 } from "./useLLMToolsApprover";
-import { getMCPToolNameParts } from "../../../../../common/prostglesMcp";
-import { Marked } from "@components/Chat/Marked";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
-import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
@@ -27,8 +27,7 @@ export type AskLLMToolsProps = {
   sendQuery: (
     msg: DBSSchema["llm_messages"]["message"] | undefined,
     isToolApproval: boolean,
-  ) => Promise<void>;
-  callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
+  ) => void;
 } & Pick<Prgl, "methods" | "connection">;
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
@@ -37,41 +36,44 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   const [mustApprove, setMustApprove] = React.useState<
     {
       onResponse: (mode: "once" | "for-chat" | "deny") => void;
-      input: any;
+      toolUseMessage: ToolUseMessage;
     } & ApproveRequest
   >();
 
-  const onRequestToolUse = useCallback(
-    async (req: ApproveRequest, input: any) => {
-      return new Promise<{ approved: boolean }>((resolve) => {
+  const { db_data_permissions } = activeChat;
+  const requestApproval = useCallback(
+    async (req: ApproveRequest, toolUseMessage: ToolUseMessage) => {
+      return new Promise<ToolApproval>((resolve) => {
         setMustApprove({
-          input,
+          toolUseMessage,
           ...req,
           onResponse: async (toolUseResponse) => {
             if (toolUseResponse !== "deny") {
               const auto_approve = toolUseResponse === "for-chat";
               if (req.type === "mcp") {
+                const { tool_id } = req;
+                if (typeof tool_id !== "number") {
+                  throw new Error("Unexpected. tool_id missing");
+                }
                 await dbs.llm_chats_allowed_mcp_tools.upsert(
-                  { chat_id: activeChatId, tool_id: req.id },
+                  { chat_id: activeChatId, tool_id },
                   {
                     chat_id: activeChatId,
-                    tool_id: req.id,
+                    tool_id,
                     auto_approve,
                   },
                 );
               } else if (req.type === "prostgles-db-methods") {
+                const { server_function_id } = req;
                 await dbs.llm_chats_allowed_functions.upsert(
-                  { chat_id: activeChatId, server_function_id: req.id },
+                  { chat_id: activeChatId, server_function_id },
                   {
                     chat_id: activeChatId,
-                    server_function_id: req.id,
+                    server_function_id,
                     auto_approve,
                   },
                 );
-              } else if (
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                req.type === "prostgles-db"
-              ) {
+              } else if (req.type === "prostgles-db") {
                 await dbs.llm_chats.update(
                   {
                     id: activeChatId,
@@ -89,8 +91,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                           auto_approve,
                         }
                       : {
-                          ...(activeChat.db_data_permissions as Extract<
-                            typeof activeChat.db_data_permissions,
+                          ...(db_data_permissions as Extract<
+                            typeof db_data_permissions,
                             { Mode: "Custom" }
                           >),
                           auto_approve,
@@ -105,6 +107,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
             }
             resolve({
               approved: toolUseResponse !== "deny",
+              mode: toolUseResponse,
             });
           },
         });
@@ -115,7 +118,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       dbs.llm_chats_allowed_functions,
       dbs.llm_chats,
       activeChatId,
-      activeChat,
+      db_data_permissions,
     ],
   );
   const nameParts = useMemo(
@@ -123,11 +126,13 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     [mustApprove],
   );
 
-  useLLMToolsApprover({ ...props, requestApproval: onRequestToolUse });
+  useLLMToolsApprover({ ...props, requestApproval });
 
   if (!mustApprove) return null;
 
-  const { input, description } = mustApprove;
+  const { toolUseMessage, description, name } = mustApprove;
+
+  const ToolUI = ProstglesMCPToolsWithUI[name];
   return (
     <Popup
       title={
@@ -137,6 +142,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       }
       showFullscreenToggle={{}}
       onClose={() => {
+        mustApprove.onResponse("deny");
         setMustApprove(undefined);
       }}
       clickCatchStyle={{ opacity: 1 }}
@@ -196,13 +202,22 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           loadedSuggestions={undefined}
           sqlHandler={undefined}
         />
-        {input && !isEmpty(input) && (
-          <CodeEditorWithSaveButton
-            label="Input"
-            // contentTop={<FlexRow className="p-1 bg-color-1">Input</FlexRow>}
-            value={JSON.stringify(input, null, 2)}
-            language="json"
-          />
+        {!isEmpty(toolUseMessage.input) && (
+          <>
+            {ToolUI ?
+              <ToolUI.component
+                chatId={activeChat.id}
+                message={toolUseMessage}
+                toolUseResult={undefined}
+                workspaceId={undefined}
+              />
+            : <CodeEditorWithSaveButton
+                label="Input"
+                value={JSON.stringify(toolUseMessage.input, null, 2)}
+                language="json"
+              />
+            }
+          </>
         )}
       </FlexCol>
     </Popup>

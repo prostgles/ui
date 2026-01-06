@@ -283,16 +283,19 @@ export const simplifyFilter = (f) => {
     return result;
 };
 export const getSmartGroupFilter = (detailedFilter = [], extraFilters, operand) => {
-    let input = detailedFilter;
-    if (extraFilters === null || extraFilters === void 0 ? void 0 : extraFilters.detailed) {
-        input = [...detailedFilter, ...extraFilters.detailed];
-    }
-    let output = input.map((f) => getFinalFilter(f));
-    if (extraFilters === null || extraFilters === void 0 ? void 0 : extraFilters.filters) {
-        output = output.concat(extraFilters.filters);
-    }
+    var _a, _b;
+    const filterItems = detailedFilter
+        .concat((_a = extraFilters === null || extraFilters === void 0 ? void 0 : extraFilters.detailed) !== null && _a !== void 0 ? _a : [])
+        .map((f) => getFinalFilter(f))
+        .concat((_b = extraFilters === null || extraFilters === void 0 ? void 0 : extraFilters.filters) !== null && _b !== void 0 ? _b : []);
     const result = simplifyFilter({
-        [`$${operand || "and"}`]: output.filter(isDefined),
+        [`$${operand || "and"}`]: filterItems.filter(isDefined),
     });
     return result !== null && result !== void 0 ? result : {};
+};
+export const getTableFilterFromDetailedGroupFilter = (detailedGroupFilter) => {
+    const [operand, filterItems] = "$and" in detailedGroupFilter ?
+        ["and", detailedGroupFilter.$and]
+        : ["or", detailedGroupFilter.$or];
+    return getSmartGroupFilter(filterItems, undefined, operand);
 };

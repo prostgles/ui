@@ -1,6 +1,6 @@
-import { useMemoDeep } from "prostgles-client/dist/react-hooks";
+import { useMemoDeep } from "prostgles-client";
 import React, { useCallback, useMemo } from "react";
-import { isObject } from "../../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import {
   CodeEditor,
   type CodeEditorProps,
@@ -8,7 +8,7 @@ import {
 import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 import type { FormFieldProps } from "./FormField";
 
-type P = Pick<FormFieldProps, "value" | "onChange" | "readOnly"> & {
+type P = Pick<FormFieldProps<"text">, "value" | "onChange" | "readOnly"> & {
   className?: string;
   style?: React.CSSProperties;
   asJSON: AsJSON;

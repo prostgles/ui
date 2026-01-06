@@ -1,11 +1,11 @@
 import React from "react";
-import Select from "../components/Select/Select";
+import { Select } from "@components/Select/Select";
 import type { DBSMethods } from "./Dashboard/DBS";
-import { FlexCol } from "../components/Flex";
+import { FlexCol } from "@components/Flex";
 import { W_SQLEditor } from "./SQLEditor/W_SQLEditor";
 import CodeExample from "./CodeExample";
-import type { SampleSchema } from "../../../common/utils";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import type { SampleSchema } from "@common/utils";
+import { usePromise } from "prostgles-client";
 
 type P = {
   name?: string;

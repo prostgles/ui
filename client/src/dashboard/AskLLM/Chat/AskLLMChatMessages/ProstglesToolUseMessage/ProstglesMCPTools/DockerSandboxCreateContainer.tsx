@@ -1,40 +1,35 @@
-import { findArr } from "../../../../../../../../common/llmUtils";
-import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../../../../../../common/prostglesMcp";
-import { sliceText } from "../../../../../../../../common/utils";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { getEntries, sliceText } from "@common/utils";
+import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FILE_EXTENSION_TO_ICON_INFO } from "@components/FileBrowser/FileBrowser";
 import { FlexCol, FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
 import { MenuList } from "@components/MenuList";
 import {
   MONACO_READONLY_DEFAULT_OPTIONS,
   MonacoEditor,
 } from "@components/MonacoEditor/MonacoEditor";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import {
-  mdiBash,
-  mdiCodeJson,
-  mdiDocker,
-  mdiLanguageGo,
-  mdiLanguageHtml5,
-  mdiLanguageJavascript,
-  mdiLanguageMarkdown,
-  mdiLanguagePython,
-  mdiLanguageRuby,
-  mdiLanguageTypescript,
+  mdiChevronDown,
+  mdiChevronUp,
+  mdiChip,
+  mdiLanConnect,
+  mdiMemory,
   mdiReload,
   mdiText,
+  mdiTimerLockOutline,
 } from "@mdi/js";
-import {
-  getJSONBObjectSchemaValidationError,
-  omitKeys,
-  type JSONB,
-} from "prostgles-types";
-import React, { useMemo, useState } from "react";
-import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
+import { omitKeys, type JSONB } from "prostgles-types";
+import React, { useState } from "react";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
-import { useAlert } from "@components/AlertProvider";
-import ErrorComponent from "@components/ErrorComponent";
-import type { ToolResultMessage } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ToolUseChatMessage";
-import Chip from "@components/Chip";
-import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
+import { PopupSection } from "../../ToolUseChatMessage/PopupSection";
+import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
+import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["schema"]["type"]
@@ -62,7 +57,13 @@ export const DockerSandboxCreateContainer = ({
       ...editedFiles,
     },
   };
-  const { resultObj } = useToolUseResultData(toolUseResult);
+
+  const schema =
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["docker-sandbox"]["create_container"][
+      "outputSchema"
+    ];
+  const resultObj = useTypedToolUseResultData(toolUseResult, schema);
+  const [showLogs, setShowLogs] = useState(Boolean(resultObj?.log.length));
   const [activeFilePath, setActiveFilePath] = useState(
     Object.keys(data.files)[0],
   );
@@ -74,179 +75,179 @@ export const DockerSandboxCreateContainer = ({
   } = usePrgl();
 
   return (
-    <FlexCol className="DockerSandboxCreateContainer b b-color ai-start gap-0 f-1">
-      <FlexRow className="bg-color-1 p-p5 ws-nowrap min-w-0 max-w-600 bb b-color w-full max-w-full">
-        <div
-          className="text-ellipsis min-w-0 ws-nowrap f-1 ta-start"
-          title={`${resultObj?.command ?? ""}\n\n${JSON.stringify(omitKeys(data, ["files"]))}`}
-        >
-          {sliceText(resultObj?.command, 100) ??
-            "Docker Sandbox Create Container"}
-        </div>
-        <Chip label="Network mode">{data.networkMode ?? "none"}</Chip>
-        <Chip label="Duration">
-          {getMillisecondsAsInterval(
-            (resultObj?.buildDuration ?? 0) + (resultObj?.runDuration ?? 0),
-          )}
-        </Chip>
-        <Chip label="Timeout">
-          {getMillisecondsAsInterval(data.timeout ?? 30_000)}
-        </Chip>
-        <CopyToClipboardBtn
-          size="small"
-          content={JSON.stringify(message.input)}
-        />
-        {callMCPServerTool && toolResult && (
-          <Btn
-            variant="faded"
-            color="action"
-            iconPath={mdiReload}
-            size="small"
-            onClickPromise={async () => {
-              const result = await callMCPServerTool(
-                chatId,
-                "docker-sandbox",
-                "create_container",
-                data,
-              );
-              console.log("Re-run result:", result);
-              if (result.isError) {
-                addAlert({
-                  title: "Error re-running tool",
-                  children: <ErrorComponent error={result.content} />,
-                });
-              } else {
-                await dbs.llm_messages.update(
-                  { id: toolResult.toolUseResult.id },
-                  {
-                    message: [
-                      {
-                        type: "tool_result",
-                        content: result.content,
-                        tool_name:
-                          toolUseResult?.tool_name ??
-                          "docker-sandbox--create_container",
-                        tool_use_id: toolUseResult!.tool_use_id,
-                      },
-                    ],
-                  },
-                );
-              }
-            }}
+    <PopupSection
+      titleItems={
+        <>
+          <div
+            className="text-ellipsis min-w-0 ws-nowrap f-1 ta-start"
+            title={`${resultObj?.command ?? ""}\n\n${JSON.stringify(omitKeys(data, ["files"]))}`}
           >
-            Re-run
-          </Btn>
-        )}
-      </FlexRow>
-      <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">
-        <MenuList
-          activeKey={activeFilePath}
-          items={Object.keys(data.files).map((filePath) => {
-            const ext = filePath.toLowerCase().split(".").pop() ?? "txt";
-            return {
-              key: filePath,
-              label: filePath,
-              leftIconPath: extensionToInfo[ext]?.iconPath ?? mdiText,
-              iconStyle: { opacity: 0.7 },
-              onPress: () => setActiveFilePath(filePath),
-            };
-          })}
-          variant="vertical"
-          className="pointer bg-color-1 rounded-none"
-          style={{ alignSelf: "stretch", fontSize: 14 }}
-        />
-        <FlexRow className="o-auto f-1 w-full h-full">
-          {activeFilePath && (
-            <MonacoEditor
-              className="f-1 h-full"
-              language={extensionToInfo[extension]?.label ?? "plaintext"}
-              loadedSuggestions={undefined}
-              value={activeContent}
-              style={{ width: "min(600px, 100%)", minHeight: 200 }}
-              onChange={(newValue) => {
-                setEditedFiles((prev) => ({
-                  ...prev,
-                  [activeFilePath]: newValue,
-                }));
+            {sliceText(resultObj?.command, 100) ??
+              "Docker Sandbox Create Container"}
+          </div>
+          <ScrollFade className="flex-row gap-1 oy-auto min-w-0 f-1 no-scroll-bar">
+            {data.cpus && (
+              <FlexRow title={"CPUs"} className="gap-p25 pointer">
+                <Icon path={mdiChip} />
+                <div>{data.cpus}</div>
+              </FlexRow>
+            )}
+            {data.memory && (
+              <FlexRow title={"Memory"} className="gap-p25 pointer">
+                <Icon path={mdiMemory} />
+                <div>{data.memory}</div>
+              </FlexRow>
+            )}
+            <FlexRow title={"Timeout"} className="gap-p25 pointer">
+              <Icon path={mdiTimerLockOutline} />
+              <div>
+                {getMillisecondsAsSingleInterval(data.timeout ?? 30_000)}
+              </div>
+            </FlexRow>
+            <FlexRow title={"Network mode"} className="gap-p25 pointer">
+              <Icon path={mdiLanConnect} />
+              <div>{data.networkMode ?? "none"}</div>
+            </FlexRow>
+          </ScrollFade>
+          <CopyToClipboardBtn
+            size="small"
+            content={JSON.stringify(message.input)}
+          />
+          {callMCPServerTool && toolResult && (
+            <Btn
+              variant="faded"
+              color="action"
+              iconPath={mdiReload}
+              size="small"
+              onClickPromise={async () => {
+                const result = await callMCPServerTool(
+                  chatId,
+                  "docker-sandbox",
+                  "create_container",
+                  data,
+                );
+                console.log("Re-run result:", result);
+                if (result.isError) {
+                  addAlert({
+                    title: "Error re-running tool",
+                    children: <ErrorComponent error={result.content} />,
+                  });
+                } else {
+                  await dbs.llm_messages.update(
+                    { id: toolResult.toolUseResult.id },
+                    {
+                      message: [
+                        {
+                          type: "tool_result",
+                          content: result.content,
+                          tool_name:
+                            toolUseResult?.tool_name ??
+                            "docker-sandbox--create_container",
+                          tool_use_id: toolUseResult!.tool_use_id,
+                        },
+                      ],
+                    },
+                  );
+                }
               }}
-              options={monacoOptions}
-            />
+            >
+              Re-run
+            </Btn>
+          )}
+        </>
+      }
+    >
+      <FlexCol className="DockerSandboxCreateContainer b b-color ai-start gap-0 f-1">
+        <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">
+          <MenuList
+            activeKey={activeFilePath}
+            items={Object.keys(data.files).map((filePath) => {
+              const ext = filePath.toLowerCase().split(".").pop() ?? "txt";
+              return {
+                key: filePath,
+                label: filePath,
+                leftIconPath:
+                  FILE_EXTENSION_TO_ICON_INFO[ext]?.iconPath ?? mdiText,
+                iconStyle: { opacity: 0.7 },
+                onPress: () => setActiveFilePath(filePath),
+              };
+            })}
+            variant="vertical"
+            className="pointer bg-color-1 rounded-none"
+            style={{ alignSelf: "stretch", fontSize: 14 }}
+          />
+          <FlexRow className="o-auto f-1 w-full h-full">
+            {activeFilePath && (
+              <MonacoEditor
+                className="f-1 h-full"
+                language={
+                  FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext"
+                }
+                loadedSuggestions={undefined}
+                value={activeContent}
+                style={{ width: "min(600px, 100%)", minHeight: 200 }}
+                onChange={(newValue) => {
+                  setEditedFiles((prev) => ({
+                    ...prev,
+                    [activeFilePath]: newValue,
+                  }));
+                }}
+                options={monacoOptions}
+              />
+            )}
+          </FlexRow>
+        </FlexRow>
+        <FlexRow className="bt b-color bg-color-2 w-full ta-start">
+          <Btn
+            size="small"
+            title="Toggle"
+            iconPosition="right"
+            iconPath={showLogs ? mdiChevronDown : mdiChevronUp}
+            onClick={() => setShowLogs(!showLogs)}
+          >
+            Logs
+          </Btn>
+          {resultObj && (
+            <Chip label="Duration">
+              {getMillisecondsAsSingleInterval(
+                resultObj.buildDuration + resultObj.runDuration,
+              )}
+            </Chip>
           )}
         </FlexRow>
-      </FlexRow>
-      <div className="bt b-color p-p5 bg-color-2 w-full ta-start">Logs</div>
-      <MonacoEditor
-        key={"logs"}
-        language="text"
-        className="f-p5"
-        data-command="DockerSandboxCreateContainer.Logs"
-        style={{ width: "100%", minHeight: 100 }}
-        value={resultObj?.log.map((l) => l.text).join("") ?? ""}
-        loadedSuggestions={undefined}
-        options={MONACO_READONLY_DEFAULT_OPTIONS}
-      />
-    </FlexCol>
+        {showLogs && (
+          <MonacoEditor
+            key={"logs"}
+            language="text"
+            className="f-p5"
+            data-command="DockerSandboxCreateContainer.Logs"
+            style={{ width: "100%", minHeight: 100 }}
+            value={resultObj?.log.map((l) => l.text).join("") ?? ""}
+            loadedSuggestions={undefined}
+            options={MONACO_READONLY_DEFAULT_OPTIONS}
+          />
+        )}
+      </FlexCol>
+    </PopupSection>
   );
 };
 
-const useToolUseResultData = (toolUseResult: ToolResultMessage | undefined) => {
-  const resultObj = useMemo(() => {
-    try {
-      if (toolUseResult && !toolUseResult.is_error) {
-        const { content } = toolUseResult;
-        const stringContent =
-          typeof content === "string" ? content : (
-            findArr(content, { type: "text" } as const)?.text
-          );
-        if (!stringContent) return undefined;
-        const parseResult = getJSONBObjectSchemaValidationError(
-          PROSTGLES_MCP_SERVERS_AND_TOOLS["docker-sandbox"]["create_container"][
-            "outputSchema"
-          ]["type"],
-          JSON.parse(stringContent).result,
-          "DockerSandboxCreateContainer output",
-        );
-        return parseResult.data;
-      }
-    } catch (error) {
-      console.error("Error parsing tool use result content:", error);
-    }
-    return undefined;
-  }, [toolUseResult]);
-
-  return { resultObj };
-};
-
-const extensionToInfo: Record<string, { label: string; iconPath?: string }> = {
-  ts: { iconPath: mdiLanguageTypescript, label: "typescript" },
-  js: { iconPath: mdiLanguageJavascript, label: "javascript" },
-  py: { iconPath: mdiLanguagePython, label: "python" },
-  rb: { iconPath: mdiLanguageRuby, label: "ruby" },
-  go: { iconPath: mdiLanguageGo, label: "go" },
-  sh: { iconPath: mdiBash, label: "shell" },
-  dockerfile: { iconPath: mdiDocker, label: "dockerfile" },
-  txt: { label: "plaintext" },
-  json: { iconPath: mdiCodeJson, label: "json" },
-  yaml: { label: "yaml" },
-  css: { label: "css" },
-  html: { label: "html", iconPath: mdiLanguageHtml5 },
-  md: { iconPath: mdiLanguageMarkdown, label: "markdown" },
-  sql: { label: "sql" },
-  Dockerfile: { iconPath: mdiDocker, label: "dockerfile" },
-};
-
-const getMillisecondsAsInterval = (ms: number) => {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
+const getMillisecondsAsSingleInterval = (ms: number) => {
+  const seconds = ms / 1000;
+  const minutes = ms / 60_000;
+  const hours = ms / (60 * 60_000);
   const result = {
+    s: seconds,
+    m: minutes,
     h: hours,
-    m: minutes % 60,
-    s: seconds % 60,
-    ms: ms % 1000,
   };
-  return Object.entries(result)
-    .filter(([n, v]) => v)
-    .map(([n, v]) => `${v}${n}`)
-    .join(" ");
+
+  const entries = getEntries(result);
+
+  return (
+    entries
+      .filter(([_n, v]) => v >= 1)
+      .map(([n, v]) => `${v}${n}`)
+      .at(-1) || `${seconds}s`
+  );
 };

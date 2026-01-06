@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
-import { useLLMChatMessages } from "./AskLLMChatMessages/useLLMChatMessages";
+import { useLLMChatMessages } from "./AskLLMChatMessages/hooks/useLLMChatMessages";
 
 export type UseLLMChatProps = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId" | "db"> & {
@@ -25,6 +25,7 @@ export const useLLMChat = (props: UseLLMChatProps) => {
     select: { "*": 1, created_ago: { $ageNow: ["created"] } },
     orderBy: { created: -1 },
   });
+
   const latestChat = latestChats?.[0];
   /**
    * Always show the selected chat if it exists otherwise show latest
@@ -74,7 +75,7 @@ export const useLLMChat = (props: UseLLMChatProps) => {
 
   useEffectDeep(() => {
     if (latestChats && !latestChats.length && preferredPromptId) {
-      createNewChat(preferredPromptId, true);
+      void createNewChat(preferredPromptId, true);
     }
   }, [latestChats, preferredPromptId, defaultCredential]);
 

@@ -1,24 +1,26 @@
-import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
-import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
-import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import { getKeys } from "prostgles-types";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import { isDefined } from "../../../common/filterUtils";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { isDefined } from "@common/filterUtils";
 import {
   getMagicLinkEmailFromTemplate,
   getVerificationEmailFromTemplate,
   MOCK_SMTP_HOST,
-} from "../../../common/OAuthUtils";
+} from "@common/OAuthUtils";
+import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
+import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
+import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
+import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import { getKeys, type FilterItem } from "prostgles-types";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
 import { checkClientIP } from "../authConfig/sessionUtils";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
 import { getPublishLLM } from "./getPublishLLM";
+import type { DBSSchema } from "@common/publishUtils";
 
-export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
-  params,
-) => {
+export const publish: Publish<
+  DBGeneratedSchema,
+  SessionUser<DBSSchema["users"]>
+> = async (params) => {
   const { dbo: db, user, db: _db, clientReq } = params;
 
   if (!user || !user.id) {
@@ -170,14 +172,14 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
         fields: { id: 0 },
         forcedData,
         postValidate: ({ row }) => {
-          if (row.type !== "s3") {
-            throw "Only s3 is supported";
+          if (row.type !== "AWS" && !row.endpoint_url) {
+            throw "Endpoint URL is required for non-AWS credentials";
           }
         },
       },
       update: "*",
     },
-    ...getPublishLLM(user_id, isAdmin, accessRules),
+    ...getPublishLLM(user_id, isAdmin, accessRules, db),
     credential_types: isAdmin && { select: "*" },
     access_control: isAdmin ? "*" : undefined, // { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
     database_configs:
@@ -199,8 +201,8 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
                   $existsJoined: {
                     "database_configs.access_control.access_control_user_types":
                       userTypeFilter["access_control_user_types"],
-                  } as any,
-                },
+                  },
+                } as FilterItem,
                 { $existsJoined: { access_control_connections: {} } },
               ],
             },
@@ -211,6 +213,7 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
           url_path: 1,
           table_options: 1,
           db_schema_filter: 1,
+          display_options: 1,
         },
         validate: async ({ update, dbx, filter }) => {
           const row = await dbx.connections.findOne(filter);
@@ -399,6 +402,20 @@ export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
         },
       },
     },
+    services:
+      isAdmin ? "*" : (
+        {
+          select: {
+            fields: {
+              name: 1,
+              status: 1,
+              icon: 1,
+              label: 1,
+              description: 1,
+            },
+          },
+        }
+      ),
   };
 
   const curTables = Object.keys(dashboardTables);

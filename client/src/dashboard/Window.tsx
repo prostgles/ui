@@ -10,10 +10,10 @@ import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/Synced
 import type { ReactNode } from "react";
 import React from "react";
 import ReactDOM from "react-dom";
-import Btn from "../components/Btn";
-import { ErrorTrap } from "../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../components/Flex";
-import Popup from "../components/Popup/Popup";
+import Btn from "@components/Btn";
+import { ErrorTrap } from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
 import { t } from "../i18n/i18nUtils";
 import type { WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
 import type { DeepPartial } from "./RTComp";

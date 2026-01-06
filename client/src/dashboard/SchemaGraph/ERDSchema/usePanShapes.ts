@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { quickClone } from "../../../utils";
+import { quickClone } from "../../../utils/utils";
 import type { Rectangle } from "../../Charts/CanvasChart";
 import type { ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { setPan, type PanEvent } from "../../setPan";

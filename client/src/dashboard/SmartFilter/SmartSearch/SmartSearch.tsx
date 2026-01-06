@@ -1,23 +1,23 @@
 import React from "react";
 import "./SmartSearch.css";
 
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import { isObject } from "prostgles-types";
-import type { SmartGroupFilter } from "@common/filterUtils";
+import type { DetailedFilter } from "@common/filterUtils";
 import ErrorComponent from "@components/ErrorComponent";
 import type {
   SearchListItem,
   SearchListProps,
 } from "@components/SearchList/SearchList";
 import { SearchList } from "@components/SearchList/SearchList";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
+import { isObject } from "prostgles-types";
 import type { DashboardState } from "../../Dashboard/Dashboard";
 import RTComp from "../../RTComp";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
 import { onSearchItems } from "./onSearchItems";
 
 export type SmartSearchOnChangeArgs = {
-  filter: SmartGroupFilter;
+  filter: DetailedFilter[];
   /**
    * Full column value
    */
@@ -41,7 +41,7 @@ type P = {
   selectedColumns?: ColumnConfig[];
   onChange?: (args?: SmartSearchOnChangeArgs) => void; //   source: "row" | "enter"
   defaultValue?: string;
-  detailedFilter?: SmartGroupFilter;
+  detailedFilter?: DetailedFilter[];
   className?: string;
   style?: React.CSSProperties;
   label?: string;
@@ -105,8 +105,8 @@ export class SmartSearch extends RTComp<P, S> {
       return [
         {
           name: column.name,
-          tsDataType: column.computedConfig.funcDef.outType.tsDataType,
-          udt_name: column.computedConfig.funcDef.outType.udt_name,
+          tsDataType: column.computedConfig.tsDataType,
+          udt_name: column.computedConfig.udt_name,
           is_pkey: false,
         },
       ];

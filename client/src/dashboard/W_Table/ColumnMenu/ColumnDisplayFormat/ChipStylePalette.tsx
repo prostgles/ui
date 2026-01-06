@@ -1,9 +1,13 @@
 import React from "react";
-import { FlexRowWrap } from "../../../../components/Flex";
+import { FlexRowWrap } from "@components/Flex";
 import { StyledCell } from "../../tableUtils/StyledTableColumn";
 
 type ChipStylePaletteProps = {
-  onChange: (chipStyle: (typeof chipColors)[number]) => void;
+  onChange: (chipStyle: {
+    color: string;
+    borderColor: string | undefined;
+    textColor: string;
+  }) => void;
 };
 
 export const chipColors = [

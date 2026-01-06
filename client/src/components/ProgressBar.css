@@ -1,4 +1,4 @@
-@keyframes indeterminateAnimation {
+/* @keyframes indeterminateTranslateX {
   0% {
     background-position-x: 0px;
   }
@@ -7,5 +7,23 @@
   }
   100% {
     background-position-x: 200px;
+  }
+} */
+
+@keyframes indeterminateTranslateX {
+  0% {
+    transform: translateX(-150%);
+  }
+  25% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(-50%);
+  }
+  75% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(200%);
   }
 }

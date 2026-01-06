@@ -1,9 +1,9 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { PG_COLUMN_UDT_DATA_TYPE } from "prostgles-types";
 import React, { useState } from "react";
-import { FlexCol } from "../../components/Flex";
-import { SearchList } from "../../components/SearchList/SearchList";
-import Btn from "../../components/Btn";
+import { FlexCol } from "@components/Flex";
+import { SearchList } from "@components/SearchList/SearchList";
+import Btn from "@components/Btn";
 
 export type SuggestedColumnDataType = {
   table_schema: string;

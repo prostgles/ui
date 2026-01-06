@@ -1,9 +1,9 @@
 import React from "react";
 import type { ParsedFieldConfig, SmartCardProps } from "./SmartCard";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { getSmartCardColumns } from "./getSmartCardColumns";
 import { getDefaultFieldConfig, parseFieldConfigs } from "./parseFieldConfigs";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 
 export const useFieldConfigParser = (props: SmartCardProps) => {
   const {

@@ -2,10 +2,10 @@ import { mdiAlertOutline, mdiPlus } from "@mdi/js";
 import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 
+import Loading from "@components/Loader/Loading";
+import type { TableColumn, TableProps } from "@components/Table/Table";
+import { PAGE_SIZES, Table, closest } from "@components/Table/Table";
 import React from "react";
-import Loading from "../../components/Loader/Loading";
-import type { TableColumn, TableProps } from "../../components/Table/Table";
-import { PAGE_SIZES, Table, closest } from "../../components/Table/Table";
 import type {
   OnAddChart,
   Query,
@@ -18,10 +18,10 @@ import "./ProstglesTable.css";
 import type { DeltaOf, DeltaOfData } from "../RTComp";
 import RTComp from "../RTComp";
 
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
 import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
 import type {
   ColumnConfig,
   ColumnSort,
@@ -29,14 +29,15 @@ import type {
 } from "./ColumnMenu/ColumnMenu";
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
+import type { DetailedFilterBase } from "@common/filterUtils";
+import { matchObj } from "@common/utils";
+import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
+import { FlexCol } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import type { PaginationProps } from "@components/Table/Pagination";
 import { isDefined, isEqual, pickKeys } from "prostgles-types";
-import type { DetailedFilterBase } from "../../../../common/filterUtils";
-import { matchObj } from "../../../../common/utils";
 import type { Command } from "../../Testing";
 import { createReactiveState } from "../../appUtils";
-import { ClickCatchOverlayZIndex } from "../../components/ClickCatchOverlay";
-import { Icon } from "../../components/Icon/Icon";
-import type { PaginationProps } from "../../components/Table/Pagination";
 import { t } from "../../i18n/i18nUtils";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
@@ -45,6 +46,7 @@ import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import Window from "../Window";
 import { CardView } from "./CardView/CardView";
 import { NodeCountChecker } from "./NodeCountChecker";
+import { QuickFilterGroupsControl } from "./QuickFilterGroupsControl";
 import type { RowPanelProps } from "./RowCard";
 import { RowCard } from "./RowCard";
 import { W_TableMenu } from "./TableMenu/W_TableMenu";
@@ -56,24 +58,17 @@ import type {
   OnClickEditRow,
   RowSiblingData,
 } from "./tableUtils/getEditColumn";
+import { getFullColumnConfig } from "./tableUtils/getFullColumnConfig";
 import { getTableCols } from "./tableUtils/getTableCols";
 import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
-import {
-  getFullColumnConfig,
-  getSort,
-  getSortColumn,
-  updateWCols,
-} from "./tableUtils/tableUtils";
-import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
-import Select from "@components/Select/Select";
-import { QuickFilterGroupsControl } from "./QuickFilterGroupsControl";
+import { getSort, getSortColumn, updateWCols } from "./tableUtils/tableUtils";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
   childWindow: React.ReactNode | undefined;
-  onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => any | void;
+  onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => void;
   onClickRow?: TableProps<ColumnSort>["onRowClick"];
   filter?: any;
   joinFilter?: AnyObject;
@@ -91,6 +86,9 @@ export type ActiveRow = {
     min: Date;
     max: Date;
     center: Date;
+  };
+  barChart?: {
+    values: any[];
   };
 };
 
@@ -128,7 +126,7 @@ export type ProstglesColumn = TableColumn & { computed?: boolean } & Pick<
 export type W_TableState = {
   rowCount: number;
   rowsLoaded: number;
-  table?: (TableProps<ColumnSort> & Query) | any;
+  table?: TableProps<ColumnSort> & Query;
   sort?: ColumnSortSQL[];
   loading: boolean;
 
@@ -221,7 +219,7 @@ export default class W_Table extends RTComp<
 
   calculatedColWidths = false;
 
-  async onMount() {
+  onMount() {
     const { w } = this.props;
 
     if (!Array.isArray(w.filter)) {
@@ -245,13 +243,13 @@ export default class W_Table extends RTComp<
   static getTableDataRequestSignature(
     args:
       | {
-          select?: AnyObject | any;
-          filter?: AnyObject | any;
-          having?: AnyObject | any;
+          select?: any;
+          filter?: AnyObject;
+          having?: AnyObject;
           barchartVals?: AnyObject;
           joinFilter?: AnyObject;
           externalFilters?: any;
-          orderBy?: AnyObject | any;
+          orderBy?: any;
           limit?: number | null;
           offset?: number;
         }
@@ -301,6 +299,7 @@ export default class W_Table extends RTComp<
     dd: DeltaOfData<ProstglesTableD>,
   ) => {
     const delta = { ...dp, ...ds, ...dd };
+
     const { workspace } = this.props;
     const { db } = this.props.prgl;
     const { w } = this.d;
@@ -507,7 +506,7 @@ export default class W_Table extends RTComp<
       .map((c) => c.name);
     const columns = this.d.w?.columns
       ?.slice(0)
-      .sort((a, b) => nIdxes.indexOf(a.name) - nIdxes.indexOf(b.name));
+      .toSorted((a, b) => nIdxes.indexOf(a.name) - nIdxes.indexOf(b.name));
     updateWCols(w, columns);
   };
 
@@ -528,7 +527,7 @@ export default class W_Table extends RTComp<
         className=" p-2 flex-row ai-center text-danger"
         data-command={"W_Table.TableNotFound" satisfies Command}
       >
-        <Icon path={mdiAlertOutline} size={1} className="mr-p5 " />
+        <Icon path={mdiAlertOutline} className="mr-p5 " />
         Table {JSON.stringify(tableName)} not found
       </div>
     );
@@ -546,6 +545,7 @@ export default class W_Table extends RTComp<
       workspace,
     } = this.props;
     const { tables, db, dbs } = prgl;
+
     const tableHandler = db[tableName];
     if (!w) {
       if (tableName && !tableHandler) {
@@ -553,6 +553,7 @@ export default class W_Table extends RTComp<
       }
       return null;
     }
+
     const activeRowStyle: React.CSSProperties =
       this.activeRowStr === JSON.stringify(joinFilter || {}) ?
         { background: activeRowColor }
@@ -605,7 +606,8 @@ export default class W_Table extends RTComp<
       const cols = getTableCols({
         data: this.state.rows,
         windowWidth: this.ref?.getBoundingClientRect().width,
-        prgl: this.props.prgl,
+        tables,
+        db,
         w: this.d.w,
         onClickEditRow: this.onClickEditRow,
         barchartVals: this.state.barchartVals,
@@ -685,9 +687,9 @@ export default class W_Table extends RTComp<
                     },
                   }}
                 />
-                <QuickFilterGroupsControl {...this.props} />
               </FlexCol>
             )}
+            <QuickFilterGroupsControl {...this.props} />
 
             <W_Table_Content
               key={"W_Table_Content"}
@@ -773,7 +775,7 @@ export default class W_Table extends RTComp<
                           /** Below the filter search clickcatch */
                           zIndex: ClickCatchOverlayZIndex - 1,
                         }}
-                        onClick={async () => {
+                        onClick={() => {
                           this.rowPanelRState.set({ type: "insert" });
                         }}
                       />

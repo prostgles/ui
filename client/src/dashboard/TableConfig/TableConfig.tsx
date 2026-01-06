@@ -1,9 +1,9 @@
 import React from "react";
 import type { Prgl } from "../../App";
-import { FlexCol } from "../../components/Flex";
+import { FlexCol } from "@components/Flex";
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { ProcessLogs } from "./ProcessLogs";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import { SwitchToggle } from "@components/SwitchToggle";
 
 type P = {
   prgl: Prgl;

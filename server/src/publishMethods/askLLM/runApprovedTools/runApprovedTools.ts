@@ -1,19 +1,20 @@
 import {
+  getMCPToolNameParts,
+  PROSTGLES_MCP_SERVERS_AND_TOOLS,
+  type AllowedChatTool,
+} from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
+import {
   getJSONBObjectSchemaValidationError,
   getSerialisableError,
 } from "prostgles-types";
-import {
-  getMCPToolNameParts,
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../../../common/prostglesMcp";
-import type { DBSSchema } from "../../../../../common/publishUtils";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import {
   getAllToolNames,
-  type getLLMAllowedChatTools,
-  type MCPToolSchemaWithApproveInfo,
-} from "../getLLMTools";
+  type getLLMToolsAllowedInThisChat,
+} from "../getLLMToolsAllowedInThisChat";
 import {
   getClientDBHandlersForChat,
   runProstglesDBTool,
@@ -23,15 +24,15 @@ import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUse
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
   | (ToolUseMessage & {
-      tool: MCPToolSchemaWithApproveInfo;
+      tool: AllowedChatTool;
       state: "approved";
     })
   | (ToolUseMessage & {
-      tool: MCPToolSchemaWithApproveInfo;
+      tool: AllowedChatTool;
       state: "needs-approval";
     })
   | (ToolUseMessage & {
-      tool: MCPToolSchemaWithApproveInfo;
+      tool: AllowedChatTool;
       state: "denied";
     })
   | (ToolUseMessage & {
@@ -41,11 +42,13 @@ type ToolUseMessageWithInfo =
 type ToolResultMessage = Extract<LLMMessage[number], { type: "tool_result" }>;
 
 export const runApprovedTools = async (
-  allowedTools: Awaited<ReturnType<typeof getLLMAllowedChatTools>>,
+  allowedTools: Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>>,
   args: Omit<AskLLMArgs, "userMessage" | "type">,
   chat: DBSSchema["llm_chats"],
   toolUseRequestMessages: ToolUseMessage[],
   userApprovals: LLMMessage | undefined,
+  aborter: AbortController,
+  clientReq: AuthClientRequest,
 ) => {
   const { user, chatId, dbs } = args;
   if (!toolUseRequestMessages.length) {
@@ -139,11 +142,13 @@ export const runApprovedTools = async (
       }
 
       if (tool.type === "prostgles-ui") {
-        if (tool.tool_name === "suggest_tools_and_prompt") {
+        const needsValidation =
+          tool.tool_name === "suggest_tools_and_prompt" ||
+          tool.tool_name === "suggest_agent_workflow";
+        if (needsValidation) {
           const validation = getJSONBObjectSchemaValidationError(
-            PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
-              "suggest_tools_and_prompt"
-            ].schema.type,
+            PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][tool.tool_name]
+              .schema.type,
             toolUseRequest.input,
             "",
           );
@@ -154,7 +159,12 @@ export const runApprovedTools = async (
             );
           }
         }
+
         return asResponse("Done");
+      }
+
+      if (aborter.signal.aborted) {
+        return asResponse(`Operation was aborted by user.`, true);
       }
       if (tool.type === "mcp") {
         const toolNameParts = getMCPToolNameParts(toolUseRequest.name);
@@ -173,6 +183,7 @@ export const runApprovedTools = async (
           toolName,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           toolUseRequest.input,
+          clientReq,
         ).catch((e) => ({
           content: e instanceof Error ? e.message : JSON.stringify(e),
           isError: true,
@@ -231,6 +242,7 @@ export const runApprovedTools = async (
       ...args,
       type: denied ? "tool-use-result-with-denied" : "tool-use-result",
       userMessage: toolResults,
+      aborter,
     });
   }
 };

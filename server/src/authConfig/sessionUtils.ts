@@ -1,12 +1,12 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
+import { DAY, ROUTES, YEAR } from "@common/utils";
 import * as crypto from "crypto";
 import type { Request } from "express";
 import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler";
 import type { BasicSession } from "prostgles-server/dist/Auth/AuthTypes";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { DAY, ROUTES, YEAR } from "../../../common/utils";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
 import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
@@ -29,7 +29,7 @@ export const createSessionSecret = () => {
 };
 
 export const makeSession = async (
-  user: Users | undefined,
+  user: Pick<Users, "id" | "type"> | undefined,
   client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & {
     sid?: string;
   },

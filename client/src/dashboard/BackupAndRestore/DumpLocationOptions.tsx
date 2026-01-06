@@ -1,9 +1,9 @@
+import type { PGDumpParams } from "@common/utils";
+import { DESTINATIONS } from "@common/utils";
+import { Select } from "@components/Select/Select";
 import React from "react";
-import type { PGDumpParams } from "../../../../common/utils";
-import { DESTINATIONS } from "../../../../common/utils";
-import Select from "../../components/Select/Select";
-import { CredentialSelector } from "./CredentialSelector";
-import type { DumpOptionsProps } from "./DumpOptions";
+import { CloudStorageCredentialSelector } from "./CloudStorageCredentialSelector";
+import type { DumpOptionsProps } from "./PGDumpOptions";
 
 type P = Pick<DumpOptionsProps, "dbs" | "dbsTables" | "dbsMethods"> & {
   currOpts: PGDumpParams;
@@ -26,13 +26,15 @@ export const DumpLocationOptions = ({
         className="mr-1"
         label="Destination"
         fullOptions={DESTINATIONS}
+        data-command="PGDumpOptions.destination"
         value={destination}
+        variant="button-group"
         onChange={(destination) => {
           onChangeCurrOpts({ destination, credentialID });
         }}
       />
       {destination === "Cloud" && (
-        <CredentialSelector
+        <CloudStorageCredentialSelector
           dbs={dbs}
           dbsTables={dbsTables}
           dbsMethods={dbsMethods}

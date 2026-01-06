@@ -4,7 +4,7 @@ import type {
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 
 const getUpdatedColumnsConfig = (
   table: DBSchemaTablesWJoins[number],
@@ -110,7 +110,7 @@ export const getAndFixWColumnsConfig = async (
     })
     .filter(isDefined);
   if (update) {
-    await w.$update!({ columns });
+    await w.$update({ columns });
   }
   return columns;
 };

@@ -2,14 +2,14 @@ import { mdiFileCogOutline, mdiLink } from "@mdi/js";
 import { type FileColumnConfig, isEmpty } from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import React, { useState } from "react";
-import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import Popup from "../../components/Popup/Popup";
-import { SearchList } from "../../components/SearchList/SearchList";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import Popup from "@components/Popup/Popup";
+import { SearchList } from "@components/SearchList/SearchList";
 import { type CommonWindowProps } from "../Dashboard/Dashboard";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
-import { quickClone } from "../../utils";
+import { quickClone } from "../../utils/utils";
 
 export type FileTableConfigReferences = Record<
   string,
@@ -78,8 +78,8 @@ export const FileColumnConfigControls = (
           onClose={() => setEditColumn(undefined)}
           positioning="center"
           persistInitialSize={true}
-          contentClassName="pl-2 p-1 pb-2"
-          contentStyle={{ paddingBottom: "100px" }}
+          clickCatchStyle={{ opacity: 1 }}
+          contentClassName="p-1 "
           footerButtons={[
             {
               label: "Done",
@@ -127,7 +127,7 @@ export const FileColumnConfigControls = (
                 </Btn>
               : <Btn
                   color="danger"
-                  onClickPromise={async () => {
+                  onClickPromise={() => {
                     const newConfig = quickClone({ ...refsConfig });
                     delete newConfig[linkedTable.name]!.referenceColumns[
                       linkedTable.columnName

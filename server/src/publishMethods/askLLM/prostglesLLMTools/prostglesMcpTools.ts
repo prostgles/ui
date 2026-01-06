@@ -38,6 +38,7 @@ export const executeSQLToolWithCommit = {
   ),
 };
 
+const taskToolName = "suggest_tools_and_prompt" as const;
 export const getAddTaskTools = ({
   availableDBTools = [],
   availableMCPTools = [],
@@ -45,15 +46,16 @@ export const getAddTaskTools = ({
   availableMCPTools?: { name: string; description: string }[];
   availableDBTools?: { name: string; description: string }[];
 } = {}) => ({
-  name: getProstglesMCPFullToolName("prostgles-ui", "suggest_tools_and_prompt"),
+  name: getProstglesMCPFullToolName("prostgles-ui", taskToolName),
   description: fixIndent(`
-    This tool suggests tools and generates a prompt based on the provided task description.
-    The input will be shown to the user, and they can select which tools to use.
+    This tool will update the user chat context with suggests tools and prompt.
+    The input will be shown to the user for confirmation.
+    
     Available MCP tools: 
-    ${availableMCPTools.map((t) => `  - ${t.name}: ${t.description}`).join("\n")}
+    ${!availableMCPTools.length ? "None" : availableMCPTools.map((t) => `  - ${t.name}: ${t.description}`).join("\n")}
 
     Available database tools:
-    ${availableDBTools.map((t) => `  - ${t.name}: ${t.description}`).join("\n")}
+    ${!availableDBTools.length ? "None" : availableDBTools.map((t) => `  - ${t.name}: ${t.description}`).join("\n")}
 
     If access to the database is needed, an access type can be specified. 
     Use the most restrictive access type that is needed to complete the task (type custom with specific tables and allowed commands).
@@ -61,9 +63,7 @@ export const getAddTaskTools = ({
     This tool input_schema must satisfy this typescript type:
     \`\`\`typescript
     ${getJSONBSchemaTSTypes(
-      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
-        "suggest_tools_and_prompt"
-      ].schema,
+      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][taskToolName].schema,
       {},
       undefined,
       [],
@@ -72,14 +72,53 @@ export const getAddTaskTools = ({
   `),
   input_schema: {
     description: getJSONBSchemaTSTypes(
-      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
-        "suggest_tools_and_prompt"
-      ].schema,
+      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][taskToolName].schema,
       {},
       undefined,
       [],
     ),
   },
+});
+
+const workflowToolName = "suggest_agent_workflow" as const;
+export const getAddWorkflowTools = ({
+  availableDBTools = [],
+  availableMCPTools = [],
+}: {
+  availableMCPTools?: { name: string; description: string }[];
+  availableDBTools?: { name: string; description: string }[];
+} = {}) => ({
+  name: getProstglesMCPFullToolName("prostgles-ui", workflowToolName),
+  description: fixIndent(`
+    This tool will allow the user to create and start an agent workflow with suggested tools and prompt.
+    The input will be shown to the user for confirmation.
+    
+    ## Available MCP tools: 
+    ${!availableMCPTools.length ? "None" : availableMCPTools.map((t) => JSON.stringify(t.name)).join(", ")}
+
+    ## Available database tools:
+    ${!availableDBTools.length ? "None" : availableDBTools.map((t) => JSON.stringify(t.name)).join(", ")}
+
+    ## Database Access
+    If access to the database is needed, an access type can be specified. 
+    Use the most restrictive access type that is needed to complete the task (type custom with specific tables and allowed commands).
+
+    Provide a json input for this tool that satisfies this typescript type:
+    \`\`\`typescript
+    ${getJSONBSchemaTSTypes(
+      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][workflowToolName].schema,
+      {},
+      undefined,
+      [],
+    )}
+    \`\`\`
+
+    Input tool schema details: 
+    \`\`\`json
+    ${JSON.stringify(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][workflowToolName].schema, null, 2)}
+    \`\`\`
+  `),
+  input_schema: {},
 });
 
 export const suggestDashboardsTool = {
@@ -90,6 +129,7 @@ export const suggestDashboardsTool = {
     "",
     "Using dashboard structure below create workspaces with useful views my current schema.",
     "Return a json of this format: `{ prostglesWorkspaces: WorkspaceInsertModel[] }`",
+    "Do not return more than 3 workspaces, each with no more than 5 views.",
     "",
     "```typescript",
     dashboardTypesContent,

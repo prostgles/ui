@@ -1,27 +1,24 @@
-import React, { useCallback, useMemo } from "react";
-import type { LLMMessage } from "../../../../../common/llmUtils";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import { MINUTE } from "../../../../../common/utils";
+import Btn from "@components/Btn";
+import { Chat } from "@components/Chat/Chat";
+import { FlexCol } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
+import React from "react";
 import type { Prgl } from "../../../App";
-import { useAlert } from "../../../components/AlertProvider";
-import Btn from "../../../components/Btn";
-import { Chat, type ChatProps } from "../../../components/Chat/Chat";
-import { FlexCol } from "../../../components/Flex";
-import Popup from "../../../components/Popup/Popup";
-import { isDefined } from "../../../utils";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
-import { CHAT_WIDTH } from "../AskLLM";
 import { AskLLMChatActionBar } from "../ChatActionBar/AskLLMChatActionBar";
 import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
 import { AskLLMToolApprover } from "../Tools/AskLLMToolApprover";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
+import { useAskLLMChatSend } from "./useAskLLMChatSend";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
+const CHAT_WIDTH = 900;
 
-export type AskLLMChatProps = {
+export type AskLLMChatProps = Pick<
+  Required<Prgl["dbsMethods"]>,
+  "askLLM" | "stopAskLLM"
+> & {
   prgl: Prgl;
-  askLLM: Required<Prgl["dbsMethods"]>["askLLM"];
-  callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
   setupState: LLMSetupStateReady;
   anchorEl: HTMLElement;
   onClose: VoidFunction;
@@ -33,23 +30,14 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   const {
     anchorEl,
     onClose,
-    askLLM,
     prgl,
     setupState,
     workspaceId,
-    callMCPServerTool,
     loadedSuggestions,
+    askLLM,
+    stopAskLLM,
   } = props;
-  const {
-    tables,
-    db,
-    user,
-    connectionId,
-    connection,
-    dbs,
-    dbsTables,
-    methods,
-  } = prgl;
+  const { tables, db, user, connectionId, connection, dbs, methods } = prgl;
   const chatState = useLLMChat({
     ...setupState,
     loadedSuggestions,
@@ -75,59 +63,17 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     activeChat,
   });
   const isAdmin = user?.type === "admin";
-  const { addAlert } = useAlert();
-  const sendQuery = useCallback(
-    async (msg: LLMMessage["message"] | undefined, isToolApproval: boolean) => {
-      if (!msg || !activeChatId) return;
-      /** TODO: move dbSchemaForPrompt to server-side */
-      void askLLM(
-        connectionId,
-        msg,
-        dbSchemaForPrompt,
-        activeChatId,
-        isToolApproval ? "approve-tool-use" : "new-message",
-      ).catch((error) => {
-        const errorText = error?.message || error;
-        const errorTextMessage =
-          typeof errorText === "string" ? errorText : JSON.stringify(errorText);
-
-        addAlert(
-          "Error when when sending AI Assistant query: " + errorTextMessage,
-        );
-      });
-    },
-    [activeChatId, askLLM, connectionId, dbSchemaForPrompt, addAlert],
-  );
-
-  const sendMessage: ChatProps["onSend"] = useCallback(
-    async (text: string | undefined, files) => {
-      const fileMessages = await Promise.all(
-        (files ?? []).map(async (file) => toMediaMessage(file)),
-      );
-      return sendQuery(
-        [
-          text ? ({ type: "text", text } as const) : undefined,
-          ...fileMessages,
-        ].filter(isDefined),
-        false,
-      );
-    },
-    [sendQuery],
-  );
-
-  const chatStyle = useMemo(() => {
-    return {
-      minWidth: `min(${CHAT_WIDTH}px, 100%)`,
-      minHeight: "0",
-    };
-  }, []);
+  const { chatIsLoading, onStopSending, sendMessage, sendQuery } =
+    useAskLLMChatSend({
+      askLLM,
+      stopAskLLM,
+      activeChatId,
+      activeChat,
+      dbSchemaForPrompt,
+    });
 
   /* Prevents flickering when popup is opened */
   if (!messages) return;
-  const status = activeChat?.status;
-  const chatIsLoading =
-    status?.state === "loading" &&
-    new Date(status.since) > new Date(Date.now() - 1 * MINUTE);
   return (
     <Popup
       data-command="AskLLM.popup"
@@ -140,7 +86,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           isFullscreen ?
             {}
           : {
-              // width: `${CHAT_WIDTH}px`,
+              width: `min(100vw, ${CHAT_WIDTH}px)`,
               minWidth: "0",
               maxWidth: `${CHAT_WIDTH}px`,
             },
@@ -149,10 +95,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
         <AskLLMChatHeader
           {...setupState}
           {...chatState}
-          connectionId={connectionId}
-          dbs={dbs}
-          dbsMethods={prgl.dbsMethods}
-          dbsTables={dbsTables}
           chatRootDiv={rootDiv}
         />
       )}
@@ -168,6 +110,10 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       rootChildStyle={{
         flex: 1,
       }}
+      contentStyle={{
+        width: "100%",
+        overflow: "unset",
+      }}
       rootChildClassname="AskLLMChat"
     >
       {activeChat && (
@@ -175,39 +121,35 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           className="min-h-0 f-1"
           style={{
             whiteSpace: "pre-line",
-            maxWidth: `min(100vw, ${CHAT_WIDTH}px)`,
-            width: `${CHAT_WIDTH - 100}px`,
+            /**
+             * Expand to 800px but shrink on smaller screens
+             */
+            minWidth: "min(100%, max(800px, 100%))",
+            width: "100%",
           }}
         >
           <Chat
             style={chatStyle}
             messages={messages}
             disabledInfo={activeChat.disabled_message ?? undefined}
-            allowedMessageTypes={{
-              speech: {
-                audio: true,
-                tts: true,
-              },
-              file: true,
-            }}
+            maxWidth={CHAT_WIDTH}
             onSend={sendMessage}
+            currentlyTypedMessage={activeChat.currently_typed_message}
+            onCurrentlyTypedMessageChange={(currently_typed_message) => {
+              void dbs.llm_chats.update(
+                { id: activeChat.id },
+                { currently_typed_message },
+              );
+            }}
             isLoading={chatIsLoading}
-            onStopSending={
-              status?.state !== "loading" ?
-                undefined
-              : () => {
-                  dbs.llm_chats.update(
-                    { id: activeChatId },
-                    { status: { state: "stopped" } },
-                  );
-                }
-            }
+            onStopSending={onStopSending}
             actionBar={
               isAdmin && (
                 <AskLLMChatActionBar
                   prgl={prgl}
                   activeChat={activeChat}
                   setupState={setupState}
+                  prompt={prompt}
                   dbSchemaForPrompt={dbSchemaForPrompt}
                   llmMessages={llmMessages ?? []}
                 />
@@ -222,7 +164,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               messages={llmMessages ?? []}
               methods={methods}
               sendQuery={sendQuery}
-              callMCPServerTool={callMCPServerTool}
               db={db}
               prompt={prompt}
             />
@@ -243,34 +184,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     </Popup>
   );
 };
-const toBase64 = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-  });
 
-const toMediaMessage = async (
-  file: File,
-): Promise<
-  Extract<
-    DBSSchema["llm_messages"]["message"][number],
-    {
-      source: {
-        type: "base64";
-      };
-    }
-  >
-> => {
-  const base64 = await toBase64(file);
-  const type = file.type.split("/")[0] as "image";
-  return {
-    type,
-    source: {
-      type: "base64",
-      media_type: file.type,
-      data: base64,
-    },
-  };
-};
+const chatStyle = {
+  minWidth: `min(${CHAT_WIDTH}px, 100%)`,
+  minHeight: "0",
+} satisfies React.CSSProperties;

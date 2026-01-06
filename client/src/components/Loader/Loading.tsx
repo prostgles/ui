@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Loading.css";
 import RTComp from "../../dashboard/RTComp";
 import { classOverride, FlexRow } from "../Flex";
-import { tout } from "../../utils";
+import { tout } from "../../utils/utils";
 import { SpinnerV2 } from "./SpinnerV2";
 import { SpinnerV4 } from "./SpinnerV4";
+import { SpinnerV3 } from "./SpinnerV3";
 export const pageReload = async (reason: string) => {
   console.log("pageReload due to: ", reason);
   await tout(200);
@@ -62,7 +63,7 @@ export default class Loading extends RTComp<P, S> {
     const wasShownRecently =
       id !== undefined &&
       loaderIdLastShown[id] &&
-      Date.now() - loaderIdLastShown[id]! < delay;
+      Date.now() - loaderIdLastShown[id] < delay;
     return !delay || wasShownRecently || this.state.ready;
   }
 
@@ -213,6 +214,7 @@ export default class Loading extends RTComp<P, S> {
 */
 
 const Spinner = ({ size }: { size: string; colorAnimation: boolean }) => {
+  // return <SpinnerV3 size={size} />;
   return <SpinnerV4 size={size} />;
   // return <SpinnerV2 size={size} />;
 

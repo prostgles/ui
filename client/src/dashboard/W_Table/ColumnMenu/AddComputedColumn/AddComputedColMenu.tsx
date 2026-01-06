@@ -1,36 +1,39 @@
+import Btn from "@components/Btn";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { Label } from "@components/Label";
+import type { FooterButton } from "@components/Popup/FooterButtons";
+import { FooterButtons } from "@components/Popup/FooterButtons";
+import Popup from "@components/Popup/Popup";
+import { SearchList } from "@components/SearchList/SearchList";
+import { Select } from "@components/Select/Select";
 import { mdiChevronDown, mdiPlus } from "@mdi/js";
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
-import { _PG_date } from "prostgles-types";
-import type { ValidatedColumnInfo } from "prostgles-types/lib";
+import { _PG_date, pickKeys } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../../App";
-import Btn from "../../../../components/Btn";
-import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
-import FormField from "../../../../components/FormField/FormField";
-import { Label } from "../../../../components/Label";
-import { FooterButtons } from "../../../../components/Popup/FooterButtons";
-import type { FooterButton } from "../../../../components/Popup/FooterButtons";
-import Popup from "../../../../components/Popup/Popup";
-import { SearchList } from "../../../../components/SearchList/SearchList";
-import Select from "../../../../components/Select/Select";
-import { isEmpty } from "../../../../utils";
+import { isEmpty } from "../../../../utils/utils";
 import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
 } from "../../../Dashboard/dashboardUtils";
 import RTComp from "../../../RTComp";
+import type { ColumnConfigWInfo } from "../../W_Table";
 import { getTableSelect } from "../../tableUtils/getTableSelect";
 import { updateWCols } from "../../tableUtils/tableUtils";
 import type { ColumnConfig } from "../ColumnMenu";
-import { getColumnListItem } from "../ColumnsMenu";
-import type { FuncDef } from "../FunctionSelector";
-import { CountAllFunc, FunctionSelector } from "../FunctionSelector";
+import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
+import {
+  CountAllFunc,
+  getColumnsAcceptedByFunction,
+  type FuncDef,
+} from "../FunctionSelector/functions";
 import { NEW_COL_POSITIONS } from "../LinkedColumn/LinkedColumnFooter";
 import {
   getNestedColumnTable,
   type NestedColumnOpts,
 } from "../getNestedColumnTable";
-import type { ColumnConfigWInfo } from "../../W_Table";
+import { getColumnListItem } from "../ColumnSelect/getColumnListItem";
 
 const ColTypes = ["Function", "Aggregate Function"] as const;
 
@@ -60,6 +63,9 @@ type AddComputedColMenuS = {
   addTo: (typeof NEW_COL_POSITIONS)[number]["key"];
 };
 
+/**
+ * @deprecated Use QuickAddComputedColumn instead
+ */
 export class AddComputedColMenu extends RTComp<
   AddComputedColMenuP,
   AddComputedColMenuS
@@ -69,7 +75,7 @@ export class AddComputedColMenu extends RTComp<
     addTo: "start",
   };
 
-  onDelta(deltaP?: Partial<AddComputedColMenuP> | undefined): void {
+  onDelta(deltaP?: Partial<AddComputedColMenuP>): void {
     if (deltaP?.selectedColumn && !this.state.column) {
       this.setState({ column: deltaP.selectedColumn });
     }
@@ -139,7 +145,7 @@ export class AddComputedColMenu extends RTComp<
     const { columns } = table;
 
     const allowedColumnsForFunction =
-      (funcDef && getFuncDefColumns(funcDef, columns)) ?? columns;
+      (funcDef && getColumnsAcceptedByFunction(funcDef, columns)) ?? columns;
 
     const isAggNocol =
       funcDef && !funcDef.tsDataTypeCol && !funcDef.udtDataTypeCol;
@@ -151,13 +157,18 @@ export class AddComputedColMenu extends RTComp<
     const hasJoinCols = w.columns?.some((c) => c.nested);
     const content = (
       <>
-        <FlexCol className="AddComputedColMenu gap-2 f-1 min-h-0 mt-1 ai-start max-h-fit">
+        <FlexCol
+          className="AddComputedColMenu gap-2 f-1 min-h-0 ai-start"
+          data-command="AddComputedColMenu"
+          style={{ maxHeight: "600px" }}
+        >
           {!column && !hasJoinCols && (
             <FlexRowWrap>
               <FlexCol className="gap-p25">
                 <Btn
                   variant="faded"
                   color="action"
+                  data-command="AddComputedColMenu.countOfAllRows"
                   onClick={() => {
                     this.setState({
                       funcDef: CountAllFunc,
@@ -342,6 +353,7 @@ export class AddComputedColMenu extends RTComp<
               label="Name"
               type="text"
               className="mt-1"
+              data-command="AddComputedColMenu.name"
               value={name}
               onChange={(name) => {
                 this.setState({ name });
@@ -350,6 +362,7 @@ export class AddComputedColMenu extends RTComp<
             <Select
               label={"Add to"}
               value={addTo}
+              data-command="AddComputedColMenu.addTo"
               fullOptions={NEW_COL_POSITIONS}
               onChange={(addTo) => this.setState({ addTo })}
             />
@@ -364,6 +377,8 @@ export class AddComputedColMenu extends RTComp<
         variant: "filled",
         color: "action",
         iconPath: mdiPlus,
+        className: "ml-auto",
+        "data-command": "AddComputedColMenu.addBtn",
         disabledInfo: canAdd ? undefined : "Some function inputs are missing",
         onClickPromise: async () => {
           if (!name) {
@@ -375,6 +390,15 @@ export class AddComputedColMenu extends RTComp<
               alert("Something went wrong. No function definition found");
               return;
             }
+            const columnInfo =
+              !column ? undefined : columns.find((c) => c.name === column);
+            const { outType } = funcDef;
+            const outInfo = outType === "sameAsInput" ? columnInfo : outType;
+            if (!outInfo) {
+              throw new Error(
+                "Cannot determine output data type for the computed column",
+              );
+            }
             const newComputedCol: ColumnConfig = {
               name: name,
               show: true,
@@ -382,7 +406,7 @@ export class AddComputedColMenu extends RTComp<
               computedConfig: {
                 funcDef,
                 column,
-                ...funcDef.outType,
+                ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
                 args: isEmpty(args) ? undefined : args,
               },
             };
@@ -429,7 +453,7 @@ export class AddComputedColMenu extends RTComp<
         positioning="top-center"
         persistInitialSize={true}
         clickCatchStyle={{ opacity: 1 }}
-        contentClassName="gap-2 p-2 "
+        contentClassName="gap-2 p-1"
         rootChildClassname="f-1"
         footerButtons={footerButtons}
         onClose={onClose}
@@ -439,26 +463,6 @@ export class AddComputedColMenu extends RTComp<
     );
   }
 }
-
-export const getFuncDefColumns = (
-  funcDef: FuncDef,
-  columns: ValidatedColumnInfo[],
-) => {
-  if (funcDef.tsDataTypeCol || funcDef.udtDataTypeCol) {
-    return columns.filter((c) => {
-      if (funcDef.tsDataTypeCol === "any" || funcDef.udtDataTypeCol === "any") {
-        return true;
-      } else if (funcDef.tsDataTypeCol) {
-        return funcDef.tsDataTypeCol.includes(c.tsDataType);
-      } else if (funcDef.udtDataTypeCol) {
-        return funcDef.udtDataTypeCol.includes(c.udt_name);
-      }
-
-      return false;
-    });
-  }
-  return undefined;
-};
 
 /*
 

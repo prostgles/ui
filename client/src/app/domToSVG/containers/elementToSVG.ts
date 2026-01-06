@@ -1,27 +1,28 @@
+import { getEntries } from "@common/utils";
 import { drawShapesOnSVG } from "../../../dashboard/Charts/drawShapes/drawShapesOnSVG";
-import { addOverflowClipPath } from "./addOverflowClipPath";
 import { SVG_NAMESPACE } from "../domToSVG";
 import { getBBoxCode, type SVGScreenshotNodeType } from "../domToThemeAwareSVG";
 import { fontIconToSVG } from "../graphics/fontIconToSVG";
-import { getWhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
 import { addImageFromDataURL, imgToSVG } from "../graphics/imgToSVG";
-import { isElementNode } from "../utils/isElementVisible";
-import { rectangleToSVG } from "./rectangleToSVG";
 import { textToSVG } from "../text/textToSVG";
-import { getEntries } from "@common/utils";
+import { canvasToDataURL } from "../utils/canvasToDataURL";
+import { getAnimationsHandler } from "../utils/copyAnimationStylesToSvg";
+import { getWhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
+import { isElementNode } from "../utils/isElementVisible";
 import { toFixed } from "../utils/toFixed";
-import {
-  cloneAnimations,
-  copyAnimationStyles,
-} from "../graphics/getForeignObject";
+import { addOverflowClipPath } from "./addOverflowClipPath";
+import { rectangleToSVG } from "./rectangleToSVG";
 
 export type SVGContext = {
+  docId: string;
   offsetX: number;
   offsetY: number;
   defs: SVGDefsElement;
   idCounter: number;
   fontFamilies: string[];
   cssDeclarations: Map<string, string>;
+  width: number;
+  height: number;
 };
 export type SVGNodeLayout = {
   x: number;
@@ -36,22 +37,26 @@ export const elementToSVG = async (
   parentSvg: SVGElement | SVGGElement,
   context: SVGContext,
 ) => {
+  /** Ensures bbox calculations are stable */
+
+  const copyAnimations = getAnimationsHandler(element);
+
   const _whatToRender = await getWhatToRenderOnSVG(element, context, parentSvg);
 
   const { elemInfo, ...whatToRender } = _whatToRender;
   const { x, y, width, height, style, isVisible } = elemInfo;
 
-  if (!isVisible) {
+  if (!isVisible && !_whatToRender.mightBeHovered) {
     return whatToRender;
   }
 
   const g = document.createElementNS(SVG_NAMESPACE, "g");
   g._domElement = element;
   g._whatToRender = _whatToRender;
-
-  if (style.opacity && style.opacity !== "1") {
-    g.setAttribute("opacity", style.opacity.toString());
-  }
+  g.setAttribute(
+    "data-selector",
+    [element.nodeName.toLowerCase(), element.className].join("."),
+  );
 
   const roundedPosition = {
     x: Math.round(x),
@@ -69,6 +74,7 @@ export const elementToSVG = async (
       g.setAttribute(key, value);
     }
   });
+
   getEntries({
     ...whatToRender.childAffectingStyles,
   }).forEach(([key, value]) => {
@@ -76,7 +82,15 @@ export const elementToSVG = async (
       g.style[key] = value;
     }
   });
-  rectangleToSVG(g, element, style, elemInfo, whatToRender, bboxCode, context);
+
+  const rectElem = rectangleToSVG(
+    g,
+    element,
+    style,
+    elemInfo,
+    whatToRender,
+    bboxCode,
+  );
 
   if (whatToRender.text?.length) {
     whatToRender.text.forEach((textForSVG) => {
@@ -90,12 +104,23 @@ export const elementToSVG = async (
       const transformedG = document.createElementNS(SVG_NAMESPACE, "g");
       g.setAttribute("transform", `translate(${x}, ${y})`);
       g.appendChild(transformedG);
-      drawShapesOnSVG(shapes, context, transformedG, { scale, translate });
+      drawShapesOnSVG(
+        shapes,
+        context,
+        transformedG,
+        {
+          scale,
+          translate,
+        },
+        {
+          width,
+          height,
+        },
+      );
     } else {
       element._deckgl?.redraw("screenshot");
-      const dataURL =
-        element._deckgl?.getCanvas()?.toDataURL("image/png") ??
-        element.toDataURL("image/png");
+      const canvas = element._deckgl?.getCanvas() || element;
+      const dataURL = canvasToDataURL(canvas);
       addImageFromDataURL(g, dataURL, context, elemInfo);
     }
   }
@@ -125,23 +150,13 @@ export const elementToSVG = async (
     svgClone.setAttribute("height", `${toFixed(height)}`);
     gWrapper.style.transform = `translate(${toFixed(x)}px, ${toFixed(y)}px)`;
     gWrapper.style.color = style.color;
+    gWrapper._gWrapperFor = element;
     gWrapper.appendChild(svgClone);
   } else if (image?.type === "fontIcon") {
     await fontIconToSVG(g, image, context, elemInfo);
   } else if (image?.type === "img") {
     await imgToSVG(g, image.element, elemInfo, context);
   } else if (image?.type === "maskedElement") {
-    // const {
-    //   clientWidth: width,
-    //   clientHeight: height,
-    //   offsetLeft: x,
-    //   offsetTop: y,
-    // } = element;
-    // const rect = document.createElementNS(SVG_NAMESPACE, "rect");
-    element.getAnimations().forEach((animation) => {
-      animation.pause();
-      animation.currentTime = 0;
-    });
     const { width, height, x, y } = element.getBoundingClientRect();
     const dataUrl = decodeURIComponent(
       style.maskImage.split(",")[1]!.slice(0, -2),
@@ -155,21 +170,23 @@ export const elementToSVG = async (
     svgElement.setAttribute("y", toFixed(y));
     svgElement.setAttribute("fill", style.color);
 
+    const wrapperG = document.createElementNS(SVG_NAMESPACE, "g");
+    wrapperG.appendChild(svgElement);
+    /** wrapperG is required to ensure animations work on safari */
     if (style.animation) {
-      svgElement.setAttribute(
+      wrapperG.setAttribute(
         "style",
         `animation: ${style.animation}; transform-origin: ${toFixed(x + width / 2)}px ${toFixed(y + height / 2)}px;`,
       );
     }
 
-    // Extract keyframes from the original element's styles
-    copyAnimationStyles(style, svgElement);
-    const animationStyles = cloneAnimations(element);
-    if (animationStyles) {
-      context.defs.appendChild(animationStyles);
-    }
+    copyAnimations?.(style, wrapperG, context.cssDeclarations, false);
 
-    parentSvg.appendChild(svgElement);
+    parentSvg.appendChild(wrapperG);
+  }
+
+  if (image?.type !== "maskedElement") {
+    copyAnimations?.(style, rectElem?.path ?? g, context.cssDeclarations, true);
   }
 
   for (const child of getChildrenSortedByZIndex(element)) {
@@ -178,6 +195,16 @@ export const elementToSVG = async (
     }
   }
 
+  /** Must ensure we have a bbox for clicking interaction placement */
+  if (!g.childNodes.length && whatToRender.attributeData) {
+    const bboxRect = document.createElementNS(SVG_NAMESPACE, "rect");
+    bboxRect.setAttribute("x", toFixed(x));
+    bboxRect.setAttribute("y", toFixed(y));
+    bboxRect.setAttribute("width", toFixed(width));
+    bboxRect.setAttribute("height", toFixed(height));
+    bboxRect.setAttribute("fill", "transparent");
+    g.appendChild(bboxRect);
+  }
   if (g.childNodes.length) {
     addOverflowClipPath(
       element,
@@ -201,10 +228,3 @@ const getChildrenSortedByZIndex = (element: HTMLElement): HTMLElement[] => {
     return aZIndex - bZIndex;
   });
 };
-
-declare global {
-  interface SVGGElement {
-    _domElement?: HTMLElement;
-    _whatToRender?: Awaited<ReturnType<typeof getWhatToRenderOnSVG>>;
-  }
-}

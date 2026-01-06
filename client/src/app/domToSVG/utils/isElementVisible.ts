@@ -8,7 +8,11 @@ export const isElementVisible = (element: Element) => {
     return { isVisible: false, style, bbox };
 
   if (isTextNode(element)) {
-    return { isVisible: !!element.textContent?.trim().length, style, bbox };
+    return {
+      isVisible: !!(element.textContent as string | null)?.trim().length,
+      style,
+      bbox,
+    };
   }
   const mightBeVisible = element.checkVisibility({
     checkOpacity: true,
@@ -34,7 +38,10 @@ const isInViewport = (
   );
 };
 
-export const isInParentViewport = (element: Element, bbox: DOMRect) => {
+export const isInParentViewport = (
+  element: Element,
+  bbox: DOMRect,
+): boolean => {
   const parent = element.parentElement;
   if (!parent) return true;
   const parentHidesOverflow =

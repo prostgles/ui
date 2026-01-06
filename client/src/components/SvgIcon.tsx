@@ -1,4 +1,4 @@
-import { useIsMounted, usePromise } from "prostgles-client/dist/prostgles";
+import { useIsMounted, usePromise } from "prostgles-client";
 import React, { useEffect } from "react";
 import sanitizeHtml from "sanitize-html";
 import { classOverride, type DivProps } from "./Flex";

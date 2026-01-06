@@ -57,6 +57,16 @@ export const tableConfig: TableConfig = {
       timestamp: "TIMESTAMPTZ NOT NULL",
     },
   },
+  futures_funding_rates: {
+    columns: {
+      id: `SERIAL PRIMARY KEY`,
+      symbol: "TEXT NOT NULL REFERENCES symbols",
+      funding_rate: `DECIMAL(18, 10) NOT NULL`,
+      mark_price: `DECIMAL(18, 8)`,
+      funding_time: `TIMESTAMP NOT NULL`,
+    },
+    // UNIQUE(symbol, funding_time)
+  },
   markets: {
     columns: {
       id: "TEXT PRIMARY KEY",

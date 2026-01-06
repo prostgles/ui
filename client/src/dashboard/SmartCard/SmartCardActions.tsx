@@ -1,8 +1,8 @@
 import { mdiPencil, mdiResize } from "@mdi/js";
 import { type AnyObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { SmartCardProps } from "./SmartCard";
 
@@ -64,10 +64,18 @@ export const SmartCardActions = <T extends AnyObject>(
   }
 
   return (
-    <FlexCol>
+    <FlexCol
+      className="show-on-parent-hover rounded"
+      style={{
+        position: "absolute",
+        right: 0,
+        top: 0,
+        backdropFilter: "blur(4px)",
+      }}
+    >
       {showViewEditRow && (
         <Btn
-          className="f-0 show-on-parent-hover"
+          className="f-0 "
           data-command="SmartCard.viewEditRow"
           iconPath={
             allowedActions.update || allowedActions.delete ?

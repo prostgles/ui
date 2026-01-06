@@ -1,3 +1,9 @@
+import type { DetailedFilter } from "@common/filterUtils";
+import { getFinalFilterInfo, getSmartGroupFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { ExpandSection } from "@components/ExpandSection";
+import { Footer } from "@components/Popup/Footer";
+import PopupMenu from "@components/PopupMenu";
 import {
   mdiChevronLeft,
   mdiChevronRight,
@@ -6,15 +12,6 @@ import {
 } from "@mdi/js";
 import { isObject, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import type { SmartGroupFilter } from "../../../../common/filterUtils";
-import {
-  getFinalFilterInfo,
-  getSmartGroupFilter,
-} from "../../../../common/filterUtils";
-import Btn from "../../components/Btn";
-import { ExpandSection } from "../../components/ExpandSection";
-import { Footer } from "../../components/Popup/Popup";
-import PopupMenu from "../../components/PopupMenu";
 import { pluralise } from "../../pages/Connections/Connection";
 import { CodeConfirmation } from "../BackupAndRestore/CodeConfirmation";
 import { InsertButton } from "../SmartForm/InsertButton";
@@ -43,7 +40,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
   );
   const table = tables.find((t) => t.name === table_name);
 
-  const filter: SmartGroupFilter = _fltr.map((f) => ({ ...f }));
+  const filter: DetailedFilter[] = _fltr.map((f) => ({ ...f }));
   const finalFilter = getSmartGroupFilter(filter);
 
   if (!table_name || !table) return null;
@@ -136,6 +133,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
 
             {!!tableHandler.update && showupdate && (
               <PopupMenu
+                title={`Update ${rowCount} rows`}
                 positioning="right-panel"
                 button={
                   <Btn
@@ -149,11 +147,12 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                 contentStyle={{
                   padding: 0,
                 }}
-                render={(pClose) => (
+                render={() => (
                   <>
                     <SmartForm
-                      label={`Update ${rowCount} rows`}
                       db={db}
+                      label=""
+                      contentClassname="pt-1"
                       rowFilter={[]}
                       tableName={table_name}
                       tables={tables}

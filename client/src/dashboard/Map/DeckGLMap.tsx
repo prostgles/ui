@@ -47,7 +47,7 @@ export type Point = [number, number];
 import type { GeoJsonLayer } from "deck.gl";
 import type { Feature } from "geojson";
 import type { MapExtent } from "../Dashboard/dashboardUtils";
-import type { MAP_SELECT_COLUMNS } from "../W_Map/getMapData";
+import type { MAP_SELECT_COLUMNS } from "../W_Map/fetchData/getMapData";
 import { InMapControls } from "./InMapControls";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 
@@ -235,7 +235,7 @@ const setDemoHandles = (node: HTMLDivElement, dmap: DeckGLMap) => {
     longitude: number;
   }) => {
     const [x = 0, y = 0] = dmap
-      .deckW!.deck.getViewports()![0]!
+      .deckW!.deck.getViewports()[0]!
       .project([place.longitude, place.latitude]);
     const bbox = node.getBoundingClientRect();
     return {
@@ -360,6 +360,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
   }
 
   onUnmount(): void {
+    this.deckW?.deck.finalize();
     this.rootResizeObserver?.unobserve(this.refRoot!);
   }
 

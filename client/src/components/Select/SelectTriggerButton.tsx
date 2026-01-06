@@ -1,9 +1,10 @@
+import { classOverride } from "@components/Flex";
 import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
 import React from "react";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
-import Btn from "../Btn";
-import type { FullOption, OptionKey, SelectProps, SelectState } from "./Select";
 import { getCommandElemSelector } from "../../Testing";
+import Btn from "../Btn";
+import type { FullOption, OptionKey, SelectProps } from "./Select";
 
 type P<
   O extends OptionKey,
@@ -38,7 +39,6 @@ export const SelectTriggerButton = <
     labelAsValue,
     emptyLabel = "Select...",
     iconPath,
-    buttonClassName = "",
     size,
     btnProps,
     disabledInfo,
@@ -73,13 +73,7 @@ export const SelectTriggerButton = <
     : iconPath || btnProps?.children !== undefined ?
       (btnProps?.children ?? null)
     : <>
-        <div
-          className={
-            " text-ellipsis " +
-            (value !== undefined ? "text-color-0" : "text-1")
-          }
-          style={{ lineHeight: "18px" }}
-        >
+        <div className={" text-ellipsis "} style={{ lineHeight: "18px" }}>
           {!labelAsValue ?
             btnText
           : <RenderValue
@@ -107,7 +101,7 @@ export const SelectTriggerButton = <
       }}
       /** Use "data-command" for content when button not needed anymore */
       data-command={popupAnchor ? undefined : props["data-command"]}
-      className={`${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${buttonClassName}`}
+      data-key={popupAnchor ? undefined : props["data-key"]}
       size={size}
       variant={chipMode ? "icon" : "faded"}
       color={chipMode ? "action" : "default"}
@@ -115,17 +109,15 @@ export const SelectTriggerButton = <
         showSelectedIcon ?? iconPath ?? (chipMode ? mdiPencil : mdiMenuDown)
       }
       iconPosition={!btnProps?.iconPath ? "right" : "left"}
-      iconClassname={
-        btnProps?.iconPath || showSelectedIcon ? ""
-        : chipMode ?
-          undefined
-        : "text-2"
-      }
       disabledInfo={
         disabledInfo ?? (noOtherOption ? "No other option" : undefined)
       }
       disabledVariant={noOtherOption ? "no-fade" : undefined}
       {...btnProps}
+      className={classOverride(
+        `${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${popupAnchor ? "is-open" : ""} `,
+        btnProps?.className,
+      )}
       onClick={
         noOtherOption ? undefined : (
           (e) => {
@@ -186,6 +178,7 @@ export const SelectTriggerButton = <
           <Btn
             iconPath={mdiClose}
             title="Reset selection"
+            size={size}
             onClick={(e) => onChange(undefined as any, e, undefined)}
           />
         )}

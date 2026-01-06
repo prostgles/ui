@@ -1,107 +1,129 @@
-import React from "react";
-import ErrorComponent from "../../../../components/ErrorComponent";
-import { FlexCol } from "../../../../components/Flex";
-import FormField from "../../../../components/FormField/FormField";
-import Popup from "../../../../components/Popup/Popup";
+import Btn from "@components/Btn";
+import { FileBrowser } from "@components/FileBrowser/FileBrowser";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import Popup from "@components/Popup/Popup";
+import React, { useContext, useState } from "react";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
-import { useEditableData } from "../../useEditableData";
+import { useMCPServerConfigState } from "./useMCPServerConfigState";
+import { mdiDelete } from "@mdi/js";
+
+export type MCPServerEnabledConfig = { configId: number };
 
 export type MCPServerConfigProps = {
   dbs: DBS;
   serverName: string;
   existingConfig: { id: number; value: Record<string, string> } | undefined;
-  onDone: () => void;
+  chatId: number | undefined;
+  onDone: (res: void | MCPServerEnabledConfig) => void;
 };
 
 export const MCPServerConfig = (props: MCPServerConfigProps) => {
-  const { serverName, existingConfig, dbs, onDone } = props;
-  const {
-    error,
-    onSave,
-    setValue,
-    value: config,
-  } = useEditableData(existingConfig?.value ?? {});
-
-  const serverInfo = dbs.mcp_servers.useSubscribeOne(
-    {
-      name: serverName,
-    },
-    {},
-    { skip: !serverName },
-  );
-  const schema = serverInfo.data?.config_schema;
+  const { serverName, existingConfig, onDone } = props;
+  const { upsertConfig, canSave, schema, setConfig, config, existingConfigs } =
+    useMCPServerConfigState(props);
   if (!schema) return null;
 
   return (
     <Popup
       title={`Configure and enable ${JSON.stringify(serverName)} MCP server`}
       positioning="center"
-      onClose={onDone}
+      onClose={() => onDone()}
       data-command="MCPServerConfig"
       rootStyle={{
         maxWidth: "min(600px, 100vw)",
       }}
       clickCatchStyle={{ opacity: 1 }}
+      contentClassName="p-1"
       footerButtons={[
         {
           label: "Cancel",
-          onClick: onDone,
+          onClick: () => onDone(),
         },
         {
           label: existingConfig ? "Update" : "Enable",
           "data-command": "MCPServerConfig.save",
-          disabledInfo: onSave ? undefined : "No changes",
+          disabledInfo: canSave ? undefined : "No changes",
           variant: "filled",
           color: "action",
           className: "ml-auto",
-          onClickPromise: async () => {
-            await onSave?.(async () => {
-              if (existingConfig) {
-                await dbs.mcp_server_configs.update(
-                  {
-                    id: existingConfig.id,
-                  },
-                  {
-                    config,
-                  },
-                );
-              } else {
-                await dbs.mcp_server_configs.insert({
-                  server_name: serverName,
-                  config,
-                });
-                await dbs.mcp_servers.update(
-                  {
-                    name: serverName,
-                  },
-                  { enabled: true },
-                );
-              }
-            })
-              .then(() => {
-                onDone();
-              })
-              .catch((e) => {});
-          },
+          onClickPromise: upsertConfig,
         },
       ]}
     >
-      <FlexCol>
-        {Object.entries(schema).map(([key, schema]) => (
-          <FormField
-            key={key}
-            label={schema.title ?? key}
-            hint={schema.description}
-            value={config[key]}
-            onChange={(v) =>
-              setValue({
-                ...config,
-                [key]: v,
-              })
-            }
-          />
-        ))}
-        {error && <ErrorComponent error={error} />}
+      <FlexCol className="min-h-0">
+        {Object.entries(schema).map(([key, schema]) => {
+          if (schema.renderWithComponent === "FileBrowser") {
+            return (
+              <FileBrowser
+                key={key}
+                title={schema.title ?? key}
+                path={config[key]}
+                onChange={(v) => {
+                  setConfig({
+                    ...config,
+                    [key]: v,
+                  });
+                }}
+              />
+            );
+          }
+          return (
+            <FormField
+              type="text"
+              key={key}
+              label={schema.title ?? key}
+              hint={schema.description}
+              value={config[key]}
+              onChange={(v) =>
+                setConfig({
+                  ...config,
+                  [key]: v,
+                })
+              }
+            />
+          );
+        })}
+        {Boolean(existingConfigs.length) && (
+          <FlexCol className="pt-1 pb-2 gap-p5">
+            <div className="ta-start">
+              Or select from existing configurations:
+            </div>
+            <FlexRowWrap>
+              {existingConfigs.map((existingConfig) => {
+                const renderableTypes = ["string", "number", "boolean"];
+                const values = Object.values(existingConfig.config)
+                  .map((v) =>
+                    renderableTypes.includes(typeof v) ?
+                      String(v)
+                    : JSON.stringify(v),
+                  )
+                  .join(", ");
+                return (
+                  <FlexRow key={existingConfig.id} className="gap-0">
+                    <Btn
+                      variant="faded"
+                      onClick={() => {
+                        setConfig(existingConfig.config);
+                      }}
+                    >
+                      {values}
+                    </Btn>
+                    <Btn
+                      iconPath={mdiDelete}
+                      title="Delete existing config (if not used in other chats)"
+                      onClickPromise={async () => {
+                        await props.dbs.mcp_server_configs.delete({
+                          id: existingConfig.id,
+                        });
+                      }}
+                    />
+                  </FlexRow>
+                );
+              })}
+            </FlexRowWrap>
+          </FlexCol>
+        )}
       </FlexCol>
     </Popup>
   );
@@ -110,7 +132,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
 export type MCPServerConfigContext = {
   setServerToConfigure: (
     p: Omit<MCPServerConfigProps, "onDone" | "dbs">,
-  ) => Promise<void>;
+  ) => Promise<void | MCPServerEnabledConfig>;
 };
 
 export const MCPServerConfigContext = React.createContext<
@@ -125,19 +147,19 @@ export const MCPServerConfigProvider = ({
   dbs: DBS;
 }) => {
   const [serverToConfigure, setServerToConfigure] =
-    React.useState<MCPServerConfigProps>();
+    useState<MCPServerConfigProps>();
 
   const value = React.useMemo(() => {
     return {
       setServerToConfigure: async (
         props: Omit<MCPServerConfigProps, "onDone" | "dbs">,
       ) => {
-        return new Promise<void>((resolve) => {
+        return new Promise<MCPServerEnabledConfig | void>((resolve) => {
           setServerToConfigure({
             ...props,
             dbs,
-            onDone: () => {
-              resolve();
+            onDone: (enabled) => {
+              resolve(enabled);
             },
           });
         });
@@ -151,8 +173,8 @@ export const MCPServerConfigProvider = ({
       {serverToConfigure && (
         <MCPServerConfig
           {...serverToConfigure}
-          onDone={() => {
-            serverToConfigure.onDone();
+          onDone={(enabled) => {
+            serverToConfigure.onDone(enabled);
             setServerToConfigure(undefined);
           }}
         />
@@ -162,7 +184,7 @@ export const MCPServerConfigProvider = ({
 };
 
 export const useMCPServerConfig = () => {
-  const context = React.useContext(MCPServerConfigContext);
+  const context = useContext(MCPServerConfigContext);
   if (!context) {
     throw new Error(
       "useMCPServerConfig must be used within a MCPServerConfigProvider",

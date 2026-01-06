@@ -1,10 +1,10 @@
 import type { LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { makeSession, type SUser } from "./sessionUtils";
 import type { AuthResponse } from "prostgles-types";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 import type { Users } from "..";
-import { DAY, MINUTE, YEAR } from "../../../common/utils";
+import { DAY, MINUTE, YEAR } from "@common/utils";
 
 export const onMagicLinkOrOTP: Required<
   LoginSignupConfig<DBGeneratedSchema, SUser>

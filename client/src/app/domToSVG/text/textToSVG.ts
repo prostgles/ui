@@ -1,5 +1,4 @@
-import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { tout } from "../../../utils";
+import { includes } from "prostgles-types";
 import { SVG_NAMESPACE } from "../domToSVG";
 import type { SVGScreenshotNodeType } from "../domToThemeAwareSVG";
 import { isInputOrTextAreaNode } from "../utils/isElementVisible";
@@ -68,16 +67,12 @@ export const textToSVG = (
   const nonWrappingWhiteSpaces = ["nowrap", "pre", "reverse", "reverse-wrap"];
   if (
     textNodeStyle.textOverflow === "ellipsis" &&
-    (includes(textNodeStyle.whiteSpace, nonWrappingWhiteSpaces) || isSingleLine)
+    (includes(nonWrappingWhiteSpaces, textNodeStyle.whiteSpace) || isSingleLine)
   ) {
     textNode[_singleLineEllipsis] = true;
   }
   textNode.setAttribute("text-anchor", "start");
 
-  // Where was this necessary?!
-  //  - Ensures overflowing text is wrapped correctly
-  // textNode.textContent =
-  //   textNodeStyle.whiteSpace === "pre" ? content.trimEnd() : content.trim();
   textNode.textContent = content.trimEnd();
 
   g.appendChild(textNode);
@@ -149,7 +144,9 @@ const wrapTextIfOverflowing = (
     setTextContent();
     const textLen = tspan.getComputedTextLength();
 
-    if (textLen > currentLineWidth + tolerance) {
+    const textIsOverflowing = textLen > currentLineWidth + tolerance;
+    const cannotWrapMoreBecauseItsASingleWord = line.length === 1;
+    if (textIsOverflowing && !cannotWrapMoreBecauseItsASingleWord) {
       if (
         numberOfLines &&
         lineNumber === numberOfLines &&
@@ -207,7 +204,7 @@ const unnestRedundantGElements = (svg: SVGElement) => {
   return svg;
 };
 
-export const wrapAllSVGText = async (svg: SVGElement) => {
+export const wrapAllSVGText = (svg: SVGElement) => {
   if (!svg.isConnected) {
     throw new Error("SVG must be in the DOM for bbox calculations");
   }

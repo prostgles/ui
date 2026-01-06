@@ -1,15 +1,15 @@
 import { mdiCardAccountDetailsOutline, mdiClose } from "@mdi/js";
 import React from "react";
-import type { ContextValue } from "../../../../common/publishUtils";
-import Btn from "../../components/Btn";
-import { classOverride } from "../../components/Flex";
-import Select from "../../components/Select/Select";
+import type { ContextValue } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { classOverride } from "@components/Flex";
+import { Select } from "@components/Select/Select";
 import type { FilterColumn } from "../SmartFilter/smartFilterUtils";
 import type { ContextDataSchema } from "./OptionControllers/FilterControl";
 
 type P = {
   className?: string;
-  onChange: (contextValue?: ContextValue | undefined) => void;
+  onChange: (contextValue?: ContextValue  ) => void;
   value: ContextValue | undefined;
   contextData: ContextDataSchema;
   column: FilterColumn;

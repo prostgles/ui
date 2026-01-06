@@ -5,49 +5,48 @@ import { classOverride } from "./Flex";
 
 type P = {
   message?: React.ReactNode;
+  style?: React.CSSProperties;
   value: number;
   totalValue: number;
-  variant?: "responsive-barchart";
 };
-export const MINI_BARCHART_COLOR = "#05b0df";
+export const MINI_BARCHART_COLOR = "var(--active)";
 
-export const ProgressBar = ({ message, value, totalValue, variant }: P) => {
-  const isBarchart = variant === "responsive-barchart";
+export const ProgressBar = ({ message, value, totalValue, style }: P) => {
   const perc = totalValue > value ? Math.round((100 * value) / totalValue) : -1;
-  const lightColor = "#ddf8ff";
-  const height = isBarchart ? 8 : 2;
-  const progressBar = (
-    <div
-      className={isBarchart ? "shadow" : ""}
-      style={{
-        borderRadius: `${height / 2}px`,
-        height: `${height}px`,
-        ...(isBarchart ?
-          {
-            background: MINI_BARCHART_COLOR,
-            flex: 1,
-            minHeight: `${height}px`,
-            width: `${perc}%`,
-          }
-        : {
-            backgroundImage:
-              perc > -1 ?
-                `linear-gradient(90deg,  ${MINI_BARCHART_COLOR} 0%, ${MINI_BARCHART_COLOR} ${perc}%, ${lightColor} ${perc}%, ${lightColor})`
-              : `linear-gradient(90deg,  ${MINI_BARCHART_COLOR} 40%,  ${lightColor} 40%, ${lightColor})`,
-            width: "200px",
-            animation:
-              perc > -1 ? undefined : (
-                "indeterminateAnimation 1s infinite linear"
-              ),
-          }),
-      }}
-    ></div>
-  );
+  const lightColor = "var(--bg-action)";
+  const height = 4;
+  const isIndeterminate = perc === -1;
 
   return (
-    <div className="ProgressBar flex-col gap-p25">
-      {progressBar}
-      <div className={"text-1 " + (isBarchart ? "ta-left" : "")}>{message}</div>
+    <div className="ProgressBar flex-col gap-p25" style={style}>
+      <div
+        className="ProgressBarOuter shadow"
+        style={{
+          background: lightColor,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          className="ProgressBarInner shadow"
+          style={{
+            borderRadius: `${height / 2}px`,
+            height: `${height}px`,
+            background: MINI_BARCHART_COLOR,
+            minHeight: `${height}px`,
+            minWidth: "2px",
+            ...(isIndeterminate ?
+              {
+                animation: "indeterminateTranslateX 1s infinite linear",
+                willChange: "transform",
+                width: `${50}%`,
+              }
+            : {
+                width: `${perc}%`,
+              }),
+          }}
+        />
+      </div>
+      <div className={"text-1 "}>{message}</div>
     </div>
   );
 };

@@ -1,9 +1,9 @@
+import type { DetailedFilter } from "@common/filterUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import type { OmitDistributive } from "@common/utils";
+import { matchObj } from "@common/utils";
+import { pageReload } from "@components/Loader/Loading";
 import { type AnyObject, type ParsedJoinPath, isEmpty } from "prostgles-types";
-import type { SmartGroupFilter } from "../../../../common/filterUtils";
-import type { DBSSchema } from "../../../../common/publishUtils";
-import type { OmitDistributive } from "../../../../common/utils";
-import { matchObj } from "../../../../common/utils";
-import { pageReload } from "../../components/Loader/Loading";
 import type { ActiveRow } from "../W_Table/W_Table";
 import type {
   ChartType,
@@ -15,7 +15,7 @@ import type {
   WindowSyncItem,
   WorkspaceSyncItem,
 } from "./dashboardUtils";
-import { PALETTE } from "./dashboardUtils";
+import { PALETTE } from "./PALETTE";
 import type { ViewRenderer, ViewRendererProps } from "./ViewRenderer";
 
 type Args = ViewRendererProps & {
@@ -32,7 +32,7 @@ export const getViewRendererUtils = function (
     w: { type: CT } & Partial<
       Pick<WindowData, "name" | "table_name" | "options" | "parent_window_id">
     >,
-    filter: SmartGroupFilter = [],
+    filter: DetailedFilter[] = [],
   ) => {
     const {
       options = {
@@ -89,7 +89,7 @@ export const getViewRendererUtils = function (
     const colorOpts =
       l.linkOpts.type === "table" ?
         {
-          colorArr: cLinkColor ?? PALETTE.c4.get(1, "deck"),
+          colorArr: cLinkColor ?? PALETTE.c4.getDeckRGBA(),
         }
       : ({} as const);
 
@@ -172,7 +172,6 @@ export const getViewRendererUtils = function (
             options: {
               showBinLabels: "off",
               binValueLabelMaxDecimals: 3,
-              statType: "Count All",
               missingBins: "ignore",
               refresh: {
                 type: "Realtime",
@@ -180,6 +179,10 @@ export const getViewRendererUtils = function (
                 intervalSeconds: 1,
               },
             },
+          };
+        } else if (type === "barchart") {
+          extra = {
+            parent_window_id: parentW.id,
           };
         }
         // const existingCharts = await windows.filter(cw => cw.parent_window_id === parentW.id);
@@ -198,8 +201,9 @@ export const getViewRendererUtils = function (
 
   type ClickRowOpts =
     | { type: "table-row" }
-    | { type: "timechart"; value: ActiveRow["timeChart"] };
-  const onClickRow = async (
+    | { type: "timechart"; value: ActiveRow["timeChart"] }
+    | { type: "barchart"; value: ActiveRow["barChart"] };
+  const onClickRow = (
     rowOrFilter: AnyObject | undefined,
     table_name: string,
     wid: string,

@@ -1,30 +1,24 @@
+import type { DetailedFilter, DetailedFilterBase } from "@common/filterUtils";
+import { getFinalFilter } from "@common/filterUtils";
 import type {
   DBHandlerClient,
   TableHandlerClient,
 } from "prostgles-client/dist/prostgles";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import type {
-  DetailedFilterBase,
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../common/filterUtils";
-import { getFinalFilter, simplifyFilter } from "../../../../common/filterUtils";
-import { isDefined } from "../../utils";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import type { FilterWrapperProps } from "./FilterWrapper";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
-import type { DBS } from "../Dashboard/DBS";
+import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
 
 export const testFilter = (
-  f: SimpleFilter,
+  f: DetailedFilter,
   tableHandler: TableHandlerClient,
-  cb: (err: any, ok?: true) => any,
+  cb: (err: unknown, ok?: true) => any,
 ) => {
   return tableHandler
     .findOne(getFinalFilter(f))
     .then(() => cb(undefined, true))
-    .catch((err) => cb(err));
+    .catch((err: unknown) => cb(err));
 };
 
 // export const getSmartGroupFilter = (
@@ -64,12 +58,19 @@ export type FilterColumn = TableColumn | ComputedColumn;
 export type BaseFilterProps = Pick<FilterWrapperProps, "variant"> & {
   db: DBHandlerClient;
   tableName: string;
-  onChange: (filter?: SimpleFilter) => void;
+  onChange: (filter?: DetailedFilter) => void;
   tables: CommonWindowProps["tables"];
   column: FilterColumn;
-  otherFilters: SmartGroupFilter;
+  /**
+   * Used to ensure that narrow down options based on other filters.
+   * No point in allowing the user to filter on values that are already filtered out.
+   */
+  otherFilters: DetailedFilter[];
+  /**
+   * Additional filters to always apply on top of otherFilters.
+   */
   extraFilters: AnyObject[] | undefined;
-  error?: any;
+  error?: unknown;
   filter?: DetailedFilterBase;
   className?: string;
   style?: React.CSSProperties;

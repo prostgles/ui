@@ -2,13 +2,13 @@ import type { JSONB } from "prostgles-types";
 import { getKeys, isEmpty, isObject, pickKeys } from "prostgles-types";
 import React from "react";
 import { SmartSearch } from "../../dashboard/SmartFilter/SmartSearch/SmartSearch";
-import { areEqual } from "../../utils";
+import { areEqual } from "../../utils/utils";
 import ErrorComponent from "../ErrorComponent";
-import Select from "../Select/Select";
+import { Select } from "../Select/Select";
 import { isCompleteJSONB } from "./isCompleteJSONB";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { JSONBSchema } from "./JSONBSchema";
-import { getFinalFilter } from "../../../../common/filterUtils";
+import { getFinalFilter } from "@common/filterUtils";
 
 type Schema = JSONB.Lookup;
 type P = JSONBSchemaCommonProps & {
@@ -234,7 +234,7 @@ export const JSONBSchemaLookup = ({
         if (!colName || !columnValue || !refCol || !filterItem) return;
 
         const finalFilter = getFinalFilter(filterItem);
-        const firstMatchingRow = await db[lookup.table!]?.findOne!(finalFilter);
+        const firstMatchingRow = await db[lookup.table]?.findOne!(finalFilter);
         if (firstMatchingRow) {
           onChange(
             lookup.isFullRow ? firstMatchingRow : firstMatchingRow[refCol],

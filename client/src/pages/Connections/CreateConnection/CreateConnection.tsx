@@ -1,11 +1,11 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useState } from "react";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { FlexCol } from "../../../components/Flex";
-import FormField from "../../../components/FormField/FormField";
-import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
-import Popup from "../../../components/Popup/Popup";
-import Select from "../../../components/Select/Select";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import Popup from "@components/Popup/Popup";
+import { Select } from "@components/Select/Select";
 import type { DBS, DBSMethods } from "../../../dashboard/Dashboard/DBS";
 import { SampleSchemas } from "../../../dashboard/SampleSchemas";
 import { t } from "../../../i18n/i18nUtils";
@@ -23,7 +23,7 @@ export type CreateConnectionProps = Required<
     | "getSampleSchemas"
     | "createConnection"
     | "validateConnection"
-    | "getSampleSchemas"
+     
   >
 > & {
   connId: string;

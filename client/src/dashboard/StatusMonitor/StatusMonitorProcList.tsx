@@ -1,21 +1,21 @@
 import { mdiCancel, mdiStopCircleOutline } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { PrglState } from "../../App";
-import Btn from "../../components/Btn";
-import Chip from "../../components/Chip";
-import { FlexRow } from "../../components/Flex";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import CodeExample from "../CodeExample";
 import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { StyledInterval } from "../W_SQL/customRenderers";
 import type { StatusMonitorProps } from "./StatusMonitor";
-import { StatusMonitorProcListHeader } from "./StatusMonitorProcListHeader";
-import { STATUS_MONITOR_IGNORE_QUERY } from "../../../../common/utils";
+import { StatusMonitorProcListControlsHeader } from "./StatusMonitorProcListControlsHeader";
+import { STATUS_MONITOR_IGNORE_QUERY } from "@common/utils";
 
 export const StatusMonitorViewTypes = [
   { key: "All Queries", subLabel: "No filtering applied" },
@@ -75,7 +75,7 @@ export const StatusMonitorProcList = (
 
   const [datidFilter, setDatidFilter] = useState<number | undefined>();
 
-  usePromise(async () => {
+  const databaseId = usePromise(async () => {
     const datids = await runConnectionQuery(
       connectionId,
       `SELECT datid
@@ -84,7 +84,9 @@ export const StatusMonitorProcList = (
     `,
     );
     if (datids.length === 1) {
-      setDatidFilter(datids[0]?.datid);
+      const datid = datids[0]?.datid as number;
+      setDatidFilter(datid);
+      return datid;
     }
   }, [runConnectionQuery, connectionId]);
 
@@ -115,7 +117,7 @@ export const StatusMonitorProcList = (
       showTopBar={{
         sort: true,
         leftContent: (
-          <StatusMonitorProcListHeader
+          <StatusMonitorProcListControlsHeader
             {...props}
             allToggledFields={allToggledFields}
             excludedFields={excludedFields}
@@ -123,6 +125,7 @@ export const StatusMonitorProcList = (
             dbsTables={dbsTables}
             datidFilter={datidFilter}
             setDatidFilter={setDatidFilter}
+            databaseId={databaseId}
             viewType={viewType}
             setViewType={setViewType}
             samplingRate={samplingRate}

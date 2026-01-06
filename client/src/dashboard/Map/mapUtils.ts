@@ -113,7 +113,7 @@ export function makeTileLayer(
       return [
         new deckGlLibs.lib.BitmapLayer(props as any, {
           data: undefined, // null
-          image: props.data,
+          image: props.data as any,
           bounds: [west, south, east, north],
         }),
         showBorder &&

@@ -2,8 +2,8 @@ import { mdiRelationManyToMany } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import Popup from "../../components/Popup/Popup";
+import Btn from "@components/Btn";
+import Popup from "@components/Popup/Popup";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { DBS } from "../Dashboard/DBS";
 import { ERDSchema } from "./ERDSchema/ERDSchema";
@@ -29,7 +29,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
         iconPath={mdiRelationManyToMany}
         className="fit "
         title="Show schema diagram"
-        data-command="SchemaGraph"
+        data-command={showSchemaDiagram ? undefined : "SchemaGraph"}
         variant="outline"
         onClick={() => {
           setShowSchemaDiagram(true);
@@ -43,6 +43,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
           clickCatchStyle={{ opacity: 1 }}
           contentClassName="o-visible relative "
           onClose={() => setShowSchemaDiagram(false)}
+          data-command="SchemaGraph"
         >
           <ERDSchema
             key={controlState.schemaKey + props.theme}

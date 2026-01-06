@@ -2,13 +2,13 @@ import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import FormField from "../../components/FormField/FormField";
-import Loading from "../../components/Loader/Loading";
-import Popup from "../../components/Popup/Popup";
-import PopupMenu from "../../components/PopupMenu";
-import { Table } from "../../components/Table/Table";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import FormField from "@components/FormField/FormField";
+import Loading from "@components/Loader/Loading";
+import Popup from "@components/Popup/Popup";
+import PopupMenu from "@components/PopupMenu";
+import { Table } from "@components/Table/Table";
 import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
@@ -27,7 +27,7 @@ export const getPapa = () =>
 
 export type FileImporterProps = {
   db: DBHandlerClient;
-  onClose: Function;
+  onClose: VoidFunction;
   openTable: (tableName: string) => void;
   style?: object;
   className?: string;
@@ -129,7 +129,7 @@ export type FileImporterState = {
     fileName: string;
     content: string;
   }[];
-  files?: File[];
+  files?: FileList | File[];
 
   streamColDelimiter: string;
 };
@@ -186,7 +186,7 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
     window.__prglIsImporting = false;
   }
 
-  onDelta = async (dP, dS, dD) => {
+  onDelta = (dP, dS, dD) => {
     const { selectedFile } = this.state;
     const delta = { ...dP, ...dS, ...dD };
 
@@ -209,7 +209,7 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
     return multiImport;
   };
 
-  setFiles = async (files: File[]) => {
+  setFiles = async (files: FileList) => {
     if (files.length > 1) {
       const allowedTypesForMultiImport = ["txt", "svg", "html", "json"];
       const arr = Array.from(files);

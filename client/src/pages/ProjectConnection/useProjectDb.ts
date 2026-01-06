@@ -1,12 +1,13 @@
 import {
+  useMemoDeep,
+  usePromise,
   useProstglesClient,
-  type DBHandlerClient,
   type UseProstglesClientProps,
-} from "prostgles-client/dist/prostgles";
-import { useMemoDeep, usePromise } from "prostgles-client/dist/react-hooks";
-import { useMemo } from "react";
+} from "prostgles-client";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { useEffect, useMemo } from "react";
 import type { PrglProject, PrglState } from "../../App";
-import { getTables } from "../../dashboard/Dashboard/Dashboard";
+import { getTables } from "../../dashboard/Dashboard/getTables";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { prgl_R } from "../../WithPrgl";
 
@@ -56,6 +57,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
   const {
     dbsMethods: { startConnection },
     dbs,
+    dbsTables,
   } = prglState;
   const connectionTableHandler = dbs.connections;
 
@@ -87,7 +89,9 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
         error: `Could not find connection with id: ${connId}`,
       } as const;
     }
-    const databaseId = conState.data.database_configs?.[0]?.id;
+    const databaseId = conState.data.database_configs?.[0]?.id as
+      | number
+      | undefined;
     if (!databaseId) {
       return {
         state: "error",
@@ -145,7 +149,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
 
   const dbPrgl = useProstglesClient(prostglesClientOpts);
 
-  const dbState = usePromise(async () => {
+  const dbState = useMemo(() => {
     try {
       if (connectionInfo.state === "error") {
         return {
@@ -183,24 +187,25 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     }
   }, [connectionInfo, dbPrgl, pathInfo]);
 
-  const connectionAndTableData = usePromise(async () => {
+  const prglProject = useMemo(() => {
     const con = conState.data;
     if (
       !dbState ||
       dbState.state !== "loaded" ||
       !con ||
       connectionInfo.state !== "loaded"
-    )
+    ) {
       return;
+    }
     const { dbo: db, methods, tableSchema, socket } = dbState.dbPrgl;
     const { tables: dbTables = [] } = getTables(
       tableSchema ?? [],
       con.table_options,
       db,
+      con.display_options?.prettyTableAndColumnNames ?? true,
     );
 
     const { path } = dbState;
-    const { dbs, dbsTables } = prglState;
     const { connectionId, databaseId, is_state_db } = connectionInfo;
     const prglProject: PrglProject = {
       dbKey: "db-onReady-" + Date.now(),
@@ -212,27 +217,33 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       connectionId,
       connection: con,
     };
-    prgl_R.set({
-      ...prglProject,
-      ...prglState,
-    });
+
     (window as any).db = db;
     (window as any).dbSocket = socket;
     (window as any).dbMethods = methods;
     return prglProject;
-  }, [conState.data, dbState, connectionInfo, prglState]);
+  }, [conState.data, dbState, connectionInfo, dbs, dbsTables]);
+
+  /** prgl_R.set moved here to prevent theme change to trigger many re-mounts due to dbKey change */
+  useEffect(() => {
+    if (!prglProject) return;
+    prgl_R.set({
+      ...prglProject,
+      ...prglState,
+    });
+  }, [prglProject, prglState]);
 
   if (!dbState || dbState.state !== "loaded") {
     return dbState ?? { state: "loading" };
   }
 
-  if (!connectionAndTableData) {
+  if (!prglProject) {
     return {
       state: "loading",
     } as const;
   }
   return {
     ...dbState,
-    ...connectionAndTableData,
+    ...prglProject,
   };
 };

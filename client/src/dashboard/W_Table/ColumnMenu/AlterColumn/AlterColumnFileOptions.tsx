@@ -1,9 +1,9 @@
 import { mdiFileCogOutline } from "@mdi/js";
-import { useIsMounted } from "prostgles-client/dist/react-hooks";
+import { useIsMounted } from "prostgles-client";
 import React, { useState } from "react";
 import { type Prgl } from "../../../../App";
-import Btn from "../../../../components/Btn";
-import PopupMenu from "../../../../components/PopupMenu";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
 import { FileColumnConfigEditor } from "../../../FileTableControls/FileColumnConfigEditor";
 import { useFileTableConfigControls } from "../../../FileTableControls/useFileTableConfigControls";
 

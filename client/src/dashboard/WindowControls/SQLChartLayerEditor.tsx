@@ -16,7 +16,7 @@ export const SQLChartLayerEditor = ({ link }: P) => {
     <CodeEditor
       language={LANG}
       value={dataSource.sql}
-      style={{ minWidth: "min(600px, 90vw)", minHeight: "min(600px, 90vw)" }}
+      style={{ minWidth: "min(600px, 90vw)" }}
       onChange={(v) => {}}
       onSave={(v) => {
         link.$update(

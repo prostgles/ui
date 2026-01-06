@@ -1,27 +1,25 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { authenticator } from "@otplib/preset-default";
 import * as crypto from "crypto";
 import fs from "fs";
 import * as os from "os";
-import path from "path";
+import path, { join } from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
 import type { DBS } from "../index";
 import { connMgr } from "../index";
 
 export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
+import type { LLMMessage } from "@common/llmUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
+import { getServiceManager } from "@src/ServiceManager/ServiceManager";
+import { prostglesServices } from "@src/ServiceManager/ServiceManagerTypes";
 import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject } from "prostgles-types";
-import {
-  asName,
-  assertJSONBObjectAgainstSchema,
-  isEmpty,
-  pickKeys,
-} from "prostgles-types";
-import type { LLMMessage } from "../../../common/llmUtils";
-import type { DBSSchema } from "../../../common/publishUtils";
+import { getKeys, includes, isEmpty } from "prostgles-types";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { checkClientIP, createSessionSecret } from "../authConfig/sessionUtils";
 import type { Backups } from "../BackupManager/BackupManager";
@@ -32,32 +30,35 @@ import {
   getCDB,
   getSuperUserCDB,
 } from "../ConnectionManager/ConnectionManager";
-import {
-  getCompiledTS,
-  getDatabaseConfigFilter,
-} from "../ConnectionManager/connectionManagerUtils";
+import { getCompiledTS } from "../ConnectionManager/connectionManagerUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { getElectronConfig } from "../electronConfig";
-import { initBackupManager, statePrgl } from "../init/startProstgles";
 import { callMCPServerTool } from "../McpHub/callMCPServerTool";
 import {
   getMcpHostInfo,
   getMCPServersStatus,
   installMCPServer,
-} from "../McpHub/installMCPServer";
-import { reloadMcpServerTools } from "../McpHub/McpHub";
+} from "../McpHub/AnthropicMcpHub/installMCPServer";
 import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
 import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import { upsertConnection } from "../upsertConnection";
 import { getSampleSchemas } from "./applySampleSchema";
-import { askLLM } from "./askLLM/askLLM";
+import { askLLM, stopAskLLM } from "./askLLM/askLLM";
 import { getFullPrompt } from "./askLLM/getFullPrompt";
-import { getLLMAllowedChatTools } from "./askLLM/getLLMTools";
+import { getLLMToolsAllowedInThisChat } from "./askLLM/getLLMToolsAllowedInThisChat";
 import { refreshModels } from "./askLLM/refreshModels";
+import { deleteConnection } from "./deleteConnection";
+import { getConnectionAndDatabaseConfig } from "./getConnectionAndDatabaseConfig";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
+import { setFileStorage } from "./setFileStorage";
+import { initBackupManager } from "@src/init/onProstglesReady";
+import { statePrgl } from "@src/init/startProstgles";
+import { glob } from "glob";
+import { mkdir } from "fs/promises";
+import type { AllowedChatTool } from "@common/prostglesMcp";
 
 export const publishMethods: PublishMethods<
   DBGeneratedSchema,
@@ -70,30 +71,44 @@ export const publishMethods: PublishMethods<
     return {};
   }
 
-  const getConnectionAndDbConf = async (arg0: unknown) => {
-    const arg = { connId: arg0 };
-    assertJSONBObjectAgainstSchema(
-      {
-        connId: "string",
-      },
-      arg,
-      "connId",
-      false,
-    );
-    const { connId } = arg;
-    const c = await dbs.connections.findOne({ id: connId });
-    if (!c) throw "Connection not found";
-    const dbConf = await dbs.database_configs.findOne(
-      getDatabaseConfigFilter(c),
-    );
-    if (!dbConf) throw "Connection database_config not found";
-    const db = connMgr.getConnectionDb(connId);
-    if (!db) throw "db missing";
-
-    return { c, dbConf, db };
-  };
+  const servicesManager = getServiceManager(dbs);
 
   const adminMethods: ReturnType<PublishMethods> = {
+    mkdir: async (path: string, folderName: string) => {
+      if (!path) throw "Path is required";
+      if (!folderName) throw "Folder name is required";
+      const fullPath = join(path, folderName);
+      await mkdir(fullPath);
+      return fullPath;
+    },
+    glob: async (path?: string, timeout: number = 10_000) => {
+      const currentPath = os.homedir();
+      const pattern = join(path || currentPath, "*");
+      if (timeout <= 0 || timeout > 120_000) {
+        throw "Timeout must be between 1 and 120 seconds";
+      }
+      // pass in a signal to cancel the glob walk
+      const resultItems = await glob(pattern, {
+        signal: AbortSignal.timeout(timeout),
+        withFileTypes: true,
+      });
+      const result = Array.from(resultItems).map((r) => ({
+        path: r.fullpath(),
+        name: r.name,
+        type:
+          r.isDirectory() ? "directory"
+          : r.isBlockDevice() ? "block"
+          : "file",
+        size: r.size,
+        lastModified: r.mtimeMs,
+        created: r.ctimeMs,
+      }));
+      return {
+        pattern,
+        path: currentPath,
+        result,
+      };
+    },
     disablePasswordless: async (newAdmin: {
       username: string;
       password: string;
@@ -147,6 +162,17 @@ export const publishMethods: PublishMethods<
     },
     getConnectedIds: () => {
       return Object.keys(connMgr.getConnections());
+    },
+    toggleService: async (serviceName: string, enable: boolean) => {
+      const serviceManager = getServiceManager(dbs);
+      if (!includes(getKeys(prostglesServices), serviceName)) {
+        throw "Service not found";
+      }
+      if (enable) {
+        return serviceManager.enableService(serviceName, () => {});
+      } else {
+        return serviceManager.stopService(serviceName);
+      }
     },
     getDBSize: async (conId: string) => {
       const c = connMgr.getConnection(conId);
@@ -207,113 +233,10 @@ export const publishMethods: PublishMethods<
       }
       await conn.prgl.restart();
     },
-    deleteConnection: async (
+    deleteConnection: (
       id: string,
       opts?: { keepBackups: boolean; dropDatabase: boolean },
-    ) => {
-      try {
-        return dbs.tx(async (t) => {
-          const con = await t.connections.findOne({ id });
-          if (con?.is_state_db)
-            throw "Cannot delete a prostgles state database connection";
-          connMgr.prglConnections[id]?.methodRunner?.destroy();
-          connMgr.prglConnections[id]?.onMountRunner?.destroy();
-          connMgr.prglConnections[id]?.tableConfigRunner?.destroy();
-          if (opts?.dropDatabase) {
-            if (!con?.db_name) throw "Unexpected: Database name missing";
-            const { db: cdb, destroy: destroyCdb } = await getCDB(
-              con.id,
-              undefined,
-              true,
-            );
-            const anotherDatabaseNames: { datname: string }[] = await cdb.any(`
-              SELECT * 
-              FROM pg_catalog.pg_database 
-              WHERE datname <> current_database() 
-              AND NOT datistemplate
-              ORDER BY datname = 'postgres' DESC
-            `);
-            const _superUsers: { usename: string }[] = await cdb.any(
-              `
-              SELECT usename 
-              FROM pg_user WHERE usesuper = true
-              `,
-              {},
-            );
-            const superUsers = _superUsers.map((u) => u.usename);
-            await destroyCdb();
-            const [anotherDatabaseName] = anotherDatabaseNames;
-            if (!anotherDatabaseName) throw "Could not find another database";
-            if (anotherDatabaseName.datname === con.db_name) {
-              throw "Not expected: Another database is the same as the one being deleted";
-            }
-
-            let superUser: { user: string; password: string } | undefined;
-            if (!superUsers.includes(con.db_user)) {
-              const conWithSuperUsers = await t.connections.findOne({
-                db_user: { $in: superUsers },
-                db_host: con.db_host,
-                db_port: con.db_port,
-                db_pass: { "<>": null },
-              });
-              if (conWithSuperUsers) {
-                superUser = {
-                  user: conWithSuperUsers.db_user,
-                  password: conWithSuperUsers.db_pass!,
-                };
-              }
-            }
-            const { db: acdb } = await getCDB(
-              con.id,
-              { database: anotherDatabaseName.datname, ...superUser },
-              true,
-            );
-            await connMgr.disconnect(con.id);
-            const killDbConnections = () => {
-              return acdb.manyOrNone(
-                `
-                SELECT pg_terminate_backend(pid) 
-                FROM pg_stat_activity 
-                WHERE datname = \${db_name}
-                AND pid <> pg_backend_pid();
-              `,
-                con,
-              );
-            };
-            await killDbConnections();
-            await killDbConnections();
-            await acdb.any(
-              `
-              DROP DATABASE ${asName(con.db_name)};
-            `,
-              con,
-            );
-          }
-          const conFilter = { connection_id: id };
-          await t.workspaces.delete(conFilter);
-
-          if (opts?.keepBackups) {
-            await t.backups.update(conFilter, { connection_id: null });
-          } else {
-            const bkps = await t.backups.find(conFilter);
-            for (const b of bkps) {
-              await bkpManager.bkpDelete(b.id, true);
-            }
-            await t.backups.delete(conFilter);
-          }
-
-          const result = await t.connections.delete({ id }, { returning: "*" });
-
-          /** delete orphaned database_configs */
-          await t.database_configs.delete({
-            $notExistsJoined: { connections: {} },
-          });
-          return result;
-        });
-      } catch (err) {
-        return Promise.reject(err);
-      }
-    },
+    ) => deleteConnection(dbs, bkpManager, id, opts),
     disconnect: async (conId: string) => {
       return connMgr.disconnect(conId);
     },
@@ -355,122 +278,11 @@ export const publishMethods: PublishMethods<
         bkpManager.closeStream(id);
       } else throw new Error("Not expected");
     },
-    setFileStorage: async (
+    setFileStorage: (
       connId: string,
       tableConfig?: ConnectionTableConfig,
       opts?: { keepS3Data?: boolean; keepFileTable?: boolean },
-    ) => {
-      const { db, dbConf } = await getConnectionAndDbConf(connId);
-
-      let newTableConfig: ConnectionTableConfig | null =
-        tableConfig ?
-          {
-            ...tableConfig,
-          }
-        : null;
-
-      /** Enable file storage */
-      if (tableConfig) {
-        if (typeof tableConfig.referencedTables !== "undefined") {
-          assertJSONBObjectAgainstSchema(
-            { referencedTables: { record: { values: "any", partial: true } } },
-            tableConfig,
-            "referencedTables",
-            false,
-          );
-        }
-        if (
-          tableConfig.referencedTables &&
-          Object.keys(tableConfig).length === 1
-        ) {
-          if (!dbConf.file_table_config) throw "Must enable file storage first";
-          newTableConfig = { ...dbConf.file_table_config, ...tableConfig };
-        } else {
-          assertJSONBObjectAgainstSchema(
-            {
-              fileTable: "string",
-              storageType: {
-                oneOfType: [
-                  {
-                    type: { enum: ["S3"] },
-                    credential_id: "number",
-                  },
-                  {
-                    type: { enum: ["local"] },
-                  },
-                ],
-              },
-            },
-            tableConfig as any,
-            "tableConfig",
-            false,
-          );
-          const { storageType } = tableConfig;
-
-          if (storageType.type === "S3") {
-            if (
-              !(await dbs.credentials.findOne({
-                id: storageType.credential_id,
-              }))
-            ) {
-              throw "Invalid credential_id provided";
-            }
-          }
-          const KEYS = ["fileTable", "storageType"] as const;
-          if (
-            dbConf.file_table_config &&
-            JSON.stringify(
-              pickKeys(dbConf.file_table_config, KEYS.slice(0)),
-            ) !== JSON.stringify(pickKeys(tableConfig, KEYS.slice(0)))
-          ) {
-            throw "Cannot update " + KEYS.join("or");
-          }
-
-          newTableConfig = tableConfig;
-        }
-
-        /** Disable current file storage */
-      } else {
-        const fileTable = dbConf.file_table_config?.fileTable;
-        if (!fileTable) throw "Unexpected: fileTable already disabled";
-        await db.tx(async (dbTX) => {
-          const fileTableHandler = dbTX[fileTable];
-          if (!fileTableHandler)
-            throw "Unexpected: fileTable table handler missing";
-          if (
-            dbConf.file_table_config?.fileTable &&
-            (dbConf.file_table_config.storageType.type === "local" ||
-              !opts?.keepS3Data)
-          ) {
-            if (!fileTable || !fileTableHandler.delete) {
-              throw "Unexpected error. fileTable handler not found";
-            }
-
-            await fileTableHandler.delete({});
-          }
-          if (!opts?.keepFileTable) {
-            await dbTX.sql!("DROP TABLE ${fileTable:name} CASCADE", {
-              fileTable,
-            });
-          }
-        });
-        newTableConfig = null;
-      }
-      const con = await dbs.connections.findOne({ id: connId });
-      if (!con) throw "Connection not found";
-      await dbs
-        .tx(async (t) => {
-          await connMgr.setFileTable(con, newTableConfig);
-          await t.database_configs.update(
-            { id: dbConf.id },
-            { file_table_config: newTableConfig },
-          );
-        })
-        .catch((err) => {
-          console.log({ err });
-          return Promise.reject(err);
-        });
-    },
+    ) => setFileStorage(dbs, connId, tableConfig, opts),
     getStatus: (connId: string) => getStatus(connId, dbs),
     runConnectionQuery,
     getSampleSchemas,
@@ -487,7 +299,7 @@ export const publishMethods: PublishMethods<
       if (isEmpty(changes)) {
         throw "No changes provided";
       }
-      const { c } = await getConnectionAndDbConf(connId);
+      const { c } = await getConnectionAndDatabaseConfig(dbs, connId);
       const newConn = await dbs.connections.update({ id: c.id }, changes, {
         returning: "*",
         multi: false,
@@ -511,7 +323,7 @@ export const publishMethods: PublishMethods<
       if (isEmpty(changes)) {
         throw "No changes provided";
       }
-      const { dbConf } = await getConnectionAndDbConf(connId);
+      const { dbConf } = await getConnectionAndDatabaseConfig(dbs, connId);
       const newDbConf = await dbs.database_configs.update(
         { id: dbConf.id },
         changes,
@@ -557,12 +369,27 @@ export const publishMethods: PublishMethods<
         serverName,
         toolName,
         args,
+        clientReq,
       );
       return res;
     },
     reloadMcpServerTools: async (serverName: string) =>
       reloadMcpServerTools(dbs, serverName),
     getMcpHostInfo,
+    transcribeAudio: async (audioBlob: Blob) => {
+      const speechToTextService = servicesManager.getService("speechToText");
+      if (speechToTextService?.status !== "running") {
+        throw "Speech to Text service is not enabled/running";
+      }
+      const formData = new FormData();
+      const audioBlobWithMime = new Blob([audioBlob], { type: "audio/webm" });
+
+      formData.append("audio", audioBlobWithMime, "recording.webm");
+      const result =
+        await speechToTextService.endpoints["/transcribe"](formData);
+
+      return result;
+    },
   };
 
   const isAdmin = user.type === "admin";
@@ -593,6 +420,7 @@ export const publishMethods: PublishMethods<
           accessRules,
           clientReq,
           type,
+          aborter: undefined,
         });
       },
     }),
@@ -604,10 +432,8 @@ export const publishMethods: PublishMethods<
       if (chat.user_id !== user.id && user.type !== "admin") {
         throw "You are not allowed to stop this chat";
       }
-      await dbs.llm_chats.update(
-        { id: chatId },
-        { status: { state: "stopped" } },
-      );
+      stopAskLLM(chatId);
+      await dbs.llm_chats.update({ id: chatId }, { status: null });
     },
     sendFeedback: async ({
       details,
@@ -699,7 +525,9 @@ export const publishMethods: PublishMethods<
       const hashedNewPassword = getPasswordHash(user, newPassword);
       await dbs.users.update({ id: user.id }, { password: hashedNewPassword });
     },
-    getLLMAllowedChatTools: async (chatId: number) => {
+    getLLMAllowedChatTools: async (
+      chatId: number,
+    ): Promise<AllowedChatTool[] | undefined> => {
       const chat = await dbs.llm_chats.findOne({ id: chatId });
       if (!chat || chat.user_id !== user.id) throw "Invalid chat";
       const connectionId = chat.connection_id;
@@ -707,12 +535,13 @@ export const publishMethods: PublishMethods<
       if (!chat.llm_prompt_id) throw "Chat prompt_id not found";
       const prompt = await dbs.llm_prompts.findOne({ id: chat.llm_prompt_id });
       if (!prompt) throw "Chat prompt not found";
-      const allowedTools = await getLLMAllowedChatTools({
+      const allowedTools = await getLLMToolsAllowedInThisChat({
         chat,
         userType: user.type,
         dbs,
         prompt,
         connectionId,
+        clientReq,
       });
       return allowedTools;
     },
@@ -742,10 +571,6 @@ export const publishMethods: PublishMethods<
     },
   };
 };
-
-process.on("exit", (code) => {
-  console.log(code);
-});
 
 export const runConnectionQuery = async (
   connId: string,

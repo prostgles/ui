@@ -1,10 +1,10 @@
 import { mdiPlus } from "@mdi/js";
 import React from "react";
-import Btn from "../../../components/Btn";
-import { CopyToClipboardBtn } from "../../../components/CopyToClipboardBtn";
-import { FlexCol, FlexRow } from "../../../components/Flex";
-import FormField from "../../../components/FormField/FormField";
-import PopupMenu from "../../../components/PopupMenu";
+import Btn from "@components/Btn";
+import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import PopupMenu from "@components/PopupMenu";
 import { t } from "../../../i18n/i18nUtils";
 import { Sessions } from "../../../pages/Account/Sessions";
 import type { APIDetailsProps } from "./APIDetails";
@@ -112,7 +112,7 @@ export const APIDetailsTokens = ({
                     : undefined
                   }
                   onClickPromise={async () => {
-                    const token = await dbsMethods.generateToken!(+state.days)!;
+                    const token = await dbsMethods.generateToken!(+state.days);
                     setToken(token);
                   }}
                 >

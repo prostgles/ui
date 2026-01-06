@@ -1,4 +1,4 @@
-import type { SmartGroupFilter } from "../../../../common/filterUtils";
+import type { DetailedFilter } from "@common/filterUtils";
 import type { Prgl } from "../../App";
 import { type WindowData } from "./dashboardUtils";
 
@@ -7,7 +7,7 @@ export type LoadTableArgs = Pick<Prgl, "db" | "dbs"> & {
   workspace_id: string;
   table?: string;
   fullscreen?: boolean;
-  filter?: SmartGroupFilter;
+  filter?: DetailedFilter[];
   sql?: string;
   name?: string;
   method_name?: string;

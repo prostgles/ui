@@ -3,9 +3,9 @@ import {
   isObject,
   type AnyObject,
 } from "prostgles-types";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import { getLLMRequestBody } from "./getLLMRequestBody";
-import type { MCPToolSchema } from "./getLLMTools";
+import type { MCPToolSchema } from "./getLLMToolsAllowedInThisChat";
 import {
   parseLLMResponseObject,
   type LLMParsedResponse,
@@ -22,12 +22,13 @@ export type FetchLLMResponseArgs = {
   llm_credential: DBSSchema["llm_credentials"];
   tools: undefined | (MCPToolSchema & { auto_approve: boolean })[];
   messages: LLMMessageWithRole[];
+  aborter: AbortController;
 };
 
 export const fetchLLMResponse = async (
   args: FetchLLMResponseArgs,
 ): Promise<LLMParsedResponse> => {
-  const { llm_provider, llm_credential, llm_model } = args;
+  const { llm_provider, llm_credential, llm_model, aborter } = args;
   const model = llm_model.name;
   const provider = llm_provider.id;
   const { api_key } = llm_credential;
@@ -43,22 +44,31 @@ export const fetchLLMResponse = async (
     method: "POST",
     headers,
     body,
+    signal: aborter.signal,
   }).catch((err) => {
-    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-    return Promise.reject(getSerialisableError(err));
+    const serialisableError = getSerialisableError(err);
+    return Promise.reject(serialisableError);
   });
+  if (!res.ok) {
+    const contentType = res.headers.get("content-type");
+    const errorData = {
+      statusText: res.statusText,
+      statusCode: res.status,
+      error: "" as unknown,
+    };
+    if (contentType?.includes("application/json")) {
+      errorData.error = await res.json();
+    } else {
+      errorData.error = await res.text();
+    }
 
+    throw new Error(
+      `Failed to fetch LLM response: ${res.statusText} ${JSON.stringify(errorData)}`,
+    );
+  }
   const responseClone = res.clone();
 
   const responseData = (await readFetchStream(res)) as AnyObject | undefined;
-  if (!res.ok) {
-    if (isObject(responseData)) {
-      throw responseData;
-    }
-    throw new Error(
-      `Failed to fetch LLM response: ${res.statusText} ${JSON.stringify(responseData)}`,
-    );
-  }
   if (!responseData) {
     throw new Error("No response data from LLM");
   }

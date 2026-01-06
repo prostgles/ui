@@ -2,14 +2,14 @@ import { mdiDelete, mdiLanguageTypescript, mdiPencil, mdiPlus } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import ConfirmationDialog from "../../components/ConfirmationDialog";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import ConfirmationDialog from "@components/ConfirmationDialog";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
@@ -130,8 +130,8 @@ const useSmartCardListProps = ({
       className: "trigger-hover",
     };
     const fieldConfigs: FieldConfig<DBSSchema["published_methods"]>[] = [
-      { name: "description", hide: true },
-      { name: "arguments", hide: true },
+      { name: "description" as const, hide: true },
+      { name: "arguments" as const, hide: true },
       {
         name: "name",
         renderMode: "full",
@@ -166,7 +166,7 @@ const useSmartCardListProps = ({
             />,
       } satisfies FieldConfig<DBSSchema["published_methods"]>,
       {
-        name: "id",
+        name: "id" as const,
         label: " ",
         className: "f-1 ",
         render: (v, row: DBSSchema["published_methods"]) => (
@@ -175,7 +175,7 @@ const useSmartCardListProps = ({
               <Btn
                 title="Edit function"
                 iconPath={mdiPencil}
-                onClick={async () => {
+                onClick={() => {
                   setAction({
                     type: "update",
                     existingMethodId: row.id,

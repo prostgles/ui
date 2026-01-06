@@ -1,8 +1,8 @@
 import { mdiDownload } from "@mdi/js";
 import React from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import Tabs from "../../../components/Tabs";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import Tabs from "@components/Tabs";
 import { Zip } from "../../API/zip";
 import CodeExample from "../../CodeExample";
 import { download } from "../../W_SQL/W_SQL";

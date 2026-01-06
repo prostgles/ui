@@ -171,7 +171,9 @@ export const suggestColumnLike = async (
       ...(s.type === "function" &&
         s.insertText &&
         activeSchema && {
-          insertText: s.insertText?.split(`${activeSchema}.`).join(""),
+          insertText: s.insertText
+            ?.split(`${activeSchema.insertText}.`)
+            .join(""),
         }),
       sortText,
     };

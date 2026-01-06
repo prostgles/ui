@@ -1,5 +1,5 @@
 import { mdiMapMarker, mdiShapePolygonPlus, mdiVectorPolyline } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { pickKeys } from "prostgles-types";
 import type { GeoJSONFeature } from "./DeckGLMap";
 // export type  { Feature } from "@deck.gl-community/editable-layers/dist/geojson-types";
@@ -24,7 +24,7 @@ const ld = {
   DrawEllipseByBoundingBoxMode: 1,
 };
 
-const getNebulaLib = async () => {
+const getNebulaLib = () => {
   // const lib = await import(/* webpackChunkName: "editable_layers" */  "@deck.gl-community/editable-layers");
   const lib = ld; // await import(/* webpackChunkName: "editable_layers" */  "./editable-layers/index");
   return lib;

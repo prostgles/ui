@@ -1,6 +1,6 @@
+import { Pan } from "@components/Pan";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import { Pan } from "../../../components/Pan";
 import type { CardViewProps, IndexedRow } from "./CardView";
 import type { CardViewRowProps } from "./CardViewRow";
 import { useDragHeader } from "./useDragHeader";

@@ -17,6 +17,7 @@
 		"skipLibCheck": true,
 		"noUncheckedIndexedAccess": true,
 		"baseUrl": ".",
+		"noImplicitAny": false,
 		"paths": {
 			"@common/*": [
 				"../common/*"
@@ -33,6 +34,7 @@
 		"prostgles_mcp"
 	],
 	"include": [
-		"src"
+		"src",
+		"**/*.spec.ts"
 	]
 }

@@ -1,7 +1,7 @@
 import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
-import { saveSVGs } from "./screenshotUtils/utils/saveSVGs";
+import { saveSVGs } from "./svgScreenshots/utils/saveSVGs";
 import {
   login,
   MINUTE,
@@ -10,14 +10,15 @@ import {
   restoreFromBackup,
   runDbsSql,
 } from "./utils/utils";
-import { DOCS_DIR } from "screenshotUtils/utils/constants";
-import { svgScreenshotsCompleteReferenced } from "screenshotUtils/utils/svgScreenshotsCompleteReferenced";
+import { DOCS_DIR } from "svgScreenshots/utils/constants";
+import { svgScreenshotsCompleteReferenced } from "svgScreenshots/utils/svgScreenshotsCompleteReferenced";
 import { USERS } from "utils/constants";
+import { goTo } from "utils/goTo";
 
 test.use({
   viewport: {
     width: 900,
-    height: 600,
+    height: 900,
   },
   trace: "retain-on-failure",
   launchOptions: {
@@ -31,7 +32,7 @@ test.describe("Create docs and screenshots", () => {
   test.describe.configure({
     retries: 0,
     mode: "serial",
-    timeout: 14 * MINUTE,
+    timeout: 18 * MINUTE,
   });
 
   test(`Restore databases`, async ({ page: p }) => {
@@ -43,6 +44,19 @@ test.describe("Create docs and screenshots", () => {
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();
     await restoreFromBackup(page, "Demo");
+
+    // Disable onMount
+    await goTo(page, "/connections");
+    await openConnection(page, "food_delivery");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.methods").click();
+    const onMountToggle = await page.getByTestId(
+      "ServerSideFunctions.onMountEnabled",
+    );
+    if ((await onMountToggle.getAttribute("aria-checked")) === "true") {
+      await onMountToggle.click();
+      await page.waitForTimeout(1000);
+    }
   });
 
   test("Create docs", async ({ page: p }) => {
@@ -125,9 +139,17 @@ test.describe("Create docs and screenshots", () => {
       await page.waitForTimeout(1100);
 
       await prepare(page);
-      const { svgifSpecs } = await saveSVGs(page);
+      const { svgifSpecs, overviewSvgifSpecs, svgifCovers } =
+        await saveSVGs(page);
+      const svgFilesUsedExternally = [
+        ...overviewSvgifSpecs
+          .filter((s) => s.usedExternally)
+          .map((s) => s.fileName + ".svgif"),
+        ...svgifCovers.map((c) => c.fileName),
+      ];
       await svgScreenshotsCompleteReferenced(
         svgifSpecs.flatMap((s) => s.scenes),
+        svgFilesUsedExternally,
       );
     }
   });

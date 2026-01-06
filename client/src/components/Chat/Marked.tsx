@@ -1,16 +1,18 @@
-import React, { useCallback, useEffect } from "react";
-import Markdown from "react-markdown";
-import { classOverride, FlexCol, type DivProps } from "../Flex";
-import {
-  MarkdownMonacoCode,
-  type MarkdownMonacoCodeProps,
-} from "./MarkdownMonacoCode";
-import "./Marked.css";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import React, { useCallback } from "react";
+import Markdown from "react-markdown";
+import { classOverride, type DivProps } from "../Flex";
+import {
+  MonacoCodeInMarkdown,
+  type MonacoCodeInMarkdownProps,
+} from "./MonacoCodeInMarkdown/MonacoCodeInMarkdown";
+import "./Marked.css";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 export type MarkedProps = DivProps &
   Pick<
-    MarkdownMonacoCodeProps,
+    MonacoCodeInMarkdownProps,
     "codeHeader" | "sqlHandler" | "loadedSuggestions"
   > & {
     content: string;
@@ -31,21 +33,23 @@ export const Marked = (props: MarkedProps) => {
     > & { node?: any }) => {
       const match = /language-(\w+)/.exec(className || "");
       const language = match ? match[1] : "";
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
       const codeString = props.children?.toString() ?? "";
 
-      if (!codeString || !className || !language) {
-        return <code {...props} />;
-      }
+      if (!codeString || !className || !language || language === "markdown") {
+        const isSingleWord =
+          !codeString.includes("\n") && !codeString.includes(" ");
 
-      if (language === "markdown") {
+        if (isSingleWord) {
+          <code {...props} />;
+        }
         return (
-          <pre>
-            <code {...props} />
-          </pre>
+          <code {...props} style={{ ...props.style, whiteSpace: "pre-line" }} />
         );
       }
+
       return (
-        <MarkdownMonacoCode
+        <MonacoCodeInMarkdown
           className="my-1"
           key={codeString}
           codeHeader={codeHeader}
@@ -68,8 +72,10 @@ export const Marked = (props: MarkedProps) => {
       )}
     >
       <Markdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
         components={{
-          pre: React.Fragment as any,
+          pre: React.Fragment,
           code: CodeComponent,
           a: (props) => (
             <a

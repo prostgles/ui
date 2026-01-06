@@ -1,5 +1,5 @@
 import React from "react";
-import { FlexCol } from "../../components/Flex";
+import { FlexCol } from "@components/Flex";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 
 export const SettingsSection = ({

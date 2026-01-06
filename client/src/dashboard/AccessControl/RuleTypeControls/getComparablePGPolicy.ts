@@ -3,9 +3,9 @@ import {
   getFinalFilter,
   parseContextVal,
   type GroupedDetailedFilter,
-  type SimpleFilter,
-} from "../../../../../common/filterUtils";
-import type { ForcedData } from "../../../../../common/publishUtils";
+  type DetailedFilter,
+} from "@common/filterUtils";
+import type { ForcedData } from "@common/publishUtils";
 import type { SelectRuleControlProps } from "./SelectRuleControl";
 type GetComparablePGPolicyArgs = Pick<
   SelectRuleControlProps,
@@ -29,7 +29,7 @@ export const getComparablePGPolicy = async ({
   excludeRLSStatement,
 }: GetComparablePGPolicyArgs) => {
   const columns = table.columns.map((c) => c.name);
-  const getSingleFilterCondition = async (f: SimpleFilter) => {
+  const getSingleFilterCondition = async (f: DetailedFilter) => {
     if ("contextValue" in f) {
       const col = table.columns.find((c) => c.name === f.fieldName);
       if (!col) return "";
@@ -55,7 +55,7 @@ export const getComparablePGPolicy = async ({
     const isAnd = "$and" in filter;
     const filters = isAnd ? filter.$and : filter.$or;
     const conditions = await Promise.all(
-      filters.map((f) => getSingleFilterCondition(f as SimpleFilter)),
+      filters.map((f) => getSingleFilterCondition(f as DetailedFilter)),
     );
     return `${conditions.filter((v) => v).join(isAnd ? " AND " : " OR ")}`;
   };

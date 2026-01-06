@@ -4,6 +4,7 @@ import type { TestSelectors } from "../Testing";
 import "./Checkbox.css";
 import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
+import { generateUniqueID } from "./FileInput/FileInput";
 
 type P = TestSelectors & {
   id?: string;
@@ -20,130 +21,127 @@ type P = TestSelectors & {
   iconPath?: string;
 };
 
-export default class Checkbox extends React.Component<P, any> {
-  inptRef?: HTMLInputElement;
-  render() {
-    const props = { ...this.props };
-    const {
-      id,
-      className = "",
-      inputClassname = "",
-      label,
-      checked,
-      style = {},
-      onChange,
-      readOnly,
-      title,
-      variant,
-      disabledInfo,
-      iconPath,
-      ...testSel
-    } = props;
+export const Checkbox = (props: P) => {
+  const {
+    id,
+    className = "",
+    inputClassname = "",
+    label,
+    checked,
+    style = {},
+    onChange,
+    readOnly,
+    title,
+    variant,
+    disabledInfo,
+    iconPath,
+    ...testSel
+  } = props;
 
-    const isBtn = variant === "button";
-    const isMiniOrMicro = variant === "minimal" || variant === "micro";
-    const tickColorClass = checked ? " text-action " : "text-2";
+  const idRef = React.useRef(id ?? generateUniqueID());
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
 
-    const defaultInputClass =
-      " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit formfield-bg-color " +
-      (!variant ? " b b-color " : "") +
-      (variant === "minimal" ? " round " : " ") +
-      (isBtn ? "bg-color-2 b-color p-p5 no-outline"
-      : isMiniOrMicro ? "bg-transparent b-unset no-outline"
-      : "relative ");
-    const checkbox = (
-      <div
-        className={classOverride(defaultInputClass, inputClassname)}
-        tabIndex={0}
+  const isBtn = variant === "button";
+  const isMiniOrMicro = variant === "minimal" || variant === "micro";
+  const tickColorClass = checked ? " text-action " : "text-2";
+
+  const defaultInputClass =
+    " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit formfield-bg-color " +
+    (!variant ? " b b-color " : "") +
+    (variant === "minimal" ? " round " : " ") +
+    (isBtn ? "bg-color-2 b-color p-p5 no-outline"
+    : isMiniOrMicro ? "bg-transparent b-unset no-outline"
+    : "relative ");
+  const checkbox = (
+    <div
+      className={classOverride(defaultInputClass, inputClassname)}
+      tabIndex={0}
+      style={
+        variant ?
+          {}
+        : {
+            padding: "3px",
+            borderRadius: "3px",
+          }
+      }
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          inputRef.current?.click();
+        }
+      }}
+    >
+      <input
+        id={idRef.current}
+        ref={inputRef}
+        className="hidden"
+        type="checkbox"
+        checked={checked}
+        onChange={
+          !onChange || disabledInfo ? undefined : (
+            (e) => {
+              onChange(e, e.target.checked);
+            }
+          )
+        }
+        readOnly={readOnly || Boolean(disabledInfo) || !onChange}
+      />
+      <Icon
+        path={
+          iconPath ??
+          (variant === "header" && !checked ?
+            mdiCheckboxBlankOutline
+          : mdiCheckBold)
+        }
+        size={
+          variant === "button" ? 1
+          : variant === "minimal" ?
+            1
+          : 0.75
+        }
+        className={
+          isMiniOrMicro || isBtn || variant === "header" ?
+            tickColorClass
+          : "text-action"
+        }
         style={
-          variant ?
+          isMiniOrMicro || isBtn || variant === "header" ?
             {}
           : {
-              padding: "3px",
-              borderRadius: "3px",
+              opacity: checked ? 1 : 0,
             }
         }
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            this.inptRef?.click();
-          }
-        }}
-      >
-        <input
-          id={id}
-          ref={(e) => {
-            if (e) this.inptRef = e;
-          }}
-          className="hidden"
-          type="checkbox"
-          checked={checked}
-          onChange={
-            !onChange || disabledInfo ? undefined : (
-              (e) => {
-                onChange(e, e.target.checked);
-              }
-            )
-          }
-          readOnly={readOnly || Boolean(disabledInfo) || !onChange}
-        />
-        <Icon
-          path={
-            iconPath ??
-            (variant === "header" && !checked ?
-              mdiCheckboxBlankOutline
-            : mdiCheckBold)
-          }
-          size={
-            variant === "button" ? 1
-            : variant === "minimal" ?
-              1
-            : 0.75
-          }
-          className={
-            isMiniOrMicro || isBtn || variant === "header" ?
-              tickColorClass
-            : "text-action"
-          }
-          style={
-            isMiniOrMicro || isBtn || variant === "header" ?
-              {}
-            : {
-                opacity: checked ? 1 : 0,
-              }
-          }
-        />
-      </div>
-    );
+      />
+    </div>
+  );
 
-    return (
-      <label
-        style={{
-          ...style,
-          ...(isMiniOrMicro ?
-            {
-              background: "transparent",
-              outline: "none !important",
-            }
-          : {}),
-        }}
-        htmlFor={id}
-        className={classOverride(
-          "Checkbox flex-row-wrap ai-center pointer w-fit h-fit " +
-            (disabledInfo ? " disabled " : ""),
-          className,
-        )}
-        title={disabledInfo ?? title}
-        {...testSel}
-      >
-        {checkbox}
-        {!label ? null : (
-          <div
-            className={`ml-1 noselect f-1 text-ellipsis ${variant === "header" ? "text-0" : tickColorClass} ${isMiniOrMicro ? "ml-p25" : "ml-p5"}`}
-          >
-            {label}
-          </div>
-        )}
-      </label>
-    );
-  }
-}
+  return (
+    <label
+      style={{
+        ...style,
+        ...(isMiniOrMicro ?
+          {
+            background: "transparent",
+            outline: "none !important",
+          }
+        : {}),
+      }}
+      htmlFor={id}
+      className={classOverride(
+        "Checkbox flex-row-wrap ai-center pointer w-fit h-fit " +
+          (disabledInfo ? " disabled " : ""),
+        className,
+      )}
+      title={disabledInfo ?? title}
+      {...testSel}
+    >
+      {checkbox}
+      {!label ? null : (
+        <div
+          className={`ml-1 noselect f-1 text-ellipsis ${variant === "header" ? "text-0" : tickColorClass} ${isMiniOrMicro ? "ml-p25" : "ml-p5"}`}
+        >
+          {label}
+        </div>
+      )}
+    </label>
+  );
+};

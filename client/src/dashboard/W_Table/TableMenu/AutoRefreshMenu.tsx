@@ -1,10 +1,10 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import ButtonGroup from "../../../components/ButtonGroup";
-import { InfoRow } from "../../../components/InfoRow";
+import ButtonGroup from "@components/ButtonGroup";
+import { InfoRow } from "@components/InfoRow";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import type { RefreshOptions } from "./W_TableMenu";
 import React from "react";
-import FormField from "../../../components/FormField/FormField";
+import FormField from "@components/FormField/FormField";
 import type { DBS } from "../../Dashboard/DBS";
 
 export const AutoRefreshMenu = ({
@@ -41,7 +41,7 @@ export const AutoRefreshMenu = ({
     {
       key: "Realtime",
       disabledInfo:
-        w.type === "table" && !db?.[w.table_name!]?.subscribe ?
+        w.type === "table" && !db?.[w.table_name]?.subscribe ?
           "Cannot subscribe"
         : undefined,
     },

@@ -1,10 +1,10 @@
 import { mdiAlert, mdiCheck } from "@mdi/js";
-import { omitKeys } from "prostgles-types";
+import { omitKeys, pickKeys } from "prostgles-types";
 import React from "react";
 import { NavLink } from "react-router-dom";
 import RTComp from "../dashboard/RTComp";
 import type { TestSelectors } from "../Testing";
-import { tout } from "../utils";
+import { tout } from "../utils/utils";
 import "./Btn.css";
 import { parsedError } from "./ErrorComponent";
 import { classOverride } from "./Flex";
@@ -44,12 +44,15 @@ type BtnCustomProps = (
    * If provided then the button is disabled and will display a tooltip with this message
    */
   disabledInfo?: string;
-  disabledVariant?: "no-fade" | "ignore-loading";
+  /**
+   * no-fade - will not fade out the button when disabled/loading
+   */
+  disabledVariant?: "no-fade";
   loading?: boolean;
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
 
-  size?: "large" | "default" | "small" | "micro";
+  size?: "large" | "default" | "small" | "micro" | "nano";
   variant?: "outline" | "filled" | "faded" | "icon" | "text" | "default";
   color?:
     | "danger"
@@ -89,7 +92,7 @@ type BtnCustomProps = (
         onClickMessage?: undefined;
         onClickPromise?: (
           e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-        ) => Promise<void>;
+        ) => Promise<void> | void;
         onClickPromiseMode?: "noTickIcon";
         /**
          * Will display it instead of the error message
@@ -128,7 +131,8 @@ const CUSTOM_ATTRS: OmmitedKeys[] = [
   "onClickPromise",
   "onClickPromiseMessage",
   "onClickPromiseMode",
-  "asNavLink" as any,
+  //@ts-ignore
+  "asNavLink",
   "iconStyle",
   "titleAsLabel",
   "clickConfirmation",
@@ -256,7 +260,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       style = {},
       iconStyle = {},
       disabledInfo,
-      disabledVariant = "",
+      disabledVariant,
       title,
       fadeIn,
       variant = "default",
@@ -283,8 +287,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     if (clickMessage?.replace) return clickMessage.msg;
 
-    const isDisabled =
-      disabledInfo || (loading && disabledVariant !== "ignore-loading");
+    const isDisabled = disabledInfo || loading;
     let _className = "";
     const { size = window.isLowWidthScreen ? "small" : "default" } = this.props;
 
@@ -324,7 +327,8 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       }
     } else {
       const padding =
-        size === "micro" ? "4px"
+        size === "nano" ? "0px"
+        : size === "micro" ? "4px"
         : size === "small" ? "6px"
         : size === "default" ? "8px"
         : "10px";
@@ -345,19 +349,21 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       default: 20,
       small: 14,
       micro: 12,
+      nano: 10,
     }[size];
     const loadingMargin = {
       large: 1,
       default: 1,
       small: 0,
       micro: 2,
+      nano: 0,
     }[size];
     const childrenContent =
       children === undefined || children === null || children === "" ? null
       : loading ?
         <div
-          className="min-w-0 ws-nowrap text-ellipsis f-0 o-hidden"
-          style={{ opacity: disabledVariant !== "ignore-loading" ? 0.5 : 1 }}
+          className="min-w-0 ws-nowrap text-ellipsis f-1 o-hidden flex-row"
+          style={{ opacity: 0.5 }}
         >
           {children}
         </div>
@@ -437,6 +443,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       default: "16px",
       small: "14px",
       micro: "12px",
+      nano: "10px",
     };
 
     const finalProps: PropsOf<HTMLAnchorElement> | PropsOf<HTMLButtonElement> =
@@ -454,8 +461,8 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
           display: "flex",
           lineHeight: "1em",
           width: "fit-content",
-          ...style,
           fontSize: FontSizeMap[size],
+          ...style,
         },
         onMouseDown: (e) => e.preventDefault(),
         className: classOverride(
@@ -463,7 +470,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
           className,
         ),
         ref: this.props._ref as any,
-        ...{ "data-id": otherProps["data-id"] },
+        ...pickKeys(otherProps, ["data-id"]),
       };
 
     const withLabel = (content: React.ReactNode) => {
@@ -512,8 +519,9 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     return withLabel(
       <>
         <button
-          {...(finalProps as PropsOf<HTMLButtonElement>)}
-          disabled={disabledInfo ? true : undefined}
+          {...finalProps}
+          data-color={color}
+          disabled={isDisabled ? true : undefined}
         >
           {content}
         </button>

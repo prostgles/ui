@@ -1,11 +1,11 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useState } from "react";
-import ButtonGroup from "../../components/ButtonGroup";
-import Checkbox from "../../components/Checkbox";
-import { FlexRowWrap } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import ButtonGroup from "@components/ButtonGroup";
+import { Checkbox } from "@components/Checkbox";
+import { FlexRowWrap } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import { SwitchToggle } from "@components/SwitchToggle";
 import type { DBSMethods } from "../../dashboard/Dashboard/DBS";
 
 export type NewPostgresUser = {
@@ -162,9 +162,7 @@ type Args = {
   runConnectionQuery: DBSMethods["runConnectionQuery"];
 };
 export const useCreatePostgresUser = ({ connId, runConnectionQuery }: Args) => {
-  const [newPgUser, setNewPgUser] = useState<
-    NewPostgresUser & { create: boolean }
-  >({
+  const [newPgUser, setNewPgUser] = useState<NewPostgresUser>({
     name: "",
     password: "",
     create: false,

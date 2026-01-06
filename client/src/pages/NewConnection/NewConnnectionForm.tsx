@@ -8,31 +8,29 @@ import {
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
-import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
-import type { DBSSchema } from "../../../../common/publishUtils";
-import { isObject } from "../../../../common/publishUtils";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import type { ExtraProps } from "../../App";
-import Btn from "../../components/Btn";
-import ErrorComponent, {
-  getErrorMessage,
-} from "../../components/ErrorComponent";
-import { FlexCol } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loader/Loading";
-import { Section } from "../../components/Section";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import ErrorComponent, { getErrorMessage } from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
+import { Section } from "@components/Section";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { CodeConfirmation } from "../../dashboard/BackupAndRestore/CodeConfirmation";
 import RTComp from "../../dashboard/RTComp";
 import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRecords";
 import { t } from "../../i18n/i18nUtils";
-import { get } from "../../utils";
+import { get } from "../../utils/utils";
 import { getBrowserOS } from "../ElectronSetup/ElectronSetup";
-import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
+import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionFormFields";
-import { ROUTES } from "../../../../common/utils";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
+import { ROUTES } from "@common/utils";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -160,7 +158,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
     const { dbsMethods } = prglState;
     this.setState({ status: "" });
     try {
-      const res = await dbsMethods.testDBConnection!(connection!);
+      const res = await dbsMethods.testDBConnection!(connection);
       this.setState({
         status:
           "OK" +
@@ -457,9 +455,10 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                 variant="outline"
                 color="action"
                 iconPath={mdiContentDuplicate}
-                onClick={async (e) => {
-                  if (c.name) updateConnection({ name: c.name + " (copy)" });
-                  updateConnection({ created: null, is_state_db: null });
+                onClick={(e) => {
+                  if (c.name)
+                    void updateConnection({ name: c.name + " (copy)" });
+                  void updateConnection({ created: null, is_state_db: null });
                   this.setState({ mode: "clone" });
                 }}
               >
@@ -488,7 +487,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   setMsg({ loading: 1 });
                   if (
                     c.name &&
-                    (await dbs!.connections.findOne({
+                    (await dbs.connections.findOne({
                       name: c.name,
                       "id.<>": conn.id,
                     }))

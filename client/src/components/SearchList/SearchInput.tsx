@@ -10,7 +10,7 @@ export const SearchInputZIndex = 2;
 
 export type SearchInputProps = Pick<
   React.HTMLProps<HTMLInputElement>,
-  "type" | "title"
+  "type" | "title" | "autoFocus"
 > &
   TestSelectors & {
     placeholder?: string;
@@ -60,11 +60,9 @@ export const SearchInput = (props: SearchInputProps) => {
       }
       style={{
         ...wrapperStyle,
-        ...(mode ?
-          { zIndex: mode["!listNode"] ? "unset" : SearchInputZIndex }
-        : {
-            margin: "8px",
-          }),
+        ...(mode && {
+          zIndex: mode["!listNode"] ? "unset" : SearchInputZIndex,
+        }),
       }}
       onClick={onClickWrapper}
     >
@@ -76,6 +74,7 @@ export const SearchInput = (props: SearchInputProps) => {
         type={type}
         ref={inputRef}
         style={{
+          minWidth: "5em",
           ...(mode?.["!noList"] && {
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
@@ -87,8 +86,11 @@ export const SearchInput = (props: SearchInputProps) => {
           }),
           ...style,
           ...(size !== "small" && {
-            padding: "8px 1em",
+            padding: "0.75em",
             paddingRight: 0,
+          }),
+          ...(leftContent && {
+            paddingLeft: 0,
           }),
         }}
         autoComplete="off"
@@ -119,6 +121,7 @@ export const SearchInput = (props: SearchInputProps) => {
             iconPath={mdiFormatLetterCase}
             style={{
               margin: "1px",
+              visibility: isLoading ? "hidden" : "visible",
             }}
             color={matchCase.value ? "action" : undefined}
             onClick={() => {

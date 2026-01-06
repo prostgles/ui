@@ -1,17 +1,17 @@
 import React from "react";
 
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loader/Loading";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
 import { AccessControlRuleEditor } from "./AccessControlRuleEditor";
 import { AccessControlRules } from "./ExistingAccessRules";
 import type { useAccessControlSearchParams } from "./useAccessControlSearchParams";
 import { mdiAccountCog, mdiPlus } from "@mdi/js";
 import { UserSyncConfig } from "./UserSyncConfig";
-import { ROUTES } from "../../../../common/utils";
+import { ROUTES } from "@common/utils";
 
 type P = ReturnType<typeof useAccessControlSearchParams> & {
   prgl: Prgl;
@@ -20,7 +20,7 @@ type P = ReturnType<typeof useAccessControlSearchParams> & {
 
 export type AccessRule = Required<DBSSchema["access_control"]> & {
   access_control_user_types: {
-    ids: string[];
+    ids: DBSSchema["user_types"]["id"][];
   }[];
   isApplied: boolean | undefined;
   published_methods: Required<DBSSchema["published_methods"]>[];

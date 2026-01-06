@@ -6,10 +6,10 @@ import {
 import { asName } from "prostgles-types";
 import React from "react";
 import type { W_TableMenuMetaProps } from "./W_TableMenu";
-import Chip from "../../../components/Chip";
-import Btn from "../../../components/Btn";
+import Chip from "@components/Chip";
+import Btn from "@components/Btn";
 import CodeExample from "../../CodeExample";
-import { FlexCol, FlexRowWrap } from "../../../components/Flex";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 
 export const W_TableMenu_TableInfo = ({
   w,

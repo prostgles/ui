@@ -200,10 +200,10 @@ export type TableRulesErrors = Partial<Record<keyof TableRules, any>> & {
     all?: string;
 };
 export declare const getTableRulesErrors: (rules: TableRules, tableColumns: string[], contextData: ContextDataObject) => Promise<TableRulesErrors>;
-export declare const validateDynamicFields: (dynamicFields: UpdateRule["dynamicFields"], db: {
-    find: any;
-    findOne: any;
-}, context: ContextDataObject, columns: string[]) => Promise<{
+export declare const validateDynamicFields: (dynamicFields: UpdateRule["dynamicFields"], tableHandler: {
+    find?: any;
+    findOne?: any;
+} | undefined, context: ContextDataObject, columns: string[]) => Promise<{
     error?: any;
 }>;
 export declare const getCIDRRangesQuery: (arg: {

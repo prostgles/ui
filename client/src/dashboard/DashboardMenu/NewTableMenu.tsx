@@ -1,7 +1,7 @@
 import { mdiFileUploadOutline, mdiFunction, mdiPlus, mdiTable } from "@mdi/js";
 import React, { useState } from "react";
-import type { FullOption } from "../../components/Select/Select";
-import Select from "../../components/Select/Select";
+import type { FullOption } from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { FileImporter } from "../FileImporter/FileImporter";
 import { NewMethod } from "../W_Method/NewMethod";
 import { CreateTable } from "./CreateTable";

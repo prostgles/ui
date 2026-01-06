@@ -6,28 +6,28 @@ import type { TestSelectors } from "../../Testing";
 import ErrorComponent from "../ErrorComponent";
 import { classOverride, FlexRow, type DivProps } from "../Flex";
 import { InfoRow } from "../InfoRow";
-import { Label } from "../Label";
-import type { FormFieldProps } from "./FormField";
+import { Label, type LabelPropsNormal } from "../Label";
 
 const INPUT_WRAPPER_CLASS = "input-wrapper";
 
+export type FormFieldCommonProps = {
+  className?: string;
+  label?: string | Omit<LabelPropsNormal, "variant">;
+  hint?: string;
+  title?: string;
+  style?: React.CSSProperties;
+  rightContentAlwaysShow?: boolean;
+  rightIcons?: React.ReactNode;
+  rightContent?: React.ReactNode;
+  labelStyle?: React.CSSProperties;
+  disabledInfo?: string;
+  error?: unknown;
+  maxWidth?: React.CSSProperties["maxWidth"];
+};
+
 type FormFieldSkeletonProps = TestSelectors &
-  Pick<DivProps, "onBlur" | "onKeyDown"> &
-  Pick<
-    FormFieldProps,
-    | "className"
-    | "title"
-    | "label"
-    | "labelStyle"
-    | "disabledInfo"
-    | "error"
-    | "hint"
-    | "style"
-    | "maxWidth"
-    | "rightContentAlwaysShow"
-    | "rightIcons"
-    | "rightContent"
-  > & {
+  FormFieldCommonProps &
+  Pick<DivProps, "onBlur" | "onKeyDown"> & {
     /**
      * Used by the label to identify the input
      */
@@ -154,7 +154,7 @@ export const FormFieldSkeleton = forwardRef(
                 {Boolean(rightIcons) && (
                   <FlexRow
                     className={
-                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} h-fit as-end gap-0 ai-start jc-center ` +
+                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} h-fit as-start gap-0 ai-start jc-center ` +
                       (rightIconsShowBorder ? "  bl b-color " : " ")
                     }
                   >
@@ -187,14 +187,15 @@ export const FormFieldSkeleton = forwardRef(
             {Boolean(rightContent) && (
               <FlexRow
                 className={`RightContent  ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} f-0 gap-0`}
-                style={{ alignSelf: "center" }} // So it looks better for asJONB=JSONBSchema
+                // style={{ alignSelf: "center" }} // So it looks better for asJONB=JSONBSchema
+                style={{ alignSelf: "start" }}
               >
                 {rightContent}
               </FlexRow>
             )}
           </div>
           {Boolean(hint) && (
-            <p className="ta-left text-2 m-0 text-sm noselect ws-pre-line">
+            <p className="FormFieldHint ta-left text-2 m-0 text-sm noselect ws-pre-line">
               {hint}
             </p>
           )}

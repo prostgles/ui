@@ -1,6 +1,6 @@
 import { isDefined } from "prostgles-types";
 import type { DBS } from "../..";
-import type { DBSSchemaForInsert } from "../../../../common/publishUtils";
+import type { DBSSchemaForInsert } from "@common/publishUtils";
 
 export const refreshModels = async (dbs: DBS) => {
   /**
@@ -32,6 +32,7 @@ export const refreshModels = async (dbs: DBS) => {
           output: Number(completion || "0") * 1e6,
           cachedInput: Number(input_cache_read || "0") * 1e6,
           cachedOutput: Number(input_cache_write || "0") * 1e6,
+          // No threshold pricing info available from OpenRouter
         },
         architecture: m.architecture,
         supported_parameters: m.supported_parameters,

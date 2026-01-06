@@ -1,3 +1,6 @@
+/**
+ * @type {import('eslint').Linter.Config}
+ */
 module.exports = {
   // "root": true,
   parserOptions: {
@@ -8,10 +11,33 @@ module.exports = {
     // "tsconfigRootDir": __dirname,
   },
   // "ingorePatterns": "**/*.d.ts, **/*.js",
+
+  ignores: [
+    "node_modules",
+    "dist",
+    "examples",
+    "**/*.d.ts",
+    "**/*.js",
+    "tests",
+    ".eslintrc.js",
+    ".eslint.config.js",
+    "*.json",
+    "**/*.json",
+  ],
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   rules: {
+    "@typescript-eslint/no-misused-spread": [
+      "error",
+      {
+        allow: [
+          "CSSStyleDeclaration",
+          "Partial<CSSStyleDeclaration>",
+          "DOMStringMap",
+        ],
+      },
+    ],
     "no-cond-assign": "error",
     "@typescript-eslint/no-namespace": "off",
     "@typescript-eslint/no-explicit-any": "off",
@@ -33,7 +59,7 @@ module.exports = {
         disallowTypeAnnotations: false,
       },
     ],
-    "@typescript-eslint/quotes": [
+    quotes: [
       "error",
       "double",
       {

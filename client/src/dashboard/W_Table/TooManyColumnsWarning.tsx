@@ -1,8 +1,8 @@
+import Btn from "@components/Btn";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import { mdiAlertOutline } from "@mdi/js";
-import React, { useEffect, useMemo } from "react";
-import Btn from "../../components/Btn";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
+import React, { useEffect } from "react";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 
 type P = {
@@ -63,7 +63,7 @@ export const TooManyColumnsWarning = ({
       ]}
     >
       <InfoRow variant="naked" color="warning">
-        There is a high number ({w.columns?.filter((c) => c.show)?.length}) of
+        There is a high number ({w.columns?.filter((c) => c.show).length}) of
         rows/columns displayed. Reduce the number of viewed rows/columns from
         the table menu to improve performance
       </InfoRow>

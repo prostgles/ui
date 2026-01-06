@@ -4,15 +4,15 @@ import {
   mdiFilterPlus,
   mdiGestureTap,
 } from "@mdi/js";
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep } from "prostgles-client";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
-import type { PopupProps } from "../../components/Popup/Popup";
-import Popup from "../../components/Popup/Popup";
-import type { TimeChart } from "../Charts/TimeChart";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import type { PopupProps } from "@components/Popup/Popup";
+import Popup from "@components/Popup/Popup";
+import type { TimeChart } from "../Charts/TimeChart/TimeChart";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import type { ActiveRow } from "../W_Table/W_Table";
 const filterColor = "rgba(5, 176, 223, 0.1)";

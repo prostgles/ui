@@ -162,6 +162,7 @@ export type ProcStats = {
 export declare function matchObj(obj1: AnyObject | undefined, obj2: AnyObject | undefined): boolean;
 export declare function sliceText<T extends string | undefined>(_text: T, maxLen: number, ellipseText?: string, midEllipse?: boolean): T;
 export type ColType = {
+    table_oid: number | undefined;
     column_name: string;
     escaped_column_name: string;
     data_type: string;
@@ -172,6 +173,7 @@ export declare const RELOAD_NOTIFICATION = "Prostgles UI accessible at";
 export declare function throttle<Params extends any[]>(func: (...args: Params) => any, timeout: number): (...args: Params) => void;
 export declare const SPOOF_TEST_VALUE = "trustme";
 export declare const getEntries: <T extends AnyObject>(obj: T) => [keyof T, T[keyof T]][];
+export declare const fromEntries: <K extends string | number | symbol, V>(entries: readonly (readonly [K, V])[]) => Record<K, V>;
 export declare const CONNECTION_CONFIG_SECTIONS: readonly ["access_control", "backups", "table_config", "details", "status", "methods", "file_storage", "API"];
 /**
  * Ensure that multi-line strings are indented correctly
@@ -209,9 +211,11 @@ export declare const ROUTES: {
 };
 export declare const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 export declare const FORKED_PROC_ENV_NAME: "IS_FORKED_PROC";
-type ValueOf<T> = T[keyof T];
-export declare const getProperty: <O extends AnyObject, K extends (keyof O & string) | string>(o: O, k: K) => ValueOf<O> | undefined;
 export declare function debouncePromise<Args extends any[], T>(promiseFuncDef: (...pArgs: Args) => Promise<T>): (...args: Args) => Promise<T>;
 export declare const getCaller: () => string[];
+export type FileTable = {
+    original_name: string;
+};
+export declare const getProperty: <T extends object, K extends string>(obj: T, key: K | string) => K extends keyof T ? T[K] : K extends string ? T[keyof T] | undefined : undefined;
 export {};
 //# sourceMappingURL=utils.d.ts.map

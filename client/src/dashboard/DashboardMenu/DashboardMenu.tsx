@@ -2,7 +2,7 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import React, { useCallback, useMemo } from "react";
 import type { ReactiveState } from "../../appUtils";
 import { useReactiveState } from "../../appUtils";
-import Popup from "../../components/Popup/Popup";
+import Popup from "@components/Popup/Popup";
 import type {
   CommonWindowProps,
   DashboardProps,
@@ -10,8 +10,8 @@ import type {
   _Dashboard,
 } from "../Dashboard/Dashboard";
 import type { WindowData, Workspace } from "../Dashboard/dashboardUtils";
-import type { SEARCH_TYPES } from "../SearchAll";
-import { SearchAll } from "../SearchAll";
+import type { SEARCH_TYPES } from "../SearchAll/SearchAll";
+import { SearchAll } from "../SearchAll/SearchAll";
 import { DashboardMenuContent } from "./DashboardMenuContent";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuHotkeys } from "./DashboardMenuHotkeys";
@@ -90,6 +90,7 @@ export const DashboardMenu = ({
     : anchor.node ?
       <Popup
         key="main menu"
+        data-command="DashboardMenu"
         showFullscreenToggle={{}}
         title={
           <DashboardMenuHeader
@@ -138,20 +139,20 @@ export const DashboardMenu = ({
           tables={tables}
           searchType={showSearchAll.mode}
           defaultTerm={showSearchAll.term}
-          suggestions={suggestions?.searchAll}
+          suggestions={suggestions?.suggestions}
           queries={queries}
           loadTable={loadTable}
           onOpenDBObject={(s, method_name) => {
             if (method_name) {
-              loadTable({ type: "method", method_name });
+              void loadTable({ type: "method", method_name });
             } else if (!s) {
             } else if (s.type === "function") {
-              loadTable({ type: "sql", sql: s.definition, name: s.name });
+              void loadTable({ type: "sql", sql: s.definition, name: s.name });
             } else if ((s as any).type === "table") {
               if (db[s.name]) {
-                loadTable({ type: "table", table: s.name, name: s.name });
+                void loadTable({ type: "table", table: s.name, name: s.name });
               } else {
-                loadTable({
+                void loadTable({
                   type: "sql",
                   sql: `SELECT *\nFROM ${s.escapedIdentifier}\nLIMIT 25`,
                   name: s.name,
@@ -162,7 +163,7 @@ export const DashboardMenu = ({
             }
           }}
           onOpen={({ filter, table }) => {
-            loadTable({ type: "table", table, filter });
+            void loadTable({ type: "table", table, filter });
           }}
           onClose={() => {
             setShowSearchAll(undefined);

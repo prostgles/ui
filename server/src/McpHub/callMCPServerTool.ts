@@ -1,14 +1,15 @@
+import type { McpToolCallResponse } from "@common/mcp";
+import type { DBSSchema } from "@common/publishUtils";
 import {
   getJSONBObjectSchemaValidationError,
   getSerialisableError,
   tryCatchV2,
 } from "prostgles-types";
 import type { DBS } from "..";
-import type { McpToolCallResponse } from "../../../common/mcp";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { startMcpHub } from "./McpHub";
-import { ProstglesLocalMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
-import { getDockerMCP } from "../DockerManager/getDockerMCP";
+import { startMcpHub } from "./AnthropicMcpHub/startMcpHub";
+import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
+import { getProstglesMcpHub } from "./ProstglesMcpHub/ProstglesMcpHub";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export const callMCPServerTool = async (
   user: Pick<DBSSchema["users"], "id">,
@@ -17,6 +18,7 @@ export const callMCPServerTool = async (
   serverName: string,
   toolName: string,
   toolArguments: Record<string, unknown> | undefined,
+  clientReq: AuthClientRequest,
 ): Promise<McpToolCallResponse> => {
   const start = new Date();
   const argErrors = getJSONBObjectSchemaValidationError(
@@ -30,7 +32,7 @@ export const callMCPServerTool = async (
       toolName,
       chat_id,
     },
-    "",
+    undefined,
     false,
   );
   if (argErrors.error) throw new Error(argErrors.error);
@@ -52,34 +54,24 @@ export const callMCPServerTool = async (
       throw new Error("Tool invalid or not allowed for this chat");
     }
 
-    if (ProstglesLocalMCPServers.includes(serverName)) {
-      if (serverName === "docker-sandbox") {
-        const dockerMCP = await getDockerMCP(dbs, chat);
-        if (toolName === "create_container") {
-          const result = await dockerMCP.tools.createContainer(toolArguments, {
-            chatId: chat.id,
-            userId: user.id,
-          });
-          return result;
-        }
-        throw new Error(
-          `MCP server ${serverName}.${toolName} not implemented for tool ${toolName}`,
-        );
-      }
-      throw new Error(
-        `MCP server ${serverName} ProstglesLocalMCPServers not implemented`,
-      );
+    const prostglesMcp = getProstglesMCPServer(serverName);
+    if (prostglesMcp) {
+      const prglMcpHub = await getProstglesMcpHub(dbs);
+      return prglMcpHub.callTool(serverName, toolName, toolArguments, {
+        chat_id,
+        user_id: user.id,
+        clientReq,
+      });
     }
-    // if (
-    //   chatAllowedMCPTool.allowed_inputs?.length &&
-    //   !chatAllowedMCPTool.allowed_inputs.some((allowedArgs) =>
-    //     isEqual(allowedArgs, toolArguments),
-    //   )
-    // ) {
-    //   throw new Error("Invalid/dissalowed arguments");
-    // }
+
     const mcpHub = await startMcpHub(dbs);
-    const res = await mcpHub.callTool(serverName, toolName, toolArguments);
+    const res = await mcpHub.callTool(
+      [serverName, chatAllowedMCPTool.server_config_id]
+        .filter(Boolean)
+        .join("_"),
+      toolName,
+      toolArguments,
+    );
     return res;
   });
 

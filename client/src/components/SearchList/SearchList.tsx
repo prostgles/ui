@@ -64,7 +64,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
     onPartialResult?: (
       searchItems: SearchListItem[],
       finished: boolean,
-      cancel: Function,
+      cancel: VoidFunction,
     ) => any,
   ) => Promise<SearchListItem[]>;
   onType?: (term: string, setTerm: (newTerm: string) => void) => void;
@@ -83,7 +83,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   autoFocus?: boolean;
   inputProps?: Pick<
     SearchInputProps,
-    "type" | "leftContent" | keyof TestSelectors
+    "type" | "leftContent" | keyof TestSelectors | "autoFocus"
   >;
 
   leftContent?: React.ReactNode;
@@ -147,7 +147,5 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
 export const SearchList = <M extends boolean = false>(
   props: SearchListProps<M>,
 ) => {
-  const content = <SearchListContent {...props} />;
-
-  return content;
+  return <SearchListContent {...props} />;
 };

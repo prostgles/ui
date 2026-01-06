@@ -1,17 +1,20 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import {
   getLLMMessageToolUse,
   isAssistantMessageRequestingToolUse,
-  type LLMMessage,
-} from "../../../../../common/llmUtils";
-import { isDefined } from "../../../utils";
+} from "@common/llmUtils";
+import type { AllowedChatTool } from "@common/prostglesMcp";
+import { usePromise } from "prostgles-client";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
+import { isDefined } from "../../../utils/utils";
+import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
 import type { AskLLMToolsProps } from "./AskLLMToolApprover";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import type { ProstglesMcpTool } from "../../../../../common/prostglesMcp";
-import { useRef } from "react";
 
 let approvingMessageId = "";
+
+export type ToolApproval = {
+  approved: boolean;
+  mode: "once" | "for-chat" | "deny";
+};
 
 /**
  * https://docs.anthropic.com/en/docs/build-with-claude/tool-use
@@ -24,19 +27,22 @@ export const useLLMToolsApprover = ({
 }: AskLLMToolsProps & {
   requestApproval: (
     tool: ApproveRequest,
-    input: unknown,
-  ) => Promise<{ approved: boolean }>;
+    toolUseMessage: ToolUseMessage,
+  ) => Promise<ToolApproval>;
 }) => {
   const { dbsMethods } = usePrgl();
 
   usePromise(async () => {
     const lastToolUseMessage = messages
       .slice(-1)
-      .reverse()
+      .toReversed()
       .find(isAssistantMessageRequestingToolUse);
-    if (!lastToolUseMessage) return;
-    if (approvingMessageId && approvingMessageId === lastToolUseMessage.id)
+    if (!lastToolUseMessage) {
       return;
+    }
+    if (approvingMessageId && approvingMessageId === lastToolUseMessage.id) {
+      return;
+    }
 
     const toolUseRequests = getLLMMessageToolUse(lastToolUseMessage);
     const allowedTools = await dbsMethods.getLLMAllowedChatTools?.(
@@ -59,43 +65,45 @@ export const useLLMToolsApprover = ({
       })
       .filter(isDefined);
     approvingMessageId = lastToolUseMessage.id;
-    const toolApprovalReponses: (
-      | Extract<LLMMessage["message"][number], { type: "tool_use" }>
-      | undefined
-    )[] = [];
+    const toolApprovalReponses: (ToolUseMessage | undefined)[] = [];
+    /** Must ensure parallel tool request permissions behave as expected */
+    const toolsNamesThatHaveJustBeenAutoApproved = new Set<string>();
     for (const {
       matchedTool,
       toolUseRequest,
     } of toolUseRequestsThatNeedApproval) {
-      const isAllowedWithoutApproval = matchedTool.auto_approve;
+      const isAllowedWithoutApproval =
+        matchedTool.auto_approve ||
+        toolsNamesThatHaveJustBeenAutoApproved.has(matchedTool.name);
       if (!isAllowedWithoutApproval) {
-        const { approved } = await requestApproval(
-          //@ts-ignore
+        const { approved, mode } = await requestApproval(
           matchedTool,
-          toolUseRequest.input,
+          toolUseRequest,
         );
-
+        if (approved && mode === "for-chat") {
+          toolsNamesThatHaveJustBeenAutoApproved.add(matchedTool.name);
+        }
         toolApprovalReponses.push(approved ? toolUseRequest : undefined);
       }
     }
     if (toolUseRequestsThatNeedApproval.length) {
-      await sendQuery(toolApprovalReponses.filter(isDefined), true);
+      sendQuery(toolApprovalReponses.filter(isDefined), true);
     }
   }, [messages, dbsMethods, activeChat.id, requestApproval, sendQuery]);
 };
 
-export type ApproveRequest =
-  | (Pick<
-      DBSSchema["mcp_server_tools"],
-      "id" | "name" | "description" | "server_name"
-    > & {
-      type: "mcp";
-      // tool_name: string;
-      auto_approve: boolean;
-    })
-  | (ProstglesMcpTool & {
-      id: number;
-      name: string;
-      description: string;
-      auto_approve: boolean;
-    });
+export type ApproveRequest = AllowedChatTool;
+// | (Pick<
+//     DBSSchema["mcp_server_tools"],
+//     "name" | "description" | "server_name"
+//   > & {
+//     type: "mcp";
+//     auto_approve: boolean;
+//     tool_id: number;
+//   })
+// | (ProstglesMcpTool & {
+//     tool_id?: undefined;
+//     name: string;
+//     description: string;
+//     auto_approve: boolean;
+//   });

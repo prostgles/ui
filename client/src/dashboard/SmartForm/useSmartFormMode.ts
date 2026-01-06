@@ -2,13 +2,13 @@ import {
   useAsyncEffectQueue,
   useEffectDeep,
   type TableHandlerClient,
-} from "prostgles-client/dist/prostgles";
+} from "prostgles-client";
 import { type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
 import {
   getSmartGroupFilter,
   type DetailedFilterBase,
-} from "../../../../common/filterUtils";
+} from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import type { SmartFormProps } from "./SmartForm";
 

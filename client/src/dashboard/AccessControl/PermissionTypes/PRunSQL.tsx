@@ -1,11 +1,10 @@
+import { InfoRow } from "@components/InfoRow";
+import { LabeledRow } from "@components/LabeledRow";
+import { SwitchToggle } from "@components/SwitchToggle";
+import { usePromise } from "prostgles-client";
 import React from "react";
-import { InfoRow } from "../../../components/InfoRow";
-import { LabeledRow } from "../../../components/LabeledRow";
-import { areEqual } from "../../../utils";
-import type { EditedAccessRule } from "../AccessControl";
+import { areEqual } from "../../../utils/utils";
 import type { DBPermissionEditorProps } from "./PCustomTables";
-import { SwitchToggle } from "../../../components/SwitchToggle";
-import { usePromise } from "prostgles-client/dist/react-hooks";
 
 export const PRunSQL = ({
   dbPermissions,
@@ -72,7 +71,7 @@ export const PRunSQL = ({
                 roleInfo?.rolbypassrls && "BypassRLS",
                 roleInfo?.rolcanlogin && "Login",
                 roleInfo?.rolvaliduntil &&
-                  "Valid Until" + roleInfo.rolvaliduntil,
+                  "Valid Until" + roleInfo.rolvaliduntil.toISOString(),
               ].filter((v) => v)}
             </LabeledRow>
           }

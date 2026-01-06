@@ -46,8 +46,12 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 /* Dark mode */
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   body {
     background-color: black;
   }
 }
+
+html.dark-theme body {
+  background-color: black;
+} */

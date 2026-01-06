@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import type { PrglState } from "../../App";
-import { FlexCol } from "../../components/Flex";
+import { FlexCol } from "@components/Flex";
 import type { DBSMethods } from "../Dashboard/DBS";
-import { StatusMonitorHeader } from "./StatusMonitorHeader";
+import { StatusMonitorInfoHeader } from "./StatusMonitorInfoHeader/StatusMonitorInfoHeader";
 import { StatusMonitorProcList } from "./StatusMonitorProcList";
 
 export type StatusMonitorProps = Pick<
@@ -29,7 +29,7 @@ export const StatusMonitor = (props: StatusMonitorProps) => {
 
   return (
     <FlexCol className="StatusMonitor w-fit min-w-0 jc-start ">
-      <StatusMonitorHeader
+      <StatusMonitorInfoHeader
         {...props}
         samplingRate={samplingRate}
         statusError={statusError}

@@ -2,19 +2,19 @@ import { useNavigate } from "react-router-dom";
 import React from "react";
 import { NavLink } from "react-router-dom";
 import type { ClientUser } from "../App";
-import PopupMenu from "../components/PopupMenu";
-import Btn from "../components/Btn";
+import PopupMenu from "@components/PopupMenu";
+import Btn from "@components/Btn";
 import {
   mdiAccountOutline,
   mdiAccountStarOutline,
   mdiLogin,
   mdiLogout,
 } from "@mdi/js";
-import { MenuList } from "../components/MenuList";
+import { MenuList } from "@components/MenuList";
 import { isDefined } from "prostgles-types";
-import { Icon } from "../components/Icon/Icon";
+import { Icon } from "@components/Icon/Icon";
 import { t } from "../i18n/i18nUtils";
-import { ROUTES } from "../../../common/utils";
+import { ROUTES } from "@common/utils";
 
 type P = {
   forNavBar?: boolean;
@@ -28,6 +28,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
     return (
       <NavLink
         key={"account"}
+        data-key={"/account"}
         className={
           "text-0 ml-auto flex-row ai-center gap-p5  bb font-16 min-w-0"
         }
@@ -51,6 +52,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
       <>
         <NavLink
           key={"account"}
+          data-key={"/account"}
           className={
             "text-0 ml-auto flex-row ai-center gap-p5  bb font-16 min-w-0"
           }
@@ -93,7 +95,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
       </>
     );
   }
-
+  const { isLowWidthScreen } = window;
   return (
     <PopupMenu
       positioning="beneath-right"
@@ -110,8 +112,8 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
           title={user.username || "Account"}
           className=" flex-col text-white b g-gray-700"
         >
-          <Icon path={iconPath} size={!window.isLowWidthScreen ? 0.75 : 1} />
-          {!window.isLowWidthScreen && (
+          <Icon path={iconPath} size={!isLowWidthScreen ? 0.75 : 1} />
+          {!isLowWidthScreen && (
             <div className=" text-2 font-12 ws-nowrap">{user.username}</div>
           )}
         </Btn>

@@ -1,7 +1,7 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import { isEmpty } from "prostgles-types";
-import { fetchNamedSVG } from "../../../components/SvgIcon";
-import { getCssVariableValue } from "../../Charts/onRenderTimechart";
+import { fetchNamedSVG } from "@components/SvgIcon";
+import { getCssVariableValue } from "../../Charts/TimeChart/onRenderTimechart";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
 import type { ERDSchemaProps } from "./ERDSchema";
@@ -64,7 +64,7 @@ export const useFetchSchemaForDiagram = (
             tableName,
         )
         .map((c) =>
-          relType === "referencedBy" ? c.table_name! : c.ftable_name!,
+          relType === "referencedBy" ? c.table_name : c.ftable_name!,
         );
     };
 

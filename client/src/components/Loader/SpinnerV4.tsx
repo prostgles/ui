@@ -7,6 +7,7 @@ export const SpinnerV4 = ({ size }: { size: string }) => {
       style={{
         width: size,
         height: size,
+
         backgroundColor: "currentColor",
         maskImage: spinnerDataUrl,
         WebkitMaskImage: spinnerDataUrl,
@@ -14,8 +15,18 @@ export const SpinnerV4 = ({ size }: { size: string }) => {
         WebkitMaskSize: "contain",
         maskRepeat: "no-repeat",
         WebkitMaskRepeat: "no-repeat",
-        animation: "rotator 0.75s infinite linear",
+
+        // borderWidth: "2px",
+        // borderStyle: "solid",
+        // borderColor: "currentColor",
+        // borderBottomColor: "transparent",
+        // borderRadius: "50%",
+
+        // animation: "rotator 0.75s infinite linear",
+
+        animation: "rotator 0.75s steps(36) infinite ", // reduce cpu by using steps
         willChange: "transform",
+        backfaceVisibility: "hidden",
       }}
     />
   );

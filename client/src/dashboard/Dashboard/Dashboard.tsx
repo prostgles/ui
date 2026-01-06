@@ -1,29 +1,27 @@
+import Loading from "@components/Loader/Loading";
 import type {
   MultiSyncHandles,
   SingleSyncHandles,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import Loading from "../../components/Loader/Loading";
 import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
-import type { DBObject } from "../SearchAll";
+import type { DBObject } from "../SearchAll/SearchAll";
 
+import { ROUTES } from "@common/utils";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import type { DBSSchema } from "../../../../common/publishUtils";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../appUtils";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../components/Flex";
+import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import { TopControls } from "../../pages/TopControls";
 import { DashboardMenu } from "../DashboardMenu/DashboardMenu";
 import type { ActiveRow } from "../W_Table/W_Table";
-import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
 import { getWorkspacePath } from "../WorkspaceMenu/useWorkspaces";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";
@@ -45,9 +43,8 @@ import type {
   WorkspaceSyncItem,
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
+import { getTables } from "./getTables";
 import { loadTable, type LoadTableArgs } from "./loadTable";
-import { ROUTES } from "../../../../common/utils";
-import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -82,7 +79,7 @@ export type DashboardState = {
 };
 export type DashboardData = {
   links: LinkSyncItem[];
-  linksSync?: any;
+  linksSync?: MultiSyncHandles<LinkSyncItem>;
   closedWindows: WindowSyncItem[];
   allWindows: WindowSyncItem[];
   windows: WindowSyncItem[];
@@ -106,15 +103,15 @@ export class _Dashboard extends RTComp<
     allWindows: [],
     windows: [],
     links: [],
-    linksSync: null,
+    linksSync: undefined,
   };
 
   onUnmount() {
     const { workspaceSync, windowsSync, linksSync } = this.d;
 
-    [workspaceSync, windowsSync, linksSync].map((s) => {
-      if (s && s.unsync) s.unsync();
-    });
+    workspaceSync?.$unsync();
+    windowsSync?.$unsync();
+    linksSync?.$unsync();
   }
 
   loadingSchema: DashboardState["suggestions"];
@@ -166,12 +163,9 @@ export class _Dashboard extends RTComp<
             ...suggestions,
             connectionId,
             dbKey,
-            searchAll: suggestions.suggestions.filter((s) =>
-              ["table", "function"].includes(s.type),
-            ) as any,
           };
-          this.loadingSchema = { ...this.loadingSchema!, ...schema };
-          ns.suggestions = { ...this.loadingSchema! };
+          this.loadingSchema = { ...this.loadingSchema, ...schema };
+          ns.suggestions = { ...this.loadingSchema };
         }
       } catch (e) {
         this.loadingSchema = undefined;
@@ -345,7 +339,7 @@ export class _Dashboard extends RTComp<
       workspace &&
       (schemaChanged || needToRecalculateCounts || dataWasImported)
     ) {
-      this.loadSchema();
+      void this.loadSchema();
     }
 
     if (dd) {
@@ -622,7 +616,14 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
   key: string;
   "data-key": string;
   "data-table-name": string | null;
-  "data-view-type": "table" | "map" | "timechart" | "sql" | "card" | "method";
+  "data-view-type":
+    | "table"
+    | "map"
+    | "timechart"
+    | "sql"
+    | "card"
+    | "method"
+    | "barchart";
   "data-title": string;
   w: WindowSyncItem<T>;
   childWindows: WindowSyncItem[];
@@ -650,52 +651,6 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
   workspace: WorkspaceSyncItem;
 } & Pick<ViewRendererProps, "searchParams" | "setSearchParams">;
 
-export const getTables = (
-  schemaTables: DBSchemaTable[],
-  connectionTableOptions: DBSSchema["connections"]["table_options"],
-  db: DBHandlerClient,
-  capitaliseMissingTableNames = false,
-): { tables: DBSchemaTablesWJoins } => {
-  const tables = schemaTables.map((t) => {
-    const { columns, label, ...tableOpts } =
-      connectionTableOptions?.[t.name] ?? {};
-    const result = {
-      ...tableOpts,
-      label:
-        label ||
-        (capitaliseMissingTableNames ? convertSnakeToReadable(t.name) : t.name),
-      ...t,
-      ...getJoinedTables(schemaTables, t.name, db),
-      columns: t.columns
-        .map((c) => ({
-          ...c,
-          icon: columns?.[c.name]?.icon,
-        }))
-        .sort((a, b) => {
-          return a.ordinal_position - b.ordinal_position;
-        }),
-    };
-    return result;
-  });
-  return { tables };
-};
-
-const convertSnakeToReadable = (str: string) => {
-  // ^[a-z0-9]+    : Starts with one or more lowercase letters or digits
-  // (?:_[a-z0-9]+)* : Followed by zero or more groups of an underscore and one or more lowercase letters/digits
-  // $             : Ends the string
-  const snakeCaseRegex = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
-
-  if (str && snakeCaseRegex.test(str)) {
-    const words = str.split("_");
-    const readableWords = words.map((word) => {
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    });
-    return readableWords.join(" ");
-  }
-  return str;
-};
-
 export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
   return workspace.options.pinnedMenu && !window.isLowWidthScreen;
 };
@@ -713,7 +668,7 @@ const cloneEditableWorkpsaces = async ({
       []
     : await dbs.workspaces.find({
         published: true,
-        user_id: { $ne: user_id! },
+        user_id: { $ne: user_id },
         layout_mode: { $isDistinctFrom: "fixed" },
         $notExistsJoined: {
           workspaces: {

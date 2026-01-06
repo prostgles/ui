@@ -1,7 +1,7 @@
+import { getFinalFilter } from "@common/filterUtils";
 import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import { reverseParsedPath } from "prostgles-types";
-import { getFinalFilter } from "../../../common/filterUtils";
-import { isDefined } from "../utils";
+import { isDefined, quickClone } from "../utils/utils";
 import type {
   Link,
   WindowData,
@@ -9,7 +9,7 @@ import type {
 } from "./Dashboard/dashboardUtils";
 import W_Map from "./W_Map/W_Map";
 import type { ActiveRow } from "./W_Table/W_Table";
-import { getTimeChartFilters } from "./W_TimeChart/getTimeChartLayersWithBins";
+import { getTimeChartFilters } from "./W_TimeChart/fetchData/getTimeChartLayersWithBins";
 
 type SyncWindow =
   | WindowSyncItem<"table">
@@ -53,7 +53,8 @@ export const getJoinFilters = (
       );
       const otherW = lws.find((lw) => lw.id !== w.id);
       const getTableFilters = (table: WindowData<"table">) =>
-        table.filter?.map((f) => getFinalFilter(f)).filter(isDefined) ?? [];
+        table.filter?.map((f) => getFinalFilter({ ...f })).filter(isDefined) ??
+        [];
       if (
         otherW &&
         lws.length === 2 &&
@@ -67,7 +68,9 @@ export const getJoinFilters = (
           reverseToTable: string | undefined,
         ) => {
           if (l.options.type === "map" || l.options.type === "timechart") {
-            const { joinPath } = l.options;
+            const { dataSource } = l.options;
+            const joinPath =
+              dataSource?.type === "table" ? dataSource.joinPath : undefined;
             if (joinPath?.length || previousPath.length) {
               const parsedPath =
                 !joinPath ? []
@@ -101,12 +104,7 @@ export const getJoinFilters = (
               chartFilters =
                 otherW.options.extentBehavior !== "filterToMapBounds" ?
                   []
-                : [
-                    W_Map.extentToFilter(
-                      otherW.options.extent as any,
-                      chartCol,
-                    ),
-                  ];
+                : [W_Map.extentToFilter(otherW.options.extent, chartCol)];
             }
           } else {
             chartFilters = getTimeChartFilters(otherW, chartCol);
@@ -163,7 +161,6 @@ export const getJoinFilters = (
             l,
             w: otherW,
             ...getChartFilters(getTableFilters(otherW), otherW.table_name),
-            // activeRowFilter,
             activeRowFilter:
               activeRowFilter ?
                 getChartFilters([activeRowFilter], otherW.table_name).f
@@ -201,9 +198,14 @@ export const getCrossFilters = (
   // To ensure we get latest data
   const windows = _windows.map((w) => w.$get()) as SyncWindow[];
 
-  const jf = getJoinFilters(w, activeRow, links, windows);
-  const crossFilters = jf.map((d) => d.f).filter(isDefined);
-  const activeRowFilter = jf.find((d) => d.activeRowFilter)?.activeRowFilter;
+  const joinFilters = getJoinFilters(w, activeRow, links, windows);
+
+  const crossFilters = joinFilters
+    .map((d) => d.f && quickClone({ ...d.f }))
+    .filter(isDefined);
+  const activeRowFilter = joinFilters.find(
+    (d) => d.activeRowFilter,
+  )?.activeRowFilter;
 
   return {
     activeRowFilter,

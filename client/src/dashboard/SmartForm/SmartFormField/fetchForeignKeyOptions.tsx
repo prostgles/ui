@@ -1,15 +1,20 @@
+import type { FileTable } from "@common/utils";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import { type FullOption } from "@components/Select/Select";
+import { SvgIconFromURL } from "@components/SvgIcon";
 import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import {
+  _PG_numbers,
+  _PG_numbers_str,
+  includes,
   isDefined,
   isEmpty,
   type AnyObject,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import { type FullOption } from "../../../components/Select/Select";
-import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
-import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import React from "react";
-import { SvgIconFromURL } from "../../../components/SvgIcon";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
+import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
 
 type FetchForeignKeyOptionsArgs = Pick<
   SmartFormFieldForeignKeyProps,
@@ -24,6 +29,70 @@ type GetRootFkeyTableArgs = Pick<
 > & {
   prevPath: { tableName: string; on: [string, string][] }[];
   columnName: string;
+};
+
+export const fetchForeignKeyOptions = async ({
+  column,
+  table,
+  db,
+  tables,
+  row,
+  term,
+}: FetchForeignKeyOptionsArgs): Promise<FullOption[]> => {
+  const rootFkeyTable = getFtableSearchOpts({
+    column,
+    table,
+    tables,
+    db,
+    term,
+    row,
+  });
+
+  if (!rootFkeyTable) {
+    return fetchSearchResults({
+      mainColumn: column.name,
+      textColumn: undefined,
+      db,
+      table,
+      term,
+      filter: undefined,
+    });
+  }
+
+  const { filterFilterWithoutCurrentValue } = rootFkeyTable;
+  const result = await fetchSearchResults({
+    ...rootFkeyTable,
+    db,
+    term,
+    filter: filterFilterWithoutCurrentValue,
+  });
+
+  /** We must add current value */
+  const currentValue = row?.[column.name];
+
+  const isNumericSoMightBeString = includes(_PG_numbers, column.udt_name);
+  if (
+    row &&
+    isDefined(currentValue) &&
+    currentValue !== null &&
+    !result.some((o) =>
+      isNumericSoMightBeString ? o.key == currentValue : o.key === currentValue,
+    )
+  ) {
+    const [currentValueOption] = await fetchSearchResults({
+      ...rootFkeyTable,
+      db,
+      term: "",
+      filter: {
+        [rootFkeyTable.mainColumn]: currentValue,
+      },
+    });
+    if (currentValueOption) {
+      result.unshift(currentValueOption);
+    }
+  }
+
+  return result;
 };
 
 /**
@@ -152,66 +221,6 @@ const getFtableSearchOpts = ({
   };
 };
 
-export const fetchForeignKeyOptions = async ({
-  column,
-  table,
-  db,
-  tables,
-  row,
-  term,
-}: FetchForeignKeyOptionsArgs): Promise<FullOption[]> => {
-  const rootFkeyTable = getFtableSearchOpts({
-    column,
-    table,
-    tables,
-    db,
-    term,
-    row,
-  });
-
-  if (!rootFkeyTable) {
-    return fetchSearchResults({
-      mainColumn: column.name,
-      textColumn: undefined,
-      db,
-      table,
-      term,
-      filter: undefined,
-    });
-  }
-
-  const { filterFilterWithoutCurrentValue } = rootFkeyTable;
-  const result = await fetchSearchResults({
-    ...rootFkeyTable,
-    db,
-    term,
-    filter: filterFilterWithoutCurrentValue,
-  });
-
-  /** We must add current value */
-  const currentValue = row?.[column.name];
-  if (
-    row &&
-    isDefined(currentValue) &&
-    currentValue !== null &&
-    !result.some((o) => o.key === currentValue)
-  ) {
-    const [currentValueOption] = await fetchSearchResults({
-      ...rootFkeyTable,
-      db,
-      term: "",
-      filter: {
-        [rootFkeyTable.mainColumn]: currentValue,
-      },
-    });
-    if (currentValueOption) {
-      result.unshift(currentValueOption);
-    }
-  }
-
-  return result;
-};
-
 type Args = {
   term: string;
   mainColumn: string;
@@ -228,8 +237,12 @@ const fetchSearchResults = async ({
   table,
   term,
 }: Args): Promise<FullOption[]> => {
-  const { name: tableName, rowIconColumn } = table;
-  const extraColumns = rowIconColumn ? [rowIconColumn] : [];
+  const { name: tableName, rowIconColumn, info } = table;
+  const fileUrl = info.isFileTable ? "url" : undefined;
+  const extraColumns =
+    rowIconColumn ? [rowIconColumn]
+    : fileUrl ? [fileUrl]
+    : [];
   const tableHandler = db[tableName];
   if (!tableHandler?.find) return [];
   const filterColumns = [mainColumn, textColumn].filter(isDefined);
@@ -243,23 +256,34 @@ const fetchSearchResults = async ({
   };
 
   const res = await tableHandler.find(finalFilter, {
-    select: [...filterColumns, ...extraColumns],
+    select: Array.from(new Set([...filterColumns, ...extraColumns])),
     groupBy: true,
     limit: OPTIONS_LIMIT,
   });
   return res.map((row) => {
     const rowIconSrc = rowIconColumn && row[rowIconColumn];
     return {
-      leftContent: rowIconSrc && (
-        <SvgIconFromURL
-          className="mr-p5 text-0"
-          url={rowIconSrc}
-          style={{
-            width: "24px",
-            height: "24px",
-          }}
-        />
-      ),
+      leftContent:
+        rowIconSrc ?
+          <SvgIconFromURL
+            className="mr-p5 text-0"
+            url={rowIconSrc}
+            style={{
+              width: "24px",
+              height: "24px",
+            }}
+          />
+        : fileUrl ?
+          <MediaViewer
+            url={row[fileUrl]}
+            style={{
+              marginRight: "1em",
+              maxHeight: "80px",
+              maxWidth: "80px",
+              pointerEvents: "none",
+            }}
+          />
+        : null,
       key: row[mainColumn],
       subLabel: textColumn && row[textColumn],
     } satisfies FullOption;
@@ -267,7 +291,6 @@ const fetchSearchResults = async ({
 };
 
 const isTextColumn = (col: ValidatedColumnInfo) =>
-  !col.is_nullable &&
   (["text", "varchar", "citext", "char"] as const).some(
     (textType) => textType === col.udt_name,
   );
@@ -281,23 +304,35 @@ export const getBestTextColumns = (
   table: DBSchemaTableWJoins,
   excludeCols: string[],
 ) => {
+  if (table.info.isFileTable) {
+    return table.columns.filter((c) =>
+      includes(["original_name"] satisfies (keyof FileTable)[], c.name),
+    );
+  }
   const nonSelectableNullableTextCols = table.columns
     .filter(isTextColumn)
-    .filter((c) => c.select);
+    .filter((c) => c.select && !excludeCols.includes(c.name));
+  const hasNonNullableTextCol = nonSelectableNullableTextCols.some(
+    (c) => !c.is_nullable,
+  );
   const fTableTextColumns = nonSelectableNullableTextCols
-    .filter((c) => !excludeCols.includes(c.name))
-    .map((c) => {
+    .filter(
+      (c) =>
+        /** Allow non nullable text cols if we don't have other options */
+        !hasNonNullableTextCol || !c.is_nullable,
+    )
+    .map((column) => {
       const shortestUnique = table.info.uniqueColumnGroups
-        ?.filter((g) => g.includes(c.name))
+        ?.filter((g) => g.includes(column.name))
         .sort((a, b) => a.length - b.length)[0];
       return {
-        ...c,
+        column,
         shortestUnique,
         shortestUniqueLength: shortestUnique?.length ?? 100,
       };
     })
     .sort((a, b) => a.shortestUniqueLength - b.shortestUniqueLength);
-  return fTableTextColumns;
+  return fTableTextColumns.map((c) => c.column);
 };
 
 const OPTIONS_LIMIT = 20;

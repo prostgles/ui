@@ -354,7 +354,7 @@ export class SilverGridChild extends RTComp<
     };
 
     /** Is used to ensure that clicks on overflowing content are not disabled */
-    const isMyContent = (target: any) => this.ref?.contains(target as any);
+    const isMyContent = (target: any) => this.ref?.contains(target);
     const isFixed = this.props.layoutMode === "fixed";
     return (
       <div

@@ -1,17 +1,17 @@
 import { mdiContentSaveCogOutline } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
-import Btn from "../../components/Btn";
-import Chip from "../../components/Chip";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexRowWrap } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
-import Select from "../../components/Select/Select";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexRowWrap } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import { Select } from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { pickKeys } from "prostgles-types";
-import { CredentialSelector } from "../BackupAndRestore/CredentialSelector";
+import { CloudStorageCredentialSelector } from "../BackupAndRestore/CloudStorageCredentialSelector";
 import { FileStorageDelete } from "./FileStorageDelete";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 
@@ -204,7 +204,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
 
         {storageType === "S3" ?
           <div className="flex-row-wrap gap-2 h-fit">
-            <CredentialSelector
+            <CloudStorageCredentialSelector
               dbs={dbs}
               dbsMethods={dbsMethods}
               dbsTables={dbsTables}

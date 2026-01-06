@@ -1,10 +1,10 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React from "react";
 import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
-import PopupMenu from "../../../components/PopupMenu";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import CodeExample from "../../CodeExample";
 import type { EditedAccessRule } from "../AccessControl";
 import { ACCESS_RULE_METHODS } from "../AccessRuleSummary";

@@ -9,18 +9,18 @@ import {
   mdiTableEdit,
 } from "@mdi/js";
 import React, { useMemo } from "react";
-import type { CONNECTION_CONFIG_SECTIONS } from "../../../../common/utils";
+import type { CONNECTION_CONFIG_SECTIONS } from "@common/utils";
 import { dataCommand } from "../../Testing";
-import { FlexRow } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import type { TabItem } from "../../components/Tabs";
-import Tabs from "../../components/Tabs";
+import { FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import type { TabItem } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import { t } from "../../i18n/i18nUtils";
 import NewConnection from "../../pages/NewConnection/NewConnnectionForm";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
 import { TopControls } from "../../pages/TopControls";
-import { getKeys } from "../../utils";
+import { getKeys } from "../../utils/utils";
 import { AccessControl } from "../AccessControl/AccessControl";
 import { useAccessControlSearchParams } from "../AccessControl/useAccessControlSearchParams";
 import { BackupsControls } from "../BackupAndRestore/BackupsControls";

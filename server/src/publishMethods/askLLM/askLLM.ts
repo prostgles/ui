@@ -10,17 +10,23 @@ import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
-import { getSerialisableError, isObject, omitKeys } from "prostgles-types";
+import {
+  getSerialisableError,
+  isObject,
+  omitKeys,
+  tryCatchV2,
+} from "prostgles-types";
 import { type DBS } from "../..";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
-import { getLLMAllowedChatTools } from "./getLLMTools";
+import { getLLMToolsAllowedInThisChat } from "./getLLMToolsAllowedInThisChat";
 
 import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
+import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 import { getFullPrompt } from "./getFullPrompt";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
@@ -53,6 +59,17 @@ export type AskLLMArgs = {
     | "approve-tool-use"
     | "tool-use-result"
     | "tool-use-result-with-denied";
+  aborter: AbortController | undefined;
+};
+
+const activeLLMFetchRequests = new Map<number, AbortController>();
+
+export const stopAskLLM = (chatId: number) => {
+  const aborter = activeLLMFetchRequests.get(chatId);
+  if (aborter) {
+    aborter.abort();
+    activeLLMFetchRequests.delete(chatId);
+  }
 };
 
 export const askLLM = async (args: AskLLMArgs) => {
@@ -66,6 +83,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     schema,
     userMessage,
     type,
+    clientReq,
   } = args;
 
   const {
@@ -78,13 +96,25 @@ export const askLLM = async (args: AskLLMArgs) => {
     llm_prompt_id,
   } = await getValidatedAskLLMChatOptions(args);
 
-  const toolsWithInfo = await getLLMAllowedChatTools({
-    userType: user.type,
-    dbs,
-    chat,
-    connectionId,
-    prompt: promptObj,
-  });
+  /** It's crucial we reduce the posibility that a new user message fails to insert due to some non critical error */
+  const {
+    data: toolsWithInfo,
+    error,
+    hasError,
+  } = await tryCatchV2(
+    async () =>
+      await getLLMToolsAllowedInThisChat({
+        userType: user.type,
+        dbs,
+        chat,
+        connectionId,
+        prompt: promptObj,
+        clientReq,
+      }),
+  );
+  if (hasError) {
+    console.error("LLM Tools fetch error:", error);
+  }
   const tools = toolsWithInfo?.map(
     ({ name, description, input_schema, auto_approve }) => {
       return {
@@ -96,6 +126,8 @@ export const askLLM = async (args: AskLLMArgs) => {
     },
   );
 
+  const aborter = args.aborter ?? new AbortController();
+  activeLLMFetchRequests.set(chat.id, aborter);
   const lastMessage = pastMessages.at(-1);
   if (type === "approve-tool-use") {
     if (!lastMessage) {
@@ -111,6 +143,8 @@ export const askLLM = async (args: AskLLMArgs) => {
       chat,
       toolUseMessages,
       userMessage,
+      aborter,
+      clientReq,
     );
   }
 
@@ -242,23 +276,6 @@ export const askLLM = async (args: AskLLMArgs) => {
     { returning: "*" },
   );
   try {
-    const { maximum_consecutive_tool_fails, max_total_cost_usd } = chat;
-    const maxTotalCost = parseFloat(max_total_cost_usd || "0");
-    if (maxTotalCost && maxTotalCost > 0) {
-      const chatCost = pastMessages.reduce(
-        (acc, m) => acc + parseFloat(m.cost),
-        0,
-      );
-      if (chatCost > maxTotalCost) {
-        throw `Maximum total cost of the chat (${maxTotalCost}) reached. Current cost: ${chatCost}`;
-      }
-    }
-    const promptWithContext = getFullPrompt({
-      prompt,
-      schema,
-      dashboardTypesContent,
-    });
-
     const modelData = (await dbs.llm_models.findOne(
       { id: chat.model },
       {
@@ -274,6 +291,15 @@ export const askLLM = async (args: AskLLMArgs) => {
       | undefined;
 
     if (!modelData) throw "Model not found";
+
+    checkMaxCostLimitForChat(chat, modelData, pastMessages, userMessage);
+
+    const promptWithContext = getFullPrompt({
+      prompt,
+      schema,
+      dashboardTypesContent,
+    });
+
     const {
       llm_providers: [llm_provider],
       ...llm_model
@@ -315,6 +341,7 @@ export const askLLM = async (args: AskLLMArgs) => {
           content: userMessage,
         } satisfies LLMMessageWithRole,
       ],
+      aborter,
     });
 
     /** Move prostgles-ui tool_use messages to the end for better UX (because no tool result is expected) */
@@ -344,6 +371,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       },
     );
 
+    const { maximum_consecutive_tool_fails } = chat;
     if (
       maximum_consecutive_tool_fails &&
       args.type !== "approve-tool-use" &&
@@ -363,17 +391,18 @@ export const askLLM = async (args: AskLLMArgs) => {
     const newToolUseMessages = filterArr(aiResponseMessage, {
       type: "tool_use",
     } as const);
-    if (latestChat.status?.state !== "stopped" && newToolUseMessages.length) {
+    if (newToolUseMessages.length) {
       await runApprovedTools(
         toolsWithInfo,
         args,
         latestChat,
         newToolUseMessages,
         undefined,
+        aborter,
+        clientReq,
       );
     }
   } catch (err) {
-    console.error(err);
     const isAdmin = user.type === "admin";
     const errorObjOrString = getSerialisableError(err);
     const errorIsString = typeof errorObjOrString === "string";
@@ -384,8 +413,11 @@ export const askLLM = async (args: AskLLMArgs) => {
     const errorText = isAdmin ? `${errorTextOrEmpty}` : "";
     const messageText = [
       "🔴 Something went wrong",
-      errorIsString ? errorText : ["```json", errorText, "```"].join("\n"),
-    ].join("\n");
+      isObject(err) && err.name === "AbortError" ?
+        "Response generation was aborted by user."
+      : errorIsString ? errorText
+      : ["```json", errorText, "```"].join("\n"),
+    ].join(".\n");
     await dbs.llm_messages.update(
       { id: aiResponseMessagePlaceholder.id },
       {

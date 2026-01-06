@@ -3,7 +3,7 @@ import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { isObject } from "@common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
-import { MarkdownMonacoCode } from "@components/Chat/MarkdownMonacoCode";
+import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import Chip from "@components/Chip";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { pageReload } from "@components/Loader/Loading";
@@ -13,7 +13,7 @@ import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";
 import { tryCatchV2, type JSONB } from "prostgles-types";
 import React, { useMemo } from "react";
 import { usePrgl } from "../../../../../../pages/ProjectConnection/PrglContextProvider";
-import { isDefined } from "../../../../../../utils";
+import { isDefined } from "../../../../../../utils/utils";
 import {
   useSetActiveWorkspace,
   useWorkspacesSync,
@@ -63,6 +63,7 @@ export const LoadSuggestedDashboards = ({
           <PopupMenu
             key={`${w.name}${i}-input`}
             title={`Suggested Dashboard: ${w.name}`}
+            positioning="fullscreen"
             onClickClose={false}
             button={
               <Chip
@@ -78,7 +79,7 @@ export const LoadSuggestedDashboards = ({
               </Chip>
             }
           >
-            <MarkdownMonacoCode
+            <MonacoCodeInMarkdown
               codeString={
                 tryCatchV2(() => JSON.stringify(w, null, 2)).data ?? ""
               }

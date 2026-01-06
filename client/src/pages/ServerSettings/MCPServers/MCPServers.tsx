@@ -1,10 +1,10 @@
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import React, { useState } from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ServerSettingsProps } from "../ServerSettings";
@@ -16,6 +16,7 @@ import {
   type MCPServerWithToolAndConfigs,
 } from "./useMCPServersListProps";
 import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfig";
+import { isDefined } from "@common/filterUtils";
 
 export type MCPServersProps = Omit<ServerSettingsProps, "auth"> & {
   chatId: number | undefined;
@@ -29,14 +30,9 @@ export const MCPServers = (props: MCPServersProps) => {
   const globalSettings = dbs.global_settings.useSubscribeOne();
   const { mcp_servers_disabled } = globalSettings.data ?? {};
 
-  const {
-    selectedTool,
-    setSelectedTool,
-    filter,
-    fieldConfigs,
-    llm_chats_allowed_mcp_tools,
-  } = useMCPServersListProps(chatId, dbs, dbsMethods);
-
+  const { selectedTool, setSelectedTool, filter, fieldConfigs, chatContext } =
+    useMCPServersListProps(chatId, dbs);
+  const { llm_chats_allowed_mcp_tools } = chatContext || {};
   const someToolsAutoApproved = llm_chats_allowed_mcp_tools?.some(
     (t) => t.auto_approve,
   );
@@ -66,6 +62,7 @@ export const MCPServers = (props: MCPServersProps) => {
           {chatId && llm_chats_allowed_mcp_tools && (
             <Btn
               variant="faded"
+              data-command="MCPServers.toggleAutoApprove"
               title="Toggle auto-approve for selected tools. When enabled, all selected tools can be called without user approval"
               iconPath={someToolsAutoApproved ? mdiCheckAll : mdiCheck}
               color={"action"}
@@ -112,6 +109,7 @@ export const MCPServers = (props: MCPServersProps) => {
                 dbs={dbs}
                 dbsMethods={dbsMethods}
                 envInfo={envInfo}
+                chatContext={chatContext}
               />
             )}
           />

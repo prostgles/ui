@@ -1,8 +1,8 @@
 import React from "react";
 import type { Backups } from "../Dashboard/dashboardUtils";
-import Chip from "../../components/Chip";
-import { parsedError } from "../../components/ErrorComponent";
-import { ProgressBar } from "../../components/ProgressBar";
+import Chip from "@components/Chip";
+import { parsedError } from "@components/ErrorComponent";
+import { ProgressBar } from "@components/ProgressBar";
 import { bytesToSize } from "./BackupsControls";
 
 export const RenderBackupStatus = ({
@@ -42,12 +42,15 @@ export const RenderBackupStatus = ({
       <div className="text-1p5">
         <ProgressBar
           message={
-            !status.loading.loaded ?
+            !status.loading.loaded || status.loading.loaded < 0 ?
               "Preparing..."
             : `Processed ${bytesToSize(status.loading.loaded || 0)}/${total ? bytesToSize(total) : "unknown"}`
           }
+          style={{
+            minWidth: "150px",
+          }}
           value={status.loading.loaded || 0}
-          totalValue={status.loading.total || 0}
+          totalValue={total || 0}
         />
       </div>
     : null

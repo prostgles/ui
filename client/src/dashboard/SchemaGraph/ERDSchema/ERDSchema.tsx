@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from "react";
-import { FlexCol } from "../../../components/Flex";
+import { FlexCol } from "@components/Flex";
 import type { SchemaGraphProps } from "../SchemaGraph";
 import type { useSchemaGraphControls } from "../SchemaGraphControls";
 import { useCanvasPanZoom } from "./useCanvasPanZoom";
@@ -76,7 +76,7 @@ export const ERDSchema = ({
         {} as Record<string, { x: number; y: number }>,
       );
     if (!dbConfId || displayMode !== "all") return;
-    dbs.database_configs.update(
+    void dbs.database_configs.update(
       {
         id: dbConfId,
       },

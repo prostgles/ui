@@ -1,4 +1,4 @@
-import { isObject } from "../../../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import { withKWDs } from "./withKWDs";
 import { getKind, type SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
 import { getParentFunction } from "./MatchSelect";

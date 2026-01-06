@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import { FlexRow } from "../../../components/Flex";
-import Popup from "../../../components/Popup/Popup";
-import { ScrollFade } from "../../../components/ScrollFade/ScrollFade";
-import { MCPServerConfig } from "../../../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { mdiClose, mdiTools } from "@mdi/js";
 import type { FilterItem } from "prostgles-types";
-import { btnStyleProps } from "./AskLLMChatActionBar";
+import React, { useEffect, useMemo, useState } from "react";
+import type { Prgl } from "../../../App";
+import { MCPServerConfig } from "../../../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
+import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarMCPToolsBtn = ({
   dbs,
@@ -34,11 +34,16 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
       },
     },
   );
-  const allowedMcpServerNames = Array.from(
-    new Set(allowedTools?.map((tool) => tool.server_name) ?? []),
+
+  const allowedMcpServerNames = useMemo(
+    () =>
+      Array.from(new Set(allowedTools?.map((tool) => tool.server_name) ?? [])),
+    [allowedTools],
   );
+
   const [serverToConfigure, setServerToConfigure] =
     useState<DBSSchema["mcp_servers"]>();
+
   const { data: mcpServersThatNeedEnabling } = dbs.mcp_servers.useFind(
     {
       enabled: false,
@@ -47,6 +52,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
     {},
     { deps: [serverToConfigure] },
   );
+
   useEffect(() => {
     const canBeEnabledServers = mcpServersThatNeedEnabling?.filter(
       (server) => !server.config_schema,
@@ -61,6 +67,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
       { enabled: true },
     );
   }, [dbs.mcp_servers, mcpServersThatNeedEnabling]);
+
   const mcpServersThatConfiguring = mcpServersThatNeedEnabling?.filter(
     (server) => server.config_schema,
   );
@@ -76,7 +83,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
             `: \n\n${allowedTools.map((t) => t.name).join("\n")}`
           : ""
         }`}
-        {...btnStyleProps}
+        {...ChatActionBarBtnStyleProps}
         color={
           mcpServersThatConfiguring?.length ? "danger"
           : allowedTools?.length ?
@@ -97,7 +104,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
             onClose={() => {
               setServerToConfigure(undefined);
             }}
-            positioning="above-center"
+            positioning="center"
             anchorEl={btnRef.current}
             clickCatchStyle={{ opacity: 1 }}
           >
@@ -145,6 +152,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
         )}
       {serverToConfigure && (
         <MCPServerConfig
+          chatId={activeChat.id}
           existingConfig={undefined}
           dbs={dbs}
           onDone={() => {

@@ -1,28 +1,24 @@
-import React, { useEffect, useMemo, useState } from "react";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/prostgles";
-import { quickClone } from "../../../utils";
-import Select from "../../../components/Select/Select";
-import {
-  getSmartGroupFilter,
-  type SimpleFilter,
-} from "../../../../../common/filterUtils";
+import { getSmartGroupFilter, type DetailedFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { Label } from "@components/Label";
+import PopupMenu from "@components/PopupMenu";
+import { Select } from "@components/Select/Select";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client";
+import { usePromise } from "prostgles-client";
 import {
   omitKeys,
   type MethodHandler,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import Btn from "../../../components/Btn";
-import PopupMenu from "../../../components/PopupMenu";
-import SmartTable from "../../SmartTable";
+import React, { useEffect, useMemo, useState } from "react";
+import { appTheme, useReactiveState } from "../../../App";
 import { pluralise } from "../../../pages/Connections/Connection";
-import { Label } from "../../../components/Label";
+import { quickClone } from "../../../utils/utils";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderFilter } from "../../RenderFilter";
-import { FlexCol, FlexRowWrap } from "../../../components/Flex";
-import { appTheme, useReactiveState } from "../../../App";
-import type { DBS } from "../../Dashboard/DBS";
+import SmartTable from "../../SmartTable";
 
 export type ContextDataSchema = {
   name: string;
@@ -30,8 +26,8 @@ export type ContextDataSchema = {
 }[];
 
 export type SingleGroupFilter =
-  | { $and: SimpleFilter[] }
-  | { $or: SimpleFilter[] };
+  | { $and: DetailedFilter[] }
+  | { $or: DetailedFilter[] };
 
 export type ForcedFilterControlProps = {
   detailedFilter?: SingleGroupFilter;

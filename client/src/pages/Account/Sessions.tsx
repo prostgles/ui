@@ -14,12 +14,12 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import type { DivProps } from "../../components/Flex";
-import { classOverride, FlexRow } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
+import Btn from "@components/Btn";
+import type { DivProps } from "@components/Flex";
+import { classOverride, FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import { SmartCardList } from "../../dashboard/SmartCardList/SmartCardList";
 import {
   getPGIntervalAsText,
@@ -59,7 +59,7 @@ export const Sessions = ({
   const listProps = useMemo(
     () => ({
       title: tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`,
-      filter: getActiveTokensFilter(displayType, user?.id) as AnyObject,
+      filter: getActiveTokensFilter(displayType, user?.id),
       style: {
         maxHeight: "40vh",
       },

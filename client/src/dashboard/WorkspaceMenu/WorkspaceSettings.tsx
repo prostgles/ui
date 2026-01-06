@@ -2,9 +2,9 @@ import { mdiCog } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { IconPalette } from "../../components/IconPalette/IconPalette";
-import PopupMenu from "../../components/PopupMenu";
+import Btn from "@components/Btn";
+import { IconPalette } from "@components/IconPalette/IconPalette";
+import PopupMenu from "@components/PopupMenu";
 import type {
   DBSchemaTablesWJoins,
   Workspace,
@@ -54,7 +54,7 @@ export const WorkspaceSettings = ({
                 },
               },
             );
-            navigator.clipboard.writeText(
+            void navigator.clipboard.writeText(
               JSON.stringify(workspaceData, null, 2),
             );
             alert("Workspace data copied to clipboard");
@@ -68,6 +68,7 @@ export const WorkspaceSettings = ({
             db={dbs as DBHandlerClient}
             showJoinedTables={false}
             label=""
+            contentClassname="p-1"
             tableName="workspaces"
             tables={dbsTables}
             methods={dbsMethods}
@@ -77,7 +78,7 @@ export const WorkspaceSettings = ({
               published: 1,
               layout_mode: 1,
               icon: {
-                onRender: (value, onChange) => {
+                onRender: (value: string, onChange) => {
                   return <IconPalette iconName={value} onChange={onChange} />;
                 },
               },

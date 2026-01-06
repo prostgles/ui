@@ -7,17 +7,17 @@ import {
   mdiPalette,
   mdiSyncCircle,
 } from "@mdi/js";
-import { FlexRow } from "../../components/Flex";
-import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
-import Select from "../../components/Select/Select";
-import { SwitchToggle } from "../../components/SwitchToggle";
-import type { TabItem } from "../../components/Tabs";
-import Tabs from "../../components/Tabs";
+import { FlexRow } from "@components/Flex";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import { Select } from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
+import type { TabItem } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import { AutoRefreshMenu } from "../W_Table/TableMenu/AutoRefreshMenu";
-import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
-import { MapBasemapOptions } from "./MapBasemapOptions";
+import { DataLayerManager } from "../WindowControls/DataLayerManager/DataLayerManager";
+import { MapBasemapOptions } from "./controls/MapBasemapOptions";
 import type { W_MapProps } from "./W_Map";
 export const MAP_PROJECTIONS = ["mercator", "orthographic"] as const;
 
@@ -71,11 +71,11 @@ export const W_MapMenu = (props: ProstglesMapMenuProps) => {
         },
         Basemap: {
           leftIconPath: mdiMap,
-          content: <MapBasemapOptions w={w} prgl={props.prgl} />,
+          content: <MapBasemapOptions w={w} />,
         },
         Layers: {
           leftIconPath: mdiLayersOutline,
-          content: <ChartLayerManager {...props} type="map" />,
+          content: <DataLayerManager {...props} type="map" />,
         },
         ...colorMenu,
         Settings: {

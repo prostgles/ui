@@ -5,12 +5,13 @@ import type {
   MapViewState,
   OrthographicView,
   OrthographicViewState,
+  PickingInfo,
   WebMercatorViewport,
 } from "deck.gl";
 import { isDefined, omitKeys, pickKeys } from "prostgles-types";
+import { createReactiveState } from "../../appUtils";
 import type { HoverCoords } from "./DeckGLMap";
 import { fitBounds } from "./fitBounds";
-import { createReactiveState } from "../../appUtils";
 export const getDeckLibs = async () => {
   const lib = await import(/* webpackChunkName: "deckgl" */ "deck.gl");
   const mvtLoader = await import(
@@ -89,7 +90,7 @@ export class DeckWrapped {
               opts.onHoverItem(info.object, {
                 x: info.x,
                 y: info.y,
-                coordinates: info.coordinate,
+                coordinates: info.coordinate as [number, number],
                 screenCoordinates: info.pixel,
               });
             }
@@ -229,22 +230,6 @@ export class DeckWrapped {
     }
   }
 }
-
-type PickingInfo = {
-  color: Uint8Array | null;
-  layer: any | null;
-  sourceLayer?: any | null;
-  viewport?: any;
-  index: number;
-  picked: boolean;
-  object?: any;
-  x: number;
-  y: number;
-  pixel?: [number, number];
-  coordinate?: [number, number];
-  devicePixel?: [number, number];
-  pixelRatio: number;
-};
 
 export type Bounds = [[number, number], [number, number]];
 

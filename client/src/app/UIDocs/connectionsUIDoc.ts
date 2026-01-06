@@ -46,7 +46,7 @@ export const connectionsUIDoc = {
     "Manage your database connections. View, add, or edit connections to your databases.",
   docs: `
     The Connections page serves as the central hub within Prostgles UI for managing all your PostgreSQL database connections. 
-    From here, you can establish new connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
+    From here, you can add and open connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
 
     <img src="./screenshots/connections.svg" alt="Connections page screenshot" />  
       
@@ -63,8 +63,6 @@ export const connectionsUIDoc = {
       docs: `
         Use the **New Connection** button to add a new database connection.
         
-        <img src="./screenshots/connections.svg#Connections_new" alt="New connection button" style="max-width: 200px;" />
-
         This will open a form where you can enter the connection details such as host, port, database name, user, and password.
         
         <img src="./screenshots/new_connection.svgif.svg" alt="New connection form screenshot" />

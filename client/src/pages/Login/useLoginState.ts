@@ -1,14 +1,14 @@
+import { EMAIL_CONFIRMED_SEARCH_PARAM } from "@common/OAuthUtils";
+import { ROUTES } from "@common/utils";
 import {
   authRequest,
   type PasswordLogin,
   type PasswordRegister,
 } from "prostgles-client/dist/getAuthHandler";
 import type { AuthResponse } from "prostgles-types";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../../common/OAuthUtils";
 import type { LoginFormProps } from "./Login";
-import { ROUTES } from "../../../../common/utils";
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordLogin;

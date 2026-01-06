@@ -15,20 +15,24 @@ import UserManager from "./dashboard/UserManager";
 import { Account } from "./pages/Account/Account";
 import { ServerSettings } from "./pages/ServerSettings/ServerSettings";
 
+import type { ProstglesState } from "@common/electronInitTypes";
+import type { DBSSchema } from "@common/publishUtils";
+import { fixIndent, ROUTES } from "@common/utils";
 import type { AuthHandler } from "prostgles-client/dist/getAuthHandler";
 import {
   type DBHandlerClient,
   type MethodHandler,
 } from "prostgles-client/dist/prostgles";
 import { type Socket } from "socket.io-client";
-import type { ProstglesState } from "@common/electronInitTypes";
-import type { DBSSchema } from "@common/publishUtils";
-import { fixIndent, ROUTES } from "@common/utils";
-import { createReactiveState, useReactiveState } from "./appUtils";
 import { CommandPalette } from "./app/CommandPalette/CommandPalette";
+import { Documentation } from "./app/CommandPalette/Documentation";
+import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
+import { createReactiveState, useReactiveState } from "./appUtils";
+import { AlertProvider } from "./components/AlertProvider";
 import { FlexCol, FlexRow } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import { NavBarWrapper } from "./components/NavBar/NavBarWrapper";
+import { PostgresInstallationInstructions } from "./components/PostgresInstallationInstructions";
 import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
 import { MousePointer } from "./demo/MousePointer";
 import { ComponentList } from "./pages/ComponentList";
@@ -37,11 +41,6 @@ import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { useAppState } from "./useAppState/useAppState";
-import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
-import { Documentation } from "./app/CommandPalette/Documentation";
-import { ScrollFade } from "./components/ScrollFade/ScrollFade";
-import { AlertProvider } from "./components/AlertProvider";
-import { PostgresInstallationInstructions } from "./pages/PostgresInstallationInstructions";
 
 export type ClientUser = {
   sid: string;

@@ -1,6 +1,6 @@
 import React from "react";
-import type { SwitchToggleProps } from "../../../components/SwitchToggle";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import type { SwitchToggleProps } from "@components/SwitchToggle";
+import { SwitchToggle } from "@components/SwitchToggle";
 
 export const RuleToggle = ({
   checked,

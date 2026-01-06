@@ -1,11 +1,12 @@
+import { classOverride, FlexCol } from "@components/Flex";
+import { Label } from "@components/Label";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import {
   getPossibleNestedInsert,
   isObject,
   type AnyObject,
 } from "prostgles-types";
 import React, { useMemo } from "react";
-import { classOverride, FlexCol } from "../../components/Flex";
-import { Label } from "../../components/Label";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { SmartFormProps } from "./SmartForm";
 import {
@@ -16,8 +17,6 @@ import { SmartFormFileSection } from "./SmartFormFileSection";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
-import { includes } from "../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 type P = Pick<
   SmartFormProps,

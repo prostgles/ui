@@ -1,6 +1,6 @@
 import type { DBS } from "../..";
-import { LLM_PROMPT_VARIABLES } from "../../../../common/llmUtils";
-import type { DBSSchemaForInsert } from "../../../../common/publishUtils";
+import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
+import type { DBSSchemaForInsert } from "@common/publishUtils";
 export const setupLLM = async (dbs: DBS) => {
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -23,6 +23,8 @@ export const setupLLM = async (dbs: DBS) => {
           "Assist user with any queries they might have. Do not add empty lines in your sql response.",
           "Reply with a full and concise answer that does not require further clarification or revisions.",
           "Below is the database schema they're currently working with:",
+          "When asked to add or generate data DO NOT CREATE IT YOURSELF. ",
+          "USE PUBLIC SOURCES OR GENERATE IT THORUGH TOOLS. NEVER PROVIDE THE VALUES YOURSELF UNLESS SPECIFICALLY ASKED.",
           "",
           LLM_PROMPT_VARIABLES.SCHEMA,
         ].join("\n"),
@@ -37,17 +39,11 @@ export const setupLLM = async (dbs: DBS) => {
         },
         prompt: [
           firstLine,
-          "Assist user with any queries they might have.",
+          "Assist user with any queries they might have about creating dashboards.",
           "Below is the database schema they're currently working with:",
           "",
           LLM_PROMPT_VARIABLES.SCHEMA,
           "",
-          "Using dashboard structure below create workspaces with useful views my current schema.",
-          "Return a json of this format: `{ prostglesWorkspaces: WorkspaceInsertModel[] }`",
-          "",
-          "```typescript",
-          LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,
-          "```",
         ].join("\n"),
       },
       {
@@ -62,8 +58,29 @@ export const setupLLM = async (dbs: DBS) => {
           firstLine,
           "Assist the user with any queries they might have in their current task mode.",
           "They expect you to look at the schema and the tools available to them and return a list of tools are best suited for accomplishing their task.",
-          "Do not assume anything and ask the user for more information until you're 90% confident of what tools they need.",
+          "Ask the user for more information if you are not sure.",
           "When suggesting a prompt make sure you add a ${today} placeholder that will be replaced with today's date.",
+          "",
+          "",
+          "Below is the database schema they're currently working with:",
+          "",
+          LLM_PROMPT_VARIABLES.SCHEMA,
+          "",
+        ].join("\n"),
+      },
+      {
+        name: "Create workflow",
+        description:
+          "Includes database schema and full tools list. Will suggest database access type, tools and workflow logic required to completed the task. Claude Sonnet recommended",
+        user_id,
+        options: {
+          prompt_type: "agent_workflow",
+        },
+        prompt: [
+          firstLine,
+          "Assist the user in creating a workflow.",
+          "They expect you to look at the schema and tools available to them and return the best suited tools, database schema and workflow logic for accomplishing their task.",
+          "Ask the user for more information if you are not sure.",
           "",
           "",
           "Below is the database schema they're currently working with:",

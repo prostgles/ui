@@ -95,7 +95,7 @@ export const SpinnerV2 = ({ size }: { size: string }) => {
   }, [startAnimation]);
 
   useResizeObserver({
-    ref: canvasRef,
+    elem: canvasRef.current,
     onResize: startAnimation,
   });
 

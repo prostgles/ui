@@ -4,9 +4,9 @@ import type {
 } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { isDefined, omitKeys } from "prostgles-types";
 import type { DBS } from "..";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { parseTableRules } from "../../../common/publishUtils";
-import { getEntries } from "../../../common/utils";
+import type { DBSSchema } from "@common/publishUtils";
+import { parseTableRules } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
 import type { SUser } from "../authConfig/sessionUtils";
 import { getAccessRule } from "./startConnection";
 import { publish } from "../publish/publish";

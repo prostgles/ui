@@ -97,6 +97,7 @@ jobs:
   build_linux:
     timeout-minutes: 20
     runs-on: ubuntu-latest
+    needs: build_docker_images
     if: success()
     steps:
       - uses: actions/checkout@v3
@@ -120,6 +121,7 @@ jobs:
             electron/dist/**/*.checksums
   build_windows:
     timeout-minutes: 20
+    needs: build_docker_images
     runs-on: windows-latest
     if: success()
     steps:
@@ -143,6 +145,7 @@ jobs:
             electron/dist/**/*.checksums
   build_macos:
     timeout-minutes: 20
+    needs: build_docker_images
     runs-on: macos-latest
     if: success()
     steps:

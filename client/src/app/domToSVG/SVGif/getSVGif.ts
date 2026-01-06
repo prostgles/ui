@@ -5,11 +5,11 @@ import { addSVGifPointer } from "./addSVGifPointer";
 import { addSVGifTimelineControls } from "./addSVGifTimelineControls";
 import { getSVGifAnimations } from "./getSVGifAnimations";
 import { getSVGifParsedScenes } from "./getSVGifParsedScenes";
+import { compressSVGif } from "./compressSVGif";
 
 export const getSVGif = (
   scenes: SVGif.Scene[],
   svgFiles: Map<string, string>,
-  loop = true,
 ) => {
   const { parsedScenes, firstScene } = getSVGifParsedScenes(scenes, svgFiles);
   const { viewBox, width, height } = firstScene;
@@ -26,7 +26,7 @@ export const getSVGif = (
   svg.appendChild(g);
 
   const { cursorKeyframes, sceneAnimations, totalDuration } =
-    getSVGifAnimations({ width, height }, g, parsedScenes, loop);
+    getSVGifAnimations({ width, height }, g, parsedScenes, appendStyle);
 
   const getThisAnimationProperty = (
     args: Omit<
@@ -55,7 +55,22 @@ export const getSVGif = (
     sceneAnimations,
   });
   addSVGifPointer({ cursorKeyframes, g, appendStyle, totalDuration });
+
+  /** This appears to break/appear narrower on ios ?!! */
+  compressSVGif(svg, parsedScenes);
+
+  svg
+    .querySelectorAll("[data-selector]")
+    .forEach((el) => el.removeAttribute("data-selector"));
   // document.body.appendChild(svg); // debugging
+
+  /** Remove defs with empty styles */
+  svg.querySelectorAll("defs").forEach((defs) => {
+    if (!defs.innerHTML || !defs.innerHTML.trim()) {
+      defs.remove();
+    }
+  });
+  svg.setAttribute("data-duration", totalDuration);
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
   return svgString;
@@ -66,21 +81,26 @@ export const getAnimationProperty = (
     elemSelector,
     animName,
     totalDuration,
+    otherProps = "",
+    easeFunction = "ease-in-out",
   }: {
     elemSelector: string;
     animName: string;
     totalDuration: number;
+    otherProps?: string;
+    easeFunction?: "ease-in-out" | "ease-out";
   },
   onlyValue = false,
 ) => {
   const loop = true as boolean;
-  const value = `animation: ${animName} ${totalDuration}ms ease-in-out ${
+  const value = `animation: ${animName} ${totalDuration}ms ${easeFunction} ${
     loop ? "infinite" : "forwards"
   };`;
   if (onlyValue) return value;
   return fixIndent(`
       ${elemSelector} {
         ${value}
+        ${otherProps}
       }
     `);
 };

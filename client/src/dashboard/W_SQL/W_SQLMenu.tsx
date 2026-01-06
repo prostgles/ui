@@ -1,5 +1,4 @@
 import {
-  mdiChartBoxPlusOutline,
   mdiCodeJson,
   mdiCog,
   mdiContentSave,
@@ -14,10 +13,10 @@ import {
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
-import Btn from "../../components/Btn";
-import FormField from "../../components/FormField/FormField";
-import type { TabsProps } from "../../components/Tabs";
-import Tabs from "../../components/Tabs";
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import type { TabsProps } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import RTComp from "../RTComp";
 
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
@@ -28,15 +27,15 @@ import type {
 } from "../Dashboard/dashboardUtils";
 
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import ErrorComponent from "../../components/ErrorComponent";
-import { InfoRow } from "../../components/InfoRow";
+import ErrorComponent from "@components/ErrorComponent";
+import { InfoRow } from "@components/InfoRow";
+import { t } from "../../i18n/i18nUtils";
 import { SECOND } from "../Charts";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS } from "../Dashboard/DBS";
-import { TestSQL } from "./TestSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
+import { TestSQL } from "./TestSQL";
 import { download } from "./W_SQL";
-import { t } from "../../i18n/i18nUtils";
 
 type P = {
   tableName?: string;
@@ -111,7 +110,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
   wSub?: ReturnType<P["w"]["$cloneSync"]>;
   autoRefresh: any;
   loading = false;
-  onDelta = async (dP?: Partial<P>, dS?: Partial<S>, dD?) => {
+  onDelta = (dP?: Partial<P>, dS?: Partial<S>, dD?) => {
     if (dS && "query" in dS) {
       this.setState({ error: undefined });
     }
@@ -311,8 +310,8 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
                 } catch (err) {}
               }}
             />
-            <InfoRow color="info">
-              {t.W_SQLMenu.Press} <strong>ctrl</strong> + <strong>space</strong>
+            <InfoRow color="info" className="ws-pre">
+              {t.W_SQLMenu.Press} <strong>ctrl</strong> + <strong>space</strong>{" "}
               {t.W_SQLMenu["to get a list of possible options"]}
             </InfoRow>
             {!!error && <ErrorComponent error={error} />}

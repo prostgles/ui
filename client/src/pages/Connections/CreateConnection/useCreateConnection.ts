@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import type { CreateConnectionProps } from "./CreateConnection";
 import { useNavigate } from "react-router-dom";
-import { ROUTES, type SampleSchema } from "../../../../../common/utils";
+import { ROUTES, type SampleSchema } from "@common/utils";
 import type { Connection } from "../../NewConnection/NewConnnectionForm";
 import { asName } from "prostgles-client/dist/prostgles";
 import { isDefined, pickKeys } from "prostgles-types";
@@ -167,7 +167,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
       }
 
       const validatedConnection = await validateConnection({
-        ...pickKeys(serverInfo!.mainConnection!, [
+        ...pickKeys(serverInfo!.mainConnection, [
           "db_conn",
           "db_host",
           "db_port",
@@ -181,7 +181,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
           "ssl_reject_unauthorized",
         ]),
         name: connectionName,
-        db_name: newDbName!,
+        db_name: newDbName,
         type: "Standard",
         db_conn: null,
         ...newDbOwnerCredentials,

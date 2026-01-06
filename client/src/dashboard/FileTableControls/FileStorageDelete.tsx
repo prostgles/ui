@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import type { PrglCore } from "../../App";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { InfoRow } from "../../components/InfoRow";
-import Popup from "../../components/Popup/Popup";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { InfoRow } from "@components/InfoRow";
+import Popup from "@components/Popup/Popup";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { CodeChecker } from "../BackupAndRestore/CodeConfirmation";
 import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
 import type { FileStorageControlsProps } from "./FileStorageControls";
@@ -33,7 +33,7 @@ export const FileStorageDelete = ({
   useEffectAsync(async () => {
     const ftable = database_config.file_table_config?.fileTable;
     const hasFiles =
-      ftable && db[ftable] ? Boolean(await db[ftable]?.count?.()) : false;
+      ftable && db[ftable] ? Boolean(await db[ftable].count?.()) : false;
     setHasFiles(hasFiles);
   }, [database_config.file_table_config?.fileTable, db]);
 

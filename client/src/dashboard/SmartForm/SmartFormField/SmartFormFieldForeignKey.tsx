@@ -1,5 +1,10 @@
+import { sliceText } from "@common/utils";
+import Btn from "@components/Btn";
+import { FileInput } from "@components/FileInput/FileInput";
+import { FlexRow, FlexRowWrap } from "@components/Flex";
+import { Select, type FullOption } from "@components/Select/Select";
 import { mdiClose } from "@mdi/js";
-import { useIsMounted, useMemoDeep } from "prostgles-client/dist/prostgles";
+import { useMemoDeep } from "prostgles-client/dist/prostgles";
 import {
   isDefined,
   isObject,
@@ -7,11 +12,6 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { sliceText } from "../../../../../common/utils";
-import Btn from "../../../components/Btn";
-import { FileInput } from "../../../components/FileInput/FileInput";
-import { FlexRow, FlexRowWrap } from "../../../components/Flex";
-import Select, { type FullOption } from "../../../components/Select/Select";
 import {
   type ColumnData,
   NewRowDataHandler,
@@ -20,6 +20,7 @@ import { RenderValue } from "./RenderValue";
 import type { SmartColumnInfo, SmartFormFieldProps } from "./SmartFormField";
 import { type SmartFormFieldLinkedDataInsertState } from "./SmartFormFieldLinkedData";
 import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
+import { useIsMounted } from "prostgles-client";
 
 export type SmartFormFieldForeignKeyProps = Pick<
   SmartFormFieldProps,
@@ -54,15 +55,23 @@ export const SmartFormFieldForeignKey = (
   const getuseIsMounted = useIsMounted();
   const newValue = newRowDataHandler.getNewRow()[column.name];
 
-  const rowWithFkeyVals = useMemo(() => {
+  const isUpsertingFile = column.file && isObject(newValue);
+  const rowWithFKeyVals = useMemo(() => {
     if (!row) return;
-    const fkeyColNames = column.references.flatMap((r) => r.cols);
+    const fkeyColNames = column.references
+      .map((ref) => ref.cols)
+      .filter(isDefined)
+      .flat()
+      .filter((c) => {
+        /** Exclude file insert data */
+        return !isUpsertingFile || c !== column.name;
+      });
     return pickKeys(row, fkeyColNames);
-  }, [row, column]);
+  }, [row, column, isUpsertingFile]);
 
-  const rowWithFkeyValsMemo = useMemoDeep(
-    () => rowWithFkeyVals,
-    [rowWithFkeyVals],
+  const rowWithFKeyValsMemo = useMemoDeep(
+    () => rowWithFKeyVals,
+    [rowWithFKeyVals],
   );
   const onSearchOptions = useCallback(
     async (term: string) => {
@@ -71,17 +80,17 @@ export const SmartFormFieldForeignKey = (
         db,
         table,
         tables,
-        row: rowWithFkeyValsMemo,
+        row: rowWithFKeyValsMemo,
         term,
       });
       if (!getuseIsMounted()) return;
       setFullOptions(options);
     },
-    [column, db, table, tables, rowWithFkeyValsMemo, getuseIsMounted],
+    [column, db, table, tables, rowWithFKeyValsMemo, getuseIsMounted],
   );
 
   useEffect(() => {
-    onSearchOptions("");
+    void onSearchOptions("");
   }, [value, onSearchOptions]);
 
   const valueStyle = {
@@ -94,6 +103,7 @@ export const SmartFormFieldForeignKey = (
 
   const paddingValue = 0;
   const isNullOrEmpty = value === null || value === undefined;
+
   const displayValue = (
     <FlexRowWrap
       className={"gap-p5 min-w-0"}
@@ -102,13 +112,14 @@ export const SmartFormFieldForeignKey = (
         padding: isNullOrEmpty && !readOnly ? 0 : `${paddingValue} 0`,
       }}
     >
-      {selectedOption?.leftContent}
+      {column.file ? null : selectedOption?.leftContent}
       <div className="text-ellipsis max-w-fit" style={valueStyle}>
         <RenderValue
           value={value}
           column={column}
           showTitle={false}
           maxLength={30}
+          getValues={undefined}
         />
       </div>
       {isDefined(selectedOption?.subLabel) && (
@@ -148,16 +159,15 @@ export const SmartFormFieldForeignKey = (
           }
           label={column.label}
           media={media}
-          minSize={470}
           maxFileCount={1}
           onAdd={([value]) => {
-            onChange({
+            void onChange({
               type: "nested-file-column",
               value,
             });
           }}
-          onDelete={async (mediaItem) => {
-            onChange({
+          onDelete={() => {
+            void onChange({
               type: "nested-file-column",
               value: undefined,
             });
@@ -227,3 +237,5 @@ export const SmartFormFieldForeignKey = (
     />
   );
 };
+
+console.error("CANNOT ADD TIMECHART AI DASHBOARD SQL EDITOR");

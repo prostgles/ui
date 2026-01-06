@@ -5,12 +5,12 @@ import {
   DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
   DEFAULT_MAGIC_LINK_TEMPLATE,
   getMagicLinkEmailFromTemplate,
-} from "../../../../../common/OAuthUtils";
-import Btn from "../../../components/Btn";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { FlexCol } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import { Section } from "../../../components/Section";
+} from "@common/OAuthUtils";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { Section } from "@components/Section";
 import type { AuthProvidersConfig } from "../AuthProvidersSetup";
 import { useEditableData } from "../useEditableData";
 import { EmailSMTPSetup } from "./EmailSMTPSetup";
@@ -32,7 +32,7 @@ const keysToUpdate = [
 
 type P = {
   websiteUrl: string;
-  value: AuthProvidersConfig["email"] | undefined;
+  value: AuthProvidersConfig["email"];
   label: string;
   className?: string;
   onChange: (

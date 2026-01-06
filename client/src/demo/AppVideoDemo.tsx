@@ -1,12 +1,12 @@
 import { mdiPlay } from "@mdi/js";
 import React, { useState } from "react";
 import { r_useAppVideoDemo, useReactiveState, type Prgl } from "../App";
-import Btn from "../components/Btn";
-import { FlexCol } from "../components/Flex";
-import Popup from "../components/Popup/Popup";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
 import type { DBS } from "../dashboard/Dashboard/DBS";
 import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
-import { getKeys } from "../utils";
+import { getKeys } from "../utils/utils";
 import { accessControlDemo } from "./scripts/accessControlDemo";
 import { backupDemo } from "./scripts/backupDemo";
 import { dashboardDemo } from "./scripts/dashboardDemo";
@@ -15,7 +15,7 @@ import { sqlDemo } from "./scripts/sqlVideoDemo";
 import { schemaDiagramDemo } from "./scripts/schemaDiagramDemo";
 import { AIAssistantDemo } from "./scripts/AIAssistantDemo";
 
-const loadTest = async () => {
+const loadTest = () => {
   const dbs: DBS = (window as any).dbs;
   console.log(dbs);
 };
@@ -35,7 +35,7 @@ type DEMO_NAME = keyof typeof VIDEO_DEMO_SCRIPTS;
 
 const videoTimings: { videoName: string; start: number; end: number }[] = [];
 let currVideo: (typeof videoTimings)[number] | undefined;
-const startVideoDemo = async (videoName: string) => {
+const startVideoDemo = (videoName: string) => {
   if (currVideo) {
     videoTimings.push({ ...currVideo, end: Date.now() });
   }

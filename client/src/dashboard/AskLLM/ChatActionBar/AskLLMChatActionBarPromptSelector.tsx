@@ -7,20 +7,15 @@ import PopupMenu from "@components/PopupMenu";
 import {
   mdiCheck,
   mdiCircleOutline,
-  mdiEye,
   mdiFileEyeOutline,
-  mdiScriptText,
   mdiViewCarousel,
 } from "@mdi/js";
-import {
-  usePromise,
-  type DBHandlerClient,
-} from "prostgles-client/dist/prostgles";
+import { usePromise, type DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
-import { btnStyleProps } from "./AskLLMChatActionBar";
+import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarPromptSelector = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -59,7 +54,7 @@ export const AskLLMChatActionBarPromptSelector = (
       button={
         <Btn
           title="Prompt"
-          {...btnStyleProps}
+          {...ChatActionBarBtnStyleProps}
           iconPath={
             prompt?.options?.prompt_type === "dashboards" ?
               mdiViewCarousel
@@ -92,9 +87,9 @@ export const AskLLMChatActionBarPromptSelector = (
                   variant="text"
                   iconPath={isActive ? mdiCheck : mdiCircleOutline}
                   iconStyle={isActive ? { opacity: 1 } : { opacity: 0 }}
-                  onClick={async () => {
+                  onClick={() => {
                     if (!activeChatId) return;
-                    dbs.llm_chats.update(
+                    void dbs.llm_chats.update(
                       { id: activeChatId },
                       {
                         llm_prompt_id: id,
@@ -133,9 +128,10 @@ export const AskLLMChatActionBarPromptSelector = (
             <PopupMenu
               title="Prompt preview"
               subTitle="Preview of the prompt with context variables filled in"
-              positioning="top-center"
+              positioning="fullscreen"
               button={<Btn iconPath={mdiFileEyeOutline} title="Preview" />}
-              contentClassName="p-2 max-w-800"
+              data-command="LLMChatOptions.Prompt.Preview"
+              contentClassName="p-2"
               showFullscreenToggle={{}}
               rootChildClassname="f-1"
               onClickClose={false}

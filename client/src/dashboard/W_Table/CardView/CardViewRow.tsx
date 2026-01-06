@@ -1,13 +1,14 @@
+import type { CardLayout } from "@common/DashboardTypes";
+import { matchObj } from "@common/utils";
+import { FlexRowWrap } from "@components/Flex";
 import { _PG_date, type AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import { matchObj } from "../../../../../common/utils";
-import { FlexRowWrap } from "../../../components/Flex";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import { getEditColumn } from "../tableUtils/getEditColumn";
 import type { CardViewProps, IndexedRow } from "./CardView";
 import { DragHeader, DragHeaderHeight } from "./DragHeader";
-import type { CardLayout } from "@common/DashboardTypes";
+import type { CardViewState } from "./useCardViewState";
 
 export type CardViewRowProps = Pick<
   CardViewProps,
@@ -18,16 +19,16 @@ export type CardViewRowProps = Pick<
   | "onDataChanged"
   | "cols"
   | "w"
-> & {
-  indexedRow: IndexedRow;
-  rowIndex: number;
-  indexedRows: IndexedRow[];
-  table: DBSchemaTableWJoins;
-  draggedRow: KanBanDraggedRow | undefined;
-  setDraggedRow: React.Dispatch<
-    React.SetStateAction<KanBanDraggedRow | undefined>
-  >;
-};
+> &
+  Pick<
+    CardViewState,
+    "moveItemsProps" | "draggedRow" | "setDraggedRow" | "allIndexedRows"
+  > & {
+    indexedRow: IndexedRow;
+    rowIndex: number;
+    indexedRows: IndexedRow[];
+    table: DBSchemaTableWJoins;
+  };
 
 export type KanBanDraggedRow = IndexedRow & {
   height: number;
@@ -48,22 +49,11 @@ export const CardViewRow = ({
   w,
   draggedRow,
   setDraggedRow,
+  moveItemsProps,
+  allIndexedRows,
 }: CardViewRowProps) => {
   const columns = table.columns;
 
-  const groupByColumn = columns.find(
-    (c) => c.name === cardOpts.cardGroupBy && c.update,
-  );
-  const moveItemsProps = useMemo(
-    () =>
-      groupByColumn ?
-        {
-          groupByColumn,
-          orderByColumn: columns.find((c) => c.name === cardOpts.cardOrderBy),
-        }
-      : undefined,
-    [cardOpts.cardOrderBy, columns, groupByColumn],
-  );
   const {
     cardRows = 1,
     hideCardFieldNames,
@@ -153,7 +143,7 @@ export const CardViewRow = ({
           padding={padding}
           tableHandler={tableHandler}
           table={table}
-          allIndexedRows={indexedRows}
+          allIndexedRows={allIndexedRows}
           columns={columns}
           onDataChanged={onDataChanged}
           onEditClickRow={onEditClickRow}
@@ -226,49 +216,55 @@ const CardViewRowContent = ({
   indexedRows: IndexedRow[];
   cardLayout: CardLayout | undefined;
 }) => {
-  const columnNodeList = visibleCols.map((c, ci) => (
-    <div
-      key={ci}
-      title={c.udt_name}
-      className={"flex-col min-w-0 " + (cardRows > 1 ? " h-fit w-fit " : "")}
-      style={{ minWidth: cardCellMinWidth }}
-    >
-      {!hideCardFieldNames && (
-        <div
-          className=" text-2 pointer noselect"
-          onContextMenu={c.onContextMenu as any}
-        >
-          {c.name}
-        </div>
-      )}
+  const columnNodeList = visibleCols.map((c, ci) => {
+    const value = row[c.name] as unknown;
+    return (
       <div
-        className=" o-auto font-18"
-        title={
-          (
-            typeof row[c.name] === "string" &&
-            (_PG_date.some((v) => v === c.udt_name) ||
-              c.tsDataType === "number")
-          ) ?
-            row[c.name]
-          : ""
-        }
-        style={{
-          lineHeight: 1.33,
-          ...(c.getCellStyle?.(row, row[c.name], row[c.name]) || {}),
-          maxHeight: `${maxCardRowHeight || 800}px`,
-        }}
+        key={ci}
+        title={c.udt_name}
+        className={"flex-col min-w-0 " + (cardRows > 1 ? " h-fit w-fit " : "")}
+        style={{ minWidth: cardCellMinWidth }}
       >
-        {c.onRender?.({
-          row: row,
-          value: row[c.name],
-          renderedVal: row[c.name],
-          rowIndex: rowIndex,
-          nextRow: indexedRows[rowIndex + 1],
-          prevRow: indexedRows[rowIndex - 1],
-        }) ?? <RenderValue column={c} value={row[c.name]} />}
+        {!hideCardFieldNames && (
+          <div
+            className=" text-2 pointer noselect"
+            onContextMenu={
+              c.onContextMenu &&
+              ((e) => c.onContextMenu?.(e, e.currentTarget, c, () => {}))
+            }
+          >
+            {c.name}
+          </div>
+        )}
+        <div
+          className=" o-auto font-18"
+          title={
+            (
+              typeof value === "string" &&
+              (_PG_date.some((v) => v === c.udt_name) ||
+                c.tsDataType === "number")
+            ) ?
+              value
+            : ""
+          }
+          style={{
+            lineHeight: 1.33,
+            ...(c.getCellStyle?.(row, value, value) || {}),
+            maxHeight: `${maxCardRowHeight || 800}px`,
+          }}
+        >
+          {c.onRender?.({
+            row: row,
+            value,
+            renderedVal: value,
+            rowIndex: rowIndex,
+            nextRow: indexedRows[rowIndex + 1],
+            prevRow: indexedRows[rowIndex - 1],
+          }) ?? <RenderValue column={c} value={value} />}
+        </div>
       </div>
-    </div>
-  ));
+    );
+  });
 
   if (cardLayout) {
     const columnNodes: Record<string, React.ReactNode> = {};
@@ -296,14 +292,14 @@ const CardLayoutRenderer = ({
   columnNodes: Record<string, React.ReactNode>;
   item: CardLayout["children"][number];
 }) => {
-  if ("type" in item) {
+  if (item.type === "node") {
     const node = columnNodes[item.columnName];
     if (!node) return <>Column node missing for {item.columnName}</>;
     return node;
   }
 
   return (
-    <div style={item.style}>
+    <div style={item.style} data-node-type={item.type || "container"}>
       {item.children.map((childItem, index) => (
         <CardLayoutRenderer
           key={index}

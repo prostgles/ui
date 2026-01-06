@@ -91,6 +91,9 @@ export function throttle(func, timeout) {
 }
 export const SPOOF_TEST_VALUE = "trustme";
 export const getEntries = (obj) => Object.entries(obj);
+export const fromEntries = (entries) => {
+    return Object.fromEntries(entries);
+};
 export const CONNECTION_CONFIG_SECTIONS = [
     "access_control",
     "backups",
@@ -160,9 +163,6 @@ testForDuplicateValues(API_ENDPOINTS, "API_ENDPOINTS");
 testForDuplicateValues(ROUTES, "ROUTES");
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC";
-export const getProperty = (o, k) => {
-    return o[k];
-};
 export function debouncePromise(promiseFuncDef) {
     let currentPromise;
     return function (...args) {
@@ -185,4 +185,9 @@ export const getCaller = () => {
     const stackLines = (_b = (_a = error.stack) === null || _a === void 0 ? void 0 : _a.split("\n")) !== null && _b !== void 0 ? _b : [];
     const callerLine = (_c = stackLines[2]) !== null && _c !== void 0 ? _c : "";
     return stackLines;
+};
+export const getProperty = (obj, key) => {
+    if (!Object.keys(obj).includes(key))
+        return undefined;
+    return obj[key];
 };

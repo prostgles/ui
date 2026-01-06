@@ -120,6 +120,74 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
     readonly "prostgles-ui": {
+        readonly suggest_agent_workflow: {
+            readonly schema: {
+                readonly type: {
+                    readonly allowed_mcp_tool_names: {
+                        readonly description: "List of MCP tools that can be used to complete the task";
+                        readonly arrayOf: "string";
+                    };
+                    readonly database_access: {
+                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.";
+                        readonly oneOfType: readonly [{
+                            readonly Mode: {
+                                readonly enum: readonly ["None"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["execute_sql_rollback"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["execute_sql_commit"];
+                            };
+                        }, {
+                            readonly Mode: {
+                                readonly enum: readonly ["Custom"];
+                            };
+                            readonly tables: {
+                                readonly arrayOfType: {
+                                    readonly tableName: "string";
+                                    readonly select: "boolean";
+                                    readonly insert: "boolean";
+                                    readonly update: "boolean";
+                                    readonly delete: "boolean";
+                                };
+                            };
+                        }];
+                    };
+                    readonly agent_definitions: {
+                        readonly description: string;
+                        readonly record: {
+                            readonly values: {
+                                readonly type: {
+                                    readonly prompt: "string";
+                                    readonly inputJSONSchema: "any";
+                                    readonly outputJSONSchema: "any";
+                                    readonly maxCostUSD: {
+                                        readonly type: "number";
+                                        readonly optional: true;
+                                    };
+                                    readonly maxIterations: {
+                                        readonly type: "number";
+                                        readonly optional: true;
+                                    };
+                                    readonly allowedToolNames: "string[]";
+                                    readonly allowDatabaseAccess: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                };
+                            };
+                        };
+                    };
+                    readonly workflow_function_definition: {
+                        readonly description: string;
+                        readonly type: "string";
+                    };
+                };
+            };
+        };
         readonly suggest_tools_and_prompt: {
             readonly schema: {
                 readonly type: {
@@ -133,7 +201,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly optional: true;
                     };
                     readonly suggested_prompt: {
-                        readonly description: "Prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.";
+                        readonly description: "System prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.";
                         readonly type: "string";
                     };
                     readonly suggested_database_access: {
@@ -181,8 +249,8 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     };
     readonly "docker-sandbox": {
         readonly create_container: {
+            readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.";
             readonly schema: {
-                readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.";
                 readonly type: {
                     readonly files: {
                         readonly description: "Files to copy into the container. Must include a Dockerfile. Example { \"index.ts\": \"import type { JSONB } from \"prostgles-types\";\" }";
@@ -226,6 +294,9 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
             readonly outputSchema: {
                 readonly type: {
+                    readonly state: {
+                        readonly enum: readonly ["finished", "error", "build-error", "timed-out", "aborted"];
+                    };
                     readonly name: "string";
                     readonly command: "string";
                     readonly log: {
@@ -239,6 +310,72 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly exitCode: "number";
                     readonly runDuration: "number";
                     readonly buildDuration: "number";
+                };
+            };
+        };
+    };
+    readonly websearch: {
+        readonly websearch: {
+            readonly description: "Perform a web search and return results";
+            readonly schema: {
+                readonly type: {
+                    readonly q: {
+                        readonly type: "string";
+                        readonly description: "The search query. This string is passed to external search services. Supports service-specific syntax (e.g., \"site:github.com SearXNG\" for Google)";
+                    };
+                    readonly categories: {
+                        readonly type: "string";
+                        readonly optional: true;
+                        readonly description: " Comma-separated list of active search categories. Categories to search in (e.g., 'general,images,videos')";
+                    };
+                    readonly engines: {
+                        readonly type: "string";
+                        readonly optional: true;
+                        readonly description: "Comma-separated list of active search engines (e.g., 'google,bing,duckduckgo')";
+                    };
+                    readonly language: {
+                        readonly type: "string";
+                        readonly optional: true;
+                        readonly description: "Language code for the search results (e.g., 'en' for English, 'fr' for French)";
+                    };
+                    readonly pageno: {
+                        readonly type: "integer";
+                        readonly optional: true;
+                        readonly description: "Search result page number. Defaults to 1.";
+                    };
+                    readonly time_range: {
+                        readonly enum: readonly ["day", "month", "year"];
+                        readonly optional: true;
+                        readonly description: "Time range filter for results ('day' = past day, 'month' = past month, 'year' = past year). Only supported by engines that implement time range filtering";
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly arrayOfType: {
+                    readonly title: "string";
+                    readonly content: "string";
+                    readonly url: "string";
+                    readonly score: "number";
+                    readonly category: "string";
+                    readonly engine: "string";
+                    readonly img_src: "string";
+                    readonly thumbnail: "string";
+                };
+            };
+        };
+        readonly get_snapshot: {
+            readonly description: "Get a snapshot of a web page";
+            readonly schema: {
+                readonly type: {
+                    readonly url: {
+                        readonly type: "string";
+                        readonly description: "URL of the web page to snapshot";
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly type: {
+                    readonly content: "string";
                 };
             };
         };

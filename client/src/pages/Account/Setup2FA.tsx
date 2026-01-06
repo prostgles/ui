@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
-import { SuccessMessage } from "../../components/Animations";
-import Btn from "../../components/Btn";
-import Chip from "../../components/Chip";
-import ErrorComponent from "../../components/ErrorComponent";
-import { ExpandSection } from "../../components/ExpandSection";
-import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
-import { QRCodeImage } from "../../components/QRCodeImage";
+import { SuccessMessage } from "@components/Animations";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import ErrorComponent from "@components/ErrorComponent";
+import { ExpandSection } from "@components/ExpandSection";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
+import { QRCodeImage } from "@components/QRCodeImage";
 import type { UserData } from "../../dashboard/Dashboard/dashboardUtils";
 import { t } from "../../i18n/i18nUtils";
 
@@ -22,7 +22,7 @@ export const Setup2FA = (
     recoveryCode: string;
   }>();
   const [err, setErr] = useState<any>();
-  const [codeConfirm, setCodeConfirm] = useState();
+  const [codeConfirm, setCodeConfirm] = useState<number>();
   const [enabled, setEnabled] = useState(false);
 
   const reset = () => {
@@ -91,7 +91,7 @@ export const Setup2FA = (
                   value={codeConfirm}
                   type="number"
                   label={t.Setup2FA["Confirm code"]}
-                  onChange={(codeConfirm) => {
+                  onChange={(codeConfirm: number) => {
                     setCodeConfirm(codeConfirm);
                   }}
                   rightContentAlwaysShow={true}

@@ -1,7 +1,7 @@
 import { mdiSortReverseVariant, mdiSortVariant } from "@mdi/js";
 import React from "react";
-import Btn from "../../components/Btn";
-import Select from "../../components/Select/Select";
+import Btn from "@components/Btn";
+import { Select } from "@components/Select/Select";
 import type {
   DBSchemaTableWJoins,
   WindowSyncItem,
@@ -45,7 +45,9 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
     <div className={"flex-row min-h-0 f-0 relative ai-center "}>
       <Select
         id="orderbycomp"
-        buttonClassName="shadow bg-color-0"
+        btnProps={{
+          className: "shadow bg-color-0",
+        }}
         style={{
           background: "white",
         }}
@@ -54,7 +56,7 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
         value={orderByKey}
         fullOptions={orderableFields.map((f) => ({
           key: f.name,
-          label: f.label || f.name,
+          label: "label" in f ? f.label || f.name : f.name,
         }))}
         onChange={(orderByKey) => {
           setSort(orderByKey, orderAsc);

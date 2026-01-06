@@ -1,9 +1,10 @@
+import Btn from "@components/Btn";
+import { FlexRow, classOverride } from "@components/Flex";
+import { SvgIcon } from "@components/SvgIcon";
+import { onWheelScroll } from "@components/Table/Table";
+import { mdiPencil, mdiViewDashboard, mdiViewDashboardEdit } from "@mdi/js";
 import React, { useEffect, useRef } from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexRow, classOverride } from "../../components/Flex";
-import { SvgIcon } from "../../components/SvgIcon";
-import { onWheelScroll } from "../../components/Table/Table";
 import type { Command } from "../../Testing";
 import type { WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
 import { useSetActiveWorkspace, useWorkspaces } from "./useWorkspaces";
@@ -61,7 +62,7 @@ export const WorkspaceMenu = (props: P) => {
           <li
             key={w.id}
             className={
-              "workspace-list-item text-1 relative " +
+              "workspace-list-item text-1 relative flex-row " +
               (workspace.id === w.id ? "active" : "")
             }
           >
@@ -92,6 +93,24 @@ export const WorkspaceMenu = (props: P) => {
           </li>
         ))}
       </ul>
+
+      {user?.type === "admin" && !window.isLowWidthScreen && (
+        <Btn
+          iconPath={
+            workspace.layout_mode === "fixed" ?
+              mdiViewDashboardEdit
+            : mdiViewDashboard
+          }
+          title={"Toggle Layout Mode"}
+          data-command="WorkspaceMenu.toggleWorkspaceLayoutMode"
+          onClick={() => {
+            workspace.$update({
+              layout_mode:
+                workspace.layout_mode === "fixed" ? "editable" : "fixed",
+            });
+          }}
+        />
+      )}
       <WorkspaceMenuDropDown
         {...props}
         setWorkspace={setWorkspace}

@@ -9,7 +9,9 @@ import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { type LabelProps } from "@components/Label";
 import Popup from "@components/Popup/Popup";
 import type { Command } from "../../../Testing";
-import { getRandomElement } from "./ColumnStyleControls";
+import { getRandomElement } from "./ColumnStyleControls/ColumnStyleControls";
+import { rgba2hex } from "./rgba2hex";
+import { asHex, asRGB, type RGBA } from "src/utils/colorUtils";
 
 type S = {
   anchorEl: Element | null;
@@ -72,6 +74,9 @@ export class ColorPicker extends React.Component<
       btnProps,
     } = this.props;
 
+    const rgba = asRGB(value);
+    const opacity = rgba[3] <= 1 ? rgba[3] : rgba[3] / 255;
+
     const labelNode =
       label ?
         isObject(label) ? null
@@ -116,6 +121,7 @@ export class ColorPicker extends React.Component<
               {COLOR_PALETTE.map((c, ci) => (
                 <Btn
                   key={ci}
+                  data-key={c}
                   className={"pointer shadow"}
                   style={{
                     width: "24px",
@@ -134,13 +140,14 @@ export class ColorPicker extends React.Component<
               <FormField
                 label="Other"
                 type="color"
-                value={asHex(value)}
+                value={asHex(`rgb(${rgba.slice(0, -1).join(",")})`)}
+                style={{ opacity }}
                 onChange={(c) => this.onChange(c)}
               />
               <FormFieldDebounced
                 label="Opacity"
                 type="number"
-                value={asRGB(value)[3] || 1}
+                value={rgba[3] || 1}
                 maxWidth={50}
                 inputProps={{
                   step: 0.1,
@@ -148,7 +155,7 @@ export class ColorPicker extends React.Component<
                   max: 1,
                 }}
                 onChange={(opacity: number) => {
-                  const [r, g, b] = asRGB(value);
+                  const [r, g, b] = rgba;
                   const colorStr = this.asString([r, g, b, opacity]);
                   const hex = rgba2hex(colorStr);
                   this.onChange(hex);
@@ -187,100 +194,28 @@ export const ColorCircle = ({
       onClick={onClick}
       iconProps={{
         path: mdiPalette,
-        color,
+        style: {
+          /** button has bg which stacks when opacity < 1  */
+          opacity: 0,
+        },
       }}
     />
   );
 };
 
-export const asHex = (v: string) => {
-  if (v.startsWith("#")) return v;
-
-  const [r, g, b] = asRGB(v);
-  return rgbToHex(r, g, b);
-};
-
-export const rgbToHex = (r, g, b) =>
-  "#" +
-  [r, g, b]
-    .map((x) => {
-      const hex = x.toString(16);
-      return hex.length === 1 ? "0" + hex : hex;
-    })
-    .join("");
-
-export const asRGB = (color: string, maxOpacity?: "1" | "255"): RGBA => {
-  if (color.toLowerCase().trim().startsWith("rgb")) {
-    const rgba = color
-      .trim()
-      .split("(")[1]
-      ?.split(")")[0]
-      ?.split(",")
-      .map((v) => +v.trim());
-    if ((rgba?.length ?? 0) >= 3 && rgba?.every((v) => Number.isFinite(v))) {
-      let opacity = rgba[3] || 1;
-      if (maxOpacity === "255" && opacity <= 1) {
-        opacity = Math.max(1, Math.floor((1 / opacity) * 255));
-      }
-      const rgb = rgba.slice(0, 3) as [number, number, number];
-      return [...rgb, opacity] as RGBA;
-    }
-    return [100, 100, 100, maxOpacity === "255" ? 255 : 1];
-  }
-
-  const r = parseInt(color.substr(1, 2), 16);
-  const g = parseInt(color.substr(3, 2), 16);
-  const b = parseInt(color.substr(5, 2), 16);
-  let a = parseInt(color.substr(7, 2), 16) || 1;
-
-  if (maxOpacity === "255" && a <= 1) {
-    a = Math.max(1, Math.floor((1 / a) * 255));
-  }
-  return [r, g, b, a];
-};
-
-export function rgba2hex(orig: string) {
-  let a;
-  const rgb = orig
-    .replace(/\s/g, "")
-    .match(/^rgba?\((\d+),(\d+),(\d+),?([^,\s)]+)?/i) as string[] | null;
-  const alpha = ((rgb && rgb[4]) || "").trim();
-  let hex =
-    rgb ?
-      ((rgb[1] as any | 1) << 8).toString(16).slice(1) +
-      ((rgb[2] as any | 1) << 8).toString(16).slice(1) +
-      ((rgb[3] as any | 1) << 8).toString(16).slice(1)
-    : orig;
-
-  if (alpha !== "") {
-    a = alpha;
-  } else {
-    a = 1;
-  }
-  // multiply before convert to HEX
-  a = ((a * 255) | (1 << 8)).toString(16).slice(1);
-  hex = hex + a;
-
-  return `#${hex}`;
-}
-
-export type RGBA = [number, number, number, number];
-
 export const COLORS = {
   "dark blue": "#174CFA",
   blue: "#0AA1FA",
   cyan: "#00D5FF",
-  green: "#36E00B",
+  green: "#089981",
   orange: "#F79800",
-  red: "#ff004a",
+  red: "#f23645",
   purple: "#CB11F0",
   indigo: "#7430F0",
   gray: "#cecece",
 } as const;
 
-export const COLOR_PALETTE = Object.values(
-  COLORS,
-) as (typeof COLORS)[keyof typeof COLORS][];
+export const COLOR_PALETTE = Object.values(COLORS);
 
 export const COLOR_PALETTE_RGB = COLOR_PALETTE.map(
   (c) => asRGB(c).slice(0, 3) as [number, number, number],

@@ -19,8 +19,8 @@ export type Users = {
 };
 
 type S = {
-  collapsed: Boolean;
-  loading: Boolean;
+  collapsed: boolean;
+  loading: boolean;
 };
 
 export default class UserManager extends RTComp<ExtraProps, S> {
@@ -31,7 +31,7 @@ export default class UserManager extends RTComp<ExtraProps, S> {
 
   loaded = false;
   sub?: SubscriptionHandler;
-  onDelta = async () => {
+  onDelta = () => {
     const { dbs, user } = this.props;
     // if(dbs && !this.loaded){
     //   this.loaded = true;

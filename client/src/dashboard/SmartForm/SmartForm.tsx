@@ -1,28 +1,30 @@
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
 import React, { useCallback } from "react";
-import { type DetailedFilterBase } from "../../../../common/filterUtils";
+import { type DetailedFilterBase } from "@common/filterUtils";
 import type { Prgl } from "../../App";
-import { SuccessMessage } from "../../components/Animations";
-import ErrorComponent from "../../components/ErrorComponent";
-import { classOverride } from "../../components/Flex";
-import Loading from "../../components/Loader/Loading";
-import { ifEmpty } from "../../utils";
+import { SuccessMessage } from "@components/Animations";
+import ErrorComponent from "@components/ErrorComponent";
+import { classOverride } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
+import { ifEmpty } from "../../utils/utils";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { SmartFormFieldList } from "./SmartFormFieldList";
 import { SmartFormFooterButtons } from "./SmartFormFooter/SmartFormFooterButtons";
 import { useSmartFormActions } from "./SmartFormFooter/useSmartFormActions";
 import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
-import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
+import { SmartFormUpperFooter } from "./SmartFormUpperFooter/SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
-import type { BtnProps } from "../../components/Btn";
-import Btn from "../../components/Btn";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
 import type { JoinedRecordsProps } from "./JoinedRecords/JoinedRecords";
-import type { JSONBSchemaCommonProps } from "../../components/JSONBSchema/JSONBSchema";
+import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
 
 export type getErrorsHook = (
-  cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,
+  cb: (
+    newRow: AnyObject,
+  ) => Promise<SmartFormState["error"] | void> | SmartFormState["error"] | void,
 ) => void;
 
 export type GetRefHooks = {
@@ -35,6 +37,7 @@ export type GetRefHooks = {
 export type GetRefCB = (hooks: GetRefHooks) => void;
 
 export type ColumnDisplayConfig = {
+  hideLabel?: boolean;
   sectionHeader?: string;
   onRender?: (value: any, setValue: (newValue: any) => void) => React.ReactNode;
 };
@@ -181,7 +184,7 @@ export const SmartForm = (props: SmartFormProps) => {
   }
 
   if (!mode) {
-    return error || "Mode missing";
+    return <> {error || "Mode missing"}</>;
   }
 
   const state: SmartFormState = {
@@ -213,7 +216,7 @@ const SmartFormWithNoError = ({
       mode.currentRow &&
       table.card.headerColumn in mode.currentRow
     ) ?
-      mode.currentRow[table.card.headerColumn]
+      (mode.currentRow[table.card.headerColumn] as string)
     : undefined;
   const headerText =
     label ??

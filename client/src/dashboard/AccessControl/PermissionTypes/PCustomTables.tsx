@@ -1,11 +1,11 @@
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
 import { getKeys } from "prostgles-types";
 import React, { useState } from "react";
-import type { TableRules } from "../../../../../common/publishUtils";
-import { FlexCol } from "../../../components/Flex";
-import { Icon } from "../../../components/Icon/Icon";
-import { SearchList } from "../../../components/SearchList/SearchList";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import type { TableRules } from "@common/publishUtils";
+import { FlexCol } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { SearchList } from "@components/SearchList/SearchList";
+import { SwitchToggle } from "@components/SwitchToggle";
 import type { EditedAccessRule } from "../AccessControl";
 import type { PermissionEditProps } from "../AccessControlRuleEditor";
 import type { TableInfoWithRules } from "../TableRules/TablePermissionControls";
@@ -129,7 +129,7 @@ export const PCustomTables = ({
               })
             );
           })
-          .sort(
+          .toSorted(
             (a, b) =>
               initialOrder.indexOf(a.name) - initialOrder.indexOf(b.name),
           )

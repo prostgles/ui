@@ -2,17 +2,18 @@ process.on("unhandledRejection", (reason, p) => {
   console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
 });
 
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { ProstglesState } from "@common/electronInitTypes";
+import { isObject, type DBSSchema } from "@common/publishUtils";
+import { SPOOF_TEST_VALUE } from "@common/utils";
 import { spawn } from "child_process";
 import type { NextFunction, Request, Response } from "express";
 import path from "path";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
-import type { DBGeneratedSchema } from "../../common/DBGeneratedSchema";
-import type { ProstglesState } from "../../common/electronInitTypes";
-import { isObject, type DBSSchema } from "../../common/publishUtils";
-import { SPOOF_TEST_VALUE } from "../../common/utils";
 import { sidKeyName } from "./authConfig/sessionUtils";
+import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
@@ -26,7 +27,6 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
-import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
 const { app, http, io } = initExpressAndIOServers();
 
@@ -235,7 +235,10 @@ type OnServerReadyResult = {
 };
 
 export const startServer = async (
-  onReady?: (result: OnServerReadyResult) => void | Promise<void>,
+  onReady?: (
+    result: OnServerReadyResult,
+    startupResult: ProstglesInitStateWithDBS,
+  ) => void | Promise<void>,
 ) => {
   const actualPort = await new Promise<number>((resolve) => {
     const server = http.listen(PORT, HOST, () => {
@@ -254,11 +257,8 @@ export const startServer = async (
   });
 
   const startupResult = await waitForInitialisation();
-  if (startupResult.state === "error") {
-    console.error("Failed to start prostgles", startupResult);
-    throw new Error("Failed to start prostgles");
-  }
-  void onReady?.({ port: actualPort });
+  await onReady?.({ port: actualPort }, startupResult);
+  return { connMgr };
 };
 
 /**
@@ -266,7 +266,11 @@ export const startServer = async (
  * Otherwise it will be started from electron/main.ts
  */
 if (require.main === module) {
-  void startServer((result) => {
+  void startServer((result, dbStartupInfo) => {
+    if (dbStartupInfo.state === "error") {
+      console.error("Failed to start prostgles", dbStartupInfo);
+      process.exit(1);
+    }
     console.log("Server started", result);
   });
 }

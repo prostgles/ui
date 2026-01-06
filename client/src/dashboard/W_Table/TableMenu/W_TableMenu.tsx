@@ -11,12 +11,12 @@ import {
   mdiViewColumnOutline,
 } from "@mdi/js";
 import React from "react";
-import type { TabItems } from "../../../components/Tabs";
-import Tabs from "../../../components/Tabs";
+import type { TabItems } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import RTComp from "../../RTComp";
 
 import type { ParsedJoinPath, TableInfo } from "prostgles-types";
-import FormField from "../../../components/FormField/FormField";
+import FormField from "@components/FormField/FormField";
 import type { ColumnConfigWInfo, W_TableProps } from "../W_Table";
 
 import type {
@@ -24,7 +24,7 @@ import type {
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
 
-import ErrorComponent from "../../../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
@@ -137,7 +137,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
     } = this.props;
     if (w.table_name && db.sql) {
       getTableMeta(db, dbs, databaseId, w.table_name, w.table_oid)
-        .then(async (tableMeta) => {
+        .then((tableMeta) => {
           this.setState({ tableMeta });
         })
         .catch((initError) => {

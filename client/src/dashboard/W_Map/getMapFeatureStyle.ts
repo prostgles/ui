@@ -1,4 +1,4 @@
-import { cachedSvgs } from "../../components/SvgIcon";
+import { cachedSvgs } from "@components/SvgIcon";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import type {
   DeckGlColor,
@@ -6,9 +6,9 @@ import type {
   GeoJsonLayerProps,
 } from "../Map/DeckGLMap";
 import { blend } from "../W_Table/colorBlend";
-import { asRGB } from "../W_Table/ColumnMenu/ColorPicker";
-import { MAP_SELECT_COLUMNS } from "./getMapData";
+import { MAP_SELECT_COLUMNS } from "./fetchData/getMapData";
 import type { ClickedItem, LayerQuery } from "./W_Map";
+import { asRGB } from "src/utils/colorUtils";
 
 export const rgbaToString = (rgba: DeckGlColor) => {
   const [r, g, b, a = 1] = rgba.map((v) => (Number.isInteger(v) ? v : 1));

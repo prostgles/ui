@@ -1,6 +1,6 @@
 import { includes, type SQLHandler } from "prostgles-types";
 import { getCommandElemSelector } from "../../Testing";
-import { tout } from "../../utils";
+import { tout } from "../../utils/utils";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { triggerCharacters } from "../SQLEditor/SQLCompletion/monacoSQLSetup/registerSuggestions";
 
@@ -210,7 +210,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
   const testResult = (expected: string, editorValue?: string): void => {
     const model = getEditor().e.getModel();
     const actual =
-      editorValue ?? model?.getValue()?.replaceAll(model.getEOL(), "\n") ?? "";
+      editorValue ?? model?.getValue().replaceAll(model.getEOL(), "\n") ?? "";
     if (!expected) {
       throw "empty expected value";
     }

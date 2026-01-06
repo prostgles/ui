@@ -1,9 +1,9 @@
 import { mdiAlertOutline, mdiClose } from "@mdi/js";
 import type { ReactNode } from "react";
 import React from "react";
-import { isObject } from "../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import type { TestSelectors } from "../Testing";
-import { isEmpty, scrollIntoViewIfNeeded } from "../utils";
+import { isEmpty, scrollIntoViewIfNeeded } from "../utils/utils";
 import Btn from "./Btn";
 import { classOverride, FlexCol, FlexRow } from "./Flex";
 import { Icon } from "./Icon/Icon";
@@ -97,9 +97,7 @@ export default class ErrorComponent extends React.Component<P> {
             }),
         }}
       >
-        {withIcon && (
-          <Icon size={1} className="as-start" path={mdiAlertOutline} />
-        )}
+        {withIcon && <Icon className="as-start f-0" path={mdiAlertOutline} />}
         <FlexCol
           className={
             "gap-1 as-center-thisbreakslongerrors " +

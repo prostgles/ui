@@ -12,9 +12,9 @@ import {
 
 /** Close previous windows */
 export const closeAllViews = async () => {
-  let windowCloseBtn;
+  let windowCloseBtn: HTMLElement | null;
   do {
-    windowCloseBtn = getElement("dashboard.window.close");
+    windowCloseBtn = getElement("dashboard.window.close") as HTMLElement | null;
     windowCloseBtn?.click();
     await tout(400);
     const deleteSql = getElement<HTMLButtonElement>("CloseSaveSQLPopup.delete");
@@ -76,6 +76,7 @@ export const dashboardDemo = async () => {
 
   await click("QuickAddComputedColumn");
   await click("QuickAddComputedColumn", `[data-key="$countAll`);
+  await click("QuickAddComputedColumn.Add");
 
   await type("Customer Order Count", "", "#nested-col-name");
   await click("LinkedColumn.Add");
@@ -121,7 +122,7 @@ export const dashboardDemo = async () => {
   await tout(5e3);
   await click("ChartLayerManager");
   await click("ChartLayerManager.AddChartLayer.addLayer");
-  // await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`"roads.geojson".geog`)}]`);
+  // await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`routes.geog`)}]`);
   await click(
     "ChartLayerManager.AddChartLayer.addLayer",
     `[data-key=${JSON.stringify(`"london_restaurants.geojson".geometry`)}]`,
@@ -174,10 +175,9 @@ export const dashboardDemo = async () => {
   await click("dashboard.window.toggleFilterBar");
   await type("btcusd", "", ".SmartFilterBar input");
   await click("", `[data-label="BTCUSDC"]`);
-  await click("", ".FilterWrapper_Type");
-  await click("", `[data-key="$in"]`);
+
+  await click("", `[title="Click to expand/collapse"]`);
   await type("btcu", "", ".FilterWrapper input.custom-input");
-  await click("", `[data-key="BTCUSDC"]`);
   await click("", `[data-key="BTCUSDT"]`);
 
   await click("SmartAddFilter");
@@ -188,6 +188,7 @@ export const dashboardDemo = async () => {
 
   await click("", `[title="Expand/Collapse filters"]`);
   await click("AddChartMenu.Timechart");
+  await click("AddChartMenu.Timechart", `[data-key="timestamp"]`);
   await click("ChartLayerManager");
   await click("TimeChartLayerOptions.aggFunc");
   await click("TimeChartLayerOptions.aggFunc.select");

@@ -1,16 +1,16 @@
 import React from "react";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import type { W_TableMenuMetaProps } from "./W_TableMenu";
 import { ACCESS_RULE_METHODS } from "../../AccessControl/AccessRuleSummary";
 import { Link } from "react-router-dom";
 import { getAccessControlHref } from "../../AccessControl/useAccessControlSearchParams";
-import { LabeledRow } from "../../../components/LabeledRow";
+import { LabeledRow } from "@components/LabeledRow";
 import { mdiAccount, mdiPlus } from "@mdi/js";
-import Btn from "../../../components/Btn";
-import { InfoRow } from "../../../components/InfoRow";
-import { isObject } from "../../../../../common/publishUtils";
+import Btn from "@components/Btn";
+import { InfoRow } from "@components/InfoRow";
+import { isObject } from "@common/publishUtils";
 import { RenderFilter } from "../../RenderFilter";
-import { Label } from "../../../components/Label";
+import { Label } from "@components/Label";
 
 export const W_TableMenu_AccessRules = ({
   tableMeta,

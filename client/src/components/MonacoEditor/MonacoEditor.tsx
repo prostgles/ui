@@ -1,25 +1,18 @@
-import { useEffectDeep, useMemoDeep } from "prostgles-client/dist/react-hooks";
-import {
-  getKeys,
-  isEqual,
-  isObject,
-  omitKeys,
-  pickKeys,
-} from "prostgles-types";
+import { useEffectDeep, useMemoDeep } from "prostgles-client";
+import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
 
+import type { TestSelectors } from "src/Testing";
 import {
   CUSTOM_MONACO_SQL_THEMES,
   defineCustomMonacoSQLTheme,
 } from "../../dashboard/SQLEditor/defineCustomMonacoSQLTheme";
-import { getMonaco, LANG } from "../../dashboard/SQLEditor/W_SQLEditor";
+import { getMonaco } from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import type { TestSelectors } from "src/Testing";
-import { useWhyDidYouUpdate } from "./useWhyDidYouUpdate";
 import { useMonacoEditorAddActions } from "./useMonacoEditorAddActions";
 
 export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
@@ -39,6 +32,10 @@ export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
   onMount?: (editor: editor.IStandaloneCodeEditor) => void;
   style?: React.CSSProperties;
   loadedSuggestions: LoadedSuggestions | undefined;
+  /**
+   * @default 200
+   */
+  minHeight?: number;
 };
 
 let monacoPromise: Promise<Monaco> | undefined;
@@ -47,7 +44,7 @@ const useMonacoSingleton = () => {
   const [monaco, setMonaco] = useState(monacoResolved);
   useEffect(() => {
     if (!monacoResolved) {
-      (async () => {
+      void (async () => {
         monacoPromise ??= getMonaco();
         monacoResolved = await monacoPromise;
         await defineCustomMonacoSQLTheme();
@@ -68,7 +65,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const [loadedLanguage, setLoadedLanguage] = useState(false);
   useEffect(() => {
-    loadPSQLLanguage(loadedSuggestions).then(() => {
+    void loadPSQLLanguage(loadedSuggestions).then(() => {
       setLoadedLanguage(true);
     });
   }, [loadedSuggestions]);
@@ -91,6 +88,7 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
     onMount,
     onChange,
     expandSuggestionDocs = true,
+    minHeight = 200,
   } = props;
 
   const valueRef = React.useRef(value);
@@ -214,10 +212,10 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
     return {
       textAlign: "initial",
       minHeight:
-        Math.min(200, (2 + value.trim().split("\n").length) * 20) + "px",
+        Math.min(minHeight, (2 + value.trim().split("\n").length) * 20) + "px",
       flex: "f-1",
     };
-  }, [value, style]);
+  }, [value, style, minHeight]);
 
   return (
     <div
@@ -254,8 +252,10 @@ const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (
   editor: editor.IStandaloneCodeEditor,
   expandSuggestionDocs = true,
 ) => {
-  const sc = editor.getContribution("editor.contrib.suggestController") as any;
+  const sc = editor.getContribution("editor.contrib.suggestController");
+  //@ts-ignore
   if (sc?.widget) {
+    //@ts-ignore
     const suggestWidget = sc.widget.value;
     if (suggestWidget && suggestWidget._setDetailsVisible) {
       // This will default to visible details. But when user switches it off

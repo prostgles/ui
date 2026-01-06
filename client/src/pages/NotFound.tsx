@@ -1,7 +1,7 @@
 import { mdiArrowLeft } from "@mdi/js";
 import React from "react";
-import Btn from "../components/Btn";
-import { FlexCol } from "../components/Flex";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
 
 export const NotFound = () => {
   return (

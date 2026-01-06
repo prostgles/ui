@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import PopupMenu from "../../components/PopupMenu";
-import Btn from "../../components/Btn";
-import FormField from "../../components/FormField/FormField";
+import PopupMenu from "@components/PopupMenu";
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
 import type { Prgl } from "../../App";
-import { InfoRow } from "../../components/InfoRow";
-import { Success } from "../../components/Animations";
+import { InfoRow } from "@components/InfoRow";
+import { Success } from "@components/Animations";
 import { t } from "../../i18n/i18nUtils";
 
 export const ChangePassword = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {

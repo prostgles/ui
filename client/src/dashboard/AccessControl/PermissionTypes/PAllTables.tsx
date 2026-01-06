@@ -5,7 +5,7 @@ import {
   TablePermissionControls,
 } from "../TableRules/TablePermissionControls";
 import type { DBPermissionEditorProps } from "./PCustomTables";
-import type { TableRules } from "../../../../../common/publishUtils";
+import type { TableRules } from "@common/publishUtils";
 
 export const PAllTables = ({
   dbPermissions,

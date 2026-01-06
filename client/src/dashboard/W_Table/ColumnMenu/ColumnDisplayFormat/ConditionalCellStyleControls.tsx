@@ -1,18 +1,18 @@
 import { mdiClose, mdiPlus } from "@mdi/js";
 import React from "react";
-import Btn from "../../../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
-import PopupMenu from "../../../../components/PopupMenu";
-import Select from "../../../../components/Select/Select";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { Select } from "@components/Select/Select";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
 import { StyledCell } from "../../tableUtils/StyledTableColumn";
 import { ColorPicker } from "../ColorPicker";
 import type {
   ConditionalStyle,
   StyleColumnProps,
-} from "../ColumnStyleControls";
+} from "../ColumnStyleControls/ColumnStyleControls";
 import { ChipStylePalette } from "./ChipStylePalette";
-import { isDefined } from "../../../../utils";
+import { isDefined } from "../../../../utils/utils";
 
 export const CONDITION_OPERATORS = [
   "=",
@@ -58,7 +58,7 @@ export const ConditionalCellStyleControls = ({
       newConditions = newConditions.map((cs, i) => {
         if (i === idx) return { ...cs, ...newStyle };
         return cs;
-      }) as any;
+      }) as typeof newConditions;
     }
     updateStyle({ conditions: newConditions });
   };
@@ -112,7 +112,7 @@ export const ConditionalCellStyleControls = ({
             <Btn
               title="Remove style"
               iconPath={mdiClose}
-              onClick={(e) => {
+              onClick={() => {
                 updateCondStyle(null, condIdx);
               }}
             />

@@ -28,7 +28,7 @@ export const createReactiveState = <S>(
     currentState: S;
   } = {
     listeners: [],
-    currentState: initialState as S,
+    currentState: initialState,
   };
 
   const rootReference: ReactiveState<S> = {
@@ -46,7 +46,7 @@ export const createReactiveState = <S>(
       handler.listeners.forEach((l) => l(handler.currentState));
       onChange?.(newState);
     },
-    initialState: initialState as S,
+    initialState: initialState,
     get: () => handler.currentState,
   };
 

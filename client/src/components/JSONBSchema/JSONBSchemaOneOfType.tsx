@@ -18,7 +18,7 @@ type P = JSONBSchemaCommonProps & {
  * Can render oneOfType only if there are common properties across objects
  */
 export const JSONBSchemaOneOfTypeMatch = (s: JSONB.JSONBSchema): s is Schema =>
-  !!s.oneOfType?.length;
+  Array.isArray(s.oneOfType);
 
 export const JSONBSchemaOneOfType = ({
   value,
@@ -85,8 +85,8 @@ export const JSONBSchemaOneOfType = ({
     /**
      * Create full options schema
      */
-    matchingOneOfSchema![tKey] = {
-      ...omitKeys(matchingOneOfSchema![tKey]! as any, ["enum"]),
+    matchingOneOfSchema[tKey] = {
+      ...omitKeys(matchingOneOfSchema[tKey]! as any, ["enum"]),
       oneOf: s.oneOfType.flatMap((ss) => {
         return {
           title: tKey,

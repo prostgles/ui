@@ -5,7 +5,7 @@ import {
   tryCatchV2,
   type AnyObject,
 } from "prostgles-types";
-import { filterArr, findArr } from "../../../../common/llmUtils";
+import { filterArr, findArr } from "@common/llmUtils";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 import type { LLMMessage } from "./askLLM";
 
@@ -112,7 +112,7 @@ export const getLLMRequestBody = ({
         /**
          * https://ai.google.dev/gemini-api/docs/text-generation?lang=rest
          */
-        contents: messages.map((m, i, arr) => ({
+        contents: messages.map((m) => ({
           role:
             m.content.some((c) => c.type === "tool_result") ? "function"
             : m.content.some((c) => c.type === "tool_use") ? "model"
@@ -127,44 +127,49 @@ export const getLLMRequestBody = ({
               //     },
               //   };
               // }
-              if (c.type === "text" && "text" in c) return { text: c.text };
+              if (c.type === "text" && "text" in c) return [{ text: c.text }];
               if (c.type === "tool_use") {
-                return {
-                  functionCall: {
-                    name: c.name,
-                    args: c.input,
-                  },
-                };
-              }
-              const toolResult = getToolResult([c]);
-              if (toolResult) {
-                const resultText = toolResult.content;
-                const funcName = arr[i - 1]?.content
-                  .map((c) =>
-                    c.type === "tool_use" && c.name ? c.name : undefined,
-                  )
-                  .find(isDefined);
-                const resultObject = tryCatchV2(
-                  () => JSON.parse(resultText || "{}") as AnyObject,
-                );
-                return {
-                  functionResponse: {
-                    name: funcName,
-                    response: {
-                      name: funcName,
-                      content: resultObject.data ?? {
-                        parsingError: "Could not parse tool result as JSON",
-                        toolResult: resultText,
-                      },
-
-                      // JSON.parse(
-                      //   (resultText as string | undefined) ?? "{}",
-                      // ),
+                return [
+                  {
+                    functionCall: {
+                      name: c.name,
+                      args: c.input,
                     },
                   },
-                };
+                ];
+              }
+              const toolResults = getToolResults([c]);
+              if (toolResults.length) {
+                return toolResults.map((toolResult) => {
+                  const resultText = toolResult.content;
+                  const funcName = toolResult.tool_name; //arr[i - 1]?.content
+                  // .map((c) =>
+                  //   c.type === "tool_use" && c.name ? c.name : undefined,
+                  // )
+                  // .find(isDefined);
+                  const resultObject = tryCatchV2(
+                    () => JSON.parse(resultText || "{}") as AnyObject,
+                  );
+                  return {
+                    functionResponse: {
+                      name: funcName,
+                      response: {
+                        name: funcName,
+                        content: resultObject.data ?? {
+                          parsingError: "Could not parse tool result as JSON",
+                          toolResult: resultText,
+                        },
+
+                        // JSON.parse(
+                        //   (resultText as string | undefined) ?? "{}",
+                        // ),
+                      },
+                    },
+                  };
+                });
               }
             })
+            .flat()
             .filter(isDefined),
         })),
         ...(tools && {
@@ -182,60 +187,69 @@ export const getLLMRequestBody = ({
     : /**  "OpenAI"  */
       {
         model,
-        messages: messages.map((m) => {
-          const isToolUse = filterArr(m.content, { type: "tool_use" as const });
-          const textContent = filterArr(m.content, { type: "text" as const });
+        messages: messages
+          .map((m) => {
+            const toolUseContent = filterArr(m.content, {
+              type: "tool_use" as const,
+            });
+            const textContent = filterArr(m.content, { type: "text" as const });
 
-          if (isToolUse.length) {
-            return {
-              role: "assistant",
-              content: textContent.map((t) => t.text).join("\n") || "",
-              tool_calls: isToolUse.map((tc) => ({
-                id: tc.id,
-                type: "function",
-                function: {
-                  name: tc.name,
-                  arguments: JSON.stringify(tc.input),
-                },
-              })),
-            };
-          }
-          const toolUseResult = getToolResult(m.content);
-          if (toolUseResult) {
-            return {
-              role: "tool",
-              tool_call_id: toolUseResult.tool_use_id,
-              content: toolUseResult.content,
-            };
-          }
-          return {
-            ...m,
-            content: m.content.map((c) => {
-              if (c.type === "image") {
+            if (toolUseContent.length) {
+              return {
+                role: "assistant",
+                content: textContent.map((t) => t.text).join("\n") || "",
+                tool_calls: toolUseContent.map((tc) => ({
+                  id: tc.id,
+                  type: "function",
+                  function: {
+                    name: tc.name,
+                    arguments: JSON.stringify(tc.input),
+                  },
+                })),
+              };
+            }
+            const toolUseResults = getToolResults(m.content);
+            if (toolUseResults.length) {
+              return toolUseResults.map((toolUseResult) => {
                 return {
-                  type: "image_url",
-                  image_url: { url: c.source.data },
+                  role: "tool",
+                  tool_call_id: toolUseResult.tool_use_id,
+                  content: toolUseResult.content,
+                  ...(toolUseResult.is_error && {
+                    is_error: toolUseResult.is_error,
+                  }),
                 };
-              }
-              if (c.type === "tool_result") {
-                return {
-                  type: "function_call_output",
-                  call_id: c.tool_use_id,
-                  output:
-                    typeof c.content === "string" ?
-                      c.content
-                    : (filterArr(c.content, { type: "text" as const })[0]
-                        ?.text ??
-                      "?? Internal issue in tool result parsing in prostgles ui"),
-                };
-              }
-              return c;
-            }),
-            ...(m.content.some((c) => c.type === "tool_result") && {
-              role: "tool",
-            }),
-          };
-        }),
+              });
+            }
+            return {
+              ...m,
+              content: m.content.map((c) => {
+                if (c.type === "image") {
+                  return {
+                    type: "image_url",
+                    image_url: { url: c.source.data },
+                  };
+                }
+                if (c.type === "tool_result") {
+                  return {
+                    type: "function_call_output",
+                    call_id: c.tool_use_id,
+                    output:
+                      typeof c.content === "string" ?
+                        c.content
+                      : (filterArr(c.content, { type: "text" as const })[0]
+                          ?.text ??
+                        "?? Internal issue in tool result parsing in prostgles ui"),
+                  };
+                }
+                return c;
+              }),
+              ...(m.content.some((c) => c.type === "tool_result") && {
+                role: "tool",
+              }),
+            };
+          })
+          .flat(),
         tools: tools?.map((t) => ({
           type: "function",
           function: {
@@ -278,12 +292,13 @@ const removeBase64Prefix = (data: string) => {
   return data;
 };
 
-const getToolResult = (content: LLMMessage) => {
-  const toolUseResult = findArr(content, {
+const getToolResults = (content: LLMMessage) => {
+  const toolUseResults = filterArr(content, {
     type: "tool_result" as const,
   });
-  if (toolUseResult) {
-    const { content, ...other } = toolUseResult;
+
+  return toolUseResults.map((toolUseResult) => {
+    const { content, ...otherProps } = toolUseResult;
     const contentText =
       typeof content === "string" ? content : (
         filterArr(content, { type: "text" as const })
@@ -291,12 +306,12 @@ const getToolResult = (content: LLMMessage) => {
           .join("\n")
       );
     return {
-      ...other,
+      ...otherProps,
       role: "tool",
       tool_call_id: toolUseResult.tool_use_id,
       content:
         contentText ||
         "?? Internal issue in tool result parsing in prostgles ui",
     };
-  }
+  });
 };

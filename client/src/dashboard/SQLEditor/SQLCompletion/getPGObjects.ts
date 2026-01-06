@@ -3,7 +3,7 @@ import { tryCatch } from "prostgles-types";
 import type { TopKeyword } from "./KEYWORDS";
 import { TOP_KEYWORDS, asSQL } from "./KEYWORDS";
 import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
-import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../common/utils";
+import { EXCLUDE_FROM_SCHEMA_WATCH } from "@common/utils";
 import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 
 export type PGDatabase = {
@@ -143,6 +143,15 @@ export type PG_Keyword = {
   topKwd?: TopKeyword;
   documentation: string;
   insertText: string;
+  barelabel?: boolean;
+  catdesc?: string;
+  /**
+   * - C = unreserved (cannot be function or type name)
+   * - R = reserved
+   * - U = unreserved
+   * - T = reserved (can be function or type name)
+   */
+  catcode?: "T" | "R" | "U" | "C";
 };
 
 type PG_Publication = {
@@ -253,7 +262,7 @@ export async function getFuncs(args: {
         format('%I', name) as escaped_name
         FROM (
           SELECT p.proname AS name
-                , pg_get_function_identity_arguments(p.oid) AS arg_list_str
+                , pg_catalog.pg_get_function_identity_arguments(p.oid) AS arg_list_str
                 , pg_catalog.pg_get_function_result(p.oid) as restype
                 , t.typname as restype_udt_name
                 , d.description
@@ -408,6 +417,7 @@ export type PG_Table = {
     character_maximum_length: number | null;
   }[];
   tableStats?: TableStats;
+  constraints?: PGConstraint[];
 };
 
 type TableStats = {
@@ -525,7 +535,7 @@ export async function getTablesViewsAndCols(
         pg_size_pretty(pg_relation_size(relid::regclass)) AS table_size,
           (50 * seq_scan > idx_scan -- more than 2%
           AND n_live_tup > 10000
-          AND pg_relation_size(relname :: regclass) > 5000000) as might_need_index
+          AND pg_relation_size(relid::regclass) > 5000000) as might_need_index
       FROM pg_stat_all_tables
       WHERE schemaname <> 'information_schema'
       AND schemaname NOT ILIKE 'pg_%';
@@ -1180,20 +1190,21 @@ export const PG_OBJECT_QUERIES = {
     getData: async (db: DB) => {
       const allKeywords = (
         await db.sql(
-          "select upper(word) as word from pg_get_keywords();",
+          "select upper(word) as word, barelabel, catcode, catdesc from pg_get_keywords();",
           {},
           { returnType: "rows" },
         )
-      )
-        .map((d) => d.word)
-        .concat([
-          "RAISE",
-          "NOTICE",
-          "IF NOT EXISTS",
-          "INSERT INTO",
-          "DELETE FROM",
-        ]) as string[];
-      return allKeywords.map((label) => {
+      ).concat([
+        { word: "RAISE" },
+        { word: "NOTICE" },
+        { word: "IF NOT EXISTS" },
+        { word: "INSERT INTO" },
+        { word: "DELETE FROM" },
+      ]) as {
+        word: string;
+        barelabel?: boolean;
+      }[];
+      return allKeywords.map(({ word: label, ...rest }) => {
         const topKwd = TOP_KEYWORDS.find((k) => k.label === label);
         let documentation = missingKeywordDocumentation[label] ?? label;
         const insertText =
@@ -1209,6 +1220,7 @@ export const PG_OBJECT_QUERIES = {
           topKwd,
           documentation,
           insertText,
+          ...rest,
         } satisfies PG_Keyword;
       });
     },

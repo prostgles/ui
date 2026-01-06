@@ -6,8 +6,8 @@ import {
 } from "@mdi/js";
 import React from "react";
 import { dataCommand } from "../../Testing";
-import Btn from "../../components/Btn";
-import { FlexRowWrap } from "../../components/Flex";
+import Btn from "@components/Btn";
+import { FlexRowWrap } from "@components/Flex";
 import type { DashboardMenuProps } from "./DashboardMenu";
 import { DashboardMenuSettings } from "./DashboardMenuSettings";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
@@ -34,8 +34,8 @@ export const DashboardMenuHeader = ({
         {...dataCommand("dashboard.menu.sqlEditor")}
         className="f-1 jc-start max-w-fit"
         title={t.DashboardMenuHeader["Opens SQL Query editor"]}
-        onClick={(e) => {
-          loadTable({ type: "sql", name: "SQL Query" });
+        onClickPromise={async () => {
+          await loadTable({ type: "sql", name: "SQL Query" });
           onClose?.();
         }}
         color="action"
@@ -65,6 +65,7 @@ export const DashboardMenuHeader = ({
         }
         title={t.DashboardMenuHeader["Pin/Unpin"]}
         data-command="DashboardMenuHeader.togglePinned"
+        data-key={pinnedMenu ? "pinned" : "unpinned"}
         className="ml-p25"
         onClick={() => {
           workspace.$update(
