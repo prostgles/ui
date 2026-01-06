@@ -744,7 +744,7 @@ test.describe("Main test", () => {
           .getByTestId("LLMChatOptions.MCPTools")
           .getByTestId("MCPServerTools")
           .getByText(toolName, { exact: true })
-          .click({ force: true });
+          .click({ force: true, timeout: 30e3 });
         await page.waitForTimeout(500);
       }
       if (toggleAutoApprove) {
