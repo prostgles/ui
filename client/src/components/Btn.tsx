@@ -52,7 +52,7 @@ type BtnCustomProps = (
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
 
-  size?: "large" | "default" | "small" | "micro";
+  size?: "large" | "default" | "small" | "micro" | "nano";
   variant?: "outline" | "filled" | "faded" | "icon" | "text" | "default";
   color?:
     | "danger"
@@ -327,7 +327,8 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       }
     } else {
       const padding =
-        size === "micro" ? "4px"
+        size === "nano" ? "0px"
+        : size === "micro" ? "4px"
         : size === "small" ? "6px"
         : size === "default" ? "8px"
         : "10px";
@@ -348,12 +349,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       default: 20,
       small: 14,
       micro: 12,
+      nano: 10,
     }[size];
     const loadingMargin = {
       large: 1,
       default: 1,
       small: 0,
       micro: 2,
+      nano: 0,
     }[size];
     const childrenContent =
       children === undefined || children === null || children === "" ? null
@@ -440,6 +443,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       default: "16px",
       small: "14px",
       micro: "12px",
+      nano: "10px",
     };
 
     const finalProps: PropsOf<HTMLAnchorElement> | PropsOf<HTMLButtonElement> =

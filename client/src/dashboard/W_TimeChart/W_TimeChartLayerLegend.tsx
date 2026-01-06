@@ -43,7 +43,7 @@ export const W_TimeChartLayerLegend = ({
             <FlexRow key={_id} className="W_TimeChartLayerLegend_Item gap-0">
               {!groupByColumn && (
                 <LayerColorPicker
-                  btnProps={{ style: { padding: 0 } }}
+                  btnProps={{ size: "nano" }}
                   title={"layerDesc"}
                   column={dateColumn}
                   linkOptions={link.options as ChartLinkOptions}
