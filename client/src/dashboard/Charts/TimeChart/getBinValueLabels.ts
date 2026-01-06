@@ -1,13 +1,14 @@
+import { nFormatter } from "src/utils/utils";
 import type { Point } from "../../Charts";
 import type { ChartedText, Circle } from "../CanvasChart";
 import { getYOnMonotoneXCurve } from "../drawMonotoneXCurve";
-import type { TimeChartProps } from "./TimeChart";
+import type { DataItem, TimeChartProps } from "./TimeChart";
 
 type GetBinValueLabelArgs = Pick<
   TimeChartProps,
   "renderStyle" | "binValueLabelMaxDecimals" | "showBinLabels"
 > & {
-  circles: Circle[];
+  circles: Circle<DataItem>[];
   showCircles: boolean;
 };
 export const getBinValueLabels = ({
@@ -17,13 +18,9 @@ export const getBinValueLabels = ({
   showCircles,
   showBinLabels,
 }: GetBinValueLabelArgs) => {
-  const formatter = new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: binValueLabelMaxDecimals ?? undefined,
-    maximumFractionDigits: binValueLabelMaxDecimals ?? undefined,
-  });
   const layerCoords = circles.map((c) => c.coords);
   const getLabel = (
-    c: Circle,
+    c: (typeof circles)[number],
     prevP: Point | undefined,
     nextP: Point | undefined,
   ) => {
@@ -54,7 +51,9 @@ export const getBinValueLabels = ({
       (angles.p || angles.n);
     const yOffset = showBelow ? textMargin + textSize : -textMargin * 2;
     const text =
-      Number.isFinite(c.data.value) ? formatter.format(c.data.value) : "";
+      Number.isFinite(c.data.value) ?
+        nFormatter(c.data.value, binValueLabelMaxDecimals || 1)
+      : "";
 
     const finalX = x + xOffset;
     const finalY = y + yOffset;

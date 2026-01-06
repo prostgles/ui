@@ -9,7 +9,12 @@ import type {
   Rectangle,
 } from "../../Charts/CanvasChart";
 import type { DeepPartial } from "../../RTComp";
-import type { TimeChart, TimeChartD, TimeChartProps } from "./TimeChart";
+import type {
+  DataItem,
+  TimeChart,
+  TimeChartD,
+  TimeChartProps,
+} from "./TimeChart";
 import { getTimeAxisTicks } from "./getTimeAxisTicks";
 import { getTimechartTooltipShapes } from "./getTimechartTooltipShapes";
 import { getBinValueLabels } from "./getBinValueLabels";
@@ -57,7 +62,7 @@ export function onRenderTimechart(
 
         const displayedCircles = circlesXY.slice(0);
 
-        const circles: Circle[] = displayedCircles.map((d, i) => ({
+        const circles: Circle<DataItem>[] = displayedCircles.map((d, i) => ({
           id: i,
           type: "circle",
           coords: [d.x, d.y],
@@ -232,10 +237,10 @@ export function onRenderTimechart(
         );
       const yTicks: ChartedText[] = [];
       const yPercTicks: ChartedText[] = [];
-
+      const { yAxisScaleMode = "multiple" } = this.props;
       const [xForPercYTicks] = this.chart.getDataXY(xMax, 0);
       yTickValues.forEach((v, i) => {
-        if (this.props.yAxisScaleMode === "multiple") {
+        if (yAxisScaleMode === "multiple" && layers.length > 1) {
           return;
         }
         const yScale = getYScale(0);
