@@ -1,4 +1,4 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useCallback, useMemo } from "react";
 
 import { getMCPToolNameParts } from "@common/prostglesMcp";
@@ -51,20 +51,25 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
             if (toolUseResponse !== "deny") {
               const auto_approve = toolUseResponse === "for-chat";
               if (req.type === "mcp") {
+                const { tool_id } = req;
+                if (typeof tool_id !== "number") {
+                  throw new Error("Unexpected. tool_id missing");
+                }
                 await dbs.llm_chats_allowed_mcp_tools.upsert(
-                  { chat_id: activeChatId, tool_id: req.id },
+                  { chat_id: activeChatId, tool_id },
                   {
                     chat_id: activeChatId,
-                    tool_id: req.id,
+                    tool_id,
                     auto_approve,
                   },
                 );
               } else if (req.type === "prostgles-db-methods") {
+                const { server_function_id } = req;
                 await dbs.llm_chats_allowed_functions.upsert(
-                  { chat_id: activeChatId, server_function_id: req.id },
+                  { chat_id: activeChatId, server_function_id },
                   {
                     chat_id: activeChatId,
-                    server_function_id: req.id,
+                    server_function_id,
                     auto_approve,
                   },
                 );

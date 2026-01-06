@@ -2,6 +2,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { useMemo, useState } from "react";
 import { ProstglesMCPToolsWithUI } from "../ProstglesToolUseMessage/ProstglesToolUseMessage";
 import type { LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage";
+import { quickClone } from "src/utils/utils";
 
 type P = {
   llmMessages: DBSSchema["llm_messages"][] | undefined;
@@ -29,21 +30,22 @@ export const useLLMChatMessageGrouper = (props: P) => {
       const hasToolUseOrResult = message.message.some(
         (m) => m.type === "tool_use" || m.type === "tool_result",
       );
+      const nextMessage = llmMessages[index + 1]; //quickClone(llmMessages[index + 1]);
 
       /** Start or continue group */
       if (hasToolUseOrResult) {
         /** Continue group */
         if (prevItem?.type === "tool_call_message_group") {
-          prevItem.messages.push({
-            message,
-            nextMessage: llmMessages[index + 1],
-          });
-          prevItem.messageContentItems.push(...message.message);
+          prevItem.messages = [...prevItem.messages, { message, nextMessage }];
+          prevItem.messageContentItems = [
+            ...prevItem.messageContentItems,
+            ...message.message,
+          ];
         } else {
           /** Start new group */
           result.push({
             type: "tool_call_message_group",
-            messages: [{ message, nextMessage: llmMessages[index + 1] }],
+            messages: [{ message, nextMessage }],
             messageContentItems: [...message.message],
             firstMessage: message,
             startId: message.id,
@@ -61,7 +63,7 @@ export const useLLMChatMessageGrouper = (props: P) => {
         result.push({
           type: "single_message",
           message,
-          nextMessage: llmMessages[index + 1],
+          nextMessage,
           onToggle: undefined,
         });
       }

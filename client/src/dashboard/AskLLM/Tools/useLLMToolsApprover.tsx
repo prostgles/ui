@@ -2,8 +2,7 @@ import {
   getLLMMessageToolUse,
   isAssistantMessageRequestingToolUse,
 } from "@common/llmUtils";
-import type { ProstglesMcpTool } from "@common/prostglesMcp";
-import type { DBSSchema } from "@common/publishUtils";
+import type { AllowedChatTool } from "@common/prostglesMcp";
 import { usePromise } from "prostgles-client";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../utils/utils";
@@ -78,7 +77,6 @@ export const useLLMToolsApprover = ({
         toolsNamesThatHaveJustBeenAutoApproved.has(matchedTool.name);
       if (!isAllowedWithoutApproval) {
         const { approved, mode } = await requestApproval(
-          //@ts-ignore
           matchedTool,
           toolUseRequest,
         );
@@ -94,19 +92,18 @@ export const useLLMToolsApprover = ({
   }, [messages, dbsMethods, activeChat.id, requestApproval, sendQuery]);
 };
 
-export type ApproveRequest =
-  | (Pick<
-      DBSSchema["mcp_server_tools"],
-      "id" | "name" | "description" | "server_name"
-    > & {
-      type: "mcp";
-      requestId: string;
-      auto_approve: boolean;
-    })
-  | (ProstglesMcpTool & {
-      id: number;
-      requestId: string;
-      name: string;
-      description: string;
-      auto_approve: boolean;
-    });
+export type ApproveRequest = AllowedChatTool;
+// | (Pick<
+//     DBSSchema["mcp_server_tools"],
+//     "name" | "description" | "server_name"
+//   > & {
+//     type: "mcp";
+//     auto_approve: boolean;
+//     tool_id: number;
+//   })
+// | (ProstglesMcpTool & {
+//     tool_id?: undefined;
+//     name: string;
+//     description: string;
+//     auto_approve: boolean;
+//   });

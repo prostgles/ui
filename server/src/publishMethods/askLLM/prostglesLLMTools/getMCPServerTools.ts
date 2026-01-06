@@ -10,11 +10,17 @@ export const getMCPServerTools = async (
   const mcpTools = mcp_server_tools.map((t) => {
     return {
       id: t.id,
+      tool_name: t.name,
+      server_name: t.server_name,
       name: getMCPFullToolName(t.server_name, t.name),
       description: t.description,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       input_schema: t.inputSchema,
-    } satisfies MCPToolSchema & { id: number };
+    } satisfies MCPToolSchema & {
+      id: number;
+      tool_name: string;
+      server_name: string;
+    };
   });
   return { mcpTools, mcp_server_tools };
 };

@@ -15,6 +15,7 @@ import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 import type { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
 import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
 import type { Backups } from "./dashboardUtils";
+import type { AllowedChatTool } from "@common/prostglesMcp";
 
 export type DBSMethods = Partial<{
   mkdir: (path: string, folderName: string) => Promise<string>;
@@ -185,22 +186,9 @@ export type DBSMethods = Partial<{
     uvxVersion: string;
   }>;
   refreshModels: () => Promise<void>;
-  getLLMAllowedChatTools: (chatId: number) => Promise<
-    | {
-        type:
-          | "mcp"
-          | "prostgles-db-methods"
-          | "prostgles-db"
-          | "prostgles-ui"
-          | "docker-sandbox";
-        name: string;
-        description: string;
-        input_schema: any;
-        tool_name: string;
-        auto_approve: boolean;
-      }[]
-    | undefined
-  >;
+  getLLMAllowedChatTools: (
+    chatId: number,
+  ) => Promise<AllowedChatTool[] | undefined>;
   transcribeAudio: (
     audio: Blob,
     language?: string,

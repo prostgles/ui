@@ -40,7 +40,6 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
 
   // await setOrAddWorkspace(page, "Default Grid Layout");
-  await toggleMenuPinned(false);
   await openMenuIfClosed(true);
 
   /** Search all */

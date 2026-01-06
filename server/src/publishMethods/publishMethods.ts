@@ -58,6 +58,7 @@ import { initBackupManager } from "@src/init/onProstglesReady";
 import { statePrgl } from "@src/init/startProstgles";
 import { glob } from "glob";
 import { mkdir } from "fs/promises";
+import type { AllowedChatTool } from "@common/prostglesMcp";
 
 export const publishMethods: PublishMethods<
   DBGeneratedSchema,
@@ -524,7 +525,9 @@ export const publishMethods: PublishMethods<
       const hashedNewPassword = getPasswordHash(user, newPassword);
       await dbs.users.update({ id: user.id }, { password: hashedNewPassword });
     },
-    getLLMAllowedChatTools: async (chatId: number) => {
+    getLLMAllowedChatTools: async (
+      chatId: number,
+    ): Promise<AllowedChatTool[] | undefined> => {
       const chat = await dbs.llm_chats.findOne({ id: chatId });
       if (!chat || chat.user_id !== user.id) throw "Invalid chat";
       const connectionId = chat.connection_id;

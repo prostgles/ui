@@ -4,13 +4,14 @@ import {
   getMCPFullToolName,
   getMCPToolNameParts,
   getProstglesMCPFullToolName,
+  type AllowedChatTool,
 } from "@common/prostglesMcp";
 
 import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import {
   type GetLLMToolsArgs,
   type MCPToolSchema,
-  type MCPToolSchemaWithApproveInfo,
 } from "../getLLMToolsAllowedInThisChat";
 import { getMCPServerTools } from "./getMCPServerTools";
 import { getProstglesDBTools } from "./getProstglesDBTools";
@@ -20,7 +21,6 @@ import {
   getAddWorkflowTools,
   suggestDashboardsTool,
 } from "./prostglesMcpTools";
-import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export const getProstglesLLMTools = async ({
   userType,
@@ -82,33 +82,36 @@ export const getProstglesLLMTools = async ({
     };
   }
 
-  const dbTools: MCPToolSchemaWithApproveInfo[] = getProstglesDBTools(chat).map(
-    (tool) => {
-      return {
-        ...tool,
-        input_schema: getJSONBSchemaAsJSONSchema("", "", tool.schema),
-      };
-    },
-  );
+  const dbTools = getProstglesDBTools(chat).map((tool) => {
+    return {
+      ...tool,
+      server_name: tool.type,
+      input_schema: getJSONBSchemaAsJSONSchema("", "", tool.schema),
+    } satisfies AllowedChatTool;
+  });
 
-  const prostglesDBTools = [
-    ...dbTools,
+  const uiTools: AllowedChatTool[] = [
     prompt_type === "dashboards" ?
       ({
         ...suggestDashboardsTool,
         auto_approve: true,
         type: "prostgles-ui",
+        server_name: "prostgles-ui",
         tool_name: "suggest_dashboards",
-      } satisfies MCPToolSchemaWithApproveInfo)
+      } satisfies AllowedChatTool)
     : undefined,
     taskTool &&
       ({
         ...taskTool.mcpSchema,
         auto_approve: true,
         type: "prostgles-ui",
+        server_name: "prostgles-ui",
         tool_name: taskTool.tool_name,
-      } satisfies MCPToolSchemaWithApproveInfo),
+      } satisfies AllowedChatTool),
   ].filter(isDefined);
+  const prostglesDBTools: AllowedChatTool[] = [...dbTools, ...uiTools].filter(
+    isDefined,
+  );
 
   const prostglesMCPHub = await getProstglesMcpHub(dbs);
   const prostglesMCPTools = await Promise.all(

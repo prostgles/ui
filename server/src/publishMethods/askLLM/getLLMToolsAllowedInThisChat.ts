@@ -3,16 +3,17 @@ import type { DBS } from "../..";
 
 import {
   getMCPFullToolName,
+  getMCPToolNameParts,
   getProstglesMCPFullToolName,
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
-  type ProstglesMcpTool,
+  type AllowedChatTool,
 } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
 import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
 import { getPublishedMethodsTools } from "./prostglesLLMTools/getPublishedMethodsTools";
-import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export type GetLLMToolsArgs = {
   userType: string;
@@ -29,16 +30,6 @@ export type MCPToolSchema = {
   input_schema: ReturnType<typeof getJSONBSchemaAsJSONSchema>;
 };
 
-export type MCPToolSchemaWithApproveInfo = MCPToolSchema &
-  (
-    | {
-        type: "mcp";
-        auto_approve: boolean;
-      }
-    | (ProstglesMcpTool & {
-        auto_approve: boolean;
-      })
-  );
 export const getLLMToolsAllowedInThisChat = async ({
   userType,
   dbs,
@@ -46,7 +37,7 @@ export const getLLMToolsAllowedInThisChat = async ({
   connectionId,
   prompt,
   clientReq,
-}: GetLLMToolsArgs): Promise<undefined | MCPToolSchemaWithApproveInfo[]> => {
+}: GetLLMToolsArgs): Promise<undefined | AllowedChatTool[]> => {
   const { id: chatId } = chat;
   const { serverSideFuncTools } = await getPublishedMethodsTools(dbs, {
     chatId,
@@ -68,7 +59,7 @@ export const getLLMToolsAllowedInThisChat = async ({
       },
     },
   });
-  const tools: Record<string, MCPToolSchemaWithApproveInfo> = {};
+  const tools: Record<string, AllowedChatTool> = {};
   const mcpToolsWithInfo = mcpTools
     .map(({ id, ...tool }) => {
       const info = llm_chats_allowed_mcp_tools.find(
@@ -80,7 +71,7 @@ export const getLLMToolsAllowedInThisChat = async ({
         ...tool,
         ...info,
         auto_approve: Boolean(info.auto_approve),
-      };
+      } satisfies AllowedChatTool;
     })
     .filter(isDefined);
 
@@ -96,7 +87,17 @@ export const getLLMToolsAllowedInThisChat = async ({
 
   /** Check for name collisions */
   [
-    ...prostglesMCPTools,
+    ...prostglesMCPTools.map((t) => {
+      const toolNameParts = getMCPToolNameParts(t.name);
+      if (!toolNameParts) {
+        throw new Error(`Could not parse tool name parts for ${t.name}`);
+      }
+      return {
+        ...t,
+        tool_name: toolNameParts.toolName,
+        server_name: toolNameParts.serverName,
+      } satisfies AllowedChatTool;
+    }),
     ...serverSideFuncTools
       .map(({ id, ...t }) => {
         const info = llm_chats_allowed_functions.find(
@@ -107,11 +108,16 @@ export const getLLMToolsAllowedInThisChat = async ({
           type: "prostgles-db-methods" as const,
           ...t,
           ...info,
+          server_name: "prostgles-db-methods",
           auto_approve: Boolean(info.auto_approve),
-        };
+        } satisfies AllowedChatTool;
       })
       .filter(isDefined),
-    ...prostglesDBTools,
+    ...prostglesDBTools.map((t) => {
+      return {
+        ...t,
+      } satisfies AllowedChatTool;
+    }),
   ].forEach((tool) => {
     const { name } = tool;
     if (tools[name]) {

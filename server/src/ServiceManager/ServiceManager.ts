@@ -3,7 +3,11 @@ import type { DBS } from "..";
 import { buildService } from "./buildService";
 import { enableService } from "./enableService";
 import { initialiseServices } from "./initialiseServices";
-import { prostglesServices, ServiceInstance } from "./ServiceManagerTypes";
+import {
+  prostglesServices,
+  ServiceInstance,
+  type RunningServiceInstance,
+} from "./ServiceManagerTypes";
 import { startService } from "./startService";
 import { stopService } from "./stopService";
 
@@ -30,6 +34,7 @@ export class ServiceManager {
     );
   };
   activeServices: Map<string, ServiceInstance> = new Map();
+  enablingServices: Map<string, Promise<RunningServiceInstance>> = new Map();
 
   getActiveService<Status extends ServiceInstance["status"]>(
     serviceName: keyof typeof prostglesServices,

@@ -1,38 +1,38 @@
 import {
+  getMCPToolNameParts,
+  PROSTGLES_MCP_SERVERS_AND_TOOLS,
+  type AllowedChatTool,
+} from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
+import {
   getJSONBObjectSchemaValidationError,
   getSerialisableError,
 } from "prostgles-types";
-import {
-  getMCPToolNameParts,
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "@common/prostglesMcp";
-import type { DBSSchema } from "@common/publishUtils";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import {
   getAllToolNames,
   type getLLMToolsAllowedInThisChat,
-  type MCPToolSchemaWithApproveInfo,
 } from "../getLLMToolsAllowedInThisChat";
 import {
   getClientDBHandlersForChat,
   runProstglesDBTool,
 } from "../prostglesLLMTools/runProstglesDBTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
-import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
   | (ToolUseMessage & {
-      tool: MCPToolSchemaWithApproveInfo;
+      tool: AllowedChatTool;
       state: "approved";
     })
   | (ToolUseMessage & {
-      tool: MCPToolSchemaWithApproveInfo;
+      tool: AllowedChatTool;
       state: "needs-approval";
     })
   | (ToolUseMessage & {
-      tool: MCPToolSchemaWithApproveInfo;
+      tool: AllowedChatTool;
       state: "denied";
     })
   | (ToolUseMessage & {

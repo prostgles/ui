@@ -418,3 +418,22 @@ export const getMCPToolNameParts = (fullName: string) => {
     return { serverName, toolName };
   }
 };
+
+export type AllowedChatTool = {
+  server_name: string;
+  name: string;
+  tool_name: string;
+  description: string;
+  input_schema: any;
+  auto_approve: boolean;
+} & (
+  | {
+      type: "mcp";
+      tool_id: number;
+    }
+  | {
+      type: "prostgles-db-methods";
+      server_function_id: number;
+    }
+  | Exclude<ProstglesMcpTool, { type: "prostgles-db-methods" }>
+);
