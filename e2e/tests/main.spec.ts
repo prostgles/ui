@@ -827,12 +827,18 @@ test.describe("Main test", () => {
     /** Test max speculative chat cost */
     await newChat();
     await enableMCPServers(["filesystem"]);
-    await page.locator(`[data-label="ui"]`).click();
-    await page.waitForTimeout(1e3);
-    await page.locator(`[data-label="client"]`).click();
-    await page.waitForTimeout(1e3);
-    await page.locator(`[data-label="node_modules"]`).click();
-    await page.waitForTimeout(1e3);
+    const githubWorkerPath = ["runner", "work", "ui"] as const;
+    const path = [
+      ...(process.env.CI === "true" ? githubWorkerPath : []),
+      "ui",
+      "client",
+      "node_modules",
+    ] as const;
+    for (const segment of path) {
+      await page.locator(`[data-label=${JSON.stringify(segment)}]`).click();
+      await page.waitForTimeout(1e3);
+    }
+
     await page.getByTestId("MCPServerConfig.save").click();
     await page.getByTestId("Popup.close").last().click();
     await toggleMCPTools(["directory_tree"], true);
