@@ -827,7 +827,7 @@ test.describe("Main test", () => {
     /** Test max speculative chat cost */
     await newChat();
     await enableMCPServers(["filesystem"]);
-    const githubWorkerPath = ["runner", "work", "ui"] as const;
+    const githubWorkerPath = ["work", "ui"] as const;
     const path = [
       ...(process.env.CI === "true" ? githubWorkerPath : []),
       "ui",
