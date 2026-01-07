@@ -1,7 +1,7 @@
 import { mdiCog, mdiTable, mdiViewGridPlus } from "@mdi/js";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { useEffectAsync, usePromise } from "prostgles-client";
-import React from "react";
+import React, { useMemo } from "react";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import { pageReload } from "@components/Loader/Loading";
@@ -12,7 +12,7 @@ import type { Workspace } from "../Dashboard/dashboardUtils";
 import { useLocalSettings } from "../localSettings";
 import { DashboardHotkeys } from "./DashboardHotkeys";
 import { SettingsSection } from "./SettingsSection";
-import { SmartForm } from "../SmartForm/SmartForm";
+import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 export { useEffectAsync };
 
@@ -37,6 +37,26 @@ export const DashboardMenuSettings = ({
 
   const localSettings = useLocalSettings();
 
+  const smartFormProps = useMemo(() => {
+    return {
+      columns: {
+        display_options: {
+          hideLabel: true,
+        },
+      },
+      rowFilter: [
+        {
+          fieldName: "id",
+          value: workspace.connection_id,
+        },
+      ],
+      jsonbSchemaWithControls: { noLabels: false },
+    } satisfies Pick<
+      SmartFormProps,
+      "rowFilter" | "columns" | "jsonbSchemaWithControls"
+    >;
+  }, [workspace.connection_id]);
+
   return (
     <PopupMenu
       button={
@@ -57,24 +77,13 @@ export const DashboardMenuSettings = ({
           <div className="flex-col gap-2 p-1">
             <SettingsSection title="Display options" iconPath={mdiTable}>
               <SmartForm
+                tableName="connections"
                 label=""
                 db={dbs as DBHandlerClient}
-                tableName="connections"
-                rowFilter={[
-                  {
-                    fieldName: "id",
-                    value: workspace.connection_id,
-                  },
-                ]}
+                {...smartFormProps}
                 contentClassname="p-0"
-                jsonbSchemaWithControls={{ noLabels: false }}
                 methods={dbsMethods}
                 tables={dbsTables}
-                columns={{
-                  display_options: {
-                    hideLabel: true,
-                  },
-                }}
                 confirmUpdates={false}
                 showJoinedTables={false}
               />

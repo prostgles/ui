@@ -85,68 +85,73 @@ export const useLLMChatMessages = (props: P) => {
     ],
   );
 
-  const lastMessage = llmMessages?.at(-1);
-  const disabled_message =
-    (
-      activeChat?.disabled_until &&
-      new Date(activeChat.disabled_until) > new Date() &&
-      activeChat.disabled_message
-    ) ?
-      activeChat.disabled_message
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    : lastMessage?.meta?.finish_reason === "length" ?
-      <FlexCol>
-        <ErrorComponent
-          error={"finish_reason = 'length'. Increase max_tokens and try again"}
-        />
-        <FormFieldDebounced
-          label={"Max tokens"}
-          value={
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            activeChat?.extra_body?.max_tokens ||
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            lastMessage.meta?.max_tokens ||
-            6000
-          }
-          onChange={(max_tokens) => {
-            void dbs.llm_chats.update(
-              { id: activeChat!.id },
-              { extra_body: { max_tokens: Number(max_tokens) } },
-            );
-          }}
-        />
-      </FlexCol>
-    : undefined;
+  const messages = useMemo(() => {
+    const lastMessage = llmMessages?.at(-1);
+    const disabled_message =
+      (
+        activeChat?.disabled_until &&
+        new Date(activeChat.disabled_until) > new Date() &&
+        activeChat.disabled_message
+      ) ?
+        activeChat.disabled_message
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      : lastMessage?.meta?.finish_reason === "length" ?
+        <FlexCol>
+          <ErrorComponent
+            error={
+              "finish_reason = 'length'. Increase max_tokens and try again"
+            }
+          />
+          <FormFieldDebounced
+            label={"Max tokens"}
+            value={
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              activeChat?.extra_body?.max_tokens ||
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              lastMessage.meta?.max_tokens ||
+              6000
+            }
+            onChange={(max_tokens) => {
+              void dbs.llm_chats.update(
+                { id: activeChat!.id },
+                { extra_body: { max_tokens: Number(max_tokens) } },
+              );
+            }}
+          />
+        </FlexCol>
+      : undefined;
+    const messages: Message[] = (
+      actualMessages?.length ? actualMessages : (
+        [
+          {
+            id: "first",
+            message: "Hello, I am the AI assistant. How can I help you?",
+            incoming: true,
+            sender_id: "ai",
+          } as const,
+        ].map((m) => {
+          const incoming = m.sender_id !== user?.id;
+          return {
+            ...m,
+            incoming,
+            message: m.message,
+          };
+        })
+      )).concat(
+      disabled_message ?
+        [
+          {
+            id: "disabled-last",
+            incoming: true,
+            message: disabled_message,
+            sender_id: "ai",
+          },
+        ]
+      : [],
+    );
 
-  const messages: Message[] = (
-    actualMessages?.length ? actualMessages : (
-      [
-        {
-          id: "first",
-          message: "Hello, I am the AI assistant. How can I help you?",
-          incoming: true,
-          sender_id: "ai",
-        } as const,
-      ].map((m) => {
-        const incoming = m.sender_id !== user?.id;
-        return {
-          ...m,
-          incoming,
-          message: m.message,
-        };
-      })
-    )).concat(
-    disabled_message ?
-      [
-        {
-          id: "disabled-last",
-          incoming: true,
-          message: disabled_message,
-          sender_id: "ai",
-        },
-      ]
-    : [],
-  );
+    return messages;
+  }, [activeChat, actualMessages, dbs.llm_chats, llmMessages, user?.id]);
 
   return {
     llmMessages,

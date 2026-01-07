@@ -38,6 +38,7 @@ import {
   login,
   loginWhenSignupIsEnabled,
   monacoType,
+  newChat,
   openConnection,
   openTable,
   PageWIds,
@@ -798,15 +799,10 @@ test.describe("Main test", () => {
       `Maximum number (5) of failed consecutive tool requests reached`,
     );
 
-    const newChat = async () => {
-      await page.getByTestId("AskLLMChat.NewChat").click();
-      await page.waitForTimeout(1e3);
-    };
-
     /** Test max chat cost */
     const defaultMaxCost = 5;
     const costPerMsg = 1.8;
-    await newChat();
+    await newChat(page);
     for (
       let step = 0;
       step < Math.ceil(defaultMaxCost / costPerMsg) + 1;
@@ -825,7 +821,7 @@ test.describe("Main test", () => {
     });
     await page.getByTestId("Popup.close").last().click();
     /** Test max speculative chat cost */
-    await newChat();
+    await newChat(page);
     await enableMCPServers(["filesystem"]);
     const githubWorkerPath = ["work", "ui"] as const;
     const path = [
@@ -852,7 +848,7 @@ test.describe("Main test", () => {
     );
 
     /* MCP Docker sandbox */
-    await newChat();
+    await newChat(page);
     /* Prompt persists from the prev chat */
     await expect(page.getByTestId("LLMChatOptions.Prompt")).toContainText(
       "Create dashboards",
@@ -934,7 +930,7 @@ test.describe("Main test", () => {
 
     /** Test stopping chat */
     await page.getByTestId("Popup.close").last().click();
-    await newChat();
+    await newChat(page);
     await sendAskLLMMessage(page, " longresponse ", {
       onAfterSend: async () => {
         await page.getByTestId("Chat.sendStop").click();
@@ -948,7 +944,7 @@ test.describe("Main test", () => {
     );
 
     /** Test parallel tool use single auto-approve */
-    await newChat();
+    await newChat(page);
     await sendAskLLMMessage(page, " parallel_calls ");
 
     await expect(
@@ -969,7 +965,7 @@ test.describe("Main test", () => {
         ),
     ).toHaveCount(3, { timeout: 30e3 });
 
-    await newChat();
+    await newChat(page);
     await toggleMCPTools(["fetch"]);
     await sendAskLLMMessage(page, " parallel_calls ");
 
@@ -993,7 +989,7 @@ test.describe("Main test", () => {
       timeout: 30e3,
     });
 
-    await newChat();
+    await newChat(page);
     await toggleMCPTools(["websearch", "get_snapshot"]);
     await page.waitForTimeout(7e3); // wait for the server to start
     await sendAskLLMMessage(page, " websearch ");

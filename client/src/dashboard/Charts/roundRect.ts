@@ -42,7 +42,6 @@ export function roundRect(
 
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius.tl);
-  ctx.closePath();
   ctx.fill();
   ctx.stroke();
   // const initialLineWidth = ctx.lineWidth;

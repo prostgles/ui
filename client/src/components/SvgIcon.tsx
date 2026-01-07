@@ -16,32 +16,40 @@ export const fetchNamedSVG = async (iconName: string) => {
   }
   const iconPath = `/icons/${iconName}.svg`;
   const cached = cachedSvgs.get(iconPath);
-  if (cached) {
+  if (cachedSvgs.has(iconPath)) {
     return cached;
   }
-  return fetchIconAndCache(iconPath);
+  return fetchIconAndCache(iconPath, undefined);
 };
+
+const getIconPath = (icon: string) => `/icons/${icon}.svg`;
 
 export const SvgIcon = ({
   icon,
   className,
   size,
   style,
+  fallbackIcon = "CrosshairsQuestion",
 }: {
   icon: string;
+  fallbackIcon?: string;
   className?: string;
   style?: React.CSSProperties;
   size?: number;
 }) => {
   const getIsMounted = useIsMounted();
-  const iconPath = `/icons/${icon}.svg`;
-  const [svg, setSvg] = React.useState(cachedSvgs.get(iconPath));
+  const iconPath = getIconPath(icon);
+  const fallbackIconPath = fallbackIcon ? getIconPath(fallbackIcon) : undefined;
+  const [svg, setSvg] = React.useState(
+    cachedSvgs.get(iconPath) ||
+      (fallbackIconPath && cachedSvgs.get(fallbackIconPath)),
+  );
   useEffect(() => {
-    fetchIconAndCache(iconPath).then((fetchedSvg) => {
+    void fetchIconAndCache(iconPath, fallbackIconPath).then((fetchedSvg) => {
       if (!getIsMounted()) return;
       setSvg(fetchedSvg);
     });
-  }, [iconPath, getIsMounted, icon]);
+  }, [iconPath, getIsMounted, icon, fallbackIconPath]);
 
   const sizePx = `${size || 24}px`;
   return (
@@ -57,9 +65,12 @@ export const SvgIcon = ({
   );
 };
 
-const fetchIconAndCache = (iconPath: string) => {
+const fetchIconAndCache = (
+  iconPath: string,
+  fallbackIcon: string | undefined,
+): Promise<string> => {
   return fetch(iconPath)
-    .then((res) => res.text())
+    .then((res) => (!res.ok ? Promise.reject(res.statusText) : res.text()))
     .then((svgRaw) => {
       const svg = sanitizeHtml(svgRaw, {
         allowedTags: ["svg", "path"],
@@ -74,13 +85,21 @@ const fetchIconAndCache = (iconPath: string) => {
       });
       cachedSvgs.set(iconPath, svg);
       return svg;
+    })
+    .catch((err) => {
+      if (fallbackIcon) {
+        return fetchIconAndCache(fallbackIcon, undefined);
+      }
+      console.error(`Error fetching SVG icon at ${iconPath}:`, err);
+      cachedSvgs.set(iconPath, "");
+      return "";
     });
 };
 
 export const getIcon = async (icon: string) => {
   const iconPath = `/icons/${icon}.svg`;
   if (!cachedSvgs.has(iconPath)) {
-    const res = await fetchIconAndCache(iconPath);
+    const res = await fetchIconAndCache(iconPath, undefined);
     return res;
   }
   return cachedSvgs.get(iconPath)!;

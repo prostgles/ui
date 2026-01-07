@@ -14,6 +14,7 @@ import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import { SmartCardActions } from "./SmartCardActions";
 import { SmartCardColumn } from "./SmartCardColumn";
 import { useFieldConfigParser } from "./useFieldConfigParser";
+import { getProperty } from "@common/utils";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<
@@ -184,7 +185,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
                 valueNode={valueNode}
                 renderMode={fc.renderMode ?? "value"}
                 labelTitle={column?.udt_name || ""}
-                info={column?.hint}
+                info={column && getProperty(column, "hint")}
               />
             );
           })}

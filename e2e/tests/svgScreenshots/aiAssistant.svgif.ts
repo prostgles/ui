@@ -5,6 +5,7 @@ import {
   closeWorkspaceWindows,
   deleteExistingLLMChat,
   getDataKey,
+  newChat,
   runDbSql,
   setModelByText,
   setPromptByText,
@@ -266,4 +267,19 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getDataKey("stt-local"));
   await addScene({ svgFileName: "stt" });
   await page.keyboard.press("Escape");
+
+  await openConnection("crypto");
+  await page.getByTestId("AskLLM").click();
+  await newChat(page);
+  await setPromptByText(page, "dashboard");
+
+  await typeSendAddScenes(
+    page,
+    addScene,
+    "I need to look at futures and funding rates data across top coins",
+  );
+  await addSceneAnimation(
+    getCommandElemSelector("AskLLMChat.LoadSuggestedDashboards"),
+  );
+  await addScene({ svgFileName: "crypto_dashboards" });
 };

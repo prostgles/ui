@@ -16,6 +16,7 @@ import { StyledInterval } from "../W_SQL/customRenderers";
 import type { StatusMonitorProps } from "./StatusMonitor";
 import { StatusMonitorProcListControlsHeader } from "./StatusMonitorProcListControlsHeader";
 import { STATUS_MONITOR_IGNORE_QUERY } from "@common/utils";
+import Loading from "@components/Loader/Loading";
 
 export const StatusMonitorViewTypes = [
   { key: "All Queries", subLabel: "No filtering applied" },
@@ -107,6 +108,7 @@ export const StatusMonitorProcList = (
     };
   }, [datidFilter, viewType]);
 
+  if (!datidFilter) return <Loading />;
   return (
     <SmartCardList
       db={dbs as DBHandlerClient}
@@ -273,10 +275,12 @@ const useStatusMonitorProcListProps = (
       },
     ] satisfies FieldConfigs;
 
-    const excludedFields: (keyof DBSSchema["stats"])[] = fixedFields
-      .filter((f) => (f as any).render)
-      .map((f) => f.name)
-      .concat(["connection_id"]) as any;
+    const excludedFields = [
+      ...fixedFields
+        .filter((f) => (f as any).render)
+        .map((f) => f.name as keyof DBSSchema["stats"]),
+      "connection_id",
+    ];
 
     const fieldConfigs = [
       ...fixedFields.filter((ff) => !toggledFields.includes(ff.name)),

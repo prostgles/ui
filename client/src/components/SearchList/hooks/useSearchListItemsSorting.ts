@@ -107,10 +107,6 @@ export const useSearchListItemsSorting = (
       header: parentLabels.join(" > "),
       parentLabels,
     }));
-  // .sort((a, b) => a.header.localeCompare(b.header));
-
-  // const dd = renderedItemsWithoutHeaders.sort((a, b) => a.rank! - b.rank!);
-  // console.log("Sorted items by ranking:", dd);
   return { itemGroupHeaders, renderedItemsWithoutHeaders, getFullItem };
 };
 

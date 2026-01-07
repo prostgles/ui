@@ -56,7 +56,6 @@ export const getSVGif = (
   });
   addSVGifPointer({ cursorKeyframes, g, appendStyle, totalDuration });
 
-  /** This appears to break/appear narrower on ios ?!! */
   compressSVGif(svg, parsedScenes);
 
   svg

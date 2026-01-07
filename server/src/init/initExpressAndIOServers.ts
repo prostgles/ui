@@ -81,16 +81,20 @@ export const initExpressAndIOServers = () => {
     }),
   );
   app.use(
-    express.static(path.resolve(actualRootDir + "/../docs"), {
+    "/screenshots",
+    express.static(path.resolve(actualRootDir + "/../docs/screenshots"), {
       index: false,
       cacheControl: false,
+      fallthrough: false,
     }),
   );
   app.use(
-    express.static("/icons", {
+    "/icons",
+    express.static(path.resolve(actualRootDir + "/../client/static/icons"), {
       cacheControl: true,
       index: false,
       maxAge: 31536000,
+      fallthrough: false,
     }),
   );
 

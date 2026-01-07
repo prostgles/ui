@@ -45,7 +45,6 @@ export const LLMChatMessageContent = ({
         style={{
           maxHeight: "200px",
           maxWidth: "fit-content",
-          // border: "1px solid var(--b-color)",
         }}
       />
     );

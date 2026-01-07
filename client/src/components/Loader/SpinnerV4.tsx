@@ -16,14 +16,6 @@ export const SpinnerV4 = ({ size }: { size: string }) => {
         maskRepeat: "no-repeat",
         WebkitMaskRepeat: "no-repeat",
 
-        // borderWidth: "2px",
-        // borderStyle: "solid",
-        // borderColor: "currentColor",
-        // borderBottomColor: "transparent",
-        // borderRadius: "50%",
-
-        // animation: "rotator 0.75s infinite linear",
-
         animation: "rotator 0.75s steps(36) infinite ", // reduce cpu by using steps
         willChange: "transform",
         backfaceVisibility: "hidden",

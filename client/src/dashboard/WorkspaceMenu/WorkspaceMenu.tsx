@@ -2,7 +2,7 @@ import Btn from "@components/Btn";
 import { FlexRow, classOverride } from "@components/Flex";
 import { SvgIcon } from "@components/SvgIcon";
 import { onWheelScroll } from "@components/Table/Table";
-import { mdiPencil, mdiViewDashboard, mdiViewDashboardEdit } from "@mdi/js";
+import { mdiViewDashboard, mdiViewDashboardEdit } from "@mdi/js";
 import React, { useEffect, useRef } from "react";
 import type { Prgl } from "../../App";
 import type { Command } from "../../Testing";
@@ -58,26 +58,27 @@ export const WorkspaceMenu = (props: P) => {
         onWheel={onWheelScroll()}
         data-command={"WorkspaceMenu.list" satisfies Command}
       >
-        {renderedWorkspaces.map((w) => (
+        {renderedWorkspaces.map((wsp) => (
           <li
-            key={w.id}
+            key={wsp.id}
             className={
               "workspace-list-item text-1 relative flex-row " +
-              (workspace.id === w.id ? "active" : "")
+              (workspace.id === wsp.id ? "active" : "")
             }
           >
             <Btn
               title={
-                (w.published && !w.isMine ? "Shared workspace" : "Workspace") +
-                (w.isMine ? "" : " (readonly)")
+                (wsp.published && !wsp.isMine ?
+                  "Shared workspace"
+                : "Workspace") + (wsp.isMine ? "" : " (readonly)")
               }
-              iconNode={w.icon ? <SvgIcon icon={w.icon} /> : undefined}
+              iconNode={wsp.icon ? <SvgIcon icon={wsp.icon} /> : undefined}
               style={{
                 padding: "16px",
                 borderBottomStyle: "solid",
                 borderBottomWidth: "4px",
                 borderBottomColor: "transparent",
-                ...(workspace.id === w.id && {
+                ...(workspace.id === wsp.id && {
                   borderBottomColor: "var(--active)",
                   fontWeight: 600,
                 }),
@@ -85,10 +86,10 @@ export const WorkspaceMenu = (props: P) => {
                 whiteSpace: "nowrap",
               }}
               onClick={() => {
-                setWorkspace(w);
+                setWorkspace(wsp);
               }}
             >
-              {w.name}
+              {wsp.name}
             </Btn>
           </li>
         ))}
