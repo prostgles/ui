@@ -70,7 +70,7 @@ export const WorkspaceDeleteBtn = ({
                   .join("/");
                 window.location.href = path;
               } else {
-                pageReload("Workspace deleted");
+                void pageReload("Workspace deleted");
               }
             } catch (newWspErr) {
               setError(error);

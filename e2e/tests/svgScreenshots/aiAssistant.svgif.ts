@@ -282,4 +282,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     getCommandElemSelector("AskLLMChat.LoadSuggestedDashboards"),
   );
   await addScene({ svgFileName: "crypto_dashboards" });
+  await page.mouse.move(450, 300);
+  await page.mouse.click(450, 300);
+  await addScene({ svgFileName: "crypto_dashboards_tooltip" });
 };

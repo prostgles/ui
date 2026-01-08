@@ -28,7 +28,7 @@ export const addSVGifPointer = ({
 
     @media (prefers-color-scheme: dark) {
       #${pointerId} {
-        fill: #ffffff36;
+        fill: #eaeaea99;
         filter: drop-shadow(0 0 2px #ffffffaa);
       }
     }

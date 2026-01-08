@@ -20,15 +20,10 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   );
   await addSceneAnimation(getCommandElemSelector("SearchList.Input"), {
     action: "type",
-    text: "btc",
+    text: "btcu",
   });
-  // await page.keyboard.press("ArrowDown");
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
-  // await page.keyboard.press("ArrowDown");
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
-  // await page.keyboard.press("Enter");
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
-  await addSceneAnimation(`[data-label="BTCUSDC"]`);
+
+  await addSceneAnimation(`[data-label="BTCUSDT"]`);
   await addSceneAnimation(getCommandElemSelector("FilterWrapper_FieldName"));
   await addSceneAnimation(
     getCommandElemSelector("FilterWrapper") +

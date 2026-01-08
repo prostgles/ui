@@ -142,7 +142,6 @@ const serveIndexIfNoCredentialsOrInitError = async (
   next();
 };
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
 app.use(serveIndexIfNoCredentialsOrInitError);
 
 /** Startup procedure

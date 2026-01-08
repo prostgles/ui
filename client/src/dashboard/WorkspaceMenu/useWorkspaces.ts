@@ -58,7 +58,7 @@ export const useSetActiveWorkspace = (
       }
       const path = getWorkspacePath(w);
 
-      navigate(path);
+      void navigate(path);
     },
     [currentWorkspaceId, navigate, searchParams, setSearchParams],
   );

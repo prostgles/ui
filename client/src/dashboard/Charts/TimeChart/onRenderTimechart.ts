@@ -238,7 +238,8 @@ export function onRenderTimechart(
       const yTicks: ChartedText[] = [];
       const yPercTicks: ChartedText[] = [];
       const { yAxisScaleMode = "multiple" } = this.props;
-      const [xForPercYTicks] = this.chart.getDataXY(xMax, 0);
+      const yTicksHeight = 16;
+      // const [xForPercYTicks] = this.chart.getDataXY(xMax, 0);
       yTickValues.forEach((v, i) => {
         if (yAxisScaleMode === "multiple" && layers.length > 1) {
           return;
@@ -255,12 +256,8 @@ export function onRenderTimechart(
             compactYAxis && !i ?
               getCssVariableValue("--color-ticks-1")
             : getCssVariableValue("--color-ticks-0"),
-          // background: {
-          //   fillStyle: "var(--color-ticks-1)",
-          // },
-          font: "14px Arial ",
+          font: `${yTicksHeight}px Arial `,
         };
-        const yTicksHeight = 14;
         const lastTick = yTicks.at(-1);
         if (
           !lastTick ||

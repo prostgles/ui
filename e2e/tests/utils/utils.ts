@@ -565,6 +565,7 @@ export const openTable = async (
   await searchAlLInput.fill(namePartStart);
   await page.waitForTimeout(200);
   await page.keyboard.press("Enter");
+  await page.waitForTimeout(500);
 
   /** Ensure table was opened */
   const table = page.locator(

@@ -60,12 +60,15 @@ export const Documentation = ({ isElectron }: P) => {
             height: "100%",
             overflowY: "auto",
             lineHeight: 1.5,
+            overflow: "auto",
           }}
         >
           {!currentDocFile ? null : (
-            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-              {currentDocFile.text}
-            </Markdown>
+            <div>
+              <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                {currentDocFile.text}
+              </Markdown>
+            </div>
           )}
         </ScrollFade>
       </WrappingElement>

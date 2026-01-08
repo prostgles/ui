@@ -98,6 +98,7 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
       fillStyle: getCssVarValue("--text-0"),
       textAlign: "center",
       text: tooltipBottomDateText,
+      textBaseline: "middle",
       background: {
         fillStyle: getCssVarValue("--bg-color-1"),
         strokeStyle: getCssVarValue("--b-color"),
