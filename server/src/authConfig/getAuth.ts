@@ -21,14 +21,16 @@ import {
   sidKeyName,
   type SUser,
 } from "./sessionUtils";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import {
+  getAuthSetupData,
+  type AuthSetupData,
+} from "./subscribeToAuthSetupChanges";
 import { initBackupManager } from "@src/init/onProstglesReady";
 
-let globalSettings: AuthSetupData["globalSettings"] | undefined;
-
+console.error("TODO: Setup origin for each connection separately");
 export const withOrigin: WithOrigin = {
   origin: (origin, cb) => {
-    cb(null, globalSettings?.allowed_origin ?? undefined);
+    cb(null, getAuthSetupData().database_config?.allowed_origin ?? undefined);
   },
 };
 
@@ -39,15 +41,10 @@ type WithOrigin = {
   ) => void;
 };
 
-const setExpressAppOptions = (
-  app: e.Express,
-  authData: Pick<AuthSetupData, "globalSettings">,
-) => {
-  globalSettings = authData.globalSettings;
-
+const setExpressAppOptions = (app: e.Express, authData: AuthSetupData) => {
   const corsMiddleware = cors(withOrigin);
   upsertNamedExpressMiddleware(app, corsMiddleware, "corsMiddleware");
-  app.set("trust proxy", globalSettings?.trust_proxy ?? false);
+  app.set("trust proxy", authData.database_config?.trust_proxy ?? false);
 };
 
 export type GetAuthResult = Awaited<ReturnType<typeof getAuth>>;
@@ -56,11 +53,12 @@ export const getAuth = async (
   app: Express,
   dbs: DBS,
   authSetupData: AuthSetupData,
+  connectionAuthBasePath: string | undefined,
 ) => {
-  const { globalSettings } = authSetupData;
-  setExpressAppOptions(app, { globalSettings });
-  const { auth_providers, auth_created_user_type = null } =
-    globalSettings ?? {};
+  const { database_config } = authSetupData;
+  if (!database_config) return;
+  setExpressAppOptions(app, authSetupData);
+  const { auth_providers, auth_created_user_type = null } = database_config;
   const auth = {
     sidKeyName,
     onUseOrSocketConnected: getOnUseOrSocketConnected(dbs, authSetupData),
@@ -76,8 +74,9 @@ export const getAuth = async (
 
     loginSignupConfig: {
       app,
-
-      login: await getLogin(auth_providers),
+      authRoutesBasePath:
+        connectionAuthBasePath && `/${connectionAuthBasePath}`,
+      login: await getLogin(database_config),
 
       logout: async (sid, db, _db: DB) => {
         if (!sid) throw "err";

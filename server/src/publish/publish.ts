@@ -183,11 +183,76 @@ export const publish: Publish<
     credential_types: isAdmin && { select: "*" },
     access_control: isAdmin ? "*" : undefined, // { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
     database_configs:
-      isAdmin ? "*" : (
+      isAdmin ?
         {
-          select: { fields: { id: 1 } },
+          select: "*",
+          update: {
+            fields: "*",
+
+            postValidate: async ({ row, dbx: dbsTX }) => {
+              if (row.allowed_ips_enabled && !row.allowed_ips.length) {
+                throw "Must include at least one allowed IP CIDR";
+              }
+              // const ranges = await Promise.all(
+              //   row.allowed_ips?.map(
+              //     cidr => db.sql!(
+              //       getCIDRRangesQuery({ cidr, returns: ["from", "to"] }),
+              //       { cidr },
+              //       { returnType: "row" }
+              //     )
+              //   )
+              // )
+
+              if (row.allowed_ips_enabled) {
+                const oldValue = await dbsTX.database_configs.findOne({
+                  id: row.id,
+                });
+                const { isAllowed, ip } = await checkClientIP(
+                  dbsTX,
+                  {
+                    ...clientReq,
+                  },
+                  oldValue,
+                );
+                if (!isAllowed) {
+                  throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`;
+                }
+              }
+
+              const { email } = row.auth_providers ?? {};
+              if (
+                email?.enabled &&
+                (email.smtp.type !== "smtp" ||
+                  email.smtp.host !== MOCK_SMTP_HOST)
+              ) {
+                const smtp = getSMTPWithTLS(email.smtp);
+                await verifySMTPConfig(smtp);
+              }
+
+              if (email?.signupType === "withPassword") {
+                getVerificationEmailFromTemplate({
+                  template: email.emailTemplate,
+                  url: "a",
+                  code: "a",
+                });
+              }
+              if (email?.signupType === "withMagicLink") {
+                getMagicLinkEmailFromTemplate({
+                  template: email.emailTemplate,
+                  url: "a",
+                  code: "a",
+                });
+              }
+
+              return undefined;
+            },
+          },
+          insert: "*",
+          delete: "*",
         }
-      ),
+      : {
+          select: { fields: { id: 1 } },
+        },
     connections: {
       select: {
         fields: isAdmin ? "*" : { id: 1, name: 1, created: 1, is_state_db: 1 },
@@ -335,70 +400,8 @@ export const publish: Publish<
       select: "*",
       update: {
         fields: {
-          allowed_origin: 1,
-          allowed_ips: 1,
-          trust_proxy: 1,
-          allowed_ips_enabled: 1,
-          session_max_age_days: 1,
-          login_rate_limit: 1,
-          login_rate_limit_enabled: 1,
-          pass_process_env_vars_to_server_side_functions: 1,
-          enable_logs: 1,
-          auth_providers: 1,
           prostgles_registration: 1,
           mcp_servers_disabled: 1,
-        },
-        postValidate: async ({ row, dbx: dbsTX }) => {
-          if (!row.allowed_ips.length) {
-            throw "Must include at least one allowed IP CIDR";
-          }
-          // const ranges = await Promise.all(
-          //   row.allowed_ips?.map(
-          //     cidr => db.sql!(
-          //       getCIDRRangesQuery({ cidr, returns: ["from", "to"] }),
-          //       { cidr },
-          //       { returnType: "row" }
-          //     )
-          //   )
-          // )
-
-          if (row.allowed_ips_enabled) {
-            const { isAllowed, ip } = await checkClientIP(
-              dbsTX,
-              {
-                ...clientReq,
-              },
-              await dbsTX.global_settings.findOne(),
-            );
-            if (!isAllowed)
-              throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`;
-          }
-
-          const { email } = row.auth_providers ?? {};
-          if (
-            email?.enabled &&
-            (email.smtp.type !== "smtp" || email.smtp.host !== MOCK_SMTP_HOST)
-          ) {
-            const smtp = getSMTPWithTLS(email.smtp);
-            await verifySMTPConfig(smtp);
-          }
-
-          if (email?.signupType === "withPassword") {
-            getVerificationEmailFromTemplate({
-              template: email.emailTemplate,
-              url: "a",
-              code: "a",
-            });
-          }
-          if (email?.signupType === "withMagicLink") {
-            getMagicLinkEmailFromTemplate({
-              template: email.emailTemplate,
-              url: "a",
-              code: "a",
-            });
-          }
-
-          return undefined;
         },
       },
     },

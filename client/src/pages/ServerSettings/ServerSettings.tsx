@@ -22,9 +22,10 @@ import { LLMProviderSetup } from "../../dashboard/AskLLM/Setup/LLMProviderSetup"
 import { SmartCardList } from "../../dashboard/SmartCardList/SmartCardList";
 import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
-import { AuthProviderSetup } from "./AuthProvidersSetup";
+import { AuthProviderSetup } from "./AuthProvidersSetup/AuthProvidersSetup";
 import { MCPServers } from "./MCPServers/MCPServers";
 import { Services } from "./Services";
+import Loading from "@components/Loader/Loading";
 
 export type ServerSettingsProps = Pick<
   Prgl,
@@ -32,6 +33,10 @@ export type ServerSettingsProps = Pick<
 >;
 export const ServerSettings = (props: ServerSettingsProps) => {
   const { dbsMethods, dbs, dbsTables, serverState } = props;
+
+  const { data: stateConnection } = dbs.connections.useFindOne({
+    is_state_db: true,
+  });
 
   const [testCIDR, setCIDR] = useState<string>();
   const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -58,7 +63,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
     }
   }, [testCIDR, dbs.sql]);
 
-  if (!myIP) return null;
+  if (!myIP || !stateConnection) return <Loading />;
 
   return (
     <div className="ServerSettings w-full o-auto">
@@ -98,7 +103,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       label=""
                       db={dbs as DBHandlerClient}
                       methods={dbsMethods}
-                      tableName="global_settings"
+                      tableName="database_configs"
                       contentClassname="px-p25  "
                       columns={
                         {
@@ -111,7 +116,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                           login_rate_limit_enabled: 1,
                         } satisfies Partial<
                           Record<
-                            keyof DBGeneratedSchema["global_settings"]["columns"],
+                            keyof DBGeneratedSchema["database_configs"]["columns"],
                             1
                           >
                         >
@@ -182,7 +187,13 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 hide: serverState.isElectron,
                 leftIconPath: mdiAccountKey,
                 label: t.ServerSettings.Authentication,
-                content: <AuthProviderSetup dbs={dbs} dbsTables={dbsTables} />,
+                content: (
+                  <AuthProviderSetup
+                    dbs={dbs}
+                    dbsTables={dbsTables}
+                    connection_id={stateConnection.id}
+                  />
+                ),
               },
               cloud: {
                 hide: serverState.isElectron,

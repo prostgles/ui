@@ -4,7 +4,7 @@ import {
   type JSONB,
 } from "prostgles-types";
 import { useCallback, useMemo, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { getKeys } from "src/utils/utils";
 
 export const useTypedSearchParams = <

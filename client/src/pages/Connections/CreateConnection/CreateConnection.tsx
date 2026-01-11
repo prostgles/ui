@@ -23,7 +23,6 @@ export type CreateConnectionProps = Required<
     | "getSampleSchemas"
     | "createConnection"
     | "validateConnection"
-     
   >
 > & {
   connId: string;
@@ -115,7 +114,10 @@ export const CreateConnection = (props: CreateConnectionProps) => {
               t.ConnectionServer["Create a database"]
             : t.ConnectionServer["Select a database from this server"]
           }
-          onClose={() => setAction(undefined)}
+          onClose={() => {
+            setAction(undefined);
+            setError(undefined);
+          }}
           autoFocusFirst={{ selector: "input" }}
           footerButtons={[
             { label: "Cancel", onClickClose: true },
@@ -157,6 +159,7 @@ export const CreateConnection = (props: CreateConnectionProps) => {
           {action.type === "new" ?
             <>
               <FormFieldDebounced
+                type="text"
                 label={t.ConnectionServer["New database name"]}
                 data-command="ConnectionServer.NewDbName"
                 inputProps={{ autoFocus: true }}

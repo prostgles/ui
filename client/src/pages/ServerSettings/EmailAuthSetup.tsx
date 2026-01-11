@@ -7,7 +7,7 @@ import { FooterButtons } from "@components/Popup/FooterButtons";
 import { Section } from "@components/Section";
 import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
-import type { AuthProviderProps } from "./AuthProvidersSetup";
+import type { AuthProviderProps } from "./AuthProvidersSetup/useProviderProps";
 import {
   DEFAULT_SMTP_CONFIG,
   EmailSMTPAndTemplateSetup,
@@ -26,7 +26,7 @@ export const EmailAuthSetup = ({
 }: AuthProviderProps) => {
   const [_localAuth, setLocalAuth] = useState(authProviders.email);
   const localAuth = _localAuth ?? authProviders.email;
-  const [error, setError] = useState<any>(undefined);
+  const [error, setError] = useState<unknown>(undefined);
   const didChange = localAuth && !isEqual(localAuth, authProviders.email);
 
   const onToggle =
@@ -175,7 +175,7 @@ export const EmailAuthSetup = ({
           }
         }}
       />
-      {error && (
+      {error !== undefined && (
         <ErrorComponent data-command="EmailAuthSetup.error" error={error} />
       )}
       {didChange && (

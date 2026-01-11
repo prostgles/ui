@@ -3,6 +3,8 @@ import { pickKeys, tryCatchV2 } from "prostgles-types";
 import type { DBS } from "..";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { upsertConnection } from "../upsertConnection";
+import { getPasswordlessAdmin } from "@src/SecurityManager/initUsers";
+import { tableConfig } from "../tableConfig/tableConfig";
 
 /** Add state db if missing */
 export const insertStateDatabase = async (
@@ -28,6 +30,17 @@ export const insertStateDatabase = async (
         },
         null,
         db,
+      );
+
+      await db.database_configs.update(
+        { $existsJoined: { connections: { id: state_db.id } } },
+        {
+          /** Origin "*" is required to enable API access */
+          allowed_origin: (await getPasswordlessAdmin(db)) ? null : "*",
+          allowed_ips_enabled: false,
+          allowed_ips: ["::ffff:127.0.0.1"],
+          tableConfig,
+        },
       );
 
       return state_db;

@@ -18,6 +18,7 @@ import {
 } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
 import { getFreePort } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/isPortFree";
 
+const STOPPED_REASON = "stopped";
 export async function startService(
   this: ServiceManager,
   serviceName: keyof typeof prostglesServices,
@@ -36,7 +37,7 @@ export async function startService(
   const getLogs = () => {
     return logs;
   };
-  const stop = () => abortController.abort();
+  const stop = () => abortController.abort(STOPPED_REASON);
   this.activeServices.set(serviceName, { getLogs, stop, status: "starting" });
   const imageName = camelCaseToSkewerCase(serviceName);
   const containerName = `prostgles-service-${imageName}`;
@@ -77,12 +78,17 @@ export async function startService(
     res: ExecutionResult | { type: "error"; error: unknown },
   ) => {
     const stopReason = "type" in res ? res.type : res.state;
-    const instance: ServiceInstance = {
-      status: "error",
-      error: new Error(
-        `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
-      ),
-    };
+    const instance: ServiceInstance =
+      abortController.signal.reason === STOPPED_REASON ?
+        {
+          status: "stopped",
+        }
+      : {
+          status: "error",
+          error: new Error(
+            `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
+          ),
+        };
     this.activeServices.set(serviceName, instance);
     this.onServiceLog(serviceName, logs);
   };

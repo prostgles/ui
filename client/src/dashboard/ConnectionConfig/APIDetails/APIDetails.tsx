@@ -9,6 +9,7 @@ import { APIDetailsWs } from "./APIDetailsWs";
 import { AllowedOriginCheck } from "./AllowedOriginCheck";
 import { ELECTRON_USER_AGENT } from "@common/OAuthUtils";
 import { useOnErrorAlert } from "@components/AlertProvider";
+import type { DBS } from "src/dashboard/Dashboard/DBS";
 
 export type APIDetailsProps = PrglState & {
   connection: Prgl["connection"];
@@ -23,7 +24,7 @@ export const APIDetails = (props: APIDetailsProps) => {
     (t) => t.user_agent === ELECTRON_USER_AGENT,
   );
   const token = electronSession?.id ?? newToken;
-  const { dbsTables, dbs } = props;
+  const { dbsTables, dbs, connection } = props;
   const { table, urlPathCol } = useMemo(() => {
     const table = dbsTables.find((t) => t.name === "connections");
     const urlPathCol = table?.columns.find((c) => c.name === "url_path");
@@ -54,7 +55,9 @@ export const APIDetails = (props: APIDetailsProps) => {
         />
       )}
 
-      {!!(dbs as any).global_settings && <AllowedOriginCheck dbs={dbs} />}
+      {!!(dbs as Partial<DBS>).database_configs && (
+        <AllowedOriginCheck dbs={dbs} connection={connection} />
+      )}
       <APIDetailsWs {...props} token={token} />
       <APIDetailsHttp {...props} token={token} />
       <APIDetailsTokens

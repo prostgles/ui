@@ -2,7 +2,7 @@ import { mdiAccount, mdiApplicationBracesOutline, mdiSecurity } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { getKeys } from "prostgles-types";
 import React from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { API_ENDPOINTS } from "@common/utils";
 import type { ExtraProps } from "../../App";
 import { FlexRow } from "@components/Flex";

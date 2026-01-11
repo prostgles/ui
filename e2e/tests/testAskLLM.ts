@@ -73,6 +73,17 @@ const webSearchToolUse: ToolUse = {
         }),
       },
     },
+    /** Must ensure parallel requests work */
+    {
+      id: "websearch-tool-use2",
+      type: "function",
+      function: {
+        name: "websearch--websearch",
+        arguments: stringify({
+          q: '"prostgles docs"',
+        }),
+      },
+    },
     {
       id: "websearch-tool-use-snapshot",
       type: "function",
@@ -80,6 +91,16 @@ const webSearchToolUse: ToolUse = {
         name: "websearch--get_snapshot",
         arguments: stringify({
           url: "http://127.0.0.1:3004/login",
+        }),
+      },
+    },
+    {
+      id: "websearch-tool-use-snapshot",
+      type: "function",
+      function: {
+        name: "websearch--get_snapshot",
+        arguments: stringify({
+          url: "http://127.0.0.1:3004/manifest.json",
         }),
       },
     },

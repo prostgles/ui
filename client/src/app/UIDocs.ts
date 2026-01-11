@@ -1,7 +1,7 @@
 import { filterArrInverse } from "@common/llmUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { ROUTES } from "@common/utils";
-import type { Route } from "react-router-dom";
+import type { Route } from "react-router";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import type { Command } from "../Testing";
 import { isDefined } from "../utils/utils";
@@ -53,9 +53,9 @@ type UIDocCommon = {
   childrenTitle?: string;
 
   docOptions?: /**
-   * If docs is defined, then it will be rendered as a separate header in the documentation with this title.
-   */
-  | { title: string }
+     * If docs is defined, then it will be rendered as a separate header in the documentation with this title.
+     */
+    | { title: string }
     /**
      * If "asSeparateFile" AND docs is defined, this will be saved as a separate file in the documentation.
      * By default, a single file is generated for each root UIDoc with child items with docs appended to the bottom.

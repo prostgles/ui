@@ -84,7 +84,6 @@ export const SearchInput = (props: SearchInputProps) => {
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
           }),
-          ...style,
           ...(size !== "small" && {
             padding: "0.75em",
             paddingRight: 0,
@@ -92,6 +91,7 @@ export const SearchInput = (props: SearchInputProps) => {
           ...(leftContent && {
             paddingLeft: 0,
           }),
+          ...style,
         }}
         autoComplete="off"
         title={"Search"}

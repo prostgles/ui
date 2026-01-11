@@ -13,14 +13,14 @@ export const getOnUseOrSocketConnected = (
     client,
     reqInfo,
   ) => {
-    while (!authSetupData.globalSettings) {
+    while (!authSetupData.database_config) {
       console.warn(
-        "Delaying user request until globalSettings is ready",
+        "Delaying user request until database_config is ready",
         reqInfo,
       );
       await tout(2000);
     }
-    const { globalSettings } = authSetupData;
+    const { database_config } = authSetupData;
 
     /** Is this needed? */
     const electronConfig = getElectronConfig();
@@ -34,8 +34,12 @@ export const getOnUseOrSocketConnected = (
       };
     }
 
-    if (globalSettings.allowed_ips_enabled) {
-      const ipCheck = await checkClientIP(dbs, reqInfo, globalSettings);
+    if (database_config.allowed_ips_enabled) {
+      const ipCheck = await checkClientIP(
+        dbs,
+        reqInfo,
+        authSetupData.database_config,
+      );
       if (!ipCheck.isAllowed) {
         return { error: "Your IP is not allowed", httpCode: 403 };
       }

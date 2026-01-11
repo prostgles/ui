@@ -20,14 +20,15 @@ import { InfoRow } from "@components/InfoRow";
 import { useIsMounted } from "prostgles-client";
 
 type SmartSelectProps<
+  T extends string = string,
   THandler extends TableHandlerClient = TableHandlerClient,
 > = {
   popupTitle?: string;
   label?: LabelProps;
-  values: string[];
+  values: T[];
   tableHandler: THandler;
   filter?: Parameters<THandler["count"]>[0];
-  onChange: (newValues: string[]) => void;
+  onChange: (newValues: T[]) => void;
   /**
    * Must be unique */
   fieldName: string;
@@ -42,9 +43,10 @@ type SmartSelectProps<
 } & TestSelectors;
 
 export const SmartSelect = <
+  T extends string,
   THandler extends TableHandlerClient = TableHandlerClient,
 >(
-  props: SmartSelectProps<THandler>,
+  props: SmartSelectProps<T, THandler>,
 ) => {
   const {
     values,
@@ -65,12 +67,15 @@ export const SmartSelect = <
   const tableHandler = tableHandlerRaw as Partial<typeof tableHandlerRaw>;
   const { data: rows } = tableHandler.useSubscribe!(filter, {
     limit,
-    select: [fieldName, displayField].filter(isDefined),
+    select: {
+      [fieldName]: 1,
+      ...(displayField ? { [displayField]: 1 } : {}),
+    },
     groupBy: true,
   });
   const items = rows?.map((r) => ({
-    key: r[fieldName],
-    label: displayField ? r[displayField] : r[fieldName],
+    key: r[fieldName] as T,
+    label: (displayField ? r[displayField] : r[fieldName]) as string,
   }));
   const displayValues = values
     .map((value) => items?.find((d) => value === d.key)?.label)
@@ -152,13 +157,11 @@ export const SmartSelect = <
         },
       ]}
       onClickClose={false}
-      contentStyle={{
-        padding: "1em",
-      }}
+      contentClassName="p-p5"
     >
       <SearchList
         onMultiToggle={(items) => {
-          onChange(items.filter((d) => d.checked).map((d) => d.key as string));
+          onChange(items.filter((d) => d.checked).map((d) => d.key as T));
         }}
         style={{
           maxHeight: "500px",
@@ -194,7 +197,7 @@ export const SmartSelect = <
             };
           })
           .sort((a, b) => +!!a.disabledInfo - +!!b.disabledInfo)}
-        endOfResultsContent={
+        noResultsContent={
           <div className="flex-row ai-center">
             <div className="p-p5">Not found</div>
           </div>

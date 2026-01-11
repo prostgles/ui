@@ -1,6 +1,6 @@
 import { ROUTES } from "@common/utils";
 import type { DBS } from "../Dashboard/DBS";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useMemo } from "react";
 import type { Workspace } from "../Dashboard/dashboardUtils";
 

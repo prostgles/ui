@@ -1,6 +1,6 @@
 import type { ReactChild } from "react";
 import React, { useMemo, useState } from "react";
-import { Navigate, Route, Routes as Switch } from "react-router-dom";
+import { Navigate, Route, Routes as Switch } from "react-router";
 import "./App.css";
 import Loading from "./components/Loader/Loading";
 import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";

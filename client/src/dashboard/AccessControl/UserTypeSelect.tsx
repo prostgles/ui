@@ -43,7 +43,6 @@ export const UserTypeSelect = (props: P) => {
       popupTitle="User types"
       placeholder="New or existing user type"
       fieldName="id"
-      //@ts-ignore
       onChange={onChange}
       tableHandler={dbs.user_types as TableHandlerClient}
       values={userTypes}
@@ -75,7 +74,6 @@ export const UserTypeSelect = (props: P) => {
           disabledInfo,
           contentLeft: (
             <Icon
-              className="mr-1"
               style={{ opacity: 0.75 }}
               path={
                 id === "admin" ? mdiAccountStar

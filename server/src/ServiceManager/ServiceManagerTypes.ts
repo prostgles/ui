@@ -96,10 +96,13 @@ export type ServiceInstance<
       getLogs: () => ProcessLog[];
       stop: () => void;
     }
-  | RunningServiceInstance<Service>
   | {
       status: "error";
       error: unknown;
-    };
+    }
+  | {
+      status: "stopped";
+    }
+  | RunningServiceInstance<Service>;
 
 export type OnServiceLogs = (logs: ProcessLog[]) => void;

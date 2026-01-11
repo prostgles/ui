@@ -6,7 +6,9 @@ import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import type { SetupLLMCredentialsProps } from "./SetupLLMCredentials";
 import { isObject } from "@common/publishUtils";
-import { ERR_CODE_MESSAGES } from "../../../pages/Login/useLoginState";
+import { ERR_CODE_MESSAGES } from "prostgles-client";
+import { getProperty } from "@common/utils";
+// import { ERR_CODE_MESSAGES } from "../../../pages/Login/useLoginState";
 
 export const ProstglesSignup = ({
   setupState,
@@ -93,7 +95,7 @@ export const ProstglesSignup = ({
             );
           } catch (err) {
             if (isObject(err) && "code" in err) {
-              setError(ERR_CODE_MESSAGES[err.code] ?? err);
+              setError(getProperty(ERR_CODE_MESSAGES, err.code) ?? err);
             } else {
               setError(err);
             }

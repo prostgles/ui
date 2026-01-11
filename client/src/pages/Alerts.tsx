@@ -1,7 +1,7 @@
 import { mdiBellBadgeOutline, mdiDelete } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import type { DBSSchema } from "@common/publishUtils";
 import { ROUTES } from "@common/utils";
 import type { Prgl } from "../App";

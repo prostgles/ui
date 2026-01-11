@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import type { PrglState } from "../../App";
 import "../../App.css";
 import { t } from "../../i18n/i18nUtils";

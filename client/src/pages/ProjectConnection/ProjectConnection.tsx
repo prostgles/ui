@@ -10,7 +10,7 @@ import type {
 } from "prostgles-client/dist/prostgles";
 import type { ExtraProps, Prgl, PrglState } from "../../App";
 
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router";
 import type { DBSSchema } from "@common/publishUtils";
 import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionConfig";
 import { ProjectConnectionError } from "./ProjectConnectionError";

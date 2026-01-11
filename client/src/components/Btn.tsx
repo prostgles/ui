@@ -1,7 +1,7 @@
 import { mdiAlert, mdiCheck } from "@mdi/js";
 import { omitKeys, pickKeys } from "prostgles-types";
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import RTComp from "../dashboard/RTComp";
 import type { TestSelectors } from "../Testing";
 import { tout } from "../utils/utils";

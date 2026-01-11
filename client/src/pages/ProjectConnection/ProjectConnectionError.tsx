@@ -4,7 +4,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import type { PrglState } from "../../App";
 import Btn from "@components/Btn";
 
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { ROUTES } from "@common/utils";
 import type { Command } from "../../Testing";
 import { FlexCol, FlexRow } from "@components/Flex";

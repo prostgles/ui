@@ -1,15 +1,11 @@
-import { getKeys, isEqual } from "prostgles-types";
 import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
 import type { DBSSchema } from "@common/publishUtils";
+import { getKeys, isEqual } from "prostgles-types";
 import { tout, type DBS } from "../index";
-import {
-  activePasswordlessAdminFilter,
-  getPasswordlessAdmin,
-} from "../SecurityManager/initUsers";
-import { tableConfig } from "../tableConfig/tableConfig";
+import { activePasswordlessAdminFilter } from "../SecurityManager/initUsers";
 
 export type AuthSetupData = {
-  globalSettings: DBSSchema["global_settings"] | undefined;
+  database_config: DBSSchema["database_configs"] | undefined;
   passwordlessAdmin:
     | (Pick<DBSSchema["users"], "id" | "type"> & {
         sessions: DBSSchema["sessions"][];
@@ -33,8 +29,8 @@ export const subscribeToAuthSetupChanges = async (
   await (await oldListener)?.destroy();
   let context: Partial<AuthSetupData> = {};
   const totalContextKeys = getKeys({
-    globalSettings: 1,
     passwordlessAdmin: 1,
+    database_config: 1,
   } satisfies Record<keyof AuthSetupData, 1>);
 
   const setContext = (changes: Partial<AuthSetupData>) => {
@@ -53,25 +49,14 @@ export const subscribeToAuthSetupChanges = async (
     void onChange(context as AuthSetupData);
   };
 
-  /** Add cors config if missing */
-  await dbs.tx(async (dbsTx) => {
-    if (!(await dbsTx.global_settings.count())) {
-      await dbsTx.global_settings.insert({
-        /** Origin "*" is required to enable API access */
-        allowed_origin: (await getPasswordlessAdmin(dbsTx)) ? null : "*",
-        allowed_ips_enabled: false,
-        allowed_ips: ["::ffff:127.0.0.1"],
-        tableConfig,
-      });
-    }
-  });
-
-  const globalSettingSub = await dbs.global_settings.subscribeOne(
+  const connectionSub = await dbs.database_configs.subscribeOne(
+    {
+      $existsJoined: { connections: { is_state_db: true } },
+    },
     {},
-    {},
-    (globalSettings) => {
+    (database_config) => {
       setContext({
-        globalSettings,
+        database_config,
       });
     },
   );
@@ -109,23 +94,24 @@ export const subscribeToAuthSetupChanges = async (
     },
   );
   const destroy = async () => {
-    await globalSettingSub.unsubscribe();
     await passwordlessAdminSub.unsubscribe();
+    await connectionSub.unsubscribe();
   };
   return { context, destroy };
 };
 
-export const waitForGlobalSettings = async () => {
-  while (!authSetupData?.globalSettings) {
+export const waitForDatabaseConfig = async () => {
+  while (!authSetupData?.database_config) {
     console.warn("Delaying user request until GlobalSettings area available");
     await tout(500);
   }
-  return authSetupData.globalSettings;
+  return authSetupData.database_config;
 };
 
 export const getAuthSetupData = () => {
   return (
     authSetupData ?? {
+      database_config: undefined,
       globalSettings: undefined,
       passwordlessAdmin: undefined,
     }

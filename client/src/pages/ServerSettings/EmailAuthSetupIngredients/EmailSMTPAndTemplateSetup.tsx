@@ -11,7 +11,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
 import { Section } from "@components/Section";
-import type { AuthProvidersConfig } from "../AuthProvidersSetup";
+import type { AuthProvidersConfig } from "../AuthProvidersSetup/AuthProvidersSetup";
 import { useEditableData } from "../useEditableData";
 import { EmailSMTPSetup } from "./EmailSMTPSetup";
 import { EmailTemplateSetup } from "./EmailTemplateSetup";

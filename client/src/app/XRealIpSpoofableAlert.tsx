@@ -1,6 +1,6 @@
 import { mdiAlertOutline } from "@mdi/js";
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { ROUTES } from "@common/utils";
 import Btn from "@components/Btn";
 import { InfoRow } from "@components/InfoRow";

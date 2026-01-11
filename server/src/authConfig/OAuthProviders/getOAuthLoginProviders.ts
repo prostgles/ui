@@ -3,7 +3,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { getFailedTooManyTimes } from "../startRateLimitedLoginAttempt";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 
-type AuthProviders = DBSSchema["global_settings"]["auth_providers"];
+type AuthProviders = DBSSchema["database_configs"]["auth_providers"];
 
 export const getOAuthLoginProviders = (
   auth_providers: AuthProviders | undefined,
@@ -13,7 +13,8 @@ export const getOAuthLoginProviders = (
   const loginWithOAuth: LoginWithOAuthConfig<DBGeneratedSchema> = {
     websiteUrl: auth_providers.website_url,
     OAuthProviders,
-    onProviderLoginFail: async ({ clientInfo, provider }) => {
+    onProviderLoginFail: async () => {
+      // Is it needed?
       // await startLoginAttempt(dbo, clientInfo, {
       //   auth_type: "provider",
       //   auth_provider: provider,

@@ -21,7 +21,7 @@ import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connMgr } from "../index";
-import { UNIQUE_DB_COLS } from "../tableConfig/tableConfig";
+import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 import {
   getCompiledTS,

@@ -993,8 +993,8 @@ test.describe("Main test", () => {
     await toggleMCPTools(["websearch", "get_snapshot"]);
     await page.waitForTimeout(7e3); // wait for the server to start
     await sendAskLLMMessage(page, " websearch ");
-    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+    await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Search done.",
       {
@@ -1061,7 +1061,7 @@ test.describe("Main test", () => {
 
     await runDbsSql(
       page,
-      `DELETE FROM login_attempts; UPDATE global_settings SET login_rate_limit = '{"groupBy": "x-real-ip", "maxAttemptsPerHour": 5}'`,
+      `DELETE FROM login_attempts; UPDATE database_configs SET login_rate_limit = '{"groupBy": "x-real-ip", "maxAttemptsPerHour": 5}'`,
     );
     await page.request.post("/logout");
     await goTo(page, "/login");
@@ -1129,7 +1129,7 @@ test.describe("Main test", () => {
     await newPage.waitForTimeout(1500);
     await runDbsSql(
       newPage,
-      `DELETE FROM login_attempts; UPDATE global_settings SET login_rate_limit = '{"groupBy": "ip", "maxAttemptsPerHour": 5}'`,
+      `DELETE FROM login_attempts; UPDATE database_configs SET login_rate_limit = '{"groupBy": "ip", "maxAttemptsPerHour": 5}'`,
     );
   });
 

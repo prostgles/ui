@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import type { CreateConnectionProps } from "./CreateConnection";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ROUTES, type SampleSchema } from "@common/utils";
 import type { Connection } from "../../NewConnection/NewConnnectionForm";
 import { asName } from "prostgles-client/dist/prostgles";
@@ -47,7 +47,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
   const { newPgUser, newUserPasswordError, newUsernameError } = newUser;
 
   const navigate = useNavigate();
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<unknown>();
   const onOpenActions = useCallback(async () => {
     const serverInfo = (
       await runConnectionQuery(

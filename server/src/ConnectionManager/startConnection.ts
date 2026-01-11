@@ -109,8 +109,10 @@ export const startConnection = async function (
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise<string>(async (resolve, reject) => {
-    const global_settings = await dbs.global_settings.findOne();
-    if (!global_settings) {
+    const database_config = await dbs.database_configs.findOne({
+      $existsJoined: { connections: { id: con_id } },
+    });
+    if (!database_config) {
       throw new Error("global_settings not found");
     }
     const _io = new Server(http, {
@@ -128,7 +130,7 @@ export const startConnection = async function (
             type: "run",
             dbConfId: dbConf.id,
             pass_process_env_vars_to_server_side_functions:
-              global_settings.pass_process_env_vars_to_server_side_functions,
+              database_config.pass_process_env_vars_to_server_side_functions,
             dbs,
             prglInitOpts: {
               dbConnection: {
@@ -185,7 +187,13 @@ export const startConnection = async function (
         dbConnection: connectionInfo,
         io: _io,
         ...hotReloadConfig,
-        auth: await getConnectionAuth(this.app, dbs, _dbs, getAuthSetupData()),
+        auth: await getConnectionAuth(
+          this.app,
+          dbs,
+          _dbs,
+          getAuthSetupData(),
+          con.url_path || undefined,
+        ),
         watchSchema,
         disableRealtime: con.disable_realtime ?? undefined,
         transactions: true,
@@ -237,6 +245,7 @@ export const startConnection = async function (
                 dbs,
                 _dbs,
                 authData,
+                con.url_path || undefined,
               );
               void prgl.update({
                 auth,
@@ -363,8 +372,11 @@ const getConnectionAuth = async (
   dbs: DBS,
   _dbs: DB,
   authData: AuthSetupData,
+  connectionAuthBasePath: string | undefined,
 ) => {
-  const auth = await getAuth(app, dbs, authData);
+  const auth = await getAuth(app, dbs, authData, connectionAuthBasePath);
+  if (!auth) return;
+  // return auth as any;
   return {
     sidKeyName: auth.sidKeyName,
     getUser: (sid, __, _, cl, reqInfo) =>

@@ -17,8 +17,8 @@ export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
     client: LoginClientInfo,
     reqInfo: AuthClientRequest,
   ): Promise<NewRedirectSession | undefined> => {
-    const { passwordlessAdmin, globalSettings } = authSetupData;
-    if (!passwordlessAdmin || !globalSettings || !reqInfo.httpReq) {
+    const { passwordlessAdmin, database_config } = authSetupData;
+    if (!passwordlessAdmin || !database_config || !reqInfo.httpReq) {
       return;
     }
 
@@ -44,7 +44,7 @@ export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
       return;
     }
 
-    const { ip } = getIPsFromClientInfo(client, globalSettings);
+    const { ip } = getIPsFromClientInfo(client, database_config);
     /** Ensure multiple passwordlessAdmin sessions are not allowed */
     const session = await dbs.tx(async (dbsTx) => {
       const isStillActive = await dbsTx.users.findOne(

@@ -1,20 +1,29 @@
-import React from "react";
-import type { APIDetailsProps } from "./APIDetails";
-import PopupMenu from "@components/PopupMenu";
-import { mdiAlert } from "@mdi/js";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
-import { InfoRow } from "@components/InfoRow";
-import { t } from "../../../i18n/i18nUtils";
 import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
+import { mdiAlert } from "@mdi/js";
+import React, { useMemo, useState } from "react";
+import { t } from "../../../i18n/i18nUtils";
+import type { APIDetailsProps } from "./APIDetails";
 
-export const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
-  const { data: serverSettings } = dbs.global_settings.useSubscribeOne({});
-  const [allowed_origin, setAllowedOrigin] = React.useState(
-    serverSettings?.allowed_origin,
+export const AllowedOriginCheck = ({
+  dbs,
+  connection,
+}: Pick<APIDetailsProps, "dbs" | "connection">) => {
+  const filter = useMemo(
+    () => ({
+      $existsJoined: { connections: { id: connection.id } },
+    }),
+    [connection.id],
+  );
+  const { data: databaseConfig } = dbs.database_configs.useSubscribeOne(filter);
+  const [allowed_origin, setAllowedOrigin] = useState(
+    databaseConfig?.allowed_origin,
   );
 
-  if (serverSettings?.allowed_origin) {
+  if (databaseConfig?.allowed_origin) {
     return null;
   }
 
@@ -40,7 +49,7 @@ export const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
               t.APIDetailsWs["Allowed origin is required"]
             : undefined,
           onClickPromise: async () => {
-            await dbs.global_settings.update({}, { allowed_origin });
+            await dbs.database_configs.update(filter, { allowed_origin });
           },
         },
       ]}
