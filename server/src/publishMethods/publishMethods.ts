@@ -157,7 +157,9 @@ export const publishMethods: PublishMethods<
       return checkClientIP(
         dbs,
         { socket },
-        await dbs.global_settings.findOne(),
+        await dbs.database_configs.findOne({
+          $existsJoined: { connections: { is_state_db: true } },
+        }),
       );
     },
     getConnectedIds: () => {

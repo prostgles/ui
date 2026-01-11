@@ -1,13 +1,13 @@
 import { mdiThemeLightDark } from "@mdi/js";
 import React from "react";
-import type { ExtraProps } from "../App";
+import type { AppContextProps } from "../App";
 import { Select } from "@components/Select/Select";
 import { t } from "../i18n/i18nUtils";
 
 export type ThemeOption = "light" | "dark" | "from-system";
-type P = Pick<ExtraProps, "dbs"> & {
+type P = Pick<AppContextProps, "dbs"> & {
   userThemeOption: ThemeOption;
-  serverState: undefined | ExtraProps["serverState"];
+  serverState: undefined | AppContextProps["serverState"];
   userId: string | undefined;
 };
 export const ThemeSelector = ({ dbs, userId, userThemeOption }: P) => {

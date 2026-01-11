@@ -29,18 +29,6 @@ export const LoadSuggestedWorkflow = ({
           items={data.allowed_mcp_tool_names}
           iconPath={mdiTools}
         />
-        {/* {data.allowed_database_tool_names?.map((funcName, idx) => {
-          return (
-            <Chip
-              key={funcName + idx}
-              color="blue"
-              title="Database Function"
-              leftIcon={{ path: mdiLanguageTypescript }}
-            >
-              {funcName}
-            </Chip>
-          );
-        })} */}
         <MonacoCodeInMarkdown
           key={"agent_definitions"}
           className="f-1 h-full"

@@ -11,6 +11,7 @@ const FUNDING_SYMBOLS = [
 ] as const;
 
 let loadGasPrices = false;
+let realtimeFutures = false;
 
 export const onMount: ProstglesOnMount = async ({ dbo }) => {
   const getMarketCaps = async () => {
@@ -29,35 +30,37 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
   setInterval(getMarketCaps, 30 * SECOND);
   getMarketCaps();
 
-  const socket = new WebSocket(
-    "wss://fstream.binance.com/ws/!markPrice@arr@1s",
-  );
+  await dbo.symbols.insert([...FUNDING_SYMBOLS.map((pair) => ({ pair }))], {
+    onConflict: "DoNothing",
+  });
+  if (!(await dbo.futures.count())) {
+    await loadHistorcalFutures(dbo);
+    await loadHistoricalFundingRates(dbo);
+  }
 
-  let futuresCount: number | undefined;
-  socket.onmessage = async (rawData) => {
-    const dataItems = JSON.parse(rawData.data as string) as any[];
-    const data = dataItems.map((data) => ({
-      symbol: data.s,
-      price: data.p,
-      timestamp: new Date(data.E),
-    }));
-    console.log(`dbo.symbols.insert ${data.length} items`);
-    await dbo.symbols.insert(
-      [
-        ...data.map(({ symbol }) => ({ pair: symbol })),
-        ...FUNDING_SYMBOLS.map((pair) => ({ pair })),
-      ],
-      { onConflict: "DoNothing" },
+  if (realtimeFutures) {
+    const socket = new WebSocket(
+      "wss://fstream.binance.com/ws/!markPrice@arr@1s",
     );
+    socket.onmessage = async (rawData) => {
+      const dataItems = JSON.parse(rawData.data as string) as any[];
+      const data = dataItems.map((data) => ({
+        symbol: data.s,
+        price: data.p,
+        timestamp: new Date(data.E),
+      }));
+      console.log(`dbo.symbols.insert ${data.length} items`);
+      await dbo.symbols.insert(
+        [
+          ...data.map(({ symbol }) => ({ pair: symbol })),
+          ...FUNDING_SYMBOLS.map((pair) => ({ pair })),
+        ],
+        { onConflict: "DoNothing" },
+      );
 
-    futuresCount ??= await dbo.futures.count();
-    if (!futuresCount) {
-      futuresCount = 1;
-      await loadHistorcalFutures(dbo);
-      await loadHistoricalFundingRates(dbo);
-    }
-    await dbo.futures.insert(data);
-  };
+      await dbo.futures.insert(data);
+    };
+  }
 
   const frequency = 20 * SECOND;
 
@@ -136,19 +139,20 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
 
   setInterval(
     async () => {
-      await dbo.sql(
-        `
-      DELETE FROM gas_prices
-      WHERE id IN (
-        SELECT id
-        FROM (
-          SELECT *, row_number() over( PARTITION BY market, price_gwei ORDER BY "timestamp" ) as dupeno
-          FROM gas_prices
-        ) t
-        WHERE dupeno > 3
-      )
-      `,
-      );
+      if (!loadGasPrices && !realtimeFutures) return;
+      if (loadGasPrices) {
+        await dbo.sql(`
+          DELETE FROM gas_prices
+          WHERE id IN (
+            SELECT id
+            FROM (
+              SELECT *, row_number() over( PARTITION BY market, price_gwei ORDER BY "timestamp" ) as dupeno
+              FROM gas_prices
+            ) t
+            WHERE dupeno > 3
+          )
+          `);
+      }
 
       const { futures_id, gas_id } = await dbo.sql(
         "SELECT (SELECT MAX(id) FROM futures) as futures_id, (SELECT MAX(id) FROM gas_prices) as gas_id",
@@ -156,10 +160,10 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
         { returnType: "row" },
       );
       let truncateQuery = "";
-      if (futures_id > 1e6) {
+      if (futures_id > 1e6 && realtimeFutures) {
         truncateQuery += `TRUNCATE futures RESTART IDENTITY;\n`;
       }
-      if (gas_id > 1e5) {
+      if (gas_id > 1e5 && loadGasPrices) {
         truncateQuery += `TRUNCATE gas_prices RESTART IDENTITY;\n`;
       }
       if (truncateQuery) {

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router";
 import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "../../Testing";
 import { useAlert } from "@components/AlertProvider";
 import { click } from "../../demo/demoUtils";

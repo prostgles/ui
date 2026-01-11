@@ -1,8 +1,8 @@
 import { mdiAccountMultiple } from "@mdi/js";
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { ROUTES } from "@common/utils";
-import type { ExtraProps } from "../../App";
+import type { AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
@@ -25,7 +25,7 @@ export type ConnectionProps = (
       isAdmin: false;
     }
 ) &
-  Pick<ExtraProps, "dbs" | "dbsMethods" | "dbsTables" | "theme"> & {
+  Pick<AppContextProps, "dbs" | "dbsMethods" | "dbsTables" | "theme"> & {
     showDbName: boolean;
   };
 

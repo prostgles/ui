@@ -11,7 +11,7 @@ import { tout } from "../..";
 
 export const getSMTPWithTLS = (
   smtp: NonNullable<
-    NonNullable<DBSSchema["global_settings"]["auth_providers"]>["email"]
+    NonNullable<DBSSchema["database_configs"]["auth_providers"]>["email"]
   >["smtp"],
 ) => {
   return {
@@ -28,7 +28,7 @@ export type EmailClient = Unpromise<
 >;
 
 export const getEmailSenderWithMockTest = async (
-  auth_providers: DBSSchema["global_settings"]["auth_providers"] | undefined,
+  auth_providers: DBSSchema["database_configs"]["auth_providers"] | undefined,
 ) => {
   const { email, website_url } = auth_providers ?? {};
   if (!email || !website_url) return undefined;

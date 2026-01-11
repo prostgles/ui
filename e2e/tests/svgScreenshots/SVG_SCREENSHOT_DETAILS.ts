@@ -3,7 +3,12 @@ import { fileImporter } from "svgScreenshots/fileImporter.svgif";
 import { schemaDiagramSvgif } from "svgScreenshots/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../Testing";
-import { getDashboardUtils, getDataKey, type PageWIds } from "../utils/utils";
+import {
+  getDashboardUtils,
+  getDataKey,
+  openTable,
+  type PageWIds,
+} from "../utils/utils";
 import { accountSvgif } from "./account.svgif";
 import { aiAssistantSvgif } from "./aiAssistant.svgif";
 import { backupAndRestoreSvgif } from "./backupAndRestore.svgif";
@@ -43,9 +48,27 @@ export const SVG_SCREENSHOT_DETAILS = {
   connections: async (page) => {
     await goTo(page, "/connections");
   },
-  smart_filter_bar: async (page, { openConnection }) => {
+  smart_filter_bar: async (
+    page,
+    { openConnection },
+    { addSceneAnimation, addScene },
+  ) => {
     await openConnection("prostgles_video_demo");
+    await openTable(page, "spatial_ref_sys");
+    await addSceneAnimation(
+      getCommandElemSelector("dashboard.window.toggleFilterBar"),
+    );
+    await addSceneAnimation(getCommandElemSelector("SearchList.Input"), {
+      action: "type",
+      text: "4326",
+      // mode: "fill",
+    });
+    await addScene();
+    await page.keyboard.press("ArrowDown");
+    await addScene();
+    await page.keyboard.press("Enter");
     await page.waitForTimeout(1500);
+    await addScene();
   },
   file_storage: async (page, { openConnection }) => {
     await openConnection("prostgles_video_demo");
@@ -54,13 +77,21 @@ export const SVG_SCREENSHOT_DETAILS = {
     await page.mouse.move(0, 0);
     await page.waitForTimeout(1500);
   },
-  access_control: async (page, { openConnection }, { addSceneAnimation }) => {
+  access_control: async (
+    page,
+    { openConnection },
+    { addSceneAnimation, addScene },
+  ) => {
     await openConnection("prostgles_video_demo");
     await addSceneAnimation(getCommandElemSelector("dashboard.goToConnConfig"));
     await addSceneAnimation(getCommandElemSelector("config.ac"));
     await addSceneAnimation(getDataKey("default"));
     await page.mouse.move(0, 0);
     await page.waitForTimeout(1500);
+    await addSceneAnimation(
+      getDataKey("chats") + " " + getCommandElemSelector("selectRuleAdvanced"),
+    );
+    await addScene();
   },
   server_settings: async (page) => {
     await page.reload();

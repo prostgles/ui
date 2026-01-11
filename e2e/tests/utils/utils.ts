@@ -552,7 +552,11 @@ export const runDbSql = async (
   return sqlResult;
 };
 
-export const openTable = async (page: PageWIds, namePartStart: string) => {
+export const openTable = async (
+  page: PageWIds,
+  namePartStart: string,
+  exact = false,
+) => {
   await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
   await page.keyboard.press("Control+KeyP");
   await page.waitForTimeout(200);
@@ -562,20 +566,21 @@ export const openTable = async (page: PageWIds, namePartStart: string) => {
   await page.waitForTimeout(200);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(500);
-  /** Ensure table_name strats with */
+
+  /** Ensure table was opened */
   const table = page.locator(
-    `[data-table-name^=${JSON.stringify(namePartStart)}]`,
+    `[data-table-name${exact ? "" : "^"}=${JSON.stringify(namePartStart)}]`,
   );
 
   /** Used for debugging */
-  if (!table.isVisible()) {
+  if (!(await table.isVisible())) {
     const v_triggers = await runDbsSql(
       page,
       `SELECT * FROM prostgles.v_triggers;`,
       {},
       { returnType: "rows" },
     );
-    console.log(JSON.stringify({ v_triggers, namePartStart }));
+    console.log(JSON.stringify({ v_triggers, namePartStart, expect }));
     await page.waitForTimeout(500);
   }
   await expect(table).toBeVisible();
@@ -1115,5 +1120,10 @@ export const setOrAddWorkspace = async (
     await page.getByLabel("New workspace name").fill(workspaceName);
     await page.getByTestId("WorkspaceAddBtn.Create").click();
   }
+  await page.waitForTimeout(1e3);
+};
+
+export const newChat = async (page: PageWIds) => {
+  await page.getByTestId("AskLLMChat.NewChat").click();
   await page.waitForTimeout(1e3);
 };

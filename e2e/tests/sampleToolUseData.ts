@@ -1,4 +1,4 @@
-export const prostglesUIDashboardSample = {
+export const prostglesUIFoodDeliveryDashboardSample = {
   prostglesWorkspaces: [
     {
       icon: "ClipboardList",
@@ -844,4 +844,271 @@ export const dockerWeatherToolUse = {
   },
   timeout: 120000,
   networkMode: "bridge",
+};
+
+export const prostglesUICryptoDashboardSample = {
+  prostglesWorkspaces: [
+    {
+      icon: "ChartTimelineVariant",
+      name: "Multi-Asset Price Comparison",
+      layout: {
+        id: "root",
+        size: 1,
+        type: "col",
+        items: [
+          {
+            id: "all-major-prices",
+            size: 2,
+            type: "item",
+            title: "Major Assets Price Comparison",
+            viewType: "timechart",
+            tableName: "futures",
+          },
+          {
+            id: "price-table",
+            size: 1,
+            type: "item",
+            title: "Latest Prices",
+            viewType: "table",
+            tableName: "futures",
+          },
+        ],
+        isRoot: true,
+      },
+      windows: [
+        {
+          id: "all-major-prices",
+          type: "timechart",
+          title: "Major Assets Price Comparison",
+          layers: [
+            {
+              type: "local-table",
+              title: "BTC",
+              yAxis: {
+                column: "price",
+                aggregation: "avg",
+              },
+              filter: [
+                {
+                  type: "$eq",
+                  value: "BTCUSDT",
+                  fieldName: "symbol",
+                },
+              ],
+              dateColumn: "timestamp",
+              table_name: "futures",
+            },
+            {
+              type: "local-table",
+              title: "ETH",
+              yAxis: {
+                column: "price",
+                aggregation: "avg",
+              },
+              filter: [
+                {
+                  type: "$eq",
+                  value: "ETHUSDT",
+                  fieldName: "symbol",
+                },
+              ],
+              dateColumn: "timestamp",
+              table_name: "futures",
+            },
+            {
+              type: "local-table",
+              title: "BNB",
+              yAxis: {
+                column: "price",
+                aggregation: "avg",
+              },
+              filter: [
+                {
+                  type: "$eq",
+                  value: "BNBUSDT",
+                  fieldName: "symbol",
+                },
+              ],
+              dateColumn: "timestamp",
+              table_name: "futures",
+            },
+            {
+              type: "local-table",
+              title: "SOL",
+              yAxis: {
+                column: "price",
+                aggregation: "avg",
+              },
+              filter: [
+                {
+                  type: "$eq",
+                  value: "SOLUSDT",
+                  fieldName: "symbol",
+                },
+              ],
+              dateColumn: "timestamp",
+              table_name: "futures",
+            },
+            {
+              type: "local-table",
+              title: "XRP",
+              yAxis: {
+                column: "price",
+                aggregation: "avg",
+              },
+              filter: [
+                {
+                  type: "$eq",
+                  value: "XRPUSDT",
+                  fieldName: "symbol",
+                },
+              ],
+              dateColumn: "timestamp",
+              table_name: "futures",
+            },
+          ],
+        },
+        {
+          id: "price-table",
+          sort: [
+            {
+              asc: false,
+              key: "timestamp",
+              nulls: "last",
+            },
+          ],
+          type: "table",
+          title: "Latest Prices",
+          filter: [
+            {
+              $or: [
+                {
+                  type: "$eq",
+                  value: "BTCUSDT",
+                  fieldName: "symbol",
+                },
+                {
+                  type: "$eq",
+                  value: "ETHUSDT",
+                  fieldName: "symbol",
+                },
+                {
+                  type: "$eq",
+                  value: "BNBUSDT",
+                  fieldName: "symbol",
+                },
+                {
+                  type: "$eq",
+                  value: "SOLUSDT",
+                  fieldName: "symbol",
+                },
+                {
+                  type: "$eq",
+                  value: "XRPUSDT",
+                  fieldName: "symbol",
+                },
+                {
+                  type: "$eq",
+                  value: "LINKUSDT",
+                  fieldName: "symbol",
+                },
+                {
+                  type: "$eq",
+                  value: "AVAXUSDT",
+                  fieldName: "symbol",
+                },
+                {
+                  type: "$eq",
+                  value: "UNIUSDT",
+                  fieldName: "symbol",
+                },
+                {
+                  type: "$eq",
+                  value: "AAVEUSDT",
+                  fieldName: "symbol",
+                },
+                {
+                  type: "$eq",
+                  value: "DOTUSDT",
+                  fieldName: "symbol",
+                },
+              ],
+            },
+          ],
+          columns: [
+            {
+              name: "symbol",
+              width: 120,
+            },
+            {
+              name: "price",
+              width: 140,
+              format: {
+                type: "Currency",
+                params: {
+                  mode: "Fixed",
+                  currencyCode: "USD",
+                  metricPrefix: false,
+                },
+              },
+            },
+            {
+              name: "timestamp",
+              width: 180,
+              format: {
+                type: "Age",
+                params: {
+                  variant: "short",
+                },
+              },
+            },
+          ],
+          cardLayout: {
+            type: "container",
+            style: {
+              gap: "8px",
+              display: "flex",
+              flexDirection: "column",
+            },
+            children: [
+              {
+                type: "node",
+                style: {
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                },
+                columnName: "symbol",
+              },
+              {
+                type: "container",
+                style: {
+                  display: "flex",
+                  justifyContent: "space-between",
+                },
+                children: [
+                  {
+                    type: "node",
+                    style: {
+                      color: "#2196F3",
+                      fontSize: "16px",
+                    },
+                    columnName: "price",
+                  },
+                  {
+                    type: "node",
+                    style: {
+                      color: "#999",
+                      fontSize: "12px",
+                    },
+                    columnName: "timestamp",
+                  },
+                ],
+              },
+            ],
+          },
+          table_name: "futures",
+        },
+      ],
+    },
+  ],
 };

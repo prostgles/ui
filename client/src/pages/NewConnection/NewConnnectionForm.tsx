@@ -7,11 +7,11 @@ import {
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
-import { NavLink, useNavigate, useParams } from "react-router-dom";
+import { NavLink, useNavigate, useParams } from "react-router";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import { isObject } from "@common/publishUtils";
-import type { ExtraProps } from "../../App";
+import type { AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import ErrorComponent, { getErrorMessage } from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -89,7 +89,7 @@ type NewConnectionProps = {
   db: FullExtraProps["dbProject"] | undefined;
   connectionId: string | undefined;
   prglState: Pick<
-    ExtraProps,
+    AppContextProps,
     "dbs" | "dbsMethods" | "dbsTables" | "user" | "theme"
   >;
   onDeleted?: () => void;

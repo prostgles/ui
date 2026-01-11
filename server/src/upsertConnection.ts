@@ -26,7 +26,7 @@ export const upsertConnection = async (
       }
       connection = await dbs.connections.update(
         { id: con.id },
-        omitKeys(c as any, ["id"]),
+        omitKeys(c, ["id"]),
         { returning: "*", multi: false },
       );
     } else {

@@ -1,5 +1,8 @@
 import { join } from "path";
-import { prostglesUIDashboardSample } from "sampleToolUseData";
+import {
+  prostglesUICryptoDashboardSample,
+  prostglesUIFoodDeliveryDashboardSample,
+} from "sampleToolUseData";
 import { dockerWeatherToolUse } from "sampleToolUseData";
 
 const stringify = (obj: any) => JSON.stringify(obj, null, 2);
@@ -70,6 +73,17 @@ const webSearchToolUse: ToolUse = {
         }),
       },
     },
+    /** Must ensure parallel requests work */
+    {
+      id: "websearch-tool-use2",
+      type: "function",
+      function: {
+        name: "websearch--websearch",
+        arguments: stringify({
+          q: '"prostgles docs"',
+        }),
+      },
+    },
     {
       id: "websearch-tool-use-snapshot",
       type: "function",
@@ -80,19 +94,42 @@ const webSearchToolUse: ToolUse = {
         }),
       },
     },
+    {
+      id: "websearch-tool-use-snapshot",
+      type: "function",
+      function: {
+        name: "websearch--get_snapshot",
+        arguments: stringify({
+          url: "http://127.0.0.1:3004/manifest.json",
+        }),
+      },
+    },
   ],
   result_content: `Search done.`,
 };
 
 const dashboardToolUse: ToolUse = {
-  content: `I analyzed your schema for what appears to be a food delivery platform. Let me suggest several workspaces that would provide valuable insights into different aspects of your business.`,
+  content: `I analyzed your schema. Let me suggest several workspaces that would provide valuable insights.`,
   tool: [
     {
       id: "dashboard-tool-use",
       type: "function",
       function: {
         name: "prostgles-ui--suggest_dashboards",
-        arguments: stringify(prostglesUIDashboardSample),
+        arguments: stringify(prostglesUIFoodDeliveryDashboardSample),
+      },
+    },
+  ],
+};
+const cryptoDashboardToolUse: ToolUse = {
+  content: `I analyzed your schema. Let me suggest several workspaces that would provide valuable insights.`,
+  tool: [
+    {
+      id: "dashboard-tool-use",
+      type: "function",
+      function: {
+        name: "prostgles-ui--suggest_dashboards",
+        arguments: stringify(prostglesUICryptoDashboardSample),
       },
     },
   ],
@@ -180,6 +217,7 @@ const mcpSandboxToolUse: ToolUse = {
 const toolResponses: Record<string, ToolUse> = {
   task: taskToolUse,
   dashboards: dashboardToolUse,
+  funding: cryptoDashboardToolUse,
   mcp: mcpToolUse,
   mcpfail: {
     content: "Hmm, the fetch tool encountered an error. Let's try again...",

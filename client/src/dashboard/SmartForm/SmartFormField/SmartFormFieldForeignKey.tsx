@@ -237,5 +237,3 @@ export const SmartFormFieldForeignKey = (
     />
   );
 };
-
-console.error("CANNOT ADD TIMECHART AI DASHBOARD SQL EDITOR");

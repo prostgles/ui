@@ -1,7 +1,10 @@
 import type { DBHandlerClient } from "prostgles-client";
 import React, { useCallback, useMemo } from "react";
 
-import { getMCPToolNameParts } from "@common/prostglesMcp";
+import {
+  getMCPToolNameParts,
+  type AllowedChatTool,
+} from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { Marked } from "@components/Chat/Marked";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -12,11 +15,7 @@ import { isEmpty } from "../../../utils/utils";
 import type { DBS } from "../../Dashboard/DBS";
 import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
 import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
-import {
-  useLLMToolsApprover,
-  type ApproveRequest,
-  type ToolApproval,
-} from "./useLLMToolsApprover";
+import { useLLMToolsApprover, type ToolApproval } from "./useLLMToolsApprover";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
@@ -37,12 +36,12 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     {
       onResponse: (mode: "once" | "for-chat" | "deny") => void;
       toolUseMessage: ToolUseMessage;
-    } & ApproveRequest
+    } & AllowedChatTool
   >();
 
   const { db_data_permissions } = activeChat;
   const requestApproval = useCallback(
-    async (req: ApproveRequest, toolUseMessage: ToolUseMessage) => {
+    async (req: AllowedChatTool, toolUseMessage: ToolUseMessage) => {
       return new Promise<ToolApproval>((resolve) => {
         setMustApprove({
           toolUseMessage,

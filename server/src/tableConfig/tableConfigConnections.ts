@@ -1,6 +1,6 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
 
-const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
 
 export const DB_SSL_ENUM = [

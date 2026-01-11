@@ -1,6 +1,6 @@
 import { mdiAlert, mdiCogOutline } from "@mdi/js";
 import React from "react";
-import type { PrglState } from "../../App";
+import type { AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import ConfirmationDialog from "@components/ConfirmationDialog";
 import PopupMenu from "@components/PopupMenu";
@@ -8,7 +8,8 @@ import { SwitchToggle } from "@components/SwitchToggle";
 import { t } from "../../i18n/i18nUtils";
 import type { useConnections } from "./useConnections";
 
-type P = Pick<PrglState, "dbs" | "user"> & ReturnType<typeof useConnections>;
+type P = Pick<AppContextProps, "dbs" | "user"> &
+  ReturnType<typeof useConnections>;
 
 export const ConnectionsOptions = ({
   dbs,

@@ -2,9 +2,9 @@ import { mdiAccount, mdiApplicationBracesOutline, mdiSecurity } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { getKeys } from "prostgles-types";
 import React from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { API_ENDPOINTS } from "@common/utils";
-import type { ExtraProps } from "../../App";
+import type { AppContextProps } from "../../App";
 import { FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import Tabs from "@components/Tabs";
@@ -16,7 +16,7 @@ import { ChangePassword } from "./ChangePassword";
 import { Sessions } from "./Sessions";
 import { Setup2FA } from "./Setup2FA";
 
-type AccountProps = ExtraProps;
+type AccountProps = AppContextProps;
 
 export const Account = (props: AccountProps) => {
   const { dbs, dbsTables, dbsMethods, user } = props;

@@ -8,6 +8,7 @@ import { SearchMatchRow } from "src/dashboard/SearchAll/SearchMatchRow";
 import { isDefined } from "../../../utils/utils";
 import type { SmartSearch } from "./SmartSearch";
 import { getSmartSearchRows } from "./getSmartSearchRows";
+import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 
 export async function onSearchItems(
   this: SmartSearch,
@@ -62,7 +63,8 @@ export async function onSearchItems(
         if (!r.prgl_term_highlight) return undefined;
         const firstRowKey = Object.keys(r.prgl_term_highlight)[0]!;
         const colName = column === "*" ? firstRowKey : (column ?? firstRowKey);
-        let node, columnValue, columnTermValue;
+        let node: React.ReactNode = null;
+        let columnValue: ColumnValue, columnTermValue;
         if (colName) {
           /** If date then put the returned content as value */
           columnTermValue = r.prgl_term_highlight[colName].flat().join("");
@@ -100,11 +102,6 @@ export async function onSearchItems(
           title: stringColumnValue,
           data: columnValue,
           onPress: () => {
-            // const newFilter: SimpleFilter = {
-            //   fieldName: colName,
-            //   type: "$term_highlight",
-            //   value: columnTermValue ?? term,
-            // };
             const newFilter: DetailedFilter = {
               fieldName: colName,
               type: "$in",

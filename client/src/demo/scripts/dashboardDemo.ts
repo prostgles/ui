@@ -174,7 +174,7 @@ export const dashboardDemo = async () => {
 
   await click("dashboard.window.toggleFilterBar");
   await type("btcusd", "", ".SmartFilterBar input");
-  await click("", `[data-label="BTCUSDC"]`);
+  await click("", `[data-label="BTCUSDT"]`);
 
   await click("", `[title="Click to expand/collapse"]`);
   await type("btcu", "", ".FilterWrapper input.custom-input");

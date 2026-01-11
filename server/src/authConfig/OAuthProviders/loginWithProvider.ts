@@ -8,6 +8,7 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSche
 import type { SUser } from "../sessionUtils";
 import { startRateLimitedLoginAttempt } from "../startRateLimitedLoginAttempt";
 import { upsertSession } from "../upsertSession";
+import type { AuthConfigForStateConnection } from "../subscribeToAuthSetupChanges";
 
 type LoginReturnType = ReturnType<
   Required<LoginSignupConfig<DBGeneratedSchema, SUser>>["login"]
@@ -17,11 +18,12 @@ export const loginWithProvider = async (
   loginParams: Extract<LoginParams, { type: "OAuth" }>,
   db: DBOFullyTyped<DBGeneratedSchema>,
   clientInfo: LoginClientInfo,
+  database_config: AuthConfigForStateConnection["database_config"],
 ): Promise<LoginReturnType> => {
   const { user_agent } = clientInfo;
   const { provider, profile } = loginParams;
   const auth_provider_user_id = profile.id;
-  if (!auth_provider_user_id) {
+  if (!auth_provider_user_id || !database_config) {
     return "server-error";
   }
   const username = `${provider}-${auth_provider_user_id}`;
@@ -51,10 +53,10 @@ export const loginWithProvider = async (
       ip,
       user_agent,
       db,
+      database_config,
     });
     return { session, response: { success: true } };
   } else {
-    const globalSettings = await db.global_settings.findOne();
     const newUser = await db.users
       .insert(
         {
@@ -70,7 +72,7 @@ export const loginWithProvider = async (
             profile,
             user_id: auth_provider_user_id,
           },
-          type: globalSettings?.auth_created_user_type ?? "default",
+          type: database_config.auth_created_user_type ?? "default",
           status: "active",
           password: "",
         },
@@ -85,6 +87,7 @@ export const loginWithProvider = async (
       ip,
       db,
       user_agent,
+      database_config,
     });
     return { session, response: { success: true } };
   }

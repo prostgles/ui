@@ -1,7 +1,7 @@
 {
   "name": "prostgles-ui",
   "private": true,
-  "version": "2.2.4",
+  "version": "2.2.5",
   "homepage": "https://prostgles.com/ui",
   "description": "Realtime Dashboard and SQL editor for PostgreSQL",
   "author": "Prostgles LTD <office@prostgles.com>",

@@ -103,21 +103,6 @@ export const rectangleToSVG = (
       outlineNode.setAttribute("stroke-linejoin", "round");
       outlineNode.setAttribute("stroke-linecap", "round");
       g.appendChild(outlineNode);
-      // const { path, rtl, rtr, rbr, rbl, showBorder, borderWidth } = getPath();
-      // if (path instanceof SVGRectElement) {
-      //   throw new Error("Outline not supported for rect element");
-      // }
-      // path.setAttribute(
-      //   "d",
-      //   roundedRectPath(
-      //     /** This is to ensure the new-connection connection type radio buttons are aligned */
-      //     x - outline.borderWidth / 2 + (!showBorder ? borderWidth : 0),
-      //     y - outline.borderWidth / 2 + (!showBorder ? borderWidth : 0),
-      //     width + outline.borderWidth,
-      //     height + outline.borderWidth,
-      //     [rtl, rtr, rbr, rbl],
-      //   ),
-      // );
     }
 
     if (border.type === "border") {

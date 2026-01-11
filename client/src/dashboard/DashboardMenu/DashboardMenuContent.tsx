@@ -206,7 +206,9 @@ export const DashboardMenuContent = (props: P) => {
                   children: "",
                   title: t.NewConnectionForm["Schemas"],
                   iconPath: mdiFilter,
-                  variant: "icon",
+                  variant: "text",
+                  size: "small",
+                  className: "mr-p5",
                 },
                 label: "",
               }}

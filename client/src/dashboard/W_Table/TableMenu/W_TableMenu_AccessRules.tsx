@@ -2,7 +2,7 @@ import React from "react";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import type { W_TableMenuMetaProps } from "./W_TableMenu";
 import { ACCESS_RULE_METHODS } from "../../AccessControl/AccessRuleSummary";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { getAccessControlHref } from "../../AccessControl/useAccessControlSearchParams";
 import { LabeledRow } from "@components/LabeledRow";
 import { mdiAccount, mdiPlus } from "@mdi/js";

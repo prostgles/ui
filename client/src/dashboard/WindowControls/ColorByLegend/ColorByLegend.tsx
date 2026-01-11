@@ -1,4 +1,7 @@
-import { getSmartGroupFilter } from "@common/filterUtils";
+import {
+  getSmartGroupFilter,
+  getTableFilterFromDetailedGroupFilter,
+} from "@common/filterUtils";
 import type { DivProps } from "@components/Flex";
 import { FlexRow, classOverride } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -43,7 +46,15 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
   );
 
   const linkOptions = thisLinkTimechartOptions;
-  const tableName = oldLayerWindow?.table_name;
+  const { dataSource } = linkOptions ?? {};
+  const tableName =
+    dataSource?.type === "local-table" ? dataSource.localTableName
+    : dataSource?.type === "table" ? dataSource.tableName
+    : oldLayerWindow?.table_name;
+  const smartGroupFilter =
+    dataSource?.type === "local-table" ?
+      dataSource.smartGroupFilter
+    : undefined;
   const groupByColumnColors = linkOptions?.groupByColumnColors;
 
   const updateGroupByColumnColors = useCallback(
@@ -76,7 +87,10 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
       const parentW = props
         .getLinksAndWindows()
         .windows.find((w) => w.id === props.w.parent_window_id);
-      const filter = getSmartGroupFilter(parentW?.filter || []);
+      const filter =
+        smartGroupFilter ?
+          getTableFilterFromDetailedGroupFilter(smartGroupFilter)
+        : getSmartGroupFilter(parentW?.filter || []);
       void fetchColumnValues(
         linkOptions?.dataSource?.type === "sql" ?
           {
@@ -118,8 +132,9 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
     groupByColumn,
     layerGroupByValues,
     linkOptions,
-    tableName,
     props,
+    smartGroupFilter,
+    tableName,
     theme,
     updateGroupByColumnColors,
     valueStyles,

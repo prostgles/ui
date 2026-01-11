@@ -102,15 +102,6 @@ export const PostgresInstallationInstructions = ({
           </div>
         </div>
       )}
-      // footerButtons={[
-      //   {
-      //     onClickClose: true,
-      //     label: "Close",
-      //     variant: "filled",
-      //     color: "action",
-      //     "data-command": "PostgresInstallationInstructions.Close",
-      //   },
-      // ]}
     />
   );
 };

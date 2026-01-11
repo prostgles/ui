@@ -109,11 +109,11 @@ app.get("/dbs", (req, res) => {
   }
   /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;
-  const { globalSettings } = getAuthSetupData();
+  const { database_config } = getAuthSetupData();
   if (
     req.headers["x-real-ip"] === SPOOF_TEST_VALUE &&
-    globalSettings?.login_rate_limit_enabled &&
-    globalSettings.login_rate_limit.groupBy === "x-real-ip"
+    database_config?.login_rate_limit_enabled &&
+    database_config.login_rate_limit.groupBy === "x-real-ip"
   ) {
     xRealIpSpoofable = true;
   }
@@ -142,7 +142,6 @@ const serveIndexIfNoCredentialsOrInitError = async (
   next();
 };
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
 app.use(serveIndexIfNoCredentialsOrInitError);
 
 /** Startup procedure

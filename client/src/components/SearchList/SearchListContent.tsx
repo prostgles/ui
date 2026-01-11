@@ -120,6 +120,7 @@ export const SearchListContent = <M extends boolean = false>(
   });
 
   const noSearch =
+    !multiSelect && // required to toggle all
     !onSearchItems &&
     items.length < noSearchLimit &&
     !searchTerm &&
@@ -132,7 +133,7 @@ export const SearchListContent = <M extends boolean = false>(
     );
   }
 
-  const hasSearch = !(noSearch || inputEl);
+  const hasSearch = !noSearch && !inputEl;
 
   const listNode =
     error ? <ErrorComponent error={error} />
@@ -170,36 +171,6 @@ export const SearchListContent = <M extends boolean = false>(
         }
         style={searchStyle}
       >
-        {!!multiSelect && (
-          <Checkbox
-            title="Toggle all"
-            className={!renderedItems.length ? "hidden" : ""}
-            data-command="SearchList.toggleAll"
-            checked={Boolean(renderedSelected.length)}
-            onChange={(e) => {
-              const checked = e.currentTarget.checked;
-
-              const newItems = items.map((d) => {
-                /** If filteted then only update the visible items */
-                const filteredItem =
-                  !searchTerm ? d : (
-                    renderedItems.find((_d) => _d.key === d.key)
-                  );
-                return {
-                  ...d,
-                  checked:
-                    filteredItem ?
-                      d.disabledInfo ?
-                        d.checked
-                      : checked
-                    : d.checked,
-                };
-              });
-
-              onMultiToggle(newItems, e);
-            }}
-          />
-        )}
         {!hasSearch ?
           multiSelect ?
             <div className="pl-1 py-p5 noselect text-1p5 ws-nowrap">
@@ -208,7 +179,44 @@ export const SearchListContent = <M extends boolean = false>(
           : null
         : <SearchInput
             id={id}
-            leftContent={leftContent}
+            leftContent={
+              Boolean(leftContent || multiSelect) && (
+                <>
+                  {leftContent}
+
+                  {!!multiSelect && (
+                    <Checkbox
+                      title="Toggle all"
+                      className={!renderedItems.length ? "hidden" : "mx-p5"}
+                      data-command="SearchList.toggleAll"
+                      checked={Boolean(renderedSelected.length)}
+                      onChange={(e) => {
+                        const checked = e.currentTarget.checked;
+
+                        const newItems = items.map((d) => {
+                          /** If filteted then only update the visible items */
+                          const filteredItem =
+                            !searchTerm ? d : (
+                              renderedItems.find((_d) => _d.key === d.key)
+                            );
+                          return {
+                            ...d,
+                            checked:
+                              filteredItem ?
+                                d.disabledInfo ?
+                                  d.checked
+                                : checked
+                              : d.checked,
+                          };
+                        });
+
+                        onMultiToggle(newItems, e);
+                      }}
+                    />
+                  )}
+                </>
+              )
+            }
             withShadow={isSearch && !noShadow}
             inputRef={inputRef}
             inputWrapperRef={inputWrapperRef}

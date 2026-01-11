@@ -1,19 +1,15 @@
 import { expect } from "@playwright/test";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { getDataKey, type PageWIds } from "utils/utils";
+import { getDataKey, newChat, type PageWIds } from "utils/utils";
 
 export const speechToTextTest = async (page: PageWIds) => {
   await grantMicrophonePermission(page);
   await mockMediaDevicesWithAudioFile(page);
   await page.reload();
   await page.getByTestId("AskLLM").click();
-  const newChat = async () => {
-    await page.getByTestId("AskLLMChat.NewChat").click();
-    await page.waitForTimeout(1e3);
-  };
 
-  await newChat();
+  await newChat(page);
   await page.getByTestId("Chat.speech").click();
   await page.locator(getDataKey("stt-local")).click();
   await page

@@ -26,7 +26,7 @@ export const useLLMToolsApprover = ({
   requestApproval,
 }: AskLLMToolsProps & {
   requestApproval: (
-    tool: ApproveRequest,
+    tool: AllowedChatTool,
     toolUseMessage: ToolUseMessage,
   ) => Promise<ToolApproval>;
 }) => {
@@ -91,19 +91,3 @@ export const useLLMToolsApprover = ({
     }
   }, [messages, dbsMethods, activeChat.id, requestApproval, sendQuery]);
 };
-
-export type ApproveRequest = AllowedChatTool;
-// | (Pick<
-//     DBSSchema["mcp_server_tools"],
-//     "name" | "description" | "server_name"
-//   > & {
-//     type: "mcp";
-//     auto_approve: boolean;
-//     tool_id: number;
-//   })
-// | (ProstglesMcpTool & {
-//     tool_id?: undefined;
-//     name: string;
-//     description: string;
-//     auto_approve: boolean;
-//   });

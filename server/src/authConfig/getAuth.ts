@@ -1,12 +1,14 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { API_ENDPOINTS, ROUTES } from "@common/utils";
+import { initBackupManager } from "@src/init/onProstglesReady";
 import cors from "cors";
 import type e from "express";
 import type { Express } from "express";
 import path from "path";
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import { upsertNamedExpressMiddleware } from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
-import type { DB } from "prostgles-server/dist/Prostgles";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import { API_ENDPOINTS, ROUTES } from "@common/utils";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
+import type { DB, DBHandlerServer } from "prostgles-server/dist/Prostgles";
 import { actualRootDir } from "../electronConfig";
 import type { DBS } from "../index";
 import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
@@ -21,16 +23,11 @@ import {
   sidKeyName,
   type SUser,
 } from "./sessionUtils";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
-import { initBackupManager } from "@src/init/onProstglesReady";
-
-let globalSettings: AuthSetupData["globalSettings"] | undefined;
-
-export const withOrigin: WithOrigin = {
-  origin: (origin, cb) => {
-    cb(null, globalSettings?.allowed_origin ?? undefined);
-  },
-};
+import {
+  getAuthSetupData,
+  type AuthConfigForStateConnection,
+  type AuthConfigForStateOrConnection,
+} from "./subscribeToAuthSetupChanges";
 
 type WithOrigin = {
   origin?: (
@@ -39,28 +36,59 @@ type WithOrigin = {
   ) => void;
 };
 
-const setExpressAppOptions = (
-  app: e.Express,
-  authData: Pick<AuthSetupData, "globalSettings">,
-) => {
-  globalSettings = authData.globalSettings;
-
-  const corsMiddleware = cors(withOrigin);
-  upsertNamedExpressMiddleware(app, corsMiddleware, "corsMiddleware");
-  app.set("trust proxy", globalSettings?.trust_proxy ?? false);
+console.error("TODO: Setup origin for each connection separately");
+export const withOrigin: WithOrigin = {
+  origin: (origin, cb) => {
+    const { database_config } = getAuthSetupData();
+    cb(null, database_config?.allowed_origin ?? undefined);
+  },
 };
 
+const setExpressAppCorsAndTrustProxy = (
+  app: e.Express,
+  authData: AuthConfigForStateConnection,
+) => {
+  const corsMiddleware = cors(withOrigin);
+  upsertNamedExpressMiddleware(app, corsMiddleware, "corsMiddleware");
+  app.set("trust proxy", authData.database_config?.trust_proxy ?? false);
+};
+
+export type DBWithAuth = DBOFullyTyped<
+  Pick<
+    DBGeneratedSchema,
+    | "users" // Must sync user id and type to state db to get access control
+    | "user_types"
+    | "sessions"
+    | "login_attempts"
+    | "magic_links"
+    | "session_types"
+    | "user_statuses"
+  >
+>;
+
 export type GetAuthResult = Awaited<ReturnType<typeof getAuth>>;
+
+export const getAuthDB = (
+  dbs: DBS,
+  db: DBHandlerServer,
+  type: AuthConfigForStateOrConnection["type"],
+) => {
+  if (type === "state") {
+    return dbs;
+  }
+
+  return db as unknown as DBWithAuth;
+};
 
 export const getAuth = async (
   app: Express,
   dbs: DBS,
-  authSetupData: AuthSetupData,
+  authSetupData: AuthConfigForStateOrConnection,
 ) => {
-  const { globalSettings } = authSetupData;
-  setExpressAppOptions(app, { globalSettings });
-  const { auth_providers, auth_created_user_type = null } =
-    globalSettings ?? {};
+  const { database_config } = authSetupData;
+  if (!database_config) return;
+  setExpressAppCorsAndTrustProxy(app, authSetupData);
+  const { auth_providers, auth_created_user_type = null } = database_config;
   const auth = {
     sidKeyName,
     onUseOrSocketConnected: getOnUseOrSocketConnected(dbs, authSetupData),
@@ -76,8 +104,11 @@ export const getAuth = async (
 
     loginSignupConfig: {
       app,
-
-      login: await getLogin(auth_providers),
+      authRoutesBasePath:
+        authSetupData.type === "connection" && authSetupData.url_path ?
+          `/${authSetupData.url_path}`
+        : undefined,
+      login: await getLogin(database_config),
 
       logout: async (sid, db, _db: DB) => {
         if (!sid) throw "err";

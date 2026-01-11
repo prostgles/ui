@@ -40,6 +40,9 @@ export const onProstglesReady = async (
     const { dbo: db } = params;
     const _db: DB = params.db;
 
+    if (!(await db.global_settings.count())) {
+      await db.global_settings.insert({});
+    }
     setLoggerDBS(params.dbo);
 
     await initUsers(db, _db);
@@ -57,7 +60,7 @@ export const onProstglesReady = async (
     const newAuthSetupDataListener = subscribeToAuthSetupChanges(
       db,
       async (authData) => {
-        const auth = await getAuth(app, db, authData);
+        const auth = await getAuth(app, db, { ...authData, type: "state" });
         void update({
           auth,
         });

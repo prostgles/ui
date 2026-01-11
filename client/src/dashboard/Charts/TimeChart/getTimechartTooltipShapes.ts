@@ -1,3 +1,4 @@
+import { clamp } from "src/dashboard/SchemaGraph/ERDSchema/useDrawSchemaShapes";
 import { isDefined } from "../../../utils/utils";
 import type { Point } from "../../Charts";
 import { DAY, HOUR, MINUTE, MONTH, SECOND, toDateStr } from "../../Charts";
@@ -97,6 +98,7 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
       fillStyle: getCssVarValue("--text-0"),
       textAlign: "center",
       text: tooltipBottomDateText,
+      textBaseline: "middle",
       background: {
         fillStyle: getCssVarValue("--bg-color-1"),
         strokeStyle: getCssVarValue("--b-color"),
@@ -116,10 +118,13 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
       tooltipBottomDateLabel.textAlign = "end";
     }
 
+    const labelHeight = 28;
     let moveToLeft = false;
     let minLabelY: number | undefined;
     let maxLabelY: number | undefined;
-    const labelTickCanvasX = xCursor + 14;
+    const labelTickCanvasX = xCursor + labelHeight / 2;
+    const labelYMin = yMin;
+    const labelYMax = yMax - labelHeight / 2;
     let textLabels = layers
       .map((l, layerIndex) => {
         if (!this.data || l.snapped_data?.value === undefined) {
@@ -137,9 +142,10 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
             next: yScale.invert(l.y),
           }) + (this.props.layers.length > 1 && l.label ? ` ${l.label}` : "");
 
+        const y = clamp(l.y + 5, labelYMin, labelYMax);
         const coords: Point = [
           this.chart!.getDataXY(labelTickCanvasX, 0)[0],
-          l.y + 5,
+          y,
         ];
 
         minLabelY ??= coords[1];
@@ -177,7 +183,6 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
     /** Highest value on top */
     textLabels = textLabels.toSorted((a, b) => a.coords[1] - b.coords[1]);
 
-    const labelHeight = 28;
     const freeHeight = yMax - Math.min(yMax, textLabels.length * labelHeight);
 
     /* Adjust text y */
@@ -207,25 +212,57 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
         ...(!moveToLeft ?
           {}
         : {
-            coords: [this.chart!.getDataXY(labelTickCanvasX - 28, 0)[0], y],
+            coords: [
+              this.chart!.getDataXY(labelTickCanvasX - labelHeight, 0)[0],
+              y,
+            ],
             textAlign: "end",
           }),
       };
     });
 
     if (tooltipPosition === "auto") {
-      const lowestOnTop = textLabels.slice(0).reverse();
+      const labelsBottomToTop = textLabels.slice(0).toReversed();
       textLabels = [];
-      lowestOnTop.forEach((l, i) => {
-        const y = l.coords[1];
-        if (!i) {
-          l.coords[1] = Math.min(y, yMax);
+      const labelGapsToBottom: { index: number; gap: number }[] = [];
+      labelsBottomToTop.forEach((label, index) => {
+        const y = label.coords[1];
+        const isFirst = index === 0;
+        if (isFirst) {
+          label.coords[1] = clamp(y, labelYMin, labelYMax);
         } else {
           const prevY = textLabels.at(-1)!.coords[1];
-          l.coords[1] = Math.min(prevY - labelHeight, y);
+          label.coords[1] = clamp(y, labelYMin, prevY - labelHeight);
         }
-        textLabels.push(l);
+        const prevY = textLabels.at(-1)?.coords[1] ?? labelYMax;
+        const gap = prevY - label.coords[1] - labelHeight;
+        if (gap) {
+          labelGapsToBottom.unshift({
+            index,
+            gap,
+          });
+        }
+        textLabels.push(label);
       });
+
+      const topOverflow =
+        !textLabels.length ? 0 : (
+          labelYMin - labelHeight / 2 - textLabels.at(-1)!.coords[1]
+        );
+      if (topOverflow > 0) {
+        let remainingOverflow = topOverflow;
+        for (
+          let i = 0;
+          i < labelGapsToBottom.length && remainingOverflow > 0;
+          i++
+        ) {
+          const { index, gap } = labelGapsToBottom[i]!;
+          textLabels.slice(index).forEach((label) => {
+            label.coords[1] += Math.min(gap, remainingOverflow);
+          });
+          remainingOverflow -= gap;
+        }
+      }
     }
 
     const pointCircles: Circle[] = layers.flatMap((l) => {

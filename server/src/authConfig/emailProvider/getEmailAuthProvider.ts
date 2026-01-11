@@ -9,7 +9,7 @@ export const getEmailAuthProvider = async (
     auth_providers,
     auth_created_user_type,
   }: Pick<
-    DBSSchema["global_settings"],
+    DBSSchema["database_configs"],
     "auth_providers" | "auth_created_user_type"
   >,
   dbs: DBS | undefined,

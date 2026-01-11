@@ -3,7 +3,7 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client";
 import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { PrglState } from "../../App";
+import type { AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { FlexRow } from "@components/Flex";
@@ -16,6 +16,7 @@ import { StyledInterval } from "../W_SQL/customRenderers";
 import type { StatusMonitorProps } from "./StatusMonitor";
 import { StatusMonitorProcListControlsHeader } from "./StatusMonitorProcListControlsHeader";
 import { STATUS_MONITOR_IGNORE_QUERY } from "@common/utils";
+import Loading from "@components/Loader/Loading";
 
 export const StatusMonitorViewTypes = [
   { key: "All Queries", subLabel: "No filtering applied" },
@@ -107,6 +108,7 @@ export const StatusMonitorProcList = (
     };
   }, [datidFilter, viewType]);
 
+  if (!datidFilter) return <Loading />;
   return (
     <SmartCardList
       db={dbs as DBHandlerClient}
@@ -154,7 +156,7 @@ export const StatusMonitorProcList = (
 type FieldConfigs = Required<SmartCardListProps>["fieldConfigs"];
 
 const useStatusMonitorProcListProps = (
-  dbsMethods: PrglState["dbsMethods"],
+  dbsMethods: AppContextProps["dbsMethods"],
   toggledFields: string[],
   connectionId: string,
   noBash: boolean,
@@ -273,10 +275,12 @@ const useStatusMonitorProcListProps = (
       },
     ] satisfies FieldConfigs;
 
-    const excludedFields: (keyof DBSSchema["stats"])[] = fixedFields
-      .filter((f) => (f as any).render)
-      .map((f) => f.name)
-      .concat(["connection_id"]) as any;
+    const excludedFields = [
+      ...fixedFields
+        .filter((f) => (f as any).render)
+        .map((f) => f.name as keyof DBSSchema["stats"]),
+      "connection_id",
+    ];
 
     const fieldConfigs = [
       ...fixedFields.filter((ff) => !toggledFields.includes(ff.name)),

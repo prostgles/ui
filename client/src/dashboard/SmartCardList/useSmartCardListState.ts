@@ -1,9 +1,9 @@
-import { useAsyncEffectQueue, usePromise } from "prostgles-client";
+import { getSmartGroupFilter } from "@common/filterUtils";
+import { useAsyncEffectQueue } from "prostgles-client";
 import { isObject, type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
-import { getSmartGroupFilter } from "@common/filterUtils";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
-import { getSmartCardColumns } from "../SmartCard/getSmartCardColumns";
+import { useSmartCardColumns } from "../SmartCard/useSmartCardColumns";
 import type { SmartCardListProps } from "./SmartCardList";
 
 export type SmartCardListState = ReturnType<typeof useSmartCardListState>;
@@ -51,19 +51,18 @@ export const useSmartCardListState = (
   );
   const [localFilter, setLocalFilter] = useState(searchFilter);
 
-  const fetchedColumns = usePromise(async () => {
-    if (columnsFromProps) {
-      return;
-    }
-    return await getSmartCardColumns({ tableName, db });
-  }, [columnsFromProps, db, tableName]);
-  const columns = columnsFromProps ?? fetchedColumns;
+  const columns = useSmartCardColumns({
+    tableName,
+    db,
+    tables,
+    columns: columnsFromProps,
+  });
 
   const [items, setItems] = useState<AnyObject[]>();
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
   const [totalRows, setTotalRows] = useState<number | undefined>(-1);
 
   const tableHandler =
@@ -224,12 +223,12 @@ export const useSmartCardListState = (
           throw new Error("tableHandler.subscribe missing");
         }
         /** This is to not wait for the subscription to start */
-        setData();
+        void setData();
         const sub = await tableHandler.subscribe(
           fullFilter,
           { limit: 0, select, throttle },
           () => {
-            setData();
+            void setData();
           },
         );
         return sub.unsubscribe;
@@ -239,7 +238,7 @@ export const useSmartCardListState = (
         return;
       }
     } else {
-      setData();
+      void setData();
     }
   }, [tableDataHandlers, tableHandler]);
 

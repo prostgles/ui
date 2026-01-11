@@ -5,22 +5,22 @@ import type {
 import { connMgr, type DBS } from "..";
 import { insertUser, makeSession } from "./sessionUtils";
 import { getIPsFromClientInfo } from "./startRateLimitedLoginAttempt";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 import { DAY } from "@common/utils";
 import type { NewRedirectSession } from "./getUser";
 
 export const createPublicUserSessionIfAllowed = async (
-  authSetupData: AuthSetupData,
+  authSetupData: AuthConfigForStateConnection,
   dbs: DBS,
   client: LoginClientInfo,
   reqInfo: AuthClientRequest,
 ): Promise<NewRedirectSession | undefined> => {
   const publicConnections = connMgr.getConnectionsWithPublicAccess();
-  const { globalSettings } = authSetupData;
-  if (!publicConnections.length || !globalSettings || !reqInfo.httpReq) {
+  const { database_config } = authSetupData;
+  if (!publicConnections.length || !database_config || !reqInfo.httpReq) {
     return;
   }
-  const { ip } = getIPsFromClientInfo(client, globalSettings);
+  const { ip } = getIPsFromClientInfo(client, database_config);
   const session = await dbs.tx(async (dbsTx) => {
     const newRandomUser = await insertUser(dbsTx, {
       username: `user-${new Date().toISOString()}_${Math.round(Math.random() * 1e8)}`,

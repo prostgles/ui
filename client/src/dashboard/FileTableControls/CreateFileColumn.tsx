@@ -1,7 +1,7 @@
 import { mdiPlus } from "@mdi/js";
 import { asName } from "prostgles-types";
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import type { Prgl, PrglCore } from "../../App";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { InfoRow } from "@components/InfoRow";

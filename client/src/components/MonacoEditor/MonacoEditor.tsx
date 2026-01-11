@@ -1,5 +1,11 @@
 import { useEffectDeep, useMemoDeep } from "prostgles-client";
-import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
+import {
+  getKeys,
+  isEqual,
+  isObject,
+  pickKeys,
+  type AnyObject,
+} from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
@@ -239,12 +245,12 @@ const valueIsDifferentFromEditor = (
     if (valuesDiffer) {
       const lang = editor.getModel()?.getLanguageId();
       if (lang !== "json") return valuesDiffer;
-      const o1 = JSON.parse(v1);
-      const o2 = JSON.parse(v2);
+      const o1 = JSON.parse(v1) as AnyObject;
+      const o2 = JSON.parse(v2) as AnyObject;
       const valuesMatch = isEqual(o1, o2);
       return !valuesMatch;
     }
-  } catch (error) {}
+  } catch {}
   return valuesDiffer;
 };
 

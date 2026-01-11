@@ -566,10 +566,16 @@ export default class FormField<
             }}
             iconPath={mdiClose}
             onClick={(e) => {
-              //@ts-ignore
-              onChange(optional ? undefined : null, e);
+              onChange(
+                (optional ? undefined : null) as FormFieldValueType<
+                  T,
+                  Nullable,
+                  Optional
+                >,
+                e,
+              );
             }}
-            size="small"
+            // size="small"
             className="rounded-r"
           />
         );

@@ -2,7 +2,7 @@ import ErrorComponent, { ErrorTrap } from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { isDefined, isEqual } from "prostgles-types";
 import React from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
 import { LinkMenu } from "../LinkMenu";
 import RTComp from "../RTComp";

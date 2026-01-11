@@ -1,10 +1,16 @@
 <h1 id="timechart_view"> Timechart view </h1> 
 
-The timechart view allows you to visualize time-series data from your database.
-It supports multiple layers, each with its own data source and style.
-You can add filters to the timechart to narrow down the data displayed.
+The timechart view allows you to visualize time-series data from your database. 
 
 <img src="./screenshots/timechart.svgif.svg" alt="Timechart view screenshot" style="border: 1px solid; margin: 1em 0;" />
+
+## Features
+- Multiple layers with independent data sources and styles.
+- Configurable aggregation functions and grouping options.
+- Zoomable and pannable canvas for detailed data exploration.
+- Interactive tooltips and data point selection.
+- Time filters for focused analysis.
+- Layer legend for quick access to layer settings.
 
 ## Components
 

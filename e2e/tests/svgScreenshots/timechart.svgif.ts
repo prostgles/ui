@@ -1,4 +1,9 @@
-import { closeWorkspaceWindows, getDataKey, openTable } from "utils/utils";
+import {
+  closeWorkspaceWindows,
+  deleteAllWorkspaces,
+  getDataKey,
+  openTable,
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { getCommandElemSelector } from "Testing";
 
@@ -8,22 +13,17 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   { addScene, addSceneAnimation },
 ) => {
   await openConnection("crypto");
-  await closeWorkspaceWindows(page);
+  await deleteAllWorkspaces(page);
   await openTable(page, "futures");
   await addSceneAnimation(
     getCommandElemSelector("dashboard.window.toggleFilterBar"),
   );
   await addSceneAnimation(getCommandElemSelector("SearchList.Input"), {
     action: "type",
-    text: "btc",
+    text: "btcu",
   });
-  // await page.keyboard.press("ArrowDown");
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
-  // await page.keyboard.press("ArrowDown");
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
-  // await page.keyboard.press("Enter");
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
-  await addSceneAnimation(`[data-label="BTCUSDC"]`);
+
+  await addSceneAnimation(`[data-label="BTCUSDT"]`);
   await addSceneAnimation(getCommandElemSelector("FilterWrapper_FieldName"));
   await addSceneAnimation(
     getCommandElemSelector("FilterWrapper") +

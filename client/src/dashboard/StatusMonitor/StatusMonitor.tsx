@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import type { PrglState } from "../../App";
+import type { AppContextProps } from "../../App";
 import { FlexCol } from "@components/Flex";
 import type { DBSMethods } from "../Dashboard/DBS";
 import { StatusMonitorInfoHeader } from "./StatusMonitorInfoHeader/StatusMonitorInfoHeader";
 import { StatusMonitorProcList } from "./StatusMonitorProcList";
 
 export type StatusMonitorProps = Pick<
-  PrglState,
+  AppContextProps,
   "dbs" | "dbsMethods" | "dbsTables"
 > & {
   connectionId: string;

@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import type { ClientUser } from "../App";
 import PopupMenu from "@components/PopupMenu";
 import Btn from "@components/Btn";

@@ -1,5 +1,5 @@
 import React from "react";
-import type { ExtraProps } from "../App";
+import type { AppContextProps } from "../App";
 import RTComp from "./RTComp";
 
 import type { SubscriptionHandler } from "prostgles-types";
@@ -23,7 +23,7 @@ type S = {
   loading: boolean;
 };
 
-export default class UserManager extends RTComp<ExtraProps, S> {
+export default class UserManager extends RTComp<AppContextProps, S> {
   state: S = {
     collapsed: true,
     loading: true,

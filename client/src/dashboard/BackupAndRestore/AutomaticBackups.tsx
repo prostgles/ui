@@ -1,6 +1,6 @@
 import { mdiRefreshAuto } from "@mdi/js";
 import React, { useState } from "react";
-import type { ExtraProps, Prgl } from "../../App";
+import type { AppContextProps, Prgl } from "../../App";
 import Btn from "@components/Btn";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";

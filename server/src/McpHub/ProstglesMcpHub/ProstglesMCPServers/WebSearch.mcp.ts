@@ -56,15 +56,15 @@ const handler = {
         get_snapshot: async (toolArguments) => {
           const mcpHub = new McpHub();
           await mcpHub.setServerConnections({
-            fetch: {
-              command: "uvx",
-              args: ["mcp-server-fetch"],
-              server_name: "fetch",
-              onLog: () => {},
-            },
+            // fetch: {
+            //   command: "uvx",
+            //   args: ["mcp-server-fetch"],
+            //   server_name: "fetch",
+            //   onLog: () => {},
+            // },
             playwright: {
               command: "npx",
-              args: ["@playwright/mcp@latest"],
+              args: ["@playwright/mcp@latest", "--isolated"],
               onLog: () => {},
               server_name: "playwright",
             },

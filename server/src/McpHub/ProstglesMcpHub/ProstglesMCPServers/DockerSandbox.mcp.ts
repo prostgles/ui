@@ -44,11 +44,18 @@ const handler = {
           if (!user) {
             throw new Error(`User with id ${context.user_id} not found`);
           }
+          const database_config = await dbs.database_configs.findOne({
+            $existsJoined: { connections: { is_state_db: true } },
+          });
+          if (!database_config) {
+            throw new Error("No database_config found for state db connection");
+          }
           const tokenForMCP = await upsertSession({
             db: dbs,
             ip: "127.0.0.1",
             user,
             user_agent: DOCKER_USER_AGENT,
+            database_config,
           });
           const sid_token = tokenForMCP.sid;
           if (!sid_token) {
