@@ -8,11 +8,11 @@ import { activePasswordlessAdminFilter } from "../SecurityManager/initUsers";
 import type { NewRedirectSession } from "./getUser";
 import { makeSession } from "./sessionUtils";
 import { getIPsFromClientInfo } from "./startRateLimitedLoginAttempt";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 
 export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
   async (
-    authSetupData: AuthSetupData,
+    authSetupData: AuthConfigForStateConnection,
     dbs: DBS,
     client: LoginClientInfo,
     reqInfo: AuthClientRequest,

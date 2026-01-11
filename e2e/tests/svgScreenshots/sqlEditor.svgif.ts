@@ -40,6 +40,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   };
 
   await page.waitForTimeout(500);
+  // await addSceneAnimation(getCommandElemSelector("dashboard.menu.sqlEditor")); // weird
   await addSceneAnimation(getCommandElemSelector("dashboard.menu.sqlEditor"));
   await page.waitForTimeout(500);
   await toggleMenuPinned();

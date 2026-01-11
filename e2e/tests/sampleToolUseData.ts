@@ -865,14 +865,6 @@ export const prostglesUICryptoDashboardSample = {
             tableName: "futures",
           },
           {
-            id: "altcoins-comparison",
-            size: 2,
-            type: "item",
-            title: "Top Altcoins Comparison",
-            viewType: "timechart",
-            tableName: "futures",
-          },
-          {
             id: "price-table",
             size: 1,
             type: "item",
@@ -968,98 +960,6 @@ export const prostglesUICryptoDashboardSample = {
                 {
                   type: "$eq",
                   value: "XRPUSDT",
-                  fieldName: "symbol",
-                },
-              ],
-              dateColumn: "timestamp",
-              table_name: "futures",
-            },
-          ],
-        },
-        {
-          id: "altcoins-comparison",
-          type: "timechart",
-          title: "Top Altcoins Comparison",
-          layers: [
-            {
-              type: "local-table",
-              title: "LINK",
-              yAxis: {
-                column: "price",
-                aggregation: "avg",
-              },
-              filter: [
-                {
-                  type: "$eq",
-                  value: "LINKUSDT",
-                  fieldName: "symbol",
-                },
-              ],
-              dateColumn: "timestamp",
-              table_name: "futures",
-            },
-            {
-              type: "local-table",
-              title: "AVAX",
-              yAxis: {
-                column: "price",
-                aggregation: "avg",
-              },
-              filter: [
-                {
-                  type: "$eq",
-                  value: "AVAXUSDT",
-                  fieldName: "symbol",
-                },
-              ],
-              dateColumn: "timestamp",
-              table_name: "futures",
-            },
-            {
-              type: "local-table",
-              title: "UNI",
-              yAxis: {
-                column: "price",
-                aggregation: "avg",
-              },
-              filter: [
-                {
-                  type: "$eq",
-                  value: "UNIUSDT",
-                  fieldName: "symbol",
-                },
-              ],
-              dateColumn: "timestamp",
-              table_name: "futures",
-            },
-            {
-              type: "local-table",
-              title: "AAVE",
-              yAxis: {
-                column: "price",
-                aggregation: "avg",
-              },
-              filter: [
-                {
-                  type: "$eq",
-                  value: "AAVEUSDT",
-                  fieldName: "symbol",
-                },
-              ],
-              dateColumn: "timestamp",
-              table_name: "futures",
-            },
-            {
-              type: "local-table",
-              title: "DOT",
-              yAxis: {
-                column: "price",
-                aggregation: "avg",
-              },
-              filter: [
-                {
-                  type: "$eq",
-                  value: "DOTUSDT",
                   fieldName: "symbol",
                 },
               ],

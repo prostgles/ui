@@ -8,7 +8,7 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSche
 import type { SUser } from "../sessionUtils";
 import { startRateLimitedLoginAttempt } from "../startRateLimitedLoginAttempt";
 import { upsertSession } from "../upsertSession";
-import type { AuthSetupData } from "../subscribeToAuthSetupChanges";
+import type { AuthConfigForStateConnection } from "../subscribeToAuthSetupChanges";
 
 type LoginReturnType = ReturnType<
   Required<LoginSignupConfig<DBGeneratedSchema, SUser>>["login"]
@@ -18,7 +18,7 @@ export const loginWithProvider = async (
   loginParams: Extract<LoginParams, { type: "OAuth" }>,
   db: DBOFullyTyped<DBGeneratedSchema>,
   clientInfo: LoginClientInfo,
-  database_config: AuthSetupData["database_config"],
+  database_config: AuthConfigForStateConnection["database_config"],
 ): Promise<LoginReturnType> => {
   const { user_agent } = clientInfo;
   const { provider, profile } = loginParams;

@@ -3,7 +3,7 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client";
 import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { PrglState } from "../../App";
+import type { AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { FlexRow } from "@components/Flex";
@@ -156,7 +156,7 @@ export const StatusMonitorProcList = (
 type FieldConfigs = Required<SmartCardListProps>["fieldConfigs"];
 
 const useStatusMonitorProcListProps = (
-  dbsMethods: PrglState["dbsMethods"],
+  dbsMethods: AppContextProps["dbsMethods"],
   toggledFields: string[],
   connectionId: string,
   noBash: boolean,

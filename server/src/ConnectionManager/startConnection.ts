@@ -16,7 +16,8 @@ import type { SUser } from "../authConfig/sessionUtils";
 import {
   getAuthSetupData,
   subscribeToAuthSetupChanges,
-  type AuthSetupData,
+  type AuthConfigForStateOrConnection,
+  type AuthConfigForStateConnection,
 } from "../authConfig/subscribeToAuthSetupChanges";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc, type DBS } from "../index";
@@ -187,13 +188,7 @@ export const startConnection = async function (
         dbConnection: connectionInfo,
         io: _io,
         ...hotReloadConfig,
-        auth: await getConnectionAuth(
-          this.app,
-          dbs,
-          _dbs,
-          getAuthSetupData(),
-          con.url_path || undefined,
-        ),
+        // auth: await getConnectionAuth(this.app, dbs, _dbs, getAuthSetupData()),
         watchSchema,
         disableRealtime: con.disable_realtime ?? undefined,
         transactions: true,
@@ -240,13 +235,12 @@ export const startConnection = async function (
           const newAuthSetupDataListener = subscribeToAuthSetupChanges(
             dbs,
             async (authData) => {
-              const auth = await getConnectionAuth(
-                this.app,
-                dbs,
-                _dbs,
-                authData,
-                con.url_path || undefined,
-              );
+              const auth = await getConnectionAuth(this.app, dbs, _dbs, {
+                ...authData,
+                type: "connection",
+                url_path: con.url_path || "",
+                database_config,
+              });
               void prgl.update({
                 auth,
               });
@@ -371,10 +365,9 @@ const getConnectionAuth = async (
   app: e.Express,
   dbs: DBS,
   _dbs: DB,
-  authData: AuthSetupData,
-  connectionAuthBasePath: string | undefined,
+  authData: AuthConfigForStateOrConnection,
 ) => {
-  const auth = await getAuth(app, dbs, authData, connectionAuthBasePath);
+  const auth = await getAuth(app, dbs, authData);
   if (!auth) return;
   // return auth as any;
   return {

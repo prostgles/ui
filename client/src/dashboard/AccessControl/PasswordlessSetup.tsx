@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import type { ClientUser, ExtraProps } from "../../App";
+import type { ClientUser, AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import PopupMenu from "@components/PopupMenu";
 import { pageReload } from "@components/Loader/Loading";
 
-export const PasswordlessSetup = ({ dbsMethods }: ExtraProps) => {
+export const PasswordlessSetup = ({ dbsMethods }: AppContextProps) => {
   type NewUser = Partial<ClientUser & { passwordconfirm?: string }>;
   const [{ username, password, passwordconfirm }, setNewUser] =
     useState<NewUser>({});

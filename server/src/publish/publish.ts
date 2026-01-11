@@ -181,7 +181,7 @@ export const publish: Publish<
     },
     ...getPublishLLM(user_id, isAdmin, accessRules, db),
     credential_types: isAdmin && { select: "*" },
-    access_control: isAdmin ? "*" : undefined, // { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
+    access_control: isAdmin ? "*" : undefined,
     database_configs:
       isAdmin ?
         {
@@ -193,15 +193,6 @@ export const publish: Publish<
               if (row.allowed_ips_enabled && !row.allowed_ips.length) {
                 throw "Must include at least one allowed IP CIDR";
               }
-              // const ranges = await Promise.all(
-              //   row.allowed_ips?.map(
-              //     cidr => db.sql!(
-              //       getCIDRRangesQuery({ cidr, returns: ["from", "to"] }),
-              //       { cidr },
-              //       { returnType: "row" }
-              //     )
-              //   )
-              // )
 
               if (row.allowed_ips_enabled) {
                 const oldValue = await dbsTX.database_configs.findOne({

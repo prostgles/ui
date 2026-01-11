@@ -41,7 +41,12 @@ export type DBSMethods = Partial<{
   prostglesSignup: (
     email: string,
     otpCode: string,
-  ) => Promise<{ token: string; host: string; hasError?: boolean; error: any }>;
+  ) => Promise<{
+    token: string;
+    host: string;
+    hasError?: boolean;
+    error: unknown;
+  }>;
   askLLM: (
     connectionId: string,
     userMessage: LLMMessage["message"],

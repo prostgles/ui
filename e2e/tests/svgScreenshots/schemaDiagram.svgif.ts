@@ -39,7 +39,7 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
     .waitFor({ state: "visible" });
 
   for (const point of [
-    [390, 430],
+    [430, 370],
     [350, 440],
   ] satisfies [number, number][]) {
     await page.mouse.move(...point, { steps: 10 });

@@ -1,7 +1,7 @@
 import { mdiArrowLeft, mdiLogin } from "@mdi/js";
 import React from "react";
 import ErrorComponent from "@components/ErrorComponent";
-import type { PrglState } from "../../App";
+import type { AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 
 import { useParams } from "react-router";
@@ -13,7 +13,7 @@ import { type PrglProjectState } from "./useProjectDb";
 
 type P = {
   projectDb: Extract<PrglProjectState, { state: "error" }>;
-  prglState: PrglState;
+  prglState: AppContextProps;
 };
 export const ProjectConnectionError = (props: P) => {
   const params = useParams();

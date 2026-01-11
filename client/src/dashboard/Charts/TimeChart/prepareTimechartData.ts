@@ -96,7 +96,7 @@ export const prepareTimechartData = function (this: TimeChart) {
     //   })
     // }
 
-    filledData.forEach((d, i) => {
+    filledData.forEach((d) => {
       ((minVal ??= d.value), (maxVal ??= d.value));
       minVal = Math.min(minVal, d.value);
       maxVal = Math.max(maxVal, d.value);
@@ -130,10 +130,8 @@ export const prepareTimechartData = function (this: TimeChart) {
     .domain([minDate, maxDate])
     .range([xMin, xMax])
     .clamp(false);
-  const xScaleYLabels = scaleLinear()
-    .domain([minDate, maxDate])
-    .range([xForYLabels, xMax])
-    .clamp(true);
+
+  const xScaleYLabels = xScale.copy().range([xForYLabels, xMax]).clamp(true);
   const getYScale = ({ maxVal, minVal }: { maxVal: number; minVal: number }) =>
     scaleLinear().domain([maxVal, minVal]).range([yMin, yMax]).clamp(false);
 

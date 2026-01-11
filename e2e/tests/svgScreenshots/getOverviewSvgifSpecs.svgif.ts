@@ -34,7 +34,7 @@ export const getOverviewSvgifSpecs = async (
     {
       fileName: "ai_assistant_overview",
       usedExternally: true,
-      scenes: [...sliceScenes("ai_assistant", 0)],
+      scenes: [...sliceScenes("ai_assistant", 1)],
     },
     {
       fileName: "sql_editor_overview",
@@ -131,7 +131,7 @@ export const getOverviewSvgifSpecs = async (
 
     {
       fileName: "timechart_cover",
-      svgSceneFileName: existing.timechart[19]!.svgFileName,
+      svgSceneFileName: existing.ai_assistant[31]!.svgFileName, // or 32 with tooltip
     },
   ];
 

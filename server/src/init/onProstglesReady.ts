@@ -60,7 +60,7 @@ export const onProstglesReady = async (
     const newAuthSetupDataListener = subscribeToAuthSetupChanges(
       db,
       async (authData) => {
-        const auth = await getAuth(app, db, authData, undefined);
+        const auth = await getAuth(app, db, { ...authData, type: "state" });
         void update({
           auth,
         });

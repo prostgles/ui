@@ -166,7 +166,7 @@ export const getNestedColumnSelect = async (
     const { bin } =
       withoutData ?
         { bin: "day" as const }
-      : await getDesiredTimeChartBinSize({
+      : getDesiredTimeChartBinSize({
           dataExtent: {
             minDate: dateExtent.min,
             maxDate: dateExtent.max,

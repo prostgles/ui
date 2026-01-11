@@ -8,7 +8,7 @@ import type {
   DBHandlerClient,
   MethodHandler,
 } from "prostgles-client/dist/prostgles";
-import type { ExtraProps, Prgl, PrglState } from "../../App";
+import type { AppContextProps, Prgl } from "../../App";
 
 import { useParams, useSearchParams } from "react-router";
 import type { DBSSchema } from "@common/publishUtils";
@@ -19,11 +19,11 @@ import { PrglProvider } from "./PrglContextProvider";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
-  prglState: PrglState;
+  prglState: AppContextProps;
   showConnectionConfig?: boolean;
 };
 
-export type FullExtraProps = ExtraProps & {
+export type FullExtraProps = AppContextProps & {
   projectPath?: string;
   dbProject: DBHandlerClient;
   dbMethods: MethodHandler;

@@ -5,12 +5,12 @@ import type {
 import { connMgr, type DBS } from "..";
 import { insertUser, makeSession } from "./sessionUtils";
 import { getIPsFromClientInfo } from "./startRateLimitedLoginAttempt";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 import { DAY } from "@common/utils";
 import type { NewRedirectSession } from "./getUser";
 
 export const createPublicUserSessionIfAllowed = async (
-  authSetupData: AuthSetupData,
+  authSetupData: AuthConfigForStateConnection,
   dbs: DBS,
   client: LoginClientInfo,
   reqInfo: AuthClientRequest,

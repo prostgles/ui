@@ -9,7 +9,7 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSche
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
 import { getPasswordHash } from "./authUtils";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 
 export type Sessions = DBSSchema["sessions"];
 export const parseAsBasicSession = (s: Sessions): BasicSession => {
@@ -80,7 +80,7 @@ export const authCookieOpts =
 export const checkClientIP = async (
   dbsOrTx: DBS,
   args: { socket: PRGLIOSocket } | { httpReq: Request },
-  database_config: AuthSetupData["database_config"],
+  database_config: AuthConfigForStateConnection["database_config"],
 ) => {
   const { ip_address, ip_address_remote, x_real_ip } =
     getClientRequestIPsInfo(args);
@@ -104,68 +104,8 @@ export const checkClientIP = async (
   };
 };
 
-// export const getPasswordlessMagicLink = async (dbs: DBS) => {
-//   /** Create session for passwordless admin */
-//   const maybePasswordlessAdmin = await getPasswordlessAdmin(dbs);
-//   if (maybePasswordlessAdmin) {
-//     const existingMagicLink = await dbs.magic_links.findOne({
-//       user_id: maybePasswordlessAdmin.id,
-//     });
-//     if (existingMagicLink) {
-//       return {
-//         state: "magic-link-exists",
-//         wasUsed: !!existingMagicLink.magic_link_used,
-//         error:
-//           existingMagicLink.magic_link_used ?
-//             PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR
-//           : undefined,
-//       } as const;
-//     }
-
-//     const mlink = await makeMagicLink(maybePasswordlessAdmin, dbs, "/", {
-//       session_expires: Date.now() + 10 * YEAR,
-//     });
-
-//     return {
-//       state: "magic-link-ready" as const,
-//       magicLinkUrl: mlink.magic_login_link_redirect,
-//     } as const;
-//   }
-
-//   return {
-//     state: "no-passwordless-admin",
-//   } as const;
-// };
-
 export const PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR =
   "Only 1 session is allowed for the passwordless admin. If you're seeing this then the passwordless admin session has already been assigned to a different device/browser";
-
-// export const makeMagicLink = async (
-//   user: Users,
-//   dbo: DBS,
-//   returnURL: string,
-//   opts?: {
-//     expires?: number;
-//     session_expires?: number;
-//   },
-// ) => {
-//   const maxValidityDays =
-//     (await dbo.global_settings.findOne())?.magic_link_validity_days ?? 2;
-//   const mlink = await dbo.magic_links.insert(
-//     {
-//       expires: opts?.expires ?? Date.now() + DAY * maxValidityDays,
-//       session_expires: opts?.session_expires ?? Date.now() + DAY * 7,
-//       user_id: user.id,
-//     },
-//     { returning: "*" },
-//   );
-
-//   return {
-//     id: user.id,
-//     magicLinkId: mlink.id,
-//     magic_login_link_redirect: `${ROUTES.MAGIC_LINK}/${mlink.id}?returnURL=${returnURL}`,
-//   };
-// };
 
 export const insertUser = async (
   db: Pick<DBS, "users">,

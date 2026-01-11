@@ -137,10 +137,11 @@ export const getSVGifCursorAnimationHandler = ({
       target: e.target.map((v) => toFixed(v)),
     }));
     cursorMovementsFixed.forEach(
-      ({ fromPerc, toPerc, lingerPerc, target: [x, y] }, i, arr) => {
+      ({ fromPerc, toPerc, lingerPerc, target: [x, y] }, i) => {
         const translate = `transform: translate(${x}px, ${y}px)`;
         const prevTarget =
-          arr[i - 1]?.target ?? [x0, y0].map((v) => toFixed(v));
+          cursorMovementsFixed[i - 1]?.target ??
+          [x0, y0].map((v) => toFixed(v));
         const prevTranslate = `transform: translate(${prevTarget[0]}px, ${prevTarget[1]}px)`;
         cursorKeyframes.push(
           ...[

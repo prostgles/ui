@@ -10,11 +10,11 @@ import { getRandomSixDigitCode } from "./emailProvider/onEmailRegistration";
 import { loginWithProvider } from "./OAuthProviders/loginWithProvider";
 import type { SUser } from "./sessionUtils";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 import { upsertSession } from "./upsertSession";
 
 export const getLogin = async (
-  database_config: NonNullable<AuthSetupData["database_config"]>,
+  database_config: NonNullable<AuthConfigForStateConnection["database_config"]>,
 ) => {
   const { auth_providers } = database_config;
   const mailClient = await getEmailSenderWithMockTest(auth_providers);

@@ -1,12 +1,12 @@
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import { tout, type DBS } from "..";
 import { checkClientIP, sidKeyName } from "./sessionUtils";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 import { getElectronConfig } from "../electronConfig";
 
 export const getOnUseOrSocketConnected = (
   dbs: DBS,
-  authSetupData: AuthSetupData,
+  authSetupData: AuthConfigForStateConnection,
 ) => {
   const onUseOrSocketConnected: AuthConfig["onUseOrSocketConnected"] = async (
     sid,

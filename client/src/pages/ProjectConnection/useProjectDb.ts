@@ -6,7 +6,7 @@ import {
 } from "prostgles-client";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { useEffect, useMemo } from "react";
-import type { PrglProject, PrglState } from "../../App";
+import type { PrglProject, AppContextProps } from "../../App";
 import { getTables } from "../../dashboard/Dashboard/getTables";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { prgl_R } from "../../WithPrgl";
@@ -34,7 +34,7 @@ export type PrglProjectState =
 
 type P = {
   connId: string | undefined;
-  prglState: PrglState;
+  prglState: AppContextProps;
 };
 
 const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
@@ -120,18 +120,6 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       return { error, path: undefined, state: "error" } as const;
     }
   }, [startConnection, connectionId]);
-
-  // const pathInfo = useMemo(() => {
-  //   if (!path?.path || connectionInfo.state === "loading") return undefined;
-  //   if (connectionInfo.error) {
-  //     return {
-  //       ...connectionInfo,
-  //       path: undefined,
-  //       connId,
-  //     } as const;
-  //   }
-  //   return { ...path, connId } as const;
-  // }, [path, connectionInfo, connId]);
 
   const prostglesClientOpts = useMemo(
     () => ({

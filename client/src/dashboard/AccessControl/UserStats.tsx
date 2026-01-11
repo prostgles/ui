@@ -1,14 +1,14 @@
 import { mdiMagnify } from "@mdi/js";
 import { usePromise } from "prostgles-client";
 import React from "react";
-import type { ExtraProps } from "../../App";
+import type { AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import SmartTable from "../SmartTable";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 type UserStatsProps = Pick<
-  ExtraProps,
+  AppContextProps,
   "dbs" | "dbsTables" | "dbsMethods" | "theme"
 >;
 

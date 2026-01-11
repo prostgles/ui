@@ -4,7 +4,7 @@ import { getKeys, isEqual } from "prostgles-types";
 import { tout, type DBS } from "../index";
 import { activePasswordlessAdminFilter } from "../SecurityManager/initUsers";
 
-export type AuthSetupData = {
+export type AuthConfigForStateConnection = {
   database_config: DBSSchema["database_configs"] | undefined;
   passwordlessAdmin:
     | (Pick<DBSSchema["users"], "id" | "type"> & {
@@ -13,27 +13,39 @@ export type AuthSetupData = {
       })
     | undefined;
 };
+export type ConnectionAuthSetup = {
+  database_config: DBSSchema["database_configs"];
+  url_path: string;
+};
 
-let authSetupData: AuthSetupData | undefined;
+export type AuthConfigForStateOrConnection = AuthConfigForStateConnection &
+  (
+    | {
+        type: "state";
+      }
+    | ({ type: "connection" } & ConnectionAuthSetup)
+  );
+
+let authSetupData: AuthConfigForStateConnection | undefined;
 
 export type AuthSetupDataListener = Promise<{
-  context: Partial<AuthSetupData>;
+  context: Partial<AuthConfigForStateConnection>;
   destroy: () => Promise<void>;
 }>;
 
 export const subscribeToAuthSetupChanges = async (
   dbs: DBS,
-  onChange: (auth: AuthSetupData) => void | Promise<void>,
+  onChange: (auth: AuthConfigForStateConnection) => void | Promise<void>,
   oldListener: AuthSetupDataListener | undefined,
 ): AuthSetupDataListener => {
   await (await oldListener)?.destroy();
-  let context: Partial<AuthSetupData> = {};
+  let context: Partial<AuthConfigForStateConnection> = {};
   const totalContextKeys = getKeys({
     passwordlessAdmin: 1,
     database_config: 1,
-  } satisfies Record<keyof AuthSetupData, 1>);
+  } satisfies Record<keyof AuthConfigForStateConnection, 1>);
 
-  const setContext = (changes: Partial<AuthSetupData>) => {
+  const setContext = (changes: Partial<AuthConfigForStateConnection>) => {
     const oldContext = { ...context };
     const newContext = { ...context, ...changes };
     const newKeyCount = Object.keys(newContext).length;
@@ -44,9 +56,9 @@ export const subscribeToAuthSetupChanges = async (
     ) {
       return;
     }
-    authSetupData = { ...context } as AuthSetupData;
+    authSetupData = { ...context } as AuthConfigForStateConnection;
 
-    void onChange(context as AuthSetupData);
+    void onChange(context as AuthConfigForStateConnection);
   };
 
   const connectionSub = await dbs.database_configs.subscribeOne(
@@ -89,7 +101,7 @@ export const subscribeToAuthSetupChanges = async (
     (passwordlessAdmin) => {
       setContext({
         passwordlessAdmin:
-          passwordlessAdmin as AuthSetupData["passwordlessAdmin"],
+          passwordlessAdmin as AuthConfigForStateConnection["passwordlessAdmin"],
       });
     },
   );
