@@ -403,8 +403,8 @@ export type DBGeneratedSchema = {
       message:  ( 
  |  {  type: "text";  text: string;  reasoning?: string; }
  |  {  type: "image" | "audio" | "video" | "application" | "text";  source: {  type: "base64";  media_type: string;  data: string; }; }
- |  {  type: "tool_result";  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: "text";  text: string; } |  {  type: "image" | "audio";  mimeType: string;  data: string; } |  {  type: "resource";  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } |  {  type: "resource_link";  uri: string;  name: string;  mimeType?: string;  description?: string; } )[];  is_error?: boolean; }
- |  {  type: "tool_use";  id: string;  name: string;  input: any; } )[]
+ |  {  type: "tool_use";  id: string;  name: string;  input: any; }
+ |  {  type: "tool_result";  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: "text";  text: string; } |  {  type: "image" | "audio";  mimeType: string;  data: string; } |  {  type: "resource";  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } |  {  type: "resource_link";  uri: string;  name: string;  mimeType?: string;  description?: string; } )[];  is_error?: boolean; } )[]
       meta?: null | any;
       user_id?: null | string;
     };
@@ -629,7 +629,7 @@ export type DBGeneratedSchema = {
       arguments?:  ( 
  |  {  name: string;  type: "any" | "string" | "number" | "boolean" | "Date" | "time" | "timestamp" | "string[]" | "number[]" | "boolean[]" | "Date[]" | "time[]" | "timestamp[]";  defaultValue?: string;  optional?: boolean;  allowedValues?: string[]; }
  |  {  name: string;  type: "Lookup" | "Lookup[]";  defaultValue?: any;  optional?: boolean;  lookup: { "table": string; "column": string; }; }
- |  {  name: string;  type: "JsonbSchema";  defaultValue?: any;  optional?: boolean;  schema: |  {  type: "boolean" | "number" | "integer" | "string" | "Date" | "time" | "timestamp" | "any" | "boolean[]" | "number[]" | "integer[]" | "string[]" | "Date[]" | "time[]" | "timestamp[]" | "any[]";  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; } |  {  type: "object" | "object[]";  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any;  properties: Record<string,  {  type: "boolean" | "number" | "integer" | "string" | "Date" | "time" | "timestamp" | "any" | "boolean[]" | "number[]" | "integer[]" | "string[]" | "Date[]" | "time[]" | "timestamp[]" | "any[]";  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; }>; }; } )[]
+ |  {  name: string;  type: "JsonbSchema";  defaultValue?: any;  optional?: boolean;  schema: |  {  type: "boolean" | "number" | "integer" | "string" | "Date" | "time" | "timestamp" | "Blob" | "any" | "unknown" | "boolean[]" | "number[]" | "integer[]" | "string[]" | "Date[]" | "time[]" | "timestamp[]" | "Blob[]" | "any[]" | "unknown[]";  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; } |  {  type: "object" | "object[]";  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any;  properties: Record<string,  {  type: "boolean" | "number" | "integer" | "string" | "Date" | "time" | "timestamp" | "Blob" | "any" | "unknown" | "boolean[]" | "number[]" | "integer[]" | "string[]" | "Date[]" | "time[]" | "timestamp[]" | "Blob[]" | "any[]" | "unknown[]";  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; }>; }; } )[]
       connection_id?: null | string;
       description?: string;
       id?: number;
@@ -873,3 +873,65 @@ export type DBGeneratedSchema = {
   
 }
 
+
+
+export type GeneratedFunctionSchema = { 
+  "askLLM": (args: {    connectionId: string;   schema: string;   chatId: number;   type: "new-message" | "approve-tool-use";   userMessage: ( 
+ |  {  type: "text";  text: string;  reasoning?: string; }
+ |  {  type: "image" | "audio" | "video" | "application" | "text";  source: {  type: "base64";  media_type: string;  data: string; }; }
+ |  {  type: "tool_use";  id: string;  name: string;  input: any; }
+ |  {  type: "tool_result";  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: "text";  text: string; } |  {  type: "image" | "audio";  mimeType: string;  data: string; } |  {  type: "resource";  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } |  {  type: "resource_link";  uri: string;  name: string;  mimeType?: string;  description?: string; } )[];  is_error?: boolean; } )[];  }) => Promise<any>
+  "getFullPrompt": (args: {    prompt: string;   schema: string;   dashboardTypesContent: string;  }) => Promise<any>
+  "stopAskLLM": (args: {    chatId: number;  }) => Promise<any>
+  "sendFeedback": (args: {    details: string;   email?: string;  }) => Promise<any>
+  "prostglesSignup": (args: {    email: string;   code: string;  }) => Promise<any>
+  "generateToken": (args: {    days: number;  }) => Promise<any>
+  "create2FA": () => Promise<any>
+  "enable2FA": (args: {    token: string;  }) => Promise<any>
+  "disable2FA": () => Promise<any>
+  "changePassword": (args: {    oldPassword: string;   newPassword: string;  }) => Promise<any>
+  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<any>
+  "makeDirectory": (args: {    path: string;   folderName: string;  }) => Promise<string>
+  "glob": (args: {    path?: string;   timeout?: number;  }) => Promise<any>
+  "disablePasswordless": (args: {    username: string;   password: string;  }) => Promise<any>
+  "getConnectionDBTypes": (args: {    conId?: string;  }) => Promise<any>
+  "getMyIP": () => Promise<any>
+  "getConnectedIds": () => Promise<any>
+  "toggleService": (args: {    serviceName: string;   enable: boolean;  }) => Promise<any>
+  "getDBSize": (args: {    conId: string;  }) => Promise<any>
+  "getIsSuperUser": (args: {    conId: string;  }) => Promise<any>
+  "getFileFolderSizeInBytes": (args: {    conId?: string;  }) => Promise<any>
+  "testDBConnection": (args: {    connection: any;  }) => Promise<any>
+  "validateConnection": (args: {    connection: any;  }) => Promise<any>
+  "getInstalledPsqlVersions": () => Promise<any>
+  "createConnection": (args: {    connection: any;   sampleSchemaName?: string;  }) => Promise<any>
+  "refreshModels": () => Promise<any>
+  "reloadSchema": (args: {    conId: string;  }) => Promise<any>
+  "deleteConnection": (args: {    id: string;   dropDatabase: boolean;  }) => Promise<any>
+  "disconnect": (args: {    conId: string;  }) => Promise<any>
+  "pgDump": (args: {    conId: string;   credId: | number
+ | null;   opts: {  name?: string;  initiator?: string;  options: |  {  command: "pg_dumpall";  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; } |  {  command: "pg_dump";  format: "p" | "t" | "c";  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean;  excludeSchema?: string;  schemaOnly?: boolean; }; };  }) => Promise<string>
+  "pgRestore": (args: {    bkpId: string;   connId?: string;   opts: any;  }) => Promise<any>
+  "bkpDelete": (args: {    bkpId: string;   force?: boolean;  }) => Promise<any>
+  "streamBackupFile": (args: {    data: |  {  type: "start";  fileName: string;  connectionId: string;  sizeBytes: number;  restoreOptions: {  command: "pg_restore" | "psql";  format: "p" | "t" | "c";  clean: boolean;  excludeSchema?: string;  newDbName?: string;  create?: boolean;  dataOnly?: boolean;  noOwner?: boolean;  numberOfJobs?: number;  ifExists?: boolean;  keepLogs?: boolean; }; }
+ |  {  type: "chunk";  streamId: string;  chunk: string; }
+ |  {  type: "end";  streamId: string; };  }) => Promise<any>
+  "setFileStorage": (args: {    connId: string;   tableConfig?: {  fileTable?: string;  storageType: |  {  type: "local"; } |  {  type: "S3";  credential_id: number; };  referencedTables?: any;  delayedDelete?: {  deleteAfterNDays: number;  checkIntervalHours?: number; }; };   opts?: {  keepS3Data?: boolean;  keepFileTable?: boolean; };  }) => Promise<any>
+  "getStatus": (args: {    connId: string;  }) => Promise<any>
+  "runConnectionQuery": (args: {    conId: string;   query: string;   args?: any;  }) => Promise<any>
+  "getSampleSchemas": () => Promise<any>
+  "getCompiledTS": (args: {    ts: string;  }) => Promise<any>
+  "killPID": (args: {    connId: string;   id_query_hash: string;   type?: "cancel" | "terminate";  }) => Promise<any>
+  "setOnMount": (args: {    connId: string;   changes: {  on_mount_ts?: string;  on_mount_ts_disabled?: boolean; };  }) => Promise<any>
+  "setTableConfig": (args: {    connId: string;   changes: {  table_config_ts?: string;  table_config_ts_disabled?: boolean; };  }) => Promise<any>
+  "getForkedProcStats": (args: {    connectionId: string;  }) => Promise<any>
+  "getNodeTypes": () => Promise<any>
+  "installMCPServer": (args: {    name: string;  }) => Promise<any>
+  "getMCPServersStatus": (args: {    serverName: string;  }) => Promise<any>
+  "callMCPServerTool": (args: {    chatId: number;   serverName: string;   toolName: string;   args?: Record<string, any>;  }) => Promise<any>
+  "reloadMcpServerTools": (args: {    serverName: string;  }) => Promise<any>
+  "getMcpHostInfo": () => Promise<any>
+  "transcribeAudio": (args: {    audioBlob: any;  }) => Promise<|  {  success: boolean;  transcription: string;  language: string;  language_probability: number;  segments: (  {  start: number;  end: number;  text: string; } )[]; }
+ |  {  error: string; }>
+  "startConnection": (args: {    connectionId: string;  }) => Promise<string>
+}

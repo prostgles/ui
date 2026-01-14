@@ -21,7 +21,9 @@ export const useCodeEditorTsTypes = (
 ): LanguageConfig | undefined => {
   const { connectionId, dbsMethods, dbKey, method, tables, dbs } = props;
   const dbSchemaTypes = usePromise(async () => {
-    const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.(connectionId);
+    const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.({
+      conId: connectionId,
+    });
     return dbSchemaTypes;
   }, [dbsMethods, connectionId]);
 

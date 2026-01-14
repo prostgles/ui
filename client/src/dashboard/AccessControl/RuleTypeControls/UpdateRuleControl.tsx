@@ -1,6 +1,3 @@
-import { mdiFileDocumentEditOutline } from "@mdi/js";
-import { getKeys, isObject, type AnyObject } from "prostgles-types";
-import React from "react";
 import type {
   ContextDataObject,
   TableRules,
@@ -8,6 +5,9 @@ import type {
 } from "@common/publishUtils";
 import { parseFieldFilter } from "@common/publishUtils";
 import ErrorComponent from "@components/ErrorComponent";
+import { mdiFileDocumentEditOutline } from "@mdi/js";
+import { getKeys, isObject } from "prostgles-types";
+import React from "react";
 
 import { DynamicFields } from "../OptionControllers/DynamicFields";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";

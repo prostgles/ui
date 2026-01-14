@@ -21,6 +21,34 @@ const EmailTemplateConfig = {
     body: "string",
   },
 } as const satisfies JSONB.FieldTypeObj;
+
+export const FILE_TABLE_CONFIG_SCHEMA = {
+  fileTable: { type: "string", optional: true },
+  storageType: {
+    oneOfType: [
+      { type: { enum: ["local"] } },
+      {
+        type: { enum: ["S3"] },
+        credential_id: { type: "number" },
+      },
+    ],
+  },
+  referencedTables: { type: "any", optional: true },
+  delayedDelete: {
+    optional: true,
+    type: {
+      /**
+       * Minimum amount of time measured in days for which the files will not be deleted after requesting delete
+       */
+      deleteAfterNDays: { type: "number" },
+      /**
+       * How freuquently the files will be checked for deletion delay
+       */
+      checkIntervalHours: { type: "number", optional: true },
+    },
+  },
+} as const satisfies JSONB.ObjectType["type"];
+
 const SMTPConfig = {
   oneOfType: [
     {
@@ -191,34 +219,8 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
       file_table_config: {
         info: { hint: `File storage configurations` },
         nullable: true,
-        jsonbSchemaType: {
-          fileTable: { type: "string", optional: true },
-          storageType: {
-            oneOfType: [
-              { type: { enum: ["local"] } },
-              {
-                type: { enum: ["S3"] },
-                credential_id: { type: "number" },
-              },
-            ],
-          },
-          referencedTables: { type: "any", optional: true },
-          delayedDelete: {
-            optional: true,
-            type: {
-              /**
-               * Minimum amount of time measured in days for which the files will not be deleted after requesting delete
-               */
-              deleteAfterNDays: { type: "number" },
-              /**
-               * How freuquently the files will be checked for deletion delay
-               */
-              checkIntervalHours: { type: "number", optional: true },
-            },
-          },
-        },
+        jsonbSchemaType: FILE_TABLE_CONFIG_SCHEMA,
       },
-
       backups_config: {
         nullable: true,
         info: { hint: `Automatic backups configurations` },

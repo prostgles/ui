@@ -25,8 +25,11 @@ export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
         label="Enabled"
         checked={!!dbConf.table_config_ts && !dbConf.table_config_ts_disabled}
         onChange={async (checked) => {
-          await dbsMethods.setTableConfig?.(connectionId, {
-            table_config_ts_disabled: !checked,
+          await dbsMethods.setTableConfig?.({
+            connId: connectionId,
+            changes: {
+              table_config_ts_disabled: !checked,
+            },
           });
         }}
       />
@@ -46,9 +49,12 @@ export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
         codePlaceholder={exampleConfig}
         value={dbConf.table_config_ts}
         onSave={async (value) => {
-          await dbsMethods.setTableConfig?.(connectionId, {
-            table_config_ts: value,
-            table_config_ts_disabled: !value,
+          await dbsMethods.setTableConfig?.({
+            connId: connectionId,
+            changes: {
+              table_config_ts: value,
+              table_config_ts_disabled: !value,
+            },
           });
         }}
       />

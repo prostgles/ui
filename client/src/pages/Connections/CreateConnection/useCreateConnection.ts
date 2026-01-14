@@ -50,21 +50,19 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
   const [error, setError] = useState<unknown>();
   const onOpenActions = useCallback(async () => {
     const serverInfo = (
-      await runConnectionQuery(
-        connId,
-        `
+      await runConnectionQuery({
+        conId: connId,
+        query: `
           SELECT rolcreatedb OR rolsuper as "canCreateDb", rolname
           FROM pg_catalog.pg_roles
           WHERE rolname = "current_user"();
         `,
-      )
+      })
     )[0]! as { canCreateDb: boolean; databases: string[]; rolname: string };
-    const databases = (await runConnectionQuery(
-      connId,
-      `
-          SELECT datname FROM pg_catalog.pg_database
-        `,
-    )) as { datname: string }[];
+    const databases = (await runConnectionQuery({
+      conId: connId,
+      query: `SELECT datname FROM pg_catalog.pg_database`,
+    })) as { datname: string }[];
     const sampleSchemas = await getSampleSchemas().catch(
       (gettingSampleSchemasError) => {
         console.error({ gettingSampleSchemasError });
@@ -106,11 +104,11 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
       if (newPgUser.create) {
         if (newUsernameError || newUserPasswordError)
           throw "User already exists or password is missing";
-        await runConnectionQuery(
-          connId,
-          `CREATE USER ${asName(newPgUser.name)} WITH ENCRYPTED PASSWORD $1;`,
-          [newPgUser.password],
-        );
+        await runConnectionQuery({
+          conId: connId,
+          query: `CREATE USER ${asName(newPgUser.name)} WITH ENCRYPTED PASSWORD $1;`,
+          args: [newPgUser.password],
+        });
         newDbOwnerCredentials = {
           db_user: newPgUser.name,
           db_pass: newPgUser.password,
@@ -123,14 +121,14 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
             `WITH OWNER ${JSON.stringify(newPgUser.name)}`
           : "",
         ].join("\n");
-        await runConnectionQuery(connId, createDbQuery);
+        await runConnectionQuery({ conId: connId, query: createDbQuery });
         newDbName = action.newDatabaseName!;
       } else {
         if (newDbOwnerCredentials && newPgUser.permissions.type === "owner") {
-          await runConnectionQuery(
-            connId,
-            `ALTER DATABASE ${asName(action.existingDatabaseName!)} SET OWNER TO ${asName(newPgUser.name)};`,
-          );
+          await runConnectionQuery({
+            conId: connId,
+            query: `ALTER DATABASE ${asName(action.existingDatabaseName!)} SET OWNER TO ${asName(newPgUser.name)};`,
+          });
         }
         newDbName = action.existingDatabaseName!;
       }
@@ -163,33 +161,36 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
         GRANT SELECT, UPDATE, DELETE, INSERT ON ALL TABLES IN SCHEMA prostgles TO ${escapedUserName};
         `
           : ``);
-        await runConnectionQuery(connId, query);
+        await runConnectionQuery({ conId: connId, query });
       }
 
       const validatedConnection = await validateConnection({
-        ...pickKeys(serverInfo!.mainConnection, [
-          "db_conn",
-          "db_host",
-          "db_port",
-          "db_ssl",
-          "db_user",
-          "db_pass",
-          "db_ssl",
-          "ssl_certificate",
-          "ssl_client_certificate",
-          "ssl_client_certificate_key",
-          "ssl_reject_unauthorized",
-        ]),
-        name: connectionName,
-        db_name: newDbName,
-        type: "Standard",
-        db_conn: null,
-        ...newDbOwnerCredentials,
+        connection: {
+          ...pickKeys(serverInfo!.mainConnection, [
+            "db_conn",
+            "db_host",
+            "db_port",
+            "db_ssl",
+            "db_user",
+            "db_pass",
+            "db_ssl",
+            "ssl_certificate",
+            "ssl_client_certificate",
+            "ssl_client_certificate_key",
+            "ssl_reject_unauthorized",
+          ]),
+          name: connectionName,
+          db_name: newDbName,
+          type: "Standard",
+          db_conn: null,
+          ...newDbOwnerCredentials,
+        },
       });
-      const newConn = await createConnection(
-        validatedConnection.connection,
-        action.type === "new" ? action.applySchema?.name : undefined,
-      );
+      const newConn = await createConnection({
+        connection: validatedConnection.connection,
+        sampleSchemaName:
+          action.type === "new" ? action.applySchema?.name : undefined,
+      });
       const { connection: newConnection } = newConn;
       if (
         action.type === "new" &&
@@ -206,7 +207,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
           });
         }
       }
-      navigate(`${ROUTES.CONNECTIONS}/${newConnection.id}`);
+      await navigate(`${ROUTES.CONNECTIONS}/${newConnection.id}`);
     },
     [
       connId,

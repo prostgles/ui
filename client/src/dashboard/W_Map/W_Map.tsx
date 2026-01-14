@@ -671,10 +671,10 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                       this.state.clickedItem?.properties.$rowhash ?
                         this.state.clickedItem
                       : undefined,
-                    dbProject: this.props.prgl.db,
+                    db: this.props.prgl.db,
                     theme: this.props.prgl.theme,
-                    dbTables: this.props.tables,
-                    dbMethods: this.props.prgl.methods,
+                    tables: this.props.tables,
+                    methods: this.props.prgl.methods,
                     layerQueries,
                     onInsertOrUpdate: () => {
                       this.setState({

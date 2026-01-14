@@ -66,7 +66,7 @@ export const ProstglesSignup = ({
           setError(undefined);
           try {
             const { token, host, error, hasError } =
-              await dbsMethods.prostglesSignup!(email, otpCode);
+              await dbsMethods.prostglesSignup!({ email, code: otpCode });
             if (hasError) {
               throw error;
             }

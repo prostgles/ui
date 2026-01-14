@@ -17,6 +17,7 @@ export const APIDetailsTokens = ({
   token,
   setToken,
   tokenCount,
+  dbsMethodSchema,
 }: APIDetailsProps & {
   token: string;
   tokenCount: number;
@@ -38,7 +39,7 @@ export const APIDetailsTokens = ({
         <Sessions
           dbs={dbs}
           dbsTables={dbsTables}
-          dbsMethods={dbsMethods}
+          dbsMethodSchema={dbsMethodSchema}
           user={user}
           displayType="api_token"
         />
@@ -112,7 +113,9 @@ export const APIDetailsTokens = ({
                     : undefined
                   }
                   onClickPromise={async () => {
-                    const token = await dbsMethods.generateToken!(+state.days);
+                    const token = await dbsMethods.generateToken!({
+                      days: +state.days,
+                    });
                     setToken(token);
                   }}
                 >

@@ -42,7 +42,7 @@ export const StatusMonitorInfoHeader = (
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const c = await getStatus(connectionId);
+        const c = await getStatus({ connId: connectionId });
         if (!getIsMounted()) {
           return;
         }

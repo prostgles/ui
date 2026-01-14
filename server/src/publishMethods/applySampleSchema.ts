@@ -10,7 +10,7 @@ import { isDefined } from "@common/filterUtils";
 import type { SampleSchema, SampleSchemaDir } from "@common/utils";
 import { getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
 import { actualRootDir } from "../electronConfig";
-import { runConnectionQuery } from "./publishMethods";
+import { runConnectionQuery } from "./getServerFunctions";
 
 export const applySampleSchema = async (
   dbs: DBS,

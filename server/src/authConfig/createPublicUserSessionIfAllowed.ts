@@ -2,7 +2,7 @@ import type {
   AuthClientRequest,
   LoginClientInfo,
 } from "prostgles-server/dist/Auth/AuthTypes";
-import { connMgr, type DBS } from "..";
+import { connectionManager, type DBS } from "..";
 import { insertUser, makeSession } from "./sessionUtils";
 import { getIPsFromClientInfo } from "./startRateLimitedLoginAttempt";
 import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
@@ -15,7 +15,7 @@ export const createPublicUserSessionIfAllowed = async (
   client: LoginClientInfo,
   reqInfo: AuthClientRequest,
 ): Promise<NewRedirectSession | undefined> => {
-  const publicConnections = connMgr.getConnectionsWithPublicAccess();
+  const publicConnections = connectionManager.getConnectionsWithPublicAccess();
   const { database_config } = authSetupData;
   if (!publicConnections.length || !database_config || !reqInfo.httpReq) {
     return;

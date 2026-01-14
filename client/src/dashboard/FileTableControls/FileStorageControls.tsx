@@ -1,6 +1,3 @@
-import { mdiContentSaveCogOutline } from "@mdi/js";
-import { usePromise } from "prostgles-client";
-import React, { useEffect, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
@@ -10,10 +7,13 @@ import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiContentSaveCogOutline } from "@mdi/js";
+import { usePromise } from "prostgles-client";
 import { pickKeys } from "prostgles-types";
+import React, { useEffect, useState } from "react";
+import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 import { CloudStorageCredentialSelector } from "../BackupAndRestore/CloudStorageCredentialSelector";
 import { FileStorageDelete } from "./FileStorageDelete";
-import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 
 const STORAGE_TYPES = [
   {
@@ -46,25 +46,19 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
   } = props;
   const [showDelete, setShowDelete] = useState(false);
 
-  const fileSizes = usePromise(
-    async () => ({
-      projectFolderSize:
-        (
-          (await database_config.file_table_config?.storageType.type) ===
-          "local"
-        ) ?
-          (dbsMethods.getFileFolderSizeInBytes?.(connection.id) as any)
-        : 0,
-      totalFileFolderSize:
-        (
-          (await database_config.file_table_config?.storageType.type) ===
-          "local"
-        ) ?
-          (dbsMethods.getFileFolderSizeInBytes?.() as any)
-        : 0,
-    }),
-    [database_config, connection, dbsMethods],
-  );
+  const fileSizes = usePromise(async () => {
+    const projectFolderSize =
+      database_config.file_table_config?.storageType.type === "local" ?
+        await dbsMethods.getFileFolderSizeInBytes?.({
+          conId: connection.id,
+        })
+      : 0;
+    const totalFileFolderSize =
+      database_config.file_table_config?.storageType.type === "local" ?
+        await dbsMethods.getFileFolderSizeInBytes?.({})
+      : 0;
+    return { projectFolderSize, totalFileFolderSize };
+  }, [database_config, connection, dbsMethods]);
 
   const { projectFolderSize = 0, totalFileFolderSize = 0 } = fileSizes ?? {};
 
@@ -98,7 +92,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
     canCreateTables ? undefined : (
       `Cannot use this feature: Your account needs CREATE TABLE privilege`
     );
-  const [enablingError, setEnablingError] = useState<any>();
+  const [enablingError, setEnablingError] = useState<unknown>();
 
   return (
     <>
@@ -205,9 +199,6 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
         {storageType === "S3" ?
           <div className="flex-row-wrap gap-2 h-fit">
             <CloudStorageCredentialSelector
-              dbs={dbs}
-              dbsMethods={dbsMethods}
-              dbsTables={dbsTables}
               selectedId={credentialId}
               pickFirst={true}
               onChange={(val) => {
@@ -225,7 +216,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
                   label="This file folder size"
                   value={
                     Math.round(
-                      (projectFolderSize ?? 0) / 1e6,
+                      Number(projectFolderSize || 0) / 1e6,
                     ).toLocaleString() + " MB"
                   }
                 />
@@ -234,7 +225,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
                   label="All file folders size"
                   value={
                     Math.round(
-                      (totalFileFolderSize ?? 0) / 1e6,
+                      Number(totalFileFolderSize || 0) / 1e6,
                     ).toLocaleString() + " MB"
                   }
                 />
@@ -244,13 +235,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
         : null}
       </FlexRowWrap>
 
-      {enablingError && (
-        <ErrorComponent
-          variant="outlined"
-          findMsg={true}
-          error={enablingError}
-        />
-      )}
+      <ErrorComponent variant="outlined" findMsg={true} error={enablingError} />
 
       {canEnable && (
         <div className="flex-col gap-1 mt-2 ">
@@ -265,17 +250,21 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
                 if (storageType === "S3" && !credentialId) {
                   throw "storageType missing";
                 }
-                await dbsMethods.setFileStorage!(connection.id, {
-                  fileTable,
-                  storageType:
-                    storageType === "local" ?
-                      {
-                        type: storageType,
-                      }
-                    : {
-                        type: storageType,
-                        credential_id: credentialId!,
-                      },
+                await dbsMethods.setFileStorage!({
+                  connId: connection.id,
+                  opts: {},
+                  tableConfig: {
+                    fileTable,
+                    storageType:
+                      storageType === "local" ?
+                        {
+                          type: storageType,
+                        }
+                      : {
+                          type: storageType,
+                          credential_id: credentialId!,
+                        },
+                  },
                 });
               } catch (err) {
                 setEnablingError(err);

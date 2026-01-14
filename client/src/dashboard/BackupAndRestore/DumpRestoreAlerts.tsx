@@ -62,7 +62,7 @@ export const DumpRestoreAlerts = ({
 
   const isSuperUser = usePromise(async () => {
     if (dbsMethods.getIsSuperUser && connectionId) {
-      return dbsMethods.getIsSuperUser(connectionId);
+      return dbsMethods.getIsSuperUser({ conId: connectionId });
     }
     return false;
   }, [dbsMethods, connectionId]);

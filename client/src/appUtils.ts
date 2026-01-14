@@ -53,6 +53,9 @@ export const createReactiveState = <S>(
   return rootReference;
 };
 
+/**
+ * @deprecated
+ */
 export const useReactiveState = <S>(store: ReactiveState<S>) => {
   const [state, setState] = useState(store.get());
   useEffect(() => {

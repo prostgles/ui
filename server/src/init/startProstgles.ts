@@ -15,11 +15,11 @@ import type { DBSConnectionInfo } from "../electronConfig";
 import { actualRootDir, getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
 import { publish } from "../publish/publish";
-import { publishMethods } from "../publishMethods/publishMethods";
 import { tableConfig } from "../tableConfig/tableConfig";
 import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
 import { onProstglesReady } from "./onProstglesReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
+import { getServerFunctions } from "@src/publishMethods/getServerFunctions";
 
 type StartArguments = {
   app: Express;
@@ -179,7 +179,7 @@ export const startProstgles = async ({
         const { user } = params;
         return Boolean(user && user.type === "admin");
       },
-      publishMethods,
+      functions: getServerFunctions,
       publish,
       joins: "inferred",
       onReady: async (params, update) => {

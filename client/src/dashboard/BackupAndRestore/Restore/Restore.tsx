@@ -84,20 +84,27 @@ export const Restore = (props: RestoreProps) => {
     if (!f) return;
 
     const stream = f.stream();
-    const streamId = await streamBackupFile(
-      "start",
-      f.name,
-      connectionId,
-      undefined,
-      f.size,
-      restoreOpts,
-    );
+    const streamId = await streamBackupFile({
+      data: {
+        type: "start",
+        fileName: f.name,
+        connectionId: connectionId,
+        sizeBytes: f.size,
+        restoreOptions: restoreOpts,
+      },
+    });
 
     const writableStream = new WritableStream({
       start(controller) {},
       async write(chunk, controller) {
         try {
-          await streamBackupFile("chunk", streamId, null, chunk, undefined);
+          await streamBackupFile({
+            data: {
+              type: "chunk",
+              streamId,
+              chunk,
+            },
+          });
         } catch (err) {
           console.error(err);
           controller.error(err);
@@ -106,14 +113,14 @@ export const Restore = (props: RestoreProps) => {
       },
       async close() {
         await (async () => {
-          await streamBackupFile("end", streamId, null, undefined, undefined);
+          await streamBackupFile({ data: { type: "end", streamId } });
         })();
       },
       abort(reason) {
         console.error("[abort]", reason);
       },
     });
-    stream.pipeTo(writableStream);
+    void stream.pipeTo(writableStream);
     popupClose();
   };
 

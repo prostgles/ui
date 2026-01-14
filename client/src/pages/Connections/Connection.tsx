@@ -25,7 +25,10 @@ export type ConnectionProps = (
       isAdmin: false;
     }
 ) &
-  Pick<AppContextProps, "dbs" | "dbsMethods" | "dbsTables" | "theme"> & {
+  Pick<
+    AppContextProps,
+    "dbs" | "dbsMethods" | "dbsMethodSchema" | "dbsTables" | "theme"
+  > & {
     showDbName: boolean;
   };
 

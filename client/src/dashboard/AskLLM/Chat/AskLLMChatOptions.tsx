@@ -19,7 +19,7 @@ export type LLMChatOptionsProps = {
 
 export const AskLLMChatOptions = (props: LLMChatOptionsProps) => {
   const { chatRootDiv, activeChatId } = props;
-  const { dbs, dbsTables } = usePrgl();
+  const { dbs, dbsTables, dbsMethodSchema, dbsMethods } = usePrgl();
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement>();
 
   const formProps = useMemo(() => {
@@ -75,6 +75,7 @@ export const AskLLMChatOptions = (props: LLMChatOptionsProps) => {
                 {...formProps}
                 db={dbs as DBHandlerClient}
                 tables={dbsTables}
+                methods={dbsMethodSchema}
               />
             </FlexCol>
           }

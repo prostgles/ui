@@ -1,22 +1,21 @@
-import { mdiMagnify } from "@mdi/js";
-import { usePromise } from "prostgles-client";
-import React from "react";
-import type { AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
-import SmartTable from "../SmartTable";
+import { mdiMagnify } from "@mdi/js";
+import { usePromise } from "prostgles-client";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React from "react";
+import type { AppContextProps } from "../../App";
+import SmartTable from "../SmartTable";
 
 type UserStatsProps = Pick<
   AppContextProps,
-  "dbs" | "dbsTables" | "dbsMethods" | "theme"
+  "dbs" | "dbsTables" | "dbsMethods" | "dbsMethodSchema" | "theme"
 >;
 
 export const UserStats = ({
   dbs,
   dbsTables,
-  dbsMethods,
-  theme,
+  dbsMethodSchema,
 }: UserStatsProps) => {
   const existingUserStats = usePromise(
     () =>
@@ -66,7 +65,7 @@ export const UserStats = ({
           <SmartTable
             key={"selectedRuleId"}
             db={dbs as DBHandlerClient}
-            methods={dbsMethods}
+            methods={dbsMethodSchema}
             filter={[
               { fieldName: "type", type: "$in", value: [], disabled: true },
             ]}

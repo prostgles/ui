@@ -6,6 +6,7 @@ import Tabs from "@components/Tabs";
 import { Zip } from "../../API/zip";
 import CodeExample from "../../CodeExample";
 import { download } from "../../W_SQL/W_SQL";
+import { sidKeyName } from "@common/authTypesAndConstants";
 
 export const APICodeExamples = ({
   token,
@@ -121,7 +122,7 @@ function getCodeSamples({
   projectPath?: string;
 }) {
   const token = _token || "YOUR_TOKEN";
-  const authStr = `auth: { sid_token: ${JSON.stringify(token)} },`;
+  const authStr = `auth: { ${sidKeyName}: ${JSON.stringify(token)} },`;
   const uri = JSON.stringify(window.location.origin);
   const path = JSON.stringify(projectPath);
   const indexTs = `import React from "react";
@@ -133,7 +134,7 @@ const App = () => {
     socketOptions: { 
       uri: ${uri},
       path: ${path}, 
-      query: { sid_token: ${JSON.stringify(token)} }, 
+      query: { ${sidKeyName}: ${JSON.stringify(token)} }, 
     }, 
   });
 

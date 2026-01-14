@@ -73,7 +73,12 @@ export const Checkbox = (props: P) => {
       <input
         id={idRef.current}
         ref={inputRef}
-        className="hidden"
+        style={{
+          opacity: 0,
+          position: "absolute",
+          width: 0,
+          height: 0,
+        }}
         type="checkbox"
         checked={checked}
         onChange={

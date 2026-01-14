@@ -74,7 +74,7 @@ export const PasswordlessSetup = ({ dbsMethods }: AppContextProps) => {
                 throw "Username or Password missing";
               }
               await dbsMethods.disablePasswordless!({ username, password });
-              pageReload("disablePasswordless");
+              await pageReload("disablePasswordless");
             },
           },
         ]}

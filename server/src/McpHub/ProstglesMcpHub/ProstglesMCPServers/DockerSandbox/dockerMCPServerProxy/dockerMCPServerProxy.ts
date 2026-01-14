@@ -11,6 +11,7 @@ import { isPortFree } from "./isPortFree";
 import { getProstglesState } from "@src/init/tryStartProstgles";
 import { isDocker } from "@src/index";
 import { runProstglesDBTool } from "@src/publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
+import { sidKeyName } from "@common/authTypesAndConstants";
 
 const PREFERRED_PORT = 3009;
 export const DOCKER_MCP_ENDPOINT = "/db";
@@ -96,7 +97,7 @@ const requestHandler = (req: Request, res: Response) => {
     }
     const { chat, sid_token } = authContext;
     req.cookies ??= {};
-    req.cookies.sid_token = sid_token;
+    req.cookies[sidKeyName] = sid_token;
     runProstglesDBTool(chat, { httpReq: req, res }, req.body, endpoint)
       .then((result) => {
         res.json(result);

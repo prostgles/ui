@@ -174,6 +174,22 @@ const schemaTypeToColType: Record<
     tsDataType: "any",
     udt_name: "text",
   },
+  unknown: {
+    tsDataType: "any",
+    udt_name: "text",
+  },
+  "unknown[]": {
+    tsDataType: "any",
+    udt_name: "text",
+  },
+  Blob: {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  "Blob[]": {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
 };
 
 const parseNumber = (str: string) =>

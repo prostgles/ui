@@ -28,7 +28,7 @@ export const MCPServersInstall = ({
   const log = (install_log || "") + (install_error || "");
   const mcpServerStatus = usePromise(async () => {
     mcpServer.installed; // To ensure it refreshes when installed changes
-    return dbsMethods.getMCPServersStatus?.(name);
+    return dbsMethods.getMCPServersStatus?.({ serverName: name });
   }, [mcpServer.installed, dbsMethods, name]);
 
   const { installMCPServer } = dbsMethods;
@@ -71,7 +71,7 @@ export const MCPServersInstall = ({
         color={"action"}
         size="small"
         onClickPromise={async () => {
-          return installMCPServer(name);
+          return installMCPServer({ name });
         }}
         data-command="MCPServersInstall.install"
       >

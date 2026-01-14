@@ -139,8 +139,6 @@ export const AddColumnMenu = ({
         null
       : colType === "CreateFileColumn" ?
         <CreateFileColumn
-          db={db}
-          tables={tables}
           fileTable={tables[0]?.info.fileTableName}
           tableName={table.name}
           onClose={() => setColType(undefined)}

@@ -19,11 +19,9 @@ export async function pgDump(
   credId: number | null,
   {
     options: o,
-    destination,
-    credentialID,
     initiator = "manual_backup",
     name,
-  }: PGDumpParams,
+  }: Omit<PGDumpParams, "credentialID" | "destination">,
 ) {
   if (isDefined(name) && typeof name !== "string") {
     throw new Error("Backup name must be a string");

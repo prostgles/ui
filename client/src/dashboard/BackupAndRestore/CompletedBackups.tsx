@@ -46,7 +46,8 @@ export const CompletedBackups = ({
   BackupsControlsState,
   "backupsFilterType" | "setBackupsFilterType" | "completedBackupsFilter"
 >) => {
-  const { connectionId, dbs, dbsTables, dbsMethods, db } = usePrgl();
+  const { connectionId, dbs, dbsTables, dbsMethods, dbsMethodSchema, db } =
+    usePrgl();
   const { pgRestore, bkpDelete } = dbsMethods;
   const connection_id = connectionId;
 
@@ -92,7 +93,7 @@ export const CompletedBackups = ({
       }
       onSetData={(items) => setHasBackups(!!items.length)}
       db={dbs as DBHandlerClient}
-      methods={dbsMethods}
+      methods={dbsMethodSchema}
       tableName="backups"
       tables={dbsTables}
       filter={completedBackupsFilter}
@@ -206,7 +207,9 @@ export const CompletedBackups = ({
                   iconPath={mdiDelete}
                   variant="outline"
                   color="danger"
-                  onClickPromise={() => bkpDelete!(row.id).then(popupClose)}
+                  onClickPromise={() =>
+                    bkpDelete!({ bkpId: row.id }).then(popupClose)
+                  }
                 >
                   Delete
                 </Btn>
@@ -215,7 +218,7 @@ export const CompletedBackups = ({
                   variant="outline"
                   color="danger"
                   onClickPromise={() =>
-                    bkpDelete!(row.id, true).then(popupClose)
+                    bkpDelete!({ bkpId: row.id, force: true }).then(popupClose)
                   }
                 >
                   Force delete
@@ -259,10 +262,11 @@ export const CompletedBackups = ({
                 variant="filled"
                 color="action"
                 onClickPromise={() =>
-                  pgRestore!(
-                    { bkpId: row.id, connId: connectionId },
-                    restoreOpts,
-                  ).then(popupClose)
+                  pgRestore!({
+                    bkpId: row.id,
+                    connId: connectionId,
+                    opts: restoreOpts,
+                  }).then(popupClose)
                 }
               >
                 Restore

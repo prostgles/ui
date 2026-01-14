@@ -116,7 +116,7 @@ export const AskLLMChatActionBarPromptSelector = (
         ]}
         tableName={"llm_prompts"}
         db={dbs as DBHandlerClient}
-        methods={prgl.dbsMethods}
+        methods={prgl.dbsMethodSchema}
         tables={prgl.dbsTables}
       />
       {prompt && (

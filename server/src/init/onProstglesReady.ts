@@ -6,7 +6,7 @@ import type { DBSConnectionInfo } from "@src/electronConfig";
 import type e from "express";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { OnReadyCallback } from "prostgles-server/dist/initProstgles";
-import { connMgr, type DBS } from "..";
+import { connectionManager, type DBS } from "..";
 import BackupManager from "../BackupManager/BackupManager";
 import { setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/AnthropicMcpHub/startMcpHub";
@@ -24,7 +24,7 @@ let authSetupDataListener: AuthSetupDataListener | undefined;
 
 let backupManager: BackupManager | undefined;
 export const initBackupManager = async (db: DB, dbs: DBS) => {
-  backupManager ??= await BackupManager.create(db, dbs, connMgr);
+  backupManager ??= await BackupManager.create(db, dbs, connectionManager);
   return backupManager;
 };
 
@@ -51,11 +51,11 @@ export const onProstglesReady = async (
     await setupLLM(db);
     await setupMCPServerHub(db);
 
-    await connMgr.destroy();
-    await connMgr.init(db, _db);
+    await connectionManager.destroy();
+    await connectionManager.init(db, _db);
     getServiceManager(db);
 
-    backupManager ??= await BackupManager.create(_db, db, connMgr);
+    backupManager ??= await BackupManager.create(_db, db, connectionManager);
 
     const newAuthSetupDataListener = subscribeToAuthSetupChanges(
       db,

@@ -1,3 +1,4 @@
+import type { DBSSchema } from "@common/publishUtils";
 import type { PGDumpParams } from "@common/utils";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
@@ -9,9 +10,9 @@ import {
   mdiFileUploadOutline,
   mdiStop,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client";
-import { type AnyObject } from "prostgles-types";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { omitKeys, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
@@ -37,7 +38,15 @@ export const orderByCreated = {
 } as const;
 
 export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
-  const { connectionId, serverState, dbs, dbsTables, dbsMethods, db } = prgl;
+  const {
+    connectionId,
+    serverState,
+    dbs,
+    dbsTables,
+    dbsMethods,
+    dbsMethodSchema,
+    db,
+  } = prgl;
   const { getInstalledPsqlVersions, getDBSize, pgDump } = dbsMethods;
   const connection_id = connectionId;
 
@@ -52,7 +61,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
   const [dumpOpts, setDumpOpts] = useState<PGDumpParams>(DEFAULT_DUMP_OPTS);
 
   const dbSize = usePromise(
-    async () => getDBSize?.(connection_id),
+    async () => getDBSize?.({ conId: connection_id }),
     [getDBSize, connection_id],
   );
 
@@ -121,13 +130,20 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
               ...dataCommand("config.bkp.create.start"),
               onClickPromise: async (e) => {
                 try {
-                  await pgDump!(
-                    connection_id,
-                    dumpOpts.destination === "Cloud" ?
-                      dumpOpts.credentialID
-                    : null,
-                    dumpOpts,
-                  );
+                  const credId = dumpOpts.credentialID ?? null;
+                  if (
+                    dumpOpts.destination === "Cloud" &&
+                    typeof credId !== "number"
+                  ) {
+                    throw new Error(
+                      "Must select/provide a cloud credential first",
+                    );
+                  }
+                  await pgDump!({
+                    conId: connection_id,
+                    credId,
+                    opts: omitKeys(dumpOpts, ["credentialID", "destination"]),
+                  });
                 } catch (err) {
                   console.error(err);
                   throw err;
@@ -195,7 +211,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
       </div>
       <SmartCardList
         db={dbs as DBHandlerClient}
-        methods={dbsMethods}
+        methods={dbsMethodSchema}
         tableName="backups"
         btnColor="gray"
         style={{ minHeight: "250px" }}
@@ -293,11 +309,11 @@ const DeleteAllBackups = ({
   filterName,
 }: DeleteAllBackupsProps) => {
   const onDeleteAll = async (popupClose: VoidFunction) => {
-    let bkp;
+    let bkp: DBSSchema["backups"] | undefined;
     do {
       bkp = await dbs.backups.findOne(filter);
       if (bkp) {
-        await dbsMethods.bkpDelete!(bkp.id, true);
+        await dbsMethods.bkpDelete!({ bkpId: bkp.id, force: true });
       }
     } while (bkp);
 

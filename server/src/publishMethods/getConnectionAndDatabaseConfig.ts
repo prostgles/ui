@@ -1,6 +1,6 @@
 import { getDatabaseConfigFilter } from "@src/ConnectionManager/connectionManagerUtils";
 import { assertJSONBObjectAgainstSchema } from "prostgles-types";
-import { connMgr, type DBS } from "..";
+import { connectionManager, type DBS } from "..";
 
 export const getConnectionAndDatabaseConfig = async (
   dbs: DBS,
@@ -20,7 +20,7 @@ export const getConnectionAndDatabaseConfig = async (
   if (!c) throw "Connection not found";
   const dbConf = await dbs.database_configs.findOne(getDatabaseConfigFilter(c));
   if (!dbConf) throw "Connection database_config not found";
-  const db = connMgr.getConnectionDb(connId);
+  const db = connectionManager.getConnectionDb(connId);
   if (!db) throw "db missing";
 
   return { c, dbConf, db };

@@ -1,3 +1,7 @@
+import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
 import {
   mdiDatabase,
   mdiDatabaseEdit,
@@ -7,13 +11,9 @@ import {
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
-import type { DBSSchema } from "@common/publishUtils";
-import Btn from "@components/Btn";
-import PopupMenu from "@components/PopupMenu";
 import { SmartForm } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
-import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
 
 export const AskLLMChatActionBarDatabaseAccess = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -25,7 +25,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
   const { prgl, activeChat } = props;
   const prompt = props.prompt?.prompt;
   const activeChatId = activeChat.id;
-  const { dbs, dbsMethods, dbsTables } = prgl;
+  const { dbs, dbsMethodSchema, dbsTables } = prgl;
 
   const { data: llm_chats_allowed_functions } =
     dbs.llm_chats_allowed_functions.useSubscribe({
@@ -107,7 +107,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
         tableName="llm_chats"
         rowFilter={[{ fieldName: "id", value: activeChatId }]}
         tables={dbsTables}
-        methods={dbsMethods}
+        methods={dbsMethodSchema}
         columns={{
           db_schema_permissions: 1,
           db_data_permissions: 1,

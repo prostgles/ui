@@ -25,7 +25,10 @@ export const ServerSideFunctions = (props: Prgl) => {
 
   const onSave = useCallback(
     async (value: string) => {
-      await setOnMount?.(connectionId, { on_mount_ts: value });
+      await setOnMount?.({
+        connId: connectionId,
+        changes: { on_mount_ts: value },
+      });
     },
     [setOnMount, connectionId],
   );
@@ -54,8 +57,11 @@ export const ServerSideFunctions = (props: Prgl) => {
           data-command="ServerSideFunctions.onMountEnabled"
           checked={!!connection.on_mount_ts && !connection.on_mount_ts_disabled}
           onChange={async (checked) => {
-            await dbsMethods.setOnMount?.(connectionId, {
-              on_mount_ts_disabled: !checked,
+            await dbsMethods.setOnMount?.({
+              connId: connectionId,
+              changes: {
+                on_mount_ts_disabled: !checked,
+              },
             });
           }}
         />

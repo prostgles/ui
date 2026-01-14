@@ -54,6 +54,46 @@ const toolUseContent: JSONB.FieldType = {
   ],
 };
 
+export const USER_MESSAGE_CONTENT_SCHEMA_OPTIONS = [
+  {
+    type: {
+      enum: ["text"],
+    },
+    text: "string",
+    reasoning: {
+      type: "string",
+      optional: true,
+      description:
+        "Internal reasoning message used by the model to explain its thought process",
+    },
+  },
+  {
+    type: {
+      enum: ["image", "audio", "video", "application", "text"],
+    },
+    source: {
+      type: {
+        type: { enum: ["base64"] },
+        media_type: "string",
+        data: "string",
+      },
+    },
+  },
+  {
+    type: { enum: ["tool_use"] },
+    id: "string",
+    name: "string",
+    input: "any",
+  },
+  {
+    type: { enum: ["tool_result"] },
+    tool_use_id: "string",
+    tool_name: { type: "string" },
+    content: toolUseContent,
+    is_error: { optional: true, type: "boolean" },
+  },
+] as const satisfies JSONB.ObjectType["type"][];
+
 export const tableConfigLLM: TableConfig<{ en: 1 }> = {
   llm_providers: {
     columns: {
@@ -222,53 +262,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       message: {
         jsonbSchema: {
           arrayOf: {
-            oneOf: [
-              {
-                type: {
-                  type: {
-                    enum: ["text"],
-                  },
-                  text: "string",
-                  reasoning: {
-                    type: "string",
-                    optional: true,
-                    description:
-                      "Internal reasoning message used by the model to explain its thought process",
-                  },
-                },
-              },
-              {
-                type: {
-                  type: {
-                    enum: ["image", "audio", "video", "application", "text"],
-                  },
-                  source: {
-                    type: {
-                      type: { enum: ["base64"] },
-                      media_type: "string",
-                      data: "string",
-                    },
-                  },
-                },
-              },
-              {
-                type: {
-                  type: { enum: ["tool_result"] },
-                  tool_use_id: "string",
-                  tool_name: { type: "string" },
-                  content: toolUseContent,
-                  is_error: { optional: true, type: "boolean" },
-                },
-              },
-              {
-                type: {
-                  type: { enum: ["tool_use"] },
-                  id: "string",
-                  name: "string",
-                  input: "any",
-                },
-              },
-            ],
+            oneOfType: USER_MESSAGE_CONTENT_SCHEMA_OPTIONS,
           },
         },
       },

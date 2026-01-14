@@ -541,10 +541,16 @@ test.describe("Main test", () => {
     );
 
     /** Add askLLM func args */
-    await page.getByTitle("Add new item").click();
-    await page.getByLabel("Argument name").fill("messages");
-    await page.getByLabel("Data type").click();
-    await page.locator(`[data-key="any"]`).click();
+    for (const [index, argName] of ["messages", "model", "tools"].entries()) {
+      await page.getByTitle("Add new item").click();
+      await page.getByLabel("Argument name").last().fill(argName);
+      await page.getByLabel("Data type").last().click();
+      await page.locator(`[data-key="any"]`).click();
+      await page.waitForTimeout(500); // Popup closes but also has this "Show more" button
+      await page.getByTitle("Show more").click();
+      await page.getByText("Optional", { exact: true }).nth(index).click();
+      await page.waitForTimeout(500);
+    }
     await page.getByRole("button", { name: "Add function" }).click();
 
     /** Page will reload after func is added */
@@ -553,7 +559,7 @@ test.describe("Main test", () => {
     /** JSONBSchema localValue bugs. Argument must show */
     await page.getByTitle("Edit function").click();
     await page.waitForTimeout(1e3);
-    await page.getByLabel("Argument name").waitFor({ state: "visible" });
+    await page.getByLabel("Argument name").last().waitFor({ state: "visible" });
     await page.getByTestId("Popup.close").click();
 
     /**

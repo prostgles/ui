@@ -1,9 +1,11 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { AnyObject } from "prostgles-types/lib";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type {
+  DBGeneratedSchema,
+  GeneratedFunctionSchema,
+} from "@common/DBGeneratedSchema";
 import type { InstalledPrograms } from "@common/electronInitTypes";
 import type { LLMMessage } from "@common/llmUtils";
 import type { McpToolCallResponse } from "@common/mcp";
+import type { AllowedChatTool } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import type {
   ConnectionStatus,
@@ -11,14 +13,23 @@ import type {
   ProcStats,
   SampleSchema,
 } from "@common/utils";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject } from "prostgles-types/lib";
 import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 import type { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
 import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
 import type { Backups } from "./dashboardUtils";
-import type { AllowedChatTool } from "@common/prostglesMcp";
 
 export type DBSMethods = Partial<{
-  mkdir: (path: string, folderName: string) => Promise<string>;
+  [funcName in keyof GeneratedFunctionSchema]: (
+    ...args: Parameters<GeneratedFunctionSchema[funcName]>
+  ) => funcName extends keyof DBSMethodsOld ?
+    ReturnType<Required<DBSMethodsOld>[funcName]>
+  : Promise<void>;
+}>;
+
+export type DBSMethodsOld = Partial<{
+  makeDirectory: (path: string, folderName: string) => Promise<string>;
   glob: (
     pattern?: string,
     timeout?: number,
@@ -88,7 +99,7 @@ export type DBSMethods = Partial<{
   testDBConnection: (con: Connection) => Promise<true>;
   deleteConnection: (
     conId: string,
-    opts: { dropDatabase: boolean },
+    dropDatabase: boolean,
   ) => Promise<Connection>;
   createConnection: (
     con: Connection,

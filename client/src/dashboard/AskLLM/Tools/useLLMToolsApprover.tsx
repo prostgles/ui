@@ -45,9 +45,9 @@ export const useLLMToolsApprover = ({
     }
 
     const toolUseRequests = getLLMMessageToolUse(lastToolUseMessage);
-    const allowedTools = await dbsMethods.getLLMAllowedChatTools?.(
-      activeChat.id,
-    );
+    const allowedTools = await dbsMethods.getLLMAllowedChatTools?.({
+      chatId: activeChat.id,
+    });
     const toolUseRequestsThatNeedApproval = toolUseRequests
       .map((toolUseRequest) => {
         const matchedTool = allowedTools?.find((tool) => {

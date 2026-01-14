@@ -127,7 +127,9 @@ export const MCPServerFooterActions = ({
             mcp_server.enabled ? undefined : "Must enable server first"
           }
           onClickPromise={async () => {
-            const toolCount = await reloadMcpServerTools(mcp_server.name);
+            const toolCount = await reloadMcpServerTools({
+              serverName: mcp_server.name,
+            });
             addAlert(
               `Reloaded ${toolCount || 0} ${pluralise(toolCount, "tool")} for ${JSON.stringify(mcp_server.name)} server`,
             );

@@ -70,7 +70,15 @@ export const AccessControlRuleEditor = ({
   dbsConnection,
   onCancel,
 }: UserGroupRuleEditorProps) => {
-  const { db, dbs, dbsTables, dbsMethods, connection, tables } = prgl;
+  const {
+    db,
+    dbs,
+    dbsTables,
+    dbsMethods,
+    connection,
+    tables,
+    dbsMethodSchema,
+  } = prgl;
   const editedRule = useEditedAccessRule({ action, prgl });
   const { setAction } = useAccessControlSearchParams();
   const [wspErrors, setWspErrors] = useState<string>();
@@ -159,6 +167,7 @@ export const AccessControlRuleEditor = ({
             dbs={dbs}
             dbsTables={dbsTables}
             dbsMethods={dbsMethods}
+            dbsMethodSchema={dbsMethodSchema}
           />
         </FlexRow>
 

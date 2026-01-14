@@ -7,7 +7,7 @@ import { StatusMonitorProcList } from "./StatusMonitorProcList";
 
 export type StatusMonitorProps = Pick<
   AppContextProps,
-  "dbs" | "dbsMethods" | "dbsTables"
+  "dbs" | "dbsMethods" | "dbsMethodSchema" | "dbsTables"
 > & {
   connectionId: string;
   getStatus: Required<DBSMethods>["getStatus"];

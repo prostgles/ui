@@ -2,11 +2,10 @@ import React from "react";
 import type { AppContextProps } from "../App";
 import RTComp from "./RTComp";
 
-import type { SubscriptionHandler } from "prostgles-types";
-import SmartTable from "./SmartTable";
-import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";
-import { t } from "../i18n/i18nUtils";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { t } from "../i18n/i18nUtils";
+import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";
+import SmartTable from "./SmartTable";
 
 export type Users = {
   created?: Date;
@@ -24,27 +23,8 @@ type S = {
 };
 
 export default class UserManager extends RTComp<AppContextProps, S> {
-  state: S = {
-    collapsed: true,
-    loading: true,
-  };
-
-  loaded = false;
-  sub?: SubscriptionHandler;
-  onDelta = () => {
-    const { dbs, user } = this.props;
-    // if(dbs && !this.loaded){
-    //   this.loaded = true;
-    //   this.sub = await dbs.users.subscribe({ username: "prostgles-no-auth-user" }, { orderBy: { created: -1 } }, users => {
-    //     this.setState({ users })
-    //   })
-    // }
-  };
-
-  onUnmount() {}
-
   render() {
-    const { dbs, dbsTables, user, dbsMethods, theme } = this.props;
+    const { dbs, dbsTables, user, dbsMethodSchema } = this.props;
 
     let content: React.ReactNode;
     if (user?.type !== "admin") {
@@ -56,7 +36,7 @@ export default class UserManager extends RTComp<AppContextProps, S> {
         <SmartTable
           className="w-full"
           db={dbs as DBHandlerClient}
-          methods={dbsMethods}
+          methods={dbsMethodSchema}
           titlePrefix={t.Users["Prostgles UI users"]}
           tableName="users"
           tables={dbsTables}

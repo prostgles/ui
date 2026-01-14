@@ -446,7 +446,9 @@ export const NewConnectionForm = ({
                 />
                 {dbsMethods?.reloadSchema && (
                   <Btn
-                    onClickPromise={() => dbsMethods.reloadSchema!(c.id!)}
+                    onClickPromise={() =>
+                      dbsMethods.reloadSchema!({ conId: c.id! })
+                    }
                     color="action"
                   >
                     {t.NewConnectionForm["Reload schema"]}

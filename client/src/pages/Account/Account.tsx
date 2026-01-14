@@ -1,13 +1,13 @@
+import { API_ENDPOINTS } from "@common/utils";
+import { FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import Tabs from "@components/Tabs";
 import { mdiAccount, mdiApplicationBracesOutline, mdiSecurity } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { getKeys } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router";
-import { API_ENDPOINTS } from "@common/utils";
 import type { AppContextProps } from "../../App";
-import { FlexRow } from "@components/Flex";
-import { InfoRow } from "@components/InfoRow";
-import Tabs from "@components/Tabs";
 import { PasswordlessSetup } from "../../dashboard/AccessControl/PasswordlessSetup";
 import { APIDetails } from "../../dashboard/ConnectionConfig/APIDetails/APIDetails";
 import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
@@ -19,7 +19,7 @@ import { Setup2FA } from "./Setup2FA";
 type AccountProps = AppContextProps;
 
 export const Account = (props: AccountProps) => {
-  const { dbs, dbsTables, dbsMethods, user } = props;
+  const { dbs, dbsTables, dbsMethods, dbsMethodSchema, user } = props;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: dbsConnection } = dbs.connections.useFindOne({
@@ -66,7 +66,7 @@ export const Account = (props: AccountProps) => {
         <SmartForm
           label=""
           db={dbs as DBHandlerClient}
-          methods={dbsMethods}
+          methods={dbsMethodSchema}
           tableName="users"
           tables={dbsTables}
           rowFilter={[{ fieldName: "id", value: user.id }]}

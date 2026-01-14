@@ -49,7 +49,7 @@ export const domToSVG = async (node: HTMLElement) => {
   /** Add textLength to prevent bugs in ios (It uses a different font which is wider and overflows the existing rects and clip paths) */
   svg.querySelectorAll("text,tspan").forEach((_text) => {
     const text = _text as SVGTextElement | SVGTSpanElement;
-    const isMultiLine = text.textContent.includes("\n");
+    const isMultiLine = (text.textContent || "").includes("\n");
     if (
       isMultiLine ||
       /** Has tspans that we'll handle separately */

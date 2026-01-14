@@ -19,10 +19,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { fixIndent, ROUTES } from "@common/utils";
 import { AppContextProvider } from "@pages/AppContextProvider";
 import type { AuthHandler } from "prostgles-client/dist/getAuthHandler";
-import {
-  type DBHandlerClient,
-  type MethodHandler,
-} from "prostgles-client/dist/prostgles";
+import { type DBHandlerClient } from "prostgles-client";
 import { type Socket } from "socket.io-client";
 import { CommandPalette } from "./app/CommandPalette/CommandPalette";
 import { Documentation } from "./app/CommandPalette/Documentation";
@@ -41,6 +38,7 @@ import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { useAppState } from "./useAppState/useAppState";
+import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
 
 export type ClientUser = {
   sid: string;
@@ -61,6 +59,7 @@ export type PrglReadyState = {
   dbs: DBS;
   dbsTables: CommonWindowProps["tables"];
   dbsMethods: DBSMethods;
+  dbsMethodSchema: ServerFunctionHandler;
   dbsSocket: Socket;
   auth: AuthHandler<ClientUser>;
   isAdminOrSupport: boolean;
@@ -80,7 +79,7 @@ export type PrglStateCore = Pick<
 
 export type PrglCore = {
   db: DBHandlerClient;
-  methods: MethodHandler;
+  methods: ServerFunctionHandler;
   tables: CommonWindowProps["tables"];
 };
 export type PrglProject = PrglCore & {

@@ -20,7 +20,7 @@ import type { AuthSetupDataListener } from "../authConfig/subscribeToAuthSetupCh
 import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
-import { connMgr } from "../index";
+import { connectionManager } from "../index";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 import {
@@ -511,7 +511,7 @@ export const getCDB = async (
       await db.$pool.end();
       delete cdbCache[connId];
     };
-    const db = await connMgr.getNewConnectionDb(connId, {
+    const db = await connectionManager.getNewConnectionDb(connId, {
       application_name: "prostgles getCDB",
       ...opts,
     });

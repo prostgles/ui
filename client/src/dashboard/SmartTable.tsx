@@ -216,6 +216,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       tableName,
       db,
       tables,
+      methods,
       onClickRow,
       onClosePopup,
       className,

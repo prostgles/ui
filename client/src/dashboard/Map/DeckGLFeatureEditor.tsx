@@ -1,13 +1,13 @@
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { InfoRow } from "@components/InfoRow";
+import { Select } from "@components/Select/Select";
 import { mdiPencil, mdiPlus } from "@mdi/js";
 import { scaleLinear } from "d3";
 import type { GeoJsonLayer } from "deck.gl";
 import type { Feature } from "geojson";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import Btn from "@components/Btn";
-import ErrorComponent from "@components/ErrorComponent";
-import { InfoRow } from "@components/InfoRow";
-import { Select } from "@components/Select/Select";
-import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
+import type { Prgl } from "src/App";
 import { isDefined } from "../../utils/utils";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { LayerTable, W_MapProps } from "../W_Map/W_Map";
@@ -19,7 +19,7 @@ import { DrawModes, geometryToGeoEWKT } from "./mapDrawUtils";
 export type DeckGLFeatureEditorProps = {
   deckW: DeckWrapped;
   edit: Pick<W_MapProps, "layerQueries"> &
-    Pick<FullExtraProps, "dbProject" | "dbTables" | "dbMethods" | "theme"> & {
+    Pick<Prgl, "db" | "tables" | "methods" | "theme"> & {
       feature:
         | undefined
         | (Feature & {
@@ -50,14 +50,7 @@ export const DeckGLFeatureEditor = ({
   deckGlLibs,
   deckW,
 }: DeckGLFeatureEditorProps) => {
-  const {
-    dbProject,
-    dbTables,
-    feature,
-    layerQueries,
-    dbMethods,
-    onInsertOrUpdate,
-  } = edit;
+  const { db, tables, feature, layerQueries, methods, onInsertOrUpdate } = edit;
 
   const [editMode, setEditMode] = useState<{
     modeKey: keyof AllDrawModes;
@@ -104,12 +97,12 @@ export const DeckGLFeatureEditor = ({
       if (insert && defaultData) {
         try {
           if (isUpdate) {
-            await dbProject[editMode.tableName]!.update!(
+            await db[editMode.tableName]!.update!(
               { $rowhash: editMode.$rowhash },
               defaultData,
             );
           } else {
-            await dbProject[editMode.tableName]!.insert!(defaultData);
+            await db[editMode.tableName]!.insert!(defaultData);
           }
           onInsertOrUpdate();
           setEditMode(undefined);
@@ -124,7 +117,7 @@ export const DeckGLFeatureEditor = ({
       editMode,
       defaultData,
       isUpdate,
-      dbProject,
+      db,
       onInsertOrUpdate,
       deckGlLibs,
       onRenderLayer,
@@ -307,7 +300,7 @@ export const DeckGLFeatureEditor = ({
     layerQueries?.filter((l) => "tableName" in l) as LayerTable[]
   )
     .map((l) => ({ ...l, rootTable: l.path?.at(-1) ?? l.tableName }))
-    .filter((l) => dbProject[l.tableName]?.update);
+    .filter((l) => db[l.tableName]?.update);
 
   const closeEditMode = useCallback(() => {
     clearEditMode(true);
@@ -332,9 +325,9 @@ export const DeckGLFeatureEditor = ({
           asPopup={true}
           tableName={editMode.tableName}
           rowFilter={editModeFilter}
-          db={dbProject}
-          tables={dbTables}
-          methods={dbMethods}
+          db={db}
+          tables={tables}
+          methods={methods}
           defaultData={defaultData}
           onSuccess={closeEditMode}
           onClose={clearEditMode}
@@ -424,7 +417,7 @@ export const DeckGLFeatureEditor = ({
                 color="danger"
                 onClick={async () => {
                   try {
-                    await dbProject[editMode.tableName]?.delete!({
+                    await db[editMode.tableName]?.delete!({
                       $rowhash: editMode.$rowhash,
                     });
                     setEditMode(undefined);

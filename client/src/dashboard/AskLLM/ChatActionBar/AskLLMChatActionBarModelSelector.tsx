@@ -1,7 +1,3 @@
-import { mdiAccountKey, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DetailedJoinSelect } from "prostgles-types";
-import React, { useMemo, useState } from "react";
 import type { DetailedFilterBase } from "@common/filterUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
@@ -9,6 +5,10 @@ import Chip from "@components/Chip";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { Select, type FullOption } from "@components/Select/Select";
 import { SvgIconFromURL } from "@components/SvgIcon";
+import { mdiAccountKey, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DetailedJoinSelect } from "prostgles-types";
+import React, { useMemo, useState } from "react";
 import { SmartForm, SmartFormPopup } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
@@ -58,7 +58,7 @@ export const AskLLMChatActionBarModelSelector = (
           tableName="llm_models"
           rowFilter={[viewModelForm]}
           tables={prgl.dbsTables}
-          methods={prgl.dbsMethods}
+          methods={prgl.dbsMethodSchema}
           onClose={() => setViewModelForm(undefined)}
         />
       )}
@@ -68,7 +68,7 @@ export const AskLLMChatActionBarModelSelector = (
           asPopup={true}
           tableName="llm_credentials"
           db={dbs as DBHandlerClient}
-          methods={prgl.dbsMethods}
+          methods={prgl.dbsMethodSchema}
           defaultData={{
             provider_id: addProviderCredentials,
           }}
@@ -176,7 +176,7 @@ export const AskLLMChatActionBarModelSelector = (
                 label="Add model"
                 db={dbs as DBHandlerClient}
                 tableName="llm_models"
-                methods={prgl.dbsMethods}
+                methods={prgl.dbsMethodSchema}
                 tables={prgl.dbsTables}
                 triggerButton={{
                   iconPath: mdiPlus,

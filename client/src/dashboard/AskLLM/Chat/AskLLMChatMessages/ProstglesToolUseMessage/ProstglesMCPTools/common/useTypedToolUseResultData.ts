@@ -23,6 +23,14 @@ export const useTypedToolUseResultData = <S extends JSONB.FieldType>(
             allowExtraProperties: true,
           },
         );
+        if (parseResult.error) {
+          console.error(
+            "Tool use result content does not match schema:",
+            parseResult.error,
+          );
+          return JSON.parse(stringContent) as JSONB.GetSchemaType<S>;
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return parseResult.data;
       }

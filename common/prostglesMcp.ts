@@ -362,7 +362,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           category: "string",
           engine: "string",
           img_src: "string",
-          thumbnail: "string",
+          thumbnail: "any",
         },
       },
     },

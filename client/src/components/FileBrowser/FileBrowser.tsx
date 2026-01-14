@@ -35,7 +35,7 @@ export const FileBrowser = ({ title, path, onChange }: P) => {
   } = usePrgl();
 
   const pathFiles = usePromise(async () => {
-    const result = glob ? await glob(path) : undefined;
+    const result = glob ? await glob({ path }) : undefined;
     if (!path && result?.path) {
       onChange(result.path);
     }

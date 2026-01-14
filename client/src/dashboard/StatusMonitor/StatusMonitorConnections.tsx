@@ -44,8 +44,12 @@ export const StatusMonitorConnections = ({
             WHERE pid <> pg_backend_pid()
             AND datid = \${datid};
           `;
-              await dbsMethods.runConnectionQuery!(connectionId, query, {
-                datid,
+              await dbsMethods.runConnectionQuery!({
+                conId: connectionId,
+                query,
+                args: {
+                  datid,
+                },
               });
             }}
           />

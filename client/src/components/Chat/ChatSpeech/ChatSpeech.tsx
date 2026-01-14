@@ -44,7 +44,9 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
             throw new Error("Transcription service is not available");
           }
           setIsTranscribing(true);
-          const sttResult = await transcribeAudio(audioOrTranscript as Blob);
+          const sttResult = await transcribeAudio({
+            audioBlob: audioOrTranscript as Blob,
+          });
           if ("success" in sttResult) {
             if (sttResult.transcription) {
               await onFinished(sttResult.transcription, autoSend);

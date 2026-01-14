@@ -68,7 +68,7 @@ export const JSONBSchemaArray = ({
       open={true}
     >
       {/* <Label info={schema.description}>{schema.title}</Label> */}
-      <div className="JSONBSchemaArray_ItemsList flex-col gap-1">
+      <ul className="JSONBSchemaArray_ItemsList flex-col gap-1 m-0 p-0">
         {Array.isArray(value) &&
           value.map((item, itemIdx) => {
             const itemNestingPath = [...(nestingPath ?? []), itemIdx];
@@ -129,7 +129,7 @@ export const JSONBSchemaArray = ({
               </DraggableLI>
             );
           })}
-      </div>
+      </ul>
       {newItem && (
         <Popup
           title={"Add new item"}

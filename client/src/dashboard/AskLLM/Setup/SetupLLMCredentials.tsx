@@ -14,7 +14,7 @@ import { isPlaywrightTest } from "../../../i18n/i18nUtils";
 
 export type SetupLLMCredentialsProps = Pick<
   Prgl,
-  "theme" | "dbs" | "dbsTables" | "dbsMethods"
+  "theme" | "dbs" | "dbsTables" | "dbsMethods" | "dbsMethodSchema"
 > & {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
 } & (

@@ -34,7 +34,7 @@ export const Setup2FA = (
   const enable2FA = async (closePopup: VoidFunction) => {
     try {
       if (!dbsMethods.enable2FA) throw "Something went wrong";
-      await dbsMethods.enable2FA(codeConfirm! + "");
+      await dbsMethods.enable2FA({ token: codeConfirm! + "" });
 
       setTimeout(() => {
         onChange();

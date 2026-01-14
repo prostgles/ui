@@ -1,23 +1,21 @@
-import {
-  mdiFile,
-  mdiFilter,
-  mdiFunction,
-  mdiRefresh,
-  mdiScriptTextPlay,
-  mdiTable,
-  mdiTableEdit,
-  mdiTableEye,
-} from "@mdi/js";
-import type { MethodFullDef } from "prostgles-types";
-import { isObject } from "prostgles-types";
-import React, { useRef } from "react";
-import { dataCommand } from "../../Testing";
+import { getEntries } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
 import { SearchList } from "@components/SearchList/SearchList";
 import { SvgIcon } from "@components/SvgIcon";
+import {
+  mdiFile,
+  mdiFilter,
+  mdiFunction,
+  mdiRefresh,
+  mdiScriptTextPlay,
+  mdiTableEdit,
+  mdiTableEye,
+} from "@mdi/js";
+import React, { useRef } from "react";
+import { dataCommand } from "../../Testing";
 import { t } from "../../i18n/i18nUtils";
 import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
@@ -67,17 +65,10 @@ export const DashboardMenuContent = (props: P) => {
       (window.innerWidth - centeredLayout.maxWidth) / 2 + "px"
     : "50vw";
 
-  const detailedMethods: (MethodFullDef & { name: string })[] = Object.keys(
-    methods,
-  )
-    .filter((n) => {
-      const m = methods[n];
-      return m && typeof m !== "function" && isObject(m) && m.run;
-    })
-    .map((methodName) => ({
-      name: methodName,
-      ...(methods[methodName] as MethodFullDef),
-    }));
+  const detailedMethods = getEntries(methods).map(([name, info]) => ({
+    ...info,
+    name: name as string,
+  }));
 
   const { setWorkspace } = useSetActiveWorkspace(workspace.id);
 
@@ -240,7 +231,7 @@ export const DashboardMenuContent = (props: P) => {
                 color="action"
                 disabledInfo={!reloadSchema ? "Must be admin" : ""}
                 onClickPromise={async () => {
-                  await reloadSchema!(props.prgl.connectionId);
+                  await reloadSchema!({ conId: props.prgl.connectionId });
                 }}
                 iconPath={mdiRefresh}
               >

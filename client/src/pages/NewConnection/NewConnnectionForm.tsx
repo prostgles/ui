@@ -1,3 +1,16 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
+import { isObject } from "@common/publishUtils";
+import { ROUTES } from "@common/utils";
+import Btn from "@components/Btn";
+import ErrorComponent, { getErrorMessage } from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { Section } from "@components/Section";
+import { SwitchToggle } from "@components/SwitchToggle";
 import {
   mdiArrowLeft,
   mdiCheck,
@@ -8,29 +21,16 @@ import {
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import type { DBSSchema } from "@common/publishUtils";
-import { isObject } from "@common/publishUtils";
 import type { AppContextProps } from "../../App";
-import Btn from "@components/Btn";
-import ErrorComponent, { getErrorMessage } from "@components/ErrorComponent";
-import { FlexCol } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
-import { InfoRow } from "@components/InfoRow";
-import Loading from "@components/Loader/Loading";
-import { Section } from "@components/Section";
-import { SwitchToggle } from "@components/SwitchToggle";
+import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
 import { CodeConfirmation } from "../../dashboard/BackupAndRestore/CodeConfirmation";
 import RTComp from "../../dashboard/RTComp";
 import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRecords";
 import { t } from "../../i18n/i18nUtils";
 import { get } from "../../utils/utils";
 import { getBrowserOS } from "../ElectronSetup/ElectronSetup";
-import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionFormFields";
-import { ROUTES } from "@common/utils";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -90,7 +90,7 @@ type NewConnectionProps = {
   connectionId: string | undefined;
   prglState: Pick<
     AppContextProps,
-    "dbs" | "dbsMethods" | "dbsTables" | "user" | "theme"
+    "dbs" | "dbsMethods" | "dbsMethodSchema" | "dbsTables" | "user" | "theme"
   >;
   onDeleted?: () => void;
   onUpserted?: (connection: Required<Connection>) => void;
@@ -158,7 +158,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
     const { dbsMethods } = prglState;
     this.setState({ status: "" });
     try {
-      const res = await dbsMethods.testDBConnection!(connection);
+      const res = await dbsMethods.testDBConnection!({ connection });
       this.setState({
         status:
           "OK" +
@@ -179,7 +179,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
 
     const { dbsMethods } = prglState;
     try {
-      await dbsMethods.deleteConnection!(c.id!, { dropDatabase });
+      await dbsMethods.deleteConnection!({ id: c.id!, dropDatabase });
       /** Hacky way to prevent reconnections to dropped connection */
       (window as any).dbSocket?.disconnect();
       onDeleted?.();
@@ -247,9 +247,11 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
           mode === "edit" ||
           mode === "insert"
         ) ?
-          await dbsMethods.validateConnection!(newData).catch((error) => {
-            return { warning: error, connection };
-          })
+          await dbsMethods.validateConnection!({ connection: newData }).catch(
+            (error) => {
+              return { warning: error, connection };
+            },
+          )
         : { connection: newData, warning: undefined };
 
       if (mode !== "edit" && !this.addedName && !connection.name) {
@@ -399,7 +401,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                         showRelated="descendants"
                         tableName={"connections"}
                         tables={prglState.dbsTables}
-                        methods={prglState.dbsMethods}
+                        methods={prglState.dbsMethodSchema}
                         errors={{}}
                       />
                     </Section>
@@ -499,8 +501,9 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     return;
                   }
 
-                  const { connection } =
-                    await dbsMethods.createConnection!(conn);
+                  const { connection } = await dbsMethods.createConnection!({
+                    connection: conn,
+                  });
 
                   onUpserted?.(connection);
                   setMsg({

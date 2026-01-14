@@ -1,3 +1,4 @@
+import { filterArr } from "@common/llmUtils";
 import {
   includes,
   isDefined,
@@ -5,9 +6,8 @@ import {
   tryCatchV2,
   type AnyObject,
 } from "prostgles-types";
-import { filterArr, findArr } from "@common/llmUtils";
-import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 import type { LLMMessage } from "./askLLM";
+import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 
 export const getLLMRequestBody = ({
   llm_provider,
@@ -271,9 +271,7 @@ export const getLLMRequestBody = ({
     ...llm_chat.extra_body,
   };
   return {
-    body: JSON.stringify(
-      provider === "Prostgles" ? [bodyWithExtras] : bodyWithExtras,
-    ),
+    body: JSON.stringify(bodyWithExtras),
     headers: {
       ...headers,
       ...llm_provider.extra_headers,

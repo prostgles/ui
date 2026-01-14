@@ -74,7 +74,6 @@ export async function initConnectionManager(
   );
 
   /** Start connections if accessed. TODO This should be a 404 error request handler */
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   this.app.use(async (req, res, next) => {
     const { url } = req;
     if (this.dbs && this.db && this.connections) {

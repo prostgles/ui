@@ -20,9 +20,9 @@ import { getOnUseOrSocketConnected } from "./onUseOrSocketConnected";
 import {
   authCookieOpts,
   parseAsBasicSession,
-  sidKeyName,
   type SUser,
 } from "./sessionUtils";
+import { sidKeyName } from "@common/authTypesAndConstants";
 import {
   getAuthSetupData,
   type AuthConfigForStateConnection,

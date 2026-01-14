@@ -523,6 +523,7 @@ export const COMMANDS = {
   FilterWrapper_Field: "",
   "CloudStorageCredentialSelector.selectCredential": "",
   DashboardMenuContent: "",
+  "ArgumentDefinition.toggleOptional": "",
 } as const satisfies Record<
   string,
   | string

@@ -129,9 +129,6 @@ export const AutomaticBackups = ({
           />
           {!!database_config?.backups_config?.cloudConfig && (
             <CloudStorageCredentialSelector
-              dbs={dbs}
-              dbsTables={dbsTables}
-              dbsMethods={dbsMethods}
               selectedId={
                 database_config.backups_config.cloudConfig.credential_id ||
                 undefined

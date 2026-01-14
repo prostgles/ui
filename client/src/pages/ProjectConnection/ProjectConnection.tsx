@@ -4,10 +4,7 @@ import Loading from "@components/Loader/Loading";
 import type { CommonWindowProps } from "../../dashboard/Dashboard/Dashboard";
 import { Dashboard } from "../../dashboard/Dashboard/Dashboard";
 
-import type {
-  DBHandlerClient,
-  MethodHandler,
-} from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AppContextProps, Prgl } from "../../App";
 
 import { useParams, useSearchParams } from "react-router";
@@ -16,6 +13,7 @@ import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionCon
 import { ProjectConnectionError } from "./ProjectConnectionError";
 import { useProjectDb } from "./useProjectDb";
 import { PrglProvider } from "./PrglContextProvider";
+import type { ClientFunctionHandler } from "prostgles-client/dist/getMethods";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -26,7 +24,7 @@ export type ProjectProps = {
 export type FullExtraProps = AppContextProps & {
   projectPath?: string;
   dbProject: DBHandlerClient;
-  dbMethods: MethodHandler;
+  dbMethods: ClientFunctionHandler;
   dbTables: CommonWindowProps["tables"];
 };
 

@@ -32,7 +32,7 @@ export const WorkspaceMenuDropDown = ({
   workspaces,
   setWorkspace,
 }: P) => {
-  const { dbs, dbsTables, dbsMethods, user } = prgl;
+  const { dbs, dbsTables, dbsMethodSchema, user } = prgl;
   const isAdmin = user?.type === "admin";
   const sortedWorkspaces = useMemo(
     () =>
@@ -150,7 +150,7 @@ export const WorkspaceMenuDropDown = ({
                           w={w}
                           dbs={prgl.dbs}
                           dbsTables={dbsTables}
-                          dbsMethods={dbsMethods}
+                          dbsMethodSchema={dbsMethodSchema}
                         />
                       </>
                     )}

@@ -87,7 +87,7 @@ export const getPublishLLM = (
             llm_model: preferredModel,
             llm_provider: provider,
             llm_credential: row,
-            tools: undefined,
+            tools: [],
             messages: [
               {
                 role: "system",

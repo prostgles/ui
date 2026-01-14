@@ -1,22 +1,22 @@
-import { mdiCancel, mdiStopCircleOutline } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client";
-import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { AppContextProps } from "../../App";
+import { STATUS_MONITOR_IGNORE_QUERY } from "@common/utils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
+import { mdiCancel, mdiStopCircleOutline } from "@mdi/js";
+import { usePromise } from "prostgles-client";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useMemo, useState } from "react";
+import type { AppContextProps } from "../../App";
 import CodeExample from "../CodeExample";
 import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { StyledInterval } from "../W_SQL/customRenderers";
 import type { StatusMonitorProps } from "./StatusMonitor";
 import { StatusMonitorProcListControlsHeader } from "./StatusMonitorProcListControlsHeader";
-import { STATUS_MONITOR_IGNORE_QUERY } from "@common/utils";
-import Loading from "@components/Loader/Loading";
 
 export const StatusMonitorViewTypes = [
   { key: "All Queries", subLabel: "No filtering applied" },
@@ -47,6 +47,7 @@ export const StatusMonitorProcList = (
     connectionId,
     dbs,
     dbsMethods,
+    dbsMethodSchema,
     dbsTables,
     runConnectionQuery,
     samplingRate,
@@ -77,13 +78,13 @@ export const StatusMonitorProcList = (
   const [datidFilter, setDatidFilter] = useState<number | undefined>();
 
   const databaseId = usePromise(async () => {
-    const datids = await runConnectionQuery(
-      connectionId,
-      `SELECT datid
+    const datids = await runConnectionQuery({
+      conId: connectionId,
+      query: `SELECT datid
       FROM pg_catalog.pg_stat_database
       WHERE datname = current_database()
     `,
-    );
+    });
     if (datids.length === 1) {
       const datid = datids[0]?.datid as number;
       setDatidFilter(datid);
@@ -112,7 +113,7 @@ export const StatusMonitorProcList = (
   return (
     <SmartCardList
       db={dbs as DBHandlerClient}
-      methods={dbsMethods}
+      methods={dbsMethodSchema}
       tables={dbsTables}
       tableName="stats"
       showEdit={false}
@@ -176,7 +177,11 @@ const useStatusMonitorProcListProps = (
               iconPath={mdiStopCircleOutline}
               color="danger"
               onClickPromise={() =>
-                dbsMethods.killPID!(connectionId, id_query_hash, "cancel")
+                dbsMethods.killPID!({
+                  connId: connectionId,
+                  id_query_hash,
+                  type: "cancel",
+                })
               }
             />
             <Btn
@@ -184,7 +189,11 @@ const useStatusMonitorProcListProps = (
               iconPath={mdiCancel}
               color="danger"
               onClickPromise={() =>
-                dbsMethods.killPID!(connectionId, id_query_hash, "terminate")
+                dbsMethods.killPID!({
+                  connId: connectionId,
+                  id_query_hash,
+                  type: "terminate",
+                })
               }
             />
           </FlexRow>,

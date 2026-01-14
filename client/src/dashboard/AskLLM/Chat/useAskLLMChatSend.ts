@@ -27,13 +27,13 @@ export const useAskLLMChatSend = ({
     (msg: LLMMessage["message"] | undefined, isToolApproval: boolean) => {
       if (!msg || !activeChatId) return;
       /** TODO: move dbSchemaForPrompt to server-side */
-      void askLLM(
+      void askLLM({
         connectionId,
-        msg,
-        dbSchemaForPrompt,
-        activeChatId,
-        isToolApproval ? "approve-tool-use" : "new-message",
-      ).catch((error) => {
+        userMessage: msg as any,
+        schema: dbSchemaForPrompt,
+        chatId: activeChatId,
+        type: isToolApproval ? "approve-tool-use" : "new-message",
+      }).catch((error) => {
         const errorText = error?.message || error;
         const errorTextMessage =
           typeof errorText === "string" ? errorText : JSON.stringify(errorText);
@@ -71,7 +71,7 @@ export const useAskLLMChatSend = ({
     if (!isLoading || activeChatId === undefined) {
       return;
     }
-    return () => stopAskLLM(activeChatId);
+    return () => stopAskLLM({ chatId: activeChatId });
   }, [activeChatId, isLoading, stopAskLLM]);
 
   return {

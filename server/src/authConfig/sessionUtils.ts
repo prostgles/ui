@@ -64,7 +64,6 @@ export type SUser = {
   } & Omit<Users, "password" | "2fa">;
   isAnonymous: boolean;
 };
-export const sidKeyName = "sid_token" as const;
 
 export const authCookieOpts =
   process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE ?

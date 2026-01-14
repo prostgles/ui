@@ -1,4 +1,5 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { JSONB } from "prostgles-types";
 
 export const DUMP_OPTIONS_SCHEMA = {
   jsonbSchema: {
@@ -33,7 +34,29 @@ export const DUMP_OPTIONS_SCHEMA = {
       },
     ],
   },
-} as const;
+} as const satisfies { jsonbSchema: JSONB.FieldType };
+
+export const RESTORE_OPTIONS_SCHEMA = {
+  jsonbSchemaType: {
+    command: { enum: ["pg_restore", "psql"] },
+    format: { enum: ["p", "t", "c"] },
+    clean: { type: "boolean" },
+    excludeSchema: { type: "string", optional: true },
+    newDbName: { type: "string", optional: true },
+    create: { type: "boolean", optional: true },
+    dataOnly: { type: "boolean", optional: true },
+    noOwner: { type: "boolean", optional: true },
+    numberOfJobs: { type: "integer", optional: true },
+
+    ifExists: { type: "boolean", optional: true },
+
+    keepLogs: { type: "boolean", optional: true },
+  },
+  defaultValue: `{ "clean": true, "format": "c", "command": "pg_restore" }`,
+} as const satisfies {
+  jsonbSchemaType: JSONB.ObjectType["type"];
+  defaultValue: string;
+};
 
 export const tableConfigBackups: TableConfig<{ en: 1 }> = {
   backups: {
@@ -117,24 +140,7 @@ export const tableConfigBackups: TableConfig<{ en: 1 }> = {
       created: { sqlDefinition: `TIMESTAMPTZ NOT NULL DEFAULT NOW()` },
       last_updated: { sqlDefinition: `TIMESTAMPTZ NOT NULL DEFAULT NOW()` },
       options: DUMP_OPTIONS_SCHEMA,
-      restore_options: {
-        jsonbSchemaType: {
-          command: { enum: ["pg_restore", "psql"] },
-          format: { enum: ["p", "t", "c"] },
-          clean: { type: "boolean" },
-          excludeSchema: { type: "string", optional: true },
-          newDbName: { type: "string", optional: true },
-          create: { type: "boolean", optional: true },
-          dataOnly: { type: "boolean", optional: true },
-          noOwner: { type: "boolean", optional: true },
-          numberOfJobs: { type: "integer", optional: true },
-
-          ifExists: { type: "boolean", optional: true },
-
-          keepLogs: { type: "boolean", optional: true },
-        },
-        defaultValue: `{ "clean": true, "format": "c", "command": "pg_restore" }`,
-      },
+      restore_options: RESTORE_OPTIONS_SCHEMA,
     },
     indexes: {
       unique_name_per_connection: {

@@ -205,9 +205,7 @@ export const runApprovedTools = async (
                 `Invalid or disallowed method: "${tool.tool_name}"`,
               );
             }
-            const methodFunc =
-              typeof method === "function" ? method : method.run;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const methodFunc = method.run!;
             const res = await methodFunc(toolUseRequest.input);
             return JSON.stringify(res ?? "");
           },

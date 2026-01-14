@@ -18,7 +18,7 @@ export const FileBrowserCurrentDirectory = ({
   existingFolderNames,
 }: P) => {
   const {
-    dbsMethods: { mkdir },
+    dbsMethods: { makeDirectory },
   } = usePrgl();
 
   const { onErrorAlert } = useOnErrorAlert();
@@ -104,10 +104,13 @@ export const FileBrowserCurrentDirectory = ({
                   disabledInfo={newFolderError}
                   onClickPromise={async () => {
                     await onErrorAlert(async () => {
-                      if (!mkdir) {
+                      if (!makeDirectory) {
                         throw new Error("Not allowed to create folders");
                       }
-                      const newFolderPath = await mkdir(path, newFolderName);
+                      const newFolderPath = await makeDirectory({
+                        path,
+                        folderName: newFolderName,
+                      });
                       onChange(newFolderPath);
                       setNewFolderName("");
                     });

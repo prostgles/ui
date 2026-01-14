@@ -5,6 +5,7 @@ import Chip from "@components/Chip";
 import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
 import { TabsWithDefaultStyle } from "@components/Tabs";
 import {
   mdiAccountKey,
@@ -14,8 +15,8 @@ import {
   mdiLaptop,
   mdiSecurity,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
 import { LLMProviderSetup } from "../../dashboard/AskLLM/Setup/LLMProviderSetup";
@@ -25,14 +26,18 @@ import { t } from "../../i18n/i18nUtils";
 import { AuthProviderSetup } from "./AuthProvidersSetup/AuthProvidersSetup";
 import { MCPServers } from "./MCPServers/MCPServers";
 import { Services } from "./Services";
-import Loading from "@components/Loader/Loading";
 
 export type ServerSettingsProps = Pick<
   Prgl,
-  "dbsMethods" | "dbs" | "dbsTables" | "auth" | "serverState"
+  | "dbsMethods"
+  | "dbsMethodSchema"
+  | "dbs"
+  | "dbsTables"
+  | "auth"
+  | "serverState"
 >;
 export const ServerSettings = (props: ServerSettingsProps) => {
-  const { dbsMethods, dbs, dbsTables, serverState } = props;
+  const { dbsMethods, dbsMethodSchema, dbs, dbsTables, serverState } = props;
 
   const { data: stateConnection } = dbs.connections.useFindOne({
     is_state_db: true,
@@ -102,7 +107,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       className="bg-color-0 "
                       label=""
                       db={dbs as DBHandlerClient}
-                      methods={dbsMethods}
+                      methods={dbsMethodSchema}
                       tableName="database_configs"
                       contentClassname="px-p25  "
                       columns={
@@ -207,7 +212,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                     </InfoRow>
                     <SmartCardList
                       db={dbs as DBHandlerClient}
-                      methods={dbsMethods}
+                      methods={dbsMethodSchema}
                       tableName="credentials"
                       tables={dbsTables}
                       realtime={true}

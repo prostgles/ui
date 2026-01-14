@@ -1,5 +1,5 @@
 import { type DBHandlerClient, useAsyncEffectQueue } from "prostgles-client";
-import { includes } from "prostgles-types";
+import { includes, type ServerFunctionHandler } from "prostgles-types";
 import { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import type { AppState } from "../App";
@@ -34,6 +34,7 @@ export const useAppState = (
     return {
       dbs: dbs as DBS,
       dbsMethods: methods as DBSMethods,
+      dbsMethodSchema: dbsClient.methodSchema ?? {},
       dbsTables,
       auth,
       isAdminOrSupport: includes(["admin", "support"], auth.user?.type),

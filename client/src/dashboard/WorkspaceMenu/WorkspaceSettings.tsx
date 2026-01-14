@@ -1,17 +1,17 @@
+import Btn from "@components/Btn";
+import { IconPalette } from "@components/IconPalette/IconPalette";
+import PopupMenu from "@components/PopupMenu";
 import { mdiCog } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import type { Prgl } from "../../App";
-import Btn from "@components/Btn";
-import { IconPalette } from "@components/IconPalette/IconPalette";
-import PopupMenu from "@components/PopupMenu";
 import type {
   DBSchemaTablesWJoins,
   Workspace,
 } from "../Dashboard/dashboardUtils";
 import { SmartForm } from "../SmartForm/SmartForm";
 
-type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods"> & {
+type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethodSchema"> & {
   w: Workspace;
   dbsTables: DBSchemaTablesWJoins;
 };
@@ -19,7 +19,7 @@ export const WorkspaceSettings = ({
   dbs,
   dbsTables,
   w,
-  dbsMethods,
+  dbsMethodSchema,
 }: WorkspaceSettingsProps) => {
   return (
     <PopupMenu
@@ -71,7 +71,7 @@ export const WorkspaceSettings = ({
             contentClassname="p-1"
             tableName="workspaces"
             tables={dbsTables}
-            methods={dbsMethods}
+            methods={dbsMethodSchema}
             confirmUpdates={true}
             columns={{
               name: 1,

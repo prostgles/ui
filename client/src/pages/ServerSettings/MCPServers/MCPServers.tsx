@@ -1,13 +1,14 @@
-import { mdiCheck, mdiCheckAll } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client";
-import React, { useState } from "react";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
+import { mdiCheck, mdiCheckAll } from "@mdi/js";
+import { usePromise } from "prostgles-client";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useState } from "react";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ServerSettingsProps } from "../ServerSettings";
+import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfig";
 import { MCPServerFooterActions } from "./MCPServerFooterActions/MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
 import { MCPServersToolbar } from "./MCPServersToolbar/MCPServersToolbar";
@@ -15,15 +16,13 @@ import {
   useMCPServersListProps,
   type MCPServerWithToolAndConfigs,
 } from "./useMCPServersListProps";
-import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfig";
-import { isDefined } from "@common/filterUtils";
 
 export type MCPServersProps = Omit<ServerSettingsProps, "auth"> & {
   chatId: number | undefined;
 };
 
 export const MCPServers = (props: MCPServersProps) => {
-  const { dbsMethods, dbs, dbsTables, chatId } = props;
+  const { dbsMethods, dbs, dbsMethodSchema, dbsTables, chatId } = props;
 
   const { getMcpHostInfo } = dbsMethods;
   const envInfo = usePromise(async () => getMcpHostInfo?.(), [getMcpHostInfo]);
@@ -84,7 +83,7 @@ export const MCPServers = (props: MCPServersProps) => {
           )}
           <SmartCardList<MCPServerWithToolAndConfigs>
             db={dbs as DBHandlerClient}
-            methods={dbsMethods}
+            methods={dbsMethodSchema}
             className={mcp_servers_disabled ? "no-interaction" : undefined}
             tableName="mcp_servers"
             realtime={true}

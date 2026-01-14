@@ -1,17 +1,17 @@
-import { mdiBellBadgeOutline, mdiDelete } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useMemo } from "react";
-import { NavLink } from "react-router";
 import type { DBSSchema } from "@common/publishUtils";
 import { ROUTES } from "@common/utils";
-import type { Prgl } from "../App";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
+import { mdiBellBadgeOutline, mdiDelete } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useMemo } from "react";
+import { NavLink } from "react-router";
+import type { Prgl } from "../App";
+import type { FieldConfig } from "../dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "../dashboard/SmartCardList/SmartCardList";
 import { StyledInterval } from "../dashboard/W_SQL/customRenderers";
-import type { FieldConfig } from "../dashboard/SmartCard/SmartCard";
 
 export const Alerts = (prgl: Prgl) => {
   const { connectionId, dbs, user } = prgl;
@@ -139,7 +139,7 @@ export const Alerts = (prgl: Prgl) => {
       {!!alerts.length && (
         <SmartCardList
           db={dbs as DBHandlerClient}
-          methods={prgl.dbsMethods}
+          methods={prgl.dbsMethodSchema}
           tables={prgl.dbsTables}
           tableName={"alerts"}
           realtime={true}

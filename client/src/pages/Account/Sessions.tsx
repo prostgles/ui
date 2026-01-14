@@ -1,3 +1,9 @@
+import Btn from "@components/Btn";
+import type { DivProps } from "@components/Flex";
+import { classOverride, FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import {
   mdiApple,
   mdiAppleSafari,
@@ -14,21 +20,18 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { Prgl } from "../../App";
-import Btn from "@components/Btn";
-import type { DivProps } from "@components/Flex";
-import { classOverride, FlexRow } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
-import { InfoRow } from "@components/InfoRow";
-import PopupMenu from "@components/PopupMenu";
+import type { FieldConfig } from "../../dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "../../dashboard/SmartCardList/SmartCardList";
 import {
   getPGIntervalAsText,
   StyledInterval,
 } from "../../dashboard/W_SQL/customRenderers";
 import { t } from "../../i18n/i18nUtils";
-import type { FieldConfig } from "../../dashboard/SmartCard/SmartCard";
 
-type SessionsProps = Pick<Prgl, "dbs" | "dbsTables" | "user" | "dbsMethods"> & {
+type SessionsProps = Pick<
+  Prgl,
+  "dbs" | "dbsTables" | "user" | "dbsMethodSchema"
+> & {
   displayType: "web_session" | "api_token";
   className?: string;
 };
@@ -50,7 +53,7 @@ export const Sessions = ({
   user,
   displayType,
   className = "",
-  dbsMethods,
+  dbsMethodSchema,
 }: SessionsProps) => {
   const tokenMode = displayType === "api_token";
   const sessionLabel =
@@ -192,7 +195,7 @@ export const Sessions = ({
     <SmartCardList
       className={"min-h-0 f-1 " + className}
       db={dbs as DBHandlerClient}
-      methods={dbsMethods}
+      methods={dbsMethodSchema}
       tableName="sessions"
       tables={dbsTables}
       realtime={true}

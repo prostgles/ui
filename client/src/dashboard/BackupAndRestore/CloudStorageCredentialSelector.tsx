@@ -3,12 +3,11 @@ import { Icon } from "@components/Icon/Icon";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import { mdiInformationOutline, mdiPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useEffect, useMemo } from "react";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
-import type { DBS, DBSMethods } from "../Dashboard/DBS";
-import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import { SmartForm } from "../SmartForm/SmartForm";
 import { ViewMoreSmartCardList } from "../SmartForm/SmartFormField/ViewMoreSmartCardList";
@@ -16,9 +15,6 @@ import { ViewMoreSmartCardList } from "../SmartForm/SmartFormField/ViewMoreSmart
 type P = {
   pickFirst?: boolean;
   pickFirstIfNoOthers?: boolean;
-  dbsTables: DBSchemaTablesWJoins;
-  dbs: DBS;
-  dbsMethods: DBSMethods;
   selectedId?: number | null;
   onChange: (credentialId: number) => void;
   style?: React.CSSProperties;
@@ -27,13 +23,11 @@ type P = {
 export function CloudStorageCredentialSelector({
   selectedId,
   onChange,
-  dbs,
-  dbsTables,
   pickFirst,
-  dbsMethods,
   pickFirstIfNoOthers,
   style,
 }: P) {
+  const { dbs, dbsTables, dbsMethodSchema, dbsMethods } = usePrgl();
   const { data: credentials } = dbs.credentials.useSubscribe(
     {},
     { select: { id: 1, name: 1, type: 1, key_id: 1 } },
@@ -80,7 +74,7 @@ export function CloudStorageCredentialSelector({
       {credentialsTable && Boolean(credentials?.length) && (
         <ViewMoreSmartCardList
           db={dbs as DBHandlerClient}
-          methods={dbsMethods}
+          methods={dbsMethodSchema}
           ftable={credentialsTable}
           tables={dbsTables}
           getActions={undefined}
@@ -105,7 +99,7 @@ export function CloudStorageCredentialSelector({
           <SmartForm
             label=""
             contentClassname="p-1"
-            methods={dbsMethods}
+            methods={dbsMethodSchema}
             db={dbs as DBHandlerClient}
             tableName="credentials"
             tables={dbsTables}

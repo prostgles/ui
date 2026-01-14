@@ -1,6 +1,6 @@
 import type { ConnectionTableConfig } from "@src/ConnectionManager/ConnectionManager";
 import { assertJSONBObjectAgainstSchema, pickKeys } from "prostgles-types";
-import { connMgr, type DBS } from "..";
+import { connectionManager, type DBS } from "..";
 import { getConnectionAndDatabaseConfig } from "./getConnectionAndDatabaseConfig";
 
 export const setFileStorage = async (
@@ -105,7 +105,7 @@ export const setFileStorage = async (
   if (!con) throw "Connection not found";
   await dbs
     .tx(async (t) => {
-      await connMgr.setFileTable(con, newTableConfig);
+      await connectionManager.setFileTable(con, newTableConfig);
       await t.database_configs.update(
         { id: dbConf.id },
         { file_table_config: newTableConfig },

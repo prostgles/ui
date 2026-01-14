@@ -29,22 +29,23 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
   } = props;
 
   const dbMethodActions = Object.entries(methods)
-    .map(([methodName, _m]) => {
-      if (isObject(_m) && "run" in _m) {
-        const argEntries = Object.entries(_m.input);
-        const thisTableArgIdx = argEntries.findIndex(
-          ([_, arg]) =>
-            arg.lookup?.type === "data" &&
-            arg.lookup.isFullRow &&
-            arg.lookup.table === tableName,
-        );
-        if (thisTableArgIdx > -1) {
-          return {
-            methodName,
-            argName: argEntries[thisTableArgIdx]![0],
-            arg: argEntries[thisTableArgIdx]![1],
-          };
-        }
+    .map(([methodName, { input }]) => {
+      const argEntries = Object.entries(input ?? {}).map(
+        ([argName, arg]) =>
+          [argName, typeof arg === "string" ? { type: arg } : arg] as const,
+      );
+      const thisTableArgIdx = argEntries.findIndex(
+        ([_, arg]) =>
+          arg.lookup?.type === "data" &&
+          arg.lookup.isFullRow &&
+          arg.lookup.table === tableName,
+      );
+      if (thisTableArgIdx > -1) {
+        return {
+          methodName,
+          argName: argEntries[thisTableArgIdx]![0],
+          arg: argEntries[thisTableArgIdx]![1],
+        };
       }
 
       return undefined;

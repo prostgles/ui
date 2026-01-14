@@ -9,7 +9,7 @@ import path from "path";
 import { Server } from "socket.io";
 import { API_ENDPOINTS } from "@common/utils";
 import { withOrigin } from "../authConfig/getAuth";
-import { sidKeyName } from "../authConfig/sessionUtils";
+import { sidKeyName } from "@common/authTypesAndConstants";
 import { actualRootDir } from "../electronConfig";
 
 export const isTesting = !!process.env.PRGL_TEST;

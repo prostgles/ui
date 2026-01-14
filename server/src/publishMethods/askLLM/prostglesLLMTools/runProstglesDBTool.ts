@@ -5,7 +5,7 @@ import {
   type JSONB,
   type TableHandler,
 } from "prostgles-types";
-import { connMgr } from "../../../index";
+import { connectionManager } from "../../../index";
 import { getProstglesDBTools } from "./getProstglesDBTools";
 import type { ChatPermissions } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 export const runProstglesDBTool = async (
@@ -126,7 +126,7 @@ export const getClientDBHandlersForChat = async (
         ]),
       )
     : undefined;
-  const connection = connMgr.getConnection(connection_id);
+  const connection = connectionManager.getConnection(connection_id);
   const handlers = await connection.prgl.getClientDBHandlers(clientReq, {
     tables,
     sql:

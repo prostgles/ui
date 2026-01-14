@@ -120,12 +120,12 @@ export const DockerSandboxCreateContainer = ({
               iconPath={mdiReload}
               size="small"
               onClickPromise={async () => {
-                const result = await callMCPServerTool(
+                const result = await callMCPServerTool({
                   chatId,
-                  "docker-sandbox",
-                  "create_container",
-                  data,
-                );
+                  serverName: "docker-sandbox",
+                  toolName: "create_container",
+                  args: data,
+                });
                 console.log("Re-run result:", result);
                 if (result.isError) {
                   addAlert({

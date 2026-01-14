@@ -1,6 +1,7 @@
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import { tout, type DBS } from "..";
-import { checkClientIP, sidKeyName } from "./sessionUtils";
+import { checkClientIP } from "./sessionUtils";
+import { sidKeyName } from "@common/authTypesAndConstants";
 import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 import { getElectronConfig } from "../electronConfig";
 

@@ -1,4 +1,4 @@
-import { isObject } from "@common/publishUtils";
+import type { DetailedFilter } from "@common/filterUtils";
 import { Icon } from "@components/Icon/Icon";
 import type { SearchListProps } from "@components/SearchList/SearchList";
 import { SvgIcon } from "@components/SvgIcon";
@@ -12,11 +12,9 @@ import {
 import React, { useMemo } from "react";
 import type { ChartOptions } from "../../Dashboard/dashboardUtils";
 import type { SearchAllProps } from "../SearchAll";
-import type { SearchAllState } from "./useSearchAllState";
-import type { MethodFullDef } from "prostgles-types";
-import type { useSearchTables } from "./useSearchTables";
 import { SearchMatchRow } from "../SearchMatchRow";
-import type { DetailedFilter } from "@common/filterUtils";
+import type { SearchAllState } from "./useSearchAllState";
+import type { useSearchTables } from "./useSearchTables";
 
 export const useSearchAllListProps = ({
   mode,
@@ -112,22 +110,20 @@ export const useSearchAllListProps = ({
       .concat(
         !typesToSearch.includes("actions") ?
           []
-        : Object.entries(methods as Record<string, MethodFullDef>)
-            .filter(([k, v]) => isObject(v) && (v as any).run)
-            .map(([methodKey, method]) => ({
-              key: methodKey,
-              label: methodKey,
-              subLabel: Object.keys(method.input).join(", "),
-              contentLeft: (
-                <div className="f-0">
-                  <Icon className="text-1p5 p-p25" path={mdiFunction} />
-                </div>
-              ),
-              onPress: (e, term) => {
-                onClose();
-                onOpenDBObject(undefined, methodKey);
-              },
-            })),
+        : Object.entries(methods).map(([methodKey, method]) => ({
+            key: methodKey,
+            label: methodKey,
+            subLabel: Object.keys(method.input ?? {}).join(", "),
+            contentLeft: (
+              <div className="f-0">
+                <Icon className="text-1p5 p-p25" path={mdiFunction} />
+              </div>
+            ),
+            onPress: (e, term) => {
+              onClose();
+              onOpenDBObject(undefined, methodKey);
+            },
+          })),
       );
   } else {
     onSearch = searchRows;

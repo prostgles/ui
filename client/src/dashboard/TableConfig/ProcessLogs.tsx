@@ -44,7 +44,7 @@ export const ProcessLogs = (props: P) => {
     if (isDisabled) return;
     const interval = setInterval(async () => {
       try {
-        const stats = await dbsMethods.getForkedProcStats?.(connectionId);
+        const stats = await dbsMethods.getForkedProcStats?.({ connectionId });
         if (!getIsMounted()) return;
         setProcStats(
           type === "tableConfig" ? stats?.tableConfigRunner

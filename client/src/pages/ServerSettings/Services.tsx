@@ -14,7 +14,7 @@ import type { Prgl } from "src/App";
 import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "src/dashboard/SmartCardList/SmartCardList";
 
-type P = Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables"> & {
+type P = Pick<Prgl, "dbs" | "dbsMethods" | "dbsMethodSchema" | "dbsTables"> & {
   showSpecificService:
     | undefined
     | {
@@ -29,6 +29,7 @@ export const Services = ({
   dbsMethods,
   dbsTables,
   showSpecificService,
+  dbsMethodSchema,
 }: P) => {
   const { servicesFieldConfigs } = useServicesFieldConfigs({
     dbs,
@@ -55,7 +56,7 @@ export const Services = ({
       }
       orderBy={{ key: "label" }}
       tableName={"services"}
-      methods={dbsMethods}
+      methods={dbsMethodSchema}
       tables={dbsTables}
       showTopBar={false}
       realtime={true}
@@ -135,7 +136,10 @@ const useServicesFieldConfigs = ({
                     checked={isRunning}
                     onChange={() =>
                       void onErrorAlert(async () => {
-                        await toggleService(name, !isRunning);
+                        await toggleService({
+                          serviceName: name,
+                          enable: !isRunning,
+                        });
                       })
                     }
                   />

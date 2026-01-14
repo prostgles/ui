@@ -359,7 +359,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly category: "string";
                     readonly engine: "string";
                     readonly img_src: "string";
-                    readonly thumbnail: "string";
+                    readonly thumbnail: "any";
                 };
             };
         };
@@ -395,5 +395,21 @@ export declare const getMCPToolNameParts: (fullName: string) => {
     serverName: string;
     toolName: string;
 } | undefined;
+export type AllowedChatTool = {
+    server_name: string;
+    name: string;
+    tool_name: string;
+    description: string;
+    input_schema: any;
+    auto_approve: boolean;
+} & ({
+    type: "mcp";
+    tool_id: number;
+} | {
+    type: "prostgles-db-methods";
+    server_function_id: number;
+} | Exclude<ProstglesMcpTool, {
+    type: "prostgles-db-methods";
+}>);
 export {};
 //# sourceMappingURL=prostglesMcp.d.ts.map

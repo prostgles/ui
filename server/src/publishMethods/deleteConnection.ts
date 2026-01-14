@@ -1,21 +1,21 @@
 import { getCDB } from "@src/ConnectionManager/ConnectionManager";
-import { connMgr, type DBS } from "..";
+import { connectionManager, type DBS } from "..";
 import type BackupManager from "@src/BackupManager/BackupManager";
 
 export const deleteConnection = async (
   dbs: DBS,
   bkpManager: BackupManager,
   id: string,
-  opts?: { keepBackups: boolean; dropDatabase: boolean },
+  opts?: { keepBackups?: boolean; dropDatabase?: boolean },
 ) => {
   try {
     return dbs.tx(async (t) => {
       const con = await t.connections.findOne({ id });
       if (con?.is_state_db)
         throw "Cannot delete a prostgles state database connection";
-      connMgr.prglConnections[id]?.methodRunner?.destroy();
-      connMgr.prglConnections[id]?.onMountRunner?.destroy();
-      connMgr.prglConnections[id]?.tableConfigRunner?.destroy();
+      connectionManager.prglConnections[id]?.methodRunner?.destroy();
+      connectionManager.prglConnections[id]?.onMountRunner?.destroy();
+      connectionManager.prglConnections[id]?.tableConfigRunner?.destroy();
       if (opts?.dropDatabase) {
         if (!con?.db_name) throw "Unexpected: Database name missing";
         const { db: cdb, destroy: destroyCdb } = await getCDB(
@@ -65,7 +65,7 @@ export const deleteConnection = async (
           { database: anotherDatabaseName.datname, ...superUser },
           true,
         );
-        await connMgr.disconnect(con.id);
+        await connectionManager.disconnect(con.id);
         const killDbConnections = () => {
           return acdb.manyOrNone(
             `

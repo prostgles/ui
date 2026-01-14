@@ -58,6 +58,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     dbsMethods: { startConnection },
     dbs,
     dbsTables,
+    dbsMethodSchema,
   } = prglState;
   const connectionTableHandler = dbs.connections;
 
@@ -113,7 +114,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
   const pathInfo = usePromise(async () => {
     if (!connectionId) return undefined;
     try {
-      const path = await startConnection?.(connectionId);
+      const path = await startConnection?.({ connectionId });
       if (!path) throw "No path";
       return { path } as const;
     } catch (error) {
@@ -185,7 +186,13 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     ) {
       return;
     }
-    const { dbo: db, methods, tableSchema, socket } = dbState.dbPrgl;
+    const {
+      dbo: db,
+      methods,
+      methodSchema = {},
+      tableSchema,
+      socket,
+    } = dbState.dbPrgl;
     const { tables: dbTables = [] } = getTables(
       tableSchema ?? [],
       con.table_options,
@@ -200,7 +207,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       databaseId,
       db: is_state_db ? (dbs as DBHandlerClient) : db,
       tables: is_state_db ? dbsTables : dbTables,
-      methods: methods ?? {},
+      methods: is_state_db ? dbsMethodSchema : methodSchema,
       projectPath: path,
       connectionId,
       connection: con,
@@ -210,7 +217,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     (window as any).dbSocket = socket;
     (window as any).dbMethods = methods;
     return prglProject;
-  }, [conState.data, dbState, connectionInfo, dbs, dbsTables]);
+  }, [conState.data, dbState, connectionInfo, dbs, dbsTables, dbsMethodSchema]);
 
   /** prgl_R.set moved here to prevent theme change to trigger many re-mounts due to dbKey change */
   useEffect(() => {

@@ -12,12 +12,12 @@ import path from "path";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
-import { sidKeyName } from "./authConfig/sessionUtils";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
 import { setDBSRoutesForElectron } from "./init/setDBSRoutesForElectron";
+import { sidKeyName } from "@common/authTypesAndConstants";
 import type {
   InitExtra,
   ProstglesInitStateWithDBS,
@@ -30,7 +30,7 @@ import {
 
 const { app, http, io } = initExpressAndIOServers();
 
-export const connMgr = new ConnectionManager(http, app);
+export const connectionManager = new ConnectionManager(http, app);
 export const isDocker = Boolean(process.env.IS_DOCKER);
 
 const isTestingElectron = require.main?.filename.endsWith("testElectron.js");
@@ -257,7 +257,7 @@ export const startServer = async (
 
   const startupResult = await waitForInitialisation();
   await onReady?.({ port: actualPort }, startupResult);
-  return { connMgr };
+  return { connMgr: connectionManager };
 };
 
 /**

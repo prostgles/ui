@@ -34,7 +34,7 @@ export const PublishedMethods = ({
   accessRuleId,
   editedRule,
 }: P) => {
-  const { dbsMethods, dbsTables, dbs, connectionId } = prgl;
+  const { dbsMethods, dbsMethodSchema, dbsTables, dbs, connectionId } = prgl;
   const { listProps, action, setAction } = useSmartCardListProps({
     dbs,
     connectionId,
@@ -48,7 +48,7 @@ export const PublishedMethods = ({
         <p className="p-0 m-0">Server-side user triggered functions</p>
         <SmartCardList
           db={dbs as DBHandlerClient}
-          methods={dbsMethods}
+          methods={dbsMethodSchema}
           tables={dbsTables}
           tableName="published_methods"
           realtime={true}

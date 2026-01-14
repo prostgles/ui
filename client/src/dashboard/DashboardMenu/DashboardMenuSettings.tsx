@@ -1,19 +1,19 @@
-import { mdiCog, mdiTable, mdiViewGridPlus } from "@mdi/js";
-import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { useEffectAsync, usePromise } from "prostgles-client";
-import React, { useMemo } from "react";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import { pageReload } from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiCog, mdiTable, mdiViewGridPlus } from "@mdi/js";
+import { useEffectAsync, usePromise } from "prostgles-client";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import React, { useMemo } from "react";
 import type { DashboardProps } from "../Dashboard/Dashboard";
 import type { Workspace } from "../Dashboard/dashboardUtils";
 import { useLocalSettings } from "../localSettings";
+import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
 import { DashboardHotkeys } from "./DashboardHotkeys";
 import { SettingsSection } from "./SettingsSection";
-import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 export { useEffectAsync };
 
 const layoutType = [
@@ -28,10 +28,10 @@ type P = Pick<DashboardProps, "prgl"> & {
 
 export const DashboardMenuSettings = ({
   workspace,
-  prgl: { dbsMethods, dbs, dbsTables },
+  prgl: { dbsMethods, dbsMethodSchema, dbs, dbsTables },
 }: P) => {
   const dbSize = usePromise(
-    async () => dbsMethods.getDBSize?.(workspace.connection_id),
+    async () => dbsMethods.getDBSize?.({ conId: workspace.connection_id }),
     [dbsMethods, workspace],
   );
 
@@ -82,7 +82,7 @@ export const DashboardMenuSettings = ({
                 db={dbs as DBHandlerClient}
                 {...smartFormProps}
                 contentClassname="p-0"
-                methods={dbsMethods}
+                methods={dbsMethodSchema}
                 tables={dbsTables}
                 confirmUpdates={false}
                 showJoinedTables={false}
