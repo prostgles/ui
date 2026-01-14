@@ -52,7 +52,8 @@ export const getACRules = async (
 type DBWithUsers = { users?: Partial<DBS["users"]> };
 
 type PRGLInstance = {
-  socket_path: string;
+  socketPath: string;
+  socketUrl: string | undefined;
   io:
     | Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>
     | undefined;
@@ -108,24 +109,18 @@ export class ConnectionManager {
   constructor(http: httpServer, app: Express) {
     this.http = http;
     this.app = app;
-
-    this.setUpWSS();
   }
 
-  destroy = async () => {
-    await this.conSub?.unsubscribe();
-    await this.dbConfSub?.unsubscribe();
-    await this.userSub?.unsubscribe();
-    Object.values(this.prglConnections).forEach((c) => {
-      c.methodRunner?.destroy();
-      c.tableConfigRunner?.destroy();
-      c.onMountRunner?.destroy();
-      void c.prgl?.destroy();
-    });
-    await Promise.all(
-      this.accessControlListeners?.map((l) => l.unsubscribe()) ?? [],
-    );
-  };
+  conSub?: SubscriptionHandler | undefined;
+  dbConfSub?: SubscriptionHandler | undefined;
+  dbConfigs: (DBSSchema["database_configs"] & {
+    connections: { id: string }[];
+    access_control_user_types: {
+      user_type: string;
+      access_control_id: number;
+    }[];
+  })[] = [];
+  init = initConnectionManager.bind(this);
 
   getConnectionsWithPublicAccess = () => {
     return this.dbConfigs.filter((c) =>
@@ -338,16 +333,6 @@ export class ConnectionManager {
       },
     );
   };
-  conSub?: SubscriptionHandler | undefined;
-  dbConfSub?: SubscriptionHandler | undefined;
-  dbConfigs: (DBSSchema["database_configs"] & {
-    connections: { id: string }[];
-    access_control_user_types: {
-      user_type: string;
-      access_control_id: number;
-    }[];
-  })[] = [];
-  init = initConnectionManager.bind(this);
 
   accessControlSkippedFirst = false;
   accessControlListeners?: SubscriptionHandler[];
@@ -395,23 +380,23 @@ export class ConnectionManager {
     ];
   };
 
-  setUpWSS() {
-    // if(!this.wss){
-    //   this.wss = new WebSocket.Server({ port: 3004, path: "/here" });
-    // }
-    // const clients = new Map();
-    // this.wss.on('connection', (ws) => {
-    //   const id = Date.now() + "." + Math.random()
-    //   const color = Math.floor(Math.random() * 360);
-    //   const metadata = { id, color };
-    //   clients.set(ws, metadata);
-    //   ws.on("message", console.log)
-    //   ws.on("close", () => {
-    //     clients.delete(ws);
-    //   });
-    // });
-    // return this.wss;
-  }
+  // setUpWSS() {
+  // if(!this.wss){
+  //   this.wss = new WebSocket.Server({ port: 3004, path: "/here" });
+  // }
+  // const clients = new Map();
+  // this.wss.on('connection', (ws) => {
+  //   const id = Date.now() + "." + Math.random()
+  //   const color = Math.floor(Math.random() * 360);
+  //   const metadata = { id, color };
+  //   clients.set(ws, metadata);
+  //   ws.on("message", console.log)
+  //   ws.on("close", () => {
+  //     clients.delete(ws);
+  //   });
+  // });
+  // return this.wss;
+  // }
 
   getFileFolderPath(conId?: string) {
     const rootPath = path.resolve(`${getRootDir()}${ROUTES.STORAGE}`);
@@ -435,19 +420,14 @@ export class ConnectionManager {
     return getDbConnection(await this.getConnectionData(connId), opts);
   }
 
-  getConnection(
-    conId: string,
-  ): PRGLInstance & Pick<Required<PRGLInstance>, "prgl"> {
+  getConnection = (conId: string) => {
     const c = this.prglConnections[conId];
-    if (!c?.prgl) {
+    const prgl = c?.prgl;
+    if (!prgl) {
       throw "Connection not found";
     }
-    return c as PRGLInstance & Pick<Required<PRGLInstance>, "prgl">;
-  }
-
-  getConnections() {
-    return this.prglConnections;
-  }
+    return { ...c, prgl };
+  };
 
   async disconnect(conId: string): Promise<boolean> {
     await cdbCache[conId]?.destroy();
@@ -490,6 +470,21 @@ export class ConnectionManager {
   };
 
   startConnection = startConnection.bind(this);
+
+  destroy = async () => {
+    await this.conSub?.unsubscribe();
+    await this.dbConfSub?.unsubscribe();
+    await this.userSub?.unsubscribe();
+    Object.values(this.prglConnections).forEach((c) => {
+      c.methodRunner?.destroy();
+      c.tableConfigRunner?.destroy();
+      c.onMountRunner?.destroy();
+      void c.prgl?.destroy();
+    });
+    await Promise.all(
+      this.accessControlListeners?.map((l) => l.unsubscribe()) ?? [],
+    );
+  };
 }
 
 export const cdbCache: Record<

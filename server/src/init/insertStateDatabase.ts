@@ -11,17 +11,19 @@ export const insertStateDatabase = async (
   db: DBS,
   _db: DB,
   con: DBSConnectionInfo,
+  port: number,
   isElectron: boolean,
 ) => {
-  const stateConnectionCount = await db.connections.count(
+  const matchingStateConnectionCount = await db.connections.count(
     pickKeys(con, ["db_name", "db_host", "db_port", "db_user"]),
   );
-  if (!stateConnectionCount) {
+  if (!matchingStateConnectionCount) {
     const { data: state_db, error } = await tryCatchV2(async () => {
       const { connection: state_db } = await upsertConnection(
         {
           ...con,
           user_id: null,
+          port,
           name: isElectron ? "Prostgles Desktop state" : "Prostgles UI state",
           type: !con.db_conn ? "Standard" : "Connection URI",
           db_port: con.db_port || 5432,
@@ -53,6 +55,8 @@ export const insertStateDatabase = async (
       console.log("Inserted state database ", state_db?.db_name);
     }
     if (!state_db) throw "state_db not found";
+  } else {
+    await db.connections.update({ is_state_db: true }, { port });
   }
 };
 

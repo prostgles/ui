@@ -1,4 +1,4 @@
-import { API_ENDPOINTS, getConnectionPaths } from "@common/utils";
+import { API_ENDPOINTS, getConnectionPaths, ROUTES } from "@common/utils";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { tout, type DBS } from "../index";
 import {
@@ -6,6 +6,7 @@ import {
   type ConnectionManager,
 } from "./ConnectionManager";
 import { saveCertificates } from "./saveCertificates";
+import { match } from "path-to-regexp";
 
 export async function initConnectionManager(
   this: ConnectionManager,
@@ -77,14 +78,24 @@ export async function initConnectionManager(
   this.app.use(async (req, res, next) => {
     const { url } = req;
     if (this.dbs && this.db && this.connections) {
+      const matchers = [
+        ROUTES.CONNECTIONS,
+        ROUTES.CONFIG,
+        API_ENDPOINTS.WS_DB,
+        API_ENDPOINTS.REST,
+      ].map((route) =>
+        match<{ connectionId: string }>(route + "/:connectionId", {
+          end: false,
+        }),
+      );
+
       let validOfflineConnectionId: string | undefined;
 
-      const connectionIdOrPath = url.split("/")[2];
-      if (
-        connectionIdOrPath &&
-        (url.startsWith(API_ENDPOINTS.WS_DB) ||
-          url.startsWith(API_ENDPOINTS.REST))
-      ) {
+      // const connectionIdOrPath = url.split("/")[2];
+      const connectionIdOrPath = matchers
+        .map((m) => m(url))
+        .find((res) => res !== false)?.params.connectionId;
+      if (connectionIdOrPath) {
         validOfflineConnectionId = this.connections.find(
           (c) =>
             !this.prglConnections[c.id] &&

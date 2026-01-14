@@ -199,7 +199,7 @@ export const getServerFunctions: ServerFunctionDefinitions<
     }),
     getConnectedIds: defineAdminFunction({
       run: () => {
-        return Object.keys(connectionManager.getConnections());
+        return Object.keys(connectionManager.prglConnections);
       },
     }),
     toggleService: defineAdminFunction({
@@ -607,25 +607,30 @@ export const getServerFunctions: ServerFunctionDefinitions<
   });
   const userServerFunctions = await getUserServerFunctions(params);
 
-  console.error("CHECK IF startConnection is still needed");
   return {
     ...userServerFunctions,
     ...adminMethods,
     startConnection: definePublicFunction({
       input: { connectionId: "string" },
-      output: { type: "string", optional: true },
+      output: {
+        type: {
+          socketPath: "string",
+          socketUrl: { type: "string", optional: true },
+        },
+        optional: true,
+      },
       run: async (
         { connectionId },
         { user, dbo: dbs, db: _dbs, clientReq: { socket } },
       ) => {
         try {
-          const socketPath = await connectionManager.startConnection(
+          const socketPathAndUrl = await connectionManager.startConnection(
             connectionId,
             dbs,
             _dbs,
             socket,
           );
-          return socketPath;
+          return socketPathAndUrl;
         } catch (error) {
           console.error("Could not start connection " + connectionId, error);
           /* Used to prevent data leak to client */

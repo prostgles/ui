@@ -24,6 +24,7 @@ export const COMMANDS = {
   "config.bkp.create.start": "",
   "config.bkp.AutomaticBackups": "",
   "config.bkp.AutomaticBackups.toggle": "",
+  "config.auth": { desc: "", uiOnly: true },
   "config.ac": { desc: "", uiOnly: true },
   "config.status": "",
   "config.ac.create": "",

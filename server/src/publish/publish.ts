@@ -16,6 +16,7 @@ import { checkClientIP } from "../authConfig/sessionUtils";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
 import { getPublishLLM } from "./getPublishLLM";
 import type { DBSSchema } from "@common/publishUtils";
+import { isPortFree } from "@src/utils/isPortFree";
 
 export const publish: Publish<
   DBGeneratedSchema,
@@ -270,8 +271,16 @@ export const publish: Publish<
           table_options: 1,
           db_schema_filter: 1,
           display_options: 1,
+          port: 1,
         },
         validate: async ({ update, dbx, filter }) => {
+          if (update.port) {
+            const isFree = await isPortFree(update.port);
+            if (!isFree) {
+              throw `Port ${update.port} is already in use`;
+            }
+          }
+
           const row = await dbx.connections.findOne(filter);
           if (row?.is_state_db && update.table_options) {
             throw "Table options are not supported yet";

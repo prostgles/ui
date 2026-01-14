@@ -1,10 +1,12 @@
 import {
+  mdiAccountKey,
   mdiAccountMultiple,
   mdiApplicationBracesOutline,
   mdiChartLine,
   mdiDatabaseSync,
   mdiImage,
   mdiLanguageTypescript,
+  mdiLock,
   mdiPencil,
   mdiTableEdit,
 } from "@mdi/js";
@@ -30,6 +32,7 @@ import { StatusMonitor } from "../StatusMonitor/StatusMonitor";
 import { TableConfig } from "../TableConfig/TableConfig";
 import { ServerSideFunctions } from "./ServerSideFunctions";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
+import { AuthProviderSetup } from "@pages/ServerSettings/AuthProvidersSetup/AuthProvidersSetup";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -41,7 +44,7 @@ type ConnectionConfigProps = Pick<
 export const ConnectionConfig = (props: ConnectionConfigProps) => {
   const { className = "", style = {}, connection } = props;
   const prgl = usePrgl();
-  const { serverState, dbs, connectionId, db, dbsMethods } = prgl;
+  const { serverState, dbs, connectionId, db, dbsMethods, dbsTables } = prgl;
   const propsWithPrgl = useMemo(() => ({ ...props, prgl }), [props, prgl]);
   const disabledText =
     (dbs.access_control as any)?.update ?
@@ -86,6 +89,25 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
                 getStatus={dbsMethods.getStatus}
                 runConnectionQuery={dbsMethods.runConnectionQuery}
               />,
+        },
+        authentication: {
+          label: t.ServerSettings.Authentication,
+          listProps: dataCommand("config.auth"),
+
+          disabledText:
+            disabledText ||
+            stateDisabledInfo ||
+            (isElectron ? "Not available for desktop" : undefined),
+
+          hide: serverState.isElectron,
+          leftIconPath: mdiAccountKey,
+          content: (
+            <AuthProviderSetup
+              dbs={dbs}
+              dbsTables={dbsTables}
+              connection_id={connectionId}
+            />
+          ),
         },
         access_control: {
           label: t.ConnectionConfig["Access control"],
@@ -158,12 +180,15 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       acParams,
       connectionId,
       db,
+      dbs,
       dbsMethods.getStatus,
       dbsMethods.runConnectionQuery,
+      dbsTables,
       disabledText,
       isElectron,
       prgl,
       propsWithPrgl,
+      serverState.isElectron,
       stateDisabledInfo,
     ],
   );

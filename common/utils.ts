@@ -298,6 +298,7 @@ export const fromEntries = <K extends string | number | symbol, V>(
   return Object.fromEntries(entries) as Record<K, V>;
 };
 export const CONNECTION_CONFIG_SECTIONS = [
+  "authentication",
   "access_control",
   "backups",
   "table_config",

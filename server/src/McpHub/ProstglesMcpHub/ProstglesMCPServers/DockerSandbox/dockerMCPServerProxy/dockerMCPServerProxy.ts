@@ -7,11 +7,11 @@ import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
 import { getSerialisableError, isObject } from "prostgles-types";
 import { dockerContainerAuthRegistry } from "./dockerContainerAuthRegistry";
 import { getDockerGatewayIP } from "../getDockerGatewayIP";
-import { isPortFree } from "./isPortFree";
 import { getProstglesState } from "@src/init/tryStartProstgles";
 import { isDocker } from "@src/index";
 import { runProstglesDBTool } from "@src/publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
 import { sidKeyName } from "@common/authTypesAndConstants";
+import { isPortFree } from "@src/utils/isPortFree";
 
 const PREFERRED_PORT = 3009;
 export const DOCKER_MCP_ENDPOINT = "/db";

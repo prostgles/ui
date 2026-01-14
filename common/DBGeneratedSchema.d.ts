@@ -91,7 +91,7 @@ export type DBGeneratedSchema = {
       database_config_id?: null | number;
       id?: string;
       message?: null | string;
-      section?: null | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API"
+      section?: null | "authentication" | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API"
       severity: "info" | "warning" | "error"
       title?: null | string;
     };
@@ -170,6 +170,7 @@ export type DBGeneratedSchema = {
       name: string;
       on_mount_ts?: null | string;
       on_mount_ts_disabled?: null | boolean;
+      port?: null | number;
       prgl_params?: null | any;
       prgl_url?: null | string;
       ssl_certificate?: null | string;
@@ -931,7 +932,7 @@ export type GeneratedFunctionSchema = {
   "callMCPServerTool": (args: {    chatId: number;   serverName: string;   toolName: string;   args?: Record<string, any>;  }) => Promise<any>
   "reloadMcpServerTools": (args: {    serverName: string;  }) => Promise<any>
   "getMcpHostInfo": () => Promise<any>
-  "transcribeAudio": (args: {    audioBlob: any;  }) => Promise<|  {  success: boolean;  transcription: string;  language: string;  language_probability: number;  segments: (  {  start: number;  end: number;  text: string; } )[]; }
+  "transcribeAudio": (args: {    audioBlob: Blob;  }) => Promise<|  {  success: boolean;  transcription: string;  language: string;  language_probability: number;  segments: (  {  start: number;  end: number;  text: string; } )[]; }
  |  {  error: string; }>
-  "startConnection": (args: {    connectionId: string;  }) => Promise<string>
+  "startConnection": (args: {    connectionId: string;  }) => Promise<{    socketPath: string;   socketUrl?: string;  }>
 }

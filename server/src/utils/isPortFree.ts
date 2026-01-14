@@ -2,7 +2,7 @@ import { createServer } from "net";
 
 export const isPortFree = async (port: number): Promise<boolean> => {
   const result = await tryPort(port);
-  return result === port;
+  return result == port; // can be string
 };
 
 export const getFreePort = async (preferredPort?: number): Promise<number> => {

@@ -132,7 +132,7 @@ The table menu provides options for managing the table view, including viewing t
 Table toolbar can be toggled through the show/hide filtering button (top left corner). 
 It provides a user-friendly interface to add filters, search for data, and perform various actions on the table data.
 
-<img src="./screenshots/smart_filter_bar.svg" alt="Smart Filter Bar screenshot" style="border: 1px solid; margin: 1em 0;" />
+<img src="./screenshots/smart_filter_bar.svgif.svg" alt="Smart Filter Bar screenshot" style="border: 1px solid; margin: 1em 0;" />
 
   - **Add Filter**: Allows adding a filter by chosing a column from the current table or from linked tables.  
     - **Include Linked Columns**: Toggle to include columns from linked tables in the column list.  

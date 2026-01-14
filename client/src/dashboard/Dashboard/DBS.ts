@@ -95,7 +95,9 @@ export type DBSMethodsOld = Partial<{
   bkpDelete: (bkpId: string, force?: boolean) => Promise<string>;
   getFileFolderSizeInBytes: (conId?: string) => Promise<string>;
   reloadSchema: (conId: string) => Promise<void>;
-  startConnection: (conId: string) => Promise<string>;
+  startConnection: (
+    conId: string,
+  ) => Promise<{ socketPath: string; socketUrl: string | undefined }>;
   testDBConnection: (con: Connection) => Promise<true>;
   deleteConnection: (
     conId: string,

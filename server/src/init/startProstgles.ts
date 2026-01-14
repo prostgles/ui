@@ -183,7 +183,7 @@ export const startProstgles = async ({
       publish,
       joins: "inferred",
       onReady: async (params, update) => {
-        await onProstglesReady(params, update, app, con);
+        await onProstglesReady(params, update, app, con, port);
       },
     });
 

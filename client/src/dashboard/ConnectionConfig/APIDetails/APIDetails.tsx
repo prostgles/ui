@@ -33,6 +33,29 @@ export const APIDetails = (props: APIDetailsProps) => {
   const { onErrorAlert } = useOnErrorAlert();
   return (
     <FlexCol className="APIDetails f-1 min-s-0 o-auto gap-2">
+      <FormFieldDebounced
+        id="port"
+        type="integer"
+        label={"Port"}
+        disabledInfo={
+          connection.is_state_db ?
+            "Must be changed from environment variable"
+          : undefined
+        }
+        value={connection.port || 3004}
+        style={{
+          padding: "2px",
+          maxWidth: "300px",
+        }}
+        onChange={(newPort) => {
+          void onErrorAlert(async () => {
+            await dbs.connections.update(
+              { id: props.connection.id },
+              { port: newPort },
+            );
+          });
+        }}
+      />
       {table && urlPathCol && (
         <FormFieldDebounced
           id="url_path"

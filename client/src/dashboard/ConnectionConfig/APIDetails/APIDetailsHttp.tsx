@@ -30,7 +30,7 @@ export const APIDetailsHttp = ({
             variant="row"
             checked={!!dbConfig.rest_api_enabled}
             onChange={(rest_api_enabled) => {
-              dbs.database_configs.update(
+              void dbs.database_configs.update(
                 { id: dbConfig.id },
                 { rest_api_enabled },
               );

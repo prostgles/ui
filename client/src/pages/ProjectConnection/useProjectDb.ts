@@ -114,26 +114,29 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
   const pathInfo = usePromise(async () => {
     if (!connectionId) return undefined;
     try {
-      const path = await startConnection?.({ connectionId });
+      const { socketPath: path, socketUrl } =
+        (await startConnection?.({ connectionId })) ?? {};
       if (!path) throw "No path";
-      return { path } as const;
+      return { path, socketUrl } as const;
     } catch (error) {
       return { error, path: undefined, state: "error" } as const;
     }
   }, [startConnection, connectionId]);
 
   const prostglesClientOpts = useMemo(
-    () => ({
-      socketOptions: {
-        path: pathInfo?.path,
-        transports: ["websocket"],
-        reconnectionDelay: 1000,
-        reconnection: true,
-      },
-      onDebug: isPlaywrightTest ? onDebug : undefined,
-      skip: !pathInfo?.path,
-    }),
-    [pathInfo?.path],
+    () =>
+      ({
+        endpoint: pathInfo?.socketUrl,
+        socketOptions: {
+          path: pathInfo?.path,
+          transports: ["websocket"],
+          reconnectionDelay: 1000,
+          reconnection: true,
+        },
+        onDebug: isPlaywrightTest ? onDebug : undefined,
+        skip: !pathInfo?.path,
+      }) satisfies UseProstglesClientProps,
+    [pathInfo?.path, pathInfo?.socketUrl],
   );
 
   const dbPrgl = useProstglesClient(prostglesClientOpts);

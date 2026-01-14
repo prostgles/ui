@@ -35,6 +35,7 @@ export const onProstglesReady = async (
   update: Parameters<OnReadyCallback<DBGeneratedSchema, SUser>>[1],
   app: e.Express,
   con: DBSConnectionInfo,
+  port: number,
 ) => {
   await promiseCleanup(async () => {
     const { dbo: db } = params;
@@ -47,7 +48,13 @@ export const onProstglesReady = async (
 
     await initUsers(db, _db);
 
-    await insertStateDatabase(db, _db, con, getProstglesState().isElectron);
+    await insertStateDatabase(
+      db,
+      _db,
+      con,
+      port,
+      getProstglesState().isElectron,
+    );
     await setupLLM(db);
     await setupMCPServerHub(db);
 

@@ -16,7 +16,7 @@ import {
   type ExecutionResult,
   type ProcessLog,
 } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
-import { getFreePort } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/isPortFree";
+import { getFreePort } from "@src/utils/isPortFree";
 
 const STOPPED_REASON = "stopped";
 export async function startService(

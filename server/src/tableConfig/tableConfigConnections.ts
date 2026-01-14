@@ -22,6 +22,10 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
           hint: `URL path to be used instead of the connection uuid`,
         },
       },
+      port: {
+        sqlDefinition: `INTEGER CHECK(port > 0 AND port < 65536)`,
+        info: { hint: `Port override for Prostgles connection` },
+      },
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       name: `TEXT NOT NULL CHECK(LENGTH(name) > 0)`,
       db_name: `TEXT NOT NULL CHECK(LENGTH(db_name) > 0)`,
@@ -140,6 +144,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
     },
     constraints: {
       unique_connection_url_path: `UNIQUE(url_path)`,
+      uniquePorts: `UNIQUE(port)`,
       uniqueConName: `UNIQUE(name, user_id)`,
       "Check connection type": `CHECK (
             type IN ('Standard', 'Connection URI', 'Prostgles') 
