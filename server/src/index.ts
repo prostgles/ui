@@ -27,10 +27,11 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
+import { tout } from "@src/utils/tout";
 
 const { app, http, io } = initExpressAndIOServers();
 
-export const connectionManager = new ConnectionManager(http, app);
+export const connectionManager = new ConnectionManager(http, app, io);
 export const isDocker = Boolean(process.env.IS_DOCKER);
 
 const isTestingElectron = require.main?.filename.endsWith("testElectron.js");
@@ -109,7 +110,7 @@ app.get("/dbs", (req, res) => {
   }
   /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;
-  const { database_config } = getAuthSetupData();
+  const { stateDatabaseConfig: database_config } = getAuthSetupData();
   if (
     req.headers["x-real-ip"] === SPOOF_TEST_VALUE &&
     database_config?.login_rate_limit_enabled &&
@@ -195,14 +196,6 @@ export function restartProc(cb?: VoidFunction) {
     stdio: "ignore",
   }).unref();
 }
-
-export const tout = (timeout: number) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, timeout);
-  });
-};
 
 export type BareConnectionDetails = Pick<
   Connections,

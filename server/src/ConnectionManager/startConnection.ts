@@ -1,25 +1,26 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
-import { getConnectionPaths } from "@common/utils";
-import { createHttpServer } from "@src/init/createHttpServer";
 import prostgles from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
-import { pickKeys, type AnyObject } from "prostgles-types";
-import { Server } from "socket.io";
+import {
+  getSerialisableError,
+  pickKeys,
+  type AnyObject,
+} from "prostgles-types";
 import { addLog } from "../Logger";
-import { withOrigin } from "../authConfig/getAuth";
 import type { SUser } from "../authConfig/sessionUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
-import { getHotReloadConfigs } from "./ConnectionManager";
+import { getHotReloadConfigs } from "./getHotReloadConfigs";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
+import { getConnectionSocketPath } from "./getConnectionSocketPath";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -29,117 +30,124 @@ export const startConnection = async function (
   socket?: PRGLIOSocket,
   restartIfExists = false,
 ): Promise<{ socketPath: string; socketUrl: string | undefined } | undefined> {
-  if (this.prglConnections[connectionId]) {
+  let existingConnection = this.prglConnections.get(connectionId);
+  if (existingConnection) {
+    if (existingConnection.state === "initializing") {
+      existingConnection = await existingConnection.initPromise;
+    }
     if (restartIfExists) {
-      await this.prglConnections[connectionId].prgl?.destroy();
-      delete this.prglConnections[connectionId];
-    } else {
-      if (this.prglConnections[connectionId].error) {
-        throw this.prglConnections[connectionId].error;
+      if (existingConnection.state === "started") {
+        await existingConnection.prgl.destroy();
       }
-      return pickKeys(this.prglConnections[connectionId], [
-        "socketPath",
-        "socketUrl",
-      ]);
+      this.prglConnections.delete(connectionId);
+    } else if (existingConnection.state === "error") {
+      throw existingConnection.error;
+    } else {
+      return pickKeys(existingConnection, ["socketPath", "socketUrl"]);
     }
   }
 
-  const con = await dbs.connections.findOne({ id: connectionId }).catch((e) => {
-    console.error("Could not fetch connection", e);
-    return undefined;
-  });
+  const connection = await dbs.connections
+    .findOne({ id: connectionId })
+    .catch((e) => {
+      console.error("Could not fetch connection", e);
+      return undefined;
+    });
 
-  if (!con) throw "Connection not found";
+  if (!connection) throw "Connection not found";
   const databaseConfig = await dbs.database_configs.findOne({
-    $existsJoined: { connections: { id: con.id } },
+    $existsJoined: { connections: { id: connection.id } },
   });
   if (!databaseConfig) throw "databaseConfig not found";
+  const stateDatabaseConfig = await dbs.database_configs.findOne({
+    $existsJoined: { connections: { is_state_db: true } },
+  });
+  if (!stateDatabaseConfig) throw "State database config not found";
 
-  const { connectionInfo, isSSLModeFallBack } = await testDBConnection(con);
+  const { connectionInfo, isSSLModeFallBack } =
+    await testDBConnection(connection);
   log(
     "testDBConnection ok" +
       (isSSLModeFallBack ? ". (sslmode=prefer fallback)" : ""),
   );
 
-  const socketPath = getConnectionPaths(con).ws;
-  const socketUrl = !con.port ? undefined : `http://localhost:${con.port}`;
+  const creatingPref = "connecting to " + connection.db_name;
+  const existingInstance = this.prglConnections.get(connection.id);
+  const prglInstance =
+    existingInstance?.state === "initializing" ?
+      await existingInstance.initPromise
+    : existingInstance;
 
-  const creatingPref = "connecting to " + con.db_name;
-  try {
-    const prglInstance = this.prglConnections[con.id];
-    if (prglInstance) {
+  const { socketPath, socketUrl } = getConnectionSocketPath(connection);
+  if (prglInstance) {
+    if (
+      prglInstance.socketPath !== socketPath ||
+      prglInstance.socketUrl !== socketUrl
+    ) {
       console.error("socket_path changed");
-      if (prglInstance.socketPath !== socketPath) {
-        restartProc(() => {
-          socket?.emit("server-restart-request", true);
-        });
+      restartProc(() => {
+        socket?.emit("server-restart-request");
+      });
 
-        if (prglInstance.prgl) {
-          log("disconnecting from ", Object.keys(prglInstance.con.db_name));
-          await prglInstance.prgl.destroy();
-        }
-      } else {
-        log("reusing ", Object.keys(prglInstance));
-        if (prglInstance.error) throw prglInstance.error;
-        return { socketPath, socketUrl };
+      if (prglInstance.state === "started") {
+        log("disconnecting from ", Object.keys(prglInstance.con.db_name));
+        await prglInstance.prgl.destroy();
       }
+    } else {
+      if (prglInstance.state === "error") {
+        throw prglInstance.error;
+      }
+      log("reusing ", Object.keys(prglInstance));
+      return { socketPath, socketUrl };
     }
-    log(creatingPref);
-    this.prglConnections[con.id] = {
-      io: undefined,
-      socketPath,
-      socketUrl,
-      con,
-      dbConf: databaseConfig,
-      isReady: false,
-      connectionInfo,
-      methodRunner: undefined,
-      onMountRunner: undefined,
-      tableConfigRunner: undefined,
-      lastRestart: 0,
-      isSuperUser: undefined,
-      authSetupDataListener: undefined,
-    };
-  } catch (e) {
-    console.error(e);
-    throw e;
   }
+  log(creatingPref);
 
-  return new Promise<{ socketPath: string; socketUrl: string | undefined }>(
+  const result = new Promise<{
+    socketPath: string;
+    socketUrl: string | undefined;
+  }>(
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     async (resolve, reject) => {
-      const database_config = await dbs.database_configs.findOne({
-        $existsJoined: { connections: { id: connectionId } },
-      });
-      if (!database_config) {
-        throw new Error("global_settings not found");
-      }
+      // const { ioConnection, ...httpServer } = this.getConnectionHttpServer({
+      //   connection: connection,
+      //   databaseConfig,
+      //   socketPath,
+      // });
 
-      const httpServer =
-        typeof con.port === "number" && !con.is_state_db ?
-          createHttpServer(con.port)
-        : this;
-      const ioConnection = new Server(httpServer.http, {
-        path: socketPath,
-        maxHttpBufferSize: 1e8,
-        cors: withOrigin,
-      });
+      const initState = {
+        prglReady: false,
+        onReadyCalled: false,
+      };
+      const setInitState = (newState: Partial<typeof initState>) => {
+        Object.assign(initState, newState);
+        if (initState.prglReady && initState.onReadyCalled) {
+          resolve({ socketPath, socketUrl });
+        }
+      };
 
       try {
-        const hotReloadConfig = await getHotReloadConfigs(
-          this,
-          con,
+        const {
+          config: hotReloadConfig,
+          connectionServers: { ioConnection, app },
+        } = await getHotReloadConfigs({
+          connectionManager: this,
+          connection,
           databaseConfig,
+          stateDatabaseConfig,
+          _dbs,
           dbs,
-        );
-        const watchSchema = con.db_watch_shema ? "*" : false;
+        });
+        const watchSchema = connection.db_watch_shema ? "*" : false;
         const getForkedProcRunner = async () => {
-          if (!this.prglConnections[con.id]?.methodRunner) {
+          if (
+            !this.getActiveConnectionSilentFail(connection.id)?.methodRunner
+          ) {
             const methodRunner = await ForkedPrglProcRunner.create({
               type: "run",
               dbConfId: databaseConfig.id,
               pass_process_env_vars_to_server_side_functions:
-                database_config.pass_process_env_vars_to_server_side_functions,
+                databaseConfig.pass_process_env_vars_to_server_side_functions,
               dbs,
               prglInitOpts: {
                 dbConnection: {
@@ -149,67 +157,72 @@ export const startConnection = async function (
                 watchSchema,
               },
             });
-            this.prglConnections[con.id]!.methodRunner = methodRunner;
+
+            const activeConnection = this.getActiveConnection(connection.id);
+            this.prglConnections.set(connection.id, {
+              ...activeConnection,
+              methodRunner,
+            });
           }
-          const forkedPrglProcRunner =
-            this.prglConnections[con.id]!.methodRunner!;
-          return forkedPrglProcRunner;
+          const forkedPrglProcRunner = this.getActiveConnection(
+            connection.id,
+          ).methodRunner;
+          return forkedPrglProcRunner!;
         };
-        await this.setTableConfig(
-          con.id,
-          databaseConfig.table_config_ts,
-          databaseConfig.table_config_ts_disabled,
+        const tableConfigRunner = await this.setTableConfig(
+          connection.id,
+          databaseConfig,
+          connectionInfo,
         ).catch((e) => {
           void dbs.alerts.insert({
             severity: "error",
             message: "Table config was disabled due to error",
             database_config_id: databaseConfig.id,
-            connection_id: con.id,
+            connection_id: connection.id,
             section: "table_config",
+            data: getSerialisableError(e),
           });
           void dbs.database_configs.update(
             { id: databaseConfig.id },
             { table_config_ts_disabled: true },
           );
         });
-        await this.setOnMount(
-          con.id,
-          con.on_mount_ts,
-          con.on_mount_ts_disabled,
+        const onMountRunner = await this.setOnMount(
+          databaseConfig.id,
+          connection,
+          connectionInfo,
         ).catch((e) => {
           void dbs.alerts.insert({
             severity: "error",
             message:
-              "On mount was disabled due to error" +
+              "On mount was disabled due to error " +
               `\n\n${JSON.stringify(getErrorAsObject(e))}`,
             database_config_id: databaseConfig.id,
-            connection_id: con.id,
+            connection_id: connection.id,
             section: "methods",
           });
           void dbs.connections.update(
-            { id: con.id },
+            { id: connection.id },
             { on_mount_ts_disabled: true },
           );
         });
 
         const prgl = await prostgles<void, SUser>({
           dbConnection: connectionInfo,
-          io: ioConnection,
           ...hotReloadConfig,
           watchSchema,
-          disableRealtime: con.disable_realtime ?? undefined,
+          disableRealtime: connection.disable_realtime ?? undefined,
           transactions: true,
           joins: "inferred",
           publish: getConnectionPublish({
             dbs,
             dbConf: databaseConfig,
-            connection: con,
+            connection: connection,
           }),
           functions: getConnectionServerFunctions({
             dbConf: databaseConfig,
             dbs,
-            con,
-            _dbs,
+            con: connection,
             getForkedProcRunner,
           }),
           // DEBUG_MODE: true,
@@ -220,8 +233,7 @@ export const startConnection = async function (
             };
             const errorCode = (error as AnyObject | undefined)?.code as string;
             if (errorCode && errorCode in nonReconnectableErrorCodes) {
-              // void this.startConnection(con.id, dbs, _dbs, undefined, true);
-              void this.disconnect(con.id);
+              void this.disconnect(connection.id);
             }
           },
           publishRawSQL: async ({ user }) => {
@@ -232,7 +244,7 @@ export const startConnection = async function (
               dbs,
               user,
               databaseConfig.id,
-              con.id,
+              connection.id,
             );
             if (
               ac?.dbPermissions.type === "Run SQL" &&
@@ -248,53 +260,66 @@ export const startConnection = async function (
           onReady: getConnectionOnReady({
             connectionManager: this,
             dbs,
-            _dbs,
-            connection: con,
-            databaseConfig: database_config,
+            connection: connection,
+            databaseConfig,
             onSetupReady: () => {
-              resolve({ socketPath, socketUrl });
+              setInitState({ onReadyCalled: true });
             },
           }),
         });
-        this.prglConnections[con.id] = {
+        this.prglConnections.set(connection.id, {
+          state: "started",
           io: ioConnection,
+          app,
           prgl,
           dbConf: databaseConfig,
           connectionInfo,
           socketPath,
           socketUrl,
-          con,
+          con: connection,
           isReady: false,
-          methodRunner: undefined,
-          onMountRunner: this.prglConnections[con.id]?.onMountRunner,
-          tableConfigRunner: this.prglConnections[con.id]?.tableConfigRunner,
+          methodRunner: undefined, // Set up later on demand
+          onMountRunner: onMountRunner ?? undefined,
+          tableConfigRunner: tableConfigRunner ?? undefined,
           isSuperUser: await getIsSuperUser(prgl._db),
           lastRestart: Date.now(),
-          authSetupDataListener:
-            this.prglConnections[con.id]?.authSetupDataListener,
-        };
+        });
         void this.setSyncUserSub();
+        setInitState({ prglReady: true });
       } catch (e) {
         reject(e);
-        this.prglConnections[con.id] = {
-          io: ioConnection,
+        this.prglConnections.set(connection.id, {
+          state: "error",
           error: e,
-          connectionInfo,
-          dbConf: databaseConfig,
           socketPath,
           socketUrl,
-          con,
-          isReady: false,
-          methodRunner: undefined,
-          onMountRunner: undefined,
-          tableConfigRunner: undefined,
-          lastRestart: 0,
-          isSuperUser: undefined,
-          authSetupDataListener: undefined,
-        };
+          con: connection,
+        });
       }
     },
   );
+
+  this.prglConnections.set(connection.id, {
+    state: "initializing",
+    con: connection,
+    initPromise: (async () => {
+      try {
+        await result;
+      } catch (e) {
+        console.error(e);
+      }
+      const existing = this.prglConnections.get(connection.id);
+      if (!existing || existing.state === "initializing") {
+        throw (
+          "Initialization failed. Could not find a valid instance " +
+          existing?.state
+        );
+      }
+      return existing;
+    })(),
+  });
+
+  return result;
 };
 
 export const getAccessRule = async (
@@ -324,3 +349,5 @@ export const getAccessRule = async (
     ],
   });
 };
+
+console.error("MUST NOT START STATEDB BUT REUSEIT");

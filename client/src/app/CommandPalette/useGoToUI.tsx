@@ -18,7 +18,7 @@ import {
   getUIDocElements,
   getUIDocElementsAndAlertIfEmpty,
 } from "./utils";
-import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { includes } from "prostgles-types";
 import { getUIDocShortestPath } from "./getUIDocShortestPath";
 
 export type DocItemHighlightItemPosition = "mid" | "last";
@@ -118,13 +118,10 @@ export const useGoToUI = (
           getUIDocShortestPath(currentPage, prevParents)
         : undefined;
       const pathItems = shortcut ?? prevParents;
-      const shouldBeOpened = includes(data.type, [
-        "link",
-        "page",
-        "tab",
-        "popup",
-        "smartform-popup",
-      ]);
+      const shouldBeOpened = includes(
+        ["link", "page", "tab", "popup", "smartform-popup"],
+        data.type,
+      );
       const finalPathItems =
         data.type === "hotkey-popup" ? [data]
         : shouldBeOpened ? [...pathItems, data]

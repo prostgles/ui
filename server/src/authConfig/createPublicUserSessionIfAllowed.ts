@@ -16,8 +16,8 @@ export const createPublicUserSessionIfAllowed = async (
   reqInfo: AuthClientRequest,
 ): Promise<NewRedirectSession | undefined> => {
   const publicConnections = connectionManager.getConnectionsWithPublicAccess();
-  const { database_config } = authSetupData;
-  if (!publicConnections.length || !database_config || !reqInfo.httpReq) {
+  const { stateDatabaseConfig: database_config } = authSetupData;
+  if (!publicConnections.length || !reqInfo.httpReq) {
     return;
   }
   const { ip } = getIPsFromClientInfo(client, database_config);

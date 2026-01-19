@@ -51,6 +51,7 @@ import {
   setModelByText,
   setPromptByText,
   setTableRule,
+  setupMagicLinkAuth,
   setWspColLayout,
   typeConfirmationCode,
   uploadFile,
@@ -99,8 +100,8 @@ test.describe("Main test", () => {
     }
   };
 
-  test("port 3009 must be available for mcpsandbox test", async () => {
-    const free = await isPortFree(3009);
+  test("port 3089 must be available for mcpsandbox test", async () => {
+    const free = await isPortFree(3089);
     expect(free).toBe(true);
   });
 
@@ -125,6 +126,7 @@ test.describe("Main test", () => {
 
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: "Prostgles UI state" }).click();
+    await page.getByTestId("Feedback").waitFor({ state: "visible" });
 
     const browser2 = await chromium.launch();
     const newPage = await browser2.newPage();
@@ -367,13 +369,7 @@ test.describe("Main test", () => {
     await login(page);
     await goTo(page, "/server-settings");
     await page.locator(`[data-key="auth"]`).click();
-    await page.getByTestId("EmailAuthSetup").locator("button").click();
-    await page.getByTestId("EmailAuthSetup.SignupType").click();
-    await page.locator(`[data-key="withMagicLink"]`).click();
-    await page.getByText("Save").click();
-    await page.waitForTimeout(1500);
-    const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
-    await expect(errNodeCount).toBe(0);
+    await setupMagicLinkAuth(page);
 
     await goTo(page, "/connections");
     await page.getByTestId("App.LanguageSelector").click();
@@ -480,21 +476,40 @@ test.describe("Main test", () => {
       })
       .count();
 
-    /** Create cloud db */
-    if (!existingCloudDb) {
-      const dbName = "cloud";
-      await createDatabase(dbName, page, false);
-      await page.getByTestId("dashboard.goToConnConfig").click();
-      await page.getByTestId("config.api").click();
-      await page.locator("input#url_path").fill(dbName);
-      /** Enable http api */
-      await page.getByText("Enabled").click();
-      await page.waitForTimeout(1500);
-    } else {
-      await page.getByRole("link", { name: "Cloud" }).click();
-      await page.getByTestId("dashboard.goToConnConfig").click();
-      await page.getByTestId("config.api").click();
+    if (existingCloudDb) {
+      return;
     }
+
+    const dbName = "cloud";
+    await createDatabase(dbName, page, false);
+    await page.getByTestId("dashboard.goToConnConfig").click();
+
+    await page.getByTestId("config.auth").click();
+    await setupMagicLinkAuth(page);
+    await page.getByText("Enabled").click();
+    await page.getByText("Save").click();
+
+    /** Enable http api */
+    await page.getByTestId("config.api").click();
+    await page.getByText("Enabled").click();
+    await page.waitForTimeout(500);
+    await page.reload();
+    await page.locator("input#port").fill("3005");
+    await page.waitForTimeout(500);
+    await page.waitForEvent("load");
+    await page.reload();
+    await page.locator("input#port").waitFor({ state: "visible" });
+    await expect(page.locator("input#port")).toHaveValue("3005");
+  });
+
+  test("Setup Free LLM assistant functions", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await loginWhenSignupIsEnabled(page);
+
+    /** Create cloud db */
+    await page.getByRole("link", { name: "Cloud" }).click();
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.api").click();
 
     /** Add server-side func */
     await page.getByTestId("config.methods").click();
@@ -906,7 +921,7 @@ test.describe("Main test", () => {
         timeout: 10e3,
       });
     };
-    /** Must test to see if port 3009 is free to avoid confusing errors */
+    /** Must test to see if port 3089 is free to avoid confusing errors */
 
     await dockerRunAndExpect(`Tool "execute_sql_with_rollback" not found`);
 

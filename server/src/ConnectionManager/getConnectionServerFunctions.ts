@@ -4,7 +4,6 @@ import {
   type ServerFunctionDefinition,
   type ServerFunctionDefinitions,
 } from "prostgles-server";
-import type { DB } from "prostgles-server/dist/initProstgles";
 import type { DBS } from "..";
 import type { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 import { getCompiledTS } from "./connectionManagerUtils";
@@ -14,7 +13,6 @@ type Args = {
   dbs: DBS;
   dbConf: DBSSchema["database_configs"];
   con: DBSSchema["connections"];
-  _dbs: DB;
   getForkedProcRunner: () => Promise<ForkedPrglProcRunner>;
 };
 
@@ -22,7 +20,6 @@ export const getConnectionServerFunctions = ({
   dbConf,
   dbs,
   con,
-  _dbs,
   getForkedProcRunner,
 }: Args) => {
   const publishMethods: ServerFunctionDefinitions<void, SUser> = async (

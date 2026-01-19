@@ -2,7 +2,7 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { authenticator } from "otplib";
 import { type LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DB } from "prostgles-server/dist/initProstgles";
-import type { Users } from "..";
+import type { DBS, Users } from "..";
 import { log } from "../index";
 import { getPasswordHash } from "./authUtils";
 import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
@@ -14,17 +14,25 @@ import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges
 import { upsertSession } from "./upsertSession";
 
 export const getLogin = async (
-  database_config: NonNullable<AuthConfigForStateConnection["database_config"]>,
+  dbs: DBS,
+  database_config: NonNullable<
+    AuthConfigForStateConnection["stateDatabaseConfig"]
+  >,
 ) => {
   const { auth_providers } = database_config;
-  const mailClient = await getEmailSenderWithMockTest(auth_providers);
+  const mailClient = await getEmailSenderWithMockTest(auth_providers).catch(
+    (error) => {
+      console.error("Failed to initialize mail client", error);
+      return undefined;
+    },
+  );
   const { email: emailAuthConfig } = auth_providers ?? {};
 
   const login: Required<
     LoginSignupConfig<DBGeneratedSchema, SUser>
   >["login"] = async (
     loginParams,
-    dbs,
+    _dbs,
     _db: DB,
     clientInfo,
     getMagicLinkUrl,
@@ -166,9 +174,10 @@ export const getLogin = async (
           matchingUser,
           totp_recovery_code.trim(),
         );
-        const areMatching = await _db.any(
+        const areMatching = await dbs.sql(
           "SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = ${hashedRecoveryCode} ",
           { id: matchingUser.id, hashedRecoveryCode },
+          { returnType: "rows" },
         );
         if (!areMatching.length) {
           return "invalid-totp-recovery-code";

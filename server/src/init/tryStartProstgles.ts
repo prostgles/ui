@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import { isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
-import { tout } from "..";
 import type { ProstglesState } from "@common/electronInitTypes";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
@@ -15,6 +14,7 @@ import {
   type ProstglesInitStateWithDBS,
 } from "./startProstgles";
 import { testDashboardTypesContent } from "./testDashboardTypesContent";
+import { tout } from "@src/utils/tout";
 
 type StartArguments = {
   app: Express;

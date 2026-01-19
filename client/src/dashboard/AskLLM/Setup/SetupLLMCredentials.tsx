@@ -51,7 +51,7 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
               color="action"
               onClick={() => setSetupType("free")}
               iconPath={mdiLogin}
-              disabledInfo={isPlaywrightTest ? undefined : "Coming soon"}
+              // disabledInfo={isPlaywrightTest ? undefined : "Coming soon"}
             >
               Signup (free)
             </Btn>

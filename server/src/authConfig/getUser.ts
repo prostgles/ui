@@ -17,8 +17,8 @@ import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges
 
 type GetUser = NonNullable<AuthConfig<DBGeneratedSchema, SUser>["getUser"]>;
 export const getGetUser = (
-  authSetupData: AuthConfigForStateConnection,
   dbs: DBS,
+  authSetupData: AuthConfigForStateConnection,
 ) => {
   const getUser: GetUser = async (sid, _dbo, _db, client, req) => {
     const sessionInfo =

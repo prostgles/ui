@@ -199,8 +199,11 @@ export const publish: Publish<
                 const oldValue = await dbsTX.database_configs.findOne({
                   id: row.id,
                 });
+                if (!oldValue) {
+                  throw "Cannot find existing database config to validate IP changes";
+                }
                 const { isAllowed, ip } = await checkClientIP(
-                  dbsTX,
+                  dbsTX.sql,
                   {
                     ...clientReq,
                   },
@@ -272,6 +275,8 @@ export const publish: Publish<
           db_schema_filter: 1,
           display_options: 1,
           port: 1,
+          web_app_port: 1,
+          web_app_directory: 1,
         },
         validate: async ({ update, dbx, filter }) => {
           if (update.port) {

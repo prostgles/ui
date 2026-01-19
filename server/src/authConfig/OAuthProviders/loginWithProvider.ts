@@ -18,7 +18,7 @@ export const loginWithProvider = async (
   loginParams: Extract<LoginParams, { type: "OAuth" }>,
   db: DBOFullyTyped<DBGeneratedSchema>,
   clientInfo: LoginClientInfo,
-  database_config: AuthConfigForStateConnection["database_config"],
+  database_config: AuthConfigForStateConnection["stateDatabaseConfig"],
 ): Promise<LoginReturnType> => {
   const { user_agent } = clientInfo;
   const { provider, profile } = loginParams;

@@ -34,7 +34,7 @@ export const setLoggerDBS = (dbs: DBS) => {
 };
 
 const shouldExclude = (e: EventInfo, isStateDb: boolean) => {
-  if (!getAuthSetupData().database_config?.enable_logs) return true;
+  if (!getAuthSetupData().stateDatabaseConfig?.enable_logs) return true;
   if (
     isStateDb &&
     e.type === "table" &&

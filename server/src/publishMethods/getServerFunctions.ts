@@ -9,7 +9,7 @@ export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
 import { getPasswordHash } from "@src/authConfig/authUtils";
-import { initBackupManager } from "@src/init/onProstglesReady";
+import { initBackupManager } from "@src/init/prostglesOnReady";
 import { statePrgl } from "@src/init/startProstgles";
 import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
 import { getPasswordlessAdmin } from "@src/SecurityManager/initUsers";
@@ -57,6 +57,7 @@ import { getNodeTypes } from "./getNodeTypes";
 import { setFileStorage } from "./setFileStorage";
 import { getUserServerFunctions } from "./userServerFunctions/userServerFunctions";
 import { glob } from "glob";
+import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 
 export const getServerFunctions: ServerFunctionDefinitions<
   DBGeneratedSchema,
@@ -181,25 +182,23 @@ export const getServerFunctions: ServerFunctionDefinitions<
         if (!conId) {
           return statePrgl.getTSSchema();
         }
-        const c = connectionManager.getConnection(conId);
+        const c = connectionManager.getConnectionStartedInstance(conId);
         return c.prgl.getTSSchema();
       },
     }),
     getMyIP: defineAdminFunction({
       run: async (_, { dbs, clientReq: { socket } }) => {
         if (!socket) throw "Socket missing";
-        return checkClientIP(
-          dbs,
-          { socket },
-          await dbs.database_configs.findOne({
-            $existsJoined: { connections: { is_state_db: true } },
-          }),
-        );
+        const { stateDatabaseConfig } = getAuthSetupData();
+        if (!stateDatabaseConfig) {
+          throw "State database config missing";
+        }
+        return checkClientIP(dbs.sql, { socket }, stateDatabaseConfig);
       },
     }),
     getConnectedIds: defineAdminFunction({
       run: () => {
-        return Object.keys(connectionManager.prglConnections);
+        return Array.from(connectionManager.prglConnections.keys());
       },
     }),
     toggleService: defineAdminFunction({
@@ -219,7 +218,7 @@ export const getServerFunctions: ServerFunctionDefinitions<
     getDBSize: defineAdminFunction({
       input: { conId: "string" },
       run: async ({ conId }) => {
-        const c = connectionManager.getConnection(conId);
+        const c = connectionManager.getConnectionStartedInstance(conId);
         const size = (await c.prgl.db.sql(
           "SELECT pg_size_pretty( pg_database_size(current_database()) ) ",
           {},
@@ -231,7 +230,7 @@ export const getServerFunctions: ServerFunctionDefinitions<
     getIsSuperUser: defineAdminFunction({
       input: { conId: "string" },
       run: async ({ conId }) => {
-        const c = connectionManager.getConnection(conId);
+        const c = connectionManager.getConnectionStartedInstance(conId);
         return getIsSuperUser(c.prgl._db);
       },
     }),
@@ -303,7 +302,7 @@ export const getServerFunctions: ServerFunctionDefinitions<
     reloadSchema: defineAdminFunction({
       input: { conId: "string" },
       run: async ({ conId }) => {
-        const conn = connectionManager.getConnection(conId);
+        const conn = connectionManager.getConnectionStartedInstance(conId);
         if (conId && typeof conId !== "string") {
           throw "Invalid/Inexisting connection id provided";
         }
@@ -476,16 +475,17 @@ export const getServerFunctions: ServerFunctionDefinitions<
         if (isEmpty(changes)) {
           throw "No changes provided";
         }
-        const { c } = await getConnectionAndDatabaseConfig(dbs, connId);
+        const { c, dbConf } = await getConnectionAndDatabaseConfig(dbs, connId);
+        const activeConnection = connectionManager.getActiveConnection(connId);
         const newConn = await dbs.connections.update({ id: c.id }, changes, {
           returning: "*",
           multi: false,
         });
         if (!newConn) throw "Unexpected: newConn missing";
         await connectionManager.setOnMount(
-          connId,
-          newConn.on_mount_ts,
-          newConn.on_mount_ts_disabled,
+          dbConf.id,
+          newConn,
+          activeConnection.connectionInfo,
         );
       },
     }),
@@ -510,17 +510,19 @@ export const getServerFunctions: ServerFunctionDefinitions<
           { returning: "*", multi: false },
         );
         if (!newDbConf) throw "Unexpected: newDbConf missing";
+        const activeConnection = connectionManager.getActiveConnection(connId);
         await connectionManager.setTableConfig(
           connId,
-          newDbConf.table_config_ts,
-          newDbConf.table_config_ts_disabled,
+          newDbConf,
+          activeConnection.connectionInfo,
         );
       },
     }),
     getForkedProcStats: defineAdminFunction({
       input: { connectionId: "string" },
       run: async ({ connectionId }) => {
-        const prgl = connectionManager.getConnection(connectionId);
+        const prgl =
+          connectionManager.getConnectionStartedInstance(connectionId);
         const res = {
           server: {
             // cpu: os.cpus(),

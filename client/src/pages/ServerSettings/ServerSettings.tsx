@@ -196,7 +196,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                   <AuthProviderSetup
                     dbs={dbs}
                     dbsTables={dbsTables}
-                    connection_id={stateConnection.id}
+                    connectionId={stateConnection.id}
                   />
                 ),
               },

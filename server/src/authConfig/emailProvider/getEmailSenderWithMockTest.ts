@@ -7,7 +7,7 @@ import {
 } from "@common/OAuthUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { Unpromise } from "../../ConnectionManager/ConnectionManager";
-import { tout } from "../..";
+import { tout } from "@src/utils/tout";
 
 export const getSMTPWithTLS = (
   smtp: NonNullable<

@@ -1,15 +1,17 @@
 import { logOutgoingHttpRequests } from "./logOutgoingHttpRequests";
 logOutgoingHttpRequests(false);
 
+import { sidKeyName } from "@common/authTypesAndConstants";
+import { API_ENDPOINTS } from "@common/utils";
+import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import express, { json, urlencoded } from "express";
 import helmet from "helmet";
 import _http from "http";
 import path from "path";
+import { upsertNamedExpressMiddleware } from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
 import { Server } from "socket.io";
-import { API_ENDPOINTS } from "@common/utils";
-import { withOrigin } from "../authConfig/getAuth";
-import { sidKeyName } from "@common/authTypesAndConstants";
 import { actualRootDir } from "../electronConfig";
 
 export const isTesting = !!process.env.PRGL_TEST;
@@ -110,6 +112,16 @@ export const initExpressAndIOServers = () => {
 
   app.use(cookieParser());
 
+  const withOrigin: CorsOrigin = {
+    origin: (origin, cb) => {
+      const { stateDatabaseConfig: database_config } = getAuthSetupData();
+      cb(null, database_config?.allowed_origin ?? undefined);
+    },
+  };
+
+  const corsMiddleware = cors(withOrigin);
+  upsertNamedExpressMiddleware(app, corsMiddleware, "corsMiddleware");
+
   const io = new Server(http, {
     path: API_ENDPOINTS.WS_DBS,
     maxHttpBufferSize: 100e100,
@@ -120,9 +132,17 @@ export const initExpressAndIOServers = () => {
   io.engine.on("connection_error", (err) => {
     console.error("Connection error :", err);
   });
+
   return {
     app,
     io,
     http,
   };
+};
+
+export type CorsOrigin = {
+  origin?: (
+    requestOrigin: string | undefined,
+    callback: (err: Error | null, origin?: string) => void,
+  ) => void;
 };

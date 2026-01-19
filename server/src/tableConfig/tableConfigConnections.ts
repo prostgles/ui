@@ -26,6 +26,11 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
         sqlDefinition: `INTEGER CHECK(port > 0 AND port < 65536)`,
         info: { hint: `Port override for Prostgles connection` },
       },
+      web_app_port: "INTEGER",
+      web_app_directory: {
+        sqlDefinition: `TEXT`,
+        info: { hint: "Path to fronend directory for connection" },
+      },
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       name: `TEXT NOT NULL CHECK(LENGTH(name) > 0)`,
       db_name: `TEXT NOT NULL CHECK(LENGTH(db_name) > 0)`,

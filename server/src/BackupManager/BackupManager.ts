@@ -36,18 +36,15 @@ export default class BackupManager {
   installedPrograms: InstalledPrograms | undefined;
 
   dbs: DBS;
-  db: DB;
   automaticBackupInterval: NodeJS.Timeout;
   connMgr: ConnectionManager;
   dbConfSub?: SubscriptionHandler;
 
   constructor(
-    db: DB,
     dbs: DBS,
     connMgr: ConnectionManager,
     installedPrograms: InstalledPrograms | undefined,
   ) {
-    this.db = db;
     this.dbs = dbs;
     this.connMgr = connMgr;
     this.installedPrograms = installedPrograms;
@@ -87,7 +84,7 @@ export default class BackupManager {
 
   static create = async (db: DB, dbs: DBS, connMgr: ConnectionManager) => {
     const installedPrograms = await getInstalledPsqlVersions(db);
-    return new BackupManager(db, dbs, connMgr, installedPrograms);
+    return new BackupManager(dbs, connMgr, installedPrograms);
   };
 
   async destroy() {

@@ -1,6 +1,5 @@
 import { CONNECTION_CONFIG_SECTIONS } from "@common/utils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import type { JSONB } from "prostgles-types";
 import { loggerTableConfig } from "../Logger";
 import { tableConfigAccessControl } from "./tableConfigAccessControl";
 import { tableConfigBackups } from "./tableConfigBackups";
@@ -14,6 +13,7 @@ import { tableConfigPublishedMethods } from "./tableConfigPublishedMethods";
 import { tableConfigUsers } from "./tableConfigUsers";
 import { tableConfigWindows } from "./tableConfigWindows";
 import { tableConfigWorkspaces } from "./tableConfigWorkspaces";
+import { tableConfigServices } from "./tableConfigServices";
 
 const SESSION_TYPE = {
   enum: ["web", "api_token", "mobile"],
@@ -89,61 +89,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     },
   },
 
-  services: {
-    columns: {
-      name: `TEXT PRIMARY KEY`,
-      label: `TEXT NOT NULL UNIQUE`,
-      description: `TEXT`,
-      icon: `TEXT NOT NULL`,
-      default_port: `INTEGER NOT NULL`,
-      build_hash: `TEXT`,
-      status: {
-        enum: [
-          "stopped",
-          "starting",
-          "running",
-          "error",
-          "building",
-          "building-done",
-          "build-error",
-        ],
-      },
-      configs: {
-        nullable: true,
-        jsonbSchema: {
-          record: {
-            values: {
-              type: {
-                label: "string",
-                description: "string",
-                defaultOption: "string",
-                options: {
-                  record: {
-                    values: {
-                      type: {
-                        label: { type: "string", optional: true },
-                        env: { record: { values: "string" } },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      selected_config_options: {
-        nullable: true,
-        jsonbSchema: {
-          record: {
-            values: { type: "string" },
-          },
-        },
-      },
-      logs: `TEXT`,
-      created: `TIMESTAMPTZ DEFAULT NOW()`,
-    },
-  },
+  ...tableConfigServices,
 
   login_attempts: {
     // dropIfExists: true,

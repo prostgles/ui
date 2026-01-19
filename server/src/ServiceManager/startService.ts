@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { tout } from "..";
+import { tout } from "@src/utils/tout";
 import type { ServiceManager } from "./ServiceManager";
 import {
   prostglesServices,

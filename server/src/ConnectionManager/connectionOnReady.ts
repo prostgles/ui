@@ -1,59 +1,34 @@
-import type { SUser } from "@src/authConfig/sessionUtils";
-import {
-  subscribeToAuthSetupChanges,
-  type AuthConfigForStateOrConnection,
-} from "@src/authConfig/subscribeToAuthSetupChanges";
-import type { DB, OnReadyCallback } from "prostgles-server/dist/initProstgles";
-import type { DBS } from "..";
 import type { DBSSchema } from "@common/publishUtils";
-import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
+import type { SUser } from "@src/authConfig/sessionUtils";
+import type { OnReadyCallback } from "prostgles-server/dist/initProstgles";
 import { pickKeys } from "prostgles-types";
+import type { DBS } from "..";
 import type { ConnectionManager } from "./ConnectionManager";
-import type e from "express";
-import { getAuth } from "@src/authConfig/getAuth";
-import type { AuthConfig } from "prostgles-server";
+import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 
 export const getConnectionOnReady = ({
   connectionManager,
   dbs,
-  _dbs,
   connection: con,
   databaseConfig,
   onSetupReady,
 }: {
   connectionManager: ConnectionManager;
   dbs: DBS;
-  _dbs: DB;
   databaseConfig: DBSSchema["database_configs"];
   connection: DBSSchema["connections"];
   onSetupReady: () => void;
 }) => {
-  const { prglConnections } = connectionManager;
   const onReady: OnReadyCallback<void, SUser> = (params) => {
     const { dbo: db, db: _db, reason, tables } = params;
 
-    const newAuthSetupDataListener = subscribeToAuthSetupChanges(
-      dbs,
-      async (authData) => {
-        const auth = await getConnectionAuth(connectionManager.app, dbs, _dbs, {
-          ...authData,
-          type: "connection",
-          url_path: con.url_path || "",
-          database_config: databaseConfig,
-        });
-        void prglConnections[con.id]?.prgl?.update({
-          auth,
-        });
-      },
-      prglConnections[con.id]?.authSetupDataListener,
+    let maybeActiveConnection = connectionManager.getActiveConnectionSilentFail(
+      con.id,
     );
-    prglConnections[con.id]!.authSetupDataListener = newAuthSetupDataListener;
-    if (prglConnections[con.id]) {
-      if (prglConnections[con.id]!.prgl) {
-        prglConnections[con.id]!.prgl!._db = _db;
-        prglConnections[con.id]!.prgl!.db = db;
-      }
-      prglConnections[con.id]!.lastRestart = Date.now();
+    if (maybeActiveConnection) {
+      maybeActiveConnection.prgl._db = _db;
+      maybeActiveConnection.prgl.db = db;
+      maybeActiveConnection.lastRestart = Date.now();
     }
     if (reason.type !== "prgl.restart" && reason.type !== "init") {
       connectionManager.onConnectionReload(con.id, databaseConfig.id);
@@ -75,42 +50,27 @@ export const getConnectionOnReady = ({
         ...pickKeys(con, ["db_host", "db_port", "db_name"]),
       });
       sameDbs.forEach(({ id }) => {
-        if (prglConnections[id]) {
-          prglConnections[id].isReady = false;
-          void prglConnections[id].prgl?.restart();
+        const maybeActiveConnection =
+          connectionManager.getActiveConnectionSilentFail(id);
+        if (maybeActiveConnection) {
+          maybeActiveConnection.isReady = false;
+          void maybeActiveConnection.prgl.restart();
         }
       });
     };
     const isNotRecursive = reason.type !== "prgl.restart";
-    if (prglConnections[con.id]?.isReady && isNotRecursive) {
+    maybeActiveConnection = connectionManager.getActiveConnectionSilentFail(
+      con.id,
+    );
+    if (maybeActiveConnection?.isReady && isNotRecursive) {
       void refreshSamedatabaseForOtherUsers();
     }
 
-    if (prglConnections[con.id]) {
-      prglConnections[con.id]!.isReady = true;
+    if (maybeActiveConnection) {
+      maybeActiveConnection.isReady = true;
     }
-    // resolve(socket_path);
     onSetupReady();
     console.log("dbProj ready", con.db_name);
   };
   return onReady;
-};
-
-const getConnectionAuth = async (
-  app: e.Express,
-  dbs: DBS,
-  _dbs: DB,
-  authData: AuthConfigForStateOrConnection,
-) => {
-  const auth = await getAuth(app, dbs, authData);
-  if (!auth) return;
-  // return auth as any;
-  return {
-    sidKeyName: auth.sidKeyName,
-    getUser: (sid, __, _, cl, reqInfo) =>
-      auth.getUser(sid, dbs, _dbs, cl, reqInfo),
-    cacheSession: {
-      getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
-    },
-  } satisfies AuthConfig<void, SUser>;
 };

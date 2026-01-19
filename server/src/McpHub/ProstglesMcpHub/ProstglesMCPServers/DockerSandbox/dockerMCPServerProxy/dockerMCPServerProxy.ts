@@ -13,7 +13,7 @@ import { runProstglesDBTool } from "@src/publishMethods/askLLM/prostglesLLMTools
 import { sidKeyName } from "@common/authTypesAndConstants";
 import { isPortFree } from "@src/utils/isPortFree";
 
-const PREFERRED_PORT = 3009;
+const PREFERRED_PORT = 3089;
 export const DOCKER_MCP_ENDPOINT = "/db";
 const ROUTE = `${DOCKER_MCP_ENDPOINT}/:endpoint`;
 

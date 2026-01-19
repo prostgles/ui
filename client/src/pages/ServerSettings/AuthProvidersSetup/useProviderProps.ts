@@ -5,18 +5,18 @@ type UseProviderPropsArgs = {
   dbs: Prgl["dbs"];
   dbsTables: Prgl["dbsTables"];
   auth_providers: DBSSchema["database_configs"]["auth_providers"] | undefined;
-  connection_id: string;
+  connectionId: string;
 };
 export const useProviderProps = ({
   dbs,
   dbsTables,
   auth_providers,
-  connection_id,
+  connectionId,
 }: UseProviderPropsArgs) => {
   const doUpdate = async (newValue: typeof auth_providers) => {
     await dbs.database_configs.update(
       {
-        $existsJoined: { connections: { id: connection_id } },
+        $existsJoined: { connections: { id: connectionId } },
       },
       {
         auth_providers: newValue,

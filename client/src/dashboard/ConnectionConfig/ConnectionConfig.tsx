@@ -1,27 +1,28 @@
-import {
-  mdiAccountKey,
-  mdiAccountMultiple,
-  mdiApplicationBracesOutline,
-  mdiChartLine,
-  mdiDatabaseSync,
-  mdiImage,
-  mdiLanguageTypescript,
-  mdiLock,
-  mdiPencil,
-  mdiTableEdit,
-} from "@mdi/js";
-import React, { useMemo } from "react";
 import type { CONNECTION_CONFIG_SECTIONS } from "@common/utils";
-import { dataCommand } from "../../Testing";
 import { FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import type { TabItem } from "@components/Tabs";
 import Tabs from "@components/Tabs";
+import {
+  mdiAccountKey,
+  mdiAccountMultiple,
+  mdiApplicationBracesOutline,
+  mdiApplicationBracketsOutline,
+  mdiChartLine,
+  mdiDatabaseSync,
+  mdiImage,
+  mdiLanguageTypescript,
+  mdiPencil,
+  mdiTableEdit,
+} from "@mdi/js";
+import { AuthProviderSetup } from "@pages/ServerSettings/AuthProvidersSetup/AuthProvidersSetup";
+import React, { useMemo } from "react";
 import { t } from "../../i18n/i18nUtils";
 import NewConnection from "../../pages/NewConnection/NewConnnectionForm";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
 import { TopControls } from "../../pages/TopControls";
+import { dataCommand } from "../../Testing";
 import { getKeys } from "../../utils/utils";
 import { AccessControl } from "../AccessControl/AccessControl";
 import { useAccessControlSearchParams } from "../AccessControl/useAccessControlSearchParams";
@@ -32,7 +33,7 @@ import { StatusMonitor } from "../StatusMonitor/StatusMonitor";
 import { TableConfig } from "../TableConfig/TableConfig";
 import { ServerSideFunctions } from "./ServerSideFunctions";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
-import { AuthProviderSetup } from "@pages/ServerSettings/AuthProvidersSetup/AuthProvidersSetup";
+import { WebApp } from "./WebApp/WebApp";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -105,7 +106,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
             <AuthProviderSetup
               dbs={dbs}
               dbsTables={dbsTables}
-              connection_id={connectionId}
+              connectionId={connectionId}
             />
           ),
         },
@@ -143,6 +144,15 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
             disabledText ||
             (isElectron ? "Not available for desktop" : undefined),
           content: <APIDetails {...prgl} />,
+        },
+        webApp: {
+          label: "Web App",
+          listProps: dataCommand("config.webApp"),
+          leftIconPath: mdiApplicationBracketsOutline,
+          disabledText:
+            disabledText ||
+            (isElectron ? "Not available for desktop" : undefined),
+          content: <WebApp dbs={dbs} connectionId={connectionId} />,
         },
         table_config: {
           label: (

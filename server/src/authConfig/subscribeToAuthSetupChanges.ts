@@ -1,11 +1,12 @@
 import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
 import type { DBSSchema } from "@common/publishUtils";
+import { tout } from "@src/utils/tout";
 import { getKeys, isEqual } from "prostgles-types";
-import { tout, type DBS } from "../index";
+import { type DBS } from "../index";
 import { activePasswordlessAdminFilter } from "../SecurityManager/initUsers";
 
 export type AuthConfigForStateConnection = {
-  database_config: DBSSchema["database_configs"] | undefined;
+  stateDatabaseConfig: DBSSchema["database_configs"];
   passwordlessAdmin:
     | (Pick<DBSSchema["users"], "id" | "type"> & {
         sessions: DBSSchema["sessions"][];
@@ -14,17 +15,20 @@ export type AuthConfigForStateConnection = {
     | undefined;
 };
 export type ConnectionAuthSetup = {
-  database_config: DBSSchema["database_configs"];
-  url_path: string;
+  connectionDatabaseConfig: DBSSchema["database_configs"];
+  connection: Pick<
+    DBSSchema["connections"],
+    "id" | "url_path" | "port" | "is_state_db"
+  >;
 };
 
-export type AuthConfigForStateOrConnection = AuthConfigForStateConnection &
-  (
-    | {
-        type: "state";
-      }
-    | ({ type: "connection" } & ConnectionAuthSetup)
-  );
+export type AuthConfigForConnection = AuthConfigForStateConnection &
+  ({ type: "connection" } & ConnectionAuthSetup);
+export type AuthConfigForStateOrConnection =
+  | (AuthConfigForStateConnection & {
+      type: "state";
+    })
+  | AuthConfigForConnection;
 
 let authSetupData: AuthConfigForStateConnection | undefined;
 
@@ -42,7 +46,7 @@ export const subscribeToAuthSetupChanges = async (
   let context: Partial<AuthConfigForStateConnection> = {};
   const totalContextKeys = getKeys({
     passwordlessAdmin: 1,
-    database_config: 1,
+    stateDatabaseConfig: 1,
   } satisfies Record<keyof AuthConfigForStateConnection, 1>);
 
   const setContext = (changes: Partial<AuthConfigForStateConnection>) => {
@@ -68,11 +72,11 @@ export const subscribeToAuthSetupChanges = async (
     {},
     (database_config) => {
       setContext({
-        database_config,
+        stateDatabaseConfig: database_config,
       });
     },
   );
-  /** This is used to avoid docker-mcp session that changes frequently and causes page restart when running a docker mcp */
+  /** This is used to exclude docker-mcp session that changes frequently and causes page restart when running a docker mcp */
   const userAgentFilter = {
     user_agent: { $ne: DOCKER_USER_AGENT },
   };
@@ -113,17 +117,17 @@ export const subscribeToAuthSetupChanges = async (
 };
 
 export const waitForDatabaseConfig = async () => {
-  while (!authSetupData?.database_config) {
+  while (!authSetupData?.stateDatabaseConfig) {
     console.warn("Delaying user request until GlobalSettings area available");
     await tout(500);
   }
-  return authSetupData.database_config;
+  return authSetupData.stateDatabaseConfig;
 };
 
 export const getAuthSetupData = () => {
   return (
     authSetupData ?? {
-      database_config: undefined,
+      stateDatabaseConfig: undefined,
       globalSettings: undefined,
       passwordlessAdmin: undefined,
     }

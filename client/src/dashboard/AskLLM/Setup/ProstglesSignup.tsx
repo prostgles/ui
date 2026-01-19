@@ -78,7 +78,7 @@ export const ProstglesSignup = ({
                 id: "Prostgles",
               },
               {
-                api_url: `${host}/rest-api/cloud/methods/askLLM`,
+                api_url: `${host}/rest-api/methods/askLLM`,
               },
             );
             await dbs.llm_credentials.insert({

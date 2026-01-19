@@ -17,7 +17,7 @@ import { DBS_CONNECTION_INFO } from "../envVars";
 import { publish } from "../publish/publish";
 import { tableConfig } from "../tableConfig/tableConfig";
 import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
-import { onProstglesReady } from "./onProstglesReady";
+import { prostglesOnReady } from "./prostglesOnReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { getServerFunctions } from "@src/publishMethods/getServerFunctions";
 
@@ -183,7 +183,7 @@ export const startProstgles = async ({
       publish,
       joins: "inferred",
       onReady: async (params, update) => {
-        await onProstglesReady(params, update, app, con, port);
+        await prostglesOnReady(params, update, app, con, port);
       },
     });
 

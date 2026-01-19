@@ -30,7 +30,7 @@ export const initBackupManager = async (db: DB, dbs: DBS) => {
 
 export const getBackupManager = () => backupManager;
 
-export const onProstglesReady = async (
+export const prostglesOnReady = async (
   params: Parameters<OnReadyCallback<DBGeneratedSchema, SUser>>[0],
   update: Parameters<OnReadyCallback<DBGeneratedSchema, SUser>>[1],
   app: e.Express,
@@ -67,7 +67,9 @@ export const onProstglesReady = async (
     const newAuthSetupDataListener = subscribeToAuthSetupChanges(
       db,
       async (authData) => {
-        const auth = await getAuth(app, db, { ...authData, type: "state" });
+        app.set("trust proxy", authData.stateDatabaseConfig.trust_proxy);
+        const authSetupData = { ...authData, type: "state" as const };
+        const auth = await getAuth(app, db, _db, authSetupData);
         void update({
           auth,
         });
@@ -88,15 +90,23 @@ export const onProstglesReady = async (
 };
 
 type AsyncCleanup = () => Promise<{ cleanup: () => Promise<void> }>;
-let oldCleanups: ReturnType<AsyncCleanup> | undefined;
-const promiseCleanup = async (func: AsyncCleanup) => {
-  const previous = oldCleanups;
-  oldCleanups = func();
+const cleanups: ReturnType<AsyncCleanup>[] = [];
+let chain = Promise.resolve();
+const promiseCleanup = (func: AsyncCleanup) => {
+  chain = chain.then(async () => {
+    /** Get new values first for better experience */
+    cleanups.push(func());
 
-  if (previous) {
-    const { cleanup } = await previous;
-    await cleanup().catch((e) => {
-      console.error("Error during prostgles onReady cleanup", e);
-    });
-  }
+    while (cleanups.length > 1) {
+      try {
+        const { cleanup } = await cleanups[0]!;
+        await cleanup();
+      } catch (e) {
+        console.error("Error during prostgles onReady cleanup", e);
+      } finally {
+        void cleanups.shift();
+      }
+    }
+  });
+  return chain;
 };

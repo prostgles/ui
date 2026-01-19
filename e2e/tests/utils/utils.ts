@@ -1127,3 +1127,19 @@ export const newChat = async (page: PageWIds) => {
   await page.getByTestId("AskLLMChat.NewChat").click();
   await page.waitForTimeout(1e3);
 };
+
+let setupAuthCount = 0;
+export const setupMagicLinkAuth = async (page: PageWIds) => {
+  await page.getByTestId("EmailAuthSetup").locator("button").click();
+  await page.getByTestId("EmailAuthSetup.SignupType").click();
+  await page.locator(`[data-key="withMagicLink"]`).click();
+  await page.getByTestId("EmailSMTPAndTemplateSetup").locator("button").click();
+  await page.getByTestId("EmailSMTPSetup").locator("button").click();
+  await page.locator("input#smtp-Port").fill((465 + setupAuthCount).toString());
+  await page.locator(`[data-label="Host"] input`).fill("prostgles-test-mock");
+  await page.getByTestId("EmailSMTPAndTemplateSetup.save").click();
+  await page.waitForTimeout(1500);
+  const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
+  await expect(errNodeCount).toBe(0);
+  setupAuthCount++;
+};

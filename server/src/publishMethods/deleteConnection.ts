@@ -11,11 +11,15 @@ export const deleteConnection = async (
   try {
     return dbs.tx(async (t) => {
       const con = await t.connections.findOne({ id });
-      if (con?.is_state_db)
+      if (con?.is_state_db) {
         throw "Cannot delete a prostgles state database connection";
-      connectionManager.prglConnections[id]?.methodRunner?.destroy();
-      connectionManager.prglConnections[id]?.onMountRunner?.destroy();
-      connectionManager.prglConnections[id]?.tableConfigRunner?.destroy();
+      }
+      const activeConnections = connectionManager.prglConnections.get(id);
+      if (activeConnections?.state === "started") {
+        activeConnections.methodRunner?.destroy();
+        activeConnections.onMountRunner?.destroy();
+        activeConnections.tableConfigRunner?.destroy();
+      }
       if (opts?.dropDatabase) {
         if (!con?.db_name) throw "Unexpected: Database name missing";
         const { db: cdb, destroy: destroyCdb } = await getCDB(

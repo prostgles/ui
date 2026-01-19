@@ -54,10 +54,13 @@ export const useDBSClient = (
     if (!socket) return;
 
     socket.on("infolog", console.log);
-    socket.on("server-restart-request", (_sure) => {
-      setTimeout(() => {
-        void pageReload("server-restart-request");
-      }, 2000);
+    socket.on("server-restart-request", (withDelay) => {
+      setTimeout(
+        () => {
+          void pageReload("server-restart-request");
+        },
+        withDelay ? 200 : 0,
+      );
     });
     socket.on("redirect", (newLocation) => {
       if (typeof newLocation !== "string") return;

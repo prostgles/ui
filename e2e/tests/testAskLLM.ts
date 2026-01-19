@@ -200,7 +200,7 @@ const mcpSandboxToolUse: ToolUse = {
             }),
             "index.js": dedent(`
             fetch(
-              "http://${isDocker ? "prostgles-ui-docker-mcp" : "172.17.0.1"}:3009/db/execute_sql_with_rollback", 
+              "http://${isDocker ? "prostgles-ui-docker-mcp" : "172.17.0.1"}:3089/db/execute_sql_with_rollback", 
               { headers: { "Content-Type": "application/json" }, 
               method: "POST", 
               body: JSON.stringify({ sql: "SELECT * FROM users" }) 

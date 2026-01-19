@@ -9,7 +9,6 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSche
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
 import { getPasswordHash } from "./authUtils";
-import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 
 export type Sessions = DBSSchema["sessions"];
 export const parseAsBasicSession = (s: Sessions): BasicSession => {
@@ -77,20 +76,24 @@ export const authCookieOpts =
  * This is mainly used to ensure that when there is passwordless admin access external IPs cannot connect
  */
 export const checkClientIP = async (
-  dbsOrTx: DBS,
+  dbsOrTxSql: DBS["sql"],
   args: { socket: PRGLIOSocket } | { httpReq: Request },
-  database_config: AuthConfigForStateConnection["database_config"],
+  {
+    id,
+    login_rate_limit,
+  }: Pick<DBSSchema["database_configs"], "id" | "login_rate_limit">,
 ) => {
   const { ip_address, ip_address_remote, x_real_ip } =
     getClientRequestIPsInfo(args);
-  const { groupBy } = database_config?.login_rate_limit ?? {};
+  const { groupBy } = login_rate_limit;
   const ipValue =
     groupBy === "x-real-ip" ? x_real_ip
     : groupBy === "remote_ip" ? ip_address_remote
     : ip_address;
-  const isAllowed = (await dbsOrTx.sql(
-    "SELECT inet ${ip} <<= any (allowed_ips::inet[]) FROM database_configs ",
-    { ip: ipValue },
+
+  const isAllowed = (await dbsOrTxSql(
+    "SELECT inet ${ip} <<= any (allowed_ips::inet[]) FROM database_configs WHERE id = ${database_config_id}",
+    { ip: ipValue, database_config_id: id },
     { returnType: "value" },
   )) as boolean;
 
@@ -114,10 +117,6 @@ export const insertUser = async (
   if (!user.id) throw "User id missing";
   if (typeof user.password !== "string") throw "Password missing";
   const hashedPassword = getPasswordHash(user, user.password);
-  // await _db.any(
-  //   "UPDATE users SET password = ${hashedPassword} WHERE id = ${id};",
-  //   { id: user.id, hashedPassword },
-  // );
   await db.users.update({ id: user.id }, { password: hashedPassword });
   return db.users.findOne({ id: user.id });
 };

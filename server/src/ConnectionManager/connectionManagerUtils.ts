@@ -13,6 +13,7 @@ import type { Connections, DatabaseConfigs, DBS } from "..";
 import { getConnectionPaths, ROUTES } from "@common/utils";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
+import type e from "express";
 
 export const getDatabaseConfigFilter = (c: Connections) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
@@ -20,6 +21,7 @@ export const getDatabaseConfigFilter = (c: Connections) =>
 type ParseTableConfigArgs = {
   dbs: DBS;
   conMgr: ConnectionManager;
+  app: e.Express;
   con: Connections;
 } & (
   | {
@@ -35,6 +37,7 @@ type ParseTableConfigArgs = {
 export const parseTableConfig = async ({
   con,
   conMgr,
+  app,
   dbs,
   type,
   newTableConfig,
@@ -96,7 +99,7 @@ export const parseTableConfig = async ({
       undefined
     : ({
         tableName: tableConfig.fileTable,
-        expressApp: conMgr.app,
+        expressApp: app,
         fileServePath: `${ROUTES.STORAGE}/${connectionId}`,
         ...(tableConfig.storageType.type === "local" ?
           {
@@ -129,14 +132,14 @@ export const getCompiledTS = (code: string) => {
 };
 
 export const getRestApiConfig = (
-  conMgr: ConnectionManager,
-  con: Connections,
+  app: e.Express,
+  con: Pick<Connections, "id" | "url_path" | "port" | "is_state_db">,
   dbConf: DatabaseConfigs,
 ) => {
   const res: ProstglesInitOptions["restApi"] =
     dbConf.rest_api_enabled ?
       {
-        expressApp: conMgr.app,
+        expressApp: app,
         path: getConnectionPaths(con).rest,
       }
     : undefined;
@@ -192,7 +195,8 @@ export const alertIfReferencedFileColumnsRemoved = async function (
   { connId, reason, tables }: AlertIfReferencedFileColumnsRemovedArgs,
 ) {
   /** Remove dropped referenced file columns */
-  const { dbConf, isSuperUser } = this.prglConnections[connId] ?? {};
+  const { dbConf, isSuperUser } =
+    this.getActiveConnectionSilentFail(connId) ?? {};
   const referencedTables = dbConf?.file_table_config?.referencedTables as
     | FileTableConfigReferences
     | undefined;

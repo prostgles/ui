@@ -5,7 +5,7 @@ import {
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { getSerialisableError } from "prostgles-types";
 import { z } from "zod";
-import { tout } from "../..";
+import { tout } from "@src/utils/tout";
 import type { McpConnection } from "./McpHub";
 import type { McpServerEvents } from "./McpTypes";
 

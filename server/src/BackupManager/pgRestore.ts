@@ -140,14 +140,15 @@ export async function pgRestore(
           const dummyViewToReloadSchema =
             "prostgles_dummy_view_to_reload_schema";
           void this.connMgr
-            .getConnection(con.id)
+            .getConnectionStartedInstance(con.id)
             .prgl._db.any(
               `
             CREATE VIEW ${dummyViewToReloadSchema} AS SELECT 1;
           `,
             )
             .then(() => {
-              void this.connMgr.getConnection(con.id).prgl._db.any(`
+              void this.connMgr.getConnectionStartedInstance(con.id).prgl._db
+                .any(`
               DROP VIEW ${dummyViewToReloadSchema};
             `);
             });

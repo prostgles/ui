@@ -1,12 +1,10 @@
-import { API_ENDPOINTS, getConnectionPaths, ROUTES } from "@common/utils";
+import { getConnectionPaths } from "@common/utils";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { tout, type DBS } from "../index";
-import {
-  getHotReloadConfigs,
-  type ConnectionManager,
-} from "./ConnectionManager";
+import { type DBS } from "../index";
+import { type ConnectionManager } from "./ConnectionManager";
 import { saveCertificates } from "./saveCertificates";
-import { match } from "path-to-regexp";
+import { startConnectionOnRequestHandler } from "./startConnectionOnRequestHandler";
+import { getHotReloadConfigs } from "./getHotReloadConfigs";
 
 export async function initConnectionManager(
   this: ConnectionManager,
@@ -20,7 +18,7 @@ export async function initConnectionManager(
   this.conSub = await this.dbs.connections.subscribe({}, {}, (connections) => {
     saveCertificates(connections);
     connections.forEach((updatedConnection) => {
-      const prglCon = this.prglConnections[updatedConnection.id];
+      const prglCon = this.getActiveConnectionSilentFail(updatedConnection.id);
       const currentConnection = this.connections?.find(
         (ccon) => ccon.id === updatedConnection.id,
       );
@@ -41,27 +39,40 @@ export async function initConnectionManager(
     {
       select: {
         "*": 1,
-        connections: { id: 1 },
+        connections: { id: 1, is_state_db: 1, port: 1 },
         access_control_user_types: "*",
       },
     },
     async (dbConfigs: typeof this.dbConfigs) => {
       this.dbConfigs = dbConfigs;
-      for (const conf of dbConfigs) {
-        for (const c of conf.connections) {
-          const prglCon = this.prglConnections[c.id];
-          if (prglCon?.prgl && !prglCon.con.is_state_db) {
-            const con = await this.getConnectionData(c.id);
-            const hotReloadConfig = await getHotReloadConfigs(
-              this,
-              con,
-              conf,
-              dbs,
+      const stateDatabaseConfig = dbConfigs.find((dc) =>
+        dc.connections.some((c) => c.is_state_db),
+      );
+      for (const databaseConfig of dbConfigs) {
+        for (const connectionPartialItem of databaseConfig.connections) {
+          const prglCon = this.getActiveConnectionSilentFail(
+            connectionPartialItem.id,
+          );
+          if (
+            stateDatabaseConfig &&
+            prglCon?.prgl &&
+            !prglCon.con.is_state_db
+          ) {
+            const connection = await this.getConnectionData(
+              connectionPartialItem.id,
             );
+            const { config: hotReloadConfig } = await getHotReloadConfigs({
+              connectionManager: this,
+              connection,
+              databaseConfig: databaseConfig,
+              stateDatabaseConfig,
+              dbs,
+              _dbs: db,
+            });
             /** Can happen due to error in onMount */
             await prglCon.prgl.update(hotReloadConfig).catch((e) => {
               console.error(
-                `Error updating connection ${con.id} with hot reload config`,
+                `Error updating connection ${connection.id} with hot reload config`,
                 e,
                 { hotReloadConfig },
               );
@@ -74,42 +85,7 @@ export async function initConnectionManager(
     },
   );
 
-  /** Start connections if accessed. TODO This should be a 404 error request handler */
-  this.app.use(async (req, res, next) => {
-    const { url } = req;
-    if (this.dbs && this.db && this.connections) {
-      const matchers = [
-        ROUTES.CONNECTIONS,
-        ROUTES.CONFIG,
-        API_ENDPOINTS.WS_DB,
-        API_ENDPOINTS.REST,
-      ].map((route) =>
-        match<{ connectionId: string }>(route + "/:connectionId", {
-          end: false,
-        }),
-      );
-
-      let validOfflineConnectionId: string | undefined;
-
-      // const connectionIdOrPath = url.split("/")[2];
-      const connectionIdOrPath = matchers
-        .map((m) => m(url))
-        .find((res) => res !== false)?.params.connectionId;
-      if (connectionIdOrPath) {
-        validOfflineConnectionId = this.connections.find(
-          (c) =>
-            !this.prglConnections[c.id] &&
-            [c.id, c.url_path].includes(connectionIdOrPath),
-        )?.id;
-      }
-      if (validOfflineConnectionId) {
-        await this.startConnection(validOfflineConnectionId, this.dbs, this.db);
-        await tout(1000);
-        return res.redirect(307, req.originalUrl);
-      }
-    }
-    next();
-  });
+  startConnectionOnRequestHandler(this);
 
   await this.accessControlHotReload();
 }

@@ -307,6 +307,7 @@ export const CONNECTION_CONFIG_SECTIONS = [
   "methods",
   "file_storage",
   "API",
+  "webApp",
 ] as const;
 
 /**
@@ -335,13 +336,16 @@ export const fixIndent = (_str: string | TemplateStringsArray): string => {
 export const getConnectionPaths = ({
   id,
   url_path,
-}: {
-  id: string;
-  url_path: string | null;
-}) => {
+  port,
+  is_state_db,
+}: Pick<
+  DBSSchema["connections"],
+  "id" | "url_path" | "port" | "is_state_db"
+>) => {
+  const { REST, WS_DB } = API_ENDPOINTS;
   return {
-    rest: `${API_ENDPOINTS.REST}/${url_path || id}`,
-    ws: `${API_ENDPOINTS.WS_DB}/${url_path || id}`,
+    rest: port && !is_state_db ? REST : `${REST}/${url_path || id}`,
+    ws: port && !is_state_db ? WS_DB : `${WS_DB}/${url_path || id}`,
     dashboard: `${ROUTES.CONNECTIONS}/${id}`,
     config: `${ROUTES.CONFIG}/${id}`,
   };

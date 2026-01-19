@@ -3,7 +3,7 @@ import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import type { Prgl } from "../../../App";
 import { t } from "../../../i18n/i18nUtils";
 import { EmailAuthSetup } from "../EmailAuthSetup";
@@ -18,9 +18,9 @@ export type AuthProvidersConfig = Extract<
 export const AuthProviderSetup = ({
   dbs,
   dbsTables,
-  connection_id,
+  connectionId,
 }: Pick<Prgl, "dbs" | "dbsTables"> & {
-  connection_id: string;
+  connectionId: string;
 }) => {
   const databaseConfigTable = dbsTables.find(
     (t) => t.name === "database_configs",
@@ -28,27 +28,32 @@ export const AuthProviderSetup = ({
   const authColumn = databaseConfigTable?.columns.find(
     (c) => c.name === "auth_providers",
   );
-  const { data: database_config } = dbs.database_configs.useSubscribeOne();
+  const databaseConfigFilter = useMemo(
+    () =>
+      ({
+        $existsJoined: { connections: { id: connectionId } },
+      }) as const,
+    [connectionId],
+  );
+  const { data: database_config } =
+    dbs.database_configs.useSubscribeOne(databaseConfigFilter);
   const { data: userTypes } = dbs.user_types.useFind();
   const updateAuth = useCallback(
     async (auth: Partial<DBSSchema["database_configs"]["auth_providers"]>) => {
-      await dbs.database_configs.update(
-        {},
-        {
-          auth_providers:
-            !auth ? undefined : (
-              {
-                website_url:
-                  database_config?.auth_providers?.website_url ??
-                  window.location.origin,
-                ...database_config?.auth_providers,
-                ...auth,
-              }
-            ),
-        },
-      );
+      await dbs.database_configs.update(databaseConfigFilter, {
+        auth_providers:
+          !auth ? undefined : (
+            {
+              website_url:
+                database_config?.auth_providers?.website_url ??
+                window.location.origin,
+              ...database_config?.auth_providers,
+              ...auth,
+            }
+          ),
+      });
     },
-    [dbs.database_configs, database_config],
+    [dbs.database_configs, database_config, databaseConfigFilter],
   );
 
   const settingsLoaded = !!database_config;
@@ -66,7 +71,7 @@ export const AuthProviderSetup = ({
     auth_providers: database_config?.auth_providers,
     dbs,
     dbsTables,
-    connection_id,
+    connectionId,
   });
 
   if (!databaseConfigTable || !authColumn) {

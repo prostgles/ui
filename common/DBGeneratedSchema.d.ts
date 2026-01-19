@@ -91,7 +91,7 @@ export type DBGeneratedSchema = {
       database_config_id?: null | number;
       id?: string;
       message?: null | string;
-      section?: null | "authentication" | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API"
+      section?: null | "authentication" | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API" | "webApp"
       severity: "info" | "warning" | "error"
       title?: null | string;
     };
@@ -181,6 +181,8 @@ export type DBGeneratedSchema = {
       type: "Standard" | "Connection URI" | "Prostgles"
       url_path?: null | string;
       user_id?: null | string;
+      web_app_directory?: null | string;
+      web_app_port?: null | number;
     };
   };
   credential_types: {

@@ -126,7 +126,8 @@ export const getClientDBHandlersForChat = async (
         ]),
       )
     : undefined;
-  const connection = connectionManager.getConnection(connection_id);
+  const connection =
+    connectionManager.getConnectionStartedInstance(connection_id);
   const handlers = await connection.prgl.getClientDBHandlers(clientReq, {
     tables,
     sql:

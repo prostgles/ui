@@ -2,10 +2,12 @@ import type { LoginWithOAuthConfig } from "prostgles-server/dist/Auth/AuthTypes"
 import type { DBSSchema } from "@common/publishUtils";
 import { getFailedTooManyTimes } from "../startRateLimitedLoginAttempt";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBS } from "@src/index";
 
 type AuthProviders = DBSSchema["database_configs"]["auth_providers"];
 
 export const getOAuthLoginProviders = (
+  dbs: DBS,
   auth_providers: AuthProviders | undefined,
 ) => {
   const OAuthProviders = auth_providers && getOAuthProviders(auth_providers);
@@ -20,8 +22,8 @@ export const getOAuthLoginProviders = (
       //   auth_provider: provider,
       // });
     },
-    onProviderLoginStart: async ({ dbo, clientInfo }) => {
-      const check = await getFailedTooManyTimes(dbo, clientInfo);
+    onProviderLoginStart: async ({ clientInfo }) => {
+      const check = await getFailedTooManyTimes(dbs, clientInfo);
       if ("success" in check) return check;
       return check.failedTooManyTimes ?
           {

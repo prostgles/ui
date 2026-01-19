@@ -22,7 +22,7 @@ const fetchServerState = async () => {
       }
     : await fetch("/dbs", {
         headers: { "x-real-ip": SPOOF_TEST_VALUE },
-      }).then((r) => r.json());
+      }).then((r) => r.json() as Promise<AppState["serverState"]>);
   return serverState;
 };
 
