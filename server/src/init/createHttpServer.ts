@@ -38,7 +38,10 @@ export const createHttpServer = ({
       cb(null, allowedOrigin ?? undefined);
     },
   };
-  const corsMiddlewareForConnection = cors(originCheck);
+  const corsMiddlewareForConnection = cors({
+    ...originCheck,
+    credentials: true,
+  });
   upsertNamedExpressMiddleware(
     app,
     corsMiddlewareForConnection,

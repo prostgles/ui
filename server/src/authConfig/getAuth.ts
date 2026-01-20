@@ -110,7 +110,7 @@ export const getAuth = async (
           );
         }
       },
-      cookieOptions: authCookieOpts,
+      cookieOptions: { ...authCookieOpts, ...database_config.cookie_options },
       onMagicLinkOrOTP: getOnMagicLinkOrOTP(dbs),
       localLoginMode:
         (

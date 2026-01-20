@@ -101,7 +101,7 @@ const _tryStartProstgles = async ({
 
   const connHistoryItem = JSON.stringify(con);
   if (connHistory.includes(connHistoryItem)) {
-    console.error("DUPLICATE UNFINISHED CONNECTION");
+    console.error("Duplicate connection attempt");
     return {
       state: "error",
       error: "Duplicate connection attempt",

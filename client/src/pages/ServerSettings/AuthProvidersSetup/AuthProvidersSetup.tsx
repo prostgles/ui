@@ -1,5 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { FlexCol } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
@@ -9,6 +9,12 @@ import { t } from "../../../i18n/i18nUtils";
 import { EmailAuthSetup } from "../EmailAuthSetup";
 import { OAuthProviderSetup } from "../OAuthProviderSetup";
 import { useProviderProps } from "./useProviderProps";
+import PopupMenu from "@components/PopupMenu";
+import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
+import Btn from "@components/Btn";
+import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
+import type { DBHandlerClient } from "prostgles-client";
+import { mdiCookie } from "@mdi/js";
 
 export type AuthProvidersConfig = Extract<
   DBSSchema["database_configs"]["auth_providers"],
@@ -96,18 +102,45 @@ export const AuthProviderSetup = ({
         login providers to control access.
       </InfoRow>
       <FlexCol className="p-1 gap-2">
-        <FormField
-          data-command="AuthProviderSetup.websiteURL"
-          label={t.AuthProviderSetup["Website URL"]}
-          hint={t.AuthProviderSetup["Used for redirect uri"]}
-          value={database_config.auth_providers?.website_url}
-          onChange={(website_url: string) => {
-            void updateAuth({
-              ...auth_providers,
-              website_url,
-            });
-          }}
-        />
+        <FlexRow>
+          <FormField
+            data-command="AuthProviderSetup.websiteURL"
+            label={t.AuthProviderSetup["Website URL"]}
+            hint={t.AuthProviderSetup["Used for redirect uri"]}
+            value={database_config.auth_providers?.website_url}
+            onChange={(website_url: string) => {
+              void updateAuth({
+                ...auth_providers,
+                website_url,
+              });
+            }}
+          />
+          <PopupMenu
+            button={
+              <Btn variant="faded" iconPath={mdiCookie}>
+                Cookie options
+              </Btn>
+            }
+            onClickClose={false}
+          >
+            <SmartForm
+              tableName="database_configs"
+              columns={
+                {
+                  cookie_options: 1,
+                  allowed_origin: 1,
+                } satisfies Partial<
+                  Record<keyof DBSSchema["database_configs"], 1>
+                >
+              }
+              db={dbs as DBHandlerClient}
+              methods={{}}
+              tables={dbsTables}
+              rowFilter={[{ fieldName: "id", value: database_config.id }]}
+              showJoinedTables={false}
+            />
+          </PopupMenu>
+        </FlexRow>
         <FormField
           label={t.AuthProviderSetup["Default user type"]}
           data-command="AuthProviderSetup.defaultUserType"

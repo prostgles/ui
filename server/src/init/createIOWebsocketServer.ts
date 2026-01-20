@@ -17,6 +17,7 @@ export const createIOWebsocketServer = ({
       origin: (_, cb) => {
         cb(null, allowedOrigin ?? undefined);
       },
+      credentials: true,
     },
   });
   return { ioConnection };

@@ -21,6 +21,7 @@ import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
+import { API_ENDPOINTS } from "@common/utils";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -54,15 +55,27 @@ export const startConnection = async function (
       return undefined;
     });
 
-  if (!connection) throw "Connection not found";
+  if (!connection) {
+    throw "Connection not found";
+  }
+  if (connection.is_state_db) {
+    return {
+      socketPath: API_ENDPOINTS.WS_DBS,
+      socketUrl: undefined,
+    };
+  }
   const databaseConfig = await dbs.database_configs.findOne({
     $existsJoined: { connections: { id: connection.id } },
   });
-  if (!databaseConfig) throw "databaseConfig not found";
+  if (!databaseConfig) {
+    throw "databaseConfig not found";
+  }
   const stateDatabaseConfig = await dbs.database_configs.findOne({
     $existsJoined: { connections: { is_state_db: true } },
   });
-  if (!stateDatabaseConfig) throw "State database config not found";
+  if (!stateDatabaseConfig) {
+    throw "State database config not found";
+  }
 
   const { connectionInfo, isSSLModeFallBack } =
     await testDBConnection(connection);
@@ -343,5 +356,3 @@ export const getAccessRule = async (
     ],
   });
 };
-
-console.error("MUST NOT START STATEDB BUT REUSEIT");

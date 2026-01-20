@@ -337,6 +337,23 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
         label: "Failed login rate limit options",
         info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" },
       },
+      cookie_options: {
+        jsonbSchemaType: {
+          secure: {
+            optional: true,
+            type: "boolean",
+            description:
+              "If true then cookies will only be sent over HTTPS connections",
+          },
+          sameSite: {
+            optional: true,
+            enum: ["lax", "strict", "none"],
+            description:
+              "Controls whether cookies are sent with cross-site requests",
+          },
+        },
+        nullable: true,
+      },
       auth_created_user_type: {
         info: {
           hint: "User type assigned to new users. Defaults to 'default'",
