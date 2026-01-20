@@ -109,12 +109,6 @@ export const startConnection = async function (
   }>(
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     async (resolve, reject) => {
-      // const { ioConnection, ...httpServer } = this.getConnectionHttpServer({
-      //   connection: connection,
-      //   databaseConfig,
-      //   socketPath,
-      // });
-
       const initState = {
         prglReady: false,
         onReadyCalled: false,

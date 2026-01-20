@@ -6,7 +6,7 @@ import {
 } from "prostgles-client";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { useEffect, useMemo } from "react";
-import type { PrglProject, AppContextProps } from "../../App";
+import type { AppContextProps, PrglProject } from "../../App";
 import { getTables } from "../../dashboard/Dashboard/getTables";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { prgl_R } from "../../WithPrgl";
@@ -60,9 +60,8 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     dbsTables,
     dbsMethodSchema,
   } = prglState;
-  const connectionTableHandler = dbs.connections;
 
-  const conState = connectionTableHandler.useSubscribeOne(
+  const conState = dbs.connections.useSubscribeOne(
     {
       id: connId,
     },

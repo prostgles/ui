@@ -27,7 +27,13 @@ export function getConnectionHttpServer(
       if (existingServer.type !== "reusing_main_server") {
         existingServer.http.close();
       }
+      console.log(
+        `${databaseConfig.db_name}: Connection ${connectionId} port changed, restarting server`,
+      );
     } else {
+      console.log(
+        `${databaseConfig.db_name}: Reusing existing server for connection ${connectionId}`,
+      );
       return existingServer;
     }
   }

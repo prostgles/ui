@@ -532,6 +532,13 @@ export const runDbSql = async (
   opts?: any,
   dbType: "db" | "dbs" = "db",
 ) => {
+  /** Wait for handle to become available */
+  await page.waitForFunction(
+    ({ dbType }) => {
+      return (window as any)[dbType] !== undefined;
+    },
+    { dbType },
+  );
   const [error, sqlResult] = (await page.evaluate(
     async ([query, args, opts, dbType]) => {
       try {
@@ -1041,7 +1048,7 @@ export const setupProstglesLLMProvider = async (page: PageWIds) => {
     `
       DELETE FROM llm_credentials WHERE provider_id = 'Prostgles';
       UPDATE llm_providers 
-      SET api_url = 'http://localhost:3004/rest-api/cloud/methods/askLLM'
+      SET api_url = 'http://localhost:3005/rest-api/methods/askLLM'
       WHERE id = 'Prostgles';
       /*
         UPDATE published_methods

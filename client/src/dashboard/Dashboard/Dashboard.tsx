@@ -68,8 +68,8 @@ export type DashboardState = {
 
   db_objects?: DBObject[];
 
-  wspError?: any;
-  error?: any;
+  wspError?: unknown;
+  error?: unknown;
   reRender?: number;
 
   /**
@@ -125,11 +125,19 @@ export class _Dashboard extends RTComp<
     const workspace = this.d.workspace;
     const dbKey =
       force ? `${FORCED_REFRESH_PREFIX}${Date.now()}` : this.props.prgl.dbKey;
+    console.log(
+      workspace,
+      this.loadingSchema?.dbKey !== dbKey || force,
+      connectionId,
+      this.loadingSchema?.dbKey,
+      dbKey,
+    );
     if (
       workspace &&
       (this.loadingSchema?.dbKey !== dbKey || force) &&
       connectionId
     ) {
+      console.log("Loading schema...");
       this.loadingSchema = {
         dbKey,
         settingSuggestions: [],
@@ -335,6 +343,12 @@ export class _Dashboard extends RTComp<
         delta.workspace?.options?.tableListSortBy);
     const schemaChanged = this.props.prgl.dbKey !== this.loadingSchema?.dbKey; //  !this.loadingSchema?.dbKey.startsWith(FORCED_REFRESH_PREFIX) &&
     const dataWasImported = !!delta.imported;
+    console.log({
+      schemaChanged,
+      needToRecalculateCounts,
+      dataWasImported,
+      workspace,
+    });
     if (
       workspace &&
       (schemaChanged || needToRecalculateCounts || dataWasImported)
@@ -443,6 +457,7 @@ export class _Dashboard extends RTComp<
       if (!windowsSync || !workspace) {
         loadingMessage = "Loading dashboard...";
       } else if (!tables) {
+        console.log(this.props.prgl);
         loadingMessage = "Loading schema...";
       }
 
