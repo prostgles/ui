@@ -174,23 +174,22 @@ export declare function throttle<Params extends any[]>(func: (...args: Params) =
 export declare const SPOOF_TEST_VALUE = "trustme";
 export declare const getEntries: <T extends AnyObject>(obj: T) => [keyof T, T[keyof T]][];
 export declare const fromEntries: <K extends string | number | symbol, V>(entries: readonly (readonly [K, V])[]) => Record<K, V>;
-export declare const CONNECTION_CONFIG_SECTIONS: readonly ["access_control", "backups", "table_config", "details", "status", "methods", "file_storage", "API"];
+export declare const CONNECTION_CONFIG_SECTIONS: readonly ["authentication", "access_control", "backups", "table_config", "details", "status", "methods", "file_storage", "API", "webApp"];
 /**
  * Ensure that multi-line strings are indented correctly
  */
 export declare const fixIndent: (_str: string | TemplateStringsArray) => string;
-export declare const getConnectionPaths: ({ id, url_path, }: {
-    id: string;
-    url_path: string | null;
-}) => {
+export declare const getConnectionApiPaths: ({ id, url_path, port, is_state_db, }: Pick<DBSSchema["connections"], "id" | "url_path" | "port" | "is_state_db">) => {
     rest: string;
     ws: string;
+};
+export declare const getConnectionPaths: ({ id, }: Pick<DBSSchema["connections"], "id">) => {
     dashboard: string;
     config: string;
 };
 export declare const API_ENDPOINTS: {
     readonly REST: "/rest-api";
-    readonly WS_DB: "/ws-api-db";
+    readonly WS_DB: "/ws-api";
     readonly WS_DBS: "/ws-api-dbs";
 };
 export declare const ROUTES: {

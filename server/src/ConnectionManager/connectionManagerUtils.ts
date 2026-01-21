@@ -1,3 +1,5 @@
+import { getConnectionApiPaths, ROUTES } from "@common/utils";
+import type e from "express";
 import type { CloudClient } from "prostgles-server/dist/FileManager/FileManager";
 import type {
   FileTableConfig,
@@ -10,10 +12,8 @@ import type { FileColumnConfig } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
 import type { Connections, DatabaseConfigs, DBS } from "..";
-import { getConnectionPaths, ROUTES } from "@common/utils";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
-import type e from "express";
 
 export const getDatabaseConfigFilter = (c: Connections) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
@@ -133,14 +133,14 @@ export const getCompiledTS = (code: string) => {
 
 export const getRestApiConfig = (
   app: e.Express,
-  con: Pick<Connections, "id" | "url_path" | "port" | "is_state_db">,
+  con: Pick<Connections, "id" | "url_path" | "port" | "is_state_db" | "name">,
   dbConf: DatabaseConfigs,
 ) => {
   const res: ProstglesInitOptions["restApi"] =
     dbConf.rest_api_enabled ?
       {
         expressApp: app,
-        path: getConnectionPaths(con).rest,
+        path: getConnectionApiPaths(con).rest,
       }
     : undefined;
 

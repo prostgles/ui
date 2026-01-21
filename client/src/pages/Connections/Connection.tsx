@@ -1,12 +1,12 @@
-import { mdiAccountMultiple } from "@mdi/js";
-import React from "react";
-import { NavLink } from "react-router";
-import { ROUTES } from "@common/utils";
-import type { AppContextProps } from "../../App";
+import { getConnectionPaths, ROUTES } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
+import { mdiAccountMultiple } from "@mdi/js";
+import React from "react";
+import { NavLink } from "react-router";
+import type { AppContextProps } from "../../App";
 import { WspIconPath } from "../../dashboard/AccessControl/ExistingAccessRules";
 import { t } from "../../i18n/i18nUtils";
 import { ConnectionActionBar } from "./ConnectionActionBar";
@@ -32,8 +32,12 @@ export type ConnectionProps = (
     showDbName: boolean;
   };
 
-const getConnectionPath = (connectionId: string, wid?: string) =>
-  `${ROUTES.CONNECTIONS}/${connectionId}` + (wid ? `?workspaceId=${wid}` : "");
+const getConnectionPath = (
+  connection: Pick<BasicConnectionModel, "id" | "name">,
+  wid?: string,
+) =>
+  `${getConnectionPaths(connection).dashboard}` +
+  (wid ? `?workspaceId=${wid}` : "");
 
 export const Connection = (props: ConnectionProps) => {
   const { connection, isAdmin } = props;
@@ -81,7 +85,7 @@ export const Connection = (props: ConnectionProps) => {
             "no-decor flex-col min-w-0 text-ellipsis f-1 text-active-hover "
           }
           data-command="Connection.openConnection"
-          to={getConnectionPath(connection.id)}
+          to={getConnectionPath(connection)}
         >
           <div className="flex-col gap-p5 p-1 h-full">
             <FlexRowWrap className="gap-1">
@@ -135,7 +139,7 @@ export const Connection = (props: ConnectionProps) => {
                   data-key={w.name}
                   color="action"
                   asNavLink={true}
-                  href={getConnectionPath(connection.id, w.id)}
+                  href={getConnectionPath(connection, w.id)}
                 >
                   {w.name || <em>Workspace</em>}
                 </Btn>

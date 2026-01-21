@@ -333,7 +333,7 @@ export const fixIndent = (_str: string | TemplateStringsArray): string => {
     .trim();
 };
 
-export const getConnectionPaths = ({
+export const getConnectionApiPaths = ({
   id,
   url_path,
   port,
@@ -346,6 +346,12 @@ export const getConnectionPaths = ({
   return {
     rest: port && !is_state_db ? REST : `${REST}/${url_path || id}`,
     ws: port && !is_state_db ? WS_DB : `${WS_DB}/${url_path || id}`,
+  };
+};
+export const getConnectionPaths = ({
+  id,
+}: Pick<DBSSchema["connections"], "id">) => {
+  return {
     dashboard: `${ROUTES.CONNECTIONS}/${id}`,
     config: `${ROUTES.CONFIG}/${id}`,
   };
@@ -353,7 +359,7 @@ export const getConnectionPaths = ({
 
 export const API_ENDPOINTS = {
   REST: "/rest-api",
-  WS_DB: "/ws-api-db",
+  WS_DB: "/ws-api",
   WS_DBS: "/ws-api-dbs",
 } as const;
 

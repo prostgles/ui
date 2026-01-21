@@ -8,7 +8,7 @@ import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll/SearchAll";
 
-import { ROUTES } from "@common/utils";
+import { getConnectionPaths, ROUTES } from "@common/utils";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -403,7 +403,7 @@ export class _Dashboard extends RTComp<
   isOk = false;
   render() {
     const { localSettings, prgl } = this.props;
-    const { connectionId } = prgl;
+    const { connectionId, connection } = prgl;
     const {
       tables,
       loading,
@@ -425,7 +425,7 @@ export class _Dashboard extends RTComp<
               color="action"
               variant="filled"
               asNavLink={true}
-              href={`${ROUTES.CONNECTIONS}/${connectionId}`}
+              href={getConnectionPaths(connection).dashboard}
               iconPath={mdiArrowLeft}
             >
               Go back

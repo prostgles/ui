@@ -1,5 +1,5 @@
-import { Server } from "socket.io";
 import type { Server as httpServer } from "http";
+import { Server } from "socket.io";
 
 export const createIOWebsocketServer = ({
   socketPath,

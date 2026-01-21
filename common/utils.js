@@ -95,6 +95,7 @@ export const fromEntries = (entries) => {
     return Object.fromEntries(entries);
 };
 export const CONNECTION_CONFIG_SECTIONS = [
+    "authentication",
     "access_control",
     "backups",
     "table_config",
@@ -103,6 +104,7 @@ export const CONNECTION_CONFIG_SECTIONS = [
     "methods",
     "file_storage",
     "API",
+    "webApp",
 ];
 /**
  * Ensure that multi-line strings are indented correctly
@@ -125,17 +127,22 @@ export const fixIndent = (_str) => {
         .join("\n")
         .trim();
 };
-export const getConnectionPaths = ({ id, url_path, }) => {
+export const getConnectionApiPaths = ({ id, url_path, port, is_state_db, }) => {
+    const { REST, WS_DB } = API_ENDPOINTS;
     return {
-        rest: `${API_ENDPOINTS.REST}/${url_path || id}`,
-        ws: `${API_ENDPOINTS.WS_DB}/${url_path || id}`,
+        rest: port && !is_state_db ? REST : `${REST}/${url_path || id}`,
+        ws: port && !is_state_db ? WS_DB : `${WS_DB}/${url_path || id}`,
+    };
+};
+export const getConnectionPaths = ({ id, }) => {
+    return {
         dashboard: `${ROUTES.CONNECTIONS}/${id}`,
         config: `${ROUTES.CONFIG}/${id}`,
     };
 };
 export const API_ENDPOINTS = {
     REST: "/rest-api",
-    WS_DB: "/ws-api-db",
+    WS_DB: "/ws-api",
     WS_DBS: "/ws-api-dbs",
 };
 export const ROUTES = {

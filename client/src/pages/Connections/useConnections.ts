@@ -14,7 +14,7 @@ type CommonConnectionInfo = Pick<DBSSchema["connections"], "created"> & {
 
 export type BasicConnectionModel = Pick<
   Required<DBSSchema["connections"]>,
-  "id" | "name" | "is_state_db"
+  "id" | "name" | "is_state_db" | "url_path"
 > &
   CommonConnectionInfo & { db_name?: undefined };
 

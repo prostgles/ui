@@ -723,19 +723,25 @@ test.describe("Main test", () => {
       `Tool name "playwright--browser_snapshot" is invalid. Try enabling and reloading the tools`,
     );
 
-    const enableMCPServers = async (serverNames: string[]) => {
+    const enableMCPServers = async (
+      serverNames: string[],
+      needsConfigSetup = false,
+    ) => {
       await page
         .getByTestId("LLMChatOptions.MCPTools")
         .click({ timeout: 10e3 });
       for (const serverName of serverNames) {
-        const toggleBtn = await page
+        const toggleCheckbox = page
           .locator(getDataKeyElemSelector(serverName))
           .getByTestId("MCPServerFooterActions.enableToggle");
 
-        await toggleBtn.scrollIntoViewIfNeeded();
+        await toggleCheckbox.scrollIntoViewIfNeeded();
         await page.waitForTimeout(500);
-        await toggleBtn.click();
+        await toggleCheckbox.click();
         await page.waitForTimeout(500);
+        if (!needsConfigSetup) {
+          await expect(toggleCheckbox).toBeChecked({ timeout: 15e3 });
+        }
       }
     };
 
@@ -843,7 +849,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
     /** Test max speculative chat cost */
     await newChat(page);
-    await enableMCPServers(["filesystem"]);
+    await enableMCPServers(["filesystem"], true);
     const githubWorkerPath = ["work", "ui"] as const;
     const path = [
       ...(process.env.CI === "true" ? githubWorkerPath : []),

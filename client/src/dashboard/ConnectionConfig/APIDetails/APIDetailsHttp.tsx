@@ -1,14 +1,14 @@
-import { mdiCodeBraces } from "@mdi/js";
-import React from "react";
+import { getConnectionApiPaths } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
-import CodeExample from "../../CodeExample";
-import type { APIDetailsProps } from "./APIDetails";
-import { getConnectionPaths } from "@common/utils";
+import { mdiCodeBraces } from "@mdi/js";
+import React from "react";
 import { t } from "../../../i18n/i18nUtils";
+import CodeExample from "../../CodeExample";
 import { download } from "../../W_SQL/W_SQL";
+import type { APIDetailsProps } from "./APIDetails";
 
 export const APIDetailsHttp = ({
   dbs,
@@ -18,7 +18,7 @@ export const APIDetailsHttp = ({
   const { data: dbConfig } = dbs.database_configs.useSubscribeOne({
     $existsJoined: { connections: { id: connection.id } },
   });
-  const restPath = `${window.location.origin}${getConnectionPaths(connection).rest}`;
+  const restPath = `${window.location.origin}${getConnectionApiPaths(connection).rest}`;
   const restExample = getRestExample(restPath, token);
   return (
     <FlexCol>

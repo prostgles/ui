@@ -1,10 +1,10 @@
-import { getConnectionPaths } from "@common/utils";
+import { getConnectionApiPaths } from "@common/utils";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { type DBS } from "../index";
 import { type ConnectionManager } from "./ConnectionManager";
+import { getHotReloadConfigs } from "./getHotReloadConfigs";
 import { saveCertificates } from "./saveCertificates";
 import { startConnectionOnRequestHandler } from "./startConnectionOnRequestHandler";
-import { getHotReloadConfigs } from "./getHotReloadConfigs";
 
 export async function initConnectionManager(
   this: ConnectionManager,
@@ -27,7 +27,7 @@ export async function initConnectionManager(
         currentConnection &&
         currentConnection.url_path !== updatedConnection.url_path
       ) {
-        prglCon.io.path(getConnectionPaths(updatedConnection).ws);
+        prglCon.io.path(getConnectionApiPaths(updatedConnection).ws);
       }
     });
     this.connections = connections;
