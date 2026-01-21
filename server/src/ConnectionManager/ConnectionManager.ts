@@ -111,6 +111,8 @@ export class ConnectionManager {
     ReturnType<typeof createHttpServer> & {
       connectionId: string;
       port: number | undefined;
+      allowedOrigin: string | undefined;
+      socketPath: string;
       type?: "reusing_main_server";
     }
   > = new Map();

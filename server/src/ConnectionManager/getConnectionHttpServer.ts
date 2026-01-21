@@ -2,6 +2,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { createHttpServer } from "@src/init/createHttpServer";
 import { createIOWebsocketServer } from "@src/init/createIOWebsocketServer";
 import type { ConnectionManager } from "./ConnectionManager";
+import { isEqual, pickKeys } from "prostgles-types";
 
 export function getConnectionHttpServer(
   this: ConnectionManager,
@@ -18,10 +19,19 @@ export function getConnectionHttpServer(
   const { id: connectionId, is_state_db } = connection;
   const port = connection.port || undefined;
   const { http, app } = this.dbsServer;
-
+  const allowedOrigin = databaseConfig.allowed_origin || undefined;
   const existingServer = this.connectionHttpServers.get(connectionId);
   if (existingServer) {
-    if (existingServer.port !== port) {
+    if (
+      !isEqual(
+        pickKeys(existingServer, ["allowedOrigin", "port", "socketPath"]),
+        {
+          port,
+          socketPath,
+          allowedOrigin,
+        },
+      )
+    ) {
       this.connectionHttpServers.delete(connectionId);
       this.dbsServer.io.emit("server-restart-request");
       if (existingServer.type !== "reusing_main_server") {
@@ -55,7 +65,13 @@ export function getConnectionHttpServer(
         allowedOrigin: databaseConfig.allowed_origin,
         socketPath,
       });
-  const connectionServer = { ...newServer, connectionId, port };
+  const connectionServer = {
+    ...newServer,
+    connectionId,
+    port,
+    socketPath,
+    allowedOrigin,
+  };
   this.connectionHttpServers.set(connectionId, connectionServer);
   return connectionServer;
 }
