@@ -14,6 +14,7 @@ import { ProjectConnectionError } from "./ProjectConnectionError";
 import { useProjectDb } from "./useProjectDb";
 import { PrglProvider } from "./PrglContextProvider";
 import type { ClientFunctionHandler } from "prostgles-client/dist/getMethods";
+import type { SQLHandler } from "prostgles-client";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -26,6 +27,7 @@ export type FullExtraProps = AppContextProps & {
   dbProject: DBHandlerClient;
   dbMethods: ClientFunctionHandler;
   dbTables: CommonWindowProps["tables"];
+  dbSql: SQLHandler | undefined;
 };
 
 export const ProjectConnection = (props: ProjectProps) => {

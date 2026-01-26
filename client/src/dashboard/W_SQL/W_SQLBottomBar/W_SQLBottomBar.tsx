@@ -6,7 +6,7 @@ import {
   mdiStopCircleOutline,
   mdiTable,
 } from "@mdi/js";
-import { isDefined, type DBHandler } from "prostgles-types";
+import { isDefined, type DBHandler, type SQLHandler } from "prostgles-types";
 import React, { useEffect, useRef, useState } from "react";
 import type { Prgl } from "../../../App";
 import { dataCommand } from "../../../Testing";
@@ -40,6 +40,7 @@ export const includes = <T extends string | undefined, ArrV extends T>(
 export type W_SQLBottomBarProps = {
   killQuery: (terminate: boolean) => void;
   db: DBHandler;
+  sql: SQLHandler | undefined;
   dbs: DBS;
   dbsMethods: DBSMethods;
   connectionId: Prgl["connectionId"];
@@ -81,6 +82,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
     streamData,
     hideCodeEditor,
     toggleCodeEditor,
+    sql,
   } = props;
   const myRef = useRef<HTMLDivElement>(null);
   const refRowCount = myRef.current;
@@ -253,11 +255,11 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               className="ml-p25"
               color="action"
               title={t.W_SQLBottomBar["Run query (CTRL+E, ALT+E)"]}
-              disabledInfo={!db.sql ? SQL_NOT_ALLOWED : undefined}
+              disabledInfo={!sql ? SQL_NOT_ALLOWED : undefined}
               size="default"
               iconPath={mdiPlay}
               onClick={(e) => {
-                runSQL();
+                void runSQL();
                 hideKeyboard(e.currentTarget);
               }}
               onContextMenu={(e) => {
@@ -329,15 +331,13 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
           <CopyResultBtn
             cols={cols ?? []}
             rows={rows}
-            sql={db.sql!}
+            sql={sql!}
             queryEnded={activeQuery?.state === "ended"}
           />
         )}
       </FlexRow>
 
-      {loadingSuggestions && db.sql && (
-        <Loading message="Loading suggestions" />
-      )}
+      {loadingSuggestions && sql && <Loading message="Loading suggestions" />}
 
       {w.sql_options.errorMessageDisplay !== "tooltip" && (
         <ErrorComponent
@@ -432,7 +432,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             iconPath={mdiAlertOutline}
             color={noticeSub ? "action" : undefined}
             className="mr-1"
-            disabledInfo={!db.sql ? SQL_NOT_ALLOWED : undefined}
+            disabledInfo={!sql ? SQL_NOT_ALLOWED : undefined}
             onClick={async (e) => {
               if (noticeSub) {
                 await noticeSub.removeListener();
@@ -440,8 +440,8 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
                   notices: undefined,
                   noticeSub: undefined,
                 });
-              } else if (db.sql) {
-                const s = await db.sql(
+              } else if (sql) {
+                const s = await sql(
                   "",
                   {},
                   { returnType: "noticeSubscription" },

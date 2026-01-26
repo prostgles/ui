@@ -55,7 +55,7 @@ async function getTimeChartLayerWithBin(
   layer: ProstglesTimeChartLayer,
 ) {
   const {
-    prgl: { db },
+    prgl: { db, sql: sqlHandler },
   } = this.props;
   const { w } = this.d;
   if (!w) return undefined;
@@ -165,24 +165,10 @@ async function getTimeChartLayerWithBin(
   } else {
     const { dateColumn, sql, withStatement } = layer;
 
-    if (!db.sql) {
+    if (!sqlHandler) {
       console.error("Not enough privileges to run query");
       return;
     }
-
-    // const extentFilter = "";
-    // let bin: { key: typeof optsBinSize, size: number; } | undefined = !optsBinSize? undefined : { ...MainTimeBinSizes[optsBinSize], key: optsBinSize };
-    // if(extent){
-    //   const { leftDate, rightDate } = extent;
-    //   if(leftDate && rightDate) {
-    //     extentFilter = await db.sql(
-    //       " WHERE ${dateColumn:name} >= ${leftDate} AND ${dateColumn:name} <= ${leftDate}  ",
-    //       { dateColumn, leftDate, rightDate },
-    //       { returnType: "statement" }
-    //     );
-    //     bin = this.getBin(leftDate, rightDate);
-    //   }
-    // }
 
     const escDateCol = asName(dateColumn);
 
@@ -196,7 +182,7 @@ async function getTimeChartLayerWithBin(
         ${queryWithoutSemicolon}
       ) t
     `;
-    const rows = await db.sql(
+    const rows = await sqlHandler(
       minMaxQuery,
       { dateColumn },
       { returnType: "rows" },

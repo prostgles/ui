@@ -10,7 +10,7 @@ import { defaultWorldExtent } from "../../WindowControls/AddChartLayer";
 export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
   async function (this: W_Map, fromUserClick = false) {
     const {
-      prgl: { db },
+      prgl: { db, sql: sqlHandler },
       layerQueries = [],
     } = this.props;
 
@@ -34,15 +34,15 @@ export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
             select: { e: { $ST_Extent: [geomColumn] } },
           })) ?? [];
       } else {
-        if (!db.sql) throw "SQL not allowed";
+        if (!sqlHandler) throw "SQL not allowed";
         const q = this.getSQL(
           layer,
           "ST_Extent(${geomColumn:name}::geometry) as e",
         );
-        // console.log( await db.sql(q.sql, q.args, { returnType: "statement" }))
         try {
           _xyExtent =
-            (await db.sql(q.sql, q.args, { returnType: "row" })) ?? undefined;
+            (await sqlHandler(q.sql, q.args, { returnType: "row" })) ??
+            undefined;
         } catch (error) {
           console.error(error);
         }

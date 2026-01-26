@@ -1,9 +1,8 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { PG_COLUMN_UDT_DATA_TYPE } from "prostgles-types";
-import React, { useState } from "react";
+import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { SearchList } from "@components/SearchList/SearchList";
-import Btn from "@components/Btn";
+import type { PG_COLUMN_UDT_DATA_TYPE, SQLHandler } from "prostgles-types";
+import React, { useState } from "react";
 
 export type SuggestedColumnDataType = {
   table_schema: string;
@@ -13,7 +12,7 @@ export type SuggestedColumnDataType = {
   alter_query: string;
 };
 export const getTextColumnPotentialDataTypes = async (
-  sql: Required<DBHandlerClient>["sql"],
+  sql: SQLHandler,
   { schema, tableName }: { schema?: string; tableName: string },
 ): Promise<SuggestedColumnDataType[]> => {
   await sql(`ANALYZE \${tableName:name}`, { tableName });
@@ -62,7 +61,7 @@ export const applySuggestedDataTypes = async ({
   tableName,
 }: {
   types: SuggestedColumnDataType[];
-  sql: Required<DBHandlerClient>["sql"];
+  sql: SQLHandler;
   tableName: string;
 }) => {
   const query =
@@ -74,7 +73,7 @@ export const applySuggestedDataTypes = async ({
 type P = {
   types: SuggestedColumnDataType[] | undefined;
   onDone: VoidFunction;
-  sql: Required<DBHandlerClient>["sql"];
+  sql: SQLHandler;
   tableName: string;
 };
 

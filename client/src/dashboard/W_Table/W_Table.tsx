@@ -608,6 +608,7 @@ export default class W_Table extends RTComp<
         windowWidth: this.ref?.getBoundingClientRect().width,
         tables,
         db,
+        sql: prgl.sql,
         w: this.d.w,
         onClickEditRow: this.onClickEditRow,
         barchartVals: this.state.barchartVals,

@@ -4,17 +4,17 @@ import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 
 type Args = Pick<
   SmartCardListProps<AnyObject>,
-  "tableName" | "db" | "tables" | "columns"
+  "tableName" | "tables" | "columns" | "sql"
 >;
 export const useSmartCardColumns = ({
   tableName,
-  db,
   tables,
   columns,
+  sql,
 }: Args) => {
   const sqlColumns = usePromise(async () => {
     if (!isObject(tableName)) return;
-    const sqlRes = await db.sql?.(tableName.sqlQuery, tableName.args ?? {});
+    const sqlRes = await sql?.(tableName.sqlQuery, tableName.args ?? {});
     return sqlRes?.fields.map((f, i) => ({
       ...f,
       label: f.columnName ?? f.name,
@@ -35,7 +35,7 @@ export const useSmartCardColumns = ({
       update: false,
       delete: false,
     }));
-  }, [db, tableName]);
+  }, [sql, tableName]);
 
   return (
     columns ??

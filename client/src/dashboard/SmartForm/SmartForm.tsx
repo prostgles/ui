@@ -42,7 +42,7 @@ export type ColumnDisplayConfig = {
   onRender?: (value: any, setValue: (newValue: any) => void) => React.ReactNode;
 };
 
-export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
+export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "sql"> & {
   tableName: string;
 
   label?: string;

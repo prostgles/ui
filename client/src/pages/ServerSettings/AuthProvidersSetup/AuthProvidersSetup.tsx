@@ -9,12 +9,6 @@ import { t } from "../../../i18n/i18nUtils";
 import { EmailAuthSetup } from "../EmailAuthSetup";
 import { OAuthProviderSetup } from "../OAuthProviderSetup";
 import { useProviderProps } from "./useProviderProps";
-import PopupMenu from "@components/PopupMenu";
-import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
-import Btn from "@components/Btn";
-import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
-import type { DBHandlerClient } from "prostgles-client";
-import { mdiCookie } from "@mdi/js";
 
 export type AuthProvidersConfig = Extract<
   DBSSchema["database_configs"]["auth_providers"],
@@ -115,31 +109,6 @@ export const AuthProviderSetup = ({
               });
             }}
           />
-          <PopupMenu
-            button={
-              <Btn variant="faded" iconPath={mdiCookie}>
-                Cookie options
-              </Btn>
-            }
-            onClickClose={false}
-          >
-            <SmartForm
-              tableName="database_configs"
-              columns={
-                {
-                  cookie_options: 1,
-                  allowed_origin: 1,
-                } satisfies Partial<
-                  Record<keyof DBSSchema["database_configs"], 1>
-                >
-              }
-              db={dbs as DBHandlerClient}
-              methods={{}}
-              tables={dbsTables}
-              rowFilter={[{ fieldName: "id", value: database_config.id }]}
-              showJoinedTables={false}
-            />
-          </PopupMenu>
         </FlexRow>
         <FormField
           label={t.AuthProviderSetup["Default user type"]}

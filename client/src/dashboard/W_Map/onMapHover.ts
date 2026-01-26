@@ -102,7 +102,8 @@ export function onMapHover(
               }
             }
           } else if (i && typeof i === "string") {
-            hovData = (await getSQLHoverRow(layer as LayerSQL, prgl.db, i))?.d;
+            hovData = (await getSQLHoverRow(layer as LayerSQL, prgl.sql!, i))
+              ?.d;
           }
           this.hovering = undefined;
 

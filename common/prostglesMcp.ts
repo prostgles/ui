@@ -16,7 +16,7 @@ const runSQLSchema = {
       optional: true,
       description:
         "Query parameters to use in the SQL query. Must satisfy the query schema.",
-      type: "any",
+      type: "unknown",
     },
   },
 } as const;

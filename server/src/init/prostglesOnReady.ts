@@ -19,12 +19,23 @@ import {
 import { setupLLM } from "../publishMethods/askLLM/setupLLM";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
+import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";
+import type { SQLHandler } from "prostgles-types";
 
 let authSetupDataListener: AuthSetupDataListener | undefined;
 
 let backupManager: BackupManager | undefined;
-export const initBackupManager = async (db: DB, dbs: DBS) => {
-  backupManager ??= await BackupManager.create(db, dbs, connectionManager);
+export const initBackupManager = async (
+  db: DB,
+  dbs: DBS,
+  dbsSql: SQLHandler,
+) => {
+  backupManager ??= await BackupManager.create(
+    db,
+    dbs,
+    dbsSql,
+    connectionManager,
+  );
   return backupManager;
 };
 
@@ -38,7 +49,7 @@ export const prostglesOnReady = async (
   port: number,
 ) => {
   await promiseCleanup(async () => {
-    const { dbo: db } = params;
+    const { dbo: db, sql } = params;
     const _db: DB = params.db;
 
     if (!(await db.global_settings.count())) {
@@ -62,16 +73,26 @@ export const prostglesOnReady = async (
     await connectionManager.init(db, _db);
     getServiceManager(db);
 
-    backupManager ??= await BackupManager.create(_db, db, connectionManager);
+    backupManager ??= await BackupManager.create(
+      _db,
+      db,
+      sql,
+      connectionManager,
+    );
 
     const newAuthSetupDataListener = subscribeToAuthSetupChanges(
       db,
       async (authData) => {
+        const { stateDatabaseConfig } = authData;
+        const connection = await db.connections.findOne({ is_state_db: true });
+        const restApi = getRestApiConfig(app, connection!, stateDatabaseConfig);
         app.set("trust proxy", authData.stateDatabaseConfig.trust_proxy);
         const authSetupData = { ...authData, type: "state" as const };
         const auth = await getAuth(app, db, _db, authSetupData);
         void update({
           auth,
+          /** TODO: this must be merged with getHotReloadConfigs */
+          restApi,
         });
       },
       authSetupDataListener,

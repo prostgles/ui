@@ -13,7 +13,7 @@ export type InputSchema = JSONB.GetObjectType<
 
 export const ExecuteSQL = ({ message }: ProstglesMCPToolsProps) => {
   const initialData = message.input as InputSchema;
-  const { db } = usePrgl();
+  const { sql } = usePrgl();
   const codeString = initialData.sql;
   return (
     <FlexCol className="ExecuteSQL ai-start gap-0 f-1">
@@ -22,7 +22,7 @@ export const ExecuteSQL = ({ message }: ProstglesMCPToolsProps) => {
         codeHeader={undefined}
         language={LANG}
         codeString={codeString}
-        sqlHandler={db.sql}
+        sqlHandler={sql}
         loadedSuggestions={undefined}
       />
     </FlexCol>

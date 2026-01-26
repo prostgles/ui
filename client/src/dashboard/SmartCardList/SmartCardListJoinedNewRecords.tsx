@@ -16,7 +16,7 @@ import {
   type SmartCardListProps,
 } from "./SmartCardList";
 
-export type P = Pick<Prgl, "db" | "tables" | "methods"> &
+export type P = Pick<Prgl, "db" | "tables" | "methods" | "sql"> &
   Pick<SmartCardListProps, "noDataComponent" | "noDataComponentMode"> & {
     className?: string;
     style?: React.CSSProperties;
@@ -42,6 +42,7 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
     table,
     noDataComponent,
     noDataComponentMode,
+    sql,
   } = props;
   const smartCardListStyle = useSmartCardListStyle(style);
 
@@ -67,6 +68,7 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
           <div key={getKeyForRowData(defaultData, keyCols)}>
             <SmartCard
               db={db}
+              sql={sql}
               methods={methods}
               tables={tables}
               tableName={table.name}

@@ -52,6 +52,7 @@ export const StatusMonitorProcList = (
     runConnectionQuery,
     samplingRate,
     noBash,
+    dbsSql,
   } = props;
   const [viewType, setViewType] = useState<StatusMonitorViewType>(
     StatusMonitorViewTypes[1].key,
@@ -112,6 +113,7 @@ export const StatusMonitorProcList = (
   if (!datidFilter) return <Loading />;
   return (
     <SmartCardList
+      sql={dbsSql}
       db={dbs as DBHandlerClient}
       methods={dbsMethodSchema}
       tables={dbsTables}
@@ -176,25 +178,25 @@ const useStatusMonitorProcListProps = (
               title="Cancel this query"
               iconPath={mdiStopCircleOutline}
               color="danger"
-              onClickPromise={() =>
-                dbsMethods.killPID!({
+              onClickPromise={async () => {
+                await dbsMethods.killPID!({
                   connId: connectionId,
                   id_query_hash,
                   type: "cancel",
-                })
-              }
+                });
+              }}
             />
             <Btn
               title="Terminate this query"
               iconPath={mdiCancel}
               color="danger"
-              onClickPromise={() =>
-                dbsMethods.killPID!({
+              onClickPromise={async () => {
+                await dbsMethods.killPID!({
                   connId: connectionId,
                   id_query_hash,
                   type: "terminate",
-                })
-              }
+                });
+              }}
             />
           </FlexRow>,
     } satisfies FieldConfigs[number];

@@ -25,7 +25,7 @@ import { getCellStyle } from "./StyledTableColumn";
 
 export type ProstglesTableColumn = ProstglesColumn & ColumnConfigWInfo;
 
-type GetTableColsArgs = Pick<W_TableProps["prgl"], "db" | "tables"> &
+type GetTableColsArgs = Pick<W_TableProps["prgl"], "db" | "tables" | "sql"> &
   Pick<CommonWindowProps, "suggestions"> & {
     data?: AnyObject[];
     w?: WindowSyncItem<"table">;
@@ -49,6 +49,7 @@ export const getTableCols = ({
   hideEditRow,
   columnMenuState,
   opts,
+  sql,
 }: GetTableColsArgs): ProstglesTableColumn[] => {
   if (!w) return [];
 
@@ -239,6 +240,7 @@ export const getTableCols = ({
         w,
         tables,
         db,
+        sql,
         suggestions,
         nestedColumnOpts: undefined,
       },

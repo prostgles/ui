@@ -34,6 +34,7 @@ export const getHotReloadConfigs = async ({
     socketPath,
   });
   const { app } = connectionServers;
+
   const restApi = getRestApiConfig(app, connection, databaseConfig);
   const { fileTable } = await parseTableConfig({
     type: "saved",

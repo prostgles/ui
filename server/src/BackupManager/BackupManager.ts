@@ -19,7 +19,11 @@ import type { Request, Response } from "express";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type { FilterItem, SubscriptionHandler } from "prostgles-types";
+import type {
+  FilterItem,
+  SQLHandler,
+  SubscriptionHandler,
+} from "prostgles-types";
 import type { InstalledPrograms } from "@common/electronInitTypes";
 import { ROUTES } from "@common/utils";
 import type { SUser } from "../authConfig/sessionUtils";
@@ -36,16 +40,19 @@ export default class BackupManager {
   installedPrograms: InstalledPrograms | undefined;
 
   dbs: DBS;
+  dbsSql: SQLHandler;
   automaticBackupInterval: NodeJS.Timeout;
   connMgr: ConnectionManager;
   dbConfSub?: SubscriptionHandler;
 
   constructor(
     dbs: DBS,
+    dbsSql: SQLHandler,
     connMgr: ConnectionManager,
     installedPrograms: InstalledPrograms | undefined,
   ) {
     this.dbs = dbs;
+    this.dbsSql = dbsSql;
     this.connMgr = connMgr;
     this.installedPrograms = installedPrograms;
 
@@ -82,9 +89,14 @@ export default class BackupManager {
     return `${filePath}${cmd}`;
   };
 
-  static create = async (db: DB, dbs: DBS, connMgr: ConnectionManager) => {
+  static create = async (
+    db: DB,
+    dbs: DBS,
+    dbsSql: SQLHandler,
+    connMgr: ConnectionManager,
+  ) => {
     const installedPrograms = await getInstalledPsqlVersions(db);
-    return new BackupManager(dbs, connMgr, installedPrograms);
+    return new BackupManager(dbs, dbsSql, connMgr, installedPrograms);
   };
 
   async destroy() {

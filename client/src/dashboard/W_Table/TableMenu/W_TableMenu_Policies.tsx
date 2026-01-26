@@ -156,6 +156,7 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
       </FlexRowWrap>
       <SmartCardList
         db={prgl.db}
+        sql={prgl.sql}
         methods={prgl.methods}
         tables={prgl.tables}
         noDataComponent={<InfoRow color="info">No policies</InfoRow>}

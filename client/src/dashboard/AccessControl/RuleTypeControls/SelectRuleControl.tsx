@@ -94,6 +94,7 @@ export const SelectRuleControl = ({
               </FlexCol>
             }
             db={db}
+            sql={prgl.sql}
             methods={dbMethods}
             tables={tables}
             detailedFilter={rule.forcedFilterDetailed as SingleGroupFilter}

@@ -14,7 +14,7 @@ import { isPlaywrightTest } from "../../../i18n/i18nUtils";
 
 export type SetupLLMCredentialsProps = Pick<
   Prgl,
-  "theme" | "dbs" | "dbsTables" | "dbsMethods" | "dbsMethodSchema"
+  "theme" | "dbs" | "dbsTables" | "dbsMethods" | "dbsMethodSchema" | "dbsSql"
 > & {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
 } & (
@@ -28,7 +28,8 @@ export type SetupLLMCredentialsProps = Pick<
       }
   );
 export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
-  const { dbs, dbsTables, dbsMethods, asPopup, onClose, setupState } = props;
+  const { dbs, dbsTables, dbsMethods, asPopup, onClose, setupState, dbsSql } =
+    props;
   const [setupType, setSetupType] = React.useState<"free" | "api" | undefined>(
     isPlaywrightTest ? undefined : "api",
   );
@@ -80,7 +81,7 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
             <InfoRow color="info" variant="filled">
               No existing prompts
             </InfoRow>
-            <AddLLMPromptForm dbs={dbs} dbsTables={dbsTables} />
+            <AddLLMPromptForm dbsSql={dbsSql} dbs={dbs} dbsTables={dbsTables} />
           </FlexCol>
         )}
       </FlexCol>;

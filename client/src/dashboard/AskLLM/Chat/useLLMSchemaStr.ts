@@ -1,12 +1,12 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { useMemoDeep, usePromise } from "prostgles-client";
 import { useMemo } from "react";
-import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../../App";
 
-type P = Pick<Prgl, "connection" | "db" | "tables"> & {
+type P = Pick<Prgl, "connection" | "sql" | "tables"> & {
   activeChat: DBSSchema["llm_chats"] | undefined;
 };
-export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
+export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
   const { db_schema_permissions } = activeChat ?? {};
   const cachedSchemaPermissions = useMemoDeep(
     () => db_schema_permissions || undefined,
@@ -14,7 +14,7 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
   );
 
   const tableConstraints = usePromise(async () => {
-    if (!db.sql) return;
+    if (!sql) return;
 
     const schemas = Object.entries(connection.db_schema_filter || { public: 1 })
       .filter(([k, v]) => v)
@@ -40,7 +40,7 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
       WHERE nspname IN (\${schemas:csv})
     `;
 
-    const res = (await db.sql(query, { schemas }, { returnType: "rows" })) as {
+    const res = (await sql(query, { schemas }, { returnType: "rows" })) as {
       table_oid: number;
       conname: string;
       escaped_conname: string;
@@ -53,7 +53,7 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
     }[];
 
     return res;
-  }, [db, connection.db_schema_filter]);
+  }, [sql, connection.db_schema_filter]);
 
   const dbSchemaForPrompt = useMemo(() => {
     if (

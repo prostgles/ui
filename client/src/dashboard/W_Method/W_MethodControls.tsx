@@ -57,7 +57,7 @@ export const W_MethodControls = ({
   );
   const [expandControls, setExpandControls] = useState(true);
   const [showJSONBErrors, setshowJSONBErrors] = useState(false);
-  const { dbs, connectionId } = prgl;
+  const { dbs, connectionId, sql } = prgl;
   const { data: methodFullData } = dbs.published_methods.useSubscribeOne(
     { name: w?.method_name, connection_id: connectionId },
     { limit: w?.method_name ? 1 : 0 },
@@ -300,6 +300,7 @@ export const W_MethodControls = ({
             <SmartTable
               title=""
               db={db}
+              sql={sql}
               methods={methods}
               tableName={outputTableInfo.name}
               tables={tables}

@@ -31,7 +31,7 @@ type P = DivProps &
   };
 export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
   const { groupByColumn, layers } = props;
-  const { db, theme } = usePrgl();
+  const { db, sql, theme } = usePrgl();
   const {
     getColor,
     oldLayerWindow,
@@ -95,7 +95,7 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
         linkOptions?.dataSource?.type === "sql" ?
           {
             type: "sql",
-            db,
+            sql: sql!,
             query: linkOptions.dataSource.sql,
             columnName: groupByColumn,
             theme,
@@ -138,6 +138,7 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
     theme,
     updateGroupByColumnColors,
     valueStyles,
+    sql,
   ]);
 
   if (!valueStyles?.length) return null;

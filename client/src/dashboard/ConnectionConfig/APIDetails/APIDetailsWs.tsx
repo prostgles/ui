@@ -9,11 +9,11 @@ import { download } from "../../W_SQL/W_SQL";
 import { APICodeExamples } from "./APICodeExamples";
 import type { APIDetailsProps } from "./APIDetails";
 
+console.error("ENSURE IT WORKS");
 export const APIDetailsWs = ({
   dbsMethods,
   connection,
   token,
-  projectPath,
 }: APIDetailsProps & { token?: string }) => {
   const dbSchemaTypes = usePromise(async () => {
     if (connection.id) {
@@ -71,7 +71,7 @@ export const APIDetailsWs = ({
           content={
             <APICodeExamples
               token={token}
-              projectPath={projectPath}
+              connection={connection}
               dbSchemaTypes={dbSchemaTypes}
             />
           }

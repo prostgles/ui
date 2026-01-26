@@ -24,7 +24,8 @@ export const ChatSpeechSetup = ({
   anchorEl: HTMLElement;
   mustEnableTranscriptionService: boolean;
 } & ChatSpeechSetupState) => {
-  const { dbs, dbsMethods, dbsMethodSchema, dbsTables, user } = usePrgl();
+  const { dbs, dbsMethods, dbsMethodSchema, dbsTables, user, dbsSql } =
+    usePrgl();
   return (
     <Popup
       title={"Microphone options"}
@@ -51,6 +52,7 @@ export const ChatSpeechSetup = ({
         )}
       {speechToTextMode === "stt-local" && user?.type === "admin" && (
         <Services
+          dbsSql={dbsSql}
           showSpecificService={{
             color: mustEnableTranscriptionService ? "red" : undefined,
             title:

@@ -103,6 +103,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
     >
       <SmartForm
         db={dbs as DBHandlerClient}
+        sql={prgl.dbsSql}
         label=""
         tableName="llm_chats"
         rowFilter={[{ fieldName: "id", value: activeChatId }]}

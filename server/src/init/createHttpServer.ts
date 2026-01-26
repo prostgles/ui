@@ -11,16 +11,22 @@ type CreateHttpServerOptions = {
   port: number;
   socketPath: string;
   allowedOrigin: string | null;
+  webAppDirectory: string | null;
+  trustProxy: boolean;
   host?: string;
 };
 
 export const createHttpServer = ({
   allowedOrigin,
   socketPath,
+  webAppDirectory,
   port,
+  trustProxy,
   host = "127.0.0.1",
 }: CreateHttpServerOptions) => {
   const app = express();
+
+  app.set("trust proxy", trustProxy);
   app.use(
     helmet({
       crossOriginResourcePolicy: false,
@@ -47,6 +53,15 @@ export const createHttpServer = ({
     corsMiddlewareForConnection,
     "corsMiddlewareForConnection",
   );
+
+  if (webAppDirectory) {
+    app.use(
+      express.static(webAppDirectory, {
+        index: "index.html",
+      }),
+    );
+  }
+
   http.listen(port, host);
 
   const { ioConnection } = createIOWebsocketServer({

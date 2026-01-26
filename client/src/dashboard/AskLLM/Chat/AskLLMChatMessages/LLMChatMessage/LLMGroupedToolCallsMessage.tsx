@@ -2,16 +2,16 @@ import Btn from "@components/Btn";
 import { SvgIcon } from "@components/SvgIcon";
 import React, { useMemo } from "react";
 import { isDefined } from "src/utils/utils";
+import type { LLMMessageGroup } from "../hooks/useLLMChatMessageGrouper";
 import type { LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage";
 import { getIconForToolUseMessage } from "../ToolUseChatMessage/useToolUseChatMessage";
 import type { LLMChatMessageCommonProps } from "./LLMChatMessage";
 import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
-import type { LLMMessageGroup } from "../hooks/useLLMChatMessageGrouper";
 
 export const LLMGroupedToolCallsMessage = ({
   messageContentItems,
   mcpServerIcons,
-  db,
+  sql,
   loadedSuggestions,
   onToggle,
   messages,
@@ -21,7 +21,7 @@ export const LLMGroupedToolCallsMessage = ({
   onToggle: VoidFunction;
 } & Pick<
   LLMChatMessageCommonProps,
-  "mcpServerIcons" | "db" | "loadedSuggestions"
+  "mcpServerIcons" | "sql" | "loadedSuggestions"
 >) => {
   const { icons, toolCallCount } = useMemo(() => {
     let toolCallCount = 0;
@@ -77,7 +77,7 @@ export const LLMGroupedToolCallsMessage = ({
       {firstTextMessage && (
         <LLMChatMessageContentText
           messageContent={firstTextMessage}
-          db={db}
+          sqlHandler={sql}
           loadedSuggestions={loadedSuggestions}
         />
       )}
@@ -96,7 +96,7 @@ export const LLMGroupedToolCallsMessage = ({
       {textMessages.length > 1 && lastTextMessage && (
         <LLMChatMessageContentText
           messageContent={lastTextMessage}
-          db={db}
+          sqlHandler={sql}
           loadedSuggestions={loadedSuggestions}
         />
       )}

@@ -72,7 +72,7 @@ export type SmartCardCommonProps = {};
 
 export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
-  "db" | "tables" | "methods"
+  "db" | "tables" | "methods" | "sql"
 > &
   Pick<SmartCardListProps<T>, "tableName" | "tables"> & {
     defaultData: T;

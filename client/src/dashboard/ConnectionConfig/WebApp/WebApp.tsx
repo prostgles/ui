@@ -88,6 +88,7 @@ export const WebApp = ({ dbs, connectionId }: P) => {
             }
           />
           <PopupMenu
+            data-command="WebApp.directory"
             button={
               <Btn
                 label={{

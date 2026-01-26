@@ -35,19 +35,18 @@ export const TimeChartLayerOptions = ({
   w: wMapOrTimechart,
   mode,
 }: TimeChartLayerOptionsProps) => {
-  const { db, tables } = usePrgl();
-  const sqlHandler = db.sql;
+  const { db, sql, tables } = usePrgl();
   const linkOpts = link.options;
   const sqlDataSourceColumns = usePromise(async () => {
     if (
-      !sqlHandler ||
+      !sql ||
       linkOpts.type !== "timechart" ||
       linkOpts.dataSource?.type !== "sql"
     )
       return [];
     const { colTypes, error } = await getTableExpressionReturnType(
       linkOpts.dataSource.sql,
-      sqlHandler,
+      sql,
     );
     if (error) console.warn(error);
     return (
@@ -58,7 +57,7 @@ export const TimeChartLayerOptions = ({
         };
       }) ?? []
     );
-  }, [linkOpts, sqlHandler]);
+  }, [linkOpts, sql]);
 
   if (!windowIs(wMapOrTimechart, "timechart")) {
     return null;

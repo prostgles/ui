@@ -62,6 +62,7 @@ export const DeleteRuleControl = ({
               </div>
             }
             db={prgl.db}
+            sql={prgl.sql}
             methods={prgl.methods}
             tables={prgl.tables}
             contextData={contextData}

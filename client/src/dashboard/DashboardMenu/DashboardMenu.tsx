@@ -43,7 +43,7 @@ export const DashboardMenu = ({
   const [showSearchAll, setShowSearchAll] =
     React.useState<DashboardMenuState["showSearchAll"]>();
   const { suggestions, tables, loadTable, workspace, prgl } = props;
-  const { db, dbs } = prgl;
+  const { db, dbs, sql, methods } = prgl;
 
   const filter =
     workspace.options.showAllMyQueries ? {} : { workspace_id: workspace.id };
@@ -135,7 +135,8 @@ export const DashboardMenu = ({
       {showSearchAll && (
         <SearchAll
           db={db}
-          methods={props.prgl.methods}
+          sql={sql}
+          methods={methods}
           tables={tables}
           searchType={showSearchAll.mode}
           defaultTerm={showSearchAll.term}

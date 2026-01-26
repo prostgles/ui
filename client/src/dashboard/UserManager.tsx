@@ -24,7 +24,7 @@ type S = {
 
 export default class UserManager extends RTComp<AppContextProps, S> {
   render() {
-    const { dbs, dbsTables, user, dbsMethodSchema } = this.props;
+    const { dbs, dbsTables, user, dbsMethodSchema, dbsSql } = this.props;
 
     let content: React.ReactNode;
     if (user?.type !== "admin") {
@@ -36,6 +36,7 @@ export default class UserManager extends RTComp<AppContextProps, S> {
         <SmartTable
           className="w-full"
           db={dbs as DBHandlerClient}
+          sql={dbsSql}
           methods={dbsMethodSchema}
           titlePrefix={t.Users["Prostgles UI users"]}
           tableName="users"

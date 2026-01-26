@@ -15,6 +15,7 @@ import {
   useCreateConnection,
   type CreateConnectionType,
 } from "./useCreateConnection";
+import type { SQLHandler } from "prostgles-client";
 
 export type CreateConnectionProps = Required<
   Pick<
@@ -27,6 +28,7 @@ export type CreateConnectionProps = Required<
 > & {
   connId: string;
   dbs: DBS;
+  dbsSql: SQLHandler | undefined;
   connections: IConnection[];
   showCreateText: boolean;
   connectionGroupKey: string;

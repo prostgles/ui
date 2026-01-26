@@ -7,7 +7,10 @@ import PopupMenu from "@components/PopupMenu";
 import { FileColumnConfigEditor } from "../../../FileTableControls/FileColumnConfigEditor";
 import { useFileTableConfigControls } from "../../../FileTableControls/useFileTableConfigControls";
 
-type P = Pick<Prgl, "db" | "tables" | "dbsMethods" | "dbs" | "connectionId"> & {
+type P = Pick<
+  Prgl,
+  "db" | "tables" | "dbsMethods" | "dbs" | "connectionId" | "sql"
+> & {
   tableName: string;
   columnName: string;
 };
@@ -20,6 +23,7 @@ export const AlterColumnFileOptions = ({
   dbs,
   dbsMethods,
   connectionId,
+  sql,
 }: P) => {
   const table = tables.find((t) => t.name === tableName);
   const column = table?.columns.find((c) => c.name === columnName);
@@ -30,7 +34,7 @@ export const AlterColumnFileOptions = ({
     setRefsConfig,
     updateRefsConfig,
     canUpdateRefColumns: canUpdate,
-  } = useFileTableConfigControls({ connectionId, db, dbs, dbsMethods });
+  } = useFileTableConfigControls({ connectionId, db, dbs, dbsMethods, sql });
   const getIsMounted = useIsMounted();
   const [error, setError] = useState<any>();
   if (!column?.file || !connectionId || !connection || !database_config)

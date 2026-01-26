@@ -526,6 +526,7 @@ export const COMMANDS = {
   "CloudStorageCredentialSelector.selectCredential": "",
   DashboardMenuContent: "",
   "ArgumentDefinition.toggleOptional": "",
+  "WebApp.directory": "",
 } as const satisfies Record<
   string,
   | string

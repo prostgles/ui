@@ -25,7 +25,7 @@ export const DEFAULT_GET_COLOR: Pick<
 
 export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
   const {
-    prgl: { db },
+    prgl: { db, sql: sqlHandler },
     layerQueries = [],
     tables,
   } = this.props;
@@ -312,7 +312,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                   (r) => r[MAP_SELECT_COLUMNS.geoJson]?.coordinates?.length,
                 );
             } else if ("sql" in q) {
-              if (!db.sql) {
+              if (!sqlHandler) {
                 console.error("Not enough privileges to run query");
                 alert(
                   "Could not show data: sql privilege not allowed for current user",
@@ -328,7 +328,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 return;
               }
 
-              rows = await getSQLData(q, db, AGG_LIMIT);
+              rows = await getSQLData(q, sqlHandler, AGG_LIMIT);
               rows = rows.map((r) => ({ ...r, type: "sql" }));
             }
 

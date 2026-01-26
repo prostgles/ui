@@ -33,7 +33,7 @@ import FormField from "@components/FormField/FormField";
 import { CloudStorageCredentialSelector } from "./CloudStorageCredentialSelector";
 import { DEFAULT_DUMP_OPTS, PGDumpOptions } from "./PGDumpOptions";
 
-type P = Pick<Prgl, "db" | "dbs" | "dbsMethods" | "dbsTables"> & {
+type P = Pick<Prgl, "db" | "dbs" | "dbsMethods" | "dbsTables" | "sql"> & {
   connectionId: string;
 };
 export const AutomaticBackups = ({
@@ -42,6 +42,7 @@ export const AutomaticBackups = ({
   dbsMethods,
   connectionId: connection_id,
   db,
+  sql,
 }: P) => {
   const [dumpOpts, setDumpOpts] = useState<PGDumpParams>(DEFAULT_DUMP_OPTS);
 
@@ -195,6 +196,7 @@ export const AutomaticBackups = ({
                 connectionId={connection_id}
                 dbsMethods={dbsMethods}
                 dbs={dbs}
+                dbSql={sql}
                 dbProject={db}
                 dbsTables={dbsTables}
                 opts={dumpOpts}

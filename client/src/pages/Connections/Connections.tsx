@@ -14,7 +14,7 @@ import { useConnections } from "./useConnections";
 import { useConnectionServersList } from "./useConnectionServersList";
 
 export const Connections = (props: AppContextProps) => {
-  const { user, dbs, dbsMethods } = props;
+  const { user, dbs, dbsMethods, dbsSql } = props;
   const state = useConnections(props);
   const { connections, isAdmin, showDbNames } = state;
   const { serverUserGroupings } = useConnectionServersList(state);
@@ -83,6 +83,7 @@ export const Connections = (props: AppContextProps) => {
                       connections={conns}
                       connectionGroupKey={name}
                       dbs={dbs}
+                      dbsSql={dbsSql}
                       showCreateText={Boolean(
                         isAdmin &&
                         serverUserGroupings.length <= 1 &&

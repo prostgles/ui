@@ -14,7 +14,10 @@ import type { Prgl } from "src/App";
 import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "src/dashboard/SmartCardList/SmartCardList";
 
-type P = Pick<Prgl, "dbs" | "dbsMethods" | "dbsMethodSchema" | "dbsTables"> & {
+type P = Pick<
+  Prgl,
+  "dbs" | "dbsSql" | "dbsMethods" | "dbsMethodSchema" | "dbsTables"
+> & {
   showSpecificService:
     | undefined
     | {
@@ -30,6 +33,7 @@ export const Services = ({
   dbsTables,
   showSpecificService,
   dbsMethodSchema,
+  dbsSql,
 }: P) => {
   const { servicesFieldConfigs } = useServicesFieldConfigs({
     dbs,
@@ -38,6 +42,7 @@ export const Services = ({
   });
   return (
     <SmartCardList
+      sql={dbsSql}
       db={dbs as DBHandlerClient}
       title={
         showSpecificService && (

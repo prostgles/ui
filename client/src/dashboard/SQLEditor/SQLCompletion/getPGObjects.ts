@@ -1,10 +1,10 @@
+import { EXCLUDE_FROM_SCHEMA_WATCH } from "@common/utils";
 import type { SQLHandler, ValidatedColumnInfo } from "prostgles-types";
-import { tryCatch } from "prostgles-types";
+import { tryCatchV2 } from "prostgles-types";
+import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
+import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
 import type { TopKeyword } from "./KEYWORDS";
 import { TOP_KEYWORDS, asSQL } from "./KEYWORDS";
-import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
-import { EXCLUDE_FROM_SCHEMA_WATCH } from "@common/utils";
-import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 
 export type PGDatabase = {
   Name: string;
@@ -230,14 +230,14 @@ export type PG_Function = {
 };
 
 export async function getFuncs(args: {
-  db: DB;
+  sql: SQLHandler;
   name?: string;
   searchTerm?: string;
   minArgs?: number;
   limit?: number;
   distinct?: boolean;
 }): Promise<PG_Function[]> {
-  const { db, minArgs = 0, limit = 10, distinct = false, searchTerm } = args;
+  const { sql, minArgs = 0, limit = 10, distinct = false, searchTerm } = args;
   let { name } = args;
   if (searchTerm) {
   } else if (name === undefined) {
@@ -323,56 +323,58 @@ export async function getFuncs(args: {
     q = rootQ + "\n" + lQ;
 
   const finalQuery = distinct ? distQ : q;
-  const funcs = await db
-    .sql(finalQuery, { name: name || "%", limit, minArgs })
-    .then((d) =>
-      d.rows.map((r: PG_Function) => {
-        const args = (r.arg_list_str ? r.arg_list_str.split(",") : []).map(
-          (a, i) => {
-            const data_type = a.trim().split(" ").at(-1) ?? a;
-            return { label: `arg${i}: ${data_type}`, data_type };
-          },
-        );
-        r.arg_list_str = args.map((a) => a.label).join(", ");
+  const funcs = await sql(finalQuery, {
+    name: name || "%",
+    limit,
+    minArgs,
+  }).then((d) =>
+    d.rows.map((r: PG_Function) => {
+      const args = (r.arg_list_str ? r.arg_list_str.split(",") : []).map(
+        (a, i) => {
+          const data_type = a.trim().split(" ").at(-1) ?? a;
+          return { label: `arg${i}: ${data_type}`, data_type };
+        },
+      );
+      r.arg_list_str = args.map((a) => a.label).join(", ");
 
-        /** Some builtin functions (left, right) can be placed without double quotes.  */
-        if (
-          r.schema === "pg_catalog" &&
-          r.escaped_name.includes('"') &&
-          !r.escaped_name.endsWith(`_user"`) &&
-          /^[a-z_]+$/.test(r.name)
-        ) {
-          r.escaped_identifier = r.name;
-        }
-        if (r.name === "format" && args.length > 1) {
-          r.description += [
-            `\n arg1 format: %[position][flags][width]type`,
-            `type:`,
-            `-  s formats the argument value as a simple string. A null value is treated as an empty string.`,
-            `-  I treats the argument value as an SQL identifier, double-quoting it if necessary. It is an error for the value to be null (equivalent to quote_ident).`,
-            `-  L quotes the argument value as an SQL literal. A null value is displayed as the string NULL, without quotes (equivalent to quote_nullable).`,
-            `\nExamples: `,
-            `SELECT format('INSERT INTO %I VALUES(%L)', 'locations', 'C:\\Program Files');`,
-            `Result: INSERT INTO locations VALUES('C:\\Program Files')`,
-          ].join("\n");
-        }
-        if (r.name === "dblink") {
-          r.description = [
-            r.description || "",
-            `Executes a query in a remote database\n\n`,
-            asSQL(
-              fixIndent(`SELECT * 
+      /** Some builtin functions (left, right) can be placed without double quotes.  */
+      if (
+        r.schema === "pg_catalog" &&
+        r.escaped_name.includes('"') &&
+        !r.escaped_name.endsWith(`_user"`) &&
+        /^[a-z_]+$/.test(r.name)
+      ) {
+        r.escaped_identifier = r.name;
+      }
+      if (r.name === "format" && args.length > 1) {
+        r.description += [
+          `\n arg1 format: %[position][flags][width]type`,
+          `type:`,
+          `-  s formats the argument value as a simple string. A null value is treated as an empty string.`,
+          `-  I treats the argument value as an SQL identifier, double-quoting it if necessary. It is an error for the value to be null (equivalent to quote_ident).`,
+          `-  L quotes the argument value as an SQL literal. A null value is displayed as the string NULL, without quotes (equivalent to quote_nullable).`,
+          `\nExamples: `,
+          `SELECT format('INSERT INTO %I VALUES(%L)', 'locations', 'C:\\Program Files');`,
+          `Result: INSERT INTO locations VALUES('C:\\Program Files')`,
+        ].join("\n");
+      }
+      if (r.name === "dblink") {
+        r.description = [
+          r.description || "",
+          `Executes a query in a remote database\n\n`,
+          asSQL(
+            fixIndent(`SELECT * 
           FROM dblink(
             'dbname=mydb ',
             'select proname, prosrc from pg_proc'
           ) AS t1(proname name, prosrc text)
           WHERE proname LIKE 'bytea%';`),
-            ),
-          ].join("\n");
-        }
-        return { ...r, args };
-      }),
-    );
+          ),
+        ].join("\n");
+      }
+      return { ...r, args };
+    }),
+  );
   if (funcs.length === limit) {
     console.warn(
       "Function 8k limit reached. Some function suggestions might be missing...",
@@ -452,7 +454,7 @@ const searchSchemaQuery = `
     ${searchSchemas} as searchpath
   )
 ` as const;
-const getSearchSchemas = async (db: DB) => {
+const getSearchSchemas = async (sql: SQLHandler) => {
   const query = `
     ${searchSchemaQuery}
     SELECT quote_ident(schema_name) 
@@ -462,7 +464,7 @@ const getSearchSchemas = async (db: DB) => {
       FROM cte1
     ) 
   `;
-  const searchSchemas: string[] = await db.sql(
+  const searchSchemas: string[] = await sql(
     query,
     {},
     { returnType: "values" },
@@ -471,13 +473,13 @@ const getSearchSchemas = async (db: DB) => {
 };
 
 export async function getTablesViewsAndCols(
-  db: DB,
+  sql: SQLHandler,
   tableName?: string,
 ): Promise<PG_Table[]> {
   /** Used to prevent permission erorrs */
   const allowedSchemasQuery = `(SELECT schema_name FROM information_schema.schemata)`;
-  const { searchSchemas } = await getSearchSchemas(db);
-  const tablesAndViews = (await db.sql(
+  const { searchSchemas } = await getSearchSchemas(sql);
+  const tablesAndViews = (await sql(
     `
     SELECT
     c.oid,
@@ -521,8 +523,8 @@ export async function getTablesViewsAndCols(
     { returnType: "rows" },
   )) as PG_Table[];
 
-  const { tableAndViewsStats = [] } = await tryCatch(async () => {
-    const tableAndViewsStats = (await db.sql(
+  const { data: tableAndViewsStats = [] } = await tryCatchV2(async () => {
+    const tableAndViewsStats = (await sql(
       `
       SELECT relid,
         relname AS table_name,
@@ -543,7 +545,7 @@ export async function getTablesViewsAndCols(
       {},
       { returnType: "rows" },
     )) as TableStats[];
-    return { tableAndViewsStats };
+    return tableAndViewsStats;
   });
 
   return tablesAndViews.map((t) => {
@@ -613,7 +615,7 @@ export type PG_DataType = {
   priority: string;
 };
 
-export async function getDataTypes(db: DB): Promise<PG_DataType[]> {
+export async function getDataTypes(sql: SQLHandler): Promise<PG_DataType[]> {
   const q = `
   SELECT n.nspname as schema,
     pg_catalog.format_type(t.oid, NULL) AS name,
@@ -629,7 +631,7 @@ export async function getDataTypes(db: DB): Promise<PG_DataType[]> {
 
   `;
 
-  let types = (await db.sql(q, {}, { returnType: "rows" })) as PG_DataType[];
+  let types = (await sql(q, {}, { returnType: "rows" })) as PG_DataType[];
   const int = types.find((t) => t.udt_name === "int4");
   const bigint = types.find((t) => t.udt_name === "int8");
 
@@ -678,8 +680,8 @@ export type PG_Setting = {
   pending_restart?: null | boolean;
 };
 
-const getSettings = (db: DB): Promise<PG_Setting[]> => {
-  return db.sql(
+const getSettings = (sql: SQLHandler) => {
+  return sql(
     `
     SELECT 
       name, 
@@ -704,7 +706,7 @@ const getSettings = (db: DB): Promise<PG_Setting[]> => {
   `,
     {},
     { returnType: "rows" },
-  ) as any;
+  ) as Promise<PG_Setting[]>;
 };
 
 export type PGOperator = {
@@ -717,8 +719,8 @@ export type PGOperator = {
 };
 
 export const PRIORITISED_OPERATORS = ["=", ">", "LIKE", "ILIKE", "IN"];
-export const getOperators = async (db: DB): Promise<PGOperator[]> => {
-  const operators: PGOperator[] = (await db.sql(
+export const getOperators = async (sql: SQLHandler): Promise<PGOperator[]> => {
+  const operators = (await sql(
     `
     SELECT 
       schema, 
@@ -750,7 +752,7 @@ export const getOperators = async (db: DB): Promise<PGOperator[]> => {
   `,
     {},
     { returnType: "rows" },
-  )) as any;
+  )) as PGOperator[];
 
   const like = operators.find(
     (o) => o.name === "~~" && o.description.toLowerCase().includes(" like "),
@@ -835,13 +837,13 @@ export const PG_OBJECT_QUERIES = {
   tables: {
     sql: undefined,
     type: {} as PG_Table,
-    getData: (db: DB) => getTablesViewsAndCols(db),
+    getData: (sql: SQLHandler) => getTablesViewsAndCols(sql),
   },
   functions: {
     sql: undefined,
-    getData: (db: DB) =>
+    getData: (sql: SQLHandler) =>
       getFuncs({
-        db,
+        sql,
         minArgs: 0,
         limit: 8000,
         distinct: false,
@@ -1093,17 +1095,6 @@ export const PG_OBJECT_QUERIES = {
     sql: (tableName?: string) => {
       /** Used to prevent error "permission denied for table pg_authid" */
       let roles_query = "";
-      // try {
-      //   await db.sql("SELECT 1 FROM pg_authid", {});
-      // roles_query = `ELSE ARRAY(
-      //   SELECT pg_authid.rolname
-      //   FROM pg_authid
-      //   WHERE pg_authid.oid = ANY (pol.polroles)
-      //   ORDER BY pg_authid.rolname
-      // )::text[]`
-      // } catch(err){
-
-      // }
       roles_query = `ELSE ARRAY( 
         SELECT pg_roles.rolname
         FROM pg_roles
@@ -1187,9 +1178,9 @@ export const PG_OBJECT_QUERIES = {
   keywords: {
     sql: undefined,
     type: {} as PG_Keyword,
-    getData: async (db: DB) => {
+    getData: async (sql: SQLHandler) => {
       const allKeywords = (
-        await db.sql(
+        await sql(
           "select upper(word) as word, barelabel, catcode, catdesc from pg_get_keywords();",
           {},
           { returnType: "rows" },
@@ -1248,8 +1239,7 @@ type PG_OBJECT_DATA = {
   [key in keyof typeof PG_OBJECT_QUERIES]: (typeof PG_OBJECT_QUERIES)[key]["type"][];
 };
 
-type DB = { sql: SQLHandler };
-export const getPGObjects = async (db: DB) => {
+export const getPGObjects = async (sqlHandler: SQLHandler) => {
   const data: PG_OBJECT_DATA = Object.fromEntries(
     await Promise.all(
       Object.entries(PG_OBJECT_QUERIES).map(async ([type, qparams]) => {
@@ -1257,7 +1247,7 @@ export const getPGObjects = async (db: DB) => {
         let result: any[] = [];
         try {
           if (sqlOrFunc === undefined) {
-            result = await qparams.getData(db);
+            result = await qparams.getData(sqlHandler);
           } else {
             let sql = "";
             if (typeof sqlOrFunc === "function") {
@@ -1265,7 +1255,7 @@ export const getPGObjects = async (db: DB) => {
             } else {
               sql = sqlOrFunc;
             }
-            result = await db.sql(sql, {}, { returnType: "rows" });
+            result = await sqlHandler(sql, {}, { returnType: "rows" });
           }
         } catch (e) {
           console.error(`Could not load ${type}`, e);

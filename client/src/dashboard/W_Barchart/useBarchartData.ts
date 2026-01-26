@@ -15,7 +15,7 @@ export const useBarchartData = ({
   const [sort, setSort] = useState<
     { column: string; direction: "asc" | "desc" } | undefined
   >(undefined);
-  const { db } = prgl;
+  const { db, sql } = prgl;
   const { windows } = getLinksAndWindows();
   const barChartData = usePromise(async () => {
     const firstLink = myLinks[0];
@@ -33,7 +33,6 @@ export const useBarchartData = ({
         message: `Invalid link type for barchart: ${firstLink.options.type}`,
       };
     }
-    const { sql } = db;
     const { columns, statType } = linkOpts;
     const [column] = columns;
     if (!column) {

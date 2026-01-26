@@ -28,7 +28,7 @@ const DEFAULT_RESTORE_OPTS: RestoreOpts = {
   keepLogs: false,
 };
 
-export type RestoreProps = Pick<Prgl, "dbsMethods" | "db"> & {
+export type RestoreProps = Pick<Prgl, "dbsMethods" | "db" | "sql"> & {
   button: React.ReactNode;
   defaultOpts?: RestoreOpts;
   dbs: DBS;
@@ -58,6 +58,7 @@ export const Restore = (props: RestoreProps) => {
     dbsMethods,
     fromFile,
     onReadyButton,
+    sql: dbSql,
   } = props;
 
   type FileOrMaybeItsNothing = File | null | undefined;
@@ -93,6 +94,9 @@ export const Restore = (props: RestoreProps) => {
         restoreOptions: restoreOpts,
       },
     });
+    if (!streamId) {
+      throw new Error("No streamId received from server");
+    }
 
     const writableStream = new WritableStream({
       start(controller) {},
@@ -200,7 +204,9 @@ export const Restore = (props: RestoreProps) => {
               </>
             }
           </InfoRow>
-          <DumpRestoreAlerts {...{ dbsMethods, connectionId, dbProject: db }} />
+          <DumpRestoreAlerts
+            {...{ dbsMethods, connectionId, dbProject: db, dbSql }}
+          />
           {plainFormatAlert}
           {fromFile && (
             <FormField

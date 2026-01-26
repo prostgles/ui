@@ -48,7 +48,7 @@ const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
       Date.now(),
       "onDebug",
       ev.type,
-      Object.keys(ev.type === "schemaChanged" ? ev.data.schema : ev.data.dbo),
+      Object.keys(ev.type === "schemaChanged" ? ev.data.schema : ev.data.db),
     );
   }
 };
@@ -57,6 +57,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
   const {
     dbsMethods: { startConnection },
     dbs,
+    dbsSql,
     dbsTables,
     dbsMethodSchema,
   } = prglState;
@@ -189,16 +190,18 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       return;
     }
     const {
-      dbo: db,
+      db,
+      sql,
       methods,
       methodSchema = {},
       tableSchema,
       socket,
     } = dbState.dbPrgl;
+
     const { tables: dbTables = [] } = getTables(
       tableSchema ?? [],
       con.table_options,
-      db,
+      db as DBHandlerClient,
       con.display_options?.prettyTableAndColumnNames ?? true,
     );
 
@@ -207,7 +210,8 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     const prglProject: PrglProject = {
       dbKey: "db-onReady-" + Date.now(),
       databaseId,
-      db: is_state_db ? (dbs as DBHandlerClient) : db,
+      sql: is_state_db ? dbsSql : sql,
+      db: is_state_db ? (dbs as DBHandlerClient) : (db as DBHandlerClient),
       tables: is_state_db ? dbsTables : dbTables,
       methods: is_state_db ? dbsMethodSchema : methodSchema,
       projectPath: path,
@@ -215,11 +219,23 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       connection: con,
     };
 
-    (window as any).db = db;
-    (window as any).dbSocket = socket;
-    (window as any).dbMethods = methods;
+    if (isPlaywrightTest) {
+      (window as any).db = db;
+      (window as any).dbsSql = dbsSql;
+      (window as any).sql = sql;
+      (window as any).dbSocket = socket;
+      (window as any).dbMethods = methods;
+    }
     return prglProject;
-  }, [conState.data, dbState, connectionInfo, dbs, dbsTables, dbsMethodSchema]);
+  }, [
+    conState.data,
+    dbState,
+    connectionInfo,
+    dbsSql,
+    dbs,
+    dbsTables,
+    dbsMethodSchema,
+  ]);
 
   /** prgl_R.set moved here to prevent theme change to trigger many re-mounts due to dbKey change */
   useEffect(() => {

@@ -25,7 +25,7 @@ export const DashboardMenuHeader = ({
   workspace,
   onClickSearchAll,
 }: P) => {
-  const db = prgl.db;
+  const { sql } = prgl;
   const pinnedMenu = getIsPinnedMenu(workspace);
   return (
     <FlexRowWrap className="DashboardMenuHeader gap-p5 f-0">
@@ -41,7 +41,7 @@ export const DashboardMenuHeader = ({
         color="action"
         variant="filled"
         iconPath={mdiScriptTextPlay}
-        disabledInfo={db.sql ? undefined : t.common["Not permitted"]}
+        disabledInfo={sql ? undefined : t.common["Not permitted"]}
       >
         {window.isLowWidthScreen ? null : t.DashboardMenuHeader["SQL Editor"]}
       </Btn>

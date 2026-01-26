@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { AnyObject } from "prostgles-types";
+import type { AnyObject, SQLHandler } from "prostgles-types";
 import type { Theme } from "src/App";
 import { chipColorsFadedBorder } from "../ColumnDisplayFormat/ChipStylePalette";
 import { getRandomElement, type ConditionalStyle } from "./ColumnStyleControls";
@@ -15,7 +15,7 @@ type DefaultConditionalStyleArgs =
     }
   | {
       type: "sql";
-      db: DBHandlerClient;
+      sql: SQLHandler;
       query: string;
       columnName: string;
       theme: Theme;
@@ -50,7 +50,6 @@ export const getValueColors = async (
 };
 
 export const fetchColumnValues = async (args: DefaultConditionalStyleArgs) => {
-  const { db } = args;
   if (args.type === "table") {
     const { columnName, db, tableName, filter = {} } = args;
     const tableHandler = db[tableName];
@@ -63,8 +62,9 @@ export const fetchColumnValues = async (args: DefaultConditionalStyleArgs) => {
     const values = rows.map((v) => v[columnName]) as string[];
     return values;
   }
+  const { sql } = args;
 
-  const values = await db.sql!(
+  const values = await sql(
     `SELECT DISTINCT \${columnName:name} 
       FROM (
         ${args.query}

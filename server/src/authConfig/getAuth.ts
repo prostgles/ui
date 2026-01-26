@@ -1,7 +1,7 @@
 import { sidKeyName } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { API_ENDPOINTS, ROUTES } from "@common/utils";
-import { initBackupManager } from "@src/init/prostglesOnReady";
+import { getBackupManager } from "@src/init/prostglesOnReady";
 import type { Express } from "express";
 import path from "path";
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
@@ -50,7 +50,7 @@ export const getAuth = async (
   const { auth_providers, auth_created_user_type = null } = database_config;
   const auth = {
     sidKeyName,
-    onUseOrSocketConnected: getOnUseOrSocketConnected(dbs, authSetupData),
+    onUseOrSocketConnected: getOnUseOrSocketConnected(_dbs, authSetupData),
     getUser: getGetUser(dbs, authSetupData),
     cacheSession: {
       getSession: async (sid, _) => {
@@ -67,7 +67,7 @@ export const getAuth = async (
       //   authSetupData.type === "connection" && authSetupData.url_path ?
       //     `/${authSetupData.url_path}`
       //   : undefined,
-      login: await getLogin(dbs, database_config),
+      login: await getLogin(dbs, _dbs, database_config),
 
       logout: async (sid) => {
         if (!sid) throw "err";
@@ -91,9 +91,7 @@ export const getAuth = async (
       onGetRequestOK: async (req, res, { getUser }) => {
         if (req.path.startsWith(ROUTES.BACKUPS)) {
           const userData = await getUser();
-          await (
-            await initBackupManager(_dbs, dbs)
-          ).onRequestBackupFile(
+          await getBackupManager()!.onRequestBackupFile(
             res,
             !userData.user ? undefined : userData,
             req,

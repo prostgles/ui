@@ -1,5 +1,8 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import { getConnectionDetails } from "./getConnectionDetails";
+import {
+  getConnectionDetails,
+  type ConnectionDetails,
+} from "./getConnectionDetails";
 import { validateConnection, type ConnectionInfo } from "./validateConnection";
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
@@ -30,7 +33,7 @@ export const testDBConnection = (
   check?: (c: pgPromise.IConnected<{}, pg.IClient>) => any,
 ): Promise<{
   prostglesSchemaVersion: string | undefined;
-  connectionInfo: pg.IConnectionParameters<pg.IClient>;
+  connectionInfo: ConnectionDetails;
   canCreateDb: boolean | undefined;
   isSSLModeFallBack?: boolean;
 }> => {

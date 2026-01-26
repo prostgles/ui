@@ -81,6 +81,7 @@ export const UpdateRuleControl = (props: P) => {
               </div>
             }
             db={prgl.db}
+            sql={prgl.sql}
             methods={prgl.methods}
             tables={prgl.tables}
             contextData={contextDataSchema}
@@ -118,6 +119,7 @@ export const UpdateRuleControl = (props: P) => {
               </div>
             }
             db={prgl.db}
+            sql={prgl.sql}
             methods={prgl.methods}
             tables={prgl.tables}
             contextData={contextDataSchema}

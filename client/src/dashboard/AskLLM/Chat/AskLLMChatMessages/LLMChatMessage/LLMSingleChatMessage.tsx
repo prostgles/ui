@@ -10,6 +10,7 @@ export const LLMSingleChatMessage = ({
   mcpServerIcons,
   workspaceId,
   loadedSuggestions,
+  sql,
 }: { messageItem: LLMSingleMessage } & LLMChatMessageCommonProps) => {
   const { message: llmMessage, nextMessage } = messageItem;
   const { id, message } = llmMessage;
@@ -30,7 +31,7 @@ export const LLMSingleChatMessage = ({
             messageContentIndex={idx}
             message={llmMessage}
             nextMessage={nextMessage}
-            db={db}
+            sql={sql}
             workspaceId={workspaceId}
             loadedSuggestions={loadedSuggestions}
             mcpServerIcons={mcpServerIcons}

@@ -18,6 +18,7 @@ export const APIDetailsTokens = ({
   setToken,
   tokenCount,
   dbsMethodSchema,
+  dbsSql,
 }: APIDetailsProps & {
   token: string;
   tokenCount: number;
@@ -38,6 +39,7 @@ export const APIDetailsTokens = ({
       <FlexCol className="w-fit  ">
         <Sessions
           dbs={dbs}
+          dbsSql={dbsSql}
           dbsTables={dbsTables}
           dbsMethodSchema={dbsMethodSchema}
           user={user}

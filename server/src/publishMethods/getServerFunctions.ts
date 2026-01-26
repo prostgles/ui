@@ -65,8 +65,8 @@ export const getServerFunctions: ServerFunctionDefinitions<
 > = async (params) => {
   const context = await (async () => {
     if (!params?.user) return;
-    const { dbo: dbs, db: _dbs, user } = params;
-    const backupManager = await initBackupManager(_dbs, dbs);
+    const { dbo: dbs, db: _dbs, user, sql } = params;
+    const backupManager = await initBackupManager(_dbs, dbs, sql);
     const servicesManager = getServiceManager(dbs);
     if (user.type === "admin") {
       return {
@@ -87,14 +87,12 @@ export const getServerFunctions: ServerFunctionDefinitions<
 
   const defineAdminFunction = createServerFunctionWithContext(
     context?.type === "admin" ? context : undefined,
-    "any",
   );
-  const definePublicFunction = createServerFunctionWithContext(params, "any");
+  const definePublicFunction = createServerFunctionWithContext(params);
 
   const adminMethods = {
     makeDirectory: defineAdminFunction({
       input: { path: "string", folderName: "string" },
-      output: "string",
       run: async ({ path, folderName }) => {
         if (!path) throw "Path is required";
         if (!folderName) throw "Folder name is required";
@@ -187,13 +185,13 @@ export const getServerFunctions: ServerFunctionDefinitions<
       },
     }),
     getMyIP: defineAdminFunction({
-      run: async (_, { dbs, clientReq: { socket } }) => {
+      run: async (_, { db, clientReq: { socket } }) => {
         if (!socket) throw "Socket missing";
         const { stateDatabaseConfig } = getAuthSetupData();
         if (!stateDatabaseConfig) {
           throw "State database config missing";
         }
-        return checkClientIP(dbs.sql, { socket }, stateDatabaseConfig);
+        return checkClientIP(db, { socket }, stateDatabaseConfig);
       },
     }),
     getConnectedIds: defineAdminFunction({
@@ -209,9 +207,9 @@ export const getServerFunctions: ServerFunctionDefinitions<
           throw "Service not found";
         }
         if (enable) {
-          return serviceManager.enableService(serviceName, () => {});
+          await serviceManager.enableService(serviceName, () => {});
         } else {
-          return serviceManager.stopService(serviceName);
+          serviceManager.stopService(serviceName);
         }
       },
     }),
@@ -219,7 +217,7 @@ export const getServerFunctions: ServerFunctionDefinitions<
       input: { conId: "string" },
       run: async ({ conId }) => {
         const c = connectionManager.getConnectionStartedInstance(conId);
-        const size = (await c.prgl.db.sql(
+        const size = (await c.prgl.sql(
           "SELECT pg_size_pretty( pg_database_size(current_database()) ) ",
           {},
           { returnType: "value" },
@@ -269,7 +267,7 @@ export const getServerFunctions: ServerFunctionDefinitions<
       input: { connection: "any" }, // TODO: add type c: Connections
       run: ({ connection }) => {
         const validatedConnection = validateConnection(connection);
-        return { connection: validatedConnection, warn: "" };
+        return { validatedConnection };
       },
     }),
     getInstalledPsqlVersions: defineAdminFunction({
@@ -335,7 +333,6 @@ export const getServerFunctions: ServerFunctionDefinitions<
           },
         },
       },
-      output: { type: "string", optional: true },
       run: ({ conId, credId, opts }, { backupManager }) => {
         return backupManager.pgDump(conId, credId, opts);
       },
@@ -399,12 +396,12 @@ export const getServerFunctions: ServerFunctionDefinitions<
 
           return stream.streamId;
         } else if (data.type === "chunk") {
-          return new Promise((resolve, reject) => {
+          return new Promise<string>((resolve, reject) => {
             backupManager.pushToStream(data.streamId, data.chunk, (err) => {
               if (err) {
                 reject(err);
               } else {
-                resolve(1);
+                resolve(data.streamId);
               }
             });
           });
@@ -584,7 +581,7 @@ export const getServerFunctions: ServerFunctionDefinitions<
     }),
     transcribeAudio: defineAdminFunction({
       input: { audioBlob: "Blob" },
-      output: TRANSCRIBE_OUTPUT_SCHEMA,
+      // output: TRANSCRIBE_OUTPUT_SCHEMA,
       run: async ({ audioBlob }, { servicesManager }) => {
         const speechToTextService = servicesManager.getService("speechToText");
         if (speechToTextService?.status !== "running") {
@@ -614,13 +611,13 @@ export const getServerFunctions: ServerFunctionDefinitions<
     ...adminMethods,
     startConnection: definePublicFunction({
       input: { connectionId: "string" },
-      output: {
-        type: {
-          socketPath: "string",
-          socketUrl: { type: "string", optional: true },
-        },
-        optional: true,
-      },
+      // output: {
+      //   type: {
+      //     socketPath: "string",
+      //     socketUrl: { type: "string", optional: true },
+      //   },
+      //   optional: true,
+      // },
       run: async (
         { connectionId },
         { user, dbo: dbs, db: _dbs, clientReq: { socket } },

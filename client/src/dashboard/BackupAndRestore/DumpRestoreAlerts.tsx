@@ -6,8 +6,8 @@ import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnec
 export const DumpRestoreAlerts = ({
   dbsMethods,
   connectionId,
-  dbProject,
-}: Pick<FullExtraProps, "dbsMethods" | "dbProject"> & {
+  dbSql,
+}: Pick<FullExtraProps, "dbsMethods" | "dbSql"> & {
   connectionId: string;
 }) => {
   const versionMismatch = usePromise(async () => {
@@ -20,7 +20,7 @@ export const DumpRestoreAlerts = ({
       if (!prglVersion) {
         return;
       }
-      let serverVersion = (await dbProject.sql?.(
+      let serverVersion = (await dbSql?.(
         `show server_version;`,
         {},
         { returnType: "value" },
@@ -58,7 +58,7 @@ export const DumpRestoreAlerts = ({
         ),
       };
     } catch {}
-  }, [dbsMethods, dbProject]);
+  }, [dbsMethods, dbSql]);
 
   const isSuperUser = usePromise(async () => {
     if (dbsMethods.getIsSuperUser && connectionId) {

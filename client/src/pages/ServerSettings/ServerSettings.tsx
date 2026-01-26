@@ -32,12 +32,14 @@ export type ServerSettingsProps = Pick<
   | "dbsMethods"
   | "dbsMethodSchema"
   | "dbs"
+  | "dbsSql"
   | "dbsTables"
   | "auth"
   | "serverState"
 >;
 export const ServerSettings = (props: ServerSettingsProps) => {
-  const { dbsMethods, dbsMethodSchema, dbs, dbsTables, serverState } = props;
+  const { dbsMethods, dbsMethodSchema, dbs, dbsSql, dbsTables, serverState } =
+    props;
 
   const { data: stateConnection } = dbs.connections.useFindOne({
     is_state_db: true,
@@ -53,7 +55,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
       if (!testCIDR) return;
       const cidr = testCIDR;
       const ranges =
-        ((await dbs.sql!(
+        ((await dbsSql!(
           getCIDRRangesQuery({ cidr, returns: ["from", "to"] }),
           { cidr },
           { returnType: "row" },
@@ -106,6 +108,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                     <SmartForm
                       className="bg-color-0 "
                       label=""
+                      sql={dbsSql}
                       db={dbs as DBHandlerClient}
                       methods={dbsMethodSchema}
                       tableName="database_configs"
@@ -211,6 +214,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       Configure AWS S3 cloud credentials for file storage
                     </InfoRow>
                     <SmartCardList
+                      sql={dbsSql}
                       db={dbs as DBHandlerClient}
                       methods={dbsMethodSchema}
                       tableName="credentials"

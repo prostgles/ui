@@ -25,7 +25,7 @@ import { useSmartCardListState } from "./useSmartCardListState";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
-  "db" | "tables" | "methods"
+  "db" | "tables" | "methods" | "sql"
 > & {
   tableName:
     | string
@@ -128,6 +128,7 @@ export const SmartCardList = <T extends AnyObject>(
     enableListAnimations = false,
     getActions,
     limit = 25,
+    sql,
     "data-command": dataCommand = "SmartCardList",
   } = props;
 
@@ -195,6 +196,7 @@ export const SmartCardList = <T extends AnyObject>(
                   contentClassname={rowProps?.className}
                   contentStyle={rowProps?.style}
                   db={db}
+                  sql={sql}
                   methods={methods}
                   tables={tables}
                   tableName={tableName}

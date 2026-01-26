@@ -190,7 +190,7 @@ export const publish: Publish<
           update: {
             fields: "*",
 
-            postValidate: async ({ row, dbx: dbsTX }) => {
+            postValidate: async ({ row, dbx: dbsTX, tx }) => {
               if (row.allowed_ips_enabled && !row.allowed_ips.length) {
                 throw "Must include at least one allowed IP CIDR";
               }
@@ -203,7 +203,7 @@ export const publish: Publish<
                   throw "Cannot find existing database config to validate IP changes";
                 }
                 const { isAllowed, ip } = await checkClientIP(
-                  dbsTX.sql,
+                  tx,
                   {
                     ...clientReq,
                   },
@@ -429,7 +429,7 @@ export const publish: Publish<
   const curTables = Object.keys(dashboardTables);
   const remainingTables = getKeys(db).filter((k) => {
     const tableHandler = db[k];
-    return tableHandler && "find" in tableHandler && !curTables.includes(k);
+    return "find" in tableHandler && !curTables.includes(k);
   });
   const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});
   dashboardTables = {

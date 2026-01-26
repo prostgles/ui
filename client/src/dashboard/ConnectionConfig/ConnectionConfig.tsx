@@ -72,6 +72,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
               prglState={prgl}
               contentOnly={true}
               db={db}
+              sql={prgl.sql}
               connectionId={connectionId}
             />
           ),
@@ -90,25 +91,6 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
                 getStatus={dbsMethods.getStatus}
                 runConnectionQuery={dbsMethods.runConnectionQuery}
               />,
-        },
-        authentication: {
-          label: t.ServerSettings.Authentication,
-          listProps: dataCommand("config.auth"),
-
-          disabledText:
-            disabledText ||
-            stateDisabledInfo ||
-            (isElectron ? "Not available for desktop" : undefined),
-
-          hide: serverState.isElectron,
-          leftIconPath: mdiAccountKey,
-          content: (
-            <AuthProviderSetup
-              dbs={dbs}
-              dbsTables={dbsTables}
-              connectionId={connectionId}
-            />
-          ),
         },
         access_control: {
           label: t.ConnectionConfig["Access control"],
@@ -135,6 +117,25 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           leftIconPath: mdiDatabaseSync,
           disabledText,
           content: <BackupsControls {...propsWithPrgl} />,
+        },
+        authentication: {
+          label: t.ServerSettings.Authentication,
+          listProps: dataCommand("config.auth"),
+
+          disabledText:
+            disabledText ||
+            stateDisabledInfo ||
+            (isElectron ? "Not available for desktop" : undefined),
+
+          hide: serverState.isElectron,
+          leftIconPath: mdiAccountKey,
+          content: (
+            <AuthProviderSetup
+              dbs={dbs}
+              dbsTables={dbsTables}
+              connectionId={connectionId}
+            />
+          ),
         },
         API: {
           label: t.ConnectionConfig["API"],

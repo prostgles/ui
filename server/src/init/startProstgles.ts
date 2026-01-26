@@ -1,7 +1,7 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesInitState } from "@common/electronInitTypes";
 import type { Express } from "express";
-import path from "path";
+import path, { join } from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
@@ -101,6 +101,10 @@ export const startProstgles = async ({
       sqlFilePath: path.join(actualRootDir + "/src/init.sql"),
       io,
       tsGeneratedTypesDir,
+      tsGeneratedTypesFunctionsPath:
+        IS_PROD ? undefined : (
+          join(actualRootDir, "/src/init/startProstgles.ts")
+        ),
       watchSchema,
       watchSchemaType: "DDL_trigger",
       transactions: true,

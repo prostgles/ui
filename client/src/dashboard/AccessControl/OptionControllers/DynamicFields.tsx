@@ -9,11 +9,10 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import { mdiClose, mdiPlus, mdiTableFilter } from "@mdi/js";
-import { useEffectAsync } from "prostgles-client";
 import React, { useEffect, useState } from "react";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { FieldFilterControl } from "./FieldFilterControl";
-import type { ContextDataSchema } from "./FilterControl";
+import type { ContextDataSchema, SingleGroupFilter } from "./FilterControl";
 import { FilterControl } from "./FilterControl";
 
 type P = Pick<
@@ -31,7 +30,7 @@ export const DynamicFields = ({
   contextDataSchema,
   table,
   onChange,
-  prgl: { db, tables, methods },
+  prgl: { db, tables, methods, sql },
   contextData,
 }: P) => {
   const rule: UpdateRule = r === true || !r ? { fields: "*" } : r;
@@ -49,7 +48,7 @@ export const DynamicFields = ({
     });
   };
 
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<unknown>();
   useEffect(() => {
     void (async () => {
       const valid = await validateDynamicFields(
@@ -115,10 +114,11 @@ export const DynamicFields = ({
                 />
                 <FilterControl
                   db={db}
+                  sql={sql}
                   methods={methods}
                   tableName={table.name}
                   tables={tables}
-                  detailedFilter={filterDetailed as any}
+                  detailedFilter={filterDetailed as SingleGroupFilter}
                   label={"Filter"}
                   onChange={(newFilter) => {
                     setValue(

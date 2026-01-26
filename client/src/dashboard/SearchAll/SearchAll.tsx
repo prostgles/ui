@@ -30,7 +30,7 @@ export type SearchAllSuggestion = Pick<
   icon?: string;
 };
 
-export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables"> & {
+export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables" | "sql"> & {
   suggestions: SQLSuggestion[] | undefined;
   onClose: () => void;
   onOpen: (arg: { table: string; filter: DetailedFilter[] }) => void;

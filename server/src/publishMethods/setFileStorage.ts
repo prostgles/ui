@@ -78,7 +78,7 @@ export const setFileStorage = async (
   } else {
     const fileTable = dbConf.file_table_config?.fileTable;
     if (!fileTable) throw "Unexpected: fileTable already disabled";
-    await db.tx(async (dbTX) => {
+    await db.tx(async (dbTX, t) => {
       const fileTableHandler = dbTX[fileTable];
       if (!fileTableHandler)
         throw "Unexpected: fileTable table handler missing";
@@ -94,7 +94,7 @@ export const setFileStorage = async (
         await fileTableHandler.delete({});
       }
       if (!opts?.keepFileTable) {
-        await dbTX.sql!("DROP TABLE ${fileTable:name} CASCADE", {
+        await t.any("DROP TABLE ${fileTable:name} CASCADE", {
           fileTable,
         });
       }

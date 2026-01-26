@@ -9,7 +9,8 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 export const AddLLMPromptForm = ({
   dbs,
   dbsTables,
-}: Pick<Prgl, "dbs" | "dbsTables">) => {
+  dbsSql,
+}: Pick<Prgl, "dbs" | "dbsTables" | "dbsSql">) => {
   return (
     <PopupMenu
       button={
@@ -20,6 +21,7 @@ export const AddLLMPromptForm = ({
       render={(pClose) => (
         <SmartForm
           db={dbs as DBHandlerClient}
+          sql={dbsSql}
           tableName="llm_prompts"
           tables={dbsTables}
           methods={{}}

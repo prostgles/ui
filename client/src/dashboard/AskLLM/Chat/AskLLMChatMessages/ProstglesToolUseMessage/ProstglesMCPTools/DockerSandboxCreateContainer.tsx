@@ -133,13 +133,17 @@ export const DockerSandboxCreateContainer = ({
                     children: <ErrorComponent error={result.content} />,
                   });
                 } else {
+                  const { content } = result;
                   await dbs.llm_messages.update(
                     { id: toolResult.toolUseResult.id },
                     {
                       message: [
                         {
                           type: "tool_result",
-                          content: result.content,
+                          content: content as unknown as {
+                            type: "text";
+                            text: string;
+                          }[],
                           tool_name:
                             toolUseResult?.tool_name ??
                             "docker-sandbox--create_container",

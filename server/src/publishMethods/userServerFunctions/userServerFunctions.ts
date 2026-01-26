@@ -24,11 +24,10 @@ export const getUserServerFunctions = async (
     params?.user ?
       { ...params, dbs: params.dbo, user: params.user }
     : undefined,
-    "any",
   );
   const llmAccessParams = params && (await getLLMAccessParams(params));
   const defineUserWithAccessRulesOrAdminFunction =
-    createServerFunctionWithContext(llmAccessParams, "any");
+    createServerFunctionWithContext(llmAccessParams);
 
   const userServerFunctions = {
     askLLM: defineUserWithAccessRulesOrAdminFunction({

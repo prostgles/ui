@@ -121,6 +121,7 @@ export class _Dashboard extends RTComp<
       connectionId,
       tables: dbSchemaTables,
       connection,
+      sql,
     } = this.props.prgl;
     const workspace = this.d.workspace;
     const dbKey =
@@ -155,10 +156,8 @@ export class _Dashboard extends RTComp<
       };
 
       try {
-        if (db.sql) {
-          const { sql } = db;
-
-          const suggestions = await getSqlSuggestions({ sql });
+        if (sql) {
+          const suggestions = await getSqlSuggestions(sql);
           const schema = {
             ...suggestions,
             connectionId,

@@ -73,6 +73,7 @@ export const AccessControlRuleEditor = ({
   const {
     db,
     dbs,
+    sql,
     dbsTables,
     dbsMethods,
     connection,
@@ -85,7 +86,7 @@ export const AccessControlRuleEditor = ({
 
   const currentSQLUser: string | undefined = usePromise(
     async () =>
-      await db.sql?.(`SELECT "current_user"()`, {}, { returnType: "value" }),
+      await sql?.(`SELECT "current_user"()`, {}, { returnType: "value" }),
     [db],
   );
   const type = editedRule?.type;
@@ -165,6 +166,7 @@ export const AccessControlRuleEditor = ({
           <UserStats
             theme={prgl.theme}
             dbs={dbs}
+            dbsSql={prgl.dbsSql}
             dbsTables={dbsTables}
             dbsMethods={dbsMethods}
             dbsMethodSchema={dbsMethodSchema}

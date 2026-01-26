@@ -24,6 +24,7 @@ export const JoinedRecordsAddRow = (props: P) => {
     rowFilter,
     newRowData,
     row,
+    sql,
   } = props;
 
   const [insert, setInsert] = useState<{
@@ -157,6 +158,7 @@ export const JoinedRecordsAddRow = (props: P) => {
         <SmartForm
           tableName={section.tableName}
           db={db}
+          sql={sql}
           methods={methods}
           tables={tables}
           asPopup={true}

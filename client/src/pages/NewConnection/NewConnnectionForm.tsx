@@ -87,10 +87,17 @@ export const DEFAULT_CONNECTION = {
 
 type NewConnectionProps = {
   db: FullExtraProps["dbProject"] | undefined;
+  sql: FullExtraProps["dbSql"] | undefined;
   connectionId: string | undefined;
   prglState: Pick<
     AppContextProps,
-    "dbs" | "dbsMethods" | "dbsMethodSchema" | "dbsTables" | "user" | "theme"
+    | "dbs"
+    | "dbsMethods"
+    | "dbsMethodSchema"
+    | "dbsTables"
+    | "user"
+    | "theme"
+    | "dbsSql"
   >;
   onDeleted?: () => void;
   onUpserted?: (connection: Required<Connection>) => void;
@@ -238,7 +245,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
       };
 
       /** Validated connection only after some crucial info is provided */
-      let { connection, warning } =
+      let { validatedConnection: connection, warning } =
         (
           newData.db_host ||
           newData.db_user ||
@@ -247,12 +254,12 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
           mode === "edit" ||
           mode === "insert"
         ) ?
-          await dbsMethods.validateConnection!({ connection: newData }).catch(
-            (error) => {
-              return { warning: error, connection };
-            },
-          )
-        : { connection: newData, warning: undefined };
+          await dbsMethods.validateConnection!({ connection: newData })
+            .then((d) => ({ ...d, warning: "" }))
+            .catch((error) => {
+              return { warning: error, validatedConnection: connection };
+            })
+        : { validatedConnection: newData, warning: undefined };
 
       if (mode !== "edit" && !this.addedName && !connection.name) {
         connection.name = connection.db_name;
@@ -337,6 +344,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     dbsTables: this.props.prglState.dbsTables,
                     origCon: c,
                     dbsMethods: this.props.prglState.dbsMethods,
+                    sql: this.props.sql,
                   }
                 : undefined
               }
@@ -397,6 +405,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                         newRowData={undefined}
                         style={{ padding: 0 }}
                         db={prglState.dbs as DBHandlerClient}
+                        sql={prglState.dbsSql}
                         rowFilter={[{ fieldName: "id", value: this.conId }]}
                         showRelated="descendants"
                         tableName={"connections"}

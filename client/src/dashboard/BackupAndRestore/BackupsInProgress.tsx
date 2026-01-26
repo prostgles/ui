@@ -20,6 +20,7 @@ export const BackupsInProgress = ({
   dbsTables,
   backupFilter,
   dbsMethodSchema,
+  dbsSql,
 }: Prgl & {
   backupFilter: AnyObject;
 }) => {
@@ -78,6 +79,7 @@ export const BackupsInProgress = ({
   return (
     <SmartCardList<DBSSchema["backups"]>
       db={dbs as DBHandlerClient}
+      sql={dbsSql}
       methods={dbsMethodSchema}
       tableName="backups"
       btnColor="gray"

@@ -20,15 +20,16 @@ import type { FileTableConfigReferences } from "../FileTableControls/FileColumnC
 import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
 import type { Backups } from "./dashboardUtils";
 
-export type DBSMethods = Partial<{
-  [funcName in keyof GeneratedFunctionSchema]: (
-    ...args: Parameters<GeneratedFunctionSchema[funcName]>
-  ) => funcName extends keyof DBSMethodsOld ?
-    ReturnType<Required<DBSMethodsOld>[funcName]>
-  : Promise<void>;
-}>;
+// export type DBSMethods = Partial<{
+//   [funcName in keyof GeneratedFunctionSchema]: (
+//     ...args: Parameters<GeneratedFunctionSchema[funcName]>
+//   ) => funcName extends keyof DBSMethodsOld ?
+//     ReturnType<Required<DBSMethodsOld>[funcName]>
+//   : Promise<void>;
+// }>;
+export type DBSMethods = Partial<GeneratedFunctionSchema>;
 
-export type DBSMethodsOld = Partial<{
+type DBSMethodsOld = Partial<{
   makeDirectory: (path: string, folderName: string) => Promise<string>;
   glob: (
     pattern?: string,

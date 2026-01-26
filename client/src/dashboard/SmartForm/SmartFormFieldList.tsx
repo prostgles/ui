@@ -20,6 +20,7 @@ import type { SmartFormModeState } from "./useSmartFormMode";
 
 type P = Pick<
   SmartFormProps,
+  | "sql"
   | "tableName"
   | "tables"
   | "db"
@@ -58,6 +59,7 @@ export const SmartFormFieldList = (props: P) => {
     modeType,
     methods,
     newRowData,
+    sql,
   } = props;
 
   const hideNullBtn = mode.type === "view" || props.hideNullBtn;
@@ -132,6 +134,7 @@ export const SmartFormFieldList = (props: P) => {
           <SmartFormField
             key={i}
             tables={tables}
+            sql={sql}
             db={db}
             tableName={tableName}
             table={table}

@@ -6,7 +6,7 @@ import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
 import { useLLMChatMessages } from "./AskLLMChatMessages/hooks/useLLMChatMessages";
 
 export type UseLLMChatProps = LLMSetupStateReady &
-  Pick<Prgl, "dbs" | "user" | "connectionId" | "db"> & {
+  Pick<Prgl, "dbs" | "user" | "connectionId" | "db" | "sql"> & {
     workspaceId: string | undefined;
     loadedSuggestions: LoadedSuggestions | undefined;
   };

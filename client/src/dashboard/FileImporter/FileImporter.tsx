@@ -1,6 +1,6 @@
 import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { AnyObject } from "prostgles-types";
+import type { AnyObject, SQLHandler } from "prostgles-types";
 import React from "react";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
@@ -27,6 +27,7 @@ export const getPapa = () =>
 
 export type FileImporterProps = {
   db: DBHandlerClient;
+  sql: SQLHandler;
   onClose: VoidFunction;
   openTable: (tableName: string) => void;
   style?: object;
@@ -280,7 +281,7 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
     try {
       await importFile({
         ...this.state,
-        db: this.props.db,
+        sql: this.props.sql,
         onError,
         onProgress: (importing) => {
           if (!this.mounted) {
@@ -297,14 +298,14 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
 
   cancel = async () => {
     this.canceled = true;
-    const { onClose, db } = this.props;
+    const { onClose, sql } = this.props;
     const { importing } = this.state;
 
     /**
      * Drop table if import is canceled
      */
     if (importing && !importing.finished)
-      await db.sql!("DROP TABLE IF EXISTS " + importing.tableName);
+      await sql("DROP TABLE IF EXISTS " + importing.tableName);
 
     this.setState({
       importing: undefined,
@@ -330,7 +331,7 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
       files,
     } = this.state;
 
-    const { openTable, parentDiv, db } = this.props;
+    const { openTable, parentDiv, db, sql } = this.props;
     const { newTableName } = destination;
     let tblName = newTableName;
     if (!newTableName && selectedFile) tblName = selectedFile.file.name; //.slice(0, -4);
@@ -555,14 +556,12 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
                   {importing.tableName}
                 </span>
               </div>
-              {db.sql && (
-                <ApplySuggestedDataTypes
-                  types={importing.types}
-                  onDone={this.cancel}
-                  sql={db.sql}
-                  tableName={importing.tableName}
-                />
-              )}
+              <ApplySuggestedDataTypes
+                types={importing.types}
+                onDone={this.cancel}
+                sql={sql}
+                tableName={importing.tableName}
+              />
             </div>
           )}
 

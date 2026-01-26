@@ -28,6 +28,7 @@ import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import type { TablesWithInfo } from "./useTableSizeInfo";
+import { sql } from "sql-formatter";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
@@ -53,6 +54,7 @@ export const DashboardMenuContent = (props: P) => {
     user,
     dbsMethods: { reloadSchema },
     dbs,
+    sql,
   } = prgl;
 
   const pinnedMenu = getIsPinnedMenu(workspace);
@@ -203,7 +205,7 @@ export const DashboardMenuContent = (props: P) => {
                 },
                 label: "",
               }}
-              db={db}
+              sql={sql}
               db_schema_filter={props.prgl.connection.db_schema_filter}
               onChange={(newDbSchemaFilter) => {
                 void dbs.connections.update(
@@ -308,7 +310,7 @@ export const DashboardMenuContent = (props: P) => {
         />
       )}
       <FlexRowWrap className="f-0 mt-1 mx-p5 jc-between">
-        {!tables.length && !db.sql && (
+        {!tables.length && !sql && (
           <InfoRow>
             You have not been granted any permissions. <br></br> Check with
             system administrator
@@ -328,7 +330,7 @@ export const DashboardMenuContent = (props: P) => {
           connectionId={props.prgl.connectionId}
           db_schema_filter={props.prgl.connection.db_schema_filter}
           dbs={dbs}
-          db={db}
+          sql={sql}
           theme={theme}
         />
       </FlexRowWrap>

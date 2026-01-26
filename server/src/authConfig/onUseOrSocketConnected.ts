@@ -1,14 +1,13 @@
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
-import { type DBS } from "..";
 
 import { sidKeyName } from "@common/authTypesAndConstants";
+import type { DB } from "prostgles-server/dist/initProstgles";
 import { getElectronConfig } from "../electronConfig";
 import { checkClientIP } from "./sessionUtils";
 import type { AuthConfigForStateOrConnection } from "./subscribeToAuthSetupChanges";
-import { tout } from "@src/utils/tout";
 
 export const getOnUseOrSocketConnected = (
-  dbs: DBS,
+  _dbs: DB,
   authSetupData: AuthConfigForStateOrConnection,
 ) => {
   const onUseOrSocketConnected: AuthConfig["onUseOrSocketConnected"] = async (
@@ -39,7 +38,7 @@ export const getOnUseOrSocketConnected = (
 
     if (database_config.allowed_ips_enabled) {
       const ipCheck = await checkClientIP(
-        dbs.sql,
+        _dbs,
         reqInfo,
         authSetupData.stateDatabaseConfig,
       );

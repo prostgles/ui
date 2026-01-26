@@ -149,6 +149,7 @@ export const WorkspaceMenuDropDown = ({
                         <WorkspaceSettings
                           w={w}
                           dbs={prgl.dbs}
+                          dbsSql={prgl.dbsSql}
                           dbsTables={dbsTables}
                           dbsMethodSchema={dbsMethodSchema}
                         />

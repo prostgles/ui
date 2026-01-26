@@ -21,6 +21,7 @@ import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColu
 import { CreateColumn } from "./AlterColumn/CreateColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
+import type { SQLHandler } from "prostgles-client";
 
 const options = [
   {
@@ -55,6 +56,7 @@ export type AddColumnMenuProps = {
   w: WindowSyncItem<"table">;
   tables: DBSchemaTablesWJoins;
   db: DBHandlerClient;
+  sql: SQLHandler | undefined;
   suggestions: LoadedSuggestions | undefined;
   variant?: "detailed";
   nestedColumnOpts: NestedColumnOpts | undefined;
@@ -63,10 +65,10 @@ export type AddColumnMenuProps = {
 export const AddColumnMenu = ({
   w,
   tables,
-  db,
   variant,
   nestedColumnOpts,
   suggestions,
+  sql,
 }: AddColumnMenuProps) => {
   const table = tables.find((t) => t.name === w.table_name);
   const [colType, setColType] = useState<
@@ -98,7 +100,7 @@ export const AddColumnMenu = ({
   }
 
   const cannotCreateColumns =
-    !db.sql ? t.AddColumnMenu["Not enough privileges"]
+    !sql ? t.AddColumnMenu["Not enough privileges"]
     : table.info.isView ?
       t.AddColumnMenu["This is a view. Cannot create columns, must recreate"]
     : undefined;
@@ -176,7 +178,7 @@ export const AddColumnMenu = ({
             />
           : colType === "Create" ?
             <CreateColumn
-              db={db}
+              sql={sql!}
               field=""
               table={table}
               tables={tables}

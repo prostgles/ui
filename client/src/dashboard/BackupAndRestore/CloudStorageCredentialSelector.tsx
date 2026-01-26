@@ -27,7 +27,7 @@ export function CloudStorageCredentialSelector({
   pickFirstIfNoOthers,
   style,
 }: P) {
-  const { dbs, dbsTables, dbsMethodSchema, dbsMethods } = usePrgl();
+  const { dbs, dbsTables, dbsMethodSchema, dbsSql } = usePrgl();
   const { data: credentials } = dbs.credentials.useSubscribe(
     {},
     { select: { id: 1, name: 1, type: 1, key_id: 1 } },
@@ -74,6 +74,7 @@ export function CloudStorageCredentialSelector({
       {credentialsTable && Boolean(credentials?.length) && (
         <ViewMoreSmartCardList
           db={dbs as DBHandlerClient}
+          sql={dbsSql}
           methods={dbsMethodSchema}
           ftable={credentialsTable}
           tables={dbsTables}
@@ -101,6 +102,7 @@ export function CloudStorageCredentialSelector({
             contentClassname="p-1"
             methods={dbsMethodSchema}
             db={dbs as DBHandlerClient}
+            sql={dbsSql}
             tableName="credentials"
             tables={dbsTables}
             showJoinedTables={false}

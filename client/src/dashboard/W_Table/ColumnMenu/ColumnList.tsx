@@ -38,7 +38,7 @@ export const ColumnList = ({
   onClose,
 }: P) => {
   const prgl = usePrgl();
-  const { db } = prgl;
+  const { sql } = prgl;
   const tableColumns = table.columns;
   const columns: ColumnConfigWInfo[] = useMemo(
     () =>
@@ -97,10 +97,10 @@ export const ColumnList = ({
             data: c,
             rowClassname: "trigger-hover",
             contentRight:
-              !db.sql && !c.computedConfig ?
+              !sql && !c.computedConfig ?
                 null
               : <FlexRow className="mr-p5" onClick={(e) => e.stopPropagation()}>
-                  {db.sql && !c.computedConfig && !c.nested && (
+                  {sql && !c.computedConfig && !c.nested && (
                     <PopupMenu
                       positioning="center"
                       title={`Alter ${c.name}`}

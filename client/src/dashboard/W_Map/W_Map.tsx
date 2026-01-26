@@ -513,6 +513,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
               asPopup={true}
               confirmUpdates={true}
               db={prgl.db}
+              sql={prgl.sql}
               methods={prgl.methods}
               tables={prgl.tables}
               tableName={clickedItem.properties.tableName}
@@ -672,6 +673,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                         this.state.clickedItem
                       : undefined,
                     db: this.props.prgl.db,
+                    sql: this.props.prgl.sql,
                     theme: this.props.prgl.theme,
                     tables: this.props.tables,
                     methods: this.props.prgl.methods,

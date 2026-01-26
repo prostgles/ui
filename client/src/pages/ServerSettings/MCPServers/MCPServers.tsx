@@ -22,7 +22,7 @@ export type MCPServersProps = Omit<ServerSettingsProps, "auth"> & {
 };
 
 export const MCPServers = (props: MCPServersProps) => {
-  const { dbsMethods, dbs, dbsMethodSchema, dbsTables, chatId } = props;
+  const { dbsMethods, dbs, dbsMethodSchema, dbsTables, chatId, dbsSql } = props;
 
   const { getMcpHostInfo } = dbsMethods;
   const envInfo = usePromise(async () => getMcpHostInfo?.(), [getMcpHostInfo]);
@@ -82,6 +82,7 @@ export const MCPServers = (props: MCPServersProps) => {
             </Btn>
           )}
           <SmartCardList<MCPServerWithToolAndConfigs>
+            sql={dbsSql}
             db={dbs as DBHandlerClient}
             methods={dbsMethodSchema}
             className={mcp_servers_disabled ? "no-interaction" : undefined}

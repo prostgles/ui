@@ -37,7 +37,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     askLLM,
     stopAskLLM,
   } = props;
-  const { tables, db, user, connectionId, connection, dbs, methods } = prgl;
+  const { tables, db, user, connectionId, connection, dbs, methods, sql } =
+    prgl;
   const chatState = useLLMChat({
     ...setupState,
     loadedSuggestions,
@@ -46,6 +47,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     connectionId,
     workspaceId,
     db,
+    sql,
   });
   const {
     messages,
@@ -58,7 +60,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   const { preferredPromptId, createNewChat } = chatState;
   const { dbSchemaForPrompt } = useLLMSchemaStr({
     tables,
-    db,
+    sql,
     connection,
     activeChat,
   });

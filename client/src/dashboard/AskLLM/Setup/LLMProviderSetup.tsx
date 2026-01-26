@@ -13,7 +13,8 @@ export const LLMProviderSetup = ({
   dbs,
   dbsMethodSchema,
   dbsTables,
-}: Pick<Prgl, "dbs" | "dbsMethodSchema" | "dbsTables">) => {
+  dbsSql,
+}: Pick<Prgl, "dbs" | "dbsMethodSchema" | "dbsTables" | "dbsSql">) => {
   const listProps = useMemo(() => {
     return {
       showTopBar: {
@@ -52,6 +53,7 @@ export const LLMProviderSetup = ({
     <>
       <SmartCardList
         className="mb-1 w-fit min-w-0"
+        sql={dbsSql}
         db={dbs as DBHandlerClient}
         tableName={"llm_credentials"}
         methods={dbsMethodSchema}

@@ -4,13 +4,10 @@ import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { InfoRow } from "@components/InfoRow";
 import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { t } from "../../../../i18n/i18nUtils";
-import type {
-  DBSchemaTablesWJoins,
-  WindowSyncItem,
-} from "../../../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../../../Dashboard/dashboardUtils";
 import { SmartFilterBar } from "../../../SmartFilterBar/SmartFilterBar";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
@@ -18,7 +15,6 @@ import type { ColumnConfig } from "../ColumnMenu";
 import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 export type LinkedColumnProps = {
   w: WindowSyncItem<"table">;
@@ -47,7 +43,7 @@ export const NESTED_COLUMN_DISPLAY_MODES = [
 
 export const LinkedColumn = (props: LinkedColumnProps) => {
   const { w } = props;
-  const { tables, db } = usePrgl();
+  const { tables, db, sql } = usePrgl();
   const getCol = (name: string) => w.columns?.find((c) => c.name === name);
 
   const [localColumn, setLocalColumn] = useState<ColumnConfigWInfo>();
@@ -247,6 +243,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                   table_name={table.name}
                   db={db}
                   tables={tables}
+                  sql={sql}
                   columns={currentColumn.nested.columns}
                   rowCount={-1}
                   methods={{}}

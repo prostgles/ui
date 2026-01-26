@@ -46,6 +46,8 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
     dbsMethods,
     dbsMethodSchema,
     db,
+    dbsSql,
+    sql,
   } = prgl;
   const { getInstalledPsqlVersions, getDBSize, pgDump } = dbsMethods;
   const connection_id = connectionId;
@@ -171,6 +173,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
                 connectionId={connection_id}
                 dbsMethods={dbsMethods}
                 dbs={dbs}
+                dbSql={dbsSql}
                 dbProject={db}
                 dbsTables={dbsTables}
                 opts={dumpOpts}
@@ -186,6 +189,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
         : <AutomaticBackups
             dbs={dbs}
             db={db}
+            sql={sql}
             dbsTables={dbsTables}
             connectionId={connection_id}
             dbsMethods={dbsMethods}
@@ -195,6 +199,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
         <Restore
           db={db}
           dbs={dbs}
+          sql={sql}
           connectionId={connection_id}
           dbsMethods={dbsMethods}
           fromFile={true}
@@ -211,6 +216,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
       </div>
       <SmartCardList
         db={dbs as DBHandlerClient}
+        sql={dbsSql}
         methods={dbsMethodSchema}
         tableName="backups"
         btnColor="gray"

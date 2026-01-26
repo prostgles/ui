@@ -39,6 +39,25 @@ export type ProstglesService = {
   gpus?: DockerGPUS;
   healthCheck: { endpoint: string; method?: "GET" | "POST" };
   volumes?: Record<string, string>;
+  bind?: Record<
+    /**
+     * source, src
+     * The location of the file or directory on the host. This can be an absolute or relative path.
+     */
+    string,
+    {
+      /**
+       * destination, dst, target
+       * The path where the file or directory is mounted in the container. Must be an absolute path.
+       */
+      containerPath: string;
+      /**
+       * readonly, ro
+       * Whether to mount the bind as read-only.
+       */
+      readOnly?: boolean;
+    }
+  >;
   endpoints: Record<
     string,
     {

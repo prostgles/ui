@@ -66,6 +66,7 @@ export const Account = (props: AccountProps) => {
         <SmartForm
           label=""
           db={dbs as DBHandlerClient}
+          sql={props.dbsSql}
           methods={dbsMethodSchema}
           tableName="users"
           tables={dbsTables}
@@ -100,11 +101,7 @@ export const Account = (props: AccountProps) => {
       content: (
         <div className="flex-col gap-1 px-1 f-1">
           {dbsConnection ?
-            <APIDetails
-              {...props}
-              projectPath={API_ENDPOINTS.WS_DBS}
-              connection={dbsConnection}
-            />
+            <APIDetails {...props} connection={dbsConnection} />
           : notAllowedBanner}
         </div>
       ),

@@ -20,6 +20,7 @@ export const useLLMChatMessages = (props: P) => {
     user,
     activeChat,
     db,
+    sql,
     loadedSuggestions,
     workspaceId,
     mcpServerIcons,
@@ -62,6 +63,7 @@ export const useLLMChatMessages = (props: P) => {
                   isLoadingSinceDate={isLoadingSinceDate}
                   messageItem={messageItem}
                   db={db}
+                  sql={sql}
                   mcpServerIcons={mcpServerIcons}
                   workspaceId={workspaceId}
                   loadedSuggestions={loadedSuggestions}
@@ -79,9 +81,10 @@ export const useLLMChatMessages = (props: P) => {
       user?.id,
       dbs,
       db,
+      sql,
+      mcpServerIcons,
       workspaceId,
       loadedSuggestions,
-      mcpServerIcons,
     ],
   );
 

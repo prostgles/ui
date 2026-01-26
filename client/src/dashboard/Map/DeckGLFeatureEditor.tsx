@@ -19,7 +19,7 @@ import { DrawModes, geometryToGeoEWKT } from "./mapDrawUtils";
 export type DeckGLFeatureEditorProps = {
   deckW: DeckWrapped;
   edit: Pick<W_MapProps, "layerQueries"> &
-    Pick<Prgl, "db" | "tables" | "methods" | "theme"> & {
+    Pick<Prgl, "db" | "tables" | "methods" | "theme" | "sql"> & {
       feature:
         | undefined
         | (Feature & {
@@ -50,7 +50,8 @@ export const DeckGLFeatureEditor = ({
   deckGlLibs,
   deckW,
 }: DeckGLFeatureEditorProps) => {
-  const { db, tables, feature, layerQueries, methods, onInsertOrUpdate } = edit;
+  const { db, tables, feature, layerQueries, methods, onInsertOrUpdate, sql } =
+    edit;
 
   const [editMode, setEditMode] = useState<{
     modeKey: keyof AllDrawModes;
@@ -325,6 +326,7 @@ export const DeckGLFeatureEditor = ({
           asPopup={true}
           tableName={editMode.tableName}
           rowFilter={editModeFilter}
+          sql={sql}
           db={db}
           tables={tables}
           methods={methods}

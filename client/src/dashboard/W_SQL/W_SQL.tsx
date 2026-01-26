@@ -333,7 +333,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       suggestions,
       tables,
       setLinkMenu,
-      prgl: { db, dbs, dbsTables, user },
+      prgl: { db, sql: sqlHandler, dbs, dbsTables, user },
       myLinks,
       childWindow,
       workspace,
@@ -427,7 +427,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             <W_SQLEditor
               value={this.d.w?.sql ?? ""}
               style={hideCodeEditor ? { display: "none" } : {}}
-              sql={db.sql}
+              sql={sqlHandler}
               suggestions={
                 !suggestions ? undefined : (
                   {
@@ -450,7 +450,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 }
                 const res =
                   cb &&
-                  (await getChartableSQL(cb, db.sql!, tables).catch(
+                  (await getChartableSQL(cb, sqlHandler!, tables).catch(
                     () => undefined,
                   ));
                 this.setState({ currentCodeBlockChartColumns: res });
@@ -482,9 +482,13 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               onStopQuery={this.killQuery}
               error={sqlError}
               getFuncDef={
-                !db.sql ? undefined : (
+                !sqlHandler ? undefined : (
                   (name, minArgs) => {
-                    return getFuncs({ db: { sql: db.sql! }, name, minArgs });
+                    return getFuncs({
+                      sql: sqlHandler,
+                      name,
+                      minArgs,
+                    });
                   }
                 )
               }
@@ -509,6 +513,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             {this.d.w && (
               <W_SQLBottomBar
                 {...this.state}
+                sql={sqlHandler}
                 connectionId={this.props.prgl.connectionId}
                 dbsMethods={this.props.prgl.dbsMethods}
                 toggleCodeEditor={() =>

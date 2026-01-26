@@ -24,16 +24,16 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
     this.sqlRef?.getSelectedText() ||
     (await this.sqlRef?.getCurrentCodeBlock())?.text;
   const sql = selected_sql || this.d.w?.sql || "";
-  const { db } = this.props.prgl;
+  const { db, sql: sqlHandler } = this.props.prgl;
   const w = this.d.w;
   if (w && w.selected_sql !== selected_sql) {
     w.$update({ selected_sql });
   }
 
-  if (!w || !db.sql) {
+  if (!w || !sqlHandler) {
     this.setState({
       error:
-        !db.sql ? SQL_NOT_ALLOWED : (
+        !sqlHandler ? SQL_NOT_ALLOWED : (
           "Internal error (w is missing). Try refreshing the page"
         ),
     });
@@ -97,9 +97,9 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
          *    this.hashedSQL = `DO $SYNTAX_CHECK$ BEGIN RETURN; \n ${_sqlLimited} \nEND; $SYNTAX_CHECK$;`
          */
         this.hashedSQL = `EXPLAIN ${sqlSorted}`;
-        await db.sql(this.hashedSQL);
+        await sqlHandler(this.hashedSQL);
         this.hashedSQL = ` SELECT * FROM (\n ${sqlSorted} \n ) t LIMIT 0`;
-        const { fields } = await db.sql(
+        const { fields } = await sqlHandler(
           this.hashedSQL,
           {},
           { returnType: "default-with-rollback" },
@@ -115,7 +115,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
             )
             .join(", ") || " TRUE::BOOLEAN ";
 
-        await db.sql(
+        await sqlHandler(
           ` SELECT * FROM (\n ${sqlSorted} \n ) t ORDER BY ${orderBy} LIMIT 0`,
         );
         sqlSorted = ` SELECT * FROM (\n ${sqlSorted} \n ) t ORDER BY ${orderBy}`;
@@ -160,7 +160,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
     let fields: SQLResult<"stream">["fields"] | undefined = undefined;
     let info: SQLResultInfo | undefined = undefined;
     let rows: any[] = [];
-    const stream = await db.sql(hashedSQL, undefined, {
+    const stream = await sqlHandler(hashedSQL, undefined, {
       returnType: "stream",
       persistStreamConnection: true,
       hasParams: false,
@@ -257,7 +257,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
           });
           if (packet.ended) {
             if (packet.info?.command === "LISTEN") {
-              const sqlRes = await db.sql!(hashedSQL, undefined, {
+              const sqlRes = await sqlHandler(hashedSQL, undefined, {
                 returnType: "arrayMode",
                 allowListen: true,
                 hasParams: false,
@@ -280,7 +280,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
                   ),
                   rows: [],
                   activeQuery: undefined,
-                  notifEventSub: await sqlRes.addListener((ev) => {
+                  notifEventSub: sqlRes.addListener((ev) => {
                     console.log(ev);
                     return this.notifEventListener(ev);
                   }),
@@ -338,7 +338,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
               activeQuery.totalRowCount = rowCount;
             } else {
               void getQueryTotalRowCount(
-                db.sql!,
+                sqlHandler,
                 activeQuery,
                 limit,
                 isSelect,

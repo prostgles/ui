@@ -26,6 +26,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
     row,
     db,
     modeType,
+    sql,
   } = props;
 
   const dbMethodActions = Object.entries(methods)
@@ -153,6 +154,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
         <JoinedRecords
           modeType={modeType}
           db={db}
+          sql={sql}
           tables={tables}
           tablesToShow={
             isObject(showJoinedTables) ? showJoinedTables : undefined

@@ -3,6 +3,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { ACCESS_CONTROL_SELECT } from "../../AccessControl/AccessControl";
 import type { DBS } from "../../Dashboard/DBS";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
+import type { SQLHandler } from "prostgles-client";
 
 export type W_TableInfo = {
   comment: string;
@@ -43,16 +44,16 @@ export type W_TableInfo = {
 };
 
 export const getTableMeta = async (
-  db: DBHandlerClient,
+  sqlHandler: SQLHandler | undefined,
   dbs: DBS,
   database_id: number,
   tableName: string,
   tableOid: number,
 ): Promise<W_TableInfo> => {
-  if (!db.sql) throw "db.sql not allowed";
+  if (!sqlHandler) throw "sql not allowed";
 
   try {
-    const constraints: any = await db.sql(
+    const constraints: any = await sqlHandler(
       `
         SELECT conname, pg_get_constraintdef(c.oid) as definition 
         FROM pg_catalog.pg_constraint c
@@ -65,7 +66,7 @@ export const getTableMeta = async (
       { tableName },
       { returnType: "rows" },
     );
-    const indexes: any = await db.sql(
+    const indexes: any = await sqlHandler(
       `
         SELECT tablename, indexname, indexdef
         FROM pg_indexes
@@ -75,7 +76,7 @@ export const getTableMeta = async (
     );
 
     const sizeInfo: any =
-      (await db.sql(
+      (await sqlHandler(
         `
         SELECT
           relname  as table_name,
@@ -90,13 +91,13 @@ export const getTableMeta = async (
         { tableName },
         { returnType: "row" },
       )) || {};
-    const comment = await db.sql(
+    const comment = await sqlHandler(
       `SELECT obj_description(${tableOid}) as c FROM pg_class LIMIT 1`,
       [tableName],
       { returnType: "value" },
     );
 
-    const triggers: any = await db.sql(
+    const triggers: any = await sqlHandler(
       `
         SELECT event_object_table
           ,trigger_name
@@ -116,13 +117,13 @@ export const getTableMeta = async (
       { returnType: "rows" },
     );
 
-    const policiesCount = await db.sql(
+    const policiesCount = await sqlHandler(
       `SELECT COUNT(*) FROM ( \n${PG_OBJECT_QUERIES.policies.sql(tableName)} \n) tt`,
       { tableName },
       { returnType: "value" },
     );
 
-    const type = (await db.sql(
+    const type = (await sqlHandler(
       `
         SELECT 
           CASE 
@@ -150,7 +151,7 @@ export const getTableMeta = async (
       { returnType: "row" },
     )) as any;
 
-    const viewDefinition = await db.sql(
+    const viewDefinition = await sqlHandler(
       "SELECT pg_get_viewdef(${tableOid})",
       { tableOid },
       { returnType: "value" },

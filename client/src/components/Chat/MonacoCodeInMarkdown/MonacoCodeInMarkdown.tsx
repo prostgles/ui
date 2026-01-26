@@ -1,5 +1,5 @@
 import type { editor } from "monaco-editor";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { SQLHandler } from "prostgles-types";
 import React, { useCallback, useMemo, useState } from "react";
 import type { LoadedSuggestions } from "../../../dashboard/Dashboard/dashboardUtils";
 import { SuccessMessage } from "../../Animations";
@@ -27,7 +27,7 @@ export type MonacoCodeInMarkdownProps = {
   codeHeader:
     | undefined
     | ((opts: { language: string; codeString: string }) => React.ReactNode);
-  sqlHandler: DBHandlerClient["sql"];
+  sqlHandler: SQLHandler | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
 };
 export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {

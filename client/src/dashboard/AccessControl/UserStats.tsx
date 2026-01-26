@@ -9,13 +9,14 @@ import SmartTable from "../SmartTable";
 
 type UserStatsProps = Pick<
   AppContextProps,
-  "dbs" | "dbsTables" | "dbsMethods" | "dbsMethodSchema" | "theme"
+  "dbs" | "dbsTables" | "dbsMethods" | "dbsMethodSchema" | "theme" | "dbsSql"
 >;
 
 export const UserStats = ({
   dbs,
   dbsTables,
   dbsMethodSchema,
+  dbsSql,
 }: UserStatsProps) => {
   const existingUserStats = usePromise(
     () =>
@@ -65,6 +66,7 @@ export const UserStats = ({
           <SmartTable
             key={"selectedRuleId"}
             db={dbs as DBHandlerClient}
+            sql={dbsSql}
             methods={dbsMethodSchema}
             filter={[
               { fieldName: "type", type: "$in", value: [], disabled: true },

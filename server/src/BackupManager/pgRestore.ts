@@ -42,7 +42,7 @@ export async function pgRestore(
     if (o.create)
       throw "Cannot use 'newDbName' together with 'create'. --create option will still restore into the database specified within the dump file";
     try {
-      await this.dbs.sql(`CREATE DATABASE ${asName(o.newDbName)}`);
+      await this.dbsSql(`CREATE DATABASE ${asName(o.newDbName)}`);
     } catch (err) {
       void setError(err);
     }

@@ -56,7 +56,9 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
-import exp = require("constants");
+import { fileBrowserGoToPath } from "fileBrowserGoToPath";
+import { join } from "path";
+import { writeFileSync } from "fs";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -500,6 +502,63 @@ test.describe("Main test", () => {
     await page.reload();
     await page.locator("input#port").waitFor({ state: "visible" });
     await expect(page.locator("input#port")).toHaveValue("3005");
+
+    /** Create API token with sample html */
+    await page.getByTestId("config.api").click();
+    await page.getByTestId("APIDetailsTokens.CreateToken").click();
+    await page.getByTestId("APIDetailsTokens.CreateToken.generate").click();
+    await page.getByTestId("Popup.close").click();
+
+    await page.getByTestId("APIDetailsWs.Examples").click();
+    await page.locator(getDataKey("Vanilla JS")).click();
+    await page.getByTestId("APIDetailsHttp.Examples").click();
+    const monacoEditor = page.getByTestId("MonacoEditor");
+    await monacoEditor.waitFor({ state: "visible" });
+    const jsContent = await monacoEditor.textContent();
+    const indexHtml = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title> Prostgles </title>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1"> 
+      </head>
+      <body style="white-space: pre">
+
+        <script>
+
+          (async () => {
+            ${jsContent}
+            document.body.innerText = JSON.stringify(schema);
+          })()
+
+        </script>
+        
+      </body>
+    </html>    
+    `;
+    const filePath = join(__dirname, "../demo", "index.html");
+    await writeFileSync(filePath, indexHtml);
+    // const [download] = await Promise.all([
+    //   page.waitForEvent("download"),
+    //   // page.getByText("Download code sample", { exact: true }).click(),
+    // ]);
+    // await download.saveAs(filePath);
+    await page.getByTestId("Popup.close").click();
+
+    /** Enable Web app */
+    await page.getByTestId("config.webApp").click();
+    await page.getByTestId("WebApp.directory").click();
+    await fileBrowserGoToPath(page, ["ui", "e2e", "demo"]);
+    await page.getByText("Update", { exact: true }).click();
+  });
+
+  test("Web app", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await page.goto("http://localhost:3005");
+    await expect(
+      page.locator("text=Welcome to Prostgles Web App Demo"),
+    ).toBeVisible();
   });
 
   test("Setup Free LLM assistant functions", async ({ page: p }) => {
@@ -850,17 +909,7 @@ test.describe("Main test", () => {
     /** Test max speculative chat cost */
     await newChat(page);
     await enableMCPServers(["filesystem"], true);
-    const githubWorkerPath = ["work", "ui"] as const;
-    const path = [
-      ...(process.env.CI === "true" ? githubWorkerPath : []),
-      "ui",
-      "client",
-      "node_modules",
-    ] as const;
-    for (const segment of path) {
-      await page.locator(`[data-label=${JSON.stringify(segment)}]`).click();
-      await page.waitForTimeout(1e3);
-    }
+    await fileBrowserGoToPath(page, ["ui", "client", "node_modules"]);
 
     await page.getByTestId("MCPServerConfig.save").click();
     await page.getByTestId("Popup.close").last().click();
@@ -1972,7 +2021,7 @@ test.describe("Main test", () => {
       `;
     await page.evaluate(async (query) => {
       try {
-        await (window as any).db.sql(query);
+        await (window as any).sql(query);
       } catch (err) {
         document.body.innerText = JSON.stringify(err);
       }
@@ -2391,5 +2440,13 @@ test.describe("Main test", () => {
 
     await page.getByLabel("ALLOWED_DIR").fill("/prostgles-mcp-test");
     await page.getByText("Enable", { exact: true }).click();
+  });
+
+  test("Web app public access", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await goTo(page, "localhost:3004/connections");
+    await page.getByRole("link", { name: "Connections" }).click();
+    await page.getByRole("link", { name: "cloud" }).click();
+    throw new Error("Not implemented yet");
   });
 });

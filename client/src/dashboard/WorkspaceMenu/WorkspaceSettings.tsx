@@ -11,7 +11,10 @@ import type {
 } from "../Dashboard/dashboardUtils";
 import { SmartForm } from "../SmartForm/SmartForm";
 
-type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethodSchema"> & {
+type WorkspaceSettingsProps = Pick<
+  Prgl,
+  "dbs" | "dbsMethodSchema" | "dbsSql"
+> & {
   w: Workspace;
   dbsTables: DBSchemaTablesWJoins;
 };
@@ -20,6 +23,7 @@ export const WorkspaceSettings = ({
   dbsTables,
   w,
   dbsMethodSchema,
+  dbsSql,
 }: WorkspaceSettingsProps) => {
   return (
     <PopupMenu
@@ -66,6 +70,7 @@ export const WorkspaceSettings = ({
         <div className="flex-col gap-p5  min-h-0">
           <SmartForm
             db={dbs as DBHandlerClient}
+            sql={dbsSql}
             showJoinedTables={false}
             label=""
             contentClassname="p-1"

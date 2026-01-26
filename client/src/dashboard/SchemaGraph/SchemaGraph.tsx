@@ -1,22 +1,21 @@
-import { mdiRelationManyToMany } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useState } from "react";
-import type { Prgl } from "../../App";
 import Btn from "@components/Btn";
 import Popup from "@components/Popup/Popup";
-import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
+import { mdiRelationManyToMany } from "@mdi/js";
+import React, { useState } from "react";
+import type { Prgl } from "../../App";
+import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 import type { DBS } from "../Dashboard/DBS";
 import { ERDSchema } from "./ERDSchema/ERDSchema";
 import {
   SchemaGraphControls,
   useSchemaGraphControls,
 } from "./SchemaGraphControls";
-import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
 
-export type SchemaGraphProps = Pick<Prgl, "connectionId" | "theme"> & {
-  db: DBHandlerClient;
+export type SchemaGraphProps = Pick<
+  Prgl,
+  "connectionId" | "theme" | "sql" | "tables"
+> & {
   dbs: DBS;
-  tables: DBSchemaTablesWJoins;
   db_schema_filter: Connection["db_schema_filter"];
 };
 

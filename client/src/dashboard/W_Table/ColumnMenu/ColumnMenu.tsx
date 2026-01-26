@@ -63,6 +63,7 @@ import type { FuncDef } from "./FunctionSelector/functions";
 import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { useIsMounted } from "prostgles-client";
+import { sql } from "sql-formatter";
 
 export type ColumnConfig = {
   idx?: number;
@@ -143,6 +144,7 @@ export type ColumnSort = Omit<ColumnSortSQL, "key"> & {
 
 export const ColumnMenu = (props: P) => {
   const { db, tables, prgl } = props;
+  const { sql } = prgl;
   const [w, setW] = useState<WindowSyncItem<"table">>(props.w);
   const tableName = w.table_name;
   const [column, setColumn] = useState<ColumnConfigWInfo>();
@@ -305,6 +307,7 @@ export const ColumnMenu = (props: P) => {
         <ColumnsMenu
           w={w}
           db={db}
+          sql={sql}
           tables={tables}
           onClose={onClose}
           suggestions={props.suggestions}
@@ -401,7 +404,7 @@ export const ColumnMenu = (props: P) => {
     Alter: {
       leftIconPath: mdiTools,
       disabledText:
-        !db.sql ? "Not enough privileges"
+        !sql ? "Not enough privileges"
         : computedType === "added" ? "Cannot alter a computed column"
         : undefined,
       hide: isComputed,

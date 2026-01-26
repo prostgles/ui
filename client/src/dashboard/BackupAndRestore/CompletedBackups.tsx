@@ -46,7 +46,7 @@ export const CompletedBackups = ({
   BackupsControlsState,
   "backupsFilterType" | "setBackupsFilterType" | "completedBackupsFilter"
 >) => {
-  const { connectionId, dbs, dbsTables, dbsMethods, dbsMethodSchema, db } =
+  const { connectionId, dbs, dbsTables, dbsMethods, dbsMethodSchema, db, sql } =
     usePrgl();
   const { pgRestore, bkpDelete } = dbsMethods;
   const connection_id = connectionId;
@@ -74,6 +74,7 @@ export const CompletedBackups = ({
 
   return (
     <SmartCardList
+      sql={sql}
       data-command="BackupsControls.Completed"
       btnColor="gray"
       showTopBar={false}
@@ -241,6 +242,7 @@ export const CompletedBackups = ({
           <Restore
             dbs={dbs}
             db={db}
+            sql={sql}
             backupId={row.id}
             connectionId={connection_id}
             dbsMethods={dbsMethods}

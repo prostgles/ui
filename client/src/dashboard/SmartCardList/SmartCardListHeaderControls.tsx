@@ -24,6 +24,7 @@ export const SmartCardListHeaderControls = (
     methods,
     tableControls,
     showTopBar = true,
+    sql,
   } = props;
 
   const titleNode =
@@ -69,6 +70,7 @@ export const SmartCardListHeaderControls = (
                 showTopBar.insert
               : {})}
               db={db}
+              sql={sql}
               tables={tables}
               methods={methods}
               tableName={tableControls.tableName}

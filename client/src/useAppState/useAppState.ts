@@ -1,7 +1,7 @@
-import { type DBHandlerClient, useAsyncEffectQueue } from "prostgles-client";
-import { includes, type ServerFunctionHandler } from "prostgles-types";
-import { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
+import { type DBHandlerClient, useAsyncEffectQueue } from "prostgles-client";
+import { includes } from "prostgles-types";
+import { useMemo, useState } from "react";
 import type { AppState } from "../App";
 import type { DBS, DBSMethods } from "../dashboard/Dashboard/DBS";
 import { getTables } from "../dashboard/Dashboard/getTables";
@@ -19,7 +19,14 @@ export const useAppState = (
   const prglStateWaiting = dbsClient.hasError || dbsClient.isLoading;
   const prglState: AppState["prglState"] = useMemo(() => {
     if (prglStateWaiting) return;
-    const { dbo: dbs, methods, auth, tableSchema, socket } = dbsClient;
+    const {
+      db: dbs,
+      sql: dbsSql,
+      methods,
+      auth,
+      tableSchema,
+      socket,
+    } = dbsClient;
 
     const { tables: dbsTables = [] } = getTables(
       tableSchema ?? [],
@@ -33,6 +40,7 @@ export const useAppState = (
     (window as any).auth = auth;
     return {
       dbs: dbs as DBS,
+      dbsSql,
       dbsMethods: methods as DBSMethods,
       dbsMethodSchema: dbsClient.methodSchema ?? {},
       dbsTables,

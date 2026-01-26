@@ -108,6 +108,7 @@ export async function getTimeChartData(
               db,
               w,
               desiredBinCount,
+              sql: this.props.prgl.sql,
             });
             return fetchedLayer;
           });

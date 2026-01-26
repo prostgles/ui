@@ -139,6 +139,7 @@ export const Alerts = (prgl: Prgl) => {
       {!!alerts.length && (
         <SmartCardList
           db={dbs as DBHandlerClient}
+          sql={prgl.dbsSql}
           methods={prgl.dbsMethodSchema}
           tables={prgl.dbsTables}
           tableName={"alerts"}

@@ -1,5 +1,5 @@
 import { mdiConnection, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
-import { usePromise } from "prostgles-client";
+import { usePromise, type SQLHandler } from "prostgles-client";
 import React, { useEffect, useRef } from "react";
 import Btn from "@components/Btn";
 import ButtonGroup from "@components/ButtonGroup";
@@ -21,6 +21,7 @@ import { SchemaFilter } from "./SchemaFilter";
 type DBProps = {
   origCon: Partial<Connection>;
   dbProject: FullExtraProps["dbProject"];
+  sql: SQLHandler | undefined;
   dbsTables: FullExtraProps["dbsTables"];
   dbsMethods: FullExtraProps["dbsMethods"];
 };
@@ -58,17 +59,17 @@ export const NewConnectionForm = ({
   }, [test.status]);
   const sslmode = "db_ssl" in c ? c.db_ssl || "disable" : "disabled";
 
-  const { dbsTables, dbProject, origCon, dbsMethods } = dbProps ?? {};
+  const { dbsTables, dbProject, origCon, dbsMethods, sql } = dbProps ?? {};
 
   const cTable = dbsTables?.find((t) => t.name === "connections");
 
   const { type } = c;
 
   const suggestions = usePromise(async () => {
-    if (!dbProject?.sql) return {};
+    if (!sql) return {};
 
     try {
-      const databases = (await dbProject.sql(
+      const databases = (await sql(
         `
       SELECT datname
       FROM pg_catalog.pg_database
@@ -77,7 +78,7 @@ export const NewConnectionForm = ({
         { returnType: "values" },
       )) as string[];
 
-      const users = (await dbProject.sql(
+      const users = (await sql(
         `
         SELECT rolname, rolsuper
         FROM pg_catalog.pg_roles`,
@@ -88,7 +89,7 @@ export const NewConnectionForm = ({
         rolsuper: boolean;
       }[];
 
-      const schemas = (await dbProject.sql(
+      const schemas = (await sql(
         `
         SELECT schema_name, schema_owner
         FROM information_schema.schemata
@@ -107,7 +108,7 @@ export const NewConnectionForm = ({
     } catch (e) {
       console.error("Failed getting user & db suggestions", e);
     }
-  }, [dbProject]);
+  }, [sql]);
 
   return (
     <>
@@ -250,13 +251,11 @@ export const NewConnectionForm = ({
                   }
                   render={(pClose, { query, action }, setState) => {
                     if (action === "clone" && origCon?.db_name) {
-                      getDBCloneQuery(
-                        origCon.db_name,
-                        c.db_name,
-                        dbProject.sql!,
-                      ).then((newQuery) => {
-                        if (newQuery !== query) setState({ query: newQuery });
-                      });
+                      getDBCloneQuery(origCon.db_name, c.db_name, sql!).then(
+                        (newQuery) => {
+                          if (newQuery !== query) setState({ query: newQuery });
+                        },
+                      );
                     } else {
                       const newQuery = `CREATE DATABASE ${c.db_name}; `;
                       if (newQuery !== query) setState({ query: newQuery });
@@ -297,9 +296,7 @@ export const NewConnectionForm = ({
                         <Btn
                           variant="filled"
                           color="action"
-                          onClickPromise={() =>
-                            dbProject.sql!(query).then(pClose)
-                          }
+                          onClickPromise={() => sql!(query).then(pClose)}
                         >
                           {t.common.Run}
                         </Btn>
@@ -328,7 +325,7 @@ export const NewConnectionForm = ({
           >
             <SchemaFilter
               db_schema_filter={c.db_schema_filter}
-              db={dbProject}
+              sql={sql}
               onChange={(newDbSchemaFilter) => {
                 updateConnection({
                   type: "Standard",

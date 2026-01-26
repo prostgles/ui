@@ -1,29 +1,26 @@
+import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
+import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
 import { mdiAlert } from "@mdi/js";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { t } from "../../../i18n/i18nUtils";
 import type { APIDetailsProps } from "./APIDetails";
 
 export const AllowedOriginCheck = ({
   dbs,
-  connection,
-}: Pick<APIDetailsProps, "dbs" | "connection">) => {
-  const filter = useMemo(
-    () => ({
-      $existsJoined: { connections: { id: connection.id } },
-    }),
-    [connection.id],
-  );
-  const { data: databaseConfig } = dbs.database_configs.useSubscribeOne(filter);
+  databaseConfig,
+}: Pick<APIDetailsProps, "dbs"> & {
+  databaseConfig: DBSSchema["database_configs"];
+}) => {
   const [allowed_origin, setAllowedOrigin] = useState(
-    databaseConfig?.allowed_origin,
+    databaseConfig.allowed_origin,
   );
 
-  if (databaseConfig?.allowed_origin) {
+  if (databaseConfig.allowed_origin) {
     return null;
   }
 
@@ -49,7 +46,10 @@ export const AllowedOriginCheck = ({
               t.APIDetailsWs["Allowed origin is required"]
             : undefined,
           onClickPromise: async () => {
-            await dbs.database_configs.update(filter, { allowed_origin });
+            await dbs.database_configs.update(
+              { id: databaseConfig.id },
+              { allowed_origin },
+            );
           },
         },
       ]}
@@ -83,6 +83,18 @@ export const AllowedOriginCheck = ({
             value={allowed_origin}
             onChange={setAllowedOrigin}
           />
+          <FlexCol>
+            <Label label="Suggested values" variant="normal" />
+            {[window.location.origin, "*", "null"].map((suggestedValue) => (
+              <Btn
+                key={suggestedValue}
+                variant="faded"
+                onClick={() => setAllowedOrigin(suggestedValue)}
+              >
+                {suggestedValue}
+              </Btn>
+            ))}
+          </FlexCol>
         </FlexCol>
       )}
     />

@@ -9,7 +9,7 @@ import { SPOOF_TEST_VALUE } from "@common/utils";
 import { spawn } from "child_process";
 import type { NextFunction, Request, Response } from "express";
 import path from "path";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
+import type { DBOFullyTyped } from "prostgles-server";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";

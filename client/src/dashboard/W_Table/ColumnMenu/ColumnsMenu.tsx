@@ -21,9 +21,11 @@ import { ColumnList } from "./ColumnList";
 import type { ColumnConfig } from "./ColumnMenu";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
+import type { SQLHandler } from "prostgles-client";
 
 type P = {
   db: DBHandlerClient;
+  sql: SQLHandler | undefined;
   w: WindowSyncItem<"table">;
   nestedColumnOpts: NestedColumnOpts | undefined;
   tables: CommonWindowProps["tables"];
@@ -49,11 +51,11 @@ export class ColumnsMenu extends RTComp<P, S> {
 
   wSub?: SingleSyncHandles<Required<WindowData<"table">>, true>;
 
-  onDelta = async () => {
+  onDelta = () => {
     const w = this.props.w;
 
     if (!this.wSub) {
-      this.wSub = await w.$cloneSync((w) => {
+      this.wSub = w.$cloneSync((w) => {
         this.setState({ w });
       });
     }
@@ -72,7 +74,7 @@ export class ColumnsMenu extends RTComp<P, S> {
 
   render() {
     const { w, addColMenu, query } = this.state;
-    const { db, tables, nestedColumnOpts, onClose, showAddCompute } =
+    const { db, sql, tables, nestedColumnOpts, onClose, showAddCompute } =
       this.props;
     if (!w) return null;
 
@@ -111,7 +113,7 @@ export class ColumnsMenu extends RTComp<P, S> {
       popup = (
         <AddComputedColMenu
           db={db}
-          tableHandler={db[this.tableName] as any}
+          tableHandler={db[this.tableName]}
           selectedColumn={showAddCompute?.colName}
           w={w}
           anchorEl={addColMenu}
@@ -136,7 +138,7 @@ export class ColumnsMenu extends RTComp<P, S> {
         <div className="flex-col f-1 min-h-0 p-1">
           <SQLSmartEditor
             title="Create new column"
-            sql={db.sql!}
+            sql={sql!}
             query={query.sql}
             hint={query.hint}
             suggestions={this.props.suggestions}
@@ -163,6 +165,7 @@ export class ColumnsMenu extends RTComp<P, S> {
             variant="detailed"
             w={w}
             db={db}
+            sql={sql}
             suggestions={this.props.suggestions}
             tables={tables}
             nestedColumnOpts={nestedColumnOpts}

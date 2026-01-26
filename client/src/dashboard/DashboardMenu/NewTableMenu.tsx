@@ -25,7 +25,7 @@ const items = [
 
 export const NewTableMenu = (p: DashboardMenuProps) => {
   const { prgl, tables, loadTable } = p;
-  const sql = prgl.db.sql;
+  const { sql } = prgl;
   const [show, setShow] = useState<(typeof items)[number]["key"]>();
 
   if (!sql) return null;
@@ -62,6 +62,7 @@ export const NewTableMenu = (p: DashboardMenuProps) => {
         <FileImporter
           tables={tables}
           db={prgl.db}
+          sql={prgl.sql!}
           onClose={() => {
             setShow(undefined);
           }}

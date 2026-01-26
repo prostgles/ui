@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import type { PGDumpParams } from "@common/utils";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexRowWrap } from "@components/Flex";
@@ -6,6 +5,7 @@ import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Section } from "@components/Section";
 import { Select } from "@components/Select/Select";
+import React, { useState } from "react";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 import { DumpLocationOptions } from "./DumpLocationOptions";
 import { DumpRestoreAlerts } from "./DumpRestoreAlerts";
@@ -62,7 +62,7 @@ const DEFAULT_DUMP_ALL_OPTS: PGDumpParams = {
 
 export type DumpOptionsProps = Pick<
   FullExtraProps,
-  "dbProject" | "dbs" | "dbsTables" | "dbsMethods"
+  "dbProject" | "dbs" | "dbsTables" | "dbsMethods" | "dbSql"
 > & {
   onReadyButton?: (dumpOpts: PGDumpParams) => React.ReactNode;
   opts?: PGDumpParams;
@@ -79,6 +79,7 @@ export const PGDumpOptions = (props: DumpOptionsProps) => {
     dbProject,
     connectionId,
     hideDestination = false,
+    dbSql,
   } = props;
 
   const [currOpts, setCurrOpts] = useState(opts ?? DEFAULT_DUMP_OPTS);
@@ -112,7 +113,7 @@ export const PGDumpOptions = (props: DumpOptionsProps) => {
       className="DumpOptions flex-col gap-1 min-s-0 o-auto bg-inherit"
       style={{ maxHeight: "800px", minWidth: "min(500px, 99vw)" }}
     >
-      <DumpRestoreAlerts {...{ dbsMethods, connectionId, dbProject }} />
+      <DumpRestoreAlerts {...{ dbsMethods, connectionId, dbProject, dbSql }} />
       <Select
         className="mr-1"
         label="Data from"

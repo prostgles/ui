@@ -9,8 +9,8 @@ export const tableConfigServices: TableConfig<{ en: 1 }> = {
       icon: `TEXT NOT NULL`,
       default_port: `INTEGER NOT NULL`,
       build_hash: `TEXT`,
-      /** Used to allow web apps for each connection */
-      // connection_id: `INTEGER REFERENCES connections(id) ON DELETE SET NULL`,
+      /** Used to allow developing web apps for each connection */
+      connection_id: `UUID REFERENCES connections(id) ON DELETE SET NULL`,
       status: {
         enum: [
           "stopped",

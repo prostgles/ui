@@ -91,7 +91,7 @@ const CreateFileColumnOptions = ({
   onDone: VoidFunction;
 }) => {
   const prgl = usePrgl();
-  const db = prgl.db;
+  const { sql } = prgl;
   const [colName, setColName] = useState<string>();
   const [optional, setOptional] = useState(true);
   const {
@@ -164,9 +164,9 @@ const CreateFileColumnOptions = ({
             try {
               if (!colName) return;
               setM({ loading: 1 });
-              if (!db.sql)
+              if (!sql)
                 throw "Not enough privileges. Must be allowed to run SQL queries";
-              await db.sql(query);
+              await sql(query);
               if (canUpdate) {
                 updateRefsConfig();
               }

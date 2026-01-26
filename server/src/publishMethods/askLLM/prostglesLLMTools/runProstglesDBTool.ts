@@ -20,7 +20,10 @@ export const runProstglesDBTool = async (
     throw new Error(`Tool "${name}" not found`);
   }
 
-  const { clientDb } = await getClientDBHandlersForChat(chat, clientReq);
+  const { clientDb, clientSql } = await getClientDBHandlersForChat(
+    chat,
+    clientReq,
+  );
 
   type DbToolsInfo = (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"];
 
@@ -45,15 +48,11 @@ export const runProstglesDBTool = async (
       DbToolsInfo["execute_sql_with_commit"]["schema"]["type"]
     >;
 
-    if (!(clientDb.sql as unknown)) {
-      throw new Error("Executing SQL not allowed to this user");
-    }
-
     const queryWithTimeout =
       query_timeout && Number.isInteger(query_timeout) ?
         [`SET LOCAL statement_timeout to '${query_timeout}s'`, sql].join(";\n")
       : sql;
-    const result = await clientDb.sql(queryWithTimeout, query_params, {
+    const result = await clientSql(queryWithTimeout, query_params as any[], {
       returnType:
         tool.tool_name === "execute_sql_with_rollback" ?
           "default-with-rollback"

@@ -27,6 +27,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
     validateConnection,
     connId,
     dbs,
+    dbsSql,
     connections,
   } = props;
   const [serverInfo, setServerInfo] = useState<
@@ -187,7 +188,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
         },
       });
       const newConn = await createConnection({
-        connection: validatedConnection.connection,
+        connection: validatedConnection.validatedConnection,
         sampleSchemaName:
           action.type === "new" ? action.applySchema?.name : undefined,
       });
@@ -198,7 +199,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
         action.applySchema.workspaceConfig
       ) {
         for (const workspace of action.applySchema.workspaceConfig.workspaces) {
-          await dbs.sql?.(`DELETE FROM workspaces WHERE name = $1`, [
+          await dbsSql?.(`DELETE FROM workspaces WHERE name = $1`, [
             workspace.name,
           ]);
           await dbs.workspaces.insert({
@@ -213,7 +214,8 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
       connId,
       connectionName,
       createConnection,
-      dbs,
+      dbs.workspaces,
+      dbsSql,
       navigate,
       newPgUser.create,
       newPgUser.name,

@@ -34,7 +34,8 @@ export const PublishedMethods = ({
   accessRuleId,
   editedRule,
 }: P) => {
-  const { dbsMethods, dbsMethodSchema, dbsTables, dbs, connectionId } = prgl;
+  const { dbsMethods, dbsMethodSchema, dbsTables, dbs, connectionId, dbsSql } =
+    prgl;
   const { listProps, action, setAction } = useSmartCardListProps({
     dbs,
     connectionId,
@@ -47,6 +48,7 @@ export const PublishedMethods = ({
       <div className={`flex-col gap-1 pl-2 `}>
         <p className="p-0 m-0">Server-side user triggered functions</p>
         <SmartCardList
+          sql={dbsSql}
           db={dbs as DBHandlerClient}
           methods={dbsMethodSchema}
           tables={dbsTables}

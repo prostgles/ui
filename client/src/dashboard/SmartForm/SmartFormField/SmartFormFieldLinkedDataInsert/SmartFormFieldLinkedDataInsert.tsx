@@ -13,6 +13,7 @@ import { useSmartFormFieldLinkedDataInsert } from "./useSmartFormFieldLinkedData
 type P = Pick<
   SmartFormFieldLinkedDataProps,
   | "db"
+  | "sql"
   | "column"
   | "action"
   | "newValue"
@@ -49,6 +50,7 @@ export const SmartFormFieldLinkedDataInsert = ({
   newValue,
   rowFilter,
   newRowDataHandler,
+  sql,
 }: P) => {
   const { fileUpsertInsert } = useSmartFormFieldLinkedDataInsert({
     column,
@@ -119,6 +121,7 @@ export const SmartFormFieldLinkedDataInsert = ({
           asPopup={true}
           db={db}
           tables={tables}
+          sql={sql}
           methods={methods}
           hideNullBtn={hideNullBtn}
           tableName={canInsertFTableName}

@@ -39,6 +39,7 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { useAppState } from "./useAppState/useAppState";
 import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
+import type { SQLHandler } from "prostgles-types";
 
 export type ClientUser = {
   sid: string;
@@ -61,6 +62,7 @@ export type PrglReadyState = {
   dbsMethods: DBSMethods;
   dbsMethodSchema: ServerFunctionHandler;
   dbsSocket: Socket;
+  dbsSql: SQLHandler | undefined;
   auth: AuthHandler<ClientUser>;
   isAdminOrSupport: boolean;
   sid: string | undefined;
@@ -79,6 +81,7 @@ export type PrglStateCore = Pick<
 
 export type PrglCore = {
   db: DBHandlerClient;
+  sql: SQLHandler | undefined;
   methods: ServerFunctionHandler;
   tables: CommonWindowProps["tables"];
 };
@@ -254,6 +257,7 @@ export const App = () => {
                   db={undefined}
                   prglState={appContextProps}
                   showTitle={true}
+                  sql={undefined}
                 />
               }
             />
@@ -266,6 +270,7 @@ export const App = () => {
                   db={undefined}
                   prglState={appContextProps}
                   showTitle={true}
+                  sql={undefined}
                 />
               }
             />

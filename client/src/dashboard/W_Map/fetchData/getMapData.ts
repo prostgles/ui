@@ -1,14 +1,13 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DetailedFilterBase } from "@common/filterUtils";
 import type {
   AnyObject,
-  ValidatedColumnInfo,
   SelectParams,
+  SQLHandler,
+  ValidatedColumnInfo,
 } from "prostgles-types";
-import type { LayerSQL, LayerTable } from "../W_Map";
-import type { GeoJSONFeature } from "../../Map/DeckGLMap";
-import type { DetailedFilterBase } from "@common/filterUtils";
 import type { LinkSyncItem } from "../../Dashboard/dashboardUtils";
-import type { DBS } from "../../Dashboard/DBS";
+import type { GeoJSONFeature } from "../../Map/DeckGLMap";
+import type { LayerSQL, LayerTable } from "../W_Map";
 
 export const WITH_LAST_SELECT_ALIAS = "prostgles_chart_data";
 const rowHashQuery =
@@ -50,9 +49,9 @@ export type MapDataResult = {
 
 export const getSQLData = async (
   layer: LayerSQL,
-  db: DBHandlerClient,
+  sqlHandler: SQLHandler,
   AGG_LIMIT: number,
-): Promise<{ $rowhash: string; l: AnyObject }[]> => {
+) => {
   const { parameters, geomColumn } = layer;
 
   const query = getSQLQuery({
@@ -64,11 +63,11 @@ export const getSQLData = async (
     limit: AGG_LIMIT,
   });
 
-  const result = (await db.sql!(
+  const result = (await sqlHandler(
     query,
     { ...parameters, geomColumn },
     { returnType: "rows" },
-  )) as any;
+  )) as { $rowhash: string; l: AnyObject }[];
 
   return result;
 };
@@ -141,9 +140,9 @@ export const getMapFilter = (
 
 export const getSQLHoverRow = async (
   q: LayerSQL,
-  db: DBHandlerClient,
+  sql: SQLHandler,
   $rowhash: string,
-): Promise<{ $rowhash: string; d: AnyObject } | undefined> => {
+) => {
   const { parameters, geomColumn } = q;
 
   const query = getSQLQuery({
@@ -154,9 +153,9 @@ export const getSQLHoverRow = async (
     ].join(", "),
     whereClause: `WHERE "$rowhash" = \${$rowhash} `,
   });
-  return (await db.sql!(
+  return (await sql(
     query,
     { ...parameters, geomColumn, $rowhash },
     { returnType: "row" },
-  )) as any;
+  )) as { $rowhash: string; d: AnyObject } | undefined;
 };

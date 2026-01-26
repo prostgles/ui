@@ -53,6 +53,7 @@ export const RowCard = ({
       asPopup={true}
       confirmUpdates={true}
       db={prgl.db}
+      sql={prgl.sql}
       methods={prgl.methods}
       tables={prgl.tables}
       tableName={tableName}

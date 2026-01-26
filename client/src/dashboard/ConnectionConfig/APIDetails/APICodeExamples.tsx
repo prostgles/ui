@@ -7,19 +7,22 @@ import { Zip } from "../../API/zip";
 import CodeExample from "../../CodeExample";
 import { download } from "../../W_SQL/W_SQL";
 import { sidKeyName } from "@common/authTypesAndConstants";
+import type { DBSSchema } from "@common/publishUtils";
+import { getConnectionApiPaths } from "@common/utils";
+import { getApiEndpoint } from "./getApiEndpoint";
 
 export const APICodeExamples = ({
   token,
-  projectPath,
   dbSchemaTypes,
+  connection,
 }: {
   token?: string;
-  projectPath: string;
+  connection: DBSSchema["connections"];
   dbSchemaTypes: string | undefined;
 }) => {
   const { htmlExample, indexTs, tsExample } = getCodeSamples({
     token,
-    projectPath,
+    connection,
   });
 
   const DownloadCodeSample = (isTS = false) => (
@@ -116,23 +119,26 @@ export const APICodeExamples = ({
 
 function getCodeSamples({
   token: _token,
-  projectPath,
+  connection,
 }: {
   token?: string;
-  projectPath?: string;
+  connection: DBSSchema["connections"];
 }) {
+  const { ws: wsPath } = getConnectionApiPaths(connection);
   const token = _token || "YOUR_TOKEN";
   const authStr = `auth: { ${sidKeyName}: ${JSON.stringify(token)} },`;
-  const uri = JSON.stringify(window.location.origin);
-  const path = JSON.stringify(projectPath);
+  const endpoint = JSON.stringify(getApiEndpoint(connection));
+  const path = JSON.stringify(wsPath);
   const indexTs = `import React from "react";
 import { createRoot } from "react-dom/client";
-import { useProstglesClient } from "prostgles-client/dist/prostgles";
+import { useProstglesClient } from "prostgles-client";
 
 const App = () => {
   const { dbo, isLoading } = useProstglesClient({
-    socketOptions: { 
-      uri: ${uri},
+    endpoint: ${endpoint},
+    credentials: "include",
+    redirect: "manual",
+    socketOptions: {
       path: ${path}, 
       query: { ${sidKeyName}: ${JSON.stringify(token)} }, 
     }, 
@@ -150,7 +156,7 @@ root.render(
 
 `;
 
-  const initLogic = `const socket = io(${JSON.stringify(window.location.origin)}, { 
+  const initLogic = `const socket = io(${endpoint}, { 
   ${authStr}
   path: ${path} 
 });`;

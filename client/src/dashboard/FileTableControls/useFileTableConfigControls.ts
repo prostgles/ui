@@ -6,11 +6,11 @@ import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 
 export type UseFileTableConfigControlsArgs = Pick<
   Prgl,
-  "dbs" | "db" | "connectionId" | "dbsMethods"
+  "dbs" | "db" | "connectionId" | "dbsMethods" | "sql"
 >;
 export const useFileTableConfigControls = ({
   dbs,
-  db,
+  sql: sqlHandler,
   dbsMethods,
   connectionId,
 }: UseFileTableConfigControlsArgs) => {
@@ -21,7 +21,7 @@ export const useFileTableConfigControls = ({
     $existsJoined: { connections: connectionFilter },
   });
 
-  const canCreateTables = usePromise(() => getCanCreateTables(db.sql!));
+  const canCreateTables = usePromise(() => getCanCreateTables(sqlHandler!));
   const savedRefsConfig: FileTableConfigReferences =
     database_config?.file_table_config?.referencedTables ?? {};
 

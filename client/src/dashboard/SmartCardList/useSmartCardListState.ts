@@ -11,6 +11,7 @@ export const useSmartCardListState = (
   props: Pick<
     SmartCardListProps,
     | "db"
+    | "sql"
     | "tableName"
     | "columns"
     | "onSetData"
@@ -32,6 +33,7 @@ export const useSmartCardListState = (
     orderByfields,
     tableName,
     db,
+    sql,
     columns: columnsFromProps,
     filter,
     throttle,
@@ -53,7 +55,7 @@ export const useSmartCardListState = (
 
   const columns = useSmartCardColumns({
     tableName,
-    db,
+    sql,
     tables,
     columns: columnsFromProps,
   });
@@ -130,15 +132,15 @@ export const useSmartCardListState = (
   /** SQL data */
   useEffect(() => {
     if (smartProps.type === "sql") {
-      if (!db.sql) {
-        console.error("db.sql missing");
+      if (!sql) {
+        console.error("sql missing");
         setLoaded(true);
         setLoading(false);
         return;
       }
       setLoading(true);
       const { sqlQuery, args } = smartProps;
-      db.sql(sqlQuery, args ?? {}, { returnType: "rows" })
+      sql(sqlQuery, args ?? {}, { returnType: "rows" })
         .then((items) => {
           setItems(items);
           setLoaded(true);

@@ -22,7 +22,7 @@ export const AskLLMChatActionBarModelSelector = (
 ) => {
   const { prgl, activeChat, llmMessages } = props;
   const activeChatId = activeChat.id;
-  const { dbs, dbsMethods } = prgl;
+  const { dbs, dbsMethods, dbsSql } = prgl;
 
   const { data: models } = dbs.llm_models.useSubscribe(
     {},
@@ -54,6 +54,7 @@ export const AskLLMChatActionBarModelSelector = (
       {viewModelForm && (
         <SmartForm
           asPopup={true}
+          sql={dbsSql}
           db={dbs as DBHandlerClient}
           tableName="llm_models"
           rowFilter={[viewModelForm]}
@@ -68,6 +69,7 @@ export const AskLLMChatActionBarModelSelector = (
           asPopup={true}
           tableName="llm_credentials"
           db={dbs as DBHandlerClient}
+          sql={dbsSql}
           methods={prgl.dbsMethodSchema}
           defaultData={{
             provider_id: addProviderCredentials,
@@ -178,6 +180,7 @@ export const AskLLMChatActionBarModelSelector = (
                 tableName="llm_models"
                 methods={prgl.dbsMethodSchema}
                 tables={prgl.dbsTables}
+                sql={dbsSql}
                 triggerButton={{
                   iconPath: mdiPlus,
                   title: "Add model",

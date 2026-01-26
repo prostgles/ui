@@ -29,7 +29,7 @@ export const AskLLMAccessControl = ({
   editedRule,
   ...prgl
 }: P) => {
-  const { dbsTables } = prgl;
+  const { dbsTables, dbsSql } = prgl;
   const [localPromptId, setLocalPromptId] = useState<number>();
   const [localCredentialId, setLocalCredentialId] = useState<number>();
   const rule = editedRule?.newRule ?? editedRule?.rule;
@@ -185,6 +185,7 @@ export const AskLLMAccessControl = ({
                   db={dbs as DBHandlerClient}
                   methods={{}}
                   tables={dbsTables}
+                  sql={dbsSql}
                   columnFilter={(c) =>
                     ["llm_prompt_id", "llm_credential_id"].includes(c.name)
                   }

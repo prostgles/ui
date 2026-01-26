@@ -1,8 +1,8 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { createHttpServer } from "@src/init/createHttpServer";
 import { createIOWebsocketServer } from "@src/init/createIOWebsocketServer";
+import { isEqual } from "prostgles-types";
 import type { ConnectionManager } from "./ConnectionManager";
-import { isEqual, pickKeys } from "prostgles-types";
 
 export function getConnectionHttpServer(
   this: ConnectionManager,
@@ -16,25 +16,39 @@ export function getConnectionHttpServer(
     socketPath: string;
   },
 ) {
-  const { id: connectionId, is_state_db } = connection;
-  const port = connection.port || undefined;
+  const {
+    id: connectionId,
+    is_state_db,
+    port,
+    web_app_directory: webAppDirectory,
+  } = connection;
+  const { allowed_origin: allowedOrigin, trust_proxy: trustProxy } =
+    databaseConfig;
+  const config = {
+    port,
+    allowedOrigin,
+    trustProxy,
+    socketPath,
+    webAppDirectory,
+  };
   const { http, app } = this.dbsServer;
-  const allowedOrigin = databaseConfig.allowed_origin || undefined;
   const existingServer = this.connectionHttpServers.get(connectionId);
   if (existingServer) {
-    if (
-      !isEqual(
-        pickKeys(existingServer, ["allowedOrigin", "port", "socketPath"]),
-        {
-          port,
-          socketPath,
-          allowedOrigin,
-        },
-      )
-    ) {
+    const isReusingState = existingServer.type === "reusing_main_server";
+
+    if (!isEqual(existingServer.config, config)) {
+      if (
+        isReusingState &&
+        existingServer.config.port === port &&
+        existingServer.config.socketPath === socketPath
+      ) {
+        throw new Error(
+          "TODO: swap socketio with wss to hot reload config without problems",
+        );
+      }
       this.connectionHttpServers.delete(connectionId);
       this.dbsServer.io.emit("server-restart-request");
-      if (existingServer.type !== "reusing_main_server") {
+      if (!isReusingState) {
         existingServer.http.close();
       }
       console.log(
@@ -56,21 +70,15 @@ export function getConnectionHttpServer(
         http,
         ...createIOWebsocketServer({
           http,
-          allowedOrigin: databaseConfig.allowed_origin,
+          allowedOrigin,
           socketPath,
         }),
       }
-    : createHttpServer({
-        port,
-        allowedOrigin: databaseConfig.allowed_origin,
-        socketPath,
-      });
+    : createHttpServer({ ...config, port });
   const connectionServer = {
     ...newServer,
     connectionId,
-    port,
-    socketPath,
-    allowedOrigin,
+    config,
   };
   this.connectionHttpServers.set(connectionId, connectionServer);
   return connectionServer;

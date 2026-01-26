@@ -7,7 +7,7 @@ export const useFieldConfigParser = (props: SmartCardProps) => {
   const {
     fieldConfigs: _fieldConfigs,
     tableName,
-    db,
+    sql,
     columns: columnsFromProps,
     hideColumns,
     tables,
@@ -17,7 +17,7 @@ export const useFieldConfigParser = (props: SmartCardProps) => {
 
   const cardColumns = useSmartCardColumns({
     tableName,
-    db,
+    sql,
     tables,
     columns: columnsFromProps,
   });

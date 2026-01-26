@@ -22,7 +22,7 @@ import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
 import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
 import type { ProstglesColumn } from "./W_Table/W_Table";
 
-type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
+type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> & {
   filter?: DetailedFilter[];
   tableName: string;
   tableCols?: ProstglesColumn[];
@@ -216,7 +216,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       tableName,
       db,
       tables,
-      methods,
+      sql,
       onClickRow,
       onClosePopup,
       className,
@@ -271,6 +271,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             asPopup={true}
             confirmUpdates={true}
             db={db}
+            sql={sql}
             methods={this.props.methods}
             tables={tables}
             tableName={tableName}
@@ -288,6 +289,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           className="p-1 bg-color-2 min-h-fit"
           rowCount={totalRows}
           db={db}
+          sql={sql}
           methods={this.props.methods}
           table_name={tableName}
           tables={tables}

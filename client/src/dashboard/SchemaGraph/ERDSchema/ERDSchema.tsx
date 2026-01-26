@@ -19,7 +19,7 @@ export type ERDSchemaProps = Omit<
   >;
 export const ERDSchema = ({
   tables,
-  db,
+  sql,
   dbs,
   connectionId,
   displayMode,
@@ -32,7 +32,7 @@ export const ERDSchema = ({
   const { shapesRef, dbConfId, shapesVersion, canAutoPosition, dbConf } =
     useSchemaShapes({
       tables,
-      db,
+      sql,
       dbs,
       connectionId,
       canvasRef,

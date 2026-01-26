@@ -28,7 +28,7 @@ type P = Pick<DashboardProps, "prgl"> & {
 
 export const DashboardMenuSettings = ({
   workspace,
-  prgl: { dbsMethods, dbsMethodSchema, dbs, dbsTables },
+  prgl: { dbsMethods, dbsMethodSchema, dbs, dbsTables, dbsSql },
 }: P) => {
   const dbSize = usePromise(
     async () => dbsMethods.getDBSize?.({ conId: workspace.connection_id }),
@@ -80,6 +80,7 @@ export const DashboardMenuSettings = ({
                 tableName="connections"
                 label=""
                 db={dbs as DBHandlerClient}
+                sql={dbsSql}
                 {...smartFormProps}
                 contentClassname="p-0"
                 methods={dbsMethodSchema}

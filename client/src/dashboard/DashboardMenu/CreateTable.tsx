@@ -16,7 +16,7 @@ import { getColumnIconPath } from "../W_Table/ColumnMenu/ColumnSelect/getColumnL
 import type { DashboardMenuProps } from "./DashboardMenu";
 
 export const CreateTable = ({
-  prgl: { db, tables },
+  prgl: { sql, tables },
   onClose,
   suggestions,
 }: DashboardMenuProps & { onClose: VoidFunction }) => {
@@ -271,7 +271,7 @@ export const CreateTable = ({
                   setTableOpts((topts) => ({ ...topts, finished: false }))
                 }
                 key={query}
-                sql={db.sql!}
+                sql={sql!}
                 query={query}
                 suggestions={suggestions}
                 onSuccess={() => {

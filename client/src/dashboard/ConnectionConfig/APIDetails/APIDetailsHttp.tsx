@@ -9,6 +9,7 @@ import { t } from "../../../i18n/i18nUtils";
 import CodeExample from "../../CodeExample";
 import { download } from "../../W_SQL/W_SQL";
 import type { APIDetailsProps } from "./APIDetails";
+import { getApiEndpoint } from "./getApiEndpoint";
 
 export const APIDetailsHttp = ({
   dbs,
@@ -18,7 +19,7 @@ export const APIDetailsHttp = ({
   const { data: dbConfig } = dbs.database_configs.useSubscribeOne({
     $existsJoined: { connections: { id: connection.id } },
   });
-  const restPath = `${window.location.origin}${getConnectionApiPaths(connection).rest}`;
+  const restPath = `${getApiEndpoint(connection)}${getConnectionApiPaths(connection).rest}`;
   const restExample = getRestExample(restPath, token);
   return (
     <FlexCol>

@@ -1,7 +1,10 @@
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DBSchemaTable } from "prostgles-types";
+import type {
+  DBSchemaTable,
+  PG_COLUMN_UDT_DATA_TYPE,
+  SQLHandler,
+} from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import React, { useState } from "react";
 import { t } from "../../../../i18n/i18nUtils";
@@ -16,13 +19,13 @@ import { getAlterFkeyQuery } from "./ReferenceEditor";
 export type CreateColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   table: DBSchemaTable;
   field: string | undefined;
-  db: DBHandlerClient;
+  sql: SQLHandler;
   tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };
 
 export const CreateColumn = ({
-  db,
+  sql,
   onClose,
   suggestions,
   table,
@@ -67,7 +70,7 @@ export const CreateColumn = ({
       : <SQLSmartEditor
           asPopup={false}
           query={query}
-          sql={db.sql!}
+          sql={sql}
           title={t.CreateColumn["Create column query"]}
           suggestions={suggestions}
           onCancel={() => {
@@ -118,7 +121,12 @@ export const getColumnDefinitionQuery = ({
   notNull,
 }: ColumnOptions) => {
   const defVal =
-    colIs({ udt_name: dataType as any }, ["_PG_numbers", "_PG_bool"]) ?
+    (
+      colIs({ udt_name: dataType as PG_COLUMN_UDT_DATA_TYPE }, [
+        "_PG_numbers",
+        "_PG_bool",
+      ])
+    ) ?
       defaultValue
     : `'${defaultValue}'`;
   return `${JSON.stringify(name)} ${dataType ?? ""}${isPkey ? " PRIMARY KEY " : ""}${notNull ? " NOT NULL " : ""}${defaultValue ? ` DEFAULT ${defVal}` : ""}`;

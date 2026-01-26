@@ -1,4 +1,3 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, SQLHandler } from "prostgles-types";
 import {
   getKeys,
@@ -16,8 +15,6 @@ import {
 import type { ParsedSQLSuggestion } from "./SQLCompletion/monacoSQLSetup/registerSuggestions";
 import { SQL_SNIPPETS } from "./SQL_SNIPPETS";
 import type { SQLSuggestion } from "./W_SQLEditor";
-
-type DB = { sql: SQLHandler };
 
 const asList = (arr: { label: string; value?: string }[], boldStyle = false) =>
   arr
@@ -42,7 +39,7 @@ export const asListObject = (
   );
 
 export const getSqlSuggestions = async (
-  db: DB,
+  sql: SQLHandler,
 ): Promise<{
   suggestions: SQLSuggestion[];
   settingSuggestions: SQLSuggestion[];
@@ -75,7 +72,7 @@ export const getSqlSuggestions = async (
       operators,
       settings,
       rules,
-    } = await getPGObjects(db);
+    } = await getPGObjects(sql);
 
     suggestions = suggestions.concat(
       rules.map((r) => ({
@@ -203,7 +200,7 @@ export const getSqlSuggestions = async (
     );
 
     const { data: columnStats } = await tryCatchV2(async () => {
-      const vals = (await db.sql(
+      const vals = (await sql(
         `
           SELECT 
               schemaname
@@ -1526,10 +1523,8 @@ CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
 /** psql -E -c '\d+ table_name' */
 export const getDetailedTableInfo = async (
   tableName: string,
-  db: DBHandlerClient,
+  sql: SQLHandler | undefined,
 ) => {
-  const sql = db.sql;
-
   if (!sql) return undefined;
 
   const t = (await sql(

@@ -14,7 +14,10 @@ import { JoinedRecordsSection } from "./JoinedRecordsSection";
 import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
 import type { FieldConfig } from "../../SmartCard/SmartCard";
 
-export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
+export type JoinedRecordsProps = Pick<
+  Prgl,
+  "db" | "tables" | "methods" | "sql"
+> &
   Pick<SmartFormProps, "onSuccess" | "parentForm"> & {
     className?: string;
     style?: React.CSSProperties;
@@ -57,6 +60,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     modeType: action,
     activeTabKey,
     onTabChange,
+    sql,
   } = props;
 
   /** Open errored section */
@@ -117,6 +121,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
                       db={db}
                       methods={methods}
                       ftable={table}
+                      sql={sql}
                       searchFilter={section.detailedJoinFilter}
                       getActions={undefined}
                       tables={tables}

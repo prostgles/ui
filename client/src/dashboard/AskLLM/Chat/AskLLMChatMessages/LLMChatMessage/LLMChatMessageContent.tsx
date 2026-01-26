@@ -1,13 +1,13 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { SQLHandler } from "prostgles-client";
 import React from "react";
 import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
-import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
 import {
   ToolUseChatMessage,
   type LLMMessageContent,
 } from "../ToolUseChatMessage/ToolUseChatMessage";
+import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
 
 export const LLMChatMessageContent = ({
   messageContent,
@@ -15,25 +15,25 @@ export const LLMChatMessageContent = ({
   message,
   nextMessage,
   loadedSuggestions,
-  db,
   mcpServerIcons,
   workspaceId,
+  sql,
 }: {
   messageContent: Exclude<LLMMessageContent, { type: "tool_result" }>;
   messageContentIndex: number;
   message: DBSSchema["llm_messages"];
   nextMessage: DBSSchema["llm_messages"] | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
-  db: DBHandlerClient;
+  sql: SQLHandler | undefined;
   workspaceId: string | undefined;
   mcpServerIcons: Map<string, string>;
 }) => {
-  const sqlHandler = db.sql;
+  const sqlHandler = sql;
   if (messageContent.type === "text" && "text" in messageContent) {
     return (
       <LLMChatMessageContentText
         messageContent={messageContent}
-        db={db}
+        sqlHandler={sql}
         loadedSuggestions={loadedSuggestions}
       />
     );

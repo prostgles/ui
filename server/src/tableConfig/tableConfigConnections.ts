@@ -29,7 +29,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
       web_app_port: "INTEGER",
       web_app_directory: {
         sqlDefinition: `TEXT`,
-        info: { hint: "Path to fronend directory for connection" },
+        info: { hint: "Path to frontend assets directory for connection" },
       },
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       name: `TEXT NOT NULL CHECK(LENGTH(name) > 0)`,

@@ -9,6 +9,7 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSche
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
 import { getPasswordHash } from "./authUtils";
+import type { DB } from "prostgles-server/dist/initProstgles";
 
 export type Sessions = DBSSchema["sessions"];
 export const parseAsBasicSession = (s: Sessions): BasicSession => {
@@ -76,7 +77,7 @@ export const authCookieOpts =
  * This is mainly used to ensure that when there is passwordless admin access external IPs cannot connect
  */
 export const checkClientIP = async (
-  dbsOrTxSql: DBS["sql"],
+  dbsOrTxSql: Pick<DB, "oneOrNone">,
   args: { socket: PRGLIOSocket } | { httpReq: Request },
   {
     id,
@@ -91,11 +92,13 @@ export const checkClientIP = async (
     : groupBy === "remote_ip" ? ip_address_remote
     : ip_address;
 
-  const isAllowed = (await dbsOrTxSql(
-    "SELECT inet ${ip} <<= any (allowed_ips::inet[]) FROM database_configs WHERE id = ${database_config_id}",
+  const isAllowedRow = await dbsOrTxSql.oneOrNone<{
+    is_allowed?: boolean | null;
+  }>(
+    "SELECT inet ${ip} <<= any (allowed_ips::inet[]) as is_allowed FROM database_configs WHERE id = ${database_config_id}",
     { ip: ipValue, database_config_id: id },
-    { returnType: "value" },
-  )) as boolean;
+  );
+  const isAllowed = isAllowedRow?.is_allowed;
 
   return {
     ip: ipValue,

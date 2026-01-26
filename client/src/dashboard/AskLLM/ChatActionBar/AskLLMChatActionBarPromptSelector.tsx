@@ -26,7 +26,7 @@ export const AskLLMChatActionBarPromptSelector = (
   const { prgl, setupState, activeChat, dbSchemaForPrompt } = props;
   const activeChatId = activeChat.id;
   const { prompts } = setupState;
-  const { dbs, dbsMethods } = prgl;
+  const { dbs, dbsMethods, dbsSql } = prgl;
   const prompt = useMemo(
     () => prompts.find(({ id }) => id === activeChat.llm_prompt_id),
     [prompts, activeChat.llm_prompt_id],
@@ -69,6 +69,7 @@ export const AskLLMChatActionBarPromptSelector = (
         style={{
           maxWidth: "min(600px, 100vw)",
         }}
+        sql={dbsSql}
         showTopBar={{ insert: true }}
         rowProps={{
           className: "pointer hover-bg",

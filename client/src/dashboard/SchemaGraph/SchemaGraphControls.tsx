@@ -21,7 +21,7 @@ export const SchemaGraphControls = ({
   setColumnColorMode,
   connectionId,
   dbs,
-  db,
+  sql,
   setColumnDisplayMode,
   setDisplayMode,
   setSchemaKey,
@@ -30,7 +30,7 @@ export const SchemaGraphControls = ({
 }: ReturnType<typeof useSchemaGraphControls> &
   Pick<
     SchemaGraphProps,
-    "dbs" | "db" | "connectionId" | "db_schema_filter"
+    "dbs" | "sql" | "connectionId" | "db_schema_filter"
   >) => {
   return (
     <FlexRow
@@ -44,7 +44,7 @@ export const SchemaGraphControls = ({
         style={{ fontWeight: "normal" }}
       >
         <SchemaFilter
-          db={db}
+          sql={sql}
           db_schema_filter={db_schema_filter}
           asSelect={{
             btnProps: {

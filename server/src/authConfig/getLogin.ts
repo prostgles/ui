@@ -15,6 +15,7 @@ import { upsertSession } from "./upsertSession";
 
 export const getLogin = async (
   dbs: DBS,
+  _dbs: DB,
   database_config: NonNullable<
     AuthConfigForStateConnection["stateDatabaseConfig"]
   >,
@@ -30,13 +31,7 @@ export const getLogin = async (
 
   const login: Required<
     LoginSignupConfig<DBGeneratedSchema, SUser>
-  >["login"] = async (
-    loginParams,
-    _dbs,
-    _db: DB,
-    clientInfo,
-    getMagicLinkUrl,
-  ) => {
+  >["login"] = async (loginParams, _, __, clientInfo, getMagicLinkUrl) => {
     log("login");
     const { ip_address, ip_address_remote, user_agent, x_real_ip } = clientInfo;
 
@@ -174,10 +169,9 @@ export const getLogin = async (
           matchingUser,
           totp_recovery_code.trim(),
         );
-        const areMatching = await dbs.sql(
+        const areMatching = await _dbs.any(
           "SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = ${hashedRecoveryCode} ",
           { id: matchingUser.id, hashedRecoveryCode },
-          { returnType: "rows" },
         );
         if (!areMatching.length) {
           return "invalid-totp-recovery-code";

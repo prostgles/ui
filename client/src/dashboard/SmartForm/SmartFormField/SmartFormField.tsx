@@ -48,7 +48,7 @@ type SmartFormFieldValue =
 
 export type SmartFormFieldProps = Pick<
   SmartFormProps,
-  "db" | "methods" | "tableName" | "jsonbSchemaWithControls"
+  "db" | "methods" | "tableName" | "jsonbSchemaWithControls" | "sql"
 > & {
   maxWidth?: string;
   value: SmartFormFieldValue | undefined;
@@ -98,6 +98,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     newRowDataHandler,
     someColumnsHaveIcons,
     loading,
+    sql,
   } = props;
 
   const onChange = useCallback(
@@ -297,6 +298,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
           row && (
             <SmartFormFieldLinkedData
               {...props}
+              sql={sql}
               state={foreignDataState.insertAndSearchState}
               action={action}
               row={row}

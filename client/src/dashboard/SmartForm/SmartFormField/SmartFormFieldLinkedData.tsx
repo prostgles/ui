@@ -16,6 +16,7 @@ export type SmartFormFieldLinkedDataProps = Pick<
   | "db"
   | "tables"
   | "methods"
+  | "sql"
   | "hideNullBtn"
   | "enableInsert"
   | "onSuccess"
@@ -47,6 +48,7 @@ export const SmartFormFieldLinkedData = (
     column,
     newRowDataHandler,
     tableName,
+    sql,
   } = props;
 
   if (!state) return null;
@@ -57,6 +59,7 @@ export const SmartFormFieldLinkedData = (
           tables={tables}
           methods={methods}
           db={db}
+          sql={sql}
           readOnly={readOnly}
           row={row}
           column={column}

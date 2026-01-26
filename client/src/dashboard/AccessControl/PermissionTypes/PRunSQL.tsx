@@ -10,10 +10,10 @@ export const PRunSQL = ({
   dbPermissions,
   onChange,
   dbsConnection,
-  prgl: { connection, db },
+  prgl: { connection, sql },
 }: DBPermissionEditorProps<"Run SQL">) => {
   const roleInfo = usePromise(async () => {
-    return (await db.sql!(
+    return (await sql!(
       `
       SELECT r.rolname, r.rolsuper, r.rolinherit, r.rolcreaterole, r.rolcreatedb, r.rolcanlogin, r.rolconnlimit, r.rolvaliduntil, r.rolreplication, r.rolbypassrls
       FROM pg_catalog.pg_roles r

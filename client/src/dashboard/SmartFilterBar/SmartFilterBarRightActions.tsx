@@ -29,6 +29,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
     rowCount,
     methods: dbMethods,
     fixedData,
+    sql,
   } = props;
 
   const { filter: _fltr = [] } = "w" in props ? props.w : props;
@@ -151,6 +152,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                   <>
                     <SmartForm
                       db={db}
+                      sql={sql}
                       label=""
                       contentClassname="pt-1"
                       rowFilter={[]}
@@ -199,6 +201,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
               ...(isObject(showInsert) && showInsert),
             }}
             db={db}
+            sql={sql}
             methods={dbMethods}
             tables={tables}
             tableName={table_name}

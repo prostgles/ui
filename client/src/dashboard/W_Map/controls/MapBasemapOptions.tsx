@@ -106,6 +106,7 @@ export const MapBasemapOptions = ({ w, className, asPopup }: P) => {
                       <SmartTable
                         title="Click row to select"
                         db={prgl.db}
+                        sql={prgl.sql}
                         tableName={mediaTable.name}
                         tables={tables}
                         methods={prgl.methods}

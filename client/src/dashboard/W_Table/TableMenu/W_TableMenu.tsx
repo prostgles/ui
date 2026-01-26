@@ -81,7 +81,7 @@ export type W_TableMenuState = {
   l2Key?: string;
   running?: boolean;
   error?: any;
-  initError?: any;
+  initError?: unknown;
   hint?: string;
   columnsConfig?: ColumnConfig[];
   infoQuery?: {
@@ -132,11 +132,11 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
 
   getTableInfo() {
     const {
-      prgl: { db, dbs, databaseId },
+      prgl: { db, sql, dbs, databaseId },
       w,
     } = this.props;
-    if (w.table_name && db.sql) {
-      getTableMeta(db, dbs, databaseId, w.table_name, w.table_oid)
+    if (w.table_name && sql) {
+      getTableMeta(sql, dbs, databaseId, w.table_name, w.table_oid)
         .then((tableMeta) => {
           this.setState({ tableMeta });
         })
@@ -170,7 +170,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
     const {
       onClose,
       w,
-      prgl: { db, dbs, tables },
+      prgl: { db, sql, dbs, tables },
       suggestions,
     } = this.props;
 
@@ -194,7 +194,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
       queryForm = (
         <SQLSmartEditor
           key={query.sql}
-          sql={db.sql!}
+          sql={sql!}
           query={query.sql}
           title={query.title || "Query"}
           contentTop={query.contentTop}
@@ -224,7 +224,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
           "Table info": {
             label: table?.info.isView ? "View info" : undefined,
             leftIconPath: mdiInformationOutline,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             content: <W_TableMenu_TableInfo {...commonProps} />,
           },
         }),
@@ -236,6 +236,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
               nestedColumnOpts={undefined}
               w={w}
               db={db}
+              sql={sql}
               tables={tables}
               onClose={onClose}
               suggestions={suggestions}
@@ -255,7 +256,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
         ...(tableMeta && {
           Triggers: {
             label: "Triggers " + tableMeta.triggers.length,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             leftIconPath: mdiFlash,
             content: <W_TableMenu_Triggers {...commonProps} />,
           },
@@ -263,21 +264,21 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
           Constraints: {
             label: "Constraints " + tableMeta.constraints.length,
             leftIconPath: mdiContentSaveCogOutline,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             content: <W_TableMenu_Constraints {...commonProps} />,
           },
 
           Indexes: {
             label: "Indexes " + tableMeta.indexes.length,
             leftIconPath: mdiDatabaseSearch,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             content: <W_TableMenu_Indexes {...commonProps} />,
           },
 
           Policies: {
             label: "Policies " + tableMeta.policiesCount,
             leftIconPath: mdiShieldAccount,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             content: <W_TableMenu_Policies {...commonProps} />,
           },
 
@@ -348,7 +349,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
             }
           }}
         />
-        {l1Key === "Columns" && tableName && db.sql && infoQuery && (
+        {l1Key === "Columns" && tableName && sql && infoQuery && (
           <div className="flex-col o-auto p-1">
             <FormField
               className="mb-1"

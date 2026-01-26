@@ -30,7 +30,7 @@ import { t } from "../../i18n/i18nUtils";
 
 type SessionsProps = Pick<
   Prgl,
-  "dbs" | "dbsTables" | "user" | "dbsMethodSchema"
+  "dbs" | "dbsSql" | "dbsTables" | "user" | "dbsMethodSchema"
 > & {
   displayType: "web_session" | "api_token";
   className?: string;
@@ -54,6 +54,7 @@ export const Sessions = ({
   displayType,
   className = "",
   dbsMethodSchema,
+  dbsSql,
 }: SessionsProps) => {
   const tokenMode = displayType === "api_token";
   const sessionLabel =
@@ -195,6 +196,7 @@ export const Sessions = ({
     <SmartCardList
       className={"min-h-0 f-1 " + className}
       db={dbs as DBHandlerClient}
+      sql={dbsSql}
       methods={dbsMethodSchema}
       tableName="sessions"
       tables={dbsTables}

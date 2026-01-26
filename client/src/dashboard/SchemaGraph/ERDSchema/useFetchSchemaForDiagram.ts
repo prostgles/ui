@@ -12,13 +12,13 @@ export const useFetchSchemaForDiagram = (
   },
 ) => {
   const {
-    db,
     dbs,
     connectionId,
     tables: dbTables,
     columnColorMode,
     columnDisplayMode,
     displayMode,
+    sql,
   } = props;
   const { data: dbConf } = dbs.database_configs.useFindOne(
     {
@@ -34,7 +34,6 @@ export const useFetchSchemaForDiagram = (
 
   const schemaInfo = usePromise(async () => {
     if (!dbConf) return;
-    const { sql } = db;
     const constraints =
       !sql ?
         []
@@ -193,7 +192,7 @@ export const useFetchSchemaForDiagram = (
       fkeys,
       columnConstraintIcons,
     };
-  }, [columnColorMode, db, dbConf, dbTables]);
+  }, [columnColorMode, dbConf, dbTables, sql]);
 
   return { schemaInfo, dbConfId: dbConf?.id, dbConf };
 };

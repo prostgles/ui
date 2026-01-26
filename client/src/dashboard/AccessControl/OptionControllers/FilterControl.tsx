@@ -25,7 +25,7 @@ export type SingleGroupFilter =
 
 export type ForcedFilterControlProps = Pick<
   Prgl,
-  "db" | "tables" | "methods"
+  "db" | "tables" | "methods" | "sql"
 > & {
   detailedFilter?: SingleGroupFilter;
   tableName: string;
@@ -141,6 +141,7 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
                   )}
                 </div>
               )}
+              sql={props.sql}
               db={props.db}
               methods={props.methods}
               tableName={props.tableName}

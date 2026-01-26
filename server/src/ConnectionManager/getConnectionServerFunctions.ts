@@ -77,7 +77,6 @@ export const getConnectionServerFunctions = ({
         });
 
       result[m.name] = {
-        output: "any",
         input: m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
         run,
       };

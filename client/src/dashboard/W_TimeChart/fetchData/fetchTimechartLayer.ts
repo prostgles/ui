@@ -1,6 +1,10 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { asName, type PG_COLUMN_UDT_DATA_TYPE } from "prostgles-types";
+import {
+  asName,
+  type PG_COLUMN_UDT_DATA_TYPE,
+  type SQLHandler,
+} from "prostgles-types";
 import type {
   DataItem,
   TimeChartLayer,
@@ -33,6 +37,7 @@ type getTChartLayerArgs = Pick<
     binSize: FetchedLayerData["binSize"] | "auto";
     desiredBinCount: number;
     db: DBHandlerClient;
+    sql: SQLHandler | undefined;
     w: SyncDataItem<Required<WindowData<"timechart">>, true>;
   };
 export async function fetchTimechartLayer({
@@ -41,6 +46,7 @@ export async function fetchTimechartLayer({
   desiredBinCount,
   layer,
   db,
+  sql: sqlHandler,
   w,
   tables,
   getLinksAndWindows,
@@ -152,13 +158,13 @@ export async function fetchTimechartLayer({
   } else {
     const { dateColumn, sql, withStatement, statType, groupByColumn } = layer;
 
-    if (!db.sql) {
+    if (!sqlHandler) {
       console.error("Not enough privileges to run query");
       return;
     }
 
     const queryWithoutSemicolon = getSQLQuerySemicolon(sql, false);
-    const plainResult = await db.sql(`
+    const plainResult = await sqlHandler(`
         ${withStatement}
         SELECT * FROM (
           ${queryWithoutSemicolon}
@@ -225,7 +231,7 @@ export async function fetchTimechartLayer({
       `ORDER BY 2`,
     ].join("\n");
 
-    rows = (await db.sql(
+    rows = (await sqlHandler(
       dataQuery,
       { dateColumn, bin: binInfo.unit, statField },
       { returnType: "rows" },
