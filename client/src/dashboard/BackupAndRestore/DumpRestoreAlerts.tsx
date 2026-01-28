@@ -1,15 +1,14 @@
+import { InfoRow } from "@components/InfoRow";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
 import React from "react";
-import { InfoRow } from "@components/InfoRow";
-import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 
 export const DumpRestoreAlerts = ({
-  dbsMethods,
   connectionId,
-  dbSql,
-}: Pick<FullExtraProps, "dbsMethods" | "dbSql"> & {
+}: {
   connectionId: string;
 }) => {
+  const { dbsMethods, sql: dbSql } = usePrgl();
   const versionMismatch = usePromise(async () => {
     try {
       const versions = await dbsMethods.getInstalledPsqlVersions?.();

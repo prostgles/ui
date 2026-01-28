@@ -1,7 +1,7 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBS } from "@src/index";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { getProstglesDBTools } from "@src/publishMethods/askLLM/prostglesLLMTools/getProstglesDBTools";
+import { getProstglesDBTools } from "@src/serverFunctions/askLLM/prostglesLLMTools/getProstglesDBTools";
 import {
   getJSONBSchemaAsJSONSchema,
   omitKeys,

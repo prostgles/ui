@@ -3,7 +3,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { tout } from "@src/utils/tout";
 import { getKeys, isEqual } from "prostgles-types";
 import { type DBS } from "../index";
-import { activePasswordlessAdminFilter } from "../SecurityManager/initUsers";
+import { activePasswordlessAdminFilter } from "../init/initUsers";
 
 export type AuthConfigForStateConnection = {
   stateDatabaseConfig: DBSSchema["database_configs"];

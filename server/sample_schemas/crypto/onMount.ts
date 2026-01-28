@@ -13,7 +13,7 @@ const FUNDING_SYMBOLS = [
 let loadGasPrices = false;
 let realtimeFutures = false;
 
-export const onMount: ProstglesOnMount = async ({ dbo }) => {
+export const onMount: ProstglesOnMount = async ({ db, sql }) => {
   const getMarketCaps = async () => {
     const marketCaps = await fetch(
       "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250",
@@ -24,18 +24,18 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     ]);
     console.log(`marketCaps ${marketCaps.length} items`);
     console.log(`batchUpdate ${batchUpdate.length} items`);
-    await dbo.market_caps.updateBatch(batchUpdate);
-    await dbo.market_caps.insert(marketCaps, { onConflict: "DoUpdate" });
+    await db.market_caps.updateBatch(batchUpdate);
+    await db.market_caps.insert(marketCaps, { onConflict: "DoUpdate" });
   };
   setInterval(getMarketCaps, 30 * SECOND);
   getMarketCaps();
 
-  await dbo.symbols.insert([...FUNDING_SYMBOLS.map((pair) => ({ pair }))], {
+  await db.symbols.insert([...FUNDING_SYMBOLS.map((pair) => ({ pair }))], {
     onConflict: "DoNothing",
   });
-  if (!(await dbo.futures.count())) {
-    await loadHistorcalFutures(dbo);
-    await loadHistoricalFundingRates(dbo);
+  if (!(await db.futures.count())) {
+    await loadHistorcalFutures(db);
+    await loadHistoricalFundingRates(db);
   }
 
   if (realtimeFutures) {
@@ -49,8 +49,8 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
         price: data.p,
         timestamp: new Date(data.E),
       }));
-      console.log(`dbo.symbols.insert ${data.length} items`);
-      await dbo.symbols.insert(
+      console.log(`db.symbols.insert ${data.length} items`);
+      await db.symbols.insert(
         [
           ...data.map(({ symbol }) => ({ pair: symbol })),
           ...FUNDING_SYMBOLS.map((pair) => ({ pair })),
@@ -58,7 +58,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
         { onConflict: "DoNothing" },
       );
 
-      await dbo.futures.insert(data);
+      await db.futures.insert(data);
     };
   }
 
@@ -73,21 +73,21 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     }))
     .filter((d) => d.rpcNode);
 
-  const marketsCount = await dbo.markets.count();
+  const marketsCount = await db.markets.count();
   if (!marketsCount) {
     // const marketAthCharts = Array.from({ length: 250 }, (_, i) => i + 1).map(i => ({
-    await dbo.markets.insert(markets);
+    await db.markets.insert(markets);
   }
 
   if (loadGasPrices) {
     setInterval(async () => {
-      const markets = await dbo.markets.find();
+      const markets = await db.markets.find();
       markets.forEach(async (market) => {
         const { id, rpcNode } = market;
         const setPrice = async (price_gwei: any) => {
           if (Number.isFinite(price_gwei)) {
-            await dbo.gas_prices.insert({ market: id, price_gwei });
-            await dbo.markets.update({ id }, { current_price: price_gwei });
+            await db.gas_prices.insert({ market: id, price_gwei });
+            await db.markets.update({ id }, { current_price: price_gwei });
           }
         };
         if (id === "btc") {
@@ -128,7 +128,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
           setPrice(price_gwei);
         } catch (error) {
           console.log(id, error, resp);
-          await dbo.markets.update(
+          await db.markets.update(
             { id },
             { fail_info: { error: error.message } },
           );
@@ -141,7 +141,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     async () => {
       if (!loadGasPrices && !realtimeFutures) return;
       if (loadGasPrices) {
-        await dbo.sql(`
+        await sql(`
           DELETE FROM gas_prices
           WHERE id IN (
             SELECT id
@@ -154,7 +154,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
           `);
       }
 
-      const { futures_id, gas_id } = await dbo.sql(
+      const { futures_id, gas_id } = await sql(
         "SELECT (SELECT MAX(id) FROM futures) as futures_id, (SELECT MAX(id) FROM gas_prices) as gas_id",
         {},
         { returnType: "row" },
@@ -167,14 +167,14 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
         truncateQuery += `TRUNCATE gas_prices RESTART IDENTITY;\n`;
       }
       if (truncateQuery) {
-        await dbo.sql(truncateQuery);
+        await sql(truncateQuery);
       }
     },
     60 * 60 * SECOND,
   );
 };
 const HISTORICAL_DATA_START = Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days ago
-const loadHistorcalFutures = async (dbo) => {
+const loadHistorcalFutures = async (db) => {
   for (const pair of FUNDING_SYMBOLS) {
     const data = await fetchHistoricalFutures(
       pair,
@@ -184,7 +184,7 @@ const loadHistorcalFutures = async (dbo) => {
     );
     console.log(`Loaded ${data.length} historical futures for ${pair}`);
     if (!data.length) continue;
-    await dbo.futures.insert(data);
+    await db.futures.insert(data);
   }
 };
 
@@ -233,7 +233,7 @@ const fetchHistoricalFutures = async (
   }));
 };
 
-const loadHistoricalFundingRates = async (dbo) => {
+const loadHistoricalFundingRates = async (db) => {
   for (const symbol of FUNDING_SYMBOLS) {
     const data = await fetchHistoricalFundingRates(
       symbol,
@@ -241,7 +241,7 @@ const loadHistoricalFundingRates = async (dbo) => {
       Date.now(),
     );
     console.log(`Fetched ${data.length} funding rates for ${symbol}`);
-    await dbo.futures_funding_rates.insert(data, { onConflict: "DoNothing" });
+    await db.futures_funding_rates.insert(data, { onConflict: "DoNothing" });
     console.log(`Loaded ${data.length} funding rates for ${symbol}`);
   }
 };

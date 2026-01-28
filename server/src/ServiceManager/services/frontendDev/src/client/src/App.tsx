@@ -20,9 +20,15 @@ export const App = () => {
   return (
     <>
       {prglState.auth?.user ?
-        <div>Logged in as: {prglState.auth.user.id}</div>
+        <div>
+          Logged in as: <strong>{prglState.auth.user.type}</strong>{" "}
+          {prglState.auth.user.id}
+        </div>
       : <div>Not logged in</div>}
-      <div>Available tables: {Object.keys(prglState.dbo).join(", ")}</div>
+      <div>
+        Available tables:{" "}
+        <strong>{Object.keys(prglState.db).join(", ")}</strong>
+      </div>
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />

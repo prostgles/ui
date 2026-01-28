@@ -1,10 +1,15 @@
 import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
+import PopupMenu from "@components/PopupMenu";
+import { mdiCookie } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useCallback, useEffect, useMemo } from "react";
-import type { Prgl } from "../../../App";
+import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../../../i18n/i18nUtils";
 import { EmailAuthSetup } from "../EmailAuthSetup";
 import { OAuthProviderSetup } from "../OAuthProviderSetup";
@@ -16,12 +21,11 @@ export type AuthProvidersConfig = Extract<
 >;
 
 export const AuthProviderSetup = ({
-  dbs,
-  dbsTables,
   connectionId,
-}: Pick<Prgl, "dbs" | "dbsTables"> & {
+}: {
   connectionId: string;
 }) => {
+  const { dbs, dbsTables, dbsSql } = usePrglCore();
   const databaseConfigTable = dbsTables.find(
     (t) => t.name === "database_configs",
   );
@@ -35,7 +39,7 @@ export const AuthProviderSetup = ({
       }) as const,
     [connectionId],
   );
-  const { data: database_config } =
+  const { data: databaseConfig } =
     dbs.database_configs.useSubscribeOne(databaseConfigFilter);
   const { data: userTypes } = dbs.user_types.useFind();
   const updateAuth = useCallback(
@@ -45,19 +49,19 @@ export const AuthProviderSetup = ({
           !auth ? undefined : (
             {
               website_url:
-                database_config?.auth_providers?.website_url ??
+                databaseConfig?.auth_providers?.website_url ??
                 window.location.origin,
-              ...database_config?.auth_providers,
+              ...databaseConfig?.auth_providers,
               ...auth,
             }
           ),
       });
     },
-    [dbs.database_configs, database_config, databaseConfigFilter],
+    [dbs.database_configs, databaseConfig, databaseConfigFilter],
   );
 
-  const settingsLoaded = !!database_config;
-  const { website_url } = database_config?.auth_providers ?? {};
+  const settingsLoaded = !!databaseConfig;
+  const { website_url } = databaseConfig?.auth_providers ?? {};
   useEffect(() => {
     if (!settingsLoaded) return;
     if (!website_url) {
@@ -68,7 +72,7 @@ export const AuthProviderSetup = ({
   }, [updateAuth, settingsLoaded, website_url]);
 
   const authProps = useProviderProps({
-    auth_providers: database_config?.auth_providers,
+    auth_providers: databaseConfig?.auth_providers,
     dbs,
     dbsTables,
     connectionId,
@@ -83,11 +87,11 @@ export const AuthProviderSetup = ({
     );
   }
 
-  if (!database_config) {
+  if (!databaseConfig) {
     return <Loading />;
   }
 
-  const { auth_providers, auth_created_user_type } = database_config;
+  const { auth_providers, auth_created_user_type } = databaseConfig;
 
   return (
     <FlexCol className="AuthProviderSetup f-1">
@@ -101,7 +105,7 @@ export const AuthProviderSetup = ({
             data-command="AuthProviderSetup.websiteURL"
             label={t.AuthProviderSetup["Website URL"]}
             hint={t.AuthProviderSetup["Used for redirect uri"]}
-            value={database_config.auth_providers?.website_url}
+            value={databaseConfig.auth_providers?.website_url}
             onChange={(website_url: string) => {
               void updateAuth({
                 ...auth_providers,
@@ -109,6 +113,36 @@ export const AuthProviderSetup = ({
               });
             }}
           />
+
+          <PopupMenu
+            button={
+              <Btn variant="faded" iconPath={mdiCookie}>
+                Cookie options
+              </Btn>
+            }
+            onClickClose={false}
+          >
+            <SmartForm
+              confirmUpdates={true}
+              label=""
+              tableName="database_configs"
+              columns={
+                {
+                  cookie_options: 1,
+                  allowed_origin: 1,
+                } satisfies Partial<
+                  Record<keyof DBSSchema["database_configs"], 1>
+                >
+              }
+              disabledActions={["clone", "delete"]}
+              db={dbs as DBHandlerClient}
+              sql={dbsSql}
+              methods={{}}
+              tables={dbsTables}
+              rowFilter={[{ fieldName: "id", value: databaseConfig.id }]}
+              showJoinedTables={false}
+            />
+          </PopupMenu>
         </FlexRow>
         <FormField
           label={t.AuthProviderSetup["Default user type"]}

@@ -87,7 +87,7 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
       await backupDemo();
       startVideoDemo("the end");
     }
-    stopWakeLock();
+    void stopWakeLock();
   };
 
   if (demoStarted || !isOnDemoDatabase) {

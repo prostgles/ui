@@ -35,6 +35,7 @@ export const useAppState = (
       true,
     );
     (window as any).dbs = dbs;
+    (window as any).dbsSql = dbsSql;
     (window as any).dbsSocket = socket;
     (window as any).dbsMethods = methods;
     (window as any).auth = auth;

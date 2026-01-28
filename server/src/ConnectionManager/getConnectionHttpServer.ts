@@ -21,6 +21,7 @@ export function getConnectionHttpServer(
     is_state_db,
     port,
     web_app_directory: webAppDirectory,
+    web_app_templated: webAppTemplated,
   } = connection;
   const { allowed_origin: allowedOrigin, trust_proxy: trustProxy } =
     databaseConfig;
@@ -30,6 +31,7 @@ export function getConnectionHttpServer(
     trustProxy,
     socketPath,
     webAppDirectory,
+    webAppTemplated,
   };
   const { http, app } = this.dbsServer;
   const existingServer = this.connectionHttpServers.get(connectionId);

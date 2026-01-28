@@ -1,20 +1,19 @@
+import type { ProstglesState } from "@common/electronInitTypes";
+import { tout } from "@src/utils/tout";
 import type { Express } from "express";
 import { isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
-import type { ProstglesState } from "@common/electronInitTypes";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
 import { cleanupTestDatabases } from "./cleanupTestDatabases";
 import { isRetryableError } from "./isRetryableError";
-import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import {
   startProstgles,
   type InitExtra,
   type ProstglesInitStateWithDBS,
 } from "./startProstgles";
 import { testDashboardTypesContent } from "./testDashboardTypesContent";
-import { tout } from "@src/utils/tout";
 
 type StartArguments = {
   app: Express;
@@ -91,8 +90,6 @@ const _tryStartProstgles = async ({
 }: StartArguments): Promise<FinishedState> => {
   /** Cleanup state for local tests */
   await cleanupTestDatabases(con);
-
-  setDBSRoutesForElectron(app, io, port, host);
 
   let lastError:
     | Extract<ProstglesInitStateWithDBS, { state: "error" }>

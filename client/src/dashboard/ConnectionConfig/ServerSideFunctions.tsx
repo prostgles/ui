@@ -102,10 +102,10 @@ export const ServerSideFunctions = (props: Prgl) => {
 
 const example = `/* Example */
 import { WebSocket } from "ws";
-export const onMount: ProstglesOnMount = async ({ dbo }) => {
+export const onMount: ProstglesOnMount = async ({ dbo, sql }) => {
 
-  await dbo.sql('CREATE TABLE IF NOT EXISTS symbols(pair text primary key);');
-  await dbo.sql('CREATE TABLE IF NOT EXISTS futures (price float, symbol text, "timestamp" timestamptz);');
+  await sql('CREATE TABLE IF NOT EXISTS symbols(pair text primary key);');
+  await sql('CREATE TABLE IF NOT EXISTS futures (price float, symbol text, "timestamp" timestamptz);');
   const socket = new WebSocket("wss://fstream.binance.com/ws/!markPrice@arr@1s");
   
   socket.onmessage = async (rawData) => {

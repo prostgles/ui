@@ -23,13 +23,14 @@ export const executeDockerCommand = async (
 ): Promise<ExecutionResult> => {
   const startTime = Date.now();
   const timeout = options.timeout;
+  const command = `docker ${args.join(" ")}`;
 
   return new Promise((resolve) => {
     // Check if already aborted before starting
     if (options.signal?.aborted) {
       resolve({
         state: "error",
-        command: `docker ${args.join(" ")}`,
+        command,
         exitCode: -1,
         timedOut: false,
         executionTime: 0,
@@ -41,8 +42,6 @@ export const executeDockerCommand = async (
       ...options,
       stdio: ["pipe", "pipe", "pipe"],
     });
-    const command = `docker ${args.join(" ")}`;
-    // TODO: move timeout handling to spawn options
     let timedOut = false;
     let ended = false;
 

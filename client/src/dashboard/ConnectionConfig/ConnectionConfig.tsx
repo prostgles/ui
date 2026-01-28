@@ -33,7 +33,7 @@ import { StatusMonitor } from "../StatusMonitor/StatusMonitor";
 import { TableConfig } from "../TableConfig/TableConfig";
 import { ServerSideFunctions } from "./ServerSideFunctions";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
-import { WebApp } from "./WebApp/WebApp";
+import { WebAppConfig } from "./WebApp/WebAppConfig";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -45,7 +45,7 @@ type ConnectionConfigProps = Pick<
 export const ConnectionConfig = (props: ConnectionConfigProps) => {
   const { className = "", style = {}, connection } = props;
   const prgl = usePrgl();
-  const { serverState, dbs, connectionId, db, dbsMethods, dbsTables } = prgl;
+  const { serverState, dbs, connectionId, db, dbsMethods } = prgl;
   const propsWithPrgl = useMemo(() => ({ ...props, prgl }), [props, prgl]);
   const disabledText =
     (dbs.access_control as any)?.update ?
@@ -129,13 +129,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
 
           hide: serverState.isElectron,
           leftIconPath: mdiAccountKey,
-          content: (
-            <AuthProviderSetup
-              dbs={dbs}
-              dbsTables={dbsTables}
-              connectionId={connectionId}
-            />
-          ),
+          content: <AuthProviderSetup connectionId={connectionId} />,
         },
         API: {
           label: t.ConnectionConfig["API"],
@@ -153,7 +147,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           disabledText:
             disabledText ||
             (isElectron ? "Not available for desktop" : undefined),
-          content: <WebApp dbs={dbs} connectionId={connectionId} />,
+          content: <WebAppConfig />,
         },
         table_config: {
           label: (
@@ -191,10 +185,8 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       acParams,
       connectionId,
       db,
-      dbs,
       dbsMethods.getStatus,
       dbsMethods.runConnectionQuery,
-      dbsTables,
       disabledText,
       isElectron,
       prgl,

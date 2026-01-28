@@ -103,7 +103,7 @@ const headers = new Headers({
   'Authorization': \`Bearer ${!token ? "YOUR_TOKEN_IN_BASE64" : btoa(token)}\`, 
   'Accept': 'application/json',
   'Content-Type': 'application/json'
-})
+});
 const api = (route, ...params) => fetch(
   \`${path}/\${route.join("/")}\`, 
   { 
@@ -113,10 +113,10 @@ const api = (route, ...params) => fetch(
   })
   .then(res => res.json())
   .catch(res => res.text())
-  .catch(res => res.statusText) 
+  .catch(res => res.statusText);
   
 const schema = await api(["schema"]);
 console.log(schema);
-const data = await api(["db", schema.tableSchema[0]?.name ?? "someTable", "find"], {}, { select: "*", limit: 2 })
+const data = await api(["db", schema.tableSchema[0]?.name ?? "someTable", "find"], {}, { select: "*", limit: 2 });
 // const methodResult = await api(["methods", "someMethod"], {})
 `;

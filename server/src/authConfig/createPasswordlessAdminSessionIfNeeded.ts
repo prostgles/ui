@@ -4,7 +4,7 @@ import type {
 } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBS } from "..";
 import { debouncePromise, YEAR } from "@common/utils";
-import { activePasswordlessAdminFilter } from "../SecurityManager/initUsers";
+import { activePasswordlessAdminFilter } from "../init/initUsers";
 import type { NewRedirectSession } from "./getUser";
 import { makeSession } from "./sessionUtils";
 import { getIPsFromClientInfo } from "./startRateLimitedLoginAttempt";

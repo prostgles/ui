@@ -5,11 +5,10 @@ import {
   type UseProstglesClientProps,
 } from "prostgles-client";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import type { AppContextProps, PrglProject } from "../../App";
 import { getTables } from "../../dashboard/Dashboard/getTables";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import { prgl_R } from "../../WithPrgl";
 
 type PrglProjectStateError = {
   error: any;
@@ -221,7 +220,6 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
 
     if (isPlaywrightTest) {
       (window as any).db = db;
-      (window as any).dbsSql = dbsSql;
       (window as any).sql = sql;
       (window as any).dbSocket = socket;
       (window as any).dbMethods = methods;
@@ -236,15 +234,6 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     dbsTables,
     dbsMethodSchema,
   ]);
-
-  /** prgl_R.set moved here to prevent theme change to trigger many re-mounts due to dbKey change */
-  useEffect(() => {
-    if (!prglProject) return;
-    prgl_R.set({
-      ...prglProject,
-      ...prglState,
-    });
-  }, [prglProject, prglState]);
 
   if (!dbState || dbState.state !== "loaded") {
     return dbState ?? { state: "loading" };

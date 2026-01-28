@@ -106,7 +106,7 @@ type NewConnectionProps = {
 };
 
 type NewConnectionState = {
-  error?: any;
+  error?: unknown;
   nameErr: string;
   connection: Connection;
   originalConnection?: DBSSchema["connections"];
@@ -438,24 +438,23 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     <ErrorComponent error={error} />
                   </FlexCol>
                 }
-                confirmButton={(popupClose) => (
-                  <Btn
-                    color="danger"
-                    variant="filled"
-                    iconPath={mdiDeleteOutline}
-                    className="ml-auto"
-                    data-command="Connection.edit.delete.confirm"
-                    onClickMessage={async (e, setMsg) => {
-                      setMsg({ loading: 1, delay: 0 });
+                confirmButtons={[
+                  {
+                    color: "danger",
+                    variant: "filled",
+                    iconPath: mdiDeleteOutline,
+                    className: "ml-auto",
+                    "data-command": "Connection.edit.delete.confirm",
+                    onClickPromise: async () => {
                       try {
-                        await this.onClickDelete().then(popupClose);
-                      } catch (e) {}
-                      setMsg({ loading: 0 });
-                    }}
-                  >
-                    {t.common.Delete}
-                  </Btn>
-                )}
+                        await this.onClickDelete();
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    },
+                    children: t.common.Delete,
+                  },
+                ]}
               />
             )}
 

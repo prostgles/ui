@@ -1,19 +1,19 @@
-export const onMount: ProstglesOnMount = async ({ dbo }) => {
-  const roadTableHandler = dbo.routes;
+export const onMount: ProstglesOnMount = async ({ db, sql }) => {
+  const roadTableHandler = db.routes;
   if (!roadTableHandler) return;
 
   const count = await roadTableHandler.count();
   if (count) {
-    await dbo.sql(`
+    await sql(`
       VACUUM;
     `);
 
     const mockLocations = async () => {
       try {
-        await dbo.sql(`CALL mock_locations(); /* from fork */`);
+        await sql(`CALL mock_locations(); /* from fork */`);
       } catch (error) {
         console.error("Error calling mock_locations", error);
-        const funcs = await dbo.sql(
+        const funcs = await sql(
           `
           SELECT proname, probin, pg_get_function_arguments(oid), current_database(), (SELECT string_agg(extname, '; ') FROM pg_catalog.pg_extension) as extensions
           FROM pg_catalog.pg_proc
@@ -59,7 +59,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
       const hourOfDay =
         new Date().getHours() as keyof typeof hourOfDayAverageOrders;
       const orderRatePerSecond = hourOfDayAverageOrders[hourOfDay] ?? 1;
-      await dbo.sql(`CALL mock_orders(\${orderRatePerSecond}::integer)`, {
+      await sql(`CALL mock_orders(\${orderRatePerSecond}::integer)`, {
         orderRatePerSecond,
       });
     }, 3e3);
@@ -78,7 +78,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     "https://prostgles.com/static/routes.json",
   ).then((res) => res.json());
 
-  await dbo.routes.insert(
+  await db.routes.insert(
     elements.map((d) => ({
       id: d.id,
       geometry: {
@@ -88,7 +88,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     })),
   );
 
-  await dbo.sql(`
+  await sql(`
     UPDATE routes
     SET geog = ST_SetSRID(ST_GeomFromGeoJSON(geometry), 4326);
 

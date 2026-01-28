@@ -10,13 +10,13 @@ import { connectionManager, type DBS } from "..";
 import BackupManager from "../BackupManager/BackupManager";
 import { setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/AnthropicMcpHub/startMcpHub";
-import { initUsers } from "../SecurityManager/initUsers";
+import { initUsers } from "./initUsers";
 import { getAuth } from "../authConfig/getAuth";
 import {
   subscribeToAuthSetupChanges,
   type AuthSetupDataListener,
 } from "../authConfig/subscribeToAuthSetupChanges";
-import { setupLLM } from "../publishMethods/askLLM/setupLLM";
+import { setupLLM } from "../serverFunctions/askLLM/setupLLM";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
 import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";

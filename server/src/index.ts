@@ -1,11 +1,17 @@
 process.on("unhandledRejection", (reason, p) => {
   console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
 });
+/** Prevent "node --watch" waiting for process graceful exit */
+process.on("SIGTERM", () => {
+  process.exit(0);
+});
 
+import { sidKeyName } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesState } from "@common/electronInitTypes";
 import { isObject, type DBSSchema } from "@common/publishUtils";
 import { SPOOF_TEST_VALUE } from "@common/utils";
+import { tout } from "@src/utils/tout";
 import { spawn } from "child_process";
 import type { NextFunction, Request, Response } from "express";
 import path from "path";
@@ -17,7 +23,6 @@ import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
 import { setDBSRoutesForElectron } from "./init/setDBSRoutesForElectron";
-import { sidKeyName } from "@common/authTypesAndConstants";
 import type {
   InitExtra,
   ProstglesInitStateWithDBS,
@@ -27,7 +32,6 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
-import { tout } from "@src/utils/tout";
 
 const { app, http, io } = initExpressAndIOServers();
 
@@ -43,7 +47,6 @@ const PORT =
 const LOCALHOST = "127.0.0.1";
 const HOST =
   electronConfig ? LOCALHOST : process.env.PROSTGLES_UI_HOST || LOCALHOST;
-setDBSRoutesForElectron(app, io, PORT, HOST);
 
 /** Make client wait for everything to load before serving page */
 export const waitForInitialisation =
@@ -177,7 +180,7 @@ export function restartProc(cb?: VoidFunction) {
   console.warn("Restarting process");
   if (process.env.process_restarting) {
     delete process.env.process_restarting;
-    // Give old process one second to shut down before continuing ...
+    // Give old process  one second to shut down before continuing ...
     setTimeout(() => {
       cb?.();
       restartProc();

@@ -9,7 +9,7 @@ import { dockerContainerAuthRegistry } from "./dockerContainerAuthRegistry";
 import { getDockerGatewayIP } from "../getDockerGatewayIP";
 import { getProstglesState } from "@src/init/tryStartProstgles";
 import { isDocker } from "@src/index";
-import { runProstglesDBTool } from "@src/publishMethods/askLLM/prostglesLLMTools/runProstglesDBTool";
+import { runProstglesDBTool } from "@src/serverFunctions/askLLM/prostglesLLMTools/runProstglesDBTool";
 import { sidKeyName } from "@common/authTypesAndConstants";
 import { isPortFree } from "@src/utils/isPortFree";
 

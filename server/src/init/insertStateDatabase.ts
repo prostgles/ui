@@ -3,7 +3,7 @@ import { pickKeys, tryCatchV2 } from "prostgles-types";
 import type { DBS } from "..";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { upsertConnection } from "../upsertConnection";
-import { getPasswordlessAdmin } from "@src/SecurityManager/initUsers";
+import { getPasswordlessAdmin } from "@src/init/initUsers";
 import { tableConfig } from "../tableConfig/tableConfig";
 
 /** Add state db if missing */

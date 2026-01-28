@@ -114,21 +114,19 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                     </div>
                   );
                 }}
-                confirmButton={(pCLose) => (
-                  <Btn
-                    iconPath={mdiDelete}
-                    {...commonBtnProps}
-                    color="danger"
-                    title="Delete rows"
-                    onClickPromise={async () => {
+                confirmButtons={[
+                  {
+                    title: "Delete rows",
+                    iconPath: mdiDelete,
+                    ...commonBtnProps,
+                    color: "danger",
+                    onClickPromise: async () => {
                       await tableHandler.delete!(finalFilter);
                       showInsertUpdateDelete.onSuccess?.();
-                      pCLose();
-                    }}
-                  >
-                    Delete rows
-                  </Btn>
-                )}
+                    },
+                    children: "Delete rows",
+                  },
+                ]}
               />
             )}
 

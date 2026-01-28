@@ -7,8 +7,8 @@
     "start": "npm run build && node dist/server/src/index.js",
     "test": "npm run build && node --test dist/server/**/**/*.spec.js",
     "lint": "eslint . --ext .ts --quiet --fix",
-    "dev": "npm i --no-audit && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"nodemon  --delay 500ms --trace-warnings --inspect dist/server/src/index.js\"",
-    "dev:electron": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"nodemon  --delay 500ms --trace-warnings --inspect dist/server/src/testElectron.js\""
+    "dev": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/index.js\"",
+    "dev:electron": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/testElectron.js\""
   },
   "author": "",
   "license": "",
@@ -29,7 +29,7 @@
     "otplib": "^12.0.1",
     "path-to-regexp": "^8.3.0",
     "pidusage": "^4.0.1",
-    "prostgles-server": "^4.2.418",
+    "prostgles-server": "^4.2.421",
     "prostgles-types": "^4.0.89",
     "qrcode": "^1.5.1",
     "simple-git": "^3.27.0",
@@ -49,7 +49,6 @@
     "eslint": "^9.39.1",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-security": "^3.0.1",
-    "nodemon": "^3.1.10",
     "tsc-alias": "^1.8.16",
     "typescript-eslint": "^8.46.4"
   }

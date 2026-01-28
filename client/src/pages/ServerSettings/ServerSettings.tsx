@@ -196,11 +196,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 leftIconPath: mdiAccountKey,
                 label: t.ServerSettings.Authentication,
                 content: (
-                  <AuthProviderSetup
-                    dbs={dbs}
-                    dbsTables={dbsTables}
-                    connectionId={stateConnection.id}
-                  />
+                  <AuthProviderSetup connectionId={stateConnection.id} />
                 ),
               },
               cloud: {

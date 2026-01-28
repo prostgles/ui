@@ -3,7 +3,7 @@ import type { Connections, DBS, Users } from ".";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
-import { applySampleSchema } from "./publishMethods/applySampleSchema";
+import { applySampleSchema } from "./serverFunctions/applySampleSchema";
 
 export const upsertConnection = async (
   con: DBGeneratedSchema["connections"]["columns"],

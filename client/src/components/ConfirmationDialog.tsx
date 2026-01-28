@@ -59,8 +59,8 @@ export default class ConfirmationDialog extends RTComp<ConfirmDialogProps, S> {
             color={acceptBtn.color}
             variant="filled"
             data-command={acceptBtn.dataCommand}
-            onClick={async () => {
-              await onAccept();
+            onClick={() => {
+              onAccept();
             }}
           >
             {acceptBtn.text}

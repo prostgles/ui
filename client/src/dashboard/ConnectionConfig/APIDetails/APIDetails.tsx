@@ -1,21 +1,15 @@
 import { ELECTRON_USER_AGENT } from "@common/OAuthUtils";
 import { useOnErrorAlert } from "@components/AlertProvider";
-import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
-import PopupMenu from "@components/PopupMenu";
-import { mdiCookie } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo, useState } from "react";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
-import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
 import type { AppContextProps, Prgl } from "../../../App";
 import { getActiveTokensFilter } from "../../../pages/Account/Sessions";
 import { APIDetailsHttp } from "./APIDetailsHttp";
 import { APIDetailsTokens } from "./APIDetailsTokens";
 import { APIDetailsWs } from "./APIDetailsWs";
 import { AllowedOriginCheck } from "./AllowedOriginCheck";
-import type { DBSSchema } from "@common/publishUtils";
 
 export type APIDetailsProps = AppContextProps & {
   connection: Prgl["connection"];
@@ -29,7 +23,7 @@ export const APIDetails = (props: APIDetailsProps) => {
     (t) => t.user_agent === ELECTRON_USER_AGENT,
   );
   const token = electronSession?.id ?? newToken;
-  const { dbsTables, dbs, connection, dbsSql } = props;
+  const { dbsTables, dbs, connection } = props;
   const { table, urlPathCol } = useMemo(() => {
     const table = dbsTables.find((t) => t.name === "connections");
     const urlPathCol = table?.columns.find((c) => c.name === "url_path");
@@ -90,38 +84,6 @@ export const APIDetails = (props: APIDetailsProps) => {
             });
           }}
         />
-      )}
-
-      {databaseConfig && (
-        <PopupMenu
-          button={
-            <Btn variant="faded" iconPath={mdiCookie}>
-              Cookie options
-            </Btn>
-          }
-          onClickClose={false}
-        >
-          <SmartForm
-            confirmUpdates={true}
-            label=""
-            tableName="database_configs"
-            columns={
-              {
-                cookie_options: 1,
-                allowed_origin: 1,
-              } satisfies Partial<
-                Record<keyof DBSSchema["database_configs"], 1>
-              >
-            }
-            disabledActions={["clone", "delete"]}
-            db={dbs as DBHandlerClient}
-            sql={dbsSql}
-            methods={{}}
-            tables={dbsTables}
-            rowFilter={[{ fieldName: "id", value: databaseConfig.id }]}
-            showJoinedTables={false}
-          />
-        </PopupMenu>
       )}
 
       {!!(dbs as Partial<DBS>).database_configs && databaseConfig && (

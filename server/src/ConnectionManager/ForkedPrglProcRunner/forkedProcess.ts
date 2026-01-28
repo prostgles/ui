@@ -76,7 +76,7 @@ const initForkedProc = () => {
             } else {
               cb(undefined, "ready");
             }
-            setProxy(params as any);
+            setProxy(params as OnReadyParamsBasic);
           },
         });
       } else {
@@ -89,7 +89,12 @@ const initForkedProc = () => {
             delete toolCalls[callId];
           } else if (msg.type === "run") {
             const { code, validatedArgs, user, id } = msg;
-            const { run } = eval(code + "\n\n exports;");
+            const { run } = eval(code + "\n\n exports;") as {
+              run: (
+                args: any,
+                prglParams: OnReadyParamsBasic & { user: any },
+              ) => Promise<unknown>;
+            };
             // const callMCPServerTool = async (
             //   serverName: string,
             //   toolName: string,

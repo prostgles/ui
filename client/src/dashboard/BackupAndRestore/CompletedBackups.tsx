@@ -28,11 +28,11 @@ import {
   BACKUP_FILTER_OPTS,
   type BackupsControlsState,
 } from "./useBackupsControlsState";
+import { t } from "src/i18n/i18nUtils";
 
 export const orderByCreated = {
   key: "created",
   asc: false,
-  // created: false,
 } as const;
 
 export const CompletedBackups = ({
@@ -48,7 +48,7 @@ export const CompletedBackups = ({
 >) => {
   const { connectionId, dbs, dbsTables, dbsMethods, dbsMethodSchema, db, sql } =
     usePrgl();
-  const { pgRestore, bkpDelete } = dbsMethods;
+  const { bkpDelete } = dbsMethods;
   const connection_id = connectionId;
 
   // const [backupsFilterType, setBackupsFilterType] = useState<
@@ -193,7 +193,7 @@ export const CompletedBackups = ({
           <CodeConfirmation
             title={"Delete the backup file from storage"}
             data-command="BackupsControls.Completed.delete"
-            show={!row.uploaded ? "confirmButton" : undefined}
+            bypassConfirmation={!row.uploaded}
             button={
               <Btn iconPath={mdiDelete} title="Will need to confirm">
                 Delete
@@ -202,30 +202,26 @@ export const CompletedBackups = ({
             message={
               <InfoRow color="warning">This action is not reversible!</InfoRow>
             }
-            confirmButton={(popupClose) => (
-              <>
-                <Btn
-                  iconPath={mdiDelete}
-                  variant="outline"
-                  color="danger"
-                  onClickPromise={() =>
-                    bkpDelete!({ bkpId: row.id }).then(popupClose)
-                  }
-                >
-                  Delete
-                </Btn>
-                <Btn
-                  iconPath={mdiDelete}
-                  variant="outline"
-                  color="danger"
-                  onClickPromise={() =>
-                    bkpDelete!({ bkpId: row.id, force: true }).then(popupClose)
-                  }
-                >
-                  Force delete
-                </Btn>
-              </>
-            )}
+            confirmButtons={[
+              {
+                iconPath: mdiDelete,
+                variant: "outline",
+                color: "danger",
+                onClickPromise: async () => {
+                  await bkpDelete!({ bkpId: row.id });
+                },
+                children: t.common.Delete,
+              },
+              {
+                iconPath: mdiDelete,
+                variant: "outline",
+                color: "danger",
+                onClickPromise: async () => {
+                  await bkpDelete!({ bkpId: row.id, force: true });
+                },
+                children: "Force delete",
+              },
+            ]}
           />
 
           <Btn
@@ -240,13 +236,10 @@ export const CompletedBackups = ({
           </Btn>
 
           <Restore
-            dbs={dbs}
-            db={db}
-            sql={sql}
             backupId={row.id}
             connectionId={connection_id}
-            dbsMethods={dbsMethods}
             data-command="BackupsControls.Completed.restore"
+            mode="fromBackup"
             button={
               <Btn
                 iconPath={mdiBackupRestore}
@@ -258,22 +251,6 @@ export const CompletedBackups = ({
                 Restore...
               </Btn>
             }
-            onReadyButton={(restoreOpts, popupClose) => (
-              <Btn
-                iconPath={mdiBackupRestore}
-                variant="filled"
-                color="action"
-                onClickPromise={() =>
-                  pgRestore!({
-                    bkpId: row.id,
-                    connId: connectionId,
-                    opts: restoreOpts,
-                  }).then(popupClose)
-                }
-              >
-                Restore
-              </Btn>
-            )}
           />
         </div>
       )}

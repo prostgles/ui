@@ -39,6 +39,9 @@ export const refreshModels = async (dbs: DBS) => {
         context_length: m.context_length,
         mcp_tool_support: m.supported_parameters.includes("tools"),
         provider_id,
+        extra_body: {
+          max_tokens: Math.min(9_000, m.top_provider.max_completion_tokens),
+        },
       } satisfies DBSSchemaForInsert["llm_models"];
     })
     .filter(isDefined)

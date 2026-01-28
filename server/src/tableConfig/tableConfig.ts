@@ -89,8 +89,6 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     },
   },
 
-  ...tableConfigServices,
-
   login_attempts: {
     // dropIfExists: true,
     columns: {
@@ -126,6 +124,8 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   ...tableConfigDatabaseConfig,
 
   ...tableConfigConnections,
+
+  ...tableConfigServices,
 
   alerts: {
     columns: {

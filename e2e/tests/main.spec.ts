@@ -484,6 +484,18 @@ test.describe("Main test", () => {
 
     const dbName = "cloud";
     await createDatabase(dbName, page, false);
+
+    /** Create table */
+    await runDbSql(
+      page,
+      `CREATE TABLE IF NOT EXISTS example_table (id SERIAL PRIMARY KEY, name TEXT);`,
+    );
+    await expect(
+      page
+        .getByTestId("dashboard.menu.tablesSearchList")
+        .locator(getDataKey("example_table")),
+    ).toBeVisible();
+
     await page.getByTestId("dashboard.goToConnConfig").click();
 
     await page.getByTestId("config.auth").click();
@@ -509,8 +521,6 @@ test.describe("Main test", () => {
     await page.getByTestId("APIDetailsTokens.CreateToken.generate").click();
     await page.getByTestId("Popup.close").click();
 
-    await page.getByTestId("APIDetailsWs.Examples").click();
-    await page.locator(getDataKey("Vanilla JS")).click();
     await page.getByTestId("APIDetailsHttp.Examples").click();
     const monacoEditor = page.getByTestId("MonacoEditor");
     await monacoEditor.waitFor({ state: "visible" });
@@ -520,28 +530,36 @@ test.describe("Main test", () => {
     <html>
       <head>
         <title> Prostgles </title>
-
+        <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1"> 
+        <script src="./script.js"></script>
       </head>
       <body style="white-space: pre">
 
-        <script>
-
-          (async () => {
-            ${jsContent}
-            document.body.innerText = JSON.stringify(schema);
-          })()
-
-        </script>
+       <h1>Loading...</h1>
         
       </body>
     </html>    
     `;
-    const filePath = join(__dirname, "../demo", "index.html");
-    await writeFileSync(filePath, indexHtml);
+    const indexFilePath = join(__dirname, "../demo", "index.html");
+    await writeFileSync(indexFilePath, indexHtml);
+    const scriptFilePath = join(__dirname, "../demo", "script.js");
+    await writeFileSync(
+      scriptFilePath,
+      `
+      (async () => {
+        ${jsContent}
+        document.body.innerText = JSON.stringify(schema, null, 2);
+      })()
+      `,
+    );
+
+    // TOOD: Check ws api as well
+    // await page.getByTestId("APIDetailsWs.Examples").click();
+    // await page.locator(getDataKey("Vanilla JS")).click();
     // const [download] = await Promise.all([
     //   page.waitForEvent("download"),
-    //   // page.getByText("Download code sample", { exact: true }).click(),
+    //   page.getByText("Download code sample", { exact: true }).click(),
     // ]);
     // await download.saveAs(filePath);
     await page.getByTestId("Popup.close").click();
@@ -556,9 +574,7 @@ test.describe("Main test", () => {
   test("Web app", async ({ page: p }) => {
     const page = p as PageWIds;
     await page.goto("http://localhost:3005");
-    await expect(
-      page.locator("text=Welcome to Prostgles Web App Demo"),
-    ).toBeVisible();
+    await expect(page.locator("body")).toContainText("example_table");
   });
 
   test("Setup Free LLM assistant functions", async ({ page: p }) => {

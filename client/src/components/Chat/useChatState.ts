@@ -55,6 +55,8 @@ export const useChatState = (
     (msg: string) => {
       if (!textAreaRef.current) return;
       textAreaRef.current.value = msg;
+      /** Scroll to end */
+      textAreaRef.current.scrollTop = textAreaRef.current.scrollHeight;
     },
     [textAreaRef],
   );

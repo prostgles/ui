@@ -1,96 +1,58 @@
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import fs from "fs";
-import * as os from "os";
-import path, { join } from "path";
-import type { DBS } from "../index";
-import { connectionManager } from "../index";
-
-export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
-export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
-
 import { getPasswordHash } from "@src/authConfig/authUtils";
-import { initBackupManager } from "@src/init/prostglesOnReady";
+import { checkClientIP } from "@src/authConfig/sessionUtils";
+import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
+import { getInstalledPsqlVersions } from "@src/BackupManager/getInstalledPrograms";
+import { getCompiledTS } from "@src/ConnectionManager/connectionManagerUtils";
+import { testDBConnection } from "@src/connectionUtils/testDBConnection";
+import { validateConnection } from "@src/connectionUtils/validateConnection";
+import { getElectronConfig } from "@src/electronConfig";
+import { connectionManager } from "@src/index";
+import { getPasswordlessAdmin } from "@src/init/initUsers";
 import { statePrgl } from "@src/init/startProstgles";
+import {
+  getMcpHostInfo,
+  getMCPServersStatus,
+  installMCPServer,
+} from "@src/McpHub/AnthropicMcpHub/installMCPServer";
+import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
 import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
-import { getPasswordlessAdmin } from "@src/SecurityManager/initUsers";
+import { getStatus } from "@src/methods/getPidStats";
+import { killPID } from "@src/methods/statusMonitorUtils";
 import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import { prostglesServices } from "@src/ServiceManager/ServiceManagerTypes";
-import { TRANSCRIBE_OUTPUT_SCHEMA } from "@src/ServiceManager/services/speechToText/TRANSCRIBE_OUTPUT_SCHEMA";
 import {
   DUMP_OPTIONS_SCHEMA,
   RESTORE_OPTIONS_SCHEMA,
 } from "@src/tableConfig/tableConfigBackups";
 import { FILE_TABLE_CONFIG_SCHEMA } from "@src/tableConfig/tableConfigDatabaseConfig";
+import { upsertConnection } from "@src/upsertConnection";
+import { existsSync, readdirSync, statSync } from "fs";
 import { mkdir } from "fs/promises";
-import {
-  createServerFunctionWithContext,
-  type ServerFunctionDefinition,
-  type ServerFunctionDefinitions,
-} from "prostgles-server";
-import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import type { AnyObject } from "prostgles-types";
-import { getKeys, includes, isEmpty } from "prostgles-types";
-import { checkClientIP, type SUser } from "../authConfig/sessionUtils";
-import { getInstalledPsqlVersions } from "../BackupManager/getInstalledPrograms";
-import {
-  getCDB,
-  getSuperUserCDB,
-} from "../ConnectionManager/ConnectionManager";
-import { getCompiledTS } from "../ConnectionManager/connectionManagerUtils";
-import { testDBConnection } from "../connectionUtils/testDBConnection";
-import { validateConnection } from "../connectionUtils/validateConnection";
-import { getElectronConfig } from "../electronConfig";
-import {
-  getMcpHostInfo,
-  getMCPServersStatus,
-  installMCPServer,
-} from "../McpHub/AnthropicMcpHub/installMCPServer";
-import { callMCPServerTool } from "../McpHub/callMCPServerTool";
-import { getStatus } from "../methods/getPidStats";
-import { killPID } from "../methods/statusMonitorUtils";
-import { upsertConnection } from "../upsertConnection";
-import { getSampleSchemas } from "./applySampleSchema";
-import { refreshModels } from "./askLLM/refreshModels";
-import { deleteConnection } from "./deleteConnection";
-import { getConnectionAndDatabaseConfig } from "./getConnectionAndDatabaseConfig";
-import { getNodeTypes } from "./getNodeTypes";
-import { setFileStorage } from "./setFileStorage";
-import { getUserServerFunctions } from "./userServerFunctions/userServerFunctions";
 import { glob } from "glob";
-import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
+import * as os from "os";
+import path, { join } from "path";
+import { createServerFunctionWithContext } from "prostgles-server";
+import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
+import { getKeys, includes, isEmpty } from "prostgles-types";
+import { getSampleSchemas } from "../applySampleSchema";
+import { refreshModels } from "../askLLM/refreshModels";
+import { deleteConnection } from "../deleteConnection";
+import { getConnectionAndDatabaseConfig } from "../getConnectionAndDatabaseConfig";
+import { getNodeTypes } from "../getNodeTypes";
+import { runConnectionQuery } from "../getServerFunctions";
+import type { getServerFunctionsContext } from "../getServerFunctionsContext";
+import { setFileStorage } from "../setFileStorage";
+import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
 
-export const getServerFunctions: ServerFunctionDefinitions<
-  DBGeneratedSchema,
-  SUser
-> = async (params) => {
-  const context = await (async () => {
-    if (!params?.user) return;
-    const { dbo: dbs, db: _dbs, user, sql } = params;
-    const backupManager = await initBackupManager(_dbs, dbs, sql);
-    const servicesManager = getServiceManager(dbs);
-    if (user.type === "admin") {
-      return {
-        ...params,
-        backupManager,
-        servicesManager,
-        dbs,
-        user,
-        type: "admin" as const,
-      };
-    }
-    return {
-      ...params,
-      dbs,
-      type: "user" as const,
-    };
-  })();
-
+export const getAdminServerFunctions = (
+  context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
+) => {
   const defineAdminFunction = createServerFunctionWithContext(
     context?.type === "admin" ? context : undefined,
   );
-  const definePublicFunction = createServerFunctionWithContext(params);
 
   const adminMethods = {
+    ...getWebAppServerFunctions(context),
     makeDirectory: defineAdminFunction({
       input: { path: "string", folderName: "string" },
       run: async ({ path, folderName }) => {
@@ -236,11 +198,11 @@ export const getServerFunctions: ServerFunctionDefinitions<
       input: { conId: { type: "string", optional: true } },
       run: ({ conId }) => {
         const dirSize = (directory: string): number => {
-          if (!fs.existsSync(directory)) return 0;
-          const files = fs.readdirSync(directory);
+          if (!existsSync(directory)) return 0;
+          const files = readdirSync(directory);
           const stats = files.flatMap((file) => {
             const fileOrPathDir = path.join(directory, file);
-            const stat = fs.statSync(fileOrPathDir);
+            const stat = statSync(fileOrPathDir);
             if (stat.isDirectory()) {
               return dirSize(fileOrPathDir);
             }
@@ -581,7 +543,6 @@ export const getServerFunctions: ServerFunctionDefinitions<
     }),
     transcribeAudio: defineAdminFunction({
       input: { audioBlob: "Blob" },
-      // output: TRANSCRIBE_OUTPUT_SCHEMA,
       run: async ({ audioBlob }, { servicesManager }) => {
         const speechToTextService = servicesManager.getService("speechToText");
         if (speechToTextService?.status !== "running") {
@@ -604,55 +565,5 @@ export const getServerFunctions: ServerFunctionDefinitions<
       throw `Admin method ${name} has run defined without admin context`;
     }
   });
-  const userServerFunctions = await getUserServerFunctions(params);
-
-  return {
-    ...userServerFunctions,
-    ...adminMethods,
-    startConnection: definePublicFunction({
-      input: { connectionId: "string" },
-      // output: {
-      //   type: {
-      //     socketPath: "string",
-      //     socketUrl: { type: "string", optional: true },
-      //   },
-      //   optional: true,
-      // },
-      run: async (
-        { connectionId },
-        { user, dbo: dbs, db: _dbs, clientReq: { socket } },
-      ) => {
-        try {
-          const socketPathAndUrl = await connectionManager.startConnection(
-            connectionId,
-            dbs,
-            _dbs,
-            socket,
-          );
-          return socketPathAndUrl;
-        } catch (error) {
-          console.error("Could not start connection " + connectionId, error);
-          /* Used to prevent data leak to client */
-          if (user?.type === "admin") {
-            throw error;
-          } else {
-            throw `Something went wrong when connecting to ${connectionId}`;
-          }
-        }
-      },
-    }),
-  } as unknown as Record<string, ServerFunctionDefinition>;
-};
-
-export const runConnectionQuery = async (
-  connId: string,
-  query: string,
-  args?: AnyObject | any[],
-  asAdminOpts?: { dbs: DBS },
-): Promise<AnyObject[]> => {
-  const { db } =
-    asAdminOpts ?
-      await getSuperUserCDB(connId, asAdminOpts.dbs)
-    : await getCDB(connId);
-  return db.any(query, args);
+  return adminMethods;
 };

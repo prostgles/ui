@@ -543,7 +543,7 @@ export const runDbSql = async (
     async ([query, args, opts, dbType]) => {
       try {
         const sql = (window as any)[dbType === "db" ? "sql" : "dbsSql"];
-        if (!sql) throw dbType + " is missing";
+        if (!sql) throw dbType === "db" ? "db is missing" : "dbs is missing";
         const data = await sql(query, args, opts);
         return [undefined, data];
       } catch (error) {

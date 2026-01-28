@@ -288,7 +288,7 @@ export const publish: Publish<
 
           const row = await dbx.connections.findOne(filter);
           if (row?.is_state_db && update.table_options) {
-            throw "Table options are not supported yet";
+            throw "Table options cannot be set on state database connections";
           }
           return update;
         },

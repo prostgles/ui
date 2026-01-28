@@ -34,7 +34,6 @@ import { useBackupsControlsState } from "./useBackupsControlsState";
 export const orderByCreated = {
   key: "created",
   asc: false,
-  // created: false,
 } as const;
 
 export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
@@ -197,12 +196,8 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
         }
 
         <Restore
-          db={db}
-          dbs={dbs}
-          sql={sql}
           connectionId={connection_id}
-          dbsMethods={dbsMethods}
-          fromFile={true}
+          mode="fromFile"
           button={
             <Btn
               color="action"
@@ -314,7 +309,7 @@ const DeleteAllBackups = ({
   dbsMethods,
   filterName,
 }: DeleteAllBackupsProps) => {
-  const onDeleteAll = async (popupClose: VoidFunction) => {
+  const onDeleteAll = async () => {
     let bkp: DBSSchema["backups"] | undefined;
     do {
       bkp = await dbs.backups.findOne(filter);
@@ -322,8 +317,6 @@ const DeleteAllBackups = ({
         await dbsMethods.bkpDelete!({ bkpId: bkp.id, force: true });
       }
     } while (bkp);
-
-    popupClose();
   };
 
   return (
@@ -342,19 +335,16 @@ const DeleteAllBackups = ({
           <strong>{filterName}</strong>. This action is not reversible!
         </InfoRow>
       }
-      confirmButton={(popupClose) => (
-        <>
-          <Btn
-            iconPath={mdiDelete}
-            variant="outline"
-            color="danger"
-            data-command="BackupControls.DeleteAll.Confirm"
-            onClickPromise={() => onDeleteAll(popupClose)}
-          >
-            Force delete backups
-          </Btn>
-        </>
-      )}
+      confirmButtons={[
+        {
+          iconPath: mdiDelete,
+          variant: "outline",
+          color: "danger",
+          "data-command": "BackupControls.DeleteAll.Confirm",
+          onClickPromise: onDeleteAll,
+          children: "Force delete backups",
+        },
+      ]}
     />
   );
 };

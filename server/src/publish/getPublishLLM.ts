@@ -1,11 +1,11 @@
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
-import { getBestLLMChatModel } from "../publishMethods/askLLM/askLLM";
-import { fetchLLMResponse } from "../publishMethods/askLLM/fetchLLMResponse";
+import { getBestLLMChatModel } from "../serverFunctions/askLLM/askLLM";
+import { fetchLLMResponse } from "../serverFunctions/askLLM/fetchLLMResponse";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
-import { refreshModels } from "@src/publishMethods/askLLM/refreshModels";
+import { refreshModels } from "@src/serverFunctions/askLLM/refreshModels";
 import type { DBS } from "..";
 
 export const getPublishLLM = (

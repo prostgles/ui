@@ -35,7 +35,7 @@ export const FooterButtons = ({
     return null;
   }
   return (
-    <Footer {...divProps} style={{ padding: "1em" }}>
+    <Footer {...divProps} style={{ padding: "1em", ...divProps.style }}>
       {footer}
       {bottomBtns.map((b, i: any) => {
         if ("node" in b)

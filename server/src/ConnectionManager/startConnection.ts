@@ -22,6 +22,7 @@ import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { API_ENDPOINTS } from "@common/utils";
+import { join } from "path";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -214,11 +215,13 @@ export const startConnection = async function (
           );
         });
 
+        const { disable_realtime, web_app_directory, web_app_templated } =
+          connection;
         const prgl = await prostgles<void, SUser>({
           dbConnection: connectionInfo,
           ...hotReloadConfig,
           watchSchema,
-          disableRealtime: connection.disable_realtime ?? undefined,
+          disableRealtime: disable_realtime ?? undefined,
           transactions: true,
           joins: "inferred",
           publish: getConnectionPublish({
@@ -226,6 +229,10 @@ export const startConnection = async function (
             dbConf: databaseConfig,
             connection: connection,
           }),
+          tsGeneratedTypesDir:
+            web_app_templated && web_app_directory ?
+              join(web_app_directory, "src", "api")
+            : undefined,
           functions: getConnectionServerFunctions({
             dbConf: databaseConfig,
             dbs,

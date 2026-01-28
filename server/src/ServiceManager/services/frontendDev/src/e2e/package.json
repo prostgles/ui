@@ -1,0 +1,12 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright install && playwright test main.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^20.4.4"
+  }
+}

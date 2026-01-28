@@ -35,7 +35,7 @@ export type TypeAutoOpts = {
 
 export const runDbSQL: SQLHandler = async (...args: any[]) => {
   try {
-    return await (window as any).db?.sql(...args);
+    return await (window as any)?.sql(...args);
   } catch (e) {
     console.error(e);
     throw e;
