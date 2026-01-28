@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "playwright install && playwright test main.spec.ts"
+    "postinstall": "npx playwright install",
+    "test": "playwright test main.spec.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",

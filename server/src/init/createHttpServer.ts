@@ -59,7 +59,9 @@ export const createHttpServer = ({
 
   if (webAppDirectory) {
     const buildDirectory =
-      webAppTemplated ? join(webAppDirectory, "dist") : webAppDirectory;
+      webAppTemplated ?
+        join(webAppDirectory, "client", "dist")
+      : webAppDirectory;
     app.use(
       express.static(buildDirectory, {
         index: "index.html",

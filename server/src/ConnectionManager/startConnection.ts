@@ -231,7 +231,7 @@ export const startConnection = async function (
           }),
           tsGeneratedTypesDir:
             web_app_templated && web_app_directory ?
-              join(web_app_directory, "src", "api")
+              join(web_app_directory, "client", "src", "api")
             : undefined,
           functions: getConnectionServerFunctions({
             dbConf: databaseConfig,

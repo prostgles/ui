@@ -18,8 +18,8 @@ export default defineConfig({
     baseURL:
       URL || "http://URL_environment_variable_needs_to_be_set.localhost:3000",
     trace: "retain-on-failure",
-    video: "retain-on-failure",
-    // video: "on",
+    // video: "retain-on-failure",
+    video: "on",
     testIdAttribute: "data-command",
     actionTimeout: 5e3,
   },

@@ -96,10 +96,9 @@ export const getWebAppServerFunctions = (
     buildWebApp: defineAdminFunction({
       input: {
         connectionId: "string",
-        test: "boolean",
         clean: { type: "boolean", optional: true },
       },
-      run: async ({ connectionId, clean, test }, { dbo }) => {
+      run: async ({ connectionId, clean }, { dbo }) => {
         const { web_app_directory } = await getTemplatedConnection(
           dbo,
           connectionId,
@@ -114,31 +113,12 @@ export const getWebAppServerFunctions = (
             rmSync(`${dirToClean}/package-lock.json`);
           }
         }
-        const uid = process.getuid?.();
-        const gid = process.getgid?.();
-        if (uid === undefined || gid === undefined) {
-          throw "Cannot get user or group id for current process";
-        }
-        const result = await executeDockerCommand(
-          [
-            "run",
-            "--rm",
-            `-u`,
-            `${uid}:${gid}`,
-            "-v",
-            `${web_app_directory}:/app`,
-            "-w",
-            "/app",
-            "node:20-slim",
-            "sh",
-            "-c",
-            `cd client && npm install --silent && npm run build ${test ? "cd ../e2e && npm test" : ""}`,
-          ],
-          {
-            cwd: web_app_directory,
-            timeout: 120_000,
-          },
-        );
+
+        const result = await runDocker({
+          web_app_directory,
+          image: "node:20-slim",
+          shCommand: "cd client && npm install --silent && npm run build",
+        });
 
         // let testResult:
         //   | { stdout: string; stderr: string; exitCode: number }
@@ -159,6 +139,34 @@ export const getWebAppServerFunctions = (
         //   };
         // }
 
+        return result;
+      },
+    }),
+    testWebApp: defineAdminFunction({
+      input: {
+        connectionId: "string",
+      },
+      run: async ({ connectionId }, { dbo }) => {
+        const { web_app_directory, port } = await getTemplatedConnection(
+          dbo,
+          connectionId,
+        );
+
+        if (!port) {
+          throw "Web app port not set for connection";
+        }
+
+        const result = await runDocker({
+          web_app_directory,
+          ipc: "host",
+          network: "host",
+          env: {
+            /** To run tests against built version */
+            URL: `http://localhost:${port}`,
+          },
+          image: "mcr.microsoft.com/playwright:v1.58.0-noble",
+          shCommand: "cd e2e && npm install --silent && npm test",
+        });
         return result;
       },
     }),
@@ -254,6 +262,61 @@ export const getWebAppServerFunctions = (
       },
     }),
   };
+};
+
+const runDocker = async ({
+  shCommand,
+  web_app_directory,
+  image,
+  timeout = 120_000,
+  env = {},
+  ipc,
+  network,
+}: {
+  web_app_directory: string;
+  shCommand: string;
+  timeout?: number;
+  image: "node:20-slim" | "mcr.microsoft.com/playwright:v1.58.0-noble";
+  env?: Record<string, string>;
+  /**
+   * Needed for Playwright
+   */
+  ipc?: "host" | undefined;
+  network?: "host" | undefined;
+}) => {
+  const uid = process.getuid?.();
+  const gid = process.getgid?.();
+  if (uid === undefined || gid === undefined) {
+    throw "Cannot get user or group id for current process";
+  }
+  const result = await executeDockerCommand(
+    [
+      "run",
+      "--rm",
+      ...(ipc ? ["--ipc", ipc] : []),
+      ...(network ? ["--network", network] : []),
+      `-u`,
+      `${uid}:${gid}`,
+      "-v",
+      `${web_app_directory}:/app`,
+      "-w",
+      "/app",
+      ...Object.entries(env).flatMap(([key, value]) => [
+        "-e",
+        `${key}=${value}`,
+      ]),
+      image,
+      "sh",
+      "-c",
+      shCommand,
+    ],
+    {
+      cwd: web_app_directory,
+      timeout,
+    },
+  );
+
+  return result;
 };
 
 const copyFolder = async (src: string, dest: string) => {

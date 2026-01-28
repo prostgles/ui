@@ -4,7 +4,10 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FileBrowser } from "@components/FileBrowser/FileBrowser";
 import { FlexCol } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
-import { FooterButtons } from "@components/Popup/FooterButtons";
+import {
+  FooterButtons,
+  type FooterButtonsProps,
+} from "@components/Popup/FooterButtons";
 import PopupMenu from "@components/PopupMenu";
 import { mdiFolderOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -17,7 +20,7 @@ export const WebAppConfig = () => {
   const {
     connectionId,
     dbs,
-    dbsMethods: { buildWebApp, createWebAppFromTemplate, glob },
+    dbsMethods: { buildWebApp, testWebApp, createWebAppFromTemplate, glob },
   } = usePrgl();
   const {
     data: connection,
@@ -194,35 +197,50 @@ export const WebAppConfig = () => {
                     });
                   },
                 },
-                connection.web_app_templated ?
-                  {
-                    label: "Build",
-                    variant: "filled",
-                    color: "action",
-                    onClickPromise: async () => {
-                      await onErrorAlert(async () => {
-                        const result = await buildWebApp!({
-                          connectionId,
-                          test: false,
+                ...(connection.web_app_templated ?
+                  ([
+                    {
+                      label: "Build",
+                      variant: "filled",
+                      color: "action",
+                      onClickPromise: async () => {
+                        await onErrorAlert(async () => {
+                          const result = await buildWebApp!({
+                            connectionId,
+                          });
+                          console.log("Docker build result: ", result);
+                          if (result.state === "error") {
+                            throw result.log;
+                          }
                         });
-                        console.log("Docker build result: ", result);
-                        if (result.state === "error") {
-                          throw result.log;
-                        }
-                      });
+                      },
                     },
-                  }
-                : undefined,
-                connection.web_app_templated ?
-                  {
-                    label: "Open in browser",
-                    variant: "filled",
-                    color: "action",
-                    onClick: () => {
-                      window.open(webAppUrl, "_blank");
+                    {
+                      label: "Test",
+                      variant: "filled",
+                      color: "action",
+                      onClickPromise: async () => {
+                        await onErrorAlert(async () => {
+                          const result = await testWebApp!({
+                            connectionId,
+                          });
+                          console.log("Docker test result: ", result);
+                          if (result.state === "error") {
+                            throw result.log;
+                          }
+                        });
+                      },
                     },
-                  }
-                : undefined,
+                    {
+                      label: "Open in browser",
+                      variant: "filled",
+                      color: "action",
+                      onClick: () => {
+                        window.open(webAppUrl, "_blank");
+                      },
+                    },
+                  ] satisfies FooterButtonsProps["footerButtons"])
+                : []),
               ]}
             />
           )}
