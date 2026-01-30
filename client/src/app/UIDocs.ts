@@ -17,6 +17,7 @@ import { overviewUIDoc } from "./UIDocs/overviewUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 import { UIInstallation } from "./UIDocs/UIInstallationUIDoc";
 import { getSVGif } from "./domToSVG/SVGif/getSVGif";
+import type { DynamicComponentRegistry } from "./CommandPalette/DynamicComponent";
 
 /**
  * The purpose of UIDocs is to provide structured metadata about the UI elements.
@@ -68,6 +69,8 @@ type UIDocCommon = {
 
   /** If true then this is not available for Prostgles Desktop */
   uiVersionOnly?: true;
+
+  componentName?: keyof DynamicComponentRegistry;
 };
 
 /**

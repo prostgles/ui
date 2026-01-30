@@ -13,7 +13,7 @@ const runSQLSchema = {
         query_params: {
             optional: true,
             description: "Query parameters to use in the SQL query. Must satisfy the query schema.",
-            type: "any",
+            type: "unknown",
         },
     },
 };
@@ -335,6 +335,90 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     url: {
                         type: "string",
                         description: "URL of the web page to snapshot",
+                    },
+                },
+            },
+            outputSchema: {
+                type: {
+                    content: "string",
+                },
+            },
+        },
+    },
+    webdev: {
+        read_files: {
+            description: "Read files from the web app directory",
+            schema: {
+                type: {
+                    filePaths: {
+                        description: "File paths to read from the web app directory",
+                        arrayOf: "string",
+                    },
+                },
+            },
+            outputSchema: {
+                record: {
+                    values: {
+                        type: "string",
+                        description: "File content",
+                    },
+                },
+            },
+        },
+        search_files: {
+            description: "Search files by content in the web app directory",
+            schema: {
+                type: {
+                    query: {
+                        type: "string",
+                        description: "Search query string",
+                    },
+                    extensions: {
+                        description: "File extensions to limit the search to (e.g., ['ts', 'tsx', 'js', 'jsx'])",
+                        arrayOf: "string",
+                        optional: true,
+                    },
+                },
+            },
+            outputSchema: {
+                arrayOfType: {
+                    filePath: "string",
+                    matchedContent: "string",
+                },
+            },
+        },
+        create_component: {
+            description: "Create a react component",
+            schema: {
+                type: {
+                    entryPoint: {
+                        type: "string",
+                        description: "Entry point file for the component. Example: 'src/components/Counter/Counter.tsx'",
+                    },
+                    files: {
+                        description: `tsx/css and other files for the component. Example: { "src/components/Counter/Counter.tsx":  "import { useState } from "react"; ..."  } `,
+                        record: {
+                            values: {
+                                type: {
+                                    content: "string",
+                                    description: "string",
+                                },
+                            },
+                        },
+                    },
+                    dependencies: {
+                        description: "Dependencies to install in the environment (e.g., react, axios)",
+                        arrayOf: "string",
+                        optional: true,
+                    },
+                    devDependencies: {
+                        description: "Dev Dependencies to install in the environment (e.g., @types/pkg)",
+                        arrayOf: "string",
+                        optional: true,
+                    },
+                    test: {
+                        description: "Playwright test to run against the component. Example:  'import { test, expect } from \"@playwright/react\"; ...'",
+                        type: "string",
                     },
                 },
             },

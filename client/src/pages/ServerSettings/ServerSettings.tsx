@@ -68,7 +68,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
     } catch (error: unknown) {
       return { error, to: undefined, from: undefined };
     }
-  }, [testCIDR, dbs.sql]);
+  }, [testCIDR, dbsSql]);
 
   if (!myIP || !stateConnection) return <Loading />;
 
@@ -245,7 +245,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       Configure LLM provider credentials used in AI Assistant
                       chat.
                     </InfoRow>
-                    <LLMProviderSetup {...props} />
+                    <LLMProviderSetup />
                   </FlexCol>
                 ),
               },

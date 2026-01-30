@@ -72,9 +72,15 @@ export const getUserServerFunctions = async (
         prompt: "string",
         schema: "string",
         dashboardTypesContent: "string",
+        connectionId: "string",
       },
-      run({ schema, dashboardTypesContent, prompt }) {
-        return getFullPrompt({ schema, dashboardTypesContent, prompt });
+      run({ schema, dashboardTypesContent, prompt, connectionId }) {
+        return getFullPrompt({
+          schema,
+          dashboardTypesContent,
+          prompt,
+          connectionId,
+        });
       },
     }),
     stopAskLLM: defineUserServerFunction({

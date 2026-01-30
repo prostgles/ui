@@ -33,7 +33,7 @@ import * as os from "os";
 import path, { join } from "path";
 import { createServerFunctionWithContext } from "prostgles-server";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import { getKeys, includes, isEmpty } from "prostgles-types";
+import { getKeys, includes, isEmpty, type SQLHandler } from "prostgles-types";
 import { getSampleSchemas } from "../applySampleSchema";
 import { refreshModels } from "../askLLM/refreshModels";
 import { deleteConnection } from "../deleteConnection";
@@ -177,9 +177,17 @@ export const getAdminServerFunctions = (
     }),
     getDBSize: defineAdminFunction({
       input: { conId: "string" },
-      run: async ({ conId }) => {
-        const c = connectionManager.getConnectionStartedInstance(conId);
-        const size = (await c.prgl.sql(
+      run: async ({ conId }, { dbo, sql }) => {
+        // TODO: move state db to connectionManager
+        const connection = await dbo.connections.findOne({ id: conId });
+        let sqlHandler: SQLHandler | undefined;
+        if (connection?.is_state_db) {
+          sqlHandler = sql;
+        } else {
+          const c = connectionManager.getConnectionStartedInstance(conId);
+          sqlHandler = c.prgl.sql;
+        }
+        const size = (await sqlHandler(
           "SELECT pg_size_pretty( pg_database_size(current_database()) ) ",
           {},
           { returnType: "value" },

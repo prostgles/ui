@@ -215,8 +215,7 @@ export const startConnection = async function (
           );
         });
 
-        const { disable_realtime, web_app_directory, web_app_templated } =
-          connection;
+        const { disable_realtime } = connection;
         const prgl = await prostgles<void, SUser>({
           dbConnection: connectionInfo,
           ...hotReloadConfig,
@@ -229,10 +228,6 @@ export const startConnection = async function (
             dbConf: databaseConfig,
             connection: connection,
           }),
-          tsGeneratedTypesDir:
-            web_app_templated && web_app_directory ?
-              join(web_app_directory, "client", "src", "api")
-            : undefined,
           functions: getConnectionServerFunctions({
             dbConf: databaseConfig,
             dbs,

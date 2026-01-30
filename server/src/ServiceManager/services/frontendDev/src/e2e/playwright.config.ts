@@ -15,6 +15,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : 4,
   reporter: [["html", { noCopyPrompt: true }]],
   use: {
+    browserName: "chromium",
     baseURL:
       URL || "http://URL_environment_variable_needs_to_be_set.localhost:3000",
     trace: "retain-on-failure",

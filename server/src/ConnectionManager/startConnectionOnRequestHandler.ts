@@ -40,6 +40,7 @@ export const startConnectionOnRequestHandler = ({
       if (connectionIdOrPath) {
         validOfflineConnectionId = connections.find(
           (c) =>
+            !c.is_state_db && // State db starts automatically
             !prglConnections.get(c.id) &&
             [c.id, c.url_path].includes(connectionIdOrPath),
         )?.id;

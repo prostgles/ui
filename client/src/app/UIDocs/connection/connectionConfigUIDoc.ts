@@ -46,7 +46,17 @@ export const connectionConfigUIDoc = {
     accessControlUIDoc,
     fileStorageUIDoc,
     backupAndRestoreUIDoc,
+    {
+      type: "tab",
+      selectorCommand: "config.webApp",
+      componentName: "WebAppConfig",
+      title: "Web app",
+      description:
+        "React based web development environment (experimental feature).",
+      children: [],
+    },
     apiUIDoc,
+
     {
       type: "tab",
       selectorCommand: "config.tableConfig",

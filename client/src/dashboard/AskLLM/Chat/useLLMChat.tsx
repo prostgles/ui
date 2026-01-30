@@ -4,6 +4,7 @@ import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
 import { useLLMChatMessages } from "./AskLLMChatMessages/hooks/useLLMChatMessages";
+import { setChatPrompt } from "./AskLLMChatMessages/setChatPrompt";
 
 export type UseLLMChatProps = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId" | "db" | "sql"> & {
@@ -16,8 +17,7 @@ export const useLLMChat = (props: UseLLMChatProps) => {
   const { dbs, credentials, firstPromptId, defaultCredential, prompts } = props;
   const chatsFilter = useMemo(() => {
     return {
-      /** TODO: fix $in: [string, null] types */
-      connection_id: { $in: [props.connectionId, null as any] },
+      connection_id: { $in: [props.connectionId, null] },
     };
   }, [props.connectionId]);
   const [selectedChatId, setSelectedChat] = useState<number>();
@@ -46,26 +46,32 @@ export const useLLMChat = (props: UseLLMChatProps) => {
           return;
         }
       }
-      if (!preferredPromptId) {
+      const prompt = prompts.find((p) => p.id === promptId);
+      if (!preferredPromptId || !prompt) {
         console.warn("No prompt found", { prompts });
         return;
       }
-      await dbs.llm_chats.insert(
+      const newChat = await dbs.llm_chats.insert(
         {
           name: "New chat",
-          //@ts-ignore
-          user_id: undefined,
+          // TODO: add publish rules (forcedData) to DBHandlerClient typings
+          user_id: undefined as any,
           connection_id: props.connectionId,
           llm_prompt_id: promptId,
           model: lastModelId,
         },
         { returning: "*" },
       );
+      await setChatPrompt({
+        dbs,
+        chatId: newChat.id,
+        prompt,
+      });
       setSelectedChat(undefined);
     },
     [
       chatsFilter,
-      dbs.llm_chats,
+      dbs,
       lastModelId,
       preferredPromptId,
       prompts,
@@ -77,7 +83,7 @@ export const useLLMChat = (props: UseLLMChatProps) => {
     if (latestChats && !latestChats.length && preferredPromptId) {
       void createNewChat(preferredPromptId, true);
     }
-  }, [latestChats, preferredPromptId, defaultCredential]);
+  }, [latestChats, preferredPromptId, defaultCredential, createNewChat]);
 
   const { llmMessages, messages } = useLLMChatMessages({
     ...props,

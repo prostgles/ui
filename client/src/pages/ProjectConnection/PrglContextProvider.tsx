@@ -1,5 +1,8 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import type { Prgl } from "../../App";
+import { CommandPalette } from "src/app/CommandPalette/CommandPalette";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import { createStore } from "src/hooks/createStore";
 
 const PrglContext = createContext<Prgl | undefined>(undefined);
 
@@ -10,7 +13,18 @@ export const PrglProvider = ({
   prgl: Prgl;
   children: React.ReactNode;
 }) => {
-  return <PrglContext.Provider value={prgl}>{children}</PrglContext.Provider>;
+  useEffect(() => {
+    prglStateStore.setState({ loaded: true });
+    return () => {
+      prglStateStore.setState({ loaded: false });
+    };
+  }, [prgl]);
+  return (
+    <PrglContext.Provider value={prgl}>
+      <CommandPalette isElectron={prgl.serverState.isElectron} />
+      {children}
+    </PrglContext.Provider>
+  );
 };
 
 export const usePrgl = () => {
@@ -20,3 +34,9 @@ export const usePrgl = () => {
   }
   return context;
 };
+
+export const prglStateStore = createStore<{
+  loaded: boolean;
+}>({
+  loaded: false,
+});

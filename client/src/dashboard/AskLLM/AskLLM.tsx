@@ -58,7 +58,6 @@ export const AskLLM = (props: P) => {
         />
       : <AskLLMChat
           loadedSuggestions={loadedSuggestions}
-          prgl={prgl}
           askLLM={askLLM}
           stopAskLLM={stopAskLLM}
           workspaceId={workspaceId}

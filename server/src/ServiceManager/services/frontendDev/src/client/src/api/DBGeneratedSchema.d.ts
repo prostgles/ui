@@ -16,4 +16,18 @@ export type DBGeneratedSchema = {
 }
 
 
+/**
+ * Data types as expected when selecting from the database
+ * */
+export type DBSchema = {
+  [K in keyof DBGeneratedSchema]: Required<DBGeneratedSchema[K]["columns"]>;
+};
+
+/**
+ * Data types as expected when inserting into the database (optional fields might be nullable/with defaults)
+ * */
+export type DBSchemaForInsert = {
+  [K in keyof DBGeneratedSchema]: DBGeneratedSchema[K]["columns"];
+};
+
 export type GeneratedFunctionSchema = Record<string, never>;

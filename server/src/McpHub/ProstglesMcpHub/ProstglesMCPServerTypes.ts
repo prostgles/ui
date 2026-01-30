@@ -87,3 +87,13 @@ export type ProstglesMcpServerHandlerTyped<
     // JSONBTypeIfDefined<ServerDefinition["tools"][ToolName]["outputSchema"]>
   }>;
 };
+
+export type ProstglesMcpServerTool<
+  ServerDefinition extends ProstglesMcpServerDefinition,
+  ToolName extends keyof ServerDefinition["tools"],
+> = (
+  toolArguments: JSONBTypeIfDefined<
+    ServerDefinition["tools"][ToolName]["schema"]
+  >,
+  context: McpCallContext,
+) => MaybePromise<unknown>;

@@ -28,12 +28,25 @@ type P = Pick<DashboardProps, "prgl"> & {
 
 export const DashboardMenuSettings = ({
   workspace,
-  prgl: { dbsMethods, dbsMethodSchema, dbs, dbsTables, dbsSql },
+  prgl: {
+    dbsMethods: { getDBSize },
+    dbsMethodSchema,
+    dbs,
+    dbsTables,
+    dbsSql,
+  },
 }: P) => {
-  const dbSize = usePromise(
-    async () => dbsMethods.getDBSize?.({ conId: workspace.connection_id }),
-    [dbsMethods, workspace],
-  );
+  const dbSize = usePromise(async () => {
+    if (!getDBSize) return;
+    return getDBSize({ conId: workspace.connection_id }).catch(() => {
+      console.error(
+        "Failed to get DB size for ",
+        workspace.connection_id,
+        workspace,
+      );
+      return undefined;
+    });
+  }, [getDBSize, workspace]);
 
   const localSettings = useLocalSettings();
 

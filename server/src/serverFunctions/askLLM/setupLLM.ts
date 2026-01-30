@@ -4,98 +4,129 @@ import type { DBSSchemaForInsert } from "@common/publishUtils";
 export const setupLLM = async (dbs: DBS) => {
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (dbs.llm_prompts && !(await dbs.llm_prompts.findOne())) {
+  if (dbs.llm_prompts) {
+    // && !(await dbs.llm_prompts.findOne())
     const adminUser = await dbs.users.findOne({ passwordless_admin: true });
     const user_id = adminUser?.id;
     const firstLine = [
       `You are an assistant for a software called ${LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME}.`,
       `It allows managing and exploring data within Postgres databases as well as creating internal tools. \n`,
       `Today is ${LLM_PROMPT_VARIABLES.TODAY}.`,
-      `DO NOT USE HARDCODED SAMPLE DATA UNLESS THE USER ASKS FOR IT.`,
+      `DO NOT USE HARDCODED DATA UNLESS STRICTLY NECESSARY OR THE USER ASKS FOR IT.`,
     ].join("\n");
-    await dbs.llm_prompts.insert([
-      {
-        name: "Chat",
-        description: "Default chat. Includes schema (if allowed)",
-        user_id,
-        prompt: [
-          firstLine,
-          "Assist user with any queries they might have. Do not add empty lines in your sql response.",
-          "Reply with a full and concise answer that does not require further clarification or revisions.",
-          "Below is the database schema they're currently working with:",
-          "When asked to add or generate data DO NOT CREATE IT YOURSELF. ",
-          "USE PUBLIC SOURCES OR GENERATE IT THORUGH TOOLS. NEVER PROVIDE THE VALUES YOURSELF UNLESS SPECIFICALLY ASKED.",
-          "",
-          LLM_PROMPT_VARIABLES.SCHEMA,
-        ].join("\n"),
-      },
-      {
-        name: "Create dashboards",
-        description:
-          "Includes database schema and dashboard view structure. Claude Sonnet recommended",
-        user_id,
-        options: {
-          prompt_type: "dashboards",
+    await dbs.llm_prompts.insert(
+      [
+        {
+          name: "Chat",
+          description: "Default chat. Includes schema (if allowed)",
+          user_id,
+          prompt: [
+            firstLine,
+            "Assist user with any queries they might have. Do not add empty lines in your sql response.",
+            "Reply with a full and concise answer that does not require further clarification or revisions.",
+            "Below is the database schema they're currently working with:",
+            "When asked to add or generate data DO NOT CREATE IT YOURSELF. ",
+            "USE PUBLIC SOURCES OR GENERATE IT THORUGH TOOLS. NEVER PROVIDE THE VALUES YOURSELF UNLESS SPECIFICALLY ASKED.",
+            "",
+            LLM_PROMPT_VARIABLES.SCHEMA,
+          ].join("\n"),
         },
-        prompt: [
-          firstLine,
-          "Assist user with any queries they might have about creating dashboards.",
-          "Below is the database schema they're currently working with:",
-          "",
-          LLM_PROMPT_VARIABLES.SCHEMA,
-          "",
-        ].join("\n"),
-      },
-      {
-        name: "Create task",
-        description:
-          "Includes database schema and full tools list. Will suggest database access type and tools required to completed the task. Claude Sonnet recommended",
-        user_id,
-        options: {
-          prompt_type: "tasks",
+        {
+          name: "Create dashboards",
+          description:
+            "Includes database schema and dashboard view structure. Claude Sonnet recommended",
+          user_id,
+          options: {
+            prompt_type: "dashboards",
+          },
+          prompt: [
+            firstLine,
+            "Assist user with any queries they might have about creating dashboards.",
+            "Below is the database schema they're currently working with:",
+            "",
+            LLM_PROMPT_VARIABLES.SCHEMA,
+            "",
+          ].join("\n"),
         },
-        prompt: [
-          firstLine,
-          "Assist the user with any queries they might have in their current task mode.",
-          "They expect you to look at the schema and the tools available to them and return a list of tools are best suited for accomplishing their task.",
-          "Ask the user for more information if you are not sure.",
-          "When suggesting a prompt make sure you add a ${today} placeholder that will be replaced with today's date.",
-          "",
-          "",
-          "Below is the database schema they're currently working with:",
-          "",
-          LLM_PROMPT_VARIABLES.SCHEMA,
-          "",
-        ].join("\n"),
-      },
-      {
-        name: "Create workflow",
-        description:
-          "Includes database schema and full tools list. Will suggest database access type, tools and workflow logic required to completed the task. Claude Sonnet recommended",
-        user_id,
-        options: {
-          prompt_type: "agent_workflow",
+        {
+          name: "Create task",
+          description:
+            "Includes database schema and full tools list. Will suggest database access type and tools required to completed the task. Claude Sonnet recommended",
+          user_id,
+          options: {
+            prompt_type: "tasks",
+          },
+          prompt: [
+            firstLine,
+            "Assist the user with any queries they might have in their current task mode.",
+            "They expect you to look at the schema and the tools available to them and return a list of tools are best suited for accomplishing their task.",
+            "Ask the user for more information if you are not sure.",
+            "When suggesting a prompt make sure you add a ${today} placeholder that will be replaced with today's date.",
+            "",
+            "",
+            "Below is the database schema they're currently working with:",
+            "",
+            LLM_PROMPT_VARIABLES.SCHEMA,
+            "",
+          ].join("\n"),
         },
-        prompt: [
-          firstLine,
-          "Assist the user in creating a workflow.",
-          "They expect you to look at the schema and tools available to them and return the best suited tools, database schema and workflow logic for accomplishing their task.",
-          "Ask the user for more information if you are not sure.",
-          "",
-          "",
-          "Below is the database schema they're currently working with:",
-          "",
-          LLM_PROMPT_VARIABLES.SCHEMA,
-          "",
-        ].join("\n"),
-      },
-      {
-        name: "Empty",
-        description: "Empty prompt",
-        user_id,
-        prompt: "",
-      },
-    ]);
+        {
+          name: "Create workflow",
+          description:
+            "Includes database schema and full tools list. Will suggest database access type, tools and workflow logic required to completed the task. Claude Sonnet recommended",
+          user_id,
+          options: {
+            prompt_type: "agent_workflow",
+          },
+          prompt: [
+            firstLine,
+            "Assist the user in creating a workflow.",
+            "They expect you to look at the schema and tools available to them and return the best suited tools, database schema and workflow logic for accomplishing their task.",
+            "Ask the user for more information if you are not sure.",
+            "",
+            "",
+            "Below is the database schema they're currently working with:",
+            "",
+            LLM_PROMPT_VARIABLES.SCHEMA,
+            "",
+          ].join("\n"),
+        },
+        {
+          name: "Web app development",
+          description:
+            "Includes database schema and full tools list. Will suggest database access type, tools and workflow logic required to completed the task. Claude Sonnet recommended",
+          user_id,
+          options: {
+            mcp_servers: ["webdev"],
+            max_tokens: 18_000,
+          },
+          prompt: [
+            firstLine,
+            "Assist the user in creating a web app for the current database schema.",
+            "They expect you to create robust, modern, responsive and intuitive interfaces.",
+            "Do not overengineer - keep things simple and functional.",
+            "Ask the user for more information if you are not sure.",
+            "",
+            "",
+            "Below is the database schema they're currently working with.",
+            "All interactions between the web app and the database are done through prostgles client API which is exposed throught the useProstgles hook:",
+            `useProstgles(): ClientOnReadyParams<DBGeneratedSchema, GeneratedFunctionSchema, { id: string; type: string; }>`,
+            `import { useProstgles } from "@/api/ProstglesProvider";`,
+            "",
+            LLM_PROMPT_VARIABLES.DB_TYPESCRIPT_SCHEMA,
+            "",
+            LLM_PROMPT_VARIABLES.DB_HANDLER_SCHEMA,
+          ].join("\n"),
+        } satisfies DBSSchemaForInsert["llm_prompts"],
+        {
+          name: "Empty",
+          description: "Empty prompt",
+          user_id,
+          prompt: "",
+        },
+      ],
+      { onConflict: "DoNothing" },
+    );
 
     const addedPrompts = await dbs.llm_prompts.find();
     console.warn(

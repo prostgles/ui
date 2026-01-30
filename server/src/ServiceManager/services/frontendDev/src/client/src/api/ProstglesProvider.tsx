@@ -8,9 +8,10 @@ import { createContext, useContext, type ReactNode } from "react";
 import type {
   DBGeneratedSchema,
   GeneratedFunctionSchema,
+  DBSchema,
 } from "./DBGeneratedSchema";
 
-type U = Pick<DBGeneratedSchema["users"]["columns"], "id" | "type">;
+type U = Pick<DBSchema["users"], "id" | "type">;
 
 type ProstglesContextValue = ProstglesClientState<
   OnReadyParams<DBGeneratedSchema, GeneratedFunctionSchema, U>

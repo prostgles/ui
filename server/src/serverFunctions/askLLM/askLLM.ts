@@ -294,10 +294,11 @@ export const askLLM = async (args: AskLLMArgs) => {
 
     checkMaxCostLimitForChat(chat, modelData, pastMessages, userMessage);
 
-    const promptWithContext = getFullPrompt({
+    const promptWithContext = await getFullPrompt({
       prompt,
       schema,
       dashboardTypesContent,
+      connectionId,
     });
 
     const {

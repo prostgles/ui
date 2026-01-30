@@ -41,6 +41,7 @@ import { useAppState } from "./useAppState/useAppState";
 import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
 import type { SQLHandler } from "prostgles-types";
 import { PrglCoreProvider } from "./useAppState/PrglCoreContextProvider";
+import { prglStateStore } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type ClientUser = {
   sid: string;
@@ -113,6 +114,7 @@ export const App = () => {
     state: { demoStarted },
   } = useReactiveState(r_useAppVideoDemo);
 
+  const prglLoaded = prglStateStore.useStore((s) => s.loaded);
   const { theme, userThemeOption } = useAppTheme(state);
   const appContextProps: AppContextProps | undefined = useMemo(
     () =>
@@ -189,7 +191,7 @@ export const App = () => {
       <PrglCoreProvider prglCore={prglState}>
         <AlertProvider>
           <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
-            <CommandPalette isElectron={isElectron} />
+            {!prglLoaded && <CommandPalette isElectron={isElectron} />}
             <XRealIpSpoofableAlert {...state} />
             {demoStarted && <MousePointer />}
             {isDisconnected && (

@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && npm run lint && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
-    "prostgles-client": "^4.0.308",
+    "prostgles-client": "^4.0.309",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

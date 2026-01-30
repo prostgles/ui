@@ -11,25 +11,23 @@ import { LLMProviderSetup } from "./LLMProviderSetup";
 import { ProstglesSignup } from "./ProstglesSignup";
 import type { LLMSetupState } from "./useLLMSetupState";
 import { isPlaywrightTest } from "../../../i18n/i18nUtils";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
-export type SetupLLMCredentialsProps = Pick<
-  Prgl,
-  "theme" | "dbs" | "dbsTables" | "dbsMethods" | "dbsMethodSchema" | "dbsSql"
-> & {
+export type SetupLLMCredentialsProps = {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
 } & (
-    | {
-        asPopup: true;
-        onClose: VoidFunction;
-      }
-    | {
-        asPopup?: false;
-        onClose?: undefined;
-      }
-  );
+  | {
+      asPopup: true;
+      onClose: VoidFunction;
+    }
+  | {
+      asPopup?: false;
+      onClose?: undefined;
+    }
+);
 export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
-  const { dbs, dbsTables, dbsMethods, asPopup, onClose, setupState, dbsSql } =
-    props;
+  const { dbs, dbsTables, dbsMethods, dbsSql } = usePrgl();
+  const { asPopup, onClose, setupState } = props;
   const [setupType, setSetupType] = React.useState<"free" | "api" | undefined>(
     isPlaywrightTest ? undefined : "api",
   );
@@ -75,7 +73,7 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
             dbsMethods={dbsMethods}
           />
         )}
-        {setupType === "api" && <LLMProviderSetup {...props} />}
+        {setupType === "api" && <LLMProviderSetup />}
         {setupType && !prompts.length && (
           <FlexCol className="mt-2">
             <InfoRow color="info" variant="filled">

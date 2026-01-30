@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npm i && cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias && npm prune --omit=dev",
     "start": "npm run build && node dist/server/src/index.js",
-    "test": "npm run build && node --test dist/server/**/**/*.spec.js",
+    "test": "npm run build && node test-runner.mjs",
     "lint": "eslint . --ext .ts --quiet --fix",
     "dev": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/index.js\"",
     "dev:electron": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/testElectron.js\""
@@ -29,7 +29,7 @@
     "otplib": "^12.0.1",
     "path-to-regexp": "^8.3.0",
     "pidusage": "^4.0.1",
-    "prostgles-server": "^4.2.421",
+    "prostgles-server": "^4.2.430",
     "prostgles-types": "^4.0.89",
     "qrcode": "^1.5.1",
     "simple-git": "^3.27.0",

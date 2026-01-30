@@ -3,18 +3,14 @@ import Chip from "@components/Chip";
 import { InfoRow } from "@components/InfoRow";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
-import type { Prgl } from "../../../App";
 import {
   SmartCardList,
   type SmartCardListProps,
 } from "../../SmartCardList/SmartCardList";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
-export const LLMProviderSetup = ({
-  dbs,
-  dbsMethodSchema,
-  dbsTables,
-  dbsSql,
-}: Pick<Prgl, "dbs" | "dbsMethodSchema" | "dbsTables" | "dbsSql">) => {
+export const LLMProviderSetup = () => {
+  const { dbsSql, dbs, dbsTables, dbsMethodSchema } = usePrgl();
   const listProps = useMemo(() => {
     return {
       showTopBar: {

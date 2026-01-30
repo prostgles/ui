@@ -1,5 +1,6 @@
 import { getKeys, includes } from "prostgles-types";
 import { DockerSandboxMCPServer } from "./ProstglesMCPServers/DockerSandbox.mcp";
+import { WebDevMCPServer } from "./ProstglesMCPServers/WebDev/WebDev.mcp";
 import { WebSearchMCPServer } from "./ProstglesMCPServers/WebSearch.mcp";
 import type {
   ProstglesMcpServerDefinition,
@@ -9,6 +10,7 @@ import type {
 export const ProstglesMCPServers = {
   "docker-sandbox": DockerSandboxMCPServer,
   websearch: WebSearchMCPServer,
+  webdev: WebDevMCPServer,
 } as const satisfies Record<
   string,
   {

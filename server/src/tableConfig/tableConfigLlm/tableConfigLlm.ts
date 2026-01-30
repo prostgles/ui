@@ -240,6 +240,29 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
             description:
               "Internal prompt type used in controlling chat context. Some tools may not be available for all types",
           },
+          max_tokens: {
+            type: "number",
+            optional: true,
+            description: "Maximum tokens the model can generate in response",
+          },
+          temperature: {
+            type: "number",
+            optional: true,
+            description:
+              "Controls randomness in output. Lower values make output more focused and deterministic",
+          },
+          mcp_tools: {
+            description:
+              "List of tools that will be enabled for this prompt. Must match tool names exactly (<servername>--<toolname>)",
+            optional: true,
+            type: "string[]",
+          },
+          mcp_servers: {
+            description:
+              "List of MCP servers that will have all their tools enabled for this prompt. Must match tool names exactly (<servername>--<toolname>)",
+            optional: true,
+            type: "string[]",
+          },
         },
       },
       created: `TIMESTAMPTZ DEFAULT NOW()`,
@@ -247,7 +270,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
     indexes: {
       unique_llm_prompt: {
         unique: true,
-        columns: "name, user_id, prompt",
+        columns: "name",
       },
     },
   },

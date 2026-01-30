@@ -1,5 +1,6 @@
 import { dashboardTypesContent } from "@common/dashboardTypesContent";
 import type { DBSSchema } from "@common/publishUtils";
+import { useOnErrorAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import { Marked } from "@components/Chat/Marked";
 import { FlexCol } from "@components/Flex";
@@ -10,27 +11,32 @@ import {
   mdiFileEyeOutline,
   mdiViewCarousel,
 } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise, type DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
+import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
+import { setChatPrompt } from "../Chat/AskLLMChatMessages/setChatPrompt";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarPromptSelector = (
-  props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
+  props: Pick<AskLLMChatProps, "setupState"> & {
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
   },
 ) => {
-  const { prgl, setupState, activeChat, dbSchemaForPrompt } = props;
+  const { setupState, activeChat, dbSchemaForPrompt } = props;
   const activeChatId = activeChat.id;
   const { prompts } = setupState;
-  const { dbs, dbsMethods, dbsSql } = prgl;
+  const { dbs, dbsMethods, dbsSql, connectionId, dbsTables, dbsMethodSchema } =
+    usePrgl();
   const prompt = useMemo(
     () => prompts.find(({ id }) => id === activeChat.llm_prompt_id),
     [prompts, activeChat.llm_prompt_id],
   );
+
   const promptContent = usePromise(async () => {
     if (!prompt) return "";
     return (
@@ -38,9 +44,13 @@ export const AskLLMChatActionBarPromptSelector = (
         prompt: prompt.prompt,
         schema: dbSchemaForPrompt,
         dashboardTypesContent,
+        connectionId,
       }) || prompt.prompt
     );
-  }, [dbSchemaForPrompt, dbsMethods, prompt]);
+  }, [dbSchemaForPrompt, dbsMethods, prompt, connectionId]);
+
+  const { onErrorAlert } = useOnErrorAlert();
+
   return (
     <PopupMenu
       title="Prompt Selector"
@@ -75,50 +85,58 @@ export const AskLLMChatActionBarPromptSelector = (
           className: "pointer hover-bg",
         }}
         showEdit={true}
-        fieldConfigs={[
-          {
-            name: "name",
-            renderMode: "full",
-            render: (name, { id, description }) => {
-              const isActive = activeChat.llm_prompt_id === id;
-              return (
-                <Btn
-                  className={"p-0 text-0 ta-start max-w-full ws-pre-wrap"}
-                  style={{ padding: 0 }}
-                  variant="text"
-                  iconPath={isActive ? mdiCheck : mdiCircleOutline}
-                  iconStyle={isActive ? { opacity: 1 } : { opacity: 0 }}
-                  onClick={() => {
-                    if (!activeChatId) return;
-                    void dbs.llm_chats.update(
-                      { id: activeChatId },
-                      {
-                        llm_prompt_id: id,
-                      },
-                    );
-                  }}
-                >
-                  <FlexCol className="gap-p25">
-                    <div style={{ fontWeight: "bold" }}>{name}</div>
-                    <div style={{ fontWeight: "normal" }}>{description}</div>
-                  </FlexCol>
-                </Btn>
-              );
-            },
-          },
-          {
-            name: "id",
-            hide: true,
-          },
-          {
-            name: "description",
-            hide: true,
-          },
-        ]}
         tableName={"llm_prompts"}
         db={dbs as DBHandlerClient}
-        methods={prgl.dbsMethodSchema}
-        tables={prgl.dbsTables}
+        methods={dbsMethodSchema}
+        tables={dbsTables}
+        fieldConfigs={
+          [
+            {
+              name: "name",
+              renderMode: "full",
+              render: (name, newPrompt) => {
+                const { id, description } = newPrompt;
+                const isActive = activeChat.llm_prompt_id === id;
+                return (
+                  <Btn
+                    className={"p-0 text-0 ta-start max-w-full ws-pre-wrap"}
+                    style={{ padding: 0 }}
+                    variant="text"
+                    iconPath={isActive ? mdiCheck : mdiCircleOutline}
+                    iconStyle={isActive ? { opacity: 1 } : { opacity: 0 }}
+                    onClickPromise={async () => {
+                      await onErrorAlert(async () => {
+                        if (!activeChatId) return;
+                        await setChatPrompt({
+                          dbs,
+                          chatId: activeChatId,
+                          prompt: newPrompt,
+                        });
+                      });
+                    }}
+                  >
+                    <FlexCol className="gap-p25">
+                      <div style={{ fontWeight: "bold" }}>{name}</div>
+                      <div style={{ fontWeight: "normal" }}>{description}</div>
+                    </FlexCol>
+                  </Btn>
+                );
+              },
+            },
+            {
+              name: "id",
+              hide: true,
+            },
+            {
+              name: "description",
+              hide: true,
+            },
+            {
+              name: "options",
+              hide: true,
+            },
+          ] satisfies FieldConfig<DBSSchema["llm_prompts"]>[]
+        }
       />
       {prompt && (
         <CodeEditorWithSaveButton

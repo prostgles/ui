@@ -12,13 +12,13 @@ import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useAskLLMChatSend } from "./useAskLLMChatSend";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 const CHAT_WIDTH = 900;
 
 export type AskLLMChatProps = Pick<
   Required<Prgl["dbsMethods"]>,
   "askLLM" | "stopAskLLM"
 > & {
-  prgl: Prgl;
   setupState: LLMSetupStateReady;
   anchorEl: HTMLElement;
   onClose: VoidFunction;
@@ -30,13 +30,13 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   const {
     anchorEl,
     onClose,
-    prgl,
     setupState,
     workspaceId,
     loadedSuggestions,
     askLLM,
     stopAskLLM,
   } = props;
+  const prgl = usePrgl();
   const { tables, db, user, connectionId, connection, dbs, methods, sql } =
     prgl;
   const chatState = useLLMChat({

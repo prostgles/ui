@@ -2,11 +2,6 @@
 
 export type DBGeneratedSchema = {
   access_control: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       created?: null | string;
       database_id: number;
@@ -21,11 +16,6 @@ export type DBGeneratedSchema = {
     };
   };
   access_control_allowed_llm: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       access_control_id: number;
       llm_credential_id: number;
@@ -33,44 +23,24 @@ export type DBGeneratedSchema = {
     };
   };
   access_control_connections: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       access_control_id: number;
       connection_id: string;
     };
   };
   access_control_methods: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       access_control_id: number;
       published_method_id: number;
     };
   };
   access_control_user_types: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       access_control_id: number;
       user_type: string;
     };
   };
   alert_viewed_by: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       alert_id?: null | string;
       id?: string;
@@ -79,11 +49,6 @@ export type DBGeneratedSchema = {
     };
   };
   alerts: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       connection_id?: null | string;
       created?: null | string;
@@ -97,11 +62,6 @@ export type DBGeneratedSchema = {
     };
   };
   backups: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       connection_details?: string;
       connection_id?: null | string;
@@ -140,11 +100,6 @@ export type DBGeneratedSchema = {
     };
   };
   connections: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       config?: null | {    enabled: boolean;   path: string;  };
       created?: null | string;
@@ -187,22 +142,12 @@ export type DBGeneratedSchema = {
     };
   };
   credential_types: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       description?: null | string;
       id: "AWS" | "Cloudflare"
     };
   };
   credentials: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       bucket?: null | string;
       endpoint_url?: string;
@@ -216,11 +161,6 @@ export type DBGeneratedSchema = {
     };
   };
   database_config_logs: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       id?: number;
       on_mount_logs?: null | string;
@@ -229,11 +169,6 @@ export type DBGeneratedSchema = {
     };
   };
   database_configs: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
@@ -270,11 +205,6 @@ export type DBGeneratedSchema = {
     };
   };
   global_settings: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       id?: number;
       mcp_servers_disabled?: boolean;
@@ -284,11 +214,6 @@ export type DBGeneratedSchema = {
     };
   };
   links: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       closed?: null | boolean;
       created?: null | string;
@@ -308,11 +233,6 @@ export type DBGeneratedSchema = {
     };
   };
   llm_chats: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       connection_id?: null | string;
       created?: null | string;
@@ -348,11 +268,6 @@ export type DBGeneratedSchema = {
     };
   };
   llm_chats_allowed_functions: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       auto_approve?: null | boolean;
       chat_id: number;
@@ -361,11 +276,6 @@ export type DBGeneratedSchema = {
     };
   };
   llm_chats_allowed_mcp_tools: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       auto_approve?: null | boolean;
       chat_id: number;
@@ -375,11 +285,6 @@ export type DBGeneratedSchema = {
     };
   };
   llm_credentials: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       api_key?: string;
       created?: null | string;
@@ -394,11 +299,6 @@ export type DBGeneratedSchema = {
     };
   };
   llm_messages: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       chat_id: number;
       cost?: string;
@@ -415,11 +315,6 @@ export type DBGeneratedSchema = {
     };
   };
   llm_models: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       architecture?: null | {    modality?: string;   input_modalities: string[];   output_modalities: string[];   tokenizer: string;   instruct_type: | null
  | string;  };
@@ -438,27 +333,17 @@ export type DBGeneratedSchema = {
     };
   };
   llm_prompts: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       created?: null | string;
       description?: null | string;
       id?: number;
       name?: string;
-      options?: null | {    prompt_type?: "dashboards" | "tasks" | "agent_workflow";  };
+      options?: null | {    prompt_type?: "dashboards" | "tasks" | "agent_workflow";   max_tokens?: number;   temperature?: number;   mcp_tools?: string[];   mcp_servers?: string[];  };
       prompt?: string;
       user_id?: null | string;
     };
   };
   llm_providers: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       api_docs_url?: null | string;
       api_pricing_url?: null | string;
@@ -471,11 +356,6 @@ export type DBGeneratedSchema = {
     };
   };
   login_attempts: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       auth_provider?: null | string;
       auth_type: "session-id" | "registration" | "email-confirmation" | "magic-link-registration" | "magic-link" | "otp-code" | "login" | "oauth"
@@ -494,11 +374,6 @@ export type DBGeneratedSchema = {
     };
   };
   logs: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       command?: null | string;
       connection_id?: null | string;
@@ -516,11 +391,6 @@ export type DBGeneratedSchema = {
     };
   };
   magic_links: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       expires: string;
       id?: string;
@@ -531,11 +401,6 @@ export type DBGeneratedSchema = {
     };
   };
   mcp_server_configs: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       config:  Record<string, any>
       created?: null | string;
@@ -545,11 +410,6 @@ export type DBGeneratedSchema = {
     };
   };
   mcp_server_logs: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       error?: null | string;
       id?: number;
@@ -561,11 +421,6 @@ export type DBGeneratedSchema = {
     };
   };
   mcp_server_tool_calls: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       called?: null | string;
       chat_id?: null | number;
@@ -581,11 +436,6 @@ export type DBGeneratedSchema = {
     };
   };
   mcp_server_tools: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       annotations?: null | {    title?: string;   readOnlyHint?: boolean;   openWorldHint?: boolean;   idempotentHint?: boolean;   destructiveHint?: boolean;  };
       autoApprove?: null | boolean;
@@ -597,11 +447,6 @@ export type DBGeneratedSchema = {
     };
   };
   mcp_servers: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       args?: null | string[];
       command: "npx" | "npm" | "uvx" | "uv" | "docker" | "prostgles-local"
@@ -625,11 +470,6 @@ export type DBGeneratedSchema = {
     };
   };
   published_methods: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       arguments?:  ( 
  |  {  name: string;  type: "any" | "string" | "number" | "boolean" | "Date" | "time" | "timestamp" | "string[]" | "number[]" | "boolean[]" | "Date[]" | "time[]" | "timestamp[]";  defaultValue?: string;  optional?: boolean;  allowedValues?: string[]; }
@@ -646,22 +486,12 @@ export type DBGeneratedSchema = {
     };
   };
   schema_version: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       id: string;
       table_config: any;
     };
   };
   services: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       build_hash?: null | string;
       configs?: null | Record<string,  {  label: string;  description: string;  defaultOption: string;  options: Record<string,  {  label?: string;  env: Record<string, string>; }>; }>
@@ -678,21 +508,11 @@ export type DBGeneratedSchema = {
     };
   };
   session_types: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       id: "web" | "api_token" | "mobile"
     };
   };
   sessions: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       active?: null | boolean;
       created?: null | string;
@@ -713,11 +533,6 @@ export type DBGeneratedSchema = {
     };
   };
   stats: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       application_name?: null | string;
       backend_start?: null | string;
@@ -752,32 +567,17 @@ export type DBGeneratedSchema = {
     };
   };
   user_statuses: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       id: "active" | "disabled" | "public"
     };
   };
   user_types: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       description?: null | string;
       id: "admin" | "public" | "default"
     };
   };
   users: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       "2fa"?: null | {    secret: string;   recoveryCode: string;   enabled: boolean;  };
       auth_provider?: null | string;
@@ -803,11 +603,6 @@ export type DBGeneratedSchema = {
     };
   };
   windows: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       closed?: null | boolean;
       columns?: null | any;
@@ -839,11 +634,6 @@ export type DBGeneratedSchema = {
     };
   };
   workspace_layout_modes: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       description?: null | string;
       en?: null | string;
@@ -851,11 +641,6 @@ export type DBGeneratedSchema = {
     };
   };
   workspaces: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
     columns: {
       active_row?: null | any;
       connection_id: string;
@@ -879,6 +664,20 @@ export type DBGeneratedSchema = {
   
 }
 
+/**
+ * Data types as expected when selecting from the database
+ * */
+export type DBSchema = {
+  [K in keyof DBGeneratedSchema]: Required<DBGeneratedSchema[K]["columns"]>;
+};
+
+/**
+ * Data types as expected when inserting into the database (optional fields might be nullable/with defaults)
+ * */
+export type DBSchemaForInsert = {
+  [K in keyof DBGeneratedSchema]: DBGeneratedSchema[K]["columns"];
+};
+
 
 
 export type GeneratedFunctionSchema = { 
@@ -887,7 +686,7 @@ export type GeneratedFunctionSchema = {
  |  {  type: "image" | "audio" | "video" | "application" | "text";  source: {  type: "base64";  media_type: string;  data: string; }; }
  |  {  type: "tool_use";  id: string;  name: string;  input: any; }
  |  {  type: "tool_result";  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: "text";  text: string; } |  {  type: "image" | "audio";  mimeType: string;  data: string; } |  {  type: "resource";  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } |  {  type: "resource_link";  uri: string;  name: string;  mimeType?: string;  description?: string; } )[];  is_error?: boolean; } )[];  }) => Promise<void>;
-  "getFullPrompt": (args: {    prompt: string;   schema: string;   dashboardTypesContent: string;  }) => Promise<string>;
+  "getFullPrompt": (args: {    prompt: string;   schema: string;   dashboardTypesContent: string;   connectionId: string;  }) => Promise<string>;
   "stopAskLLM": (args: {    chatId: number;  }) => Promise<void>;
   "sendFeedback": (args: {    details: string;   email?: string;  }) => Promise<void>;
   "prostglesSignup": (args: {    email: string;   code: string;  }) => Promise<({ error: unknown; hasError: boolean; token?: undefined; host?: undefined } | { token: string; host: string; error?: undefined; hasError?: undefined })>;
@@ -896,10 +695,10 @@ export type GeneratedFunctionSchema = {
   "enable2FA": (args: {    token: string;  }) => Promise<string>;
   "disable2FA": () => Promise<(undefined | Array<void>)>;
   "changePassword": (args: {    oldPassword: string;   newPassword: string;  }) => Promise<void>;
-  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<(({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "mcp"; tool_id: number }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db-methods"; server_function_id: number }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db"; tool_name: ("select" | "insert" | "update" | "delete" | "execute_sql_with_rollback" | "execute_sql_with_commit") }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-ui"; tool_name: ("suggest_agent_workflow" | "suggest_tools_and_prompt" | "suggest_dashboards") }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "docker-sandbox"; tool_name: "create_container" }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "websearch"; tool_name: ("websearch" | "get_snapshot") }))>)>;
+  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<(({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "mcp"; tool_id: number }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db-methods"; server_function_id: number }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db"; tool_name: ("select" | "insert" | "update" | "delete" | "execute_sql_with_rollback" | "execute_sql_with_commit") }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-ui"; tool_name: ("suggest_agent_workflow" | "suggest_tools_and_prompt" | "suggest_dashboards") }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "docker-sandbox"; tool_name: "create_container" }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "websearch"; tool_name: ("websearch" | "get_snapshot") }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "webdev"; tool_name: ("list_directory" | "read_files" | "search_files" | "create_component") }))>)>;
   "createWebAppFromTemplate": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<string>;
-  "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<{ state: ("error" | "timed-out" | "aborted" | "close"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
-  "testWebApp": (args: {    connectionId: string;  }) => Promise<{ state: ("error" | "timed-out" | "aborted" | "close"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
+  "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
+  "testWebApp": (args: {    connectionId: string;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
   "writeWebAppFiles": (args: {    connectionId: string;   bypassAllowList?: boolean;   files: Record<string,  {  content: string;  description?: string; }>;  }) => Promise<boolean>;
   "makeDirectory": (args: {    path: string;   folderName: string;  }) => Promise<string>;
   "glob": (args: {    path?: string;   timeout?: number;  }) => Promise<{ pattern: string; path: string; result: Array<{ path: string; name: string; type: string; size: (undefined | number); lastModified: (undefined | number); created: (undefined | number) }> }>;

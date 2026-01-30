@@ -19,7 +19,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly query_params: {
                         readonly optional: true;
                         readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema.";
-                        readonly type: "any";
+                        readonly type: "unknown";
                     };
                 };
             };
@@ -40,7 +40,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly query_params: {
                         readonly optional: true;
                         readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema.";
-                        readonly type: "any";
+                        readonly type: "unknown";
                     };
                 };
             };
@@ -370,6 +370,90 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly url: {
                         readonly type: "string";
                         readonly description: "URL of the web page to snapshot";
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly type: {
+                    readonly content: "string";
+                };
+            };
+        };
+    };
+    readonly webdev: {
+        readonly read_files: {
+            readonly description: "Read files from the web app directory";
+            readonly schema: {
+                readonly type: {
+                    readonly filePaths: {
+                        readonly description: "File paths to read from the web app directory";
+                        readonly arrayOf: "string";
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly record: {
+                    readonly values: {
+                        readonly type: "string";
+                        readonly description: "File content";
+                    };
+                };
+            };
+        };
+        readonly search_files: {
+            readonly description: "Search files by content in the web app directory";
+            readonly schema: {
+                readonly type: {
+                    readonly query: {
+                        readonly type: "string";
+                        readonly description: "Search query string";
+                    };
+                    readonly extensions: {
+                        readonly description: "File extensions to limit the search to (e.g., ['ts', 'tsx', 'js', 'jsx'])";
+                        readonly arrayOf: "string";
+                        readonly optional: true;
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly arrayOfType: {
+                    readonly filePath: "string";
+                    readonly matchedContent: "string";
+                };
+            };
+        };
+        readonly create_component: {
+            readonly description: "Create a react component";
+            readonly schema: {
+                readonly type: {
+                    readonly entryPoint: {
+                        readonly type: "string";
+                        readonly description: "Entry point file for the component. Example: 'src/components/Counter/Counter.tsx'";
+                    };
+                    readonly files: {
+                        readonly description: "tsx/css and other files for the component. Example: { \"src/components/Counter/Counter.tsx\":  \"import { useState } from \"react\"; ...\"  } ";
+                        readonly record: {
+                            readonly values: {
+                                readonly type: {
+                                    readonly content: "string";
+                                    readonly description: "string";
+                                };
+                            };
+                        };
+                    };
+                    readonly dependencies: {
+                        readonly description: "Dependencies to install in the environment (e.g., react, axios)";
+                        readonly arrayOf: "string";
+                        readonly optional: true;
+                    };
+                    readonly devDependencies: {
+                        readonly description: "Dev Dependencies to install in the environment (e.g., @types/pkg)";
+                        readonly arrayOf: "string";
+                        readonly optional: true;
+                    };
+                    readonly test: {
+                        readonly description: "Playwright test to run against the component. Example:  'import { test, expect } from \"@playwright/react\"; ...'";
+                        readonly type: "string";
                     };
                 };
             };
