@@ -8,6 +8,8 @@ import { buildWebApp } from "./webApp/buildWebApp";
 import { testWebApp } from "./webApp/testWebApp";
 import { writeWebAppFiles } from "./webApp/writeWebAppFiles";
 import { connectionManager } from "@src/index";
+import { getTemplatedWebAppConnection } from "./webApp/getTemplatedWebAppConnection";
+import { getReactComponents } from "./webApp/getReactComponents";
 
 export const getWebAppServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -94,6 +96,21 @@ export const getWebAppServerFunctions = (
         },
       },
       run: writeWebAppFiles,
+    }),
+    getWebAppComponents: defineAdminFunction({
+      input: {
+        connectionId: "string",
+      },
+      run: async ({ connectionId }, { dbo }) => {
+        const { web_app_directory } = await getTemplatedWebAppConnection(
+          dbo,
+          connectionId,
+        );
+        const components = getReactComponents({
+          web_app_directory,
+        });
+        return components;
+      },
     }),
   };
 };

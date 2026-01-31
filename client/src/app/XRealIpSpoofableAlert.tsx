@@ -1,15 +1,16 @@
-import { mdiAlertOutline } from "@mdi/js";
-import React from "react";
-import { NavLink } from "react-router";
 import { ROUTES } from "@common/utils";
 import Btn from "@components/Btn";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
+import { mdiAlertOutline } from "@mdi/js";
+import React from "react";
+import { NavLink } from "react-router";
 import { t } from "../i18n/i18nUtils";
 import type { useAppState } from "../useAppState/useAppState";
 
-type P = Pick<ReturnType<typeof useAppState>, "serverState" | "user">;
-export const XRealIpSpoofableAlert = ({ serverState, user }: P) => {
+type P = Pick<ReturnType<typeof useAppState>, "serverState" | "prglState">;
+export const XRealIpSpoofableAlert = ({ serverState, prglState }: P) => {
+  const user = prglState?.user;
   return (
     <>
       {serverState?.xRealIpSpoofable && user?.type === "admin" && (

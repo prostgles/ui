@@ -50,8 +50,9 @@ export const useAppState = (
       dbsSocket: socket,
       sid: auth.user?.sid,
       dbsKey: Date.now() + "",
+      user,
     };
-  }, [dbsClient, prglStateWaiting]);
+  }, [dbsClient, prglStateWaiting, user]);
 
   const { dbs, auth } = prglState ?? {};
 
@@ -78,7 +79,6 @@ export const useAppState = (
       state: "error" as const,
       dbsClientError,
       prglState: undefined,
-      user: undefined,
       serverState,
     };
   }
@@ -87,7 +87,6 @@ export const useAppState = (
     state: prglStateWaiting ? ("loading" as const) : ("ok" as const),
     dbsClientError: undefined,
     prglState,
-    user,
     serverState,
   };
 };

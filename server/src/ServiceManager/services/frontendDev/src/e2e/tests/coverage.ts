@@ -22,15 +22,11 @@ export async function stopCoverage(page: Page) {
   for (const entry of coverage) {
     const { source } = entry;
     if (!source) continue;
-    console.log(
-      `Processing coverage for ${entry.url}. Source: ${source.length} chars. ${source.slice(0, 30)}...`,
-    );
     const converter = v8toIstanbul("", 0, { source });
     await converter.load();
     converter.applyCoverage(entry.functions);
     const convertedCoverage = converter.toIstanbul();
     map.merge(converter.toIstanbul());
-    console.log(JSON.stringify(convertedCoverage));
     fs.mkdirSync(v8Dir, { recursive: true });
     fs.writeFileSync(
       path.join(v8Dir, `${Date.now()}-${Math.random()}.json`),

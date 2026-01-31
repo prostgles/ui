@@ -1,11 +1,13 @@
-import React, { useState } from "react";
-import type { ClientUser, AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
-import PopupMenu from "@components/PopupMenu";
 import { pageReload } from "@components/Loader/Loading";
+import PopupMenu from "@components/PopupMenu";
+import React, { useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import type { ClientUser } from "../../App";
 
-export const PasswordlessSetup = ({ dbsMethods }: AppContextProps) => {
+export const PasswordlessSetup = () => {
+  const { dbsMethods } = usePrglCore();
   type NewUser = Partial<ClientUser & { passwordconfirm?: string }>;
   const [{ username, password, passwordconfirm }, setNewUser] =
     useState<NewUser>({});

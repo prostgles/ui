@@ -54,7 +54,7 @@ export const createReactiveState = <S>(
 };
 
 /**
- * @deprecated
+ * @deprecated use createStore instead
  */
 export const useReactiveState = <S>(store: ReactiveState<S>) => {
   const [state, setState] = useState(store.get());

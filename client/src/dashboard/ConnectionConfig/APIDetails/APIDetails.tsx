@@ -4,26 +4,27 @@ import { FlexCol } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import React, { useMemo, useState } from "react";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
-import type { AppContextProps, Prgl } from "../../../App";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import type { Prgl } from "../../../App";
 import { getActiveTokensFilter } from "../../../pages/Account/Sessions";
 import { APIDetailsHttp } from "./APIDetailsHttp";
 import { APIDetailsTokens } from "./APIDetailsTokens";
 import { APIDetailsWs } from "./APIDetailsWs";
 import { AllowedOriginCheck } from "./AllowedOriginCheck";
 
-export type APIDetailsProps = AppContextProps & {
+export type APIDetailsProps = {
   connection: Prgl["connection"];
 };
-export const APIDetails = (props: APIDetailsProps) => {
+export const APIDetails = ({ connection }: APIDetailsProps) => {
   const [newToken, setToken] = useState("");
 
-  const tokens = useAPITokens(props);
+  const tokens = useAPITokens();
 
   const electronSession = tokens?.find(
     (t) => t.user_agent === ELECTRON_USER_AGENT,
   );
   const token = electronSession?.id ?? newToken;
-  const { dbsTables, dbs, connection } = props;
+  const { dbsTables, dbs } = usePrglCore();
   const { table, urlPathCol } = useMemo(() => {
     const table = dbsTables.find((t) => t.name === "connections");
     const urlPathCol = table?.columns.find((c) => c.name === "url_path");
@@ -58,7 +59,7 @@ export const APIDetails = (props: APIDetailsProps) => {
         onChange={(newPort) => {
           void onErrorAlert(async () => {
             await dbs.connections.update(
-              { id: props.connection.id },
+              { id: connection.id },
               { port: newPort },
             );
           });
@@ -78,7 +79,7 @@ export const APIDetails = (props: APIDetailsProps) => {
             void onErrorAlert(async () => {
               if (typeof v !== "string") return;
               await dbs.connections.update(
-                { id: props.connection.id },
+                { id: connection.id },
                 { url_path: v },
               );
             });
@@ -89,10 +90,10 @@ export const APIDetails = (props: APIDetailsProps) => {
       {!!(dbs as Partial<DBS>).database_configs && databaseConfig && (
         <AllowedOriginCheck dbs={dbs} databaseConfig={databaseConfig} />
       )}
-      <APIDetailsWs {...props} token={token} />
-      <APIDetailsHttp {...props} token={token} />
+      <APIDetailsWs connection={connection} token={token} />
+      <APIDetailsHttp connection={connection} token={token} />
       <APIDetailsTokens
-        {...props}
+        connection={connection}
         token={token}
         setToken={setToken}
         tokenCount={tokens?.length ?? 0}
@@ -101,10 +102,8 @@ export const APIDetails = (props: APIDetailsProps) => {
   );
 };
 
-export const useAPITokens = ({
-  dbs,
-  user,
-}: Pick<AppContextProps, "dbs" | "user">) => {
+export const useAPITokens = () => {
+  const { dbs, user } = usePrglCore();
   const { data: tokens } = dbs.sessions.useSubscribe(
     getActiveTokensFilter("api_token", user?.id),
   );

@@ -44,6 +44,8 @@ export declare const LLM_PROMPT_VARIABLES: {
     readonly PROSTGLES_SOFTWARE_NAME: "${prostglesSoftwareName}";
     readonly SCHEMA: "${schema}";
     readonly DASHBOARD_TYPES: "${dashboardTypes}";
+    readonly DB_TYPESCRIPT_SCHEMA: "${dbTypescriptSchema}";
+    readonly DB_HANDLER_SCHEMA: "${dbHandlerSchema}";
     readonly TODAY: "${today}";
 };
 export declare const wrapCode: (language: "sql" | "typescript", code: string) => string;

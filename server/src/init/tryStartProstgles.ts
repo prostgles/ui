@@ -13,7 +13,7 @@ import {
   type InitExtra,
   type ProstglesInitStateWithDBS,
 } from "./startProstgles";
-import { testDashboardTypesContent } from "./testDashboardTypesContent";
+import { saveTypescriptFilesForProduction } from "./saveTypescriptFilesForProduction";
 
 type StartArguments = {
   app: Express;
@@ -174,6 +174,4 @@ export const getProstglesState = (): ProstglesState<InitExtra> => {
   };
 };
 
-if (process.env.NODE_ENV !== "production") {
-  testDashboardTypesContent();
-}
+saveTypescriptFilesForProduction();

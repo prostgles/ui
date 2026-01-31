@@ -19,6 +19,10 @@ const DYNAMIC_COMPONENT_REGISTRY = {
     import("src/dashboard/ConnectionConfig/WebApp/WebAppConfig").then(
       (mod) => ({ default: mod.WebAppConfig }),
     ),
+  Account: () =>
+    import("src/pages/Account/Account").then((mod) => ({
+      default: mod.Account,
+    })),
 } as const satisfies Record<
   string,
   () => Promise<{ default: React.ComponentType<any> }>

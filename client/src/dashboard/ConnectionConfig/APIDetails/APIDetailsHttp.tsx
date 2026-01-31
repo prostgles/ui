@@ -5,6 +5,7 @@ import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiCodeBraces } from "@mdi/js";
 import React from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../../../i18n/i18nUtils";
 import CodeExample from "../../CodeExample";
 import { download } from "../../W_SQL/W_SQL";
@@ -12,10 +13,10 @@ import type { APIDetailsProps } from "./APIDetails";
 import { getApiEndpoint } from "./getApiEndpoint";
 
 export const APIDetailsHttp = ({
-  dbs,
   connection,
   token,
 }: APIDetailsProps & { token?: string }) => {
+  const { dbs } = usePrglCore();
   const { data: dbConfig } = dbs.database_configs.useSubscribeOne({
     $existsJoined: { connections: { id: connection.id } },
   });

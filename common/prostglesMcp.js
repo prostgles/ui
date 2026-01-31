@@ -346,12 +346,27 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
     },
     webdev: {
+        list_directory: {
+            description: "List files in the web app directory. Will truncate long lists.",
+            schema: {
+                type: {
+                    directoryPath: {
+                        type: "string",
+                        description: "Directory path to list files from the web app directory. Example: 'src/components'",
+                        optional: true,
+                    },
+                },
+            },
+            outputSchema: {
+                arrayOf: "string",
+            },
+        },
         read_files: {
             description: "Read files from the web app directory",
             schema: {
                 type: {
                     filePaths: {
-                        description: "File paths to read from the web app directory",
+                        description: "File paths to read from the web app directory.",
                         arrayOf: "string",
                     },
                 },

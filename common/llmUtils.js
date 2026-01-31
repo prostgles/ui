@@ -51,6 +51,8 @@ export const LLM_PROMPT_VARIABLES = {
     PROSTGLES_SOFTWARE_NAME: "${prostglesSoftwareName}",
     SCHEMA: "${schema}",
     DASHBOARD_TYPES: "${dashboardTypes}",
+    DB_TYPESCRIPT_SCHEMA: "${dbTypescriptSchema}",
+    DB_HANDLER_SCHEMA: "${dbHandlerSchema}",
     TODAY: "${today}",
 };
 export const wrapCode = (language, code) => {

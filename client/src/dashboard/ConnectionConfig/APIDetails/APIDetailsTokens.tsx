@@ -8,22 +8,18 @@ import PopupMenu from "@components/PopupMenu";
 import { t } from "../../../i18n/i18nUtils";
 import { Sessions } from "../../../pages/Account/Sessions";
 import type { APIDetailsProps } from "./APIDetails";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 export const APIDetailsTokens = ({
-  dbs,
-  dbsMethods,
-  dbsTables,
-  user,
   token,
   setToken,
   tokenCount,
-  dbsMethodSchema,
-  dbsSql,
 }: APIDetailsProps & {
   token: string;
   tokenCount: number;
   setToken: (value: string) => void;
 }) => {
+  const { dbsMethods } = usePrglCore();
   return (
     <FlexCol data-command="APIDetailsTokens">
       <h4 className="m-0 p-0">
@@ -37,14 +33,7 @@ export const APIDetailsTokens = ({
         }
       </div>
       <FlexCol className="w-fit  ">
-        <Sessions
-          dbs={dbs}
-          dbsSql={dbsSql}
-          dbsTables={dbsTables}
-          dbsMethodSchema={dbsMethodSchema}
-          user={user}
-          displayType="api_token"
-        />
+        <Sessions displayType="api_token" />
         <PopupMenu
           title={t.APIDetailsTokens["Create access token"]}
           data-command="APIDetailsTokens.CreateToken"

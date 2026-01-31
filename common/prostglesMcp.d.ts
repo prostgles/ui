@@ -381,12 +381,27 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
     readonly webdev: {
+        readonly list_directory: {
+            readonly description: "List files in the web app directory. Will truncate long lists.";
+            readonly schema: {
+                readonly type: {
+                    readonly directoryPath: {
+                        readonly type: "string";
+                        readonly description: "Directory path to list files from the web app directory. Example: 'src/components'";
+                        readonly optional: true;
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly arrayOf: "string";
+            };
+        };
         readonly read_files: {
             readonly description: "Read files from the web app directory";
             readonly schema: {
                 readonly type: {
                     readonly filePaths: {
-                        readonly description: "File paths to read from the web app directory";
+                        readonly description: "File paths to read from the web app directory.";
                         readonly arrayOf: "string";
                     };
                 };

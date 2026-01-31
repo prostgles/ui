@@ -6,6 +6,7 @@ import type { UIDocContainers } from "../UIDocs";
 export const accountUIDoc = {
   type: "page",
   path: ROUTES.ACCOUNT,
+  componentName: "Account",
   title: "Account",
   iconPath: mdiAccountOutline,
   description:

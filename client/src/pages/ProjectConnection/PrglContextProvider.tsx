@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useEffect } from "react";
-import type { Prgl } from "../../App";
 import { CommandPalette } from "src/app/CommandPalette/CommandPalette";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { createStore } from "src/hooks/createStore";
+import type { Prgl } from "../../App";
 
 const PrglContext = createContext<Prgl | undefined>(undefined);
 

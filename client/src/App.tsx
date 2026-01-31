@@ -10,7 +10,7 @@ import { NotFound } from "./pages/NotFound";
 import { ProjectConnection } from "./pages/ProjectConnection/ProjectConnection";
 
 import ErrorComponent from "./components/ErrorComponent";
-import UserManager from "./dashboard/UserManager";
+import { UserManager } from "./dashboard/UserManager";
 import { Account } from "./pages/Account/Account";
 import { ServerSettings } from "./pages/ServerSettings/ServerSettings";
 
@@ -68,11 +68,10 @@ export type PrglReadyState = {
   auth: AuthHandler<ClientUser>;
   isAdminOrSupport: boolean;
   sid: string | undefined;
+  user: DBSSchema["users"] | undefined;
 };
 export type AppContextProps = PrglReadyState & {
   setTitle: (content: string | React.ReactNode) => void;
-  user: DBSSchema["users"] | undefined;
-  dbsSocket: Socket;
   theme: Theme;
 } & Pick<Required<AppState>, "serverState">;
 
@@ -115,7 +114,7 @@ export const App = () => {
   } = useReactiveState(r_useAppVideoDemo);
 
   const prglLoaded = prglStateStore.useStore((s) => s.loaded);
-  const { theme, userThemeOption } = useAppTheme(state);
+  const { theme, userThemeOption } = useAppTheme(state.prglState);
   const appContextProps: AppContextProps | undefined = useMemo(
     () =>
       state.prglState &&
@@ -124,7 +123,6 @@ export const App = () => {
         setTitle: (content: React.ReactNode) => {
           if (title !== content) setTitle(content);
         },
-        user: state.user,
         theme,
         serverState: state.serverState,
       },
@@ -230,7 +228,7 @@ export const App = () => {
                     needsUser={false}
                     userThemeOption={userThemeOption}
                   >
-                    <UserManager {...appContextProps} />
+                    <UserManager />
                   </NavBarWrapper>
                 }
               />
@@ -243,7 +241,7 @@ export const App = () => {
                     needsUser={false}
                     userThemeOption={userThemeOption}
                   >
-                    <Account {...appContextProps} />
+                    <Account />
                   </NavBarWrapper>
                 }
               />

@@ -1,4 +1,3 @@
-import { API_ENDPOINTS } from "@common/utils";
 import { FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import Tabs from "@components/Tabs";
@@ -7,7 +6,7 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { getKeys } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router";
-import type { AppContextProps } from "../../App";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { PasswordlessSetup } from "../../dashboard/AccessControl/PasswordlessSetup";
 import { APIDetails } from "../../dashboard/ConnectionConfig/APIDetails/APIDetails";
 import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
@@ -16,10 +15,9 @@ import { ChangePassword } from "./ChangePassword";
 import { Sessions } from "./Sessions";
 import { Setup2FA } from "./Setup2FA";
 
-type AccountProps = AppContextProps;
-
-export const Account = (props: AccountProps) => {
-  const { dbs, dbsTables, dbsMethods, dbsMethodSchema, user } = props;
+export const Account = () => {
+  const { dbs, dbsSql, dbsTables, dbsMethods, dbsMethodSchema, user } =
+    usePrglCore();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: dbsConnection } = dbs.connections.useFindOne({
@@ -42,7 +40,7 @@ export const Account = (props: AccountProps) => {
         className=" f-1 flex-col w-full gap-1 p-p5 o-auto"
         style={{ maxWidth: "700px" }}
       >
-        <PasswordlessSetup {...props} />
+        <PasswordlessSetup />
       </div>
     );
   }
@@ -66,7 +64,7 @@ export const Account = (props: AccountProps) => {
         <SmartForm
           label=""
           db={dbs as DBHandlerClient}
-          sql={props.dbsSql}
+          sql={dbsSql}
           methods={dbsMethodSchema}
           tableName="users"
           tables={dbsTables}
@@ -91,7 +89,7 @@ export const Account = (props: AccountProps) => {
             <ChangePassword dbsMethods={dbsMethods} />
           </FlexRow>
 
-          <Sessions displayType="web_session" {...props} />
+          <Sessions displayType="web_session" />
         </div>
       ),
     },
@@ -101,7 +99,7 @@ export const Account = (props: AccountProps) => {
       content: (
         <div className="flex-col gap-1 px-1 f-1">
           {dbsConnection ?
-            <APIDetails {...props} connection={dbsConnection} />
+            <APIDetails connection={dbsConnection} />
           : notAllowedBanner}
         </div>
       ),

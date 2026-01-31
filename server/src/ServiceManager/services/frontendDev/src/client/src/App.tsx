@@ -1,33 +1,19 @@
-import { getSerialisableError } from "prostgles-types";
+import { useProstgles } from "./api/ProstglesProvider";
 import "./App.css";
 import reactLogo from "./assets/react.svg";
-import { useProstgles } from "./api/ProstglesProvider";
 import viteLogo from "/vite.svg";
 
 export const App = () => {
-  const prglState = useProstgles();
-  if (prglState.isLoading) {
-    return <div>Loading Prostgles Client...</div>;
-  }
-  if (prglState.hasError) {
-    return (
-      <div>
-        Error loading Prostgles Client:{" "}
-        {JSON.stringify(getSerialisableError(prglState.error))}
-      </div>
-    );
-  }
+  const { auth, db } = useProstgles();
   return (
     <>
-      {prglState.auth?.user ?
+      {auth?.user ?
         <div>
-          Logged in as: <strong>{prglState.auth.user.type}</strong>{" "}
-          {prglState.auth.user.id}
+          Logged in as: <strong>{auth.user.type}</strong> {auth.user.id}
         </div>
       : <div>Not logged in</div>}
       <div>
-        Available tables:{" "}
-        <strong>{Object.keys(prglState.db).join(", ")}</strong>
+        Available tables: <strong>{Object.keys(db).join(", ")}</strong>
       </div>
       <div>
         <a href="https://vite.dev" target="_blank">

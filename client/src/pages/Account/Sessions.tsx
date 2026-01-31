@@ -27,11 +27,9 @@ import {
   StyledInterval,
 } from "../../dashboard/W_SQL/customRenderers";
 import { t } from "../../i18n/i18nUtils";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
-type SessionsProps = Pick<
-  Prgl,
-  "dbs" | "dbsSql" | "dbsTables" | "user" | "dbsMethodSchema"
-> & {
+type SessionsProps = {
   displayType: "web_session" | "api_token";
   className?: string;
 };
@@ -47,15 +45,8 @@ export const getActiveTokensFilter = (
     active: true,
   }) as AnyObject;
 
-export const Sessions = ({
-  dbs,
-  dbsTables,
-  user,
-  displayType,
-  className = "",
-  dbsMethodSchema,
-  dbsSql,
-}: SessionsProps) => {
+export const Sessions = ({ displayType, className = "" }: SessionsProps) => {
+  const { dbs, dbsTables, user, dbsMethodSchema, dbsSql } = usePrglCore();
   const tokenMode = displayType === "api_token";
   const sessionLabel =
     tokenMode ? t.Sessions["API tokens"] : t.Sessions["Sessions"];

@@ -700,6 +700,7 @@ export type GeneratedFunctionSchema = {
   "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
   "testWebApp": (args: {    connectionId: string;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
   "writeWebAppFiles": (args: {    connectionId: string;   bypassAllowList?: boolean;   files: Record<string,  {  content: string;  description?: string; }>;  }) => Promise<boolean>;
+  "getWebAppComponents": (args: {    connectionId: string;  }) => Promise<{ components: Array<{ name: string; propsTypeString: (undefined | string) }>; renderTree: any }>;
   "makeDirectory": (args: {    path: string;   folderName: string;  }) => Promise<string>;
   "glob": (args: {    path?: string;   timeout?: number;  }) => Promise<{ pattern: string; path: string; result: Array<{ path: string; name: string; type: string; size: (undefined | number); lastModified: (undefined | number); created: (undefined | number) }> }>;
   "disablePasswordless": (args: {    username: string;   password: string;  }) => Promise<void>;

@@ -1,22 +1,20 @@
 import {
   useProstglesClient,
   type OnReadyParams,
+  type ProstglesClientState,
   type UseProstglesClientProps,
 } from "prostgles-client";
 import { createContext, useContext, type ReactNode } from "react";
 import type {
   DBGeneratedSchema,
-  DBSchema,
   GeneratedFunctionSchema,
+  DBSchema,
 } from "./DBGeneratedSchema";
-import { getSerialisableError } from "prostgles-types";
 
 type U = Pick<DBSchema["users"], "id" | "type">;
 
-type ProstglesContextValue = OnReadyParams<
-  DBGeneratedSchema,
-  GeneratedFunctionSchema,
-  U
+type ProstglesContextValue = ProstglesClientState<
+  OnReadyParams<DBGeneratedSchema, GeneratedFunctionSchema, U>
 >;
 
 const ProstglesContext = createContext<ProstglesContextValue | undefined>(
@@ -40,19 +38,6 @@ export const ProstglesProvider = ({
     GeneratedFunctionSchema,
     U
   >(props);
-
-  if (value.isLoading) {
-    return <div>Loading Prostgles Client...</div>;
-  }
-  if (value.hasError) {
-    return (
-      <div>
-        Error loading Prostgles Client:{" "}
-        {JSON.stringify(getSerialisableError(value.error))}
-      </div>
-    );
-  }
-
   return (
     <ProstglesContext.Provider value={value}>
       {children}

@@ -8,13 +8,14 @@ import { t } from "../../../i18n/i18nUtils";
 import { download } from "../../W_SQL/W_SQL";
 import { APICodeExamples } from "./APICodeExamples";
 import type { APIDetailsProps } from "./APIDetails";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 console.error("ENSURE IT WORKS");
 export const APIDetailsWs = ({
-  dbsMethods,
   connection,
   token,
 }: APIDetailsProps & { token?: string }) => {
+  const { dbsMethods } = usePrglCore();
   const dbSchemaTypes = usePromise(async () => {
     if (connection.id) {
       const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.({
