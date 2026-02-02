@@ -117,7 +117,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     },
   },
   "prostgles-ui": {
-    ask_question: {
+    ask_user_questions: {
       needsLlmResponse: true,
       description:
         "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time",

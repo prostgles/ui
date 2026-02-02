@@ -1,6 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { pickKeys } from "prostgles-types";
 import * as cors from "cors";
+import { getElectronConfig } from "@src/electronConfig";
 export const getCorsOptions = (
   {
     cors: corsSettings,
@@ -19,7 +20,7 @@ export const getCorsOptions = (
         corsSettings?.credentialsAllowed
       ),
     origin: (requestedOrigin, cb) => {
-      if (!requestedOrigin) {
+      if (!requestedOrigin || getElectronConfig()?.isElectron) {
         return cb(null, true);
       }
 

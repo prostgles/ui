@@ -1,5 +1,6 @@
 import { isDefined } from "@common/filterUtils";
 import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
 
 export const setChatPrompt = async ({
@@ -11,7 +12,7 @@ export const setChatPrompt = async ({
   chatId: number;
   prompt: Pick<DBSSchema["llm_prompts"], "id" | "options">;
 }) => {
-  const { max_tokens, mcp_servers, temperature } = options || {};
+  const { max_tokens, mcp_server_tools, temperature } = options || {};
   const res = await dbs.llm_chats.update(
     { id: chatId },
     {
@@ -31,11 +32,13 @@ export const setChatPrompt = async ({
   if (res?.length !== 1) {
     throw "Failed to update chat prompt";
   }
-  if (mcp_servers?.length) {
+  const mcpServersAndTools = getEntries(mcp_server_tools || {});
+  if (mcpServersAndTools.length) {
     const allowedToolsInsert = await Promise.all(
-      mcp_servers.flatMap(async (server_name) => {
+      mcpServersAndTools.flatMap(async ([server_name, toolList]) => {
         const tools = await dbs.mcp_server_tools.find({
           server_name,
+          name: toolList === "*" ? undefined : { $in: toolList },
         });
         return tools.flatMap(({ id }) => {
           return {

@@ -2505,7 +2505,7 @@ test.describe("Main test", () => {
     await page.keyboard.type("pack");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("MonacoEditor")).toContainText("vite build");
-    throw new Error("Not implemented yet");
+    throw "Tidy + show error when on webdev prompt and webapp not templated";
   });
   test("Web template works", async ({ page: p }) => {
     const page = p as PageWIds;
@@ -2539,10 +2539,8 @@ test.describe("Main test", () => {
       await expect(page.locator("body")).toContainText("Not logged in");
       await expect(page.locator("body")).toContainText("Available tables:");
     } finally {
-      // devProc.kill("SIGTERM");
-      process.kill(-devProc.pid!, "SIGTERM"); // still leaves a zombie node process
-
       console.log("Killing dev proc tree:", devProc.pid);
+      process.kill(-devProc.pid!, "SIGTERM"); // still leaves a zombie node process?!
     }
   });
 });

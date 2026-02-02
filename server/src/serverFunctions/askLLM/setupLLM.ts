@@ -97,7 +97,10 @@ export const setupLLM = async (dbs: DBS) => {
             "Includes database schema and full tools list. Will suggest database access type, tools and workflow logic required to completed the task. Claude Sonnet recommended",
           user_id,
           options: {
-            mcp_servers: ["webdev"],
+            mcp_server_tools: {
+              webdev: "*",
+              "prostgles-ui": ["ask_user_questions"],
+            },
             max_tokens: 18_000,
           },
           prompt: [

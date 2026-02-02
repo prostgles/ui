@@ -19,7 +19,7 @@ export const AskAnswerQuestions = ({
     connectionId,
   } = usePrgl();
   const data = message.input as JSONB.GetObjectType<
-    (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["ask_question"]["schema"]["type"]
+    (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["ask_user_questions"]["schema"]["type"]
   >;
   const { questions } = data;
   const [selectedAnswers, setSelectedAnswers] = React.useState<
@@ -28,7 +28,7 @@ export const AskAnswerQuestions = ({
 
   const sentAnswers = useTypedToolUseResultData(
     toolUseResult?.toolUseResultMessage,
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["ask_question"][
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["ask_user_questions"][
       "outputSchema"
     ],
   );

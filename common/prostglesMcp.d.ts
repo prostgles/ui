@@ -120,7 +120,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
     readonly "prostgles-ui": {
-        readonly ask_question: {
+        readonly ask_user_questions: {
             readonly needsLlmResponse: true;
             readonly description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time";
             readonly schema: {

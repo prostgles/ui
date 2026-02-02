@@ -32,10 +32,11 @@ export const ProstglesMCPToolsWithUI = {
     component: LoadSuggestedWorkflow,
     displayMode: "full",
   },
-  [getProstglesMCPFullToolName("prostgles-ui", "ask_question") as string]: {
-    component: AskAnswerQuestions,
-    displayMode: "full",
-  },
+  [getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions") as string]:
+    {
+      component: AskAnswerQuestions,
+      displayMode: "full",
+    },
   "docker-sandbox--create_container": {
     component: DockerSandboxCreateContainer,
     displayMode: "inline",

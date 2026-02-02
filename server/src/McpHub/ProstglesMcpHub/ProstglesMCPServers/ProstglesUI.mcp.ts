@@ -20,7 +20,7 @@ const handler = {
     return {
       stop: () => {},
       tools: {
-        ask_question: async ({ questions }, { chat_id }) => {},
+        ask_user_questions: async ({ questions }, { chat_id }) => {},
         suggest_agent_workflow: async (input, { chat_id }) => {},
         suggest_dashboards: async (input, { chat_id }) => {},
         suggest_tools_and_prompt: async (input, { chat_id }) => {},

@@ -251,17 +251,18 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
             description:
               "Controls randomness in output. Lower values make output more focused and deterministic",
           },
-          mcp_tools: {
+          mcp_server_tools: {
             description:
-              "List of tools that will be enabled for this prompt. Must match tool names exactly (<servername>--<toolname>)",
+              "List of MCP servers and tools that will be enabled for this prompt.",
             optional: true,
-            type: "string[]",
+            record: {
+              values: { oneOf: [{ enum: ["*"] }, { type: "string[]" }] },
+            },
           },
           mcp_servers: {
-            description:
-              "List of MCP servers that will have all their tools enabled for this prompt. Must match tool names exactly (<servername>--<toolname>)",
-            optional: true,
             type: "string[]",
+            optional: true,
+            description: "Deprecated. Use mcp_server_tools instead.",
           },
         },
       },
