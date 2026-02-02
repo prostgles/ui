@@ -60,6 +60,7 @@ const setTSoptions = (monaco: MonacoEditorImport) => {
     esModule: false,
     experimentalDecorators: true,
     keyofStringsOnly: true,
+    jsx: monaco.languages.typescript.JsxEmit.React,
     /** Adding this line breaks inbuild functions (setTimeout, etc) */
     // lib: ["ES2017", "es2019", "ES2021.String", "ES2020", "ES2022"],
     esModuleInterop: true,

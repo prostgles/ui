@@ -1,18 +1,18 @@
-import { type AnyObject } from "prostgles-types";
-import React, { useEffect } from "react";
-import { type DetailedFilterBase } from "@common/filterUtils";
-import type { Prgl } from "../../../App";
+import { type DetailedFilter } from "@common/filterUtils";
 import { FlexCol, FlexRow, classOverride } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import { Section } from "@components/Section";
 import { SvgIcon } from "@components/SvgIcon";
+import { type AnyObject } from "prostgles-types";
+import React, { useEffect } from "react";
+import type { Prgl } from "../../../App";
+import type { FieldConfig } from "../../SmartCard/SmartCard";
 import type { SmartFormProps } from "../SmartForm";
 import { ViewMoreSmartCardList } from "../SmartFormField/ViewMoreSmartCardList";
 import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import { JoinedRecordsSection } from "./JoinedRecordsSection";
 import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
-import type { FieldConfig } from "../../SmartCard/SmartCard";
 
 export type JoinedRecordsProps = Pick<
   Prgl,
@@ -22,7 +22,7 @@ export type JoinedRecordsProps = Pick<
     className?: string;
     style?: React.CSSProperties;
     tableName: string;
-    rowFilter?: DetailedFilterBase[];
+    rowFilter?: DetailedFilter[];
     newRowData: NewRow | undefined;
     newRowDataHandler: NewRowDataHandler | undefined;
     showRelated?: "descendants";

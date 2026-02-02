@@ -7,13 +7,13 @@ import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { ERR_CODE_MESSAGES } from "prostgles-client";
 import React, { useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { SetupLLMCredentialsProps } from "./SetupLLMCredentials";
 
 export const ProstglesSignup = ({
   setupState,
-  dbsMethods,
-  dbs,
-}: Pick<SetupLLMCredentialsProps, "setupState" | "dbs" | "dbsMethods">) => {
+}: Pick<SetupLLMCredentialsProps, "setupState">) => {
+  const { dbsMethods, dbs } = usePrglCore();
   const [email, setEmail] = React.useState(
     setupState.globalSettings?.data?.prostgles_registration?.email || "",
   );

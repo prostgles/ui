@@ -142,10 +142,8 @@ export const runApprovedTools = async (
       }
 
       if (tool.type === "prostgles-ui") {
-        const needsValidation =
-          tool.tool_name === "suggest_tools_and_prompt" ||
-          tool.tool_name === "suggest_agent_workflow";
-        if (needsValidation) {
+        const avoidValidation = tool.tool_name === "suggest_dashboards";
+        if (!avoidValidation) {
           const validation = getJSONBObjectSchemaValidationError(
             PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][tool.tool_name]
               .schema.type,

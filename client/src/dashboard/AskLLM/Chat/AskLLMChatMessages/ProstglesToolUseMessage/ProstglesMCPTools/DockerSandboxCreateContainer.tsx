@@ -3,12 +3,11 @@ import { getEntries, sliceText } from "@common/utils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
+import { CodeFileBrowser } from "@components/CodeFileBrowser/CodeFileBrowser";
 import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
 import ErrorComponent from "@components/ErrorComponent";
-import { FILE_EXTENSION_TO_ICON_INFO } from "@components/FileBrowser/FileBrowser";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
-import { MenuList } from "@components/MenuList";
 import {
   MONACO_READONLY_DEFAULT_OPTIONS,
   MonacoEditor,
@@ -21,7 +20,6 @@ import {
   mdiLanConnect,
   mdiMemory,
   mdiReload,
-  mdiText,
   mdiTimerLockOutline,
 } from "@mdi/js";
 import { omitKeys, type JSONB } from "prostgles-types";
@@ -34,12 +32,6 @@ import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["schema"]["type"]
 >;
-
-const monacoOptions = {
-  ...MONACO_READONLY_DEFAULT_OPTIONS,
-  readOnly: false,
-  lineNumbers: "on",
-} as const;
 
 export const DockerSandboxCreateContainer = ({
   message,
@@ -64,11 +56,6 @@ export const DockerSandboxCreateContainer = ({
     ];
   const resultObj = useTypedToolUseResultData(toolUseResult, schema);
   const [showLogs, setShowLogs] = useState(Boolean(resultObj?.log.length));
-  const [activeFilePath, setActiveFilePath] = useState(
-    Object.keys(data.files)[0],
-  );
-  const activeContent = data.files[activeFilePath ?? ""] ?? "";
-  const extension = activeFilePath?.toLowerCase().split(".").pop() ?? "txt";
   const {
     dbsMethods: { callMCPServerTool },
     dbs,
@@ -162,45 +149,15 @@ export const DockerSandboxCreateContainer = ({
       }
     >
       <FlexCol className="DockerSandboxCreateContainer b b-color ai-start gap-0 f-1">
-        <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">
-          <MenuList
-            activeKey={activeFilePath}
-            items={Object.keys(data.files).map((filePath) => {
-              const ext = filePath.toLowerCase().split(".").pop() ?? "txt";
-              return {
-                key: filePath,
-                label: filePath,
-                leftIconPath:
-                  FILE_EXTENSION_TO_ICON_INFO[ext]?.iconPath ?? mdiText,
-                iconStyle: { opacity: 0.7 },
-                onPress: () => setActiveFilePath(filePath),
-              };
-            })}
-            variant="vertical"
-            className="pointer bg-color-1 rounded-none"
-            style={{ alignSelf: "stretch", fontSize: 14 }}
-          />
-          <FlexRow className="o-auto f-1 w-full h-full">
-            {activeFilePath && (
-              <MonacoEditor
-                className="f-1 h-full"
-                language={
-                  FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext"
-                }
-                loadedSuggestions={undefined}
-                value={activeContent}
-                style={{ width: "min(600px, 100%)", minHeight: 200 }}
-                onChange={(newValue) => {
-                  setEditedFiles((prev) => ({
-                    ...prev,
-                    [activeFilePath]: newValue,
-                  }));
-                }}
-                options={monacoOptions}
-              />
-            )}
-          </FlexRow>
-        </FlexRow>
+        <CodeFileBrowser
+          files={data.files}
+          onChange={({ fileName, content }) => {
+            setEditedFiles((prev) => ({
+              ...prev,
+              [fileName]: content,
+            }));
+          }}
+        />
         <FlexRow className="bt b-color bg-color-2 w-full ta-start">
           <Btn
             size="small"

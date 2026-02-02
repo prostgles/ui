@@ -21,6 +21,7 @@ import {
   type NewRow,
 } from "./SmartFormNewRowDataHandler";
 import type { useSmartFormMode } from "./useSmartFormMode";
+import { isJoinedFilter } from "@common/filterUtils";
 
 type Args = {
   columns: ValidatedColumnInfo[];
@@ -161,11 +162,13 @@ export const useNewRowDataHandler = (args: Args) => {
         !confirmUpdates &&
         rowFilter &&
         column?.is_pkey &&
-        rowFilter.find((f) => f.fieldName === column.name)
+        rowFilter.find((f) => !isJoinedFilter(f) && f.fieldName === column.name)
       ) {
         setLocalRowFilter(
           rowFilter.map((f) =>
-            f.fieldName === column.name ? { ...f, value: newVal } : f,
+            !isJoinedFilter(f) && f.fieldName === column.name ?
+              { ...f, value: newVal }
+            : f,
           ),
         );
       }

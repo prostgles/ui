@@ -1,6 +1,11 @@
 import { chromium, expect, test } from "@playwright/test";
 import { authenticator } from "otplib";
-import { speechToTextTest } from "speechToTextTest";
+import { speechToTextTest } from "testAskLLM/speechToTextTest";
+
+import { spawn } from "child_process";
+import { fileBrowserGoToPath } from "fileBrowserGoToPath";
+import { writeFileSync } from "fs";
+import { join, resolve } from "path";
 import {
   localNoAuthSetup,
   QUERIES,
@@ -10,9 +15,14 @@ import {
 import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
-import { testAskLLMCode } from "./testAskLLM";
-import { getCommandElemSelector, getDataKeyElemSelector } from "./Testing";
+import { testAskLLMCode } from "./testAskLLM/testAskLLM";
 import {
+  getCommandElemSelector,
+  getDataKeyElemSelector,
+  getDataLabelElemSelector,
+} from "./Testing";
+import {
+  clickAndWait,
   clickInsertRow,
   closeWorkspaceWindows,
   createAccessRule,
@@ -56,9 +66,6 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
-import { fileBrowserGoToPath } from "fileBrowserGoToPath";
-import { join } from "path";
-import { writeFileSync } from "fs";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -631,7 +638,12 @@ test.describe("Main test", () => {
     );
 
     /** Add askLLM func args */
-    for (const [index, argName] of ["messages", "model", "tools"].entries()) {
+    for (const [index, argName] of [
+      "messages",
+      "model",
+      "tools",
+      "max_tokens",
+    ].entries()) {
       await page.getByTitle("Add new item").click();
       await page.getByLabel("Argument name").last().fill(argName);
       await page.getByLabel("Data type").last().click();
@@ -1001,7 +1013,8 @@ test.describe("Main test", () => {
     await runDbSql(
       page,
       `CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        type TEXT NOT NULL DEFAULT 'regular',
         username TEXT NOT NULL UNIQUE, 
         created_at TIMESTAMP DEFAULT NOW()
       );
@@ -1111,6 +1124,15 @@ test.describe("Main test", () => {
 
     /** Speech to text */
     await speechToTextTest(page);
+
+    /** Create component */
+    await newChat(page);
+    await setPromptByText(page, "Web app development");
+    await sendAskLLMMessage(
+      page,
+      " I need you to create a user list component ",
+    );
+    await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
   });
 
   test("Disable signups", async ({ page: p }) => {
@@ -2458,11 +2480,69 @@ test.describe("Main test", () => {
     await page.getByText("Enable", { exact: true }).click();
   });
 
-  test("Web app public access", async ({ page: p }) => {
+  test("Web template build works", async ({ page: p }) => {
     const page = p as PageWIds;
-    await goTo(page, "localhost:3004/connections");
-    await page.getByRole("link", { name: "Connections" }).click();
+    await login(page, USERS.test_user, "localhost:3004/login");
     await page.getByRole("link", { name: "cloud" }).click();
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.webApp").click();
+    const createFromTemplateBtn = page.getByTestId(
+      "WebAppConfig.createFromTemplate",
+    );
+    await createFromTemplateBtn.click();
+    await page.waitForTimeout(1e3);
+    await page
+      .getByTestId("Btn.ClickConfirmation.Confirm")
+      .click({ timeout: 10e3 });
+    await page.waitForTimeout(1e3);
+    await expect(createFromTemplateBtn).toBeEnabled();
+    await clickAndWait(page.getByTestId("WebAppConfig.build"));
+    await clickAndWait(page.getByTestId("WebAppConfig.test"));
+    await page.locator(getDataKey("Components")).click();
+    await page.locator(getDataKey("SampleComponent")).click();
+    await page.locator(getDataKey("Files")).click();
+    await page.locator(getDataLabelElemSelector("client")).click();
+    await page.keyboard.type("pack");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("MonacoEditor")).toContainText("vite build");
     throw new Error("Not implemented yet");
+  });
+  test("Web template works", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await goTo(page, "localhost:3005");
+    await expect(page.locator("body")).toContainText("Not logged in");
+    await expect(page.locator("body")).toContainText("Available tables:");
+  });
+
+  test("Web app dev mode works", async ({ page: p }) => {
+    const page = p as PageWIds;
+    const cwd = resolve(join(__dirname, "..", "demo", "client"));
+    console.log("Starting dev server in cwd:", cwd);
+    const devProc = spawn("npm", ["run", "dev"], {
+      cwd,
+      shell: true,
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    try {
+      await new Promise((resolve, reject) => {
+        devProc.stdout?.on("data", (data) => {
+          const str = data.toString();
+          console.log("devProc stdout:", str);
+          if (str.includes("5173")) {
+            resolve(1);
+          }
+        });
+        setTimeout(() => reject(new Error("Dev server timeout")), 30_000);
+      });
+      await goTo(page, "localhost:5173");
+      await expect(page.locator("body")).toContainText("Not logged in");
+      await expect(page.locator("body")).toContainText("Available tables:");
+    } finally {
+      // devProc.kill("SIGTERM");
+      process.kill(-devProc.pid!, "SIGTERM"); // still leaves a zombie node process
+
+      console.log("Killing dev proc tree:", devProc.pid);
+    }
   });
 });

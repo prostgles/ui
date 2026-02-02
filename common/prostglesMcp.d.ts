@@ -120,7 +120,38 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
     readonly "prostgles-ui": {
+        readonly ask_question: {
+            readonly needsLlmResponse: true;
+            readonly description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time";
+            readonly schema: {
+                readonly type: {
+                    readonly questions: {
+                        readonly arrayOfType: {
+                            readonly question: {
+                                readonly type: "string";
+                                readonly description: "The question to ask the user";
+                            };
+                            readonly allowMultipleChoices: {
+                                readonly type: "boolean";
+                                readonly optional: true;
+                                readonly description: "If true, the user can select multiple choices. Defaults to false.";
+                            };
+                            readonly answers: {
+                                readonly arrayOf: "string";
+                            };
+                        };
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly arrayOfType: {
+                    readonly question: "string";
+                    readonly answers: "string[]";
+                };
+            };
+        };
         readonly suggest_agent_workflow: {
+            readonly description: "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.";
             readonly schema: {
                 readonly type: {
                     readonly allowed_mcp_tool_names: {
@@ -187,8 +218,10 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                 };
             };
+            readonly outputSchema: undefined;
         };
         readonly suggest_tools_and_prompt: {
+            readonly description: "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.";
             readonly schema: {
                 readonly type: {
                     readonly suggested_mcp_tool_names: {
@@ -235,8 +268,10 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                 };
             };
+            readonly outputSchema: undefined;
         };
         readonly suggest_dashboards: {
+            readonly description: "Suggest Prostgles UI dashboards to visualize data for the specified task.";
             readonly schema: {
                 readonly type: {
                     readonly prostglesWorkspaces: {
@@ -245,6 +280,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                 };
             };
+            readonly outputSchema: undefined;
         };
     };
     readonly "docker-sandbox": {
@@ -443,15 +479,14 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 readonly type: {
                     readonly entryPoint: {
                         readonly type: "string";
-                        readonly description: "Entry point file for the component. Example: 'src/components/Counter/Counter.tsx'";
+                        readonly description: "Entry point file for the component. Example: '@/components/Counter/Counter.tsx'";
                     };
                     readonly files: {
-                        readonly description: "tsx/css and other files for the component. Example: { \"src/components/Counter/Counter.tsx\":  \"import { useState } from \"react\"; ...\"  } ";
+                        readonly description: "tsx/css and other files for the component. Example: { \"@/components/Counter/Counter.tsx\":  \"import { useState } from \"react\"; ...\"  } ";
                         readonly record: {
                             readonly values: {
                                 readonly type: {
                                     readonly content: "string";
-                                    readonly description: "string";
                                 };
                             };
                         };

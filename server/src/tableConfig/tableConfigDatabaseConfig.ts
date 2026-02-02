@@ -288,6 +288,190 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
           hint: "If true then will use the IP from 'X-Forwarded-For' header",
         },
       },
+      cors: {
+        info: {
+          hint: "Cross-Origin Resource Sharing settings",
+        },
+        nullable: true,
+        jsonbSchemaType: {
+          allowedOrigins: {
+            type: "string[]",
+            description:
+              "List of allowed origins for CORS (Cross-Origin Resource Sharing)",
+          },
+          credentialsAllowed: {
+            optional: true,
+            type: "boolean",
+            description: "Allow credentials",
+          },
+          methods: {
+            optional: true,
+            type: "string[]",
+            allowedValues: [
+              "GET",
+              "POST",
+              "PUT",
+              "DELETE",
+              "PATCH",
+              "OPTIONS",
+              "HEAD",
+            ],
+            description: "Allowed HTTP methods",
+          },
+          allowedHeaders: {
+            optional: true,
+            type: "string[]",
+            description: "List of allowed headers",
+            allowedValues: [
+              "Content-Type",
+              "Authorization",
+              "X-Requested-With",
+              "Accept",
+              "Origin",
+              "Access-Control-Allow-Origin",
+            ],
+          },
+        },
+      },
+      cors_csp_devmode_enabled: {
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT TRUE`,
+        info: {
+          hint: [
+            `If true then will add the following options for easier web app development: `,
+            `1) add state connection localhost port to frameAncestors  `,
+            `2) add http://localhost:5173/ to API allowed origin  `,
+            `3) add API localhost port to web app `,
+          ].join("\n"),
+        },
+      },
+      csp_add_defaults_enabled: {
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,
+        info: {
+          hint: "If true then will add default CSP settings to the provided CSP",
+        },
+      },
+      csp: {
+        info: { hint: "Content Security Policy settings" },
+        nullable: true,
+        jsonbSchemaType: {
+          fontSrc: {
+            optional: true,
+            type: "string[]",
+            description: "List of font sources for Content Security Policy",
+          },
+          mediaSrc: {
+            optional: true,
+            type: "string[]",
+            description: "List of media sources for Content Security Policy",
+          },
+          objectSrc: {
+            optional: true,
+            type: "string[]",
+            description: "List of object sources for Content Security Policy",
+          },
+          manifestSrc: {
+            optional: true,
+            type: "string[]",
+            description: "List of manifest sources for Content Security Policy",
+          },
+          defaultSrc: {
+            optional: true,
+            type: "string[]",
+            description: "List of default sources for Content Security Policy",
+          },
+          frameAncestors: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of allowed frame ancestors for Content Security Policy",
+          },
+          scriptSrc: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of allowed script sources for Content Security Policy",
+          },
+          styleSrc: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of allowed style sources for Content Security Policy",
+          },
+          connectSrc: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of allowed connect sources for Content Security Policy",
+          },
+          imgSrc: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of allowed image sources for Content Security Policy",
+          },
+          frameSrc: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of allowed frame sources for Content Security Policy",
+          },
+          workerSrc: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of allowed worker sources for Content Security Policy",
+          },
+          formAction: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of allowed form action destinations for Content Security Policy",
+          },
+          baseUri: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of allowed base URIs for Content Security Policy",
+          },
+          upgradeInsecureRequests: {
+            optional: true,
+            type: "string[]",
+            description:
+              "If true then will upgrade all insecure requests (HTTP) to secure (HTTPS)",
+          },
+          blockAllMixedContent: {
+            optional: true,
+            type: "string[]",
+            description:
+              "If true then will block all mixed content (HTTP content on HTTPS sites)",
+          },
+          requireSriFor: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of resource types that require Subresource Integrity",
+            allowedValues: ["script", "style", "font"],
+          },
+          sandbox: {
+            optional: true,
+            type: "string[]",
+            description:
+              "List of sandboxing options for Content Security Policy",
+            allowedValues: [
+              "allow-forms",
+              "allow-modals",
+              "allow-orientation-lock",
+              "allow-pointer-lock",
+              "allow-popups",
+              "allow-popups-to-escape-sandbox",
+              "allow-presentation",
+              "allow-same-origin",
+              "allow-scripts",
+              "allow-top-navigation",
+            ],
+          },
+        },
+      },
 
       enable_logs: {
         sqlDefinition: `boolean NOT NULL DEFAULT FALSE`,

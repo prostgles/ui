@@ -1150,3 +1150,12 @@ export const setupMagicLinkAuth = async (page: PageWIds) => {
   await expect(errNodeCount).toBe(0);
   setupAuthCount++;
 };
+
+export const clickAndWait = async (
+  btnLocator: LocatorWIds,
+  timeout = 60_000,
+) => {
+  await btnLocator.click();
+  await expect(btnLocator).toBeDisabled();
+  await expect(btnLocator).toBeEnabled({ timeout }); // waits until loading finishes
+};

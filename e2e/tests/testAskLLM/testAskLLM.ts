@@ -2,13 +2,14 @@ import { join } from "path";
 import {
   prostglesUICryptoDashboardSample,
   prostglesUIFoodDeliveryDashboardSample,
-} from "sampleToolUseData";
-import { dockerWeatherToolUse } from "sampleToolUseData";
+} from "testAskLLM/sampleToolUseData";
+import { dockerWeatherToolUse } from "testAskLLM/sampleToolUseData";
+import { createComponentToolUse } from "./createComponentToolUse";
+import { stringify, type ToolUse } from "./utils";
 
-const stringify = (obj: any) => JSON.stringify(obj, null, 2);
 export const clientNodeModulesDirectory = join(
   __dirname,
-  "../../client/node_modules",
+  "../../../client/node_modules",
 );
 console.log("Client node modules dir:", clientNodeModulesDirectory);
 
@@ -29,20 +30,6 @@ const taskToolArguments = {
   },
   suggested_database_tool_names: [],
   suggested_mcp_tool_names: ["fetch--fetch"],
-};
-
-type ToolUse = {
-  content?: string;
-  tool: {
-    id: string;
-    type: "function";
-    function: {
-      name: string;
-      arguments: string;
-    };
-  }[];
-  duration?: number;
-  result_content?: string;
 };
 
 const taskToolUse: ToolUse = {
@@ -318,6 +305,7 @@ const toolResponses: Record<string, ToolUse> = {
       },
     ],
   },
+  component: createComponentToolUse,
 };
 
 export const testAskLLMCode = `

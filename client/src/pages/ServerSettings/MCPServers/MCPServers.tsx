@@ -2,12 +2,12 @@ import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
-import type { ServerSettingsProps } from "../ServerSettings";
 import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfig";
 import { MCPServerFooterActions } from "./MCPServerFooterActions/MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
@@ -17,12 +17,12 @@ import {
   type MCPServerWithToolAndConfigs,
 } from "./useMCPServersListProps";
 
-export type MCPServersProps = Omit<ServerSettingsProps, "auth"> & {
+export type MCPServersProps = {
   chatId: number | undefined;
 };
 
-export const MCPServers = (props: MCPServersProps) => {
-  const { dbsMethods, dbs, dbsMethodSchema, dbsTables, chatId, dbsSql } = props;
+export const MCPServers = ({ chatId }: MCPServersProps) => {
+  const { dbsMethods, dbs, dbsMethodSchema, dbsTables, dbsSql } = usePrgl();
 
   const { getMcpHostInfo } = dbsMethods;
   const envInfo = usePromise(async () => getMcpHostInfo?.(), [getMcpHostInfo]);
@@ -48,7 +48,7 @@ export const MCPServers = (props: MCPServersProps) => {
       >
         <MCPServersHeader envInfo={envInfo} />
         <MCPServersToolbar
-          {...props}
+          chatId={chatId}
           selectedTool={selectedTool}
           setSelectedTool={setSelectedTool}
         />
@@ -106,8 +106,6 @@ export const MCPServers = (props: MCPServersProps) => {
             getRowFooter={(r) => (
               <MCPServerFooterActions
                 mcp_server={r}
-                dbs={dbs}
-                dbsMethods={dbsMethods}
                 envInfo={envInfo}
                 chatContext={chatContext}
               />

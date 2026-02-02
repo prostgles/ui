@@ -1,5 +1,6 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
+import { API_ENDPOINTS } from "@common/utils";
 import prostgles from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
@@ -15,14 +16,12 @@ import type { SUser } from "../authConfig/sessionUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
-import { getHotReloadConfigs } from "./getHotReloadConfigs";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
-import { API_ENDPOINTS } from "@common/utils";
-import { join } from "path";
+import { getHotReloadConfigs } from "./getHotReloadConfigs";
 
 export const startConnection = async function (
   this: ConnectionManager,

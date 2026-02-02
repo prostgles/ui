@@ -7,15 +7,15 @@ import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
 import { mdiAlert } from "@mdi/js";
 import React, { useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../../../i18n/i18nUtils";
-import type { APIDetailsProps } from "./APIDetails";
 
 export const AllowedOriginCheck = ({
-  dbs,
   databaseConfig,
-}: Pick<APIDetailsProps, "dbs"> & {
+}: {
   databaseConfig: DBSSchema["database_configs"];
 }) => {
+  const { dbs } = usePrglCore();
   const [allowed_origin, setAllowedOrigin] = useState(
     databaseConfig.allowed_origin,
   );

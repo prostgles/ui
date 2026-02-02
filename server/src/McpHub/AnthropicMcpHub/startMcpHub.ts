@@ -3,7 +3,7 @@ import { McpHub } from "./McpHub";
 import { fetchMCPServerConfigs } from "../fetchMCPServerConfigs";
 import { updateMcpServerTools } from "../reloadMcpServerTools";
 import type { SubscriptionHandler } from "prostgles-types";
-import { insertServerList } from "../insertServerList";
+import { insertMcpServerList } from "../insertMcpServerList";
 import type { DBSSchema } from "@common/publishUtils";
 
 const mcpHub = new McpHub();
@@ -65,7 +65,7 @@ const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
 };
 
 export const setupMCPServerHub = async (dbs: DBS) => {
-  await insertServerList(dbs);
+  await insertMcpServerList(dbs);
   for (const sub of Object.values(mcpSubscriptions)) {
     await sub?.unsubscribe();
   }

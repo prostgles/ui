@@ -35,7 +35,9 @@ export const getUserServerFunctions = async (
         connectionId: "string",
         schema: "string",
         chatId: "integer",
-        type: { enum: ["new-message", "approve-tool-use"] as const },
+        type: {
+          enum: ["new-message", "approve-tool-use", "tool-use-result"] as const,
+        },
         userMessage: {
           arrayOf: { oneOfType: USER_MESSAGE_CONTENT_SCHEMA_OPTIONS },
         },

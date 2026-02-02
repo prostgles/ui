@@ -10,14 +10,11 @@ import { SvgIcon } from "@components/SvgIcon";
 import { SwitchToggle } from "@components/SwitchToggle";
 import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
-import type { Prgl } from "src/App";
 import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "src/dashboard/SmartCardList/SmartCardList";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
-type P = Pick<
-  Prgl,
-  "dbs" | "dbsSql" | "dbsMethods" | "dbsMethodSchema" | "dbsTables"
-> & {
+type P = {
   showSpecificService:
     | undefined
     | {
@@ -27,17 +24,9 @@ type P = Pick<
       };
 };
 
-export const Services = ({
-  dbs,
-  dbsMethods,
-  dbsTables,
-  showSpecificService,
-  dbsMethodSchema,
-  dbsSql,
-}: P) => {
+export const Services = ({ showSpecificService }: P) => {
+  const { dbs, dbsTables, dbsSql, dbsMethodSchema } = usePrglCore();
   const { servicesFieldConfigs } = useServicesFieldConfigs({
-    dbs,
-    dbsMethods,
     showSpecificService,
   });
   return (
@@ -72,10 +61,9 @@ export const Services = ({
 };
 
 const useServicesFieldConfigs = ({
-  dbs,
-  dbsMethods,
   showSpecificService,
-}: Pick<P, "dbsMethods" | "dbs" | "showSpecificService">) => {
+}: Pick<P, "showSpecificService">) => {
+  const { dbs, dbsMethods } = usePrglCore();
   const { toggleService } = dbsMethods;
   const { onErrorAlert } = useOnErrorAlert();
   const servicesFieldConfigs = useMemo(() => {

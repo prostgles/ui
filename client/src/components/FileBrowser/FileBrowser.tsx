@@ -16,6 +16,8 @@ import {
   mdiLanguagePython,
   mdiLanguageRuby,
   mdiLanguageTypescript,
+  mdiPound,
+  mdiReact,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
@@ -26,21 +28,29 @@ import { FileBrowserCurrentDirectory } from "./FileBrowserCurrentDirectory";
 type P = {
   title?: string;
   path: string | undefined;
-  onChange: (filePath: string) => void;
+  filePath?: string;
+  onChange: (filePath: string, isDirectory: boolean) => void;
+  mode?: "file" | "directory";
 };
 
-export const FileBrowser = ({ title, path, onChange }: P) => {
+export const FileBrowser = ({
+  title,
+  path: currentPath,
+  onChange,
+  mode = "directory",
+  filePath,
+}: P) => {
   const {
     dbsMethods: { glob },
   } = usePrgl();
 
   const pathFiles = usePromise(async () => {
-    const result = glob ? await glob({ path }) : undefined;
-    if (!path && result?.path) {
-      onChange(result.path);
+    const result = glob ? await glob({ path: currentPath }) : undefined;
+    if (!currentPath && result?.path) {
+      onChange(result.path, true);
     }
     return result;
-  }, [glob, path, onChange]);
+  }, [glob, currentPath, onChange]);
 
   const sortedPathFiles = React.useMemo(() => {
     if (!pathFiles?.result) return;
@@ -53,12 +63,13 @@ export const FileBrowser = ({ title, path, onChange }: P) => {
   }, [pathFiles?.result]);
 
   return (
-    <FlexCol className="min-h-0 gap-0">
+    <FlexCol className="min-h-0 gap-0 max-h-full">
       {title && <Label className="mb-2">{title}</Label>}
-      {path !== undefined && (
+      {currentPath !== undefined && mode === "directory" && (
         <FileBrowserCurrentDirectory
-          path={path}
-          onChange={onChange}
+          path={currentPath}
+          className="mb-p5"
+          onChange={(newDir) => onChange(newDir, true)}
           existingFolderNames={
             pathFiles?.result
               .map((p) => (p.type === "directory" ? p.name : undefined))
@@ -67,50 +78,54 @@ export const FileBrowser = ({ title, path, onChange }: P) => {
         />
       )}
       <SearchList
-        key={path}
-        className="f-1 min-h-0 mt-p5"
+        key={currentPath}
+        className="f-1 min-h-0 "
         style={{ maxHeight: "600px" }}
         inputProps={{
           autoFocus: true,
         }}
         placeholder="Search files and folders"
         limit={500}
-        noSearchLimit={0}
+        /** Directory mode needs file create button */
+        noSearchLimit={mode === "directory" ? 0 : 9}
         noResultsContent={<div className="p-1 bg-color-1">Empty folder</div>}
         items={
-          sortedPathFiles?.map(
-            ({ path, type, created, lastModified, name, size }) => {
-              const extension = name.toLowerCase().split(".").at(-1);
-              return {
-                key: path,
-                label: name,
-                rowStyle: { paddingLeft: "0" },
-                contentLeft: (
-                  <Icon
-                    path={
-                      type === "directory" ? mdiFolderOutline : (
-                        FILE_EXTENSION_TO_ICON_INFO[extension ?? ""]
-                          ?.iconPath || mdiFileDocument
-                      )
-                    }
-                    className="mr-p5"
-                  />
-                ),
-                onPress: () => {
-                  onChange(path);
-                },
-                disabledInfo:
-                  type === "directory" ? undefined : "Select directories only",
-                contentRight: size ? <>{bytesToSize(size)}</> : null,
-                subLabel: `${
-                  lastModified ?
-                    new Date(lastModified).toISOString().split("T")[0] +
-                    " modified"
-                  : ""
-                } ${created ? new Date(created).toISOString().split("T")[0] + " created" : ""} `,
-              };
-            },
-          ) ?? []
+          sortedPathFiles?.map((item) => {
+            const { type, created, lastModified, name, size } = item;
+            const isDirectory = type === "directory";
+            const extension = name.toLowerCase().split(".").at(-1);
+            return {
+              key: item.path,
+              label: name,
+              rowStyle: { paddingLeft: "0" },
+              selected: item.path === filePath,
+              contentLeft: (
+                <Icon
+                  path={
+                    isDirectory ? mdiFolderOutline : (
+                      FILE_EXTENSION_TO_ICON_INFO[extension ?? ""]?.iconPath ||
+                      mdiFileDocument
+                    )
+                  }
+                  className="mx-p5"
+                />
+              ),
+              onPress: () => {
+                onChange(item.path, isDirectory);
+              },
+              disabledInfo:
+                isDirectory || mode === "file" ?
+                  undefined
+                : "Select directories only",
+              contentRight: size ? <>{bytesToSize(size)}</> : null,
+              subLabel: `${
+                lastModified ?
+                  new Date(lastModified).toISOString().split("T")[0] +
+                  " modified"
+                : ""
+              } ${created ? new Date(created).toISOString().split("T")[0] + " created" : ""} `,
+            };
+          }) ?? []
         }
       />
     </FlexCol>
@@ -122,6 +137,8 @@ export const FILE_EXTENSION_TO_ICON_INFO: Record<
   { label: string; iconPath?: string }
 > = {
   ts: { iconPath: mdiLanguageTypescript, label: "typescript" },
+  jsx: { iconPath: mdiReact, label: "javascript" },
+  tsx: { iconPath: mdiReact, label: "typescript" },
   js: { iconPath: mdiLanguageJavascript, label: "javascript" },
   py: { iconPath: mdiLanguagePython, label: "python" },
   rb: { iconPath: mdiLanguageRuby, label: "ruby" },
@@ -131,7 +148,7 @@ export const FILE_EXTENSION_TO_ICON_INFO: Record<
   txt: { label: "plaintext" },
   json: { iconPath: mdiCodeJson, label: "json" },
   yaml: { label: "yaml" },
-  css: { label: "css" },
+  css: { iconPath: mdiPound, label: "css" },
   html: { label: "html", iconPath: mdiLanguageHtml5 },
   md: { iconPath: mdiLanguageMarkdown, label: "markdown" },
   sql: { label: "sql" },

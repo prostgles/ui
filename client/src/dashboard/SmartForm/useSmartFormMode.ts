@@ -7,6 +7,7 @@ import { type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
 import {
   getSmartGroupFilter,
+  type DetailedFilter,
   type DetailedFilterBase,
 } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
@@ -17,7 +18,7 @@ export type SmartFormMode =
       type: "view" | "update";
       currentRow: AnyObject | undefined;
       loading: boolean;
-      rowFilter: DetailedFilterBase[];
+      rowFilter: DetailedFilter[];
       rowFilterObj: AnyObject;
       select: AnyObject;
       clone: VoidFunction | undefined;
@@ -29,7 +30,7 @@ export type SmartFormMode =
     }
   | {
       type: "multiUpdate";
-      rowFilter: DetailedFilterBase[];
+      rowFilter: DetailedFilter[];
       rowFilterObj: AnyObject;
       tableHandlerUpdate: undefined | TableHandlerClient["update"];
       tableHandlerDelete: undefined | TableHandlerClient["delete"];

@@ -1,13 +1,14 @@
-import { mdiAssistant, mdiClose, mdiPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useState } from "react";
-import type { Prgl } from "../../../App";
+import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiAssistant, mdiClose, mdiPlus } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useState } from "react";
+import type { Prgl } from "../../../App";
 import { SectionHeader } from "../../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../../AccessControl/useEditedAccessRule";
 import { SmartForm } from "../../SmartForm/SmartForm";
@@ -93,12 +94,7 @@ export const AskLLMAccessControl = ({
           }
         >
           {state.state !== "ready" ?
-            <SetupLLMCredentials
-              {...prgl}
-              asPopup={false}
-              dbs={dbs}
-              setupState={state}
-            />
+            <SetupLLMCredentials asPopup={false} setupState={state} />
           : <>
               <div className="ta-left" style={{ maxWidth: "500px" }}>
                 To allow chatting with the AI assistant, allowed prompts and
@@ -190,7 +186,10 @@ export const AskLLMAccessControl = ({
                     ["llm_prompt_id", "llm_credential_id"].includes(c.name)
                   }
                   jsonbSchemaWithControls={{ noLabels: true }}
-                  onChange={(row) => {
+                  onChange={(_row) => {
+                    const row = _row as Partial<
+                      DBSSchema["access_control_allowed_llm"]
+                    >;
                     if ("llm_credential_id" in row) {
                       setLocalCredentialId(row.llm_credential_id);
                     }

@@ -12,17 +12,18 @@ import React, { useMemo, useState } from "react";
 import { SmartForm, SmartFormPopup } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const AskLLMChatActionBarModelSelector = (
-  props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
+  props: Pick<AskLLMChatProps, "setupState"> & {
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
     llmMessages: DBSSchema["llm_messages"][];
   },
 ) => {
-  const { prgl, activeChat, llmMessages } = props;
+  const { activeChat, llmMessages } = props;
   const activeChatId = activeChat.id;
-  const { dbs, dbsMethods, dbsSql } = prgl;
+  const { dbs, dbsMethods, dbsSql, dbsTables, dbsMethodSchema } = usePrgl();
 
   const { data: models } = dbs.llm_models.useSubscribe(
     {},
@@ -58,8 +59,8 @@ export const AskLLMChatActionBarModelSelector = (
           db={dbs as DBHandlerClient}
           tableName="llm_models"
           rowFilter={[viewModelForm]}
-          tables={prgl.dbsTables}
-          methods={prgl.dbsMethodSchema}
+          tables={dbsTables}
+          methods={dbsMethodSchema}
           onClose={() => setViewModelForm(undefined)}
         />
       )}
@@ -70,12 +71,12 @@ export const AskLLMChatActionBarModelSelector = (
           tableName="llm_credentials"
           db={dbs as DBHandlerClient}
           sql={dbsSql}
-          methods={prgl.dbsMethodSchema}
+          methods={dbsMethodSchema}
           defaultData={{
             provider_id: addProviderCredentials,
           }}
           onClose={() => setAddProviderCredentials("")}
-          tables={prgl.dbsTables}
+          tables={dbsTables}
           showJoinedTables={false}
         />
       )}
@@ -178,8 +179,8 @@ export const AskLLMChatActionBarModelSelector = (
                 label="Add model"
                 db={dbs as DBHandlerClient}
                 tableName="llm_models"
-                methods={prgl.dbsMethodSchema}
-                tables={prgl.dbsTables}
+                methods={dbsMethodSchema}
+                tables={dbsTables}
                 sql={dbsSql}
                 triggerButton={{
                   iconPath: mdiPlus,

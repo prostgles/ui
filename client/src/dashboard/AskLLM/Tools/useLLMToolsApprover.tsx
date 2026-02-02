@@ -54,7 +54,11 @@ export const useLLMToolsApprover = ({
           return toolUseRequest.name === tool.name;
         });
 
-        if (!matchedTool || matchedTool.auto_approve) {
+        if (
+          !matchedTool ||
+          matchedTool.auto_approve ||
+          matchedTool.server_name === "prostgles-ui"
+        ) {
           // Handled by the backend
           return;
         }

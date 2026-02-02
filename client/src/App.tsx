@@ -73,6 +73,7 @@ export type PrglReadyState = {
 export type AppContextProps = PrglReadyState & {
   setTitle: (content: string | React.ReactNode) => void;
   theme: Theme;
+  user: DBSSchema["users"] | undefined;
 } & Pick<Required<AppState>, "serverState">;
 
 export type PrglStateCore = Pick<
@@ -125,6 +126,7 @@ export const App = () => {
         },
         theme,
         serverState: state.serverState,
+        user: state.user,
       },
     [state, theme, title],
   );

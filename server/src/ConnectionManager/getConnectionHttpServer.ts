@@ -20,18 +20,26 @@ export function getConnectionHttpServer(
     id: connectionId,
     is_state_db,
     port,
-    web_app_directory: webAppDirectory,
-    web_app_templated: webAppTemplated,
+    web_app_directory,
+    web_app_templated,
   } = connection;
-  const { allowed_origin: allowedOrigin, trust_proxy: trustProxy } =
-    databaseConfig;
+  const {
+    cors,
+    csp,
+    cors_csp_devmode_enabled,
+    trust_proxy,
+    csp_add_defaults_enabled,
+  } = databaseConfig;
   const config = {
     port,
-    allowedOrigin,
-    trustProxy,
+    cors,
+    csp,
+    csp_add_defaults_enabled,
+    cors_csp_devmode_enabled,
     socketPath,
-    webAppDirectory,
-    webAppTemplated,
+    web_app_directory,
+    web_app_templated,
+    trust_proxy,
   };
   const { http, app } = this.dbsServer;
   const existingServer = this.connectionHttpServers.get(connectionId);
@@ -70,13 +78,24 @@ export function getConnectionHttpServer(
         type: "reusing_main_server" as const,
         app,
         http,
-        ...createIOWebsocketServer({
-          http,
-          allowedOrigin,
-          socketPath,
-        }),
+        ...createIOWebsocketServer(
+          {
+            http,
+            socketPath,
+            cors,
+            cors_csp_devmode_enabled,
+          },
+          { is_state_db, port },
+          this.dbsServer.port,
+        ),
       }
-    : createHttpServer({ ...config, port });
+    : createHttpServer({
+        ...config,
+        port,
+        stateAppPort: this.dbsServer.port,
+        is_state_db,
+        connectionPorts: this.connectionPorts,
+      });
   const connectionServer = {
     ...newServer,
     connectionId,

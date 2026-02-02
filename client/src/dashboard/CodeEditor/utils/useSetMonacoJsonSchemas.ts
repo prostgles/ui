@@ -10,7 +10,7 @@ export const useSetMonacoJsonSchemas = (
   languageObj: LanguageConfig | undefined,
 ) => {
   useEffectDeep(() => {
-    setMonacoEditorJsonSchemas(editor, value, languageObj);
+    void setMonacoEditorJsonSchemas(editor, value, languageObj);
   }, [editor, languageObj]);
 };
 

@@ -35,15 +35,15 @@ import {
 
 const { app, http, io } = initExpressAndIOServers();
 
-export const connectionManager = new ConnectionManager(http, app, io);
-export const isDocker = Boolean(process.env.IS_DOCKER);
-
 const isTestingElectron = require.main?.filename.endsWith("testElectron.js");
 const electronConfig = getElectronConfig();
 const PORT =
   electronConfig && !isTestingElectron ? 0 : (
     +(process.env.PROSTGLES_UI_PORT ?? 3004)
   );
+export const connectionManager = new ConnectionManager(http, app, io, PORT);
+export const isDocker = Boolean(process.env.IS_DOCKER);
+
 const LOCALHOST = "127.0.0.1";
 const HOST =
   electronConfig ? LOCALHOST : process.env.PROSTGLES_UI_HOST || LOCALHOST;

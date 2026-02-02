@@ -20,6 +20,7 @@ export const readWebAppFiles = async (
   const { web_app_directory } = await getTemplatedWebAppConnection(
     dbo,
     connectionId,
+    true,
   );
   const result: { filePath: string; content: string }[] = [];
   for (const relativePath of filePaths) {

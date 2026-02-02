@@ -1,5 +1,5 @@
 import { getRootDir } from "@src/electronConfig";
-import { copyFile, mkdir, readdir, rm } from "fs/promises";
+import { copyFile, mkdir, readdir, readFile, rm, writeFile } from "fs/promises";
 import { glob } from "glob";
 import { join } from "path";
 import { createServerFunctionWithContext } from "prostgles-server";
@@ -10,6 +10,7 @@ import { writeWebAppFiles } from "./webApp/writeWebAppFiles";
 import { connectionManager } from "@src/index";
 import { getTemplatedWebAppConnection } from "./webApp/getTemplatedWebAppConnection";
 import { getReactComponents } from "./webApp/getReactComponents";
+import { getValidatedWebAppPath } from "./webApp/getValidatedWebAppPath";
 
 export const getWebAppServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -57,6 +58,19 @@ export const getWebAppServerFunctions = (
         );
 
         await copyFolder(templateDir, connection.web_app_directory);
+        if (connection.port !== null) {
+          const envFilePath = join(
+            connection.web_app_directory,
+            "client",
+            ".env.development",
+          );
+
+          await writeFile(
+            envFilePath,
+            `VITE_API_URL=http://localhost:${connection.port}`,
+            "utf-8",
+          );
+        }
         await dbo.connections.update(
           { id: connection.id },
           { web_app_templated: true },
@@ -110,6 +124,70 @@ export const getWebAppServerFunctions = (
           web_app_directory,
         });
         return components;
+      },
+    }),
+    getWebAppFileList: defineAdminFunction({
+      input: {
+        connectionId: "string",
+      },
+      run: async ({ connectionId }, { dbo }) => {
+        const { web_app_directory } = await getTemplatedWebAppConnection(
+          dbo,
+          connectionId,
+        );
+        /** Return all code files */
+        // const codeFiles: Record<string, string> = {};
+        const filePaths = await glob("**/*.*", {
+          nodir: true,
+          cwd: web_app_directory,
+          ignore: ["**/node_modules/**", "**/build/**", "**/dist/**"],
+          signal: AbortSignal.timeout(10_000),
+          posix: true,
+        });
+        // await Promise.all(
+        //   filePaths.map(async (filePath) => {
+        //     const relativePath = filePath.replace(web_app_directory + "/", "");
+        //     const content = await readFile(filePath, "utf-8");
+        //     codeFiles[relativePath] = content;
+        //   }),
+        // );
+        return filePaths;
+      },
+    }),
+    getWebAppFile: defineAdminFunction({
+      input: {
+        connectionId: "string",
+        relativePath: "string",
+      },
+      run: async ({ connectionId, relativePath }, { dbo }) => {
+        const { web_app_directory } = await getTemplatedWebAppConnection(
+          dbo,
+          connectionId,
+          true,
+        );
+        const { filePath } = getValidatedWebAppPath({
+          web_app_directory,
+          relativePath,
+        });
+        const content = await readFile(filePath, "utf-8");
+        return content;
+      },
+    }),
+    saveWebAppFile: defineAdminFunction({
+      input: {
+        connectionId: "string",
+        fileName: "string",
+        content: "string",
+      },
+      run: async ({ connectionId, fileName, content }, { dbo }) => {
+        const { web_app_directory } = await getTemplatedWebAppConnection(
+          dbo,
+          connectionId,
+        );
+        const filePath = join(web_app_directory, fileName);
+        await mkdir(join(filePath, ".."), { recursive: true });
+        await writeFile(filePath, content, "utf-8");
+        return true;
       },
     }),
   };

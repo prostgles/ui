@@ -13,6 +13,7 @@ import {
   mdiImage,
   mdiLanguageTypescript,
   mdiPencil,
+  mdiSecurity,
   mdiTableEdit,
 } from "@mdi/js";
 import { AuthProviderSetup } from "@pages/ServerSettings/AuthProvidersSetup/AuthProvidersSetup";
@@ -34,6 +35,7 @@ import { TableConfig } from "../TableConfig/TableConfig";
 import { ServerSideFunctions } from "./ServerSideFunctions";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
 import { WebAppConfig } from "./WebApp/WebAppConfig";
+import { SecuritySettings } from "@pages/ServerSettings/SecuritySettings";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -148,6 +150,13 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
             disabledText ||
             (isElectron ? "Not available for desktop" : undefined),
           content: <WebAppConfig />,
+        },
+        security: {
+          label: t.ServerSettings["Security"],
+          listProps: dataCommand("config.security"),
+          hide: serverState.isElectron,
+          leftIconPath: mdiSecurity,
+          content: <SecuritySettings connectionId={connectionId} />,
         },
         table_config: {
           label: (

@@ -14,7 +14,7 @@ export const setupLLM = async (dbs: DBS) => {
       `Today is ${LLM_PROMPT_VARIABLES.TODAY}.`,
       `DO NOT USE HARDCODED DATA UNLESS STRICTLY NECESSARY OR THE USER ASKS FOR IT.`,
     ].join("\n");
-    await dbs.llm_prompts.insert(
+    const upsertedPrompts = await dbs.llm_prompts.insert(
       [
         {
           name: "Chat",
@@ -125,14 +125,17 @@ export const setupLLM = async (dbs: DBS) => {
           prompt: "",
         },
       ],
-      { onConflict: "DoNothing" },
+      { onConflict: "DoNothing", returning: { name: 1 } },
     );
 
-    const addedPrompts = await dbs.llm_prompts.find();
-    console.warn(
-      "Inserted default prompts",
-      addedPrompts.map((p) => p.name),
-    );
+    // TODO: fix returning type for onconflict do nothing
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (upsertedPrompts?.length) {
+      console.warn(
+        "Inserted default prompts",
+        upsertedPrompts.map((p) => p.name),
+      );
+    }
   }
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition

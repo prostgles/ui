@@ -105,6 +105,7 @@ export const CONNECTION_CONFIG_SECTIONS = [
     "file_storage",
     "API",
     "webApp",
+    "security",
 ];
 /**
  * Ensure that multi-line strings are indented correctly

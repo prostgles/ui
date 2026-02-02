@@ -93,7 +93,38 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
     },
     "prostgles-ui": {
+        ask_question: {
+            needsLlmResponse: true,
+            description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time",
+            schema: {
+                type: {
+                    questions: {
+                        arrayOfType: {
+                            question: {
+                                type: "string",
+                                description: "The question to ask the user",
+                            },
+                            allowMultipleChoices: {
+                                type: "boolean",
+                                optional: true,
+                                description: "If true, the user can select multiple choices. Defaults to false.",
+                            },
+                            answers: {
+                                arrayOf: "string",
+                            },
+                        },
+                    },
+                },
+            },
+            outputSchema: {
+                arrayOfType: {
+                    question: "string",
+                    answers: "string[]",
+                },
+            },
+        },
         suggest_agent_workflow: {
+            description: "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
             schema: {
                 type: {
                     allowed_mcp_tool_names: {
@@ -171,8 +202,10 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     },
                 },
             },
+            outputSchema: undefined,
         },
         suggest_tools_and_prompt: {
+            description: "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.",
             schema: {
                 type: {
                     suggested_mcp_tool_names: {
@@ -210,8 +243,10 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     },
                 },
             },
+            outputSchema: undefined,
         },
         suggest_dashboards: {
+            description: "Suggest Prostgles UI dashboards to visualize data for the specified task.",
             schema: {
                 type: {
                     prostglesWorkspaces: {
@@ -220,6 +255,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     },
                 },
             },
+            outputSchema: undefined,
         },
     },
     "docker-sandbox": {
@@ -408,15 +444,14 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 type: {
                     entryPoint: {
                         type: "string",
-                        description: "Entry point file for the component. Example: 'src/components/Counter/Counter.tsx'",
+                        description: "Entry point file for the component. Example: '@/components/Counter/Counter.tsx'",
                     },
                     files: {
-                        description: `tsx/css and other files for the component. Example: { "src/components/Counter/Counter.tsx":  "import { useState } from "react"; ..."  } `,
+                        description: `tsx/css and other files for the component. Example: { "@/components/Counter/Counter.tsx":  "import { useState } from "react"; ..."  } `,
                         record: {
                             values: {
                                 type: {
                                     content: "string",
-                                    description: "string",
                                 },
                             },
                         },

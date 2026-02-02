@@ -88,7 +88,7 @@ export const APIDetails = ({ connection }: APIDetailsProps) => {
       )}
 
       {!!(dbs as Partial<DBS>).database_configs && databaseConfig && (
-        <AllowedOriginCheck dbs={dbs} databaseConfig={databaseConfig} />
+        <AllowedOriginCheck databaseConfig={databaseConfig} />
       )}
       <APIDetailsWs connection={connection} token={token} />
       <APIDetailsHttp connection={connection} token={token} />

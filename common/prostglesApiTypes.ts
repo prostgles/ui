@@ -92,7 +92,7 @@ export type AsyncResult<T> = {
 } | {
     data: T;
     isLoading: boolean;
-    error?: any;
+    error?: unknown;
 };
 export type HookOptions = {
     /**

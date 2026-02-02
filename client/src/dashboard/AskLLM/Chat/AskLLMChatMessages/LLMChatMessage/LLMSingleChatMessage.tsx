@@ -6,7 +6,6 @@ import React from "react";
 
 export const LLMSingleChatMessage = ({
   messageItem,
-  db,
   mcpServerIcons,
   workspaceId,
   loadedSuggestions,

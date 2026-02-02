@@ -4,6 +4,7 @@ import type { DBOFullyTyped } from "prostgles-server";
 export const getTemplatedWebAppConnection = async (
   dbo: DBOFullyTyped<DBGeneratedSchema>,
   connectionId: string,
+  allowNonTemplated = false,
 ) => {
   const connection = await dbo.connections.findOne({ id: connectionId });
   if (!connection) throw "Connection not found";
@@ -11,7 +12,7 @@ export const getTemplatedWebAppConnection = async (
   if (!web_app_directory) {
     throw "No web app directory set for connection";
   }
-  if (!web_app_templated) {
+  if (!allowNonTemplated && !web_app_templated) {
     throw "Web app not templated yet";
   }
   return {

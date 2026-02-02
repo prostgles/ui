@@ -109,7 +109,7 @@ export const createReceipt = async (page1: PageWIds) => {
 
   const fileName = "hotel_receipt.png";
   // Take screenshot
-  const filePath = path.join(__dirname, "../demo", fileName);
+  const filePath = path.join(__dirname, "../../demo", fileName);
   await page.screenshot({
     path: filePath,
     fullPage: true,

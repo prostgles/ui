@@ -11,7 +11,7 @@ import type {
 } from "./DBGeneratedSchema";
 import { getSerialisableError } from "prostgles-types";
 
-type U = Pick<DBSchema["users"], "id" | "type">;
+type U = DBSchema["users"];
 
 type ProstglesContextValue = OnReadyParams<
   DBGeneratedSchema,

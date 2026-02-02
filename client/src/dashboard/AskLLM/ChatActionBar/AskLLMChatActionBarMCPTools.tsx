@@ -6,13 +6,12 @@ import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { AskLLMChatActionBarMCPToolsBtn } from "./AskLLMChatActionBarMCPToolsBtn";
 
 export const AskLLMChatActionBarMCPTools = (
-  props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
+  props: Pick<AskLLMChatProps, "setupState"> & {
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
   },
 ) => {
-  const { prgl, activeChat } = props;
-  const { dbs } = prgl;
+  const { activeChat } = props;
 
   const [loading, setLoading] = useState(false);
 
@@ -28,13 +27,11 @@ export const AskLLMChatActionBarMCPTools = (
       button={
         <AskLLMChatActionBarMCPToolsBtn
           activeChat={activeChat}
-          dbs={dbs}
           loading={loading}
-          dbsMethods={prgl.dbsMethods}
         />
       }
     >
-      <MCPServers {...props.prgl} chatId={activeChat.id} />
+      <MCPServers {...props} chatId={activeChat.id} />
     </PopupMenu>
   );
 };

@@ -419,12 +419,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     if (this.props.onClickPromise) {
       const { onClickPromise } = this.props;
       onClick = (e) => {
-        !needsConfirmation() && this.setPromise(onClickPromise(e));
+        if (needsConfirmation()) return;
+        void this.setPromise(onClickPromise(e));
       };
     } else if (this.props.onClickMessage) {
       const { onClickMessage } = this.props;
       onClick = (e) => {
-        !needsConfirmation() && onClickMessage(e, this.clickMessage);
+        if (needsConfirmation()) return;
+        onClickMessage(e, this.clickMessage);
       };
     } else if (this.props.onClick) {
       onClick = (e) => {
@@ -543,8 +545,8 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
                 variant: "filled",
                 className: "ml-auto",
                 onClick: (e) => {
-                  this.setState({ showClickConfirmation: false });
                   onClick?.(e);
+                  this.setState({ showClickConfirmation: false });
                 },
               },
             ]}

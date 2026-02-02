@@ -4,17 +4,18 @@ import { FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
 import { mdiFilter, mdiMagnify, mdiPlay, mdiStop } from "@mdi/js";
 import React from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { MCPServersProps } from "../MCPServers";
 import { AddMCPServer } from "./AddMCPServer";
 
 export const MCPServersToolbar = ({
-  dbs,
   selectedTool,
   setSelectedTool,
 }: MCPServersProps & {
   selectedTool: undefined | DBSSchema["mcp_server_tools"];
   setSelectedTool: (tool: undefined | DBSSchema["mcp_server_tools"]) => void;
 }) => {
+  const { dbs } = usePrglCore();
   const { data: tools } = dbs.mcp_server_tools.useFind();
   const globalSettings = dbs.global_settings.useSubscribeOne();
 

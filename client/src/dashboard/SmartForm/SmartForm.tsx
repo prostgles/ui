@@ -1,7 +1,10 @@
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
 import React, { useCallback } from "react";
-import { type DetailedFilterBase } from "@common/filterUtils";
+import {
+  type DetailedFilter,
+  type DetailedFilterBase,
+} from "@common/filterUtils";
 import type { Prgl } from "../../App";
 import { SuccessMessage } from "@components/Animations";
 import ErrorComponent from "@components/ErrorComponent";
@@ -52,7 +55,7 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "sql"> & {
   onLoaded?: VoidFunction;
   onChange?: (newRow: AnyObject) => void;
 
-  rowFilter?: DetailedFilterBase[];
+  rowFilter?: DetailedFilter[];
   /**
    * If true will not "Update" button in bottom bar and changes will be applied immediately
    */

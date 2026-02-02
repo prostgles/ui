@@ -1,12 +1,13 @@
 import { useOnErrorAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
-import { FlexRow, FlexRowWrap } from "@components/Flex";
+import { classOverride, FlexRow, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { mdiCheck, mdiClose, mdiFolderPlusOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo, useState } from "react";
 
 type P = {
+  className?: string;
   path: string;
   existingFolderNames: string[];
   onChange: (filePath: string) => void;
@@ -16,6 +17,7 @@ export const FileBrowserCurrentDirectory = ({
   path,
   onChange,
   existingFolderNames,
+  className,
 }: P) => {
   const {
     dbsMethods: { makeDirectory },
@@ -35,7 +37,7 @@ export const FileBrowserCurrentDirectory = ({
   }, [existingFolderNames, newFolderName]);
 
   return (
-    <FlexRowWrap className="gap-0">
+    <FlexRowWrap className={classOverride("gap-0", className)}>
       {path.split("/").map((pathPart, index, pathParts) => {
         return (
           <React.Fragment key={pathPart + index}>

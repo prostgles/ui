@@ -27,6 +27,7 @@ export const COMMANDS = {
   "config.auth": { desc: "", uiOnly: true },
   "config.ac": { desc: "", uiOnly: true },
   "config.status": "",
+  "config.security": "",
   "config.ac.create": "",
   "config.ac.save": "",
   "config.ac.removeRule": "",
@@ -527,6 +528,9 @@ export const COMMANDS = {
   DashboardMenuContent: "",
   "ArgumentDefinition.toggleOptional": "",
   "WebApp.directory": "",
+  "WebAppConfig.createFromTemplate": "",
+  "WebAppConfig.build": "",
+  "WebAppConfig.test": "",
 } as const satisfies Record<
   string,
   | string

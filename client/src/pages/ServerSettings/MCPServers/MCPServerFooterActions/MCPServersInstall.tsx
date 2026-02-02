@@ -1,20 +1,19 @@
-import { usePromise } from "prostgles-client";
-import React from "react";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
+import { usePromise } from "prostgles-client";
+import React from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { CodeEditor } from "../../../../dashboard/CodeEditor/CodeEditor";
-import type { ServerSettingsProps } from "../../ServerSettings";
 import type { MCPServerWithToolAndConfigs } from "../useMCPServersListProps";
 
 export const MCPServersInstall = ({
   mcpServer,
-  dbs,
-  dbsMethods,
-}: Pick<ServerSettingsProps, "dbsMethods" | "dbs"> & {
+}: {
   mcpServer: MCPServerWithToolAndConfigs;
 }) => {
+  const { dbs, dbsMethods } = usePrglCore();
   if (!mcpServer.source) {
     throw new Error("MCP Server source is not defined");
   }

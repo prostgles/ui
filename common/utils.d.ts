@@ -174,7 +174,7 @@ export declare function throttle<Params extends any[]>(func: (...args: Params) =
 export declare const SPOOF_TEST_VALUE = "trustme";
 export declare const getEntries: <T extends AnyObject>(obj: T) => [keyof T, T[keyof T]][];
 export declare const fromEntries: <K extends string | number | symbol, V>(entries: readonly (readonly [K, V])[]) => Record<K, V>;
-export declare const CONNECTION_CONFIG_SECTIONS: readonly ["authentication", "access_control", "backups", "table_config", "details", "status", "methods", "file_storage", "API", "webApp"];
+export declare const CONNECTION_CONFIG_SECTIONS: readonly ["authentication", "access_control", "backups", "table_config", "details", "status", "methods", "file_storage", "API", "webApp", "security"];
 /**
  * Ensure that multi-line strings are indented correctly
  */

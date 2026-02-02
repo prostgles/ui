@@ -308,6 +308,7 @@ export const CONNECTION_CONFIG_SECTIONS = [
   "file_storage",
   "API",
   "webApp",
+  "security",
 ] as const;
 
 /**

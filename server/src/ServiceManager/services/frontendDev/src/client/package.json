@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm i && vite",
     "build": "tsc -b && npm run lint && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -12,7 +12,8 @@
   "dependencies": {
     "prostgles-client": "^4.0.309",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-router": "^7.13.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

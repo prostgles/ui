@@ -1,13 +1,14 @@
-import { mdiReload } from "@mdi/js";
-import React from "react";
 import type { DBSSchema } from "@common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiReload } from "@mdi/js";
+import React from "react";
+import { pluralise } from "src/pages/Connections/Connection";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { CodeEditor } from "../../../../dashboard/CodeEditor/CodeEditor";
-import type { ServerSettingsProps } from "../../ServerSettings";
 import { MCPServerConfigButton } from "../MCPServerConfig/MCPServerConfigButton";
 import {
   useMCPServerEnable,
@@ -15,12 +16,8 @@ import {
 } from "../MCPServerConfig/useMCPServerEnable";
 import type { MCPServerWithToolAndConfigs } from "../useMCPServersListProps";
 import { MCPServersInstall } from "./MCPServersInstall";
-import { pluralise } from "src/pages/Connections/Connection";
 
-export type MCPServerFooterActionsProps = Pick<
-  ServerSettingsProps,
-  "dbs" | "dbsMethods"
-> & {
+export type MCPServerFooterActionsProps = {
   mcp_server: MCPServerWithToolAndConfigs;
   envInfo:
     | {
@@ -33,11 +30,10 @@ export type MCPServerFooterActionsProps = Pick<
 };
 export const MCPServerFooterActions = ({
   mcp_server,
-  dbs,
-  dbsMethods,
   envInfo,
   chatContext,
 }: MCPServerFooterActionsProps) => {
+  const { dbs, dbsMethods } = usePrglCore();
   const { reloadMcpServerTools } = dbsMethods;
   const { mcp_server_configs, config_schema } = mcp_server;
   const logItem: DBSSchema["mcp_server_logs"] | undefined =
@@ -52,13 +48,7 @@ export const MCPServerFooterActions = ({
   const { llm_chats_allowed_mcp_tools, chatId } = chatContext ?? {};
   return (
     <FlexRow className="jc-end pl-p5">
-      {mcp_server.source && (
-        <MCPServersInstall
-          mcpServer={mcp_server}
-          dbs={dbs}
-          dbsMethods={dbsMethods}
-        />
-      )}
+      {mcp_server.source && <MCPServersInstall mcpServer={mcp_server} />}
       {logItem &&
         Boolean(
           logItem.log || logItem.install_log || logItem.install_error,

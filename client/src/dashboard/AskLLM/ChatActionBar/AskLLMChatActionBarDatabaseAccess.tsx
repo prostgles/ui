@@ -9,6 +9,7 @@ import {
   mdiTable,
   mdiTableSearch,
 } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
 import { SmartForm } from "../../SmartForm/SmartForm";
@@ -16,21 +17,22 @@ import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarDatabaseAccess = (
-  props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
+  props: Pick<AskLLMChatProps, "setupState"> & {
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
     prompt: DBSSchema["llm_prompts"] | undefined;
   },
 ) => {
-  const { prgl, activeChat } = props;
+  const { activeChat } = props;
   const prompt = props.prompt?.prompt;
   const activeChatId = activeChat.id;
-  const { dbs, dbsMethodSchema, dbsTables } = prgl;
+  const { dbs, dbsMethodSchema, dbsTables, connectionId, dbsSql, tables } =
+    usePrgl();
 
   const { data: llm_chats_allowed_functions } =
     dbs.llm_chats_allowed_functions.useSubscribe({
       chat_id: activeChatId,
-      connection_id: prgl.connectionId,
+      connection_id: connectionId,
     });
 
   const allowedFunctions = llm_chats_allowed_functions?.length;
@@ -103,7 +105,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
     >
       <SmartForm
         db={dbs as DBHandlerClient}
-        sql={prgl.dbsSql}
+        sql={dbsSql}
         label=""
         tableName="llm_chats"
         rowFilter={[{ fieldName: "id", value: activeChatId }]}
@@ -121,7 +123,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
         contentClassname="p-1"
         // contentClassname="p-0 pb-1"
         jsonbSchemaWithControls={{
-          tables: props.prgl.tables,
+          tables,
           schemaStyles: [
             {
               path: ["3", "tables"],

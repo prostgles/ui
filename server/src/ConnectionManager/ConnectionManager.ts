@@ -13,7 +13,7 @@ import type { DB } from "prostgles-server/dist/Prostgles";
 import type { FileTableConfig } from "prostgles-server/dist/ProstglesTypes";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { SubscriptionHandler } from "prostgles-types";
-import { pickKeys } from "prostgles-types";
+import { isDefined, pickKeys } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
 import type { SUser } from "../authConfig/sessionUtils";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
@@ -30,6 +30,7 @@ import {
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
 import { initConnectionManager } from "./initConnectionManager";
 import { startConnection } from "./startConnection";
+import type { HttpAppSecurityOptions } from "@src/init/setHttpAppSecurity";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
@@ -88,6 +89,7 @@ export class ConnectionManager {
     http: httpServer;
     app: e.Express;
     io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
+    port: number;
   };
   // wss?: WebSocket.Server<WebSocket.WebSocket>;
   dbs?: DBS;
@@ -102,8 +104,9 @@ export class ConnectionManager {
     http: httpServer,
     app: Express,
     io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
+    port: number,
   ) {
-    this.dbsServer = { http, app, io };
+    this.dbsServer = { http, app, io, port };
   }
 
   connectionHttpServers: Map<
@@ -112,10 +115,10 @@ export class ConnectionManager {
       connectionId: string;
       config: {
         port: number | null;
-        allowedOrigin: string | null;
         socketPath: string;
-        webAppDirectory: string | null;
-      };
+        web_app_directory: string | null;
+        web_app_templated: boolean | null;
+      } & HttpAppSecurityOptions;
       type?: "reusing_main_server";
     }
   > = new Map();
@@ -125,10 +128,21 @@ export class ConnectionManager {
   conSub?: SubscriptionHandler | undefined;
   dbConfSub?: SubscriptionHandler | undefined;
   dbConfigs: (DBSSchema["database_configs"] & {
-    connections: Pick<DBSSchema["connections"], "id" | "is_state_db">[];
+    connections: Pick<
+      DBSSchema["connections"],
+      "id" | "is_state_db" | "port"
+    >[];
     access_control_user_types: DBSSchema["access_control_user_types"][];
   })[] = [];
   init = initConnectionManager.bind(this);
+
+  get connectionPorts() {
+    return (
+      this.connections
+        ?.map((c) => (c.is_state_db ? undefined : c.port || undefined))
+        .filter(isDefined) ?? []
+    );
+  }
 
   getConnectionsWithPublicAccess = () => {
     return this.dbConfigs.filter((c) =>

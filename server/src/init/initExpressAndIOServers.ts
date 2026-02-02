@@ -5,24 +5,15 @@ import { sidKeyName } from "@common/authTypesAndConstants";
 import { API_ENDPOINTS } from "@common/utils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import cookieParser from "cookie-parser";
-import cors from "cors";
 import express, { json, urlencoded } from "express";
-import helmet from "helmet";
 import _http from "http";
 import path from "path";
-import { upsertNamedExpressMiddleware } from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
 import { Server } from "socket.io";
 import { actualRootDir } from "../electronConfig";
 
 export const isTesting = !!process.env.PRGL_TEST;
 export const initExpressAndIOServers = () => {
   const app = express();
-  app.use(
-    helmet({
-      crossOriginResourcePolicy: false,
-      referrerPolicy: false,
-    }),
-  );
 
   if (isTesting) {
     app.use((req, res, next) => {
@@ -47,22 +38,8 @@ export const initExpressAndIOServers = () => {
     });
   }
 
-  /**
-   * Required to ensure xenova/transformators works
-   */
-  const localLLMHeaders = ""; // `'unsafe-eval' 'wasm-unsafe-eval'`;
-  // console.error("REMOVE CSP", localLLMHeaders);
-  const renderPDFinIframe = `data: blob:`;
   app.use(json({ limit: "100mb" }));
   app.use(urlencoded({ extended: true, limit: "100mb" }));
-  app.use(function (req, res, next) {
-    /* data import (papaparse) requires: worker-src blob: 'self' */
-    res.setHeader(
-      "Content-Security-Policy",
-      ` script-src 'self' ${localLLMHeaders}; frame-src 'self' ${renderPDFinIframe} ; worker-src blob: 'self';`,
-    );
-    next();
-  });
 
   process.on("unhandledRejection", (reason, p) => {
     console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
@@ -112,20 +89,15 @@ export const initExpressAndIOServers = () => {
 
   app.use(cookieParser());
 
-  const withOrigin: CorsOrigin = {
-    origin: (origin, cb) => {
-      const { stateDatabaseConfig: database_config } = getAuthSetupData();
-      cb(null, database_config?.allowed_origin ?? undefined);
-    },
-  };
-
-  const corsMiddleware = cors(withOrigin);
-  upsertNamedExpressMiddleware(app, corsMiddleware, "corsMiddleware");
-
   const io = new Server(http, {
     path: API_ENDPOINTS.WS_DBS,
     maxHttpBufferSize: 100e100,
-    cors: withOrigin,
+    cors: {
+      origin: (origin, cb) => {
+        const { stateDatabaseConfig: database_config } = getAuthSetupData();
+        cb(null, database_config?.allowed_origin ?? undefined);
+      },
+    },
   });
 
   // Log server-level events
@@ -138,11 +110,4 @@ export const initExpressAndIOServers = () => {
     io,
     http,
   };
-};
-
-export type CorsOrigin = {
-  origin?: (
-    requestOrigin: string | undefined,
-    callback: (err: Error | null, origin?: string) => void,
-  ) => void;
 };

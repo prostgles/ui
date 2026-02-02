@@ -1,27 +1,21 @@
-import { useOnErrorAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
+import { WebAppFileBrowser } from "@components/CodeFileBrowser/WebAppFileBrowser";
 import ErrorComponent from "@components/ErrorComponent";
 import { FileBrowser } from "@components/FileBrowser/FileBrowser";
 import { FlexCol } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
-import {
-  FooterButtons,
-  type FooterButtonsProps,
-} from "@components/Popup/FooterButtons";
 import PopupMenu from "@components/PopupMenu";
+import Tabs from "@components/Tabs";
 import { mdiFolderOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { usePromise } from "prostgles-client";
 import { pickKeys } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { areEqual, isEmpty } from "src/utils/utils";
+import { WebAppConfigComponents } from "./WebAppConfigComponents";
+import { WebAppConfigFooterActions } from "./WebAppConfigFooterActions";
 
 export const WebAppConfig = () => {
-  const {
-    connectionId,
-    dbs,
-    dbsMethods: { buildWebApp, testWebApp, createWebAppFromTemplate, glob },
-  } = usePrgl();
+  const { connectionId, dbs } = usePrgl();
   const {
     data: connection,
     isLoading,
@@ -29,7 +23,6 @@ export const WebAppConfig = () => {
   } = dbs.connections.useSubscribeOne({
     id: connectionId,
   });
-  const { onErrorAlert } = useOnErrorAlert();
 
   const { web_app_directory, web_app_port, web_app_templated } =
     connection ?? {};
@@ -57,73 +50,60 @@ export const WebAppConfig = () => {
   const port = edits?.web_app_port ?? web_app_port;
 
   const webAppUrl = `${location.protocol}//${location.hostname}:${port ?? connection?.port}`;
-
-  const cannotTemplateError = usePromise(async () => {
-    if (!web_app_directory) return "No directory set";
-    if (web_app_templated) return "Already templated";
-    const existingFiles = await glob?.({ path: web_app_directory });
-    if (!existingFiles) return "Cannot access directory";
-    return existingFiles.result.length === 0 ?
-        undefined
-      : "Directory not empty";
-  }, [glob, web_app_directory, web_app_templated]);
-
-  const dirNotEmpty =
-    cannotTemplateError === "Directory not empty" ||
-    cannotTemplateError === "Already templated";
-
+  if (!connection) {
+    return <Loading />;
+  }
   return (
-    <FlexCol>
+    <FlexCol className="f-1">
       {webAppUrl && <a href={webAppUrl}>{webAppUrl}</a>}
       {isLoading && <Loading />}
-      {connection && (
-        <>
-          <PopupMenu
-            data-command="WebApp.directory"
-            button={
-              <Btn
-                label={{
-                  label: "Directory",
-                  variant: "normal",
-                  className: "mb-p5",
-                }}
-                variant="faded"
-                iconPath={mdiFolderOutline}
-              >
-                {directory ?? "Set diretory ..."}
-              </Btn>
-            }
-            onClickClose={false}
-            onClose={() => setEdits(undefined)}
-            footerButtons={(pClose) =>
-              !didChange || !edits ?
-                []
-              : [
-                  {
-                    label: "Cancel",
-                    onClickClose: true,
+      <>
+        <PopupMenu
+          data-command="WebApp.directory"
+          button={
+            <Btn
+              label={{
+                label: "Directory",
+                variant: "normal",
+                className: "mb-p5",
+              }}
+              variant="faded"
+              iconPath={mdiFolderOutline}
+            >
+              {directory ?? "Set diretory ..."}
+            </Btn>
+          }
+          onClickClose={false}
+          onClose={() => setEdits(undefined)}
+          footerButtons={(pClose) =>
+            !didChange || !edits ?
+              []
+            : [
+                {
+                  label: "Cancel",
+                  onClickClose: true,
+                },
+                {
+                  label: "Update",
+                  className: "ml-auto",
+                  variant: "filled",
+                  color: "action",
+                  onClickPromise: async (e) => {
+                    await dbs.connections.update({ id: connectionId }, edits);
+                    pClose?.(e);
                   },
-                  {
-                    label: "Update",
-                    className: "ml-auto",
-                    variant: "filled",
-                    color: "action",
-                    onClickPromise: async (e) => {
-                      await dbs.connections.update({ id: connectionId }, edits);
-                      pClose?.(e);
-                    },
-                  },
-                ]
+                },
+              ]
+          }
+        >
+          <FileBrowser
+            path={directory || undefined}
+            onChange={(newDir) =>
+              setEdits((oldVal) => ({ ...oldVal, web_app_directory: newDir }))
             }
-          >
-            <FileBrowser
-              path={directory || undefined}
-              onChange={(newDir) =>
-                setEdits((oldVal) => ({ ...oldVal, web_app_directory: newDir }))
-              }
-            />
-          </PopupMenu>
-          {/* <FormField
+          />
+        </PopupMenu>
+        {/* <FormField
             type="integer"
             label={"Port"}
             value={port || undefined}
@@ -152,100 +132,36 @@ export const WebAppConfig = () => {
               )
             }
           /> */}
-          {directory && (
-            <FooterButtons
-              className="mt-2"
-              style={{
-                padding: "1em 0",
-              }}
-              footerButtons={[
-                {
-                  label:
-                    dirNotEmpty ?
-                      "Re-create from template"
-                    : "Create from template",
-                  variant: "filled",
-                  color: "action",
-                  disabledInfo: dirNotEmpty ? undefined : cannotTemplateError,
-                  clickConfirmation:
-                    dirNotEmpty ?
-                      {
-                        message:
-                          "This will overwrite existing files in the directory. Are you sure you want to continue?",
-                        buttonText: "Yes, create from template",
-                        color: "danger",
-                      }
-                    : undefined,
-                  onClickPromise: async () => {
-                    await onErrorAlert(async () => {
-                      await createWebAppFromTemplate?.({
-                        connectionId,
-                        clean: dirNotEmpty,
-                      });
-                      // await dbs.services.insert({
-                      //   name: "web_app_service",
-                      //   default_port: port!,
-                      //   icon: "ApplicationBracketsOutline",
-                      //   label: "Web App Service",
-                      //   status: "stopped",
-                      //   configs: {
-                      //     // web_app_directory: directory,
-                      //     // web_app_port: port,
-                      //     // connection_id: connectionId,
-                      //   },
-                      // });
-                    });
-                  },
-                },
-                ...(connection.web_app_templated ?
-                  ([
-                    {
-                      label: "Build",
-                      variant: "filled",
-                      color: "action",
-                      onClickPromise: async () => {
-                        await onErrorAlert(async () => {
-                          const result = await buildWebApp!({
-                            connectionId,
-                          });
-                          console.log("Docker build result: ", result);
-                          if (result.state === "error") {
-                            throw result.log;
-                          }
-                        });
-                      },
-                    },
-                    {
-                      label: "Test",
-                      variant: "filled",
-                      color: "action",
-                      onClickPromise: async () => {
-                        await onErrorAlert(async () => {
-                          const result = await testWebApp!({
-                            connectionId,
-                          });
-                          console.log("Docker test result: ", result);
-                          if (result.state === "error") {
-                            throw result.log;
-                          }
-                        });
-                      },
-                    },
-                    {
-                      label: "Open in browser",
-                      variant: "filled",
-                      color: "action",
-                      onClick: () => {
-                        window.open(webAppUrl, "_blank");
-                      },
-                    },
-                  ] satisfies FooterButtonsProps["footerButtons"])
-                : []),
-              ]}
-            />
-          )}
-        </>
-      )}
+        <Tabs
+          className="f-1 w-full"
+          contentClass="f-1 py-1 min-h-0"
+          defaultActiveKey="Preview"
+          items={{
+            Preview: {
+              content: (
+                <iframe
+                  className="f-1 w-full h-full"
+                  title="Web App Preview"
+                  src={webAppUrl}
+                />
+              ),
+            },
+            Components: {
+              hide: !web_app_templated,
+              content: <WebAppConfigComponents webAppUrl={webAppUrl} />,
+            },
+            Files: {
+              content: <WebAppFileBrowser connection={connection} />,
+            },
+            Tests: {
+              hide: !web_app_templated,
+              content: <div>Tests go here</div>,
+            },
+          }}
+        />
+
+        <WebAppConfigFooterActions connection={connection} />
+      </>
       <ErrorComponent error={error} />
     </FlexCol>
   );

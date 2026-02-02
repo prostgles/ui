@@ -1,12 +1,16 @@
 import { getProstglesMCPFullToolName } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
-import type { ToolResultMessage } from "../ToolUseChatMessage/ToolUseChatMessage";
+import type {
+  ToolResultMessage,
+  ToolUseMessage,
+} from "../ToolUseChatMessage/ToolUseChatMessage";
 import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
 import { LoadSuggestedWorkflow } from "./ProstglesMCPTools/LoadSuggestedWorkflow";
 import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
+import { AskAnswerQuestions } from "./ProstglesMCPTools/AskAnswerQuestions";
 
 export const ProstglesMCPToolsWithUI = {
   [getProstglesMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]:
@@ -26,6 +30,10 @@ export const ProstglesMCPToolsWithUI = {
     "suggest_agent_workflow",
   ) as string]: {
     component: LoadSuggestedWorkflow,
+    displayMode: "full",
+  },
+  [getProstglesMCPFullToolName("prostgles-ui", "ask_question") as string]: {
+    component: AskAnswerQuestions,
     displayMode: "full",
   },
   "docker-sandbox--create_container": {
@@ -65,11 +73,7 @@ export const ProstglesMCPToolsWithUI = {
 
 export type ProstglesMCPToolsProps = {
   workspaceId: string | undefined;
-  // message: ToolUseMessage;
-  message: {
-    id: string;
-    input: any;
-  };
+  message: ToolUseMessage;
   chatId: number;
   toolUseResult:
     | {

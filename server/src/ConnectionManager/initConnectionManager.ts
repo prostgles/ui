@@ -1,5 +1,7 @@
 import { getConnectionApiPaths } from "@common/utils";
+import { setHttpAppSecurity } from "@src/init/setHttpAppSecurity";
 import type { DB } from "prostgles-server/dist/Prostgles";
+import { isDefined } from "prostgles-types";
 import { type DBS } from "../index";
 import { type ConnectionManager } from "./ConnectionManager";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
@@ -19,6 +21,14 @@ export async function initConnectionManager(
     saveCertificates(connections);
     connections.forEach((updatedConnection) => {
       const prglCon = this.getActiveConnectionSilentFail(updatedConnection.id);
+      if (
+        !prglCon &&
+        (updatedConnection.port || updatedConnection.web_app_directory)
+      ) {
+        /** Auto start connections that are setup for API or Web app usage */
+        void this.startConnection(updatedConnection.id, dbs, db);
+        return;
+      }
       const currentConnection = this.connections?.find(
         (ccon) => ccon.id === updatedConnection.id,
       );
@@ -53,6 +63,22 @@ export async function initConnectionManager(
           const prglCon = this.getActiveConnectionSilentFail(
             connectionPartialItem.id,
           );
+
+          const stateConnectionPort = stateDatabaseConfig?.connections
+            .map((c) => c.port || undefined)
+            .find(isDefined);
+          const { is_state_db } = connectionPartialItem;
+          const app = is_state_db ? this.dbsServer.app : prglCon?.app;
+          if (app && stateDatabaseConfig && stateConnectionPort) {
+            setHttpAppSecurity(
+              app,
+              databaseConfig,
+              connectionPartialItem,
+              stateConnectionPort,
+              this.connectionPorts,
+            );
+          }
+
           if (
             stateDatabaseConfig &&
             prglCon?.prgl &&

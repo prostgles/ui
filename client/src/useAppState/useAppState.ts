@@ -2,7 +2,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { type DBHandlerClient, useAsyncEffectQueue } from "prostgles-client";
 import { includes } from "prostgles-types";
 import { useMemo, useState } from "react";
-import type { AppState } from "../App";
+import type { PrglReadyState } from "../App";
 import type { DBS, DBSMethods } from "../dashboard/Dashboard/DBS";
 import { getTables } from "../dashboard/Dashboard/getTables";
 import { dbsConnectionOptions } from "./dbsConnectionOptions";
@@ -17,7 +17,7 @@ export const useAppState = (
   const [user, setUser] = useState<DBSSchema["users"]>();
 
   const prglStateWaiting = dbsClient.hasError || dbsClient.isLoading;
-  const prglState: AppState["prglState"] = useMemo(() => {
+  const prglState: PrglReadyState | undefined = useMemo(() => {
     if (prglStateWaiting) return;
     const {
       db: dbs,
@@ -50,9 +50,9 @@ export const useAppState = (
       dbsSocket: socket,
       sid: auth.user?.sid,
       dbsKey: Date.now() + "",
-      user,
+      user: auth.user,
     };
-  }, [dbsClient, prglStateWaiting, user]);
+  }, [dbsClient, prglStateWaiting]);
 
   const { dbs, auth } = prglState ?? {};
 
@@ -88,5 +88,6 @@ export const useAppState = (
     dbsClientError: undefined,
     prglState,
     serverState,
+    user,
   };
 };

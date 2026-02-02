@@ -19,7 +19,7 @@ export const insertStateDatabase = async (
   );
   if (!matchingStateConnectionCount) {
     const { data: state_db, error } = await tryCatchV2(async () => {
-      const { connection: state_db } = await upsertConnection(
+      const { connection: state_db, database_config } = await upsertConnection(
         {
           ...con,
           user_id: null,
@@ -27,21 +27,47 @@ export const insertStateDatabase = async (
           name: isElectron ? "Prostgles Desktop state" : "Prostgles UI state",
           type: !con.db_conn ? "Standard" : "Connection URI",
           db_port: con.db_port || 5432,
-          db_ssl: con.db_ssl, // || "disable",
+          db_ssl: con.db_ssl,
           is_state_db: true,
         },
         null,
         db,
       );
 
+      /**
+       * Required to ensure xenova/transformators works
+       */
+      // const localLLMHeaders = `'unsafe-eval' 'wasm-unsafe-eval'`;
       await db.database_configs.update(
-        { $existsJoined: { connections: { id: state_db.id } } },
+        { id: database_config.id },
         {
           /** Origin "*" is required to enable API access */
           allowed_origin: (await getPasswordlessAdmin(db)) ? null : "*",
           allowed_ips_enabled: false,
           allowed_ips: ["::ffff:127.0.0.1"],
           tableConfig,
+          csp: {
+            defaultSrc: ["'self'"],
+            imgSrc: [
+              "*",
+              "'self'",
+              "data:",
+              "blob:",
+              "https://*.tile.openstreetmap.org",
+            ],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'"], // localLLMHeaders
+            /* data import (papaparse) requires: worker-src blob: 'self' */
+            workerSrc: ["'self'", "blob:"],
+            frameSrc: [
+              "self",
+              /** Allow rendering pdf in AskLLM chat */
+              "data:",
+              "blob:",
+            ],
+            connectSrc: ["'self'", "ws:", "wss:"],
+          },
+          cors_csp_devmode_enabled: true,
         },
       );
 
@@ -59,34 +85,3 @@ export const insertStateDatabase = async (
     await db.connections.update({ is_state_db: true }, { port });
   }
 };
-
-// export const createSampleDatabase = async (db: DBS, _db: DB, state_db: DBSSchema["connections"]) => {
-
-//   const SAMPLE_DB_LABEL = "Sample database";
-//   const SAMPLE_DB_NAME = "sample_database";
-//   const sampleConnection = await db.connections.findOne({ name: SAMPLE_DB_LABEL, db_name: SAMPLE_DB_NAME });
-//   if(!sampleConnection){
-
-//     const databases: string[] = (await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`)).map(({ datname }) => datname)
-//     if(!databases.includes(SAMPLE_DB_NAME)) {
-//       await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
-//     }
-//     if(!getElectronConfig()?.isElectron){
-//       const stateCon = { ...omitKeys(state_db, ["id"]) };
-//       const validatedSampleDBConnection = validateConnection({
-//         ...stateCon,
-//         type: "Standard",
-//         name: SAMPLE_DB_LABEL,
-//         db_name: SAMPLE_DB_NAME,
-//       })
-//       const { connection: con, database_config } = await upsertConnection({
-//         ...stateCon,
-//         ...validatedSampleDBConnection,
-//         is_state_db: false,
-//         name: SAMPLE_DB_LABEL,
-//       }, null, db);
-//       console.log("Inserted sample connection for db ", con.db_name);
-//     }
-
-//   }
-// }

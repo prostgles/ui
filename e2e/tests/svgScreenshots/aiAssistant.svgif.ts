@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { getCommandElemSelector, getDataKeyElemSelector } from "Testing";
-import { createReceipt } from "createReceipt";
+import { createReceipt } from "testAskLLM/createReceipt";
 import {
   closeWorkspaceWindows,
   deleteExistingLLMChat,

@@ -11,6 +11,7 @@ import { sliceText } from "@common/utils";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import {
+  getProperty,
   getSerialisableError,
   isObject,
   omitKeys,
@@ -23,7 +24,7 @@ import { getLLMToolsAllowedInThisChat } from "./getLLMToolsAllowedInThisChat";
 
 import {
   getMCPToolNameParts,
-  type PROSTGLES_MCP_SERVERS_AND_TOOLS,
+  PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
@@ -247,15 +248,28 @@ export const askLLM = async (args: AskLLMArgs) => {
     }
   }
 
-  const hasMessagesThatNeedsAIResponse = userMessage.some(
-    (m) =>
-      !(
-        m.type === "tool_result" &&
-        !m.is_error &&
-        getMCPToolNameParts(m.tool_name)?.serverName ===
-          ("prostgles-ui" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)
-      ),
-  );
+  const hasMessagesThatNeedsAIResponse = userMessage.some((m) => {
+    if (m.type === "tool_result" && !m.is_error) {
+      const toolNameParts = getMCPToolNameParts(m.tool_name);
+      if (!toolNameParts) return true;
+      const { serverName, toolName } = toolNameParts;
+      /**
+       * Somet of prostgles-ui tools don't need LLM response after their result
+       */
+      if (serverName === "prostgles-ui") {
+        const toolDefinition = getProperty(
+          PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
+          toolName,
+        );
+        return (
+          toolDefinition &&
+          "needsLlmResponse" in toolDefinition &&
+          toolDefinition.needsLlmResponse
+        );
+      }
+    }
+    return true;
+  });
   if (!hasMessagesThatNeedsAIResponse) {
     return;
   }

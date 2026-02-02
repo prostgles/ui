@@ -2,6 +2,7 @@ import Btn from "@components/Btn";
 import { Chat } from "@components/Chat/Chat";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
@@ -12,7 +13,6 @@ import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useAskLLMChatSend } from "./useAskLLMChatSend";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 const CHAT_WIDTH = 900;
 
 export type AskLLMChatProps = Pick<
@@ -148,7 +148,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             actionBar={
               isAdmin && (
                 <AskLLMChatActionBar
-                  prgl={prgl}
                   activeChat={activeChat}
                   setupState={setupState}
                   prompt={prompt}
