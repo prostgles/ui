@@ -20,7 +20,7 @@ export const WebAppConfigFooterActions = ({
 
   const { onErrorAlert } = useOnErrorAlert();
 
-  const { web_app_directory, web_app_templated } = connection;
+  const { web_app_directory, web_app_templated, port } = connection;
 
   const cannotTemplateError = usePromise(async () => {
     if (!web_app_directory) return "No directory set";
@@ -50,7 +50,10 @@ export const WebAppConfigFooterActions = ({
           variant: "filled",
           color: "action",
           "data-command": "WebAppConfig.createFromTemplate",
-          disabledInfo: dirNotEmpty ? undefined : cannotTemplateError,
+          disabledInfo:
+            !connection.port ? "Must set port first"
+            : dirNotEmpty ? undefined
+            : cannotTemplateError,
           clickConfirmation:
             dirNotEmpty ?
               {
@@ -74,14 +77,13 @@ export const WebAppConfigFooterActions = ({
               //   status: "stopped",
               //   configs: {
               //     // web_app_directory: directory,
-              //     // web_app_port: port,
               //     // connection_id: connectionId,
               //   },
               // });
             });
           },
         },
-        ...(web_app_templated ?
+        ...(web_app_templated && port ?
           ([
             {
               label: "Build",

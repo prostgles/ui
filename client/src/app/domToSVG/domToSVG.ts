@@ -61,7 +61,8 @@ export const domToSVG = async (node: HTMLElement) => {
     const ctm = text.getCTM();
     const scaleX = !ctm ? 1 : Math.hypot(ctm.a, ctm.c);
     text.setAttribute("textLength", bbox.width / scaleX);
-    text.setAttribute("lengthAdjust", "spacingAndGlyphs");
+    text.setAttribute("lengthAdjust", "spacing");
+    // text.setAttribute("lengthAdjust", "spacingAndGlyphs");
   });
 
   /** Does not really seem effective */

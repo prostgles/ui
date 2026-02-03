@@ -254,6 +254,28 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", timeout: 15e3 });
   });
 
+  test("Server settings and account tabs work", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await login(page, USERS.test_user, "/login");
+
+    for (const pageWithTabs of ["/server-settings", "/account"]) {
+      await goTo(page, pageWithTabs);
+
+      const tabItems = await page.getByTestId("MenuList").locator("li").all();
+      for (const tabItem of tabItems) {
+        const tabKey = await tabItem.getAttribute("data-key");
+        const tabText = await tabItem.textContent();
+        await expect(tabKey).toBeTruthy();
+        await expect(tabText).toBeTruthy();
+        await tabItem.click();
+        await page.waitForTimeout(500);
+        await expect(page.locator(".Tabs_Content h2").first()).toContainText(
+          tabText!,
+        );
+      }
+    }
+  });
+
   test("Email password registration setup", async ({ page: p, browser }) => {
     const page = p as PageWIds;
 
@@ -575,7 +597,7 @@ test.describe("Main test", () => {
     await page.getByTestId("config.webApp").click();
     await page.getByTestId("WebApp.directory").click();
     await fileBrowserGoToPath(page, ["ui", "e2e", "demo"]);
-    await page.getByText("Update", { exact: true }).click();
+    await page.getByText("Select directory", { exact: true }).click();
   });
 
   test("Web app", async ({ page: p }) => {
@@ -2433,10 +2455,17 @@ test.describe("Main test", () => {
 
   test("MCP Servers", async ({ page: p }) => {
     const page = p as PageWIds;
-    // await goTo(page, "localhost:3004/login");
     await login(page, USERS.test_user, "localhost:3004/login");
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: TEST_DB_NAME }).click();
+
+    await runDbsSql(
+      page,
+      `
+      UPDATE mcp_servers SET enabled = false WHERE name = 'myServer';
+      DELETE FROM mcp_servers WHERE name = 'myServer';
+    `,
+    );
 
     await page.getByTestId("AskLLM").click();
     await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
@@ -2450,9 +2479,13 @@ test.describe("Main test", () => {
           mcpServers: {
             myServer: {
               command: "npx",
-              args: ["@modelcontextprotocol/server-filesystem", "ALLOWED_DIR"],
+              args: [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "ALLOWED_DIR",
+              ],
               env: {
-                GITHUB_PERSONAL_ACCESS_TOKEN: "<YOUR_TOKEN>",
+                MY_TOKEN: "<YOUR_TOKEN>",
               },
             },
           },
@@ -2495,7 +2528,7 @@ test.describe("Main test", () => {
       .getByTestId("Btn.ClickConfirmation.Confirm")
       .click({ timeout: 10e3 });
     await page.waitForTimeout(1e3);
-    await expect(createFromTemplateBtn).toBeEnabled();
+    await expect(createFromTemplateBtn).toBeEnabled({ timeout: 5e3 });
     await clickAndWait(page.getByTestId("WebAppConfig.build"));
     await clickAndWait(page.getByTestId("WebAppConfig.test"));
     await page.locator(getDataKey("Components")).click();

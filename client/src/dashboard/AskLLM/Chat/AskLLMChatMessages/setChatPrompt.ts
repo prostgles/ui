@@ -49,6 +49,8 @@ export const setChatPrompt = async ({
         });
       }),
     ).then((arr) => arr.flat());
-    await dbs.llm_chats_allowed_mcp_tools.insert(allowedToolsInsert);
+    await dbs.llm_chats_allowed_mcp_tools.insert(allowedToolsInsert, {
+      onConflict: "DoNothing",
+    });
   }
 };

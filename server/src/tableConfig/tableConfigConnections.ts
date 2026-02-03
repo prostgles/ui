@@ -30,7 +30,6 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
         sqlDefinition: `TEXT`,
         info: { hint: "Path to frontend assets directory for connection" },
       },
-      web_app_port: "INTEGER",
       web_app_templated: "BOOLEAN DEFAULT FALSE ",
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       name: `TEXT NOT NULL CHECK(LENGTH(name) > 0)`,

@@ -2,10 +2,10 @@ import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfig";
@@ -22,7 +22,7 @@ export type MCPServersProps = {
 };
 
 export const MCPServers = ({ chatId }: MCPServersProps) => {
-  const { dbsMethods, dbs, dbsMethodSchema, dbsTables, dbsSql } = usePrgl();
+  const { dbsMethods, dbs, dbsMethodSchema, dbsTables, dbsSql } = usePrglCore();
 
   const { getMcpHostInfo } = dbsMethods;
   const envInfo = usePromise(async () => getMcpHostInfo?.(), [getMcpHostInfo]);

@@ -1,14 +1,22 @@
+import { getEntries } from "@common/utils";
+import type { TabItems } from "@components/Tabs";
+import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 
-export const useConnectionConfigSearchParams = <ItemKey extends string>(
-  connectionConfigItems: ItemKey[],
+export const useConnectionConfigSearchParams = <Items extends TabItems<string>>(
+  connectionConfigItems: Items,
 ) => {
   const [searchParams, setSearchParams] = useSearchParams();
-
+  const searchParamSection = searchParams.get("section");
+  const itemEntries = useMemo(
+    () => getEntries(connectionConfigItems),
+    [connectionConfigItems],
+  );
   const activeSection =
-    connectionConfigItems.find((s) => s === searchParams.get("section")) ??
-    connectionConfigItems[0];
-  const setSection = <S extends (typeof connectionConfigItems)[number]>({
+    searchParamSection ?
+      itemEntries.find(([key]) => key === searchParamSection)?.[0]
+    : itemEntries.find(([, v]) => !v.hide && !v.disabledText)?.[0];
+  const setSection = <S extends keyof Items & string>({
     section,
     opts,
   }: {

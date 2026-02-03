@@ -22,6 +22,7 @@ export function getConnectionHttpServer(
     port,
     web_app_directory,
     web_app_templated,
+    id,
   } = connection;
   const {
     cors,
@@ -31,6 +32,7 @@ export function getConnectionHttpServer(
     csp_add_defaults_enabled,
   } = databaseConfig;
   const config = {
+    id,
     port,
     cors,
     csp,
@@ -89,13 +91,16 @@ export function getConnectionHttpServer(
           this.dbsServer.port,
         ),
       }
-    : createHttpServer({
-        ...config,
-        port,
-        stateAppPort: this.dbsServer.port,
-        is_state_db,
-        connectionPorts: this.connectionPorts,
-      });
+    : createHttpServer(
+        {
+          ...config,
+          port,
+          stateAppPort: this.dbsServer.port,
+          is_state_db,
+          connectionPorts: this.connectionPorts,
+        },
+        this.dbsServer.app,
+      );
   const connectionServer = {
     ...newServer,
     connectionId,

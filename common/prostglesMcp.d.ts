@@ -122,7 +122,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     readonly "prostgles-ui": {
         readonly ask_user_questions: {
             readonly needsLlmResponse: true;
-            readonly description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time";
+            readonly description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time. Each question should have a list of suggested answers to choose from. If allowMultipleChoices is true, the user can select multiple answers.";
             readonly schema: {
                 readonly type: {
                     readonly questions: {
@@ -136,7 +136,8 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                 readonly optional: true;
                                 readonly description: "If true, the user can select multiple choices. Defaults to false.";
                             };
-                            readonly answers: {
+                            readonly suggested_answers: {
+                                readonly description: "The list of suggested answers the user will choose from";
                                 readonly arrayOf: "string";
                             };
                         };

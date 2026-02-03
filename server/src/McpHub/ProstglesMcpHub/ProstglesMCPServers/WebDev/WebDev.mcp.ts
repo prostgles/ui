@@ -22,7 +22,7 @@ import { searchWebDevFiles } from "./tools/searchWebDevFiles";
 const toolsSchema = PROSTGLES_MCP_SERVERS_AND_TOOLS["webdev"];
 
 const definition = {
-  icon_path: "Web",
+  icon_path: "React",
   label: "Web Dev Environment",
   description: "React vite based web development environment.",
   tools: toolsSchema,

@@ -6,32 +6,32 @@ export const goTo = async (page: PageWIds, url = "localhost:3004") => {
   const pendingRequests = new Set<Request>();
 
   // Store listener references for cleanup
-  const requestListener = (request: Request) => {
+  const onRequestStarted = (request: Request) => {
+    if (request.url().endsWith(".worker.js")) {
+      console.log("Ignoring worker request:", request.url());
+      // ignore worker scripts because the request for a worker script stays “pending”
+      // for as long as the worker is alive
+      return;
+    }
+
     pendingRequests.add(request);
-    // console.log(`→ REQUEST: ${request.method()} ${request.url()}`);
   };
 
-  const requestFinishedListener = (request: Request) => {
+  const onRequestCompleted = (request: Request) => {
     pendingRequests.delete(request);
-    // console.log(`✓ FINISHED: ${request.url()}`);
   };
 
-  const requestFailedListener = (request: Request) => {
+  const onRequestFailed = (request: Request) => {
     pendingRequests.delete(request);
-    // console.log(`✗ FAILED: ${request.url()} - ${request.failure()?.errorText}`);
   };
 
-  // const responseListener = (response: Response) => {
-  //   console.log(`← RESPONSE: ${response.status()} ${response.url()}`);
-  // };
-
-  page.on("request", requestListener);
-  page.on("requestfinished", requestFinishedListener);
-  page.on("requestfailed", requestFailedListener);
+  page.on("request", onRequestStarted);
+  page.on("requestfinished", onRequestCompleted);
+  page.on("requestfailed", onRequestFailed);
   // page.on("response", responseListener);
   try {
     const resp = await page.goto(url, {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
       timeout: 30e3,
     });
     if (resp && resp.status() >= 400) {
@@ -39,6 +39,12 @@ export const goTo = async (page: PageWIds, url = "localhost:3004") => {
     }
     if (!resp) {
       console.warn(`page.goto ${url}: no response`);
+    }
+    await page.waitForTimeout(500);
+    // Wait until there are no pending requests for at least 500ms
+    const start = Date.now();
+    while (pendingRequests.size > 0 || Date.now() - start < 500) {
+      await page.waitForTimeout(100);
     }
   } catch (error) {
     const requestInfo = Array.from(pendingRequests)
@@ -54,17 +60,15 @@ export const goTo = async (page: PageWIds, url = "localhost:3004") => {
         return `\n - ${reqMethod}: ${reqUrl}`;
       })
       .join("");
-    console.error(requestInfo);
+
     /** It's usually  http://localhost:3004/json.worker.js */
-    if (!requestInfo.includes("http://localhost:3004/json.worker.js")) {
-      throw new Error("\n⚠️ TIMEOUT! Pending requests: " + requestInfo, {
-        cause: error,
-      });
-    }
+    throw new Error("\n⚠️ TIMEOUT! Pending requests: " + requestInfo, {
+      cause: error,
+    });
   } finally {
-    page.off("request", requestListener);
-    page.off("requestfinished", requestFinishedListener);
-    page.off("requestfailed", requestFailedListener);
+    page.off("request", onRequestStarted);
+    page.off("requestfinished", onRequestCompleted);
+    page.off("requestfailed", onRequestFailed);
     // page.off("response", responseListener);
   }
 

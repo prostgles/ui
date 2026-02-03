@@ -6,13 +6,13 @@ import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
-import { ProstglesUIMCPServer } from "./ProstglesMCPServers/ProstglesUI.mcp";
+import { ProstglesMCPServer } from "./ProstglesMCPServers/Prostgles.mcp";
 
 export const ProstglesMCPServers = {
   "docker-sandbox": DockerSandboxMCPServer,
   websearch: WebSearchMCPServer,
   webdev: WebDevMCPServer,
-  "prostgles-ui": ProstglesUIMCPServer,
+  "prostgles-ui": ProstglesMCPServer,
 } as const satisfies Record<
   string,
   {

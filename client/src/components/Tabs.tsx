@@ -1,5 +1,5 @@
 import { mdiArrowLeft } from "@mdi/js";
-import React from "react";
+import React, { useMemo } from "react";
 import { isObject } from "@common/publishUtils";
 import type { DeltaOf, DeltaOfData } from "../dashboard/RTComp";
 import RTComp from "../dashboard/RTComp";
@@ -10,6 +10,7 @@ import type { MenuListitem } from "./MenuListItem";
 import { MenuList } from "./MenuList";
 import { useConnectionConfigSearchParams } from "../dashboard/ConnectionConfig/useConnectionConfigSearchParams";
 import { getKeys } from "../utils/utils";
+import { getEntries } from "@common/utils";
 
 export type TabItem = Partial<
   Omit<MenuListitem, "contentRight" | "onPress">
@@ -263,10 +264,14 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<
   }
 }
 
-export const TabsWithDefaultStyle = (props: Pick<TabsProps, "items">) => {
-  const { activeSection, setSection } = useConnectionConfigSearchParams(
-    getKeys(props.items),
-  );
+export const TabsWithDefaultStyle = ({ items }: Pick<TabsProps, "items">) => {
+  const { activeSection, setSection } = useConnectionConfigSearchParams(items);
+  const defaultActiveSection = useMemo(() => {
+    return (
+      activeSection ??
+      getEntries(items).find(([, v]) => !v.hide && !v.disabledText)?.[0]
+    );
+  }, [activeSection, items]);
   return (
     <div
       className="flex-col f-1 min-h-0 pt-1 w-full"
@@ -281,11 +286,11 @@ export const TabsWithDefaultStyle = (props: Pick<TabsProps, "items">) => {
           controlsCollapseWidth: 350,
         }}
         className="f-1 shadow"
-        activeKey={activeSection ?? props.items[0]?.key}
+        activeKey={defaultActiveSection}
         onChange={(section) => {
           setSection({ section });
         }}
-        items={props.items}
+        items={items}
         contentClass="f-1 o-autdo flex-row jc-center bg-color-2 "
         onRender={(item) => (
           <div className="flex-col f-1 max-w-800 min-w-0 bg-color-0 shadow w-full">

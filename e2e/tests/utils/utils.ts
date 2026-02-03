@@ -1156,6 +1156,7 @@ export const clickAndWait = async (
   timeout = 60_000,
 ) => {
   await btnLocator.click();
+  await btnLocator.page().waitForTimeout(200);
   await expect(btnLocator).toBeDisabled();
   await expect(btnLocator).toBeEnabled({ timeout }); // waits until loading finishes
 };

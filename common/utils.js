@@ -139,6 +139,7 @@ export const getConnectionPaths = ({ id, }) => {
     return {
         dashboard: `${ROUTES.CONNECTIONS}/${id}`,
         config: `${ROUTES.CONFIG}/${id}`,
+        webAppTests: `${ROUTES.PLAYWRIGHT_REPORT}/${id}`,
     };
 };
 export const API_ENDPOINTS = {
@@ -161,6 +162,7 @@ export const ROUTES = {
     USERS: "/users",
     BACKUPS: "/prostgles_backups",
     STORAGE: "/prostgles_storage",
+    PLAYWRIGHT_REPORT: "/playwright-report",
 };
 const testForDuplicateValues = (obj, name) => {
     if (new Set(Object.values(obj)).size !== Object.keys(obj).length) {

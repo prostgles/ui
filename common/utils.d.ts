@@ -186,6 +186,7 @@ export declare const getConnectionApiPaths: ({ id, url_path, port, is_state_db, 
 export declare const getConnectionPaths: ({ id, }: Pick<DBSSchema["connections"], "id">) => {
     dashboard: string;
     config: string;
+    webAppTests: string;
 };
 export declare const API_ENDPOINTS: {
     readonly REST: "/rest-api";
@@ -207,6 +208,7 @@ export declare const ROUTES: {
     readonly USERS: "/users";
     readonly BACKUPS: "/prostgles_backups";
     readonly STORAGE: "/prostgles_storage";
+    readonly PLAYWRIGHT_REPORT: "/playwright-report";
 };
 export declare const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 export declare const FORKED_PROC_ENV_NAME: "IS_FORKED_PROC";

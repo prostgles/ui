@@ -1,23 +1,33 @@
-import { type PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import Btn from "@components/Btn";
 import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
+import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
-import { mdiDatabaseEdit, mdiLanguageTypescript, mdiTools } from "@mdi/js";
-import type { JSONB } from "prostgles-types";
-import React, { useMemo } from "react";
+import { mdiLanguageTypescript, mdiTools } from "@mdi/js";
+import React from "react";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
-import { HeaderList } from "./common/HeaderList";
 import { DatabaseAccessPermissions } from "./common/DatabaseAccessPermissions";
+import { HeaderList } from "./common/HeaderList";
+import { useJSONBParsedData } from "./common/useJSONBParsedData";
 
 export const LoadSuggestedWorkflow = ({
-  chatId,
   message,
 }: Pick<ProstglesMCPToolsProps, "chatId" | "message">) => {
-  const data = message.input as JSONB.GetObjectType<
-    (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_agent_workflow"]["schema"]["type"]
-  >;
+  const inputValidation = useJSONBParsedData(
+    message.input,
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agent_workflow"]
+      .schema,
+  );
 
+  if (inputValidation.error !== undefined) {
+    return (
+      <ErrorComponent
+        error={`Error parsing tool input: ${inputValidation.error}`}
+      />
+    );
+  }
+  const { data } = inputValidation;
   const dbAccess = data.database_access;
 
   return (

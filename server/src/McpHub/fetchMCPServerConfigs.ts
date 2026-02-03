@@ -106,10 +106,7 @@ const applyConfig = (
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         env[key] = config[key];
       } else {
-        const dollarArgIndexes = args
-          .map((a, i) => (a.startsWith("${") ? i : undefined))
-          .filter(isDefined);
-        const argIndex = dollarArgIndexes[configItem.index ?? itemIndex];
+        const argIndex = args[configItem.index ?? itemIndex];
         if (argIndex) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           args[argIndex] = config[key];

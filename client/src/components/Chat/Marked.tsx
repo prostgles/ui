@@ -9,6 +9,7 @@ import {
 import "./Marked.css";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import { getProperty } from "@common/utils";
 
 export type MarkedProps = DivProps &
   Pick<
@@ -48,12 +49,19 @@ export const Marked = (props: MarkedProps) => {
         );
       }
 
+      const shortenedMap = {
+        tsx: "typescript",
+        ts: "typescript",
+        js: "javascript",
+        py: "python",
+      };
+
       return (
         <MonacoCodeInMarkdown
           className="my-1"
           key={codeString}
           codeHeader={codeHeader}
-          language={language}
+          language={getProperty(shortenedMap, language) ?? language}
           codeString={codeString}
           sqlHandler={sqlHandler}
           loadedSuggestions={loadedSuggestions}

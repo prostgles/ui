@@ -1,17 +1,15 @@
 import type { DBSSchema } from "@common/publishUtils";
+import { getElectronConfig } from "@src/electronConfig";
 import cors from "cors";
-import crypto from "crypto";
 import type e from "express";
-import type { RequestHandler } from "express";
 import helmet from "helmet";
-import type { IncomingMessage, ServerResponse } from "http";
 import {
   removeExpressRouteByName,
   upsertNamedExpressMiddleware,
 } from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
-import { getCorsOptions } from "./getCorsOptions";
-import { getElectronConfig } from "@src/electronConfig";
 import type { ExpressApp } from "prostgles-server/dist/RestApi";
+import { getCorsOptions } from "./getCorsOptions";
+import { setNonceHandler, withNonce, withSelfAndExtra } from "./utils";
 
 export type HttpAppSecurityOptions = Pick<
   DBSSchema["database_configs"],
@@ -38,19 +36,6 @@ export const setHttpAppSecurity = (
   app.set("trust proxy", trust_proxy);
   app.disable("x-powered-by");
 
-  const withSelfAndExtra = (
-    directive: string[] | undefined = ["'self'"],
-    extra: string[] = [],
-  ) => {
-    return [...directive, ...extra];
-  };
-  const withNonce = (directive: string[] | undefined, extra?: string[]) => {
-    return [
-      ...withSelfAndExtra(directive, extra),
-      (_req: IncomingMessage, res: ServerResponse) =>
-        `'nonce-${(res as unknown as e.Response).locals.cspNonce}'`,
-    ];
-  };
   const addDevDefaultsToStateConnection = (
     currentValue: undefined | string[],
     protocol: "http" | "wss" = "http",
@@ -85,7 +70,13 @@ export const setHttpAppSecurity = (
     /**
      * Allow web apps to be embedded in iframes to be shown in state connection web app config
      */
-    frameSrc: addDevDefaultsToStateConnection(csp?.frameSrc),
+    frameSrc: [
+      ...addDevDefaultsToStateConnection(csp?.frameSrc),
+      ...(is_state_db && cors_csp_devmode_enabled ?
+        /** Required to show playwright-report test results */
+        [`http://localhost:${stateAppPort}`]
+      : []),
+    ],
     connectSrc: addDevDefaultsToStateConnection(csp?.connectSrc, "wss"),
   };
 
@@ -93,14 +84,9 @@ export const setHttpAppSecurity = (
     !getElectronConfig()?.isElectron &&
     Boolean(csp || csp_add_defaults_enabled || cors_csp_devmode_enabled);
 
-  const cspNonceHandlerName = "nonceHandler";
   const cspHelmetMiddlewareHandlerName = "cspHelmetMiddlewareHandler";
+  setNonceHandler(app, cspEnabled);
   if (cspEnabled) {
-    const nonceHandler: RequestHandler = (_req, res, next) => {
-      res.locals.cspNonce = crypto.randomBytes(32).toString("hex");
-      next();
-    };
-    upsertNamedExpressMiddleware(app, nonceHandler, cspNonceHandlerName);
     const cspHandler = helmet({
       crossOriginResourcePolicy: false,
       referrerPolicy: false,
@@ -115,7 +101,6 @@ export const setHttpAppSecurity = (
       cspHelmetMiddlewareHandlerName,
     );
   } else {
-    removeExpressRouteByName(app as unknown as ExpressApp, cspNonceHandlerName);
     removeExpressRouteByName(
       app as unknown as ExpressApp,
       cspHelmetMiddlewareHandlerName,

@@ -97,7 +97,9 @@ export const MarkdownMonacoCodeHeader = (
               )}
             </>
           )}
-          {language === "html" && <OpenHTMLPreviewBtn html={codeString} />}
+          {(language === "html" || language === "xml") && (
+            <OpenHTMLPreviewBtn html={codeString} />
+          )}
           <CopyToClipboardBtn
             size="small"
             style={{
@@ -110,7 +112,11 @@ export const MarkdownMonacoCodeHeader = (
             title="Download"
             iconPath={mdiDownload}
             onClick={() => {
-              download(codeString, `code.${language}`, "text");
+              download(
+                codeString,
+                `generated_${new Date().toISOString().replace("T", "_").split(".")[0]}.${language}`,
+                "text",
+              );
             }}
           />
         </>
@@ -126,10 +132,11 @@ export const MarkdownMonacoCodeHeader = (
 
 const OpenHTMLPreviewBtn = ({ html }: { html: string }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<unknown>();
 
   const blobURL = useMemo(() => {
-    const blob = new Blob([html], { type: "text/html" });
+    const type = html.trim().startsWith("<svg") ? "image/svg+xml" : "text/html";
+    const blob = new Blob([html], { type });
     return URL.createObjectURL(blob);
   }, [html]);
   const iframeSandbox =
@@ -175,7 +182,7 @@ const OpenHTMLPreviewBtn = ({ html }: { html: string }) => {
               setError(new Error("Failed to load HTML preview"));
             }}
           />
-          {error && <ErrorComponent error={error} />}
+          <ErrorComponent error={error} />
         </Popup>
       )}
     </>

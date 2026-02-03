@@ -113,8 +113,10 @@ export const setupLLM = async (dbs: DBS) => {
             "",
             "Below is the database schema they're currently working with.",
             "All interactions between the web app and the database are done through prostgles client API which is exposed throught the useProstgles hook:",
-            `useProstgles(): ClientOnReadyParams<DBGeneratedSchema, GeneratedFunctionSchema, { id: string; type: string; }>`,
+            "```typescript",
+            `/* useProstgles(): ClientOnReadyParams<DBGeneratedSchema, GeneratedFunctionSchema, { id: string; type: string; }> */`,
             `import { useProstgles } from "@/api/ProstglesProvider";`,
+            "```",
             "",
             LLM_PROMPT_VARIABLES.DB_TYPESCRIPT_SCHEMA,
             "",
@@ -128,7 +130,7 @@ export const setupLLM = async (dbs: DBS) => {
           prompt: "",
         },
       ],
-      { onConflict: "DoNothing", returning: { name: 1 } },
+      { onConflict: "DoUpdate", returning: { name: 1 } },
     );
 
     // TODO: fix returning type for onconflict do nothing

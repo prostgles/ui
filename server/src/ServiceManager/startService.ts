@@ -170,7 +170,7 @@ export async function startService(
     stop,
     endpoints: getServiceEndoints({ serviceName, baseUrl, endpoints }),
   };
-  //@ts-ignore
+
   this.activeServices.set(serviceName, runningService);
   this.onServiceLog(serviceName, logs);
 

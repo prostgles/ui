@@ -355,6 +355,7 @@ export const getConnectionPaths = ({
   return {
     dashboard: `${ROUTES.CONNECTIONS}/${id}`,
     config: `${ROUTES.CONFIG}/${id}`,
+    webAppTests: `${ROUTES.PLAYWRIGHT_REPORT}/${id}`,
   };
 };
 
@@ -379,6 +380,7 @@ export const ROUTES = {
   USERS: "/users",
   BACKUPS: "/prostgles_backups",
   STORAGE: "/prostgles_storage",
+  PLAYWRIGHT_REPORT: "/playwright-report",
 } as const;
 
 const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {

@@ -87,15 +87,11 @@ export const askLLM = async (args: AskLLMArgs) => {
     clientReq,
   } = args;
 
-  const {
-    chat,
-    prompt,
-    pastMessages,
-    promptObj,
-    getChat,
-    llm_credential,
-    llm_prompt_id,
-  } = await getValidatedAskLLMChatOptions(args);
+  const { chat, prompt, promptObj, getChat, llm_credential, llm_prompt_id } =
+    await getValidatedAskLLMChatOptions(args);
+  const getPastMessages = () =>
+    dbs.llm_messages.find({ chat_id: chatId }, { orderBy: { created: 1 } });
+  let pastMessages = await getPastMessages();
 
   /** It's crucial we reduce the posibility that a new user message fails to insert due to some non critical error */
   const {
@@ -180,6 +176,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       })),
       llm_model_id: chat.model,
     });
+    pastMessages = await getPastMessages();
   }
 
   if (args.type === "tool-use-result" && !awaitingToolUseResult.length) {
@@ -488,14 +485,10 @@ const getValidatedAskLLMChatOptions = async ({
   const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
   if (!promptObj) throw "Prompt not found";
   const { prompt } = promptObj;
-  const pastMessages = await dbs.llm_messages.find(
-    { chat_id: chatId },
-    { orderBy: { created: 1 } },
-  );
+
   return {
     prompt,
     promptObj,
-    pastMessages,
     chat,
     llm_credential,
     llm_prompt_id,

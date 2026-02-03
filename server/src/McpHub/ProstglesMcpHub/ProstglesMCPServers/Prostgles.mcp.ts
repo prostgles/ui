@@ -10,8 +10,8 @@ import type {
 
 const definition = {
   icon_path: "HelpCircleOutline",
-  label: "Prostgles UI",
-  description: "Tools to assist with Prostgles UI.",
+  label: "Prostgles",
+  description: "Tools to assist with Prostgles UI tasks",
   tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"],
 } as const satisfies ProstglesMcpServerDefinition;
 
@@ -42,7 +42,7 @@ const handler = {
   },
 } satisfies ProstglesMcpServerHandlerTyped<typeof definition>;
 
-export const ProstglesUIMCPServer = {
+export const ProstglesMCPServer = {
   definition,
   handler: handler as ProstglesMcpServerHandler,
 };

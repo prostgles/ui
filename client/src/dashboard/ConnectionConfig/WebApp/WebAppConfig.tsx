@@ -1,8 +1,10 @@
+import { useOnErrorAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import { WebAppFileBrowser } from "@components/CodeFileBrowser/WebAppFileBrowser";
 import ErrorComponent from "@components/ErrorComponent";
 import { FileBrowser } from "@components/FileBrowser/FileBrowser";
 import { FlexCol } from "@components/Flex";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import Loading from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
 import Tabs from "@components/Tabs";
@@ -13,9 +15,10 @@ import React, { useMemo, useState } from "react";
 import { areEqual, isEmpty } from "src/utils/utils";
 import { WebAppConfigComponents } from "./WebAppConfigComponents";
 import { WebAppConfigFooterActions } from "./WebAppConfigFooterActions";
+import { getConnectionPaths } from "@common/utils";
 
 export const WebAppConfig = () => {
-  const { connectionId, dbs } = usePrgl();
+  const { connectionId, dbs, tables } = usePrgl();
   const {
     data: connection,
     isLoading,
@@ -24,13 +27,11 @@ export const WebAppConfig = () => {
     id: connectionId,
   });
 
-  const { web_app_directory, web_app_port, web_app_templated } =
-    connection ?? {};
+  const { web_app_directory, web_app_templated } = connection ?? {};
   const [edits, setEdits] = useState(
     connection &&
       pickKeys(connection as Partial<typeof connection>, [
         "web_app_directory",
-        "web_app_port",
         "web_app_templated",
       ]),
   );
@@ -39,20 +40,37 @@ export const WebAppConfig = () => {
       connection &&
       edits &&
       !isEmpty(edits) &&
-      !areEqual(connection, edits, [
-        "web_app_directory",
-        "web_app_port",
-        "web_app_templated",
-      ]),
+      !areEqual(connection, edits, ["web_app_directory", "web_app_templated"]),
     [connection, edits],
   );
-  const directory = edits?.web_app_directory ?? web_app_directory;
-  const port = edits?.web_app_port ?? web_app_port;
 
-  const webAppUrl = `${location.protocol}//${location.hostname}:${port ?? connection?.port}`;
+  const usersTableError = useMemo(() => {
+    const usersTable = tables.find((t) => t.name === "users");
+    if (!usersTable) {
+      return 'A "users" is required.';
+    }
+    const hasType = usersTable.columns.some((c) => c.name === "type");
+    if (!hasType) {
+      return 'A "type" TEXT column is required on the "users" table.';
+    }
+  }, [tables]);
+  const { data: usedPorts } = dbs.connections.useFind(
+    {},
+    { select: { port: 1 }, returnType: "values" },
+  );
+  const { onErrorAlert } = useOnErrorAlert();
+
   if (!connection) {
     return <Loading />;
   }
+
+  const directory = edits?.web_app_directory ?? web_app_directory;
+  const { port } = connection;
+
+  const webAppUrl =
+    !web_app_directory || !port ?
+      undefined
+    : `${location.protocol}//${location.hostname}:${port}`;
   return (
     <FlexCol className="f-1">
       {webAppUrl && <a href={webAppUrl}>{webAppUrl}</a>}
@@ -84,7 +102,7 @@ export const WebAppConfig = () => {
                   onClickClose: true,
                 },
                 {
-                  label: "Update",
+                  label: "Select directory",
                   className: "ml-auto",
                   variant: "filled",
                   color: "action",
@@ -103,62 +121,54 @@ export const WebAppConfig = () => {
             }
           />
         </PopupMenu>
-        {/* <FormField
-            type="integer"
-            label={"Port"}
-            value={port || undefined}
-            onChange={(newPort) => {
-              setEdits((v) => ({ ...v, web_app_port: newPort }));
-            }}
-            rightIcons={
-              didChange && (
-                <>
-                  <Btn
-                    iconPath={mdiClose}
-                    onClick={() => setEdits(undefined)}
-                  />
-                  <Btn
-                    iconPath={mdiCheck}
-                    onClick={() => {
-                      void onErrorAlert(async () => {
-                        await dbs.connections.update(
-                          { id: connectionId },
-                          { web_app_port: port },
-                        );
-                      });
-                    }}
-                  />
-                </>
-              )
-            }
-          /> */}
-        <Tabs
-          className="f-1 w-full"
-          contentClass="f-1 py-1 min-h-0"
-          defaultActiveKey="Preview"
-          items={{
-            Preview: {
-              content: (
-                <iframe
-                  className="f-1 w-full h-full"
-                  title="Web App Preview"
-                  src={webAppUrl}
-                />
-              ),
-            },
-            Components: {
-              hide: !web_app_templated,
-              content: <WebAppConfigComponents webAppUrl={webAppUrl} />,
-            },
-            Files: {
-              content: <WebAppFileBrowser connection={connection} />,
-            },
-            Tests: {
-              hide: !web_app_templated,
-              content: <div>Tests go here</div>,
-            },
+        <FormFieldDebounced
+          type="integer"
+          label={"Port"}
+          value={port || undefined}
+          hint={`Used ports: ${usedPorts?.filter((p) => p !== port).join(", ")}`}
+          onChange={(newPort) => {
+            void onErrorAlert(async () => {
+              await dbs.connections.update(
+                { id: connectionId },
+                { port: newPort || null },
+              );
+            });
           }}
         />
+        {usersTableError && <ErrorComponent error={usersTableError} />}
+        {web_app_templated && webAppUrl && (
+          <Tabs
+            className="f-1 w-full"
+            contentClass="f-1 py-1 min-h-0"
+            defaultActiveKey="Preview"
+            items={{
+              Preview: {
+                content: (
+                  <iframe
+                    className="f-1 w-full h-full"
+                    title="Web App Preview"
+                    src={webAppUrl}
+                  />
+                ),
+              },
+              Components: {
+                hide: !web_app_templated,
+                content: <WebAppConfigComponents webAppUrl={webAppUrl} />,
+              },
+              Files: {
+                content: <WebAppFileBrowser connection={connection} />,
+              },
+              Tests: {
+                hide: !web_app_templated,
+                content: (
+                  <iframe
+                    src={getConnectionPaths({ id: connectionId }).webAppTests}
+                  />
+                ),
+              },
+            }}
+          />
+        )}
 
         <WebAppConfigFooterActions connection={connection} />
       </>
@@ -166,4 +176,4 @@ export const WebAppConfig = () => {
     </FlexCol>
   );
 };
-console.error("FINISH");
+console.error("FINISH TESTS");

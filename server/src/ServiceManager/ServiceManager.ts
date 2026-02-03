@@ -16,7 +16,7 @@ export class ServiceManager {
   constructor(dbs: DBS | undefined) {
     this.dbs = dbs;
     if (dbs) {
-      void initialiseServices(this, dbs);
+      void initialiseServices(this, dbs).catch(console.error);
     }
   }
   onServiceLog = (
@@ -28,7 +28,14 @@ export class ServiceManager {
       .slice(-100)
       .map((l) => l.text)
       .join("");
-    void this.dbs?.services.update(
+    if (!this.dbs) {
+      console.warn("No dbs available to log service logs", {
+        serviceName,
+        serviceStatus,
+      });
+      return;
+    }
+    void this.dbs.services.update(
       { name: serviceName },
       { logs, status: serviceStatus ?? "stopped" },
     );

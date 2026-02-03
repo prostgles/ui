@@ -8,6 +8,7 @@ import type { JSONB } from "prostgles-types";
 import React from "react";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
+import FormField from "@components/FormField/FormField";
 
 export const AskAnswerQuestions = ({
   chatId,
@@ -50,7 +51,10 @@ export const AskAnswerQuestions = ({
   return (
     <FlexCol className="w-full ta-left">
       {questions.map(
-        ({ question, answers, allowMultipleChoices }, questionIndex) => {
+        (
+          { question, suggested_answers, allowMultipleChoices },
+          questionIndex,
+        ) => {
           return (
             <FlexCol key={question + questionIndex} className="">
               <p className="p-0 m-0 bold">{question}</p>
@@ -60,7 +64,23 @@ export const AskAnswerQuestions = ({
                   gap: ".5em 2em",
                 }}
               >
-                {answers.map((answer, answerIndex) => (
+                {!suggested_answers.length && (
+                  <FormField
+                    type="text"
+                    value={
+                      Array.from(
+                        selectedAnswers.get(question)?.keys() ?? [],
+                      )[0] || ""
+                    }
+                    onChange={(newAnswer) => {
+                      setSelectedAnswers((prev) => {
+                        prev.set(question, new Set([newAnswer]));
+                        return new Map(prev);
+                      });
+                    }}
+                  />
+                )}
+                {suggested_answers.map((answer, answerIndex) => (
                   <Checkbox
                     label={answer}
                     variant="header"
@@ -125,6 +145,10 @@ export const AskAnswerQuestions = ({
                           },
                         ),
                       ),
+                    },
+                    {
+                      type: "text",
+                      text: "The answers have been provided as a JSON array of objects with 'question' and 'answers' fields. DO NOT ASK THE USER FOR THESE ANSWERS AGAIN.",
                     },
                   ],
                 },

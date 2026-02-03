@@ -17,6 +17,7 @@ import {
   mdiTableEdit,
 } from "@mdi/js";
 import { AuthProviderSetup } from "@pages/ServerSettings/AuthProvidersSetup/AuthProvidersSetup";
+import { SecuritySettings } from "@pages/ServerSettings/SecuritySettings";
 import React, { useMemo } from "react";
 import { t } from "../../i18n/i18nUtils";
 import NewConnection from "../../pages/NewConnection/NewConnnectionForm";
@@ -24,7 +25,6 @@ import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
 import { TopControls } from "../../pages/TopControls";
 import { dataCommand } from "../../Testing";
-import { getKeys } from "../../utils/utils";
 import { AccessControl } from "../AccessControl/AccessControl";
 import { useAccessControlSearchParams } from "../AccessControl/useAccessControlSearchParams";
 import { BackupsControls } from "../BackupAndRestore/BackupsControls";
@@ -35,7 +35,6 @@ import { TableConfig } from "../TableConfig/TableConfig";
 import { ServerSideFunctions } from "./ServerSideFunctions";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
 import { WebAppConfig } from "./WebApp/WebAppConfig";
-import { SecuritySettings } from "@pages/ServerSettings/SecuritySettings";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -204,9 +203,8 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       stateDisabledInfo,
     ],
   );
-  const { activeSection, setSection } = useConnectionConfigSearchParams(
-    getKeys(sectionItems),
-  );
+  const { activeSection, setSection } =
+    useConnectionConfigSearchParams(sectionItems);
 
   return (
     <div className={`flex-col f-1 min-s-0 ${className}`} style={style}>

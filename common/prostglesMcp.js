@@ -95,7 +95,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     "prostgles-ui": {
         ask_user_questions: {
             needsLlmResponse: true,
-            description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time",
+            description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time. Each question should have a list of suggested answers to choose from. If allowMultipleChoices is true, the user can select multiple answers.",
             schema: {
                 type: {
                     questions: {
@@ -109,7 +109,8 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                                 optional: true,
                                 description: "If true, the user can select multiple choices. Defaults to false.",
                             },
-                            answers: {
+                            suggested_answers: {
+                                description: "The list of suggested answers the user will choose from",
                                 arrayOf: "string",
                             },
                         },
@@ -177,7 +178,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                    
                   type WorkflowFunction = ({
                     runTableAction?: (tableName: string, action: "select" | "update" | "insert" | "delete") => Record<string, any>[];
-                    runSQL?: (sql: string) => Record<string, any>[];
+                    runSQL?: (sql: string, args?: Record<string, any>) => Record<string, any>[];
                     agents: { [AgentName: keyof typeof agentDefinitions]: (input: (typeof agentDefinitions)[AgentName]["inputSchema]) => Promise<(typeof agentDefinitions)[AgentName]["outputSchema]>>;
                   }) => Promise<void>;
                    

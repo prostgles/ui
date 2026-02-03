@@ -29,7 +29,7 @@ export const useAskLLMChatSend = ({
       /** TODO: move dbSchemaForPrompt to server-side */
       void askLLM({
         connectionId,
-        userMessage: msg as any,
+        userMessage: msg,
         schema: dbSchemaForPrompt,
         chatId: activeChatId,
         type: isToolApproval ? "approve-tool-use" : "new-message",

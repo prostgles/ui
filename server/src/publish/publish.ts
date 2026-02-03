@@ -275,7 +275,6 @@ export const publish: Publish<
           db_schema_filter: 1,
           display_options: 1,
           port: 1,
-          web_app_port: 1,
           web_app_directory: 1,
         },
         validate: async ({ update, dbx, filter }) => {
