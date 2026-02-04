@@ -7,8 +7,7 @@
     "start": "npm run build && node dist/server/src/index.js",
     "test": "npm run build && node test-runner.mjs",
     "lint": "eslint . --ext .ts --quiet --fix",
-    "devold": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/index.js\"",
-    "dev": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' node dev.js",
+    "dev": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/index.js\"",
     "dev:electron": "npm i && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/testElectron.js\""
   },
   "author": "",

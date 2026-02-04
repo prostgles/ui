@@ -7,11 +7,14 @@ import {
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
 import React from "react";
+import type { useWebAppConfigActiveSection } from "./hooks/useWebAppConfigActiveSection";
 
 export const WebAppConfigFooterActions = ({
   connection,
+  setParams,
 }: {
   connection: DBSSchema["connections"];
+  setParams: ReturnType<typeof useWebAppConfigActiveSection>["setParams"];
 }) => {
   const {
     connectionId,
@@ -112,6 +115,7 @@ export const WebAppConfigFooterActions = ({
                   const result = await testWebApp!({
                     connectionId,
                   });
+                  setParams({ web_config_section: "Tests" });
                   console.log("Docker test result: ", result);
                   if (result.state === "error") {
                     throw result.log;

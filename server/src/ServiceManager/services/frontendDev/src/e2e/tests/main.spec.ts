@@ -16,5 +16,6 @@ test.describe("Main test", () => {
 
   test("should display the main page", async ({ page }) => {
     await expect(page.getByText("Available tables:")).toBeVisible();
+    await page.waitForTimeout(1000);
   });
 });

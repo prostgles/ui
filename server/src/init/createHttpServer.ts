@@ -1,5 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
+import { getConnectionPaths } from "@common/utils";
 import cookieParser from "cookie-parser";
+import type e from "express";
 import express, { json, urlencoded } from "express";
 import _http from "http";
 import { join } from "path";
@@ -8,10 +10,7 @@ import {
   setHttpAppSecurity,
   type HttpAppSecurityOptions,
 } from "./setHttpAppSecurity";
-import type e from "express";
-import { getConnectionPaths } from "@common/utils";
 import { setNonceHandler } from "./utils";
-import { readFile } from "fs";
 
 export type CreateHttpServerOptions = {
   port: number;
@@ -77,49 +76,24 @@ export const createHttpServer = (
       res.sendFile(join(buildDirectory, "index.html"));
     });
 
-    if (web_app_templated) {
+    if (web_app_templated && cors_csp_devmode_enabled) {
       const testResultsDirectory = join(
         web_app_directory,
         "e2e",
         "playwright-report",
       );
       setNonceHandler(stateApp, true);
-      stateApp.use(
-        getConnectionPaths({ id }).webAppTests,
-        (req, res, next) => {
-          const filePath = join(testResultsDirectory, req.path || "index.html");
+      stateApp.use(getConnectionPaths({ id }).webAppTests, (req, res, next) => {
+        res.setHeader(
+          "Content-Security-Policy",
+          `script-src 'unsafe-inline' http://localhost:3004`,
+        );
 
-          // Check if the request is for an HTML file
-          if (
-            req.path.endsWith(".html") ||
-            req.path === "/" ||
-            req.path === ""
-          ) {
-            readFile(filePath, "utf8", (err, data) => {
-              if (err) {
-                return next(err);
-              }
-
-              const nonce = res.locals.nonce || "";
-              const modifiedHtml = data
-                .replace(/<script(?!\s+nonce=)/g, `<script nonce="${nonce}"`)
-                .replace(/<style(?!\s+nonce=)/g, `<style nonce="${nonce}"`);
-
-              res.setHeader("Content-Type", "text/html");
-              res.send(modifiedHtml);
-            });
-          } else {
-            // For non-HTML files (CSS, JS, images), use static serving
-            express.static(testResultsDirectory, {
-              fallthrough: true,
-            })(req, res, next);
-          }
-        },
-        // express.static(testResultsDirectory, {
-        //   index: "index.html",
-        //   fallthrough: false,
-        // }),
-      );
+        express.static(testResultsDirectory, {
+          fallthrough: true,
+          index: "index.html",
+        })(req, res, next);
+      });
     }
   }
 

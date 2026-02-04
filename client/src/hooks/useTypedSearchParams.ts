@@ -3,7 +3,7 @@ import {
   getJSONBObjectSchemaValidationError,
   type JSONB,
 } from "prostgles-types";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { getKeys } from "src/utils/utils";
 
@@ -17,9 +17,11 @@ export const useTypedSearchParams = <
 ): [
   JSONB.GetObjectType<JSONBType>,
   (newValue: JSONB.GetObjectType<JSONBType>) => void,
+  number,
 ] => {
   const type = useMemoDeep(() => jsonbType, [jsonbType]);
   const [searchParams, setSearchParamsUnstable] = useSearchParams();
+  const [paramsLastModified, setParamsLastModified] = useState(0);
   const setSearchParamsRef = useRef(setSearchParamsUnstable);
   const value = useMemo(() => {
     const rawValue = getKeys(type).reduce(
@@ -48,28 +50,32 @@ export const useTypedSearchParams = <
     return rawValue as JSONB.GetObjectType<JSONBType>;
   }, [searchParams, type]);
 
-  const setParams = useCallback((newValue: JSONB.GetObjectType<JSONBType>) => {
-    setSearchParamsRef.current((prev) => {
-      const newSearchParams = new URLSearchParams(prev.toString());
-      Object.entries(newValue).forEach(([key, value]) => {
-        if (value == null || value === "") {
-          newSearchParams.delete(key);
-        } else {
-          if (
-            typeof value !== "string" &&
-            typeof value !== "number" &&
-            typeof value !== "boolean"
-          ) {
-            throw new Error(
-              `useTypedSearchParams Key "${key}" has illegal value`,
-            );
+  const setParams = useCallback(
+    (newValue: JSONB.GetObjectType<JSONBType>) => {
+      setSearchParamsRef.current((prev) => {
+        const newSearchParams = new URLSearchParams(prev.toString());
+        Object.entries(newValue).forEach(([key, value]) => {
+          if (value == null || value === "") {
+            newSearchParams.delete(key);
+          } else {
+            if (
+              typeof value !== "string" &&
+              typeof value !== "number" &&
+              typeof value !== "boolean"
+            ) {
+              throw new Error(
+                `useTypedSearchParams Key "${key}" has illegal value`,
+              );
+            }
+            newSearchParams.set(key, String(value));
+            setParamsLastModified(Date.now());
           }
-          newSearchParams.set(key, String(value));
-        }
+        });
+        return newSearchParams;
       });
-      return newSearchParams;
-    });
-  }, []);
+    },
+    [setParamsLastModified],
+  );
 
-  return [value, setParams];
+  return [value, setParams, paramsLastModified];
 };

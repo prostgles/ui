@@ -1,9 +1,13 @@
 process.on("unhandledRejection", (reason, p) => {
   console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
 });
-/** Prevent "node --watch" waiting for process graceful exit */
+/** Prevent "node --watch" waiting for process graceful exit  */
+import inspector from "inspector";
 process.on("SIGTERM", () => {
-  process.exit(0);
+  inspector.close();
+  void tout(1000).then(() => {
+    process.exit(0);
+  });
 });
 
 import { sidKeyName } from "@common/authTypesAndConstants";

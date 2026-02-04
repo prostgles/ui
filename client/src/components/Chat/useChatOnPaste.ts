@@ -86,4 +86,6 @@ const insertCodeSnippetAtCursor = (
   // Move the cursor to after the inserted text
   const newCursorPos = startPos + text.length + 1; // +1 for the added newline
   textarea.setSelectionRange(newCursorPos, newCursorPos);
+  /** scroll to end if necessary */
+  textarea.scrollTop = textarea.scrollHeight;
 };

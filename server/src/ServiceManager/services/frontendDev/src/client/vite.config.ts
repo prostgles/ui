@@ -9,7 +9,7 @@ export default defineConfig({
     /**
      * Used in coverage reports
      */
-    sourcemap: "inline",
+    sourcemap: true,
   },
   resolve: {
     alias: {

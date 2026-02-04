@@ -73,7 +73,7 @@ export const setHttpAppSecurity = (
     frameSrc: [
       ...addDevDefaultsToStateConnection(csp?.frameSrc),
       ...(is_state_db && cors_csp_devmode_enabled ?
-        /** Required to show playwright-report test results */
+        /** Required to show playwright-report test results  */
         [`http://localhost:${stateAppPort}`]
       : []),
     ],
