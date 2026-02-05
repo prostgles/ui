@@ -26,6 +26,7 @@ export function parseAgenticWorkflowDefinition(sourceText: string) {
     strict: true,
     noEmit: true,
     lib: [libFileName],
+    // lib: ["lib.es2020.full.d.ts"],
     types: [],
     typeRoots: [],
     skipLibCheck: true,

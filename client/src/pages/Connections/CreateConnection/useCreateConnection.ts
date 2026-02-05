@@ -128,7 +128,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
         if (newDbOwnerCredentials && newPgUser.permissions.type === "owner") {
           await runConnectionQuery({
             conId: connId,
-            query: `ALTER DATABASE ${asName(action.existingDatabaseName!)} SET OWNER TO ${asName(newPgUser.name)};`,
+            query: `ALTER DATABASE ${asName(action.existingDatabaseName!)} OWNER TO ${asName(newPgUser.name)};`,
           });
         }
         newDbName = action.existingDatabaseName!;

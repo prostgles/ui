@@ -27,6 +27,7 @@ export const getDockerRunArgs = ({
   volumes,
   localDir,
   name,
+  readOnly = true,
 }: CreateContainerParams & LocalDockerParams) => {
   const runArgs = ["run", "--rm", "--interactive"];
 
@@ -51,7 +52,9 @@ export const getDockerRunArgs = ({
     runArgs.push("--user", user);
   }
 
-  runArgs.push("--read-only");
+  if (readOnly) {
+    runArgs.push("--read-only");
+  }
 
   // Environment variables
   Object.entries(environment).forEach(([key, value]) => {

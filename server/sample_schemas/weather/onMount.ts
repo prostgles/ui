@@ -1,4 +1,4 @@
-export const onMount: ProstglesOnMount = async ({ db, sql }) => {
+export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   if (!db.cities) {
     console.warn("Creating tables...");
     await sql(`

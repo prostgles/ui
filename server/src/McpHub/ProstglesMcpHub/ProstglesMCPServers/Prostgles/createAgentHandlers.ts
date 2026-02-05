@@ -22,7 +22,12 @@ const enqueueAgentExecution = <T>(
 };
 
 export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
-  { name, toolDefinitions, agentDefinitions }: Parameters<P>[0],
+  {
+    name,
+    toolDefinitions,
+    agentDefinitions,
+    databaseAccessDefinitions,
+  }: Parameters<P>[0],
   {
     dbs,
     chatId,
@@ -34,7 +39,11 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
   },
   runInSequence = true,
 ) => {
-  const agentHandlers = {} as Parameters<P>[0];
+  const agentHandlers = new Map<
+    string,
+    (agentInput?: string) => Promise<any>
+  >();
+  const dbHandler = {} as Parameters<Parameters<P>[1]>[1];
 
   const user = await dbs.users.findOne({ id: userId });
   if (!user) {
@@ -42,7 +51,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
   }
   const { validatedTools } = await getValidatedWorkflowTools(
     toolDefinitions || {},
-    { dbs },
+    dbs,
   );
 
   for (const [agentName, config] of Object.entries(agentDefinitions)) {
@@ -57,7 +66,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
       temperature,
     } = await getValidatedAgentHandlerArgs(
       { agentName, agentConfig: config },
-      { dbs },
+      dbs,
     );
 
     const tools = allowedToolDefinitionNames
@@ -176,12 +185,13 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
       // }
       return state.type === "completed" ? state.output : undefined;
     };
-    agentHandlers[agentName] = (input) => {
+    const agentHandler = (input) => {
       if (!runInSequence) {
         return startAgent(input);
       }
       return enqueueAgentExecution(() => startAgent(input));
     };
+    agentHandlers.set(agentName, agentHandler);
   }
 
   return {

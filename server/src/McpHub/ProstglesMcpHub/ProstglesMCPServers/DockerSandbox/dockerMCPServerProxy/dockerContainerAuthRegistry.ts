@@ -14,14 +14,14 @@ export type ContainerAuthInfo = {
   sid_token: string;
 };
 
-const containers: Record<string, ContainerAuthInfo> = {};
+const containers = new Map<string, ContainerAuthInfo>();
 
 const setContainerInfo = (name: string, info: ContainerAuthInfo) => {
-  containers[name] = info;
+  containers.set(name, info);
 };
 
 const deleteContainerInfo = (name: string) => {
-  delete containers[name];
+  containers.delete(name);
 };
 
 const containerIpCache = {
@@ -29,7 +29,7 @@ const containerIpCache = {
   ipToContainerName: new Map<string, string>(),
 };
 const getIPToContainerName = () => {
-  const containerNames = getKeys(containers).sort().join();
+  const containerNames = Array.from(containers.keys()).sort().join();
   if (!containerNames) {
     throw new Error("No containers available");
   }
@@ -65,11 +65,8 @@ const getContainerFromIP: GetAuthContext = (ip: string) => {
   const containerName = getIPToContainerName().get(ip);
 
   if (!containerName) throw new Error(`No container found for IP ${ip}`);
-  const containerInfo = containerName ? containers[containerName] : undefined;
-  if (!containerName || !containerInfo) {
-    return;
-  }
-  return pickKeys(containerInfo, ["chat", "sid_token"]);
+  const containerInfo = containers.get(containerName);
+  return containerInfo && pickKeys(containerInfo, ["chat", "sid_token"]);
 };
 
 export const dockerContainerAuthRegistry = {

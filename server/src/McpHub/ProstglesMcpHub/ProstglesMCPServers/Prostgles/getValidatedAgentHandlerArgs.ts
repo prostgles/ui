@@ -7,11 +7,7 @@ export const getValidatedAgentHandlerArgs = async (
     agentName,
     agentConfig,
   }: { agentName: string; agentConfig: AgentDefinition<string[]> },
-  {
-    dbs,
-  }: {
-    dbs: DBS;
-  },
+  dbs: DBS,
 ) => {
   const {
     modelName = "claude-4.5-sonnet-20250929",

@@ -16,4 +16,12 @@ const sortedFiles =
       return a.localeCompare(b);
     })
   : files;
-run({ files: sortedFiles }).compose(spec).pipe(process.stdout);
+
+// Bail on first failure
+const ac = new AbortController();
+const runner = run({ files: sortedFiles, signal: ac.signal });
+
+runner.on("test:fail", () => {
+  ac.abort();
+});
+runner.compose(spec).pipe(process.stdout);

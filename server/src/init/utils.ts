@@ -4,7 +4,7 @@ import type { IncomingMessage, ServerResponse } from "http";
 import {
   removeExpressRouteByName,
   upsertNamedExpressMiddleware,
-} from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
+} from "prostgles-server";
 import type { ExpressApp } from "prostgles-server/dist/RestApi";
 import crypto from "crypto";
 

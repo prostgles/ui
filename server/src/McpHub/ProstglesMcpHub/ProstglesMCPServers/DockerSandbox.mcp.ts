@@ -65,12 +65,13 @@ const handler = {
             chat,
             sid_token,
           });
-          const containerResult = await createContainer(name, args).catch(
-            (error) => {
+          const containerResult = await createContainer(name, args)
+            .catch((error) => {
               console.error("Error creating container:", error);
-            },
-          );
-          dockerContainerAuthRegistry.deleteContainerInfo(name);
+            })
+            .finally(() => {
+              dockerContainerAuthRegistry.deleteContainerInfo(name);
+            });
           return containerResult;
         },
       },

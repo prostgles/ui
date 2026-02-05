@@ -2527,8 +2527,10 @@ test.describe("Main test", () => {
     await page
       .getByTestId("Btn.ClickConfirmation.Confirm")
       .click({ timeout: 10e3 });
-    await page.waitForTimeout(1e3);
     await expect(createFromTemplateBtn).toBeEnabled({ timeout: 5e3 });
+    // Page will reload
+    await page.waitForTimeout(500);
+    await page.waitForEvent("load");
     await clickAndWait(page.getByTestId("WebAppConfig.build"));
     await clickAndWait(page.getByTestId("WebAppConfig.test"));
     await page.locator(getDataKey("Components")).click();
@@ -2538,8 +2540,27 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await page.keyboard.type("pack");
     await page.keyboard.press("Enter");
-    await expect(page.getByTestId("MonacoEditor")).toContainText("vite build");
-    throw "Tidy + show error when on webdev prompt and webapp not templated";
+    await expect(page.getByTestId("MonacoEditor")).toContainText(
+      "vite-project",
+    );
+  });
+  test("show error when on webdev prompt and webapp not templated", async ({
+    page: p,
+  }) => {
+    const page = p as PageWIds;
+    await login(page, USERS.test_user, "localhost:3004/login");
+    await page.getByRole("link", { name: "sample_database" }).click();
+    await page.getByTestId("AskLLM").click();
+    await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
+    await setPromptByText(page, "Web app development");
+    const alertLocator = page.getByText(
+      "WebDev MCP Server requires a templated web app",
+    );
+    await expect(alertLocator).toBeVisible();
+
+    /** Closing it works */
+    await page.getByTestId("Popup.close").last().click();
+    await expect(alertLocator).not.toBeAttached();
   });
   test("Web template works", async ({ page: p }) => {
     const page = p as PageWIds;

@@ -14,7 +14,7 @@ import {
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise, type DBHandlerClient } from "prostgles-client";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { WebAppConfig } from "src/dashboard/ConnectionConfig/WebApp/WebAppConfig";
 import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
@@ -60,22 +60,19 @@ export const AskLLMChatActionBarPromptSelector = (
 
   const { onErrorAlert } = useOnErrorAlert();
 
-  const options = prompt?.options || {};
-  const [webDevAlert, setWebDevAlert] = React.useState<boolean>(false);
+  const { data: enabledWebdevMcpTools } =
+    dbs.llm_chats_allowed_mcp_tools.useSubscribe(
+      { chat_id: activeChatId, server_name: "webdev" },
+      { select: "" },
+    );
+  const enabledWebdevMcpToolsCount = enabledWebdevMcpTools?.length || 0;
+  const [webDevAlert, setWebDevAlert] = useState(false);
   useEffect(() => {
-    if (
-      (options.mcp_servers?.includes("webdev") ||
-        "webdev" in (options.mcp_server_tools ?? {})) &&
-      !connection.web_app_templated
-    ) {
+    if (enabledWebdevMcpToolsCount && !connection.web_app_templated) {
       return setWebDevAlert(true);
     }
     return setWebDevAlert(false);
-  }, [
-    options.mcp_servers,
-    options.mcp_server_tools,
-    connection.web_app_templated,
-  ]);
+  }, [enabledWebdevMcpToolsCount, connection.web_app_templated]);
 
   return (
     <>

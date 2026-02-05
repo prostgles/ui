@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
 import { API_ENDPOINTS, ROUTES } from "@common/utils";
 import { match } from "path-to-regexp";
-import { upsertNamedExpressMiddleware } from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
+import { upsertNamedExpressMiddleware } from "prostgles-server";
 import type { ConnectionManager } from "./ConnectionManager";
 import { tout } from "@src/utils/tout";
 

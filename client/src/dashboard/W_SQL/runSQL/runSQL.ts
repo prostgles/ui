@@ -1,5 +1,9 @@
 import type { SQLResult } from "prostgles-client/dist/prostgles";
-import type { SocketSQLStreamHandlers, SQLResultInfo } from "prostgles-types";
+import {
+  includes,
+  type SocketSQLStreamHandlers,
+  type SQLResultInfo,
+} from "prostgles-types";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../../SQLEditor/SQLCompletion/CommonMatchImports";
 import type { ColumnSortSQL } from "../../W_Table/ColumnMenu/ColumnMenu";
@@ -24,7 +28,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
     this.sqlRef?.getSelectedText() ||
     (await this.sqlRef?.getCurrentCodeBlock())?.text;
   const sql = selected_sql || this.d.w?.sql || "";
-  const { db, sql: sqlHandler } = this.props.prgl;
+  const { sql: sqlHandler } = this.props.prgl;
   const w = this.d.w;
   if (w && w.selected_sql !== selected_sql) {
     w.$update({ selected_sql });
@@ -111,7 +115,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
             .map(
               (s) =>
                 `${(s.key as number) + 1}` +
-                ([1, true].includes(s.asc as any) ? " ASC " : " DESC "),
+                (includes([1, true], s.asc) ? " ASC " : " DESC "),
             )
             .join(", ") || " TRUE::BOOLEAN ";
 

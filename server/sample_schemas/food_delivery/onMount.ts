@@ -1,4 +1,4 @@
-export const onMount: ProstglesOnMount = async ({ db, sql }) => {
+export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   const roadTableHandler = db.routes;
   if (!roadTableHandler) return;
 

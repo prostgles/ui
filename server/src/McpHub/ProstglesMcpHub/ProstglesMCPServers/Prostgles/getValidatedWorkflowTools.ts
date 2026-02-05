@@ -4,11 +4,7 @@ import type { ToolDefinition } from "./defineAgenticWorkflow";
 
 export const getValidatedWorkflowTools = async (
   toolDefinitions: Record<string, ToolDefinition>,
-  {
-    dbs,
-  }: {
-    dbs: DBS;
-  },
+  dbs: DBS,
 ) => {
   const validatedTools = new Map(
     await Promise.all(

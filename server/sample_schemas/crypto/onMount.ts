@@ -13,7 +13,7 @@ const FUNDING_SYMBOLS = [
 let loadGasPrices = false;
 let realtimeFutures = false;
 
-export const onMount: ProstglesOnMount = async ({ db, sql }) => {
+export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   const getMarketCaps = async () => {
     const marketCaps = await fetch(
       "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250",

@@ -6,7 +6,7 @@ import helmet from "helmet";
 import {
   removeExpressRouteByName,
   upsertNamedExpressMiddleware,
-} from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
+} from "prostgles-server";
 import type { ExpressApp } from "prostgles-server/dist/RestApi";
 import { getCorsOptions } from "./getCorsOptions";
 import { setNonceHandler, withNonce, withSelfAndExtra } from "../init/utils";
@@ -50,33 +50,36 @@ export const setHttpAppSecurity = (
     return currentValueWithNonce;
   };
 
-  const frameAncestors = csp?.frameAncestors ?? ["'self'"];
+  const frameAncestorsWithSelf = withSelfAndExtra(csp?.frameAncestors);
+  const frameAncestors =
+    !cors_csp_devmode_enabled || is_state_db ?
+      frameAncestorsWithSelf
+    : [
+        ...frameAncestorsWithSelf,
+        /**
+         * Allow web apps to be embedded in iframes to be shown in state connection web app config
+         * */
+        `http://localhost:${stateAppPort}`,
+      ];
+
+  /**
+   * Allow web apps to be embedded in iframes to be shown in state connection web app config
+   */
+  const frameSrc = [
+    ...addDevDefaultsToStateConnection(csp?.frameSrc),
+    ...(is_state_db && cors_csp_devmode_enabled ?
+      /** Required to show playwright-report test results  */
+      [`http://localhost:${stateAppPort}`]
+    : []),
+  ];
   const directives = {
     ...csp,
 
     styleSrc: withSelfAndExtra(csp?.styleSrc, ["'unsafe-inline'"]),
     defaultSrc: addDevDefaultsToStateConnection(csp?.defaultSrc),
-    frameAncestors:
-      !cors_csp_devmode_enabled || is_state_db ? frameAncestors : (
-        [
-          ...frameAncestors,
-          /**
-           * Allow web apps to be embedded in iframes to be shown in state connection web app config
-           * */
-          `http://localhost:${stateAppPort}`,
-        ]
-      ),
+    frameAncestors,
 
-    /**
-     * Allow web apps to be embedded in iframes to be shown in state connection web app config
-     */
-    frameSrc: [
-      ...addDevDefaultsToStateConnection(csp?.frameSrc),
-      ...(is_state_db && cors_csp_devmode_enabled ?
-        /** Required to show playwright-report test results  */
-        [`http://localhost:${stateAppPort}`]
-      : []),
-    ],
+    frameSrc,
     connectSrc: addDevDefaultsToStateConnection(csp?.connectSrc, "wss"),
   };
 

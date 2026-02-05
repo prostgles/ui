@@ -1,5 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { getConnectionPaths } from "@common/utils";
+import { getConnectionPaths, ROUTES } from "@common/utils";
 import cookieParser from "cookie-parser";
 import type e from "express";
 import express, { json, urlencoded } from "express";
@@ -11,6 +11,8 @@ import {
   type HttpAppSecurityOptions,
 } from "./setHttpAppSecurity";
 import { setNonceHandler } from "../init/utils";
+import type { RequestWithUser } from "prostgles-server";
+import { removeExpressRoute } from "prostgles-server/dist/Auth/AuthHandler";
 
 export type CreateHttpServerOptions = {
   port: number;
@@ -77,22 +79,39 @@ export const createHttpServer = (
     });
 
     if (web_app_templated && cors_csp_devmode_enabled) {
-      const testResultsDirectory = join(
-        web_app_directory,
-        "e2e",
-        "playwright-report",
-      );
-      setNonceHandler(stateApp, true);
-      stateApp.use(getConnectionPaths({ id }).webAppTests, (req, res, next) => {
-        res.setHeader(
-          "Content-Security-Policy",
-          `script-src 'unsafe-inline' http://localhost:3004`,
+      // TODO: this should happen in state app getAuth
+      void afterUserContextMiddlewareAdded(stateApp, () => {
+        const testResultsDirectory = join(
+          web_app_directory,
+          "e2e",
+          ROUTES.PLAYWRIGHT_REPORT,
         );
+        setNonceHandler(stateApp, true);
+        const route = getConnectionPaths({ id }).webAppTests;
+        removeExpressRoute(stateApp, [route], "get");
+        stateApp.use(route, async (_req, res, next) => {
+          const req = _req as RequestWithUser;
+          const sessionData = await req.getUser();
+          if (sessionData === "new-session-redirect") {
+            res.status(401).send("Unauthorized - New session, please refresh");
+            return;
+          } else if (!sessionData.user) {
+            res.status(401).send("Unauthorized");
+            return;
+          } else if (sessionData.user.type !== "admin") {
+            res.status(403).send("Forbidden");
+            return;
+          }
+          res.setHeader(
+            "Content-Security-Policy",
+            `script-src 'unsafe-inline'`,
+          );
 
-        express.static(testResultsDirectory, {
-          fallthrough: true,
-          index: "index.html",
-        })(req, res, next);
+          express.static(testResultsDirectory, {
+            fallthrough: true,
+            index: "index.html",
+          })(req, res, next);
+        });
       });
     }
   }
@@ -111,4 +130,18 @@ export const createHttpServer = (
   );
 
   return { app, http, ioConnection };
+};
+
+const afterUserContextMiddlewareAdded = async (
+  app: e.Express,
+  cb: () => void | Promise<void>,
+) => {
+  while (
+    app.router.stack.find(
+      (s) => s.name === "prostglesUserContextMiddleware",
+    ) === undefined
+  ) {
+    await new Promise((res) => setTimeout(res, 500));
+  }
+  await cb();
 };

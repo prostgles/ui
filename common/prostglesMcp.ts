@@ -333,6 +333,13 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             optional: true,
             // default: "1",
           },
+          readOnly: {
+            type: "boolean",
+            description:
+              "Whether to mount the filesystem as read-only. Defaults to true",
+            optional: true,
+            // default: true,
+          },
         },
       },
       outputSchema: {

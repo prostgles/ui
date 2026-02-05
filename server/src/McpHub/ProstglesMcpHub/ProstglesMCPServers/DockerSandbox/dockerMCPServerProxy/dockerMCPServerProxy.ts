@@ -56,6 +56,7 @@ export const createDockerMCPServerProxy = async () => {
     server: _http.Server;
     address: AddressInfo;
     api_url: string;
+    base_url: string;
     destroy: () => void;
   }>((resolve, reject) => {
     const server = http.listen(
@@ -68,15 +69,17 @@ export const createDockerMCPServerProxy = async () => {
           reject(new Error("Server address is not an object"));
         } else {
           const actualPort = address.port;
-          const api_url =
+          const base_url =
             isDocker ?
-              `http://prostgles-ui-docker-mcp:${actualPort}${ROUTE}`
-            : `http://${dockerGatewayIP}:${actualPort}${ROUTE}`;
+              `http://prostgles-ui-docker-mcp:${actualPort}`
+            : `http://${dockerGatewayIP}:${actualPort}`;
+          const api_url = base_url + ROUTE;
           resolve({
             app,
             server,
             address,
             api_url,
+            base_url,
             destroy: () => server.close(),
           });
         }

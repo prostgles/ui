@@ -6,6 +6,7 @@ npm i
 npx tsc
 
 cd ../server
+rm -rf ./dist
 npm i
 npx tsc
 npm test
