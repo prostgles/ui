@@ -33,7 +33,7 @@ export const useWebAppConfigState = () => {
   const usersTableError = useMemo(() => {
     const usersTable = tables.find((t) => t.name === "users");
     if (!usersTable) {
-      return 'A "users" is required.';
+      return 'A "users" table is required.';
     }
     const hasType = usersTable.columns.some((c) => c.name === "type");
     if (!hasType) {

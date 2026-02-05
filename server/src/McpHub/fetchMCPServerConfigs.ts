@@ -100,23 +100,31 @@ const applyConfig = (
 ) => {
   const args = [...baseArgs];
   const env = { ...baseEnv };
-  Object.entries({ ...config_schema }).forEach(
-    ([key, configItem], itemIndex) => {
-      if (configItem.type === "env") {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        env[key] = config[key];
-      } else {
-        const argIndex = args[configItem.index ?? itemIndex];
-        if (argIndex) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          args[argIndex] = config[key];
-        } else {
-          console.error(
-            `Invalid index for arg "${key}" in server "${server_name}"`,
-          );
-        }
+  Object.entries({ ...config_schema }).forEach(([key, configItem]) => {
+    if (configItem.type === "env") {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      env[key] = config[key];
+    } else {
+      const dollarArgIndexes = args
+        .map((a, i) => (a.startsWith("${") ? i : undefined))
+        .filter(isDefined);
+      if (dollarArgIndexes.length > 1) {
+        throw new Error(
+          `Config schema for server "${server_name}" has multiple args with ${"{"}...{""} syntax, which is not supported.`,
+        );
       }
-    },
-  );
+      const argIndex = configItem.index ?? dollarArgIndexes[0];
+      if (isFinite(argIndex) && argIndex > -1) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        args[argIndex] = config[key];
+      } else {
+        console.error(
+          `Invalid index for arg "${key}" in server "${server_name}"`,
+        );
+      }
+    }
+  });
   return { args, env };
 };
+
+const isFinite = (value: unknown): value is number => Number.isFinite(value);

@@ -12,7 +12,7 @@ import {
   DOCKER_CONTAINER_NAME_PREFIX,
   dockerContainerAuthRegistry,
 } from "./DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
-import { dockerMCPServerProxy } from "./DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
+import { createDockerMCPServerProxy } from "./DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import { fetchTools } from "./DockerSandbox/fetchTools";
 
 const definition = {
@@ -22,11 +22,11 @@ const definition = {
   tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["docker-sandbox"],
 } as const satisfies ProstglesMcpServerDefinition;
 
-let mcpRequestRouter: ReturnType<typeof dockerMCPServerProxy> | undefined;
+let mcpRequestRouter: ReturnType<typeof createDockerMCPServerProxy> | undefined;
 
 const handler = {
   start: async (dbs) => {
-    mcpRequestRouter ??= dockerMCPServerProxy();
+    mcpRequestRouter ??= createDockerMCPServerProxy();
     const { api_url, destroy } = await mcpRequestRouter;
 
     return {

@@ -89,7 +89,17 @@ export const getAuth = async (
         API_ENDPOINTS.WS_DB,
       ],
       onGetRequestOK: async (req, res, { getUser }) => {
-        if (req.path.startsWith(ROUTES.BACKUPS)) {
+        if (req.path.startsWith(ROUTES.PLAYWRIGHT_REPORT)) {
+          const userData = await getUser();
+          if (!userData.user) {
+            res.status(401).send("Unauthorized");
+            return;
+          } else if (userData.user.type !== "admin") {
+            res.status(403).send("Forbidden");
+            return;
+          }
+          req.next?.();
+        } else if (req.path.startsWith(ROUTES.BACKUPS)) {
           const userData = await getUser();
           await getBackupManager()!.onRequestBackupFile(
             res,

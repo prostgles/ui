@@ -1,24 +1,20 @@
-type PrimitiveType =
-  | "string"
-  | "number"
-  | "boolean"
-  | "null"
-  | "undefined"
-  | "unknown";
-type PrimitiveTypeUnion = PrimitiveType | `${PrimitiveType} | ${PrimitiveType}`;
+type PrimitiveType = "string" | "number" | "boolean" | "unknown";
 type PropertyType =
   | PrimitiveType
-  | PrimitiveTypeUnion
-  | `${PrimitiveTypeUnion}[]`;
+  | `${PrimitiveType}[]`
+  | {
+      type: PrimitiveType | `${PrimitiveType}[]`;
+      optional?: boolean;
+    };
 
-type AgentDefinition = {
+export type AgentDefinition<ToolNames extends string[]> = {
   prompt: string;
-  model?: string;
+  modelName?: string;
   maxCostUSD?: number;
   maxIterations?: number;
-  allowedToolNames?: string[];
-  allowDatabaseAccess?: boolean;
-  inputSchema: Record<string, PropertyType>;
+  allowedToolDefinitionNames?: ToolNames;
+  maxTokens?: number;
+  temperature?: number;
   outputSchema: Record<string, PropertyType>;
 };
 
@@ -46,58 +42,63 @@ type ParseSchema<S extends Record<string, PropertyType>> = {
   [K in keyof S]: ParsePropertyType<S[K]>;
 };
 
-export const defineAgenticWorkflow = <
-  AgentDefinitions extends Record<string, AgentDefinition>,
-  ToolDefinitions extends Record<string, { name: string; input: unknown }>,
+export type ToolDefinition = {
+  mcpServerName: string;
+  toolNames: string[];
+  configId?: number;
+};
+
+export type DefineAgenticWorkflow = <
+  ToolDefinitions extends Record<string, ToolDefinition>,
+  AgentDefinitions extends Record<
+    string,
+    AgentDefinition<(keyof ToolDefinitions & string)[]>
+  >,
 >(
   {
+    name,
     toolDefinitions,
     agentDefinitions,
   }: {
+    name: string;
     toolDefinitions?: ToolDefinitions;
     agentDefinitions: AgentDefinitions;
   },
-  workflow: (
-    agentHandlers: {
-      [AgentName in keyof AgentDefinitions]: (
-        agentInput: ParseSchema<AgentDefinitions[AgentName]["inputSchema"]>,
-      ) => Promise<ParseSchema<AgentDefinitions[AgentName]["outputSchema"]>>;
-    },
-    toolHandlers: {
-      [ToolName in keyof ToolDefinitions]: (
-        input: ToolDefinitions[ToolName]["input"],
-      ) => Promise<unknown>;
-    },
-  ) => Promise<void>,
+  workflow: (agentHandlers: {
+    [AgentName in keyof AgentDefinitions]: (
+      agentInput?: string,
+    ) => Promise<ParseSchema<AgentDefinitions[AgentName]["outputSchema"]>>;
+  }) => Promise<void>,
+) => void | Promise<void>;
+
+export const defineAgenticWorkflow: DefineAgenticWorkflow = (
+  definitions,
+  handler,
 ) => {
-  return workflow as unknown;
+  // Implementation not shown
+  return;
 };
 
 /**
  * Example usage:
  */
-defineAgenticWorkflow(
+void defineAgenticWorkflow(
   {
+    name: "Test Workflow",
     toolDefinitions: {
-      fetch_webpage: {
-        name: "fetch_webpage",
-        input: {
-          url: "string",
-        },
+      fetchWebpage: {
+        mcpServerName: "fetch",
+        toolNames: ["fetch_webpage"],
       },
-      query_database: {
-        name: "query_database",
-        input: {
-          query: "string",
-        },
+      getUsers: {
+        mcpServerName: "database",
+        toolNames: ["select"],
       },
     },
     agentDefinitions: {
       researcher: {
         prompt: "You are a research assistant.",
-        inputSchema: {
-          research_topic: "string",
-        },
+        allowedToolNames: ["fetchWebpage", "getUsers"],
         outputSchema: {
           summary: "string",
           references: "string[]",
@@ -106,7 +107,7 @@ defineAgenticWorkflow(
     },
   },
   async ({ researcher }) => {
-    const result = await researcher({ research_topic: "Prostgles" });
+    const result = await researcher(`research_topic: "Prostgles"`);
     result.summary;
   },
 );

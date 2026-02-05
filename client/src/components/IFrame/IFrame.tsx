@@ -37,7 +37,11 @@ export const IFrame = ({
       }
     >
       <FlexRow>
-        <div className="text-sm text-color-4 f-1 px-1 ta-start">{title}</div>
+        <div className="text-sm text-color-4 f-1 px-1 ta-start">
+          <a href={src} target="_blank" rel="noopener noreferrer">
+            {title}
+          </a>
+        </div>
         <Btn
           title="Toggle Fullscreen"
           iconPath={mdiFullscreen}

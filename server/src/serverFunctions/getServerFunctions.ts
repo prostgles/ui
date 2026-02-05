@@ -64,10 +64,31 @@ export const runConnectionQuery = async (
   query: string,
   args?: AnyObject | any[],
   asAdminOpts?: { dbs: DBS },
+  /**
+   * The database might have been deleted. Try and find one that is avalable
+   */
+  findFirstAvailableInServer = false,
 ): Promise<AnyObject[]> => {
-  const { db } =
-    asAdminOpts ?
-      await getSuperUserCDB(connId, asAdminOpts.dbs)
-    : await getCDB(connId);
-  return db.any(query, args);
+  if (asAdminOpts) {
+    const { db } = await getSuperUserCDB(connId, asAdminOpts.dbs);
+    return db.any(query, args);
+  }
+
+  const dbInstance = await getCDB(connId).catch((err) => {
+    if (findFirstAvailableInServer) {
+      console.warn(
+        `Could not find database for connection ${connId}, trying to find another one in the same server. Error: ${err}`,
+      );
+      for (const database of ["template1", "postgres"]) {
+        try {
+          return getCDB(connId, { database });
+        } catch (err) {}
+      }
+    }
+  });
+  if (!dbInstance) {
+    throw new Error(`Could not find database for connection ${connId}`);
+  }
+
+  return dbInstance.db.any(query, args);
 };

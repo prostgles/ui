@@ -3,8 +3,8 @@ import Btn from "@components/Btn";
 import { classOverride, FlexRow, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { mdiCheck, mdiClose, mdiFolderPlusOutline } from "@mdi/js";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo, useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 type P = {
   className?: string;
@@ -21,7 +21,7 @@ export const FileBrowserCurrentDirectory = ({
 }: P) => {
   const {
     dbsMethods: { makeDirectory },
-  } = usePrgl();
+  } = usePrglCore();
 
   const { onErrorAlert } = useOnErrorAlert();
   const [newFolderName, setNewFolderName] = useState("");
@@ -38,11 +38,11 @@ export const FileBrowserCurrentDirectory = ({
 
   return (
     <FlexRowWrap className={classOverride("gap-0", className)}>
-      {path.split("/").map((pathPart, index, pathParts) => {
-        return (
-          <React.Fragment key={pathPart + index}>
-            {index > 1 && <div>/</div>}
+      <span>
+        {path.split("/").map((pathPart, index, pathParts) => {
+          return (
             <Btn
+              key={pathPart + index}
               variant="text"
               size="small"
               className="underline-on-hover"
@@ -50,6 +50,9 @@ export const FileBrowserCurrentDirectory = ({
                 paddingRight: 0,
                 fontSize: "18px",
                 minWidth: 0,
+                userSelect: "auto",
+                whiteSpace: "nowrap",
+                display: "inline",
               }}
               onClick={() => {
                 const selectedPath =
@@ -57,11 +60,15 @@ export const FileBrowserCurrentDirectory = ({
                 onChange(selectedPath);
               }}
             >
-              {!index ? "/" : pathPart}
+              {!index ?
+                "/"
+              : index > 1 ?
+                `/${pathPart}`
+              : pathPart}
             </Btn>
-          </React.Fragment>
-        );
-      })}
+          );
+        })}
+      </span>
       {!newFolderName ?
         <Btn
           iconPath={mdiFolderPlusOutline}

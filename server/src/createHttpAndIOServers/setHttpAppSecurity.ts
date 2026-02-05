@@ -9,7 +9,7 @@ import {
 } from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
 import type { ExpressApp } from "prostgles-server/dist/RestApi";
 import { getCorsOptions } from "./getCorsOptions";
-import { setNonceHandler, withNonce, withSelfAndExtra } from "./utils";
+import { setNonceHandler, withNonce, withSelfAndExtra } from "../init/utils";
 
 export type HttpAppSecurityOptions = Pick<
   DBSSchema["database_configs"],

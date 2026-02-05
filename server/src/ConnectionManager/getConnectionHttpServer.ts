@@ -1,6 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { createHttpServer } from "@src/init/createHttpServer";
-import { createIOWebsocketServer } from "@src/init/createIOWebsocketServer";
+import { createHttpServer } from "@src/createHttpAndIOServers/createHttpServer";
+import { createIOWebsocketServer } from "@src/createHttpAndIOServers/createIOWebsocketServer";
 import { isEqual } from "prostgles-types";
 import type { ConnectionManager } from "./ConnectionManager";
 

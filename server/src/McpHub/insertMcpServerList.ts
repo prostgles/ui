@@ -5,6 +5,11 @@ import { getMCPDirectory } from "./AnthropicMcpHub/installMCPServer";
 import { getDefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
 
 export const insertMcpServerList = async (dbs: DBS) => {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (!dbs.mcp_servers) {
+    // Stale schema
+    return;
+  }
   const defaultServers = Object.entries(getDefaultMCPServers()).map(
     ([name, { ...server }]) => {
       return {

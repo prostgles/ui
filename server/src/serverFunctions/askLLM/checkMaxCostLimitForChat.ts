@@ -1,8 +1,10 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { getUserMessageCost } from "./getUserMessageCost";
 import type { LLMMessage } from "./askLLM";
+import type { DBS } from "@src/index";
 
-export const checkMaxCostLimitForChat = (
+export const checkMaxCostLimitForChat = async (
+  dbs: DBS,
   chat: DBSSchema["llm_chats"],
   model: DBSSchema["llm_models"],
   pastMessages: DBSSchema["llm_messages"][],
@@ -15,11 +17,23 @@ export const checkMaxCostLimitForChat = (
       (acc, m) => acc + parseFloat(m.cost),
       0,
     );
+    const updateState = async (
+      error_state: "estimated_future_max_total_cost_usd" | "max_total_cost_usd",
+    ) => {
+      await dbs.llm_chats.update(
+        { id: chat.id },
+        {
+          error_state,
+        },
+      );
+    };
     if (pastMessageCost > maxTotalCost) {
+      await updateState("max_total_cost_usd");
       throw `Maximum total cost of the chat (${maxTotalCost}) reached. Current cost: ${pastMessageCost}`;
     }
     const currentMessageCost = getUserMessageCost(userMessage, model);
     if (pastMessageCost + currentMessageCost > maxTotalCost) {
+      await updateState("estimated_future_max_total_cost_usd");
       throw [
         `Maximum total cost of the chat (${maxTotalCost}) will be reached after sending this message.`,
         `Current cost: ${pastMessageCost}.`,

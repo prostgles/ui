@@ -1,7 +1,7 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import { ROUTES } from "@common/utils";
-import type { createHttpServer } from "@src/init/createHttpServer";
+import type { createHttpServer } from "@src/createHttpAndIOServers/createHttpServer";
 import type e from "express";
 import type { Express } from "express";
 import type { Server as httpServer } from "http";
@@ -30,7 +30,7 @@ import {
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
 import { initConnectionManager } from "./initConnectionManager";
 import { startConnection } from "./startConnection";
-import type { HttpAppSecurityOptions } from "@src/init/setHttpAppSecurity";
+import type { HttpAppSecurityOptions } from "@src/createHttpAndIOServers/setHttpAppSecurity";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 

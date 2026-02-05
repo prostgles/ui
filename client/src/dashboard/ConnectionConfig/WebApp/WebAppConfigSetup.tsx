@@ -101,7 +101,9 @@ export const WebAppConfigSetup = ({
           });
         }}
       />
-      {usersTableError && <ErrorComponent error={usersTableError} />}
+      {usersTableError && web_app_directory && (
+        <ErrorComponent error={usersTableError} />
+      )}
     </>
   );
 };

@@ -10,7 +10,7 @@ import {
   setHttpAppSecurity,
   type HttpAppSecurityOptions,
 } from "./setHttpAppSecurity";
-import { setNonceHandler } from "./utils";
+import { setNonceHandler } from "../init/utils";
 
 export type CreateHttpServerOptions = {
   port: number;

@@ -4,7 +4,7 @@ import type {
   SQLMatchContext,
 } from "../monacoSQLSetup/registerSuggestions";
 import type { CodeBlock } from "./getCodeBlock";
-import type { GetTableExpressionSuggestionsArgs } from "./getTableExpressionReturnTypes";
+import type { TableExpressionSuggestionArgs } from "./getTableExpressionReturnTypes";
 import type { TokenInfo } from "./getTokens";
 
 const getAliasToken = (
@@ -70,7 +70,7 @@ export const getTabularExpressions = (
     cb: _cb,
     ss,
     parentCb,
-  }: Pick<GetTableExpressionSuggestionsArgs, "ss" | "cb" | "parentCb">,
+  }: Pick<TableExpressionSuggestionArgs, "ss" | "cb" | "parentCb">,
   require: "columns" | "table",
   onlyCurrentBlock = false,
 ) => {

@@ -32,9 +32,11 @@ export type GetAuthContext = (ip: string) => AuhtContext | undefined;
 /**
  * A separate server is used to improve security because we need to bind it to 0.0.0.0 to ensure docker containers can access it.
  */
-export const dockerMCPServerProxy = async () => {
+export const createDockerMCPServerProxy = async () => {
   const dockerVersion = execSync("docker --version").toString();
-  if (!dockerVersion) throw new Error("Docker not installed");
+  if (!dockerVersion) {
+    throw new Error("Docker not installed");
+  }
   const app = express();
 
   app.use(json({ limit: "1000mb" }));

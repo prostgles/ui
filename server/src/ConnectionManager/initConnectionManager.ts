@@ -1,5 +1,5 @@
 import { getConnectionApiPaths } from "@common/utils";
-import { setHttpAppSecurity } from "@src/init/setHttpAppSecurity";
+import { setHttpAppSecurity } from "@src/createHttpAndIOServers/setHttpAppSecurity";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { isDefined } from "prostgles-types";
 import { type DBS } from "../index";

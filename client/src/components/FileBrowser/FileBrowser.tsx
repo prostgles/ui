@@ -19,10 +19,10 @@ import {
   mdiPound,
   mdiReact,
 } from "@mdi/js";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
 import React from "react";
 import { bytesToSize } from "src/dashboard/BackupAndRestore/BackupsControls";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { FileBrowserCurrentDirectory } from "./FileBrowserCurrentDirectory";
 
 type P = {
@@ -42,7 +42,7 @@ export const FileBrowser = ({
 }: P) => {
   const {
     dbsMethods: { glob },
-  } = usePrgl();
+  } = usePrglCore();
 
   const pathFiles = usePromise(async () => {
     const result = glob ? await glob({ path: currentPath }) : undefined;

@@ -6,7 +6,7 @@ import { getCompiledTS } from "@src/ConnectionManager/connectionManagerUtils";
 import { testDBConnection } from "@src/connectionUtils/testDBConnection";
 import { validateConnection } from "@src/connectionUtils/validateConnection";
 import { getElectronConfig } from "@src/electronConfig";
-import { connectionManager } from "@src/index";
+import { connectionManager, type DBS } from "@src/index";
 import { getPasswordlessAdmin } from "@src/init/initUsers";
 import { statePrgl } from "@src/init/startProstgles";
 import {
@@ -43,6 +43,10 @@ import { runConnectionQuery } from "../getServerFunctions";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { setFileStorage } from "../setFileStorage";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
+import type {
+  DBGeneratedSchema,
+  GeneratedFunctionSchema,
+} from "@common/DBGeneratedSchema";
 
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -408,7 +412,8 @@ export const getAdminServerFunctions = (
         query: "string",
         args: { type: "any", optional: true },
       },
-      run: ({ conId, query, args }) => runConnectionQuery(conId, query, args),
+      run: ({ conId, query, args }) =>
+        runConnectionQuery(conId, query, args, undefined, true),
     }),
     getSampleSchemas: defineAdminFunction({
       run: () => getSampleSchemas(),
@@ -564,6 +569,27 @@ export const getAdminServerFunctions = (
           await speechToTextService.endpoints["/transcribe"](formData);
 
         return result;
+      },
+    }),
+    startWorkflow: defineAdminFunction({
+      input: {
+        chatId: "integer",
+        workflowDefinition: "string",
+      },
+      run: async (
+        { chatId, workflowDefinition },
+        { dbs, user, getClientDBHandlers },
+      ) => {
+        const chat = await dbs.llm_chats.findOne({
+          id: chatId,
+          user_id: user.id,
+        });
+        if (!chat) {
+          throw "Chat not found";
+        }
+        const { clientMethods } = await getClientDBHandlers(undefined);
+        const dbsMethods = clientMethods as unknown as GeneratedFunctionSchema;
+        // dbsMethods.askLLM();
       },
     }),
   };

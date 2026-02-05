@@ -1,6 +1,6 @@
 import type { SQLSuggestion } from "../W_SQLEditor";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
-import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
+import { getTableExpressionReturnTypes } from "./completionUtils/getTableExpressionReturnTypes";
 import { getJoinSuggestions } from "./getJoinSuggestions";
 import type {
   ParsedSQLSuggestion,
@@ -41,7 +41,7 @@ export const suggestTableLike = async (
     : parentCb?.ftoken?.textLC === "with" ? parentCb
     : undefined;
   if (withCb) {
-    const tableExpressions = await getTableExpressionSuggestions(
+    const tableExpressions = await getTableExpressionReturnTypes(
       { cb: withCb, ss, sql },
       "table",
     );

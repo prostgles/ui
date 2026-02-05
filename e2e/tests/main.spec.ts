@@ -2535,6 +2535,7 @@ test.describe("Main test", () => {
     await page.locator(getDataKey("SampleComponent")).click();
     await page.locator(getDataKey("Files")).click();
     await page.locator(getDataLabelElemSelector("client")).click();
+    await page.waitForTimeout(1e3);
     await page.keyboard.type("pack");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("MonacoEditor")).toContainText("vite build");

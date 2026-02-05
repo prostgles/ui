@@ -303,7 +303,13 @@ export const askLLM = async (args: AskLLMArgs) => {
 
     if (!modelData) throw "Model not found";
 
-    checkMaxCostLimitForChat(chat, modelData, pastMessages, userMessage);
+    await checkMaxCostLimitForChat(
+      dbs,
+      chat,
+      modelData,
+      pastMessages,
+      userMessage,
+    );
 
     const promptWithContext = await getFullPrompt({
       prompt,
@@ -394,6 +400,12 @@ export const askLLM = async (args: AskLLMArgs) => {
         true,
       )
     ) {
+      await dbs.llm_chats.update(
+        { id: chat.id },
+        {
+          error_state: "maximum_consecutive_tool_fails",
+        },
+      );
       throw `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`;
     }
 

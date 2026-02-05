@@ -22,15 +22,30 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
   llm_chats: {
     columns: {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
-      parent_chat_id: {
-        sqlDefinition: `INTEGER REFERENCES llm_chats(id) ON DELETE SET NULL`,
-        info: {
-          hint: "Agentic chats can have a parent chat",
-        },
-      },
       name: `TEXT NOT NULL DEFAULT 'New chat'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       connection_id: `UUID REFERENCES connections(id) ON DELETE CASCADE`,
+      parent_chat_id: {
+        sqlDefinition: `INTEGER REFERENCES llm_chats(id) ON DELETE SET NULL`,
+        info: {
+          hint: "If defined then is Agentic chat",
+        },
+      },
+      agent_info: {
+        nullable: true,
+        jsonbSchemaType: {
+          prompt: {
+            type: "string",
+            title: "Prompt",
+            description: "Prompt used for agentic chat",
+          },
+          outputSchema: {
+            title: "Output schema",
+            description: "JSON schema for validating agent output",
+            type: "unknown",
+          },
+        },
+      },
       model: `INTEGER  REFERENCES llm_models(id)`,
       llm_prompt_id: {
         label: "Prompt",
@@ -185,6 +200,14 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
         info: {
           hint: "Maximum total cost of the chat in USD. If set to 0 then no limit is applied",
         },
+      },
+      error_state: {
+        nullable: true,
+        enum: [
+          "max_total_cost_usd",
+          "estimated_future_max_total_cost_usd",
+          "maximum_consecutive_tool_fails",
+        ],
       },
       currently_typed_message: {
         sqlDefinition: `TEXT`,
