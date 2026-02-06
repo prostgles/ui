@@ -105,6 +105,7 @@ export const getAdminServerFunctions = (
       input: {
         username: "string",
         password: "string",
+        origin: "string", // to be added to allowed origins for CORS
       },
       run: async (newAdmin, { user, dbs }) => {
         const noPwdAdmin = await getPasswordlessAdmin(dbs);
@@ -121,6 +122,17 @@ export const getAdminServerFunctions = (
             password: getPasswordHash(user, newAdmin.password),
             type: "admin",
             passwordless_admin: false,
+          },
+        );
+
+        await dbs.database_configs.update(
+          {
+            $existsJoined: { connections: { is_state_db: true } },
+          },
+          {
+            cors: {
+              allowedOrigins: [newAdmin.origin],
+            },
           },
         );
 

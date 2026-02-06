@@ -75,7 +75,11 @@ export const PasswordlessSetup = () => {
               if (!username || !password) {
                 throw "Username or Password missing";
               }
-              await dbsMethods.disablePasswordless!({ username, password });
+              await dbsMethods.disablePasswordless!({
+                username,
+                password,
+                origin: window.location.origin,
+              });
               await pageReload("disablePasswordless");
             },
           },
