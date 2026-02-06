@@ -16,11 +16,10 @@ export const AllowedOriginCheck = ({
   databaseConfig: DBSSchema["database_configs"];
 }) => {
   const { dbs } = usePrglCore();
-  const [allowed_origin, setAllowedOrigin] = useState(
-    databaseConfig.allowed_origin,
-  );
+  const firstAllowedOrigin = databaseConfig.cors?.allowedOrigins[0];
+  const [allowedOrigin, setAllowedOrigin] = useState(firstAllowedOrigin);
 
-  if (databaseConfig.allowed_origin) {
+  if (firstAllowedOrigin) {
     return null;
   }
 
@@ -42,13 +41,13 @@ export const AllowedOriginCheck = ({
           variant: "filled",
           className: "ml-auto",
           disabledInfo:
-            !allowed_origin ?
+            !allowedOrigin ?
               t.APIDetailsWs["Allowed origin is required"]
             : undefined,
           onClickPromise: async () => {
             await dbs.database_configs.update(
               { id: databaseConfig.id },
-              { allowed_origin },
+              { cors: { allowedOrigins: [allowedOrigin] } },
             );
           },
         },
@@ -80,7 +79,7 @@ export const AllowedOriginCheck = ({
           <FormField
             label={t.APIDetailsWs["Allowed origin"]}
             data-command="AllowedOriginCheck.FormField"
-            value={allowed_origin}
+            value={allowedOrigin}
             onChange={setAllowedOrigin}
           />
           <FlexCol>

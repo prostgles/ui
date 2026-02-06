@@ -10,6 +10,7 @@ import _http from "http";
 import path from "path";
 import { Server } from "socket.io";
 import { actualRootDir } from "../electronConfig";
+import { includes } from "prostgles-types";
 
 export const isTesting = !!process.env.PRGL_TEST;
 export const initExpressAndIOServers = () => {
@@ -95,7 +96,16 @@ export const initExpressAndIOServers = () => {
     cors: {
       origin: (origin, cb) => {
         const { stateDatabaseConfig: database_config } = getAuthSetupData();
-        cb(null, database_config?.allowed_origin ?? undefined);
+        const allowedOrigins = database_config?.cors?.allowedOrigins ?? [];
+        const isAllowed =
+          (origin && includes(allowedOrigins, origin)) ||
+          allowedOrigins.includes("*");
+        if (!isAllowed) {
+          console.warn(
+            `Blocked WS connection from origin: ${origin}. Allowed origins: ${allowedOrigins.join(", ")}`,
+          );
+        }
+        cb(null, isAllowed);
       },
     },
   });

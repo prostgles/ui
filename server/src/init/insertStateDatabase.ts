@@ -41,8 +41,6 @@ export const insertStateDatabase = async (
       await db.database_configs.update(
         { id: database_config.id },
         {
-          /** Origin "*" is required to enable API access */
-          allowed_origin: (await getPasswordlessAdmin(db)) ? null : "*",
           allowed_ips_enabled: false,
           allowed_ips: ["::ffff:127.0.0.1"],
           tableConfig,

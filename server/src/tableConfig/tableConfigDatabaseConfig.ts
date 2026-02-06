@@ -265,14 +265,6 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
           dump_options: DUMP_OPTIONS_SCHEMA.jsonbSchema,
         },
       },
-
-      allowed_origin: {
-        sqlDefinition: "TEXT",
-        label: "Allow-Origin",
-        info: {
-          hint: "Specifies which domains can access this app in a cross-origin manner. \nSets the Access-Control-Allow-Origin header. \nUse '*' or a specific URL to allow API access",
-        },
-      },
       allowed_ips: {
         sqlDefinition: `cidr[] NOT NULL DEFAULT '{}'`,
         label: "Allowed IPs and subnets",
