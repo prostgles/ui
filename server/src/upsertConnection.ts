@@ -9,6 +9,7 @@ export const upsertConnection = async (
   con: DBGeneratedSchema["connections"]["columns"],
   user_id: Users["id"] | null,
   dbs: DBS,
+  allowedOrigins: string[],
   sampleSchemaName?: string,
 ) => {
   const c = validateConnection({
@@ -31,7 +32,10 @@ export const upsertConnection = async (
       );
     } else {
       await dbs.database_configs.insert(
-        pickKeys({ ...c }, ["db_host", "db_name", "db_port"]),
+        {
+          ...pickKeys({ ...c }, ["db_host", "db_name", "db_port"]),
+          cors: { allowedOrigins },
+        },
         {
           removeDisallowedFields: true,
           onConflict: "DoNothing",

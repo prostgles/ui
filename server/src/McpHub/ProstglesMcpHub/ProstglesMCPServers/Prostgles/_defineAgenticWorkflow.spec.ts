@@ -1,16 +1,13 @@
 import { strict as assert } from "assert";
-import { test, describe } from "node:test";
-import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
-import { readFileSync } from "fs";
-import { join } from "path";
-import { createContainer } from "../DockerSandbox/createContainer";
-import http from "http";
+import { describe, test } from "node:test";
 import { createDockerMCPServerProxy } from "../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
+import { createAgenticWorkflowContainer } from "./createAgenticWorkflowContainer";
+import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
 
 void describe("defineAgenticWorkflow", async () => {
   await test("defineAgenticWorkflow init", () => {
     () => {
-      defineAgenticWorkflow(
+      void defineAgenticWorkflow(
         {
           name: "Test Workflow",
           toolDefinitions: {
@@ -49,121 +46,53 @@ void describe("defineAgenticWorkflow", async () => {
   });
 
   await test("parseAgenticWorkflowDefinition", async () => {
-    const parseAgenticWorkflowDefinitionTs = readFileSync(
-      join(
-        __dirname.replace("server/dist/", ""),
-        "parseAgenticWorkflowDefinition.ts",
-      ),
-      "utf8",
-    );
-    const defineAgenticWorkflowTs = readFileSync(
-      join(__dirname.replace("server/dist/", ""), "defineAgenticWorkflow.ts"),
-      "utf8",
-    );
-    assert.equal(
-      parseAgenticWorkflowDefinitionTs.startsWith(
-        `import ts from "typescript"`,
-      ),
-      true,
-    );
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    return new Promise<void>(async (resolve) => {
+      const proxy = await createDockerMCPServerProxy(false, {
+        agent: (req, res) => {
+          assert.equal(req.body.type, "definitions");
+          assert.deepStrictEqual(req.body.definitions, workflowDefinitions);
+          res.json({ result: "success" });
 
-    // Intercept http post call with definitions
-    // const server = http.createServer((req, res) => {
-    //   if (req.method === "POST" && req.url === "/parse-agentic-workflow") {
-    //     let body = "";
-    //     req.on("data", (chunk) => {
-    //       body += chunk.toString();
-    //     });
-    //     req.on("end", () => {
-    //       const data = JSON.parse(body);
-    //       assert.equal(data.definitions.name, "Test Workflow");
-    //       res.end(JSON.stringify({ result: "success" }));
-    //     });
-    //   } else {
-    //     res.statusCode = 404;
-    //     res.end();
-    //   }
-    // });
-    // server.listen(3089, async () => {});
-    const proxy = await createDockerMCPServerProxy();
+          proxy.destroy();
+          resolve();
+        },
+      });
 
-    const result = await createContainer("test-container", {
-      files: {
-        Dockerfile: `
-          FROM node:18
-          WORKDIR /app
-          COPY . .
-          RUN npm install
-          RUN npm run build
-          CMD ["npm", "start"]
-        `,
-        "defineAgenticWorkflow.ts": defineAgenticWorkflowTs,
-        "index.ts": workflowTs,
-        "package.json": `
-          {
-            "name": "test-container",
-            "version": "1.0.0",
-            "main": "index.js",
-            "scripts": {
-              "build": "tsc",
-              "start": "node index.js"
-            },
-            "dependencies": {
-              "@types/node": "^22.15.2",
-              "typescript": "^5.8.3"
-            }
-          }
-         `,
-        "tsconfig.json": `
-          {
-            "compilerOptions": {
-              "target": "ES2020",
-              "module": "CommonJS",
-              "strict": true,
-              "esModuleInterop": true,
-              "skipLibCheck": true,
-              "forceConsistentCasingInFileNames": true
-            }
-          }
-         `,
-      },
-      environment: {
-        DOCKER_MCP_ENDPOINT: proxy.base_url,
-        MODE: "definitions-only",
-      },
+      const result = await createAgenticWorkflowContainer(workflowTs);
+
+      assert.equal(result.state, "finished");
+      assert.equal(result.exitCode, 0);
     });
-
-    assert.equal(result, "finished");
-    assert.equal(result.exitCode, 0);
-    assert.equal(result.log.map((l) => l.text).join(""), "Hello, world!\n");
   });
 });
 
-const workflowTs = `
-import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
-export default defineAgenticWorkflow(
-  {
-    name: "Test Workflow",
-    toolDefinitions: {
-      fetch_webpage: {
-        mcpServerName: "fetch",
-        toolNames: ["fetch"],
-      },
-      query_database: {
-        mcpServerName: "database",
-        toolNames: ["select"],
-      },
+const workflowDefinitions = {
+  name: "Test Workflow",
+  toolDefinitions: {
+    fetch_webpage: {
+      mcpServerName: "fetch",
+      toolNames: ["fetch"],
     },
-    agentDefinitions: {
-      researcher: {
-        prompt: "You are a research assistant.",
-        outputSchema: {
-          summary: "string",
-          references: "string[]",
-        },
+    query_database: {
+      mcpServerName: "database",
+      toolNames: ["select"],
+    },
+  },
+  agentDefinitions: {
+    researcher: {
+      prompt: "You are a research assistant.",
+      outputSchema: {
+        summary: "string",
+        references: "string[]",
       },
     },
   },
+};
+const workflowTs = `
+import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
+export default defineAgenticWorkflow(
+  ${JSON.stringify(workflowDefinitions, null, 2)},
   async ({ researcher }) => {
     const result = await researcher("Prostgles");
     result.summary;

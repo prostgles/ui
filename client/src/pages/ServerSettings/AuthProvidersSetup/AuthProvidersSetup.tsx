@@ -129,7 +129,6 @@ export const AuthProviderSetup = ({
               columns={
                 {
                   cookie_options: 1,
-                  allowed_origin: 1,
                 } satisfies Partial<
                   Record<keyof DBSSchema["database_configs"], 1>
                 >

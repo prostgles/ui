@@ -289,8 +289,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
   checkPosition = popupCheckPosition.bind(this);
   prevStateStyles: PopupState["stateStyle"][] = [];
   render() {
-    const defaultContentClassName =
-      this.props.title && !window.isLowWidthScreen ? "p-1 pl-2" : "p-1";
+    const defaultContentClassName = "p-1";
     const {
       onClose,
       positioning,

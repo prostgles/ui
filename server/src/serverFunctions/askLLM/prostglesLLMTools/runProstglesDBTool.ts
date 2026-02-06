@@ -7,9 +7,9 @@ import {
 } from "prostgles-types";
 import { connectionManager } from "../../../index";
 import { getProstglesDBTools } from "./getProstglesDBTools";
-import type { ChatPermissions } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
+import type { ChatDatabasePermissions } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
 export const runProstglesDBTool = async (
-  chat: ChatPermissions,
+  chat: ChatDatabasePermissions,
   clientReq: AuthClientRequest,
   args: unknown,
   name: string,
@@ -108,7 +108,7 @@ export const runProstglesDBTool = async (
 };
 
 export const getClientDBHandlersForChat = async (
-  chat: ChatPermissions,
+  chat: ChatDatabasePermissions,
   clientReq: AuthClientRequest,
 ) => {
   const chatDBPermissions = chat.db_data_permissions;

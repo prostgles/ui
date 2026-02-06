@@ -46,7 +46,6 @@ const PORT =
     +(process.env.PROSTGLES_UI_PORT ?? 3004)
   );
 export const connectionManager = new ConnectionManager(http, app, io, PORT);
-export const isDocker = Boolean(process.env.IS_DOCKER);
 
 const LOCALHOST = "127.0.0.1";
 const HOST =

@@ -10,7 +10,6 @@ import { APICodeExamples } from "./APICodeExamples";
 import type { APIDetailsProps } from "./APIDetails";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
-console.error("ENSURE IT WORKS");
 export const APIDetailsWs = ({
   connection,
   token,

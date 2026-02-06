@@ -511,6 +511,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
 
                   const { connection } = await dbsMethods.createConnection!({
                     connection: conn,
+                    origin: window.location.origin,
                   });
 
                   onUpserted?.(connection);

@@ -1,38 +1,33 @@
-import type { DBSSchema } from "@common/publishUtils";
-import { execSync } from "child_process";
-import express, { json, Request, Response, urlencoded } from "express";
 import _http from "http";
+import { execSync } from "child_process";
+import { getSerialisableError, isObject } from "prostgles-types";
+import express, {
+  json,
+  Request,
+  Response,
+  urlencoded,
+  type RequestHandler,
+} from "express";
 import type { AddressInfo } from "net";
 import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
-import { getSerialisableError, isObject } from "prostgles-types";
 import { dockerContainerAuthRegistry } from "./dockerContainerAuthRegistry";
 import { getDockerGatewayIP } from "../getDockerGatewayIP";
-import { getProstglesState } from "@src/init/tryStartProstgles";
-import { isDocker } from "@src/index";
 import { runProstglesDBTool } from "@src/serverFunctions/askLLM/prostglesLLMTools/runProstglesDBTool";
 import { sidKeyName } from "@common/authTypesAndConstants";
 import { isPortFree } from "@src/utils/isPortFree";
+import { isDocker } from "@src/McpHub/utils";
 
-const PREFERRED_PORT = 3089;
-export const DOCKER_MCP_ENDPOINT = "/db";
+const DOCKER_MCP_ENDPOINT = "/db";
 const ROUTE = `${DOCKER_MCP_ENDPOINT}/:endpoint`;
-
-export type ChatPermissions = Pick<
-  DBSSchema["llm_chats"],
-  "db_data_permissions" | "connection_id"
->;
-
-type AuhtContext = {
-  sid_token: string;
-  chat: ChatPermissions;
-};
-
-export type GetAuthContext = (ip: string) => AuhtContext | undefined;
+const PREFERRED_PORT = 3089;
 
 /**
  * A separate server is used to improve security because we need to bind it to 0.0.0.0 to ensure docker containers can access it.
  */
-export const createDockerMCPServerProxy = async () => {
+export const createDockerMCPServerProxy = async (
+  isElectron: boolean,
+  customRequestHandlers?: { agent: RequestHandler },
+) => {
   const dockerVersion = execSync("docker --version").toString();
   if (!dockerVersion) {
     throw new Error("Docker not installed");
@@ -41,6 +36,10 @@ export const createDockerMCPServerProxy = async () => {
 
   app.use(json({ limit: "1000mb" }));
   app.use(urlencoded({ extended: true, limit: "1000mb" }));
+  app.post("/agent", (req, res, next) => {
+    customRequestHandlers?.agent(req, res, next);
+    // return requestHandler(req, res);
+  });
   app.post(ROUTE, (req, res) => {
     return requestHandler(req, res);
   });
@@ -48,8 +47,7 @@ export const createDockerMCPServerProxy = async () => {
   const usePreferredPort = await isPortFree(PREFERRED_PORT);
 
   const dockerGatewayIP = getDockerGatewayIP();
-  const hostname =
-    isDocker || getProstglesState().isElectron ? "0.0.0.0" : dockerGatewayIP;
+  const hostname = isDocker || isElectron ? "0.0.0.0" : dockerGatewayIP;
 
   return new Promise<{
     app: express.Express;

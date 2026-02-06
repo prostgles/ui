@@ -167,7 +167,7 @@ type ProxyCallData =
       params: any[];
     };
 
-export const defineAgenticWorkflow: DefineAgenticWorkflow = (
+export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   definitions,
   handler,
 ) => {
@@ -193,7 +193,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = (
     return data;
   };
 
-  callMcpProxy({ type: "definitions", definitions });
+  await callMcpProxy({ type: "definitions", definitions });
 
   if (MODE === "definitions-only") {
     console.log(

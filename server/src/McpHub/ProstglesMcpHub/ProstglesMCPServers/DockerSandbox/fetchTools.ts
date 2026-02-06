@@ -8,6 +8,7 @@ import {
   type JSONB,
 } from "prostgles-types";
 import type { McpCallContext } from "../../ProstglesMCPServerTypes";
+import { isDocker } from "@src/McpHub/utils";
 
 const createContainerToolInfo =
   PROSTGLES_MCP_SERVERS_AND_TOOLS["docker-sandbox"]["create_container"];
@@ -19,7 +20,6 @@ export const fetchTools = async (
 ) => {
   const chat = await dbs.llm_chats.findOne({ id: context.chat_id });
   const dbTools = getProstglesDBTools(chat);
-  const isDocker = Boolean(process.env.IS_DOCKER);
 
   const databaseQueryDescription =
     !dbTools.length ?

@@ -14,6 +14,7 @@ import {
 } from "./DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { createDockerMCPServerProxy } from "./DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import { fetchTools } from "./DockerSandbox/fetchTools";
+import { getProstglesState } from "@src/init/tryStartProstgles";
 
 const definition = {
   icon_path: "Docker",
@@ -26,7 +27,9 @@ let mcpRequestRouter: ReturnType<typeof createDockerMCPServerProxy> | undefined;
 
 const handler = {
   start: async (dbs) => {
-    mcpRequestRouter ??= createDockerMCPServerProxy();
+    mcpRequestRouter ??= createDockerMCPServerProxy(
+      getProstglesState().isElectron,
+    );
     const { api_url, destroy } = await mcpRequestRouter;
 
     return {

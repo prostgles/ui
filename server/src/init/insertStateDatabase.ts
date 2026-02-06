@@ -2,9 +2,8 @@ import type { DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys, tryCatchV2 } from "prostgles-types";
 import type { DBS } from "..";
 import type { DBSConnectionInfo } from "../electronConfig";
-import { upsertConnection } from "../upsertConnection";
-import { getPasswordlessAdmin } from "@src/init/initUsers";
 import { tableConfig } from "../tableConfig/tableConfig";
+import { upsertConnection } from "../upsertConnection";
 
 /** Add state db if missing */
 export const insertStateDatabase = async (
@@ -32,6 +31,7 @@ export const insertStateDatabase = async (
         },
         null,
         db,
+        ["*"],
       );
 
       /**

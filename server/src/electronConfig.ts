@@ -33,7 +33,6 @@ const electronConfig: {
   isElectron: false,
   electronSid: "",
   safeStorage: undefined,
-  // onReady: (actualPort: number) => {},
 };
 
 export const actualRootDir = path.join(__dirname, "/../../..");

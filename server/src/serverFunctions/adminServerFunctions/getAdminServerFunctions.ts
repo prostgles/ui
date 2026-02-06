@@ -264,13 +264,15 @@ export const getAdminServerFunctions = (
     createConnection: defineAdminFunction({
       input: {
         connection: "any",
+        origin: "string",
         sampleSchemaName: { type: "string", optional: true },
       },
-      run: async ({ connection, sampleSchemaName }, { dbs, user }) => {
+      run: async ({ connection, sampleSchemaName, origin }, { dbs, user }) => {
         const res = await upsertConnection(
           connection,
           user.id,
           dbs,
+          [origin],
           sampleSchemaName,
         );
         const el = getElectronConfig();

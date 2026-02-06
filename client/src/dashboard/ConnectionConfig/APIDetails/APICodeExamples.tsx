@@ -193,7 +193,7 @@ ${initLogic}
 prostgles<DBGeneratedSchema>({
   socket,
   onReload: () => {},
-  onReady: async (db, methods, tableSchema, auth) => {
+  onReady: async ({ db, methods, tableSchema, auth }) => {
     const info = JSON.stringify({ 
       tableHandlers: Object.keys(db), 
       methods, 
@@ -241,8 +241,6 @@ const packageJson = {
   scripts: {
     start: 'npm i && tsc-watch --onSuccess "node --inspect index.js"',
   },
-  author: "",
-  license: "MIT",
   devDependencies: {
     "@types/node": "^20.6.5",
     "tsc-watch": "^6.0.4",

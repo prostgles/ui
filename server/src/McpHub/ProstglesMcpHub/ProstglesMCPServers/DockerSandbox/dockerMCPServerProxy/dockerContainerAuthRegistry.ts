@@ -1,8 +1,12 @@
-import { execSync } from "child_process";
-import { getKeys, isDefined, pickKeys } from "prostgles-types";
 import type { DBSSchema } from "@common/publishUtils";
-import type { GetAuthContext } from "./dockerMCPServerProxy";
+import { execSync } from "child_process";
+import { isDefined, pickKeys } from "prostgles-types";
 export const DOCKER_CONTAINER_NAME_PREFIX = "prostgles-docker-mcp-sandbox";
+
+export type ChatDatabasePermissions = Pick<
+  DBSSchema["llm_chats"],
+  "db_data_permissions" | "connection_id"
+>;
 
 export type CreateContainerContext = {
   userId: string;
@@ -13,6 +17,8 @@ export type ContainerAuthInfo = {
   chat: DBSSchema["llm_chats"];
   sid_token: string;
 };
+
+export type GetAuthContext = (ip: string) => ContainerAuthInfo | undefined;
 
 const containers = new Map<string, ContainerAuthInfo>();
 
@@ -37,7 +43,7 @@ const getIPToContainerName = () => {
     return containerIpCache.ipToContainerName;
   }
   const containerNamesToIPs = execSync(
-    "docker inspect   -f '{{.Name}} {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq)",
+    "docker inspect -f '{{.Name}} {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq)",
   )
     .toString()
     .split("\n")

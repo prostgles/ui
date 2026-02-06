@@ -1,3 +1,4 @@
+import { isDocker } from "@src/McpHub/utils";
 import type { CreateContainerParams } from "./fetchTools";
 
 const CUSTOM_BRIDGE_NETWORK_NAME = "prostgles-bridge-net";
@@ -14,8 +15,6 @@ type LocalDockerParams = {
   localDir: string;
   name: string;
 };
-
-const isDocker = Boolean(process.env.IS_DOCKER);
 
 export const getDockerRunArgs = ({
   cpus = "1",

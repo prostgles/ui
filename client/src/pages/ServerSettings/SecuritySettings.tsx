@@ -68,7 +68,6 @@ export const SecuritySettings = ({
         contentClassname="px-p25  "
         columns={
           {
-            allowed_origin: 1,
             allowed_ips: 1,
             allowed_ips_enabled: 1,
             trust_proxy: 1,
@@ -79,6 +78,7 @@ export const SecuritySettings = ({
             csp_add_defaults_enabled: 1,
             cors: 1,
             cors_csp_devmode_enabled: 1,
+            cookie_options: 1,
           } satisfies Partial<
             Record<keyof DBGeneratedSchema["database_configs"]["columns"], 1>
           >

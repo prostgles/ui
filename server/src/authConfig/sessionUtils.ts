@@ -105,7 +105,7 @@ export const checkClientIP = async (
     ip_address,
     ip_address_remote,
     x_real_ip,
-    isAllowed, //: (args.byPassedRanges || this.ipRanges).some(({ from, to }) => ip && ip >= from && ip <= to )
+    isAllowed,
   };
 };
 

@@ -191,6 +191,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
         connection: validatedConnection.validatedConnection,
         sampleSchemaName:
           action.type === "new" ? action.applySchema?.name : undefined,
+        origin: window.location.origin,
       });
       const { connection: newConnection } = newConn;
       if (
