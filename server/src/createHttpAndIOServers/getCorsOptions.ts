@@ -37,6 +37,7 @@ export const getCorsOptions = (
       if (allowedOrigins.includes(requestedOrigin)) {
         return cb(null, true);
       }
+      console.error(`CORS policy: Origin ${requestedOrigin} blocked`);
       return cb(
         new Error(
           `CORS policy: Origin ${requestedOrigin} not allowed${
