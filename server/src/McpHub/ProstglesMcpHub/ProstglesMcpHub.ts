@@ -9,6 +9,7 @@ import {
 } from "prostgles-types";
 import type {
   McpCallContext,
+  McpCallContextFetchTools,
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
@@ -133,7 +134,10 @@ const init = async (dbs: DBS) => {
     };
   };
 
-  const fetchTools = async (serverName: string, context: McpCallContext) => {
+  const fetchTools = async (
+    serverName: string,
+    context: McpCallContextFetchTools,
+  ) => {
     const { server } = getExpectedServer(serverName);
     return server.fetchTools(dbs, context);
   };
@@ -141,7 +145,13 @@ const init = async (dbs: DBS) => {
     return sub.unsubscribe();
   };
 
-  return { destroy, callTool, fetchTools, getServer };
+  return {
+    destroy,
+    callTool,
+    fetchTools,
+    getServer,
+    getServers: () => Array.from(servers.entries()),
+  };
 };
 
 let inFlightInit: ReturnType<typeof init> | undefined;

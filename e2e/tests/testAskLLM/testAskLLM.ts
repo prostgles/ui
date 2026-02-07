@@ -6,6 +6,7 @@ import {
 import { dockerWeatherToolUse } from "testAskLLM/sampleToolUseData";
 import { createComponentToolUse } from "./createComponentToolUse";
 import { stringify, type ToolUse } from "./utils";
+import { agenticWorkflowToolUse } from "./agenticWorkflowToolUse";
 
 export const clientNodeModulesDirectory = join(
   __dirname,
@@ -171,7 +172,7 @@ const mcpSandboxToolUse: ToolUse = {
       id: "mcp-tool-use-sandbox1",
       type: "function",
       function: {
-        name: "docker-sandbox--create_container",
+        name: "prostgles-ui--create_container",
         arguments: stringify({
           files: {
             Dockerfile: `FROM node:20 \nWORKDIR /app \nCOPY . . \nRUN npm install \nCMD ["npm", "start"]`,
@@ -237,7 +238,7 @@ const toolResponses: Record<string, ToolUse> = {
         id: "weather-tool-use",
         type: "function",
         function: {
-          name: "docker-sandbox--create_container",
+          name: "prostgles-ui--create_container",
           arguments: stringify(dockerWeatherToolUse),
         },
       },
@@ -306,6 +307,7 @@ const toolResponses: Record<string, ToolUse> = {
     ],
   },
   component: createComponentToolUse,
+  agentic_workflow: agenticWorkflowToolUse,
 };
 
 export const testAskLLMCode = `

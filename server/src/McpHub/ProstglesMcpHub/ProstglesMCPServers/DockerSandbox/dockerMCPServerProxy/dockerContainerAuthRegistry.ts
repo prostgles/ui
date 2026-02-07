@@ -1,6 +1,8 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { execSync } from "child_process";
-import { isDefined, pickKeys } from "prostgles-types";
+import { randomUUID } from "crypto";
+import type { RequestHandler } from "express";
+import { isDefined, isEmpty, pickKeys } from "prostgles-types";
 export const DOCKER_CONTAINER_NAME_PREFIX = "prostgles-docker-mcp-sandbox";
 
 export type ChatDatabasePermissions = Pick<
@@ -13,21 +15,43 @@ export type CreateContainerContext = {
   chatId: number;
 };
 
+export type DockerMCPServerProxyHandler = (
+  authContext: { chat: ChatDatabasePermissions; sid_token: string },
+  ...args: Parameters<RequestHandler>
+) => void;
+
 export type ContainerAuthInfo = {
-  chat: DBSSchema["llm_chats"];
+  chat: ChatDatabasePermissions;
   sid_token: string;
+  requestHandlers: Record<
+    string,
+    {
+      method: "POST" | "GET";
+      handler: DockerMCPServerProxyHandler;
+    }
+  >;
 };
 
 export type GetAuthContext = (ip: string) => ContainerAuthInfo | undefined;
 
 const containers = new Map<string, ContainerAuthInfo>();
 
-const setContainerInfo = (name: string, info: ContainerAuthInfo) => {
+const runContainerWithAuth = <T>(
+  info: ContainerAuthInfo,
+  runContainer: (name: string) => Promise<T>,
+): Promise<T> => {
+  if (isEmpty(info.requestHandlers)) {
+    throw new Error("At least one request handler must be provided");
+  }
+  const name = `${DOCKER_CONTAINER_NAME_PREFIX}-${Date.now()}-${randomUUID()}`;
+  if (containers.has(name)) {
+    throw new Error(`Container with name ${name} already exists`);
+  }
   containers.set(name, info);
-};
 
-const deleteContainerInfo = (name: string) => {
-  containers.delete(name);
+  return runContainer(name).finally(() => {
+    containers.delete(name);
+  });
 };
 
 const containerIpCache = {
@@ -42,16 +66,18 @@ const getIPToContainerName = () => {
   if (containerIpCache.containerNames === containerNames) {
     return containerIpCache.ipToContainerName;
   }
-  const containerNamesToIPs = execSync(
-    "docker inspect -f '{{.Name}} {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq)",
-  )
-    .toString()
-    .split("\n")
-    .map((line) => {
-      // Skip slash at the beginning of the container name
-      const [name, ip] = line.slice(1).trim().split(" ");
-      if (!name || !name.startsWith(DOCKER_CONTAINER_NAME_PREFIX) || !ip)
-        return;
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const containerInspect: ContainerInspect[] = JSON.parse(
+    execSync("docker inspect $(docker ps -aq)").toString(),
+  );
+  const containerNamesToIPs = containerInspect
+    .map((c) => {
+      const name = c.Name.slice(1);
+      if (!name.startsWith(DOCKER_CONTAINER_NAME_PREFIX)) return;
+      const ip =
+        Object.values(c.NetworkSettings.Networks)[0]?.IPAddress || undefined;
+      if (!ip) return;
       return { name, ip };
     })
     .filter(isDefined);
@@ -70,13 +96,28 @@ const getIPToContainerName = () => {
 const getContainerFromIP: GetAuthContext = (ip: string) => {
   const containerName = getIPToContainerName().get(ip);
 
-  if (!containerName) throw new Error(`No container found for IP ${ip}`);
+  if (!containerName) return;
   const containerInfo = containers.get(containerName);
-  return containerInfo && pickKeys(containerInfo, ["chat", "sid_token"]);
+  return (
+    containerInfo &&
+    pickKeys(containerInfo, ["chat", "sid_token", "requestHandlers"])
+  );
 };
 
 export const dockerContainerAuthRegistry = {
   getContainerFromIP,
-  setContainerInfo,
-  deleteContainerInfo,
+  runContainerWithAuth,
+};
+
+type ContainerInspect = {
+  Id: string;
+  Name: string;
+  NetworkSettings: {
+    Networks: Record<
+      string,
+      {
+        IPAddress: string;
+      }
+    >;
+  };
 };

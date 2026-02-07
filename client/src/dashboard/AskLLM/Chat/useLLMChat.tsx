@@ -66,6 +66,7 @@ export const useLLMChat = (props: UseLLMChatProps) => {
         dbs,
         chatId: newChat.id,
         prompt,
+        currentPrompt: undefined,
       });
       setSelectedChat(undefined);
     },

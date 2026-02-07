@@ -6,8 +6,8 @@ import { mdiDatabaseEdit } from "@mdi/js";
 
 export const DatabaseAccessPermissions = (
   dbAccess: JSONB.GetObjectType<
-    (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_agent_workflow"]["schema"]["type"]
-  >["database_access"],
+    (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]
+  >["suggested_database_access"],
 ) => {
   const databaseAccessList = useMemo(() => {
     if (dbAccess.Mode === "None") return;

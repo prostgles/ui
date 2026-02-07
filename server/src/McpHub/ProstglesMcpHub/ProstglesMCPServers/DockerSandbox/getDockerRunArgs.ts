@@ -1,5 +1,5 @@
 import { isDocker } from "@src/McpHub/utils";
-import type { CreateContainerParams } from "./fetchTools";
+import type { CreateContainerParams } from "../Prostgles/schemas/getCreateContainerToolSchema";
 
 const CUSTOM_BRIDGE_NETWORK_NAME = "prostgles-bridge-net";
 const LABEL = "prostgles-docker-sandbox";

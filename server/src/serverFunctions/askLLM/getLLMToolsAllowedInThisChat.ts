@@ -52,7 +52,7 @@ export const getLLMToolsAllowedInThisChat = async ({
     await dbs.llm_chats_allowed_mcp_tools.find({
       chat_id: chatId,
     });
-  const { mcpTools } = await getMCPServerTools(dbs, {
+  const { mcpTools: mcpToolsWithoutExtraInfo } = await getMCPServerTools(dbs, {
     $existsJoined: {
       llm_chats_allowed_mcp_tools: {
         chat_id: chatId,
@@ -60,7 +60,7 @@ export const getLLMToolsAllowedInThisChat = async ({
     },
   });
   const tools: Record<string, AllowedChatTool> = {};
-  const mcpToolsWithInfo = mcpTools
+  const allowedMcpToolsWithInfo = mcpToolsWithoutExtraInfo
     .map(({ id, ...tool }) => {
       const info = llm_chats_allowed_mcp_tools.find(
         ({ tool_id }) => tool_id === id,
@@ -75,19 +75,18 @@ export const getLLMToolsAllowedInThisChat = async ({
     })
     .filter(isDefined);
 
-  const { prostglesMCPTools, prostglesDBTools } = await getProstglesLLMTools({
+  const { mcpTools, dbTools } = await getProstglesLLMTools({
     userType,
     dbs,
     chat,
     prompt,
-    mcpToolsWithInfo,
-    connectionId,
+    allowedMcpToolsWithInfo,
     clientReq,
   });
 
   /** Check for name collisions */
   [
-    ...prostglesMCPTools.map((t) => {
+    ...mcpTools.map((t) => {
       const toolNameParts = getMCPToolNameParts(t.name);
       if (!toolNameParts) {
         throw new Error(`Could not parse tool name parts for ${t.name}`);
@@ -110,10 +109,11 @@ export const getLLMToolsAllowedInThisChat = async ({
           ...info,
           server_name: "prostgles-db-methods",
           auto_approve: Boolean(info.auto_approve),
+          mode: null,
         } satisfies AllowedChatTool;
       })
       .filter(isDefined),
-    ...prostglesDBTools.map((t) => {
+    ...dbTools.map((t) => {
       return {
         ...t,
       } satisfies AllowedChatTool;
@@ -143,9 +143,6 @@ export const getAllToolNames = async (dbs: DBS): Promise<string[]> => {
     ),
     ...getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]).map(
       ([toolName]) => getProstglesMCPFullToolName("prostgles-db", toolName),
-    ),
-    ...getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]).map(
-      ([toolName]) => getProstglesMCPFullToolName("prostgles-ui", toolName),
     ),
   ];
 };

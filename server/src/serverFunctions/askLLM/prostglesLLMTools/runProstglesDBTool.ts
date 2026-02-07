@@ -6,18 +6,19 @@ import {
   type TableHandler,
 } from "prostgles-types";
 import { connectionManager } from "../../../index";
-import { getProstglesDBTools } from "./getProstglesDBTools";
+import { getAllowedDBToolSchemas } from "./getAllowedDBToolSchemas";
 import type { ChatDatabasePermissions } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
+
 export const runProstglesDBTool = async (
   chat: ChatDatabasePermissions,
   clientReq: AuthClientRequest,
   args: unknown,
-  name: string,
+  toolName: string,
 ) => {
-  const tools = getProstglesDBTools(chat);
-  const tool = tools.find((t) => t.tool_name === name);
+  const tools = getAllowedDBToolSchemas(chat);
+  const tool = tools.find((t) => t.tool_name === toolName);
   if (!tool) {
-    throw new Error(`Tool "${name}" not found`);
+    throw new Error(`Tool "${toolName}" not found`);
   }
 
   const { clientDb, clientSql } = await getClientDBHandlersForChat(

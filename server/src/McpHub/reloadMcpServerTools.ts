@@ -1,4 +1,4 @@
-import type { DBSSchemaForInsert } from "@common/publishUtils";
+import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import { DBS } from "..";
@@ -14,17 +14,20 @@ export const updateMcpServerTools = async (
   serverName: string,
   mcpHub: McpHub,
 ) => {
-  let tools: McpTool[] = [];
+  let tools: (McpTool & {
+    mode: DBSSchema["mcp_server_tools"]["mode"];
+  })[] = [];
   const prostglesMCP = getProstglesMCPServer(serverName);
   if (prostglesMCP) {
     tools = getEntries(
       prostglesMCP.definition.tools as ProstglesMcpServerDefinition["tools"],
-    ).map(([name, { schema, description }]) => {
+    ).map(([name, { schema, description, mode = null }]) => {
       const inputSchema =
         !schema ? undefined : getJSONBSchemaAsJSONSchema("", "", schema);
       return {
         name,
         description,
+        mode,
         inputSchema: inputSchema as unknown as McpTool["inputSchema"],
       };
     });
@@ -35,7 +38,12 @@ export const updateMcpServerTools = async (
         `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
       );
     }
-    tools = await fetchMCPToolsList(client);
+    tools = (await fetchMCPToolsList(client)).map((tool) => {
+      return {
+        ...tool,
+        mode: null,
+      };
+    });
   }
 
   await dbs.tx(async (tx) => {
@@ -53,13 +61,25 @@ export const updateMcpServerTools = async (
     if (tools.length) {
       await tx.mcp_server_tools.insert(
         tools.map(
-          ({ name, description, inputSchema, annotations }) =>
+          ({
+            name,
+            description,
+            inputSchema,
+            annotations,
+            title,
+            _meta,
+            execution,
+            icons,
+            outputSchema,
+            mode,
+          }) =>
             ({
               description: description ?? "",
               server_name: serverName,
               inputSchema,
               name,
               annotations,
+              mode,
             }) satisfies DBSSchemaForInsert["mcp_server_tools"],
         ),
         {

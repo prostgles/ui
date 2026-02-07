@@ -2,7 +2,7 @@ import {
   getLLMMessageToolUse,
   isAssistantMessageRequestingToolUse,
 } from "@common/llmUtils";
-import type { AllowedChatTool } from "@common/prostglesMcp";
+import { type AllowedChatTool } from "@common/prostglesMcp";
 import { usePromise } from "prostgles-client";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../utils/utils";
@@ -54,11 +54,7 @@ export const useLLMToolsApprover = ({
           return toolUseRequest.name === tool.name;
         });
 
-        if (
-          !matchedTool ||
-          matchedTool.auto_approve ||
-          matchedTool.server_name === "prostgles-ui"
-        ) {
+        if (!matchedTool || matchedTool.auto_approve || matchedTool.mode) {
           // Handled by the backend
           return;
         }

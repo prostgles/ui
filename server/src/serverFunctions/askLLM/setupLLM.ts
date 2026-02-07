@@ -37,8 +37,11 @@ export const setupLLM = async (dbs: DBS) => {
             "Includes database schema and dashboard view structure. Claude Sonnet recommended",
           user_id,
           options: {
-            prompt_type: "dashboards",
+            mcp_server_tools: {
+              "prostgles-ui": ["suggest_dashboards"],
+            },
           },
+          icon: "ViewCarousel",
           prompt: [
             firstLine,
             "Assist user with any queries they might have about creating dashboards.",
@@ -54,7 +57,9 @@ export const setupLLM = async (dbs: DBS) => {
             "Includes database schema and full tools list. Will suggest database access type and tools required to completed the task. Claude Sonnet recommended",
           user_id,
           options: {
-            prompt_type: "tasks",
+            mcp_server_tools: {
+              "prostgles-ui": ["suggest_tools_and_prompt"],
+            },
           },
           prompt: [
             firstLine,
@@ -76,7 +81,10 @@ export const setupLLM = async (dbs: DBS) => {
             "Includes database schema and full tools list. Will suggest database access type, tools and workflow logic required to completed the task. Claude Sonnet recommended",
           user_id,
           options: {
-            prompt_type: "agent_workflow",
+            max_tokens: 18_000,
+            mcp_server_tools: {
+              "prostgles-ui": ["suggest_agentic_workflow"],
+            },
           },
           prompt: [
             firstLine,
@@ -129,7 +137,7 @@ export const setupLLM = async (dbs: DBS) => {
           user_id,
           prompt: "",
         },
-      ],
+      ] as DBSSchemaForInsert["llm_prompts"][],
       { onConflict: "DoUpdate", returning: { name: 1 } },
     );
 

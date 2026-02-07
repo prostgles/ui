@@ -1,3 +1,4 @@
+import type { DBSSchema } from "./publishUtils";
 import { fixIndent } from "./utils";
 
 const runSQLSchema = {
@@ -42,6 +43,14 @@ const filterSchema = {
   },
 } as const;
 
+const selectSchema = {
+  select: {
+    description:
+      "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }",
+    record: { values: { enum: [1, 0] } },
+  },
+} as const;
+
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   "prostgles-db-methods": { ["" as string]: "" },
   "prostgles-db": {
@@ -64,6 +73,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             description: "Table to select from",
           },
           ...filterSchema,
+          ...selectSchema,
           limit: "integer",
         },
       },
@@ -117,186 +127,6 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     },
   },
   "prostgles-ui": {
-    ask_user_questions: {
-      needsLlmResponse: true,
-      description:
-        "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time. Each question should have a list of suggested answers to choose from. If allowMultipleChoices is true, the user can select multiple answers.",
-      schema: {
-        type: {
-          questions: {
-            arrayOfType: {
-              question: {
-                type: "string",
-                description: "The question to ask the user",
-              },
-              allowMultipleChoices: {
-                type: "boolean",
-                optional: true,
-                description:
-                  "If true, the user can select multiple choices. Defaults to false.",
-              },
-              suggested_answers: {
-                description:
-                  "The list of suggested answers the user will choose from",
-                arrayOf: "string",
-              },
-            },
-          },
-        },
-      },
-      outputSchema: {
-        arrayOfType: {
-          question: "string",
-          answers: "string[]",
-        },
-      },
-    },
-    suggest_agent_workflow: {
-      description:
-        "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
-      schema: {
-        type: {
-          allowed_mcp_tool_names: {
-            description:
-              "List of MCP tools that can be used to complete the task",
-            arrayOf: "string",
-          },
-          database_access: {
-            description:
-              "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.",
-            oneOfType: [
-              { Mode: { enum: ["None"] } },
-              { Mode: { enum: ["execute_sql_rollback"] } },
-              { Mode: { enum: ["execute_sql_commit"] } },
-              {
-                Mode: { enum: ["Custom"] },
-                tables: {
-                  arrayOfType: {
-                    tableName: "string",
-                    select: "boolean",
-                    insert: "boolean",
-                    update: "boolean",
-                    delete: "boolean",
-                  },
-                },
-              },
-            ],
-          },
-          agent_definitions: {
-            description: fixIndent(`
-              The agent definitions are used to invoke an LLM chat with the specified inputs and constraints to return the output schema. 
-              The agent can only use from the suggested tools to complete the task.
-              The workflow_function_definition can invoke these agents as needed.
-            `),
-            record: {
-              values: {
-                type: {
-                  prompt: "string",
-                  inputJSONSchema: "any",
-                  outputJSONSchema: "any",
-                  maxCostUSD: { type: "number", optional: true },
-                  maxIterations: { type: "number", optional: true },
-                  allowedToolNames: "string[]",
-                  allowDatabaseAccess: { type: "boolean", optional: true },
-                },
-              },
-            },
-          },
-          workflow_function_definition: {
-            description: fixIndent(` 
-                  The workflow function must satisfy the following definition: 
-                   
-                  type WorkflowFunction = ({
-                    runTableAction?: (tableName: string, action: "select" | "update" | "insert" | "delete") => Record<string, any>[];
-                    runSQL?: (sql: string, args?: Record<string, any>) => Record<string, any>[];
-                    agents: { [AgentName: keyof typeof agentDefinitions]: (input: (typeof agentDefinitions)[AgentName]["inputSchema]) => Promise<(typeof agentDefinitions)[AgentName]["outputSchema]>>;
-                  }) => Promise<void>;
-                   
-                  /*
-                    Example workflow_function_definition:
-                    
-                    const workflow_function = async ({ runSQL, agents }) => {
-                      
-                      const rows = runSQL("SELECT * FROM my_table");
-                      
-                      for(const row of rows) {
-                        const rowEnhanced = await agents.rowEnhancer({ row });
-                        await runSQL(\`
-                          UPDATE my_table SET enhanced_data = \${rowEnhanced.enhanced_data} WHERE id = \${row.id}
-                        \`, { row, rowEnhanced });
-                      }
-                    };
-
-                  */
-                `),
-            type: "string",
-          },
-        },
-      },
-      outputSchema: undefined,
-    },
-    suggest_tools_and_prompt: {
-      description:
-        "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.",
-      schema: {
-        type: {
-          suggested_mcp_tool_names: {
-            description:
-              "List of MCP tools that can be used to complete the task",
-            arrayOf: "string",
-          },
-          suggested_database_tool_names: {
-            description:
-              "List of database tools that can be used to complete the task",
-            arrayOf: "string",
-            optional: true,
-          },
-          suggested_prompt: {
-            description:
-              "System prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.",
-            type: "string",
-          },
-          suggested_database_access: {
-            description:
-              "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.",
-            oneOfType: [
-              { Mode: { enum: ["None"] } },
-              { Mode: { enum: ["execute_sql_rollback"] } },
-              { Mode: { enum: ["execute_sql_commit"] } },
-              {
-                Mode: { enum: ["Custom"] },
-                tables: {
-                  arrayOfType: {
-                    tableName: "string",
-                    select: "boolean",
-                    insert: "boolean",
-                    update: "boolean",
-                    delete: "boolean",
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-      outputSchema: undefined,
-    },
-    suggest_dashboards: {
-      description:
-        "Suggest Prostgles UI dashboards to visualize data for the specified task.",
-      schema: {
-        type: {
-          prostglesWorkspaces: {
-            description:
-              "Workspace to create. Must satisfy the typescript WorkspaceInsertModel type",
-            arrayOf: "any",
-          },
-        },
-      },
-      outputSchema: undefined,
-    },
-  },
-  "docker-sandbox": {
     create_container: {
       description:
         "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.",
@@ -360,6 +190,117 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           buildDuration: "number",
         },
       },
+    },
+    ask_user_questions: {
+      mode: "user-provides-response",
+      description:
+        "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time. Each question should have a list of suggested answers to choose from. If allowMultipleChoices is true, the user can select multiple answers.",
+      schema: {
+        type: {
+          questions: {
+            arrayOfType: {
+              question: {
+                type: "string",
+                description: "The question to ask the user",
+              },
+              allowMultipleChoices: {
+                type: "boolean",
+                optional: true,
+                description:
+                  "If true, the user can select multiple choices. Defaults to false.",
+              },
+              suggested_answers: {
+                description:
+                  "The list of suggested answers the user will choose from",
+                arrayOf: "string",
+              },
+            },
+          },
+        },
+      },
+      outputSchema: {
+        arrayOfType: {
+          question: "string",
+          answers: "string[]",
+        },
+      },
+    },
+    suggest_agentic_workflow: {
+      mode: "structured-output",
+      description:
+        "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
+      schema: {
+        type: {
+          workflow_function_definition: {
+            type: "string",
+            description:
+              "Typescript code defining a function that returns an agent workflow. The function must satisfy the following type provided. The function can use available MCP tools and database access if needed. Available MCP tools and database access are determined by the fetchTools function and the input to this tool.",
+          },
+        },
+      },
+      outputSchema: undefined,
+    },
+    suggest_tools_and_prompt: {
+      mode: "structured-output",
+      description:
+        "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.",
+      schema: {
+        type: {
+          suggested_mcp_tool_names: {
+            description:
+              "List of MCP tools that can be used to complete the task",
+            arrayOf: "string",
+          },
+          suggested_database_tool_names: {
+            description:
+              "List of database tools that can be used to complete the task",
+            arrayOf: "string",
+            optional: true,
+          },
+          suggested_prompt: {
+            description:
+              "System prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.",
+            type: "string",
+          },
+          suggested_database_access: {
+            description:
+              "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.",
+            oneOfType: [
+              { Mode: { enum: ["None"] } },
+              { Mode: { enum: ["execute_sql_rollback"] } },
+              { Mode: { enum: ["execute_sql_commit"] } },
+              {
+                Mode: { enum: ["Custom"] },
+                tables: {
+                  arrayOfType: {
+                    tableName: "string",
+                    select: "boolean",
+                    insert: "boolean",
+                    update: "boolean",
+                    delete: "boolean",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      outputSchema: undefined,
+    },
+    suggest_dashboards: {
+      mode: "structured-output",
+      description:
+        "Suggest Prostgles UI dashboards to visualize data for the specified task.",
+      schema: {
+        type: {
+          prostglesWorkspaces: {
+            description:
+              "Workspace to create. Must satisfy the typescript WorkspaceInsertModel type",
+            arrayOf: "any",
+          },
+        },
+      },
+      outputSchema: undefined,
     },
   },
   websearch: {
@@ -538,9 +479,24 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       },
     },
   },
-} as const;
+} as const satisfies Record<
+  string,
+  Record<
+    string,
+    | string
+    | {
+        description: string;
+        schema: any;
+        outputSchema?: any;
+        mode?: DBSSchema["mcp_server_tools"]["mode"];
+      }
+  >
+>;
 
-type ProstglesMcpTools = typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
+type ProstglesMcpTools = Pick<
+  typeof PROSTGLES_MCP_SERVERS_AND_TOOLS,
+  "prostgles-db" | "prostgles-db-methods"
+>;
 export type ProstglesMcpTool = {
   [K in keyof ProstglesMcpTools]: {
     type: K;
@@ -574,21 +530,22 @@ export const getMCPToolNameParts = (fullName: string) => {
   }
 };
 
-export type AllowedChatTool = {
-  server_name: string;
+export type AllowedChatTool = Pick<
+  DBSSchema["mcp_server_tools"],
+  "server_name" | "mode" | "description"
+> & {
   name: string;
   tool_name: string;
-  description: string;
   input_schema: any;
   auto_approve: boolean;
 } & (
-  | {
-      type: "mcp";
-      tool_id: number;
-    }
-  | {
-      type: "prostgles-db-methods";
-      server_function_id: number;
-    }
-  | Exclude<ProstglesMcpTool, { type: "prostgles-db-methods" }>
-);
+    | {
+        type: "mcp";
+        tool_id: number;
+      }
+    | {
+        type: "prostgles-db-methods";
+        server_function_id: number;
+      }
+    | Extract<ProstglesMcpTool, { type: "prostgles-db" }>
+  );

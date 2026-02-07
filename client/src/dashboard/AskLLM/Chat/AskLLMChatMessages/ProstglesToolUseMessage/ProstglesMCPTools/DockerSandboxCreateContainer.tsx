@@ -30,7 +30,7 @@ import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["schema"]["type"]
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["schema"]["type"]
 >;
 
 export const DockerSandboxCreateContainer = ({
@@ -51,7 +51,7 @@ export const DockerSandboxCreateContainer = ({
   };
 
   const schema =
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["docker-sandbox"]["create_container"][
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_container"][
       "outputSchema"
     ];
   const resultObj = useTypedToolUseResultData(toolUseResult, schema);
@@ -109,7 +109,7 @@ export const DockerSandboxCreateContainer = ({
               onClickPromise={async () => {
                 const result = await callMCPServerTool({
                   chatId,
-                  serverName: "docker-sandbox",
+                  serverName: "prostgles-ui",
                   toolName: "create_container",
                   args: data,
                 });
@@ -133,7 +133,7 @@ export const DockerSandboxCreateContainer = ({
                           }[],
                           tool_name:
                             toolUseResult?.tool_name ??
-                            "docker-sandbox--create_container",
+                            "prostgles-ui--create_container",
                           tool_use_id: toolUseResult!.tool_use_id,
                         },
                       ],

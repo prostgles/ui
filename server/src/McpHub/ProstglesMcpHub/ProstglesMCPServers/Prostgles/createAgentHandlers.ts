@@ -39,10 +39,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
   },
   runInSequence = true,
 ) => {
-  const agentHandlers = new Map<
-    string,
-    (agentInput?: string) => Promise<any>
-  >();
+  const agentHandlers = new Map<string, (agentInput: string) => Promise<any>>();
   const dbHandler = {} as Parameters<Parameters<P>[1]>[1];
 
   const user = await dbs.users.findOne({ id: userId });
@@ -185,7 +182,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
       // }
       return state.type === "completed" ? state.output : undefined;
     };
-    const agentHandler = (input) => {
+    const agentHandler = (input: string) => {
       if (!runInSequence) {
         return startAgent(input);
       }

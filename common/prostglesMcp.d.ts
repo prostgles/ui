@@ -1,3 +1,4 @@
+import type { DBSSchema } from "./publishUtils";
 export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     readonly "prostgles-db-methods": {
         readonly [x: string]: "";
@@ -50,6 +51,14 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly schema: {
                 readonly type: {
                     readonly limit: "integer";
+                    readonly select: {
+                        readonly description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }";
+                        readonly record: {
+                            readonly values: {
+                                readonly enum: readonly [1, 0];
+                            };
+                        };
+                    };
                     readonly filter: {
                         readonly record: {
                             readonly values: "any";
@@ -120,8 +129,78 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
     readonly "prostgles-ui": {
+        readonly create_container: {
+            readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.";
+            readonly schema: {
+                readonly type: {
+                    readonly files: {
+                        readonly description: "Files to copy into the container. Must include a Dockerfile. Example { \"index.ts\": \"import type { JSONB } from \"prostgles-types\";\" }";
+                        readonly record: {
+                            readonly partial: true;
+                            readonly values: {
+                                readonly type: "string";
+                                readonly description: "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ";
+                            };
+                        };
+                    };
+                    readonly timeout: {
+                        readonly type: "number";
+                        readonly optional: true;
+                        readonly description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ";
+                    };
+                    readonly networkMode: {
+                        readonly enum: readonly ["none", "bridge", "host"];
+                        readonly description: "Network mode for the container. Defaults to 'none'";
+                        readonly optional: true;
+                    };
+                    readonly environment: {
+                        readonly description: "Environment variables to set in the container";
+                        readonly record: {
+                            readonly values: "string";
+                            readonly partial: true;
+                        };
+                        readonly optional: true;
+                    };
+                    readonly memory: {
+                        readonly type: "string";
+                        readonly description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m";
+                        readonly optional: true;
+                    };
+                    readonly cpus: {
+                        readonly type: "string";
+                        readonly description: "CPU limit (e.g., '0.5', '1'). Defaults to 1";
+                        readonly optional: true;
+                    };
+                    readonly readOnly: {
+                        readonly type: "boolean";
+                        readonly description: "Whether to mount the filesystem as read-only. Defaults to true";
+                        readonly optional: true;
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly type: {
+                    readonly state: {
+                        readonly enum: readonly ["finished", "error", "build-error", "timed-out", "aborted"];
+                    };
+                    readonly name: "string";
+                    readonly command: "string";
+                    readonly log: {
+                        readonly arrayOfType: {
+                            readonly type: {
+                                readonly enum: readonly ["stdout", "stderr", "error"];
+                            };
+                            readonly text: "string";
+                        };
+                    };
+                    readonly exitCode: "number";
+                    readonly runDuration: "number";
+                    readonly buildDuration: "number";
+                };
+            };
+        };
         readonly ask_user_questions: {
-            readonly needsLlmResponse: true;
+            readonly mode: "user-provides-response";
             readonly description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time. Each question should have a list of suggested answers to choose from. If allowMultipleChoices is true, the user can select multiple answers.";
             readonly schema: {
                 readonly type: {
@@ -151,77 +230,21 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
         };
-        readonly suggest_agent_workflow: {
+        readonly suggest_agentic_workflow: {
+            readonly mode: "structured-output";
             readonly description: "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.";
             readonly schema: {
                 readonly type: {
-                    readonly allowed_mcp_tool_names: {
-                        readonly description: "List of MCP tools that can be used to complete the task";
-                        readonly arrayOf: "string";
-                    };
-                    readonly database_access: {
-                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.";
-                        readonly oneOfType: readonly [{
-                            readonly Mode: {
-                                readonly enum: readonly ["None"];
-                            };
-                        }, {
-                            readonly Mode: {
-                                readonly enum: readonly ["execute_sql_rollback"];
-                            };
-                        }, {
-                            readonly Mode: {
-                                readonly enum: readonly ["execute_sql_commit"];
-                            };
-                        }, {
-                            readonly Mode: {
-                                readonly enum: readonly ["Custom"];
-                            };
-                            readonly tables: {
-                                readonly arrayOfType: {
-                                    readonly tableName: "string";
-                                    readonly select: "boolean";
-                                    readonly insert: "boolean";
-                                    readonly update: "boolean";
-                                    readonly delete: "boolean";
-                                };
-                            };
-                        }];
-                    };
-                    readonly agent_definitions: {
-                        readonly description: string;
-                        readonly record: {
-                            readonly values: {
-                                readonly type: {
-                                    readonly prompt: "string";
-                                    readonly inputJSONSchema: "any";
-                                    readonly outputJSONSchema: "any";
-                                    readonly maxCostUSD: {
-                                        readonly type: "number";
-                                        readonly optional: true;
-                                    };
-                                    readonly maxIterations: {
-                                        readonly type: "number";
-                                        readonly optional: true;
-                                    };
-                                    readonly allowedToolNames: "string[]";
-                                    readonly allowDatabaseAccess: {
-                                        readonly type: "boolean";
-                                        readonly optional: true;
-                                    };
-                                };
-                            };
-                        };
-                    };
                     readonly workflow_function_definition: {
-                        readonly description: string;
                         readonly type: "string";
+                        readonly description: "Typescript code defining a function that returns an agent workflow. The function must satisfy the following type provided. The function can use available MCP tools and database access if needed. Available MCP tools and database access are determined by the fetchTools function and the input to this tool.";
                     };
                 };
             };
             readonly outputSchema: undefined;
         };
         readonly suggest_tools_and_prompt: {
+            readonly mode: "structured-output";
             readonly description: "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.";
             readonly schema: {
                 readonly type: {
@@ -272,6 +295,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly outputSchema: undefined;
         };
         readonly suggest_dashboards: {
+            readonly mode: "structured-output";
             readonly description: "Suggest Prostgles UI dashboards to visualize data for the specified task.";
             readonly schema: {
                 readonly type: {
@@ -282,73 +306,6 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
             readonly outputSchema: undefined;
-        };
-    };
-    readonly "docker-sandbox": {
-        readonly create_container: {
-            readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.";
-            readonly schema: {
-                readonly type: {
-                    readonly files: {
-                        readonly description: "Files to copy into the container. Must include a Dockerfile. Example { \"index.ts\": \"import type { JSONB } from \"prostgles-types\";\" }";
-                        readonly record: {
-                            readonly partial: true;
-                            readonly values: {
-                                readonly type: "string";
-                                readonly description: "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ";
-                            };
-                        };
-                    };
-                    readonly timeout: {
-                        readonly type: "number";
-                        readonly optional: true;
-                        readonly description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ";
-                    };
-                    readonly networkMode: {
-                        readonly enum: readonly ["none", "bridge", "host"];
-                        readonly description: "Network mode for the container. Defaults to 'none'";
-                        readonly optional: true;
-                    };
-                    readonly environment: {
-                        readonly description: "Environment variables to set in the container";
-                        readonly record: {
-                            readonly values: "string";
-                            readonly partial: true;
-                        };
-                        readonly optional: true;
-                    };
-                    readonly memory: {
-                        readonly type: "string";
-                        readonly description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m";
-                        readonly optional: true;
-                    };
-                    readonly cpus: {
-                        readonly type: "string";
-                        readonly description: "CPU limit (e.g., '0.5', '1'). Defaults to 1";
-                        readonly optional: true;
-                    };
-                };
-            };
-            readonly outputSchema: {
-                readonly type: {
-                    readonly state: {
-                        readonly enum: readonly ["finished", "error", "build-error", "timed-out", "aborted"];
-                    };
-                    readonly name: "string";
-                    readonly command: "string";
-                    readonly log: {
-                        readonly arrayOfType: {
-                            readonly type: {
-                                readonly enum: readonly ["stdout", "stderr", "error"];
-                            };
-                            readonly text: "string";
-                        };
-                    };
-                    readonly exitCode: "number";
-                    readonly runDuration: "number";
-                    readonly buildDuration: "number";
-                };
-            };
         };
     };
     readonly websearch: {
@@ -516,7 +473,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
 };
-type ProstglesMcpTools = typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
+type ProstglesMcpTools = Pick<typeof PROSTGLES_MCP_SERVERS_AND_TOOLS, "prostgles-db" | "prostgles-db-methods">;
 export type ProstglesMcpTool = {
     [K in keyof ProstglesMcpTools]: {
         type: K;
@@ -530,11 +487,9 @@ export declare const getMCPToolNameParts: (fullName: string) => {
     serverName: string;
     toolName: string;
 } | undefined;
-export type AllowedChatTool = {
-    server_name: string;
+export type AllowedChatTool = Pick<DBSSchema["mcp_server_tools"], "server_name" | "mode" | "description"> & {
     name: string;
     tool_name: string;
-    description: string;
     input_schema: any;
     auto_approve: boolean;
 } & ({
@@ -543,8 +498,8 @@ export type AllowedChatTool = {
 } | {
     type: "prostgles-db-methods";
     server_function_id: number;
-} | Exclude<ProstglesMcpTool, {
-    type: "prostgles-db-methods";
+} | Extract<ProstglesMcpTool, {
+    type: "prostgles-db";
 }>);
 export {};
 //# sourceMappingURL=prostglesMcp.d.ts.map

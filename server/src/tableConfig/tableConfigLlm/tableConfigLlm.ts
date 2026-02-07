@@ -231,15 +231,10 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       description: `TEXT DEFAULT ''`,
       user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
       prompt: `TEXT NOT NULL DEFAULT ''`,
+      icon: `TEXT`,
       options: {
         nullable: true,
         jsonbSchemaType: {
-          prompt_type: {
-            enum: ["dashboards", "tasks", "agent_workflow"],
-            optional: true,
-            description:
-              "Internal prompt type used in controlling chat context. Some tools may not be available for all types",
-          },
           max_tokens: {
             type: "number",
             optional: true,

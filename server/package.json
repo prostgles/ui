@@ -13,15 +13,16 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.940.0",
+    "@aws-sdk/client-s3": "^3.984.0",
     "@aws-sdk/lib-storage": "^3.940.0",
     "@aws-sdk/s3-request-presigner": "^3.940.0",
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@types/cookie-parser": "^1.4.2",
     "@types/pidusage": "^2.0.5",
     "check-disk-space": "^3.3.1",
     "connection-string": "^4.4.0",
     "cookie-parser": "^1.4.5",
+    "cross-env": "^10.0.0",
     "dotenv": "^10.0.0",
     "express": "^5.2.1",
     "glob": "^13.0.0",
@@ -36,8 +37,7 @@
     "smtp-server": "^3.18.0",
     "socket.io": "^4.8.1",
     "typescript": "^5.8.3",
-    "ws": "^8.17.1",
-    "cross-env": "^10.0.0"
+    "ws": "^8.17.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

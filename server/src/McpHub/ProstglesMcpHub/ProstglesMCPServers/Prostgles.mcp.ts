@@ -1,43 +1,69 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import { getEntries } from "@common/utils";
-import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
+import { getDockerMCPServerProxy } from "./DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
+import { createAgenticWorkflowContainer } from "./Prostgles/createAgenticWorkflowContainer";
+import { createContainerSandbox } from "./Prostgles/createContainerSandbox";
+import { fetchTools } from "./Prostgles/fetchTools";
 
+const serverName = "prostgles-ui" as const;
 const definition = {
-  icon_path: "HelpCircleOutline",
+  icon_path: "CubeOutline",
   label: "Prostgles",
   description: "Tools to assist with Prostgles UI tasks",
-  tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"],
+  tools: PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {
-  start: () => {
+  start: (dbs) => {
     return {
-      stop: () => {},
+      stop: async () => {
+        await getDockerMCPServerProxy()?.then((s) => s.destroy());
+      },
       tools: {
-        ask_user_questions: async ({ questions }, { chat_id }) => {},
-        suggest_agent_workflow: async (input, { chat_id }) => {},
-        suggest_dashboards: async (input, { chat_id }) => {},
-        suggest_tools_and_prompt: async (input, { chat_id }) => {},
+        create_container: async (args, ctx) => {
+          return createContainerSandbox(dbs, args, ctx);
+        },
+        ask_user_questions: async ({ questions }, { chat_id }) => {
+          // never called
+        },
+        suggest_agentic_workflow: async (
+          { workflow_function_definition },
+          { chat_id, user_id },
+        ) => {
+          const chat = await dbs.llm_chats.findOne({ id: chat_id });
+          if (!chat) {
+            throw new Error(`Chat with id ${chat_id} not found`);
+          }
+          return new Promise((resolve, reject) => {
+            createAgenticWorkflowContainer(
+              dbs,
+              {
+                chat,
+                user_id,
+                workflowTs: workflow_function_definition,
+              },
+              {
+                type: "definitions-only",
+                handler: ({ definitions }) => {
+                  resolve(definitions);
+                },
+              },
+            ).catch(reject);
+          });
+        },
+        suggest_dashboards: (input, { chat_id }) => {
+          return "Done";
+        },
+        suggest_tools_and_prompt: (input, { chat_id }) => {
+          // TODO: validate tools list
+          return "Done";
+        },
       },
-      fetchTools: () => {
-        return getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]).map(
-          ([name, { schema, description }]) => ({
-            name,
-            description,
-            inputSchema: getJSONBSchemaAsJSONSchema(
-              "",
-              "",
-              schema,
-            ) as McpTool["inputSchema"],
-          }),
-        );
-      },
+      fetchTools,
     };
   },
 } satisfies ProstglesMcpServerHandlerTyped<typeof definition>;

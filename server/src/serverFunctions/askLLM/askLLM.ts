@@ -260,8 +260,8 @@ export const askLLM = async (args: AskLLMArgs) => {
         );
         return (
           toolDefinition &&
-          "needsLlmResponse" in toolDefinition &&
-          toolDefinition.needsLlmResponse
+          "mode" in toolDefinition &&
+          toolDefinition.mode === "user-provides-response"
         );
       }
     }

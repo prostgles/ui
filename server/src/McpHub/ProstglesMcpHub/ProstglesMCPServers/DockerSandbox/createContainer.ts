@@ -5,10 +5,10 @@ import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { executeDockerCommand } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
-import type { CreateContainerParams } from "./fetchTools";
+import type { CreateContainerParams } from "../Prostgles/schemas/getCreateContainerToolSchema";
 
 type CreateContainerResult = JSONBTypeIfDefined<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["docker-sandbox"]["create_container"]["outputSchema"]
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["outputSchema"]
 >;
 
 export const createContainer = async (

@@ -340,9 +340,10 @@ export type DBGeneratedSchema = {
     columns: {
       created?: null | string;
       description?: null | string;
+      icon?: null | string;
       id?: number;
       name?: string;
-      options?: null | {    prompt_type?: "dashboards" | "tasks" | "agent_workflow";   max_tokens?: number;   temperature?: number;   mcp_server_tools?: Record<string, 
+      options?: null | {    max_tokens?: number;   temperature?: number;   mcp_server_tools?: Record<string, 
  | "*"
  | string[]>;   mcp_servers?: string[];  };
       prompt?: string;
@@ -444,10 +445,10 @@ export type DBGeneratedSchema = {
   mcp_server_tools: {
     columns: {
       annotations?: null | {    title?: string;   readOnlyHint?: boolean;   openWorldHint?: boolean;   idempotentHint?: boolean;   destructiveHint?: boolean;  };
-      autoApprove?: null | boolean;
       description: string;
       id?: number;
       inputSchema?: null | any;
+      mode?: null | "structured-output" | "user-provides-response"
       name: string;
       server_name: string;
     };
@@ -701,7 +702,7 @@ export type GeneratedFunctionSchema = {
   "enable2FA": (args: {    token: string;  }) => Promise<string>;
   "disable2FA": () => Promise<(undefined | Array<void>)>;
   "changePassword": (args: {    oldPassword: string;   newPassword: string;  }) => Promise<void>;
-  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<(({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "mcp"; tool_id: number }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db-methods"; server_function_id: number }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db"; tool_name: ("select" | "insert" | "update" | "delete" | "execute_sql_with_rollback" | "execute_sql_with_commit") }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-ui"; tool_name: ("ask_user_questions" | "suggest_agent_workflow" | "suggest_tools_and_prompt" | "suggest_dashboards") }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "docker-sandbox"; tool_name: "create_container" }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "websearch"; tool_name: ("websearch" | "get_snapshot") }) | ({ server_name: string; name: string; tool_name: string; description: string; input_schema: any; auto_approve: boolean } & { type: "webdev"; tool_name: ("list_directory" | "read_files" | "search_files" | "create_component") }))>)>;
+  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<(({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "mcp"; tool_id: number }) | ({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db-methods"; server_function_id: number }) | ({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db"; tool_name: ("select" | "insert" | "update" | "delete" | "execute_sql_with_rollback" | "execute_sql_with_commit") }))>)>;
   "createWebAppFromTemplate": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<string>;
   "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
   "testWebApp": (args: {    connectionId: string;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
@@ -751,6 +752,6 @@ export type GeneratedFunctionSchema = {
   "reloadMcpServerTools": (args: {    serverName: string;  }) => Promise<number>;
   "getMcpHostInfo": () => Promise<{ os: string; npmVersion: string; uvxVersion: string }>;
   "transcribeAudio": (args: {    audioBlob: Blob;  }) => Promise<(({} & { success: boolean; transcription: string; language: string; language_probability: number; segments: Array<({} & { start: number; end: number; text: string })> }) | ({} & { error: string }))>;
-  "startWorkflow": (args: {    chatId: number;   workflowDefinition: string;  }) => Promise<void>;
+  "startWorkflow": (args: {    chatId: number;   workflowDefinition: string;  }) => Promise<({} & { state: ("error" | "finished" | "build-error" | "timed-out" | "aborted"); name: string; command: string; log: Array<({} & { type: ("error" | "stdout" | "stderr"); text: string })>; exitCode: number; runDuration: number; buildDuration: number })>;
   "startConnection": (args: {    connectionId: string;  }) => Promise<(undefined | { socketPath: string; socketUrl: (undefined | string) })>;
 }

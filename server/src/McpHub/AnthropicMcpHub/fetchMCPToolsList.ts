@@ -9,11 +9,18 @@ export const fetchMCPToolsList = async (client: Client) => {
     );
 
     const autoApproveConfig: string[] = [];
-    const tools = response.tools.map((tool) => ({
-      ...tool,
-      description: tool.description ?? "",
-      autoApprove: autoApproveConfig.includes(tool.name),
-    }));
+    const tools = response.tools.map(
+      ({
+        /* Exclude mode as it is a prostgles-specific setting */
+        // @ts-expect-error
+        mode,
+        ...tool
+      }) => ({
+        ...tool,
+        description: tool.description ?? "",
+        autoApprove: autoApproveConfig.includes(tool.name),
+      }),
+    );
     return tools;
   } catch (_error) {
     return [];

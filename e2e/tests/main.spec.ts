@@ -730,8 +730,8 @@ test.describe("Main test", () => {
     await runDbsSql(
       page,
       `
-      UPDATE mcp_servers SET enabled = false WHERE name IN ('playwright', 'docker-sandbox');
-      DELETE FROM mcp_server_tools WHERE server_name IN ('playwright', 'docker-sandbox');
+      UPDATE mcp_servers SET enabled = false WHERE name IN ('playwright', 'prostgles-ui');
+      DELETE FROM mcp_server_tools WHERE server_name IN ('playwright', 'prostgles-ui');
       `,
     );
     await runDbSql(
@@ -835,6 +835,7 @@ test.describe("Main test", () => {
     const enableMCPServers = async (
       serverNames: string[],
       needsConfigSetup = false,
+      toggleOn = true,
     ) => {
       await page
         .getByTestId("LLMChatOptions.MCPTools")
@@ -849,7 +850,11 @@ test.describe("Main test", () => {
         await toggleCheckbox.click();
         await page.waitForTimeout(500);
         if (!needsConfigSetup) {
-          await expect(toggleCheckbox).toBeChecked({ timeout: 15e3 });
+          if (toggleOn) {
+            await expect(toggleCheckbox).toBeChecked({ timeout: 15e3 });
+          } else {
+            await expect(toggleCheckbox).not.toBeChecked({ timeout: 15e3 });
+          }
         }
       }
     };
@@ -980,23 +985,24 @@ test.describe("Main test", () => {
       "Create dashboards",
     );
 
-    await enableMCPServers(["docker-sandbox"]);
+    // await enableMCPServers(["prostgles-ui"]);
+    await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
+    await page
+      .locator(getDataKeyElemSelector("prostgles-ui"))
+      .getByText("create_container", { exact: true })
+      .waitFor({ state: "visible", timeout: 15e3 });
     await page.waitForTimeout(2e3);
     /** Tools are loaded after enabling */
     await page
-      .locator(getDataKeyElemSelector("docker-sandbox"))
-      .getByText("create_container", { exact: true })
-      .waitFor({ state: "visible", timeout: 15e3 });
-    await page
-      .locator(getDataKeyElemSelector("docker-sandbox"))
+      .locator(getDataKeyElemSelector("prostgles-ui"))
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
-      `Reloaded 1 tool for "docker-sandbox" server`,
+      `Reloaded 5 tools for "prostgles-ui" server`,
     );
     await page.getByText("OK", { exact: true }).click();
     await page
-      .locator(getDataKeyElemSelector("docker-sandbox"))
+      .locator(getDataKeyElemSelector("prostgles-ui"))
       .getByText("create_container", { exact: true })
       .click();
     await page.waitForTimeout(1e3);
@@ -1150,11 +1156,29 @@ test.describe("Main test", () => {
     /** Create component */
     await newChat(page);
     await setPromptByText(page, "Web app development");
+    /** The web app must be created from template */
+    await page.getByTestId("WebAppConfig.createFromTemplate").click();
+    await page.getByTestId("Btn.ClickConfirmation.Confirm").click();
+    /** Page will reload */
+    await page.waitForEvent("load");
+    await page.getByTestId("AskLLM").click();
     await sendAskLLMMessage(
       page,
       " I need you to create a user list component ",
     );
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+
+    /** Agentic workflow */
+    await newChat(page);
+    await setPromptByText(page, "Create workflow");
+    await sendAskLLMMessage(page, " agentic_workflow ");
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "ZZZZZZZZZZZZZZZZZZZZZ Agentic workflow executed successfully",
+      {
+        timeout: 30e3,
+      },
+    );
   });
 
   test("Disable signups", async ({ page: p }) => {

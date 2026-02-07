@@ -10,13 +10,15 @@ import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { DatabaseAccessPermissions } from "./common/DatabaseAccessPermissions";
 import { HeaderList } from "./common/HeaderList";
 import { useJSONBParsedData } from "./common/useJSONBParsedData";
+import Loading from "@components/Loader/Loading";
 
 export const LoadSuggestedWorkflow = ({
   message,
-}: Pick<ProstglesMCPToolsProps, "chatId" | "message">) => {
+  toolUseResult,
+}: Pick<ProstglesMCPToolsProps, "chatId" | "message" | "toolUseResult">) => {
   const inputValidation = useJSONBParsedData(
     message.input,
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agent_workflow"]
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
       .schema,
   );
 
@@ -27,19 +29,18 @@ export const LoadSuggestedWorkflow = ({
       />
     );
   }
-  const { data } = inputValidation;
-  const dbAccess = data.database_access;
+  const { data: inputData } = inputValidation;
 
   return (
     <FlexCol className="w-full">
       <FlexCol className="rounded b b-action o-auto p-1">
-        <DatabaseAccessPermissions {...dbAccess} />
+        {/* <DatabaseAccessPermissions {...dbAccess} />
         <HeaderList
           title="MCP Tools"
           items={data.allowed_mcp_tool_names}
           iconPath={mdiTools}
-        />
-        <MonacoCodeInMarkdown
+        /> */}
+        {/* <MonacoCodeInMarkdown
           key={"agent_definitions"}
           className="f-1 h-full"
           language={"json"}
@@ -52,7 +53,7 @@ export const LoadSuggestedWorkflow = ({
           )}
           loadedSuggestions={undefined}
           codeString={JSON.stringify(data.agent_definitions, null, 2)}
-        />
+        /> */}
         <MonacoCodeInMarkdown
           key={"workflow_function_definition"}
           className="f-1 h-full"
@@ -65,12 +66,13 @@ export const LoadSuggestedWorkflow = ({
             </FlexRow>
           )}
           loadedSuggestions={undefined}
-          codeString={data.workflow_function_definition}
+          codeString={inputData.workflow_function_definition}
         />
       </FlexCol>
       <Btn
         variant="filled"
         color="action"
+        disabledInfo={!toolUseResult ? "Validating workflow" : undefined}
         onClick={() => {
           throw new Error("Not implemented yet");
         }}

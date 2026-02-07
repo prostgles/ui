@@ -12,9 +12,10 @@ export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
   description: string;
   auto_approve: boolean;
   schema: JSONB.ObjectType;
+  mode: null;
 };
 
-export const getProstglesDBTools = (
+export const getAllowedDBToolSchemas = (
   chat: ChatDatabasePermissions | undefined,
 ): DBTool[] => {
   const chatDBAccess = chat?.db_data_permissions;
@@ -45,6 +46,7 @@ export const getProstglesDBTools = (
           description,
           auto_approve: Boolean(chatDBAccess.auto_approve),
           schema,
+          mode: null,
         } satisfies DBTool;
       })
       .filter(isDefined);
@@ -64,6 +66,7 @@ export const getProstglesDBTools = (
           description,
           auto_approve: Boolean(chatDBAccess.auto_approve),
           schema,
+          mode: null,
         };
         const isAllowed =
           chatDBAccess.Mode === "Run commited SQL" ||

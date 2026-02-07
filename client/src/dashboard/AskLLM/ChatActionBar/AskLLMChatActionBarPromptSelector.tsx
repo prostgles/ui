@@ -6,12 +6,7 @@ import { Marked } from "@components/Chat/Marked";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import PopupMenu from "@components/PopupMenu";
-import {
-  mdiCheck,
-  mdiCircleOutline,
-  mdiFileEyeOutline,
-  mdiViewCarousel,
-} from "@mdi/js";
+import { mdiCheck, mdiCircleOutline, mdiFileEyeOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise, type DBHandlerClient } from "prostgles-client";
 import React, { useEffect, useMemo, useState } from "react";
@@ -100,15 +95,7 @@ export const AskLLMChatActionBarPromptSelector = (
         contentClassName="p-2 flex-col gap-1 f-1"
         rootChildClassname="f-1"
         button={
-          <Btn
-            title="Prompt"
-            {...ChatActionBarBtnStyleProps}
-            iconPath={
-              prompt?.options?.prompt_type === "dashboards" ?
-                mdiViewCarousel
-              : undefined
-            }
-          >
+          <Btn title="Prompt" {...ChatActionBarBtnStyleProps}>
             {prompt?.name || <i>Select Prompt</i>}
           </Btn>
         }
@@ -149,6 +136,7 @@ export const AskLLMChatActionBarPromptSelector = (
                             dbs,
                             chatId: activeChatId,
                             prompt: newPrompt,
+                            currentPrompt: prompt,
                           });
                         });
                       }}

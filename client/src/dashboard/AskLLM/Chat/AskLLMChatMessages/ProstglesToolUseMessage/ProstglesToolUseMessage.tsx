@@ -1,4 +1,7 @@
-import { getProstglesMCPFullToolName } from "@common/prostglesMcp";
+import {
+  getMCPFullToolName,
+  getProstglesMCPFullToolName,
+} from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import type {
   ToolResultMessage,
@@ -13,31 +16,23 @@ import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 import { AskAnswerQuestions } from "./ProstglesMCPTools/AskAnswerQuestions";
 
 export const ProstglesMCPToolsWithUI = {
-  [getProstglesMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]:
-    {
-      component: LoadSuggestedDashboards,
-      displayMode: "full",
-    },
-  [getProstglesMCPFullToolName(
-    "prostgles-ui",
-    "suggest_tools_and_prompt",
-  ) as string]: {
+  [getMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]: {
+    component: LoadSuggestedDashboards,
+    displayMode: "full",
+  },
+  [getMCPFullToolName("prostgles-ui", "suggest_tools_and_prompt") as string]: {
     component: LoadSuggestedToolsAndPrompt,
     displayMode: "full",
   },
-  [getProstglesMCPFullToolName(
-    "prostgles-ui",
-    "suggest_agent_workflow",
-  ) as string]: {
+  [getMCPFullToolName("prostgles-ui", "suggest_agentic_workflow") as string]: {
     component: LoadSuggestedWorkflow,
     displayMode: "full",
   },
-  [getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions") as string]:
-    {
-      component: AskAnswerQuestions,
-      displayMode: "full",
-    },
-  "docker-sandbox--create_container": {
+  [getMCPFullToolName("prostgles-ui", "ask_user_questions") as string]: {
+    component: AskAnswerQuestions,
+    displayMode: "full",
+  },
+  "prostgles-ui--create_container": {
     component: DockerSandboxCreateContainer,
     displayMode: "inline",
   },
@@ -55,7 +50,7 @@ export const ProstglesMCPToolsWithUI = {
     component: ExecuteSQL,
     displayMode: "inline",
   },
-  [getProstglesMCPFullToolName("websearch", "websearch") as string]: {
+  [getMCPFullToolName("websearch", "websearch") as string]: {
     component: WebSearch,
     displayMode: "inline",
   },

@@ -1,4 +1,3 @@
-import { fixIndent } from "./utils";
 const runSQLSchema = {
     type: {
         sql: {
@@ -33,6 +32,12 @@ const filterSchema = {
         description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }",
     },
 };
+const selectSchema = {
+    select: {
+        description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }",
+        record: { values: { enum: [1, 0] } },
+    },
+};
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     "prostgles-db-methods": { [""]: "" },
     "prostgles-db": {
@@ -47,10 +52,10 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         select: {
             description: "Selects rows from a table.",
             schema: {
-                type: Object.assign(Object.assign({ tableName: {
+                type: Object.assign(Object.assign(Object.assign({ tableName: {
                         type: "string",
                         description: "Table to select from",
-                    } }, filterSchema), { limit: "integer" }),
+                    } }, filterSchema), selectSchema), { limit: "integer" }),
             },
         },
         insert: {
@@ -93,8 +98,69 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
     },
     "prostgles-ui": {
+        create_container: {
+            description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.",
+            schema: {
+                type: {
+                    files: filesSchema,
+                    timeout: {
+                        type: "number",
+                        optional: true,
+                        description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ",
+                        // default: 30000,
+                    },
+                    networkMode: {
+                        enum: ["none", "bridge", "host"],
+                        description: "Network mode for the container. Defaults to 'none'",
+                        // default: "none",
+                        optional: true,
+                    },
+                    environment: {
+                        description: "Environment variables to set in the container",
+                        record: { values: "string", partial: true },
+                        optional: true,
+                    },
+                    memory: {
+                        type: "string",
+                        description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m",
+                        optional: true,
+                        // default: "512m",
+                    },
+                    cpus: {
+                        type: "string",
+                        description: "CPU limit (e.g., '0.5', '1'). Defaults to 1",
+                        optional: true,
+                        // default: "1",
+                    },
+                    readOnly: {
+                        type: "boolean",
+                        description: "Whether to mount the filesystem as read-only. Defaults to true",
+                        optional: true,
+                        // default: true,
+                    },
+                },
+            },
+            outputSchema: {
+                type: {
+                    state: {
+                        enum: ["finished", "error", "build-error", "timed-out", "aborted"],
+                    },
+                    name: "string",
+                    command: "string",
+                    log: {
+                        arrayOfType: {
+                            type: { enum: ["stdout", "stderr", "error"] },
+                            text: "string",
+                        },
+                    },
+                    exitCode: "number",
+                    runDuration: "number",
+                    buildDuration: "number",
+                },
+            },
+        },
         ask_user_questions: {
-            needsLlmResponse: true,
+            mode: "user-provides-response",
             description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time. Each question should have a list of suggested answers to choose from. If allowMultipleChoices is true, the user can select multiple answers.",
             schema: {
                 type: {
@@ -124,88 +190,21 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 },
             },
         },
-        suggest_agent_workflow: {
+        suggest_agentic_workflow: {
+            mode: "structured-output",
             description: "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
             schema: {
                 type: {
-                    allowed_mcp_tool_names: {
-                        description: "List of MCP tools that can be used to complete the task",
-                        arrayOf: "string",
-                    },
-                    database_access: {
-                        description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.",
-                        oneOfType: [
-                            { Mode: { enum: ["None"] } },
-                            { Mode: { enum: ["execute_sql_rollback"] } },
-                            { Mode: { enum: ["execute_sql_commit"] } },
-                            {
-                                Mode: { enum: ["Custom"] },
-                                tables: {
-                                    arrayOfType: {
-                                        tableName: "string",
-                                        select: "boolean",
-                                        insert: "boolean",
-                                        update: "boolean",
-                                        delete: "boolean",
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                    agent_definitions: {
-                        description: fixIndent(`
-              The agent definitions are used to invoke an LLM chat with the specified inputs and constraints to return the output schema. 
-              The agent can only use from the suggested tools to complete the task.
-              The workflow_function_definition can invoke these agents as needed.
-            `),
-                        record: {
-                            values: {
-                                type: {
-                                    prompt: "string",
-                                    inputJSONSchema: "any",
-                                    outputJSONSchema: "any",
-                                    maxCostUSD: { type: "number", optional: true },
-                                    maxIterations: { type: "number", optional: true },
-                                    allowedToolNames: "string[]",
-                                    allowDatabaseAccess: { type: "boolean", optional: true },
-                                },
-                            },
-                        },
-                    },
                     workflow_function_definition: {
-                        description: fixIndent(` 
-                  The workflow function must satisfy the following definition: 
-                   
-                  type WorkflowFunction = ({
-                    runTableAction?: (tableName: string, action: "select" | "update" | "insert" | "delete") => Record<string, any>[];
-                    runSQL?: (sql: string, args?: Record<string, any>) => Record<string, any>[];
-                    agents: { [AgentName: keyof typeof agentDefinitions]: (input: (typeof agentDefinitions)[AgentName]["inputSchema]) => Promise<(typeof agentDefinitions)[AgentName]["outputSchema]>>;
-                  }) => Promise<void>;
-                   
-                  /*
-                    Example workflow_function_definition:
-                    
-                    const workflow_function = async ({ runSQL, agents }) => {
-                      
-                      const rows = runSQL("SELECT * FROM my_table");
-                      
-                      for(const row of rows) {
-                        const rowEnhanced = await agents.rowEnhancer({ row });
-                        await runSQL(\`
-                          UPDATE my_table SET enhanced_data = \${rowEnhanced.enhanced_data} WHERE id = \${row.id}
-                        \`, { row, rowEnhanced });
-                      }
-                    };
-
-                  */
-                `),
                         type: "string",
+                        description: "Typescript code defining a function that returns an agent workflow. The function must satisfy the following type provided. The function can use available MCP tools and database access if needed. Available MCP tools and database access are determined by the fetchTools function and the input to this tool.",
                     },
                 },
             },
             outputSchema: undefined,
         },
         suggest_tools_and_prompt: {
+            mode: "structured-output",
             description: "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.",
             schema: {
                 type: {
@@ -247,6 +246,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             outputSchema: undefined,
         },
         suggest_dashboards: {
+            mode: "structured-output",
             description: "Suggest Prostgles UI dashboards to visualize data for the specified task.",
             schema: {
                 type: {
@@ -257,63 +257,6 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 },
             },
             outputSchema: undefined,
-        },
-    },
-    "docker-sandbox": {
-        create_container: {
-            description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.",
-            schema: {
-                type: {
-                    files: filesSchema,
-                    timeout: {
-                        type: "number",
-                        optional: true,
-                        description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ",
-                        // default: 30000,
-                    },
-                    networkMode: {
-                        enum: ["none", "bridge", "host"],
-                        description: "Network mode for the container. Defaults to 'none'",
-                        // default: "none",
-                        optional: true,
-                    },
-                    environment: {
-                        description: "Environment variables to set in the container",
-                        record: { values: "string", partial: true },
-                        optional: true,
-                    },
-                    memory: {
-                        type: "string",
-                        description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m",
-                        optional: true,
-                        // default: "512m",
-                    },
-                    cpus: {
-                        type: "string",
-                        description: "CPU limit (e.g., '0.5', '1'). Defaults to 1",
-                        optional: true,
-                        // default: "1",
-                    },
-                },
-            },
-            outputSchema: {
-                type: {
-                    state: {
-                        enum: ["finished", "error", "build-error", "timed-out", "aborted"],
-                    },
-                    name: "string",
-                    command: "string",
-                    log: {
-                        arrayOfType: {
-                            type: { enum: ["stdout", "stderr", "error"] },
-                            text: "string",
-                        },
-                    },
-                    exitCode: "number",
-                    runDuration: "number",
-                    buildDuration: "number",
-                },
-            },
         },
     },
     websearch: {

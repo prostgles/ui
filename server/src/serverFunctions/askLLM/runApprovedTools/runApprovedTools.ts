@@ -81,7 +81,11 @@ export const runApprovedTools = async (
       ...toolUse,
       tool,
       state:
-        tool.auto_approve || tool.type === "prostgles-ui" || wasApprovedByUser ?
+        (
+          tool.auto_approve ||
+          tool.mode === "structured-output" ||
+          wasApprovedByUser
+        ) ?
           "approved"
         : userApprovals ? "denied"
         : "needs-approval",
@@ -141,26 +145,6 @@ export const runApprovedTools = async (
         );
       }
 
-      if (tool.type === "prostgles-ui") {
-        const avoidValidation = tool.tool_name === "suggest_dashboards";
-        if (!avoidValidation) {
-          const validation = getJSONBObjectSchemaValidationError(
-            PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][tool.tool_name]
-              .schema.type,
-            toolUseRequest.input,
-            "",
-          );
-          if (validation.error !== undefined) {
-            return asResponse(
-              `Input validation error: ${validation.error}`,
-              true,
-            );
-          }
-        }
-
-        return asResponse("Done");
-      }
-
       if (aborter.signal.aborted) {
         return asResponse(`Operation was aborted by user.`, true);
       }
@@ -211,6 +195,7 @@ export const runApprovedTools = async (
         return asResponse(content, is_error);
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (tool.type !== "prostgles-db") {
         return asResponse(
           `Tool name "${toolUseRequest.name}" is invalid`,

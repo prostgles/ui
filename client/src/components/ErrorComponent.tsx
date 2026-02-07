@@ -7,6 +7,7 @@ import { isEmpty, scrollIntoViewIfNeeded } from "../utils/utils";
 import Btn from "./Btn";
 import { classOverride, FlexCol, FlexRow } from "./Flex";
 import { Icon } from "./Icon/Icon";
+import { getSerialisableError } from "prostgles-types";
 
 type P = TestSelectors & {
   error: any;
@@ -198,7 +199,8 @@ export const getErrorMessage = (e: any) => {
 /**
  * Return a more human readable error message if it's an object
  */
-export const parsedError = (val, findMsg?: boolean): string => {
+export const parsedError = (rawVal, findMsg?: boolean): string => {
+  const val = getSerialisableError(rawVal);
   let res = "";
 
   if (typeof val === "string") res = val;
@@ -209,10 +211,13 @@ export const parsedError = (val, findMsg?: boolean): string => {
       res = getErrorMessage(val);
     }
     if (!res)
-      res = Object.keys(val)
-        .map((k) => `${k}: ${JSON.stringify(val[k], null, 2)}`)
+      res = Object.entries(val)
+        .map(
+          ([k, v]) =>
+            `${k}: ${JSON.stringify(getSerialisableError(v), null, 2)}`,
+        )
         .join("\n");
-  } else if (val?.toString) res = val.toString();
+  } else if (val?.toString) res = (val as any).toString();
   else res = JSON.stringify(val);
 
   if (typeof res === "string" && res.length) {

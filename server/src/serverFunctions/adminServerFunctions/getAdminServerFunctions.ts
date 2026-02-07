@@ -47,6 +47,10 @@ import type {
   DBGeneratedSchema,
   GeneratedFunctionSchema,
 } from "@common/DBGeneratedSchema";
+import { createAgentHandlers } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createAgentHandlers";
+import { createAgenticWorkflowContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createAgenticWorkflowContainer";
+import type { AgenticWorkflowDefinition } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/defineAgenticWorkflow";
+import { dbRequestHandler } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createContainerSandbox";
 
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -588,11 +592,107 @@ export const getAdminServerFunctions = (
     startWorkflow: defineAdminFunction({
       input: {
         chatId: "integer",
-        workflowDefinition: "string",
-      },
+        name: "string",
+        workflowTs: "string",
+        databaseAccessDefinitions: {
+          oneOfType: [
+            {
+              mode: { enum: ["custom"] },
+              tablePermissions: {
+                record: {
+                  partial: true,
+                  values: {
+                    record: {
+                      keysEnum: ["select", "insert", "update", "delete"],
+                      partial: true,
+                      values: { enum: [1] },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              mode: { enum: ["run_commited_sql", "run_readonly_sql"] },
+            },
+          ],
+        },
+        toolDefinitions: {
+          record: {
+            values: {
+              type: {
+                mcpServerName: "string",
+                toolNames: "string[]",
+                configId: { type: "number", optional: true },
+              },
+            },
+          },
+        },
+        agentDefinitions: {
+          record: {
+            values: {
+              type: {
+                prompt: "string",
+                modelName: { type: "string", optional: true },
+                maxCostUSD: { type: "number", optional: true },
+                maxIterations: { type: "number", optional: true },
+                allowedToolDefinitionNames: {
+                  type: "string[]",
+                  optional: true,
+                },
+                maxTokens: { type: "number", optional: true },
+                temperature: { type: "number", optional: true },
+                outputSchema: {
+                  record: {
+                    values: {
+                      oneOf: [
+                        {
+                          enum: [
+                            "string",
+                            "number",
+                            "boolean",
+                            "unknown",
+                            "string[]",
+                            "number[]",
+                            "boolean[]",
+                            "unknown[]",
+                          ],
+                        },
+                        {
+                          type: {
+                            optional: { type: "boolean", optional: true },
+                            type: {
+                              enum: [
+                                "string",
+                                "number",
+                                "boolean",
+                                "unknown",
+                                "string[]",
+                                "number[]",
+                                "boolean[]",
+                                "unknown[]",
+                              ],
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      } as const,
       run: async (
-        { chatId, workflowDefinition },
-        { dbs, user, getClientDBHandlers },
+        {
+          chatId,
+          name,
+          agentDefinitions,
+          toolDefinitions,
+          databaseAccessDefinitions,
+          workflowTs,
+        },
+        { dbs, user },
       ) => {
         const chat = await dbs.llm_chats.findOne({
           id: chatId,
@@ -601,8 +701,55 @@ export const getAdminServerFunctions = (
         if (!chat) {
           throw "Chat not found";
         }
-        const { clientMethods } = await getClientDBHandlers(undefined);
-        const dbsMethods = clientMethods as unknown as GeneratedFunctionSchema;
+
+        const handlers = await createAgentHandlers(
+          {
+            name,
+            agentDefinitions,
+            toolDefinitions,
+            databaseAccessDefinitions,
+          },
+          {
+            chatId,
+            dbs,
+            userId: user.id,
+          },
+        );
+        await createAgenticWorkflowContainer(
+          dbs,
+          { chat, user_id: user.id, workflowTs },
+          {
+            type: "full",
+            // definition: workflowDefinition as AgenticWorkflowDefinition,
+            definition: {
+              name,
+              agentDefinitions,
+              toolDefinitions,
+              databaseAccessDefinitions,
+            },
+            handler: (data, ctx) => {
+              if (data.type === "agent") {
+                const agentHandler = handlers.agentHandlers.get(data.agentName);
+                if (!agentHandler) {
+                  throw `Agent handler for ${data.agentName} not found`;
+                }
+                return agentHandler(data.input);
+              }
+
+              dbRequestHandler(
+                {
+                  chat,
+                  sid_token: ctx.sid_token,
+                },
+                { dbs, user, chatId },
+                res,
+                next,
+              );
+            },
+          },
+        );
+        // const { clientMethods } = await getClientDBHandlers(undefined);
+        // const dbsMethods = clientMethods as unknown as GeneratedFunctionSchema;
         // dbsMethods.askLLM();
       },
     }),

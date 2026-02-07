@@ -51,7 +51,6 @@ export const DEFAULT_MCP_SERVER_NAMES = [
   "memory",
   "playwright",
   "websearch",
-  "docker-sandbox",
   "webdev",
   "slack",
 ] as const;

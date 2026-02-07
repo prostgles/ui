@@ -101,8 +101,9 @@ export const getDefaultMCPServers = (): Record<
           config_schema: undefined,
           icon_path,
           mcp_server_tools: getEntries(tools).map(
-            ([name, { schema, description }]) => ({
+            ([name, { schema, description, mode }]) => ({
               name,
+              mode,
               description,
               inputSchema: schema,
             }),

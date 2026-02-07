@@ -3,6 +3,7 @@ import { type DBS } from "@src/index";
 import { type JSONB } from "prostgles-types";
 import type { McpTool } from "../AnthropicMcpHub/McpTypes";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
+import type { DBTool } from "@src/serverFunctions/askLLM/prostglesLLMTools/getAllowedDBToolSchemas";
 
 export type ProstglesMcpServerDefinition = {
   icon_path: string;
@@ -14,9 +15,9 @@ export type ProstglesMcpServerDefinition = {
       description: string;
       schema: JSONB.FieldTypeObj | undefined;
       outputSchema: JSONB.FieldType | undefined;
+      mode?: DBSSchema["mcp_server_tools"]["mode"];
     }
   >;
-  // config_schema: JSONB.FieldType | undefined;
 };
 
 export type JSONBTypeIfDefined<Schema extends JSONB.FieldType | undefined> =
@@ -30,17 +31,27 @@ export type McpCallContext = {
   clientReq: AuthClientRequest;
 };
 
+export type McpCallContextFetchTools = McpCallContext & {
+  /**
+   * List of db tools allowed in this chat.
+   * Used for docker container description
+   */
+  dbTools: DBTool[];
+  mcpTools: { name: string; description: string }[];
+  chat: DBSSchema["llm_chats"];
+  toolsAllowed: {
+    tool_id: number;
+    tool_name: string;
+  }[];
+};
 export type ProstglesMcpServerHandler = {
-  start: (
-    // config: unknown,
-    dbs: DBS,
-  ) => MaybePromise<ProstglesMcpServerHandlerInstance>;
+  start: (dbs: DBS) => MaybePromise<ProstglesMcpServerHandlerInstance>;
 };
 export type ProstglesMcpServerHandlerInstance = {
   stop: () => MaybePromise<void>;
   fetchTools: (
     dbs: DBS,
-    context: McpCallContext,
+    context: McpCallContextFetchTools,
   ) => MaybePromise<
     {
       name: string;
@@ -60,14 +71,11 @@ export type ProstglesMcpServerHandlerTyped<
     "handler"
   > = ProstglesMcpServerDefinition,
 > = {
-  start: (
-    // config: JSONBTypeIfDefined<ServerDefinition["config_schema"]>,
-    dbs: DBS,
-  ) => MaybePromise<{
+  start: (dbs: DBS) => MaybePromise<{
     stop: () => MaybePromise<void>;
     fetchTools: (
       dbs: DBS,
-      context: McpCallContext,
+      context: McpCallContextFetchTools,
     ) => MaybePromise<
       {
         name: string;

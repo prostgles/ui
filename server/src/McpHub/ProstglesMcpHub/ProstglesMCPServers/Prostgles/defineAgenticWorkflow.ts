@@ -53,36 +53,42 @@ export type ToolDefinition = {
 export type DatabaseAccessDefinition =
   | {
       mode: "custom";
-      permissions: {
-        command: "select" | "insert" | "update" | "delete";
-        table: string;
-        columns: string[] | "*";
-      }[];
+      tablePermissions: Record<
+        string,
+        Partial<Record<"select" | "insert" | "update" | "delete", 1>>
+      >;
     }
   | {
       mode: "run_commited_sql" | "run_readonly_sql";
     };
 
-type Select = Record<string, 1 | 0> | "*";
+type Select = "*" | Record<string, 1> | Record<string, 0>;
 export type DatabaseHandler = {
-  runSQL: (sql: string) => Promise<{ rows: any[]; columns: string[] }>;
+  runSQL: (
+    sql: string,
+    params?: any,
+    timeout?: number,
+  ) => Promise<{ rows: any[]; columns: string[] }>;
   find: (
-    table: string,
-    filter: Record<string, any>,
+    tableName: string,
+    filter?: Record<string, any>,
     options?: { select?: Select; limit?: number },
   ) => Promise<AnyObject[]>;
   update: (
-    table: string,
+    tableName: string,
     filter: Record<string, any>,
     update: Record<string, any>,
     options?: { returning?: Select },
-  ) => Promise<void>;
+  ) => Promise<void | AnyObject[]>;
   insert: (
-    table: string,
+    tableName: string,
     newRows: Record<string, any>[],
-    options?: { returning?: Select },
-  ) => Promise<void>;
-  delete: (table: string, filter: Record<string, any>) => Promise<void>;
+    returning?: Select,
+  ) => Promise<void | AnyObject[]>;
+  delete: (
+    tableName: string,
+    filter: Record<string, any>,
+  ) => Promise<void | AnyObject[]>;
 };
 
 export type DefineAgenticWorkflow = <
@@ -147,8 +153,8 @@ void defineAgenticWorkflow(
 );
 
  */
-
-type ProxyCallData =
+export type AgenticWorkflowDefinition = Parameters<DefineAgenticWorkflow>[0];
+export type ProxyCallData =
   | {
       type: "definitions";
       definitions: Parameters<DefineAgenticWorkflow>[0];
@@ -156,7 +162,7 @@ type ProxyCallData =
   | {
       type: "agent";
       agentName: string;
-      input?: string;
+      input: string;
     }
   | {
       type: "db-sql";
@@ -208,7 +214,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
       if (!(prop in definitions.agentDefinitions)) {
         throw new Error(`Agent "${prop}" is not defined in agentDefinitions`);
       }
-      return (input?: string) =>
+      return (input: string) =>
         callMcpProxy({ type: "agent", agentName: prop, input });
     },
   });
