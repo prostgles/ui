@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { executeDockerCommand } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
-import type { CreateContainerParams } from "../Prostgles/schemas/getCreateContainerToolSchema";
+import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
 
 type CreateContainerResult = JSONBTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["outputSchema"]

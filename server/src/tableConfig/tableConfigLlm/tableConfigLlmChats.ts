@@ -64,12 +64,30 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
         nullable: true,
         jsonbSchema: {
           oneOf: [
-            { type: { state: { enum: ["stopped"] } } },
+            {
+              type: {
+                state: { enum: ["stopped"] },
+                reason: {
+                  enum: [
+                    "max_total_cost_usd",
+                    "estimated_future_max_total_cost_usd",
+                    "maximum_consecutive_tool_fails",
+                  ],
+                  optional: true,
+                },
+              },
+            },
             {
               type: {
                 state: { enum: ["loading"] },
                 /** Timestamp since started waiting for LLM response */
                 since: "Date",
+              },
+            },
+            {
+              type: {
+                state: { enum: ["goal-reached"] },
+                data: "unknown",
               },
             },
           ],
@@ -200,14 +218,6 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
         info: {
           hint: "Maximum total cost of the chat in USD. If set to 0 then no limit is applied",
         },
-      },
-      error_state: {
-        nullable: true,
-        enum: [
-          "max_total_cost_usd",
-          "estimated_future_max_total_cost_usd",
-          "maximum_consecutive_tool_fails",
-        ],
       },
       currently_typed_message: {
         sqlDefinition: `TEXT`,

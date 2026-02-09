@@ -5,7 +5,7 @@ import {
   type ProstglesMcpTool,
 } from "@common/prostglesMcp";
 import { getEntries } from "@common/utils";
-import type { ChatDatabasePermissions } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
+import type { DbPermissions } from "@src/McpHub/DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
 
 export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
   name: string;
@@ -16,9 +16,9 @@ export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
 };
 
 export const getAllowedDBToolSchemas = (
-  chat: ChatDatabasePermissions | undefined,
+  dbPermissions: DbPermissions | undefined,
 ): DBTool[] => {
-  const chatDBAccess = chat?.db_data_permissions;
+  const chatDBAccess = dbPermissions?.db_data_permissions;
   if (!chatDBAccess || chatDBAccess.Mode === "None") {
     return [];
   }

@@ -15,7 +15,7 @@ import {
   executeDockerCommand,
   type ExecutionResult,
   type ProcessLog,
-} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
+} from "@src/McpHub/DockerSandbox/executeDockerCommand";
 import { getFreePort } from "@src/utils/isPortFree";
 
 const STOPPED_REASON = "stopped";

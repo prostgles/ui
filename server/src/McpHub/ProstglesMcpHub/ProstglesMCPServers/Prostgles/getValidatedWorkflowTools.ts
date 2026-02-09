@@ -9,7 +9,7 @@ export const getValidatedWorkflowTools = async (
   const validatedTools = new Map(
     await Promise.all(
       getEntries(toolDefinitions).map(
-        async ([toolName, { configId, mcpServerName, toolNames }]) => {
+        async ([workflowToolName, { configId, mcpServerName, toolNames }]) => {
           if (configId !== undefined) {
             const mcpServerConfig = await dbs.mcp_server_configs.findOne({
               id: configId,
@@ -17,19 +17,14 @@ export const getValidatedWorkflowTools = async (
             });
             if (!mcpServerConfig) {
               throw new Error(
-                `MCP Server config with id ${configId} for server ${mcpServerName} not found for tool ${toolName}`,
+                `MCP Server config with id ${configId} for server ${mcpServerName} not found for workflow tool ${workflowToolName}`,
               );
             }
           }
           const serverTools = await dbs.mcp_server_tools.find(
             {
-              $and: [
-                { name: toolName },
-                {
-                  server_name: mcpServerName,
-                  name: { $in: toolNames },
-                },
-              ],
+              server_name: mcpServerName,
+              name: { $in: toolNames },
             },
             {
               select: { id: 1, name: 1, server_name: 1 },
@@ -37,12 +32,12 @@ export const getValidatedWorkflowTools = async (
           );
           if (serverTools.length !== toolNames.length) {
             throw new Error(
-              `Could not find all specified tools for tool definition ${JSON.stringify(toolName)}. Tools not found: ${toolNames
+              `Could not find all specified tools for workflow tool definition ${JSON.stringify(workflowToolName)}. Tools not found: ${toolNames
                 .filter((tn) => !serverTools.find((st) => st.name === tn))
                 .join(", ")}`,
             );
           }
-          return [toolName, { configId, serverTools }] as const;
+          return [workflowToolName, { configId, serverTools }] as const;
         },
       ),
     ),

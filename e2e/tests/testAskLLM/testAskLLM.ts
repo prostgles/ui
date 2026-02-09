@@ -308,6 +308,21 @@ const toolResponses: Record<string, ToolUse> = {
   },
   component: createComponentToolUse,
   agentic_workflow: agenticWorkflowToolUse,
+  ["research assistant."]: {
+    tool: [
+      {
+        id: "agentic-workflow-tool-use",
+        type: "function",
+        function: {
+          name: "agent_goal",
+          arguments: stringify({
+            summary: "here is the summary",
+            references: ["ref1", "ref2"],
+          }),
+        },
+      },
+    ],
+  },
 };
 
 export const testAskLLMCode = `

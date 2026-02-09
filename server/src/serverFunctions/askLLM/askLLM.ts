@@ -8,9 +8,9 @@ import {
 } from "@common/llmUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import {
+  getJSONBSchemaAsJSONSchema,
   getProperty,
   getSerialisableError,
   isObject,
@@ -29,6 +29,7 @@ import {
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 import { getFullPrompt } from "./getFullPrompt";
+import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
 export const getBestLLMChatModel = async (
@@ -112,16 +113,6 @@ export const askLLM = async (args: AskLLMArgs) => {
   if (hasError) {
     console.error("LLM Tools fetch error:", error);
   }
-  const tools = toolsWithInfo?.map(
-    ({ name, description, input_schema, auto_approve }) => {
-      return {
-        name,
-        description,
-        input_schema: omitKeys(input_schema, ["$id"]),
-        auto_approve,
-      };
-    },
-  );
 
   const aborter = args.aborter ?? new AbortController();
   activeLLMFetchRequests.set(chat.id, aborter);
@@ -324,6 +315,32 @@ export const askLLM = async (args: AskLLMArgs) => {
     } = modelData;
     if (!llm_provider) throw "Provider not found";
 
+    const tools = toolsWithInfo?.map(
+      ({ name, description, input_schema, auto_approve }) => {
+        return {
+          name,
+          description,
+          input_schema: omitKeys(input_schema, ["$id"]),
+          auto_approve,
+        };
+      },
+    );
+    const toolsWithAgentGoalTool: typeof tools =
+      chat.agent_info ?
+        [
+          ...(tools ?? []),
+          {
+            name: "agent_goal",
+            description: "Call this tool to end the agent's workflow",
+            input_schema: getJSONBSchemaAsJSONSchema(
+              "",
+              "",
+              chat.agent_info.outputSchema as any,
+            ),
+            auto_approve: true,
+          },
+        ]
+      : tools;
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const {
       content: aiResponseMessageRaw,
@@ -334,7 +351,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       llm_model,
       llm_provider,
       llm_credential,
-      tools,
+      tools: toolsWithAgentGoalTool,
       messages: [
         {
           /** TODO check if this works with all providers */
@@ -403,7 +420,10 @@ export const askLLM = async (args: AskLLMArgs) => {
       await dbs.llm_chats.update(
         { id: chat.id },
         {
-          error_state: "maximum_consecutive_tool_fails",
+          status: {
+            state: "stopped",
+            reason: "maximum_consecutive_tool_fails",
+          },
         },
       );
       throw `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`;
@@ -456,54 +476,4 @@ export const askLLM = async (args: AskLLMArgs) => {
       status: null,
     },
   );
-};
-
-const getValidatedAskLLMChatOptions = async ({
-  userMessage,
-  type,
-  chatId,
-  dbs,
-  user,
-}: AskLLMArgs) => {
-  if (!userMessage.length && type === "new-message") throw "Message is empty";
-  if (!Number.isInteger(chatId)) throw "chatId must be an integer";
-  const getChat = () => dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
-  let maybeChat = await getChat();
-  if (!maybeChat) throw "Chat not found";
-  const { llm_prompt_id } = maybeChat;
-  if (!maybeChat.model) {
-    const preferredChatModel = await getBestLLMChatModel(dbs, {
-      $existsJoined: {
-        "llm_providers.llm_credentials": {},
-      },
-    } as Filter);
-    await dbs.llm_chats.update(
-      { id: chatId },
-      { model: preferredChatModel.id },
-    );
-    maybeChat = await getChat();
-  }
-  if (!maybeChat?.model) throw "Chat model not found";
-  const chat = { ...maybeChat, model: maybeChat.model };
-  const llm_credential = await dbs.llm_credentials.findOne({
-    $existsJoined: {
-      "llm_providers.llm_models": {
-        id: chat.model,
-      },
-    },
-  } as Filter);
-  if (!llm_prompt_id) throw "Chat missing prompt";
-  if (!llm_credential) throw "LLM credentials missing";
-  const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
-  if (!promptObj) throw "Prompt not found";
-  const { prompt } = promptObj;
-
-  return {
-    prompt,
-    promptObj,
-    chat,
-    llm_credential,
-    llm_prompt_id,
-    getChat,
-  };
 };

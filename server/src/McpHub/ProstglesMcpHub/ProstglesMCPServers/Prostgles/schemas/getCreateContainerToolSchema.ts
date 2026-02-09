@@ -7,7 +7,7 @@ import {
   omitKeys,
   type JSONB,
 } from "prostgles-types";
-import { DOCKER_MCP_ENDPOINT_ENV_VAR } from "../../DockerSandbox/runContainerWithProxyAccess";
+import { DOCKER_MCP_ENDPOINT_ENV_VAR } from "../../../../DockerSandbox/runContainerWithProxyAccess";
 
 const createContainerToolInfo =
   PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_container"];

@@ -13,7 +13,7 @@ import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 import {
   executeDockerCommand,
   type ExecutionResult,
-} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
+} from "@src/McpHub/DockerSandbox/executeDockerCommand";
 import { filterArr } from "@common/llmUtils";
 
 export async function buildService(

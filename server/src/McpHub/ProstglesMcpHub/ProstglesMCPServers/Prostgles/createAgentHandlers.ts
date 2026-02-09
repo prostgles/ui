@@ -1,6 +1,6 @@
+import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import type { DBS } from "@src/index";
-import { askLLM } from "@src/serverFunctions/askLLM/askLLM";
 import { tout } from "@src/utils/tout";
 import type { DefineAgenticWorkflow } from "./defineAgenticWorkflow";
 import { getValidatedAgentHandlerArgs } from "./getValidatedAgentHandlerArgs";
@@ -22,25 +22,22 @@ const enqueueAgentExecution = <T>(
 };
 
 export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
-  {
-    name,
-    toolDefinitions,
-    agentDefinitions,
-    databaseAccessDefinitions,
-  }: Parameters<P>[0],
+  dbsFunctions: GeneratedFunctionSchema,
+  { name, toolDefinitions, agentDefinitions }: Parameters<P>[0],
   {
     dbs,
     chatId,
     userId,
+    connectionId,
   }: {
     dbs: DBS;
     chatId: number;
     userId: string;
+    connectionId: string;
   },
   runInSequence = true,
 ) => {
   const agentHandlers = new Map<string, (agentInput: string) => Promise<any>>();
-  const dbHandler = {} as Parameters<Parameters<P>[1]>[1];
 
   const user = await dbs.users.findOne({ id: userId });
   if (!user) {
@@ -97,8 +94,8 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
               "Be concise and to the point.",
               "When you are ready you must respond with the required output format.",
               "",
-              // "Below your prompt:",
-              // prompt, // provided as first message
+              "Below your prompt:",
+              prompt, // provided as first message
             ].join("\n"),
             outputSchema,
           },
@@ -128,49 +125,41 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
         );
       }
 
-      let state = undefined as
-        | {
-            type: Exclude<
-              Required<DBSSchema["llm_chats"]>["error_state"],
-              null
-            >;
-          }
-        | {
-            type: "completed";
-            output: unknown;
-          }
-        | undefined;
+      let chatStatus = null as DBSSchema["llm_chats"]["status"];
 
-      // await askLLM({
-      //   dbs,
-      //   chatId: workflowChat.id,
-      //   type: "new-message",
-      //   userMessage: [
-      //     {
-      //       type: "text",
-      //       text: prompt,
-      //     },
-      //   ],
-      //   user,
-      // });
+      await dbsFunctions.askLLM({
+        chatId: workflowChat.id,
+        type: "new-message",
+        userMessage: [
+          {
+            type: "text",
+            text: agentInput || "",
+          },
+        ],
+        connectionId,
+        schema: "",
+      });
 
-      while (!state) {
+      while (!chatStatus || chatStatus.state === "loading") {
         await tout(500);
         const chat = await dbs.llm_chats.findOne(
           { id: workflowChat.id },
-          { select: { error_state: 1 } },
+          { select: { status: 1 } },
         );
-        if (chat?.error_state) {
-          state = { type: chat.error_state };
-          break;
-        }
-        const lastMessage = await dbs.llm_messages.findOne(
-          {
-            chat_id: workflowChat.id,
-          },
-          {
-            orderBy: { key: "id", asc: false },
-          },
+        chatStatus = chat?.status ?? null;
+        // const lastMessage = await dbs.llm_messages.findOne(
+        //   {
+        //     chat_id: workflowChat.id,
+        //   },
+        //   {
+        //     orderBy: { key: "id", asc: false },
+        //   },
+        // );
+        // return lastMessage?.message;
+      }
+      if (chatStatus.state === "stopped") {
+        throw new Error(
+          `Agent ${agentName} failed with error: ${chatStatus.reason ?? "unknown error"}`,
         );
       }
       // TODO: validation?
@@ -180,7 +169,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
       //     state.type === "completed" ? state.output : undefined,
       //   );
       // }
-      return state.type === "completed" ? state.output : undefined;
+      return chatStatus.data;
     };
     const agentHandler = (input: string) => {
       if (!runInSequence) {

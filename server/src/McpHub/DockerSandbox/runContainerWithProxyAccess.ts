@@ -2,31 +2,25 @@ import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
 import { upsertSession } from "@src/authConfig/upsertSession";
 import { getElectronConfig } from "@src/electronConfig";
 import type { DBS } from "@src/index";
+import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
 import { createContainer } from "./createContainer";
 import {
   dockerContainerAuthRegistry,
-  type ChatDatabasePermissions,
-  type ContainerAuthInfo,
+  type ContainerProxyContext,
 } from "./dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { getOrCreateDockerMCPServerProxy } from "./dockerMCPServerProxy/dockerMCPServerProxy";
-import type { CreateContainerParams } from "../Prostgles/schemas/getCreateContainerToolSchema";
 
 export const DOCKER_MCP_ENDPOINT_ENV_VAR = "DOCKER_MCP_ENDPOINT";
 export const runContainerWithProxyAccess = async (
   dbs: DBS,
   {
     user_id,
-    chat,
+    dbPermissions,
     requestHandlers,
   }: {
     user_id: string;
-    chat: ChatDatabasePermissions;
-  } & Pick<ContainerAuthInfo, "requestHandlers">,
-  argsOrGetArgs:
-    | CreateContainerParams
-    | ((
-        proxy: Awaited<ReturnType<typeof getOrCreateDockerMCPServerProxy>>,
-      ) => CreateContainerParams),
+  } & Pick<ContainerProxyContext, "requestHandlers" | "dbPermissions">,
+  args: CreateContainerParams,
 ) => {
   const proxy = await getOrCreateDockerMCPServerProxy(
     getElectronConfig()?.isElectron,
@@ -56,28 +50,24 @@ export const runContainerWithProxyAccess = async (
   const containerResult =
     await dockerContainerAuthRegistry.runContainerWithAuth(
       {
-        chat,
+        dbPermissions,
         sid_token,
         requestHandlers,
       },
-      (name) => {
-        const args =
-          typeof argsOrGetArgs === "function" ?
-            argsOrGetArgs(proxy)
-          : argsOrGetArgs;
+      (containerName) => {
         if (args.networkMode === "host") {
           throw new Error(
             "Bridge network mode is required to use the Docker MCP proxy. Host network mode is not supported.",
           );
         }
-        const argsWithEnv = {
+        const argsWithEnv: typeof args = {
           ...args,
           environment: {
             ...args.environment,
             [DOCKER_MCP_ENDPOINT_ENV_VAR]: proxy.baseUrl,
           },
         };
-        return createContainer(name, argsWithEnv).catch((error) => {
+        return createContainer(containerName, argsWithEnv).catch((error) => {
           console.error("Error creating container:", error);
           throw error;
         });

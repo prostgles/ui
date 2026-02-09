@@ -7,6 +7,16 @@ type PropertyType =
   | {
       type: PrimitiveType | `${PrimitiveType}[]`;
       optional?: boolean;
+    }
+  /** Object */
+  | {
+      type: Record<string, PropertyType>;
+      optional?: boolean;
+    }
+  /** Array of objects */
+  | {
+      arrayOfType: Record<string, PropertyType>;
+      optional?: boolean;
     };
 
 export type AgentDefinition<ToolNames extends string[]> = {
@@ -55,14 +65,14 @@ export type DatabaseAccessDefinition =
       mode: "custom";
       tablePermissions: Record<
         string,
-        Partial<Record<"select" | "insert" | "update" | "delete", 1>>
+        Partial<Record<"select" | "insert" | "update" | "delete", boolean>>
       >;
     }
   | {
       mode: "run_commited_sql" | "run_readonly_sql";
     };
 
-type Select = "*" | Record<string, 1> | Record<string, 0>;
+type Select = "*" | Record<string, 1 | 0>;
 export type DatabaseHandler = {
   runSQL: (
     sql: string,
@@ -78,7 +88,7 @@ export type DatabaseHandler = {
     tableName: string,
     filter: Record<string, any>,
     update: Record<string, any>,
-    options?: { returning?: Select },
+    returning?: Select,
   ) => Promise<void | AnyObject[]>;
   insert: (
     tableName: string,
@@ -88,6 +98,7 @@ export type DatabaseHandler = {
   delete: (
     tableName: string,
     filter: Record<string, any>,
+    returning?: Select,
   ) => Promise<void | AnyObject[]>;
 };
 
@@ -153,6 +164,22 @@ void defineAgenticWorkflow(
 );
 
  */
+
+// import type { ProstglesDbTools } from "@common/prostglesMcp";
+// import { getProperty, type JSONB } from "prostgles-types";
+// export type ProxyDbCallData<
+//   K extends keyof ProstglesDbTools = keyof ProstglesDbTools,
+// > = {
+//   type: "db";
+//   command: K;
+//   params: JSONB.GetObjectType<ProstglesDbTools[K]["schema"]["type"]>;
+// };
+
+export type ProxyDbCallData = {
+  type: "db";
+  command: string;
+  params: any;
+};
 export type AgenticWorkflowDefinition = Parameters<DefineAgenticWorkflow>[0];
 export type ProxyCallData =
   | {
@@ -164,14 +191,7 @@ export type ProxyCallData =
       agentName: string;
       input: string;
     }
-  | {
-      type: "db-sql";
-      query: string;
-    }
-  | {
-      type: "db-table";
-      params: any[];
-    };
+  | ProxyDbCallData;
 
 export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   definitions,
@@ -183,7 +203,11 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   }
 
   const callMcpProxy = async (args: ProxyCallData) => {
-    const result = await fetch(DOCKER_MCP_ENDPOINT, {
+    const route =
+      args.type === "definitions" ? "definitions"
+      : args.type === "agent" ? "agent"
+      : `${"db"}/${args.command}`;
+    const result = await fetch(`${DOCKER_MCP_ENDPOINT}/${route}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -196,7 +220,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
         (data as any)?.error || "Failed with statusText: " + result.statusText,
       );
     }
-    return data;
+    return data as any;
   };
 
   await callMcpProxy({ type: "definitions", definitions });
@@ -219,13 +243,137 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
     },
   });
 
+  const dbMode = definitions.databaseAccessDefinitions?.mode;
   const dbHandlerProxy = new Proxy({} as DatabaseHandler, {
-    get(_target, prop: keyof DatabaseHandler) {
-      if (typeof prop !== "string") return undefined;
-      if (prop === "runSQL") {
-        return (query: string) => callMcpProxy({ type: "db-sql", query });
+    get(_target, rawCommand: keyof DatabaseHandler) {
+      if (typeof rawCommand !== "string") return undefined;
+      const COMMAND_MAP = {
+        runSQL:
+          !dbMode || dbMode === "custom" ? undefined
+          : dbMode === "run_commited_sql" ? "execute_sql_with_commit"
+          : "execute_sql_with_rollback",
+        find: "select",
+        update: "update",
+        insert: "insert",
+        delete: "delete",
+      } as const satisfies Record<
+        keyof DatabaseHandler,
+        string | undefined
+        // keyof ProstglesDbTools | undefined
+      >;
+      const command = COMMAND_MAP[rawCommand];
+      if (!command) {
+        throw new Error(
+          `Database handler command "${rawCommand}" is not supported. Supported commands are: ${Object.keys(COMMAND_MAP).join(", ")}`,
+        );
+      }
+
+      if (
+        command === "execute_sql_with_commit" ||
+        command === "execute_sql_with_rollback"
+      ) {
+        const runSql: DatabaseHandler["runSQL"] = (
+          sql,
+          query_params,
+          query_timeout,
+        ) => {
+          return callMcpProxy({
+            type: "db",
+            command,
+            params: {
+              sql,
+              query_params,
+              query_timeout,
+            },
+            // satisfies JSONB.GetObjectType<
+            //   ProstglesDbTools[typeof command]["schema"]["type"]
+            // >,
+          });
+        };
+        return runSql;
+      } else if (command === "select") {
+        const find: DatabaseHandler["find"] = (
+          tableName,
+          filter = {},
+          options,
+        ) => {
+          return callMcpProxy({
+            type: "db",
+            command,
+            params: {
+              tableName,
+              filter,
+              limit: options?.limit ?? 100,
+              select: options?.select,
+            },
+            // satisfies JSONB.GetObjectType<
+            //   ProstglesDbTools[typeof command]["schema"]["type"]
+            // >,
+          });
+        };
+        return find;
+      } else if (command === "delete") {
+        const _delete: DatabaseHandler[typeof command] = (
+          tableName,
+          filter = {},
+          returning,
+        ) => {
+          return callMcpProxy({
+            type: "db",
+            command,
+            params: {
+              tableName,
+              filter,
+              returning,
+            },
+            // satisfies JSONB.GetObjectType<
+            //   ProstglesDbTools[typeof command]["schema"]["type"]
+            // >,
+          });
+        };
+        return _delete;
+      } else if (command === "insert") {
+        const insert: DatabaseHandler[typeof command] = (
+          tableName,
+          newRows,
+          returning,
+        ) => {
+          return callMcpProxy({
+            type: "db",
+            command,
+            params: {
+              tableName,
+              data: newRows,
+              returning,
+            },
+            // satisfies JSONB.GetObjectType<
+            //   ProstglesDbTools[typeof command]["schema"]["type"]
+            // >,
+          });
+        };
+        return insert;
       } else {
-        return (params: any[]) => callMcpProxy({ type: "db-table", params });
+        const update: DatabaseHandler[typeof command] = (
+          tableName,
+          filter,
+          update,
+          returning,
+        ) => {
+          return callMcpProxy({
+            type: "db",
+            command,
+            params: {
+              tableName,
+              filter,
+              data: update,
+              returning,
+            },
+            // satisfies JSONB.GetObjectType<
+            //   ProstglesDbTools[typeof command]["schema"]["type"]
+            // >,
+          });
+        };
+        return update;
       }
     },
   });

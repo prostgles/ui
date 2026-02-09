@@ -4,18 +4,20 @@ import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/Mona
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
-import { mdiLanguageTypescript, mdiTools } from "@mdi/js";
+import { mdiLanguageTypescript } from "@mdi/js";
 import React from "react";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
-import { DatabaseAccessPermissions } from "./common/DatabaseAccessPermissions";
-import { HeaderList } from "./common/HeaderList";
 import { useJSONBParsedData } from "./common/useJSONBParsedData";
-import Loading from "@components/Loader/Loading";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 export const LoadSuggestedWorkflow = ({
   message,
   toolUseResult,
+  chatId,
 }: Pick<ProstglesMCPToolsProps, "chatId" | "message" | "toolUseResult">) => {
+  const {
+    dbsMethods: { startAgenticWorkflow },
+  } = usePrglCore();
   const inputValidation = useJSONBParsedData(
     message.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
@@ -72,9 +74,28 @@ export const LoadSuggestedWorkflow = ({
       <Btn
         variant="filled"
         color="action"
-        disabledInfo={!toolUseResult ? "Validating workflow" : undefined}
-        onClick={() => {
-          throw new Error("Not implemented yet");
+        disabledInfo={
+          !startAgenticWorkflow ?
+            "Starting agentic workflows is not allowed/available"
+          : !toolUseResult ?
+            "Validating workflow"
+          : toolUseResult.toolUseResultMessage.is_error ?
+            "Workflow validation failed"
+          : undefined
+        }
+        data-command="LoadSuggestedWorkflow"
+        onClickPromise={async () => {
+          const { content } = toolUseResult?.toolUseResultMessage || {};
+          const contentStr =
+            typeof content === "string" ? content
+            : content?.[0]?.type === "text" ? content[0].text
+            : undefined;
+          const contentJson = contentStr ? JSON.parse(contentStr) : {};
+          await startAgenticWorkflow!({
+            chatId,
+            workflowTs: inputData.workflow_function_definition,
+            ...contentJson,
+          });
         }}
       >
         Start workflow

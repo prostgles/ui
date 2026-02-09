@@ -1,8 +1,12 @@
 import type { DBS } from "@src/index";
 import { readFileSync } from "fs";
 import { join } from "path";
-import type { ChatDatabasePermissions } from "../DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
-import { runContainerWithProxyAccess } from "../DockerSandbox/runContainerWithProxyAccess";
+import { getJSONBSchemaValidationError } from "prostgles-types";
+import type {
+  DbPermissions,
+  McpProxyRequestContext,
+} from "../../../DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
+import { runContainerWithProxyAccess } from "../../../DockerSandbox/runContainerWithProxyAccess";
 import type {
   AgenticWorkflowDefinition,
   ProxyCallData,
@@ -18,32 +22,26 @@ export const createAgenticWorkflowContainer = async (
   {
     workflowTs,
     user_id,
-    chat,
   }: {
     workflowTs: string;
     user_id: string;
-    chat: ChatDatabasePermissions;
   },
   mode:
     | {
         type: "definitions-only";
+        dbPermissions?: undefined;
         handler: (
           args: Extract<ProxyCallData, { type: "definitions" }>,
-          ctx: {
-            chat: ChatDatabasePermissions;
-            sid_token: string;
-          },
+          ctx: McpProxyRequestContext,
         ) => void;
       }
     | {
         type: "full";
         definition: AgenticWorkflowDefinition;
+        dbPermissions: DbPermissions;
         handler: (
-          args: Exclude<ProxyCallData, { type: "definitions" }>,
-          ctx: {
-            chat: ChatDatabasePermissions;
-            sid_token: string;
-          },
+          args: Extract<ProxyCallData, { type: "agent" }>,
+          ctx: McpProxyRequestContext,
         ) => Promise<unknown>;
       },
 ) => {
@@ -51,39 +49,60 @@ export const createAgenticWorkflowContainer = async (
     dbs,
     {
       user_id,
-      chat,
+      dbPermissions: mode.dbPermissions,
       requestHandlers: {
-        "/agent": {
+        ["/definitions"]: {
           method: "POST",
           handler: (ctx, req, res) => {
-            const data = req.body as ProxyCallData;
-
-            if (mode.type === "full") {
-              if (data.type === "definitions") {
-                return res.status(400).json({
-                  error: "Definitions calls are not allowed in full mode",
-                });
-              }
-              mode
-                .handler(data, ctx)
-                .then((result) => {
-                  res.json(result);
-                })
-                .catch((error) => {
-                  console.error("Error in handler:", error);
-                  res.status(500).json({ error: "Internal server error" });
-                });
+            if (mode.type !== "definitions-only") {
+              res
+                .status(400)
+                .json({ error: "Invalid request for current mode" });
               return;
             }
-
-            if (data.type !== "definitions") {
-              res.status(400).json({
-                error: "Only definitions calls are allowed in this container",
-              });
-            } else {
-              // resolve({ success: true, data: data.definitions });
-              mode.handler(data, ctx);
+            const { data, error } = getJSONBSchemaValidationError(
+              {
+                type: { type: { enum: ["definitions"] }, definitions: "any" },
+              } as const,
+              req.body,
+            );
+            if (error !== undefined) {
+              throw new Error("Invalid request data: " + error);
             }
+            mode.handler(data, ctx);
+          },
+        },
+        ["/agent"]: {
+          method: "POST",
+          handler: (ctx, req, res) => {
+            if (mode.type !== "full") {
+              res
+                .status(400)
+                .json({ error: "Invalid request for current mode" });
+              return;
+            }
+            const { data, error } = getJSONBSchemaValidationError(
+              {
+                type: {
+                  type: { enum: ["agent"] },
+                  agentName: "string",
+                  input: "string",
+                },
+              } as const,
+              req.body,
+            );
+            if (error !== undefined) {
+              throw new Error("Invalid request data: " + error);
+            }
+            mode
+              .handler(data, ctx)
+              .then((result) => {
+                res.json(result);
+              })
+              .catch((error) => {
+                console.error("Error in handler:", error);
+                res.status(500).json({ error: "Internal server error" });
+              });
           },
         },
       },

@@ -1034,7 +1034,9 @@ test.describe("Main test", () => {
     };
     /** Must test to see if port 3089 is free to avoid confusing errors */
 
-    await dockerRunAndExpect(`Tool "execute_sql_with_rollback" not found`);
+    await dockerRunAndExpect(
+      `No database permissions granted for this container`,
+    );
 
     await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
 
@@ -1173,6 +1175,7 @@ test.describe("Main test", () => {
     await setPromptByText(page, "Create workflow");
     await sendAskLLMMessage(page, " agentic_workflow ");
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page.getByTestId("LoadSuggestedWorkflow").click({ timeout: 30e3 });
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "ZZZZZZZZZZZZZZZZZZZZZ Agentic workflow executed successfully",
       {

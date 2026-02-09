@@ -6,22 +6,26 @@ export default defineAgenticWorkflow(
   ${JSON.stringify(
     {
       name: "Test Workflow",
+      databaseAccessDefinitions: {
+        mode: "custom",
+        tablePermissions: {
+          users: { select: true },
+        },
+      },
       toolDefinitions: {
         fetch_webpage: {
           mcpServerName: "fetch",
           toolNames: ["fetch"],
         },
-        query_database: {
-          mcpServerName: "database",
-          toolNames: ["select"],
-        },
       },
       agentDefinitions: {
         researcher: {
-          prompt: "You are a research assistant.",
+          prompt: "You are a research assistant. ",
           outputSchema: {
-            summary: "string",
-            references: "string[]",
+            type: {
+              summary: "string",
+              references: "string[]",
+            },
           },
         },
       },

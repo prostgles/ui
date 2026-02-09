@@ -5,7 +5,7 @@ import { webSearchSearxngService } from "./services/webSearchSearxng/webSearchSe
 import type {
   ExecutionResult,
   ProcessLog,
-} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
+} from "@src/McpHub/DockerSandbox/executeDockerCommand";
 
 export type DockerGPUS = "none" | "all" | number | number[];
 

@@ -253,7 +253,6 @@ export type DBGeneratedSchema = {
        |  {  type: "Custom";  tables: string[]; }
       disabled_message?: null | string;
       disabled_until?: null | string;
-      error_state?: null | "max_total_cost_usd" | "estimated_future_max_total_cost_usd" | "maximum_consecutive_tool_fails"
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";   think?: boolean;   reasoning?: |  {  effort: "high" | "medium" | "low"; }
  |  {  max_tokens?: number; };   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
@@ -266,8 +265,9 @@ export type DBGeneratedSchema = {
       parent_chat_id?: null | number;
       status?: 
        | null
-       |  {  state: "stopped"; }
+       |  {  state: "stopped";  reason?: "max_total_cost_usd" | "estimated_future_max_total_cost_usd" | "maximum_consecutive_tool_fails"; }
        |  {  state: "loading";  since: string; }
+       |  {  state: "goal-reached";  data: unknown; }
       user_id: string;
     };
   };
@@ -752,6 +752,7 @@ export type GeneratedFunctionSchema = {
   "reloadMcpServerTools": (args: {    serverName: string;  }) => Promise<number>;
   "getMcpHostInfo": () => Promise<{ os: string; npmVersion: string; uvxVersion: string }>;
   "transcribeAudio": (args: {    audioBlob: Blob;  }) => Promise<(({} & { success: boolean; transcription: string; language: string; language_probability: number; segments: Array<({} & { start: number; end: number; text: string })> }) | ({} & { error: string }))>;
-  "startWorkflow": (args: {    chatId: number;   workflowDefinition: string;  }) => Promise<({} & { state: ("error" | "finished" | "build-error" | "timed-out" | "aborted"); name: string; command: string; log: Array<({} & { type: ("error" | "stdout" | "stderr"); text: string })>; exitCode: number; runDuration: number; buildDuration: number })>;
+  "startAgenticWorkflow": (args: {    chatId: number;   name: string;   workflowTs: string;   databaseAccessDefinitions?: |  {  mode: "custom";  tablePermissions: Partial<Record<string,  Partial<Record<"select" | "insert" | "update" | "delete", boolean>>>>; }
+ |  {  mode: "run_commited_sql" | "run_readonly_sql"; };   toolDefinitions: Record<string,  {  mcpServerName: string;  toolNames: string[];  configId?: number; }>;   agentDefinitions: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  allowedToolDefinitionNames?: string[];  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>;  }) => Promise<void>;
   "startConnection": (args: {    connectionId: string;  }) => Promise<(undefined | { socketPath: string; socketUrl: (undefined | string) })>;
 }

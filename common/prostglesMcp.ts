@@ -44,11 +44,15 @@ const filterSchema = {
 } as const;
 
 const selectSchema = {
-  select: {
-    description:
-      "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }",
-    record: { values: { enum: [1, 0] } },
-  },
+  optional: true,
+  oneOf: [
+    { enum: ["*"] },
+    {
+      description:
+        "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }",
+      record: { values: { enum: [1, 0] } },
+    },
+  ],
 } as const;
 
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
@@ -73,7 +77,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             description: "Table to select from",
           },
           ...filterSchema,
-          ...selectSchema,
+          select: selectSchema,
           limit: "integer",
         },
       },
@@ -91,6 +95,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
               "Data to insert into the table. Must satisfy the table schema.",
             arrayOf: "any",
           },
+          returning: selectSchema,
         },
       },
     },
@@ -110,6 +115,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
               values: "any",
             },
           },
+          returning: selectSchema,
         },
       },
     },
@@ -122,6 +128,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             description: "Table to delete from",
           },
           ...filterSchema,
+          returning: selectSchema,
         },
       },
     },
@@ -493,6 +500,8 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   >
 >;
 
+export type ProstglesDbTools =
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"];
 type ProstglesMcpTools = Pick<
   typeof PROSTGLES_MCP_SERVERS_AND_TOOLS,
   "prostgles-db" | "prostgles-db-methods"

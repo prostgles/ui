@@ -33,7 +33,17 @@ export const getProstglesLLMTools = async ({
 }) => {
   const { mcp_server_tools } = await getMCPServerTools(dbs, {});
 
-  const dbTools = getAllowedDBToolSchemas(chat).map((tool) => {
+  const { connection_id, db_data_permissions } = chat;
+  if (!connection_id) {
+    throw new Error(`Chat with id ${chat.id} does not have a connection_id`);
+  }
+  const dbPermissions = {
+    connection_id,
+    db_data_permissions,
+  };
+
+  const dbTools = getAllowedDBToolSchemas(dbPermissions);
+  const dbToolsWithJsonSchema = dbTools.map((tool) => {
     return {
       ...tool,
       server_name: tool.type,
@@ -51,7 +61,7 @@ export const getProstglesLLMTools = async ({
           chat_id: chat.id,
           user_id: chat.user_id,
           clientReq,
-          dbTools: getAllowedDBToolSchemas(chat),
+          dbTools,
           chat,
           mcpTools: mcp_server_tools,
           toolsAllowed: allowedMcpToolsWithInfo.map((t) => {
@@ -88,5 +98,5 @@ export const getProstglesLLMTools = async ({
     })
     .filter(isDefined);
 
-  return { mcpTools, dbTools };
+  return { mcpTools, dbTools: dbToolsWithJsonSchema };
 };

@@ -4,9 +4,9 @@ import type {
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
-import { getDockerMCPServerProxy } from "./DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
+import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
+import { runContainerWithProxyAccess } from "../../DockerSandbox/runContainerWithProxyAccess";
 import { createAgenticWorkflowContainer } from "./Prostgles/createAgenticWorkflowContainer";
-import { createContainerSandbox } from "./Prostgles/createContainerSandbox";
 import { fetchTools } from "./Prostgles/fetchTools";
 
 const serverName = "prostgles-ui" as const;
@@ -24,8 +24,29 @@ const handler = {
         await getDockerMCPServerProxy()?.then((s) => s.destroy());
       },
       tools: {
-        create_container: async (args, ctx) => {
-          return createContainerSandbox(dbs, args, ctx);
+        create_container: async (args, { user_id, chat_id }) => {
+          const chat = await dbs.llm_chats.findOne({ id: chat_id, user_id });
+          if (!chat) {
+            throw new Error(`Chat with id ${chat_id} not found`);
+          }
+          const { connection_id, db_data_permissions } = chat;
+          if (!connection_id) {
+            throw new Error(
+              `Chat with id ${chat_id} does not have a connection_id`,
+            );
+          }
+
+          return runContainerWithProxyAccess(
+            dbs,
+            {
+              user_id,
+              dbPermissions: {
+                connection_id,
+                db_data_permissions,
+              },
+            },
+            args,
+          );
         },
         ask_user_questions: async ({ questions }, { chat_id }) => {
           // never called
@@ -42,7 +63,6 @@ const handler = {
             createAgenticWorkflowContainer(
               dbs,
               {
-                chat,
                 user_id,
                 workflowTs: workflow_function_definition,
               },
@@ -52,7 +72,18 @@ const handler = {
                   resolve(definitions);
                 },
               },
-            ).catch(reject);
+            )
+              .then((containerResult) => {
+                if (containerResult.state !== "finished") {
+                  const lastLog = containerResult.log.at(-1);
+                  if (lastLog?.type === "error") {
+                    reject(lastLog);
+                  } else {
+                    reject(containerResult.log);
+                  }
+                }
+              })
+              .catch(reject);
           });
         },
         suggest_dashboards: (input, { chat_id }) => {

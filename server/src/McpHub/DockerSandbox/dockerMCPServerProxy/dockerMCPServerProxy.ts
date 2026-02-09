@@ -1,16 +1,27 @@
+import { sidKeyName } from "@common/authTypesAndConstants";
 import { getEntries } from "@common/utils";
 import { isDocker } from "@src/McpHub/utils";
+import { runProstglesDBTool } from "@src/serverFunctions/askLLM/prostglesLLMTools/runProstglesDBTool";
 import { isPortFree } from "@src/utils/isPortFree";
 import { execSync } from "child_process";
-import express, { json, urlencoded, type RequestHandler } from "express";
+import express, {
+  json,
+  Request,
+  Response,
+  urlencoded,
+  type RequestHandler,
+} from "express";
 import _http from "http";
 import type { AddressInfo } from "net";
 import { match } from "path-to-regexp";
 import { upsertNamedExpressMiddleware } from "prostgles-server";
 import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
-import { isObject } from "prostgles-types";
-import { getDockerGatewayIP } from "../getDockerGatewayIP";
-import { dockerContainerAuthRegistry } from "./dockerContainerAuthRegistry";
+import { getSerialisableError, isObject } from "prostgles-types";
+import {
+  dockerContainerAuthRegistry,
+  type ContainerProxyContext,
+} from "./dockerContainerAuthRegistry";
+import { getDockerGatewayIP } from "./getDockerGatewayIP";
 
 const PREFERRED_PORT = 3089;
 
@@ -24,7 +35,6 @@ export const getOrCreateDockerMCPServerProxy = async (
   dockerMCPServerProxy ??= createDockerMCPServerProxy(isElectron);
   return dockerMCPServerProxy;
 };
-
 export const getDockerMCPServerProxy = () => dockerMCPServerProxy;
 
 /**
@@ -41,7 +51,7 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
   app.use(json({ limit: "1000mb" }));
   app.use(urlencoded({ extended: true, limit: "1000mb" }));
 
-  const dockerProxyRouter: RequestHandler = (req, res, next) => {
+  const authContextMiddleware: RequestHandler = (req, res, next) => {
     const ip = req.ip || req.socket.remoteAddress || "";
 
     const authContext = dockerContainerAuthRegistry.getContainerFromIP(ip);
@@ -51,16 +61,33 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
           "Container and/or Chat not found for the given IP address: " + ip,
       });
     }
-    const { chat, sid_token, requestHandlers } = authContext;
-    const matchedRequestHandler = getEntries(requestHandlers).find(([route]) =>
-      match(route)(req.path),
+    res.locals.authContext = authContext;
+    next();
+  };
+  upsertNamedExpressMiddleware(
+    app,
+    authContextMiddleware,
+    "docker-mcp-proxy-auth-context",
+  );
+
+  app.post(DB_ROUTE, dbRequestHandler);
+
+  const dockerProxyRouter: RequestHandler = (req, res, next) => {
+    const authContext = res.locals.authContext as ContainerProxyContext;
+    const { dbPermissions, sid_token, requestHandlers } = authContext;
+
+    const matchedRequestHandler = getEntries(requestHandlers ?? {}).find(
+      ([route]) => {
+        return match(route)(req.path);
+      },
     );
     if (!matchedRequestHandler) {
       return res.status(HTTP_FAIL_CODES.NOT_FOUND).json({
         error: "No request handler found for path: " + req.path,
       });
     }
-    matchedRequestHandler[1].handler({ chat, sid_token }, req, res, next);
+    const { handler } = matchedRequestHandler[1];
+    handler({ dbPermissions, sid_token }, req, res, next);
   };
   upsertNamedExpressMiddleware(
     app,
@@ -106,4 +133,33 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
       },
     );
   });
+};
+
+const DB_ROUTE = `/db/:endpoint`;
+
+const dbRequestHandler: RequestHandler = (req: Request, res: Response) => {
+  const authContext = res.locals.authContext as ContainerProxyContext;
+  const { endpoint = "" } = req.params;
+  try {
+    const { dbPermissions, sid_token } = authContext;
+    const { Mode = "None" } = dbPermissions?.db_data_permissions || {};
+    if (!dbPermissions || Mode === "None") {
+      return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
+        error: "No database permissions granted for this container",
+      });
+    }
+    req.cookies ??= {};
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    req.cookies[sidKeyName] = sid_token;
+    runProstglesDBTool(dbPermissions, { httpReq: req, res }, req.body, endpoint)
+      .then((result) => {
+        res.json(result);
+      })
+      .catch((error) => {
+        res.status(400).json({ error: getSerialisableError(error) });
+      });
+  } catch (error) {
+    console.error("Error in request handler:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };

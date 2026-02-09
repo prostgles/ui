@@ -2,28 +2,27 @@ import type { DBSSchema } from "@common/publishUtils";
 import { execSync } from "child_process";
 import { randomUUID } from "crypto";
 import type { RequestHandler } from "express";
-import { isDefined, isEmpty, pickKeys } from "prostgles-types";
+import { isDefined, pickKeys } from "prostgles-types";
 export const DOCKER_CONTAINER_NAME_PREFIX = "prostgles-docker-mcp-sandbox";
 
-export type ChatDatabasePermissions = Pick<
-  DBSSchema["llm_chats"],
-  "db_data_permissions" | "connection_id"
->;
-
-export type CreateContainerContext = {
-  userId: string;
-  chatId: number;
+export type DbPermissions = {
+  db_data_permissions: DBSSchema["llm_chats"]["db_data_permissions"];
+  connection_id: string;
 };
 
+export type McpProxyRequestContext = Omit<
+  ContainerProxyContext,
+  "requestHandlers"
+>;
 export type DockerMCPServerProxyHandler = (
-  authContext: { chat: ChatDatabasePermissions; sid_token: string },
+  authContext: McpProxyRequestContext,
   ...args: Parameters<RequestHandler>
 ) => void;
 
-export type ContainerAuthInfo = {
-  chat: ChatDatabasePermissions;
+export type ContainerProxyContext = {
+  dbPermissions: DbPermissions | undefined;
   sid_token: string;
-  requestHandlers: Record<
+  requestHandlers?: Record<
     string,
     {
       method: "POST" | "GET";
@@ -32,17 +31,12 @@ export type ContainerAuthInfo = {
   >;
 };
 
-export type GetAuthContext = (ip: string) => ContainerAuthInfo | undefined;
-
-const containers = new Map<string, ContainerAuthInfo>();
+const containers = new Map<string, ContainerProxyContext>();
 
 const runContainerWithAuth = <T>(
-  info: ContainerAuthInfo,
+  info: ContainerProxyContext,
   runContainer: (name: string) => Promise<T>,
 ): Promise<T> => {
-  if (isEmpty(info.requestHandlers)) {
-    throw new Error("At least one request handler must be provided");
-  }
   const name = `${DOCKER_CONTAINER_NAME_PREFIX}-${Date.now()}-${randomUUID()}`;
   if (containers.has(name)) {
     throw new Error(`Container with name ${name} already exists`);
@@ -93,14 +87,14 @@ const getIPToContainerName = () => {
   return containerIpCache.ipToContainerName;
 };
 
-const getContainerFromIP: GetAuthContext = (ip: string) => {
+const getContainerFromIP = (ip: string): ContainerProxyContext | undefined => {
   const containerName = getIPToContainerName().get(ip);
 
   if (!containerName) return;
   const containerInfo = containers.get(containerName);
   return (
     containerInfo &&
-    pickKeys(containerInfo, ["chat", "sid_token", "requestHandlers"])
+    pickKeys(containerInfo, ["dbPermissions", "sid_token", "requestHandlers"])
   );
 };
 

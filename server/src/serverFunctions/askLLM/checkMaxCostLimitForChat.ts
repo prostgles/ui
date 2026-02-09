@@ -17,23 +17,27 @@ export const checkMaxCostLimitForChat = async (
       (acc, m) => acc + parseFloat(m.cost),
       0,
     );
-    const updateState = async (
-      error_state: "estimated_future_max_total_cost_usd" | "max_total_cost_usd",
+    const stopChat = async (
+      reason: "estimated_future_max_total_cost_usd" | "max_total_cost_usd",
     ) => {
       await dbs.llm_chats.update(
         { id: chat.id },
+
         {
-          error_state,
+          status: {
+            state: "stopped",
+            reason,
+          },
         },
       );
     };
     if (pastMessageCost > maxTotalCost) {
-      await updateState("max_total_cost_usd");
+      await stopChat("max_total_cost_usd");
       throw `Maximum total cost of the chat (${maxTotalCost}) reached. Current cost: ${pastMessageCost}`;
     }
     const currentMessageCost = getUserMessageCost(userMessage, model);
     if (pastMessageCost + currentMessageCost > maxTotalCost) {
-      await updateState("estimated_future_max_total_cost_usd");
+      await stopChat("estimated_future_max_total_cost_usd");
       throw [
         `Maximum total cost of the chat (${maxTotalCost}) will be reached after sending this message.`,
         `Current cost: ${pastMessageCost}.`,

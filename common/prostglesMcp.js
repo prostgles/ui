@@ -33,10 +33,14 @@ const filterSchema = {
     },
 };
 const selectSchema = {
-    select: {
-        description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }",
-        record: { values: { enum: [1, 0] } },
-    },
+    optional: true,
+    oneOf: [
+        { enum: ["*"] },
+        {
+            description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }",
+            record: { values: { enum: [1, 0] } },
+        },
+    ],
 };
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     "prostgles-db-methods": { [""]: "" },
@@ -52,10 +56,10 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         select: {
             description: "Selects rows from a table.",
             schema: {
-                type: Object.assign(Object.assign(Object.assign({ tableName: {
+                type: Object.assign(Object.assign({ tableName: {
                         type: "string",
                         description: "Table to select from",
-                    } }, filterSchema), selectSchema), { limit: "integer" }),
+                    } }, filterSchema), { select: selectSchema, limit: "integer" }),
             },
         },
         insert: {
@@ -70,6 +74,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                         description: "Data to insert into the table. Must satisfy the table schema.",
                         arrayOf: "any",
                     },
+                    returning: selectSchema,
                 },
             },
         },
@@ -84,16 +89,16 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                         record: {
                             values: "any",
                         },
-                    } }),
+                    }, returning: selectSchema }),
             },
         },
         delete: {
             description: "Deletes rows from a table.",
             schema: {
-                type: Object.assign({ tableName: {
+                type: Object.assign(Object.assign({ tableName: {
                         type: "string",
                         description: "Table to delete from",
-                    } }, filterSchema),
+                    } }, filterSchema), { returning: selectSchema }),
             },
         },
     },

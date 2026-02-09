@@ -1,7 +1,7 @@
 import { getProstglesState } from "@src/init/tryStartProstgles";
 import { isDefined } from "prostgles-types";
 import type { ProstglesMcpServerHandlerInstance } from "../../ProstglesMCPServerTypes";
-import { getOrCreateDockerMCPServerProxy } from "../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
+import { getOrCreateDockerMCPServerProxy } from "../../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import { askQuestionsToolSchema } from "./schemas/askQuestionsToolSchema";
 import { getAgenticWorkflowToolSchema } from "./schemas/getAgenticToolSchemas";
 import { getCreateContainerToolSchema } from "./schemas/getCreateContainerToolSchema";

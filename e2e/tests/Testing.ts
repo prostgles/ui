@@ -531,6 +531,7 @@ export const COMMANDS = {
   "WebAppConfig.createFromTemplate": "",
   "WebAppConfig.build": "",
   "WebAppConfig.test": "",
+  LoadSuggestedWorkflow: "",
 } as const satisfies Record<
   string,
   | string

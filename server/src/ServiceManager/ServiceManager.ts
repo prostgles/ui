@@ -1,4 +1,4 @@
-import { type ProcessLog } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
+import { type ProcessLog } from "@src/McpHub/DockerSandbox/executeDockerCommand";
 import type { DBS } from "..";
 import { buildService } from "./buildService";
 import { enableService } from "./enableService";

@@ -50,15 +50,20 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Selects rows from a table.";
             readonly schema: {
                 readonly type: {
-                    readonly limit: "integer";
                     readonly select: {
-                        readonly description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }";
-                        readonly record: {
-                            readonly values: {
-                                readonly enum: readonly [1, 0];
+                        readonly optional: true;
+                        readonly oneOf: readonly [{
+                            readonly enum: readonly ["*"];
+                        }, {
+                            readonly description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }";
+                            readonly record: {
+                                readonly values: {
+                                    readonly enum: readonly [1, 0];
+                                };
                             };
-                        };
+                        }];
                     };
+                    readonly limit: "integer";
                     readonly filter: {
                         readonly record: {
                             readonly values: "any";
@@ -84,6 +89,19 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly description: "Data to insert into the table. Must satisfy the table schema.";
                         readonly arrayOf: "any";
                     };
+                    readonly returning: {
+                        readonly optional: true;
+                        readonly oneOf: readonly [{
+                            readonly enum: readonly ["*"];
+                        }, {
+                            readonly description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }";
+                            readonly record: {
+                                readonly values: {
+                                    readonly enum: readonly [1, 0];
+                                };
+                            };
+                        }];
+                    };
                 };
             };
         };
@@ -96,6 +114,19 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly record: {
                             readonly values: "any";
                         };
+                    };
+                    readonly returning: {
+                        readonly optional: true;
+                        readonly oneOf: readonly [{
+                            readonly enum: readonly ["*"];
+                        }, {
+                            readonly description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }";
+                            readonly record: {
+                                readonly values: {
+                                    readonly enum: readonly [1, 0];
+                                };
+                            };
+                        }];
                     };
                     readonly filter: {
                         readonly record: {
@@ -114,6 +145,19 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Deletes rows from a table.";
             readonly schema: {
                 readonly type: {
+                    readonly returning: {
+                        readonly optional: true;
+                        readonly oneOf: readonly [{
+                            readonly enum: readonly ["*"];
+                        }, {
+                            readonly description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }";
+                            readonly record: {
+                                readonly values: {
+                                    readonly enum: readonly [1, 0];
+                                };
+                            };
+                        }];
+                    };
                     readonly filter: {
                         readonly record: {
                             readonly values: "any";
@@ -473,6 +517,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
 };
+export type ProstglesDbTools = (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"];
 type ProstglesMcpTools = Pick<typeof PROSTGLES_MCP_SERVERS_AND_TOOLS, "prostgles-db" | "prostgles-db-methods">;
 export type ProstglesMcpTool = {
     [K in keyof ProstglesMcpTools]: {

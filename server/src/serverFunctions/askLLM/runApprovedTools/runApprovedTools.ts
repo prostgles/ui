@@ -1,14 +1,10 @@
 import {
   getMCPToolNameParts,
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
   type AllowedChatTool,
 } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
-import {
-  getJSONBObjectSchemaValidationError,
-  getSerialisableError,
-} from "prostgles-types";
+import { getSerialisableError } from "prostgles-types";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import {
@@ -54,6 +50,15 @@ export const runApprovedTools = async (
   if (!toolUseRequestMessages.length) {
     return;
   }
+
+  const { connection_id, db_data_permissions } = chat;
+  if (!connection_id) {
+    throw new Error(`Chat with id ${chatId} does not have a connection_id`);
+  }
+  const dbPermissions = {
+    connection_id,
+    db_data_permissions,
+  };
 
   /**
    * Here we expect the user to return a list of approved tools. Anything not in this list that is not auto-approved means denied.
@@ -175,7 +180,7 @@ export const runApprovedTools = async (
       }
 
       const { clientMethods } = await getClientDBHandlersForChat(
-        chat,
+        dbPermissions,
         args.clientReq,
       );
       if (tool.type === "prostgles-db-methods") {
@@ -205,7 +210,7 @@ export const runApprovedTools = async (
 
       const { content, is_error } = await parseToolResultToMessage(async () => {
         const result = await runProstglesDBTool(
-          chat,
+          dbPermissions,
           args.clientReq,
           toolUseRequest.input,
           tool.tool_name,
