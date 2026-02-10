@@ -9,13 +9,10 @@ import { tout } from "@src/utils/tout";
 import type { McpConnection } from "./McpHub";
 import type { McpServerEvents } from "./McpTypes";
 
-const AutoApproveSchema = z.array(z.string()).default([]);
-
 const StdioConfigSchema = z.object({
   command: z.string(),
   args: z.array(z.string()).optional(),
   env: z.record(z.string(), z.string()).optional(),
-  autoApprove: AutoApproveSchema.optional(),
   disabled: z.boolean().optional(),
 });
 
@@ -25,10 +22,13 @@ export type MCPServerInitInfo = McpServerEvents & {
   config: StdioServerParameters;
 };
 
-export const connectToMCPServer = (
-  { name, server_name, config, onLog, onTransportClose }: MCPServerInitInfo,
-  // { onLog, onTransportClose }: McpServerEvents,
-): Promise<McpConnection> => {
+export const connectToMCPServer = ({
+  name,
+  server_name,
+  config,
+  onLog,
+  onTransportClose,
+}: MCPServerInitInfo): Promise<McpConnection> => {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise(async (resolve, reject) => {
     let log = "";
@@ -115,7 +115,6 @@ export const connectToMCPServer = (
       }
       transport.start = async () => {}; // No-op now, .connect() won't fail
 
-      // Connect
       await client.connect(transport).catch(async (error) => {
         await tout(1000); // wait for connection to be established
         return Promise.reject(error);
@@ -124,7 +123,6 @@ export const connectToMCPServer = (
       connection.server.error = "";
       resolve(connection);
     } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       reject({ error: getSerialisableError(error), log });
     }
   });

@@ -8,7 +8,6 @@ export const fetchMCPToolsList = async (client: Client) => {
       ListToolsResultSchema,
     );
 
-    const autoApproveConfig: string[] = [];
     const tools = response.tools.map(
       ({
         /* Exclude mode as it is a prostgles-specific setting */
@@ -18,7 +17,6 @@ export const fetchMCPToolsList = async (client: Client) => {
       }) => ({
         ...tool,
         description: tool.description ?? "",
-        autoApprove: autoApproveConfig.includes(tool.name),
       }),
     );
     return tools;

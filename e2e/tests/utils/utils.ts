@@ -1021,9 +1021,14 @@ export const getDashboardUtils = (page: PageWIds) => {
   };
 };
 
-export const setPromptByText = async (page: PageWIds, text: string) => {
+export const setPromptByText = async (
+  page: PageWIds,
+  text: string,
+  closePopup = true,
+) => {
   await page.getByTestId("LLMChatOptions.Prompt").click();
   await page.locator(".SmartCard").getByText(text).first().click();
+  if (!closePopup) return;
   await page
     .getByTestId("LLMChatOptions.Prompt")
     .getByTestId("Popup.close")

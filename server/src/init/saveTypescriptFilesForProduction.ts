@@ -2,6 +2,14 @@ import { getRootDir } from "@src/electronConfig";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
+export const dashboardTypesContent = readFileSync(
+  join(__dirname, "..", "..", "..", "..", "..", "common", "DashboardTypes.ts"),
+  "utf-8",
+);
+if (!dashboardTypesContent) {
+  throw new Error("Failed to read DashboardTypes.ts");
+}
+
 /**
  * Electron builder strips out ts files in production builds, so we need to
  * save them as built js files.
@@ -9,15 +17,15 @@ import { join } from "path";
 export const saveTypescriptFilesForProduction = () => {
   if (process.env.NODE_ENV === "production") return; // Skip in production
   const commonDir = `${getRootDir()}/../common`;
-  const expectedContent = readFileSync(
-    `${commonDir}/DashboardTypes.ts`,
-    "utf-8",
-  );
-  saveTsAsStringValue({
-    variableName: "dashboardTypesContent",
-    content: expectedContent,
-    commonDir,
-  });
+  // const expectedContent = readFileSync(
+  //   `${commonDir}/DashboardTypes.ts`,
+  //   "utf-8",
+  // );
+  // saveTsAsStringValue({
+  //   variableName: "dashboardTypesContent",
+  //   content: expectedContent,
+  //   commonDir,
+  // });
 
   saveTsAsStringValue({
     variableName: "prostglesApiTypes",

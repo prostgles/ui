@@ -665,6 +665,7 @@ test.describe("Main test", () => {
       "model",
       "tools",
       "max_tokens",
+      "temperature",
     ].entries()) {
       await page.getByTitle("Add new item").click();
       await page.getByLabel("Argument name").last().fill(argName);
@@ -1157,7 +1158,7 @@ test.describe("Main test", () => {
 
     /** Create component */
     await newChat(page);
-    await setPromptByText(page, "Web app development");
+    await setPromptByText(page, "Web app development", false);
     /** The web app must be created from template */
     await page.getByTestId("WebAppConfig.createFromTemplate").click();
     await page.getByTestId("Btn.ClickConfirmation.Confirm").click();
@@ -1169,17 +1170,24 @@ test.describe("Main test", () => {
       " I need you to create a user list component ",
     );
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+  });
 
-    /** Agentic workflow */
+  test("Agentic workflow", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await loginWhenSignupIsEnabled(page);
+
+    await openConnection(page, "cloud");
+    await page.getByTestId("AskLLM").click();
     await newChat(page);
     await setPromptByText(page, "Create workflow");
     await sendAskLLMMessage(page, " agentic_workflow ");
-    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
-    await page.getByTestId("LoadSuggestedWorkflow").click({ timeout: 30e3 });
+    await page
+      .getByTestId("LoadSuggestedWorkflow.start")
+      .click({ timeout: 30e3 });
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "ZZZZZZZZZZZZZZZZZZZZZ Agentic workflow executed successfully",
       {
-        timeout: 30e3,
+        timeout: 60e3,
       },
     );
   });

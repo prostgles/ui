@@ -6,7 +6,10 @@ import type {
 } from "../ProstglesMCPServerTypes";
 import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import { runContainerWithProxyAccess } from "../../DockerSandbox/runContainerWithProxyAccess";
-import { createAgenticWorkflowContainer } from "./Prostgles/createAgenticWorkflowContainer";
+import {
+  createAgenticWorkflowContainer,
+  defineAgenticWorkflowTs,
+} from "./Prostgles/createAgenticWorkflowContainer";
 import { fetchTools } from "./Prostgles/fetchTools";
 
 const serverName = "prostgles-ui" as const;
@@ -77,9 +80,12 @@ const handler = {
                 if (containerResult.state !== "finished") {
                   const lastLog = containerResult.log.at(-1);
                   if (lastLog?.type === "error") {
-                    reject(lastLog);
+                    reject({ logs: lastLog.text, defineAgenticWorkflowTs });
                   } else {
-                    reject(containerResult.log);
+                    reject({
+                      logs: containerResult.log.map((l) => l.text).join("\n"),
+                      defineAgenticWorkflowTs,
+                    });
                   }
                 }
               })

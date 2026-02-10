@@ -1,4 +1,6 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
+import type { FilterItem } from "prostgles-types";
 import { useCallback, useMemo, useState } from "react";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
@@ -18,7 +20,8 @@ export const useLLMChat = (props: UseLLMChatProps) => {
   const chatsFilter = useMemo(() => {
     return {
       connection_id: { $in: [props.connectionId, null] },
-    };
+      "agent_info.$eq": null,
+    } satisfies FilterItem<DBSSchema["llm_chats"]>;
   }, [props.connectionId]);
   const [selectedChatId, setSelectedChat] = useState<number>();
   const { data: latestChats } = dbs.llm_chats.useSubscribe(chatsFilter, {

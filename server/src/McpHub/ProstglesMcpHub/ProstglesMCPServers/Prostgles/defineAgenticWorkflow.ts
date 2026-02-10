@@ -63,6 +63,12 @@ export type ToolDefinition = {
 export type DatabaseAccessDefinition =
   | {
       mode: "custom";
+      /**
+       * An sql statement that creates custom tables the agent will interact with.
+       * Permissions for these tables can be defined in `tablePermissions`.
+       * This is preferred over providing access to the entire database (run_commited_sql mode) for better security.
+       */
+      tableCreateStatements?: string;
       tablePermissions: Record<
         string,
         Partial<Record<"select" | "insert" | "update" | "delete", boolean>>
@@ -111,11 +117,13 @@ export type DefineAgenticWorkflow = <
 >(
   {
     name,
+    timeOutInSeconds,
     toolDefinitions,
     databaseAccessDefinitions,
     agentDefinitions,
   }: {
     name: string;
+    timeOutInSeconds: number;
     databaseAccessDefinitions?: DatabaseAccessDefinition;
     toolDefinitions?: ToolDefinitions;
     agentDefinitions: AgentDefinitions;
@@ -136,6 +144,7 @@ import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
 void defineAgenticWorkflow(
   {
     name: "Test Workflow",
+    timeOutInSeconds: 60,
     toolDefinitions: {
       fetchWebpage: {
         mcpServerName: "fetch",
@@ -165,6 +174,9 @@ void defineAgenticWorkflow(
 
  */
 
+export const END_OF_SCHEMA_PLACEHOLDER =
+  "export const END_OF_SCHEMA_PLACEHOLDER =";
+
 // import type { ProstglesDbTools } from "@common/prostglesMcp";
 // import { getProperty, type JSONB } from "prostgles-types";
 // export type ProxyDbCallData<
@@ -193,6 +205,7 @@ export type ProxyCallData =
     }
   | ProxyDbCallData;
 
+import { getSerialisableError } from "prostgles-types";
 export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   definitions,
   handler,
@@ -212,20 +225,21 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(args),
+      body: JSON.stringify(args.type === "db" ? args.params : args),
     });
-    const data = await result.json();
+    const resCopy = result.clone();
+    const data = await result.json().catch(() => resCopy.text());
     if (!result.ok) {
-      throw new Error(
-        (data as any)?.error || "Failed with statusText: " + result.statusText,
+      throw (
+        JSON.stringify(getSerialisableError(data)) ||
+        new Error("Failed with statusText: " + result.statusText)
       );
     }
     return data as any;
   };
 
-  await callMcpProxy({ type: "definitions", definitions });
-
   if (MODE === "definitions-only") {
+    await callMcpProxy({ type: "definitions", definitions });
     console.log(
       "Definitions sent to MCP proxy, exiting due to MODE=definitions-only",
     );

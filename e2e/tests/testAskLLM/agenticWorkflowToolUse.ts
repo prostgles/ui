@@ -6,10 +6,11 @@ export default defineAgenticWorkflow(
   ${JSON.stringify(
     {
       name: "Test Workflow",
+      timeOutInSeconds: 60,
       databaseAccessDefinitions: {
         mode: "custom",
         tablePermissions: {
-          users: { select: true },
+          users: { select: true, insert: true, update: true },
         },
       },
       toolDefinitions: {
@@ -21,11 +22,10 @@ export default defineAgenticWorkflow(
       agentDefinitions: {
         researcher: {
           prompt: "You are a research assistant. ",
+          modelName: "anthropic/claude-sonnet-4",
           outputSchema: {
-            type: {
-              summary: "string",
-              references: "string[]",
-            },
+            summary: "string",
+            references: { arrayOfType: { url: "string", title: "string" } },
           },
         },
       },
@@ -33,9 +33,16 @@ export default defineAgenticWorkflow(
     null,
     2,
   )},
-  async ({ researcher }) => {
-    const result = await researcher("Prostgles");
-    result.summary;
+  async ({ researcher }, dbHandler) => {
+    await dbHandler.insert("users", [{ username: "Prostgles", type: "from-agent" }]);
+    const start = Date.now();
+    dbHandler.find("users").then(users => {
+      users.forEach(async (user) => {
+        const result = await researcher("Prostgles"); 
+        const sinceStart = Date.now() - start;
+        dbHandler.update("users", { id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });
+      })
+    })
   },
 );
 `;

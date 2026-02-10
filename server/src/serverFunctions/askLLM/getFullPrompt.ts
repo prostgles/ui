@@ -7,12 +7,10 @@ import { statePrgl } from "@src/init/startProstgles";
 export const getFullPrompt = async ({
   prompt,
   schema,
-  dashboardTypesContent,
   connectionId,
 }: {
   prompt: string;
   schema: string;
-  dashboardTypesContent: string;
   connectionId: string;
 }) => {
   const connInfo = await connectionManager.getConnectionData(connectionId);

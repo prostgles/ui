@@ -1,6 +1,6 @@
 import { mdiAlert, mdiCheck } from "@mdi/js";
 import { omitKeys, pickKeys } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import { NavLink } from "react-router";
 import RTComp from "../dashboard/RTComp";
 import type { TestSelectors } from "../Testing";
@@ -13,6 +13,7 @@ import { Icon } from "./Icon/Icon";
 import { Label, type LabelProps } from "./Label";
 import Loading from "./Loader/Loading";
 import Popup from "./Popup/Popup";
+import { useOnErrorAlert } from "./AlertProvider";
 
 type ClickMessage = (
   | { err: any }
@@ -163,7 +164,7 @@ type BtnState = {
   showClickConfirmation?: boolean;
 };
 
-export default class Btn<HREF extends string | void = void> extends RTComp<
+class Btn<HREF extends string | void = void> extends RTComp<
   BtnProps<HREF>,
   BtnState
 > {
@@ -558,3 +559,26 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     );
   }
 }
+
+const BtnWrapped = <HREF extends string | void = void>(
+  allProps: BtnProps<HREF>,
+) => {
+  const { onClickPromise, ...props } = allProps;
+  const { onErrorAlert } = useOnErrorAlert();
+
+  const propsWithOnAlert = useMemo(() => {
+    if (!onClickPromise) return props;
+    return {
+      ...props,
+      onClickPromise: async (e) => {
+        await onErrorAlert(async () => {
+          await onClickPromise(e);
+        });
+      },
+    };
+  }, [onClickPromise, onErrorAlert, props]);
+
+  return <Btn {...(propsWithOnAlert as BtnProps<string>)} />;
+};
+
+export default BtnWrapped;

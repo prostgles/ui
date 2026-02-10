@@ -7,15 +7,38 @@ import type {
   McpProxyRequestContext,
 } from "../../../DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { runContainerWithProxyAccess } from "../../../DockerSandbox/runContainerWithProxyAccess";
-import type {
-  AgenticWorkflowDefinition,
-  ProxyCallData,
+import {
+  END_OF_SCHEMA_PLACEHOLDER,
+  type AgenticWorkflowDefinition,
+  type ProxyCallData,
 } from "./defineAgenticWorkflow";
 
-const defineAgenticWorkflowTs = readFileSync(
-  join(__dirname.replace("server/dist/", ""), "defineAgenticWorkflow.ts"),
+const defineAgenticWorkflowDirectory = join(
+  __dirname,
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
+  "src",
+  "McpHub",
+  "ProstglesMcpHub",
+  "ProstglesMCPServers",
+  "Prostgles",
+);
+export const defineAgenticWorkflowTs = readFileSync(
+  join(defineAgenticWorkflowDirectory, "defineAgenticWorkflow.ts"),
   "utf8",
 );
+export const defineAgenticWorkflowTsSchema = defineAgenticWorkflowTs.split(
+  END_OF_SCHEMA_PLACEHOLDER,
+)[0];
+
+if (!defineAgenticWorkflowTs || !defineAgenticWorkflowTsSchema) {
+  throw new Error("Failed to read defineAgenticWorkflow.ts");
+}
 
 export const createAgenticWorkflowContainer = async (
   dbs: DBS,
@@ -69,7 +92,14 @@ export const createAgenticWorkflowContainer = async (
             if (error !== undefined) {
               throw new Error("Invalid request data: " + error);
             }
-            mode.handler(data, ctx);
+            mode.handler(
+              {
+                ...data,
+                //@ts-expect-error
+                defineAgenticWorkflowTs,
+              },
+              ctx,
+            );
           },
         },
         ["/agent"]: {
@@ -109,6 +139,8 @@ export const createAgenticWorkflowContainer = async (
     },
     {
       networkMode: "bridge",
+      timeout:
+        mode.type === "full" ? mode.definition.timeOutInSeconds * 1000 : 30_000,
       files: {
         Dockerfile: `
           FROM node:18
@@ -120,33 +152,8 @@ export const createAgenticWorkflowContainer = async (
         `,
         "defineAgenticWorkflow.ts": defineAgenticWorkflowTs,
         "index.ts": workflowTs,
-        "package.json": `
-          {
-            "name": "agentic-workflow",
-            "version": "1.0.0",
-            "main": "index.js",
-            "scripts": {
-              "build": "tsc",
-              "start": "node index.js"
-            },
-            "dependencies": {
-              "@types/node": "^22.15.2",
-              "typescript": "^5.8.3"
-            }
-          }
-         `,
-        "tsconfig.json": `
-          {
-            "compilerOptions": {
-              "target": "ES2020",
-              "module": "CommonJS",
-              "strict": true,
-              "esModuleInterop": true,
-              "skipLibCheck": true,
-              "forceConsistentCasingInFileNames": true
-            }
-          }
-         `,
+        "package.json": packageJson,
+        "tsconfig.json": tsconfigJson,
       },
       environment: {
         MODE: mode.type,
@@ -154,3 +161,29 @@ export const createAgenticWorkflowContainer = async (
     },
   );
 };
+
+const packageJson = JSON.stringify({
+  name: "agentic-workflow",
+  version: "1.0.0",
+  main: "index.js",
+  scripts: {
+    build: "tsc",
+    start: "node index.js",
+  },
+  dependencies: {
+    "@types/node": "^22.15.2",
+    typescript: "^5.8.3",
+    "prostgles-types": "^4.0.208",
+  },
+});
+
+const tsconfigJson = JSON.stringify({
+  compilerOptions: {
+    target: "ES2020",
+    module: "CommonJS",
+    strict: true,
+    esModuleInterop: true,
+    skipLibCheck: true,
+    forceConsistentCasingInFileNames: true,
+  },
+});

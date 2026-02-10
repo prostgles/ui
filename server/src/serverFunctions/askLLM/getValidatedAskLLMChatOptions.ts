@@ -35,15 +35,16 @@ export const getValidatedAskLLMChatOptions = async ({
       },
     },
   } as Filter);
-  if (!llm_prompt_id) throw "Chat missing prompt";
   if (!llm_credential) throw "LLM credentials missing";
-  const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
-  if (!promptObj) throw "Prompt not found";
-  const { prompt } = promptObj;
+  let prompt = chat.agent_info?.prompt ?? "";
+  if (llm_prompt_id) {
+    const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
+    if (!promptObj) throw "Prompt not found";
+    ({ prompt } = promptObj);
+  }
 
   return {
     prompt,
-    promptObj,
     chat,
     llm_credential,
     llm_prompt_id,

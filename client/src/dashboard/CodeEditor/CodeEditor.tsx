@@ -105,6 +105,7 @@ export type LanguageConfig =
        * Must be unique for each model
        */
       modelFileName: string;
+      importedModels?: { [modelName: string]: string };
       tsLibraries?: TSLibrary[];
     }
   | {

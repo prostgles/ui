@@ -25,8 +25,8 @@
 } */
 
 .Marked ol {
-  list-style: none;
-  padding-left: 0;
+  /* list-style: none; */
+  padding-left: 1em;
 }
 
 /* Used to ensure the li marker does not appear above li item  

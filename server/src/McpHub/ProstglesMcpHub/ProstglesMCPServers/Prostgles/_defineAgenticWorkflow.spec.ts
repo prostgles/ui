@@ -7,6 +7,7 @@ void describe("defineAgenticWorkflow", async () => {
       void defineAgenticWorkflow(
         {
           name: "Test Workflow",
+          timeOutInSeconds: 60,
           toolDefinitions: {
             fetch_webpage: {
               mcpServerName: "fetch",

@@ -22,7 +22,11 @@ const enqueueAgentExecution = <T>(
 };
 
 export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
-  dbsFunctions: GeneratedFunctionSchema,
+  dbsFunctions: {
+    [K in keyof GeneratedFunctionSchema]: {
+      run: GeneratedFunctionSchema[K];
+    };
+  },
   { name, toolDefinitions, agentDefinitions }: Parameters<P>[0],
   {
     dbs,
@@ -86,6 +90,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
           name,
           user_id: userId,
           parent_chat_id: chatId,
+          connection_id: connectionId,
           agent_info: {
             prompt: [
               "You are part of an agentic workflow.",
@@ -127,7 +132,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
 
       let chatStatus = null as DBSSchema["llm_chats"]["status"];
 
-      await dbsFunctions.askLLM({
+      await dbsFunctions.askLLM.run({
         chatId: workflowChat.id,
         type: "new-message",
         userMessage: [

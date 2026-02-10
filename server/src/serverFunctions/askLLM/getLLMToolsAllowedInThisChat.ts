@@ -18,7 +18,6 @@ import { getPublishedMethodsTools } from "./prostglesLLMTools/getPublishedMethod
 export type GetLLMToolsArgs = {
   userType: string;
   chat: DBSSchema["llm_chats"];
-  prompt: DBSSchema["llm_prompts"];
   dbs: DBS;
   connectionId: string;
   clientReq: AuthClientRequest;
@@ -35,7 +34,6 @@ export const getLLMToolsAllowedInThisChat = async ({
   dbs,
   chat,
   connectionId,
-  prompt,
   clientReq,
 }: GetLLMToolsArgs): Promise<undefined | AllowedChatTool[]> => {
   const { id: chatId } = chat;
@@ -79,7 +77,6 @@ export const getLLMToolsAllowedInThisChat = async ({
     userType,
     dbs,
     chat,
-    prompt,
     allowedMcpToolsWithInfo,
     clientReq,
   });

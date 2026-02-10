@@ -48,7 +48,9 @@ export const ToolUseChatMessageResult = (
             toolUseResult={toolUseResult}
           />
         )}
-        {toolCallError && <ErrorComponent error={toolCallError} />}
+        {toolCallError && !ProstglesTool?.showsError && (
+          <ErrorComponent error={toolCallError} />
+        )}
       </FlexCol>
       {anchorEl && !displayMode && <ToolUseChatMessageJSONData {...props} />}
     </>

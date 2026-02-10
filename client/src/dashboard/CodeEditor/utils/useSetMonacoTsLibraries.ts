@@ -20,7 +20,7 @@ export const useSetMonacoTsLibraries = (
 
   useEffectDeep(() => {
     if (!monaco || !editor || languageObj?.lang !== "typescript") return;
-    const { tsLibraries, modelFileName } = languageObj;
+    const { tsLibraries, modelFileName, importedModels = {} } = languageObj;
     if (!tsLibraries) return;
     monaco.languages.typescript.typescriptDefaults.setExtraLibs(tsLibraries);
     /* 
@@ -29,12 +29,27 @@ export const useSetMonacoTsLibraries = (
       */
     // monaco.editor.getModels().forEach(model => model.dispose());
 
-    const modelUri = monaco.Uri.parse(`file:///${modelFileName}.ts`);
-    const existingModel = monaco.editor
-      .getModels()
-      .find((m) => m.uri.path === modelUri.path);
-    const model =
-      existingModel ?? monaco.editor.createModel(value, "typescript", modelUri);
+    const getExistingModelOrCreate = (fileName: string, content: string) => {
+      const modelUri = monaco.Uri.file(fileName);
+      const existingModel = monaco.editor
+        .getModels()
+        .find((m) => m.uri.path === modelUri.path);
+      return (
+        existingModel ??
+        monaco.editor.createModel(content, "typescript", modelUri)
+      );
+    };
+    Object.entries(importedModels).forEach(([modelName, modelContent]) => {
+      getExistingModelOrCreate(modelName, modelContent);
+    });
+
+    const model = getExistingModelOrCreate(modelFileName, value);
+    // const modelUri = monaco.Uri.parse(`file:///${modelFileName}`);
+    // const existingModel = monaco.editor
+    //   .getModels()
+    //   .find((m) => m.uri.path === modelUri.path);
+    // const model =
+    //   existingModel ?? monaco.editor.createModel(value, "typescript", modelUri);
 
     if (!getIsMounted()) return;
     try {
@@ -43,7 +58,7 @@ export const useSetMonacoTsLibraries = (
       console.error(e);
     }
     onTSLibraryChange?.(tsLibraries);
-  }, [editor, monaco, languageObj, onTSLibraryChange]);
+  }, [editor, monaco, languageObj, onTSLibraryChange, getIsMounted]);
 };
 
 const setTSoptions = (monaco: MonacoEditorImport) => {

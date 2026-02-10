@@ -73,13 +73,11 @@ export const getUserServerFunctions = async (
       input: {
         prompt: "string",
         schema: "string",
-        dashboardTypesContent: "string",
         connectionId: "string",
       },
-      run({ schema, dashboardTypesContent, prompt, connectionId }) {
+      run({ schema, prompt, connectionId }) {
         return getFullPrompt({
           schema,
-          dashboardTypesContent,
           prompt,
           connectionId,
         });
@@ -224,16 +222,10 @@ export const getUserServerFunctions = async (
         if (!chat || chat.user_id !== user.id) throw "Invalid chat";
         const connectionId = chat.connection_id;
         if (!connectionId) throw "Chat connection_id not found";
-        if (!chat.llm_prompt_id) throw "Chat prompt_id not found";
-        const prompt = await dbs.llm_prompts.findOne({
-          id: chat.llm_prompt_id,
-        });
-        if (!prompt) throw "Chat prompt not found";
         const allowedTools = await getLLMToolsAllowedInThisChat({
           chat,
           userType: user.type,
           dbs,
-          prompt,
           connectionId,
           clientReq,
         });

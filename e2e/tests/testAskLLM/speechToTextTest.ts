@@ -23,6 +23,7 @@ export const speechToTextTest = async (page: PageWIds) => {
     page.locator(
       getDataKey("speechToText") + " " + getDataKey("service-status"),
     ),
+    /** Flaky. gets stuck on "starting". Due to desktop/ui clash? */
   ).toContainText("running", { timeout: 5 * 60_000 });
 
   // Used to debug

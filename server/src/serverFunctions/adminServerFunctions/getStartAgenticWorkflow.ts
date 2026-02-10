@@ -4,15 +4,69 @@ import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { createAgenticWorkflowContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createAgenticWorkflowContainer";
 import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 
+const propertyTypeBasic = {
+  enum: [
+    "string",
+    "number",
+    "boolean",
+    "unknown",
+    "string[]",
+    "number[]",
+    "boolean[]",
+    "unknown[]",
+  ],
+} as const;
+
+const PropertyTypeOptional = {
+  type: {
+    optional: { type: "boolean", optional: true },
+    type: {
+      enum: [
+        "string",
+        "number",
+        "boolean",
+        "unknown",
+        "string[]",
+        "number[]",
+        "boolean[]",
+        "unknown[]",
+      ],
+    },
+  },
+} as const;
+
+const recordType = {
+  record: {
+    values: {
+      oneOf: [
+        propertyTypeBasic,
+        PropertyTypeOptional,
+        {
+          type: {
+            optional: { type: "boolean", optional: true },
+            arrayOfType: {
+              record: {
+                values: { oneOf: [propertyTypeBasic, PropertyTypeOptional] },
+              },
+            },
+          },
+        },
+      ],
+    },
+  },
+} as const;
+
 const startAgenticWorkflowSchema = {
   chatId: "integer",
   name: "string",
   workflowTs: "string",
+  timeOutInSeconds: "number",
   databaseAccessDefinitions: {
     optional: true,
     oneOfType: [
       {
         mode: { enum: ["custom"] },
+        tableCreateStatements: { type: "string", optional: true },
         tablePermissions: {
           record: {
             partial: true,
@@ -56,43 +110,7 @@ const startAgenticWorkflowSchema = {
           },
           maxTokens: { type: "number", optional: true },
           temperature: { type: "number", optional: true },
-          outputSchema: {
-            record: {
-              values: {
-                oneOf: [
-                  {
-                    enum: [
-                      "string",
-                      "number",
-                      "boolean",
-                      "unknown",
-                      "string[]",
-                      "number[]",
-                      "boolean[]",
-                      "unknown[]",
-                    ],
-                  },
-                  {
-                    type: {
-                      optional: { type: "boolean", optional: true },
-                      type: {
-                        enum: [
-                          "string",
-                          "number",
-                          "boolean",
-                          "unknown",
-                          "string[]",
-                          "number[]",
-                          "boolean[]",
-                          "unknown[]",
-                        ],
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
+          outputSchema: recordType,
         },
       },
     },
@@ -108,6 +126,7 @@ export const getStartAgenticWorkflow = (
       {
         chatId,
         name,
+        timeOutInSeconds,
         agentDefinitions,
         toolDefinitions,
         databaseAccessDefinitions,
@@ -127,12 +146,17 @@ export const getStartAgenticWorkflow = (
         throw new Error(`Chat with id ${chatId} does not have a connection_id`);
       }
 
-      const { clientMethods } = await getClientDBHandlers(undefined);
-      const dbsMethods = clientMethods as unknown as GeneratedFunctionSchema;
+      const { clientMethods, clientSql } = await getClientDBHandlers(undefined);
+      const dbsMethods = clientMethods as unknown as {
+        [K in keyof GeneratedFunctionSchema]: {
+          run: GeneratedFunctionSchema[K];
+        };
+      };
       const { agentHandlers } = await createAgentHandlers(
         dbsMethods,
         {
           name,
+          timeOutInSeconds,
           agentDefinitions,
           toolDefinitions,
           databaseAccessDefinitions,
@@ -144,13 +168,21 @@ export const getStartAgenticWorkflow = (
           connectionId: connection_id,
         },
       );
-      await createAgenticWorkflowContainer(
+
+      if (
+        databaseAccessDefinitions?.mode === "custom" &&
+        databaseAccessDefinitions.tableCreateStatements
+      ) {
+        await clientSql(databaseAccessDefinitions.tableCreateStatements);
+      }
+      const res = await createAgenticWorkflowContainer(
         dbs,
         { user_id: user.id, workflowTs },
         {
           type: "full",
           definition: {
             name,
+            timeOutInSeconds,
             agentDefinitions,
             toolDefinitions,
             databaseAccessDefinitions,
@@ -185,9 +217,8 @@ export const getStartAgenticWorkflow = (
           },
         },
       );
-      // const { clientMethods } = await getClientDBHandlers(undefined);
-      // const dbsMethods = clientMethods as unknown as GeneratedFunctionSchema;
-      // dbsMethods.askLLM();
+
+      return res;
     },
   });
 };

@@ -90,8 +90,8 @@ export const useCodeEditorTsTypes = (
          */
         modelFileName:
           methodOpts ?
-            `method_${connectionId}${methodOpts.id}`
-          : `onMount_${connectionId}`,
+            `method_${connectionId}${methodOpts.id}.ts`
+          : `onMount_${connectionId}.ts`,
       };
     }
   }, [dbsMethods, connectionId, dbKey, tables, dbs, dbSchemaTypes, methodOpts]);

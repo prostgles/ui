@@ -33,6 +33,10 @@ cp ./server/package.json ./ui/server/
 cp ./server/package-lock.json ./ui/server/
 
 cd ./ui/server/
+
+# Cleanup services
+# rm -rf /src/ServiceManager/services
+
 npm run build
 cd ../../
 

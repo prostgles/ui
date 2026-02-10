@@ -55,25 +55,24 @@ export const getAllowedDBToolSchemas = (
 
   const sqlTools = getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"])
     .map(([toolName, { description, schema }]) => {
+      const tool: DBTool = {
+        name: getProstglesMCPFullToolName("prostgles-db", toolName),
+        type: "prostgles-db",
+        tool_name: toolName,
+        description,
+        auto_approve: Boolean(chatDBAccess.auto_approve),
+        schema,
+        mode: null,
+      };
+
       if (
+        /** Allow all tools */
+        chatDBAccess.Mode === "Run commited SQL" ||
+        /** Allow read only tools */
         toolName === "execute_sql_with_rollback" ||
-        toolName === "execute_sql_with_commit"
+        toolName === "select"
       ) {
-        const tool: DBTool = {
-          name: getProstglesMCPFullToolName("prostgles-db", toolName),
-          type: "prostgles-db",
-          tool_name: toolName,
-          description,
-          auto_approve: Boolean(chatDBAccess.auto_approve),
-          schema,
-          mode: null,
-        };
-        const isAllowed =
-          chatDBAccess.Mode === "Run commited SQL" ||
-          toolName === "execute_sql_with_rollback";
-        if (isAllowed) {
-          return tool;
-        }
+        return tool;
       }
     })
     .filter(isDefined);

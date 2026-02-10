@@ -1,7 +1,7 @@
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import { mdiPlus } from "@mdi/js";
+import { mdiPlus, mdiRobot } from "@mdi/js";
 import React from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
@@ -46,6 +46,7 @@ export const AskLLMChatHeader = (
             latestChats?.map((c) => ({
               key: c.id,
               label: c.name,
+              iconPath: c.agent_info ? mdiRobot : undefined,
               subLabel: getPGIntervalAsText(c.created_ago, true, true, true),
             })) ?? []
           }

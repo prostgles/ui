@@ -27,6 +27,7 @@ export const ProstglesMCPToolsWithUI = {
   [getMCPFullToolName("prostgles-ui", "suggest_agentic_workflow") as string]: {
     component: LoadSuggestedWorkflow,
     displayMode: "full",
+    showsError: true,
   },
   [getMCPFullToolName("prostgles-ui", "ask_user_questions") as string]: {
     component: AskAnswerQuestions,
@@ -64,6 +65,8 @@ export const ProstglesMCPToolsWithUI = {
      * - full: will render component and a side button to show source JSON in popup
      */
     displayMode: "full" | "inline";
+    /* whether the tool component itself shows errors or if errors should be shown by the parent component */
+    showsError?: boolean;
   }
 >;
 

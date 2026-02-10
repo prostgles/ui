@@ -1,4 +1,3 @@
-import { dashboardTypesContent } from "@common/dashboardTypesContent";
 import {
   filterArr,
   filterArrInverse,
@@ -88,7 +87,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     clientReq,
   } = args;
 
-  const { chat, prompt, promptObj, getChat, llm_credential, llm_prompt_id } =
+  const { chat, prompt, getChat, llm_credential, llm_prompt_id } =
     await getValidatedAskLLMChatOptions(args);
   const getPastMessages = () =>
     dbs.llm_messages.find({ chat_id: chatId }, { orderBy: { created: 1 } });
@@ -106,11 +105,13 @@ export const askLLM = async (args: AskLLMArgs) => {
         dbs,
         chat,
         connectionId,
-        prompt: promptObj,
         clientReq,
       }),
   );
   if (hasError) {
+    if (chat.agent_info) {
+      throw error;
+    }
     console.error("LLM Tools fetch error:", error);
   }
 
@@ -305,7 +306,6 @@ export const askLLM = async (args: AskLLMArgs) => {
     const promptWithContext = await getFullPrompt({
       prompt,
       schema,
-      dashboardTypesContent,
       connectionId,
     });
 

@@ -4,11 +4,13 @@ import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/Mona
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
+import { MonacoLogRenderer } from "@components/MonacoLogRenderer/MonacoLogRenderer";
 import { mdiLanguageTypescript } from "@mdi/js";
-import React from "react";
+import React, { useMemo, useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useJSONBParsedData } from "./common/useJSONBParsedData";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import Popup from "@components/Popup/Popup";
 
 export const LoadSuggestedWorkflow = ({
   message,
@@ -32,29 +34,47 @@ export const LoadSuggestedWorkflow = ({
     );
   }
   const { data: inputData } = inputValidation;
+  const toolUseResultJson = useMemo(() => {
+    if (!toolUseResult) return;
+    const { content } = toolUseResult.toolUseResultMessage;
+    const contentStr =
+      typeof content === "string" ? content
+      : content[0]?.type === "text" ? content[0].text
+      : undefined;
+    if (contentStr) {
+      try {
+        return {
+          isError: toolUseResult.toolUseResultMessage.is_error,
+          result: JSON.parse(contentStr),
+        };
+      } catch (e) {
+        console.error("Error parsing tool use result content as JSON", e);
+        return;
+      }
+    }
+  }, [toolUseResult]);
+
+  const [workflowResult, setWorkflowResult] = useState<any>();
 
   return (
     <FlexCol className="w-full">
+      {workflowResult && (
+        <Popup title={"Workflow finished"}>
+          <MonacoCodeInMarkdown
+            codeHeader={undefined}
+            codeString={JSON.stringify(workflowResult, null, 2)}
+            language="json"
+            loadedSuggestions={undefined}
+            sqlHandler={undefined}
+          />
+        </Popup>
+      )}
       <FlexCol className="rounded b b-action o-auto p-1">
         {/* <DatabaseAccessPermissions {...dbAccess} />
         <HeaderList
           title="MCP Tools"
           items={data.allowed_mcp_tool_names}
           iconPath={mdiTools}
-        /> */}
-        {/* <MonacoCodeInMarkdown
-          key={"agent_definitions"}
-          className="f-1 h-full"
-          language={"json"}
-          sqlHandler={undefined}
-          codeHeader={() => (
-            <FlexRow>
-              <Icon path={mdiLanguageTypescript} className="mr-p5" />
-              <div>Agent Definitions</div>
-            </FlexRow>
-          )}
-          loadedSuggestions={undefined}
-          codeString={JSON.stringify(data.agent_definitions, null, 2)}
         /> */}
         <MonacoCodeInMarkdown
           key={"workflow_function_definition"}
@@ -70,6 +90,12 @@ export const LoadSuggestedWorkflow = ({
           loadedSuggestions={undefined}
           codeString={inputData.workflow_function_definition}
         />
+        {toolUseResultJson?.isError && (
+          <MonacoLogRenderer
+            label="Error"
+            logs={toolUseResultJson.result.logs}
+          />
+        )}
       </FlexCol>
       <Btn
         variant="filled"
@@ -77,25 +103,28 @@ export const LoadSuggestedWorkflow = ({
         disabledInfo={
           !startAgenticWorkflow ?
             "Starting agentic workflows is not allowed/available"
-          : !toolUseResult ?
+          : !toolUseResultJson ?
             "Validating workflow"
-          : toolUseResult.toolUseResultMessage.is_error ?
+          : toolUseResultJson.isError ?
             "Workflow validation failed"
           : undefined
         }
-        data-command="LoadSuggestedWorkflow"
+        data-command="LoadSuggestedWorkflow.start"
         onClickPromise={async () => {
-          const { content } = toolUseResult?.toolUseResultMessage || {};
-          const contentStr =
-            typeof content === "string" ? content
-            : content?.[0]?.type === "text" ? content[0].text
-            : undefined;
-          const contentJson = contentStr ? JSON.parse(contentStr) : {};
-          await startAgenticWorkflow!({
+          const res = await startAgenticWorkflow!({
             chatId,
             workflowTs: inputData.workflow_function_definition,
-            ...contentJson,
+            ...toolUseResultJson?.result,
           });
+
+          console.log(res);
+          if (res.state !== "finished") {
+            throw new Error(
+              `Agentic workflow container did not finish successfully. Logs: ${res.log.map((l) => l.text).join("\n")}`,
+            );
+          } else {
+            setWorkflowResult(res);
+          }
         }}
       >
         Start workflow

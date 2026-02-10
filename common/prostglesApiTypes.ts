@@ -38,11 +38,11 @@ export const prostglesApiTypes = `export type ViewHandler<TD extends AnyObject =
     /**
      * Retrieves a list of matching records from the view/table and subscribes to changes
      */
-    subscribe: <P extends SubscribeParams<TD, S>>(filter: FullFilter<TD, S>, params: P, onData: SubscribeCallback<SelectReturnType<S, P, TD, true>>, onError?: SubscribeOnError) => Promise<SubscriptionHandler>;
+    subscribe: <P extends SubscribeParams<TD, S>>(filter: FullFilter<TD, S>, params: P, onData: SubscribeCallback<SelectReturnType<S, P, TD, true>>) => Promise<SubscriptionHandler>;
     /**
      * Retrieves first matching record from the view/table and subscribes to changes
      */
-    subscribeOne: <P extends SubscribeParams<TD, S>>(filter: FullFilter<TD, S>, params: P, onData: SubscribeOneCallback<SelectReturnType<S, P, TD, false> | undefined>, onError?: SubscribeOnError) => Promise<SubscriptionHandler>;
+    subscribeOne: <P extends SubscribeParams<TD, S>>(filter: FullFilter<TD, S>, params: P, onData: SubscribeOneCallback<SelectReturnType<S, P, TD, false> | undefined>) => Promise<SubscriptionHandler>;
     /**
      * Returns the number of rows that match the filter
      */

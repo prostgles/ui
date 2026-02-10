@@ -83,7 +83,10 @@ export const setupLLM = async (dbs: DBS) => {
           options: {
             max_tokens: 18_000,
             mcp_server_tools: {
-              "prostgles-ui": ["suggest_agentic_workflow"],
+              "prostgles-ui": [
+                "suggest_agentic_workflow",
+                "ask_user_questions",
+              ],
             },
           },
           prompt: [

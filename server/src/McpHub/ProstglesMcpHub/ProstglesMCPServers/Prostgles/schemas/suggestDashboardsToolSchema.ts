@@ -1,5 +1,5 @@
-import { dashboardTypesContent } from "@common/dashboardTypesContent";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { dashboardTypesContent } from "@src/init/saveTypescriptFilesForProduction";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 

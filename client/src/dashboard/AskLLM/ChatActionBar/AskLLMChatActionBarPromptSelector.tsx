@@ -1,4 +1,3 @@
-import { dashboardTypesContent } from "@common/dashboardTypesContent";
 import type { DBSSchema } from "@common/publishUtils";
 import { useOnErrorAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
@@ -47,7 +46,6 @@ export const AskLLMChatActionBarPromptSelector = (
       dbsMethods.getFullPrompt?.({
         prompt: prompt.prompt,
         schema: dbSchemaForPrompt,
-        dashboardTypesContent,
         connectionId,
       }) || prompt.prompt
     );
