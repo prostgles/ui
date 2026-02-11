@@ -10,6 +10,7 @@ trap 'kill 0' EXIT
 npm i --no-audit
 
 cd server 
+npm run build
 npm run dev &
 
 cd ../client 

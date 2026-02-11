@@ -1,16 +1,34 @@
-import { getRootDir } from "@src/electronConfig";
+import { connectionManager } from "@src/index";
 import { copyFile, mkdir, readdir, readFile, rm, writeFile } from "fs/promises";
 import { glob } from "glob";
 import { join } from "path";
 import { createServerFunctionWithContext } from "prostgles-server";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { buildWebApp } from "./webApp/buildWebApp";
+import { getReactComponents } from "./webApp/getReactComponents";
+import { getTemplatedWebAppConnection } from "./webApp/getTemplatedWebAppConnection";
+import { getValidatedWebAppPath } from "./webApp/getValidatedWebAppPath";
 import { testWebApp } from "./webApp/testWebApp";
 import { writeWebAppFiles } from "./webApp/writeWebAppFiles";
-import { connectionManager } from "@src/index";
-import { getTemplatedWebAppConnection } from "./webApp/getTemplatedWebAppConnection";
-import { getReactComponents } from "./webApp/getReactComponents";
-import { getValidatedWebAppPath } from "./webApp/getValidatedWebAppPath";
+import { readdirSync } from "fs";
+
+/** Copy template files over */
+const templateDir = join(
+  // getRootDir(),
+  __dirname,
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
+  "src",
+  "ServiceManager",
+  "services",
+  "frontendDev",
+  "src",
+);
+
+console.log("Template dir:", templateDir, readdirSync(templateDir));
 
 export const getWebAppServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -47,15 +65,6 @@ export const getWebAppServerFunctions = (
         if (existingFiles.length > 0) {
           throw "Web app directory is not empty";
         }
-        /** Copy template files over */
-        const templateDir = join(
-          getRootDir(),
-          "src",
-          "ServiceManager",
-          "services",
-          "frontendDev",
-          "src",
-        );
 
         await copyFolder(templateDir, connection.web_app_directory);
         if (connection.port !== null) {

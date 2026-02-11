@@ -91,7 +91,7 @@ export const WebAppConfigSetup = ({
         type="integer"
         label={"Port"}
         value={port || undefined}
-        hint={`Used ports: ${usedPorts?.filter((p) => p !== port).join(", ")}`}
+        hint={`Used ports: ${usedPorts?.filter((p) => p && p !== port).join(", ")}`}
         onChange={(newPort) => {
           void onErrorAlert(async () => {
             await dbs.connections.update(
