@@ -36,9 +36,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     askLLM,
     stopAskLLM,
   } = props;
-  const prgl = usePrgl();
   const { tables, db, user, connectionId, connection, dbs, methods, sql } =
-    prgl;
+    usePrgl();
   const chatState = useLLMChat({
     ...setupState,
     loadedSuggestions,
@@ -160,13 +159,10 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           {prompt && (
             <AskLLMToolApprover
               connection={connection}
-              dbs={dbs}
               activeChat={activeChat}
               messages={llmMessages ?? []}
               methods={methods}
               sendQuery={sendQuery}
-              db={db}
-              prompt={prompt}
             />
           )}
         </FlexCol>

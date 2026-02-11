@@ -123,6 +123,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
                   tool_id: id,
                   server_name,
                   server_config_id: configId,
+                  auto_approve: true, // TODO: make approvable in UI
                 } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
               }),
             )

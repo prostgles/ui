@@ -11,6 +11,13 @@ cd ..
 
 rm -rf ./ui/*
 
+# Cleanup old builds
+# to preview: git clean -ndX
+cd server 
+git clean -fdx
+cd ..
+
+
 mkdir -p ./ui/server/src
 mkdir -p ./ui/server/dist
 mkdir -p ./ui/server/connection_dbo
@@ -33,9 +40,6 @@ cp ./server/package.json ./ui/server/
 cp ./server/package-lock.json ./ui/server/
 
 cd ./ui/server/
-
-# Cleanup services
-# rm -rf /src/ServiceManager/services
 
 npm run build
 cd ../../

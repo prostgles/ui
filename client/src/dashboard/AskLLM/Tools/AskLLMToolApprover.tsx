@@ -1,4 +1,3 @@
-import type { DBHandlerClient } from "prostgles-client";
 import React, { useCallback, useMemo } from "react";
 
 import {
@@ -10,18 +9,15 @@ import { Marked } from "@components/Chat/Marked";
 import { FlexCol, FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { Prgl } from "../../../App";
 import { isEmpty } from "../../../utils/utils";
-import type { DBS } from "../../Dashboard/DBS";
 import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
 import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
 import { useLLMToolsApprover, type ToolApproval } from "./useLLMToolsApprover";
 
 export type AskLLMToolsProps = {
-  dbs: DBS;
-  db: DBHandlerClient;
   activeChat: DBSSchema["llm_chats"];
-  prompt: DBSSchema["llm_prompts"];
   messages: DBSSchema["llm_messages"][];
   sendQuery: (
     msg: DBSSchema["llm_messages"]["message"] | undefined,
@@ -30,7 +26,8 @@ export type AskLLMToolsProps = {
 } & Pick<Prgl, "methods" | "connection">;
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
-  const { dbs, activeChat } = props;
+  const { dbs } = usePrglCore();
+  const { activeChat } = props;
   const activeChatId = activeChat.id;
   const [mustApprove, setMustApprove] = React.useState<
     {
@@ -72,6 +69,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                     auto_approve,
                   },
                 );
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               } else if (req.type === "prostgles-db") {
                 await dbs.llm_chats.update(
                   {
