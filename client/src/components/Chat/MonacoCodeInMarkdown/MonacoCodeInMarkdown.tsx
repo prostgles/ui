@@ -103,7 +103,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
       >
         <MonacoEditor
           key={codeString}
-          className={fullscreen ? "f-1" : "f-1"}
+          className={"f-1"}
           loadedSuggestions={loadedSuggestions}
           value={codeString}
           language={LANGUAGE_FALLBACK.get(language) ?? language}

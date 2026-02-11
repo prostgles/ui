@@ -41,6 +41,10 @@ export const callMCPServerTool = async (
     if (!chat) {
       throw new Error("Chat not found");
     }
+    const { connection_id } = chat;
+    if (!connection_id) {
+      throw new Error(`Chat with id ${chat_id} does not have a connection_id`);
+    }
     const chatAllowedMCPTool = await dbs.llm_chats_allowed_mcp_tools.findOne({
       chat_id,
       $existsJoined: {
@@ -58,7 +62,8 @@ export const callMCPServerTool = async (
     if (prostglesMcp) {
       const prglMcpHub = await getProstglesMcpHub(dbs);
       return prglMcpHub.callTool(serverName, toolName, toolArguments, {
-        chat_id,
+        chat,
+        connection_id,
         user_id: user.id,
         clientReq,
       });

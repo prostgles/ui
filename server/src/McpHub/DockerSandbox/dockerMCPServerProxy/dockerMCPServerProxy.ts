@@ -72,7 +72,7 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
 
   app.post(DB_ROUTE, dbRequestHandler);
 
-  const dockerProxyRouter: RequestHandler = (req, res, next) => {
+  const dockerProxyRouter: RequestHandler = async (req, res, next) => {
     const authContext = res.locals.authContext as ContainerProxyContext;
     const { dbPermissions, sid_token, requestHandlers } = authContext;
 
@@ -87,7 +87,11 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
       });
     }
     const { handler } = matchedRequestHandler[1];
-    handler({ dbPermissions, sid_token }, req, res, next);
+    try {
+      await handler({ dbPermissions, sid_token }, req, res, next);
+    } catch (error) {
+      return res.status(500).json(getSerialisableError(error));
+    }
   };
   upsertNamedExpressMiddleware(
     app,

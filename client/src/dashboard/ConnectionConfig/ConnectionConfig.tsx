@@ -136,18 +136,18 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           label: t.ConnectionConfig["API"],
           listProps: dataCommand("config.api"),
           leftIconPath: mdiApplicationBracesOutline,
-          disabledText:
-            disabledText ||
-            (isElectron ? "Not available for desktop" : undefined),
+          disabledText: disabledText,
+          //  ||
+          // (isElectron ? "Not available for desktop" : undefined),
           content: <APIDetails {...prgl} />,
         },
         webApp: {
           label: "Web App",
           listProps: dataCommand("config.webApp"),
           leftIconPath: mdiApplicationBracketsOutline,
-          disabledText:
-            disabledText ||
-            (isElectron ? "Not available for desktop" : undefined),
+          disabledText: disabledText,
+          // ||
+          // (isElectron ? "Not available for desktop" : undefined),
           content: <WebAppConfig />,
         },
         security: {

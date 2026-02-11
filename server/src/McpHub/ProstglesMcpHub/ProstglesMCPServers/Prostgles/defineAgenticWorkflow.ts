@@ -82,7 +82,7 @@ type Select = "*" | Record<string, 1 | 0>;
 export type DatabaseHandler = {
   runSQL: (
     sql: string,
-    params?: any,
+    params?: Record<string, any> | any[],
     timeout?: number,
   ) => Promise<{ rows: any[]; columns: string[] }>;
   find: (
@@ -108,12 +108,44 @@ export type DatabaseHandler = {
   ) => Promise<void | AnyObject[]>;
 };
 
+type UserInputBase<T> = T & {
+  title: string;
+  optional?: boolean;
+};
+
+export type UserInputItem =
+  | UserInputBase<{
+      type: "table-filter" | "table-column";
+      tableName: string;
+    }>
+  | UserInputBase<{
+      type: "table-name" | "table-and-column";
+    }>
+  | UserInputBase<{
+      type: "custom";
+      dataType: "string" | "number" | "boolean" | "Date";
+    }>;
+
+export type UserInputOutputMapping = {
+  "table-filter": Record<string, any>;
+  "table-and-column": { tableName: string; columnName: string };
+  "table-name": string;
+  "table-column": string;
+  custom: unknown;
+};
+
+export type ValueOfUserInput<UserInput extends Record<string, UserInputItem>> =
+  {
+    [InputName in keyof UserInput]?: UserInputOutputMapping[UserInput[InputName]["type"]];
+  };
+
 export type DefineAgenticWorkflow = <
   ToolDefinitions extends Record<string, ToolDefinition>,
   AgentDefinitions extends Record<
     string,
     AgentDefinition<(keyof ToolDefinitions & string)[]>
   >,
+  UserInput extends Record<string, UserInputItem>,
 >(
   {
     name,
@@ -121,9 +153,11 @@ export type DefineAgenticWorkflow = <
     toolDefinitions,
     databaseAccessDefinitions,
     agentDefinitions,
+    userInput,
   }: {
     name: string;
     timeOutInSeconds: number;
+    userInput?: UserInput;
     databaseAccessDefinitions?: DatabaseAccessDefinition;
     toolDefinitions?: ToolDefinitions;
     agentDefinitions: AgentDefinitions;
@@ -135,6 +169,7 @@ export type DefineAgenticWorkflow = <
       ) => Promise<ParseSchema<AgentDefinitions[AgentName]["outputSchema"]>>;
     },
     databaseHandler: DatabaseHandler,
+    userInputValues: ValueOfUserInput<UserInput>,
   ) => Promise<void>,
 ) => void | Promise<void>;
 
@@ -210,10 +245,16 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   definitions,
   handler,
 ) => {
-  const { DOCKER_MCP_ENDPOINT, MODE } = process.env;
+  const { DOCKER_MCP_ENDPOINT, MODE, USER_INPUT } = process.env;
   if (!DOCKER_MCP_ENDPOINT) {
     throw new Error("DOCKER_MCP_ENDPOINT environment variable is not set");
   }
+
+  if (!USER_INPUT) {
+    throw new Error("USER_INPUT environment variable is not set");
+  }
+
+  const userInput = JSON.parse(USER_INPUT);
 
   const callMcpProxy = async (args: ProxyCallData) => {
     const route =
@@ -392,5 +433,5 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
     },
   });
 
-  return handler(agentHandlersProxy, dbHandlerProxy);
+  return handler(agentHandlersProxy, dbHandlerProxy, userInput);
 };

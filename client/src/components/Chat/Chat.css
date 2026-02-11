@@ -30,8 +30,9 @@
   border: none;
   font-size: 16px;
   field-sizing: content;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
 }
 
 .chat-container.chat-component .send-wrapper button {
@@ -76,6 +77,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  /** Fill width */
+  align-self: stretch;
 }
 .chat-container.chat-component .message:not(.incoming) {
   margin-left: auto;

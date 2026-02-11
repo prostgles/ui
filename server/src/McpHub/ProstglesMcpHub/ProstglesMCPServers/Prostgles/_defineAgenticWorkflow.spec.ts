@@ -27,17 +27,30 @@ void describe("defineAgenticWorkflow", async () => {
               },
             },
           },
+          userInput: {
+            test_input: {
+              title: "Test Input",
+              type: "table-filter",
+              tableName: "users",
+            },
+          },
         },
-        async ({
-          researcher,
-          //@ts-expect-error
-          invalid,
-        }) => {
+        async (
+          {
+            researcher,
+            //@ts-expect-error
+            invalid,
+          },
+          dbHandler,
+          { test_input },
+        ) => {
           const result = await researcher("Prostgles");
           result.summary satisfies string;
 
           // @ts-expect-error
           result.invalid;
+
+          const result2 = await researcher(test_input?.tableName);
         },
       );
     };

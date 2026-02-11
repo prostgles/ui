@@ -1,16 +1,15 @@
+import { isObject } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
 import { mdiArrowLeft } from "@mdi/js";
 import React, { useMemo } from "react";
-import { isObject } from "@common/publishUtils";
+import { useConnectionConfigSearchParams } from "../dashboard/ConnectionConfig/useConnectionConfigSearchParams";
 import type { DeltaOf, DeltaOfData } from "../dashboard/RTComp";
 import RTComp from "../dashboard/RTComp";
 import Btn from "./Btn";
 import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
-import type { MenuListitem } from "./MenuListItem";
 import { MenuList } from "./MenuList";
-import { useConnectionConfigSearchParams } from "../dashboard/ConnectionConfig/useConnectionConfigSearchParams";
-import { getKeys } from "../utils/utils";
-import { getEntries } from "@common/utils";
+import type { MenuListitem } from "./MenuListItem";
 
 export type TabItem = Partial<
   Omit<MenuListitem, "contentRight" | "onPress">

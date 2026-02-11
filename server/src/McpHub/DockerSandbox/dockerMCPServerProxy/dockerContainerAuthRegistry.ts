@@ -2,7 +2,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import { execSync } from "child_process";
 import { randomUUID } from "crypto";
 import type { RequestHandler } from "express";
-import { isDefined, pickKeys } from "prostgles-types";
+import { isDefined, pickKeys, type MaybePromise } from "prostgles-types";
 export const DOCKER_CONTAINER_NAME_PREFIX = "prostgles-docker-mcp-sandbox";
 
 export type DbPermissions = {
@@ -17,7 +17,7 @@ export type McpProxyRequestContext = Omit<
 export type DockerMCPServerProxyHandler = (
   authContext: McpProxyRequestContext,
   ...args: Parameters<RequestHandler>
-) => void;
+) => MaybePromise<void>;
 
 export type ContainerProxyContext = {
   dbPermissions: DbPermissions | undefined;

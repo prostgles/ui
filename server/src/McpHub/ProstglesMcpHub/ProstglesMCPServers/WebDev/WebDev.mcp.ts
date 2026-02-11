@@ -33,11 +33,11 @@ const handler = {
     return {
       stop: () => {},
       tools: {
-        list_directory: async ({ directoryPath }, { chat_id }) => {
-          const { web_app_directory } = await getWebDevChatAndConnection(
-            dbs,
-            chat_id,
-          );
+        list_directory: async ({ directoryPath }, { chat, connection_id }) => {
+          const { web_app_directory } = await getWebDevChatAndConnection(dbs, {
+            chat,
+            connection_id,
+          });
 
           const { filePath } = getValidatedWebAppPath({
             web_app_directory,
@@ -55,22 +55,25 @@ const handler = {
           }
           return result;
         },
-        read_files: async ({ filePaths }, { chat_id }) => {
-          const { connectionId } = await getWebDevChatAndConnection(
-            dbs,
-            chat_id,
-          );
+        read_files: async ({ filePaths }, { chat, connection_id }) => {
+          await getWebDevChatAndConnection(dbs, {
+            chat,
+            connection_id,
+          });
           const result = await readWebAppFiles(
-            { connectionId, filePaths },
+            { connectionId: connection_id, filePaths },
             { dbo: dbs },
           );
           return result;
         },
-        search_files: async ({ query, extensions }, { chat_id }) => {
-          const { web_app_directory } = await getWebDevChatAndConnection(
-            dbs,
-            chat_id,
-          );
+        search_files: async (
+          { query, extensions },
+          { chat, connection_id },
+        ) => {
+          const { web_app_directory } = await getWebDevChatAndConnection(dbs, {
+            chat,
+            connection_id,
+          });
           const { result } = await searchWebDevFiles({
             contentQuery: query,
             extensions,
@@ -81,10 +84,12 @@ const handler = {
         },
         create_component: async (
           { entryPoint, dependencies, devDependencies, files, test },
-          { chat_id },
+          { chat, connection_id },
         ) => {
-          const { web_app_directory, connectionId } =
-            await getWebDevChatAndConnection(dbs, chat_id);
+          const { web_app_directory } = await getWebDevChatAndConnection(dbs, {
+            chat,
+            connection_id,
+          });
           const componentFile = basename(entryPoint);
           const componentName = componentFile.split(".")[0];
           if (!entryPoint.includes(`src/components/${componentName}`)) {
@@ -126,7 +131,7 @@ const handler = {
 
           await writeWebAppFiles(
             {
-              connectionId,
+              connectionId: connection_id,
               files: {
                 ...clientFiles,
                 ...testFile,
@@ -137,14 +142,17 @@ const handler = {
             },
           );
 
-          const buildResult = await buildWebApp({ connectionId }, { dbo: dbs });
+          const buildResult = await buildWebApp(
+            { connectionId: connection_id },
+            { dbo: dbs },
+          );
 
           if (buildResult.state !== "close") {
             return Promise.reject(buildResult);
           }
 
           const testResult = await testWebApp(
-            { connectionId },
+            { connectionId: connection_id },
             {
               dbo: dbs,
             },

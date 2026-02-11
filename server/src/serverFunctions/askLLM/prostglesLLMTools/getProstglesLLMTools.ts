@@ -58,11 +58,11 @@ export const getProstglesLLMTools = async ({
     await Promise.all(
       serverEntries.map(async ([name, { fetchTools }]) => {
         const serverTools = await fetchTools(dbs, {
-          chat_id: chat.id,
+          chat,
+          connection_id,
           user_id: chat.user_id,
           clientReq,
           dbTools,
-          chat,
           mcpTools: mcp_server_tools,
           toolsAllowed: allowedMcpToolsWithInfo.map((t) => {
             return {

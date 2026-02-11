@@ -175,7 +175,10 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
       }
     }
 
-    if (e.key === "Escape") {
+    if (
+      e.key === "Escape" &&
+      !document.querySelector(`.FullscreenWrapper[aria-modal=true]`)
+    ) {
       onClose?.(e);
     }
   };

@@ -26,7 +26,8 @@ export type JSONBTypeIfDefined<Schema extends JSONB.FieldType | undefined> =
 type MaybePromise<T> = T | Promise<T>;
 
 export type McpCallContext = {
-  chat_id: DBSSchema["llm_chats"]["id"];
+  chat: DBSSchema["llm_chats"];
+  connection_id: string;
   user_id: DBSSchema["users"]["id"];
   clientReq: AuthClientRequest;
 };
@@ -92,7 +93,6 @@ export type ProstglesMcpServerHandlerTyped<
         context: McpCallContext,
       ) => MaybePromise<unknown>;
     };
-    // JSONBTypeIfDefined<ServerDefinition["tools"][ToolName]["outputSchema"]>
   }>;
 };
 

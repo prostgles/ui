@@ -10,7 +10,7 @@ import type {
 import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
-import { LoadSuggestedWorkflow } from "./ProstglesMCPTools/LoadSuggestedWorkflow";
+import { LoadSuggestedWorkflow } from "./ProstglesMCPTools/LoadSuggestedWorkflow/LoadSuggestedWorkflow";
 import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 import { AskAnswerQuestions } from "./ProstglesMCPTools/AskAnswerQuestions";

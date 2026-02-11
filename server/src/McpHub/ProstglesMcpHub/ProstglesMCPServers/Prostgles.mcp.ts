@@ -27,17 +27,8 @@ const handler = {
         await getDockerMCPServerProxy()?.then((s) => s.destroy());
       },
       tools: {
-        create_container: async (args, { user_id, chat_id }) => {
-          const chat = await dbs.llm_chats.findOne({ id: chat_id, user_id });
-          if (!chat) {
-            throw new Error(`Chat with id ${chat_id} not found`);
-          }
-          const { connection_id, db_data_permissions } = chat;
-          if (!connection_id) {
-            throw new Error(
-              `Chat with id ${chat_id} does not have a connection_id`,
-            );
-          }
+        create_container: async (args, { user_id, chat, connection_id }) => {
+          const { db_data_permissions } = chat;
 
           return runContainerWithProxyAccess(
             dbs,
@@ -51,17 +42,13 @@ const handler = {
             args,
           );
         },
-        ask_user_questions: async ({ questions }, { chat_id }) => {
+        ask_user_questions: async () => {
           // never called
         },
         suggest_agentic_workflow: async (
           { workflow_function_definition },
-          { chat_id, user_id },
+          { user_id },
         ) => {
-          const chat = await dbs.llm_chats.findOne({ id: chat_id });
-          if (!chat) {
-            throw new Error(`Chat with id ${chat_id} not found`);
-          }
           return new Promise((resolve, reject) => {
             createAgenticWorkflowContainer(
               dbs,
@@ -72,7 +59,10 @@ const handler = {
               {
                 type: "definitions-only",
                 handler: ({ definitions }) => {
-                  resolve(definitions);
+                  resolve({
+                    isValid: true,
+                    ...definitions,
+                  });
                 },
               },
             )
@@ -83,6 +73,7 @@ const handler = {
                     reject({ logs: lastLog.text, defineAgenticWorkflowTs });
                   } else {
                     reject({
+                      isValid: false,
                       logs: containerResult.log.map((l) => l.text).join("\n"),
                       defineAgenticWorkflowTs,
                     });
@@ -92,10 +83,10 @@ const handler = {
               .catch(reject);
           });
         },
-        suggest_dashboards: (input, { chat_id }) => {
+        suggest_dashboards: () => {
           return "Done";
         },
-        suggest_tools_and_prompt: (input, { chat_id }) => {
+        suggest_tools_and_prompt: () => {
           // TODO: validate tools list
           return "Done";
         },

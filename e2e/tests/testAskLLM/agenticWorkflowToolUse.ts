@@ -29,6 +29,13 @@ export default defineAgenticWorkflow(
           },
         },
       },
+      userInput: {
+        test_input: {
+          title: "Test Input",
+          type: "table-filter",
+          tableName: "users",
+        },
+      },
     },
     null,
     2,

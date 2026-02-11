@@ -56,7 +56,7 @@ const recordType = {
   },
 } as const;
 
-const startAgenticWorkflowSchema = {
+export const startAgenticWorkflowSchema = {
   chatId: "integer",
   name: "string",
   workflowTs: "string",
@@ -115,6 +115,39 @@ const startAgenticWorkflowSchema = {
       },
     },
   },
+  userInput: {
+    optional: true,
+    record: {
+      values: {
+        oneOfType: [
+          {
+            title: "string",
+            optional: { type: "boolean", optional: true },
+            type: { enum: ["table-filter", "table-column"] },
+            tableName: "string",
+          },
+          {
+            title: "string",
+            optional: { type: "boolean", optional: true },
+            type: { enum: ["table-name", "table-and-column"] },
+          },
+          {
+            title: "string",
+            optional: { type: "boolean", optional: true },
+            type: { enum: ["custom"] },
+            dataType: { enum: ["string", "number", "boolean", "Date"] },
+          },
+        ],
+      },
+    },
+  },
+  userInputValue: {
+    record: {
+      values: {
+        type: "unknown",
+      },
+    },
+  },
 } as const;
 export const getStartAgenticWorkflow = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -131,6 +164,7 @@ export const getStartAgenticWorkflow = (
         toolDefinitions,
         databaseAccessDefinitions,
         workflowTs,
+        userInputValue,
       },
       { dbs, user, getClientDBHandlers },
     ) => {
@@ -180,11 +214,13 @@ export const getStartAgenticWorkflow = (
         { user_id: user.id, workflowTs },
         {
           type: "full",
+          userInputValue,
           definition: {
             name,
             timeOutInSeconds,
             agentDefinitions,
             toolDefinitions,
+            userInput: {},
             databaseAccessDefinitions,
           },
           dbPermissions: {

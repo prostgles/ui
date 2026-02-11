@@ -1,7 +1,7 @@
 import type { DBS } from "@src/index";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { getJSONBSchemaValidationError } from "prostgles-types";
+import { getJSONBSchemaValidationError, omitKeys } from "prostgles-types";
 import type {
   DbPermissions,
   McpProxyRequestContext,
@@ -10,8 +10,10 @@ import { runContainerWithProxyAccess } from "../../../DockerSandbox/runContainer
 import {
   END_OF_SCHEMA_PLACEHOLDER,
   type AgenticWorkflowDefinition,
+  type DefineAgenticWorkflow,
   type ProxyCallData,
 } from "./defineAgenticWorkflow";
+import { startAgenticWorkflowSchema } from "@src/serverFunctions/adminServerFunctions/getStartAgenticWorkflow";
 
 const defineAgenticWorkflowDirectory = join(
   __dirname,
@@ -60,6 +62,7 @@ export const createAgenticWorkflowContainer = async (
       }
     | {
         type: "full";
+        userInputValue: Record<string, unknown>;
         definition: AgenticWorkflowDefinition;
         dbPermissions: DbPermissions;
         handler: (
@@ -85,13 +88,25 @@ export const createAgenticWorkflowContainer = async (
             }
             const { data, error } = getJSONBSchemaValidationError(
               {
-                type: { type: { enum: ["definitions"] }, definitions: "any" },
+                type: {
+                  type: { enum: ["definitions"] },
+                  definitions: {
+                    type: omitKeys(startAgenticWorkflowSchema, [
+                      "chatId",
+                      "workflowTs",
+                      "userInputValue",
+                    ]),
+                  },
+                },
               } as const,
               req.body,
             );
             if (error !== undefined) {
               throw new Error("Invalid request data: " + error);
             }
+            type AgentWorkflowDefinitions =
+              Parameters<DefineAgenticWorkflow>[0];
+            data.definitions satisfies AgentWorkflowDefinitions;
             mode.handler(
               {
                 ...data,
@@ -157,6 +172,8 @@ export const createAgenticWorkflowContainer = async (
       },
       environment: {
         MODE: mode.type,
+        USER_INPUT:
+          mode.type === "full" ? JSON.stringify(mode.userInputValue) : "{}",
       },
     },
   );
