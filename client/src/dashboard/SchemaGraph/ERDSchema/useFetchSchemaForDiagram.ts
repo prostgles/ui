@@ -1,7 +1,7 @@
 import { usePromise } from "prostgles-client";
 import { isEmpty } from "prostgles-types";
 import { fetchNamedSVG } from "@components/SvgIcon";
-import { getCssVariableValue } from "../../Charts/TimeChart/onRenderTimechart";
+import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
 import type { ERDSchemaProps } from "./ERDSchema";

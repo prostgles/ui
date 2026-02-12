@@ -7,7 +7,7 @@ import type {
   Rectangle,
 } from "../../Charts/CanvasChart";
 import { measureText } from "../../Charts/TimeChart/measureText";
-import { getCssVariableValue } from "../../Charts/TimeChart/onRenderTimechart";
+import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue";
 import type {
   DBSchemaTableColumn,
   DBSchemaTableWJoins,

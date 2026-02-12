@@ -1,5 +1,5 @@
-import React, { useCallback, useRef } from "react";
 import { FlexCol } from "@components/Flex";
+import React, { useCallback, useRef } from "react";
 import type { SchemaGraphProps } from "../SchemaGraph";
 import type { useSchemaGraphControls } from "../SchemaGraphControls";
 import { useCanvasPanZoom } from "./useCanvasPanZoom";
@@ -27,6 +27,7 @@ export const ERDSchema = ({
   columnColorMode,
 }: ERDSchemaProps & Pick<SchemaGraphProps, "db_schema_filter">) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
   const { shapesRef, dbConfId, shapesVersion, canAutoPosition, dbConf } =
@@ -43,6 +44,7 @@ export const ERDSchema = ({
 
   const { onRenderShapes, positionRef, scaleRef, setScaleAndPosition } =
     useDrawSchemaShapes({
+      svgRef,
       shapesRef,
       canvasRef,
       shapesVersion,
@@ -114,7 +116,8 @@ export const ERDSchema = ({
       className="f-1 bg-color-1"
       style={{ overflow: "hidden" }}
     >
-      <canvas onWheel={handleWheel} className="f-1" ref={canvasRef} />
+      <canvas ref={canvasRef} onWheel={handleWheel} className="f-1" />
+      <svg ref={svgRef} className="text-search-svg absolute w-full h-full" />
     </FlexCol>
   );
 };

@@ -174,4 +174,4 @@ export const getProstglesState = (): ProstglesState<InitExtra> => {
   };
 };
 
-saveTypescriptFilesForProduction();
+void saveTypescriptFilesForProduction();

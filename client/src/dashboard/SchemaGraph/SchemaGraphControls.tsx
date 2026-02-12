@@ -6,7 +6,7 @@ import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { Select } from "@components/Select/Select";
 import React, { useState } from "react";
 import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
-import { getCssVariableValue } from "../Charts/TimeChart/onRenderTimechart";
+import { getCssVariableValue } from "../Charts/TimeChart/getCssVariableValue";
 import type { CASCADE } from "../SQLEditor/SQLCompletion/getPGObjects";
 import {
   type ColumnColorMode,

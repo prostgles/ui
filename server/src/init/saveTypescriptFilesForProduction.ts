@@ -1,4 +1,5 @@
 import { getRootDir } from "@src/electronConfig";
+import { tout } from "@src/utils/tout";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
@@ -14,9 +15,12 @@ if (!dashboardTypesContent) {
  * Electron builder strips out ts files in production builds, so we need to
  * save them as built js files.
  */
-export const saveTypescriptFilesForProduction = () => {
+export const saveTypescriptFilesForProduction = async () => {
   if (process.env.NODE_ENV === "production") return; // Skip in production
   const commonDir = `${getRootDir()}/../common`;
+
+  await tout(3000); // Wait for any potential file changes to settle
+
   // const expectedContent = readFileSync(
   //   `${commonDir}/DashboardTypes.ts`,
   //   "utf-8",

@@ -6,7 +6,11 @@ import { type DBS } from "../index";
 import { activePasswordlessAdminFilter } from "../init/initUsers";
 
 export type AuthConfigForStateConnection = {
-  stateDatabaseConfig: DBSSchema["database_configs"];
+  stateDatabaseConfig: Omit<
+    DBSSchema["database_configs"],
+    "table_schema_positions" | "table_schema_transform"
+  >;
+
   passwordlessAdmin:
     | (Pick<DBSSchema["users"], "id" | "type"> & {
         sessions: DBSSchema["sessions"][];
@@ -69,7 +73,12 @@ export const subscribeToAuthSetupChanges = async (
     {
       $existsJoined: { connections: { is_state_db: true } },
     },
-    {},
+    {
+      select: {
+        table_schema_positions: 0,
+        table_schema_transform: 0,
+      },
+    },
     (database_config) => {
       setContext({
         stateDatabaseConfig: database_config,

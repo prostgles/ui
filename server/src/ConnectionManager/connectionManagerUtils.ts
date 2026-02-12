@@ -134,10 +134,10 @@ export const getCompiledTS = (code: string) => {
 export const getRestApiConfig = (
   app: e.Express,
   con: Pick<Connections, "id" | "url_path" | "port" | "is_state_db" | "name">,
-  dbConf: DatabaseConfigs,
+  { rest_api_enabled }: Pick<DatabaseConfigs, "rest_api_enabled">,
 ) => {
   const res: ProstglesInitOptions["restApi"] =
-    dbConf.rest_api_enabled ?
+    rest_api_enabled ?
       {
         expressApp: app,
         path: getConnectionApiPaths(con).rest,

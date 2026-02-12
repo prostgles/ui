@@ -1,4 +1,4 @@
-import { getConnectionApiPaths } from "@common/utils";
+import { fromEntries, getConnectionApiPaths } from "@common/utils";
 import { setHttpAppSecurity } from "@src/createHttpAndIOServers/setHttpAppSecurity";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { isDefined } from "prostgles-types";
@@ -7,6 +7,7 @@ import { type ConnectionManager } from "./ConnectionManager";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
 import { saveCertificates } from "./saveCertificates";
 import { startConnectionOnRequestHandler } from "./startConnectionOnRequestHandler";
+import type { DBSSchema } from "@common/publishUtils";
 
 export async function initConnectionManager(
   this: ConnectionManager,
@@ -44,15 +45,22 @@ export async function initConnectionManager(
   });
 
   await this.dbConfSub?.unsubscribe();
+  const dbConfColumnListSelect = fromEntries(
+    (await this.dbs.database_configs.getColumns())
+      .filter((c) => !c.name.includes("table_schema_"))
+      .map((c) => [c.name as keyof DBSSchema["database_configs"], 1] as const),
+  );
   this.dbConfSub = await this.dbs.database_configs.subscribe(
     {},
     {
       select: {
-        "*": 1,
+        ...dbConfColumnListSelect,
         connections: { id: 1, is_state_db: 1, port: 1 },
         access_control_user_types: "*",
+        published_methods: "*",
       },
     },
+    //@ts-ignore
     async (dbConfigs: typeof this.dbConfigs) => {
       this.dbConfigs = dbConfigs;
       const stateDatabaseConfig = dbConfigs.find((dc) =>
@@ -94,6 +102,7 @@ export async function initConnectionManager(
               stateDatabaseConfig,
               dbs,
               _dbs: db,
+              connectionInfo: prglCon.connectionInfo,
             });
             /** Can happen due to error in onMount */
             await prglCon.prgl.update(hotReloadConfig).catch((e) => {

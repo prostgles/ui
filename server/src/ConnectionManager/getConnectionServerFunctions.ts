@@ -5,31 +5,34 @@ import {
   type ServerFunctionDefinitions,
 } from "prostgles-server";
 import type { DBS } from "..";
-import type { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 import { getCompiledTS } from "./connectionManagerUtils";
 import { getAccessRule } from "./startConnection";
+import type { ConnectionManager } from "./ConnectionManager";
+import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
+import { getConnectionFunctionRunner } from "./getConnectionFunctionRunner";
 
 type Args = {
   dbs: DBS;
-  dbConf: DBSSchema["database_configs"];
-  con: DBSSchema["connections"];
-  getForkedProcRunner: () => Promise<ForkedPrglProcRunner>;
+  databaseConfig: DBSSchema["database_configs"];
+  connection: DBSSchema["connections"];
+  connectionManager: ConnectionManager;
+  connectionInfo: ConnectionDetails;
 };
 
-export const getConnectionServerFunctions = ({
-  dbConf,
+export const getConnectionServerFunctions = async ({
+  databaseConfig,
   dbs,
-  con,
-  getForkedProcRunner,
+  connection,
+  connectionManager,
+  connectionInfo,
 }: Args) => {
+  const connectionFunctions = await dbs.published_methods.find({
+    connection_id: connection.id,
+  });
   const publishMethods: ServerFunctionDefinitions<void, SUser> = async (
     params,
   ) => {
     const result: Record<string, ServerFunctionDefinition> = {};
-
-    const connectionFunctions = await dbs.published_methods.find({
-      connection_id: con.id,
-    });
 
     const authContext = await (async () => {
       if (!params) return;
@@ -39,7 +42,12 @@ export const getConnectionServerFunctions = ({
       if (user?.type === "admin") {
         return { ...params, user, type: "admin" as const };
       } else {
-        const ac = await getAccessRule(dbs, user, dbConf.id, con.id);
+        const ac = await getAccessRule(
+          dbs,
+          user,
+          databaseConfig.id,
+          connection.id,
+        );
         if (ac) {
           const allowedMethods = await dbs.access_control_methods.find({
             access_control_id: ac.id,
@@ -64,7 +72,19 @@ export const getConnectionServerFunctions = ({
           const sourceCode = getCompiledTS(m.run);
 
           try {
-            const forkedPrglProcRunner = await getForkedProcRunner();
+            const forkedPrglProcRunner = await getConnectionFunctionRunner({
+              dbs,
+              connection,
+              connectionManager,
+              databaseConfig,
+              connectionInfo,
+            }).catch((err) => {
+              console.error(
+                "Error getting function runner for connection function",
+                err,
+              );
+              return Promise.reject("Error setting up function runner");
+            });
             return forkedPrglProcRunner.run({
               type: "run",
               code: sourceCode,
@@ -77,7 +97,10 @@ export const getConnectionServerFunctions = ({
         });
 
       result[m.name] = {
-        input: m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
+        input:
+          !m.arguments.length ?
+            undefined
+          : m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
         run,
       };
     });

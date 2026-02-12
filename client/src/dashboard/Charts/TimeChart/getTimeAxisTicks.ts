@@ -13,7 +13,7 @@ import {
 import type { ChartedText, TextMeasurement } from "./../CanvasChart";
 import type { XYFunc } from "./TimeChart";
 import type { DateExtent } from "./getTimechartBinSize";
-import { getCssVariableValue } from "./onRenderTimechart";
+import { getCssVariableValue } from "./getCssVariableValue";
 
 type GetTimeTicksOpts = DateExtent & {
   leftX: number;

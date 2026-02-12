@@ -1,6 +1,6 @@
 import { scaleLinear } from "d3";
 import type { TimeChart, TimeChartLayer } from "./TimeChart";
-import { getCssVariableValue } from "./onRenderTimechart";
+import { getCssVariableValue } from "./getCssVariableValue";
 
 export const prepareTimechartData = function (this: TimeChart) {
   const renderMessage = (text: string) => {

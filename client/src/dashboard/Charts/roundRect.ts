@@ -1,11 +1,4 @@
-import { getCssVariableValue } from "./TimeChart/onRenderTimechart";
-
-export const DEFAULT_SHADOW = {
-  color: getCssVariableValue("--shadow1"), //"rgba(73, 56, 56, 0.5)",
-  blur: 15,
-  offsetX: 3,
-  offsetY: 3,
-};
+import { DEFAULT_SHADOW } from "./constants";
 
 export function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -42,5 +35,8 @@ export function roundRect(
 
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius.tl);
+  if (shadow.blur) {
+    ctx.fill();
+  }
   ctx.restore();
 }

@@ -8,6 +8,8 @@ import { getConnectionAuth } from "./getConnectionAuth";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import type { ConnectionManager } from "./ConnectionManager";
 import { join } from "path";
+import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
+import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 
 export type HotReloadConfigOptions = Pick<
   UpdateableOptions<void, SUser>,
@@ -16,6 +18,7 @@ export type HotReloadConfigOptions = Pick<
   | "schemaFilter"
   | "auth"
   | "io"
+  | "functions"
   | "tsGeneratedTypesDir"
 >;
 export const getHotReloadConfigs = async ({
@@ -25,6 +28,7 @@ export const getHotReloadConfigs = async ({
   databaseConfig,
   connectionManager,
   stateDatabaseConfig,
+  connectionInfo,
 }: {
   connectionManager: ConnectionManager;
   connection: Connections;
@@ -32,6 +36,7 @@ export const getHotReloadConfigs = async ({
   stateDatabaseConfig: DatabaseConfigs;
   dbs: DBS;
   _dbs: DB;
+  connectionInfo: ConnectionDetails;
 }) => {
   const { socketPath, socketUrl } = getConnectionSocketPath(connection);
   const connectionServers = connectionManager.getConnectionHttpServer({
@@ -66,19 +71,29 @@ export const getHotReloadConfigs = async ({
     activeConnection.socketPath = socketPath;
     activeConnection.socketUrl = socketUrl;
   }
-  const { web_app_templated, web_app_directory } = connection;
+  const { web_app_templated, web_app_directory, db_schema_filter } = connection;
   const tsGeneratedTypesDir =
     web_app_templated && web_app_directory ?
       join(web_app_directory, "client", "src", "api")
     : undefined;
+
+  const functions = await getConnectionServerFunctions({
+    databaseConfig,
+    dbs,
+    connection,
+    connectionManager,
+    connectionInfo,
+  });
+
   return {
     config: {
       io: connectionServers.ioConnection,
       restApi,
       fileTable,
       auth,
-      schemaFilter: connection.db_schema_filter ?? { public: 1 },
+      schemaFilter: db_schema_filter ?? { public: 1 },
       tsGeneratedTypesDir,
+      functions,
     } satisfies HotReloadConfigOptions,
     connectionServers,
   };

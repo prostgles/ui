@@ -4,10 +4,11 @@ import { createHiPPICanvas } from "src/dashboard/Charts/createHiPPICanvas";
 import { isDefined } from "../../../utils/utils";
 import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
 import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
-import { getCssVariableValue } from "../../Charts/TimeChart/onRenderTimechart";
+import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue";
 import type { ColumnColorMode } from "./ERDSchema";
 import { getInitialPlacement } from "./getInitialPlacement";
 import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
+import { useDrawHiddenSvgForNativeTextSearch } from "./useDrawHiddenSvgForNativeTextSearch";
 
 export const minScale = 0.1;
 export const maxScale = 5;
@@ -24,6 +25,7 @@ export const useDrawSchemaShapes = (
     "shapesRef" | "shapesVersion" | "canAutoPosition" | "dbConf"
   > & {
     canvasRef: React.RefObject<HTMLCanvasElement>;
+    svgRef: React.RefObject<SVGSVGElement>;
     columnColorMode: ColumnColorMode;
   },
 ) => {
@@ -34,6 +36,7 @@ export const useDrawSchemaShapes = (
     columnColorMode,
     canAutoPosition,
     dbConf,
+    svgRef,
   } = props;
   const positionRef = useRef({ x: 0, y: 0 });
   const scaleRef = useRef(1);
@@ -74,6 +77,10 @@ export const useDrawSchemaShapes = (
     return shapesRef.current;
   }, [shapesRef]);
 
+  const { drawShapesOnHiddenSvg } = useDrawHiddenSvgForNativeTextSearch(
+    svgRef,
+    canvasRef,
+  );
   const onRenderShapes = useCallback(
     (hoveredRectangle?: Rectangle) => {
       const render = () => {
@@ -139,13 +146,14 @@ export const useDrawSchemaShapes = (
           translate: positionRef.current,
         };
         canvas._drawn = _drawn;
+        drawShapesOnHiddenSvg();
         if (animationRef.current.progress < 1) {
           requestAnimationFrame(() => onRenderShapes());
         }
       };
       requestAnimationFrame(render);
     },
-    [canvasRef, getShapes, columnColorMode],
+    [canvasRef, getShapes, columnColorMode, drawShapesOnHiddenSvg],
   );
 
   const prevdbConf = useRef(dbConf);

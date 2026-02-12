@@ -23,9 +23,6 @@ export const getConnectionPublish = ({
   connection,
 }: Args): Publish<void, SUser> | undefined => {
   if (connection.is_state_db) {
-    // throw new Error(
-    //   "Cannot publish state database. Must be used from useDBSConnection",
-    // );
     return publish as Publish<void, SUser>;
   }
   const connectionId = connection.id;

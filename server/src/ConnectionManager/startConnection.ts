@@ -16,10 +16,8 @@ import type { SUser } from "../authConfig/sessionUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
-import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
 import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "./getConnectionPublish";
-import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
 
@@ -144,38 +142,9 @@ export const startConnection = async function (
           stateDatabaseConfig,
           _dbs,
           dbs,
+          connectionInfo,
         });
         const watchSchema = connection.db_watch_shema ? "*" : false;
-        const getForkedProcRunner = async () => {
-          if (
-            !this.getActiveConnectionSilentFail(connection.id)?.methodRunner
-          ) {
-            const methodRunner = await ForkedPrglProcRunner.create({
-              type: "run",
-              dbConfId: databaseConfig.id,
-              pass_process_env_vars_to_server_side_functions:
-                databaseConfig.pass_process_env_vars_to_server_side_functions,
-              dbs,
-              prglInitOpts: {
-                dbConnection: {
-                  ...connectionInfo,
-                  application_name: "methodRunner",
-                },
-                watchSchema,
-              },
-            });
-
-            const activeConnection = this.getActiveConnection(connection.id);
-            this.prglConnections.set(connection.id, {
-              ...activeConnection,
-              methodRunner,
-            });
-          }
-          const forkedPrglProcRunner = this.getActiveConnection(
-            connection.id,
-          ).methodRunner;
-          return forkedPrglProcRunner!;
-        };
         const tableConfigRunner = await this.setTableConfig(
           connection.id,
           databaseConfig,
@@ -226,12 +195,6 @@ export const startConnection = async function (
             dbs,
             dbConf: databaseConfig,
             connection: connection,
-          }),
-          functions: getConnectionServerFunctions({
-            dbConf: databaseConfig,
-            dbs,
-            con: connection,
-            getForkedProcRunner,
           }),
           // DEBUG_MODE: true,
           onConnectionError: (error) => {

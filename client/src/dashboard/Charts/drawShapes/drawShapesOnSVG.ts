@@ -5,7 +5,7 @@ import type { SVGContext } from "../../../app/domToSVG/containers/elementToSVG";
 import { addImageFromDataURL } from "../../../app/domToSVG/graphics/imgToSVG";
 import type { Point } from "../../Charts";
 import type { LinkLine, Rectangle } from "../CanvasChart";
-import { DEFAULT_SHADOW } from "../roundRect";
+import { DEFAULT_SHADOW } from "../constants";
 import type { ShapeV2 } from "./drawShapes";
 import { getTimechartGradientPeakSections } from "./getTimechartGradientPeakSections";
 

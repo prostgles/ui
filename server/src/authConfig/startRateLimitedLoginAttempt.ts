@@ -166,13 +166,16 @@ export const startRateLimitedLoginAttempt = async (
 
 export const getIPsFromClientInfo = (
   clientInfo: LoginClientInfo,
-  globalSettings: DBSSchema["database_configs"],
-) => {
-  const { ip_address } = clientInfo;
-  const {
+  {
     login_rate_limit: { groupBy },
     login_rate_limit_enabled,
-  } = globalSettings;
+  }: Pick<
+    DBSSchema["database_configs"],
+    "login_rate_limit_enabled" | "login_rate_limit"
+  >,
+) => {
+  const { ip_address } = clientInfo;
+
   if (!login_rate_limit_enabled) {
     return {
       ip:

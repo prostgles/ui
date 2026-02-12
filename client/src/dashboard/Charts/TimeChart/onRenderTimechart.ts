@@ -18,6 +18,7 @@ import type {
 import { getTimeAxisTicks } from "./getTimeAxisTicks";
 import { getTimechartTooltipShapes } from "./getTimechartTooltipShapes";
 import { getBinValueLabels } from "./getBinValueLabels";
+import { getCssVariableValue } from "./getCssVariableValue";
 
 export function onRenderTimechart(
   this: TimeChart,
@@ -351,10 +352,3 @@ function getNicestVal(min: number, max: number): number {
 
   return nicestVal;
 }
-
-export const getCssVariableValue = (
-  varName: string,
-  node: HTMLElement = document.body,
-) => {
-  return getComputedStyle(node).getPropertyValue(varName);
-};

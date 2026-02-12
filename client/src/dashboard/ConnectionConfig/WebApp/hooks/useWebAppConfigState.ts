@@ -33,11 +33,17 @@ export const useWebAppConfigState = () => {
   const usersTableError = useMemo(() => {
     const usersTable = tables.find((t) => t.name === "users");
     if (!usersTable) {
-      return 'A "users" table is required.';
+      return {
+        error: 'A "users" table is required.',
+        query: `CREATE TABLE IF NOT EXISTS users (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), \n  type TEXT \n);`,
+      } as const;
     }
     const hasType = usersTable.columns.some((c) => c.name === "type");
     if (!hasType) {
-      return 'A "type" TEXT column is required on the "users" table.';
+      return {
+        error: 'A "type" TEXT column is required on the "users" table.',
+        query: `ALTER TABLE users \nADD COLUMN IF NOT EXISTS type TEXT NOT NULL;`,
+      } as const;
     }
   }, [tables]);
   const { data: usedPorts } = dbs.connections.useFind(

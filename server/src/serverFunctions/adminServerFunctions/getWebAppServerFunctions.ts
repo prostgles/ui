@@ -14,7 +14,6 @@ import { readdirSync } from "fs";
 
 /** Copy template files over */
 const templateDir = join(
-  // getRootDir(),
   __dirname,
   "..",
   "..",
@@ -27,8 +26,6 @@ const templateDir = join(
   "frontendDev",
   "src",
 );
-
-console.log("Template dir:", templateDir, readdirSync(templateDir));
 
 export const getWebAppServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,

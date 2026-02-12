@@ -11,14 +11,14 @@ type CreateSessionArgs = {
   ip: string;
   db: DBOFullyTyped<DBGeneratedSchema>;
   user_agent: string | undefined;
-  database_config: DBSSchema["database_configs"];
+  database_config: Pick<DBSSchema["database_configs"], "session_max_age_days">;
 };
 export const upsertSession = async ({
   db,
   ip,
   user,
   user_agent,
-  database_config,
+  database_config: { session_max_age_days },
 }: CreateSessionArgs) => {
   const {
     validSession: activeSession,
@@ -35,8 +35,7 @@ export const upsertSession = async ({
     throw "rate-limit-exceeded";
   }
   if (!activeSession) {
-    const expires =
-      Date.now() + (database_config.session_max_age_days || 1) * DAY;
+    const expires = Date.now() + (session_max_age_days || 1) * DAY;
     return await makeSession(
       user,
       { ip_address: ip, user_agent: user_agent || null, type: "web" },

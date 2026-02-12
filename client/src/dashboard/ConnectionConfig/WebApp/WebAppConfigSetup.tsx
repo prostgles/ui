@@ -8,6 +8,8 @@ import PopupMenu from "@components/PopupMenu";
 import { mdiFolderOutline } from "@mdi/js";
 import React from "react";
 import type { useWebAppConfigState } from "./hooks/useWebAppConfigState";
+import { SQLSmartEditor } from "src/dashboard/SQLEditor/SQLSmartEditor";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const WebAppConfigSetup = ({
   connection,
@@ -20,8 +22,8 @@ export const WebAppConfigSetup = ({
   usedPorts,
   connectionId,
   web_app_directory,
-  dbs,
 }: ReturnType<typeof useWebAppConfigState>) => {
+  const { sql, dbs } = usePrgl();
   const { onErrorAlert } = useOnErrorAlert();
 
   if (!connection) {
@@ -101,8 +103,26 @@ export const WebAppConfigSetup = ({
           });
         }}
       />
-      {usersTableError && web_app_directory && (
-        <ErrorComponent error={usersTableError} />
+      {usersTableError && (
+        <PopupMenu
+          button={
+            <Btn color="danger" variant="faded">
+              {usersTableError.error}
+            </Btn>
+          }
+          onClickClose={false}
+          title="Ensure users table (id UUID, type TEXT) exists"
+          render={(pClose) => (
+            <SQLSmartEditor
+              asPopup={false}
+              query={usersTableError.query}
+              sql={sql!}
+              title=""
+              onCancel={pClose}
+              onSuccess={pClose}
+            />
+          )}
+        />
       )}
     </>
   );
