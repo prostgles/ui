@@ -13,7 +13,7 @@ import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashbo
 import { LoadSuggestedWorkflow } from "./ProstglesMCPTools/LoadSuggestedWorkflow/LoadSuggestedWorkflow";
 import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
-import { AskAnswerQuestions } from "./ProstglesMCPTools/AskAnswerQuestions";
+import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
 
 export const ProstglesMCPToolsWithUI = {
   [getMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]: {
@@ -30,7 +30,7 @@ export const ProstglesMCPToolsWithUI = {
     showsError: true,
   },
   [getMCPFullToolName("prostgles-ui", "ask_user_questions") as string]: {
-    component: AskAnswerQuestions,
+    component: AskUserQuestions,
     displayMode: "full",
   },
   "prostgles-ui--create_container": {

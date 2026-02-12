@@ -70,6 +70,7 @@ export const getProstglesLLMTools = async ({
               tool_name: getMCPToolNameParts(t.name)!.toolName,
             };
           }),
+          dbs,
         });
         const res = [name, serverTools] as const;
         return res;

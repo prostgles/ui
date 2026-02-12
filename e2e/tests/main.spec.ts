@@ -2579,6 +2579,7 @@ test.describe("Main test", () => {
       "vite-project",
     );
   });
+
   test("show error when on webdev prompt and webapp not templated", async ({
     page: p,
   }) => {
@@ -2596,7 +2597,19 @@ test.describe("Main test", () => {
     /** Closing it works */
     await page.getByTestId("Popup.close").last().click();
     await expect(alertLocator).not.toBeAttached();
+
+    /** Test ask tool */
+    await newChat(page);
+    await sendAskLLMMessage(page, "ask_tool");
+    page.getByTestId("AskUserQuestions").getByText("Red").first().click();
+    page.getByTestId("AskUserQuestions").getByText("Yellow").nth(1).click();
+    page.getByTestId("AskUserQuestions").getByText("Blue").nth(1).click();
+    await page.getByTestId("AskUserQuestions.confirm").click();
+    await expect(
+      page.getByTestId("AskUserQuestions.confirm"),
+    ).not.toBeAttached();
   });
+
   test("Web template works", async ({ page: p }) => {
     const page = p as PageWIds;
     await goTo(page, "localhost:3005");

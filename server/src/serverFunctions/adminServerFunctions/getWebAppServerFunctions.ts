@@ -10,7 +10,6 @@ import { getTemplatedWebAppConnection } from "./webApp/getTemplatedWebAppConnect
 import { getValidatedWebAppPath } from "./webApp/getValidatedWebAppPath";
 import { testWebApp } from "./webApp/testWebApp";
 import { writeWebAppFiles } from "./webApp/writeWebAppFiles";
-import { readdirSync } from "fs";
 
 /** Copy template files over */
 const templateDir = join(
@@ -106,12 +105,7 @@ export const getWebAppServerFunctions = (
         bypassAllowList: { type: "boolean", optional: true },
         files: {
           record: {
-            values: {
-              type: {
-                content: "string",
-                description: { type: "string", optional: true },
-              },
-            },
+            values: "string",
           },
         },
       },

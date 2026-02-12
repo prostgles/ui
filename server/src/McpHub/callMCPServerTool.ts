@@ -66,6 +66,7 @@ export const callMCPServerTool = async (
         connection_id,
         user_id: user.id,
         clientReq,
+        dbs,
       });
     }
 

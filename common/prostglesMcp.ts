@@ -419,12 +419,21 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       },
     },
     search_files: {
-      description: "Search files by content in the web app directory",
+      description:
+        "Search files by content and/or file name in the web app directory",
       schema: {
         type: {
-          query: {
+          contentQuery: {
             type: "string",
-            description: "Search query string",
+            description:
+              "File content search query. Example: 'useState' to search for files that include 'useState'",
+            optional: true,
+          },
+          fileNameQuery: {
+            type: "string",
+            optional: true,
+            description:
+              "File name search query to further filter search results. Example: 'Counter' to only include files with 'Counter' in the file name.",
           },
           extensions: {
             description:
@@ -441,6 +450,38 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
       },
     },
+    create_component_quick_feedback_preview: {
+      description: [
+        "Quickly show the user a component they need you to create so they can provide feedback.",
+        "It is crucial that you first show a very basic and simple design and component to get feedback early to ensure you are on the right track and to avoid doing unnecessary work.",
+      ].join("\n"),
+      schema: {
+        type: {
+          indexTsx: {
+            type: "string",
+            description:
+              "tsx code for the component. Example: 'import { useState } from \"react\"; ...'",
+          },
+          css: {
+            type: "string",
+            optional: true,
+            description:
+              "css code for the component. Example: '.container { display: flex; }'",
+          },
+          dependencies: {
+            description:
+              "Dependencies to install in the environment (e.g., react, axios)",
+            arrayOf: "string",
+            optional: true,
+          },
+        },
+      },
+      outputSchema: {
+        type: {
+          content: "string",
+        },
+      },
+    },
     create_component: {
       description: "Create a react component",
       schema: {
@@ -453,11 +494,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           files: {
             description: `tsx/css and other files for the component. Example: { "@/components/Counter/Counter.tsx":  "import { useState } from "react"; ..."  } `,
             record: {
-              values: {
-                type: {
-                  content: "string",
-                },
-              },
+              values: "string",
             },
           },
           dependencies: {

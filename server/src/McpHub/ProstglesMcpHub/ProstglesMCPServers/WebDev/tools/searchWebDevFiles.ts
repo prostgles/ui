@@ -14,7 +14,7 @@ export const searchWebDevFiles = async ({
   maxFilesPerFolder = 50,
   maxLineLength = 500,
 }: {
-  contentQuery: string;
+  contentQuery?: string;
   fileNameQuery?: string;
   extensions?: string[];
   web_app_directory: string;
@@ -55,7 +55,10 @@ export const searchWebDevFiles = async ({
     await Promise.all(
       filteredResults.map(async (filePath) => {
         const content = await readFile(join(cwd, filePath), "utf-8");
-        if (!content.toLowerCase().includes(contentQuery.toLowerCase())) {
+        if (
+          contentQuery &&
+          !content.toLowerCase().includes(contentQuery.toLowerCase())
+        ) {
           return;
         }
 
@@ -73,13 +76,16 @@ export const searchWebDevFiles = async ({
 
         /** Return lines surrounding expression */
         const lines = content.split("\n");
-        const matchingLinesIndices = lines
-          .map((line, index) =>
-            line.toLowerCase().includes(contentQuery.toLowerCase()) ?
-              index
-            : -1,
-          )
-          .filter((index) => index !== -1);
+        const matchingLinesIndices =
+          !contentQuery ?
+            [0]
+          : lines
+              .map((line, index) =>
+                line.toLowerCase().includes(contentQuery.toLowerCase()) ?
+                  index
+                : -1,
+              )
+              .filter((index) => index !== -1);
 
         const contextLines = new Set<string>();
         matchingLinesIndices.forEach((matchIndex) => {

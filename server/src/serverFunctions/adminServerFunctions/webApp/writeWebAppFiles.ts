@@ -21,7 +21,7 @@ export const writeWebAppFiles = async (
   }: {
     connectionId: string;
     bypassAllowList?: boolean;
-    files: Record<string, { content: string; description?: string }>;
+    files: Record<string, string>;
   },
   {
     dbo,
@@ -85,7 +85,7 @@ export const writeWebAppFiles = async (
   /** Write files */
   for (const { fullPath, dirPath, fileData } of validatedFiles) {
     await mkdir(dirPath, { recursive: true });
-    await writeFile(fullPath, fileData.content, "utf-8");
+    await writeFile(fullPath, fileData, "utf-8");
   }
   return true;
 };

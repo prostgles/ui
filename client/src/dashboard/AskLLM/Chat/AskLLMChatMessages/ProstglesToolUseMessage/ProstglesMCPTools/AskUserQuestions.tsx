@@ -2,15 +2,21 @@ import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import Btn from "@components/Btn";
 import { Checkbox } from "@components/Checkbox";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import {
+  mdiCheckboxBlankOutline,
+  mdiCheckboxIntermediate,
+  mdiRadioboxBlank,
+  mdiRadioboxMarked,
+} from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useEffectDeep } from "prostgles-client";
 import type { JSONB } from "prostgles-types";
 import React from "react";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
-import FormField from "@components/FormField/FormField";
 
-export const AskAnswerQuestions = ({
+export const AskUserQuestions = ({
   chatId,
   message,
   toolUseResult,
@@ -49,7 +55,7 @@ export const AskAnswerQuestions = ({
   }, [questions, sentAnswers]);
 
   return (
-    <FlexCol className="w-full ta-left">
+    <FlexCol className="w-full ta-left" data-command="AskUserQuestions">
       {questions.map(
         (
           { question, suggested_answers, allowMultipleChoices },
@@ -80,37 +86,48 @@ export const AskAnswerQuestions = ({
                     }}
                   />
                 )}
-                {suggested_answers.map((answer, answerIndex) => (
-                  <Checkbox
-                    label={answer}
-                    variant="header"
-                    key={answer + answerIndex}
-                    checked={
-                      selectedAnswers.get(question)?.has(answer) || false
-                    }
-                    readOnly={Boolean(sentAnswers)}
-                    onChange={
-                      sentAnswers ? undefined : (
-                        ({ target: { checked } }) => {
-                          setSelectedAnswers((prev) => {
-                            const questionAnswers =
-                              prev.get(question) || new Set();
-                            if (!allowMultipleChoices) {
-                              questionAnswers.clear();
-                            }
-                            if (checked) {
-                              questionAnswers.add(answer);
-                            } else {
-                              questionAnswers.delete(answer);
-                            }
-                            prev.set(question, questionAnswers);
-                            return new Map(prev);
-                          });
-                        }
-                      )
-                    }
-                  />
-                ))}
+                {suggested_answers.map((answer, answerIndex) => {
+                  const checked =
+                    selectedAnswers.get(question)?.has(answer) || false;
+                  return (
+                    <Checkbox
+                      label={answer}
+                      variant="header"
+                      key={answer + answerIndex}
+                      checked={checked}
+                      iconPath={
+                        allowMultipleChoices ?
+                          checked ?
+                            mdiCheckboxIntermediate
+                          : mdiCheckboxBlankOutline
+                        : checked ?
+                          mdiRadioboxMarked
+                        : mdiRadioboxBlank
+                      }
+                      readOnly={Boolean(sentAnswers)}
+                      onChange={
+                        sentAnswers ? undefined : (
+                          ({ target: { checked } }) => {
+                            setSelectedAnswers((prev) => {
+                              const questionAnswers =
+                                prev.get(question) || new Set();
+                              if (!allowMultipleChoices) {
+                                questionAnswers.clear();
+                              }
+                              if (checked) {
+                                questionAnswers.add(answer);
+                              } else {
+                                questionAnswers.delete(answer);
+                              }
+                              prev.set(question, questionAnswers);
+                              return new Map(prev);
+                            });
+                          }
+                        )
+                      }
+                    />
+                  );
+                })}
               </FlexRowWrap>
             </FlexCol>
           );
@@ -119,6 +136,7 @@ export const AskAnswerQuestions = ({
       {!sentAnswers && (
         <Btn
           disabledInfo={selectedAnswers.size ? undefined : "Select answers"}
+          data-command="AskUserQuestions.confirm"
           variant="filled"
           className="ml-auto"
           color="action"

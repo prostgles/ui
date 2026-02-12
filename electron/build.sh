@@ -3,6 +3,8 @@
 
 npm version "$(../scripts/get_version.sh ../package.json)" --force --no-git-tag-version --silent
 
+set -e  # Exit immediately if any command fails
+
 rm -rf ./ui
 rm -rf ./dist
 mkdir -p ./dist
@@ -14,7 +16,7 @@ rm -rf ./ui/*
 # Cleanup old builds
 # to preview: git clean -ndX
 cd server 
-git clean -fdx
+git clean -fdXn
 cd ..
 
 

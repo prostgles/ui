@@ -323,6 +323,32 @@ const toolResponses: Record<string, ToolUse> = {
       },
     ],
   },
+  ask_tool: {
+    content: "I'll ask you a question using the ask_user_questions tool.",
+    tool: [
+      {
+        id: "ask-tool-use",
+        type: "function",
+        function: {
+          name: "prostgles-ui--ask_user_questions",
+          arguments: stringify({
+            questions: [
+              {
+                question: "What is your favorite color?",
+                allowMultipleChoices: false,
+                suggested_answers: ["Red", "Blue", "Green", "Yellow"],
+              },
+              {
+                question: "What is my favorite color?",
+                allowMultipleChoices: true,
+                suggested_answers: ["Red", "Blue", "Green", "Yellow"],
+              },
+            ],
+          }),
+        },
+      },
+    ],
+  },
 };
 
 export const testAskLLMCode = `
