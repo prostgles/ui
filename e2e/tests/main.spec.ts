@@ -1180,14 +1180,64 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLM").click();
     await newChat(page);
     await setPromptByText(page, "Create workflow");
+    await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " agentic_workflow ");
+
+    const startWorkFlowAndExpectError = async (errorMessage: string) => {
+      await page.getByTestId("LoadSuggestedWorkflow.start").click({
+        timeout: 60e3,
+      });
+      await expect(page.getByTestId("Alert")).toContainText(errorMessage, {
+        timeout: 60e3,
+      });
+      await page.getByText("OK", { exact: true }).click();
+    };
+    await startWorkFlowAndExpectError(
+      `Missing required user input: "Users filter"`,
+    );
+
+    /** Fill user input form */
+    await page.getByTestId("RenderFilter.edit").click();
+    await page.getByTestId("SmartAddFilter").click();
+    await page.locator(getDataKeyElemSelector("type")).last().click();
+    await page.getByTestId("SearchList.Input").last().click();
+    await page.locator(`[data-label="regular"]`).first().click();
+    await page.getByTestId("RenderFilter.done").click();
+
+    await startWorkFlowAndExpectError(
+      `Missing required user input: "Sort column"`,
+    );
+    await page.locator(getDataKeyElemSelector("custom") + " input").fill("a");
+
+    await startWorkFlowAndExpectError(
+      `Missing required user input: "Table name"`,
+    );
+
+    await page.locator(getDataKeyElemSelector("table-name")).click();
+    await page.locator(`[data-key="example_table"]`).last().click();
+
+    await startWorkFlowAndExpectError(
+      `Missing required user input: "Table column"`,
+    );
+
+    await page.locator(getDataKeyElemSelector("table-column")).click();
+    await page.locator(`[data-key="id"]`).last().click();
+
+    await startWorkFlowAndExpectError(
+      `Missing required user input: "Table and column"`,
+    );
+
+    await page.locator(getDataKeyElemSelector("table-and-column")).click();
+    await page.locator(`[data-label="receipts.amount"]`).click();
+
     await page
       .getByTestId("LoadSuggestedWorkflow.start")
       .click({ timeout: 30e3 });
+
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      "ZZZZZZZZZZZZZZZZZZZZZ Agentic workflow executed successfully",
+      "Workflow completed successfully",
       {
-        timeout: 60e3,
+        timeout: 120e3,
       },
     );
   });

@@ -27,7 +27,12 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
       run: GeneratedFunctionSchema[K];
     };
   },
-  { name, toolDefinitions, agentDefinitions }: Parameters<P>[0],
+  {
+    name,
+    toolDefinitions,
+    agentDefinitions,
+    timeOutInSeconds,
+  }: Parameters<P>[0],
   {
     dbs,
     chatId,
@@ -42,7 +47,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
   runInSequence = true,
 ) => {
   const agentHandlers = new Map<string, (agentInput: string) => Promise<any>>();
-
+  const started = Date.now();
   const user = await dbs.users.findOne({ id: userId });
   if (!user) {
     throw new Error(`User with id ${userId} not found`);
@@ -102,7 +107,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
               "Below your prompt:",
               prompt, // provided as first message
             ].join("\n"),
-            outputSchema,
+            outputSchema: outputSchema,
           },
           model: model.id,
           max_total_cost_usd: maxCostUSD,
@@ -131,8 +136,6 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
         );
       }
 
-      let chatStatus = null as DBSSchema["llm_chats"]["status"];
-
       await dbsFunctions.askLLM.run({
         chatId: workflowChat.id,
         type: "new-message",
@@ -146,6 +149,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
         schema: "",
       });
 
+      let chatStatus = null as DBSSchema["llm_chats"]["status"];
       while (!chatStatus || chatStatus.state === "loading") {
         await tout(500);
         const chat = await dbs.llm_chats.findOne(
@@ -153,28 +157,23 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
           { select: { status: 1 } },
         );
         chatStatus = chat?.status ?? null;
-        // const lastMessage = await dbs.llm_messages.findOne(
-        //   {
-        //     chat_id: workflowChat.id,
-        //   },
-        //   {
-        //     orderBy: { key: "id", asc: false },
-        //   },
-        // );
-        // return lastMessage?.message;
+        if (Date.now() - started > timeOutInSeconds * 1000) {
+          throw new Error(
+            `Agent ${agentName} timed out after ${timeOutInSeconds} seconds`,
+          );
+        }
       }
       if (chatStatus.state === "stopped") {
         throw new Error(
           `Agent ${agentName} failed with error: ${chatStatus.reason ?? "unknown error"}`,
         );
       }
-      // TODO: validation?
-      // if (!isEmpty(outputSchema)) {
-      //   const validationResult = await getJSONBSchemaValidationError(
-      //     { type: outputSchema },
-      //     state.type === "completed" ? state.output : undefined,
-      //   );
-      // }
+
+      if (chatStatus.state === "goal-data-validation-failure") {
+        throw new Error(
+          `Agent ${agentName} failed because the output did not match the expected schema. Error details: ${chatStatus.error}, Output data: ${JSON.stringify(chatStatus.data)}`,
+        );
+      }
       return chatStatus.data;
     };
     const agentHandler = (input: string) => {

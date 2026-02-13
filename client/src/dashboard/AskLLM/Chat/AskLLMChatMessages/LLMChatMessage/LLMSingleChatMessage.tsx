@@ -6,10 +6,8 @@ import React from "react";
 
 export const LLMSingleChatMessage = ({
   messageItem,
-  mcpServerIcons,
   workspaceId,
   loadedSuggestions,
-  sql,
 }: { messageItem: LLMSingleMessage } & LLMChatMessageCommonProps) => {
   const { message: llmMessage, nextMessage } = messageItem;
   const { id, message } = llmMessage;
@@ -30,10 +28,8 @@ export const LLMSingleChatMessage = ({
             messageContentIndex={idx}
             message={llmMessage}
             nextMessage={nextMessage}
-            sql={sql}
             workspaceId={workspaceId}
             loadedSuggestions={loadedSuggestions}
-            mcpServerIcons={mcpServerIcons}
           />
         );
       })}

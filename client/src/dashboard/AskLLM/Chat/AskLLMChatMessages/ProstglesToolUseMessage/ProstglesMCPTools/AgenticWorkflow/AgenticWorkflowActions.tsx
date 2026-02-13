@@ -1,13 +1,14 @@
 import Btn from "@components/Btn";
 import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import Popup from "@components/Popup/Popup";
-import React, { useState } from "react";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
-import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
-import type { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { omitKeys } from "prostgles-types";
+import React, { useState } from "react";
+import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
+import { LoadSuggestedWorkflowUserInput } from "./AgenticWorkflowUserInput";
+import type { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
 
-export const LoadSuggestedWorkflowActions = ({
+export const AgenticWorkflowActions = ({
   validatedWorkflowJson,
   chatId,
   inputData,
@@ -17,9 +18,12 @@ export const LoadSuggestedWorkflowActions = ({
 }) => {
   const {
     dbsMethods: { startAgenticWorkflow },
-  } = usePrglCore();
+  } = usePrgl();
 
   const [workflowResult, setWorkflowResult] = useState<any>();
+  const [userInputValue, setUserInputValue] = useState<Record<string, unknown>>(
+    {},
+  );
 
   return (
     <>
@@ -34,6 +38,12 @@ export const LoadSuggestedWorkflowActions = ({
           />
         </Popup>
       )}
+
+      <LoadSuggestedWorkflowUserInput
+        validatedWorkflowJson={validatedWorkflowJson}
+        userInputValue={userInputValue}
+        setUserInputValue={setUserInputValue}
+      />
 
       <Btn
         variant="filled"
@@ -60,12 +70,13 @@ export const LoadSuggestedWorkflowActions = ({
             chatId,
             workflowTs: inputData.workflow_function_definition,
             ...omitKeys(validatedWorkflowJson.result, ["isValid"]),
+            userInputValue,
           });
 
           console.log(res);
           if (res.state !== "finished") {
             throw new Error(
-              `Agentic workflow container did not finish successfully. Logs: ${res.log.map((l) => l.text).join("\n")}`,
+              `Agentic workflow container finished with status: ${res.state}. Logs: ${res.log.map((l) => l.text).join("\n")}`,
             );
           } else {
             setWorkflowResult(res);

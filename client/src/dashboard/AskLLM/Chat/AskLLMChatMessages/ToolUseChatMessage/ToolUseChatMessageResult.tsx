@@ -26,6 +26,7 @@ export const ToolUseChatMessageResult = (
     anchorEl,
     toolUseMessageContent,
     toolUseMessage,
+    loadedSuggestions,
   } = props;
 
   const toolCallError =
@@ -46,6 +47,7 @@ export const ToolUseChatMessageResult = (
             message={toolUseMessageContent}
             chatId={toolUseMessage.chat_id}
             toolUseResult={toolUseResult}
+            loadedSuggestions={loadedSuggestions}
           />
         )}
         {toolCallError && !ProstglesTool?.showsError && (

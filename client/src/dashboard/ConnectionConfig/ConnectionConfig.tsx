@@ -145,9 +145,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           label: "Web App",
           listProps: dataCommand("config.webApp"),
           leftIconPath: mdiApplicationBracketsOutline,
-          disabledText: disabledText,
-          // ||
-          // (isElectron ? "Not available for desktop" : undefined),
+          disabledText: disabledText || stateDisabledInfo,
           content: <WebAppConfig />,
         },
         security: {

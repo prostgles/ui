@@ -93,7 +93,10 @@ export const getUserServerFunctions = async (
           throw "You are not allowed to stop this chat";
         }
         stopAskLLM(chatId);
-        await dbs.llm_chats.update({ id: chatId }, { status: null });
+        await dbs.llm_chats.update(
+          { id: chatId },
+          { status: { state: "stopped" } },
+        );
       },
     }),
     sendFeedback: defineUserServerFunction({

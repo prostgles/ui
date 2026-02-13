@@ -9,7 +9,6 @@ import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import {
-  getJSONBSchemaAsJSONSchema,
   getProperty,
   getSerialisableError,
   isObject,
@@ -26,6 +25,7 @@ import {
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
+import { getAgentGoalTool } from "./agentConstants";
 import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 import { getFullPrompt } from "./getFullPrompt";
 import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
@@ -327,19 +327,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
     const toolsWithAgentGoalTool: typeof tools =
       chat.agent_info ?
-        [
-          ...(tools ?? []),
-          {
-            name: "agent_goal",
-            description: "Call this tool to end the agent's workflow",
-            input_schema: getJSONBSchemaAsJSONSchema(
-              "",
-              "",
-              chat.agent_info.outputSchema as any,
-            ),
-            auto_approve: true,
-          },
-        ]
+        [...(tools ?? []), getAgentGoalTool(chat.agent_info)]
       : tools;
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const {
@@ -430,7 +418,9 @@ export const askLLM = async (args: AskLLMArgs) => {
     }
 
     const latestChat = await getChat();
-    if (!latestChat) throw "Chat not found after LLM response";
+    if (!latestChat) {
+      throw "Chat not found after LLM response";
+    }
 
     const newToolUseMessages = filterArr(aiResponseMessage, {
       type: "tool_use",
@@ -470,10 +460,12 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
   }
 
-  await dbs.llm_chats.update(
-    { id: chatId },
-    {
-      status: null,
-    },
-  );
+  if ((await getChat())?.status?.state === "loading") {
+    await dbs.llm_chats.update(
+      { id: chatId },
+      {
+        status: null,
+      },
+    );
+  }
 };

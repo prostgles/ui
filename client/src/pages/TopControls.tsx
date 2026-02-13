@@ -90,7 +90,6 @@ export const TopControls = (props: TopControlsProps) => {
 
             {prgl.dbsMethods.askLLM && (
               <AskLLM
-                {...prgl}
                 loadedSuggestions={loadedSuggestions}
                 workspaceId={
                   props.location === "workspace" ?

@@ -164,7 +164,7 @@ type BtnState = {
   showClickConfirmation?: boolean;
 };
 
-class Btn<HREF extends string | void = void> extends RTComp<
+class Button<HREF extends string | void = void> extends RTComp<
   BtnProps<HREF>,
   BtnState
 > {
@@ -560,9 +560,7 @@ class Btn<HREF extends string | void = void> extends RTComp<
   }
 }
 
-const BtnWrapped = <HREF extends string | void = void>(
-  allProps: BtnProps<HREF>,
-) => {
+const Btn = <HREF extends string | void = void>(allProps: BtnProps<HREF>) => {
   const { onClickPromise, ...props } = allProps;
   const { onErrorAlert } = useOnErrorAlert();
 
@@ -578,7 +576,7 @@ const BtnWrapped = <HREF extends string | void = void>(
     };
   }, [onClickPromise, onErrorAlert, props]);
 
-  return <Btn {...(propsWithOnAlert as BtnProps<string>)} />;
+  return <Button {...(propsWithOnAlert as BtnProps<string>)} />;
 };
 
-export default BtnWrapped;
+export default Btn;

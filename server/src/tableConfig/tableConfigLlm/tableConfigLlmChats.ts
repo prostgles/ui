@@ -1,6 +1,7 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { JSONB } from "prostgles-types";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
+import { agentOutputSchemaType } from "../startAgenticWorkflowSchema";
 
 const commonrunSQLOpts = {
   query_timeout: {
@@ -40,9 +41,9 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
             description: "Prompt used for agentic chat",
           },
           outputSchema: {
+            ...agentOutputSchemaType,
             title: "Output schema",
             description: "JSON schema for validating agent output",
-            type: "unknown",
           },
         },
       },
@@ -88,6 +89,13 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
               type: {
                 state: { enum: ["goal-reached"] },
                 data: "unknown",
+              },
+            },
+            {
+              type: {
+                state: { enum: ["goal-data-validation-failure"] },
+                data: "unknown",
+                error: "string",
               },
             },
           ],

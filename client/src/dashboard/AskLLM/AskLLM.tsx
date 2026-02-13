@@ -1,28 +1,28 @@
+import Btn from "@components/Btn";
 import { mdiAssistant } from "@mdi/js";
 import React, { useState } from "react";
-import type { Prgl } from "../../App";
-import Btn from "@components/Btn";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../../i18n/i18nUtils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { AskLLMChat } from "./Chat/AskLLMChat";
 import { SetupLLMCredentials } from "./Setup/SetupLLMCredentials";
-import { useLLMSetupState } from "./Setup/useLLMSetupState";
+import { useLLMSetup } from "./Setup/LLMSetupProvider";
 
-type P = Prgl & {
+type AskLLMProps = {
   workspaceId: string | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
 };
 
-export const AskLLM = (props: P) => {
-  const { workspaceId, loadedSuggestions, ...prgl } = props;
-  const { dbsMethods } = prgl;
+export const AskLLM = (props: AskLLMProps) => {
+  const { workspaceId, loadedSuggestions } = props;
+  const { dbsMethods } = usePrglCore();
   const { askLLM, stopAskLLM } = dbsMethods;
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const onClose = () => {
     setAnchorEl(null);
   };
-  const state = useLLMSetupState(prgl);
+  const state = useLLMSetup();
 
   return (
     <>
@@ -51,7 +51,6 @@ export const AskLLM = (props: P) => {
         null
       : state.state !== "ready" ?
         <SetupLLMCredentials
-          {...prgl}
           asPopup={true}
           setupState={state}
           onClose={onClose}

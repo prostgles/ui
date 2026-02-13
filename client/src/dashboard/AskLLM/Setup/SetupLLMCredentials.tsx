@@ -10,7 +10,7 @@ import { isPlaywrightTest } from "../../../i18n/i18nUtils";
 import { AddLLMPromptForm } from "./AddLLMPromptForm";
 import { LLMProviderSetup } from "./LLMProviderSetup";
 import { ProstglesSignup } from "./ProstglesSignup";
-import type { LLMSetupState } from "./useLLMSetupState";
+import type { LLMSetupState } from "./LLMSetupProvider";
 
 export type SetupLLMCredentialsProps = {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;

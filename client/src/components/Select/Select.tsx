@@ -146,7 +146,6 @@ export class Select<
     const {
       onChange: _onChange,
       className = "",
-      title,
       value: _value,
       id = this.id,
       style = {},
@@ -172,15 +171,18 @@ export class Select<
     let fullOptions: FullOption[] = [];
 
     if ("options" in this.props) {
-      fullOptions = (this.props.options as any).map((key) => ({
-        key,
-        label: key,
-        ...(multiSelect ?
-          {
-            checked: Boolean(value && (value as string[]).includes(key)),
-          }
-        : {}),
-      }));
+      fullOptions = this.props.options.map(
+        (key) =>
+          ({
+            key,
+            label: key,
+            ...(multiSelect ?
+              {
+                checked: Boolean(value && value.includes(key)),
+              }
+            : {}),
+          }) as FullOption,
+      );
     } else {
       if (
         this.props.value &&
@@ -460,17 +462,14 @@ export class Select<
       return searchList;
     }
 
-    const labelNode =
-      typeof label === "string" ?
-        <label
-          htmlFor={id}
-          className={
-            "noselect f-0 text-1 ta-left " + (asRow ? " mr-p5 " : " mb-p5 ")
-          }
-        >
-          {label}
-        </label>
-      : <Label {...label} variant="normal" className={"mb-p5"} />;
+    const labelProps = typeof label === "string" ? { label } : label;
+    const labelNode = (
+      <Label
+        {...labelProps}
+        // htmlFor={id}
+        variant="normal"
+      />
+    );
     if (variant === "button-group-vertical") {
       return (
         <FlexCol className="gap-p25">

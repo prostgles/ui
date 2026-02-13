@@ -1,21 +1,24 @@
 type AnyObject = Record<string, any>;
 
 type PrimitiveType = "string" | "number" | "boolean" | "unknown";
-type PropertyType =
+
+type PrimitiveTypeWithArraysAndOptional =
   | PrimitiveType
   | `${PrimitiveType}[]`
   | {
       type: PrimitiveType | `${PrimitiveType}[]`;
       optional?: boolean;
-    }
+    };
+type PropertyType =
+  | PrimitiveTypeWithArraysAndOptional
   /** Object */
   | {
-      type: Record<string, PropertyType>;
+      type: Record<string, PrimitiveTypeWithArraysAndOptional>;
       optional?: boolean;
     }
   /** Array of objects */
   | {
-      arrayOfType: Record<string, PropertyType>;
+      arrayOfType: Record<string, PrimitiveTypeWithArraysAndOptional>;
       optional?: boolean;
     };
 
@@ -85,6 +88,7 @@ export type DatabaseHandler = {
     params?: Record<string, any> | any[],
     timeout?: number,
   ) => Promise<{ rows: any[]; columns: string[] }>;
+  count: (tableName: string, filter?: Record<string, any>) => Promise<number>;
   find: (
     tableName: string,
     filter?: Record<string, any>,
@@ -308,6 +312,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
           : dbMode === "run_commited_sql" ? "execute_sql_with_commit"
           : "execute_sql_with_rollback",
         find: "select",
+        count: "count",
         update: "update",
         insert: "insert",
         delete: "delete",
@@ -367,6 +372,24 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
           });
         };
         return find;
+      } else if (command === "count") {
+        const count: DatabaseHandler[typeof command] = (
+          tableName,
+          filter = {},
+        ) => {
+          return callMcpProxy({
+            type: "db",
+            command,
+            params: {
+              tableName,
+              filter,
+            },
+            // satisfies JSONB.GetObjectType<
+            //   ProstglesDbTools[typeof command]["schema"]["type"]
+            // >,
+          });
+        };
+        return count;
       } else if (command === "delete") {
         const _delete: DatabaseHandler[typeof command] = (
           tableName,

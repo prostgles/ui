@@ -167,5 +167,6 @@ export type GroupedDetailedFilter = {
 } | {
     $or: (DetailedFilter | GroupedDetailedFilter)[];
 };
+export declare const getDetailedGroupFilterFromTableFilter: (tableFilter: AnyObject) => DetailedGroupFilter;
 export {};
 //# sourceMappingURL=filterUtils.d.ts.map

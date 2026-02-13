@@ -1,3 +1,4 @@
+import { isObject } from "./publishUtils";
 export const isDefined = (v) => v !== undefined && v !== null;
 export const CORE_FILTER_TYPES = [
     { key: "=", label: "=" },
@@ -298,4 +299,45 @@ export const getTableFilterFromDetailedGroupFilter = (detailedGroupFilter) => {
         ["and", detailedGroupFilter.$and]
         : ["or", detailedGroupFilter.$or];
     return getSmartGroupFilter(filterItems, undefined, operand);
+};
+const getDetailedFilterFromTableFilter = (tableFilter) => {
+    const filterType = "$existsJoined" in tableFilter ? "$existsJoined"
+        : "$notExistsJoined" in tableFilter ? "$notExistsJoined"
+            : Object.keys(tableFilter)[0];
+    if (filterType === "$existsJoined" || filterType === "$notExistsJoined") {
+        const value = tableFilter.$existsJoined;
+        const tableName = Object.keys(value)[0];
+        const filter = value[tableName];
+        return {
+            type: filterType,
+            path: [tableName],
+            filter: getDetailedFilterFromTableFilter(filter),
+        };
+    }
+    const fieldName = Object.keys(tableFilter)[0];
+    const operator = isObject(tableFilter[fieldName]) ?
+        Object.keys(tableFilter[fieldName])[0]
+        : undefined;
+    return {
+        fieldName,
+        type: operator,
+        value: operator ? tableFilter[fieldName][operator] : tableFilter[fieldName],
+    };
+};
+export const getDetailedGroupFilterFromTableFilter = (tableFilter) => {
+    const filterType = "$and" in tableFilter && Array.isArray(tableFilter.$and) ? "$and"
+        : "$or" in tableFilter && Array.isArray(tableFilter.$or) ? "$or"
+            : "$existsJoined" in tableFilter ? "$existsJoined"
+                : null;
+    if (filterType === "$and") {
+        return {
+            $and: tableFilter.$and.map((f) => getDetailedFilterFromTableFilter(f)),
+        };
+    }
+    else if (filterType === "$or") {
+        return {
+            $or: tableFilter.$or.map((f) => getDetailedFilterFromTableFilter(f)),
+        };
+    }
+    return { $and: [] };
 };

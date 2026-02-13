@@ -2,6 +2,7 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import type { JSONB } from "prostgles-types";
 import { tableConfigLlmChats } from "./tableConfigLlmChats";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
+import { tableConfigAgenticWorkflow } from "../tableConfigAgenticWorkflow";
 
 const toolUseContent: JSONB.FieldType = {
   oneOf: [
@@ -83,7 +84,7 @@ export const USER_MESSAGE_CONTENT_SCHEMA_OPTIONS = [
     type: { enum: ["tool_use"] },
     id: "string",
     name: "string",
-    input: "any",
+    input: { record: { values: "unknown" }, optional: true },
   },
   {
     type: { enum: ["tool_result"] },
@@ -324,4 +325,5 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       },
     },
   },
+  ...tableConfigAgenticWorkflow,
 };

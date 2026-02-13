@@ -1,4 +1,4 @@
-import { ContextDataObject, ContextValue } from "./publishUtils";
+import { ContextDataObject, ContextValue, isObject } from "./publishUtils";
 
 type AnyObject = Record<string, any>;
 
@@ -434,3 +434,58 @@ export const getTableFilterFromDetailedGroupFilter = (
 export type GroupedDetailedFilter =
   | { $and: (DetailedFilter | GroupedDetailedFilter)[] }
   | { $or: (DetailedFilter | GroupedDetailedFilter)[] };
+
+const getDetailedFilterFromTableFilter = (
+  tableFilter: AnyObject,
+): DetailedFilter => {
+  const filterType =
+    "$existsJoined" in tableFilter ? "$existsJoined"
+    : "$notExistsJoined" in tableFilter ? "$notExistsJoined"
+    : Object.keys(tableFilter)[0];
+
+  if (filterType === "$existsJoined" || filterType === "$notExistsJoined") {
+    const value = tableFilter.$existsJoined;
+    const tableName = Object.keys(value)[0]!;
+    const filter = value[tableName];
+    return {
+      type: filterType,
+      path: [tableName],
+      filter: getDetailedFilterFromTableFilter(filter) as DetailedFilterBase,
+    };
+  }
+  const fieldName = Object.keys(tableFilter)[0]!;
+  const operator =
+    isObject(tableFilter[fieldName]) ?
+      Object.keys(tableFilter[fieldName])[0]
+    : undefined;
+  return {
+    fieldName,
+    type: operator as FilterType,
+    value: operator ? tableFilter[fieldName][operator] : tableFilter[fieldName],
+  };
+};
+export const getDetailedGroupFilterFromTableFilter = (
+  tableFilter: AnyObject,
+): DetailedGroupFilter => {
+  const filterType =
+    "$and" in tableFilter && Array.isArray(tableFilter.$and) ? "$and"
+    : "$or" in tableFilter && Array.isArray(tableFilter.$or) ? "$or"
+    : "$existsJoined" in tableFilter ? "$existsJoined"
+    : null;
+
+  if (filterType === "$and") {
+    return {
+      $and: tableFilter.$and.map((f: AnyObject) =>
+        getDetailedFilterFromTableFilter(f),
+      ),
+    };
+  } else if (filterType === "$or") {
+    return {
+      $or: tableFilter.$or.map((f: AnyObject) =>
+        getDetailedFilterFromTableFilter(f),
+      ),
+    };
+  }
+
+  return { $and: [] };
+};

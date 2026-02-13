@@ -1,4 +1,3 @@
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 import ErrorComponent from "@components/ErrorComponent";
@@ -8,26 +7,23 @@ import {
   MonacoEditor,
 } from "@components/MonacoEditor/MonacoEditor";
 import { MonacoLogRenderer } from "@components/MonacoLogRenderer/MonacoLogRenderer";
-import type { DBHandlerClient } from "prostgles-client";
-import type { ExistsFilter } from "prostgles-types";
 import React from "react";
-import { SmartCardList } from "src/dashboard/SmartCardList/SmartCardList";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { useJSONBParsedData } from "../common/useJSONBParsedData";
-import { LoadSuggestedWorkflowActions } from "./LoadSuggestedWorkflowActions";
+import { AgenticWorkflowActions } from "./AgenticWorkflowActions";
+import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity";
 import { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
 
-export const LoadSuggestedWorkflow = ({
+export const AgenticWorkflow = ({
   message,
   toolUseResult,
   chatId,
-}: Pick<ProstglesMCPToolsProps, "chatId" | "message" | "toolUseResult">) => {
-  const {
-    dbs,
-    dbsMethods: { startAgenticWorkflow },
-    dbsTables,
-  } = usePrglCore();
+  loadedSuggestions,
+  workspaceId,
+}: Pick<
+  ProstglesMCPToolsProps,
+  "chatId" | "message" | "toolUseResult" | "loadedSuggestions" | "workspaceId"
+>) => {
   const inputValidation = useJSONBParsedData(
     message.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
@@ -83,24 +79,11 @@ export const LoadSuggestedWorkflow = ({
             Activity: {
               label: "Activity",
               content: (
-                <FlexCol className="p-p5">
-                  <SmartCardList
-                    db={dbs as unknown as DBHandlerClient}
-                    tableName={"llm_messages"}
-                    methods={{}}
-                    sql={undefined}
-                    tables={dbsTables}
-                    filter={
-                      {
-                        $existsJoined: {
-                          llm_chats: {
-                            parent_chat_id: chatId,
-                          },
-                        },
-                      } satisfies ExistsFilter<DBGeneratedSchema>
-                    }
-                  />
-                </FlexCol>
+                <AgenticWorkflowActivity
+                  chatId={chatId}
+                  loadedSuggestions={loadedSuggestions}
+                  workspaceId={workspaceId}
+                />
               ),
             },
           }}
@@ -113,7 +96,7 @@ export const LoadSuggestedWorkflow = ({
             />
           )}
       </FlexCol>
-      <LoadSuggestedWorkflowActions
+      <AgenticWorkflowActions
         chatId={chatId}
         validatedWorkflowJson={validatedWorkflowJson}
         inputData={inputData}

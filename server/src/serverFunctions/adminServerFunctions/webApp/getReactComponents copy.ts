@@ -30,117 +30,30 @@ export const getReactComponents = ({
   const program = ts.createProgram(parsed.fileNames, parsed.options);
   const checker = program.getTypeChecker();
 
-  const componentsMap = new Map<
-    string,
-    { name: string; propsType: ts.Type | undefined }
-  >();
+  const components: { name: string; propsType: ts.Type | undefined }[] = [];
 
   for (const sourceFile of program.getSourceFiles()) {
     const filePath = sourceFile.fileName;
     if (!filePath.startsWith(componentsDir)) continue;
 
     ts.forEachChild(sourceFile, (node) => {
-      // Check for regular exports
-      if (isExported(node)) {
-        const comp = getReactComponent(node, checker);
-        if (comp) {
-          componentsMap.set(comp.name, comp);
-        }
-      }
+      if (!isExported(node)) return;
 
-      // Check for default exports
-      if (ts.isExportAssignment(node) && !node.isExportEquals) {
-        const comp = getReactComponentFromDefaultExport(
-          node,
-          checker,
-          sourceFile,
-        );
-        if (comp) {
-          componentsMap.set(comp.name, comp);
-        }
+      const comp = getReactComponent(node, checker);
+      if (comp) {
+        components.push(comp);
       }
     });
   }
 
-  const comps = Array.from(componentsMap.values()).map((c) => ({
+  const comps = components.map((c) => ({
     name: c.name,
     propsTypeString:
       c.propsType ? checker.typeToString(c.propsType) : undefined,
   }));
-
   // TODO: fix recursive types generation for func returns
   const renderTree = getReactRenderTree(program) as any;
   return { components: comps, renderTree };
-};
-
-const getReactComponentFromDefaultExport = (
-  node: ts.ExportAssignment,
-  checker: ts.TypeChecker,
-  sourceFile: ts.SourceFile,
-):
-  | undefined
-  | {
-      name: string;
-      propsType: ts.Type | undefined;
-    } => {
-  const expression = node.expression;
-
-  // Handle: export default MyComponent
-  if (ts.isIdentifier(expression)) {
-    const symbol = checker.getSymbolAtLocation(expression);
-    if (!symbol) return undefined;
-
-    const declarations = symbol.getDeclarations();
-    if (!declarations || declarations.length === 0) return undefined;
-
-    for (const decl of declarations) {
-      const comp = getReactComponent(decl, checker);
-      if (comp) {
-        return comp;
-      }
-    }
-  }
-
-  // Handle: export default function MyComponent() { ... }
-  if (ts.isFunctionExpression(expression) || ts.isArrowFunction(expression)) {
-    if (returnsJSX(expression)) {
-      // Use filename as component name for anonymous default exports
-      const fileName =
-        sourceFile.fileName
-          .split("/")
-          .pop()
-          ?.replace(/\.(tsx?|jsx?)$/, "") || "DefaultExport";
-      const componentName = expression.name?.text || fileName;
-      return {
-        name: componentName,
-        propsType: getPropsTypeFromFunction(checker, expression),
-      };
-    }
-  }
-
-  // Handle: export default class MyComponent extends React.Component
-  if (ts.isClassExpression(expression)) {
-    const heritage = expression.heritageClauses?.flatMap((h) => h.types) || [];
-    const isReactComponent = heritage.some(
-      (h) =>
-        h.expression.getText().includes("React.Component") ||
-        h.expression.getText().includes("Component"),
-    );
-    if (isReactComponent) {
-      const fileName =
-        sourceFile.fileName
-          .split("/")
-          .pop()
-          ?.replace(/\.(tsx?|jsx?)$/, "") || "DefaultExport";
-      const componentName = expression.name?.text || fileName;
-      return {
-        name: componentName,
-        propsType: getPropsTypeFromClass(checker, expression),
-      };
-    }
-  }
-
-  return undefined;
 };
 
 const getReactComponent = (
@@ -206,7 +119,7 @@ const getReactComponent = (
 
 const getPropsTypeFromClass = (
   checker: ts.TypeChecker,
-  node: ts.ClassDeclaration | ts.ClassExpression,
+  node: ts.ClassDeclaration,
 ): ts.Type | undefined => {
   const heritage = node.heritageClauses?.flatMap((h) => h.types) || [];
   for (const h of heritage) {
@@ -217,7 +130,6 @@ const getPropsTypeFromClass = (
   }
   return undefined;
 };
-
 const getPropsTypeFromFunction = (
   checker: ts.TypeChecker,
   fn: ts.FunctionLikeDeclaration,
@@ -228,7 +140,6 @@ const getPropsTypeFromFunction = (
   }
   return checker.getTypeAtLocation(firstParam);
 };
-
 const getPropsTypeFromVariable = (
   checker: ts.TypeChecker,
   decl: ts.VariableDeclaration,

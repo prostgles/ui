@@ -13,7 +13,7 @@ import {
   type DefineAgenticWorkflow,
   type ProxyCallData,
 } from "./defineAgenticWorkflow";
-import { startAgenticWorkflowSchema } from "@src/serverFunctions/adminServerFunctions/getStartAgenticWorkflow";
+import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
 
 const defineAgenticWorkflowDirectory = join(
   __dirname,

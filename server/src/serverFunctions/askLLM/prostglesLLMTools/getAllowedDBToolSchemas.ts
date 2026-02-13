@@ -34,6 +34,9 @@ export const getAllowedDBToolSchemas = (
         }
       }
     });
+    if (allowedCommands.get("select")) {
+      allowedCommands.set("count", true);
+    }
     const tableTools = getEntries(
       PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"],
     )
@@ -70,7 +73,8 @@ export const getAllowedDBToolSchemas = (
         chatDBAccess.Mode === "Run commited SQL" ||
         /** Allow read only tools */
         toolName === "execute_sql_with_rollback" ||
-        toolName === "select"
+        toolName === "select" ||
+        toolName === "count"
       ) {
         return tool;
       }

@@ -1,12 +1,12 @@
 import { getMCPToolNameParts } from "@common/prostglesMcp";
-import { useMemo } from "react";
-import type { MonacoCodeInMarkdownProps } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
-import type { UseLLMChatProps } from "../../useLLMChat";
 import type { DBSSchema } from "@common/publishUtils";
-import { getToolUseResult } from "./utils/getToolUseResult";
+import type { MonacoCodeInMarkdownProps } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
+import { useMemo } from "react";
 import type { ToolUseMessage } from "./ToolUseChatMessage";
+import { getToolUseResult } from "./utils/getToolUseResult";
+import { useLLMSetupDone } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
-export type ToolUseMessageProps = Pick<UseLLMChatProps, "mcpServerIcons"> & {
+export type ToolUseMessageProps = {
   message: DBSSchema["llm_messages"];
   nextMessage: DBSSchema["llm_messages"] | undefined;
   toolUseMessageContentIndex: number;
@@ -14,8 +14,8 @@ export type ToolUseMessageProps = Pick<UseLLMChatProps, "mcpServerIcons"> & {
 } & Pick<MonacoCodeInMarkdownProps, "sqlHandler" | "loadedSuggestions">;
 
 export const useToolUseChatMessage = (props: ToolUseMessageProps) => {
-  const { message, nextMessage, toolUseMessageContentIndex, mcpServerIcons } =
-    props;
+  const { mcpServerIcons } = useLLMSetupDone();
+  const { message, nextMessage, toolUseMessageContentIndex } = props;
 
   const toolUseMessage = message;
   const toolUseMessageContent =

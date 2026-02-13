@@ -13,7 +13,8 @@ import { SectionHeader } from "../../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../../AccessControl/useEditedAccessRule";
 import { SmartForm } from "../../SmartForm/SmartForm";
 import { SetupLLMCredentials } from "./SetupLLMCredentials";
-import { useLLMSetupState } from "./useLLMSetupState";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { useLLMSetup } from "./LLMSetupProvider";
 
 type P = Prgl & {
   accessRuleId: number | undefined;
@@ -23,14 +24,11 @@ type P = Prgl & {
 };
 export const AskLLMAccessControl = ({
   dbs,
-  connectionId,
-  accessRuleId,
   className,
   style,
   editedRule,
-  ...prgl
 }: P) => {
-  const { dbsTables, dbsSql } = prgl;
+  const { dbsTables, dbsSql } = usePrgl();
   const [localPromptId, setLocalPromptId] = useState<number>();
   const [localCredentialId, setLocalCredentialId] = useState<number>();
   const rule = editedRule?.newRule ?? editedRule?.rule;
@@ -45,7 +43,7 @@ export const AskLLMAccessControl = ({
 
   /** We need to reset form after both values are undefined */
   const [addFormKey, setAddFormKey] = useState(0);
-  const state = useLLMSetupState({ dbs, user: prgl.user });
+  const state = useLLMSetup();
 
   return (
     <FlexCol className={className} style={style}>

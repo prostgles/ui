@@ -46,6 +46,23 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
         };
+        readonly count: {
+            readonly description: "Counts rows in a table that satisfy a filter.";
+            readonly schema: {
+                readonly type: {
+                    readonly filter: {
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
+                    };
+                    readonly tableName: {
+                        readonly type: "string";
+                        readonly description: "Table to select from";
+                    };
+                };
+            };
+        };
         readonly select: {
             readonly description: "Selects rows from a table.";
             readonly schema: {

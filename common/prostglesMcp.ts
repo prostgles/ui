@@ -68,6 +68,18 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction commited at the end).",
       schema: runSQLSchema,
     },
+    count: {
+      description: "Counts rows in a table that satisfy a filter.",
+      schema: {
+        type: {
+          tableName: {
+            type: "string",
+            description: "Table to select from",
+          },
+          ...filterSchema,
+        },
+      },
+    },
     select: {
       description: "Selects rows from a table.",
       schema: {

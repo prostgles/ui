@@ -14,9 +14,9 @@ cd ..
 rm -rf ./ui/*
 
 # Cleanup old builds
-# to preview: git clean -ndX
+# to preview: git clean -fdXn
 cd server 
-git clean -fdXn
+git clean -fdX
 cd ..
 
 

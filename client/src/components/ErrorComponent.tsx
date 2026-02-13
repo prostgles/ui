@@ -7,7 +7,7 @@ import { isEmpty, scrollIntoViewIfNeeded } from "../utils/utils";
 import Btn from "./Btn";
 import { classOverride, FlexCol, FlexRow } from "./Flex";
 import { Icon } from "./Icon/Icon";
-import { getSerialisableError } from "prostgles-types";
+import { getSerialisableError, isEqual } from "prostgles-types";
 
 type P = TestSelectors & {
   error: any;
@@ -41,8 +41,12 @@ export default class ErrorComponent extends React.Component<P> {
   componentDidMount() {
     this.scrollIntoView();
   }
+
+  prevError: any;
   componentDidUpdate() {
-    this.scrollIntoView();
+    if (!isEqual(this.props.error, this.prevError)) {
+      this.scrollIntoView();
+    }
   }
   render() {
     const {

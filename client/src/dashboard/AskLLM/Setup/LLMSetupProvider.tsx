@@ -1,13 +1,13 @@
-import { useMemo } from "react";
-import type { Prgl } from "../../../App";
-import type { DbsByUserType } from "../../Dashboard/DBS";
+import React, { createContext, useContext, useMemo } from "react";
+import type { DbsByUserType } from "src/dashboard/Dashboard/DBS";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 export type LLMSetupState = ReturnType<typeof useLLMSetupState>;
 export type LLMSetupStateReady = Extract<LLMSetupState, { state: "ready" }>;
 
-export const useLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
-  const dbs = props.dbs as DbsByUserType;
-  const { user } = props;
+const useLLMSetupState = () => {
+  const { dbs: dbsRaw, user } = usePrglCore();
+  const dbs = dbsRaw as DbsByUserType;
   const { data: credentials } = dbs.llm_credentials.useSubscribe();
   const isAdmin = user?.type === "admin";
   const globalSettings = dbs.global_settings?.useSubscribeOne?.();
@@ -80,4 +80,35 @@ export const useLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
   };
 
   return result;
+};
+
+const LLMSetupContext = createContext<ReturnType<
+  typeof useLLMSetupState
+> | null>(null);
+
+export const LLMSetupProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const state = useLLMSetupState();
+  return (
+    <LLMSetupContext.Provider value={state}>
+      {children}
+    </LLMSetupContext.Provider>
+  );
+};
+
+export const useLLMSetup = () => {
+  const ctx = useContext(LLMSetupContext);
+  if (!ctx) throw new Error("useLLMSetup must be used inside LLMSetupProvider");
+  return ctx;
+};
+export const useLLMSetupDone = () => {
+  const ctx = useContext(LLMSetupContext);
+  if (!ctx) throw new Error("useLLMSetup must be used inside LLMSetupProvider");
+  if (ctx.state !== "ready") {
+    throw new Error(`LLM setup is not ready. Current state: ${ctx.state}`);
+  }
+  return ctx;
 };

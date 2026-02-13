@@ -2,7 +2,7 @@ import type {
   DetailedFilter,
   GroupedDetailedFilter,
 } from "@common/filterUtils";
-import Btn from "@components/Btn";
+import Btn, { type BtnProps } from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import { mdiFilter } from "@mdi/js";
 import React, { useMemo } from "react";
@@ -19,7 +19,7 @@ export type RenderFilterProps = {
   onChange: (filter: SingleGroupFilter) => void;
   contextData: ContextDataSchema | undefined;
   title?: string;
-  mode?: "micro" | "compact" | "minimised";
+  mode?: ("micro" | BtnProps) | "compact" | "minimised";
   itemName: "filter" | "condition";
   selectedColumns: ColumnConfig[] | undefined;
   hideOperand?: boolean;
@@ -133,8 +133,9 @@ export const RenderFilter = (props: RenderFilterProps) => {
           title={title}
           iconPath={mdiFilter}
           variant="icon"
-          data-command="RenderFilter.edit"
           color={filterIsNotEmpty ? "action" : undefined}
+          {...(mode === "micro" ? {} : mode)}
+          data-command="RenderFilter.edit"
         />
       }
       contentStyle={{

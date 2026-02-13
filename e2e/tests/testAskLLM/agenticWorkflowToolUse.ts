@@ -1,5 +1,10 @@
 import { stringify, type ToolUse } from "./utils";
+import { GeneratedFunctionSchema } from "../../../common/DBGeneratedSchema";
+type UserInput = NonNullable<
+  Parameters<GeneratedFunctionSchema["startAgenticWorkflow"]>[0]["userInput"]
+>;
 
+export const research = "research" as const;
 const workflow_function_definition = `
 import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
 export default defineAgenticWorkflow(
@@ -30,24 +35,44 @@ export default defineAgenticWorkflow(
         },
       },
       userInput: {
-        test_input: {
-          title: "Test Input",
+        "table-filter": {
+          title: "Users filter",
           type: "table-filter",
           tableName: "users",
         },
-      },
+        custom: {
+          title: "Sort column",
+          type: "custom",
+          dataType: "string",
+        },
+        "table-name": {
+          title: "Table name",
+          type: "table-name",
+        },
+        "table-column": {
+          title: "Table column",
+          type: "table-column",
+          tableName: "users",
+        },
+        "table-and-column": {
+          title: "Table and column",
+          type: "table-and-column",
+        },
+      } satisfies Record<UserInput[string]["type"], UserInput[string]>,
     },
     null,
     2,
   )},
-  async ({ researcher }, dbHandler) => {
+  async ({ researcher }, dbHandler, userInputValue) => {
     await dbHandler.insert("users", [{ username: "Prostgles", type: "from-agent" }]);
     const start = Date.now();
+    const filterCount = await dbHandler.count("users", userInputValue["table-filter"]);
+    console.log("Filter count:", filterCount);
     dbHandler.find("users").then(users => {
       users.forEach(async (user) => {
-        const result = await researcher("Prostgles"); 
+        const result = await researcher(" ${research} Prostgles"); 
         const sinceStart = Date.now() - start;
-        dbHandler.update("users", { id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });
+        await dbHandler.update("users", { id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });
       })
     })
   },

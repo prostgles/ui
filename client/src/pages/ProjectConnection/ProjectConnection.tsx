@@ -15,6 +15,7 @@ import { useProjectDb } from "./useProjectDb";
 import { PrglProvider } from "./PrglContextProvider";
 import type { ClientFunctionHandler } from "prostgles-client/dist/getMethods";
 import type { SQLHandler } from "prostgles-client";
+import { LLMSetupProvider } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -68,7 +69,9 @@ export const ProjectConnection = (props: ProjectProps) => {
   if (showConnectionConfig && connectionId) {
     return (
       <PrglProvider prgl={prgl}>
-        <ConnectionConfig connection={connection} />
+        <LLMSetupProvider>
+          <ConnectionConfig connection={connection} />
+        </LLMSetupProvider>
       </PrglProvider>
     );
   }
@@ -86,11 +89,13 @@ export const ProjectConnection = (props: ProjectProps) => {
         style={prgl.theme === "dark" ? { background: "black" } : {}}
       >
         <PrglProvider prgl={prgl}>
-          <Dashboard
-            key={workspaceId}
-            workspaceId={workspaceId}
-            onLoaded={() => {}}
-          />
+          <LLMSetupProvider>
+            <Dashboard
+              key={workspaceId}
+              workspaceId={workspaceId}
+              onLoaded={() => {}}
+            />
+          </LLMSetupProvider>
         </PrglProvider>
       </div>
     </div>

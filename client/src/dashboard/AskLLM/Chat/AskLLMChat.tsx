@@ -7,7 +7,7 @@ import React from "react";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import { AskLLMChatActionBar } from "../ChatActionBar/AskLLMChatActionBar";
-import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
+import type { LLMSetupStateReady } from "../Setup/LLMSetupProvider";
 import { AskLLMToolApprover } from "../Tools/AskLLMToolApprover";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useAskLLMChatSend } from "./useAskLLMChatSend";
@@ -36,7 +36,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     askLLM,
     stopAskLLM,
   } = props;
-  const { tables, db, user, connectionId, connection, dbs, methods, sql } =
+  const { tables, user, connectionId, connection, dbs, methods, sql } =
     usePrgl();
   const chatState = useLLMChat({
     ...setupState,
@@ -45,8 +45,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     user,
     connectionId,
     workspaceId,
-    db,
-    sql,
   });
   const {
     messages,
@@ -163,6 +161,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               messages={llmMessages ?? []}
               methods={methods}
               sendQuery={sendQuery}
+              loadedSuggestions={loadedSuggestions}
+              workspaceId={workspaceId}
             />
           )}
         </FlexCol>

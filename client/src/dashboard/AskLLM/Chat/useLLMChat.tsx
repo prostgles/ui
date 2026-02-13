@@ -4,12 +4,12 @@ import type { FilterItem } from "prostgles-types";
 import { useCallback, useMemo, useState } from "react";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
-import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
+import type { LLMSetupStateReady } from "../Setup/LLMSetupProvider";
 import { useLLMChatMessages } from "./AskLLMChatMessages/hooks/useLLMChatMessages";
 import { setChatPrompt } from "./AskLLMChatMessages/setChatPrompt";
 
 export type UseLLMChatProps = LLMSetupStateReady &
-  Pick<Prgl, "dbs" | "user" | "connectionId" | "db" | "sql"> & {
+  Pick<Prgl, "dbs" | "user" | "connectionId"> & {
     workspaceId: string | undefined;
     loadedSuggestions: LoadedSuggestions | undefined;
   };

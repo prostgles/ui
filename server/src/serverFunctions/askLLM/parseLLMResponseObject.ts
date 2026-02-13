@@ -102,7 +102,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       .flatMap((c) => {
         const toolCalls =
           c.message.tool_calls?.map((toolCall) => {
-            let input: unknown = {};
+            let input: Record<string, unknown> = {};
             if (toolCall.function.arguments) {
               try {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

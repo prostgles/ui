@@ -10,10 +10,11 @@ import type {
 import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
-import { LoadSuggestedWorkflow } from "./ProstglesMCPTools/LoadSuggestedWorkflow/LoadSuggestedWorkflow";
+import { AgenticWorkflow } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
 import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
+import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 
 export const ProstglesMCPToolsWithUI = {
   [getMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]: {
@@ -25,7 +26,7 @@ export const ProstglesMCPToolsWithUI = {
     displayMode: "full",
   },
   [getMCPFullToolName("prostgles-ui", "suggest_agentic_workflow") as string]: {
-    component: LoadSuggestedWorkflow,
+    component: AgenticWorkflow,
     displayMode: "full",
     showsError: true,
   },
@@ -71,6 +72,7 @@ export const ProstglesMCPToolsWithUI = {
 >;
 
 export type ProstglesMCPToolsProps = {
+  loadedSuggestions: LoadedSuggestions | undefined;
   workspaceId: string | undefined;
   message: ToolUseMessage;
   chatId: number;

@@ -11,7 +11,8 @@ export const ComponentPreview = () => {
     import(`../components/${component}/${component}.tsx`)
       .then((mod) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const LoadedComponent = mod[`${component}`] as React.ComponentType;
+        const LoadedComponent = (mod[`${component}`] ||
+          mod.default) as React.ComponentType;
         setComponent(() => LoadedComponent);
       })
       .catch((err) => {

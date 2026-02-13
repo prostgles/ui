@@ -15,16 +15,7 @@ type P = UseLLMChatProps & {
 };
 
 export const useLLMChatMessages = (props: P) => {
-  const {
-    dbs,
-    user,
-    activeChat,
-    db,
-    sql,
-    loadedSuggestions,
-    workspaceId,
-    mcpServerIcons,
-  } = props;
+  const { dbs, user, activeChat, loadedSuggestions, workspaceId } = props;
   const { status } = activeChat ?? {};
 
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
@@ -62,9 +53,6 @@ export const useLLMChatMessages = (props: P) => {
                 <LLMChatMessage
                   isLoadingSinceDate={isLoadingSinceDate}
                   messageItem={messageItem}
-                  db={db}
-                  sql={sql}
-                  mcpServerIcons={mcpServerIcons}
                   workspaceId={workspaceId}
                   loadedSuggestions={loadedSuggestions}
                 />
@@ -80,9 +68,6 @@ export const useLLMChatMessages = (props: P) => {
       isLoadingSince,
       user?.id,
       dbs,
-      db,
-      sql,
-      mcpServerIcons,
       workspaceId,
       loadedSuggestions,
     ],

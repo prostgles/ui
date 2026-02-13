@@ -11,7 +11,7 @@ import { LLMSingleChatMessage } from "./LLMSingleChatMessage";
 
 export type LLMChatMessageCommonProps = Pick<
   UseLLMChatProps,
-  "db" | "mcpServerIcons" | "workspaceId" | "loadedSuggestions" | "sql"
+  "workspaceId" | "loadedSuggestions"
 >;
 
 type P = LLMChatMessageCommonProps & {
@@ -21,15 +21,8 @@ type P = LLMChatMessageCommonProps & {
 
 export const LLMChatMessage = memo(
   (props: P) => {
-    const {
-      messageItem,
-      isLoadingSinceDate,
-      db,
-      mcpServerIcons,
-      loadedSuggestions,
-      workspaceId,
-      sql,
-    } = props;
+    const { messageItem, isLoadingSinceDate, loadedSuggestions, workspaceId } =
+      props;
 
     const message =
       messageItem.type === "single_message" ?
@@ -42,18 +35,13 @@ export const LLMChatMessage = memo(
           <LLMSingleChatMessage
             key={`${id}-single_message `}
             messageItem={messageItem}
-            mcpServerIcons={mcpServerIcons}
             workspaceId={workspaceId}
-            db={db}
-            sql={sql}
             loadedSuggestions={loadedSuggestions}
           />
         : <LLMGroupedToolCallsMessage
             messages={messageItem.messages}
             messageContentItems={messageItem.messageContentItems}
             onToggle={messageItem.onToggle}
-            mcpServerIcons={mcpServerIcons}
-            sql={sql}
             loadedSuggestions={loadedSuggestions}
           />
         }

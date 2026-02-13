@@ -40,6 +40,40 @@ export type DBGeneratedSchema = {
       user_type: string;
     };
   };
+  agentic_workflow_logs: {
+    columns: {
+      agentic_workflow_run_id: number;
+      chat_id: number;
+      id?: number;
+      log: 
+       | string
+      workflow_id: number;
+    };
+  };
+  agentic_workflow_runs: {
+    columns: {
+      chat_id: number;
+      id?: number;
+      user_input_value:  Record<string, 
+ | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"
+ |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }
+ |  {  optional?: boolean;  type: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }
+ |  {  optional?: boolean;  arrayOfType: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>
+      workflow_id: number;
+    };
+  };
+  agentic_workflows: {
+    columns: {
+      chat_id: number;
+      definition_data: {    agentDefinitions: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  allowedToolDefinitionNames?: string[];  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   toolDefinitions: Record<string,  {  mcpServerName: string;  toolNames: string[];  configId?: number; }>;   databaseAccessDefinitions?: |  {  mode: "custom";  tableCreateStatements?: string;  tablePermissions: Partial<Record<string,  Partial<Record<"select" | "insert" | "update" | "delete", boolean>>>>; }
+ |  {  mode: "run_commited_sql" | "run_readonly_sql"; };   userInput?: Record<string, 
+ |  {  title: string;  optional?: boolean;  type: "table-filter" | "table-column";  tableName: string; }
+ |  {  title: string;  optional?: boolean;  type: "table-name" | "table-and-column"; }
+ |  {  title: string;  optional?: boolean;  type: "custom";  dataType: "string" | "number" | "boolean" | "Date"; }>;   timeOutInSeconds: number;  };
+      id?: number;
+      name: string;
+    };
+  };
   alert_viewed_by: {
     columns: {
       alert_id?: null | string;
@@ -236,7 +270,11 @@ export type DBGeneratedSchema = {
   };
   llm_chats: {
     columns: {
-      agent_info?: null | {    prompt: string;   outputSchema: unknown;  };
+      agent_info?: null | {    prompt: string;   outputSchema: Record<string, 
+ | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"
+ |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }
+ |  {  optional?: boolean;  type: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }
+ |  {  optional?: boolean;  arrayOfType: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>;  };
       connection_id?: null | string;
       created?: null | string;
       currently_typed_message?: null | string;
@@ -268,6 +306,7 @@ export type DBGeneratedSchema = {
        |  {  state: "stopped";  reason?: "max_total_cost_usd" | "estimated_future_max_total_cost_usd" | "maximum_consecutive_tool_fails"; }
        |  {  state: "loading";  since: string; }
        |  {  state: "goal-reached";  data: unknown; }
+       |  {  state: "goal-data-validation-failure";  data: unknown;  error: string; }
       user_id: string;
     };
   };
@@ -312,7 +351,7 @@ export type DBGeneratedSchema = {
       message:  ( 
  |  {  type: "text";  text: string;  reasoning?: string; }
  |  {  type: "image" | "audio" | "video" | "application" | "text";  source: {  type: "base64";  media_type: string;  data: string; }; }
- |  {  type: "tool_use";  id: string;  name: string;  input: any; }
+ |  {  type: "tool_use";  id: string;  name: string;  input?: Record<string, unknown>; }
  |  {  type: "tool_result";  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: "text";  text: string; } |  {  type: "image" | "audio";  mimeType: string;  data: string; } |  {  type: "resource";  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } |  {  type: "resource_link";  uri: string;  name: string;  mimeType?: string;  description?: string; } )[];  is_error?: boolean; } )[]
       meta?: null | any;
       user_id?: null | string;
@@ -691,7 +730,7 @@ export type GeneratedFunctionSchema = {
   "askLLM": (args: {    connectionId: string;   schema: string;   chatId: number;   type: "new-message" | "approve-tool-use" | "tool-use-result";   userMessage: ( 
  |  {  type: "text";  text: string;  reasoning?: string; }
  |  {  type: "image" | "audio" | "video" | "application" | "text";  source: {  type: "base64";  media_type: string;  data: string; }; }
- |  {  type: "tool_use";  id: string;  name: string;  input: any; }
+ |  {  type: "tool_use";  id: string;  name: string;  input?: Record<string, unknown>; }
  |  {  type: "tool_result";  tool_use_id: string;  tool_name: string;  content: | string |  (  |  {  type: "text";  text: string; } |  {  type: "image" | "audio";  mimeType: string;  data: string; } |  {  type: "resource";  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } |  {  type: "resource_link";  uri: string;  name: string;  mimeType?: string;  description?: string; } )[];  is_error?: boolean; } )[];  }) => Promise<void>;
   "getFullPrompt": (args: {    prompt: string;   schema: string;   connectionId: string;  }) => Promise<string>;
   "stopAskLLM": (args: {    chatId: number;  }) => Promise<void>;
@@ -702,7 +741,7 @@ export type GeneratedFunctionSchema = {
   "enable2FA": (args: {    token: string;  }) => Promise<string>;
   "disable2FA": () => Promise<(undefined | Array<void>)>;
   "changePassword": (args: {    oldPassword: string;   newPassword: string;  }) => Promise<void>;
-  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<(({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "mcp"; tool_id: number }) | ({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db-methods"; server_function_id: number }) | ({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db"; tool_name: ("select" | "insert" | "update" | "delete" | "execute_sql_with_rollback" | "execute_sql_with_commit") }))>)>;
+  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<(({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "mcp"; tool_id: number }) | ({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db-methods"; server_function_id: number }) | ({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db"; tool_name: ("select" | "insert" | "update" | "delete" | "execute_sql_with_rollback" | "execute_sql_with_commit" | "count") }))>)>;
   "createWebAppFromTemplate": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<string>;
   "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
   "testWebApp": (args: {    connectionId: string;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
@@ -739,7 +778,7 @@ export type GeneratedFunctionSchema = {
   "setFileStorage": (args: {    connId: string;   tableConfig?: {  fileTable?: string;  storageType: |  {  type: "local"; } |  {  type: "S3";  credential_id: number; };  referencedTables?: any;  delayedDelete?: {  deleteAfterNDays: number;  checkIntervalHours?: number; }; };   opts?: {  keepS3Data?: boolean;  keepFileTable?: boolean; };  }) => Promise<void>;
   "getStatus": (args: {    connId: string;  }) => Promise<{ queries: Array<{ datid: (null | number); datname: (null | string); pid: number; usesysid: (null | number); usename: (null | string); application_name: string; client_addr: (null | string); client_hostname: (null | string); client_port: (null | number); backend_start: string; xact_start: (null | string); query_start: (null | string); state_change: (null | string); wait_event_type: (null | string); wait_event: (null | string); state: (null | string); backend_xid: any; backend_xmin: any; query: string; backend_type: string; blocked_by: Array<number>; running_time: { [key: string]: any } }>; topQueries: Array<{ [key: string]: any }>; blockedQueries: Array<{ [key: string]: any }>; connections: Array<{ datid: number; datname: string; numbackends: number; xact_commit: number; xact_rollback: number; blks_read: number; blks_hit: number; tup_returned: number; tup_fetched: number; tup_inserted: number; tup_updated: number; tup_deleted: number; conflicts: number; temp_files: number; temp_bytes: number; deadlocks: number; checksum_failures: (null | number); checksum_last_failure: (null | string); blk_read_time: number; blk_write_time: number; stats_reset: string }>; maxConnections: number; noBash: boolean; getPidStatsErrors: { [key: string]: any }; serverStatus?: (undefined | { clock_ticks: number; total_memoryKb: number; free_memoryKb: number; uptimeSeconds: number; cpu_model: string; cpu_cores_mhz: string; cpu_mhz: string; disk_space: string; memAvailable: number; ioInfo?: (undefined | Array<{ majorNumber: number; minorNumber: number; deviceName: string; readsCompletedSuccessfully: number; readsMerged: number; sectorsRead: number; timeSpentReadingMs: number; writesCompleted: number; writesMerged: number; sectorsWritten: number; timeSpentWritingMs: number; IOsCurrentlyInProgress: number; timeSpentDoingIOms: number; weightedTimeSpentDoingIOms: number }>) }) }>;
   "runConnectionQuery": (args: {    conId: string;   query: string;   args?: any;  }) => Promise<Array<{ [key: string]: any }>>;
-  "getSampleSchemas": () => Promise<Array<(({ name: string; path: string } & { type: "sql"; file: string }) | ({ name: string; path: string } & { type: "dir"; tableConfigTs: string; onMountTs: string; onInitSQL: string; workspaceConfig: (undefined | { workspaces: Array<{ active_row: any; connection_id: string; created: (null | string); deleted: boolean; icon: (null | string); id: string; last_updated: string; last_used: string; layout: any; layout_mode: (null | "fixed" | "editable"); name: string; options: { hideCounts?: (undefined | false | true); tableListEndInfo?: (undefined | "none" | "size" | "count"); tableListSortBy?: (undefined | "name" | "extraInfo"); showAllMyQueries?: (undefined | false | true); defaultLayoutType?: (undefined | "row" | "tab" | "col"); pinnedMenu?: (undefined | false | true); pinnedMenuWidth?: (undefined | number) }; parent_workspace_id: (null | string); published: boolean; source: (null | { tool_use_id: string }); url_path: (null | string); user_id: string }> }); connection: (undefined | { db_schema_filter: (null | { [key: string]: 0 } | { [key: string]: 1 }); info: (null | { canCreateDb?: (undefined | false | true) }); table_options: (null | { [key: string]: (undefined | { icon?: (undefined | string); label?: (undefined | string); rowIconColumn?: (undefined | string); columns?: (undefined | { [key: string]: (undefined | { icon?: (undefined | string) }) }); card?: (undefined | { headerColumn?: (undefined | string) }) }) }) }); databaseConfig: (undefined | { table_schema_positions: (null | { [key: string]: (undefined | { x: number; y: number }) }); table_schema_transform: (null | { translate: { x: number; y: number }; scale: number }) }) }))>>;
+  "getSampleSchemas": () => Promise<Array<(({ name: string; path: string } & { type: "sql"; file: string }) | ({ name: string; path: string } & { type: "dir"; tableConfigTs: string; onMountTs: string; onInitSQL: string; workspaceConfig: (undefined | { workspaces: Array<{ active_row: any; connection_id: string; created: (null | string); deleted: boolean; icon: (null | string); id: string; last_updated: string; last_used: string; layout: any; layout_mode: (null | "fixed" | "editable"); name: string; options: { hideCounts?: (undefined | false | true); tableListEndInfo?: (undefined | "count" | "none" | "size"); tableListSortBy?: (undefined | "name" | "extraInfo"); showAllMyQueries?: (undefined | false | true); defaultLayoutType?: (undefined | "row" | "tab" | "col"); pinnedMenu?: (undefined | false | true); pinnedMenuWidth?: (undefined | number) }; parent_workspace_id: (null | string); published: boolean; source: (null | { tool_use_id: string }); url_path: (null | string); user_id: string }> }); connection: (undefined | { db_schema_filter: (null | { [key: string]: 0 } | { [key: string]: 1 }); info: (null | { canCreateDb?: (undefined | false | true) }); table_options: (null | { [key: string]: (undefined | { icon?: (undefined | string); label?: (undefined | string); rowIconColumn?: (undefined | string); columns?: (undefined | { [key: string]: (undefined | { icon?: (undefined | string) }) }); card?: (undefined | { headerColumn?: (undefined | string) }) }) }) }); databaseConfig: (undefined | { table_schema_positions: (null | { [key: string]: (undefined | { x: number; y: number }) }); table_schema_transform: (null | { translate: { x: number; y: number }; scale: number }) }) }))>>;
   "getCompiledTS": (args: {    ts: string;  }) => Promise<string>;
   "killPID": (args: {    connId: string;   id_query_hash: string;   type?: "cancel" | "terminate";  }) => Promise<Array<any>>;
   "setOnMount": (args: {    connId: string;   changes: {  on_mount_ts?: string;  on_mount_ts_disabled?: boolean; };  }) => Promise<void>;
@@ -753,7 +792,7 @@ export type GeneratedFunctionSchema = {
   "getMcpHostInfo": () => Promise<{ os: string; npmVersion: string; uvxVersion: string }>;
   "transcribeAudio": (args: {    audioBlob: Blob;  }) => Promise<(({} & { success: boolean; transcription: string; language: string; language_probability: number; segments: Array<({} & { start: number; end: number; text: string })> }) | ({} & { error: string }))>;
   "startAgenticWorkflow": (args: {    chatId: number;   name: string;   workflowTs: string;   timeOutInSeconds: number;   databaseAccessDefinitions?: |  {  mode: "custom";  tableCreateStatements?: string;  tablePermissions: Partial<Record<string,  Partial<Record<"select" | "insert" | "update" | "delete", boolean>>>>; }
- |  {  mode: "run_commited_sql" | "run_readonly_sql"; };   toolDefinitions: Record<string,  {  mcpServerName: string;  toolNames: string[];  configId?: number; }>;   agentDefinitions: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  allowedToolDefinitionNames?: string[];  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  arrayOfType: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   userInput?: Record<string, 
+ |  {  mode: "run_commited_sql" | "run_readonly_sql"; };   toolDefinitions: Record<string,  {  mcpServerName: string;  toolNames: string[];  configId?: number; }>;   agentDefinitions: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  allowedToolDefinitionNames?: string[];  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   userInput?: Record<string, 
  |  {  title: string;  optional?: boolean;  type: "table-filter" | "table-column";  tableName: string; }
  |  {  title: string;  optional?: boolean;  type: "table-name" | "table-and-column"; }
  |  {  title: string;  optional?: boolean;  type: "custom";  dataType: "string" | "number" | "boolean" | "Date"; }>;   userInputValue: Record<string, unknown>;  }) => Promise<({} & { state: ("error" | "finished" | "build-error" | "timed-out" | "aborted"); name: string; command: string; log: Array<({} & { type: ("error" | "stdout" | "stderr"); text: string })>; exitCode: number; runDuration: number; buildDuration: number })>;

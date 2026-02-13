@@ -6,6 +6,7 @@ import type {
 import { getWebDevChatAndConnection } from "./getWebDevChatAndConnection";
 import { installDependenciesIfNeeded } from "./utils";
 import { writeWebAppFiles } from "@src/serverFunctions/adminServerFunctions/webApp/writeWebAppFiles";
+import { buildWebApp } from "@src/serverFunctions/adminServerFunctions/webApp/buildWebApp";
 
 export const createComponentQuickFeedbackPreview = async (
   {
@@ -26,9 +27,9 @@ export const createComponentQuickFeedbackPreview = async (
     {
       connectionId: connection_id,
       files: {
-        "client/src/Components/ComponentQuickFeedbackPreview/ComponentQuickFeedbackPreview.tsx":
+        "client/src/components/ComponentQuickFeedbackPreview/ComponentQuickFeedbackPreview.tsx":
           indexTsx,
-        "client/src/Components/ComponentQuickFeedbackPreview/ComponentQuickFeedbackPreview.css":
+        "client/src/components/ComponentQuickFeedbackPreview/ComponentQuickFeedbackPreview.css":
           css ?? "",
       },
     },
@@ -40,4 +41,13 @@ export const createComponentQuickFeedbackPreview = async (
     devDependencies: undefined,
     web_app_directory,
   });
+
+  const buildResult = await buildWebApp(
+    { connectionId: connection_id },
+    { dbo: dbs },
+  );
+
+  if (buildResult.state !== "close") {
+    return Promise.reject(buildResult);
+  }
 };

@@ -78,30 +78,37 @@ export const runProstglesDBTool = async (
     return tableHandler;
   };
 
-  if (tool.tool_name === "select") {
+  const { tool_name } = tool;
+  if (tool_name === "count") {
     //@ts-ignore
+    const { tableName, filter } = validatedData as JSONB.GetObjectType<
+      ProstglesDbTools["count"]["schema"]["type"]
+    >;
+    const tableHandler = getTableHandler(tableName);
+    return tableHandler.count(filter);
+  } else if (tool_name === "select") {
     const { tableName, filter, limit } = validatedData as JSONB.GetObjectType<
-      ProstglesDbTools[typeof tool.tool_name]["schema"]["type"]
+      ProstglesDbTools[typeof tool_name]["schema"]["type"]
     >;
     const tableHandler = getTableHandler(tableName);
     return tableHandler.find(filter, { limit });
-  } else if (tool.tool_name === "insert") {
+  } else if (tool_name === "insert") {
     const { tableName, data } = validatedData as JSONB.GetObjectType<
-      ProstglesDbTools[typeof tool.tool_name]["schema"]["type"]
+      ProstglesDbTools[typeof tool_name]["schema"]["type"]
     >;
     const tableHandler = getTableHandler(tableName);
     const rows = await tableHandler.insert(data, { returning: "*" });
     return `rows inserted: ${rows.length}`;
-  } else if (tool.tool_name === "update") {
+  } else if (tool_name === "update") {
     const { tableName, data, filter } = validatedData as JSONB.GetObjectType<
-      ProstglesDbTools[typeof tool.tool_name]["schema"]["type"]
+      ProstglesDbTools[typeof tool_name]["schema"]["type"]
     >;
     const tableHandler = getTableHandler(tableName);
     const rows = await tableHandler.update(filter, data, { returning: "*" });
     return `rows updated: ${rows?.length ?? 0}`;
   } else {
     const { tableName, filter } = validatedData as JSONB.GetObjectType<
-      ProstglesDbTools[typeof tool.tool_name]["schema"]["type"]
+      ProstglesDbTools[typeof tool_name]["schema"]["type"]
     >;
     const tableHandler = getTableHandler(tableName);
     const rows = await tableHandler.delete(filter, { returning: "*" });

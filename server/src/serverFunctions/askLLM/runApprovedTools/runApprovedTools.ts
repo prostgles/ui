@@ -4,7 +4,10 @@ import {
 } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
-import { getSerialisableError } from "prostgles-types";
+import {
+  getJSONBSchemaValidationError,
+  getSerialisableError,
+} from "prostgles-types";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import {
@@ -16,6 +19,7 @@ import {
   runProstglesDBTool,
 } from "../prostglesLLMTools/runProstglesDBTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
+import { AGENT_GOAL_TOOL_NAME } from "../agentConstants";
 
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
@@ -51,7 +55,7 @@ export const runApprovedTools = async (
     return;
   }
 
-  const { connection_id, db_data_permissions } = chat;
+  const { connection_id, db_data_permissions, agent_info } = chat;
   if (!connection_id) {
     throw new Error(`Chat with id ${chatId} does not have a connection_id`);
   }
@@ -69,6 +73,46 @@ export const runApprovedTools = async (
       userToolUseApprovals: userApprovals,
     });
   }
+
+  const agetGoalTool = toolUseRequestMessages.find(
+    (m) => m.name === AGENT_GOAL_TOOL_NAME,
+  );
+  if (agetGoalTool) {
+    if (!agent_info) {
+      throw new Error(
+        "Unexpected. Agent goal tool used but chat does not have agent_info",
+      );
+    }
+    const validationResult = getJSONBSchemaValidationError(
+      { type: agent_info.outputSchema },
+      agetGoalTool.input,
+    );
+    await dbs.llm_chats.update(
+      {
+        id: chat.id,
+      },
+      {
+        status:
+          validationResult.error !== undefined ?
+            {
+              state: "goal-data-validation-failure",
+              data: agetGoalTool.input,
+              error: validationResult.error,
+            }
+          : {
+              state: "goal-reached",
+              data: agetGoalTool.input,
+            },
+      },
+    );
+    if (validationResult.error) {
+      throw new Error(
+        `Agent goal tool input validation failed: ${validationResult.error}`,
+      );
+    }
+    return;
+  }
+
   const toolUseRequests = toolUseRequestMessages.map((toolUse) => {
     const tool = allowedTools?.find((t) => t.name === toolUse.name);
     if (!tool) {
@@ -168,7 +212,6 @@ export const runApprovedTools = async (
           dbs,
           serverName,
           toolName,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           toolUseRequest.input,
           clientReq,
         ).catch((e) => ({

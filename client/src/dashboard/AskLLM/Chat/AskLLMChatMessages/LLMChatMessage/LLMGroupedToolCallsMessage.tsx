@@ -7,11 +7,11 @@ import type { LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage
 import { getIconForToolUseMessage } from "../ToolUseChatMessage/useToolUseChatMessage";
 import type { LLMChatMessageCommonProps } from "./LLMChatMessage";
 import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
+import { useLLMSetupDone } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const LLMGroupedToolCallsMessage = ({
   messageContentItems,
-  mcpServerIcons,
-  sql,
   loadedSuggestions,
   onToggle,
   messages,
@@ -19,10 +19,9 @@ export const LLMGroupedToolCallsMessage = ({
   messageContentItems: LLMMessageContent[];
   messages: LLMMessageGroup["messages"];
   onToggle: VoidFunction;
-} & Pick<
-  LLMChatMessageCommonProps,
-  "mcpServerIcons" | "sql" | "loadedSuggestions"
->) => {
+} & Pick<LLMChatMessageCommonProps, "loadedSuggestions">) => {
+  const { sql } = usePrgl();
+  const { mcpServerIcons } = useLLMSetupDone();
   const { icons, toolCallCount } = useMemo(() => {
     let toolCallCount = 0;
     const iconPaths = messageContentItems

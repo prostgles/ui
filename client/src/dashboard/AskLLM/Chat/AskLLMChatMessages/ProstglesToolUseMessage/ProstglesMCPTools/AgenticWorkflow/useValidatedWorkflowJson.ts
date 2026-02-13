@@ -4,7 +4,7 @@ import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 
 export type ValidatedWorkflow = Omit<
   Parameters<Required<GeneratedFunctionSchema>["startAgenticWorkflow"]>[0],
-  "chatId" | "workflowTs"
+  "chatId" | "workflowTs" | "userInputValue"
 >;
 
 export const useValidatedWorkflowJson = ({

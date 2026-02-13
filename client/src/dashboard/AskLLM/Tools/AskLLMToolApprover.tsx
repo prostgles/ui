@@ -15,6 +15,7 @@ import { isEmpty } from "../../../utils/utils";
 import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
 import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
 import { useLLMToolsApprover, type ToolApproval } from "./useLLMToolsApprover";
+import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 
 export type AskLLMToolsProps = {
   activeChat: DBSSchema["llm_chats"];
@@ -23,11 +24,13 @@ export type AskLLMToolsProps = {
     msg: DBSSchema["llm_messages"]["message"] | undefined,
     isToolApproval: boolean,
   ) => void;
+  workspaceId: string | undefined;
+  loadedSuggestions: LoadedSuggestions | undefined;
 } & Pick<Prgl, "methods" | "connection">;
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   const { dbs } = usePrglCore();
-  const { activeChat } = props;
+  const { activeChat, loadedSuggestions, workspaceId } = props;
   const activeChatId = activeChat.id;
   const [mustApprove, setMustApprove] = React.useState<
     {
@@ -206,7 +209,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                 chatId={activeChat.id}
                 message={toolUseMessage}
                 toolUseResult={undefined}
-                workspaceId={undefined}
+                workspaceId={workspaceId}
+                loadedSuggestions={loadedSuggestions}
               />
             : <CodeEditorWithSaveButton
                 label="Input"
