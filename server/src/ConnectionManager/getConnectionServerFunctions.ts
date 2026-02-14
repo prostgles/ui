@@ -68,7 +68,7 @@ export const getConnectionServerFunctions = async ({
     connectionFunctions.forEach((m) => {
       const run =
         authContext &&
-        (async (validatedArgs) => {
+        (async (validatedArgs?: Record<string, unknown>) => {
           const sourceCode = getCompiledTS(m.run);
 
           try {

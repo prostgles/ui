@@ -47,9 +47,11 @@ export const createAgenticWorkflowContainer = async (
   {
     workflowTs,
     user_id,
+    chat_id,
   }: {
     workflowTs: string;
     user_id: string;
+    chat_id: number;
   },
   mode:
     | {
@@ -62,6 +64,7 @@ export const createAgenticWorkflowContainer = async (
       }
     | {
         type: "full";
+        workflowId: number;
         userInputValue: Record<string, unknown>;
         definition: AgenticWorkflowDefinition;
         dbPermissions: DbPermissions;
@@ -71,6 +74,18 @@ export const createAgenticWorkflowContainer = async (
         ) => Promise<unknown>;
       },
 ) => {
+  const workflowRun =
+    mode.type === "full" ?
+      await dbs.agentic_workflow_runs.insert(
+        {
+          workflow_id: mode.workflowId,
+          chat_id,
+          user_input_value: mode.userInputValue as any,
+          log: [],
+        },
+        { returning: "*" },
+      )
+    : undefined;
   return runContainerWithProxyAccess(
     dbs,
     {
@@ -95,6 +110,7 @@ export const createAgenticWorkflowContainer = async (
                       "chatId",
                       "workflowTs",
                       "userInputValue",
+                      "workflowId",
                     ]),
                   },
                 },
@@ -161,9 +177,10 @@ export const createAgenticWorkflowContainer = async (
           FROM node:18
           WORKDIR /app
           COPY . .
-          RUN npm install
+          ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+          RUN npm install --silent --quiet
           RUN npm run build
-          CMD ["npm", "start"]
+          CMD ["npm", "start", "--silent"]
         `,
         "defineAgenticWorkflow.ts": defineAgenticWorkflowTs,
         "index.ts": workflowTs,
@@ -175,6 +192,19 @@ export const createAgenticWorkflowContainer = async (
         USER_INPUT:
           mode.type === "full" ? JSON.stringify(mode.userInputValue) : "{}",
       },
+    },
+    (log) => {
+      if (!workflowRun) return;
+      void dbs.agentic_workflow_runs
+        .update(
+          { id: workflowRun.id },
+          {
+            log,
+          },
+        )
+        .catch((e) => {
+          console.error("Failed to update workflow log:", e);
+        });
     },
   );
 };

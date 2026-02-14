@@ -323,18 +323,18 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly type: "string";
                     };
                     readonly suggested_database_access: {
-                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.";
+                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type.";
                         readonly oneOfType: readonly [{
                             readonly Mode: {
                                 readonly enum: readonly ["None"];
                             };
                         }, {
                             readonly Mode: {
-                                readonly enum: readonly ["execute_sql_rollback"];
+                                readonly enum: readonly ["execute_sql_with_rollback"];
                             };
                         }, {
                             readonly Mode: {
-                                readonly enum: readonly ["execute_sql_commit"];
+                                readonly enum: readonly ["execute_sql_with_commit"];
                             };
                         }, {
                             readonly Mode: {

@@ -22,8 +22,8 @@ void describe("defineAgenticWorkflow", async () => {
             researcher: {
               prompt: "You are a research assistant.",
               outputSchema: {
-                summary: "string",
-                references: "string[]",
+                summary: { type: "string" },
+                references: { type: "string[]" },
               },
             },
           },

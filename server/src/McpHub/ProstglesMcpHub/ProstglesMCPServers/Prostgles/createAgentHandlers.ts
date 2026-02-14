@@ -98,24 +98,29 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
           connection_id: connectionId,
           agent_info: {
             prompt: [
-              "You are part of an agentic workflow.",
-              "Follow the instructions carefully.",
+              "You are part of an agentic workflow and you have the following limits: " +
+                JSON.stringify({ maxIterations, maxTokens }),
               "Use the tools as needed to complete your tasks.",
               "Be concise and to the point.",
+              "It is crucial that you use the least amount of steps, input and output that is necessary to complete your goal and instructions. ",
               "When you are ready you must respond with the required output format.",
               "",
-              "Below your prompt:",
-              prompt, // provided as first message
+              "Below is your prompt:",
+              prompt /* provided as first message */,
             ].join("\n"),
-            outputSchema: outputSchema,
+            outputSchema,
+            maxIterations,
           },
           model: model.id,
-          max_total_cost_usd: maxCostUSD,
+          max_total_cost_usd: maxCostUSD.toString(),
           extra_body: {
             max_tokens: maxTokens,
             temperature,
           },
-        },
+          /** satisfies added due to weird but.
+           * TODO: detect why and where else TS is silently failing to show errors due to outputSchema complexity
+           * */
+        } satisfies DBSSchemaForInsert["llm_chats"],
         { returning: "*" },
       );
       if (tools?.length) {
@@ -165,7 +170,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
       }
       if (chatStatus.state === "stopped") {
         throw new Error(
-          `Agent ${agentName} failed with error: ${chatStatus.reason ?? "unknown error"}`,
+          `Agent ${agentName} failed with error: ${chatStatus.reason}`,
         );
       }
 

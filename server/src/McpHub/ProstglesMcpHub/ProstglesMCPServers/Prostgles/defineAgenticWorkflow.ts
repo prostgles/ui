@@ -3,13 +3,13 @@ type AnyObject = Record<string, any>;
 type PrimitiveType = "string" | "number" | "boolean" | "unknown";
 
 type PrimitiveTypeWithArraysAndOptional =
-  | PrimitiveType
-  | `${PrimitiveType}[]`
-  | {
-      type: PrimitiveType | `${PrimitiveType}[]`;
-      optional?: boolean;
-    };
-type PropertyType =
+  // | PrimitiveType
+  // | `${PrimitiveType}[]`
+  {
+    type: PrimitiveType | `${PrimitiveType}[]`;
+    optional?: boolean;
+  };
+export type PropertyType =
   | PrimitiveTypeWithArraysAndOptional
   /** Object */
   | {
@@ -69,7 +69,7 @@ export type DatabaseAccessDefinition =
       /**
        * An sql statement that creates custom tables the agent will interact with.
        * Permissions for these tables can be defined in `tablePermissions`.
-       * This is preferred over providing access to the entire database (run_commited_sql mode) for better security.
+       * This is preferred over providing access to the entire database (execute_sql_with_commit mode) for better security.
        */
       tableCreateStatements?: string;
       tablePermissions: Record<
@@ -78,7 +78,7 @@ export type DatabaseAccessDefinition =
       >;
     }
   | {
-      mode: "run_commited_sql" | "run_readonly_sql";
+      mode: "execute_sql_with_commit" | "execute_sql_with_rollback";
     };
 
 type Select = "*" | Record<string, 1 | 0>;
@@ -228,7 +228,14 @@ export const END_OF_SCHEMA_PLACEHOLDER =
 
 export type ProxyDbCallData = {
   type: "db";
-  command: string;
+  command:
+    | "execute_sql_with_commit"
+    | "execute_sql_with_rollback"
+    | "select"
+    | "count"
+    | "update"
+    | "insert"
+    | "delete";
   params: any;
 };
 export type AgenticWorkflowDefinition = Parameters<DefineAgenticWorkflow>[0];
@@ -265,6 +272,26 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
       args.type === "definitions" ? "definitions"
       : args.type === "agent" ? "agent"
       : `${"db"}/${args.command}`;
+    const logData = (() => {
+      if (args.type === "db") {
+        if (
+          args.command === "execute_sql_with_commit" ||
+          args.command === "execute_sql_with_rollback"
+        ) {
+          return ["db.runSql", args.params];
+        }
+        const {
+          command,
+          params: { tableName, ...otherParams },
+        } = args;
+
+        return ["db." + command, tableName, otherParams];
+      } else if (args.type === "agent") {
+        return ["agent." + args.agentName, args.input];
+      }
+      return [args.type, args.definitions.name];
+    })();
+    const now = new Date();
     const result = await fetch(`${DOCKER_MCP_ENDPOINT}/${route}`, {
       method: "POST",
       headers: {
@@ -272,6 +299,11 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
       },
       body: JSON.stringify(args.type === "db" ? args.params : args),
     });
+    if (!result.ok) {
+      console.error(now.toISOString(), ...logData, "\n");
+    } else {
+      console.log(now.toISOString(), ...logData, "\n");
+    }
     const resCopy = result.clone();
     const data = await result.json().catch(() => resCopy.text());
     if (!result.ok) {
@@ -309,7 +341,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
       const COMMAND_MAP = {
         runSQL:
           !dbMode || dbMode === "custom" ? undefined
-          : dbMode === "run_commited_sql" ? "execute_sql_with_commit"
+          : dbMode === "execute_sql_with_commit" ? "execute_sql_with_commit"
           : "execute_sql_with_rollback",
         find: "select",
         count: "count",

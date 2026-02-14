@@ -1,30 +1,18 @@
-const propertyTypeBasic = {
-  enum: [
-    "string",
-    "number",
-    "boolean",
-    "unknown",
-    "string[]",
-    "number[]",
-    "boolean[]",
-    "unknown[]",
-  ],
-} as const;
+const PrimitiveType = ["string", "number", "boolean", "unknown"] as const;
+const PrimitiveTypesWithArrays = [
+  ...PrimitiveType,
+  ...PrimitiveType.map((t) => `${t}[]` as const),
+] as const;
+
+// const propertyTypeBasic = {
+//   enum: PrimitiveTypesWithArrays,
+// } as const;
 
 const PropertyTypeOptional = {
   type: {
     optional: { type: "boolean", optional: true },
     type: {
-      enum: [
-        "string",
-        "number",
-        "boolean",
-        "unknown",
-        "string[]",
-        "number[]",
-        "boolean[]",
-        "unknown[]",
-      ],
+      enum: PrimitiveTypesWithArrays,
     },
   },
 } as const;
@@ -33,14 +21,19 @@ export const agentOutputSchemaType = {
   record: {
     values: {
       oneOf: [
-        propertyTypeBasic,
+        // propertyTypeBasic,
         PropertyTypeOptional,
         {
           type: {
             optional: { type: "boolean", optional: true },
             type: {
               record: {
-                values: { oneOf: [propertyTypeBasic, PropertyTypeOptional] },
+                values: {
+                  oneOf: [
+                    // propertyTypeBasic,
+                    PropertyTypeOptional,
+                  ],
+                },
               },
             },
           },
@@ -50,7 +43,12 @@ export const agentOutputSchemaType = {
             optional: { type: "boolean", optional: true },
             arrayOfType: {
               record: {
-                values: { oneOf: [propertyTypeBasic, PropertyTypeOptional] },
+                values: {
+                  oneOf: [
+                    // propertyTypeBasic,
+                    PropertyTypeOptional,
+                  ],
+                },
               },
             },
           },
@@ -62,6 +60,7 @@ export const agentOutputSchemaType = {
 
 export const startAgenticWorkflowSchema = {
   chatId: "integer",
+  workflowId: "integer",
   name: "string",
   workflowTs: "string",
   timeOutInSeconds: "number",
@@ -85,7 +84,9 @@ export const startAgenticWorkflowSchema = {
         },
       },
       {
-        mode: { enum: ["run_commited_sql", "run_readonly_sql"] },
+        mode: {
+          enum: ["execute_sql_with_commit", "execute_sql_with_rollback"],
+        },
       },
     ],
   },

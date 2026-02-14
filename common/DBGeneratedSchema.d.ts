@@ -45,8 +45,7 @@ export type DBGeneratedSchema = {
       agentic_workflow_run_id: number;
       chat_id: number;
       id?: number;
-      log: 
-       | string
+      log: any;
       workflow_id: number;
     };
   };
@@ -54,24 +53,25 @@ export type DBGeneratedSchema = {
     columns: {
       chat_id: number;
       id?: number;
+      log:  (  {  type: "stdout" | "stderr" | "error";  text: string; } )[]
       user_input_value:  Record<string, 
- | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"
  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }
- |  {  optional?: boolean;  type: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }
- |  {  optional?: boolean;  arrayOfType: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>
+ |  {  optional?: boolean;  type: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }
+ |  {  optional?: boolean;  arrayOfType: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>
       workflow_id: number;
     };
   };
   agentic_workflows: {
     columns: {
       chat_id: number;
-      definition_data: {    agentDefinitions: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  allowedToolDefinitionNames?: string[];  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   toolDefinitions: Record<string,  {  mcpServerName: string;  toolNames: string[];  configId?: number; }>;   databaseAccessDefinitions?: |  {  mode: "custom";  tableCreateStatements?: string;  tablePermissions: Partial<Record<string,  Partial<Record<"select" | "insert" | "update" | "delete", boolean>>>>; }
- |  {  mode: "run_commited_sql" | "run_readonly_sql"; };   userInput?: Record<string, 
+      definition_data: {    agentDefinitions: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  allowedToolDefinitionNames?: string[];  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   toolDefinitions: Record<string,  {  mcpServerName: string;  toolNames: string[];  configId?: number; }>;   databaseAccessDefinitions?: |  {  mode: "custom";  tableCreateStatements?: string;  tablePermissions: Partial<Record<string,  Partial<Record<"select" | "insert" | "update" | "delete", boolean>>>>; }
+ |  {  mode: "execute_sql_with_commit" | "execute_sql_with_rollback"; };   userInput?: Record<string, 
  |  {  title: string;  optional?: boolean;  type: "table-filter" | "table-column";  tableName: string; }
  |  {  title: string;  optional?: boolean;  type: "table-name" | "table-and-column"; }
  |  {  title: string;  optional?: boolean;  type: "custom";  dataType: "string" | "number" | "boolean" | "Date"; }>;   timeOutInSeconds: number;  };
       id?: number;
       name: string;
+      user_id: string;
     };
   };
   alert_viewed_by: {
@@ -270,11 +270,10 @@ export type DBGeneratedSchema = {
   };
   llm_chats: {
     columns: {
-      agent_info?: null | {    prompt: string;   outputSchema: Record<string, 
- | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"
+      agent_info?: null | {    prompt: string;   maxIterations?: number;   outputSchema: Record<string, 
  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }
- |  {  optional?: boolean;  type: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }
- |  {  optional?: boolean;  arrayOfType: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>;  };
+ |  {  optional?: boolean;  type: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }
+ |  {  optional?: boolean;  arrayOfType: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>;  };
       connection_id?: null | string;
       created?: null | string;
       currently_typed_message?: null | string;
@@ -303,7 +302,7 @@ export type DBGeneratedSchema = {
       parent_chat_id?: null | number;
       status?: 
        | null
-       |  {  state: "stopped";  reason?: "max_total_cost_usd" | "estimated_future_max_total_cost_usd" | "maximum_consecutive_tool_fails"; }
+       |  {  state: "stopped";  reason: "max_total_cost_usd" | "estimated_future_max_total_cost_usd" | "maximum_consecutive_tool_fails" | "manual" | "max_iterations_reached"; }
        |  {  state: "loading";  since: string; }
        |  {  state: "goal-reached";  data: unknown; }
        |  {  state: "goal-data-validation-failure";  data: unknown;  error: string; }
@@ -791,8 +790,8 @@ export type GeneratedFunctionSchema = {
   "reloadMcpServerTools": (args: {    serverName: string;  }) => Promise<number>;
   "getMcpHostInfo": () => Promise<{ os: string; npmVersion: string; uvxVersion: string }>;
   "transcribeAudio": (args: {    audioBlob: Blob;  }) => Promise<(({} & { success: boolean; transcription: string; language: string; language_probability: number; segments: Array<({} & { start: number; end: number; text: string })> }) | ({} & { error: string }))>;
-  "startAgenticWorkflow": (args: {    chatId: number;   name: string;   workflowTs: string;   timeOutInSeconds: number;   databaseAccessDefinitions?: |  {  mode: "custom";  tableCreateStatements?: string;  tablePermissions: Partial<Record<string,  Partial<Record<"select" | "insert" | "update" | "delete", boolean>>>>; }
- |  {  mode: "run_commited_sql" | "run_readonly_sql"; };   toolDefinitions: Record<string,  {  mcpServerName: string;  toolNames: string[];  configId?: number; }>;   agentDefinitions: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  allowedToolDefinitionNames?: string[];  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  | "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]" |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   userInput?: Record<string, 
+  "startAgenticWorkflow": (args: {    chatId: number;   workflowId: number;   name: string;   workflowTs: string;   timeOutInSeconds: number;   databaseAccessDefinitions?: |  {  mode: "custom";  tableCreateStatements?: string;  tablePermissions: Partial<Record<string,  Partial<Record<"select" | "insert" | "update" | "delete", boolean>>>>; }
+ |  {  mode: "execute_sql_with_commit" | "execute_sql_with_rollback"; };   toolDefinitions: Record<string,  {  mcpServerName: string;  toolNames: string[];  configId?: number; }>;   agentDefinitions: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  allowedToolDefinitionNames?: string[];  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   userInput?: Record<string, 
  |  {  title: string;  optional?: boolean;  type: "table-filter" | "table-column";  tableName: string; }
  |  {  title: string;  optional?: boolean;  type: "table-name" | "table-and-column"; }
  |  {  title: string;  optional?: boolean;  type: "custom";  dataType: "string" | "number" | "boolean" | "Date"; }>;   userInputValue: Record<string, unknown>;  }) => Promise<({} & { state: ("error" | "finished" | "build-error" | "timed-out" | "aborted"); name: string; command: string; log: Array<({} & { type: ("error" | "stdout" | "stderr"); text: string })>; exitCode: number; runDuration: number; buildDuration: number })>;

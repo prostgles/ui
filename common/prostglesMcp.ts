@@ -283,20 +283,20 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           },
           suggested_database_access: {
             description:
-              "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_commit' access type.",
+              "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type.",
             oneOfType: [
               { Mode: { enum: ["None"] } },
-              { Mode: { enum: ["execute_sql_rollback"] } },
-              { Mode: { enum: ["execute_sql_commit"] } },
+              { Mode: { enum: ["execute_sql_with_rollback"] } },
+              { Mode: { enum: ["execute_sql_with_commit"] } },
               {
                 Mode: { enum: ["Custom"] },
                 tables: {
                   arrayOfType: {
                     tableName: "string",
-                    select: "boolean",
-                    insert: "boolean",
-                    update: "boolean",
-                    delete: "boolean",
+                    select: { type: "boolean", optional: true },
+                    insert: { type: "boolean", optional: true },
+                    update: { type: "boolean", optional: true },
+                    delete: { type: "boolean", optional: true },
                   },
                 },
               },

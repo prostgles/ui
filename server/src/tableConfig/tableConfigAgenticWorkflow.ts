@@ -10,6 +10,7 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
     columns: {
       id: "INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY",
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       name: "TEXT NOT NULL",
       definition_data: {
         jsonbSchemaType: pickKeys(startAgenticWorkflowSchema, [
@@ -30,17 +31,12 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
       user_input_value: {
         jsonbSchema: agentOutputSchemaType,
       },
-    },
-  },
-  agentic_workflow_logs: {
-    columns: {
-      id: "INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY",
-      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
-      workflow_id: `INTEGER NOT NULL REFERENCES agentic_workflows(id) ON DELETE CASCADE`,
-      agentic_workflow_run_id: `INTEGER NOT NULL REFERENCES agentic_workflow_runs(id) ON DELETE CASCADE`,
       log: {
         jsonbSchema: {
-          oneOf: ["string"],
+          arrayOfType: {
+            type: { enum: ["stdout", "stderr", "error"] },
+            text: "string",
+          },
         },
       },
     },

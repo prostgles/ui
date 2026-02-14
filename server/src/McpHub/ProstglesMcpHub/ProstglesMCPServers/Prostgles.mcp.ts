@@ -11,6 +11,7 @@ import {
   defineAgenticWorkflowTs,
 } from "./Prostgles/createAgenticWorkflowContainer";
 import { fetchTools } from "./Prostgles/fetchTools";
+import { getSerialisableError, omitKeys } from "prostgles-types";
 
 const serverName = "prostgles-ui" as const;
 const definition = {
@@ -47,7 +48,7 @@ const handler = {
         },
         suggest_agentic_workflow: async (
           { workflow_function_definition },
-          { user_id },
+          { user_id, chat },
         ) => {
           return new Promise((resolve, reject) => {
             createAgenticWorkflowContainer(
@@ -55,32 +56,54 @@ const handler = {
               {
                 user_id,
                 workflowTs: workflow_function_definition,
+                chat_id: chat.id,
               },
               {
                 type: "definitions-only",
                 handler: ({ definitions }) => {
-                  resolve({
-                    isValid: true,
-                    ...definitions,
-                  });
+                  dbs.agentic_workflows
+                    .insert(
+                      {
+                        user_id,
+                        name: definitions.name,
+                        chat_id: chat.id,
+                        definition_data: omitKeys(definitions, ["name"]) as any,
+                      },
+                      { returning: { id: 1 } },
+                    )
+                    .then(({ id }) => {
+                      resolve({
+                        isValid: true,
+                        workflowId: id,
+                        ...definitions,
+                      });
+                    })
+                    .catch((e) =>
+                      reject({
+                        isValid: false,
+                        logs: JSON.stringify(getSerialisableError(e), null, 2),
+                        defineAgenticWorkflowTs,
+                      }),
+                    );
                 },
               },
             )
               .then((containerResult) => {
                 if (containerResult.state !== "finished") {
-                  const lastLog = containerResult.log.at(-1);
-                  if (lastLog?.type === "error") {
-                    reject({ logs: lastLog.text, defineAgenticWorkflowTs });
-                  } else {
-                    reject({
-                      isValid: false,
-                      logs: containerResult.log.map((l) => l.text).join("\n"),
-                      defineAgenticWorkflowTs,
-                    });
-                  }
+                  reject({
+                    isValid: false,
+                    logs: containerResult.log.map((l) => l.text).join("\n"),
+                    defineAgenticWorkflowTs,
+                  });
                 }
               })
-              .catch(reject);
+              .catch((err) => {
+                reject({
+                  isValid: false,
+                  logs: JSON.stringify(getSerialisableError(err), null, 2),
+                  defineAgenticWorkflowTs,
+                });
+              });
           });
         },
         suggest_dashboards: () => {

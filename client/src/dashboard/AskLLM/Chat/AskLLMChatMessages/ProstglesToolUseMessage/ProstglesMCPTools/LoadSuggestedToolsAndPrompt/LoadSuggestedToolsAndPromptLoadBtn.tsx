@@ -98,9 +98,9 @@ export const LoadSuggestedToolsAndPromptLoadBtn = ({
           { id: chatId },
           {
             db_data_permissions:
-              dbAccess.Mode === "execute_sql_commit" ?
+              dbAccess.Mode === "execute_sql_with_commit" ?
                 { Mode: "Run commited SQL", auto_approve: true }
-              : dbAccess.Mode === "execute_sql_rollback" ?
+              : dbAccess.Mode === "execute_sql_with_rollback" ?
                 { Mode: "Run readonly SQL", auto_approve: true }
               : dbAccess.Mode === "Custom" ? { ...dbAccess, auto_approve: true }
               : dbAccess,

@@ -1,9 +1,9 @@
+import { SuccessMessage } from "@components/Animations";
 import Btn from "@components/Btn";
-import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import Popup from "@components/Popup/Popup";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { omitKeys } from "prostgles-types";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { LoadSuggestedWorkflowUserInput } from "./AgenticWorkflowUserInput";
 import type { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
@@ -12,30 +12,38 @@ export const AgenticWorkflowActions = ({
   validatedWorkflowJson,
   chatId,
   inputData,
+  onStarted,
 }: Pick<ProstglesMCPToolsProps, "chatId"> & {
   inputData: { workflow_function_definition: string };
   validatedWorkflowJson: ReturnType<typeof useValidatedWorkflowJson>;
+  onStarted: () => void;
 }) => {
   const {
     dbsMethods: { startAgenticWorkflow },
   } = usePrgl();
 
-  const [workflowResult, setWorkflowResult] = useState<any>();
+  const [workflowResult, setWorkflowResult] = useState<unknown>();
   const [userInputValue, setUserInputValue] = useState<Record<string, unknown>>(
     {},
   );
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  useEffect(() => {
+    if (workflowResult) {
+      setShowSuccessMessage(true);
+      const timeout = setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 5000);
+      return () => clearTimeout(timeout);
+    } else {
+      setShowSuccessMessage(false);
+    }
+  }, [workflowResult]);
 
   return (
     <>
-      {workflowResult && (
-        <Popup title={"Workflow finished"}>
-          <MonacoCodeInMarkdown
-            codeHeader={undefined}
-            codeString={JSON.stringify(workflowResult, null, 2)}
-            language="json"
-            loadedSuggestions={undefined}
-            sqlHandler={undefined}
-          />
+      {showSuccessMessage && (
+        <Popup>
+          <SuccessMessage message="Workflow finished successfully!" />
         </Popup>
       )}
 
@@ -48,6 +56,7 @@ export const AgenticWorkflowActions = ({
       <Btn
         variant="filled"
         color="action"
+        className="ml-auto"
         disabledInfo={
           !startAgenticWorkflow ?
             "Starting agentic workflows is not allowed/available"
@@ -66,17 +75,20 @@ export const AgenticWorkflowActions = ({
           ) {
             throw new Error(`Cannot start workflow due error`);
           }
+          onStarted();
           const res = await startAgenticWorkflow!({
             chatId,
             workflowTs: inputData.workflow_function_definition,
             ...omitKeys(validatedWorkflowJson.result, ["isValid"]),
             userInputValue,
+          }).catch((err) => {
+            return err;
           });
 
           console.log(res);
           if (res.state !== "finished") {
             throw new Error(
-              `Agentic workflow container finished with status: ${res.state}. Logs: ${res.log.map((l) => l.text).join("\n")}`,
+              `Agentic workflow container finished with status: ${res.state}. \nLogs: \n\n${res.log.map((l) => l.text).join("\n")}`,
             );
           } else {
             setWorkflowResult(res);

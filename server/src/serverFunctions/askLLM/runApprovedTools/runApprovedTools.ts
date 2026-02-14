@@ -87,6 +87,20 @@ export const runApprovedTools = async (
       { type: agent_info.outputSchema },
       agetGoalTool.input,
     );
+    await dbs.llm_messages.insert({
+      chat_id: chatId,
+      message: [
+        {
+          type: "tool_result",
+          tool_name: AGENT_GOAL_TOOL_NAME,
+          tool_use_id: agetGoalTool.id,
+          content:
+            validationResult.error !== undefined ?
+              "goal-data-validation-failure"
+            : "goal-reached",
+        },
+      ],
+    });
     await dbs.llm_chats.update(
       {
         id: chat.id,

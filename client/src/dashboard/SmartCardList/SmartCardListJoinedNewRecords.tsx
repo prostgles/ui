@@ -63,7 +63,7 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
       data-command="SmartCardList"
       style={smartCardListStyle}
     >
-      {data.map((defaultData, i) => {
+      {data.map((defaultData, index) => {
         return (
           <div key={getKeyForRowData(defaultData, keyCols)}>
             <SmartCard
@@ -76,6 +76,10 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
               columns={table.columns}
               excludeNulls={excludeNulls}
               smartFormProps={{ onSuccess }}
+              fullData={{
+                index,
+                rows: data,
+              }}
             />
             <Btn
               iconPath={mdiDelete}
@@ -83,7 +87,7 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
               className="absolute"
               style={{ top: "5px", right: "5px" }}
               onClick={() => {
-                onChange(props.data.filter((_, di) => di !== i));
+                onChange(props.data.filter((_, di) => di !== index));
               }}
             />
           </div>

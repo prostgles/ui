@@ -7,23 +7,31 @@ import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import type { LLMSetupStateReady } from "../Setup/LLMSetupProvider";
 import { useLLMChatMessages } from "./AskLLMChatMessages/hooks/useLLMChatMessages";
 import { setChatPrompt } from "./AskLLMChatMessages/setChatPrompt";
+import type { AskLLMChatProps } from "./AskLLMChat";
 
 export type UseLLMChatProps = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
     workspaceId: string | undefined;
     loadedSuggestions: LoadedSuggestions | undefined;
-  };
+  } & Pick<AskLLMChatProps, "agentChat">;
 
 export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = (props: UseLLMChatProps) => {
-  const { dbs, credentials, firstPromptId, defaultCredential, prompts } = props;
+  const {
+    dbs,
+    credentials,
+    firstPromptId,
+    defaultCredential,
+    prompts,
+    agentChat,
+  } = props;
   const chatsFilter = useMemo(() => {
     return {
       connection_id: { $in: [props.connectionId, null] },
-      "agent_info.$eq": null,
+      agent_info: agentChat ? { $ne: null } : { $eq: null },
     } satisfies FilterItem<DBSSchema["llm_chats"]>;
-  }, [props.connectionId]);
-  const [selectedChatId, setSelectedChat] = useState<number>();
+  }, [agentChat, props.connectionId]);
+  const [selectedChatId, setSelectedChat] = useState(agentChat?.id);
   const { data: latestChats } = dbs.llm_chats.useSubscribe(chatsFilter, {
     select: { "*": 1, created_ago: { $ageNow: ["created"] } },
     orderBy: { created: -1 },

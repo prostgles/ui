@@ -3,7 +3,7 @@ import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMC
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
-import { executeDockerCommand } from "./executeDockerCommand";
+import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
 import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
 
@@ -14,6 +14,7 @@ type CreateContainerResult = JSONBTypeIfDefined<
 export const createContainer = async (
   name: string,
   params: CreateContainerParams,
+  onLogs?: (logs: ProcessLog[]) => void,
 ): Promise<CreateContainerResult> => {
   let localDir = "";
   try {
@@ -48,9 +49,13 @@ export const createContainer = async (
       localDir,
     ];
     const startTime = Date.now();
-    const buildResult = await executeDockerCommand(buildArgs, {
-      timeout: 300_000,
-    });
+    const buildResult = await executeDockerCommand(
+      buildArgs,
+      {
+        timeout: 300_000,
+      },
+      onLogs,
+    );
     const buildDuration = Date.now() - startTime;
 
     if (buildResult.exitCode !== 0) {
@@ -72,11 +77,15 @@ export const createContainer = async (
     });
 
     const runStartTime = Date.now();
-    const runResult = await executeDockerCommand(runArgs, {
-      timeout: 30_000,
-      ...config,
-      ...params,
-    });
+    const runResult = await executeDockerCommand(
+      runArgs,
+      {
+        timeout: 30_000,
+        ...config,
+        ...params,
+      },
+      onLogs,
+    );
 
     /** Cleanup */
     if (runResult.state === "timed-out") {

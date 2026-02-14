@@ -41,12 +41,21 @@
   background-color: var(--green-100);
 }
 .chip.yellow {
-  color: var(--yellow-500);
+  color: var(--yellow);
 }
 .chip.yellow.variant-default,
 .chip.yellow.variant-outline {
   background-color: var(--yellow-100);
 }
+
+.chip.orange {
+  color: #7a3e00; /* #997100; */
+}
+.chip.orange.variant-default,
+.chip.orange.variant-outline {
+  background-color: #ffddb3; /* #ffe699; */
+}
+
 .chip.red {
   color: var(--red-500);
 }

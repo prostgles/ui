@@ -9,6 +9,7 @@ import {
   type ContainerProxyContext,
 } from "./dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { getOrCreateDockerMCPServerProxy } from "./dockerMCPServerProxy/dockerMCPServerProxy";
+import type { ProcessLog } from "./executeDockerCommand";
 
 export const DOCKER_MCP_ENDPOINT_ENV_VAR = "DOCKER_MCP_ENDPOINT";
 export const runContainerWithProxyAccess = async (
@@ -21,6 +22,7 @@ export const runContainerWithProxyAccess = async (
     user_id: string;
   } & Pick<ContainerProxyContext, "requestHandlers" | "dbPermissions">,
   args: CreateContainerParams,
+  onLogs?: (logs: ProcessLog[]) => void,
 ) => {
   const proxy = await getOrCreateDockerMCPServerProxy(
     getElectronConfig()?.isElectron,
@@ -67,10 +69,14 @@ export const runContainerWithProxyAccess = async (
             [DOCKER_MCP_ENDPOINT_ENV_VAR]: proxy.baseUrl,
           },
         };
-        return createContainer(containerName, argsWithEnv).catch((error) => {
-          console.error("Error creating container:", error);
-          throw error;
-        });
+        return createContainer(containerName, argsWithEnv, onLogs).then(
+          (res) => {
+            if (res.exitCode !== 0) {
+              return Promise.reject(res);
+            }
+            return res;
+          },
+        );
       },
     );
   return containerResult;

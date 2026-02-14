@@ -23,6 +23,7 @@ export const getStartAgenticWorkflow = (
         workflowTs,
         userInputValue,
         userInput,
+        workflowId,
       },
       { dbs, user, getClientDBHandlers },
     ) => {
@@ -73,10 +74,11 @@ export const getStartAgenticWorkflow = (
       }
       const res = await createAgenticWorkflowContainer(
         dbs,
-        { user_id: user.id, workflowTs },
+        { user_id: user.id, workflowTs, chat_id: chatId },
         {
           type: "full",
           userInputValue,
+          workflowId,
           definition: {
             name,
             timeOutInSeconds,
@@ -101,12 +103,15 @@ export const getStartAgenticWorkflow = (
                 }
               : {
                   Mode:
-                    databaseAccessDefinitions.mode === "run_commited_sql" ?
+                    (
+                      databaseAccessDefinitions.mode ===
+                      "execute_sql_with_commit"
+                    ) ?
                       "Run commited SQL"
                     : "Run readonly SQL",
                 },
           },
-          handler: (data, ctx) => {
+          handler: (data) => {
             const agentHandler = agentHandlers.get(data.agentName);
             if (!agentHandler) {
               throw `Agent handler for ${data.agentName} not found`;
@@ -114,7 +119,10 @@ export const getStartAgenticWorkflow = (
             return agentHandler(data.input);
           },
         },
-      );
+      ).catch((err) => {
+        console.error("Error in createAgenticWorkflowContainer:", err);
+        throw err;
+      });
 
       return res;
     },

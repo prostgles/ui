@@ -315,7 +315,10 @@ export const askLLM = async (args: AskLLMArgs) => {
     } = modelData;
     if (!llm_provider) throw "Provider not found";
 
-    const tools = toolsWithInfo?.map(
+    const tools = (
+      chat.agent_info ?
+        [...(toolsWithInfo ?? []), getAgentGoalTool(chat.agent_info)]
+      : toolsWithInfo)?.map(
       ({ name, description, input_schema, auto_approve }) => {
         return {
           name,
@@ -325,10 +328,6 @@ export const askLLM = async (args: AskLLMArgs) => {
         };
       },
     );
-    const toolsWithAgentGoalTool: typeof tools =
-      chat.agent_info ?
-        [...(tools ?? []), getAgentGoalTool(chat.agent_info)]
-      : tools;
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const {
       content: aiResponseMessageRaw,
@@ -339,7 +338,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       llm_model,
       llm_provider,
       llm_credential,
-      tools: toolsWithAgentGoalTool,
+      tools,
       messages: [
         {
           /** TODO check if this works with all providers */
@@ -394,7 +393,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       },
     );
 
-    const { maximum_consecutive_tool_fails } = chat;
+    const { maximum_consecutive_tool_fails, agent_info } = chat;
     if (
       maximum_consecutive_tool_fails &&
       args.type !== "approve-tool-use" &&
@@ -415,6 +414,30 @@ export const askLLM = async (args: AskLLMArgs) => {
         },
       );
       throw `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`;
+    }
+
+    const { maxIterations } = agent_info ?? {};
+    if (
+      maxIterations !== undefined &&
+      isAssistantMessageRequestingToolUse({ message: aiResponseMessage })
+    ) {
+      const iterations =
+        pastMessages.filter((m) => {
+          return !m.user_id;
+        }).length +
+        1; /** +1 for current response that is requesting tool use */
+      if (iterations > maxIterations) {
+        await dbs.llm_chats.update(
+          { id: chat.id },
+          {
+            status: {
+              state: "stopped",
+              reason: "max_iterations_reached",
+            },
+          },
+        );
+        throw `Maximum number (${maxIterations}) of iterations reached`;
+      }
     }
 
     const latestChat = await getChat();

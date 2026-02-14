@@ -6,7 +6,7 @@ import type { DBSConnectionInfo } from "@src/electronConfig";
 import type e from "express";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { OnReadyCallback } from "prostgles-server/dist/initProstgles";
-import { connectionManager, type DBS } from "..";
+import { connectionManager, type DBS } from "@src/index";
 import BackupManager from "../BackupManager/BackupManager";
 import { setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/AnthropicMcpHub/startMcpHub";
@@ -36,6 +36,36 @@ export const initBackupManager = async (
     dbsSql,
     connectionManager,
   );
+
+  // const workflowChat = await dbs.llm_chats.insert(
+  //   {
+  //     name: "",
+  //     user_id: "userId",
+  //     parent_chat_id: 1,
+  //     connection_id: "connectionId",
+  //     agent_info: {
+  //       prompt: [
+  //         "You are part of an agentic workflow.",
+  //         "Follow the instructions carefully.",
+  //         "Use the tools as needed to complete your tasks.",
+  //         "Be concise and to the point.",
+  //         "When you are ready you must respond with the required output format.",
+  //         "",
+  //         "Below is your prompt:",
+  //         "prompt", // provided as first message
+  //       ].join("\n"),
+  //       outputSchema: {},
+  //       maxIterations,
+  //     },
+  //     model: "model.id",
+  //     max_total_cost_usd: "maxCostUSD",
+  //     extra_body: {
+  //       max_tokens: 111,
+  //       temperature: 1,
+  //     },
+  //   }, //satisfies DBSSchemaForInsert["llm_chats"],
+  //   { returning: "*" },
+  // );
   return backupManager;
 };
 

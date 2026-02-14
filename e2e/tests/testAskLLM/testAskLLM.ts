@@ -6,7 +6,11 @@ import {
 import { dockerWeatherToolUse } from "testAskLLM/sampleToolUseData";
 import { createComponentToolUse } from "./createComponentToolUse";
 import { stringify, type ToolUse } from "./utils";
-import { agenticWorkflowToolUse, research } from "./agenticWorkflowToolUse";
+import {
+  agenticWorkflowToolUse,
+  agenticWorkflowToolUseNoUserInput,
+  research,
+} from "./agenticWorkflowToolUse";
 
 export const clientNodeModulesDirectory = join(
   __dirname,
@@ -308,6 +312,7 @@ const toolResponses: Record<string, ToolUse> = {
   },
   component: createComponentToolUse,
   agentic_workflow: agenticWorkflowToolUse,
+  agentic_workflow2: agenticWorkflowToolUseNoUserInput,
   [research]: {
     tool: [
       {

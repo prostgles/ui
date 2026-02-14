@@ -40,10 +40,20 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
             title: "Prompt",
             description: "Prompt used for agentic chat",
           },
+          maxIterations: {
+            type: "integer",
+            optional: true,
+            title: "Max iterations",
+            description:
+              "Maximum number of iterations for the agentic workflow. An iteration is a single cycle of the agent thinking, tool calling and observing the results. Set to 0 for unlimited iterations.",
+          },
           outputSchema: {
-            ...agentOutputSchemaType,
             title: "Output schema",
             description: "JSON schema for validating agent output",
+            ...agentOutputSchemaType,
+            // record: {
+            //   values: "unknown",
+            // },
           },
         },
       },
@@ -73,8 +83,9 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                     "max_total_cost_usd",
                     "estimated_future_max_total_cost_usd",
                     "maximum_consecutive_tool_fails",
+                    "manual",
+                    "max_iterations_reached",
                   ],
-                  optional: true,
                 },
               },
             },

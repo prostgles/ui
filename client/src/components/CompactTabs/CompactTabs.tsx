@@ -1,8 +1,6 @@
 import { getEntries } from "@common/utils";
-import { FlexCol } from "@components/Flex";
 import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapper";
-import type { TabItems, TabsProps } from "@components/Tabs";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Btn from "../Btn";
 
 type CompactTabItem = {
@@ -15,16 +13,29 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
   style,
   defaultTab,
   items,
+  controlled,
 }: {
   items: T;
   defaultTab?: keyof T;
   className?: string;
   style?: React.CSSProperties;
+  controlled?: {
+    activeTab: string;
+    setActiveTab: (tab: string) => void;
+  };
 }) => {
-  const [activeTab, setActiveTab] = useState(
+  const [localActiveTab, setLocalActiveTab] = useState(
     defaultTab ??
       getEntries(items).find(([_, item]) => !item.disabledInfo)?.[0],
   );
+  const { activeTab, setActiveTab } = useMemo(() => {
+    return (
+      controlled ?? {
+        activeTab: localActiveTab,
+        setActiveTab: setLocalActiveTab,
+      }
+    );
+  }, [controlled, localActiveTab]);
   const activeTabItem = activeTab ? items[activeTab] : undefined;
 
   return (

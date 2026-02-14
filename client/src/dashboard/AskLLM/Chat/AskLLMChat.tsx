@@ -20,10 +20,11 @@ export type AskLLMChatProps = Pick<
   "askLLM" | "stopAskLLM"
 > & {
   setupState: LLMSetupStateReady;
-  anchorEl: HTMLElement;
+  anchorEl: HTMLElement | undefined;
   onClose: VoidFunction;
   workspaceId: string | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
+  agentChat: { id: number } | undefined;
 };
 
 export const AskLLMChat = (props: AskLLMChatProps) => {
@@ -35,6 +36,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     loadedSuggestions,
     askLLM,
     stopAskLLM,
+    agentChat,
   } = props;
   const { tables, user, connectionId, connection, dbs, methods, sql } =
     usePrgl();
@@ -45,6 +47,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     user,
     connectionId,
     workspaceId,
+    agentChat,
   });
   const {
     messages,
@@ -97,7 +100,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           chatRootDiv={rootDiv}
         />
       )}
-      positioning="right-panel"
+      positioning={agentChat ? "center" : "right-panel"}
       clickCatchStyle={{ opacity: 0.1 }}
       onClickClose={false}
       onClose={onClose}

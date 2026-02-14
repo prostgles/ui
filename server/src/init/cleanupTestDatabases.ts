@@ -2,7 +2,14 @@ import { testDBConnection } from "../connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { isTesting } from "./initExpressAndIOServers";
 
+let isCleaningUp = false;
 export const cleanupTestDatabases = async (con: DBSConnectionInfo) => {
+  if (isCleaningUp) {
+    throw new Error(
+      "Already cleaning up test databases. This function should not be called multiple times concurrently.",
+    );
+  }
+  isCleaningUp = true;
   if (!isTesting) return;
 
   await testDBConnection({ ...con, db_name: "postgres" }, false, async (c) => {
@@ -26,10 +33,14 @@ export const cleanupTestDatabases = async (con: DBSConnectionInfo) => {
     //     existingDbs.some((dbName) => cmd.includes(`drop database ${dbName}`))
     //   );
     // });
-    await Promise.all(
-      commands.map(async (cmd) => {
-        return c.result(cmd).catch(console.error);
-      }),
-    );
+    for (const cmd of commands) {
+      await c.result(cmd).catch((e) => {
+        console.error(e.message);
+        if (e.message.includes("is being accessed by other users")) {
+          return Promise.reject(e);
+        }
+      });
+    }
+    // await Promise.all(commands.map(async (cmd) => {}));
   });
 };

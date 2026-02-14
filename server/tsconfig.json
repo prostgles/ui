@@ -15,9 +15,10 @@
 		"ignoreDeprecations": "5.0",
 		"strict": true,
 		"skipLibCheck": true,
+		"strictFunctionTypes": true,
+		"noImplicitAny": true,
 		"noUncheckedIndexedAccess": true,
 		"baseUrl": ".",
-		"noImplicitAny": false,
 		"paths": {
 			"@common/*": [
 				"../common/*"
@@ -25,7 +26,7 @@
 			"@src/*": [
 				"src/*"
 			],
-		},
+		}
 	},
 	"exclude": [
 		"dist",

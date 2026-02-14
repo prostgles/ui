@@ -111,7 +111,7 @@ test.describe("Main test", () => {
 
   test("port 3089 must be available for mcpsandbox test", async () => {
     const free = await isPortFree(3089);
-    expect(free).toBe(true);
+    await expect(free).toBe(true);
   });
 
   test("Connecting with an existing sid to a fresh instance will ignore the sid IF passwordless admin did not claim a session yet", async ({

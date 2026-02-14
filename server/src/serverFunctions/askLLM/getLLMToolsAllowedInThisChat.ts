@@ -14,6 +14,7 @@ import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
 import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
 import { getPublishedMethodsTools } from "./prostglesLLMTools/getPublishedMethodsTools";
+import { getAgentGoalTool } from "./agentConstants";
 
 export type GetLLMToolsArgs = {
   userType: string;
@@ -57,7 +58,19 @@ export const getLLMToolsAllowedInThisChat = async ({
       },
     },
   });
-  const tools: Record<string, AllowedChatTool> = {};
+  const tools: Map<string, AllowedChatTool> = new Map();
+  if (chat.agent_info) {
+    const agentGoalTool = getAgentGoalTool(chat.agent_info);
+    tools.set(agentGoalTool.name, {
+      ...agentGoalTool,
+      auto_approve: true,
+      mode: "structured-output",
+      server_name: "",
+      type: "mcp",
+      tool_name: agentGoalTool.name,
+      tool_id: -1,
+    });
+  }
   const allowedMcpToolsWithInfo = mcpToolsWithoutExtraInfo
     .map(({ id, ...tool }) => {
       const info = llm_chats_allowed_mcp_tools.find(
@@ -117,14 +130,14 @@ export const getLLMToolsAllowedInThisChat = async ({
     }),
   ].forEach((tool) => {
     const { name } = tool;
-    if (tools[name]) {
+    if (tools.has(name)) {
       throw new Error(
         `Tool name collision: ${name} is used by both MCP tool and/or other function`,
       );
     }
-    tools[name] = tool;
+    tools.set(name, tool);
   });
-  const toolList = Object.values(tools);
+  const toolList = Array.from(tools.values());
 
   return toolList;
 };

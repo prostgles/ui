@@ -7,12 +7,16 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CodeEditor } from "src/dashboard/CodeEditor/CodeEditor";
 import stripAnsi from "strip-ansi";
 
-export const MonacoLogRenderer = ({
+export const MonacoLogsWithFullscreen = ({
   logs,
   label,
+  minHeight = 100,
+  maxHeight = 300,
 }: {
   logs: string;
   label: string;
+  minHeight?: number;
+  maxHeight?: number;
 }) => {
   const onMount = useCallback((editor: editor.IStandaloneCodeEditor) => {
     const scrollToLastLine = () => {
@@ -72,12 +76,12 @@ export const MonacoLogRenderer = ({
         style={{
           minWidth: "400px",
           width: "100%",
-          maxHeight: fullscreen ? undefined : "100px",
+          maxHeight: fullscreen ? undefined : `${maxHeight}px`,
           height: fullscreen ? "100%" : undefined,
           overflow: "hidden",
           flex: 1,
         }}
-        minHeight={100}
+        minHeight={minHeight}
         value={logsWithoutAnsi}
         onMount={onMount}
         options={options}

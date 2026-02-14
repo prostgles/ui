@@ -3,7 +3,7 @@ import { getEntries } from "@common/utils";
 import { useOnErrorAlert } from "@components/AlertProvider";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
-import { MonacoLogRenderer } from "@components/MonacoLogRenderer/MonacoLogRenderer";
+import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import { Select } from "@components/Select/Select";
 import { StatusChip } from "@components/StatusChip";
 import { SvgIcon } from "@components/SvgIcon";
@@ -211,7 +211,7 @@ const useServicesFieldConfigs = ({
               maxWidth: showSpecificService ? "200px" : undefined,
             }}
           >
-            <MonacoLogRenderer logs={logs || ""} label="Logs" />
+            <MonacoLogsWithFullscreen logs={logs || ""} label="Logs" />
           </FlexCol>
         ),
       },

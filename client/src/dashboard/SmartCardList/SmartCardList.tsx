@@ -186,7 +186,7 @@ export const SmartCardList = <T extends AnyObject>(
       >
         {showNoDataComponent ?
           noDataComponent
-        : items.map((defaultData, i) => {
+        : items.map((defaultData, index) => {
             const key = getKeyForRowData(defaultData, keyCols);
             return (
               /** SmartCard wrapped in div to ensure MaybeFlipMove works */
@@ -208,6 +208,10 @@ export const SmartCardList = <T extends AnyObject>(
                   footer={getRowFooter}
                   getActions={getActions}
                   smartFormProps={{ onSuccess }}
+                  fullData={{
+                    index,
+                    rows: items as T[],
+                  }}
                   showViewEditBtn={
                     "showEdit" in props ? props.showEdit : undefined
                   }
