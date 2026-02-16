@@ -3,6 +3,7 @@ import React from "react";
 import Btn, { type BtnProps } from "../Btn";
 import { classOverride, FlexCol, FlexRow } from "../Flex";
 import { useFullscreen } from "./useFullscreen";
+import type { TestSelectors } from "src/Testing";
 
 export const FullscreenWrapper = ({
   className,
@@ -10,7 +11,8 @@ export const FullscreenWrapper = ({
   title,
   content,
   endActions,
-}: {
+  ...testSelectors
+}: TestSelectors & {
   className?: string;
   style?: React.CSSProperties;
   title: React.ReactNode;
@@ -26,6 +28,7 @@ export const FullscreenWrapper = ({
 
   return (
     <FlexCol
+      {...testSelectors}
       className={classOverride(
         "FullscreenWrapper relative b b-color rounded gap-0 f-0 o-hidden ",
         className,
@@ -36,9 +39,8 @@ export const FullscreenWrapper = ({
         ...style,
         ...fullscreenStyle,
       }}
-      data-command="MarkdownMonacoCode"
     >
-      <FlexRow className="MarkdownMonacoCodeHeader bg-color-2 p-p25">
+      <FlexRow className="bg-color-2 p-p25">
         <div className="text-sm text-color-4 f-1 px-1no ta-start flex-row gap-p5">
           {title}
         </div>

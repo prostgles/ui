@@ -63,6 +63,7 @@ export const AskLLM = (props: AskLLMProps) => {
           setupState={state}
           anchorEl={anchorEl}
           onClose={onClose}
+          agentChat={undefined}
         />
       }
     </>

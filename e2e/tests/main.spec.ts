@@ -117,6 +117,7 @@ test.describe("Main test", () => {
   test("Connecting with an existing sid to a fresh instance will ignore the sid IF passwordless admin did not claim a session yet", async ({
     page: p,
   }) => {
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     const page = p as PageWIds;
     const url = new URL("http://localhost:3004");
     await page.context().addCookies([
@@ -1234,12 +1235,11 @@ test.describe("Main test", () => {
       .getByTestId("LoadSuggestedWorkflow.start")
       .click({ timeout: 30e3 });
 
-    await expect(page.getByTestId("Chat.messageList")).toContainText(
-      "Workflow completed successfully",
-      {
-        timeout: 120e3,
-      },
-    );
+    await expect(
+      page.getByTestId("Chat.messageList").locator(".SuccessMessage"),
+    ).toContainText("Workflow completed successfully", {
+      timeout: 120e3,
+    });
   });
 
   test("Disable signups", async ({ page: p }) => {

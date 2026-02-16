@@ -4,10 +4,6 @@ const PrimitiveTypesWithArrays = [
   ...PrimitiveType.map((t) => `${t}[]` as const),
 ] as const;
 
-// const propertyTypeBasic = {
-//   enum: PrimitiveTypesWithArrays,
-// } as const;
-
 const PropertyTypeOptional = {
   type: {
     optional: { type: "boolean", optional: true },
@@ -21,19 +17,13 @@ export const agentOutputSchemaType = {
   record: {
     values: {
       oneOf: [
-        // propertyTypeBasic,
         PropertyTypeOptional,
         {
           type: {
             optional: { type: "boolean", optional: true },
             type: {
               record: {
-                values: {
-                  oneOf: [
-                    // propertyTypeBasic,
-                    PropertyTypeOptional,
-                  ],
-                },
+                values: PropertyTypeOptional,
               },
             },
           },
@@ -43,12 +33,7 @@ export const agentOutputSchemaType = {
             optional: { type: "boolean", optional: true },
             arrayOfType: {
               record: {
-                values: {
-                  oneOf: [
-                    // propertyTypeBasic,
-                    PropertyTypeOptional,
-                  ],
-                },
+                values: PropertyTypeOptional,
               },
             },
           },
@@ -60,10 +45,14 @@ export const agentOutputSchemaType = {
 
 export const startAgenticWorkflowSchema = {
   chatId: "integer",
+  messageId: "string",
   workflowId: "integer",
   name: "string",
   workflowTs: "string",
   timeOutInSeconds: "number",
+  executionMode: {
+    enum: ["series", "parallel"],
+  },
   databaseAccessDefinitions: {
     optional: true,
     oneOfType: [

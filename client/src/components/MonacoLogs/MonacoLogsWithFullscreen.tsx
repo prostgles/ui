@@ -2,10 +2,8 @@ import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import { mdiFullscreen } from "@mdi/js";
-import type { editor } from "monaco-editor";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { CodeEditor } from "src/dashboard/CodeEditor/CodeEditor";
-import stripAnsi from "strip-ansi";
+import React, { useEffect, useState } from "react";
+import { MonacoLogs } from "./MonacoLogs";
 
 export const MonacoLogsWithFullscreen = ({
   logs,
@@ -17,22 +15,9 @@ export const MonacoLogsWithFullscreen = ({
   label: string;
   minHeight?: number;
   maxHeight?: number;
+  style?: React.CSSProperties;
 }) => {
-  const onMount = useCallback((editor: editor.IStandaloneCodeEditor) => {
-    const scrollToLastLine = () => {
-      const lineCount = editor.getModel()?.getLineCount();
-      editor.revealLineInCenter(lineCount ?? 1);
-    };
-    const disposable = editor.onDidChangeModelContent(scrollToLastLine);
-    scrollToLastLine();
-    return () => {
-      disposable.dispose();
-    };
-  }, []);
-
   const [fullscreen, setFullscreen] = useState(false);
-
-  const logsWithoutAnsi = useMemo(() => stripAnsi(logs), [logs]);
 
   /** Close on escape */
   useEffect(() => {
@@ -72,7 +57,7 @@ export const MonacoLogsWithFullscreen = ({
           onClick={() => setFullscreen(!fullscreen)}
         />
       </FlexRow>
-      <CodeEditor
+      <MonacoLogs
         style={{
           minWidth: "400px",
           width: "100%",
@@ -82,18 +67,8 @@ export const MonacoLogsWithFullscreen = ({
           flex: 1,
         }}
         minHeight={minHeight}
-        value={logsWithoutAnsi}
-        onMount={onMount}
-        options={options}
-        language="bash"
+        logs={logs}
       />
     </FlexCol>
   );
 };
-
-const options = {
-  minimap: { enabled: false },
-  lineNumbers: "off",
-  scrollBeyondLastLine: false,
-  automaticLayout: true,
-} satisfies editor.IStandaloneEditorConstructionOptions;

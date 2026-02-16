@@ -1,102 +1,161 @@
-import { SuccessMessage } from "@components/Animations";
 import Btn from "@components/Btn";
-import Popup from "@components/Popup/Popup";
+import { FlexRow } from "@components/Flex";
+import { ProgressBar } from "@components/ProgressBar";
+import { Select } from "@components/Select/Select";
+import { mdiLockClock, mdiLockOpenAlert, mdiStop } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { omitKeys } from "prostgles-types";
-import React, { useEffect, useState } from "react";
+import { isDefined, omitKeys } from "prostgles-types";
+import React from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
-import { LoadSuggestedWorkflowUserInput } from "./AgenticWorkflowUserInput";
+import type { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
+import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
 import type { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
 
 export const AgenticWorkflowActions = ({
-  validatedWorkflowJson,
+  validatedWorkflowJson: { toolUseResultJson, validWorkflow },
   chatId,
   inputData,
   onStarted,
+  onInitError,
+  userInputState,
+  messageId,
+  latestRun,
+  executionMode,
+  setExecutionMode,
+  onSuccess,
 }: Pick<ProstglesMCPToolsProps, "chatId"> & {
   inputData: { workflow_function_definition: string };
   validatedWorkflowJson: ReturnType<typeof useValidatedWorkflowJson>;
   onStarted: () => void;
-}) => {
+  onInitError: () => void;
+  onSuccess: () => void;
+  userInputState: ReturnType<typeof useAgenticWorkflowUserInput>;
+  messageId: string | undefined;
+} & Pick<
+    ReturnType<typeof useAgenticWorkflowState>,
+    "latestRun" | "executionMode" | "setExecutionMode"
+  >) => {
   const {
-    dbsMethods: { startAgenticWorkflow },
+    dbsMethods: { startAgenticWorkflow, stopAgenticWorkflow },
   } = usePrgl();
 
-  const [workflowResult, setWorkflowResult] = useState<unknown>();
-  const [userInputValue, setUserInputValue] = useState<Record<string, unknown>>(
-    {},
-  );
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  useEffect(() => {
-    if (workflowResult) {
-      setShowSuccessMessage(true);
-      const timeout = setTimeout(() => {
-        setShowSuccessMessage(false);
-      }, 5000);
-      return () => clearTimeout(timeout);
-    } else {
-      setShowSuccessMessage(false);
-    }
-  }, [workflowResult]);
+  const { userInputValue } = userInputState;
 
+  const { state } = latestRun ?? {};
+  const isRunning = state?.status === "running";
   return (
     <>
-      {showSuccessMessage && (
-        <Popup>
-          <SuccessMessage message="Workflow finished successfully!" />
-        </Popup>
-      )}
-
-      <LoadSuggestedWorkflowUserInput
-        validatedWorkflowJson={validatedWorkflowJson}
-        userInputValue={userInputValue}
-        setUserInputValue={setUserInputValue}
-      />
-
-      <Btn
-        variant="filled"
-        color="action"
-        className="ml-auto"
-        disabledInfo={
-          !startAgenticWorkflow ?
-            "Starting agentic workflows is not allowed/available"
-          : !validatedWorkflowJson ?
-            "Validating workflow"
-          : validatedWorkflowJson.isError ?
-            "Workflow validation failed"
-          : undefined
-        }
-        data-command="LoadSuggestedWorkflow.start"
-        onClickPromise={async () => {
-          if (
-            validatedWorkflowJson?.isError ||
-            !validatedWorkflowJson?.result ||
-            !validatedWorkflowJson.result.isValid
-          ) {
-            throw new Error(`Cannot start workflow due error`);
+      <FlexRow className="ml-auto">
+        {state?.status === "running" &&
+          isDefined(state.progressPercent ?? state.progressPercent) && (
+            <ProgressBar
+              totalValue={100}
+              message={state.message}
+              value={state.progressPercent ?? -1}
+            />
+          )}
+        <Select
+          title="Execution mode"
+          value={executionMode}
+          onChange={(newMode) => {
+            setExecutionMode(newMode);
+          }}
+          btnProps={{
+            variant: "icon",
+          }}
+          showIconOnly={true}
+          disabledInfo={
+            state?.status === "running" ?
+              "Cannot change execution mode while workflow is running"
+            : undefined
           }
-          onStarted();
-          const res = await startAgenticWorkflow!({
-            chatId,
-            workflowTs: inputData.workflow_function_definition,
-            ...omitKeys(validatedWorkflowJson.result, ["isValid"]),
-            userInputValue,
-          }).catch((err) => {
-            return err;
-          });
-
-          console.log(res);
-          if (res.state !== "finished") {
-            throw new Error(
-              `Agentic workflow container finished with status: ${res.state}. \nLogs: \n\n${res.log.map((l) => l.text).join("\n")}`,
-            );
-          } else {
-            setWorkflowResult(res);
+          fullOptions={
+            [
+              {
+                key: "series",
+                label: "Queue agent chat creation",
+                iconPath: mdiLockClock,
+                subLabel:
+                  "(Recommended) Agent chat creation is queued to reduce cost and avoid mistakes.",
+              },
+              {
+                key: "parallel",
+                label: "Allow parallel agent chat creation",
+                iconPath: mdiLockOpenAlert,
+                subLabel: "No limits on parallel agent chat requests.",
+              },
+            ] as const
           }
-        }}
-      >
-        Start workflow
-      </Btn>
+        />
+
+        <Btn
+          variant="filled"
+          color="action"
+          disabledInfo={
+            !startAgenticWorkflow ?
+              "Starting agentic workflows is not allowed/available"
+            : !toolUseResultJson ?
+              "Validating workflow"
+            : toolUseResultJson.isError ?
+              "Workflow validation failed"
+            : undefined
+          }
+          data-command="LoadSuggestedWorkflow.start"
+          loading={isRunning ? true : undefined}
+          onClickPromise={async () => {
+            if (!validWorkflow || !messageId) {
+              throw new Error(`Cannot start workflow due error`);
+            }
+            onStarted();
+            const res = await startAgenticWorkflow!({
+              chatId,
+              workflowTs: inputData.workflow_function_definition,
+              ...omitKeys(validWorkflow, ["isValid"]),
+              userInputValue,
+              messageId,
+              executionMode,
+            }).catch((err) => {
+              return Promise.reject(err);
+            });
+
+            if (res.state !== "finished") {
+              if (res.state === "init-error") {
+                const { message, error } = res;
+                onInitError();
+                throw new Error(
+                  `Failed to start agentic workflow: ${message}.${error !== undefined ? JSON.stringify(error) : ""}`,
+                );
+              }
+
+              throw new Error(
+                `Agentic workflow container finished with status: ${res.state}. \nLogs: \n\n${res.log.map((l) => l.text).join("\n")}`,
+              );
+            } else {
+              onSuccess();
+            }
+          }}
+        >
+          {isRunning ? "Running..." : "Start workflow"}
+        </Btn>
+        {state?.status === "running" && (
+          <Btn
+            title="Stop"
+            iconPath={mdiStop}
+            variant="faded"
+            color="danger"
+            onClickPromise={() =>
+              stopAgenticWorkflow!({
+                chatId,
+                messageId: messageId!,
+              }).then((res) => {
+                if (!res.success) {
+                  throw new Error(`Failed to stop workflow run`);
+                }
+              })
+            }
+          />
+        )}
+      </FlexRow>
     </>
   );
 };

@@ -1,19 +1,29 @@
 import { getEntries } from "@common/utils";
 import { FlexCol } from "@components/Flex";
+import { mdiCogs, mdiRobotOutline, mdiTools } from "@mdi/js";
 import React, { useMemo } from "react";
 import { DatabaseAccessPermissions } from "../common/DatabaseAccessPermissions";
-import { type ValidatedWorkflow } from "./useValidatedWorkflowJson";
 import { HeaderList } from "../common/HeaderList";
-import { mdiRobotExcited, mdiTools } from "@mdi/js";
+import { type ValidatedWorkflow } from "./useValidatedWorkflowJson";
+import { AgenticWorkflowUserInput } from "./AgenticWorkflowUserInput";
+import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
+import { isEmpty } from "src/utils/utils";
 
 export const AgenticWorkflowDetails = ({
-  name,
-  timeOutInSeconds,
-  agentDefinitions,
-  toolDefinitions,
-  databaseAccessDefinitions,
-  userInput,
-}: ValidatedWorkflow) => {
+  validatedWorkflow,
+  userInputState,
+}: {
+  validatedWorkflow: ValidatedWorkflow;
+  userInputState: ReturnType<typeof useAgenticWorkflowUserInput>;
+}) => {
+  const {
+    name,
+    timeOutInSeconds,
+    agentDefinitions,
+    toolDefinitions,
+    databaseAccessDefinitions,
+    userInput,
+  } = validatedWorkflow;
   const dbAccess = databaseAccessDefinitions;
   const combinedToolNames = useMemo(() => {
     const result = new Map<string, Set<string>>();
@@ -29,6 +39,7 @@ export const AgenticWorkflowDetails = ({
         [mcpServerName, Array.from(toolNames)] as const,
     );
   }, [toolDefinitions]);
+
   return (
     <FlexCol className="w-full p-1">
       <div className="font-18 bold">{name}</div>
@@ -62,17 +73,33 @@ export const AgenticWorkflowDetails = ({
 
       <HeaderList
         title="Agents"
-        iconPath={mdiRobotExcited}
+        iconPath={mdiRobotOutline}
         items={Object.entries(agentDefinitions).map(
-          ([agentName, { prompt, modelName }]) => (
+          ([agentName, { prompt }]) => (
             <span>
               {agentName}:{" "}
               <span style={{ fontWeight: "normal" }}>{prompt}</span>
-              {modelName ? ` (model: ${modelName})` : ""}
             </span>
           ),
         )}
       />
+
+      {!isEmpty(userInput) && (
+        <>
+          <div
+            style={{
+              height: "1px",
+              width: "100%",
+              backgroundColor: "var(--b-color)",
+            }}
+          />
+          <HeaderList
+            title="User Input"
+            iconPath={mdiCogs}
+            items={[<AgenticWorkflowUserInput {...userInputState} />]}
+          />
+        </>
+      )}
     </FlexCol>
   );
 };

@@ -42,7 +42,7 @@ import { runConnectionQuery } from "../getServerFunctions";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { setFileStorage } from "../setFileStorage";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
-import { getStartAgenticWorkflow } from "./getStartAgenticWorkflow";
+import { getAgenticWorkflowFunctions } from "./getStartAgenticWorkflow";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -579,7 +579,7 @@ export const getAdminServerFunctions = (
         return result;
       },
     }),
-    startAgenticWorkflow: getStartAgenticWorkflow(context),
+    ...getAgenticWorkflowFunctions(context),
   };
   /** Ensure we didn't miss anything.  */
   Object.entries(adminMethods).forEach(([name, method]) => {

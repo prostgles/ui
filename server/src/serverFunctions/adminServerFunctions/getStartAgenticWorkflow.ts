@@ -6,11 +6,36 @@ import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import { validateUserInput } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/validateUserInput";
 import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
 
-export const getStartAgenticWorkflow = (
+const aborterByUserId = new Map<
+  string,
+  { chatId: number; messageId: string; aborter: AbortController }[]
+>();
+export const getAgenticWorkflowFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
   const { defineAdminFunction } = getDefineAdminFunction(context);
-  return defineAdminFunction({
+  const stopAgenticWorkflow = defineAdminFunction({
+    input: {
+      chatId: "integer",
+      messageId: "string",
+    },
+    run: ({ chatId, messageId }, { user }) => {
+      const userAborters = aborterByUserId.get(user.id);
+      const aborterEntryIndex = userAborters?.findIndex(
+        (entry) => entry.chatId === chatId && entry.messageId === messageId,
+      );
+      const aborterEntry = userAborters?.[aborterEntryIndex ?? -1];
+      if (aborterEntry) {
+        aborterEntry.aborter.abort();
+        userAborters.splice(aborterEntryIndex!, 1);
+        aborterByUserId.set(user.id, userAborters);
+        return { success: true };
+      } else {
+        return { success: false, message: "No running workflow found" };
+      }
+    },
+  });
+  const startAgenticWorkflow = defineAdminFunction({
     input: startAgenticWorkflowSchema,
     run: async (
       {
@@ -24,23 +49,28 @@ export const getStartAgenticWorkflow = (
         userInputValue,
         userInput,
         workflowId,
+        messageId,
+        executionMode,
       },
       { dbs, user, getClientDBHandlers },
     ) => {
       const validationError = validateUserInput(userInputValue, userInput);
       if (validationError) {
-        throw new Error(validationError.error);
+        return { state: "init-error" as const, message: validationError.error };
       }
       const chat = await dbs.llm_chats.findOne({
         id: chatId,
         user_id: user.id,
       });
       if (!chat) {
-        throw "Chat not found";
+        return { state: "init-error" as const, message: "Chat not found" };
       }
       const { connection_id } = chat;
       if (!connection_id) {
-        throw new Error(`Chat with id ${chatId} does not have a connection_id`);
+        return {
+          state: "init-error" as const,
+          message: `Chat with id ${chatId} does not have a connection_id`,
+        };
       }
 
       const { clientMethods, clientSql } = await getClientDBHandlers(undefined);
@@ -64,21 +94,38 @@ export const getStartAgenticWorkflow = (
           userId: user.id,
           connectionId: connection_id,
         },
+        executionMode !== "parallel",
       );
 
       if (
         databaseAccessDefinitions?.mode === "custom" &&
         databaseAccessDefinitions.tableCreateStatements
       ) {
-        await clientSql(databaseAccessDefinitions.tableCreateStatements);
+        try {
+          await clientSql(databaseAccessDefinitions.tableCreateStatements);
+        } catch (error) {
+          return {
+            state: "init-error" as const,
+            message: `Error creating tables for cuaborterEntrystom database access`,
+            error,
+          };
+        }
       }
+      const aborter = new AbortController();
+      const existingAborters = aborterByUserId.get(user.id) || [];
+      aborterByUserId.set(user.id, [
+        ...existingAborters,
+        { chatId, messageId, aborter },
+      ]);
       const res = await createAgenticWorkflowContainer(
         dbs,
         { user_id: user.id, workflowTs, chat_id: chatId },
         {
+          abortSignal: aborter.signal,
           type: "full",
           userInputValue,
           workflowId,
+          messageId,
           definition: {
             name,
             timeOutInSeconds,
@@ -119,12 +166,17 @@ export const getStartAgenticWorkflow = (
             return agentHandler(data.input);
           },
         },
-      ).catch((err) => {
-        console.error("Error in createAgenticWorkflowContainer:", err);
-        throw err;
+      ).catch((error: unknown) => {
+        return {
+          state: "init-error" as const,
+          message: "Failed to start agentic workflow",
+          error,
+        };
       });
 
       return res;
     },
   });
+
+  return { startAgenticWorkflow, stopAgenticWorkflow };
 };

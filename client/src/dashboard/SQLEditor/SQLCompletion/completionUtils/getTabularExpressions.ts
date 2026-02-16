@@ -130,6 +130,20 @@ export const getTabularExpressions = (
     }
   }
 
+  const funcsThatAllowUsingParentScope = ["any", "all", "exists"];
+  if (
+    !onlyCurrentBlock &&
+    parentCb &&
+    _cb.currNestingFunc &&
+    funcsThatAllowUsingParentScope.includes(_cb.currNestingFunc.textLC)
+  ) {
+    const prevExpressions = getTabularExpressions(
+      { cb: parentCb, ss },
+      require,
+    ).filter((e) => e.endOffset < parentCb.currOffset);
+    expressions = [...prevExpressions];
+  }
+
   expressions = [...expressions, ...getExpressions(tokens, _cb, ss, parentCb)];
 
   if (parentTokensForLateral.length && require === "columns") {

@@ -10,8 +10,8 @@ type P = {
 export const HeaderList = ({ title, iconPath, items }: P) => {
   return (
     <FlexCol className="gap-p5">
-      <FlexRow className="gap-p5">
-        {iconPath && <Icon path={iconPath} style={{ opacity: 0.8 }} />}
+      <FlexRow className="gap-p5" style={{ opacity: 0.7 }}>
+        {iconPath && <Icon path={iconPath} />}
         <div className=" ">{title}</div>
       </FlexRow>
       <ul className="no-decor" style={{ paddingLeft: "2em" }}>

@@ -1,5 +1,5 @@
 import type { editor } from "monaco-editor";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import { CodeEditor } from "src/dashboard/CodeEditor/CodeEditor";
 import stripAnsi from "strip-ansi";
 
@@ -7,52 +7,24 @@ export const MonacoLogs = ({
   logs,
   minHeight = 100,
   maxHeight = 300,
+  style,
 }: {
   logs: string;
   minHeight?: number;
   maxHeight?: number;
+  style?: React.CSSProperties;
 }) => {
-  const onMount = useCallback((editor: editor.IStandaloneCodeEditor) => {
-    const scrollToLastLine = () => {
-      const lineCount = editor.getModel()?.getLineCount();
-      editor.revealLineInCenter(lineCount ?? 1);
-    };
-    const disposable = editor.onDidChangeModelContent(scrollToLastLine);
-    scrollToLastLine();
-    return () => {
-      disposable.dispose();
-    };
-  }, []);
-
-  const [fullscreen, setFullscreen] = useState(false);
-
   const logsWithoutAnsi = useMemo(() => stripAnsi(logs), [logs]);
-
-  /** Close on escape */
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && fullscreen) {
-        setFullscreen(false);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [fullscreen]);
-
+  const { onMount } = useMonacoScrollToLastLine();
   return (
     <CodeEditor
       style={{
         minWidth: "400px",
         width: "100%",
-        maxHeight:
-          fullscreen ? undefined
-          : !maxHeight ? undefined
-          : `${maxHeight}px`,
-        height: fullscreen ? "100%" : undefined,
+        maxHeight: !maxHeight ? undefined : `${maxHeight}px`,
         overflow: "hidden",
         flex: 1,
+        ...style,
       }}
       minHeight={minHeight}
       value={logsWithoutAnsi}
@@ -69,3 +41,18 @@ const options = {
   scrollBeyondLastLine: false,
   automaticLayout: true,
 } satisfies editor.IStandaloneEditorConstructionOptions;
+
+export const useMonacoScrollToLastLine = () => {
+  const onMount = useCallback((editor: editor.IStandaloneCodeEditor) => {
+    const scrollToLastLine = () => {
+      const lineCount = editor.getModel()?.getLineCount();
+      editor.revealLineInCenter(lineCount ?? 1);
+    };
+    const disposable = editor.onDidChangeModelContent(scrollToLastLine);
+    scrollToLastLine();
+    return () => {
+      disposable.dispose();
+    };
+  }, []);
+  return { onMount };
+};

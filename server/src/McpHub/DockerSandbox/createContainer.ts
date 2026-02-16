@@ -13,12 +13,14 @@ type CreateContainerResult = JSONBTypeIfDefined<
 
 export const createContainer = async (
   name: string,
-  params: CreateContainerParams,
+  params: CreateContainerParams & {
+    signal?: AbortSignal;
+  },
   onLogs?: (logs: ProcessLog[]) => void,
 ): Promise<CreateContainerResult> => {
   let localDir = "";
   try {
-    const { files } = params;
+    const { files, signal } = params;
     localDir = join(tmpdir(), name);
 
     mkdirSync(localDir, { recursive: true });
@@ -53,6 +55,7 @@ export const createContainer = async (
       buildArgs,
       {
         timeout: 300_000,
+        signal,
       },
       onLogs,
     );
@@ -83,6 +86,7 @@ export const createContainer = async (
         timeout: 30_000,
         ...config,
         ...params,
+        signal,
       },
       onLogs,
     );

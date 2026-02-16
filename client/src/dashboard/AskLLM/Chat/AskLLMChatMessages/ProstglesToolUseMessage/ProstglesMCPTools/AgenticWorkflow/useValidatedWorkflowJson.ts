@@ -4,7 +4,7 @@ import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 
 export type ValidatedWorkflow = Omit<
   Parameters<Required<GeneratedFunctionSchema>["startAgenticWorkflow"]>[0],
-  "chatId" | "workflowTs" | "userInputValue"
+  "chatId" | "workflowTs" | "userInputValue" | "messageId"
 >;
 
 export const useValidatedWorkflowJson = ({
@@ -26,14 +26,16 @@ export const useValidatedWorkflowJson = ({
             | { isValid: false; logs: string },
         };
       } catch (e) {
-        console.error("Error parsing tool use result content as JSON", e);
         return {
           isError: true,
-          validationError: `Error parsing tool use result content as JSON: ${e}`,
+          validationError: `Error parsing tool use result content as JSON`,
+          contentStr,
         };
       }
     }
   }, [toolUseResult]);
+  const { result } = toolUseResultJson ?? {};
+  const validWorkflow = result?.isValid ? result : undefined;
 
-  return toolUseResultJson;
+  return { toolUseResultJson, validWorkflow };
 };

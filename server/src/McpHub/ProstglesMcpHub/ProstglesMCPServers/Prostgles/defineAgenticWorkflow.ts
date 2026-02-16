@@ -2,13 +2,10 @@ type AnyObject = Record<string, any>;
 
 type PrimitiveType = "string" | "number" | "boolean" | "unknown";
 
-type PrimitiveTypeWithArraysAndOptional =
-  // | PrimitiveType
-  // | `${PrimitiveType}[]`
-  {
-    type: PrimitiveType | `${PrimitiveType}[]`;
-    optional?: boolean;
-  };
+type PrimitiveTypeWithArraysAndOptional = {
+  type: PrimitiveType | `${PrimitiveType}[]`;
+  optional?: boolean;
+};
 export type PropertyType =
   | PrimitiveTypeWithArraysAndOptional
   /** Object */
@@ -174,6 +171,7 @@ export type DefineAgenticWorkflow = <
     },
     databaseHandler: DatabaseHandler,
     userInputValues: ValueOfUserInput<UserInput>,
+    setProgress: (progressPercent: number, message?: string) => Promise<void>,
   ) => Promise<void>,
 ) => void | Promise<void>;
 
@@ -249,6 +247,11 @@ export type ProxyCallData =
       agentName: string;
       input: string;
     }
+  | {
+      type: "progress";
+      percent: number;
+      message: string;
+    }
   | ProxyDbCallData;
 
 import { getSerialisableError } from "prostgles-types";
@@ -268,10 +271,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   const userInput = JSON.parse(USER_INPUT);
 
   const callMcpProxy = async (args: ProxyCallData) => {
-    const route =
-      args.type === "definitions" ? "definitions"
-      : args.type === "agent" ? "agent"
-      : `${"db"}/${args.command}`;
+    const route = args.type !== "db" ? args.type : `${"db"}/${args.command}`;
     const logData = (() => {
       if (args.type === "db") {
         if (
@@ -288,6 +288,13 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
         return ["db." + command, tableName, otherParams];
       } else if (args.type === "agent") {
         return ["agent." + args.agentName, args.input];
+      } else if (args.type === "progress") {
+        const { percent, message } = args;
+        return [
+          "progress",
+          typeof percent === "number" ? percent.toFixed(1) : percent,
+          message,
+        ];
       }
       return [args.type, args.definitions.name];
     })();
@@ -488,5 +495,15 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
     },
   });
 
-  return handler(agentHandlersProxy, dbHandlerProxy, userInput);
+  const setProgress = (percent: number, message = "") => {
+    return callMcpProxy({
+      type: "progress",
+      percent,
+      message,
+    }).catch((err) => {
+      console.error("Failed to set progress:", err);
+    });
+  };
+
+  return handler(agentHandlersProxy, dbHandlerProxy, userInput, setProgress);
 };

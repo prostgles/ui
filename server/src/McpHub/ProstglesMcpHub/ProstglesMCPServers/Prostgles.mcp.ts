@@ -1,17 +1,14 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { omitKeys } from "prostgles-types";
+import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
+import { runContainerWithProxyAccess } from "../../DockerSandbox/runContainerWithProxyAccess";
 import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
-import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
-import { runContainerWithProxyAccess } from "../../DockerSandbox/runContainerWithProxyAccess";
-import {
-  createAgenticWorkflowContainer,
-  defineAgenticWorkflowTs,
-} from "./Prostgles/createAgenticWorkflowContainer";
+import { createAgenticWorkflowContainer } from "./Prostgles/createAgenticWorkflowContainer";
 import { fetchTools } from "./Prostgles/fetchTools";
-import { getSerialisableError, omitKeys } from "prostgles-types";
 
 const serverName = "prostgles-ui" as const;
 const definition = {
@@ -61,13 +58,18 @@ const handler = {
               {
                 type: "definitions-only",
                 handler: ({ definitions }) => {
+                  const definition_data = omitKeys(definitions, ["name"]);
                   dbs.agentic_workflows
                     .insert(
                       {
                         user_id,
                         name: definitions.name,
                         chat_id: chat.id,
-                        definition_data: omitKeys(definitions, ["name"]) as any,
+                        definition_data: {
+                          ...definition_data,
+                          toolDefinitions:
+                            definition_data.toolDefinitions || {},
+                        },
                       },
                       { returning: { id: 1 } },
                     )
@@ -78,31 +80,18 @@ const handler = {
                         ...definitions,
                       });
                     })
-                    .catch((e) =>
-                      reject({
-                        isValid: false,
-                        logs: JSON.stringify(getSerialisableError(e), null, 2),
-                        defineAgenticWorkflowTs,
-                      }),
-                    );
+                    .catch(reject);
                 },
               },
             )
               .then((containerResult) => {
                 if (containerResult.state !== "finished") {
-                  reject({
-                    isValid: false,
-                    logs: containerResult.log.map((l) => l.text).join("\n"),
-                    defineAgenticWorkflowTs,
-                  });
+                  reject(containerResult.log.map((l) => l.text).join("\n"));
                 }
+                resolve(containerResult);
               })
               .catch((err) => {
-                reject({
-                  isValid: false,
-                  logs: JSON.stringify(getSerialisableError(err), null, 2),
-                  defineAgenticWorkflowTs,
-                });
+                reject(err);
               });
           });
         },

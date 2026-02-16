@@ -5,32 +5,18 @@ import { Select, type FullOption } from "@components/Select/Select";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { getProperty } from "prostgles-types";
 import React from "react";
-import type { SingleGroupFilter } from "src/dashboard/AccessControl/OptionControllers/FilterControl";
 import { RenderFilter } from "src/dashboard/RenderFilter";
-import type { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
+import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
 
-export const LoadSuggestedWorkflowUserInput = ({
-  validatedWorkflowJson,
+export const AgenticWorkflowUserInput = ({
   setUserInputValue,
   userInputValue,
-}: {
-  validatedWorkflowJson: ReturnType<typeof useValidatedWorkflowJson>;
-  userInputValue: Record<string, unknown>;
-  setUserInputValue: React.Dispatch<
-    React.SetStateAction<Record<string, unknown>>
-  >;
-}) => {
+  userInput,
+  localFilter,
+  setLocalFilter,
+}: ReturnType<typeof useAgenticWorkflowUserInput>) => {
   const { db, tables } = usePrgl();
 
-  const [localFilter, setLocalFilter] = React.useState<
-    Record<string, SingleGroupFilter>
-  >({});
-
-  const validatedWorkflow =
-    validatedWorkflowJson?.result?.isValid ?
-      validatedWorkflowJson.result
-    : undefined;
-  const userInput = validatedWorkflow?.userInput;
   return (
     <>
       {userInput && (
@@ -45,7 +31,7 @@ export const LoadSuggestedWorkflowUserInput = ({
                 <FormField
                   key={inputKey}
                   value={currentValue}
-                  labelStyle={{ lineHeight: "1em" }}
+                  labelStyle={{ lineHeight: "1em", fontWeight: "normal" }}
                   label={title}
                   title={title}
                   data-key={inputKey}
@@ -53,7 +39,7 @@ export const LoadSuggestedWorkflowUserInput = ({
                     InputDataTypeToFormFieldTypeMap,
                     inputItem.dataType,
                   )}
-                  onChange={(newValue) =>
+                  onChange={(newValue: unknown) =>
                     setUserInputValue((prev) => ({
                       ...prev,
                       [inputKey]: newValue,
@@ -63,9 +49,6 @@ export const LoadSuggestedWorkflowUserInput = ({
               );
             }
             if (inputItem.type === "table-filter") {
-              // const detailedFilter = getDetailedGroupFilterFromTableFilter(
-              //   currentValue || {},
-              // );
               const detailedFilter = localFilter[inputKey];
               return (
                 <RenderFilter

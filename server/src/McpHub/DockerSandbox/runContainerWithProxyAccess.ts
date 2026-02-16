@@ -2,7 +2,6 @@ import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
 import { upsertSession } from "@src/authConfig/upsertSession";
 import { getElectronConfig } from "@src/electronConfig";
 import type { DBS } from "@src/index";
-import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
 import { createContainer } from "./createContainer";
 import {
   dockerContainerAuthRegistry,
@@ -21,7 +20,7 @@ export const runContainerWithProxyAccess = async (
   }: {
     user_id: string;
   } & Pick<ContainerProxyContext, "requestHandlers" | "dbPermissions">,
-  args: CreateContainerParams,
+  args: Parameters<typeof createContainer>[1],
   onLogs?: (logs: ProcessLog[]) => void,
 ) => {
   const proxy = await getOrCreateDockerMCPServerProxy(
@@ -69,14 +68,7 @@ export const runContainerWithProxyAccess = async (
             [DOCKER_MCP_ENDPOINT_ENV_VAR]: proxy.baseUrl,
           },
         };
-        return createContainer(containerName, argsWithEnv, onLogs).then(
-          (res) => {
-            if (res.exitCode !== 0) {
-              return Promise.reject(res);
-            }
-            return res;
-          },
-        );
+        return createContainer(containerName, argsWithEnv, onLogs);
       },
     );
   return containerResult;

@@ -1,4 +1,3 @@
-import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -7,15 +6,18 @@ import {
   MONACO_READONLY_DEFAULT_OPTIONS,
   MonacoEditor,
 } from "@components/MonacoEditor/MonacoEditor";
-import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
-import React, { useEffect, useState } from "react";
+import {
+  MonacoLogs,
+  useMonacoScrollToLastLine,
+} from "@components/MonacoLogs/MonacoLogs";
+import React, { useState } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
-import { useJSONBParsedData } from "../common/useJSONBParsedData";
 import { AgenticWorkflowActions } from "./AgenticWorkflowActions";
 import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity";
-import { AgenticWorkflowLogs } from "./AgenticWorkflowLogs";
-import { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
+import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
+import { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
+import { SuccessMessage } from "@components/Animations";
 
 export const AgenticWorkflow = ({
   message,
@@ -27,24 +29,20 @@ export const AgenticWorkflow = ({
   ProstglesMCPToolsProps,
   "chatId" | "message" | "toolUseResult" | "loadedSuggestions" | "workspaceId"
 >) => {
-  const inputValidation = useJSONBParsedData(
-    message.input,
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
-      .schema,
-  );
-  const validatedWorkflowJson = useValidatedWorkflowJson({ toolUseResult });
-  const { result } = validatedWorkflowJson ?? {};
-  const validWorkflow = result?.isValid ? result : undefined;
-  const workflow_id = validWorkflow?.workflowId;
-  const [activeTab, setActiveTab] = useState(
-    workflow_id ? "Details" : "Definition",
-  );
-  useEffect(() => {
-    if (validWorkflow) {
-      setActiveTab("Details");
-    }
-  }, [validWorkflow]);
-
+  const {
+    activeTab,
+    inputValidation,
+    setActiveTab,
+    validatedWorkflowJson,
+    latestRun,
+    executionMode,
+    setExecutionMode,
+  } = useAgenticWorkflowState({
+    message,
+    toolUseResult,
+  });
+  const { toolUseResultJson, validWorkflow } = validatedWorkflowJson;
+  const userInputState = useAgenticWorkflowUserInput(validWorkflow?.userInput);
   if (inputValidation.error !== undefined) {
     return (
       <ErrorComponent
@@ -53,27 +51,15 @@ export const AgenticWorkflow = ({
     );
   }
   const { data: inputData } = inputValidation;
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
+  const { onMount } = useMonacoScrollToLastLine();
+  if (!toolUseResult) {
+    return <div>Validating workflow...</div>;
+  }
   return (
     <FlexCol className="w-full">
-      <FlexCol className="rounded o-auto">
-        {/* <DatabaseAccessPermissions {...dbAccess} />
-        <HeaderList
-          title="MCP Tools"
-          items={data.allowed_mcp_tool_names}
-          iconPath={mdiTools}
-        /> */}
-        {/* <MonacoCodeInMarkdown
-          key={"workflow_function_definition"}
-          className="f-1 h-full"
-          language={"typescript"}
-          title="Definition"
-          sqlHandler={undefined}
-          codeHeader={undefined}
-          loadedSuggestions={undefined}
-          codeString={inputData.workflow_function_definition}
-        /> */}
-
+      <FlexCol className="rounded o-auto relative">
         <CompactTabs
           controlled={{ activeTab, setActiveTab }}
           items={{
@@ -82,7 +68,12 @@ export const AgenticWorkflow = ({
             : {
                 Details: {
                   label: "Details",
-                  content: <AgenticWorkflowDetails {...validWorkflow} />,
+                  content: (
+                    <AgenticWorkflowDetails
+                      validatedWorkflow={validWorkflow}
+                      userInputState={userInputState}
+                    />
+                  ),
                 },
               }),
             Definition: {
@@ -95,6 +86,8 @@ export const AgenticWorkflow = ({
                   value={inputData.workflow_function_definition}
                   language={"typescript"}
                   minHeight={400}
+                  // scroll to end to avoid top data which is shown in Details tab
+                  onMount={onMount}
                   options={MONACO_READONLY_DEFAULT_OPTIONS}
                 />
               ),
@@ -112,31 +105,64 @@ export const AgenticWorkflow = ({
             Logs: {
               label: "Logs",
               content:
-                !workflow_id ?
-                  <InfoRow variant="filled" color="info">
+                !latestRun ?
+                  <InfoRow variant="filled" color="info" className="m-1">
                     No logs yet. Logs will appear here once the workflow starts
                     running.
                   </InfoRow>
-                : <AgenticWorkflowLogs workflowId={workflow_id} />,
+                : <MonacoLogs
+                    logs={latestRun.log.map((l) => l.text).join("")}
+                    maxHeight={0}
+                    minHeight={400}
+                    style={{ border: "unset" }}
+                  />,
             },
           }}
         />
-        {validatedWorkflowJson?.isError &&
-          !validatedWorkflowJson.result?.isValid && (
-            <MonacoLogsWithFullscreen
-              label="Error"
-              logs={validatedWorkflowJson.result?.logs ?? ""}
-              minHeight={400}
+        {toolUseResultJson?.isError && (
+          <ErrorComponent error={toolUseResultJson} maxTextLength={2e3} />
+        )}
+        {showSuccessMessage && (
+          <div
+            style={{
+              background:
+                "color-mix(in srgb, var(--bg-color-0) 80%, transparent)",
+              position: "absolute",
+              inset: 0,
+              zIndex: 100,
+              width: "100%",
+              display: "flex",
+            }}
+          >
+            <SuccessMessage
+              message="Workflow finished successfully!"
+              className="bg-color-0 p-2 shadow rounded m-auto js-center as-center"
+              duration={{
+                millis: 5000,
+                onEnd: () => {
+                  setShowSuccessMessage(false);
+                },
+              }}
             />
-          )}
+          </div>
+        )}
       </FlexCol>
       <AgenticWorkflowActions
         chatId={chatId}
+        userInputState={userInputState}
         validatedWorkflowJson={validatedWorkflowJson}
         inputData={inputData}
         onStarted={() => {
           setActiveTab("Logs");
         }}
+        onInitError={() => {
+          setActiveTab("Details");
+        }}
+        onSuccess={() => setShowSuccessMessage(true)}
+        messageId={toolUseResult.toolUseResult.id}
+        latestRun={latestRun}
+        executionMode={executionMode}
+        setExecutionMode={setExecutionMode}
       />
     </FlexCol>
   );

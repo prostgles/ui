@@ -36,8 +36,6 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
       }
     );
   }, [controlled, localActiveTab]);
-  const activeTabItem = activeTab ? items[activeTab] : undefined;
-
   return (
     <FullscreenWrapper
       className={className}
@@ -45,6 +43,7 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
       title={Object.entries(items).map(([key, { disabledInfo }]) => (
         <Btn
           key={key}
+          data-key={key}
           disabledInfo={disabledInfo}
           variant={activeTab === key ? "faded" : undefined}
           onClick={() => {
@@ -54,7 +53,24 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
           {key}
         </Btn>
       ))}
-      content={activeTabItem?.content ?? null}
+      content={
+        <>
+          {getEntries(items).map(([tabName, { content }]) => (
+            <div
+              key={tabName as string}
+              style={{
+                /**
+                 * Avoid layout shift when switching tabs
+                 */
+                display: tabName === activeTab ? "flex" : "none",
+                flex: 1,
+              }}
+            >
+              {content}
+            </div>
+          ))}
+        </>
+      }
     />
   );
 };

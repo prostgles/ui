@@ -7,8 +7,8 @@ npx tsc
 
 cd ../server
 rm -rf ./dist
-npm i
-npx tsc
+
+npm i 
 npm test
 
 cd ..

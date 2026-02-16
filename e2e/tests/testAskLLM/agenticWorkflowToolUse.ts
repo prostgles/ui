@@ -71,13 +71,16 @@ export default defineAgenticWorkflow(
     null,
     2,
   )},
-  async ({ researcher }, dbHandler, userInputValue) => {
+  async ({ researcher }, dbHandler, userInputValue, setProgress) => {
+    setProgress(0, "Starting workflow");
     await dbHandler.insert("users", [{ username: "Prostgles", type: "from-agent" }]);
     const start = Date.now();
     const filterCount = ${!withUserInputArgs ? "undefined;//" : ""} await dbHandler.count("users", userInputValue["table-filter"]);
     console.log("Filter count:", filterCount);
-    dbHandler.find("users").then(users => {
-      users.forEach(async (user) => {
+    setProgress(1, "Finished database operation, starting research");
+    dbHandler.find("users").then((users) => {
+      users.forEach(async (user, index) => {
+        setProgress((100/users.length) * index, "Processing user " + (index + 1) + "/" + users.length);
         const result = await researcher(" ${research} Prostgles"); 
         const sinceStart = Date.now() - start;
         await dbHandler.update("users", { id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });

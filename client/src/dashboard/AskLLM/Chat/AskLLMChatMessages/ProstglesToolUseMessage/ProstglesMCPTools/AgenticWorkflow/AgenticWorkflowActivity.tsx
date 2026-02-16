@@ -1,19 +1,19 @@
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import { mdiOpenInApp } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { DBHandlerClient } from "prostgles-client";
-import { type ExistsFilter } from "prostgles-types";
+import { type FilterItem } from "prostgles-types";
 import React, { useMemo, useState } from "react";
+import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
+import { useLLMSetupDone } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "src/dashboard/SmartCardList/SmartCardList";
 import { StyledInterval } from "src/dashboard/W_SQL/customRenderers";
-import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
-import { mdiOpenInApp } from "@mdi/js";
 import { LLMChatMessage } from "../../../LLMChatMessage/LLMChatMessage";
-import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
-import { useLLMSetupDone } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
+import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 
 export const AgenticWorkflowActivity = ({
   chatId,
@@ -23,27 +23,24 @@ export const AgenticWorkflowActivity = ({
   ProstglesMCPToolsProps,
   "chatId" | "workspaceId" | "loadedSuggestions"
 >) => {
+  const tableName = "llm_chats" as const;
   const { dbs, dbsTables, dbsMethods } = usePrgl();
   const setupState = useLLMSetupDone();
   const [agentChatId, setAgentChatId] = useState<number>();
 
-  const { fieldConfigs, filter } = useMemo(() => {
+  const listProps = useMemo(() => {
     const fieldConfigs = [
-      {
-        name: "chat_id",
-        hide: true,
-      },
       {
         name: "id",
         renderMode: "full",
-        render: (value, { chat_id }) => (
+        render: (value, { id }) => (
           <Btn
             title={`Open chat ${value}`}
             iconPath={mdiOpenInApp}
             variant="icon"
             onClick={() => {
-              console.log("Opening chat with id", chat_id);
-              setAgentChatId(chat_id);
+              console.log("Opening chat with id", id);
+              setAgentChatId(id);
             }}
           />
         ),
@@ -55,26 +52,30 @@ export const AgenticWorkflowActivity = ({
         render: (value) => <StyledInterval value={value} />,
       },
       {
-        name: "message",
+        name: "latestMessages" as "name",
+        select: {
+          $leftJoin: "llm_messages",
+          orderBy: { created: -1 },
+          limit: 2,
+        },
         renderMode: "full",
-        render: (_, messageData, { index, rows }) => {
-          const nextMessage = rows[index - 1];
-          if (
-            nextMessage &&
-            Number(nextMessage.id) !== Number(messageData.id) + 1
-          ) {
-            console.warn(
-              "Non sequential messages in workflow activity, rendering may be incorrect",
-              { currentMessage: messageData, nextMessage },
-            );
+        render: (_, data) => {
+          const { latestMessages: lm } = data as unknown as {
+            latestMessages: DBSSchema["llm_messages"][];
+          };
+          /* reverse to show oldest first */
+          const latestMessages = lm.toReversed();
+          const [message, nextMessage] = latestMessages;
+          if (!message) {
+            return null;
           }
           return (
             <LLMChatMessage
               isLoadingSinceDate={undefined}
               messageItem={{
                 type: "single_message",
-                message: messageData,
-                nextMessage: rows[index - 1],
+                message,
+                nextMessage,
                 onToggle: undefined,
               }}
               workspaceId={workspaceId}
@@ -83,29 +84,32 @@ export const AgenticWorkflowActivity = ({
           );
         },
       },
-    ] satisfies FieldConfig<DBSSchema["llm_messages"]>[];
+    ] satisfies FieldConfig<DBSSchema[typeof tableName]>[];
+
     const filter = {
-      $existsJoined: {
-        llm_chats: {
-          parent_chat_id: chatId,
-        },
-      },
-    } satisfies ExistsFilter<DBGeneratedSchema>;
-    return { fieldConfigs, filter };
+      parent_chat_id: chatId,
+    } satisfies FilterItem<DBSSchema[typeof tableName]>;
+
+    return { fieldConfigs, filter, orderBy: { key: "id", asc: false } };
   }, [chatId, loadedSuggestions, workspaceId]);
 
   return (
-    <FlexCol className="p-p5" style={{ maxHeight: "400px" }}>
-      <SmartCardList<DBSSchema["llm_messages"]>
+    <FlexCol className="p-p5 f-1" style={{ maxHeight: "400px" }}>
+      <SmartCardList<DBSSchema[typeof tableName]>
         db={dbs as unknown as DBHandlerClient}
-        tableName={"llm_messages"}
+        tableName={tableName}
         methods={{}}
         sql={undefined}
         tables={dbsTables}
-        fieldConfigs={fieldConfigs}
-        filter={filter}
-        orderBy={{ key: "id", asc: false }}
+        {...listProps}
         realtime={true}
+        noDataComponentMode="hide-all"
+        noDataComponent={
+          <InfoRow variant="filled" color="info" className="m-5">
+            No activity yet. Agent chats will appear here once the workflow
+            starts running.
+          </InfoRow>
+        }
       />
       {agentChatId && (
         <AskLLMChat

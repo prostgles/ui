@@ -1,7 +1,12 @@
 import type { DBS } from "@src/index";
+import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { getJSONBSchemaValidationError, omitKeys } from "prostgles-types";
+import {
+  getJSONBSchemaValidationError,
+  getKeys,
+  pickKeys,
+} from "prostgles-types";
 import type {
   DbPermissions,
   McpProxyRequestContext,
@@ -13,7 +18,6 @@ import {
   type DefineAgenticWorkflow,
   type ProxyCallData,
 } from "./defineAgenticWorkflow";
-import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
 
 const defineAgenticWorkflowDirectory = join(
   __dirname,
@@ -65,6 +69,8 @@ export const createAgenticWorkflowContainer = async (
     | {
         type: "full";
         workflowId: number;
+        messageId: string;
+        abortSignal: AbortSignal;
         userInputValue: Record<string, unknown>;
         definition: AgenticWorkflowDefinition;
         dbPermissions: DbPermissions;
@@ -79,14 +85,16 @@ export const createAgenticWorkflowContainer = async (
       await dbs.agentic_workflow_runs.insert(
         {
           workflow_id: mode.workflowId,
+          message_id: mode.messageId,
           chat_id,
-          user_input_value: mode.userInputValue as any,
+          user_input_value: mode.userInputValue,
           log: [],
+          state: { status: "running" },
         },
         { returning: "*" },
       )
     : undefined;
-  return runContainerWithProxyAccess(
+  const result = await runContainerWithProxyAccess(
     dbs,
     {
       user_id,
@@ -106,17 +114,29 @@ export const createAgenticWorkflowContainer = async (
                 type: {
                   type: { enum: ["definitions"] },
                   definitions: {
-                    type: omitKeys(startAgenticWorkflowSchema, [
-                      "chatId",
-                      "workflowTs",
-                      "userInputValue",
-                      "workflowId",
-                    ]),
+                    type: pickKeys(
+                      startAgenticWorkflowSchema,
+                      getKeys({
+                        agentDefinitions: 1,
+                        toolDefinitions: 1,
+                        databaseAccessDefinitions: 1,
+                        name: 1,
+                        timeOutInSeconds: 1,
+                        userInput: 1,
+                      } satisfies Record<
+                        keyof Extract<
+                          ProxyCallData,
+                          { type: "definitions" }
+                        >["definitions"],
+                        1
+                      >),
+                    ),
                   },
                 },
               } as const,
               req.body,
             );
+
             if (error !== undefined) {
               throw new Error("Invalid request data: " + error);
             }
@@ -152,6 +172,9 @@ export const createAgenticWorkflowContainer = async (
               } as const,
               req.body,
             );
+            data satisfies
+              | Extract<ProxyCallData, { type: "agent" }>
+              | undefined;
             if (error !== undefined) {
               throw new Error("Invalid request data: " + error);
             }
@@ -166,9 +189,62 @@ export const createAgenticWorkflowContainer = async (
               });
           },
         },
+        ["/progress"]: {
+          method: "POST",
+          handler: (ctx, req, res) => {
+            if (mode.type !== "full") {
+              res
+                .status(400)
+                .json({ error: "Invalid request for current mode" });
+              return;
+            }
+            const { data, error } = getJSONBSchemaValidationError(
+              {
+                type: {
+                  type: { enum: ["progress"] },
+                  percent: "number",
+                  message: { type: "string" },
+                },
+              } as const,
+              req.body,
+            );
+            data satisfies
+              | Extract<ProxyCallData, { type: "progress" }>
+              | undefined;
+            if (error !== undefined) {
+              throw new Error("Invalid request data: " + error);
+            }
+
+            if (!workflowRun) {
+              res.status(500).json({ error: "Workflow run not found" });
+              return;
+            }
+            void dbs.agentic_workflow_runs
+              .update(
+                { id: workflowRun.id },
+                {
+                  state: {
+                    $merge: [
+                      {
+                        progressPercent: data.percent,
+                        message: data.message,
+                      },
+                    ],
+                  },
+                },
+              )
+              .then(() => {
+                res.json({ success: true });
+              })
+              .catch((e) => {
+                console.error("Failed to update workflow log:", e);
+              });
+          },
+        },
       },
     },
     {
+      signal: mode.type === "full" ? mode.abortSignal : undefined,
       networkMode: "bridge",
       timeout:
         mode.type === "full" ? mode.definition.timeOutInSeconds * 1000 : 30_000,
@@ -207,6 +283,22 @@ export const createAgenticWorkflowContainer = async (
         });
     },
   );
+
+  if (workflowRun) {
+    await dbs.agentic_workflow_runs
+      .update(
+        { id: workflowRun.id },
+        {
+          state: {
+            status: result.state === "finished" ? "completed" : "error",
+          },
+        },
+      )
+      .catch((e) => {
+        console.error("Failed to update workflow log:", e);
+      });
+  }
+  return result;
 };
 
 const packageJson = JSON.stringify({
