@@ -1,10 +1,6 @@
 import { Locator, Page as PG, expect } from "@playwright/test";
 import * as path from "path";
-import {
-  Command,
-  getCommandElemSelector,
-  getDataKeyElemSelector,
-} from "../Testing";
+import { Command, getCommandElemSelector, getDataKey } from "../Testing";
 import { goTo } from "./goTo";
 import { TEST_DB_NAME, USERS } from "./constants";
 
@@ -343,8 +339,6 @@ export const closeWorkspaceWindows = async (page: PageWIds) => {
   await page.waitForTimeout(100);
 };
 
-export const getDataKey = (key: string) =>
-  `[data-key=${JSON.stringify(key)}]` as const;
 export const getTestId = (testid: Command) =>
   `[data-command=${JSON.stringify(testid)}]` as const;
 export const getSelector = ({
@@ -929,7 +923,7 @@ export const openConnection = async (
 ) => {
   await goTo(page, "/connections");
   await page
-    .locator(getDataKeyElemSelector(connectionName))
+    .locator(getDataKey(connectionName))
     .getByTestId("Connection.openConnection")
     .click();
   await page.waitForTimeout(1000);

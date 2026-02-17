@@ -1,7 +1,4 @@
-import {
-  getDataKeyElemSelector,
-  getDataLabelElemSelector,
-} from "../../../../Testing";
+import { getDataKey, getDataLabelElemSelector } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 
 export const dashboardMenuUIDoc = {
@@ -103,7 +100,7 @@ export const dashboardMenuUIDoc = {
       children: [
         {
           type: "popup",
-          selector: getDataKeyElemSelector("new table"),
+          selector: getDataKey("new table"),
           title: "Create new table",
           description:
             "Opens the form to create a new table in the current database.",
@@ -111,7 +108,7 @@ export const dashboardMenuUIDoc = {
         },
         {
           type: "popup",
-          selector: getDataKeyElemSelector("import file"),
+          selector: getDataKey("import file"),
           title: "Import file",
           description:
             "Opens the form to import a file into the current database.",
@@ -176,7 +173,7 @@ export const dashboardMenuUIDoc = {
         },
         {
           type: "popup",
-          selector: getDataKeyElemSelector("new function"),
+          selector: getDataKey("new function"),
           title: "Create TS Function",
           description:
             "Opens the form to create a new server-side TypeScript function for the current database.",

@@ -64,14 +64,14 @@ export const deleteConnection = async (
             };
           }
         }
-        const { db: acdb } = await getCDB(
+        const { db: adminConnectionDb } = await getCDB(
           con.id,
           { database: anotherDatabaseName.datname, ...superUser },
           true,
         );
         await connectionManager.disconnect(con.id);
         const killDbConnections = () => {
-          return acdb.manyOrNone(
+          return adminConnectionDb.manyOrNone(
             `
                 SELECT pg_terminate_backend(pid) 
                 FROM pg_stat_activity 
@@ -83,7 +83,7 @@ export const deleteConnection = async (
         };
         await killDbConnections();
         await killDbConnections();
-        await acdb.any(
+        await adminConnectionDb.any(
           `
               DROP DATABASE \${db_name:name};
             `,

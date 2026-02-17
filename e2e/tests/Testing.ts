@@ -531,10 +531,13 @@ export const COMMANDS = {
   "WebAppConfig.createFromTemplate": "",
   "WebAppConfig.build": "",
   "WebAppConfig.test": "",
-  "LoadSuggestedWorkflow.start": "",
-  "LoadSuggestedWorkflow.stop": "",
+  "AgenticWorkflow.start": "",
+  "AgenticWorkflow.stop": "",
   AskUserQuestions: "",
   "AskUserQuestions.confirm": "",
+  AgenticWorkflow: "",
+  "AgenticWorkflow.validationErrorLogs": "",
+  "AgenticWorkflow.openChat": "",
 } as const satisfies Record<
   string,
   | string
@@ -557,7 +560,7 @@ export const dataCommand = (cmd: Command): { "data-command": Command } => ({
 export const getCommandElemSelector = (cmd: Command) => {
   return `[data-command=${JSON.stringify(cmd)}]`;
 };
-export const getDataKeyElemSelector = (key: string) => {
+export const getDataKey = (key: string) => {
   return `[data-key=${JSON.stringify(key)}]`;
 };
 export const getDataLabelElemSelector = (key: string) => {
@@ -568,6 +571,7 @@ export const COMMAND_SEARCH_ATTRIBUTE_NAME = "data-command-search-ended";
 
 export const MOCK_ELECTRON_WINDOW_ATTR = "MOCK_ELECTRON_WINDOW_ATTR" as const;
 
+//@ts-ignore
 declare module "react" {
   interface HTMLAttributes<T> {
     "data-command"?: Command;

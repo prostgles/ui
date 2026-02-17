@@ -4,19 +4,21 @@ import { Label } from "@components/Label";
 import { mdiFullscreen } from "@mdi/js";
 import React, { useEffect, useState } from "react";
 import { MonacoLogs } from "./MonacoLogs";
+import type { TestSelectors } from "src/Testing";
 
 export const MonacoLogsWithFullscreen = ({
   logs,
   label,
   minHeight = 100,
   maxHeight = 300,
+  ...testSelectors
 }: {
   logs: string;
   label: string;
   minHeight?: number;
   maxHeight?: number;
   style?: React.CSSProperties;
-}) => {
+} & TestSelectors) => {
   const [fullscreen, setFullscreen] = useState(false);
 
   /** Close on escape */
@@ -34,6 +36,7 @@ export const MonacoLogsWithFullscreen = ({
 
   return (
     <FlexCol
+      {...testSelectors}
       className="bg-color-0 gap-p25"
       style={
         fullscreen ?

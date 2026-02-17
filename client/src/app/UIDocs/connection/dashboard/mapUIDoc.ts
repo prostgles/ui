@@ -1,8 +1,5 @@
 import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
-import {
-  getCommandElemSelector,
-  getDataKeyElemSelector,
-} from "../../../../Testing";
+import { getCommandElemSelector, getDataKey } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../getCommonViewHeaderUIDoc";
 
@@ -38,7 +35,7 @@ export const mapUIDoc = {
             selector:
               getCommandElemSelector("MenuList") +
               " " +
-              getDataKeyElemSelector("Data refresh"),
+              getDataKey("Data refresh"),
             title: "Data refresh",
             description:
               "Allows setting subscriptions or data refresh rates. By default every table subscribes to data changes.",
@@ -47,9 +44,7 @@ export const mapUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("Basemap"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("Basemap"),
             title: "Basemap",
             description: "Allows setting the map tiles and projection.",
             children: [
@@ -65,9 +60,7 @@ export const mapUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("Layers"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("Layers"),
             title: "Layers",
             description:
               "Allows setting the map layers data source and style. The map supports multiple layers.",
@@ -76,9 +69,7 @@ export const mapUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("Settings"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("Settings"),
             title: "Settings",
             description:
               "Allows setting the map layout options: aggregation limit, click behavior, etc.",

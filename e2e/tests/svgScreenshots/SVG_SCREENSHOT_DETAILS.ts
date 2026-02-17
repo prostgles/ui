@@ -2,7 +2,7 @@ import { dashboardSvgif } from "svgScreenshots/dashboard.svgif";
 import { fileImporter } from "svgScreenshots/fileImporter.svgif";
 import { schemaDiagramSvgif } from "svgScreenshots/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
-import { getCommandElemSelector, getDataKeyElemSelector } from "../Testing";
+import { getCommandElemSelector, getDataKey } from "../Testing";
 import {
   getDashboardUtils,
   getDataKey,
@@ -101,11 +101,11 @@ export const SVG_SCREENSHOT_DETAILS = {
   connect_existing_database: async (page) => {
     await goTo(page, "/connections");
     await page.getByTestId("ConnectionServer.add").click();
-    await page.locator(getDataKeyElemSelector("existing")).click();
+    await page.locator(getDataKey("existing")).click();
     await page.getByTestId("ConnectionServer.add.existingDatabase").click();
     await page
       .getByTestId("ConnectionServer.add.existingDatabase")
-      .locator(getDataKeyElemSelector("postgres"))
+      .locator(getDataKey("postgres"))
       .click();
     await page.waitForTimeout(1500);
   },

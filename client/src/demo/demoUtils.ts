@@ -1,9 +1,5 @@
 import { scrollIntoViewIfNeeded } from "src/utils/utils";
-import {
-  type Command,
-  getCommandElemSelector,
-  getDataKeyElemSelector,
-} from "../Testing";
+import { type Command, getCommandElemSelector, getDataKey } from "../Testing";
 import { tout } from "../pages/ElectronSetup/ElectronSetup";
 
 let pointer: HTMLDivElement | null = null;
@@ -138,7 +134,7 @@ export const openConnection = async (
 ) => {
   await click(
     "Connections",
-    getDataKeyElemSelector(name) +
+    getDataKey(name) +
       " " +
       getCommandElemSelector("Connection.openConnection"),
   );

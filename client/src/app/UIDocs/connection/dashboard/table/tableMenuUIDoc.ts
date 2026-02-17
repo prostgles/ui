@@ -1,8 +1,5 @@
 import { fixIndent } from "../../../../../demo/scripts/sqlVideoDemo";
-import {
-  getCommandElemSelector,
-  getDataKeyElemSelector,
-} from "../../../../../Testing";
+import { getCommandElemSelector, getDataKey } from "../../../../../Testing";
 import type { UIDocElement } from "../../../../UIDocs";
 
 export const tableMenuUIDoc = {
@@ -16,7 +13,7 @@ export const tableMenuUIDoc = {
   children: [
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Table info"),
+      selector: getDataKey("Table info"),
       title: "Table info",
       description: "Postgres specific table/view details.",
       children: [
@@ -133,7 +130,7 @@ export const tableMenuUIDoc = {
     },
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Columns"),
+      selector: getDataKey("Columns"),
       title: "Columns",
       description: "Allows editing, reordering and toggling table columns.",
       children: [
@@ -171,7 +168,7 @@ export const tableMenuUIDoc = {
     },
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Data refresh"),
+      selector: getDataKey("Data refresh"),
       title: "Data refresh",
       description:
         "Allows setting subscriptions or data refresh rates. By default every table subscribes to data changes.",
@@ -179,42 +176,42 @@ export const tableMenuUIDoc = {
     },
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Triggers"),
+      selector: getDataKey("Triggers"),
       title: "Triggers",
       description: "Allows managing triggers. ",
       children: [],
     },
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Constraints"),
+      selector: getDataKey("Constraints"),
       title: "Constraints",
       description: "Allows managing constraints.",
       children: [],
     },
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Indexes"),
+      selector: getDataKey("Indexes"),
       title: "Indexes",
       description: "Allows managing indexes.",
       children: [],
     },
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Policies"),
+      selector: getDataKey("Policies"),
       title: "Policies",
       description: "Allows managing policies.",
       children: [],
     },
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Access rules"),
+      selector: getDataKey("Access rules"),
       title: "Access rules",
       description: "Allows managing prostgles access rules.",
       children: [],
     },
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Current query"),
+      selector: getDataKey("Current query"),
       title: "Current query",
       description:
         "Allows viewing the SQL and data/layout info for the current table view.",
@@ -222,7 +219,7 @@ export const tableMenuUIDoc = {
     },
     {
       type: "tab",
-      selector: getDataKeyElemSelector("Display options"),
+      selector: getDataKey("Display options"),
       title: "Display options",
       description: "Layout preferences.",
       children: [],

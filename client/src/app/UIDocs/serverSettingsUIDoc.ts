@@ -1,6 +1,6 @@
 import { ROUTES } from "@common/utils";
 import { mdiServerSecurity, mdiTools } from "@mdi/js";
-import { getDataKeyElemSelector } from "../../Testing";
+import { getDataKey } from "../../Testing";
 import type { UIDocContainers } from "../UIDocs";
 import { authenticationUIDoc } from "./connection/config/authentication.UIDoc";
 
@@ -18,7 +18,7 @@ export const serverSettingsUIDoc = {
   children: [
     {
       type: "tab",
-      selector: getDataKeyElemSelector("security"),
+      selector: getDataKey("security"),
       title: "Security",
       description:
         "Security. Configure domain access, IP restrictions, session duration, and login rate limits to enhance security.",
@@ -37,7 +37,7 @@ export const serverSettingsUIDoc = {
       type: "tab",
       iconPath: mdiTools,
       title: "MCP Servers",
-      selector: getDataKeyElemSelector("mcpServers"),
+      selector: getDataKey("mcpServers"),
       description:
         "Manage MCP servers and tools that can then be used in the Ask AI chat",
       children: [],
@@ -45,7 +45,7 @@ export const serverSettingsUIDoc = {
     {
       type: "tab",
       title: "LLM Providers",
-      selector: getDataKeyElemSelector("llmProviders"),
+      selector: getDataKey("llmProviders"),
       description:
         "Manage LLM providers, credentials and models to be used in the Ask AI chat",
       children: [],
@@ -53,7 +53,7 @@ export const serverSettingsUIDoc = {
     {
       type: "tab",
       title: "Services",
-      selector: getDataKeyElemSelector("services"),
+      selector: getDataKey("services"),
       description: "Manage services",
       children: [],
     },

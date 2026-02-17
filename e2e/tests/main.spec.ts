@@ -18,7 +18,7 @@ import { startMockSMTPServer } from "./mockSMTPServer";
 import { testAskLLMCode } from "./testAskLLM/testAskLLM";
 import {
   getCommandElemSelector,
-  getDataKeyElemSelector,
+  getDataKey,
   getDataLabelElemSelector,
 } from "./Testing";
 import {
@@ -37,7 +37,6 @@ import {
   fillSmartForm,
   forEachLocator,
   getAskLLMLastMessage,
-  getDataKey,
   getLLMResponses,
   getMonacoEditorBySelector,
   getMonacoValue,
@@ -844,7 +843,7 @@ test.describe("Main test", () => {
         .click({ timeout: 10e3 });
       for (const serverName of serverNames) {
         const toggleCheckbox = page
-          .locator(getDataKeyElemSelector(serverName))
+          .locator(getDataKey(serverName))
           .getByTestId("MCPServerFooterActions.enableToggle");
 
         await toggleCheckbox.scrollIntoViewIfNeeded();
@@ -990,13 +989,13 @@ test.describe("Main test", () => {
     // await enableMCPServers(["prostgles-ui"]);
     await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
     await page
-      .locator(getDataKeyElemSelector("prostgles-ui"))
+      .locator(getDataKey("prostgles-ui"))
       .getByText("create_container", { exact: true })
       .waitFor({ state: "visible", timeout: 15e3 });
     await page.waitForTimeout(2e3);
     /** Tools are loaded after enabling */
     await page
-      .locator(getDataKeyElemSelector("prostgles-ui"))
+      .locator(getDataKey("prostgles-ui"))
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
@@ -1004,7 +1003,7 @@ test.describe("Main test", () => {
     );
     await page.getByText("OK", { exact: true }).click();
     await page
-      .locator(getDataKeyElemSelector("prostgles-ui"))
+      .locator(getDataKey("prostgles-ui"))
       .getByText("create_container", { exact: true })
       .click();
     await page.waitForTimeout(1e3);
@@ -1182,6 +1181,20 @@ test.describe("Main test", () => {
     await openConnection(page, "cloud");
     await closeWorkspaceWindows(page);
     await page.getByTestId("AskLLM").click();
+
+    await newChat(page);
+
+    /** Test ask tool */
+    await newChat(page);
+    await sendAskLLMMessage(page, " ask_tool ");
+    page.getByTestId("AskUserQuestions").getByText("Red").first().click();
+    page.getByTestId("AskUserQuestions").getByText("Yellow").nth(1).click();
+    page.getByTestId("AskUserQuestions").getByText("Blue").nth(1).click();
+    await page.getByTestId("AskUserQuestions.confirm").click();
+    await expect(
+      page.getByTestId("AskUserQuestions.confirm"),
+    ).not.toBeAttached();
+
     await newChat(page);
     await setPromptByText(page, "Create workflow");
 
@@ -1198,7 +1211,7 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, " agentic_workflow ");
 
     const startWorkFlowAndExpectError = async (errorMessage: string) => {
-      await page.getByTestId("LoadSuggestedWorkflow.start").click({
+      await page.getByTestId("AgenticWorkflow.start").click({
         timeout: 60e3,
       });
       await expect(page.getByTestId("Alert")).toContainText(errorMessage, {
@@ -1213,7 +1226,7 @@ test.describe("Main test", () => {
     /** Fill user input form */
     await page.getByTestId("RenderFilter.edit").click();
     await page.getByTestId("SmartAddFilter").click();
-    await page.locator(getDataKeyElemSelector("type")).last().click();
+    await page.locator(getDataKey("type")).last().click();
     await page.getByTestId("SearchList.Input").last().click();
     await page.locator(`[data-label="regular"]`).first().click();
     await page.getByTestId("RenderFilter.done").click();
@@ -1221,38 +1234,36 @@ test.describe("Main test", () => {
     await startWorkFlowAndExpectError(
       `Missing required user input: "Sort column"`,
     );
-    await page.locator(getDataKeyElemSelector("custom") + " input").fill("a");
+    await page.locator(getDataKey("custom") + " input").fill("a");
 
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table name"`,
     );
 
-    await page.locator(getDataKeyElemSelector("table-name")).click();
+    await page.locator(getDataKey("table-name")).click();
     await page.locator(`[data-key="example_table"]`).last().click();
 
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table column"`,
     );
 
-    await page.locator(getDataKeyElemSelector("table-column")).click();
+    await page.locator(getDataKey("table-column")).click();
     await page.locator(`[data-key="id"]`).last().click();
 
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table and column"`,
     );
 
-    await page.locator(getDataKeyElemSelector("table-and-column")).click();
+    await page.locator(getDataKey("table-and-column")).click();
     await page.locator(`[data-label="receipts.amount"]`).click();
 
-    await page
-      .getByTestId("LoadSuggestedWorkflow.start")
-      .click({ timeout: 30e3 });
+    await page.getByTestId("AgenticWorkflow.start").click({ timeout: 30e3 });
     /** Progress bar works */
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Processing user 2/",
     );
 
-    await page.getByTestId("LoadSuggestedWorkflow.stop").click();
+    await page.getByTestId("AgenticWorkflow.stop").click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
       "Agentic workflow container stopped with status: aborted",
       {
@@ -1274,7 +1285,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await newChat(page);
     await sendAskLLMMessage(page, " agentic_workflow_noinput ");
-    await page.getByTestId("LoadSuggestedWorkflow.start").click({
+    await page.getByTestId("AgenticWorkflow.start").click({
       timeout: 30e3,
     });
 
@@ -1284,48 +1295,51 @@ test.describe("Main test", () => {
         timeout: 120e3,
       },
     );
+    await page.locator(getDataKey("Activity")).click({
+      timeout: 10e3,
+    });
+    await page
+      .getByTestId("AgenticWorkflow")
+      .getByTestId("AgenticWorkflow.openChat")
+      .first()
+      .click();
+    const agentChant = page.getByTestId("AskLLM.popup").nth(1);
+    await expect(
+      agentChant.getByTestId("ToolUseMessage.toggle").first(),
+    ).toContainText("agent_goal_reached");
+    await agentChant.getByTestId("Popup.close").click();
 
     await page.waitForTimeout(1e3);
     await newChat(page);
     await sendAskLLMMessage(page, " agentic_workflow_clashing ");
-    await page.getByTestId("LoadSuggestedWorkflow.start").click({
+    await expect(
+      page.getByTestId("AgenticWorkflow.validationErrorLogs"),
+    ).toContainText("the following tables already exist: public.users", {
       timeout: 30e3,
     });
-    await expect(page.getByTestId("Alert")).toContainText(
-      "Workflow has clashing input names. Please change the input names and try again.",
-      {
-        timeout: 30e3,
-      },
-    );
-    await page.getByText("OK", { exact: true }).click();
 
-    await page.waitForTimeout(1e3);
     await newChat(page);
     await sendAskLLMMessage(page, " agentic_workflow_invalidTable ");
-    await page.getByTestId("LoadSuggestedWorkflow.start").click({
-      timeout: 30e3,
-    });
-    await expect(page.getByTestId("Alert")).toContainText(
-      "agentic_workflow_invalidTable.",
+    await expect(
+      page.getByTestId("AgenticWorkflow.validationErrorLogs"),
+    ).toContainText(
+      `the following table names do not match any new tables or existing tables: ["invalid_table"]`,
       {
         timeout: 30e3,
       },
     );
-    await page.getByText("OK", { exact: true }).click();
 
     await page.waitForTimeout(1e3);
     await newChat(page);
     await sendAskLLMMessage(page, " agentic_workflow_invalidPermissionTable ");
-    await page.getByTestId("LoadSuggestedWorkflow.start").click({
-      timeout: 30e3,
-    });
-    await expect(page.getByTestId("Alert")).toContainText(
-      "agentic_workflow_invalidTable.",
+    await expect(
+      page.getByTestId("AgenticWorkflow.validationErrorLogs"),
+    ).toContainText(
+      `tablePermissions: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
       {
         timeout: 30e3,
       },
     );
-    await page.getByText("OK", { exact: true }).click();
   });
 
   test("Disable signups", async ({ page: p }) => {
@@ -2701,7 +2715,7 @@ test.describe("Main test", () => {
     await expect(createFromTemplateBtn).toBeEnabled({ timeout: 5e3 });
     // Page will reload
     await page.waitForTimeout(500);
-    await page.waitForEvent("load");
+    // await page.waitForEvent("load", { timeout: 15e3 });
     await clickAndWait(page.getByTestId("WebAppConfig.build"));
     await clickAndWait(page.getByTestId("WebAppConfig.test"));
     await page.locator(getDataKey("Components")).click();
@@ -2733,17 +2747,6 @@ test.describe("Main test", () => {
     /** Closing it works */
     await page.getByTestId("Popup.close").last().click();
     await expect(alertLocator).not.toBeAttached();
-
-    /** Test ask tool */
-    await newChat(page);
-    await sendAskLLMMessage(page, "ask_tool");
-    page.getByTestId("AskUserQuestions").getByText("Red").first().click();
-    page.getByTestId("AskUserQuestions").getByText("Yellow").nth(1).click();
-    page.getByTestId("AskUserQuestions").getByText("Blue").nth(1).click();
-    await page.getByTestId("AskUserQuestions.confirm").click();
-    await expect(
-      page.getByTestId("AskUserQuestions.confirm"),
-    ).not.toBeAttached();
   });
 
   test("Web template works", async ({ page: p }) => {

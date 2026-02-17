@@ -137,6 +137,8 @@ export const FILE_EXTENSION_TO_ICON_INFO: Record<
   { label: string; iconPath?: string }
 > = {
   ts: { iconPath: mdiLanguageTypescript, label: "typescript" },
+  mjs: { iconPath: mdiReact, label: "javascript" },
+  cjs: { iconPath: mdiReact, label: "javascript" },
   jsx: { iconPath: mdiReact, label: "javascript" },
   tsx: { iconPath: mdiReact, label: "typescript" },
   js: { iconPath: mdiLanguageJavascript, label: "javascript" },

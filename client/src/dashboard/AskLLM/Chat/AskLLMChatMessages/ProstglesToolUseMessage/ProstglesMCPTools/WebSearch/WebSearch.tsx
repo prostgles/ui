@@ -4,11 +4,13 @@ import React from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { useTypedToolUseResultData } from "../common/useTypedToolUseResultData";
 import { Favicon } from "./Favicon";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 const schema =
   PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]["websearch"]["outputSchema"];
 
 export const WebSearch = ({
   toolUseResult: toolResult,
+  message,
 }: ProstglesMCPToolsProps) => {
   const toolUseResult = useTypedToolUseResultData(
     toolResult?.toolUseResultMessage,
@@ -16,7 +18,15 @@ export const WebSearch = ({
   );
 
   return (
-    <FlexCol>
+    <ScrollFade
+      className="o-auto flex-col"
+      style={{
+        maxHeight: "70vh",
+      }}
+    >
+      <div title="Search input" className="p-1 b rounded">
+        {JSON.stringify(message.input)}
+      </div>
       {toolUseResult && toolUseResult.length === 0 && (
         <div style={{ color: "var(--gray)" }}>No results found.</div>
       )}
@@ -51,6 +61,6 @@ export const WebSearch = ({
           </FlexCol>
         );
       })}
-    </FlexCol>
+    </ScrollFade>
   );
 };

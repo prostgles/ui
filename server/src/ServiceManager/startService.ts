@@ -145,6 +145,10 @@ export async function startService(
         },
       },
     ).catch(() => null);
+    console.log(
+      "starting Service " + serviceName + " - healthcheck",
+      healthCheckResponse?.statusText,
+    );
     if (healthCheckResponse?.ok) {
       break;
     }

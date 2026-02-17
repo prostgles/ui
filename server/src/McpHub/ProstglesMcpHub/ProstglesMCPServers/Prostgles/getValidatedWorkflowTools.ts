@@ -9,18 +9,19 @@ export const getValidatedWorkflowTools = async (
   const validatedTools = new Map(
     await Promise.all(
       getEntries(toolDefinitions).map(
-        async ([workflowToolName, { configId, mcpServerName, toolNames }]) => {
-          if (configId !== undefined) {
-            const mcpServerConfig = await dbs.mcp_server_configs.findOne({
-              id: configId,
-              server_name: mcpServerName,
-            });
-            if (!mcpServerConfig) {
-              throw new Error(
-                `MCP Server config with id ${configId} for server ${mcpServerName} not found for workflow tool ${workflowToolName}`,
-              );
-            }
-          }
+        async ([workflowToolName, { mcpServerName, toolNames }]) => {
+          const configId = undefined;
+          // if (configId !== undefined) {
+          //   const mcpServerConfig = await dbs.mcp_server_configs.findOne({
+          //     id: configId,
+          //     server_name: mcpServerName,
+          //   });
+          //   if (!mcpServerConfig) {
+          //     throw new Error(
+          //       `MCP Server config with id ${configId} for server ${mcpServerName} not found for workflow tool ${workflowToolName}`,
+          //     );
+          //   }
+          // }
           const serverTools = await dbs.mcp_server_tools.find(
             {
               server_name: mcpServerName,

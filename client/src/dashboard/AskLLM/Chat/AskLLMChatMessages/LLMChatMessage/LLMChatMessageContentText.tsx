@@ -19,7 +19,7 @@ export const LLMChatMessageContentText = (props: {
       {messageContent.reasoning && (
         <Expander
           getButton={() => (
-            <Btn title="Reasoning" iconPath={mdiBrain} variant="faded">
+            <Btn title="Reasoning" iconPath={mdiBrain} variant="icon">
               Reasoning...
             </Btn>
           )}

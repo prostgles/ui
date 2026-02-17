@@ -1,8 +1,5 @@
 import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
-import {
-  getCommandElemSelector,
-  getDataKeyElemSelector,
-} from "../../../../Testing";
+import { getCommandElemSelector, getDataKey } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../getCommonViewHeaderUIDoc";
 
@@ -48,9 +45,7 @@ export const sqlEditorUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("General"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("General"),
             title: "General",
             description: "General settings for the SQL editor.",
             children: [
@@ -97,7 +92,7 @@ export const sqlEditorUIDoc = {
             selector:
               getCommandElemSelector("MenuList") +
               " " +
-              getDataKeyElemSelector("Editor options"),
+              getDataKey("Editor options"),
             title: "Editor options",
             description:
               "Settings for the SQL editor's appearance and behavior.",
@@ -117,9 +112,7 @@ export const sqlEditorUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("Hotkeys"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("Hotkeys"),
             title: "Hotkeys",
             description:
               "Keyboard shortcuts for common actions in the SQL editor. This includes executing queries, saving files, and more.",

@@ -1,7 +1,8 @@
 import { expect } from "@playwright/test";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { getDataKey, newChat, type PageWIds } from "utils/utils";
+import { getDataKey } from "Testing";
+import { newChat, type PageWIds } from "utils/utils";
 
 export const speechToTextTest = async (page: PageWIds) => {
   await grantMicrophonePermission(page);

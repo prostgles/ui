@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { getCommandElemSelector, getDataKeyElemSelector } from "Testing";
+import { getCommandElemSelector, getDataKey } from "Testing";
 import { createReceipt } from "testAskLLM/createReceipt";
 import {
   closeWorkspaceWindows,
@@ -52,7 +52,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     const firstMessage = await page.getByTestId("AskLLM.DeleteMessage").first();
     if (await firstMessage.count()) {
       await firstMessage.click();
-      await page.locator(getDataKeyElemSelector("allToBottom")).click();
+      await page.locator(getDataKey("allToBottom")).click();
     }
   };
   await addScene({
@@ -198,7 +198,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     "Fetching data from",
   );
 
-  await addSceneAnimation(getDataKeyElemSelector("fetch_weather.js"));
+  await addSceneAnimation(getDataKey("fetch_weather.js"));
 
   // await page.getByTestId("ToolUseMessage").last().scrollIntoViewIfNeeded();
   // await addScene({

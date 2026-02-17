@@ -1,5 +1,5 @@
 import { fixIndent } from "../../../../../demo/scripts/sqlVideoDemo";
-import { getDataKeyElemSelector } from "../../../../../Testing";
+import { getDataKey } from "../../../../../Testing";
 import type { UIDocElement } from "../../../../UIDocs";
 
 export const smartFilterBarUIDoc = {
@@ -112,14 +112,14 @@ export const smartFilterBarUIDoc = {
       type: "section",
       title: "Filters",
       description: "Filters applied to the data",
-      selector: getDataKeyElemSelector("where"),
+      selector: getDataKey("where"),
       children: [],
     },
     {
       type: "section",
       title: "Having Filters",
       description: "Filters applied after aggregation (HAVING clause in SQL).",
-      selector: getDataKeyElemSelector("having"),
+      selector: getDataKey("having"),
       children: [],
     },
   ],

@@ -118,33 +118,43 @@ export class ForkedPrglProcRunner {
   };
 
   isRestarting = false;
-  restartProc = debounce((error: any) => {
-    if (this.isRestarting || this.databaseNotFound || this.destroyed) return;
-    const logName = `ForkedPrglProcRunner (${this.opts.type})`;
-    this.isRestarting = true;
-    console.error(`${logName} restartProc. error:`, error);
-    Object.entries(this.runQueue).forEach(([id, { cb }]) => {
-      cb(
-        "Forked process error. Check logs: \n" + this.logs.slice(-3).join("\n"),
-      );
-      delete this.runQueue[id];
-    });
-    console.log(`${logName} restarting ...`);
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    setTimeout(async () => {
-      console.log(`${logName} restarted`);
-      const newProc = await ForkedPrglProcRunner.createProc(this.opts);
-      this.proc = newProc;
-      this.initProc();
-      if (this.opts.type === "onMount") {
-        void this.run({
-          type: "onMount",
-          code: this.opts.on_mount_ts_compiled,
-        });
+  restartProc = debounce(
+    (info: {
+      error?: any;
+      code?: number | null;
+      signal?: NodeJS.Signals | null;
+    }) => {
+      if (this.isRestarting || this.databaseNotFound || this.destroyed) {
+        return;
       }
-      this.isRestarting = false;
-    }, 1e3);
-  }, 400);
+      const logName = `ForkedPrglProcRunner (${this.opts.type})`;
+      this.isRestarting = true;
+      console.error(`${logName} restartProc. error:`, info);
+      Object.entries(this.runQueue).forEach(([id, { cb }]) => {
+        cb(
+          "Forked process error. Check logs: \n" +
+            this.logs.slice(-3).join("\n"),
+        );
+        delete this.runQueue[id];
+      });
+      console.log(`${logName} restarting ...`);
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      setTimeout(async () => {
+        console.log(`${logName} restarted`);
+        const newProc = await ForkedPrglProcRunner.createProc(this.opts);
+        this.proc = newProc;
+        this.initProc();
+        if (this.opts.type === "onMount") {
+          void this.run({
+            type: "onMount",
+            code: this.opts.on_mount_ts_compiled,
+          });
+        }
+        this.isRestarting = false;
+      }, 1e3);
+    },
+    400,
+  );
 
   private initProc = () => {
     const updateLogs = (
@@ -168,8 +178,8 @@ export class ForkedPrglProcRunner {
         },
       );
     };
-    this.proc.on("exit", (code) => {
-      this.restartProc(code);
+    this.proc.on("exit", (code, signal) => {
+      this.restartProc({ code, signal });
     });
     this.proc.on("message", (msg: ForkedProcMessageResult) => {
       if ("type" in msg) {
@@ -212,10 +222,13 @@ export class ForkedPrglProcRunner {
 
       /** This is the onReady/onReady reload callback */
       if (msg.id === "1" && msg.result === "reload") {
-        if (this.opts.type !== "tableConfig") {
-          // Reload schema;
-          this.proc.kill();
-        }
+        // if (this.opts.type !== "tableConfig") {
+        //   // Reload schema;
+        //   console.log(
+        //     "ForkedPrglProcRunner received reload command, reloading schema",
+        //   );
+        //   this.proc.kill();
+        // }
         return;
       }
 
@@ -232,7 +245,7 @@ export class ForkedPrglProcRunner {
     });
 
     this.proc.on("error", (error) => {
-      this.restartProc(error);
+      this.restartProc({ error });
     });
 
     void this.opts.dbs.database_config_logs.insert(

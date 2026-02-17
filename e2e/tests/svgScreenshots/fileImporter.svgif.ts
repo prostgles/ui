@@ -1,4 +1,4 @@
-import { getCommandElemSelector, getDataKeyElemSelector } from "Testing";
+import { getCommandElemSelector, getDataKey } from "Testing";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { closeWorkspaceWindows, runDbSql } from "utils/utils";
 
@@ -12,7 +12,7 @@ export const fileImporter: OnBeforeScreenshot = async (
   await openMenuIfClosed();
   await addSceneAnimation(getCommandElemSelector("dashboard.menu.create"));
 
-  await addSceneAnimation(getDataKeyElemSelector("import file"));
+  await addSceneAnimation(getDataKey("import file"));
 
   const tableName = "contacts.csv";
   await runDbSql(page, "DROP TABLE IF EXISTS ${tableName:name}", { tableName });

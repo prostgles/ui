@@ -1,12 +1,11 @@
 import { createAgentHandlers } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createAgentHandlers";
-import type { getServerFunctionsContext } from "../getServerFunctionsContext";
-import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { startAgenticWorkflowContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/startAgenticWorkflowContainer";
-import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import { validateUserInput } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/validateUserInput";
 import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
 import { getSerialisableError } from "prostgles-types";
 import { runConnectionQuery } from "../getServerFunctions";
+import type { getServerFunctionsContext } from "../getServerFunctionsContext";
+import { getDefineAdminFunction } from "./getDefineAdminFunction";
 
 const abortersByUserId = new Map<
   string,
@@ -54,7 +53,7 @@ export const getAgenticWorkflowFunctions = (
         messageId,
         executionMode,
       },
-      { dbs, user, getClientDBHandlers },
+      { dbs, user, clientReq },
     ) => {
       const validationError = validateUserInput(userInputValue, userInput);
       if (validationError) {
@@ -84,26 +83,22 @@ export const getAgenticWorkflowFunctions = (
         };
       }
 
-      const { clientMethods } = await getClientDBHandlers(undefined);
-      const dbsMethods = clientMethods as unknown as {
-        [K in keyof GeneratedFunctionSchema]: {
-          run: GeneratedFunctionSchema[K];
-        };
-      };
+      const aborter = new AbortController();
       const { agentHandlers } = await createAgentHandlers(
-        dbsMethods,
         {
           name,
           timeOutInSeconds,
           agentDefinitions,
           toolDefinitions,
           databaseAccessDefinitions,
+          signal: aborter.signal,
         },
         {
           chatId,
           dbs,
           userId: user.id,
           connectionId: connection_id,
+          clientReq,
         },
         executionMode !== "parallel",
       );
@@ -126,7 +121,6 @@ export const getAgenticWorkflowFunctions = (
         }
       }
 
-      const aborter = new AbortController();
       const existingAborters = abortersByUserId.get(user.id) || [];
       abortersByUserId.set(user.id, [
         ...existingAborters,

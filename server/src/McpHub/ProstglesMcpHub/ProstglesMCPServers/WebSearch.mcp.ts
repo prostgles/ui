@@ -9,6 +9,8 @@ import type {
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
 import { McpHub } from "@src/McpHub/AnthropicMcpHub/McpHub";
+import { tout } from "@src/utils/tout";
+import type { ProcessLog } from "@src/McpHub/DockerSandbox/executeDockerCommand";
 
 const definition = {
   icon_path: "Web",
@@ -17,12 +19,42 @@ const definition = {
   tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"],
 } as const satisfies ProstglesMcpServerDefinition;
 
+const withRetries = async <T>(
+  fn: () => Promise<T>,
+  attempts = 3,
+  delay = 1000,
+): Promise<T> => {
+  try {
+    const success = await fn();
+    return success;
+  } catch (error) {
+    if (attempts <= 1) {
+      throw error;
+    }
+    console.warn(`Retrying in ${delay}ms...`);
+    await tout(delay);
+    return withRetries(fn, attempts - 1, delay);
+  }
+};
+
 const handler = {
   start: async (dbs) => {
     const searXngService = getServiceManager(dbs);
-    await searXngService
-      .enableService("webSearchSearxng", () => {})
-      .catch(console.error);
+
+    let logs: ProcessLog[] = [];
+    await withRetries(() => {
+      return searXngService.enableService("webSearchSearxng", (log) => {
+        logs = log;
+      });
+    }).catch((error) => {
+      console.error(
+        "Failed to start SearXNG service for Web Search MCP Server",
+        { error, logs: logs.map((l) => l.text).join("\n") },
+      );
+      throw new Error(
+        "Failed to start SearXNG service for Web Search MCP Server. Check server logs for details.",
+      );
+    });
 
     const serviceInstance = searXngService.getService("webSearchSearxng");
     if (serviceInstance?.status !== "running") {

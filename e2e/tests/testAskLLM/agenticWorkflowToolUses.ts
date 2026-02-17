@@ -5,7 +5,7 @@ type UserInput = NonNullable<
 >;
 
 const clashingTableDefinition = `
-  CREATE TABLE IF NOT EXISTS users (
+  CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT,
     type TEXT

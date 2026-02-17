@@ -1,7 +1,9 @@
 import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import type { DBS } from "@src/index";
+import { statePrgl } from "@src/init/startProstgles";
 import { tout } from "@src/utils/tout";
+import type { AuthClientRequest } from "prostgles-server";
 import type { DefineAgenticWorkflow } from "./defineAgenticWorkflow";
 import { getValidatedAgentHandlerArgs } from "./getValidatedAgentHandlerArgs";
 import { getValidatedWorkflowTools } from "./getValidatedWorkflowTools";
@@ -22,30 +24,41 @@ const enqueueAgentExecution = <T>(
 };
 
 export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
-  dbsFunctions: {
-    [K in keyof GeneratedFunctionSchema]: {
-      run: GeneratedFunctionSchema[K];
-    };
-  },
   {
     name,
     toolDefinitions,
     agentDefinitions,
     timeOutInSeconds,
-  }: Parameters<P>[0],
+    signal,
+  }: Parameters<P>[0] & {
+    signal?: AbortSignal;
+  },
   {
     dbs,
     chatId,
     userId,
     connectionId,
+    clientReq,
   }: {
     dbs: DBS;
     chatId: number;
     userId: string;
     connectionId: string;
+    clientReq: AuthClientRequest;
   },
   runInSequence = true,
 ) => {
+  if (!statePrgl) {
+    throw new Error("Prostgles state is not initialized");
+  }
+  const { clientMethods } = await statePrgl.getClientDBHandlers(clientReq, {
+    methods: { askLLM: true },
+  });
+  const dbsClientFunctions = clientMethods as unknown as {
+    [K in keyof GeneratedFunctionSchema]: {
+      run: GeneratedFunctionSchema[K];
+    };
+  };
   const agentHandlers = new Map<string, (agentInput: string) => Promise<any>>();
   const started = Date.now();
   const user = await dbs.users.findOne({ id: userId });
@@ -90,7 +103,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
       .flat();
 
     const startAgent = async (agentInput?: string) => {
-      const workflowChat = await dbs.llm_chats.insert(
+      const agentChat = await dbs.llm_chats.insert(
         {
           name,
           user_id: userId,
@@ -117,7 +130,8 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
             max_tokens: maxTokens,
             temperature,
           },
-          /** satisfies added due to weird but.
+          /**
+           * satisfies added due to weird ts behaviour (hidden conversion to any) but.
            * TODO: detect why and where else TS is silently failing to show errors due to outputSchema complexity
            * */
         } satisfies DBSSchemaForInsert["llm_chats"],
@@ -129,7 +143,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
             .map(({ serverTools, configId }) =>
               serverTools.map(({ id, server_name }) => {
                 return {
-                  chat_id: workflowChat.id,
+                  chat_id: agentChat.id,
                   tool_id: id,
                   server_name,
                   server_config_id: configId,
@@ -141,8 +155,8 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
         );
       }
 
-      await dbsFunctions.askLLM.run({
-        chatId: workflowChat.id,
+      await dbsClientFunctions.askLLM.run({
+        chatId: agentChat.id,
         type: "new-message",
         userMessage: [
           {
@@ -155,19 +169,29 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
       });
 
       let chatStatus = null as DBSSchema["llm_chats"]["status"];
-      while (!chatStatus || chatStatus.state === "loading") {
+      do {
+        if (Date.now() - started > timeOutInSeconds * 1000) {
+          throw new Error(
+            [
+              `Agent ${agentName} timed out after ${timeOutInSeconds} seconds.`,
+              `chat id: ${agentChat.id}`,
+              `chat status: ${JSON.stringify(chatStatus)}`,
+            ].join("\n"),
+          );
+        }
+        if (signal?.aborted) {
+          throw new Error(
+            `Agent ${agentName} stopped due to workflow execution being aborted.`,
+          );
+        }
         await tout(500);
         const chat = await dbs.llm_chats.findOne(
-          { id: workflowChat.id },
+          { id: agentChat.id },
           { select: { status: 1 } },
         );
         chatStatus = chat?.status ?? null;
-        if (Date.now() - started > timeOutInSeconds * 1000) {
-          throw new Error(
-            `Agent ${agentName} timed out after ${timeOutInSeconds} seconds`,
-          );
-        }
-      }
+      } while (!chatStatus || chatStatus.state === "loading");
+
       if (chatStatus.state === "stopped") {
         throw new Error(
           `Agent ${agentName} failed with error: ${chatStatus.reason}`,

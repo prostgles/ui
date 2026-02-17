@@ -57,7 +57,6 @@ type ParseSchema<S extends Record<string, PropertyType>> = {
 export type ToolDefinition = {
   mcpServerName: string;
   toolNames: string[];
-  configId?: number;
 };
 
 /**
@@ -250,17 +249,6 @@ void defineAgenticWorkflow(
 export const END_OF_SCHEMA_PLACEHOLDER =
   "export const END_OF_SCHEMA_PLACEHOLDER =";
 
-process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled Rejection:\n", reason);
-
-  process.exit(1);
-});
-
-process.on("uncaughtException", (error) => {
-  console.error("Uncaught Exception:\n", error);
-  process.exit(1);
-});
-
 // import type { ProstglesDbTools } from "@common/prostglesMcp";
 // import { getProperty, type JSONB } from "prostgles-types";
 // export type ProxyDbCallData<
@@ -313,11 +301,23 @@ import { includes } from "prostgles-types";
 
 const { DOCKER_MCP_ENDPOINT, MODE, USER_INPUT } = process.env;
 let wasStarted = false;
-setTimeout(() => {
-  if (wasStarted || !DOCKER_MCP_ENDPOINT) {
-    return;
-  }
-  console.error(`
+
+if (DOCKER_MCP_ENDPOINT) {
+  process.on("unhandledRejection", (reason) => {
+    console.error("Unhandled Rejection:\n", reason);
+    process.exit(1);
+  });
+
+  process.on("uncaughtException", (error) => {
+    console.error("Uncaught Exception:\n", error);
+    process.exit(1);
+  });
+
+  setTimeout(() => {
+    if (wasStarted) {
+      return;
+    }
+    console.error(`
 defineAgenticWorkflow was not called within 1 second of the container starting. 
 This likely means there is an error in your workflow code that is preventing it from running, or you are not using defineAgenticWorkflow correctly.
 When generating workflow code, you MUST:
@@ -345,8 +345,9 @@ void defineAgenticWorkflow(
 
 4. The workflow callback is the SECOND argument to defineAgenticWorkflow
 `);
-  process.exit(1);
-}, 1000);
+    process.exit(1);
+  }, 1000);
+}
 export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   definitions,
   handler,

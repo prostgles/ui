@@ -1,11 +1,11 @@
 import type { UIDocElement } from "src/app/UIDocs";
-import { getCommandElemSelector, getDataKeyElemSelector } from "src/Testing";
+import { getCommandElemSelector, getDataKey } from "src/Testing";
 
 export const authenticationUIDoc: UIDocElement = {
   type: "tab",
   title: "Authentication",
   componentName: "AuthProviderSetup",
-  selector: getDataKeyElemSelector("auth"),
+  selector: getDataKey("auth"),
   description:
     "Manage user authentication methods, default user roles, and third-party login providers to control access.",
   children: [

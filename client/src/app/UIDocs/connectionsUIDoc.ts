@@ -1,6 +1,6 @@
 import { ROUTES } from "@common/utils";
 import { mdiDatabasePlusOutline, mdiFilter, mdiServerNetwork } from "@mdi/js";
-import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
+import { getCommandElemSelector, getDataKey } from "../../Testing";
 import type { UIDocContainers, UIDocElement } from "../UIDocs";
 import { editConnectionUIDoc } from "./editConnectionUIDoc";
 
@@ -166,7 +166,7 @@ export const connectionsUIDoc = {
             },
             {
               type: "popup",
-              selector: getDataKeyElemSelector("Select existing database"),
+              selector: getDataKey("Select existing database"),
               title: "Connect to an existing database",
               description: "Selects a database from the server to connect to. ",
               docs: `

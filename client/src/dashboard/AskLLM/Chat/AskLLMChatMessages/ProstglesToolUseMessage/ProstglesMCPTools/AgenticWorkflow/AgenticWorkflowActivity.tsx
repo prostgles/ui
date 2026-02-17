@@ -2,7 +2,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import { mdiOpenInApp } from "@mdi/js";
+import { mdiOpenInNew } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { DBHandlerClient } from "prostgles-client";
 import { type FilterItem } from "prostgles-types";
@@ -36,7 +36,8 @@ export const AgenticWorkflowActivity = ({
         render: (value, { id }) => (
           <Btn
             title={`Open chat ${value}`}
-            iconPath={mdiOpenInApp}
+            iconPath={mdiOpenInNew}
+            data-command="AgenticWorkflow.openChat"
             variant="icon"
             onClick={() => {
               console.log("Opening chat with id", id);

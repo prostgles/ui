@@ -100,7 +100,7 @@ export const AgenticWorkflowActions = ({
               "Workflow validation failed"
             : undefined
           }
-          data-command="LoadSuggestedWorkflow.start"
+          data-command="AgenticWorkflow.start"
           loading={isRunning ? true : undefined}
           onClickPromise={async () => {
             if (!validWorkflow) {
@@ -144,7 +144,7 @@ export const AgenticWorkflowActions = ({
           <Btn
             title="Stop"
             iconPath={mdiStop}
-            data-command="LoadSuggestedWorkflow.stop"
+            data-command="AgenticWorkflow.stop"
             variant="faded"
             color="danger"
             onClickPromise={() =>
