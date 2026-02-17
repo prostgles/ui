@@ -52,14 +52,22 @@ export const executeDockerCommand = async (
         setTimeout(() => {
           timedOut = true;
           child.kill("SIGKILL");
-          onEnd({ type: "timed-out", error: new Error("Execution timed out") });
+          onEnd({
+            type: "timed-out",
+            error: new Error("Execution timed out"),
+            code: -1,
+          });
         }, timeout)
       );
 
     const onEnd = (
       reason:
         | { type: "close"; code: number | null }
-        | { type: "error" | "timed-out" | "aborted"; error: Error },
+        | {
+            type: "error" | "timed-out" | "aborted";
+            error: Error;
+            code: number | null;
+          },
     ) => {
       if (ended) return;
       ended = true;
@@ -68,16 +76,11 @@ export const executeDockerCommand = async (
       }
 
       const executionTime = Date.now() - startTime;
-      if (reason.type === "error") {
-        log.push({
-          type: "error",
-          text: reason.error.message,
-        });
-      }
+
       resolve({
         state: reason.type,
         command,
-        exitCode: reason.type === "close" ? reason.code || 0 : -1,
+        exitCode: reason.code ?? 0,
         timedOut,
         executionTime,
         log,
@@ -105,7 +108,7 @@ export const executeDockerCommand = async (
           .filter((l) => l.type === "stderr")
           .map((l) => l.text)
           .join("");
-        onEnd({ type: "error", error: new Error(stderr) });
+        onEnd({ type: "error", error: new Error(stderr), code });
       } else {
         onEnd({ type: "close", code: 0 });
       }
@@ -113,11 +116,15 @@ export const executeDockerCommand = async (
 
     child.on("error", (error) => {
       if (options.signal?.aborted) {
-        onEnd({ type: "aborted", error });
+        onEnd({ type: "aborted", error, code: -1 });
         // If aborted, kill the process
         child.kill("SIGKILL");
       } else {
-        onEnd({ type: "error", error });
+        log.push({
+          type: "error",
+          text: error.message,
+        });
+        onEnd({ type: "error", error, code: -1 });
       }
     });
   });

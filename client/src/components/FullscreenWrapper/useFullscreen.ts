@@ -22,6 +22,8 @@ export const useFullscreen = () => {
         position: "fixed",
         top: 0,
         left: 0,
+        maxHeight: "100vh",
+        maxWidth: "100vw",
         width: "100vw",
         height: "100vh",
         zIndex: 1000,

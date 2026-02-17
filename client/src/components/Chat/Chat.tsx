@@ -100,6 +100,14 @@ export const Chat = (props: ChatProps) => {
           {messages.map((message) => (
             <ChatMessage key={message.id} message={message} />
           ))}
+          {/* Spacer */}
+          <div
+            style={{
+              width: "100%",
+              height: window.isMobile ? "2em" : "100px",
+              flex: "none",
+            }}
+          ></div>
         </div>
       </FlexCol>
 

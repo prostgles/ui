@@ -59,7 +59,7 @@ export const getServerFunctions = async (
   } as const satisfies Record<string, ServerFunctionDefinition>;
 };
 
-export const runConnectionQuery = async (
+export const runConnectionQuery = async <T extends AnyObject = AnyObject>(
   connId: string,
   query: string,
   args?: AnyObject | any[],
@@ -68,7 +68,7 @@ export const runConnectionQuery = async (
    * The database might have been deleted. Try and find one that is avalable
    */
   findFirstAvailableInServer = false,
-): Promise<AnyObject[]> => {
+): Promise<T[]> => {
   if (asAdminOpts) {
     const { db } = await getSuperUserCDB(connId, asAdminOpts.dbs);
     return db.any(query, args);

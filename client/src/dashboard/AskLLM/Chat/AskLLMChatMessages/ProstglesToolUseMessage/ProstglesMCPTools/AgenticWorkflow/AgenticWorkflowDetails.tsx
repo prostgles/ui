@@ -41,8 +41,11 @@ export const AgenticWorkflowDetails = ({
   }, [toolDefinitions]);
 
   return (
-    <FlexCol className="w-full p-1">
+    <FlexCol className="w-full p-1 o-auto">
       <div className="font-18 bold">{name}</div>
+      <div style={{ opacity: 0.7, marginBottom: "0.5em" }}>
+        Timeout: {timeOutInSeconds} seconds
+      </div>
       <DatabaseAccessPermissions
         {...(!dbAccess ? { Mode: "None" }
         : dbAccess.mode === "custom" ?

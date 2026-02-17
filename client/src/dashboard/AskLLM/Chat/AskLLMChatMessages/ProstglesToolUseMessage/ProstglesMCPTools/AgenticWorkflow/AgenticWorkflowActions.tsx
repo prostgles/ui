@@ -8,7 +8,7 @@ import { isDefined, omitKeys } from "prostgles-types";
 import React from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import type { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
-import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
+import type { UseAgenticWorkflowUserInputReturn } from "./hooks/useAgenticWorkflowUserInput";
 import type { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
 
 export const AgenticWorkflowActions = ({
@@ -29,7 +29,7 @@ export const AgenticWorkflowActions = ({
   onStarted: () => void;
   onInitError: () => void;
   onSuccess: () => void;
-  userInputState: ReturnType<typeof useAgenticWorkflowUserInput>;
+  userInputState: UseAgenticWorkflowUserInputReturn;
   messageId: string | undefined;
 } & Pick<
     ReturnType<typeof useAgenticWorkflowState>,
@@ -103,8 +103,11 @@ export const AgenticWorkflowActions = ({
           data-command="LoadSuggestedWorkflow.start"
           loading={isRunning ? true : undefined}
           onClickPromise={async () => {
-            if (!validWorkflow || !messageId) {
-              throw new Error(`Cannot start workflow due error`);
+            if (!validWorkflow) {
+              throw new Error(`validWorkflow missing`);
+            }
+            if (!messageId) {
+              throw new Error(`messageId missing`);
             }
             onStarted();
             const res = await startAgenticWorkflow!({
@@ -128,7 +131,7 @@ export const AgenticWorkflowActions = ({
               }
 
               throw new Error(
-                `Agentic workflow container finished with status: ${res.state}. \nLogs: \n\n${res.log.map((l) => l.text).join("\n")}`,
+                `Agentic workflow container stopped with status: ${res.state}`,
               );
             } else {
               onSuccess();
@@ -141,6 +144,7 @@ export const AgenticWorkflowActions = ({
           <Btn
             title="Stop"
             iconPath={mdiStop}
+            data-command="LoadSuggestedWorkflow.stop"
             variant="faded"
             color="danger"
             onClickPromise={() =>

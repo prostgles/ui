@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
 
-export const AGENT_GOAL_TOOL_NAME = "agent_goal";
+export const AGENT_GOAL_TOOL_NAME = "agent_goal_reached";
 export const getAgentGoalTool = (
   agent_info: NonNullable<DBSSchema["llm_chats"]["agent_info"]>,
 ) => {

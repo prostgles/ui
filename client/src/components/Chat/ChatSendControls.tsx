@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 
 import { useOnErrorAlert } from "@components/AlertProvider";
-import { mdiArrowUp, mdiAttachment, mdiStopCircle } from "@mdi/js";
+import { mdiArrowUp, mdiAttachment, mdiStop, mdiStopCircle } from "@mdi/js";
 import { ChatActionBarBtnStyleProps } from "src/dashboard/AskLLM/ChatActionBar/AskLLMChatActionBar";
 import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
@@ -91,7 +91,8 @@ export const ChatSendControls = ({
           data-command="Chat.sendStop"
           onClick={onStopSending}
           title={t.common.Stop}
-          iconPath={mdiStopCircle}
+          iconPath={mdiStop}
+          className="b bg-color-3 round"
         />
       : <Btn
           iconPath={mdiArrowUp}

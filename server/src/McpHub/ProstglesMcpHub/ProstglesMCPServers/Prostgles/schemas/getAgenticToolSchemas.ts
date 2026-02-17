@@ -1,7 +1,7 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fixIndent } from "@common/utils";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import { defineAgenticWorkflowTsSchema } from "../createAgenticWorkflowContainer";
+import { defineAgenticWorkflowTsSchema } from "../startAgenticWorkflowContainer";
 
 const name = "suggest_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = ({

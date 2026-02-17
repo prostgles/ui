@@ -60,6 +60,12 @@ export type ToolDefinition = {
   configId?: number;
 };
 
+/**
+ * Valid table name from existing tables or to be created from tableCreateStatements.
+ * Iregular table names must contain the double quotes (quote_ident(tableName) result)
+ */
+type TableName = string;
+
 export type DatabaseAccessDefinition =
   | {
       mode: "custom";
@@ -69,9 +75,11 @@ export type DatabaseAccessDefinition =
        * This is preferred over providing access to the entire database (execute_sql_with_commit mode) for better security.
        */
       tableCreateStatements?: string;
-      tablePermissions: Record<
-        string,
-        Partial<Record<"select" | "insert" | "update" | "delete", boolean>>
+      tablePermissions: Partial<
+        Record<
+          TableName,
+          Partial<Record<"select" | "insert" | "update" | "delete", boolean>>
+        >
       >;
     }
   | {
@@ -80,33 +88,47 @@ export type DatabaseAccessDefinition =
 
 type Select = "*" | Record<string, 1 | 0>;
 export type DatabaseHandler = {
-  runSQL: (
-    sql: string,
-    params?: Record<string, any> | any[],
-    timeout?: number,
-  ) => Promise<{ rows: any[]; columns: string[] }>;
+  /**
+   * The table handlers below are only available if databaseAccessDefinitions are defined
+   */
+
   count: (tableName: string, filter?: Record<string, any>) => Promise<number>;
   find: (
-    tableName: string,
+    tableName: TableName,
     filter?: Record<string, any>,
-    options?: { select?: Select; limit?: number },
+    options?: {
+      select?: Select;
+      limit?: number;
+      orderBy?: Record<string, 1 | -1>[];
+    },
   ) => Promise<AnyObject[]>;
   update: (
-    tableName: string,
+    tableName: TableName,
     filter: Record<string, any>,
     update: Record<string, any>,
     returning?: Select,
   ) => Promise<void | AnyObject[]>;
   insert: (
-    tableName: string,
+    tableName: TableName,
     newRows: Record<string, any>[],
     returning?: Select,
   ) => Promise<void | AnyObject[]>;
   delete: (
-    tableName: string,
+    tableName: TableName,
     filter: Record<string, any>,
     returning?: Select,
   ) => Promise<void | AnyObject[]>;
+
+  /**
+   * Runs a raw SQL query.
+   * Prefer to use the table handlers above when possible, as they are safer.
+   * Only available if databaseAccessDefinitions.mode is "execute_sql_with_commit" or "execute_sql_with_rollback".
+   */
+  runSQL: (
+    sql: string,
+    params?: Record<string, any> | any[],
+    timeout?: number,
+  ) => Promise<Record<string, unknown>[]>;
 };
 
 type UserInputBase<T> = T & {
@@ -182,6 +204,20 @@ void defineAgenticWorkflow(
   {
     name: "Test Workflow",
     timeOutInSeconds: 60,
+    databaseAccessDefinitions: {
+      mode: "custom",
+      tablePermissions: {
+        '"MyUsers"': { select: true, insert: true, update: true },
+        my_new_table: { select: true, insert: true, update: true },
+      },
+      tableCreateStatements: `
+        CREATE TABLE IF NOT EXISTS my_new_table (
+          id SERIAL PRIMARY KEY,
+          username TEXT,
+          type TEXT
+        );
+      `,
+    },
     toolDefinitions: {
       fetchWebpage: {
         mcpServerName: "fetch",
@@ -214,6 +250,17 @@ void defineAgenticWorkflow(
 export const END_OF_SCHEMA_PLACEHOLDER =
   "export const END_OF_SCHEMA_PLACEHOLDER =";
 
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:\n", reason);
+
+  process.exit(1);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:\n", error);
+  process.exit(1);
+});
+
 // import type { ProstglesDbTools } from "@common/prostglesMcp";
 // import { getProperty, type JSONB } from "prostgles-types";
 // export type ProxyDbCallData<
@@ -237,11 +284,19 @@ export type ProxyDbCallData = {
   params: any;
 };
 export type AgenticWorkflowDefinition = Parameters<DefineAgenticWorkflow>[0];
+export type ProxyCallDataDefinitions = {
+  type: "definitions";
+  definitions: Parameters<DefineAgenticWorkflow>[0];
+  newTables: {
+    name: string;
+    schema?: string;
+    columns: unknown[];
+    ifNotExists?: boolean;
+  }[];
+  usedTables: string[];
+};
 export type ProxyCallData =
-  | {
-      type: "definitions";
-      definitions: Parameters<DefineAgenticWorkflow>[0];
-    }
+  | ProxyCallDataDefinitions
   | {
       type: "agent";
       agentName: string;
@@ -254,12 +309,49 @@ export type ProxyCallData =
     }
   | ProxyDbCallData;
 
-import { getSerialisableError } from "prostgles-types";
+import { includes } from "prostgles-types";
+
+const { DOCKER_MCP_ENDPOINT, MODE, USER_INPUT } = process.env;
+let wasStarted = false;
+setTimeout(() => {
+  if (wasStarted || !DOCKER_MCP_ENDPOINT) {
+    return;
+  }
+  console.error(`
+defineAgenticWorkflow was not called within 1 second of the container starting. 
+This likely means there is an error in your workflow code that is preventing it from running, or you are not using defineAgenticWorkflow correctly.
+When generating workflow code, you MUST:
+
+1. Use defineAgenticWorkflow() - NOT exported functions
+2. Structure must be:
+
+\`\`\`typescript
+import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
+void defineAgenticWorkflow(
+  {
+    name: "Workflow Name",
+    // workflow parameters
+  },
+  async ({ agentName }) => {
+    // workflow logic
+  },
+);
+\`\`\`
+
+3. DO NOT use:
+   - export default function
+   - export const myWorkflow
+   - Any other export syntax
+
+4. The workflow callback is the SECOND argument to defineAgenticWorkflow
+`);
+  process.exit(1);
+}, 1000);
 export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   definitions,
   handler,
 ) => {
-  const { DOCKER_MCP_ENDPOINT, MODE, USER_INPUT } = process.env;
+  wasStarted = true;
   if (!DOCKER_MCP_ENDPOINT) {
     throw new Error("DOCKER_MCP_ENDPOINT environment variable is not set");
   }
@@ -270,64 +362,54 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
 
   const userInput = JSON.parse(USER_INPUT);
 
-  const callMcpProxy = async (args: ProxyCallData) => {
-    const route = args.type !== "db" ? args.type : `${"db"}/${args.command}`;
-    const logData = (() => {
-      if (args.type === "db") {
-        if (
-          args.command === "execute_sql_with_commit" ||
-          args.command === "execute_sql_with_rollback"
-        ) {
-          return ["db.runSql", args.params];
-        }
-        const {
-          command,
-          params: { tableName, ...otherParams },
-        } = args;
-
-        return ["db." + command, tableName, otherParams];
-      } else if (args.type === "agent") {
-        return ["agent." + args.agentName, args.input];
-      } else if (args.type === "progress") {
-        const { percent, message } = args;
-        return [
-          "progress",
-          typeof percent === "number" ? percent.toFixed(1) : percent,
-          message,
-        ];
-      }
-      return [args.type, args.definitions.name];
-    })();
-    const now = new Date();
-    const result = await fetch(`${DOCKER_MCP_ENDPOINT}/${route}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(args.type === "db" ? args.params : args),
-    });
-    if (!result.ok) {
-      console.error(now.toISOString(), ...logData, "\n");
-    } else {
-      console.log(now.toISOString(), ...logData, "\n");
-    }
-    const resCopy = result.clone();
-    const data = await result.json().catch(() => resCopy.text());
-    if (!result.ok) {
-      throw (
-        JSON.stringify(getSerialisableError(data)) ||
-        new Error("Failed with statusText: " + result.statusText)
-      );
-    }
-    return data as any;
-  };
-
   if (MODE === "definitions-only") {
-    await callMcpProxy({ type: "definitions", definitions });
+    const createStatement =
+      definitions.databaseAccessDefinitions?.mode === "custom" ?
+        definitions.databaseAccessDefinitions.tableCreateStatements
+      : undefined;
+
+    const newTables: ProxyCallDataDefinitions["newTables"] = [];
+    if (typeof createStatement === "string") {
+      if (!createStatement.trim()) {
+        throw new Error("tableCreateStatements is an empty string");
+      }
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      const { parse } = (await import("pgsql-ast-parser")) as {
+        parse: (sql: string) => any[];
+      };
+      const ast = parse(createStatement);
+
+      for (const {
+        type,
+        name: { name: tableName, schema },
+        ifNotExists,
+        columns,
+      } of ast) {
+        if (type !== "create table") {
+          throw new Error(
+            "Only CREATE TABLE statements are allowed in tableCreateStatements",
+          );
+        }
+        newTables.push({
+          name: tableName,
+          schema: schema,
+          columns: columns,
+          ifNotExists,
+        });
+      }
+    }
+    const usedTables = extractTableNames();
+    await callMcpProxy({
+      type: "definitions",
+      definitions,
+      newTables,
+      usedTables,
+    });
     console.log(
       "Definitions sent to MCP proxy, exiting due to MODE=definitions-only",
     );
-    return;
+    process.exit(0);
   }
 
   const agentHandlersProxy = new Proxy({} as Parameters<typeof handler>[0], {
@@ -507,3 +589,121 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
 
   return handler(agentHandlersProxy, dbHandlerProxy, userInput, setProgress);
 };
+
+const callMcpProxy = async (args: ProxyCallData) => {
+  const route = args.type !== "db" ? args.type : `${"db"}/${args.command}`;
+  const logData = (() => {
+    if (args.type === "db") {
+      if (
+        args.command === "execute_sql_with_commit" ||
+        args.command === "execute_sql_with_rollback"
+      ) {
+        return ["db.runSql", args.params];
+      }
+      const {
+        command,
+        params: { tableName, ...otherParams },
+      } = args;
+
+      return ["db." + command, tableName, otherParams];
+    } else if (args.type === "agent") {
+      return ["agent." + args.agentName, args.input];
+    } else if (args.type === "progress") {
+      const { percent, message } = args;
+      return [
+        "progress",
+        typeof percent === "number" ? percent.toFixed(1) + "%" : percent,
+        message,
+      ];
+    }
+    return [args.type, args.definitions.name];
+  })();
+  const now = new Date();
+  const result = await fetch(`${DOCKER_MCP_ENDPOINT}/${route}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(args.type === "db" ? args.params : args),
+  });
+  if (!result.ok) {
+    console.error(now.toISOString(), ...logData, "\n");
+  } else {
+    console.log(now.toISOString(), ...logData, "\n");
+  }
+  const resCopy = result.clone();
+  const data = await result.json().catch(() => resCopy.text());
+  const commandInfo =
+    args.type === "db" ?
+      (
+        includes(
+          ["execute_sql_with_commit", "execute_sql_with_rollback"] as const,
+          args.command,
+        )
+      ) ?
+        `db.runSQL(${JSON.stringify(args.params.sql.slice(0, 40))}...)`
+      : `db.${args.command}(${JSON.stringify(args.params.tableName)})`
+    : "";
+  if (!result.ok) {
+    console.error(`${commandInfo} failed`, data);
+    return Promise.reject(data);
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return data as any;
+};
+
+import ts from "typescript";
+
+const dbMethods = new Set(["find", "insert", "update", "delete", "count"]);
+
+export function extractTableNames(): string[] {
+  const configPath = ts.findConfigFile(
+    __dirname,
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    ts.sys.fileExists,
+    "tsconfig.json",
+  );
+  if (!configPath) throw new Error("tsconfig.json not found");
+
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+  const parsed = ts.parseJsonConfigFileContent(
+    configFile.config,
+    ts.sys,
+    __dirname,
+  );
+
+  const program = ts.createProgram(parsed.fileNames, parsed.options);
+  const sourceFile = program.getSourceFile(__dirname + "/index.ts");
+  if (!sourceFile) {
+    throw new Error("index.ts not found");
+  }
+  const checker = program.getTypeChecker();
+  const tables: string[] = [];
+
+  function isDatabaseHandler(node: ts.Expression): boolean {
+    const type = checker.getTypeAtLocation(node);
+    const symbol = type.aliasSymbol ?? type.getSymbol();
+    return symbol?.getName() === "DatabaseHandler";
+  }
+
+  function visit(node: ts.Node) {
+    if (ts.isCallExpression(node)) {
+      const expr = node.expression;
+      if (ts.isPropertyAccessExpression(expr)) {
+        const method = expr.name.text;
+
+        if (dbMethods.has(method) && isDatabaseHandler(expr.expression)) {
+          const arg0 = node.arguments[0];
+          if (arg0 && ts.isStringLiteralLike(arg0)) {
+            tables.push(arg0.text);
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return Array.from(new Set(tables));
+}

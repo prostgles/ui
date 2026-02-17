@@ -5,7 +5,12 @@ import { Marked } from "@components/Chat/Marked";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import PopupMenu from "@components/PopupMenu";
-import { mdiCheck, mdiCircleOutline, mdiFileEyeOutline } from "@mdi/js";
+import {
+  mdiCheck,
+  mdiCircleOutline,
+  mdiFileEyeOutline,
+  mdiToolboxOutline,
+} from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise, type DBHandlerClient } from "prostgles-client";
 import React, { useEffect, useMemo, useState } from "react";
@@ -16,6 +21,10 @@ import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { setChatPrompt } from "../Chat/AskLLMChatMessages/setChatPrompt";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
+import {
+  MONACO_READONLY_DEFAULT_OPTIONS,
+  MonacoEditor,
+} from "@components/MonacoEditor/MonacoEditor";
 
 export const AskLLMChatActionBarPromptSelector = (
   props: Pick<AskLLMChatProps, "setupState"> & {
@@ -50,6 +59,17 @@ export const AskLLMChatActionBarPromptSelector = (
       }) || prompt.prompt
     );
   }, [dbSchemaForPrompt, dbsMethods, prompt, connectionId]);
+
+  const tools = usePromise(async () => {
+    const allowedTools = await dbsMethods.getLLMAllowedChatTools?.({
+      chatId: activeChat.id,
+    });
+    return allowedTools?.map(({ name, description, input_schema }) => ({
+      name,
+      description,
+      input_schema,
+    }));
+  }, [activeChat.id, dbsMethods]);
 
   const { onErrorAlert } = useOnErrorAlert();
 
@@ -170,25 +190,45 @@ export const AskLLMChatActionBarPromptSelector = (
             value={prompt.prompt}
             label={<div className="ml-1">Prompt template</div>}
             headerButtons={
-              <PopupMenu
-                title="Prompt preview"
-                subTitle="Preview of the prompt with context variables filled in"
-                positioning="fullscreen"
-                button={<Btn iconPath={mdiFileEyeOutline} title="Preview" />}
-                data-command="LLMChatOptions.Prompt.Preview"
-                contentClassName="p-2"
-                showFullscreenToggle={{}}
-                rootChildClassname="f-1"
-                onClickClose={false}
-              >
-                <Marked
-                  className="f-1 m-auto"
-                  content={promptContent || ""}
-                  loadedSuggestions={undefined}
-                  codeHeader={undefined}
-                  sqlHandler={undefined}
-                />
-              </PopupMenu>
+              <>
+                <PopupMenu
+                  title="Preview of the prompt with context variables filled in"
+                  positioning="fullscreen"
+                  button={<Btn iconPath={mdiFileEyeOutline} title="Preview" />}
+                  data-command="LLMChatOptions.Prompt.Preview"
+                  contentClassName="p-2"
+                  showFullscreenToggle={{}}
+                  rootChildClassname="f-1"
+                  onClickClose={false}
+                >
+                  <Marked
+                    className="f-1 m-auto"
+                    content={promptContent || ""}
+                    loadedSuggestions={undefined}
+                    codeHeader={undefined}
+                    sqlHandler={undefined}
+                  />
+                </PopupMenu>
+                <PopupMenu
+                  title="Preview of tool list"
+                  positioning="fullscreen"
+                  button={
+                    <Btn iconPath={mdiToolboxOutline} title="Preview tools" />
+                  }
+                  contentClassName="p-2"
+                  showFullscreenToggle={{}}
+                  rootChildClassname="f-1"
+                  onClickClose={false}
+                >
+                  <MonacoEditor
+                    loadedSuggestions={undefined}
+                    className="f-1 w-full h-full"
+                    value={JSON.stringify(tools, null, 2)}
+                    language="json"
+                    options={MONACO_READONLY_DEFAULT_OPTIONS}
+                  />
+                </PopupMenu>
+              </>
             }
             language={"text"}
             onSave={async (v) => {

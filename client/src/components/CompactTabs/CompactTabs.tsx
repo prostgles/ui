@@ -64,6 +64,7 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
                  */
                 display: tabName === activeTab ? "flex" : "none",
                 flex: 1,
+                minHeight: 0,
               }}
             >
               {content}

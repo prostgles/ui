@@ -120,6 +120,10 @@ export const tableConfigUsers = {
             optional: true,
             enum: ["manual", "auto"],
           },
+          llm_chat_window_positioning: {
+            optional: true,
+            enum: ["right-panel", "fullscreen"],
+          },
         },
       },
       "2fa": {

@@ -56,26 +56,3 @@ void describe("defineAgenticWorkflow", async () => {
     };
   });
 });
-
-const workflowDefinitions = {
-  name: "Test Workflow",
-  toolDefinitions: {
-    fetch_webpage: {
-      mcpServerName: "fetch",
-      toolNames: ["fetch"],
-    },
-    query_database: {
-      mcpServerName: "database",
-      toolNames: ["select"],
-    },
-  },
-  agentDefinitions: {
-    researcher: {
-      prompt: "You are a research assistant.",
-      outputSchema: {
-        summary: "string",
-        references: "string[]",
-      },
-    },
-  },
-};

@@ -42,7 +42,7 @@ import { runConnectionQuery } from "../getServerFunctions";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { setFileStorage } from "../setFileStorage";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
-import { getAgenticWorkflowFunctions } from "./getStartAgenticWorkflow";
+import { getAgenticWorkflowFunctions } from "./getAgenticWorkflowFunctions";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,

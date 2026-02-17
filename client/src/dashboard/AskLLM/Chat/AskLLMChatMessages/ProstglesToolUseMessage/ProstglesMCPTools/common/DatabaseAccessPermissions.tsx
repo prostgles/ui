@@ -19,7 +19,7 @@ export const DatabaseAccessPermissions = (
           ["select", "update", "insert", "delete"] as const
         ).filter((v) => t[v]);
         return (
-          <FlexRow>
+          <FlexRow className="gap-p5">
             <span
               style={{
                 fontSize: "18px",

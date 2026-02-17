@@ -32,6 +32,7 @@ export const setContextMenu = (mainWindow: BrowserWindow) => {
         { role: "cut", enabled: Boolean(selectionText) && isEditable },
         { role: "paste", enabled: isEditable },
         { role: "selectAll", enabled: isEditable },
+        { type: "separator" },
         ...(selectionText ?
           [
             {
@@ -41,11 +42,13 @@ export const setContextMenu = (mainWindow: BrowserWindow) => {
                   `https://www.google.com/search?q=${encodeURIComponent(selectionText)}`,
                 ),
             },
+            { type: "separator" } as const,
           ]
         : []),
         ...(isEditable ? [{ role: "toggleSpellChecker" } as const] : []),
-        { role: "toggleDevTools" },
         ...spellCheckMenuItems,
+        { type: "separator" },
+        { role: "toggleDevTools" },
       ]);
       menu.popup();
     },

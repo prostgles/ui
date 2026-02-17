@@ -1,7 +1,9 @@
+import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
 import type { editor } from "monaco-editor";
 import React, { useCallback, useMemo } from "react";
 import { CodeEditor } from "src/dashboard/CodeEditor/CodeEditor";
 import stripAnsi from "strip-ansi";
+import { omitKeys } from "prostgles-types";
 
 export const MonacoLogs = ({
   logs,
@@ -35,12 +37,7 @@ export const MonacoLogs = ({
   );
 };
 
-const options = {
-  minimap: { enabled: false },
-  lineNumbers: "off",
-  scrollBeyondLastLine: false,
-  automaticLayout: true,
-} satisfies editor.IStandaloneEditorConstructionOptions;
+const options = omitKeys(MONACO_READONLY_DEFAULT_OPTIONS, ["readOnly"]);
 
 export const useMonacoScrollToLastLine = () => {
   const onMount = useCallback((editor: editor.IStandaloneCodeEditor) => {

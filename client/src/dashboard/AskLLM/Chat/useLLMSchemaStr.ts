@@ -13,7 +13,7 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
     [db_schema_permissions],
   );
 
-  const tableConstraints = usePromise(async () => {
+  const definitions = usePromise(async () => {
     if (!sql) return;
 
     const schemas = Object.entries(connection.db_schema_filter || { public: 1 })
@@ -40,7 +40,11 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
       WHERE nspname IN (\${schemas:csv})
     `;
 
-    const res = (await sql(query, { schemas }, { returnType: "rows" })) as {
+    const tableConstraints = (await sql(
+      query,
+      { schemas },
+      { returnType: "rows" },
+    )) as {
       table_oid: number;
       conname: string;
       escaped_conname: string;
@@ -52,12 +56,24 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
       schema: string;
     }[];
 
-    return res;
+    const viewDefinitions = (await sql(
+      `
+      SELECT 
+        regclass(table_schema|| '.' ||table_name  )::OID as oid, 
+        table_name, 
+        view_definition 
+      FROM information_schema.views 
+      WHERE table_schema IN (\${schemas:csv})`,
+      { schemas },
+      { returnType: "rows" },
+    )) as { oid: number; table_name: string; view_definition: string }[];
+
+    return { tableConstraints, viewDefinitions };
   }, [sql, connection.db_schema_filter]);
 
   const dbSchemaForPrompt = useMemo(() => {
     if (
-      !tableConstraints ||
+      !definitions ||
       !cachedSchemaPermissions ||
       cachedSchemaPermissions.type === "None"
     )
@@ -70,8 +86,20 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
             (allowedTableName) => allowedTableName === t.name,
           );
         });
+    const { tableConstraints, viewDefinitions } = definitions;
+    const viewDefinitonsMap = new Map(
+      viewDefinitions.map((v) => [v.oid.toString(), v.view_definition]),
+    );
     const res = allowedTables
       .map((t) => {
+        const viewDefinition = viewDefinitonsMap.get(t.info.oid.toString());
+        if (viewDefinition) {
+          return {
+            query: `CREATE VIEW ${t.name} AS ${viewDefinition}`,
+            constraints: [],
+          };
+        }
+
         const constraints = tableConstraints.filter(
           (c) => c.table_oid === t.info.oid,
         );
@@ -127,7 +155,7 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
       .join(";\n");
 
     return res;
-  }, [tables, tableConstraints, cachedSchemaPermissions]);
+  }, [tables, definitions, cachedSchemaPermissions]);
 
   return { dbSchemaForPrompt };
 };

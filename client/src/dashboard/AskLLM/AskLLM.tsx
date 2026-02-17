@@ -7,6 +7,7 @@ import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { AskLLMChat } from "./Chat/AskLLMChat";
 import { SetupLLMCredentials } from "./Setup/SetupLLMCredentials";
 import { useLLMSetup } from "./Setup/LLMSetupProvider";
+import { ErrorTrap } from "@components/ErrorComponent";
 
 type AskLLMProps = {
   workspaceId: string | undefined;
@@ -25,7 +26,7 @@ export const AskLLM = (props: AskLLMProps) => {
   const state = useLLMSetup();
 
   return (
-    <>
+    <ErrorTrap>
       <Btn
         title={
           t.AskLLM["Chat to an AI Assistant to get help with your queries"]
@@ -66,6 +67,6 @@ export const AskLLM = (props: AskLLMProps) => {
           agentChat={undefined}
         />
       }
-    </>
+    </ErrorTrap>
   );
 };

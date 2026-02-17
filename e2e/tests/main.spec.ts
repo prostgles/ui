@@ -1143,6 +1143,8 @@ test.describe("Main test", () => {
     const text = await page.getByTestId("ToolUseMessage").first().textContent();
     if (text?.includes("No results found.")) {
       // Probably due to engines limiting searches
+    } else if (text?.includes("https://prostgles.com/")) {
+      // Websearch results changing and not a fail
     } else {
       await expect(page.getByTestId("ToolUseMessage").first()).toContainText(
         "https://www.postgresql.org/",
@@ -1178,9 +1180,20 @@ test.describe("Main test", () => {
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
+    await closeWorkspaceWindows(page);
     await page.getByTestId("AskLLM").click();
     await newChat(page);
     await setPromptByText(page, "Create workflow");
+
+    /** Cleanup for any reruns */
+    await page.waitForTimeout(1e3);
+    await runDbSql(
+      page,
+      `
+      DROP TABLE IF EXISTS new_users;
+      DELETE FROM users WHERE type = 'from-agent';
+      `,
+    );
     await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " agentic_workflow ");
 
@@ -1234,12 +1247,85 @@ test.describe("Main test", () => {
     await page
       .getByTestId("LoadSuggestedWorkflow.start")
       .click({ timeout: 30e3 });
+    /** Progress bar works */
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "Processing user 2/",
+    );
 
-    await expect(
-      page.getByTestId("Chat.messageList").locator(".SuccessMessage"),
-    ).toContainText("Workflow completed successfully", {
-      timeout: 120e3,
+    await page.getByTestId("LoadSuggestedWorkflow.stop").click();
+    await expect(page.getByTestId("Popup.content").last()).toContainText(
+      "Agentic workflow container stopped with status: aborted",
+      {
+        timeout: 10_000,
+      },
+    );
+    await page
+      .getByTestId("Popup.footer")
+      .getByText("OK", { exact: true })
+      .click();
+
+    await runDbSql(
+      page,
+      `
+      DROP TABLE IF EXISTS new_users;
+      DELETE FROM users WHERE type = 'from-agent';
+      `,
+    );
+    await page.waitForTimeout(1e3);
+    await newChat(page);
+    await sendAskLLMMessage(page, " agentic_workflow_noinput ");
+    await page.getByTestId("LoadSuggestedWorkflow.start").click({
+      timeout: 30e3,
     });
+
+    await expect(page.locator(".SuccessMessage")).toContainText(
+      "Workflow finished successfully",
+      {
+        timeout: 120e3,
+      },
+    );
+
+    await page.waitForTimeout(1e3);
+    await newChat(page);
+    await sendAskLLMMessage(page, " agentic_workflow_clashing ");
+    await page.getByTestId("LoadSuggestedWorkflow.start").click({
+      timeout: 30e3,
+    });
+    await expect(page.getByTestId("Alert")).toContainText(
+      "Workflow has clashing input names. Please change the input names and try again.",
+      {
+        timeout: 30e3,
+      },
+    );
+    await page.getByText("OK", { exact: true }).click();
+
+    await page.waitForTimeout(1e3);
+    await newChat(page);
+    await sendAskLLMMessage(page, " agentic_workflow_invalidTable ");
+    await page.getByTestId("LoadSuggestedWorkflow.start").click({
+      timeout: 30e3,
+    });
+    await expect(page.getByTestId("Alert")).toContainText(
+      "agentic_workflow_invalidTable.",
+      {
+        timeout: 30e3,
+      },
+    );
+    await page.getByText("OK", { exact: true }).click();
+
+    await page.waitForTimeout(1e3);
+    await newChat(page);
+    await sendAskLLMMessage(page, " agentic_workflow_invalidPermissionTable ");
+    await page.getByTestId("LoadSuggestedWorkflow.start").click({
+      timeout: 30e3,
+    });
+    await expect(page.getByTestId("Alert")).toContainText(
+      "agentic_workflow_invalidTable.",
+      {
+        timeout: 30e3,
+      },
+    );
+    await page.getByText("OK", { exact: true }).click();
   });
 
   test("Disable signups", async ({ page: p }) => {

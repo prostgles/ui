@@ -6,11 +6,7 @@ import {
 import { dockerWeatherToolUse } from "testAskLLM/sampleToolUseData";
 import { createComponentToolUse } from "./createComponentToolUse";
 import { stringify, type ToolUse } from "./utils";
-import {
-  agenticWorkflowToolUse,
-  agenticWorkflowToolUseNoUserInput,
-  research,
-} from "./agenticWorkflowToolUse";
+import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
 
 export const clientNodeModulesDirectory = join(
   __dirname,
@@ -311,15 +307,19 @@ const toolResponses: Record<string, ToolUse> = {
     ],
   },
   component: createComponentToolUse,
-  agentic_workflow: agenticWorkflowToolUse,
-  agentic_workflow2: agenticWorkflowToolUseNoUserInput,
+  agentic_workflow: agenticWorkflowToolUses.input,
+  agentic_workflow_noinput: agenticWorkflowToolUses.noinput,
+  agentic_workflow_clashing: agenticWorkflowToolUses.clashing,
+  agentic_workflow_invalidTable: agenticWorkflowToolUses.invalidTable,
+  agentic_workflow_invalidPermissionTable:
+    agenticWorkflowToolUses.invalidPermissionTable,
   [research]: {
     tool: [
       {
         id: "agentic-workflow-tool-use",
         type: "function",
         function: {
-          name: "agent_goal",
+          name: "agent_goal_reached",
           arguments: stringify({
             summary: "here is the summary",
             references: [

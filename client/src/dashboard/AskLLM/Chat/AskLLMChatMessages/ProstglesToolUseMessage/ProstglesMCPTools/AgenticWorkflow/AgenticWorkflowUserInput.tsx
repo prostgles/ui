@@ -39,12 +39,18 @@ export const AgenticWorkflowUserInput = ({
                     InputDataTypeToFormFieldTypeMap,
                     inputItem.dataType,
                   )}
-                  onChange={(newValue: unknown) =>
+                  onChange={(newValueRaw: unknown) => {
+                    const newValue =
+                      inputItem.dataType === "boolean" ? Boolean(newValueRaw)
+                      : inputItem.dataType === "number" ? Number(newValueRaw)
+                      : inputItem.dataType === "Date" ?
+                        new Date(String(newValueRaw)).toISOString()
+                      : String(newValueRaw);
                     setUserInputValue((prev) => ({
                       ...prev,
                       [inputKey]: newValue,
-                    }))
-                  }
+                    }));
+                  }}
                 />
               );
             }

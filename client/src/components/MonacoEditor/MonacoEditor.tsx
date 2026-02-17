@@ -312,4 +312,7 @@ export const MONACO_READONLY_DEFAULT_OPTIONS = {
   automaticLayout: true,
   lineHeight: 19,
   readOnly: true,
+  /** prevent long single lines in json strings */
+  wordWrap: "on",
+  wrappingIndent: "same",
 } satisfies editor.IStandaloneEditorConstructionOptions;

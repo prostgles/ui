@@ -92,7 +92,7 @@ export const createContainer = async (
     );
 
     /** Cleanup */
-    if (runResult.state === "timed-out") {
+    if (runResult.state !== "close") {
       await executeDockerCommand(["kill", name], { timeout: 60_000 });
     }
     await executeDockerCommand(["image", "rm", name], { timeout: 60_000 });

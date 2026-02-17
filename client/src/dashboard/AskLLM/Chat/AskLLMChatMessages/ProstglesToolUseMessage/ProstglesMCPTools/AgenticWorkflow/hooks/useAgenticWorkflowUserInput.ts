@@ -2,6 +2,9 @@ import { useState } from "react";
 import type { ValidatedWorkflow } from "../useValidatedWorkflowJson";
 import type { SingleGroupFilter } from "src/dashboard/AccessControl/OptionControllers/FilterControl";
 
+export type UseAgenticWorkflowUserInputReturn = ReturnType<
+  typeof useAgenticWorkflowUserInput
+>;
 export const useAgenticWorkflowUserInput = (
   userInput: ValidatedWorkflow["userInput"],
 ) => {

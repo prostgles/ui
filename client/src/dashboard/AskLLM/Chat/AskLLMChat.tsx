@@ -76,8 +76,12 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
 
   /* Prevents flickering when popup is opened */
   if (!messages) return;
+
+  const showFullscreen =
+    user?.options?.llm_chat_window_positioning === "fullscreen";
   return (
     <Popup
+      key={showFullscreen.toString()}
       data-command="AskLLM.popup"
       showFullscreenToggle={{
         getContentStyle: (isFullscreen) =>
@@ -92,6 +96,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               minWidth: "0",
               maxWidth: `${CHAT_WIDTH}px`,
             },
+        defaultValue: showFullscreen ? true : undefined,
       }}
       title={(rootDiv) => (
         <AskLLMChatHeader

@@ -18,6 +18,7 @@ import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
 import { SuccessMessage } from "@components/Animations";
+import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 
 export const AgenticWorkflow = ({
   message,
@@ -62,6 +63,9 @@ export const AgenticWorkflow = ({
       <FlexCol className="rounded o-auto relative">
         <CompactTabs
           controlled={{ activeTab, setActiveTab }}
+          style={{
+            maxHeight: "600px",
+          }}
           items={{
             ...(!validWorkflow ?
               {}
@@ -119,9 +123,15 @@ export const AgenticWorkflow = ({
             },
           }}
         />
-        {toolUseResultJson?.isError && (
-          <ErrorComponent error={toolUseResultJson} maxTextLength={2e3} />
-        )}
+        {toolUseResultJson?.isError &&
+          (typeof toolUseResultJson.result === "string" ?
+            <MonacoLogsWithFullscreen
+              label="Error logs"
+              //@ts-ignore
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              logs={toolUseResultJson.result}
+            />
+          : <ErrorComponent error={toolUseResultJson} maxTextLength={2e3} />)}
         {showSuccessMessage && (
           <div
             style={{

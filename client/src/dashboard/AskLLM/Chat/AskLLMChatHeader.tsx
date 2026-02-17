@@ -1,7 +1,7 @@
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import { mdiPlus, mdiRobot } from "@mdi/js";
+import { mdiDotsHorizontal, mdiPlus, mdiRobot } from "@mdi/js";
 import React from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
@@ -10,6 +10,7 @@ import {
   type LLMChatOptionsProps,
 } from "./AskLLMChatOptions";
 import type { LLMChatState } from "./useLLMChat";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const AskLLMChatHeader = (
   props: LLMChatState & Pick<LLMChatOptionsProps, "chatRootDiv" | "prompts">,
@@ -25,6 +26,8 @@ export const AskLLMChatHeader = (
     chatRootDiv,
     prompts,
   } = props;
+
+  const { dbs, user } = usePrgl();
 
   return (
     <FlexRow className="AskLLMChatHeader">
@@ -79,6 +82,37 @@ export const AskLLMChatHeader = (
           }}
         />
       </FlexRow>
+      {user && (
+        <Select
+          className="ml-auto"
+          fullOptions={[
+            { key: "right-panel", label: "Show as side panel (default)" },
+            { key: "fullscreen", label: "Show in fullscreen" },
+          ]}
+          iconPath={mdiDotsHorizontal}
+          value={user.options?.llm_chat_window_positioning ?? "right-panel"}
+          showIconOnly={true}
+          btnProps={{
+            variant: "icon",
+          }}
+          onChange={(chatWindowPositioning) => {
+            void dbs.users.update(
+              {
+                id: user.id,
+              },
+              {
+                options: {
+                  $merge: [
+                    {
+                      llm_chat_window_positioning: chatWindowPositioning,
+                    } satisfies Partial<NonNullable<typeof user.options>>,
+                  ],
+                },
+              },
+            );
+          }}
+        />
+      )}
     </FlexRow>
   );
 };

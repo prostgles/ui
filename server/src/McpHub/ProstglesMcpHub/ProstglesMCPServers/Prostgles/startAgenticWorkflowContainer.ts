@@ -15,8 +15,8 @@ import { runContainerWithProxyAccess } from "../../../DockerSandbox/runContainer
 import {
   END_OF_SCHEMA_PLACEHOLDER,
   type AgenticWorkflowDefinition,
-  type DefineAgenticWorkflow,
   type ProxyCallData,
+  type ProxyCallDataDefinitions,
 } from "./defineAgenticWorkflow";
 
 const defineAgenticWorkflowDirectory = join(
@@ -46,16 +46,18 @@ if (!defineAgenticWorkflowTs || !defineAgenticWorkflowTsSchema) {
   throw new Error("Failed to read defineAgenticWorkflow.ts");
 }
 
-export const createAgenticWorkflowContainer = async (
+export const startAgenticWorkflowContainer = async (
   dbs: DBS,
   {
     workflowTs,
     user_id,
     chat_id,
+    abortSignal,
   }: {
     workflowTs: string;
     user_id: string;
     chat_id: number;
+    abortSignal: AbortSignal;
   },
   mode:
     | {
@@ -64,13 +66,12 @@ export const createAgenticWorkflowContainer = async (
         handler: (
           args: Extract<ProxyCallData, { type: "definitions" }>,
           ctx: McpProxyRequestContext,
-        ) => void;
+        ) => Promise<void>;
       }
     | {
         type: "full";
         workflowId: number;
         messageId: string;
-        abortSignal: AbortSignal;
         userInputValue: Record<string, unknown>;
         definition: AgenticWorkflowDefinition;
         dbPermissions: DbPermissions;
@@ -113,6 +114,18 @@ export const createAgenticWorkflowContainer = async (
               {
                 type: {
                   type: { enum: ["definitions"] },
+                  newTables: {
+                    arrayOfType: {
+                      name: "string",
+                      schema: { type: "string", optional: true },
+                      columns: "unknown[]",
+                      ifNotExists: {
+                        type: "boolean",
+                        optional: true,
+                      },
+                    },
+                  },
+                  usedTables: "string[]",
                   definitions: {
                     type: pickKeys(
                       startAgenticWorkflowSchema,
@@ -140,17 +153,24 @@ export const createAgenticWorkflowContainer = async (
             if (error !== undefined) {
               throw new Error("Invalid request data: " + error);
             }
-            type AgentWorkflowDefinitions =
-              Parameters<DefineAgenticWorkflow>[0];
-            data.definitions satisfies AgentWorkflowDefinitions;
-            mode.handler(
-              {
-                ...data,
-                //@ts-expect-error
-                defineAgenticWorkflowTs,
-              },
-              ctx,
-            );
+            data satisfies undefined | ProxyCallDataDefinitions;
+            mode
+              .handler(
+                {
+                  ...data,
+                  //@ts-expect-error
+                  defineAgenticWorkflowTs,
+                },
+                ctx,
+              )
+              .then(() => {
+                res.json({ success: true });
+              })
+              .catch((error) => {
+                res
+                  .status(500)
+                  .json({ error: "Internal server error: " + String(error) });
+              });
           },
         },
         ["/agent"]: {
@@ -208,9 +228,11 @@ export const createAgenticWorkflowContainer = async (
               } as const,
               req.body,
             );
+
             data satisfies
               | Extract<ProxyCallData, { type: "progress" }>
               | undefined;
+
             if (error !== undefined) {
               throw new Error("Invalid request data: " + error);
             }
@@ -244,23 +266,23 @@ export const createAgenticWorkflowContainer = async (
       },
     },
     {
-      signal: mode.type === "full" ? mode.abortSignal : undefined,
+      signal: abortSignal,
       networkMode: "bridge",
       timeout:
         mode.type === "full" ? mode.definition.timeOutInSeconds * 1000 : 30_000,
       files: {
         Dockerfile: `
-          FROM node:18
+          FROM node:22-slim
           WORKDIR /app
           COPY . .
           ENV NPM_CONFIG_UPDATE_NOTIFIER=false
-          RUN npm install --silent --quiet
+          RUN npm install --silent
           RUN npm run build
           CMD ["npm", "start", "--silent"]
         `,
         "defineAgenticWorkflow.ts": defineAgenticWorkflowTs,
         "index.ts": workflowTs,
-        "package.json": packageJson,
+        "package.json": getPackageJson(mode.type === "definitions-only"),
         "tsconfig.json": tsconfigJson,
       },
       environment: {
@@ -301,20 +323,22 @@ export const createAgenticWorkflowContainer = async (
   return result;
 };
 
-const packageJson = JSON.stringify({
-  name: "agentic-workflow",
-  version: "1.0.0",
-  main: "index.js",
-  scripts: {
-    build: "tsc",
-    start: "node index.js",
-  },
-  dependencies: {
-    "@types/node": "^22.15.2",
-    typescript: "^5.8.3",
-    "prostgles-types": "^4.0.208",
-  },
-});
+const getPackageJson = (forDefinitions: boolean) =>
+  JSON.stringify({
+    name: "agentic-workflow",
+    version: "1.0.0",
+    main: "index.js",
+    scripts: {
+      build: "tsc",
+      start: "node index.js",
+    },
+    dependencies: {
+      "@types/node": "^22.15.2",
+      typescript: "^5.8.3",
+      "prostgles-types": "^4.0.208",
+      ...(forDefinitions ? { "pgsql-ast-parser": "^12.0.2" } : {}),
+    },
+  });
 
 const tsconfigJson = JSON.stringify({
   compilerOptions: {

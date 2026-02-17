@@ -1,12 +1,14 @@
 import { createAgentHandlers } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createAgentHandlers";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
-import { createAgenticWorkflowContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createAgenticWorkflowContainer";
+import { startAgenticWorkflowContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/startAgenticWorkflowContainer";
 import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import { validateUserInput } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/validateUserInput";
 import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
+import { getSerialisableError } from "prostgles-types";
+import { runConnectionQuery } from "../getServerFunctions";
 
-const aborterByUserId = new Map<
+const abortersByUserId = new Map<
   string,
   { chatId: number; messageId: string; aborter: AbortController }[]
 >();
@@ -20,7 +22,7 @@ export const getAgenticWorkflowFunctions = (
       messageId: "string",
     },
     run: ({ chatId, messageId }, { user }) => {
-      const userAborters = aborterByUserId.get(user.id);
+      const userAborters = abortersByUserId.get(user.id);
       const aborterEntryIndex = userAborters?.findIndex(
         (entry) => entry.chatId === chatId && entry.messageId === messageId,
       );
@@ -28,7 +30,7 @@ export const getAgenticWorkflowFunctions = (
       if (aborterEntry) {
         aborterEntry.aborter.abort();
         userAborters.splice(aborterEntryIndex!, 1);
-        aborterByUserId.set(user.id, userAborters);
+        abortersByUserId.set(user.id, userAborters);
         return { success: true };
       } else {
         return { success: false, message: "No running workflow found" };
@@ -56,24 +58,33 @@ export const getAgenticWorkflowFunctions = (
     ) => {
       const validationError = validateUserInput(userInputValue, userInput);
       if (validationError) {
-        return { state: "init-error" as const, message: validationError.error };
+        return {
+          state: "init-error" as const,
+          message: validationError.error,
+          error: undefined,
+        };
       }
       const chat = await dbs.llm_chats.findOne({
         id: chatId,
         user_id: user.id,
       });
       if (!chat) {
-        return { state: "init-error" as const, message: "Chat not found" };
+        return {
+          state: "init-error" as const,
+          message: "Chat not found",
+          error: undefined,
+        };
       }
       const { connection_id } = chat;
       if (!connection_id) {
         return {
           state: "init-error" as const,
           message: `Chat with id ${chatId} does not have a connection_id`,
+          error: undefined,
         };
       }
 
-      const { clientMethods, clientSql } = await getClientDBHandlers(undefined);
+      const { clientMethods } = await getClientDBHandlers(undefined);
       const dbsMethods = clientMethods as unknown as {
         [K in keyof GeneratedFunctionSchema]: {
           run: GeneratedFunctionSchema[K];
@@ -102,26 +113,34 @@ export const getAgenticWorkflowFunctions = (
         databaseAccessDefinitions.tableCreateStatements
       ) {
         try {
-          await clientSql(databaseAccessDefinitions.tableCreateStatements);
+          await runConnectionQuery(
+            connection_id,
+            databaseAccessDefinitions.tableCreateStatements,
+          );
         } catch (error) {
           return {
             state: "init-error" as const,
-            message: `Error creating tables for cuaborterEntrystom database access`,
-            error,
+            message: `Error creating tables from tableCreateStatements`,
+            error: getSerialisableError(error),
           };
         }
       }
+
       const aborter = new AbortController();
-      const existingAborters = aborterByUserId.get(user.id) || [];
-      aborterByUserId.set(user.id, [
+      const existingAborters = abortersByUserId.get(user.id) || [];
+      abortersByUserId.set(user.id, [
         ...existingAborters,
         { chatId, messageId, aborter },
       ]);
-      const res = await createAgenticWorkflowContainer(
+      const res = await startAgenticWorkflowContainer(
         dbs,
-        { user_id: user.id, workflowTs, chat_id: chatId },
         {
+          user_id: user.id,
+          workflowTs,
+          chat_id: chatId,
           abortSignal: aborter.signal,
+        },
+        {
           type: "full",
           userInputValue,
           workflowId,

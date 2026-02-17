@@ -628,7 +628,7 @@ export type DBGeneratedSchema = {
       id?: string;
       last_updated?: null | string;
       name?: null | string;
-      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";   speech_mode?: "off" | "stt-local" | "stt-web" | "audio";   speech_send_mode?: "manual" | "auto";  };
+      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";   speech_mode?: "off" | "stt-local" | "stt-web" | "audio";   speech_send_mode?: "manual" | "auto";   llm_chat_window_positioning?: "right-panel" | "fullscreen";  };
       password: string;
       passwordless_admin?: null | boolean;
       registration?: 
@@ -788,7 +788,7 @@ export type GeneratedFunctionSchema = {
  |  {  mode: "execute_sql_with_commit" | "execute_sql_with_rollback"; };   toolDefinitions: Record<string,  {  mcpServerName: string;  toolNames: string[];  configId?: number; }>;   agentDefinitions: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  allowedToolDefinitionNames?: string[];  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   userInput?: Record<string, 
  |  {  title: string;  optional?: boolean;  type: "table-filter" | "table-column";  tableName: string; }
  |  {  title: string;  optional?: boolean;  type: "table-name" | "table-and-column"; }
- |  {  title: string;  optional?: boolean;  type: "custom";  dataType: "string" | "number" | "boolean" | "Date"; }>;   userInputValue: Record<string, unknown>;  }) => Promise<(({} & { state: ("error" | "finished" | "build-error" | "timed-out" | "aborted"); name: string; command: string; log: Array<({} & { type: ("error" | "stdout" | "stderr"); text: string })>; exitCode: number; runDuration: number; buildDuration: number }) | { state: "init-error"; message: string; error?: undefined } | { state: "init-error"; message: string; error: unknown })>;
+ |  {  title: string;  optional?: boolean;  type: "custom";  dataType: "string" | "number" | "boolean" | "Date"; }>;   userInputValue: Record<string, unknown>;  }) => Promise<(({} & { state: ("error" | "finished" | "build-error" | "timed-out" | "aborted"); name: string; command: string; log: Array<({} & { type: ("error" | "stdout" | "stderr"); text: string })>; exitCode: number; runDuration: number; buildDuration: number }) | { state: "init-error"; message: string; error: unknown })>;
   "stopAgenticWorkflow": (args: {    chatId: number;   messageId: string;  }) => Promise<({ success: boolean; message?: undefined } | { success: boolean; message: string })>;
   "startConnection": (args: {    connectionId: string;  }) => Promise<(undefined | { socketPath: string; socketUrl: (undefined | string) })>;
 }

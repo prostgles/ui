@@ -4,8 +4,22 @@ type UserInput = NonNullable<
   Parameters<GeneratedFunctionSchema["startAgenticWorkflow"]>[0]["userInput"]
 >;
 
+const clashingTableDefinition = `
+  CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username TEXT,
+    type TEXT
+  );
+`;
+
 export const research = "research" as const;
-const getFunc = (withUserInputArgs = true) => `
+type Mode =
+  | "input"
+  | "clashing"
+  | "noinput"
+  | "invalidTable"
+  | "invalidPermissionTable";
+const getFunc = (mode: Mode) => `
 import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
 export default defineAgenticWorkflow(
   ${JSON.stringify(
@@ -16,7 +30,19 @@ export default defineAgenticWorkflow(
         mode: "custom",
         tablePermissions: {
           users: { select: true, insert: true, update: true },
+          new_users: { select: true, insert: true, update: true },
+          ...(mode === "invalidPermissionTable" ?
+            { invalid_table: { select: true } }
+          : {}),
         },
+        tableCreateStatements: `
+          ${mode === "clashing" ? clashingTableDefinition : ""}
+          CREATE TABLE IF NOT EXISTS new_users (
+            id SERIAL PRIMARY KEY,
+            username TEXT,
+            type TEXT
+          );
+        `,
       },
       toolDefinitions: {
         fetch_webpage: {
@@ -40,7 +66,7 @@ export default defineAgenticWorkflow(
         },
       },
       userInput:
-        !withUserInputArgs ? undefined : (
+        mode !== "input" ? undefined : (
           ({
             "table-filter": {
               title: "Users filter",
@@ -75,9 +101,10 @@ export default defineAgenticWorkflow(
     setProgress(0, "Starting workflow");
     await dbHandler.insert("users", [{ username: "Prostgles", type: "from-agent" }]);
     const start = Date.now();
-    const filterCount = ${!withUserInputArgs ? "undefined;//" : ""} await dbHandler.count("users", userInputValue["table-filter"]);
+    const filterCount = ${mode !== "input" ? "undefined;//" : ""} await dbHandler.count("users", userInputValue["table-filter"]);
     console.log("Filter count:", filterCount);
     setProgress(1, "Finished database operation, starting research");
+    ${mode === "invalidTable" ? "await dbHandler.count('invalid_table');" : ""}
     dbHandler.find("users").then((users) => {
       users.forEach(async (user, index) => {
         setProgress((100/users.length) * index, "Processing user " + (index + 1) + "/" + users.length);
@@ -89,32 +116,36 @@ export default defineAgenticWorkflow(
   },
 );
 `;
-const workflow_function_definition = getFunc();
-export const agenticWorkflowToolUse: ToolUse = {
-  content:
-    "Based on your requirements, I suggest the following agentic workflow.",
-  tool: [
-    {
-      id: "agentic-workflow-tool-use",
-      type: "function",
-      function: {
-        name: "prostgles-ui--suggest_agentic_workflow",
-        arguments: stringify({ workflow_function_definition }),
-      },
-    },
-  ],
-};
-export const agenticWorkflowToolUseNoUserInput: ToolUse = {
-  content:
-    "Based on your requirements, I suggest the following agentic workflow.",
-  tool: [
-    {
-      id: "agentic-workflow-tool-use",
-      type: "function",
-      function: {
-        name: "prostgles-ui--suggest_agentic_workflow",
-        arguments: stringify({ workflow_function_definition: getFunc(false) }),
-      },
-    },
-  ],
-};
+
+export const agenticWorkflowToolUses = Object.fromEntries(
+  (
+    [
+      "input",
+      "clashing",
+      "noinput",
+      "invalidTable",
+      "invalidPermissionTable",
+    ] as const
+  ).map(
+    (mode) =>
+      [
+        mode,
+        {
+          content:
+            "Based on your requirements, I suggest the following agentic workflow.",
+          tool: [
+            {
+              id: `agentic-workflow-tool-use-${mode}`,
+              type: "function",
+              function: {
+                name: "prostgles-ui--suggest_agentic_workflow",
+                arguments: stringify({
+                  workflow_function_definition: getFunc(mode),
+                }),
+              },
+            },
+          ],
+        } satisfies ToolUse,
+      ] as const,
+  ),
+) as Record<Mode, ToolUse>;
