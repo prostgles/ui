@@ -129,7 +129,9 @@ export const getSceneUtils = (
             {
               type: "type",
               elementSelector: svgifSelector,
-              zoomToElement: mode === "fillZoomTo",
+              // zoomToElement: mode === "fillZoomTo",
+              extraAnimation:
+                mode === "fillZoomTo" ? { type: "zoomToElement" } : undefined,
               duration:
                 zoomDurations + Math.max(500, action.text.length * msPerChar),
             },

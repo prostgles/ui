@@ -1,6 +1,6 @@
-import { closeWorkspaceWindows, getDataKey, openTable } from "utils/utils";
+import { closeWorkspaceWindows, openTable } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
-import { getCommandElemSelector } from "Testing";
+import { getDataKey, getCommandElemSelector } from "Testing";
 
 export const smartFormSvgif: OnBeforeScreenshot = async (
   page,

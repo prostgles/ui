@@ -12,16 +12,16 @@ export const getError = (rawError: any) => {
   return getSerialisableError(rawError) || "Unknown error";
 };
 const initForkedProc = () => {
-  let _prglParams: OnReadyParamsBasic | undefined;
-  let prglParams: OnReadyParamsBasic | undefined;
+  let onReadyParams: OnReadyParamsBasic | undefined;
+  let onReadyParamsProxy: OnReadyParamsBasic | undefined;
 
   const lastToolCallId = 0;
   const toolCalls: Record<number, { cb: (err: any, res: any) => void }> = {};
   const setProxy = (params: OnReadyParamsBasic) => {
-    _prglParams = params;
-    prglParams ??= new Proxy(params, {
+    onReadyParams = params;
+    onReadyParamsProxy = new Proxy(params, {
       get(target, prop: keyof OnReadyParamsBasic, receiver) {
-        return _prglParams![prop];
+        return onReadyParams![prop];
       },
     });
   };
@@ -62,7 +62,7 @@ const initForkedProc = () => {
         } satisfies ForkedProcMessageResult);
       };
       if (msg.type === "start") {
-        if (prglParams) throw "Already started";
+        if (onReadyParamsProxy) throw "Already started";
 
         //@ts-ignore
         await prostgles({
@@ -70,7 +70,7 @@ const initForkedProc = () => {
           watchSchema: "*",
           transactions: true,
           onReady: (params) => {
-            if (prglParams) {
+            if (onReadyParamsProxy) {
               console.log("reload", params.reason);
               cb(undefined, "reload");
             } else {
@@ -80,7 +80,7 @@ const initForkedProc = () => {
           },
         });
       } else {
-        if (!prglParams) throw "prgl not ready";
+        if (!onReadyParamsProxy) throw "prgl not ready";
 
         try {
           if (msg.type === "mcpResult") {
@@ -116,7 +116,7 @@ const initForkedProc = () => {
             //   });
             // };
             const methodResult = await run(validatedArgs, {
-              ...prglParams,
+              ...onReadyParamsProxy,
               user,
               // callMCPServerTool,
             });
@@ -125,7 +125,7 @@ const initForkedProc = () => {
             const { code } = msg;
             const { onMount } = eval(code + "\n\n exports;");
 
-            const methodResult = await onMount(prglParams);
+            const methodResult = await onMount(onReadyParamsProxy);
             cb(undefined, methodResult);
           }
         } catch (rawError: any) {

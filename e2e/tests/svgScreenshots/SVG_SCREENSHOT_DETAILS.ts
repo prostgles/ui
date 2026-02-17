@@ -3,12 +3,7 @@ import { fileImporter } from "svgScreenshots/fileImporter.svgif";
 import { schemaDiagramSvgif } from "svgScreenshots/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
 import { getCommandElemSelector, getDataKey } from "../Testing";
-import {
-  getDashboardUtils,
-  getDataKey,
-  openTable,
-  type PageWIds,
-} from "../utils/utils";
+import { getDashboardUtils, openTable, type PageWIds } from "../utils/utils";
 import { accountSvgif } from "./account.svgif";
 import { aiAssistantSvgif } from "./aiAssistant.svgif";
 import { backupAndRestoreSvgif } from "./backupAndRestore.svgif";

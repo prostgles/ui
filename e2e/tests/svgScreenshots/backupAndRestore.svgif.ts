@@ -1,5 +1,5 @@
-import { getCommandElemSelector } from "Testing";
-import { closeWorkspaceWindows, getDataKey, runDbsSql } from "utils/utils";
+import { getCommandElemSelector, getDataKey } from "Testing";
+import { closeWorkspaceWindows, runDbsSql } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 
 export const backupAndRestoreSvgif: OnBeforeScreenshot = async (

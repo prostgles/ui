@@ -1,10 +1,5 @@
-import { getCommandElemSelector, type SVGif } from "Testing";
-import {
-  closeWorkspaceWindows,
-  getDataKey,
-  monacoType,
-  runDbSql,
-} from "utils/utils";
+import { getDataKey, getCommandElemSelector, type SVGif } from "Testing";
+import { closeWorkspaceWindows, monacoType, runDbSql } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { expect } from "@playwright/test";
 

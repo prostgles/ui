@@ -4,7 +4,6 @@ import { createReceipt } from "testAskLLM/createReceipt";
 import {
   closeWorkspaceWindows,
   deleteExistingLLMChat,
-  getDataKey,
   newChat,
   runDbSql,
   setModelByText,

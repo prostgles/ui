@@ -1,11 +1,6 @@
-import {
-  closeWorkspaceWindows,
-  deleteAllWorkspaces,
-  getDataKey,
-  openTable,
-} from "utils/utils";
+import { getCommandElemSelector, getDataKey } from "Testing";
+import { deleteAllWorkspaces, openTable } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
-import { getCommandElemSelector } from "Testing";
 
 export const timechartSvgif: OnBeforeScreenshot = async (
   page,

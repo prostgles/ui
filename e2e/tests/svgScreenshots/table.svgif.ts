@@ -1,8 +1,7 @@
-import { getCommandElemSelector } from "Testing";
+import { getDataKey, getCommandElemSelector } from "Testing";
 import {
   closeWorkspaceWindows,
   deleteAllWorkspaces,
-  getDataKey,
   type PageWIds,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";

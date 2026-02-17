@@ -1,10 +1,6 @@
-import { getCommandElemSelector } from "Testing";
+import { getCommandElemSelector, getDataKey } from "Testing";
 import { goTo } from "utils/goTo";
-import {
-  closeWorkspaceWindows,
-  deleteAllWorkspaces,
-  getDataKey,
-} from "utils/utils";
+import { closeWorkspaceWindows, deleteAllWorkspaces } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { expect } from "@playwright/test";
 import { clickTableRow } from "./table.svgif";

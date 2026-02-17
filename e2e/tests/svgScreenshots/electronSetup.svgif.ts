@@ -9,7 +9,7 @@ export const electronSetupSvgif: OnBeforeScreenshot = async (
 ) => {
   await page.addInitScript(() => {
     //@ts-ignore
-    window.MOCK_ELECTRON_WINDOW_ATTR = true;
+    window[MOCK_ELECTRON_WINDOW_ATTR] = true;
   });
   await goTo(page, "/");
   await addSceneAnimation(getCommandElemSelector("ElectronSetup.Next"));
@@ -19,6 +19,6 @@ export const electronSetupSvgif: OnBeforeScreenshot = async (
   });
   await page.addInitScript(() => {
     //@ts-ignore
-    delete window.MOCK_ELECTRON_WINDOW_ATTR;
+    delete window[MOCK_ELECTRON_WINDOW_ATTR];
   });
 };
