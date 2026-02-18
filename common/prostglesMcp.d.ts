@@ -343,10 +343,22 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                             readonly tables: {
                                 readonly arrayOfType: {
                                     readonly tableName: "string";
-                                    readonly select: "boolean";
-                                    readonly insert: "boolean";
-                                    readonly update: "boolean";
-                                    readonly delete: "boolean";
+                                    readonly select: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly insert: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly update: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly delete: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
                                 };
                             };
                         }];

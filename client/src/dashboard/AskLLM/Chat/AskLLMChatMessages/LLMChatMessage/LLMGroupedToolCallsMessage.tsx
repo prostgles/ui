@@ -1,25 +1,29 @@
 import Btn from "@components/Btn";
 import { SvgIcon } from "@components/SvgIcon";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo } from "react";
+import { useLLMSetupDone } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 import { isDefined } from "src/utils/utils";
-import type { LLMMessageGroup } from "../hooks/useLLMChatMessageGrouper";
-import type { LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage";
+import {
+  getMessageContentItems,
+  type LLMMessageGroup,
+} from "../hooks/useLLMChatMessageGrouper";
 import { getIconForToolUseMessage } from "../ToolUseChatMessage/useToolUseChatMessage";
 import type { LLMChatMessageCommonProps } from "./LLMChatMessage";
 import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
-import { useLLMSetupDone } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const LLMGroupedToolCallsMessage = ({
-  messageContentItems,
   loadedSuggestions,
   onToggle,
   messages,
 }: {
-  messageContentItems: LLMMessageContent[];
   messages: LLMMessageGroup["messages"];
   onToggle: VoidFunction;
 } & Pick<LLMChatMessageCommonProps, "loadedSuggestions">) => {
+  const messageContentItems = useMemo(() => {
+    return getMessageContentItems({ messages });
+  }, [messages]);
+
   const { sql } = usePrgl();
   const { mcpServerIcons } = useLLMSetupDone();
   const { icons, toolCallCount } = useMemo(() => {

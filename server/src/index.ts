@@ -14,7 +14,7 @@ import { sidKeyName } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesState } from "@common/electronInitTypes";
 import { isObject, type DBSSchema } from "@common/publishUtils";
-import { SPOOF_TEST_VALUE } from "@common/utils";
+import { API_ENDPOINTS, SPOOF_TEST_VALUE } from "@common/utils";
 import { tout } from "@src/utils/tout";
 import { spawn } from "child_process";
 import type { NextFunction, Request, Response } from "express";
@@ -73,7 +73,7 @@ export const waitForInitialisation =
 /**
  * Serve prostglesInitState
  */
-app.get("/dbs", (req, res) => {
+app.get(API_ENDPOINTS.DBS, (req, res) => {
   const prostglesState = getProstglesState();
   const { initState } = prostglesState;
   const nonSerialiseableOrNotNeededKeys = getKeys({
@@ -140,7 +140,7 @@ const serveIndexIfNoCredentialsOrInitError = async (
     electronCredsProvided,
   } = getProstglesState();
   if (state !== "ok" || (isElectron && !electronCredsProvided)) {
-    if (req.method === "GET" && !req.path.startsWith("/dbs")) {
+    if (req.method === "GET" && !req.path.startsWith(API_ENDPOINTS.DBS)) {
       res.sendFile(path.resolve(actualRootDir + "/../client/build/index.html"));
       return;
     }

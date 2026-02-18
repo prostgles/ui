@@ -20,7 +20,10 @@ export const PrglProvider = ({
   }, [prgl]);
   return (
     <PrglContext.Provider value={prgl}>
-      <CommandPalette isElectron={prgl.serverState.isElectron} />
+      <CommandPalette
+        isElectron={prgl.serverState.isElectron}
+        prglLoaded={true}
+      />
       {children}
     </PrglContext.Provider>
   );

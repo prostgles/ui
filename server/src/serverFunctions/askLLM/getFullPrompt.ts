@@ -26,7 +26,16 @@ export const getFullPrompt = async ({
     .replace(
       LLM_PROMPT_VARIABLES.SCHEMA,
       schema ?
-        wrapCode("sql", schema)
+        wrapCode("sql", schema) +
+          [
+            `\n`,
+            `When you need to reference records from the database use an anchor to ensure the user can quickly preview them.`,
+            `The tag must be of this format: `,
+            wrapCode(
+              "html",
+              `<a href="#record" data-table-name="{the name of the table}" data-column-name="{the name of the column to filter by (should ideally have a pkey constraint)}" data-column-value="{the value of the column/pkey}">{pkey and/or name and/or other data}</a>`,
+            ),
+          ].join("\n")
       : "Schema is empty: there are no tables or views in the database",
     )
     .replace(

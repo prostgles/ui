@@ -950,7 +950,8 @@ test.describe("Main test", () => {
       step < Math.ceil(defaultMaxCost / costPerMsg) + 1;
       step++
     ) {
-      await sendAskLLMMessage(page, "cost");
+      await page.waitForTimeout(1500);
+      await sendAskLLMMessage(page, "cost", true);
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Maximum total cost of the chat (5) reached. Current cost: 5.4`,
@@ -971,7 +972,8 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
     await toggleMCPTools(["directory_tree"], true);
     for (let step = 0; step < Math.floor(maxCost / costPerMsg); step++) {
-      await sendAskLLMMessage(page, "cost");
+      await page.waitForTimeout(1500);
+      await sendAskLLMMessage(page, "cost", true);
     }
     await sendAskLLMMessage(page, " estimated_cost ");
     await expect(page.getByTestId("Chat.messageList")).toContainText(

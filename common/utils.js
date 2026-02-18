@@ -146,9 +146,10 @@ export const API_ENDPOINTS = {
     REST: "/rest-api",
     WS_DB: "/ws-api",
     WS_DBS: "/ws-api-dbs",
+    MAGIC_LINK: "/magic-link",
+    DBS: "/dbs",
 };
 export const ROUTES = {
-    MAGIC_LINK: "/magic-link",
     LOGIN: "/login",
     LOGOUT: "/logout",
     ACCOUNT: "/account",

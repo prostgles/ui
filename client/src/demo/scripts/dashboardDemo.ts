@@ -60,7 +60,11 @@ export const dashboardDemo = async () => {
       // await click("dashboard.menu");
       // await click("DashboardMenuHeader.togglePinned");
     }
-    await click("dashboard.menu.tablesSearchList", `[data-key=${tableName}]`);
+    await click(
+      "dashboard.menu.tablesSearchList",
+      `[data-key=${JSON.stringify(tableName)}]`,
+    );
+    await waitForElement("", `[data-table-name=${JSON.stringify(tableName)}]`);
     // await click("DashboardMenuHeader.togglePinned");
   };
 

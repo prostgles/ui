@@ -72,7 +72,6 @@ export const Chat = (props: ChatProps) => {
     currentlyTypedMessage,
     onCurrentlyTypedMessageChange,
   });
-
   useEffect(() => {
     if (!isLoading && textAreaRef.current) {
       textAreaRef.current.focus();
@@ -148,7 +147,7 @@ export const Chat = (props: ChatProps) => {
               style={{
                 maxHeight: "50vh",
               }}
-              disabled={!!disabledInfo || chatIsLoading}
+              disabled={!!disabledInfo}
               defaultValue={getCurrentMessage() || currentlyTypedMessage || ""}
               onPaste={handleOnPaste}
               onChange={({ currentTarget }) => {
@@ -156,6 +155,8 @@ export const Chat = (props: ChatProps) => {
               }}
               onKeyDown={(e) => {
                 if (
+                  !chatIsLoading &&
+                  !disabledInfo &&
                   textAreaRef.current &&
                   !e.shiftKey &&
                   e.key.toLocaleLowerCase() === "enter"

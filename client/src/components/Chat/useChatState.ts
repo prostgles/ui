@@ -79,8 +79,12 @@ export const useChatState = (
     }
     setSendingMsg(true);
     try {
-      await onSend(msg, files);
-      onCurrentlyTypedMessageChangeDebounced("");
+      onCurrentlyTypedMessageChange("");
+      await onSend(msg, files).catch((e) => {
+        onCurrentlyTypedMessageChange(msg);
+        console.error(e);
+        throw e;
+      });
       setCurrentMessage("");
       setFiles([]);
     } catch (e) {
@@ -91,7 +95,7 @@ export const useChatState = (
     getCurrentMessage,
     files,
     onSend,
-    onCurrentlyTypedMessageChangeDebounced,
+    onCurrentlyTypedMessageChange,
     setCurrentMessage,
   ]);
   const chatIsLoading = isLoading || sendingMsg;

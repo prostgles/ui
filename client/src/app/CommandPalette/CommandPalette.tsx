@@ -1,7 +1,6 @@
 import { FlashMessage } from "@components/FlashMessage";
 import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
-
 import React from "react";
 import { NavLink } from "react-router";
 import "./CommandPalette.css";
@@ -12,7 +11,13 @@ import { useCommandPaletteState } from "./useCommandPaletteState";
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
  */
-export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
+export const CommandPalette = ({
+  isElectron,
+  prglLoaded,
+}: {
+  isElectron: boolean;
+  prglLoaded: boolean;
+}) => {
   const {
     showSection,
     setShowSection,
@@ -22,7 +27,7 @@ export const CommandPalette = ({ isElectron }: { isElectron: boolean }) => {
     setMessage,
     quickPeekComponent,
     setQuickPeekComponent,
-  } = useCommandPaletteState();
+  } = useCommandPaletteState(prglLoaded);
   return (
     <>
       {highlights.map((h, i) => (

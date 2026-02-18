@@ -1,6 +1,10 @@
 import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { AnyObject, SQLHandler } from "prostgles-types";
+import {
+  getSerialisableError,
+  type AnyObject,
+  type SQLHandler,
+} from "prostgles-types";
 import React from "react";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
@@ -558,7 +562,15 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
               </div>
               <ApplySuggestedDataTypes
                 types={importing.types}
-                onDone={this.cancel}
+                onDone={(error) => {
+                  if (error) {
+                    alert(
+                      "Error applying suggested data types: " +
+                        JSON.stringify(getSerialisableError(error)),
+                    );
+                  }
+                  void this.cancel();
+                }}
                 sql={sql}
                 tableName={importing.tableName}
               />

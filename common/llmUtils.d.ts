@@ -5,7 +5,7 @@ export declare const getLLMMessageToolUse: ({ message, }: Pick<LLMMessage, "mess
     type: "tool_use";
     id: string;
     name: string;
-    input: any;
+    input?: Record<string, unknown>;
 }[];
 export declare const getLLMMessageToolUseResult: ({ message, }: Pick<LLMMessage, "message">) => {
     type: "tool_result";

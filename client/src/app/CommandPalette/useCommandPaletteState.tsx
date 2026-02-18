@@ -23,13 +23,14 @@ import {
 } from "@mdi/js";
 import React, { useEffect, useState } from "react";
 import { isPlaywrightTest } from "src/i18n/i18nUtils";
+import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "src/Testing";
 import { flatUIDocs, type UIDoc, type UIDocInputElement } from "../UIDocs";
 import type { CommandSearchHighlight } from "./CommandPalette";
 import "./CommandPalette.css";
-import { useGoToUI } from "./useGoToUI";
 import type { DynamicComponentRegistry } from "./DynamicComponent";
+import { useGoToUI } from "./useGoToUI";
 
-export const useCommandPaletteState = () => {
+export const useCommandPaletteState = (prglLoaded: boolean) => {
   const { showSection, setShowSection } = useOnKeyDown();
   const [highlights, setHighlights] = useState<CommandSearchHighlight[]>([]);
   const { message, setMessage, goToUIDocItem } = useGoToUI(setHighlights);
@@ -60,11 +61,18 @@ export const useCommandPaletteState = () => {
           <Icon path={iconPath} title={data.type} className="text-1 f-0" />
         : undefined,
       onPress: async () => {
-        if (componentName) {
+        // TODO: keep track of which component needs prglLoaded and if it's not loaded:
+        //     - goToItem until it becomes loaded and show component
+        if (componentName && prglLoaded) {
           setQuickPeekComponent(componentName);
         } else {
           await goToItem();
         }
+
+        window.document.body.setAttribute(
+          COMMAND_SEARCH_ATTRIBUTE_NAME,
+          data.title,
+        );
       },
       contentRight: Boolean(componentName) && (
         <Btn

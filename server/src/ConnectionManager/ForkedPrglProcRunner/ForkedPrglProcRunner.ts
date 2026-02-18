@@ -168,8 +168,7 @@ export class ForkedPrglProcRunner {
       this.logs = this.logs.slice(-500);
       const { type } = this.opts;
       const logs = this.logs.map((v) => v.toString()).join("");
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.opts.dbs.database_config_logs.update(
+      void this.opts.dbs.database_config_logs.update(
         { id: this.opts.dbConfId },
         {
           [type === "onMount" ? "on_mount_logs"
@@ -207,11 +206,12 @@ export class ForkedPrglProcRunner {
         //   return;
         // }
 
-        console.error(
-          "ForkedPrglProc error ",
-          this.opts.prglInitOpts.dbConnection,
-          msg.error,
-        );
+        const { dbConnection } = this.opts.prglInitOpts;
+        const dbName =
+          typeof dbConnection === "string" ?
+            dbConnection.split("/").at(-1)
+          : dbConnection.database;
+        console.error("ForkedPrglProc error ", dbName, msg.error);
         updateLogs(getError(msg.error));
         /** Database was dropped */
         if (msg.error.code === "3D000") {

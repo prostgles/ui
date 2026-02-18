@@ -1,15 +1,19 @@
+import { getProperty } from "@common/utils";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
-import React, { useCallback } from "react";
+import type { TableHandlerClient } from "prostgles-client";
+import type { AnyObject } from "prostgles-types";
+import React, { useCallback, useState } from "react";
 import Markdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
+import { type Prgl } from "src/App";
 import { classOverride, type DivProps } from "../Flex";
+import "./Marked.css";
 import {
   MonacoCodeInMarkdown,
   type MonacoCodeInMarkdownProps,
 } from "./MonacoCodeInMarkdown/MonacoCodeInMarkdown";
-import "./Marked.css";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
-import { getProperty } from "@common/utils";
+import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
 
 export type MarkedProps = DivProps &
   Pick<
@@ -17,11 +21,28 @@ export type MarkedProps = DivProps &
     "codeHeader" | "sqlHandler" | "loadedSuggestions"
   > & {
     content: string;
+    prgl: Prgl | undefined;
   };
 
 export const Marked = (props: MarkedProps) => {
-  const { content, codeHeader, sqlHandler, loadedSuggestions, ...divProps } =
-    props;
+  const {
+    content,
+    codeHeader,
+    sqlHandler,
+    loadedSuggestions,
+    prgl,
+    ...divProps
+  } = props;
+
+  const [showTableRow, setShowTableRow] = useState<
+    | undefined
+    | {
+        tableName: string;
+        columnName: string;
+        columnValue: string | number;
+        tableHandler: Partial<TableHandlerClient<AnyObject, void>>;
+      }
+  >();
 
   const CodeComponent = useCallback(
     ({
@@ -79,20 +100,73 @@ export const Marked = (props: MarkedProps) => {
         divProps.className,
       )}
     >
+      {showTableRow && prgl && (
+        <SmartForm
+          asPopup={true}
+          confirmUpdates={true}
+          db={prgl.db}
+          sql={prgl.sql}
+          methods={prgl.methods}
+          tables={prgl.tables}
+          tableName={showTableRow.tableName}
+          rowFilter={[
+            {
+              fieldName: showTableRow.columnName,
+              value: showTableRow.columnValue,
+            },
+          ]}
+          onClose={() => setShowTableRow(undefined)}
+        />
+      )}
       <Markdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
           pre: React.Fragment,
           code: CodeComponent,
-          a: (props) => (
-            <a
-              {...props}
-              className="link"
-              target={props.href?.startsWith("#") ? undefined : "_blank"}
-              rel={props.href?.startsWith("#") ? undefined : "noreferrer"}
-            />
-          ),
+          a: (props) => {
+            const { href } = props;
+            const tableName = props["data-table-name"] as string | undefined;
+            const columnName = props["data-column-name"] as string | undefined;
+            const columnValue = props["data-column-value"] as
+              | string
+              | number
+              | undefined;
+            if (
+              tableName &&
+              columnName &&
+              columnValue &&
+              prgl &&
+              Object.hasOwn(prgl.db, tableName) &&
+              prgl.db[tableName] &&
+              href?.startsWith("#record")
+            ) {
+              const tableHandler = prgl.db[tableName];
+              return (
+                <a
+                  {...props}
+                  className="link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTableRow({
+                      tableName,
+                      columnName,
+                      columnValue,
+                      tableHandler,
+                    });
+                  }}
+                />
+              );
+            }
+            return (
+              <a
+                {...props}
+                className="link"
+                target={props.href?.startsWith("#") ? undefined : "_blank"}
+                rel={props.href?.startsWith("#") ? undefined : "noreferrer"}
+              />
+            );
+          },
         }}
       >
         {content}

@@ -33,6 +33,7 @@ export type ReactSilverGridNode = ReactElement<{
   "data-table-name": string | null;
   "data-type": "title" | "header-icons" | "content";
   "data-title"?: string;
+  "data-key"?: string;
 }>;
 
 export type SilverGridProps = {
@@ -117,12 +118,13 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
       const items = this.getItems(layout),
         itemIds = items.map((d) => d.id),
         orphans = children.filter(
-          (c) => !itemIds.includes(c.props["data-key"]),
+          (c) => !includesNumOrStr(itemIds, c.props["data-key"]),
         ),
         emptyItemIds = Array.from(
           new Set(
             itemIds.filter(
-              (id) => !children.find((c) => c.props["data-key"] == id),
+              (id) =>
+                !children.find((c) => equalsNumOrStr(c.props["data-key"], id)),
             ),
           ),
         );
@@ -171,7 +173,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
               ...orphans.map(
                 (c, i) =>
                   ({
-                    id: c.props["data-key"] || i,
+                    id: c.props["data-key"] ?? i.toString(),
                     title: c.props["data-title"],
                     tableName: c.props["data-table-name"],
                     viewType: c.props["data-view-type"],
@@ -197,7 +199,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
                 .map(
                   (c, i) =>
                     ({
-                      id: c.props["data-key"] || i,
+                      id: c.props["data-key"] ?? i.toString(),
                       title: c.props["data-title"],
                       tableName: c.props["data-table-name"],
                       viewType: c.props["data-view-type"],
@@ -283,7 +285,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
     const key = _key ?? layout.id;
 
     const getChildNode = (id: string | number) => {
-      const res = children.find((c) => c.props["data-key"] == id);
+      const res = children.find((c) => equalsNumOrStr(c.props["data-key"], id));
       return res;
     };
 
@@ -292,9 +294,10 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
       const headerIcon =
         children.find(
           (c) =>
-            c.props["data-key"] == layout.id &&
+            equalsNumOrStr(c.props["data-key"], layout.id) &&
             c.props["data-type"] === "header-icons",
-        ) || headerIcons.find((c) => c.props["data-key"] == layout.id);
+        ) ||
+        headerIcons.find((c) => equalsNumOrStr(c.props["data-key"], layout.id));
 
       return (
         <SilverGridChild
@@ -327,7 +330,8 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           return null;
         }
         const activeItem =
-          layout.items.find((d) => d.id === layout.activeTabKey) ?? firstItem;
+          layout.items.find((d) => equalsNumOrStr(d.id, layout.activeTabKey)) ??
+          firstItem;
         const activeItemId = activeItem.id;
         const child = getChildNode(activeItemId) ?? (
           <FlexRow className="p-2 ai-center">
@@ -343,8 +347,8 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           </FlexRow>
         );
 
-        const headerIcon = headerIcons.find(
-          (c) => c.props["data-key"] == activeItemId,
+        const headerIcon = headerIcons.find((c) =>
+          equalsNumOrStr(c.props["data-key"], activeItemId),
         );
 
         const otherChildren: LayoutItem[] = layout.items.map((l) => ({
@@ -496,6 +500,9 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
     );
   }
 }
+
+const includesNumOrStr = (arr: any[], val: any) => arr.some((a) => a == val);
+const equalsNumOrStr = (a: any, b: any) => a == b;
 
 export function isTouchDevice() {
   return (

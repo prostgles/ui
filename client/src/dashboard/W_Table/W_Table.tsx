@@ -791,7 +791,6 @@ export default class W_Table extends RTComp<
             <RowCard
               showR={this.rowPanelRState}
               rows={rows}
-              prgl={prgl}
               tableName={tableName}
               tableHandler={tableHandler}
               onPrevOrNext={(newRowPanel) => {

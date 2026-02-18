@@ -40,7 +40,6 @@ export const LLMChatMessage = memo(
           />
         : <LLMGroupedToolCallsMessage
             messages={messageItem.messages}
-            messageContentItems={messageItem.messageContentItems}
             onToggle={messageItem.onToggle}
             loadedSuggestions={loadedSuggestions}
           />

@@ -35,7 +35,7 @@ export const useWebAppConfigState = () => {
     if (!usersTable) {
       return {
         error: 'A "users" table is required.',
-        query: `CREATE TABLE IF NOT EXISTS users (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), \n  type TEXT \n);`,
+        query: `CREATE TABLE IF NOT EXISTS users (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), \n  type TEXT NOT NULL \n);`,
       } as const;
     }
     const hasType = usersTable.columns.some((c) => c.name === "type");

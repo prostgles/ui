@@ -15,13 +15,6 @@ export const getOnUseOrSocketConnected = (
     _client,
     reqInfo,
   ) => {
-    // while (!authSetupData.stateDatabaseConfig) {
-    //   console.warn(
-    //     "Delaying user request until database_config is ready",
-    //     reqInfo,
-    //   );
-    //   await tout(2000);
-    // }
     const { stateDatabaseConfig: database_config } = authSetupData;
 
     /** Is this needed? */

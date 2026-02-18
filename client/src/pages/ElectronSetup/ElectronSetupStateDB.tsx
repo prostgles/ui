@@ -9,6 +9,8 @@ import type { useElectronSetup } from "./useElectronSetup";
 import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
 import ErrorComponent from "@components/ErrorComponent";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { InfoRow } from "@components/InfoRow";
+import ButtonGroup from "@components/ButtonGroup";
 
 export const ElectronSetupStateDB = ({
   state,
@@ -29,17 +31,14 @@ export const ElectronSetupStateDB = ({
       <h2>State database</h2>
       <section className="ta-left font-18">
         <strong>Prostgles Desktop</strong> needs a PostgreSQL database to
-        securely store your workspace and connection settings. (This will not
-        affect your existing databases.)
-        <p className="m-0 mt-p5">
+        securely store your workspace and connection settings.
+        <p className="m-0 my-p5">
           For best experience we recommend using a locally installed database
         </p>
-        <div className="flex-row-wrap gap-2 f-1 mt-1">
-          <PostgresInstallationInstructions
-            os={os}
-            placement="state-db-quick-setup"
-          />
-        </div>
+        <PostgresInstallationInstructions
+          os={os}
+          placement="state-db-quick-setup"
+        />
       </section>
       <Tabs
         className="mt-2"
@@ -47,7 +46,7 @@ export const ElectronSetupStateDB = ({
         onChange={(key) => {
           setIsQuickMode(key === "quick");
         }}
-        contentClass="ta-left p-2"
+        contentClass="ta-left py-2"
         items={{
           quick: {
             label: "Quick setup",
@@ -97,12 +96,12 @@ export const ElectronSetupStateDB = ({
                   autoComplete="off"
                   onChange={(db_pass) => updateConnection({ db_pass })}
                 />
-                {validationWarning && (
+                {
                   <ErrorComponent
                     error={validationWarning}
                     style={{ minWidth: 0 }}
                   />
-                )}
+                }
               </FlexCol>
             ),
           },
@@ -114,6 +113,10 @@ export const ElectronSetupStateDB = ({
                   Provide the connection details to an existing database that
                   will be used as the state database
                 </div>
+                <InfoRow color="danger">
+                  <strong>This database will be modified.</strong> Required
+                  metadata tables will be created in this database.
+                </InfoRow>
                 <FlexCol className="min-s-0 o-auto px-p5">
                   <NewConnectionForm
                     mode="insert"

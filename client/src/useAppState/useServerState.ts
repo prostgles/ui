@@ -1,7 +1,7 @@
 import { usePromise } from "prostgles-client";
 import { includes } from "prostgles-types";
 import type { ProstglesState } from "@common/electronInitTypes";
-import { SPOOF_TEST_VALUE } from "@common/utils";
+import { API_ENDPOINTS, SPOOF_TEST_VALUE } from "@common/utils";
 import type { AppState } from "../App";
 import { tout } from "../utils/utils";
 import { MOCK_ELECTRON_WINDOW_ATTR } from "src/Testing";
@@ -10,7 +10,7 @@ import { MOCK_ELECTRON_WINDOW_ATTR } from "src/Testing";
  * Check if state database is setup
  */
 const fetchServerState = async () => {
-  // window.MOCK_ELECTRON_WINDOW_ATTR = true;
+  // window[MOCK_ELECTRON_WINDOW_ATTR] = true;
   const serverState: AppState["serverState"] =
     window[MOCK_ELECTRON_WINDOW_ATTR] ?
       {
@@ -20,7 +20,7 @@ const fetchServerState = async () => {
         },
         electronCredsProvided: false,
       }
-    : await fetch("/dbs", {
+    : await fetch(API_ENDPOINTS.DBS, {
         headers: { "x-real-ip": SPOOF_TEST_VALUE },
       }).then((r) => r.json() as Promise<AppState["serverState"]>);
   return serverState;

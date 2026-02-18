@@ -40,11 +40,16 @@ export const getTextColumnPotentialDataTypes = async (
       WHERE table_schema = current_schema()
       and table_name = \${tableName}
       and nullif(common_value, '') is not null
+    ),
+    suggested_types AS (
+      SELECT table_schema, table_name, column_name, suggested_type
+      , format('ALTER COLUMN %1$I SET DATA TYPE %2$s USING NULLIF(%1$I, '''')::%2$s', column_name, suggested_type) as alter_query
+      FROM text_column_values
+      GROUP BY table_schema, table_name, column_name
     )
-    SELECT table_schema, table_name, column_name, suggested_type, format('ALTER COLUMN %1$I SET DATA TYPE %2$s USING NULLIF(%1$I, '''')::%2$s', column_name, suggested_type) as alter_query
-    FROM text_column_values
-    GROUP BY table_schema, table_name, column_name, suggested_type
-    HAVING COUNT(DISTINCT suggested_type) = 1
+    SELECT table_schema, table_name, column_name, MIN(alter_query) as alter_query 
+    FROM suggested_types
+    WHERE suggested_type IS NOT NULL
   `;
 
   const result = (await sql(
@@ -72,7 +77,7 @@ export const applySuggestedDataTypes = async ({
 
 type P = {
   types: SuggestedColumnDataType[] | undefined;
-  onDone: VoidFunction;
+  onDone: (errors?: any) => void;
   sql: SQLHandler;
   tableName: string;
 };
@@ -123,8 +128,9 @@ export const ApplySuggestedDataTypes = ({
             types: selectedTypes,
             sql,
             tableName,
-          });
-          onDone();
+          })
+            .then(() => onDone())
+            .catch((error) => onDone(error));
         }}
       >
         Apply suggested data types types

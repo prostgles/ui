@@ -77,12 +77,13 @@ export const startConnection = async function (
 
   const { connectionInfo, isSSLModeFallBack } =
     await testDBConnection(connection);
-  log(
-    "testDBConnection ok" +
-      (isSSLModeFallBack ? ". (sslmode=prefer fallback)" : ""),
-  );
+  if (isSSLModeFallBack) {
+    log(
+      `testDBConnection ${JSON.stringify(connection.db_name)} switched to (sslmode=prefer fallback)`,
+    );
+  }
 
-  const creatingPref = "connecting to " + connection.db_name;
+  const creatingPref = "connecting to " + JSON.stringify(connection.db_name);
   const existingInstance = this.prglConnections.get(connection.id);
   const prglInstance =
     existingInstance?.state === "initializing" ?

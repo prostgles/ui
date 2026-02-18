@@ -18,14 +18,16 @@ import type { ProstglesState } from "@common/electronInitTypes";
 import type { DBSSchema } from "@common/publishUtils";
 import { fixIndent, ROUTES } from "@common/utils";
 import { AppContextProvider } from "@pages/AppContextProvider";
-import type { AuthHandler } from "prostgles-client/dist/getAuthHandler";
+import { prglStateStore } from "@pages/ProjectConnection/PrglContextProvider";
 import { type DBHandlerClient } from "prostgles-client";
+import type { AuthHandler } from "prostgles-client/dist/getAuthHandler";
+import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
+import type { SQLHandler } from "prostgles-types";
 import { type Socket } from "socket.io-client";
 import { CommandPalette } from "./app/CommandPalette/CommandPalette";
 import { Documentation } from "./app/CommandPalette/Documentation";
 import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
 import { createReactiveState, useReactiveState } from "./appUtils";
-import { AlertProvider } from "./components/AlertProvider";
 import { FlexCol, FlexRow } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import { NavBarWrapper } from "./components/NavBar/NavBarWrapper";
@@ -37,11 +39,8 @@ import { ElectronSetup } from "./pages/ElectronSetup/ElectronSetup";
 import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
-import { useAppState } from "./useAppState/useAppState";
-import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
-import type { SQLHandler } from "prostgles-types";
 import { PrglCoreProvider } from "./useAppState/PrglCoreContextProvider";
-import { prglStateStore } from "@pages/ProjectConnection/PrglContextProvider";
+import { useAppState } from "./useAppState/useAppState";
 
 export type ClientUser = {
   sid: string;
@@ -189,153 +188,153 @@ export const App = () => {
   return (
     <AppContextProvider appContextProps={appContextProps}>
       <PrglCoreProvider prglCore={prglState}>
-        <AlertProvider>
-          <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
-            {!prglLoaded && <CommandPalette isElectron={isElectron} />}
-            <XRealIpSpoofableAlert {...state} />
-            {demoStarted && <MousePointer />}
-            {isDisconnected && (
-              <Loading
-                message={t.App["Reconnecting..."]}
-                variant="cover"
-                style={{ zIndex: 467887 }}
-              />
-            )}
-            <NonHTTPSWarning {...prglState} />
-            <Switch>
-              <Route
-                key="0"
-                path="/"
-                element={<Navigate to={ROUTES.CONNECTIONS} replace />}
-              />
-              <Route
-                key="1"
-                path={ROUTES.CONNECTIONS}
-                element={
-                  <NavBarWrapper
-                    extraProps={appContextProps}
-                    needsUser={true}
-                    userThemeOption={userThemeOption}
-                  >
-                    <Connections {...appContextProps} />
-                  </NavBarWrapper>
-                }
-              />
-              <Route
-                key="2"
-                path={ROUTES.USERS}
-                element={
-                  <NavBarWrapper
-                    extraProps={appContextProps}
-                    needsUser={false}
-                    userThemeOption={userThemeOption}
-                  >
-                    <UserManager />
-                  </NavBarWrapper>
-                }
-              />
-              <Route
-                key="3"
-                path={ROUTES.ACCOUNT}
-                element={
-                  <NavBarWrapper
-                    extraProps={appContextProps}
-                    needsUser={false}
-                    userThemeOption={userThemeOption}
-                  >
-                    <Account />
-                  </NavBarWrapper>
-                }
-              />
-              <Route
-                key="4"
-                path={`${ROUTES.CONNECTIONS}/:connectionId`}
-                element={<ProjectConnection prglState={appContextProps} />}
-              />
-              <Route
-                key="5"
-                path={ROUTES.NEW_CONNECTION}
-                element={
-                  <NewConnnection
-                    connectionId={undefined}
-                    db={undefined}
-                    prglState={appContextProps}
-                    showTitle={true}
-                    sql={undefined}
-                  />
-                }
-              />
-              <Route
-                key="6"
-                path={`${ROUTES.EDIT_CONNECTION}/:id`}
-                element={
-                  <NewConnnection
-                    connectionId={undefined}
-                    db={undefined}
-                    prglState={appContextProps}
-                    showTitle={true}
-                    sql={undefined}
-                  />
-                }
-              />
-              <Route
-                key="7"
-                path={`${ROUTES.CONFIG}/:connectionId`}
-                element={
-                  <ProjectConnection
-                    prglState={appContextProps}
-                    showConnectionConfig={true}
-                  />
-                }
-              />
-              <Route
-                key="8"
-                path={ROUTES.SERVER_SETTINGS}
-                element={
-                  <NavBarWrapper
-                    extraProps={appContextProps}
-                    needsUser={true}
-                    userThemeOption={userThemeOption}
-                  >
-                    <ServerSettings {...appContextProps} />
-                  </NavBarWrapper>
-                }
-              />
-              <Route
-                key="9"
-                path={ROUTES.COMPONENT_LIST}
-                element={
-                  <NavBarWrapper
-                    extraProps={appContextProps}
-                    needsUser={false}
-                    userThemeOption={userThemeOption}
-                  >
-                    <ComponentList />
-                  </NavBarWrapper>
-                }
-              />
-              <Route
-                key="10"
-                path={ROUTES.LOGIN}
-                element={<Login {...appContextProps} />}
-              />
-              <Route
-                key="11"
-                path={ROUTES.DOCUMENTATION}
-                element={
-                  <NavBarWrapper
-                    extraProps={appContextProps}
-                    needsUser={false}
-                    userThemeOption={userThemeOption}
-                  >
-                    <Documentation isElectron={isElectron} />
-                  </NavBarWrapper>
-                }
-              />
-              <Route key="12" path="*" element={<NotFound />} />
-            </Switch>
-          </FlexCol>
-        </AlertProvider>
+        <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
+          {!prglLoaded && (
+            <CommandPalette isElectron={isElectron} prglLoaded={false} />
+          )}
+          <XRealIpSpoofableAlert {...state} />
+          {demoStarted && <MousePointer />}
+          {isDisconnected && (
+            <Loading
+              message={t.App["Reconnecting..."]}
+              variant="cover"
+              style={{ zIndex: 467887 }}
+            />
+          )}
+          <NonHTTPSWarning {...prglState} />
+          <Switch>
+            <Route
+              key="0"
+              path="/"
+              element={<Navigate to={ROUTES.CONNECTIONS} replace />}
+            />
+            <Route
+              key="1"
+              path={ROUTES.CONNECTIONS}
+              element={
+                <NavBarWrapper
+                  extraProps={appContextProps}
+                  needsUser={true}
+                  userThemeOption={userThemeOption}
+                >
+                  <Connections {...appContextProps} />
+                </NavBarWrapper>
+              }
+            />
+            <Route
+              key="2"
+              path={ROUTES.USERS}
+              element={
+                <NavBarWrapper
+                  extraProps={appContextProps}
+                  needsUser={false}
+                  userThemeOption={userThemeOption}
+                >
+                  <UserManager />
+                </NavBarWrapper>
+              }
+            />
+            <Route
+              key="3"
+              path={ROUTES.ACCOUNT}
+              element={
+                <NavBarWrapper
+                  extraProps={appContextProps}
+                  needsUser={false}
+                  userThemeOption={userThemeOption}
+                >
+                  <Account />
+                </NavBarWrapper>
+              }
+            />
+            <Route
+              key="4"
+              path={`${ROUTES.CONNECTIONS}/:connectionId`}
+              element={<ProjectConnection prglState={appContextProps} />}
+            />
+            <Route
+              key="5"
+              path={ROUTES.NEW_CONNECTION}
+              element={
+                <NewConnnection
+                  connectionId={undefined}
+                  db={undefined}
+                  prglState={appContextProps}
+                  showTitle={true}
+                  sql={undefined}
+                />
+              }
+            />
+            <Route
+              key="6"
+              path={`${ROUTES.EDIT_CONNECTION}/:id`}
+              element={
+                <NewConnnection
+                  connectionId={undefined}
+                  db={undefined}
+                  prglState={appContextProps}
+                  showTitle={true}
+                  sql={undefined}
+                />
+              }
+            />
+            <Route
+              key="7"
+              path={`${ROUTES.CONFIG}/:connectionId`}
+              element={
+                <ProjectConnection
+                  prglState={appContextProps}
+                  showConnectionConfig={true}
+                />
+              }
+            />
+            <Route
+              key="8"
+              path={ROUTES.SERVER_SETTINGS}
+              element={
+                <NavBarWrapper
+                  extraProps={appContextProps}
+                  needsUser={true}
+                  userThemeOption={userThemeOption}
+                >
+                  <ServerSettings {...appContextProps} />
+                </NavBarWrapper>
+              }
+            />
+            <Route
+              key="9"
+              path={ROUTES.COMPONENT_LIST}
+              element={
+                <NavBarWrapper
+                  extraProps={appContextProps}
+                  needsUser={false}
+                  userThemeOption={userThemeOption}
+                >
+                  <ComponentList />
+                </NavBarWrapper>
+              }
+            />
+            <Route
+              key="10"
+              path={ROUTES.LOGIN}
+              element={<Login {...appContextProps} />}
+            />
+            <Route
+              key="11"
+              path={ROUTES.DOCUMENTATION}
+              element={
+                <NavBarWrapper
+                  extraProps={appContextProps}
+                  needsUser={false}
+                  userThemeOption={userThemeOption}
+                >
+                  <Documentation isElectron={isElectron} />
+                </NavBarWrapper>
+              }
+            />
+            <Route key="12" path="*" element={<NotFound />} />
+          </Switch>
+        </FlexCol>
       </PrglCoreProvider>
     </AppContextProvider>
   );

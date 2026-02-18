@@ -46,6 +46,7 @@ export const LoadSuggestedToolsAndPrompt = ({
           loadedSuggestions={undefined}
           sqlHandler={undefined}
           content={suggested_prompt}
+          prgl={undefined}
         />
       )}
 

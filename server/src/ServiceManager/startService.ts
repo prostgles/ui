@@ -133,7 +133,9 @@ export async function startService(
     });
 
   const baseUrl = `http://${baseHost}`;
+  const startingServiceLabel = `Starting service ${JSON.stringify(serviceName)}. `;
   while (this.activeServices.get(serviceName)?.status === "starting") {
+    await tout(1000);
     const clientIp = "127.0.0.1";
     const healthCheckResponse = await fetch(
       `${baseUrl}${healthCheck.endpoint}`,
@@ -143,22 +145,24 @@ export async function startService(
           "X-Forwarded-For": clientIp,
           "X-Real-IP": clientIp,
         },
+        signal: AbortSignal.timeout(5_000),
       },
     ).catch(() => null);
     console.log(
-      "starting Service " + serviceName + " - healthcheck",
-      healthCheckResponse?.statusText,
+      startingServiceLabel +
+        ": healthcheck " +
+        (healthCheckResponse?.ok ? "passed" : "..."),
     );
     if (healthCheckResponse?.ok) {
       break;
     }
-    await tout(1000);
   }
 
   const serviceInstance = this.activeServices.get(serviceName);
   if (serviceInstance?.status !== "starting") {
     const error = new Error(
-      "Healthcheck not finished. Service failed to start. Current status:" +
+      startingServiceLabel +
+        "Healthcheck not finished. Service failed to start. Current status:" +
         serviceInstance?.status,
     );
     onStopped({

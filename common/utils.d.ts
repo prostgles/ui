@@ -192,9 +192,10 @@ export declare const API_ENDPOINTS: {
     readonly REST: "/rest-api";
     readonly WS_DB: "/ws-api";
     readonly WS_DBS: "/ws-api-dbs";
+    readonly MAGIC_LINK: "/magic-link";
+    readonly DBS: "/dbs";
 };
 export declare const ROUTES: {
-    readonly MAGIC_LINK: "/magic-link";
     readonly LOGIN: "/login";
     readonly LOGOUT: "/logout";
     readonly ACCOUNT: "/account";

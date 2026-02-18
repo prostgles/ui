@@ -60,6 +60,7 @@ export const PromptAndAllowedMcpToolsSchemaPreviews = (props: {
           loadedSuggestions={undefined}
           codeHeader={undefined}
           sqlHandler={undefined}
+          prgl={undefined}
         />
       </PopupMenu>
       <PopupMenu

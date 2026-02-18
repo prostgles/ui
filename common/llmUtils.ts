@@ -91,7 +91,10 @@ export const LLM_PROMPT_VARIABLES = {
   TODAY: "${today}",
 } as const;
 
-export const wrapCode = (language: "sql" | "typescript", code: string) => {
+export const wrapCode = (
+  language: "sql" | "typescript" | "html",
+  code: string,
+) => {
   return "```" + language + "\n" + code + "\n```";
 };
 

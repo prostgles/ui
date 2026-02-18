@@ -32,7 +32,7 @@ export const W_TableMenu_TableInfo = ({
           color="action"
           onClick={() => {
             onSetQuery({
-              sql: `ALTER ${tableMeta.type.toUpperCase()} ${asName(tableName)} \nRENAME TO new_name`,
+              sql: `ALTER ${tableMeta.type.toUpperCase()} ${tableName} \nRENAME TO new_name`,
             });
           }}
         />
@@ -52,7 +52,7 @@ export const W_TableMenu_TableInfo = ({
           iconPath={mdiPencil}
           onClick={() => {
             onSetQuery({
-              sql: `COMMENT ON ${tableMeta.type.toUpperCase()} ${asName(tableName)} IS 'My comment';`,
+              sql: `COMMENT ON ${tableMeta.type.toUpperCase()} ${tableName} IS 'My comment';`,
             });
           }}
         />
@@ -133,7 +133,7 @@ export const W_TableMenu_TableInfo = ({
               variant="outline"
               onClick={() => {
                 onSetQuery({
-                  sql: `VACUUM ${asName(tableName)} `,
+                  sql: `VACUUM ${tableName} `,
                   title: `Garbage-collect and optionally analyze a database`,
                 });
               }}
@@ -147,7 +147,7 @@ export const W_TableMenu_TableInfo = ({
               variant="outline"
               onClick={() => {
                 onSetQuery({
-                  sql: `VACUUM FULL ${asName(tableName)} `,
+                  sql: `VACUUM FULL ${tableName} `,
                   title: `Selects "full" vacuum, which can reclaim more space, but takes much longer and exclusively locks the table`,
                 });
               }}
@@ -167,7 +167,7 @@ export const W_TableMenu_TableInfo = ({
               sql: `DROP ${tableMeta.type.toUpperCase()} ${tableName} \n"remove this line to confirm"`,
               title: `${tableMeta.type} will be deleted from the database`,
               onSuccess: () => {
-                prgl.dbs.windows.update(
+                void prgl.dbs.windows.update(
                   { table_name: tableName },
                   { closed: true },
                 );

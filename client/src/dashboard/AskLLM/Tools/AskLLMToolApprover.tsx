@@ -201,6 +201,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           codeHeader={undefined}
           loadedSuggestions={undefined}
           sqlHandler={undefined}
+          prgl={undefined}
         />
         {!isEmpty(toolUseMessage.input) && (
           <>

@@ -8,6 +8,7 @@ import type { RowSiblingData } from "./tableUtils/getEditColumn";
 import { getRowSiblingData } from "./tableUtils/getEditColumn";
 import type { ReactiveState } from "../../appUtils";
 import { useReactiveState } from "../../appUtils";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type RowPanelProps =
   | {
@@ -21,7 +22,7 @@ export type RowPanelProps =
       fixedUpdateData?: AnyObject;
     };
 
-type RowCardProps = Pick<CommonWindowProps, "prgl"> & {
+type RowCardProps = {
   tableName: string;
   tableHandler: Partial<TableHandlerClient>;
   onSuccess?: VoidFunction;
@@ -31,7 +32,6 @@ type RowCardProps = Pick<CommonWindowProps, "prgl"> & {
 };
 
 export const RowCard = ({
-  prgl,
   tableName,
   rows,
   tableHandler,
@@ -39,6 +39,7 @@ export const RowCard = ({
   onPrevOrNext,
   showR,
 }: RowCardProps) => {
+  const prgl = usePrgl();
   const { state: show, setState } = useReactiveState(showR);
   if (!show) return null;
 

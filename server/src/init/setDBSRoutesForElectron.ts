@@ -13,6 +13,7 @@ import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { getElectronConfig } from "../electronConfig";
 import { getProstglesState, tryStartProstgles } from "./tryStartProstgles";
+import { API_ENDPOINTS } from "@common/utils";
 
 /**
  * Used in Electron to set the DB connection and show any connection errors
@@ -31,8 +32,8 @@ export const setDBSRoutesForElectron = (
     throw "Electron sid missing";
   }
 
-  removeExpressRoute(app, ["/dbs"], "post");
-  app.post("/dbs", onPostDBSRequestHandler(app, io, port, host));
+  removeExpressRoute(app, [API_ENDPOINTS.DBS], "post");
+  app.post(API_ENDPOINTS.DBS, onPostDBSRequestHandler(app, io, port, host));
 };
 
 const onPostDBSRequestHandler =

@@ -1,8 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { useMemo, useState } from "react";
 import { ProstglesMCPToolsWithUI } from "../ProstglesToolUseMessage/ProstglesToolUseMessage";
-import type { LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage";
-import { quickClone } from "src/utils/utils";
 
 type P = {
   llmMessages: DBSSchema["llm_messages"][] | undefined;
@@ -37,16 +35,11 @@ export const useLLMChatMessageGrouper = (props: P) => {
         /** Continue group */
         if (prevItem?.type === "tool_call_message_group") {
           prevItem.messages = [...prevItem.messages, { message, nextMessage }];
-          prevItem.messageContentItems = [
-            ...prevItem.messageContentItems,
-            ...message.message,
-          ];
         } else {
           /** Start new group */
           result.push({
             type: "tool_call_message_group",
             messages: [{ message, nextMessage }],
-            messageContentItems: [...message.message],
             firstMessage: message,
             startId: message.id,
             onToggle: () => {
@@ -75,7 +68,7 @@ export const useLLMChatMessageGrouper = (props: P) => {
           return [item];
         }
 
-        const toolCalls = item.messageContentItems.filter(
+        const toolCalls = getMessageContentItems(item).filter(
           (m) => m.type === "tool_use",
         );
         const allowMinimise =
@@ -129,9 +122,12 @@ export type LLMMessageGroup = {
     message: DBSSchema["llm_messages"];
     nextMessage: DBSSchema["llm_messages"] | undefined;
   }[];
-  messageContentItems: LLMMessageContent[];
   firstMessage: DBSSchema["llm_messages"];
   startId: string;
   onToggle: () => void;
 };
+export const getMessageContentItems = ({
+  messages,
+}: Pick<LLMMessageGroup, "messages">) =>
+  messages.flatMap(({ message }) => message.message);
 export type LLMMessageItem = LLMSingleMessage | LLMMessageGroup;
