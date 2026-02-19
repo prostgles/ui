@@ -101,7 +101,10 @@ export type PopupProps = TestSelectors & {
    */
   fixedTopLeft?: boolean;
   autoFocusFirst?: "header" | "content" | { selector: string };
-  onKeyDown?: (e: KeyboardEvent, section: "header" | "content") => void;
+  onKeyDown?: (
+    e: KeyboardEvent,
+    section: "header" | "content" | Element | null,
+  ) => void;
   collapsible?:
     | boolean
     | {
@@ -151,7 +154,9 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
         e,
         document.activeElement?.closest("header." + POPUP_CLASSES.title) ?
           "header"
-        : "content",
+        : document.activeElement?.closest("header." + POPUP_CLASSES.content) ?
+          "content"
+        : document.activeElement,
       );
     }
     if (focusTrap && e.key === "Tab") {

@@ -5,15 +5,24 @@ import type { AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { type Prgl } from "src/App";
+import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
 import { classOverride, type DivProps } from "../Flex";
 import "./Marked.css";
 import {
   MonacoCodeInMarkdown,
   type MonacoCodeInMarkdownProps,
 } from "./MonacoCodeInMarkdown/MonacoCodeInMarkdown";
-import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
+
+const sanitizeSchema = {
+  ...defaultSchema,
+  /**
+   * Allow data- attributes for links so that we can have links that open smart form popups
+   */
+  "*": [...(defaultSchema.attributes?.["*"] ?? []), /^data-/],
+};
 
 export type MarkedProps = DivProps &
   Pick<
@@ -120,11 +129,11 @@ export const Marked = (props: MarkedProps) => {
       )}
       <Markdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
         components={{
           pre: React.Fragment,
           code: CodeComponent,
-          a: (props) => {
+          a: ({ node, ...props }) => {
             const { href } = props;
             const tableName = props["data-table-name"] as string | undefined;
             const columnName = props["data-column-name"] as string | undefined;

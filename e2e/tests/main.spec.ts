@@ -2152,9 +2152,20 @@ test.describe("Main test", () => {
     console.log({ nodes });
     await expect(page.getByText(fileName)).toHaveCount(1);
     await page.waitForTimeout(1e3);
+
+    const myTableContainer = page.locator(`[data-table-name="my_table"]`);
+
     // Required to ensure it is not obscured by the insert btn
-    await page.getByTestId("dashboard.window.fullscreen").last().click();
-    await page.getByTestId("dashboard.window.viewEditRow").last().click();
+    await myTableContainer.getByTestId("dashboard.window.fullscreen").click();
+    await myTableContainer
+      .getByTestId("dashboard.window.viewEditRow")
+      .last()
+      .click();
+
+    /** Toggling records by keyboard works */
+    await page.waitForTimeout(1e3); // Wait for listeners to attach?!
+    await page.keyboard.press("ArrowLeft");
+    await expect(page.locator(`[data-label="Id"]`)).toContainText("4");
 
     await expect(
       page.getByTestId("Popup.content").locator("img"),

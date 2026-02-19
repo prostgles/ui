@@ -50,9 +50,8 @@ export const SmartFormPopupWrapper = ({
           autoFocusFirst: autoFocusFirstIfIsInsert ? "content" : undefined,
         } satisfies Pick<PopupProps, "autoFocusFirst">)
       : {
-          autoFocusFirst: "header",
           onKeyDown: (e, section) => {
-            if (section !== "header") return;
+            if (section === "content") return;
 
             if (e.key === "ArrowLeft") {
               onPrevOrNext(-1);
