@@ -4,7 +4,7 @@ import Loading from "@components/Loader/Loading";
 import type { CommonWindowProps } from "../../dashboard/Dashboard/Dashboard";
 import { Dashboard } from "../../dashboard/Dashboard/Dashboard";
 
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { AppContextProps, Prgl } from "../../App";
 
 import { useParams, useSearchParams } from "react-router";

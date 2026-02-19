@@ -38,7 +38,7 @@ export const useLLMChatMessages = (props: P) => {
             const { id, user_id } =
               messageItem.type === "single_message" ?
                 messageItem.message
-              : messageItem.firstMessage;
+              : messageItem.messages[0].message;
             const isLoadingSinceDate =
               !isLastMessage || !isLoadingSince ?
                 undefined

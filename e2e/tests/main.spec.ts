@@ -1140,6 +1140,7 @@ test.describe("Main test", () => {
       },
     );
 
+    await page.getByTestId("ToolUseMessage.toggleGroup").click();
     await page.getByTestId("ToolUseMessage.toggle").first().click();
     const text = await page.getByTestId("ToolUseMessage").first().textContent();
     if (text?.includes("No results found.")) {

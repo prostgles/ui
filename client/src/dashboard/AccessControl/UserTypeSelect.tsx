@@ -4,7 +4,7 @@ import type { TestSelectors } from "../../Testing";
 import { Icon } from "@components/Icon/Icon";
 import type { DBS } from "../Dashboard/DBS";
 import { SmartSelect } from "../SmartSelect";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client";
 import type { DBSSchema } from "@common/publishUtils";
 import type { UserType } from "./useEditedAccessRule";
 

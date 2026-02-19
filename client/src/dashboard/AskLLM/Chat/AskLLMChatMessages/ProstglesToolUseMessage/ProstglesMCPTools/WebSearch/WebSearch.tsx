@@ -10,7 +10,6 @@ const schema =
 
 export const WebSearch = ({
   toolUseResult: toolResult,
-  message,
 }: ProstglesMCPToolsProps) => {
   const toolUseResult = useTypedToolUseResultData(
     toolResult?.toolUseResultMessage,
@@ -19,14 +18,11 @@ export const WebSearch = ({
 
   return (
     <ScrollFade
-      className="o-auto flex-col"
+      className="o-auto flex-col gap-p5"
       style={{
         maxHeight: "70vh",
       }}
     >
-      <div title="Search input" className="p-1 b rounded">
-        {JSON.stringify(message.input)}
-      </div>
       {toolUseResult && toolUseResult.length === 0 && (
         <div style={{ color: "var(--gray)" }}>No results found.</div>
       )}
@@ -38,7 +34,7 @@ export const WebSearch = ({
             className="gap-p5"
           >
             <FlexRow className="gap-p5">
-              <Favicon url={result.url} />
+              <Favicon className="as-start" url={result.url} />
               <FlexCol className="gap-0">
                 <a
                   href={result.url}

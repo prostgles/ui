@@ -148,7 +148,7 @@ export const Chat = (props: ChatProps) => {
                 maxHeight: "50vh",
               }}
               disabled={!!disabledInfo}
-              defaultValue={getCurrentMessage() || currentlyTypedMessage || ""}
+              defaultValue={getCurrentMessage()}
               onPaste={handleOnPaste}
               onChange={({ currentTarget }) => {
                 onCurrentlyTypedMessageChangeDebounced(currentTarget.value);

@@ -1,4 +1,4 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import { getSmartGroupFilter } from "@common/filterUtils";

@@ -8,7 +8,7 @@ import Loading from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
 import { mdiCancel, mdiStopCircleOutline } from "@mdi/js";
 import { usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo, useState } from "react";
 import type { AppContextProps } from "../../App";
 import CodeExample from "../CodeExample";

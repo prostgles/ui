@@ -5,7 +5,7 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
 import { mdiBellBadgeOutline, mdiDelete } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
 import { NavLink } from "react-router";
 import type { Prgl } from "../App";

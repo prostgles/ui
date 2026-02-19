@@ -1,5 +1,5 @@
 import { getTableFilterFromDetailedGroupFilter } from "@common/filterUtils";
-import { type TableHandlerClient } from "prostgles-client/dist/prostgles";
+import { type TableHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import { asName, isEqual, tryCatchV2 } from "prostgles-types";
 import {

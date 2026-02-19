@@ -4,7 +4,7 @@ import type {
   SingleSyncHandles,
   SyncDataItem,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {

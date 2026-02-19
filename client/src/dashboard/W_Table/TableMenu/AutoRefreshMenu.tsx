@@ -1,4 +1,4 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import ButtonGroup from "@components/ButtonGroup";
 import { InfoRow } from "@components/InfoRow";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";

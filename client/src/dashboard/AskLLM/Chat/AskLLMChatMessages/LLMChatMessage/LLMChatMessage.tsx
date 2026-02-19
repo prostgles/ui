@@ -1,13 +1,13 @@
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
-import { isEqual } from "prostgles-types";
 import React, { memo } from "react";
 import { Counter } from "src/dashboard/W_SQL/W_SQL";
 import type { UseLLMChatProps } from "../../useLLMChat";
 import type { LLMMessageItem } from "../hooks/useLLMChatMessageGrouper";
 import { LLMGroupedToolCallsMessage } from "./LLMGroupedToolCallsMessage";
 import { LLMSingleChatMessage } from "./LLMSingleChatMessage";
+import { isEqual } from "prostgles-types";
 
 export type LLMChatMessageCommonProps = Pick<
   UseLLMChatProps,
@@ -27,7 +27,7 @@ export const LLMChatMessage = memo(
     const message =
       messageItem.type === "single_message" ?
         messageItem.message
-      : messageItem.firstMessage;
+      : messageItem.messages[0].message;
     const { id, meta } = message;
     return (
       <FlexCol>
@@ -60,7 +60,12 @@ export const LLMChatMessage = memo(
     );
   },
   (prev, next) => {
-    const areEqual = isEqual(prev, next);
-    return areEqual;
+    try {
+      const areEqual = isEqual(prev, next); //"error"
+      return areEqual;
+    } catch (e) {
+      console.error("Error comparing LLMChatMessage props:", e);
+      return false; // If there's an error during comparison, re-render the component
+    }
   },
 );

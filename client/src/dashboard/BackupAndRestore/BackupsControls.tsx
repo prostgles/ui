@@ -11,7 +11,7 @@ import {
   mdiStop,
 } from "@mdi/js";
 import { usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import { omitKeys, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";

@@ -15,7 +15,7 @@ import {
   mdiTools,
   mdiViewColumnOutline,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useEffect, useState } from "react";
 
 import type {

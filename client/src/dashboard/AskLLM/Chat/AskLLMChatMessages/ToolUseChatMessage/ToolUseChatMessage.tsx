@@ -58,7 +58,11 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
               title={m.name}
               onClickClose={false}
               button={
-                <Btn iconPath={mdiCodeJson} className="show-on-trigger-hover" />
+                <Btn
+                  iconPath={mdiCodeJson}
+                  size="small"
+                  className="show-on-trigger-hover"
+                />
               }
               contentClassName="p-1 flex-col gap-1 f-1"
             >

@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Chip from "@components/Chip";
 import { InfoRow } from "@components/InfoRow";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import {

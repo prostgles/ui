@@ -10,7 +10,7 @@ import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiFilterPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { _PG_date, _PG_numbers, includes } from "prostgles-types";
 import React, { useState } from "react";

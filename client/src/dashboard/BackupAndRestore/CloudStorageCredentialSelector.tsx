@@ -5,7 +5,7 @@ import { Select } from "@components/Select/Select";
 import { mdiInformationOutline, mdiPlus } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useEffect, useMemo } from "react";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import { getMonaco } from "../SQLEditor/W_SQLEditor";

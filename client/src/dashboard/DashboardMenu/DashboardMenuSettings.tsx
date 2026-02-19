@@ -5,7 +5,7 @@ import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiCog, mdiTable, mdiViewGridPlus } from "@mdi/js";
 import { useEffectAsync, usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React, { useMemo } from "react";
 import type { DashboardProps } from "../Dashboard/Dashboard";

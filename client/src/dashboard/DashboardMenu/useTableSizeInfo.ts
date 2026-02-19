@@ -1,7 +1,7 @@
 import { usePromise } from "prostgles-client";
 import type { DashboardMenuProps } from "./DashboardMenu";
 import { kFormatter } from "../W_Table/W_Table";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import { useMemo } from "react";
 import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";

@@ -1,4 +1,4 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { DBSSchema } from "@common/publishUtils";
 import { ACCESS_CONTROL_SELECT } from "../../AccessControl/AccessControl";
 import type { DBS } from "../../Dashboard/DBS";

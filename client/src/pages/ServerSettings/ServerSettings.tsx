@@ -10,7 +10,7 @@ import {
   mdiLaptop,
   mdiSecurity,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { Prgl } from "../../App";

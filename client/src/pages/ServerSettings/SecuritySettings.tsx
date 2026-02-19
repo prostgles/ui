@@ -5,7 +5,7 @@ import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { mdiLaptop } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useState } from "react";
 import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";

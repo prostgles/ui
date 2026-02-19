@@ -1,4 +1,4 @@
-import { join } from "path";
+import { join, relative } from "path";
 import { isDefined } from "prostgles-types";
 import ts from "typescript";
 import { getReactRenderTree } from "./getReactRenderTree";
@@ -32,7 +32,7 @@ export const getReactComponents = ({
 
   const componentsMap = new Map<
     string,
-    { name: string; propsType: ts.Type | undefined }
+    { name: string; propsType: ts.Type | undefined; filePath: string }
   >();
 
   for (const sourceFile of program.getSourceFiles()) {
@@ -40,11 +40,12 @@ export const getReactComponents = ({
     if (!filePath.startsWith(componentsDir)) continue;
 
     ts.forEachChild(sourceFile, (node) => {
+      const filePath = relative(projectRoot, sourceFile.fileName);
       // Check for regular exports
       if (isExported(node)) {
         const comp = getReactComponent(node, checker);
         if (comp) {
-          componentsMap.set(comp.name, comp);
+          componentsMap.set(comp.name, { ...comp, filePath });
         }
       }
 
@@ -56,20 +57,29 @@ export const getReactComponents = ({
           sourceFile,
         );
         if (comp) {
-          componentsMap.set(comp.name, comp);
+          componentsMap.set(comp.name, { ...comp, filePath });
         }
       }
     });
   }
 
   const comps = Array.from(componentsMap.values()).map((c) => ({
+    filePath: c.filePath,
     name: c.name,
     propsTypeString:
       c.propsType ? checker.typeToString(c.propsType) : undefined,
   }));
 
   // TODO: fix recursive types generation for func returns
-  const renderTree = getReactRenderTree(program) as any;
+  const renderTree = getReactRenderTree(program) as {
+    componentName: string;
+    outputTree: {
+      name: string;
+      children: any[];
+      condition?: string;
+      outputTree?: any[];
+    }[];
+  }[];
   return { components: comps, renderTree };
 };
 

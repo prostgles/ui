@@ -45,7 +45,8 @@ const getProstglesApiTypes = () => {
   );
   const viewHandlerStart = getTextBetween(
     commonHandlers,
-    "export type ViewHandler",
+    `/**
+ * Data fetching`,
     "export type JoinMakerOptions",
   );
   const clientHandlers = readFileSync(
@@ -97,9 +98,9 @@ export const saveTsAsStringValue = ({
       .replace(/\\/g, "\\\\")
       .replace(/`/g, "\\`")
       .replace(/\$\{/g, "\\${");
+    //  * https://github.com/electron-userland/electron-builder/issues/5064
     const newContent = `/**
  * Generated file. Do not edit.
- * https://github.com/electron-userland/electron-builder/issues/5064
  */
 export const ${variableName} = \`${escapedContent}\n\`;`;
     writeFileSync(`${commonDir}/${variableName}.ts`, newContent);

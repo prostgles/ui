@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { mdiStop } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { Prgl } from "../../App";

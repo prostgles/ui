@@ -2,7 +2,7 @@ import Btn from "@components/Btn";
 import { IconPalette } from "@components/IconPalette/IconPalette";
 import PopupMenu from "@components/PopupMenu";
 import { mdiCog } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 import type { Prgl } from "../../App";
 import type {

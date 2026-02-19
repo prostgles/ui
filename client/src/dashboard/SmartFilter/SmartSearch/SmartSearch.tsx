@@ -8,7 +8,7 @@ import type {
   SearchListProps,
 } from "@components/SearchList/SearchList";
 import { SearchList } from "@components/SearchList/SearchList";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import type { DashboardState } from "../../Dashboard/Dashboard";

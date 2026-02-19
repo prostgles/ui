@@ -1,4 +1,4 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import { getComputedColumnSelect } from "src/dashboard/W_Table/tableUtils/getTableSelect";
 import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";

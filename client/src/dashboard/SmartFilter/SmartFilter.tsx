@@ -3,7 +3,7 @@ import { isJoinedFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { FlexCol, classOverride } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";

@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../i18n/i18nUtils";
 import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";

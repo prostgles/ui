@@ -1,4 +1,4 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject, SQLHandler } from "prostgles-types";
 import type { Theme } from "src/App";
 import { chipColorsFadedBorder } from "../ColumnDisplayFormat/ChipStylePalette";

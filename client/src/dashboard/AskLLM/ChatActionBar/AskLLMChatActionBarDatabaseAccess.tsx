@@ -10,7 +10,7 @@ import {
   mdiTableSearch,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
 import { SmartForm } from "../../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";

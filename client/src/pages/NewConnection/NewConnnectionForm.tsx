@@ -18,7 +18,7 @@ import {
   mdiDeleteOutline,
   mdiPlus,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router";
 import type { AppContextProps } from "../../App";

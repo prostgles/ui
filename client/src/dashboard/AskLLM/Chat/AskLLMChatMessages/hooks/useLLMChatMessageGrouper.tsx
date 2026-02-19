@@ -28,7 +28,7 @@ export const useLLMChatMessageGrouper = (props: P) => {
       const hasToolUseOrResult = message.message.some(
         (m) => m.type === "tool_use" || m.type === "tool_result",
       );
-      const nextMessage = llmMessages[index + 1]; //quickClone(llmMessages[index + 1]);
+      const nextMessage = llmMessages[index + 1];
 
       /** Start or continue group */
       if (hasToolUseOrResult) {
@@ -40,7 +40,6 @@ export const useLLMChatMessageGrouper = (props: P) => {
           result.push({
             type: "tool_call_message_group",
             messages: [{ message, nextMessage }],
-            firstMessage: message,
             startId: message.id,
             onToggle: () => {
               setToggledSections((prev) => {
@@ -73,32 +72,33 @@ export const useLLMChatMessageGrouper = (props: P) => {
         );
         const allowMinimise =
           toolCalls.length >= 3 &&
-          !toolCalls.some((m) => ProstglesMCPToolsWithUI[m.name]);
+          !toolCalls.some(
+            (m) => ProstglesMCPToolsWithUI[m.name]?.displayMode === "full",
+          );
         const shouldExpand =
           !allowMinimise || toggledSections.has(item.startId);
 
-        if (shouldExpand) {
-          return item.messages.map(
-            ({ message, nextMessage }) =>
-              ({
-                type: "single_message",
-                message,
-                nextMessage,
-                onToggle:
-                  toggledSections.has(message.id) ?
-                    () => {
-                      setToggledSections((prev) => {
-                        const newSet = new Set(prev);
-                        newSet.delete(message.id);
-                        return newSet;
-                      });
-                    }
-                  : undefined,
-              }) satisfies LLMMessageItem,
-          );
+        if (!shouldExpand) {
+          return [item];
         }
-
-        return [item];
+        return item.messages.map(
+          ({ message, nextMessage }) =>
+            ({
+              type: "single_message",
+              message,
+              nextMessage,
+              onToggle:
+                toggledSections.has(message.id) ?
+                  () => {
+                    setToggledSections((prev) => {
+                      const newSet = new Set(prev);
+                      newSet.delete(message.id);
+                      return newSet;
+                    });
+                  }
+                : undefined,
+            }) satisfies LLMMessageItem,
+        );
       })
       .flat();
 
@@ -110,19 +110,18 @@ export const useLLMChatMessageGrouper = (props: P) => {
   };
 };
 
-export type LLMSingleMessage = {
-  type: "single_message";
+type LLMMessagePair = {
   message: DBSSchema["llm_messages"];
   nextMessage: DBSSchema["llm_messages"] | undefined;
+};
+export type LLMSingleMessage = LLMMessagePair & {
+  type: "single_message";
   onToggle: undefined | (() => void);
 };
+
 export type LLMMessageGroup = {
   type: "tool_call_message_group";
-  messages: {
-    message: DBSSchema["llm_messages"];
-    nextMessage: DBSSchema["llm_messages"] | undefined;
-  }[];
-  firstMessage: DBSSchema["llm_messages"];
+  messages: [LLMMessagePair, ...LLMMessagePair[]];
   startId: string;
   onToggle: () => void;
 };

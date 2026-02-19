@@ -1,5 +1,5 @@
 import { mdiAlertCircleOutline, mdiPencil, mdiPlus } from "@mdi/js";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client";
 import { isDefined } from "prostgles-types";
 import React, { useState } from "react";
 import type { TestSelectors } from "../Testing";

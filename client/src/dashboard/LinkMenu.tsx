@@ -1,4 +1,4 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { ParsedJoinPath } from "prostgles-types";
 import React from "react";
 import Popup from "@components/Popup/Popup";

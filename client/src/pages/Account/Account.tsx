@@ -2,7 +2,7 @@ import { FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import Tabs from "@components/Tabs";
 import { mdiAccount, mdiApplicationBracesOutline, mdiSecurity } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import { getKeys } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router";

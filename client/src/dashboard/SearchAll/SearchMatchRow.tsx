@@ -2,7 +2,7 @@ import { sliceText } from "@common/utils";
 import { Icon } from "@components/Icon/Icon";
 import { SvgIcon } from "@components/SvgIcon";
 import { mdiTable, mdiTableEdit } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 
 export type SearchMatch = {

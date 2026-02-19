@@ -1,5 +1,5 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import {
   asName,
   type PG_COLUMN_UDT_DATA_TYPE,

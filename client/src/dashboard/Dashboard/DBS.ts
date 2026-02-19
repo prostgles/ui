@@ -2,7 +2,7 @@ import type {
   DBGeneratedSchema,
   GeneratedFunctionSchema,
 } from "@common/DBGeneratedSchema";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 
 export type DBSMethods = Partial<GeneratedFunctionSchema>;
 

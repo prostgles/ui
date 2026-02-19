@@ -17,7 +17,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { Select } from "@components/Select/Select";
 import { mdiCheckBold, mdiDelete } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import { includes } from "prostgles-types";
 import React from "react";
 import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";

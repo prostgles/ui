@@ -2,7 +2,7 @@ import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import { mdiMagnify } from "@mdi/js";
 import { usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 import type { AppContextProps } from "../../App";
 import SmartTable from "../SmartTable";

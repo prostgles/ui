@@ -12,7 +12,7 @@ import {
   mdiRefreshAuto,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import { type AnyObject } from "prostgles-types";
 import React from "react";
 import type { Backups } from "../Dashboard/dashboardUtils";

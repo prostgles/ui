@@ -11,7 +11,7 @@ import {
   mdiTable,
   mdiUpload,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";

@@ -292,9 +292,8 @@ export class SilverGridChild extends RTComp<
     const { getRoot } = this.props;
     return Boolean(
       this.ref &&
-        getRoot().querySelector('[data-box-type="item"].fullscreen') &&
-        getRoot().querySelector('[data-box-type="item"].fullscreen') !==
-          this.ref,
+      getRoot().querySelector('[data-box-type="item"].fullscreen') &&
+      getRoot().querySelector('[data-box-type="item"].fullscreen') !== this.ref,
     );
   };
 
@@ -361,6 +360,11 @@ export class SilverGridChild extends RTComp<
         ref={(r) => {
           if (r) this.ref = r;
         }}
+        /**
+         * Specifically added for timechart.
+         * It dissapears when it's a small view and is zoomed in and fullscreen is toggled
+         * */
+        key={fullscreen + layout.id}
         className={`SilverGridChild silver-grid-box silver-grid-item bg-color-1 f-1 flex-col min-w-0 min-h-0 ${fullscreen ? " fullscreen " : " "} ${isFixed ? "rounded shadow" : ""}`}
         data-box-id={layout.id}
         data-box-type="item"

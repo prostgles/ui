@@ -1,7 +1,13 @@
 import React, { useMemo } from "react";
 import { tryCatchV2 } from "prostgles-types";
 
-export const Favicon = ({ url }: { url: string }) => {
+export const Favicon = ({
+  url,
+  className,
+}: {
+  url: string;
+  className?: string;
+}) => {
   const faviconUrl = useMemo(
     () =>
       tryCatchV2(() => {
@@ -17,6 +23,11 @@ export const Favicon = ({ url }: { url: string }) => {
   if (!faviconUrl) return null;
 
   return (
-    <img src={faviconUrl} alt="Favicon" style={{ width: 24, height: 24 }} />
+    <img
+      className={className}
+      src={faviconUrl}
+      alt="Favicon"
+      style={{ width: 24, height: 24 }}
+    />
   );
 };

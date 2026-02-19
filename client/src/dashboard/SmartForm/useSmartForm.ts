@@ -1,4 +1,4 @@
-import { type TableHandlerClient } from "prostgles-client/dist/prostgles";
+import { type TableHandlerClient } from "prostgles-client";
 import { type AnyObject } from "prostgles-types";
 import { useMemo, useState } from "react";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";

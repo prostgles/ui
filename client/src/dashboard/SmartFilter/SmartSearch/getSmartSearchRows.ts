@@ -1,6 +1,6 @@
 import { getSmartGroupFilter, type DetailedFilter } from "@common/filterUtils";
 import { isObject } from "@common/publishUtils";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import {
   _PG_numbers,
   type AnyObject,

@@ -1,5 +1,5 @@
 import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import {
   getSerialisableError,
   type AnyObject,

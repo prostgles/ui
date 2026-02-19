@@ -6,10 +6,10 @@ SQL Editor and internal tool builder for Postgres
 
 ### Screenshots
 
-[More](https://prostgles.com/ui)
+[More](https://prostgles.com/)
 
 <p float="left">
-  <img src="https://prostgles.com/static/images/screenshot_crypto.png" width="100%"/>  
+  <img src="./docs/screenshots/overview.svgif.svg" width="100%"/>  
 </p>
 
 ### Features

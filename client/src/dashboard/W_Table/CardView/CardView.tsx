@@ -1,6 +1,6 @@
 import type { PaginationProps } from "@components/Table/Pagination";
 import { Pagination } from "@components/Table/Pagination";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
 import type {

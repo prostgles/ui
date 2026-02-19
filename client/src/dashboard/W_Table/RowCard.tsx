@@ -1,4 +1,4 @@
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
 import type { DetailedFilterBase } from "@common/filterUtils";

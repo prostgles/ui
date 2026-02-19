@@ -6,7 +6,7 @@ import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { Select, type FullOption } from "@components/Select/Select";
 import { SvgIconFromURL } from "@components/SvgIcon";
 import { mdiAccountKey, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { DetailedJoinSelect } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { SmartForm, SmartFormPopup } from "../../SmartForm/SmartForm";

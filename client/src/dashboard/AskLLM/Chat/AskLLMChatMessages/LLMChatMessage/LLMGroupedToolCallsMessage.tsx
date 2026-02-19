@@ -11,6 +11,7 @@ import {
 import { getIconForToolUseMessage } from "../ToolUseChatMessage/useToolUseChatMessage";
 import type { LLMChatMessageCommonProps } from "./LLMChatMessage";
 import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
+import { LLMToolCallIcon } from "./LLMToolCallIcon";
 
 export const LLMGroupedToolCallsMessage = ({
   loadedSuggestions,
@@ -91,8 +92,8 @@ export const LLMGroupedToolCallsMessage = ({
         onClick={onToggle}
         data-command="ToolUseMessage.toggleGroup"
       >
-        {icons.map((iconPath) => {
-          return <SvgIcon key={iconPath} icon={iconPath} />;
+        {icons.map((iconName) => {
+          return <LLMToolCallIcon key={iconName} iconName={iconName} />;
         })}
         {toolCallCount} tool calls
       </Btn>

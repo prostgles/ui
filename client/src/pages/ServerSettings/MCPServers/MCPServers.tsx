@@ -3,7 +3,7 @@ import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
 import { usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";

@@ -4,7 +4,7 @@ import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import { SmartForm } from "../../SmartForm/SmartForm";
 import { mdiPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 
 export const AddLLMPromptForm = ({
   dbs,

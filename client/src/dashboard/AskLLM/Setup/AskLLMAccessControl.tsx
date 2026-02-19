@@ -6,7 +6,7 @@ import FormField from "@components/FormField/FormField";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiAssistant, mdiClose, mdiPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React, { useState } from "react";
 import type { Prgl } from "../../../App";
 import { SectionHeader } from "../../AccessControl/AccessControlRuleEditor";

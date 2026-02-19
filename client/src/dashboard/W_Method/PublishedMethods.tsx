@@ -1,5 +1,5 @@
 import { mdiDelete, mdiLanguageTypescript, mdiPencil, mdiPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";

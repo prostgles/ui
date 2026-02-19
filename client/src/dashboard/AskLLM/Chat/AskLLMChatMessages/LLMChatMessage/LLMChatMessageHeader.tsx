@@ -42,7 +42,9 @@ export const LLMChatMessageHeader = ({
         }, 0);
       }
       const { id, user_id, chat_id, created } =
-        item.type === "single_message" ? item.message : item.firstMessage;
+        item.type === "single_message" ?
+          item.message
+        : item.messages[0].message;
 
       const meta =
         item.type === "single_message" ?

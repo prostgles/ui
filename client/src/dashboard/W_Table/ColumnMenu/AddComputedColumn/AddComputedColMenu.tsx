@@ -8,7 +8,7 @@ import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
 import { Select } from "@components/Select/Select";
 import { mdiChevronDown, mdiPlus } from "@mdi/js";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client";
 import { _PG_date, pickKeys } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../../App";

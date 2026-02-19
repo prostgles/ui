@@ -1,4 +1,4 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { DBSchemaTable } from "prostgles-types";
 import { getKeys, pickKeys } from "prostgles-types";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
