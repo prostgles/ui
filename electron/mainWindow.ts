@@ -40,6 +40,15 @@ const createWindow = () => {
     width: startupWidth,
     height: startupHeight,
     icon: iconPath,
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      nodeIntegrationInWorker: false,
+      nodeIntegrationInSubFrames: false,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+    },
   });
   setContextMenu(mainWindow);
   mainWindow.setMenuBarVisibility(false);

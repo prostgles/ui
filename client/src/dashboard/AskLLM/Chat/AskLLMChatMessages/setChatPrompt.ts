@@ -1,7 +1,6 @@
 import { isDefined } from "@common/filterUtils";
 import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
-import type { s } from "react-router/dist/development/index-react-server-client-gGyf-7Xp";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
 import { tout } from "src/utils/utils";
 
@@ -65,6 +64,12 @@ export const setChatPrompt = async ({
       });
     }
   }
+
+  /** Disable previous db access */
+  if (currentPrompt?.options?.database_access && currentPrompt.id !== id) {
+    await dbs.llm_chats.update({ id: chatId }, { db_data_permissions: null });
+  }
+
   const mcpServersAndTools = getEntries(mcp_server_tools || {});
   if (mcpServersAndTools.length) {
     const allowedToolsInsert = await Promise.all(
@@ -98,5 +103,14 @@ export const setChatPrompt = async ({
     await dbs.llm_chats_allowed_mcp_tools.insert(allowedToolsInsert, {
       onConflict: "DoNothing",
     });
+  }
+
+  if (options?.database_access) {
+    await dbs.llm_chats.update(
+      { id: chatId },
+      {
+        db_data_permissions: { Mode: options.database_access },
+      },
+    );
   }
 };

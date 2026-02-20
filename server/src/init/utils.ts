@@ -38,3 +38,5 @@ export const setNonceHandler = (app: e.Express, enable: boolean) => {
   };
   upsertNamedExpressMiddleware(app, nonceHandler, cspNonceHandlerName);
 };
+
+export const isTesting = !!process.env.PRGL_TEST;

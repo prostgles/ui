@@ -377,7 +377,7 @@ export type DBGeneratedSchema = {
       name?: string;
       options?: null | {    max_tokens?: number;   temperature?: number;   mcp_server_tools?: Record<string, 
  | "*"
- | string[]>;   mcp_servers?: string[];  };
+ | string[]>;   database_access?: "Run readonly SQL";  };
       prompt?: string;
       user_id?: null | string;
     };

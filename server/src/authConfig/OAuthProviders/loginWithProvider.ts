@@ -23,7 +23,7 @@ export const loginWithProvider = async (
   const { user_agent } = clientInfo;
   const { provider, profile } = loginParams;
   const auth_provider_user_id = profile.id;
-  if (!auth_provider_user_id || !database_config) {
+  if (!auth_provider_user_id) {
     return "server-error";
   }
   const username = `${provider}-${auth_provider_user_id}`;

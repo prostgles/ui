@@ -86,7 +86,10 @@ export const validateAgenticWorkflowDefinitions = async (
       .join(", ")}`;
   }
 
-  const validateTables = (tablesToCheck: string[], errMsg: string) => {
+  const ensureTablesExistInFutureSchema = (
+    tablesToCheck: string[],
+    errMsg: string,
+  ) => {
     const invalidTables = tablesToCheck.filter(
       (tableName) =>
         !existingTableNames.includes(tableName) &&
@@ -100,16 +103,28 @@ export const validateAgenticWorkflowDefinitions = async (
       throw `${errMsg} the following table names do not match any new tables or existing tables: ${JSON.stringify(invalidTables)}`;
     }
   };
-  validateTables(usedTables, "Validation error for databaseHandler usage:");
+  ensureTablesExistInFutureSchema(
+    usedTables,
+    "Validation error for databaseHandler usage:",
+  );
 
   const permissionTables =
     databaseAccessDefinitions?.mode === "custom" ?
       Object.keys(databaseAccessDefinitions.tablePermissions)
-    : [];
-  validateTables(
-    permissionTables,
-    "Validation error for databaseAccessDefinitions.tablePermissions:",
-  );
+    : undefined;
+
+  if (permissionTables) {
+    ensureTablesExistInFutureSchema(
+      permissionTables,
+      "Validation error for databaseAccessDefinitions.tablePermissions:",
+    );
+
+    usedTables.forEach((table) => {
+      if (!permissionTables.includes(table)) {
+        throw `Validation error for databaseAccessDefinitions.tablePermissions: the table "${table}" used in the workflow is not included in the tablePermissions`;
+      }
+    });
+  }
 
   Object.entries(userInput || {}).forEach(([inputName, inputDefinition]) => {
     if (
@@ -117,7 +132,7 @@ export const validateAgenticWorkflowDefinitions = async (
       inputDefinition.type === "table-column"
     ) {
       const tableName = inputDefinition.tableName;
-      validateTables(
+      ensureTablesExistInFutureSchema(
         [tableName],
         `Validation error for userInput definition ${inputName}:`,
       );

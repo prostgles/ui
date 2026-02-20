@@ -25,7 +25,6 @@ import {
   PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
-import { getAgentGoalTool } from "./agentConstants";
 import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 import { getFullPrompt } from "./getFullPrompt";
 import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
@@ -315,10 +314,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     } = modelData;
     if (!llm_provider) throw "Provider not found";
 
-    const tools = (
-      chat.agent_info ?
-        [...(toolsWithInfo ?? []), getAgentGoalTool(chat.agent_info)]
-      : toolsWithInfo)?.map(
+    const tools = toolsWithInfo?.map(
       ({ name, description, input_schema, auto_approve }) => {
         return {
           name,

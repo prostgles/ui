@@ -64,7 +64,9 @@ export const LLMChatMessageHeader = ({
 
   const canCollapse = item.type === "single_message";
   return (
-    <FlexRow className="show-on-parent-hover f-1 gap-p25">
+    <FlexRow
+      className={"LLMChatMessageHeader show-on-parent-hover f-1 gap-p25"}
+    >
       {!user_id && (
         <Chip
           className="ml-p5"

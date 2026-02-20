@@ -195,9 +195,14 @@ export class DeckWrapped {
 
   /** Used in getting data */
   getExtent = (): Bounds | undefined => {
-    const b = this.deck.getViewports()[0]?.getBounds();
-    if (!b) return undefined;
-    return [b.slice(0, 2) as any, b.slice(2) as any];
+    try {
+      const b = this.deck.getViewports()[0]?.getBounds();
+      if (!b) return undefined;
+      return [b.slice(0, 2) as any, b.slice(2) as any];
+    } catch (err) {
+      console.log(err);
+    }
+    return undefined;
   };
 
   render(props: DeckProps<OrthographicView[] | MapView[]>) {

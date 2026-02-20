@@ -1,6 +1,6 @@
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "../electronConfig";
-import { isTesting } from "./initExpressAndIOServers";
+import { isTesting } from "./utils";
 
 let isCleaningUp = false;
 export const cleanupTestDatabases = async (con: DBSConnectionInfo) => {

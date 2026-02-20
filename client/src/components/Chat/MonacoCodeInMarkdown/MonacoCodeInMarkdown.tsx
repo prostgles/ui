@@ -84,7 +84,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
         className,
       )}
       style={{
-        minWidth: "min(100%,600px, 100vw)",
+        minWidth: "min(600px, calc(100vw - 4em))",
       }}
       data-command="MarkdownMonacoCode"
     >

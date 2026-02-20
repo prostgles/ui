@@ -173,7 +173,8 @@ export const dashboardDemo = async () => {
   await closeAllViews();
   await runDbSQL(
     "DELETE FROM futures WHERE (now() - timestamp) > interval '30 minutes'",
-  );
+  ).catch(console.error);
+  // await tout(500); // It must be the silver grid refactor
   await openTable("futures");
 
   await click("dashboard.window.toggleFilterBar");

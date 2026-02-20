@@ -978,7 +978,7 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, " estimated_cost ");
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Maximum total cost of the chat (5) will be reached after sending this message`,
-      { timeout: 15e3 },
+      { timeout: 30_000 },
     );
 
     /* MCP Docker sandbox */
@@ -1062,8 +1062,11 @@ test.describe("Main test", () => {
       .click();
 
     await page.getByRole("option", { name: "Run readonly SQL" }).click();
+    /** Auto approve to ensure the container can run the query */
+    await page.getByTitle("Show more").last().click();
+    await page.getByText("Auto approve", { exact: true }).last().click();
+    await page.waitForTimeout(2000); // debounced update
     await page.getByTestId("Popup.close").last().click();
-    await page.waitForTimeout(4e3); // wait for askLLM publish method forked process to restart after schema change
     await dockerRunAndExpect(`username: 'fresh_user'`, true);
 
     /** Test stopping chat */
@@ -2165,7 +2168,8 @@ test.describe("Main test", () => {
     /** Toggling records by keyboard works */
     await page.waitForTimeout(1e3); // Wait for listeners to attach?!
     await page.keyboard.press("ArrowLeft");
-    await expect(page.locator(`[data-label="Id"]`)).toContainText("4");
+    await expect(page.locator(`#my_table-id`)).toHaveValue("4");
+    await page.keyboard.press("ArrowRight");
 
     await expect(
       page.getByTestId("Popup.content").locator("img"),

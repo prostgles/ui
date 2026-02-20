@@ -1,11 +1,9 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getEntries, sliceText } from "@common/utils";
-import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { CodeFileBrowser } from "@components/CodeFileBrowser/CodeFileBrowser";
 import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
-import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import {
@@ -19,15 +17,15 @@ import {
   mdiChip,
   mdiLanConnect,
   mdiMemory,
-  mdiReload,
   mdiTimerLockOutline,
 } from "@mdi/js";
 import { omitKeys, type JSONB } from "prostgles-types";
 import React, { useState } from "react";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { PopupSection } from "../../ToolUseChatMessage/PopupSection";
+import { ToolUseReRun } from "../../ToolUseChatMessage/ToolUseReRun";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
+import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["schema"]["type"]
@@ -39,7 +37,6 @@ export const DockerSandboxCreateContainer = ({
   chatId,
 }: ProstglesMCPToolsProps) => {
   const toolUseResult = toolResult?.toolUseResultMessage;
-  const { addAlert } = useAlert();
   const initialData = message.input as DockerSandboxCreateContainerData;
   const [editedFiles, setEditedFiles] = useState<Record<string, string>>();
   const data = {
@@ -56,10 +53,6 @@ export const DockerSandboxCreateContainer = ({
     ];
   const resultObj = useTypedToolUseResultData(toolUseResult, schema);
   const [showLogs, setShowLogs] = useState(Boolean(resultObj?.log.length));
-  const {
-    dbsMethods: { callMCPServerTool },
-    dbs,
-  } = usePrgl();
 
   return (
     <PopupSection
@@ -100,50 +93,59 @@ export const DockerSandboxCreateContainer = ({
             size="small"
             content={JSON.stringify(message.input)}
           />
-          {callMCPServerTool && toolResult && (
-            <Btn
-              variant="faded"
-              color="action"
-              iconPath={mdiReload}
-              size="small"
-              onClickPromise={async () => {
-                const result = await callMCPServerTool({
-                  chatId,
-                  serverName: "prostgles-ui",
-                  toolName: "create_container",
-                  args: data,
-                });
-                console.log("Re-run result:", result);
-                if (result.isError) {
-                  addAlert({
-                    title: "Error re-running tool",
-                    children: <ErrorComponent error={result.content} />,
-                  });
-                } else {
-                  const { content } = result;
-                  await dbs.llm_messages.update(
-                    { id: toolResult.toolUseResult.id },
-                    {
-                      message: [
-                        {
-                          type: "tool_result",
-                          content: content as unknown as {
-                            type: "text";
-                            text: string;
-                          }[],
-                          tool_name:
-                            toolUseResult?.tool_name ??
-                            "prostgles-ui--create_container",
-                          tool_use_id: toolUseResult!.tool_use_id,
-                        },
-                      ],
-                    },
-                  );
-                }
+          {toolResult && (
+            <ToolUseReRun
+              chatId={chatId}
+              toolRequest={message}
+              variant="text"
+              toolResult={{
+                messagePart: toolResult.toolUseResultMessage,
+                messageId: toolResult.toolUseResult.id,
               }}
-            >
-              Re-run
-            </Btn>
+            />
+            // <Btn
+            //   variant="faded"
+            //   color="action"
+            //   iconPath={mdiReload}
+            //   size="small"
+            //   onClickPromise={async () => {
+            //     const result = await callMCPServerTool({
+            //       chatId,
+            //       serverName: "prostgles-ui",
+            //       toolName: "create_container",
+            //       args: data,
+            //     });
+            //     console.log("Re-run result:", result);
+            //     if (result.isError) {
+            //       addAlert({
+            //         title: "Error re-running tool",
+            //         children: <ErrorComponent error={result.content} />,
+            //       });
+            //     } else {
+            //       const { content } = result;
+            //       await dbs.llm_messages.update(
+            //         { id: toolResult.toolUseResult.id },
+            //         {
+            //           message: [
+            //             {
+            //               type: "tool_result",
+            //               content: content as unknown as {
+            //                 type: "text";
+            //                 text: string;
+            //               }[],
+            //               tool_name:
+            //                 toolUseResult?.tool_name ??
+            //                 "prostgles-ui--create_container",
+            //               tool_use_id: toolUseResult!.tool_use_id,
+            //             },
+            //           ],
+            //         },
+            //       );
+            //     }
+            //   }}
+            // >
+            //   Re-run
+            // </Btn>
           )}
         </>
       }
@@ -177,15 +179,12 @@ export const DockerSandboxCreateContainer = ({
           )}
         </FlexRow>
         {showLogs && (
-          <MonacoEditor
+          <MonacoLogs
             key={"logs"}
-            language="text"
             className="f-p5"
             data-command="DockerSandboxCreateContainer.Logs"
             style={{ width: "100%", minHeight: 100 }}
-            value={resultObj?.log.map((l) => l.text).join("") ?? ""}
-            loadedSuggestions={undefined}
-            options={MONACO_READONLY_DEFAULT_OPTIONS}
+            logs={resultObj?.log.map((l) => l.text).join("") ?? ""}
           />
         )}
       </FlexCol>

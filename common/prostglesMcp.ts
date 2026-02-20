@@ -76,7 +76,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             type: "string",
             description: "Table to select from",
           },
-          ...filterSchema,
+          filter: { ...filterSchema.filter, optional: true },
         },
       },
     },
@@ -88,7 +88,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             type: "string",
             description: "Table to select from",
           },
-          ...filterSchema,
+          filter: { ...filterSchema.filter, optional: true },
           select: selectSchema,
           limit: "integer",
         },
@@ -148,7 +148,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   "prostgles-ui": {
     create_container: {
       description:
-        "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.",
+        "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.",
       schema: {
         type: {
           files: filesSchema,

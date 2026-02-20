@@ -1,9 +1,8 @@
 import { API_ENDPOINTS, PROSTGLES_CLOUD_URL, ROUTES } from "@common/utils";
-import { isTesting } from "../init/initExpressAndIOServers";
+import { isTesting } from "../init/utils";
 
 export const prostglesSignup = async (email: string, code: string) => {
-  const host =
-    isTesting || true ? "http://localhost:3005" : PROSTGLES_CLOUD_URL;
+  const host = isTesting ? "http://localhost:3005" : PROSTGLES_CLOUD_URL;
   const path = code ? API_ENDPOINTS.MAGIC_LINK : ROUTES.LOGIN;
   const url = `${host}${path}`;
   const rawResp = await fetch(url, {

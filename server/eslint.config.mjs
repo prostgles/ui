@@ -20,6 +20,7 @@ export default defineConfig(
       "sample_schemas",
       "**/*.d.ts",
       "**/*.js",
+      "src/ServiceManager/services/*/src",
     ],
   },
   {

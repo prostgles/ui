@@ -10,6 +10,7 @@ import {
 } from "./ServiceManagerTypes";
 import { startService } from "./startService";
 import { stopService } from "./stopService";
+import { isTesting } from "@src/init/utils";
 
 export class ServiceManager {
   dbs: DBS | undefined;
@@ -35,10 +36,30 @@ export class ServiceManager {
       });
       return;
     }
-    void this.dbs.services.update(
-      { name: serviceName },
-      { logs, status: serviceStatus ?? "stopped" },
-    );
+    if (isTesting) {
+      console.log(
+        `Updating ${JSON.stringify(serviceName)} status to ${serviceStatus}`,
+      );
+    }
+    void this.dbs.services
+      .update(
+        { name: serviceName },
+        { logs, status: serviceStatus ?? "stopped" },
+        {
+          returning: { name: 1, status: 1 },
+        },
+      )
+      .then((res) => {
+        if (isTesting) {
+          console.log("Updated service logs in db", res);
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "Failed to update service logs in db for service " + serviceName,
+          error,
+        );
+      });
   };
   activeServices: Map<string, ServiceInstance> = new Map();
   enablingServices: Map<string, Promise<RunningServiceInstance>> = new Map();

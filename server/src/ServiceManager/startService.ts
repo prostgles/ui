@@ -150,8 +150,8 @@ export async function startService(
     ).catch(() => null);
     console.log(
       startingServiceLabel +
-        ": healthcheck " +
-        (healthCheckResponse?.ok ? "passed" : "..."),
+        "Healthcheck" +
+        (healthCheckResponse?.ok ? " passed" : "..."),
     );
     if (healthCheckResponse?.ok) {
       break;

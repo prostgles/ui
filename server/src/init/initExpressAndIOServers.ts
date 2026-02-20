@@ -11,8 +11,8 @@ import path from "path";
 import { Server } from "socket.io";
 import { actualRootDir } from "../electronConfig";
 import { includes } from "prostgles-types";
+import { isTesting } from "./utils";
 
-export const isTesting = !!process.env.PRGL_TEST;
 export const initExpressAndIOServers = () => {
   const app = express();
 

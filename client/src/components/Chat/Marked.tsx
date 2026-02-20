@@ -18,10 +18,18 @@ import {
 
 const sanitizeSchema = {
   ...defaultSchema,
-  /**
-   * Allow data- attributes for links so that we can have links that open smart form popups
-   */
-  "*": [...(defaultSchema.attributes?.["*"] ?? []), /^data-/],
+  attributes: {
+    ...defaultSchema.attributes,
+    /**
+     * Allow data- attributes for links so that we can have links that open smart form popups
+     */
+    a: [
+      ...(defaultSchema.attributes?.a ?? []),
+      "dataTableName",
+      "dataColumnName",
+      "dataColumnValue",
+    ],
+  },
 };
 
 export type MarkedProps = DivProps &
@@ -135,22 +143,36 @@ export const Marked = (props: MarkedProps) => {
           code: CodeComponent,
           a: ({ node, ...props }) => {
             const { href } = props;
-            const tableName = props["data-table-name"] as string | undefined;
+            const tableNameRaw = props["data-table-name"] as string | undefined;
             const columnName = props["data-column-name"] as string | undefined;
             const columnValue = props["data-column-value"] as
               | string
               | number
               | undefined;
+            /** It messes it up frequently */
+            const getTableHandler = (name: string, isEscaped = false) => {
+              if (!prgl) return undefined;
+              const tableName = !isEscaped ? name : JSON.stringify(name);
+              if (!Object.hasOwn(prgl.db, tableName)) {
+                if (!isEscaped) {
+                  return getTableHandler(tableName, true);
+                }
+                return undefined;
+              }
+              const tableHandler = prgl.db[tableName];
+              if (!tableHandler) return undefined;
+              return { tableName, tableHandler };
+            };
+            const dbTable =
+              tableNameRaw ? getTableHandler(tableNameRaw) : undefined;
             if (
-              tableName &&
+              tableNameRaw &&
               columnName &&
               columnValue &&
-              prgl &&
-              Object.hasOwn(prgl.db, tableName) &&
-              prgl.db[tableName] &&
+              dbTable &&
               href?.startsWith("#record")
             ) {
-              const tableHandler = prgl.db[tableName];
+              const { tableHandler, tableName } = dbTable;
               return (
                 <a
                   {...props}

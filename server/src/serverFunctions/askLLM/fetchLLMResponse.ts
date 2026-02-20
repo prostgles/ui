@@ -28,7 +28,17 @@ export type FetchLLMResponseArgs = {
 export const fetchLLMResponse = async (
   args: FetchLLMResponseArgs,
 ): Promise<LLMParsedResponse> => {
-  const { llm_provider, llm_credential, llm_model, aborter } = args;
+  const { llm_provider, llm_credential, llm_model, aborter, tools } = args;
+
+  const toolNames = new Set<string>();
+  tools?.forEach((tool) => {
+    if (toolNames.has(tool.name)) {
+      throw new Error(
+        `Duplicate tool name ${JSON.stringify(tool.name)} in tools array`,
+      );
+    }
+    toolNames.add(tool.name);
+  });
   const model = llm_model.name;
   const provider = llm_provider.id;
   const { api_key } = llm_credential;

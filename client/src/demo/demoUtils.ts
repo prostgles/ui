@@ -69,6 +69,9 @@ export const waitForElement = async <T extends Element>(
     }
   }
   if (!elem) {
+    console.trace(
+      `Could not find ${[testId, endSelector].filter(Boolean).join(" ")} element to click`,
+    );
     throw `Could not find ${[testId, endSelector].filter(Boolean).join(" ")} element to click`;
   }
   return elem;

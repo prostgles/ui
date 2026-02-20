@@ -314,6 +314,7 @@ export const startAgenticWorkflowContainer = async (
           state: {
             status: result.state === "finished" ? "completed" : "error",
           },
+          log: result.log,
         },
       )
       .catch((e) => {

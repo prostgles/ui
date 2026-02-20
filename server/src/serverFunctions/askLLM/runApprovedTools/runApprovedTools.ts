@@ -83,23 +83,42 @@ export const runApprovedTools = async (
         "Unexpected. Agent goal tool used but chat does not have agent_info",
       );
     }
+    if (toolUseRequestMessages.length > 1) {
+      throw new Error(
+        "Unexpected. Agent goal tool used but there are other tool use requests in the same message. Agent goal tool must be used alone.",
+      );
+    }
     const validationResult = getJSONBSchemaValidationError(
       { type: agent_info.outputSchema },
       agetGoalTool.input,
     );
+    const toolResultContent = {
+      type: "tool_result",
+      tool_name: AGENT_GOAL_TOOL_NAME,
+      tool_use_id: agetGoalTool.id,
+      is_error: validationResult.error !== undefined,
+      content:
+        validationResult.error !== undefined ?
+          "goal-data-validation-failure"
+        : "goal-reached",
+    } satisfies ToolResultMessage;
+
+    /**
+     * Allow agent to fix issue
+     */
+    if (toolResultContent.is_error) {
+      await askLLM({
+        ...args,
+        type: "tool-use-result",
+        userMessage: [toolResultContent],
+        aborter,
+      });
+      return;
+    }
+
     await dbs.llm_messages.insert({
       chat_id: chatId,
-      message: [
-        {
-          type: "tool_result",
-          tool_name: AGENT_GOAL_TOOL_NAME,
-          tool_use_id: agetGoalTool.id,
-          content:
-            validationResult.error !== undefined ?
-              "goal-data-validation-failure"
-            : "goal-reached",
-        },
-      ],
+      message: [toolResultContent],
     });
     await dbs.llm_chats.update(
       {

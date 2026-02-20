@@ -255,10 +255,9 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
               values: { oneOf: [{ enum: ["*"] }, { type: "string[]" }] },
             },
           },
-          mcp_servers: {
-            type: "string[]",
+          database_access: {
             optional: true,
-            description: "Deprecated. Use mcp_server_tools instead.",
+            enum: ["Run readonly SQL"],
           },
         },
       },

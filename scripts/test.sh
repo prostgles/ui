@@ -4,11 +4,13 @@ set -e
 cd client
 npm i
 npx tsc
+npm run lint
 
 cd ../server
 rm -rf ./dist
 
 npm i 
+npm run lint
 npm test
 
 cd ..

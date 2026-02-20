@@ -14,6 +14,23 @@ export const getFullPrompt = async ({
   connectionId: string;
 }) => {
   const connInfo = await connectionManager.getConnectionData(connectionId);
+  const schemaWithInfo =
+    !schema ?
+      "Schema is empty: there are no tables or views in the database"
+    : [
+        "Below (in the next sql code block) is the database schema they're currently working with expressed as create statements so you have a better idea of relationships and constraints:",
+        wrapCode("sql", schema),
+        `\n`,
+        `When interacting with the tables through non raw SQL tools, it is important that you include double quotes for table names that need escaping. `,
+        `For example: db.find(${JSON.stringify("my users")}); db.insert("tools");`,
+        `\n`,
+        `When you need to reference records from the database use an anchor to ensure the user can quickly preview them.`,
+        `The tag must be of this format: `,
+        wrapCode(
+          "html",
+          `<a href="#record" data-table-name="{the name of the table}" data-column-name="{the name of the column to filter by (should ideally have a pkey constraint)}" data-column-value="{the value of the column/pkey}">{pkey and/or name and/or other data}</a>`,
+        ),
+      ].join("\n");
   const promptWithContext = prompt
     .replaceAll(
       LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME,
@@ -23,24 +40,10 @@ export const getFullPrompt = async ({
       LLM_PROMPT_VARIABLES.TODAY,
       new Date().toISOString().split("T")[0]!,
     )
-    .replace(
-      LLM_PROMPT_VARIABLES.SCHEMA,
-      schema ?
-        wrapCode("sql", schema) +
-          [
-            `\n`,
-            `When you need to reference records from the database use an anchor to ensure the user can quickly preview them.`,
-            `The tag must be of this format: `,
-            wrapCode(
-              "html",
-              `<a href="#record" data-table-name="{the name of the table}" data-column-name="{the name of the column to filter by (should ideally have a pkey constraint)}" data-column-value="{the value of the column/pkey}">{pkey and/or name and/or other data}</a>`,
-            ),
-          ].join("\n")
-      : "Schema is empty: there are no tables or views in the database",
-    )
+    .replace(LLM_PROMPT_VARIABLES.SCHEMA, schemaWithInfo)
     .replace(
       LLM_PROMPT_VARIABLES.DB_TYPESCRIPT_SCHEMA,
-      wrapWithCodeBlock(
+      wrapCode(
         "typescript",
         (() => {
           if (connInfo.is_state_db) return statePrgl?.getTSSchema() ?? "";
@@ -52,16 +55,11 @@ export const getFullPrompt = async ({
     )
     .replace(
       LLM_PROMPT_VARIABLES.DB_HANDLER_SCHEMA,
-      wrapWithCodeBlock("typescript", prostglesApiTypes),
+      wrapCode("typescript", prostglesApiTypes),
     );
   // .replace(
   //   LLM_PROMPT_VARIABLES.DASHBOARD_TYPES,
   //   wrapCode("typescript", dashboardTypesContent),
   // );
   return promptWithContext;
-};
-
-const wrapWithCodeBlock = (language: "sql" | "typescript", code: string) => {
-  const backticks = "```";
-  return `${backticks}${language}\n${code}\n${backticks}`;
 };
