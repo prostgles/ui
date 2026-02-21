@@ -62,6 +62,7 @@ export const CommandPalette = ({
                 <NavLink to={"/documentation"}>Documentation</NavLink>
               ))
             }
+            showFullscreenToggle={{}}
             data-command="CommandPalette"
             clickCatchStyle={{ opacity: 1 }}
             positioning={showSection === "commands" ? "top-center" : "center"}

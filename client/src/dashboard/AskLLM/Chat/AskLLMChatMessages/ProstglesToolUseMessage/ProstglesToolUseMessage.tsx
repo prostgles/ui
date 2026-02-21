@@ -3,18 +3,19 @@ import {
   getProstglesMCPFullToolName,
 } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
+import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 import type {
   ToolResultMessage,
   ToolUseMessage,
 } from "../ToolUseChatMessage/ToolUseChatMessage";
+import { AgenticWorkflow } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
+import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
 import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
-import { AgenticWorkflow } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
 import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
+import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/CreateComponentQuickFeedbackPreview";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
-import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
-import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 
 export const ProstglesMCPToolsWithUI = {
   [getMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]: {
@@ -55,6 +56,14 @@ export const ProstglesMCPToolsWithUI = {
   [getMCPFullToolName("websearch", "websearch") as string]: {
     component: WebSearch,
     displayMode: "inline",
+  },
+  [getMCPFullToolName(
+    "webdev",
+    "create_component_quick_feedback_preview",
+  ) as string]: {
+    component: CreateComponentQuickFeedbackPreview,
+    displayMode: "full",
+    showsError: true,
   },
 } satisfies Record<
   string,

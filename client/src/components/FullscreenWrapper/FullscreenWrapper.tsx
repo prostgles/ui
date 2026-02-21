@@ -11,10 +11,12 @@ export const FullscreenWrapper = ({
   title,
   content,
   endActions,
+  maxContentHeight,
   ...testSelectors
 }: TestSelectors & {
   className?: string;
   style?: React.CSSProperties;
+  maxContentHeight?: number | string;
   title: React.ReactNode;
   content: React.ReactNode;
   endActions?: (Pick<
@@ -35,9 +37,13 @@ export const FullscreenWrapper = ({
       )}
       aria-modal={fullscreen}
       style={{
-        minWidth: "min(100%,600px, 100vw)",
+        minWidth: "min(100%, 600px, 100vw)",
         ...style,
         ...fullscreenStyle,
+        ...(!fullscreen &&
+          maxContentHeight && {
+            maxHeight: maxContentHeight,
+          }),
       }}
     >
       <FlexRow className="bg-color-2 p-p25">

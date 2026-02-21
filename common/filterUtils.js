@@ -295,9 +295,9 @@ export const getSmartGroupFilter = (detailedFilter = [], extraFilters, operand) 
     return result !== null && result !== void 0 ? result : {};
 };
 export const getTableFilterFromDetailedGroupFilter = (detailedGroupFilter) => {
-    const [operand, filterItems] = "$and" in detailedGroupFilter ?
-        ["and", detailedGroupFilter.$and]
-        : ["or", detailedGroupFilter.$or];
+    const [operand, filterItems] = "$and" in detailedGroupFilter ? ["and", detailedGroupFilter.$and]
+        : "$or" in detailedGroupFilter ? ["or", detailedGroupFilter.$or]
+            : ["and", [detailedGroupFilter]];
     return getSmartGroupFilter(filterItems, undefined, operand);
 };
 const getDetailedFilterFromTableFilter = (tableFilter) => {

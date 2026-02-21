@@ -6,7 +6,7 @@ export const getNodeTypes = () => {
   const files = extractInstalledPackageTypes(pathToProject);
   return files.map((file) => ({
     ...file,
-    filePath: file.filePath.split(pathToProject).pop()!,
+    filePath: file.filePath.split(pathToProject).at(-1)!,
   }));
 };
 

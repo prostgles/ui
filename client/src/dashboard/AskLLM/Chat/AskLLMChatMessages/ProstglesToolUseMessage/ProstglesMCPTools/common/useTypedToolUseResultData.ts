@@ -5,11 +5,12 @@ import { useMemo } from "react";
 export const useTypedToolUseResultData = <S extends JSONB.FieldType>(
   toolUseResult: ToolResultMessage | undefined,
   schema: S,
+  parseErrors = false,
 ): JSONB.GetSchemaType<S> | undefined => {
   //@ts-ignore
   const resultObj = useMemo(() => {
     try {
-      if (toolUseResult && !toolUseResult.is_error) {
+      if (toolUseResult && (parseErrors || !toolUseResult.is_error)) {
         const { content } = toolUseResult;
         const stringContent =
           typeof content === "string" ? content : (

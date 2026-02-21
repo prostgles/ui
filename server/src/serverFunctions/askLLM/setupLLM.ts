@@ -30,6 +30,9 @@ export const setupLLM = async (dbs: DBS) => {
             LLM_PROMPT_VARIABLES.SCHEMA,
           ].join("\n"),
           options: {
+            mcp_server_tools: {
+              "prostgles-ui": ["ask_user_questions"],
+            },
             database_access: "Run readonly SQL",
           },
         },
@@ -40,7 +43,7 @@ export const setupLLM = async (dbs: DBS) => {
           user_id,
           options: {
             mcp_server_tools: {
-              "prostgles-ui": ["suggest_dashboards"],
+              "prostgles-ui": ["suggest_dashboards", "ask_user_questions"],
             },
             database_access: "Run readonly SQL",
           },

@@ -15,9 +15,16 @@ export const CodeFileBrowser = ({
   files: Record<string, string>;
   onChange: (newFile: { fileName: string; content: string }) => void;
 }) => {
+  // ADD REACT TYPES FROM node_modules/@types/react/index.d.ts
+  // const { dbsMethods } = usePrglCore();
+  // const tsTypes = usePromise(async () => {
+  //   if (!dbsMethods.getNodeTypes) return;
+  //   return await dbsMethods.getNodeTypes();
+  // }, [dbsMethods]);
+
   const [activeFilePath, setActiveFilePath] = useState(Object.keys(files)[0]);
   const activeContent = activeFilePath ? (files[activeFilePath] ?? "") : "";
-  const extension = activeFilePath?.toLowerCase().split(".").pop() ?? "txt";
+  const extension = activeFilePath?.toLowerCase().split(".").at(-1) ?? "txt";
 
   return (
     <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">

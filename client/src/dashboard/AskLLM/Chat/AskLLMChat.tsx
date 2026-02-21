@@ -3,7 +3,7 @@ import { Chat } from "@components/Chat/Chat";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React from "react";
+import React, { useCallback } from "react";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import { AskLLMChatActionBar } from "../ChatActionBar/AskLLMChatActionBar";
@@ -74,11 +74,23 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       dbSchemaForPrompt,
     });
 
+  const onCurrentlyTypedMessageChange = useCallback(
+    (currently_typed_message: string) => {
+      if (!activeChatId) return;
+      void dbs.llm_chats.update(
+        { id: activeChatId },
+        { currently_typed_message },
+      );
+    },
+    [activeChatId, dbs.llm_chats],
+  );
+
   /* Prevents flickering when popup is opened */
   if (!messages) return;
 
   const showFullscreen =
     user?.options?.llm_chat_window_positioning === "fullscreen";
+
   return (
     <Popup
       key={showFullscreen.toString()}
@@ -142,12 +154,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             maxWidth={CHAT_WIDTH}
             onSend={sendMessage}
             currentlyTypedMessage={activeChat.currently_typed_message}
-            onCurrentlyTypedMessageChange={(currently_typed_message) => {
-              void dbs.llm_chats.update(
-                { id: activeChat.id },
-                { currently_typed_message },
-              );
-            }}
+            onCurrentlyTypedMessageChange={onCurrentlyTypedMessageChange}
             isLoading={chatIsLoading}
             onStopSending={onStopSending}
             actionBar={

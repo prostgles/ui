@@ -422,12 +422,12 @@ export const getSmartGroupFilter = (
 };
 
 export const getTableFilterFromDetailedGroupFilter = (
-  detailedGroupFilter: DetailedGroupFilter,
+  detailedGroupFilter: DetailedFilter | DetailedGroupFilter,
 ): AnyObject => {
   const [operand, filterItems] =
-    "$and" in detailedGroupFilter ?
-      ["and" as const, detailedGroupFilter.$and]
-    : ["or" as const, detailedGroupFilter.$or];
+    "$and" in detailedGroupFilter ? ["and" as const, detailedGroupFilter.$and]
+    : "$or" in detailedGroupFilter ? ["or" as const, detailedGroupFilter.$or]
+    : ["and" as const, [detailedGroupFilter] as DetailedFilter[]];
   return getSmartGroupFilter(filterItems, undefined, operand);
 };
 

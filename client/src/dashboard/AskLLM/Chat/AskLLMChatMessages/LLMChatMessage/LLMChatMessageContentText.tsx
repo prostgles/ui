@@ -13,11 +13,15 @@ export const LLMChatMessageContentText = (props: {
   loadedSuggestions: LoadedSuggestions | undefined;
   sqlHandler: SQLHandler | undefined;
 }) => {
-  const { messageContent, loadedSuggestions, sqlHandler } = props;
+  const {
+    messageContent: { reasoning, text },
+    loadedSuggestions,
+    sqlHandler,
+  } = props;
   const prgl = usePrgl();
   return (
     <React.Fragment>
-      {messageContent.reasoning && (
+      {reasoning && (
         <Expander
           getButton={() => (
             <Btn
@@ -26,26 +30,28 @@ export const LLMChatMessageContentText = (props: {
               variant="text"
               size="small"
             >
-              Reasoning...
+              Reasoning
             </Btn>
           )}
         >
           <Marked
             codeHeader={undefined}
-            content={messageContent.reasoning}
+            content={reasoning}
             sqlHandler={sqlHandler}
             loadedSuggestions={loadedSuggestions}
             prgl={prgl}
           />
         </Expander>
       )}
-      <Marked
-        codeHeader={undefined}
-        content={messageContent.text}
-        sqlHandler={sqlHandler}
-        loadedSuggestions={loadedSuggestions}
-        prgl={prgl}
-      />
+      {text && (
+        <Marked
+          codeHeader={undefined}
+          content={text}
+          sqlHandler={sqlHandler}
+          loadedSuggestions={loadedSuggestions}
+          prgl={prgl}
+        />
+      )}
     </React.Fragment>
   );
 };

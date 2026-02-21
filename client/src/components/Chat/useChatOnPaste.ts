@@ -24,7 +24,17 @@ export const useChatOnPaste = ({
           "application/vnd.code.copymetadata",
           "vscode-editor-data",
         ];
-        if (vsCodeTypes.some((vsType) => types.includes(vsType))) {
+        const isAlreadyInsideCodeBlock = (() => {
+          const currentMessage = textAreaRef.current?.value || "";
+          const selectionStart = textAreaRef.current?.selectionStart || 0;
+          const textBeforeCursor = currentMessage.slice(0, selectionStart);
+          const codeBlocksBeforeCursor = textBeforeCursor.match(/```/g) || [];
+          return codeBlocksBeforeCursor.length % 2 === 1;
+        })();
+        if (
+          !isAlreadyInsideCodeBlock &&
+          vsCodeTypes.some((vsType) => types.includes(vsType))
+        ) {
           const text = e.clipboardData.getData("text/plain");
           const vsData = e.clipboardData.getData("vscode-editor-data");
           const { data: languageRaw = "" } = tryCatchV2(() => {
@@ -71,21 +81,28 @@ const insertCodeSnippetAtCursor = (
 ) => {
   const startPos = textarea.selectionStart;
   const endPos = textarea.selectionEnd;
-  let beforeText = textarea.value.substring(0, startPos);
-  let afterText = textarea.value.substring(endPos);
+  // let beforeText = textarea.value.substring(0, startPos);
+  // let afterText = textarea.value.substring(endPos);
 
-  if (beforeText.length) {
-    beforeText = beforeText + "\n";
-  }
-  if (afterText.length) {
-    afterText = "\n" + afterText;
-  }
-  // Set the new value with the pasted text inserted
-  textarea.value = beforeText + text + afterText;
+  // if (beforeText.length) {
+  //   beforeText = beforeText + "\n";
+  // }
+  // if (afterText.length) {
+  //   afterText = "\n" + afterText;
+  // }
+  // // Set the new value with the pasted text inserted
+  // textarea.value = beforeText + text + afterText;
 
-  // Move the cursor to after the inserted text
-  const newCursorPos = startPos + text.length + 1; // +1 for the added newline
-  textarea.setSelectionRange(newCursorPos, newCursorPos);
+  // // Move the cursor to after the inserted text
+  // const newCursorPos = startPos + text.length + 1; // +1 for the added newline
+  // textarea.setSelectionRange(newCursorPos, newCursorPos);
+
+  const prefix = startPos > 0 ? "\n" : "";
+  const suffix = endPos < textarea.value.length ? "\n" : "";
+  const insertedText = prefix + text + suffix;
+
+  textarea.setRangeText(insertedText, startPos, endPos, "end");
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
   /** scroll to end if necessary */
   textarea.scrollTop = textarea.scrollHeight;
 };

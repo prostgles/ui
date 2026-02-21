@@ -51,6 +51,13 @@ export const useWebAppConfigState = () => {
     { select: { port: 1 }, returnType: "values" },
   );
 
+  const { port } = connection ?? {};
+
+  const webAppUrl =
+    !web_app_directory || !port ?
+      undefined
+    : `${location.protocol}//${location.hostname}:${port}`;
+
   return {
     connection,
     isLoading,
@@ -64,5 +71,6 @@ export const useWebAppConfigState = () => {
     usedPorts,
     connectionId,
     dbs,
+    webAppUrl,
   };
 };

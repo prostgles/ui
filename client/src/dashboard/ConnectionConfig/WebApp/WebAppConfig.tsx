@@ -14,13 +14,8 @@ import { WebAppConfigSetup } from "./WebAppConfigSetup";
 
 export const WebAppConfig = () => {
   const state = useWebAppConfigState();
-  const {
-    connection,
-    error,
-    web_app_directory,
-    connectionId,
-    web_app_templated,
-  } = state;
+  const { connection, error, webAppUrl, connectionId, web_app_templated } =
+    state;
 
   const { section, setParams, lastChanged } = useWebAppConfigActiveSection();
 
@@ -28,12 +23,6 @@ export const WebAppConfig = () => {
     return <Loading />;
   }
 
-  const { port } = connection;
-
-  const webAppUrl =
-    !web_app_directory || !port ?
-      undefined
-    : `${location.protocol}//${location.hostname}:${port}`;
   return (
     <FlexCol className="f-1">
       <WebAppConfigSetup {...state} />

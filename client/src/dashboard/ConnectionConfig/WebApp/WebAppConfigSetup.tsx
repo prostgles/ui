@@ -42,7 +42,11 @@ export const WebAppConfigSetup = ({
     : `${location.protocol}//${location.hostname}:${port}`;
   return (
     <>
-      {webAppUrl && <a href={webAppUrl}>{webAppUrl}</a>}
+      {webAppUrl && (
+        <a className="w-fit" href={webAppUrl}>
+          {webAppUrl}
+        </a>
+      )}
       {isLoading && <Loading />}
       <PopupMenu
         data-command="WebApp.directory"

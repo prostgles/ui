@@ -6,10 +6,7 @@ import { CodeFileBrowser } from "@components/CodeFileBrowser/CodeFileBrowser";
 import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
-import {
-  MONACO_READONLY_DEFAULT_OPTIONS,
-  MonacoEditor,
-} from "@components/MonacoEditor/MonacoEditor";
+import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import {
   mdiChevronDown,
@@ -25,7 +22,6 @@ import { PopupSection } from "../../ToolUseChatMessage/PopupSection";
 import { ToolUseReRun } from "../../ToolUseChatMessage/ToolUseReRun";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
-import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["schema"]["type"]
@@ -103,49 +99,6 @@ export const DockerSandboxCreateContainer = ({
                 messageId: toolResult.toolUseResult.id,
               }}
             />
-            // <Btn
-            //   variant="faded"
-            //   color="action"
-            //   iconPath={mdiReload}
-            //   size="small"
-            //   onClickPromise={async () => {
-            //     const result = await callMCPServerTool({
-            //       chatId,
-            //       serverName: "prostgles-ui",
-            //       toolName: "create_container",
-            //       args: data,
-            //     });
-            //     console.log("Re-run result:", result);
-            //     if (result.isError) {
-            //       addAlert({
-            //         title: "Error re-running tool",
-            //         children: <ErrorComponent error={result.content} />,
-            //       });
-            //     } else {
-            //       const { content } = result;
-            //       await dbs.llm_messages.update(
-            //         { id: toolResult.toolUseResult.id },
-            //         {
-            //           message: [
-            //             {
-            //               type: "tool_result",
-            //               content: content as unknown as {
-            //                 type: "text";
-            //                 text: string;
-            //               }[],
-            //               tool_name:
-            //                 toolUseResult?.tool_name ??
-            //                 "prostgles-ui--create_container",
-            //               tool_use_id: toolUseResult!.tool_use_id,
-            //             },
-            //           ],
-            //         },
-            //       );
-            //     }
-            //   }}
-            // >
-            //   Re-run
-            // </Btn>
           )}
         </>
       }

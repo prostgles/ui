@@ -134,6 +134,7 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                   ...getDraggedTableColStyle(col, iCol, draggedCol),
                   ...contextMenuStyles,
                   maxHeight: "3em",
+                  overflow: "hidden",
                 }}
                 draggable={true}
                 onDragStart={(e) => {

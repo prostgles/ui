@@ -1,9 +1,19 @@
+import { useProstgles } from "@/api/ProstglesProvider";
 import reactLogo from "../assets/react.svg";
 import viteLogo from "/vite.svg";
 export const Home = () => {
+  const { auth, db } = useProstgles();
   return (
     <div>
       {" "}
+      {auth?.user ?
+        <div>
+          Logged in as: <strong>{auth.user.type}</strong> {auth.user.id}
+        </div>
+      : <div>Not logged in</div>}
+      <div>
+        Available tables: <strong>{Object.keys(db).join(", ")}</strong>
+      </div>
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />

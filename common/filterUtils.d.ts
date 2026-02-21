@@ -161,7 +161,7 @@ export declare const getSmartGroupFilter: (detailedFilter?: DetailedFilter[], ex
     detailed?: DetailedFilter[];
     filters?: AnyObject[];
 }, operand?: "and" | "or") => AnyObject;
-export declare const getTableFilterFromDetailedGroupFilter: (detailedGroupFilter: DetailedGroupFilter) => AnyObject;
+export declare const getTableFilterFromDetailedGroupFilter: (detailedGroupFilter: DetailedFilter | DetailedGroupFilter) => AnyObject;
 export type GroupedDetailedFilter = {
     $and: (DetailedFilter | GroupedDetailedFilter)[];
 } | {

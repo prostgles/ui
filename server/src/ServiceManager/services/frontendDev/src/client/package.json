@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npm i && vite",
     "build": "tsc -b && npm run lint && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --quiet --fix",
     "preview": "vite preview"
   },
   "dependencies": {

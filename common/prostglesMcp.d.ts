@@ -50,15 +50,16 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Counts rows in a table that satisfy a filter.";
             readonly schema: {
                 readonly type: {
+                    readonly tableName: {
+                        readonly type: "string";
+                        readonly description: "Table to select from";
+                    };
                     readonly filter: {
+                        readonly optional: true;
                         readonly record: {
                             readonly values: "any";
                         };
                         readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
-                    };
-                    readonly tableName: {
-                        readonly type: "string";
-                        readonly description: "Table to select from";
                     };
                 };
             };
@@ -67,6 +68,17 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Selects rows from a table.";
             readonly schema: {
                 readonly type: {
+                    readonly tableName: {
+                        readonly type: "string";
+                        readonly description: "Table to select from";
+                    };
+                    readonly filter: {
+                        readonly optional: true;
+                        readonly record: {
+                            readonly values: "any";
+                        };
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
+                    };
                     readonly select: {
                         readonly optional: true;
                         readonly oneOf: readonly [{
@@ -81,16 +93,6 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         }];
                     };
                     readonly limit: "integer";
-                    readonly filter: {
-                        readonly record: {
-                            readonly values: "any";
-                        };
-                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
-                    };
-                    readonly tableName: {
-                        readonly type: "string";
-                        readonly description: "Table to select from";
-                    };
                 };
             };
         };
@@ -191,7 +193,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     };
     readonly "prostgles-ui": {
         readonly create_container: {
-            readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL.";
+            readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.";
             readonly schema: {
                 readonly type: {
                     readonly files: {
@@ -293,7 +295,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
         readonly suggest_agentic_workflow: {
             readonly mode: "structured-output";
-            readonly description: "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.";
+            readonly description: string;
             readonly schema: {
                 readonly type: {
                     readonly workflow_function_definition: {

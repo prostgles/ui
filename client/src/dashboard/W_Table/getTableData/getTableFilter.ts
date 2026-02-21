@@ -1,5 +1,6 @@
 import {
   getSmartGroupFilter,
+  getTableFilterFromDetailedGroupFilter,
   simplifyFilter,
   type DetailedFilter,
 } from "@common/filterUtils";
@@ -29,15 +30,7 @@ export const getTableFilter = (
         if (!toggledFilterName) return;
         const filter = filters[toggledFilterName];
         if (!filter) return;
-        const [operand, fieldFilters] = (
-          "$and" in filter ? ["and", filter.$and]
-          : "$or" in filter ? ["or", filter.$or]
-          : ["and", [filter]]) satisfies ["and" | "or", AnyObject[]];
-        return getSmartGroupFilter(
-          fieldFilters as DetailedFilter[],
-          undefined,
-          operand,
-        );
+        return getTableFilterFromDetailedGroupFilter(filter as DetailedFilter);
       })
       .filter(isDefined);
 

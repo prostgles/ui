@@ -246,8 +246,12 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     },
     suggest_agentic_workflow: {
       mode: "structured-output",
-      description:
+      description: [
         "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
+        "The user will initially execute it in series mode (agent calls and responses will be queued) to ensure it works as expected,",
+        "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",
+        "Avoid gathering agent responses and then executing database operations at the end of the workflow unless absolutely necessary, as it can lead to a long feedback loop and more work if the workflow needs to be adjusted.",
+      ].join("\n"),
       schema: {
         type: {
           workflow_function_definition: {
@@ -466,6 +470,8 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description: [
         "Quickly show the user a component they need you to create so they can provide feedback.",
         "It is crucial that you first show a very basic and simple design and component to get feedback early to ensure you are on the right track and to avoid doing unnecessary work.",
+        "The tsx and css files will be both named ComponentQuickFeedbackPreview and saved in the components folder. This means you can import the css file in the tsx file using './ComponentQuickFeedbackPreview.css'",
+        "Use best practices for component design and code structure to make it easy for the user to understand and provide feedback.",
       ].join("\n"),
       schema: {
         type: {

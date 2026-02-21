@@ -75,6 +75,7 @@ export const validateAgenticWorkflowDefinitions = async (
       ),
     ],
   );
+
   const clashingTables = newTableWithEscapedNames.filter(
     (t) => t.is_clashing && !t.ifNotExists,
   );

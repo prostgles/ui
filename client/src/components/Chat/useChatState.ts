@@ -65,10 +65,9 @@ export const useChatState = (
 
   const onCurrentlyTypedMessageChangeDebounced = useDebouncedCallback(
     (value: string) => {
-      if (sendingMsg && value) return;
       onCurrentlyTypedMessageChange(value);
     },
-    [onCurrentlyTypedMessageChange, sendingMsg],
+    [onCurrentlyTypedMessageChange],
   );
 
   const sendMsg = useCallback(async () => {
@@ -82,7 +81,7 @@ export const useChatState = (
       onCurrentlyTypedMessageChange("");
       await onSend(msg, files).catch((e) => {
         onCurrentlyTypedMessageChange(msg);
-        console.error(e);
+        console.error("Reverting onCurrentlyTypedMessage", e);
         throw e;
       });
       setCurrentMessage("");

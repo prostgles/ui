@@ -42,6 +42,7 @@ export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
    * @default 200
    */
   minHeight?: number;
+  minWidth?: number | string;
 };
 
 let monacoPromise: Promise<Monaco> | undefined;
@@ -95,9 +96,10 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
     onChange,
     expandSuggestionDocs = true,
     minHeight = 200,
+    minWidth = `min(600px, calc(100vw - 100px))`,
   } = props;
 
-  const valueRef = React.useRef(value);
+  const valueRef = useRef(value);
 
   const monacoRef = useRef<Monaco>();
 
@@ -217,6 +219,7 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
      */
     return {
       textAlign: "initial",
+      minWidth,
       minHeight:
         Math.min(minHeight, (2 + value.trim().split("\n").length) * 20) + "px",
       flex: "f-1",

@@ -14,11 +14,13 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
   defaultTab,
   items,
   controlled,
+  maxHeight,
 }: {
   items: T;
   defaultTab?: keyof T;
   className?: string;
   style?: React.CSSProperties;
+  maxHeight?: number | string;
   controlled?: {
     activeTab: string;
     setActiveTab: (tab: string) => void;
@@ -45,6 +47,7 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
           key={key}
           data-key={key}
           disabledInfo={disabledInfo}
+          size="small"
           variant={activeTab === key ? "faded" : undefined}
           onClick={() => {
             setActiveTab(key);
@@ -53,6 +56,7 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
           {key}
         </Btn>
       ))}
+      maxContentHeight={maxHeight}
       content={
         <>
           {getEntries(items).map(([tabName, { content }]) => (

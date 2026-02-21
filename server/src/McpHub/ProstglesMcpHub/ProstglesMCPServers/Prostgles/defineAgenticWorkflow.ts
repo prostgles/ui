@@ -89,6 +89,7 @@ type Select = "*" | Record<string, 1 | 0>;
 export type DatabaseHandler = {
   /**
    * The table handlers below are only available if databaseAccessDefinitions are defined
+   * Must provide the correct data type in filters (do not provide a boolean if the column is a string, etc.)
    */
 
   count: (tableName: string, filter?: Record<string, any>) => Promise<number>;
@@ -101,6 +102,8 @@ export type DatabaseHandler = {
       orderBy?: Record<string, 1 | -1>[];
     },
   ) => Promise<AnyObject[]>;
+
+  /** Must define "returning" to get anything back */
   update: (
     tableName: TableName,
     filter: Record<string, any>,
@@ -198,6 +201,7 @@ export type DefineAgenticWorkflow = <
 
 /**
  * Example usage:
+ * 
 import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
 void defineAgenticWorkflow(
   {
@@ -207,13 +211,14 @@ void defineAgenticWorkflow(
       mode: "custom",
       tablePermissions: {
         '"MyUsers"': { select: true, insert: true, update: true },
-        my_new_table: { select: true, insert: true, update: true },
+        my_research_topics: { select: true, insert: true, update: true },
       },
       tableCreateStatements: `
-        CREATE TABLE IF NOT EXISTS my_new_table (
+        CREATE TABLE IF NOT EXISTS my_research_topics (
           id SERIAL PRIMARY KEY,
-          username TEXT,
-          type TEXT
+          topic TEXT NOT NULL,
+          summary TEXT,
+          references TEXT[]
         );
       `,
     },
@@ -232,15 +237,42 @@ void defineAgenticWorkflow(
         prompt: "You are a research assistant.",
         allowedToolNames: ["fetchWebpage", "getUsers"],
         outputSchema: {
-          summary: "string",
-          references: "string[]",
+          summary: { type: "string" },
+          references: { type: "string[]" },
         },
       },
     },
   },
-  async ({ researcher }) => {
-    const result = await researcher(`research_topic: "Prostgles"`);
-    result.summary;
+  async ({ researcher }, db) => {
+
+    const doResearch = async () => {
+      const result = await researcher(`research_topic: "Prostgles"`);
+      await db.insert("my_research_topics", [
+        {
+          topic: "Prostgles",
+          summary: result.summary,
+          references: result.references,
+        },
+      ]);
+    }
+    await doResearch();
+    
+    const finalTopics = await db.find("my_research_topics", {
+      $and: [
+        { 
+          $or: [
+            { topic: { $in: ["Prostgles", "Postgres"] } },
+            { summary: { $ilike: "%postgres%" } },
+            { id: { $gt: 5 } },
+          ]
+        },
+        { summary: { $ne: null } }
+      ]
+    });
+
+    if(finalTopics.length < 10) {
+      await doResearch();
+    }
   },
 );
 
