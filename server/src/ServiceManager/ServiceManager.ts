@@ -20,36 +20,47 @@ export class ServiceManager {
       void initialiseServices(this, dbs).catch(console.error);
     }
   }
+
+  serviceLogUpdateQueue: Map<string, Promise<void>> = new Map();
   onServiceLog = (
     serviceName: keyof typeof prostglesServices,
     logItems: ProcessLog[],
   ) => {
-    const serviceStatus = this.activeServices.get(serviceName)?.status;
-    const logs = logItems
-      .slice(-100)
-      .map((l) => l.text)
-      .join("");
-    if (!this.dbs) {
-      console.warn("No dbs available to log service logs", {
-        serviceName,
-        serviceStatus,
-      });
-      return;
-    }
-    if (isTesting) {
-      console.log(
-        `Updating ${JSON.stringify(serviceName)} status to ${serviceStatus}`,
-      );
-    }
-    void this.dbs.services
-      .update(
-        { name: serviceName },
-        { logs, status: serviceStatus ?? "stopped" },
-        {
-          returning: { name: 1, status: 1 },
-        },
-      )
-      .then((res) => {
+    const prevQueue =
+      this.serviceLogUpdateQueue.get(serviceName) ?? Promise.resolve();
+    const nextQueue = prevQueue
+      .catch((err) => {
+        console.error(
+          `Error in previous log update for service ${serviceName}:`,
+          err,
+        );
+      })
+      .then(async () => {
+        const serviceStatus = this.activeServices.get(serviceName)?.status;
+        const logs = logItems
+          .slice(-100)
+          .map((l) => l.text)
+          .join("");
+
+        if (!this.dbs) {
+          console.warn("No dbs available to log service logs", {
+            serviceName,
+            serviceStatus,
+          });
+          return;
+        }
+        if (isTesting) {
+          console.log(
+            `Updating ${JSON.stringify(serviceName)} status to ${serviceStatus}`,
+          );
+        }
+        const res = await this.dbs.services.update(
+          { name: serviceName },
+          { logs, status: serviceStatus ?? "stopped" },
+          {
+            returning: { name: 1, status: 1 },
+          },
+        );
         if (isTesting) {
           console.log("Updated service logs in db", res);
         }
@@ -60,6 +71,8 @@ export class ServiceManager {
           error,
         );
       });
+
+    this.serviceLogUpdateQueue.set(serviceName, nextQueue);
   };
   activeServices: Map<string, ServiceInstance> = new Map();
   enablingServices: Map<string, Promise<RunningServiceInstance>> = new Map();
