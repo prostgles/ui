@@ -17,6 +17,7 @@ import React from "react";
 import { usePrgl } from "../../../../../../../pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../../../../../utils/utils";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
+import { fromEntries } from "@common/utils";
 
 export const LoadSuggestedToolsAndPromptLoadBtn = ({
   chatId,
@@ -102,7 +103,17 @@ export const LoadSuggestedToolsAndPromptLoadBtn = ({
                 { Mode: "Run commited SQL", auto_approve: true }
               : dbAccess.Mode === "execute_sql_with_rollback" ?
                 { Mode: "Run readonly SQL", auto_approve: true }
-              : dbAccess.Mode === "Custom" ? { ...dbAccess, auto_approve: true }
+              : dbAccess.Mode === "Custom" ?
+                {
+                  Mode: "Custom",
+                  tables: fromEntries(
+                    dbAccess.tables.map(({ tableName, ...rules }) => [
+                      tableName,
+                      rules,
+                    ]),
+                  ),
+                  auto_approve: true,
+                }
               : dbAccess,
           },
         );

@@ -7,7 +7,7 @@ type P = Pick<Prgl, "connection" | "sql" | "tables"> & {
   activeChat: DBSSchema["llm_chats"] | undefined;
 };
 export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
-  const { db_schema_permissions } = activeChat ?? {};
+  const { db_schema_permissions, db_data_permissions } = activeChat ?? {};
   const cachedSchemaPermissions = useMemoDeep(
     () => db_schema_permissions || undefined,
     [db_schema_permissions],
@@ -19,7 +19,9 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
     const schemas = Object.entries(connection.db_schema_filter || { public: 1 })
       .filter(([k, v]) => v)
       .map(([k, v]) => k);
-    if (!schemas.includes("public")) schemas.push("public");
+    if (!schemas.includes("public")) {
+      schemas.push("public");
+    }
     const query = `SELECT  
       rel.oid as table_oid, 
       conname,
@@ -82,6 +84,24 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
       cachedSchemaPermissions.type === "Full" ?
         tables
       : tables.filter((t) => {
+          if (cachedSchemaPermissions.type === "SameAsData") {
+            if (
+              !db_data_permissions?.Mode ||
+              db_data_permissions.Mode === "None"
+            ) {
+              return false;
+            }
+            if (db_data_permissions.Mode === "Custom") {
+              const tableRule = db_data_permissions.tables[t.name];
+              return (
+                tableRule?.delete ||
+                tableRule?.insert ||
+                tableRule?.select ||
+                tableRule?.update
+              );
+            }
+            return true;
+          }
           return cachedSchemaPermissions.tables.some(
             (allowedTableName) => allowedTableName === t.name,
           );
@@ -155,7 +175,7 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
       .join(";\n");
 
     return res;
-  }, [tables, definitions, cachedSchemaPermissions]);
+  }, [definitions, cachedSchemaPermissions, tables, db_data_permissions]);
 
   return { dbSchemaForPrompt };
 };

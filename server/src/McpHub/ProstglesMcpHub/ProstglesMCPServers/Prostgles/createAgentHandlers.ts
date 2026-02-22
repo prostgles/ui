@@ -110,6 +110,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
           parent_chat_id: chatId,
           connection_id: connectionId,
           agent_info: {
+            name: agentName,
             prompt: [
               "You are part of an agentic workflow and you have the following limits: " +
                 JSON.stringify({ maxIterations, maxTokens }),

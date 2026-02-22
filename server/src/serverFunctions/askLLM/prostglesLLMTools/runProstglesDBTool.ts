@@ -123,14 +123,7 @@ export const getClientDBHandlersForChat = async (
   const chatDBPermissions = chat.db_data_permissions;
   const { connection_id } = chat;
   const tables =
-    chatDBPermissions?.Mode === "Custom" ?
-      Object.fromEntries(
-        chatDBPermissions.tables.map(({ tableName, ...rules }) => [
-          tableName,
-          rules,
-        ]),
-      )
-    : undefined;
+    chatDBPermissions?.Mode === "Custom" ? chatDBPermissions.tables : undefined;
   const connection =
     connectionManager.getConnectionStartedInstance(connection_id);
   const handlers = await connection.prgl.getClientDBHandlers(clientReq, {

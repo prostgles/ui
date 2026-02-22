@@ -8,6 +8,7 @@ import { type ValidatedWorkflow } from "./useValidatedWorkflowJson";
 import { AgenticWorkflowUserInput } from "./AgenticWorkflowUserInput";
 import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
 import { isEmpty } from "src/utils/utils";
+import { getDurationAsStr } from "@components/Stopwatch";
 
 export const AgenticWorkflowDetails = ({
   validatedWorkflow,
@@ -44,7 +45,7 @@ export const AgenticWorkflowDetails = ({
     <FlexCol className="w-full p-1 o-auto">
       <div className="font-18 bold">{name}</div>
       <div style={{ opacity: 0.7, marginBottom: "0.5em" }}>
-        Timeout: {timeOutInSeconds} seconds
+        Timeout: {getDurationAsStr(timeOutInSeconds * 1000)}
       </div>
       <DatabaseAccessPermissions
         {...(!dbAccess ? { Mode: "None" }

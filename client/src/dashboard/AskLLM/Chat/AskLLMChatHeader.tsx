@@ -31,17 +31,21 @@ export const AskLLMChatHeader = (
 
   return (
     <FlexRow className="AskLLMChatHeader">
-      <FlexCol className="gap-p25">
-        <div>{t.AskLLM["AI Assistant"]}</div>
-      </FlexCol>
+      {!activeChat?.agent_info && (
+        <FlexCol className="gap-p25">
+          <div>{t.AskLLM["AI Assistant"]}</div>
+        </FlexCol>
+      )}
       <FlexRow className="gap-p25 min-w-0">
-        <AskLLMChatOptions
-          prompts={prompts}
-          activeChat={activeChat}
-          activeChatId={activeChatId}
-          credentials={credentials}
-          chatRootDiv={chatRootDiv}
-        />
+        {!activeChat?.agent_info && (
+          <AskLLMChatOptions
+            prompts={prompts}
+            activeChat={activeChat}
+            activeChatId={activeChatId}
+            credentials={credentials}
+            chatRootDiv={chatRootDiv}
+          />
+        )}
         <Select
           title={t.AskLLMChatHeader.Chat}
           data-command="LLMChat.select"
@@ -64,23 +68,25 @@ export const AskLLMChatHeader = (
             setActiveChat(v);
           }}
         />
-        <Btn
-          iconPath={mdiPlus}
-          title={t.AskLLMChatHeader["New chat"]}
-          data-command="AskLLMChat.NewChat"
-          variant="faded"
-          color="action"
-          disabledInfo={
-            !preferredPromptId ?
-              t.AskLLMChatHeader["No prompt found"]
-            : undefined
-          }
-          onClickPromise={async () => {
-            if (!preferredPromptId)
-              throw new Error(t.AskLLMChatHeader["No prompt found"]);
-            await createNewChat(preferredPromptId);
-          }}
-        />
+        {!activeChat?.agent_info && (
+          <Btn
+            iconPath={mdiPlus}
+            title={t.AskLLMChatHeader["New chat"]}
+            data-command="AskLLMChat.NewChat"
+            variant="faded"
+            color="action"
+            disabledInfo={
+              !preferredPromptId ?
+                t.AskLLMChatHeader["No prompt found"]
+              : undefined
+            }
+            onClickPromise={async () => {
+              if (!preferredPromptId)
+                throw new Error(t.AskLLMChatHeader["No prompt found"]);
+              await createNewChat(preferredPromptId);
+            }}
+          />
+        )}
       </FlexRow>
       {user && (
         <Select

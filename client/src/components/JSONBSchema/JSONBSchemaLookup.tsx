@@ -98,6 +98,7 @@ export const JSONBSchemaLookup = ({
         optional={schema.optional}
         fullOptions={fullOptions}
         multiSelect={multiSelect}
+        variant="chips-lg"
         onChange={(opts) => {
           if (needsCol) {
             const [table, column] =
@@ -163,16 +164,14 @@ export const JSONBSchemaLookup = ({
                         },
                       },
                     },
-                  } as any
+                  } as const
                 }
-                onChange={
-                  ((newLookupOpts) => {
-                    setLookupMerged({
-                      ...newLookupOpts,
-                      type: "data",
-                    });
-                  }) as any
-                }
+                onChange={(newLookupOpts) => {
+                  setLookupMerged({
+                    ...newLookupOpts,
+                    type: "data",
+                  });
+                }}
                 db={db}
                 tables={tables}
                 {...oProps}

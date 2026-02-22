@@ -1,41 +1,39 @@
-import { mdiDelete, mdiLanguageTypescript, mdiPencil, mdiPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
-import { isDefined } from "prostgles-types";
-import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { Prgl } from "../../App";
 import Btn from "@components/Btn";
 import ConfirmationDialog from "@components/ConfirmationDialog";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiDelete, mdiLanguageTypescript, mdiPencil, mdiPlus } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { DBHandlerClient } from "prostgles-client";
+import { isDefined } from "prostgles-types";
+import React, { useMemo, useState } from "react";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
-import { SmartCardList } from "../SmartCardList/SmartCardList";
-import { ProcessLogs } from "../TableConfig/ProcessLogs";
-import { NewMethod } from "./NewMethod";
-import { FunctionLabel } from "./FunctionLabel";
 import type { DBS } from "../Dashboard/DBS";
 import type { FieldConfig } from "../SmartCard/SmartCard";
+import { SmartCardList } from "../SmartCardList/SmartCardList";
+import { ProcessLogs } from "../TableConfig/ProcessLogs";
+import { FunctionLabel } from "./FunctionLabel";
+import { NewMethod } from "./NewMethod";
 
 type P = {
   className?: string;
   style?: React.CSSProperties;
   accessRuleId: number | undefined;
-  prgl: Prgl;
   editedRule: ValidEditedAccessRuleState | undefined;
 };
 
 export const PublishedMethods = ({
   className,
   style,
-  prgl,
   accessRuleId,
   editedRule,
 }: P) => {
   const { dbsMethods, dbsMethodSchema, dbsTables, dbs, connectionId, dbsSql } =
-    prgl;
+    usePrgl();
   const { listProps, action, setAction } = useSmartCardListProps({
     dbs,
     connectionId,
@@ -96,10 +94,8 @@ export const PublishedMethods = ({
         <div className="flex-col f-1">
           {action && (
             <NewMethod
-              {...prgl}
               connectionId={connectionId}
               access_rule_id={accessRuleId}
-              dbs={dbs}
               onClose={() => setAction(undefined)}
               methodId={
                 action.type === "update" ? action.existingMethodId : undefined

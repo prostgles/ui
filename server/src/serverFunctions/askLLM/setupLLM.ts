@@ -1,5 +1,6 @@
 import type { DBS } from "../..";
 import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 export const setupLLM = async (dbs: DBS) => {
   /** In case of stale schema update */
@@ -88,7 +89,7 @@ export const setupLLM = async (dbs: DBS) => {
             max_tokens: 18_000,
             mcp_server_tools: {
               "prostgles-ui": [
-                "suggest_agentic_workflow",
+                "suggest_agentic_workflow" satisfies keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"],
                 "ask_user_questions",
               ],
             },
@@ -97,8 +98,17 @@ export const setupLLM = async (dbs: DBS) => {
           prompt: [
             firstLine,
             "Assist the user in creating a workflow.",
-            "They expect you to look at the schema and tools available to them and return the best suited tools, database schema and workflow logic for accomplishing their task.",
-            "Ask the user for more information if you are not sure.",
+            "They expect you to look at the schema and tools available and return the best suited tools, database schema and workflow logic for accomplishing their task.",
+            `Always use the ${"suggest_agentic_workflow" satisfies keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]} tool to return a workflow_function_definition instead of only describing the workflow in plain text.`,
+            `The workflow_function_definition must compile and call defineAgenticWorkflow(...`,
+            "Choose the minimum required database access and minimum required tools; prefer custom tablePermissions over broad SQL modes.",
+            "IMPORTANT: Do not provide CREATE statements for table names that are already present in the schema unless the user specifically asks for it.",
+            "If databaseAccessDefinitions.mode is custom, ensure every table used by dbHandler (find/count/insert/update/delete) exists in current schema or in tableCreateStatements, and that each used table is included in tablePermissions.",
+            "Take into account that the user has the ability to stop and re-run the workflow.",
+            "Prefer short iterative steps with progress updates via setProgress, and await async operations (avoid fire-and-forget promises) so stop/re-run works predictably.",
+            "Without over-engineering make the workflow resilient to re-runs unless it goes against the nature of the workflow.",
+            "Interleave agent steps and database writes; avoid collecting all agent output first and applying DB changes only at the end unless truly necessary.",
+            "When user requirements are ambiguous, ask targeted follow-up questions using ask_user_questions and include a best-guess default workflow.",
             "",
             LLM_PROMPT_VARIABLES.SCHEMA,
             "",

@@ -1,18 +1,26 @@
 import React from "react";
 import "./ProgressBar.css";
 import type { DivProps } from "./Flex";
-import { classOverride } from "./Flex";
+import { classOverride, FlexRow } from "./Flex";
 
 type P = {
   message?: React.ReactNode;
   style?: React.CSSProperties;
   value: number;
   totalValue: number;
+  endContent?: React.ReactNode;
 };
 export const MINI_BARCHART_COLOR = "var(--active)";
 
-export const ProgressBar = ({ message, value, totalValue, style }: P) => {
-  const perc = totalValue > value ? Math.round((100 * value) / totalValue) : -1;
+export const ProgressBar = ({
+  message,
+  value,
+  totalValue,
+  style,
+  endContent,
+}: P) => {
+  const perc =
+    totalValue >= value ? Math.round((100 * value) / totalValue) : -1;
   const lightColor = "var(--bg-action)";
   const height = 4;
   const isIndeterminate = perc === -1;
@@ -46,7 +54,10 @@ export const ProgressBar = ({ message, value, totalValue, style }: P) => {
           }}
         />
       </div>
-      <div className={"text-1 "}>{message}</div>
+      <FlexRow>
+        <div className={"text-1 "}>{message}</div>
+        {endContent}
+      </FlexRow>
     </div>
   );
 };

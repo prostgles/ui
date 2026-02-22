@@ -549,7 +549,7 @@ export class Select<
       <div
         className={
           "Select w-fit " +
-          (asRow ? " flex-row ai-center " : " flex-col ") +
+          (asRow ? " flex-row ai-center " : " flex-col gap-p25 ") +
           className
         }
         style={style}

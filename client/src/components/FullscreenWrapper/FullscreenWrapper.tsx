@@ -61,6 +61,7 @@ export const FullscreenWrapper = ({
         <Btn
           title="Toggle Fullscreen"
           iconPath={mdiFullscreen}
+          size="small"
           onClick={() => setFullscreen(!fullscreen)}
         />
       </FlexRow>

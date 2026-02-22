@@ -264,7 +264,7 @@ export type DBGeneratedSchema = {
   };
   llm_chats: {
     columns: {
-      agent_info?: null | {    prompt: string;   maxIterations?: number;   outputSchema: Record<string, 
+      agent_info?: null | {    name?: string;   prompt: string;   maxIterations?: number;   outputSchema: Record<string, 
  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }
  |  {  optional?: boolean;  type: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }
  |  {  optional?: boolean;  arrayOfType: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>;  };
@@ -276,10 +276,11 @@ export type DBGeneratedSchema = {
        |  {  Mode: "None"; }
        |  {  Mode: "Run readonly SQL";  query_timeout?: number;  auto_approve?: boolean; }
        |  {  Mode: "Run commited SQL";  query_timeout?: number;  auto_approve?: boolean; }
-       |  {  Mode: "Custom";  auto_approve?: boolean;  tables: (  {  tableName: string;  select?: boolean;  update?: boolean;  insert?: boolean;  delete?: boolean; } )[]; }
+       |  {  Mode: "Custom";  auto_approve?: boolean;  tables: Record<string,  {  select?: boolean;  update?: boolean;  insert?: boolean;  delete?: boolean; }>; }
       db_schema_permissions?: 
        | null
        |  {  type: "None"; }
+       |  {  type: "SameAsData"; }
        |  {  type: "Full"; }
        |  {  type: "Custom";  tables: string[]; }
       disabled_message?: null | string;

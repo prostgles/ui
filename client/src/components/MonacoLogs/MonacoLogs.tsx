@@ -1,7 +1,7 @@
 import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
 import type { editor } from "monaco-editor";
 import { omitKeys } from "prostgles-types";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CodeEditor } from "src/dashboard/CodeEditor/CodeEditor";
 import { applyAnsiDecorations } from "./setAnsiLogContent";
 import { usePromise } from "prostgles-client";
@@ -35,24 +35,31 @@ export const MonacoLogs = ({
     }
     applyAnsiDecorations(monaco, editor, logs);
   }, [editor, logs, monaco]);
+
+  const { monacoStyle, onMountWrapped } = useMemo(() => {
+    const monacoStyle: React.CSSProperties = {
+      minWidth: "400px",
+      width: "100%",
+      maxHeight: !maxHeight ? undefined : `${maxHeight}px`,
+      overflow: "hidden",
+      flex: 1,
+      ...style,
+    };
+    const onMountWrapped = (editor: editor.IStandaloneCodeEditor) => {
+      onMount(editor);
+      setEditor(editor);
+    };
+    return { monacoStyle, onMountWrapped };
+  }, [maxHeight, onMount, style]);
+
   return (
     <CodeEditor
       {...testSelectors}
       className={className}
-      style={{
-        minWidth: "400px",
-        width: "100%",
-        maxHeight: !maxHeight ? undefined : `${maxHeight}px`,
-        overflow: "hidden",
-        flex: 1,
-        ...style,
-      }}
+      style={monacoStyle}
       minHeight={minHeight}
       value={logs}
-      onMount={(editor) => {
-        onMount(editor);
-        setEditor(editor);
-      }}
+      onMount={onMountWrapped}
       options={options}
       language="bash"
     />

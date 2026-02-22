@@ -18,7 +18,8 @@ export const getFullPrompt = async ({
     !schema ?
       "Schema is empty: there are no tables or views in the database"
     : [
-        "Below (in the next sql code block) is the database schema they're currently working with expressed as create statements so you have a better idea of relationships and constraints:",
+        "Below (in the next sql code block) is the schema of database they're currently working with expressed as create statements so you have a better idea of relationships and constraints.",
+        "IMPORTANT: this is the schema of EXISTING TABLES AND VIEWS that can be accessed through the database tools.",
         wrapCode("sql", schema),
         `\n`,
         `When interacting with the tables through non raw SQL tools, it is important that you include double quotes for table names that need escaping. `,

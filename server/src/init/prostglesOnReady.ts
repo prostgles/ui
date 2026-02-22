@@ -37,35 +37,6 @@ export const initBackupManager = async (
     connectionManager,
   );
 
-  // const workflowChat = await dbs.llm_chats.insert(
-  //   {
-  //     name: "",
-  //     user_id: "userId",
-  //     parent_chat_id: 1,
-  //     connection_id: "connectionId",
-  //     agent_info: {
-  //       prompt: [
-  //         "You are part of an agentic workflow.",
-  //         "Follow the instructions carefully.",
-  //         "Use the tools as needed to complete your tasks.",
-  //         "Be concise and to the point.",
-  //         "When you are ready you must respond with the required output format.",
-  //         "",
-  //         "Below is your prompt:",
-  //         "prompt", // provided as first message
-  //       ].join("\n"),
-  //       outputSchema: {},
-  //       maxIterations,
-  //     },
-  //     model: "model.id",
-  //     max_total_cost_usd: "maxCostUSD",
-  //     extra_body: {
-  //       max_tokens: 111,
-  //       temperature: 1,
-  //     },
-  //   }, //satisfies DBSSchemaForInsert["llm_chats"],
-  //   { returning: "*" },
-  // );
   return backupManager;
 };
 

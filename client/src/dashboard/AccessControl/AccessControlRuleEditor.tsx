@@ -71,7 +71,6 @@ export const AccessControlRuleEditor = ({
   onCancel,
 }: UserGroupRuleEditorProps) => {
   const {
-    db,
     dbs,
     sql,
     dbsTables,
@@ -84,10 +83,12 @@ export const AccessControlRuleEditor = ({
   const { setAction } = useAccessControlSearchParams();
   const [wspErrors, setWspErrors] = useState<string>();
 
-  const currentSQLUser: string | undefined = usePromise(
+  const currentSQLUser = usePromise(
     async () =>
-      await sql?.(`SELECT "current_user"()`, {}, { returnType: "value" }),
-    [db],
+      (await sql?.(`SELECT "current_user"()`, {}, { returnType: "value" })) as
+        | string
+        | undefined,
+    [sql],
   );
   const type = editedRule?.type;
   if (!editedRule) {
@@ -312,7 +313,6 @@ export const AccessControlRuleEditor = ({
 
             <PublishedMethods
               className="my-2 PublishedMethods"
-              prgl={prgl}
               editedRule={editedRule}
               accessRuleId={
                 action.type === "edit" ? action.selectedRuleId : undefined

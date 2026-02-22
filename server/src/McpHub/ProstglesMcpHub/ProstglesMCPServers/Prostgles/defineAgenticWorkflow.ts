@@ -638,7 +638,7 @@ const callMcpProxy = async (args: ProxyCallData) => {
         params: { tableName, ...otherParams },
       } = args;
 
-      return ["db." + command, tableName, otherParams];
+      return ["db." + command, tableName, JSON.stringify(otherParams, null, 2)];
     } else if (args.type === "agent") {
       return ["agent." + args.agentName, args.input];
     } else if (args.type === "progress") {

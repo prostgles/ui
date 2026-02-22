@@ -24,7 +24,7 @@ export const getAllowedDBToolSchemas = (
   }
   if (chatDBAccess.Mode === "Custom") {
     const allowedCommands: Map<string, true> = new Map();
-    chatDBAccess.tables.forEach((tableRule) => {
+    Object.values(chatDBAccess.tables).forEach((tableRule) => {
       for (const actionName of COMMANDS) {
         if (tableRule[actionName]) {
           allowedCommands.set(actionName, true);

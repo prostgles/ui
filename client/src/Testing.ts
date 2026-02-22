@@ -538,6 +538,8 @@ export const COMMANDS = {
   AgenticWorkflow: "",
   "AgenticWorkflow.validationErrorLogs": "",
   "AgenticWorkflow.openChat": "",
+  "LLMChatOptions.DatabaseAccess.schema": "",
+  "LLMChatOptions.DatabaseAccess.data": "",
 } as const satisfies Record<
   string,
   | string

@@ -5,11 +5,12 @@ import { Select } from "@components/Select/Select";
 import { mdiLockClock, mdiLockOpenAlert, mdiStop } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined, omitKeys } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import type { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import type { UseAgenticWorkflowUserInputReturn } from "./hooks/useAgenticWorkflowUserInput";
 import type { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
+import { Stopwatch } from "@components/Stopwatch";
 
 export const AgenticWorkflowActions = ({
   validatedWorkflowJson: { toolUseResultJson, validWorkflow },
@@ -37,23 +38,56 @@ export const AgenticWorkflowActions = ({
   >) => {
   const {
     dbsMethods: { startAgenticWorkflow, stopAgenticWorkflow },
+    dbs,
   } = usePrgl();
-
+  const { data: agentMessages } = dbs.llm_messages.useSubscribe({
+    $existsJoined: {
+      llm_chats: {
+        parent_chat_id: chatId,
+      },
+    },
+  });
+  const totalCost = useMemo(() => {
+    return agentMessages?.reduce((acc, msg) => {
+      const cost = parseFloat(msg.cost);
+      return acc + cost;
+    }, 0);
+  }, [agentMessages]);
   const { userInputValue } = userInputState;
 
-  const { state } = latestRun ?? {};
+  const { state, created, finished } = latestRun ?? {};
   const isRunning = state?.status === "running";
   return (
     <>
       <FlexRow className="ml-auto">
-        {state?.status === "running" &&
-          isDefined(state.progressPercent ?? state.progressPercent) && (
-            <ProgressBar
-              totalValue={100}
-              message={state.message}
-              value={state.progressPercent ?? -1}
-            />
-          )}
+        {created && (
+          <ProgressBar
+            totalValue={100}
+            message={
+              state?.message ??
+              (state?.status === "error" ?
+                <span className="text-danger">Error</span>
+              : state?.status)
+            }
+            value={
+              state?.status !== "running" ? 100 : (state.progressPercent ?? -1)
+            }
+            endContent={
+              <>
+                {isDefined(totalCost) && (
+                  <div className="ml-2" title="Cost">
+                    ${totalCost.toFixed(2)}
+                  </div>
+                )}
+                <Stopwatch
+                  title="Workflow duration"
+                  startTime={new Date(created)}
+                  endTime={finished ? new Date(finished) : undefined}
+                />
+              </>
+            }
+          />
+        )}
         <Select
           title="Execution mode"
           value={executionMode}

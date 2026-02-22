@@ -1,14 +1,12 @@
-import { mdiFullscreen } from "@mdi/js";
-import { useEffectDeep } from "prostgles-client";
-import React, { useCallback, useRef } from "react";
 import type { BtnProps } from "@components/Btn";
-import Btn from "@components/Btn";
 import { FlexCol, FlexRow, classOverride } from "@components/Flex";
+import { FullScreenHeader } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import { FooterButtons } from "@components/Popup/FooterButtons";
 import Popup from "@components/Popup/Popup";
-import { CodeEditor, type CodeEditorProps } from "./CodeEditor";
+import { useEffectDeep } from "prostgles-client";
+import React, { useCallback, useRef, useState } from "react";
 import { isDefined } from "../../utils/utils";
-import { Label } from "@components/Label";
+import { CodeEditor, type CodeEditorProps } from "./CodeEditor";
 
 type P = {
   label: React.ReactNode;
@@ -41,7 +39,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
   const propsValueRef = useRef<string | null | undefined>(value);
   propsValueRef.current = value;
 
-  const [error, setError] = React.useState<any>();
+  const [error, setError] = useState<unknown>();
   const [fullScreen, setFullScreen] = React.useState(false);
   useEffectDeep(() => {
     if (
@@ -70,20 +68,10 @@ export const CodeEditorWithSaveButton = (props: P) => {
   const titleNode =
     !label && !headerButtons ?
       null
-    : <FlexRow className={fullScreen ? "" : "bg-color-1"}>
-        {
-          <Label className=" px-p25 f-1 " variant="normal">
-            {label}
-          </Label>
-        }
-        <FlexRow className="gap-0">
-          {headerButtons}
-          <Btn
-            iconPath={mdiFullscreen}
-            onClick={() => setFullScreen(!fullScreen)}
-          />
-        </FlexRow>
-      </FlexRow>;
+    : <FullScreenHeader fullscreen={fullScreen} setFullscreen={setFullScreen}>
+        {label}
+        <FlexRow className="gap-0">{headerButtons}</FlexRow>
+      </FullScreenHeader>;
 
   const footerNode = didChange && onClickSave && (
     <FooterButtons

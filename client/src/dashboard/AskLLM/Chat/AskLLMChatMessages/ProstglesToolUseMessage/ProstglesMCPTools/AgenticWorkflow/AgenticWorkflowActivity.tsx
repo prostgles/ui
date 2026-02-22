@@ -2,7 +2,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import { mdiOpenInNew } from "@mdi/js";
+import { mdiOpenInNew, mdiRobotOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { DBHandlerClient } from "prostgles-client";
 import { type FilterItem } from "prostgles-types";
@@ -31,35 +31,43 @@ export const AgenticWorkflowActivity = ({
   const listProps = useMemo(() => {
     const fieldConfigs = [
       {
+        name: "agent_info",
+        hide: true,
+      },
+      {
         name: "id",
-        renderMode: "full",
-        render: (value, { id }) => (
+        renderMode: "valueNode",
+        render: (value, { id, agent_info }) => (
           <Btn
             title={`Open chat ${value}`}
-            iconPath={mdiOpenInNew}
+            iconPath={mdiRobotOutline}
             data-command="AgenticWorkflow.openChat"
-            variant="icon"
+            variant="faded"
+            size="small"
             onClick={() => {
               console.log("Opening chat with id", id);
               setAgentChatId(id);
             }}
-          />
+          >
+            {agent_info?.name ?? ""} {value}
+          </Btn>
         ),
       },
       {
         name: "created",
-        renderMode: "full",
+        renderMode: "value",
         select: { $ageNow: ["created", null, "second"] },
         render: (value) => <StyledInterval value={value} />,
       },
       {
         name: "latestMessages" as "name",
+        label: "Latest messages",
         select: {
           $leftJoin: "llm_messages",
           orderBy: { created: -1 },
           limit: 2,
         },
-        renderMode: "full",
+        renderMode: "valueNode",
         render: (_, data) => {
           const { latestMessages: lm } = data as unknown as {
             latestMessages: DBSSchema["llm_messages"][];
@@ -95,7 +103,7 @@ export const AgenticWorkflowActivity = ({
   }, [chatId, loadedSuggestions, workspaceId]);
 
   return (
-    <FlexCol className="p-p5 f-1" style={{ maxHeight: "400px" }}>
+    <FlexCol className="p-p5 f-1">
       <SmartCardList<DBSSchema[typeof tableName]>
         db={dbs as unknown as DBHandlerClient}
         tableName={tableName}

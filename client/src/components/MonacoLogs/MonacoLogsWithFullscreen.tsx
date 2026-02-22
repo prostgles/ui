@@ -2,7 +2,7 @@ import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import { mdiFullscreen } from "@mdi/js";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { MonacoLogs } from "./MonacoLogs";
 import type { TestSelectors } from "src/Testing";
 
@@ -14,7 +14,7 @@ export const MonacoLogsWithFullscreen = ({
   ...testSelectors
 }: {
   logs: string;
-  label: string;
+  label: React.ReactNode;
   minHeight?: number;
   maxHeight?: number;
   style?: React.CSSProperties;
@@ -34,6 +34,18 @@ export const MonacoLogsWithFullscreen = ({
     };
   }, [fullscreen]);
 
+  const monacoStyle = useMemo(
+    () => ({
+      minWidth: "400px",
+      width: "100%",
+      maxHeight: fullscreen ? undefined : `${maxHeight}px`,
+      height: fullscreen ? "100%" : undefined,
+      overflow: "hidden",
+      flex: 1,
+    }),
+    [fullscreen, maxHeight],
+  );
+
   return (
     <FlexCol
       {...testSelectors}
@@ -51,27 +63,37 @@ export const MonacoLogsWithFullscreen = ({
         : undefined
       }
     >
-      <FlexRow>
-        <Label variant="normal" className={"f-1" + (fullscreen ? " px-1" : "")}>
-          {label}
-        </Label>
-        <Btn
-          iconPath={mdiFullscreen}
-          onClick={() => setFullscreen(!fullscreen)}
-        />
-      </FlexRow>
-      <MonacoLogs
-        style={{
-          minWidth: "400px",
-          width: "100%",
-          maxHeight: fullscreen ? undefined : `${maxHeight}px`,
-          height: fullscreen ? "100%" : undefined,
-          overflow: "hidden",
-          flex: 1,
-        }}
-        minHeight={minHeight}
-        logs={logs}
-      />
+      <FullScreenHeader fullscreen={fullscreen} setFullscreen={setFullscreen}>
+        {label}
+      </FullScreenHeader>
+      <MonacoLogs style={monacoStyle} minHeight={minHeight} logs={logs} />
     </FlexCol>
+  );
+};
+
+export const FullScreenHeader = ({
+  children,
+  fullscreen,
+  setFullscreen,
+  className,
+}: {
+  children: React.ReactNode;
+  fullscreen: boolean;
+  setFullscreen: (fullscreen: boolean) => void;
+  className?: string;
+}) => {
+  return (
+    <FlexRow>
+      <Label
+        variant="normal"
+        className={"f-1" + (fullscreen ? " px-1" : "") + ` ${className}`}
+      >
+        {children}
+      </Label>
+      <Btn
+        iconPath={mdiFullscreen}
+        onClick={() => setFullscreen(!fullscreen)}
+      />
+    </FlexRow>
   );
 };

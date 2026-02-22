@@ -1094,7 +1094,7 @@ export const deleteExistingLLMChat = async (page: PageWIds) => {
 };
 
 export const deleteAllWorkspaces = async (page: PageWIds): Promise<void> => {
-  const list = await page.getByTestId("WorkspaceMenu.list");
+  const list = page.getByTestId("WorkspaceMenu.list");
   await list.waitFor({ state: "visible", timeout: 10e3 });
   await page.waitForTimeout(1500);
   const listTextContent = await list.textContent();

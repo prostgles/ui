@@ -1055,17 +1055,14 @@ test.describe("Main test", () => {
       VALUES ('fresh_user') ON CONFLICT DO NOTHING;
       `,
     );
-    await page
-      .getByTestId("Popup.content")
-      .last()
-      .getByLabel("Mode", { exact: true })
-      .click();
+    await page.getByTestId("LLMChatOptions.DatabaseAccess.data").click();
 
-    await page.getByRole("option", { name: "Run readonly SQL" }).click();
+    await page
+      .getByTestId("LLMChatOptions.DatabaseAccess.data")
+      .locator(getDataKey("Run readonly SQL"))
+      .click();
     /** Auto approve to ensure the container can run the query */
-    await page.getByTitle("Show more").last().click();
-    await page.getByText("Auto approve", { exact: true }).last().click();
-    await page.waitForTimeout(2000); // debounced update
+    await page.getByLabel("Auto approve", { exact: true }).last().click();
     await page.getByTestId("Popup.close").last().click();
     await dockerRunAndExpect(`username: 'fresh_user'`, true);
 
@@ -2756,7 +2753,7 @@ test.describe("Main test", () => {
     await page.getByRole("link", { name: "sample_database" }).click();
     await page.getByTestId("AskLLM").click();
     await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
-    await setPromptByText(page, "Web app development");
+    await setPromptByText(page, "Web app development", false);
     const alertLocator = page.getByText(
       "WebDev MCP Server requires a templated web app",
     );

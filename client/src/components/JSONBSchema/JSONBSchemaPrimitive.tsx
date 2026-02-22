@@ -1,5 +1,9 @@
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
-import type { JSONB, ValidatedColumnInfo } from "prostgles-types";
+import {
+  getProperty,
+  type JSONB,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
 import React from "react";
 import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
 import type { FormFieldProps } from "../FormField/FormField";
@@ -37,7 +41,7 @@ export const JSONBSchemaPrimitive = ({
   }
 
   const transformedType = {
-    ...(schemaTypeToColType[schema.type as any] ?? {
+    ...((schema.type && getProperty(schemaTypeToColType, schema.type)) ?? {
       tsDataType: "string",
       udt_name: "text",
     }),

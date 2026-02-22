@@ -35,6 +35,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
       agent_info: {
         nullable: true,
         jsonbSchemaType: {
+          name: { type: "string", optional: true },
           prompt: {
             type: "string",
             title: "Prompt",
@@ -130,6 +131,14 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
             },
             {
               type: {
+                enum: ["SameAsData"],
+                title: "Type",
+                description:
+                  "Inherit schema scope from data access (Custom tables, or Full when SQL access allows it).",
+              },
+            },
+            {
+              type: {
                 enum: ["Full"],
                 title: "Type",
                 description: "All tables, columns and constraints",
@@ -196,30 +205,26 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
               tables: {
                 title: "Tables",
                 description: "Tables the assistant can access",
-                arrayOfType: {
-                  tableName: {
-                    title: "Table name",
-                    type: "Lookup",
-                    lookup: {
-                      type: "schema",
-                      object: "table",
+                record: {
+                  values: {
+                    type: {
+                      /** TODO: this must re-use access control data and UI */
+                      select: { type: "boolean", optional: true },
+                      update: { type: "boolean", optional: true },
+                      insert: { type: "boolean", optional: true },
+                      delete: { type: "boolean", optional: true },
+                      // columns: {
+                      //   optional: true,
+                      //   type: "Lookup[]",
+                      //   lookup: {
+                      //     type: "schema",
+                      //     object: "column",
+                      //   },
+                      //   description:
+                      //     "Columns the assistant can access in the table",
+                      // },
                     },
                   },
-                  /** TODO: this must re-use access control data and UI */
-                  select: { type: "boolean", optional: true },
-                  update: { type: "boolean", optional: true },
-                  insert: { type: "boolean", optional: true },
-                  delete: { type: "boolean", optional: true },
-                  // columns: {
-                  //   optional: true,
-                  //   type: "Lookup[]",
-                  //   lookup: {
-                  //     type: "schema",
-                  //     object: "column",
-                  //   },
-                  //   description:
-                  //     "Columns the assistant can access in the table",
-                  // },
                 },
               },
             },

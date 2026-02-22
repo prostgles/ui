@@ -1,15 +1,15 @@
-import React, { useCallback, useState } from "react";
-import type { Prgl } from "../../App";
 import { FlexCol, FlexRow } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React, { useCallback, useState } from "react";
 import { useCodeEditorTsTypes } from "../AccessControl/Methods/useCodeEditorTsTypes";
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
-import Loading from "@components/Loader/Loading";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
 
-export const ServerSideFunctions = (props: Prgl) => {
-  const { dbsMethods, dbs, connectionId, dbKey, tables } = props;
+export const ServerSideFunctions = () => {
+  const { dbsMethods, dbs, connectionId, dbKey, tables } = usePrgl();
   const { data: connection } = dbs.connections.useSubscribeOne({
     id: connectionId,
   });
@@ -90,12 +90,7 @@ export const ServerSideFunctions = (props: Prgl) => {
       </FlexCol>
       {!libsLoaded ?
         <Loading />
-      : <PublishedMethods
-          prgl={props}
-          editedRule={undefined}
-          accessRuleId={undefined}
-        />
-      }
+      : <PublishedMethods editedRule={undefined} accessRuleId={undefined} />}
     </FlexCol>
   );
 };

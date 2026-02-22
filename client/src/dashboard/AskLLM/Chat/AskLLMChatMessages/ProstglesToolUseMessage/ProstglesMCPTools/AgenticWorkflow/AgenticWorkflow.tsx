@@ -1,3 +1,4 @@
+import { SuccessMessage } from "@components/Animations";
 import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -10,6 +11,7 @@ import {
   MonacoLogs,
   useMonacoScrollToLastLine,
 } from "@components/MonacoLogs/MonacoLogs";
+import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import React, { useMemo, useState } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { AgenticWorkflowActions } from "./AgenticWorkflowActions";
@@ -17,8 +19,6 @@ import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
-import { SuccessMessage } from "@components/Animations";
-import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 
 export const AgenticWorkflow = ({
   message,
@@ -44,6 +44,7 @@ export const AgenticWorkflow = ({
   });
   const { toolUseResultJson, validWorkflow } = validatedWorkflowJson;
   const userInputState = useAgenticWorkflowUserInput(validWorkflow?.userInput);
+
   if (inputValidation.error !== undefined) {
     return (
       <ErrorComponent
@@ -130,18 +131,6 @@ export const AgenticWorkflow = ({
           },
         }}
       />
-      {toolUseResultJson?.isError &&
-        (typeof toolUseResultJson.result === "string" ?
-          <MonacoLogsWithFullscreen
-            label="Error logs"
-            data-command="AgenticWorkflow.validationErrorLogs"
-            logs={(toolUseResultJson as any).result}
-          />
-        : <ErrorComponent
-            data-command="AgenticWorkflow.validationErrorLogs"
-            error={toolUseResultJson}
-            maxTextLength={2e3}
-          />)}
       {showSuccessMessage && (
         <div
           style={{
@@ -178,6 +167,18 @@ export const AgenticWorkflow = ({
         executionMode={executionMode}
         setExecutionMode={setExecutionMode}
       />
+      {toolUseResultJson?.isError &&
+        (typeof toolUseResultJson.result === "string" ?
+          <MonacoLogsWithFullscreen
+            label="Error logs"
+            data-command="AgenticWorkflow.validationErrorLogs"
+            logs={(toolUseResultJson as any).result}
+          />
+        : <ErrorComponent
+            data-command="AgenticWorkflow.validationErrorLogs"
+            error={toolUseResultJson}
+            maxTextLength={2e3}
+          />)}
     </FlexCol>
   );
 };

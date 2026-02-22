@@ -105,17 +105,18 @@ export const goToElem = async <ElemType = HTMLElement>(
     endSelector,
     opts,
   );
-  const bbox = elem.getBoundingClientRect();
   scrollIntoViewIfNeeded(elem, { behavior: "smooth" });
   !opts.noTimeToWait && (await tout(200));
-  await movePointer(
-    bbox.left + Math.min(60, bbox.width / 2),
-    bbox.top + bbox.height / 2,
-  );
+
+  const bbox = elem.getBoundingClientRect();
+  const x = Math.round(bbox.left + Math.min(60, bbox.width / 2));
+  const y = Math.round(bbox.top + bbox.height / 2);
+
+  await movePointer(x, y);
   if (!elem.isConnected) {
     return goToElem(testId, endSelector, opts);
   }
-  return elem as any;
+  return elem as ElemType;
 };
 export const click = async (
   testId: Command | "",
@@ -141,6 +142,7 @@ export const openConnection = async (
       " " +
       getCommandElemSelector("Connection.openConnection"),
   );
+  await waitForElement("ConnectionSelector", "", { timeout: 30e3 });
 };
 // window._click = click;
 

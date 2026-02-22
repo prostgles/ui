@@ -275,6 +275,7 @@ export class ForkedPrglProcRunner {
         env: {
           ...(pass_process_env_vars_to_server_side_functions && process.env),
           [FORKED_PROC_ENV_NAME]: "true",
+          FORCE_COLOR: "1",
         },
       });
       proc.on("error", reject);

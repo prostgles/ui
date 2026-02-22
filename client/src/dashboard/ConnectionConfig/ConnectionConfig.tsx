@@ -181,7 +181,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           disabledText: disabledText || stateDisabledInfo,
           listProps: dataCommand("config.methods"),
           leftIconPath: mdiLanguageTypescript,
-          content: <ServerSideFunctions {...prgl} />,
+          content: <ServerSideFunctions />,
         },
       }) as const satisfies Record<
         (typeof CONNECTION_CONFIG_SECTIONS)[number],

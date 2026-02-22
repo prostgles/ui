@@ -62,7 +62,18 @@ export const CommandPalette = ({
                 <NavLink to={"/documentation"}>Documentation</NavLink>
               ))
             }
-            showFullscreenToggle={{}}
+            showFullscreenToggle={{
+              getContentStyle: (fullscreen) =>
+                showSection === "docs" ?
+                  {
+                    textAlign: "left",
+                  }
+                : fullscreen ? {}
+                : {
+                    width: "min(100vw, 700px)",
+                    maxHeight: "min(100vh, 500px)",
+                  },
+            }}
             data-command="CommandPalette"
             clickCatchStyle={{ opacity: 1 }}
             positioning={showSection === "commands" ? "top-center" : "center"}
@@ -72,16 +83,6 @@ export const CommandPalette = ({
             }}
             contentClassName={
               "flex-col gap-2 " + (showSection === "docs" ? " p-2" : "p-1")
-            }
-            contentStyle={
-              showSection === "docs" ?
-                {
-                  textAlign: "left",
-                }
-              : {
-                  width: "min(100vw, 700px)",
-                  maxHeight: "min(100vh, 500px)",
-                }
             }
           >
             {showSection === "commands" ?

@@ -16,6 +16,7 @@ import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { setChatPrompt } from "../Chat/AskLLMChatMessages/setChatPrompt";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 import { PromptAndAllowedMcpToolsSchemaPreviews } from "./PromptAndAllowedMcpToolsSchemaPreviews";
+import { Marked } from "@components/Chat/Marked";
 
 export const AskLLMChatActionBarPromptSelector = (
   props: Pick<AskLLMChatProps, "setupState"> & {
@@ -86,100 +87,116 @@ export const AskLLMChatActionBarPromptSelector = (
         rootChildClassname="f-1"
         button={
           <Btn title="Prompt" {...ChatActionBarBtnStyleProps}>
-            {prompt?.name || <i>Select Prompt</i>}
+            {prompt?.name || activeChat.agent_info?.prompt.slice(0, 40) || (
+              <i>Select Prompt</i>
+            )}
           </Btn>
         }
       >
-        <SmartCardList
-          style={{
-            maxWidth: "min(600px, 100vw)",
-          }}
-          sql={dbsSql}
-          showTopBar={{ insert: true }}
-          rowProps={{
-            className: "pointer hover-bg",
-          }}
-          showEdit={true}
-          tableName={"llm_prompts"}
-          db={dbs as DBHandlerClient}
-          methods={dbsMethodSchema}
-          tables={dbsTables}
-          fieldConfigs={
-            [
-              {
-                name: "name",
-                renderMode: "full",
-                render: (name, newPrompt) => {
-                  const { id, description } = newPrompt;
-                  const isActive = activeChat.llm_prompt_id === id;
-                  return (
-                    <Btn
-                      className={"p-0 text-0 ta-start max-w-full ws-pre-wrap"}
-                      style={{ padding: 0 }}
-                      variant="text"
-                      iconPath={isActive ? mdiCheck : mdiCircleOutline}
-                      iconStyle={isActive ? { opacity: 1 } : { opacity: 0 }}
-                      onClickPromise={async () => {
-                        await onErrorAlert(async () => {
-                          if (!activeChatId) return;
-                          await setChatPrompt({
-                            dbs,
-                            chatId: activeChatId,
-                            prompt: newPrompt,
-                            currentPrompt: prompt,
-                          });
-                        });
-                      }}
-                    >
-                      <FlexCol className="gap-p25">
-                        <div style={{ fontWeight: "bold" }}>{name}</div>
-                        <div style={{ fontWeight: "normal" }}>
-                          {description}
-                        </div>
-                      </FlexCol>
-                    </Btn>
-                  );
-                },
-              },
-              {
-                name: "id",
-                hide: true,
-              },
-              {
-                name: "description",
-                hide: true,
-              },
-              {
-                name: "options",
-                hide: true,
-              },
-            ] satisfies FieldConfig<DBSSchema["llm_prompts"]>[]
-          }
-        />
-        {prompt && (
-          <CodeEditorWithSaveButton
-            key={prompt.id}
-            value={prompt.prompt}
-            label={<div className="ml-1">Prompt template</div>}
-            headerButtons={
-              <PromptAndAllowedMcpToolsSchemaPreviews
-                connectionId={connectionId}
-                chatId={activeChatId}
-                dbSchemaForPrompt={dbSchemaForPrompt}
-                prompt={prompt}
-              />
-            }
-            language={"text"}
-            onSave={async (v) => {
-              await dbs.llm_prompts.update(
-                { id: prompt.id },
-                {
-                  prompt: v,
-                },
-              );
-            }}
+        {activeChat.agent_info ?
+          <Marked
+            className="ta-start"
+            codeHeader={undefined}
+            loadedSuggestions={undefined}
+            prgl={undefined}
+            sqlHandler={undefined}
+            content={activeChat.agent_info.prompt}
           />
-        )}
+        : <>
+            <SmartCardList
+              style={{
+                maxWidth: "min(600px, 100vw)",
+              }}
+              sql={dbsSql}
+              showTopBar={{ insert: true }}
+              rowProps={{
+                className: "pointer hover-bg",
+              }}
+              showEdit={true}
+              tableName={"llm_prompts"}
+              db={dbs as DBHandlerClient}
+              methods={dbsMethodSchema}
+              tables={dbsTables}
+              fieldConfigs={
+                [
+                  {
+                    name: "name",
+                    renderMode: "full",
+                    render: (name, newPrompt) => {
+                      const { id, description } = newPrompt;
+                      const isActive = activeChat.llm_prompt_id === id;
+                      return (
+                        <Btn
+                          className={
+                            "p-0 text-0 ta-start max-w-full ws-pre-wrap"
+                          }
+                          style={{ padding: 0 }}
+                          variant="text"
+                          iconPath={isActive ? mdiCheck : mdiCircleOutline}
+                          iconStyle={isActive ? { opacity: 1 } : { opacity: 0 }}
+                          onClickPromise={async () => {
+                            await onErrorAlert(async () => {
+                              if (!activeChatId) return;
+                              await setChatPrompt({
+                                dbs,
+                                chatId: activeChatId,
+                                prompt: newPrompt,
+                                currentPrompt: prompt,
+                              });
+                            });
+                          }}
+                        >
+                          <FlexCol className="gap-p25">
+                            <div style={{ fontWeight: "bold" }}>{name}</div>
+                            <div style={{ fontWeight: "normal" }}>
+                              {description}
+                            </div>
+                          </FlexCol>
+                        </Btn>
+                      );
+                    },
+                  },
+                  {
+                    name: "id",
+                    hide: true,
+                  },
+                  {
+                    name: "description",
+                    hide: true,
+                  },
+                  {
+                    name: "options",
+                    hide: true,
+                  },
+                ] satisfies FieldConfig<DBSSchema["llm_prompts"]>[]
+              }
+            />
+            {prompt && (
+              <CodeEditorWithSaveButton
+                key={prompt.id}
+                value={prompt.prompt}
+                label={<div className="ml-1">Prompt template</div>}
+                headerButtons={
+                  <PromptAndAllowedMcpToolsSchemaPreviews
+                    connectionId={connectionId}
+                    chatId={activeChatId}
+                    dbSchemaForPrompt={dbSchemaForPrompt}
+                    prompt={prompt}
+                  />
+                }
+                language={"text"}
+                onSave={async (v) => {
+                  await dbs.llm_prompts.update(
+                    { id: prompt.id },
+                    {
+                      prompt: v,
+                    },
+                  );
+                }}
+              />
+            )}
+          </>
+        }
       </PopupMenu>
     </>
   );

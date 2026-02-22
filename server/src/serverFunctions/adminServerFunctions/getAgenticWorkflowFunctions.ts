@@ -154,12 +154,7 @@ export const getAgenticWorkflowFunctions = (
               : databaseAccessDefinitions.mode === "custom" ?
                 {
                   Mode: "Custom",
-                  tables: Object.entries(
-                    databaseAccessDefinitions.tablePermissions,
-                  ).map(([tableName, permissions]) => ({
-                    tableName,
-                    ...permissions,
-                  })),
+                  tables: databaseAccessDefinitions.tablePermissions,
                 }
               : {
                   Mode:

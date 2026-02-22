@@ -11,6 +11,7 @@ import { getPGIntervalAsText } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";
 import type { FilterItem } from "prostgles-types";
 import { LOG_LANGUAGE_ID } from "../CodeEditor/registerLogLang";
+import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 
 type P = Pick<Prgl, "dbsMethods" | "connectionId" | "dbs"> & {
   type: "tableConfig" | "onMount" | "methods";
@@ -96,7 +97,7 @@ export const ProcessLogs = (props: P) => {
 
   return (
     <FlexCol className="f-1 relative">
-      <CodeEditorWithSaveButton
+      {/* <CodeEditorWithSaveButton
         key={editorKey}
         label={
           <FlexRow className="px-p5">
@@ -122,15 +123,41 @@ export const ProcessLogs = (props: P) => {
                 </Chip>
               </>
             }
-            <Label variant="normal">
-              {isDisabled || !procStats ? "Log history:" : "Logs:"}
-            </Label>
           </FlexRow>
         }
         onMount={onMonacoEditorMount}
         options={options}
         language={LOG_LANGUAGE_ID}
         value={logs ?? ""}
+      /> */}
+      <MonacoLogsWithFullscreen
+        label={
+          <FlexRow className="px-p5">
+            {isDisabled || !procStats ?
+              <div>Process not started.</div>
+            : <>
+                <Chip variant="naked" label="PID">
+                  {procStats.pid}
+                </Chip>
+                <Chip variant="naked" label="Cpu">
+                  {procStats.cpu.toFixed(1)}%
+                </Chip>
+                <Chip variant="naked" label="Mem">
+                  {Math.round(procStats.mem / 1e6).toLocaleString() + " MB"}
+                </Chip>
+                <Chip variant="naked" label="Uptime">
+                  {getPGIntervalAsText(
+                    getAgeFromDiff(Math.round(procStats.uptime) * 1e3),
+                    true,
+                    undefined,
+                    true,
+                  )}
+                </Chip>
+              </>
+            }
+          </FlexRow>
+        }
+        logs={logs ?? ""}
       />
     </FlexCol>
   );

@@ -1,19 +1,16 @@
-import { omitKeys } from "prostgles-types";
-import React, { useEffect, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { Prgl } from "../../App";
 import { pageReload } from "@components/Loader/Loading";
 import Popup from "@components/Popup/Popup";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { omitKeys } from "prostgles-types";
+import React, { useEffect, useState } from "react";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 
 export type Method = DBSSchema["published_methods"] & {
   access_control_methods: DBSSchema["access_control_methods"][];
 };
 
-type P = Pick<
-  Prgl,
-  "dbs" | "db" | "tables" | "dbsTables" | "dbsMethods" | "dbKey"
-> & {
+type P = {
   /** If undefined then it's a new method */
   methodId: number | undefined;
   access_rule_id: number | undefined;
@@ -21,17 +18,12 @@ type P = Pick<
   onClose: VoidFunction;
 };
 export const NewMethod = ({
-  dbKey,
-  db,
-  dbs,
   methodId,
   connectionId,
   onClose,
-  dbsTables,
-  tables,
-  dbsMethods,
   access_rule_id,
 }: P) => {
+  const { dbKey, db, dbs, dbsTables, tables, dbsMethods } = usePrgl();
   const [newMethod, setNewMethod] = useState<Partial<Omit<Method, "id">>>({
     name: "my_new_func",
     arguments: [],

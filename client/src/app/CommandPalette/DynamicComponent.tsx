@@ -23,6 +23,12 @@ const DYNAMIC_COMPONENT_REGISTRY = {
     import("src/pages/Account/Account").then((mod) => ({
       default: mod.Account,
     })),
+  ServerSideFunctions: () =>
+    import("src/dashboard/ConnectionConfig/ServerSideFunctions").then(
+      (mod) => ({
+        default: mod.ServerSideFunctions,
+      }),
+    ),
 } as const satisfies Record<
   string,
   () => Promise<{ default: React.ComponentType<any> }>

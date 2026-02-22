@@ -220,13 +220,12 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
   await deleteExistingLLMChat(page);
   await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
-  await page
-    .getByTestId("Popup.content")
-    .last()
-    .getByLabel("Mode", { exact: true })
-    .click();
+  await page.getByTestId("LLMChatOptions.DatabaseAccess.data").click();
 
-  await page.getByRole("option", { name: "Run readonly SQL" }).click();
+  await page
+    .getByTestId("LLMChatOptions.DatabaseAccess.data")
+    .locator(getDataKey("Run readonly SQL"))
+    .click();
   await page.getByTestId("Popup.close").last().click();
 
   await setPromptByText(page, "chat");

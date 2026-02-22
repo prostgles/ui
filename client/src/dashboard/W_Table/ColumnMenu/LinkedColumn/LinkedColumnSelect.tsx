@@ -143,8 +143,8 @@ export const LinkedColumnSelect = ({
                 tableName={table.name}
                 existingColumn={undefined}
                 onAddColumn={(newCol) => {
+                  popupClose();
                   if (!newCol) {
-                    popupClose();
                     return;
                   }
                   const oldHiddenCols = (nestedColumns ?? []).map((c) => ({

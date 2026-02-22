@@ -12,7 +12,6 @@ export const clientNodeModulesDirectory = join(
   __dirname,
   "../../../client/node_modules",
 );
-console.log("Client node modules dir:", clientNodeModulesDirectory);
 
 const taskToolArguments = {
   suggested_prompt:

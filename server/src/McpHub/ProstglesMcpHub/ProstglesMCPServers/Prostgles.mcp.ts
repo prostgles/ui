@@ -43,7 +43,9 @@ const handler = {
                 db_data_permissions: autoApprovedPermissions,
               },
             },
-            args,
+            {
+              ...args,
+            },
           );
         },
         ask_user_questions: async () => {

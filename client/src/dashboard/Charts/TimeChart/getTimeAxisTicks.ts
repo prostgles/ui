@@ -300,7 +300,7 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
   };
 
   const providedTicks = getProvidedTicks();
-  const midTicksTop: MidTick[] = [];
+  const midTicksBottom: MidTick[] = [];
   if (providedTicks) {
     midTicks = providedTicks;
   } else {
@@ -309,12 +309,12 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
       (inc) =>
         inc.inc.getTopLabel &&
         theChosenInc.dateDelta < inc.inc.dateDelta &&
-        width / inc.spacing > 3,
+        width / inc.spacing > 2,
     );
 
     /** Add higher unit row */
     if (groupInc) {
-      addMidTicks(groupInc.inc, midTicksTop, true);
+      addMidTicks(groupInc.inc, midTicksBottom, true);
     }
 
     addMidTicks(theChosenInc, midTicks);
@@ -389,7 +389,7 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
   return [
     lt,
     lb,
-    ...[midTicks, midTicksTop].flatMap((ticks, tickRowIndex) => {
+    ...[midTicksBottom, midTicks].flatMap((ticks, tickRowIndex) => {
       return ticks
         .map(
           (t, i) =>

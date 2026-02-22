@@ -69,6 +69,7 @@ export const connectionConfigUIDoc = {
       type: "tab",
       selectorCommand: "config.methods",
       title: "Server-side functions",
+      componentName: "ServerSideFunctions",
       description:
         "Configure and manage server-side functions (experimental feature).",
       children: [],
