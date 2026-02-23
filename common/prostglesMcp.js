@@ -183,24 +183,60 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
         ask_user_questions: {
             mode: "user-provides-response",
-            description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time. Each question should have a list of suggested answers to choose from. If allowMultipleChoices is true, the user can select multiple answers.",
+            description: [
+                "Ask a question to gather information from the user.",
+                "Be as short and as consice as possible.",
+                "Do not ask more than 8 questions at a time.",
+                `Each "choice" type question should have a list of suggested answers to choose from.`,
+                `If allowMultipleChoices is true on "choice" type question, the user can select multiple answers.`,
+                `When asking "table-columns" type questions, ensure the tableName is valid and include it in the question data. Example question data: { type: "table-columns", question: "Which columns should I select?", tableName: "users" }`,
+            ].join("\n"),
             schema: {
                 type: {
                     questions: {
-                        arrayOfType: {
-                            question: {
-                                type: "string",
-                                description: "The question to ask the user",
-                            },
-                            allowMultipleChoices: {
-                                type: "boolean",
-                                optional: true,
-                                description: "If true, the user can select multiple choices. Defaults to false.",
-                            },
-                            suggested_answers: {
-                                description: "The list of suggested answers the user will choose from",
-                                arrayOf: "string",
-                            },
+                        arrayOf: {
+                            oneOfType: [
+                                {
+                                    type: { enum: ["choice"] },
+                                    question: {
+                                        type: "string",
+                                        description: "The question to ask the user",
+                                    },
+                                    allowMultipleChoices: {
+                                        type: "boolean",
+                                        optional: true,
+                                        description: "If true, the user can select multiple choices. Defaults to false.",
+                                    },
+                                    suggestedAnswers: {
+                                        description: "The list of suggested answers the user will choose from",
+                                        arrayOf: "string",
+                                    },
+                                },
+                                {
+                                    type: { enum: ["free-text"] },
+                                    question: {
+                                        type: "string",
+                                        description: "The question to ask the user",
+                                    },
+                                },
+                                {
+                                    type: { enum: ["table-name"] },
+                                    question: {
+                                        type: "string",
+                                        description: "The question to ask the user",
+                                    },
+                                    suggestedTableName: { type: "string", optional: true },
+                                },
+                                {
+                                    type: { enum: ["table-columns"] },
+                                    tableName: "string",
+                                    question: {
+                                        type: "string",
+                                        description: "The question to ask the user",
+                                    },
+                                    suggestedColumns: { type: "string[]", optional: true },
+                                },
+                            ],
                         },
                     },
                 },
@@ -216,8 +252,11 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             mode: "structured-output",
             description: [
                 "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
+                "Return workflow_function_definition as valid TypeScript that calls defineAgenticWorkflow(...) directly.",
                 "The user will initially execute it in series mode (agent calls and responses will be queued) to ensure it works as expected,",
+                "Prefer series-first, human-in-the-loop flow: interleave agent steps and DB operations to enable feedback and safe re-runs.",
                 "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",
+                "Use least-privilege DB/tool scope; for custom DB mode, ensure all dbHandler tables are valid and included in tablePermissions.",
                 "Avoid gathering agent responses and then executing database operations at the end of the workflow unless absolutely necessary, as it can lead to a long feedback loop and more work if the workflow needs to be adjusted.",
             ].join("\n"),
             schema: {
@@ -259,10 +298,10 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                                 tables: {
                                     arrayOfType: {
                                         tableName: "string",
-                                        select: { type: "boolean", optional: true },
-                                        insert: { type: "boolean", optional: true },
-                                        update: { type: "boolean", optional: true },
-                                        delete: { type: "boolean", optional: true },
+                                        select: { enum: [true], optional: true },
+                                        insert: { enum: [true], optional: true },
+                                        update: { enum: [true], optional: true },
+                                        delete: { enum: [true], optional: true },
                                     },
                                 },
                             },

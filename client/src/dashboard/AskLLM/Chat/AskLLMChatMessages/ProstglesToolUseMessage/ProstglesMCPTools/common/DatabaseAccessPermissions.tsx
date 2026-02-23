@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import { getProperty, type JSONB } from "prostgles-types";
-import { HeaderList } from "./HeaderList";
-import { mdiDatabaseEdit } from "@mdi/js";
+import { getEntries } from "@common/utils";
 import Chip from "@components/Chip";
 import { FlexRow } from "@components/Flex";
+import { mdiDatabaseEdit } from "@mdi/js";
+import { getProperty, type JSONB } from "prostgles-types";
+import React, { useMemo } from "react";
+import { HeaderList } from "./HeaderList";
 
 export const DatabaseAccessPermissions = (
   dbAccess: JSONB.GetObjectType<
@@ -14,7 +15,7 @@ export const DatabaseAccessPermissions = (
   const databaseAccessList = useMemo(() => {
     if (dbAccess.Mode === "None") return;
     if (dbAccess.Mode === "Custom") {
-      return dbAccess.tables.map((t) => {
+      return getEntries(dbAccess.tables).map(([tableName, t]) => {
         const tableMethods = (
           ["select", "update", "insert", "delete"] as const
         ).filter((v) => t[v]);
@@ -25,7 +26,7 @@ export const DatabaseAccessPermissions = (
                 fontSize: "18px",
               }}
             >
-              {t.tableName}:{" "}
+              {tableName}:{" "}
             </span>
             {tableMethods.map((method) => {
               const methodColor = {

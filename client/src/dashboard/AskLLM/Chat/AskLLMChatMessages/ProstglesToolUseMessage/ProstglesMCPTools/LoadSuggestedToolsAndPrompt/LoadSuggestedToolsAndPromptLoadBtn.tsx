@@ -2,6 +2,7 @@ import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
+import { getEntries } from "@common/utils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
@@ -17,7 +18,6 @@ import React from "react";
 import { usePrgl } from "../../../../../../../pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../../../../../utils/utils";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
-import { fromEntries } from "@common/utils";
 
 export const LoadSuggestedToolsAndPromptLoadBtn = ({
   chatId,
@@ -106,12 +106,7 @@ export const LoadSuggestedToolsAndPromptLoadBtn = ({
               : dbAccess.Mode === "Custom" ?
                 {
                   Mode: "Custom",
-                  tables: fromEntries(
-                    dbAccess.tables.map(({ tableName, ...rules }) => [
-                      tableName,
-                      rules,
-                    ]),
-                  ),
+                  tables: dbAccess.tables,
                   auto_approve: true,
                 }
               : dbAccess,
@@ -166,14 +161,14 @@ export const LoadSuggestedToolsAndPromptLoadBtn = ({
                 <div>
                   Table access:
                   <ul className="no-decor">
-                    {dbAccess.tables.map((t) => (
+                    {getEntries(dbAccess.tables).map(([tableName, t]) => (
                       <li
-                        key={t.tableName}
+                        key={tableName}
                         className="bold flex-row gap-p5 ai-center py-p5"
                       >
                         <Icon path={mdiTable} />
                         <div>
-                          <strong>{t.tableName}</strong>:
+                          <strong>{tableName}</strong>:
                         </div>
                         {[
                           t.select ? "select" : null,

@@ -18,15 +18,13 @@ const taskToolArguments = {
     "I will paste receipt images in this chat. Please extract the following information from each receipt:\n- Company/merchant name\n- Total amount\n- Currency\n- Date of purchase\n- Full extracted text\n\nAfter extracting the data, insert it into the receipts table.",
   suggested_database_access: {
     Mode: "Custom",
-    tables: [
-      {
-        tableName: "receipts",
+    tables: {
+      receipts: {
         select: true,
         insert: true,
-        delete: false,
         update: true,
       },
-    ],
+    },
   },
   suggested_database_tool_names: [],
   suggested_mcp_tool_names: ["fetch--fetch"],
@@ -341,14 +339,29 @@ const toolResponses: Record<string, ToolUse> = {
           arguments: stringify({
             questions: [
               {
+                type: "choice",
                 question: "What is your favorite color?",
                 allowMultipleChoices: false,
-                suggested_answers: ["Red", "Blue", "Green", "Yellow"],
+                suggestedAnswers: ["Red", "Blue", "Green", "Yellow"],
               },
               {
+                type: "choice",
                 question: "What is my favorite color?",
                 allowMultipleChoices: true,
-                suggested_answers: ["Red", "Blue", "Green", "Yellow"],
+                suggestedAnswers: ["Red", "Blue", "Green", "Yellow"],
+              },
+              {
+                type: "table-columns",
+                tableName: "users",
+                question: "Table columns",
+              },
+              {
+                type: "table-name",
+                question: "Table name",
+              },
+              {
+                type: "free-text",
+                question: "Free text",
               },
             ],
           }),

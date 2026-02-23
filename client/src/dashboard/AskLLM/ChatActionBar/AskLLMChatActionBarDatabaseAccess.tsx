@@ -320,12 +320,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
                   return a.name.localeCompare(b.name);
                 })
                 .map((t) => {
-                  const tableRules = dataPermission.tables[t.name] ?? {
-                    select: false,
-                    insert: false,
-                    update: false,
-                    delete: false,
-                  };
+                  const tableRules = dataPermission.tables[t.name] ?? {};
 
                   return {
                     key: t.name,
@@ -366,13 +361,14 @@ export const AskLLMChatActionBarDatabaseAccess = (
                               variant={isOn ? "filled" : undefined}
                               size="small"
                               onClick={() => {
+                                const shouldTurnOn = !isOn;
                                 const newTableRules = {
                                   ...dataPermission.tables,
                                   [t.name]: {
                                     ...tableRules,
-                                    [ruleType]: !isOn,
+                                    [ruleType]: shouldTurnOn || undefined,
                                   },
-                                };
+                                } as const;
                                 void dbs.llm_chats.update(
                                   { id: activeChatId },
                                   {

@@ -2,6 +2,7 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import type { JSONB } from "prostgles-types";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
 import { agentOutputSchemaType } from "../startAgenticWorkflowSchema";
+import { tablePermissionsSchema } from "../tablePermissionsSchema";
 
 const commonrunSQLOpts = {
   query_timeout: {
@@ -202,31 +203,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                   "Can only access specific tables on behalf of the user",
               },
               auto_approve: commonrunSQLOpts.auto_approve,
-              tables: {
-                title: "Tables",
-                description: "Tables the assistant can access",
-                record: {
-                  values: {
-                    type: {
-                      /** TODO: this must re-use access control data and UI */
-                      select: { type: "boolean", optional: true },
-                      update: { type: "boolean", optional: true },
-                      insert: { type: "boolean", optional: true },
-                      delete: { type: "boolean", optional: true },
-                      // columns: {
-                      //   optional: true,
-                      //   type: "Lookup[]",
-                      //   lookup: {
-                      //     type: "schema",
-                      //     object: "column",
-                      //   },
-                      //   description:
-                      //     "Columns the assistant can access in the table",
-                      // },
-                    },
-                  },
-                },
-              },
+              tables: tablePermissionsSchema,
             },
           ],
         },

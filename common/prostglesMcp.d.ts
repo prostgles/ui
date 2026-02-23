@@ -264,24 +264,62 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
         readonly ask_user_questions: {
             readonly mode: "user-provides-response";
-            readonly description: "Ask a question to gather information from the user. Be as short and as consice as possible. Do not ask more than 8 questions at a time. Each question should have a list of suggested answers to choose from. If allowMultipleChoices is true, the user can select multiple answers.";
+            readonly description: string;
             readonly schema: {
                 readonly type: {
                     readonly questions: {
-                        readonly arrayOfType: {
-                            readonly question: {
-                                readonly type: "string";
-                                readonly description: "The question to ask the user";
-                            };
-                            readonly allowMultipleChoices: {
-                                readonly type: "boolean";
-                                readonly optional: true;
-                                readonly description: "If true, the user can select multiple choices. Defaults to false.";
-                            };
-                            readonly suggested_answers: {
-                                readonly description: "The list of suggested answers the user will choose from";
-                                readonly arrayOf: "string";
-                            };
+                        readonly arrayOf: {
+                            readonly oneOfType: readonly [{
+                                readonly type: {
+                                    readonly enum: readonly ["choice"];
+                                };
+                                readonly question: {
+                                    readonly type: "string";
+                                    readonly description: "The question to ask the user";
+                                };
+                                readonly allowMultipleChoices: {
+                                    readonly type: "boolean";
+                                    readonly optional: true;
+                                    readonly description: "If true, the user can select multiple choices. Defaults to false.";
+                                };
+                                readonly suggestedAnswers: {
+                                    readonly description: "The list of suggested answers the user will choose from";
+                                    readonly arrayOf: "string";
+                                };
+                            }, {
+                                readonly type: {
+                                    readonly enum: readonly ["free-text"];
+                                };
+                                readonly question: {
+                                    readonly type: "string";
+                                    readonly description: "The question to ask the user";
+                                };
+                            }, {
+                                readonly type: {
+                                    readonly enum: readonly ["table-name"];
+                                };
+                                readonly question: {
+                                    readonly type: "string";
+                                    readonly description: "The question to ask the user";
+                                };
+                                readonly suggestedTableName: {
+                                    readonly type: "string";
+                                    readonly optional: true;
+                                };
+                            }, {
+                                readonly type: {
+                                    readonly enum: readonly ["table-columns"];
+                                };
+                                readonly tableName: "string";
+                                readonly question: {
+                                    readonly type: "string";
+                                    readonly description: "The question to ask the user";
+                                };
+                                readonly suggestedColumns: {
+                                    readonly type: "string[]";
+                                    readonly optional: true;
+                                };
+                            }];
                         };
                     };
                 };
@@ -346,19 +384,19 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                 readonly arrayOfType: {
                                     readonly tableName: "string";
                                     readonly select: {
-                                        readonly type: "boolean";
+                                        readonly enum: readonly [true];
                                         readonly optional: true;
                                     };
                                     readonly insert: {
-                                        readonly type: "boolean";
+                                        readonly enum: readonly [true];
                                         readonly optional: true;
                                     };
                                     readonly update: {
-                                        readonly type: "boolean";
+                                        readonly enum: readonly [true];
                                         readonly optional: true;
                                     };
                                     readonly delete: {
-                                        readonly type: "boolean";
+                                        readonly enum: readonly [true];
                                         readonly optional: true;
                                     };
                                 };

@@ -65,6 +65,8 @@ export type ToolDefinition = {
  */
 type TableName = string;
 
+type FieldFilter = Record<string, 1> | Record<string, 0>;
+
 export type DatabaseAccessDefinition =
   | {
       mode: "custom";
@@ -74,11 +76,32 @@ export type DatabaseAccessDefinition =
        * This is preferred over providing access to the entire database (execute_sql_with_commit mode) for better security.
        */
       tableCreateStatements?: string;
-      tablePermissions: Partial<
-        Record<
-          TableName,
-          Partial<Record<"select" | "insert" | "update" | "delete", boolean>>
-        >
+      tablePermissions: Record<
+        TableName,
+        {
+          select?:
+            | true
+            | {
+                fields?: FieldFilter;
+                forcedFilter?: Record<string, unknown>;
+              };
+          insert?:
+            | true
+            | {
+                fields?: FieldFilter;
+              };
+          update?:
+            | true
+            | {
+                fields?: FieldFilter;
+                forcedFilter?: Record<string, unknown>;
+              };
+          delete?:
+            | true
+            | {
+                forcedFilter?: Record<string, unknown>;
+              };
+        }
       >;
     }
   | {

@@ -1,3 +1,5 @@
+import { tablePermissionsSchema } from "./tablePermissionsSchema";
+
 const PrimitiveType = ["string", "number", "boolean", "unknown"] as const;
 const PrimitiveTypesWithArrays = [
   ...PrimitiveType,
@@ -59,18 +61,7 @@ export const startAgenticWorkflowSchema = {
       {
         mode: { enum: ["custom"] },
         tableCreateStatements: { type: "string", optional: true },
-        tablePermissions: {
-          record: {
-            partial: true,
-            values: {
-              record: {
-                keysEnum: ["select", "insert", "update", "delete"],
-                partial: true,
-                values: "boolean",
-              },
-            },
-          },
-        },
+        tablePermissions: tablePermissionsSchema,
       },
       {
         mode: {

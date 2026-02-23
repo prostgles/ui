@@ -26,6 +26,7 @@ export type SearchListItemsProps = Pick<
   | "endOfResultsContent"
   | "noResultsContent"
   | "onReorder"
+  | "onMultiToggle"
 > & {
   renderedItems: ParsedListItem[];
   isSearch: boolean | undefined;
@@ -51,6 +52,7 @@ export const SearchListItems = forwardRef<
     searchingItems,
     endSearch,
     onReorder,
+    onMultiToggle,
   } = props;
   const inputWrapper = inputWrapperRef.current;
   const notAllItemsShown =
@@ -176,6 +178,7 @@ export const SearchListItems = forwardRef<
                     onReorder={onReorder}
                     className={classOverride(
                       "noselect bg-li flex-row ai-start p-p5 min-w-0 " +
+                        (onMultiToggle ? " px-1 " : "") +
                         (renderedItem.selected ? " selected " : "") +
                         (renderedItem.disabledInfo ? " not-allowed "
                         : renderedItem.onPress ? " pointer "

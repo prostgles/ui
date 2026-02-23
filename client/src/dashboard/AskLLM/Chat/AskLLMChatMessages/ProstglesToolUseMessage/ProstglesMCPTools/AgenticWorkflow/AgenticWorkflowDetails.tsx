@@ -1,14 +1,13 @@
-import { getEntries } from "@common/utils";
 import { FlexCol } from "@components/Flex";
+import { getDurationAsStr } from "@components/Stopwatch";
 import { mdiCogs, mdiRobotOutline, mdiTools } from "@mdi/js";
 import React, { useMemo } from "react";
+import { isEmpty } from "src/utils/utils";
 import { DatabaseAccessPermissions } from "../common/DatabaseAccessPermissions";
 import { HeaderList } from "../common/HeaderList";
-import { type ValidatedWorkflow } from "./useValidatedWorkflowJson";
 import { AgenticWorkflowUserInput } from "./AgenticWorkflowUserInput";
 import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
-import { isEmpty } from "src/utils/utils";
-import { getDurationAsStr } from "@components/Stopwatch";
+import { type ValidatedWorkflow } from "./useValidatedWorkflowJson";
 
 export const AgenticWorkflowDetails = ({
   validatedWorkflow,
@@ -52,12 +51,7 @@ export const AgenticWorkflowDetails = ({
         : dbAccess.mode === "custom" ?
           {
             Mode: "Custom",
-            tables: getEntries(dbAccess.tablePermissions).map(
-              ([tableName, permissions]) => ({
-                tableName,
-                ...permissions,
-              }),
-            ),
+            tables: dbAccess.tablePermissions,
           }
         : {
             Mode: dbAccess.mode,

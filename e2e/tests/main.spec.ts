@@ -1190,13 +1190,47 @@ test.describe("Main test", () => {
     /** Test ask tool */
     await newChat(page);
     await sendAskLLMMessage(page, " ask_tool ");
-    page.getByTestId("AskUserQuestions").getByText("Red").first().click();
-    page.getByTestId("AskUserQuestions").getByText("Yellow").nth(1).click();
-    page.getByTestId("AskUserQuestions").getByText("Blue").nth(1).click();
+    await page.getByTestId("AskUserQuestions").getByText("Red").first().click();
+    await page
+      .getByTestId("AskUserQuestions")
+      .getByText("Yellow")
+      .nth(1)
+      .click();
+    await page.getByTestId("AskUserQuestions").getByText("Blue").nth(1).click();
+    await page
+      .getByTestId("AskUserQuestions")
+      .locator(getDataKey("Table columns"))
+      .click();
+    await page
+      .locator(getDataKey("Table columns"))
+      .locator(getDataKey("type"))
+      .click();
+    await page.keyboard.press("Escape");
+    await page
+      .getByTestId("AskUserQuestions")
+      .locator(getDataKey("Table name"))
+      .click();
+    await page
+      .locator(getDataKey("Table name"))
+      .locator(getDataKey("receipts"))
+      .click();
+    await page
+      .locator(getDataKey("Free text"))
+      .locator("input")
+      .fill("some free text");
     await page.getByTestId("AskUserQuestions.confirm").click();
     await expect(
       page.getByTestId("AskUserQuestions.confirm"),
     ).not.toBeAttached();
+
+    const buttons = page.getByTestId("AskUserQuestions").locator("button");
+
+    for (const btn of await buttons.all()) {
+      await expect(btn).toBeDisabled();
+    }
+    await expect(page.getByTestId("AskUserQuestions")).toContainText(
+      "some free text",
+    );
 
     await newChat(page);
     await setPromptByText(page, "Create workflow");
