@@ -257,7 +257,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           },
           database_access: {
             optional: true,
-            enum: ["Run readonly SQL"],
+            enum: ["execute_sql_with_rollback"],
           },
         },
       },

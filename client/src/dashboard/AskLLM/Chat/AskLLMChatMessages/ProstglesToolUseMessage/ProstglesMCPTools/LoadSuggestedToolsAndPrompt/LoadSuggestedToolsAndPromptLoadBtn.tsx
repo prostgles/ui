@@ -2,22 +2,17 @@ import {
   getMCPToolNameParts,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
-import { getEntries } from "@common/utils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
-import {
-  mdiLanguageTypescript,
-  mdiOpenInNew,
-  mdiTable,
-  mdiTools,
-} from "@mdi/js";
+import { mdiLanguageTypescript, mdiOpenInNew, mdiTools } from "@mdi/js";
 import type { JSONB } from "prostgles-types";
 import React from "react";
 import { usePrgl } from "../../../../../../../pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "../../../../../../../utils/utils";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
+import { DatabaseAccessPermissions } from "../common/DatabaseAccessPermissions";
 
 export const LoadSuggestedToolsAndPromptLoadBtn = ({
   chatId,
@@ -98,18 +93,7 @@ export const LoadSuggestedToolsAndPromptLoadBtn = ({
         await dbs.llm_chats.update(
           { id: chatId },
           {
-            db_data_permissions:
-              dbAccess.Mode === "execute_sql_with_commit" ?
-                { Mode: "Run commited SQL", auto_approve: true }
-              : dbAccess.Mode === "execute_sql_with_rollback" ?
-                { Mode: "Run readonly SQL", auto_approve: true }
-              : dbAccess.Mode === "Custom" ?
-                {
-                  Mode: "Custom",
-                  tables: dbAccess.tables,
-                  auto_approve: true,
-                }
-              : dbAccess,
+            db_data_permissions: { ...dbAccess, auto_approve: true } as any,
           },
         );
 
@@ -152,37 +136,7 @@ export const LoadSuggestedToolsAndPromptLoadBtn = ({
                 </div>
               : null}
 
-              {dbAccess.Mode !== "Custom" && (
-                <div>
-                  Database Access: <strong>{dbAccess.Mode}</strong>
-                </div>
-              )}
-              {dbAccess.Mode === "Custom" && (
-                <div>
-                  Table access:
-                  <ul className="no-decor">
-                    {getEntries(dbAccess.tables).map(([tableName, t]) => (
-                      <li
-                        key={tableName}
-                        className="bold flex-row gap-p5 ai-center py-p5"
-                      >
-                        <Icon path={mdiTable} />
-                        <div>
-                          <strong>{tableName}</strong>:
-                        </div>
-                        {[
-                          t.select ? "select" : null,
-                          t.update ? "update" : null,
-                          t.insert ? "insert" : null,
-                          t.delete ? "delete" : null,
-                        ]
-                          .filter(isDefined)
-                          .join(", ")}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <DatabaseAccessPermissions dbAccess={dbAccess} />
             </FlexCol>
           ),
         });

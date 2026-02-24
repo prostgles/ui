@@ -50,7 +50,7 @@ export const LoadSuggestedToolsAndPrompt = ({
         />
       )}
 
-      <DatabaseAccessPermissions {...suggested_database_access} />
+      <DatabaseAccessPermissions dbAccess={suggested_database_access} />
 
       <HeaderList
         title="MCP Tools"

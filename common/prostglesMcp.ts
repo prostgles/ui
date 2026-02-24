@@ -1,3 +1,4 @@
+import { databaseAccessSchema } from "./databaseAccessSchema";
 import type { DBSSchema } from "./publishUtils";
 import { tablePermissionsSchema } from "./tablePermissionsSchema";
 import { fixIndent } from "./utils";
@@ -327,15 +328,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           suggested_database_access: {
             description:
               "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type.",
-            oneOfType: [
-              { Mode: { enum: ["None"] } },
-              { Mode: { enum: ["execute_sql_with_rollback"] } },
-              { Mode: { enum: ["execute_sql_with_commit"] } },
-              {
-                Mode: { enum: ["Custom"] },
-                tables: tablePermissionsSchema,
-              },
-            ],
+            ...databaseAccessSchema,
           },
         },
       },

@@ -8,6 +8,7 @@ import { HeaderList } from "../common/HeaderList";
 import { AgenticWorkflowUserInput } from "./AgenticWorkflowUserInput";
 import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
 import { type ValidatedWorkflow } from "./useValidatedWorkflowJson";
+import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 
 export const AgenticWorkflowDetails = ({
   validatedWorkflow,
@@ -46,18 +47,8 @@ export const AgenticWorkflowDetails = ({
       <div style={{ opacity: 0.7, marginBottom: "0.5em" }}>
         Timeout: {getDurationAsStr(timeOutInSeconds * 1000)}
       </div>
-      <DatabaseAccessPermissions
-        {...(!dbAccess ? { Mode: "None" }
-        : dbAccess.mode === "custom" ?
-          {
-            Mode: "Custom",
-            tables: dbAccess.tablePermissions,
-          }
-        : {
-            Mode: dbAccess.mode,
-          })}
-      />
-
+      <DatabaseAccessPermissions dbAccess={dbAccess} />
+      <DatabaseAccessEditor value={dbAccess} />
       <HeaderList
         title="MCP Tools"
         iconPath={mdiTools}

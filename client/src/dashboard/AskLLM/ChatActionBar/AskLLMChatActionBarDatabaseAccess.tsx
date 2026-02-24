@@ -10,7 +10,6 @@ import {
   MonacoEditor,
 } from "@components/MonacoEditor/MonacoEditor";
 import PopupMenu from "@components/PopupMenu";
-import { SearchList } from "@components/SearchList/SearchList";
 import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import {
@@ -22,11 +21,11 @@ import {
   mdiEye,
   mdiLinkVariant,
   mdiTable,
-  mdiTableEye,
   mdiTableSearch,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo } from "react";
+import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
@@ -51,8 +50,8 @@ export const AskLLMChatActionBarDatabaseAccess = (
   const allowedFunctions = llm_chats_allowed_functions?.length;
   const dataPermission = activeChat.db_data_permissions;
   const tablePermissionInfo =
-    dataPermission?.Mode === "Custom" ?
-      Array.from(getEntries(dataPermission.tables)).map(
+    dataPermission?.mode === "custom" ?
+      Array.from(getEntries(dataPermission.tablePermissions)).map(
         ([tableName, t]) =>
           `${tableName}: ${["select", "update", "insert", "delete"].filter((v) => t[v]).join(", ")}`,
       )
@@ -73,22 +72,22 @@ export const AskLLMChatActionBarDatabaseAccess = (
     return { icon: mdiDatabase, type: schemaPermission.type };
   }, [prompt, schemaPermission]);
   const databaseAccess = useMemo(() => {
-    if (!dataPermission || dataPermission.Mode === "None") {
+    if (!dataPermission) {
       return;
     }
 
-    const { Mode } = dataPermission;
+    const { mode } = dataPermission;
     const canEditData =
-      dataPermission.Mode === "Custom" &&
-      Object.values(dataPermission.tables).some(
+      dataPermission.mode === "custom" &&
+      Object.values(dataPermission.tablePermissions).some(
         (t) => t.update || t.insert || t.delete,
       );
     const icon = {
       "Run readonly SQL": mdiDatabaseSearch,
       Custom: canEditData ? mdiTable : mdiTableSearch,
       "Run commited SQL": mdiDatabaseEdit,
-    }[Mode];
-    return { icon, Mode };
+    }[mode];
+    return { icon, mode };
   }, [dataPermission]);
 
   return (
@@ -107,7 +106,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
           title={[
             `Database access for this chat:\n`,
             `Schema read access: ${schemaReadAccess?.type ?? "None"}`,
-            `Data: \n ${(tablePermissionInfo?.join(", ") || dataPermission?.Mode) ?? "None"}`,
+            `Data: \n ${(tablePermissionInfo?.join(", ") || dataPermission?.mode) ?? "None"}`,
             allowedFunctions ? `Allowed Functions: ${allowedFunctions}` : "",
           ].join("\n")}
           color={
@@ -223,206 +222,41 @@ export const AskLLMChatActionBarDatabaseAccess = (
           </div>
         )}
       </FlexRowWrap>
-      <FlexRowWrap className="gap-p5 ai-start">
-        <Icon className="text-1 mt-p25" path={mdiTableEye} />
-        <Select
-          label={{ label: "Data access" }}
-          value={dataPermission?.Mode}
-          data-command="LLMChatOptions.DatabaseAccess.data"
-          btnProps={
-            dataPermission && dataPermission.Mode !== "None" ?
-              {
-                color: "action",
-              }
-            : {}
-          }
-          fullOptions={
-            [
-              {
-                key: "None",
-                subLabel:
-                  "Cannot interact with the database (schema access is controlled separately).",
-                iconPath: mdiDatabaseOff,
-              },
-              {
-                key: "Run readonly SQL",
-                subLabel:
-                  "Can run readonly SQL queries (if the current user is allowed)",
-                iconPath: mdiTableSearch,
-              },
-              {
-                key: "Run commited SQL",
-                subLabel:
-                  "Can run SQL queries that will be commited (if the current user is allowed). Use with caution",
-                iconPath: mdiDatabaseEdit,
-              },
-              {
-                key: "Custom",
-                subLabel:
-                  "Can only access specific tables on behalf of the user",
-                iconPath: mdiTable,
-              },
-            ] as const
-          }
-          onChange={(dataAccess) => {
-            void dbs.llm_chats.update(
-              { id: activeChatId },
-              {
-                db_data_permissions:
-                  dataAccess === "Custom" ?
-                    {
-                      Mode: dataAccess,
-                      tables: {},
-                    }
-                  : {
-                      Mode: dataAccess,
-                    },
-              },
-            );
-          }}
-        />
-        {dataPermission && dataPermission.Mode !== "None" && (
-          <SwitchToggle
-            label={"Auto approve"}
-            title="If enabled, the system will automatically approve the SQL queries generated by the LLM without requiring manual approval. Use with caution, especially if the LLM has broad data access permissions."
-            checked={dataPermission.auto_approve ?? false}
-            variant="col"
-            onChange={async (checked) => {
-              await dbs.llm_chats.update(
-                { id: activeChatId },
-                {
-                  db_data_permissions: {
-                    ...dataPermission,
-                    auto_approve: checked,
-                  },
-                },
-              );
-            }}
-          />
-        )}
-        {dataPermission?.Mode === "Custom" && (
-          <div className="w-full pl-2">
-            <SearchList
-              id="custom-tables"
-              className="shadow"
-              style={{
-                maxHeight: "min(400px, calc(100vh - 100px)",
-              }}
-              placeholder={`Search ${tables.length} tables & views`}
-              limit={200}
-              items={tables
-                .toSorted((a, b) => {
-                  const aRule = dataPermission.tables[a.name];
-                  const bRule = dataPermission.tables[b.name];
-                  /** Bring tables with rules first */
-                  if (aRule && !bRule) return -1;
-                  if (!aRule && bRule) return 1;
-                  return a.name.localeCompare(b.name);
-                })
-                .map((t) => {
-                  const tableRules = dataPermission.tables[t.name] ?? {};
-
-                  return {
-                    key: t.name,
-                    styles: {
-                      labelWrapper: {
-                        fontWeight: 500,
-                        minWidth: "60px",
-                      },
-                      rowInner:
-                        window.isLowWidthScreen ?
-                          {
-                            flexDirection: "column",
-                            gap: "1em",
-                            alignItems: "start",
-                            overflow: "auto",
-                          }
-                        : {},
-                    },
-                    title: t.name,
-                    rowStyle: { border: "1px solid var(--b-default)" },
-                    contentLeft: (
-                      <Icon
-                        className="mr-p5 text-2"
-                        title={t.info.isView ? "View" : "Table"}
-                        path={t.info.isView ? mdiTableEye : mdiTable}
-                      />
-                    ),
-                    contentRight: (
-                      <>
-                        {(
-                          ["select", "insert", "update", "delete"] as const
-                        ).map((ruleType) => {
-                          const isOn = tableRules[ruleType];
-                          return (
-                            <Btn
-                              key={ruleType}
-                              color={isOn ? "action" : "default"}
-                              variant={isOn ? "filled" : undefined}
-                              size="small"
-                              onClick={() => {
-                                const shouldTurnOn = !isOn;
-                                const newTableRules = {
-                                  ...dataPermission.tables,
-                                  [t.name]: {
-                                    ...tableRules,
-                                    [ruleType]: shouldTurnOn || undefined,
-                                  },
-                                } as const;
-                                void dbs.llm_chats.update(
-                                  { id: activeChatId },
-                                  {
-                                    db_data_permissions: {
-                                      Mode: "Custom",
-                                      tables: newTableRules,
-                                    },
-                                  },
-                                );
-                              }}
-                            >
-                              {ruleType.toUpperCase()}
-                            </Btn>
-                          );
-                        })}
-                      </>
-                    ),
-                  };
-                })}
-            />
-          </div>
-        )}
-      </FlexRowWrap>
-      {/* <SmartForm
-        db={dbs as DBHandlerClient}
-        sql={dbsSql}
-        label=""
-        tableName="llm_chats"
-        rowFilter={[{ fieldName: "id", value: activeChatId }]}
-        tables={dbsTables}
-        methods={dbsMethodSchema}
-        columns={{
-          db_schema_permissions: 1,
-          db_data_permissions: 1,
-        }}
-        confirmUpdates={false}
-        disabledActions={["delete", "clone", "update"]}
-        showJoinedTables={{
-          llm_chats_allowed_functions: {},
-        }}
-        contentClassname="p-1"
-        // contentClassname="p-0 pb-1"
-        jsonbSchemaWithControls={{
-          tables,
-          schemaStyles: [
+      <DatabaseAccessEditor
+        value={dataPermission ?? undefined}
+        onChange={(newAccess) => {
+          void dbs.llm_chats.update(
+            { id: activeChatId },
             {
-              path: ["3", "tables"],
-              style: {
-                width: "100%",
+              db_data_permissions: {
+                ...(newAccess as any),
+                auto_approve: dataPermission?.auto_approve,
               },
             },
-          ],
+          );
         }}
-      /> */}
+        contentRight={
+          dataPermission && (
+            <SwitchToggle
+              label={"Auto approve"}
+              title="If enabled, the system will automatically approve the SQL queries generated by the LLM without requiring manual approval. Use with caution, especially if the LLM has broad data access permissions."
+              checked={dataPermission.auto_approve ?? false}
+              variant="col"
+              onChange={async (checked) => {
+                await dbs.llm_chats.update(
+                  { id: activeChatId },
+                  {
+                    db_data_permissions: {
+                      ...dataPermission,
+                      auto_approve: checked,
+                    },
+                  },
+                );
+              }}
+            />
+          )
+        }
+      />
     </PopupMenu>
   );
 };

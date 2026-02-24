@@ -85,14 +85,11 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
         tables
       : tables.filter((t) => {
           if (cachedSchemaPermissions.type === "SameAsData") {
-            if (
-              !db_data_permissions?.Mode ||
-              db_data_permissions.Mode === "None"
-            ) {
+            if (!db_data_permissions) {
               return false;
             }
-            if (db_data_permissions.Mode === "Custom") {
-              const tableRule = db_data_permissions.tables[t.name];
+            if (db_data_permissions.mode === "custom") {
+              const tableRule = db_data_permissions.tablePermissions[t.name];
               return (
                 tableRule?.delete ||
                 tableRule?.insert ||

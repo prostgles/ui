@@ -538,8 +538,10 @@ export const COMMANDS = {
   AgenticWorkflow: "",
   "AgenticWorkflow.validationErrorLogs": "",
   "AgenticWorkflow.openChat": "",
+  DatabaseAccessEditor: "",
+  "DatabaseAccessEditor.Mode": "",
+  "DatabaseAccessEditor.TableRules": "",
   "LLMChatOptions.DatabaseAccess.schema": "",
-  "LLMChatOptions.DatabaseAccess.data": "",
 } as const satisfies Record<
   string,
   | string
@@ -565,7 +567,7 @@ export const getCommandElemSelector = (cmd: Command) => {
 export const getDataKey = (key: string) => {
   return `[data-key=${JSON.stringify(key)}]`;
 };
-export const getDataLabelElemSelector = (key: string) => {
+export const getDataLabel = (key: string) => {
   return `[data-label=${JSON.stringify(key)}]`;
 };
 

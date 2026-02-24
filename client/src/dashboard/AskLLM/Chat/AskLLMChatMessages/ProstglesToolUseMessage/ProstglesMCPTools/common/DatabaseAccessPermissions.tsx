@@ -1,21 +1,21 @@
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getEntries } from "@common/utils";
 import Chip from "@components/Chip";
 import { FlexRow } from "@components/Flex";
 import { mdiDatabaseEdit } from "@mdi/js";
-import { getProperty, type JSONB } from "prostgles-types";
+import { getProperty } from "prostgles-types";
 import React, { useMemo } from "react";
+import type { DatabaseAccessPermission } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 import { HeaderList } from "./HeaderList";
 
-export const DatabaseAccessPermissions = (
-  dbAccess: JSONB.GetObjectType<
-    (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]
-  >["suggested_database_access"],
-) => {
+export const DatabaseAccessPermissions = ({
+  dbAccess,
+}: {
+  dbAccess: DatabaseAccessPermission | undefined;
+}) => {
   const databaseAccessList = useMemo(() => {
-    if (dbAccess.Mode === "None") return;
-    if (dbAccess.Mode === "Custom") {
-      return getEntries(dbAccess.tables).map(([tableName, t]) => {
+    if (!dbAccess) return;
+    if (dbAccess.mode === "custom") {
+      return getEntries(dbAccess.tablePermissions).map(([tableName, t]) => {
         const tableMethods = (
           ["select", "update", "insert", "delete"] as const
         ).filter((v) => t[v]);
@@ -46,7 +46,7 @@ export const DatabaseAccessPermissions = (
       });
     }
 
-    return dbAccess.Mode === "execute_sql_with_rollback" ?
+    return dbAccess.mode === "execute_sql_with_rollback" ?
         ["Execute SQL with rollback"]
       : ["Execute SQL with commit"];
   }, [dbAccess]);

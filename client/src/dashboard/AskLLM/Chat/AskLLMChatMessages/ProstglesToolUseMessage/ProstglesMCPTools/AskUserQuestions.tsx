@@ -80,6 +80,7 @@ export const AskUserQuestions = ({
                   }
                   return (
                     <Select
+                      label={table.label}
                       data-key={question}
                       options={table.columns.map((c) => c.name)}
                       multiSelect={true}

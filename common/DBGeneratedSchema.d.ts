@@ -273,10 +273,9 @@ export type DBGeneratedSchema = {
       currently_typed_message?: null | string;
       db_data_permissions?: 
        | null
-       |  {  Mode: "None"; }
-       |  {  Mode: "Run readonly SQL";  query_timeout?: number;  auto_approve?: boolean; }
-       |  {  Mode: "Run commited SQL";  query_timeout?: number;  auto_approve?: boolean; }
-       |  {  Mode: "Custom";  auto_approve?: boolean;  tables: Record<string,  {  select?: | true |  {  forcedFilter?: Record<string, any>;  fields?: |  Record<string, 1> |  Record<string, 0>; };  update?: | true |  {  forcedFilter?: Record<string, any>;  fields?: |  Record<string, 1> |  Record<string, 0>; };  insert?: | true |  {  fields?: |  Record<string, 1> |  Record<string, 0>; };  delete?: | true |  {  forcedFilter?: Record<string, any>; }; }>; }
+       |  {  mode: "execute_sql_with_rollback";  query_timeout?: number;  auto_approve?: boolean; }
+       |  {  mode: "execute_sql_with_commit";  query_timeout?: number;  auto_approve?: boolean; }
+       |  {  mode: "custom";  auto_approve?: boolean;  tablePermissions: Record<string,  {  select?: | true |  {  forcedFilter?: Record<string, any>;  fields?: |  Record<string, 1> |  Record<string, 0>; };  update?: | true |  {  forcedFilter?: Record<string, any>;  fields?: |  Record<string, 1> |  Record<string, 0>; };  insert?: | true |  {  fields?: |  Record<string, 1> |  Record<string, 0>; };  delete?: | true |  {  forcedFilter?: Record<string, any>; }; }>; }
       db_schema_permissions?: 
        | null
        |  {  type: "None"; }
@@ -378,7 +377,7 @@ export type DBGeneratedSchema = {
       name?: string;
       options?: null | {    max_tokens?: number;   temperature?: number;   mcp_server_tools?: Record<string, 
  | "*"
- | string[]>;   database_access?: "Run readonly SQL";  };
+ | string[]>;   database_access?: "execute_sql_with_rollback";  };
       prompt?: string;
       user_id?: null | string;
     };

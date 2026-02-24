@@ -27,11 +27,7 @@ const handler = {
         create_container: async (args, { user_id, chat, connection_id }) => {
           const { db_data_permissions } = chat;
           const autoApprovedPermissions =
-            (
-              db_data_permissions?.Mode !== "None" &&
-              db_data_permissions?.Mode &&
-              db_data_permissions.auto_approve
-            ) ?
+            db_data_permissions?.mode && db_data_permissions.auto_approve ?
               db_data_permissions
             : undefined;
           return runContainerWithProxyAccess(

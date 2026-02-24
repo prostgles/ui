@@ -146,8 +146,8 @@ const dbRequestHandler: RequestHandler = (req: Request, res: Response) => {
   const { endpoint = "" } = req.params;
   try {
     const { dbPermissions, sid_token } = authContext;
-    const { Mode = "None" } = dbPermissions?.db_data_permissions || {};
-    if (!dbPermissions || Mode === "None") {
+    const { mode = "none" } = dbPermissions?.db_data_permissions || {};
+    if (!dbPermissions || mode === "none") {
       return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
         error: "No database permissions granted for this container",
       });

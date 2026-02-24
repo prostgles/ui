@@ -16,11 +16,7 @@ import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { testAskLLMCode } from "./testAskLLM/testAskLLM";
-import {
-  getCommandElemSelector,
-  getDataKey,
-  getDataLabelElemSelector,
-} from "./Testing";
+import { getCommandElemSelector, getDataKey, getDataLabel } from "./Testing";
 import {
   clickAndWait,
   clickInsertRow,
@@ -1055,11 +1051,11 @@ test.describe("Main test", () => {
       VALUES ('fresh_user') ON CONFLICT DO NOTHING;
       `,
     );
-    await page.getByTestId("LLMChatOptions.DatabaseAccess.data").click();
+    await page.getByTestId("DatabaseAccessEditor.Mode").click();
 
     await page
-      .getByTestId("LLMChatOptions.DatabaseAccess.data")
-      .locator(getDataKey("Run readonly SQL"))
+      .getByTestId("DatabaseAccessEditor.Mode")
+      .locator(getDataLabel("Run readonly SQL"))
       .click();
     /** Auto approve to ensure the container can run the query */
     await page.getByLabel("Auto approve", { exact: true }).last().click();
@@ -2770,7 +2766,7 @@ test.describe("Main test", () => {
     await page.locator(getDataKey("Components")).click();
     await page.locator(getDataKey("SampleComponent")).click();
     await page.locator(getDataKey("Files")).click();
-    await page.locator(getDataLabelElemSelector("client")).click();
+    await page.locator(getDataLabel("client")).click();
     await page.waitForTimeout(1e3);
     await page.keyboard.type("pack");
     await page.keyboard.press("Enter");

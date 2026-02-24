@@ -109,7 +109,7 @@ export const setChatPrompt = async ({
     await dbs.llm_chats.update(
       { id: chatId },
       {
-        db_data_permissions: { Mode: options.database_access },
+        db_data_permissions: { mode: options.database_access },
       },
     );
   }

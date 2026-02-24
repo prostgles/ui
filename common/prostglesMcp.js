@@ -1,3 +1,4 @@
+import { databaseAccessSchema } from "./databaseAccessSchema";
 const runSQLSchema = {
     type: {
         sql: {
@@ -287,26 +288,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                         description: "System prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.",
                         type: "string",
                     },
-                    suggested_database_access: {
-                        description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type.",
-                        oneOfType: [
-                            { Mode: { enum: ["None"] } },
-                            { Mode: { enum: ["execute_sql_with_rollback"] } },
-                            { Mode: { enum: ["execute_sql_with_commit"] } },
-                            {
-                                Mode: { enum: ["Custom"] },
-                                tables: {
-                                    arrayOfType: {
-                                        tableName: "string",
-                                        select: { enum: [true], optional: true },
-                                        insert: { enum: [true], optional: true },
-                                        update: { enum: [true], optional: true },
-                                        delete: { enum: [true], optional: true },
-                                    },
-                                },
-                            },
-                        ],
-                    },
+                    suggested_database_access: Object.assign({ description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type." }, databaseAccessSchema),
                 },
             },
             outputSchema: undefined,

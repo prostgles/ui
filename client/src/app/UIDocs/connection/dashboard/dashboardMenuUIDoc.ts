@@ -1,4 +1,4 @@
-import { getDataKey, getDataLabelElemSelector } from "../../../../Testing";
+import { getDataKey, getDataLabel } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 
 export const dashboardMenuUIDoc = {
@@ -132,7 +132,7 @@ export const dashboardMenuUIDoc = {
             {
               type: "input",
               inputType: "text",
-              selector: getDataLabelElemSelector("Table name"),
+              selector: getDataLabel("Table name"),
               title: "Table name",
               description:
                 "New/existing table name into which data is to be imported.",
@@ -140,7 +140,7 @@ export const dashboardMenuUIDoc = {
             {
               type: "input",
               inputType: "checkbox",
-              selector: getDataLabelElemSelector(
+              selector: getDataLabel(
                 "Try to infer and apply column data types",
               ),
               title: "Try to infer and apply column data types",
@@ -150,14 +150,14 @@ export const dashboardMenuUIDoc = {
             {
               type: "input",
               inputType: "checkbox",
-              selector: getDataLabelElemSelector("Drop table if exists"),
+              selector: getDataLabel("Drop table if exists"),
               title: "Drop table if exists",
               description:
                 "Checkbox for dropping the table if it already exists in the database. If checked, the existing table will be deleted before importing the new file.",
             },
             {
               type: "select",
-              selector: getDataLabelElemSelector("Insert as"),
+              selector: getDataLabel("Insert as"),
               title: "Insert as",
               description:
                 "Select list for choosing the method of inserting JSON/GeoJSON data into the table. Options include: Single text value, JSONB rows, and Properties with geometry.",

@@ -174,36 +174,29 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
         jsonbSchema: {
           oneOfType: [
             {
-              Mode: {
-                description:
-                  "Cannot interact with any data from the database. This excludes the schema read access which is controlled separately",
-                enum: ["None"],
-              },
-            },
-            {
-              Mode: {
-                enum: ["Run readonly SQL"],
+              mode: {
+                enum: ["execute_sql_with_rollback"],
                 description:
                   "Can run readonly SQL queries (if the current user is allowed)",
               },
               ...commonrunSQLOpts,
             },
             {
-              Mode: {
-                enum: ["Run commited SQL"],
+              mode: {
+                enum: ["execute_sql_with_commit"],
                 description:
                   "Can run SQL queries that will be commited (if the current user is allowed). Use with caution",
               },
               ...commonrunSQLOpts,
             },
             {
-              Mode: {
-                enum: ["Custom"],
+              mode: {
+                enum: ["custom"],
                 description:
                   "Can only access specific tables on behalf of the user",
               },
               auto_approve: commonrunSQLOpts.auto_approve,
-              tables: tablePermissionsSchema,
+              tablePermissions: tablePermissionsSchema,
             },
           ],
         },

@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { getCommandElemSelector, getDataKey } from "Testing";
+import { getCommandElemSelector, getDataKey, getDataLabel } from "Testing";
 import { createReceipt } from "testAskLLM/createReceipt";
 import {
   closeWorkspaceWindows,
@@ -220,11 +220,11 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
   await deleteExistingLLMChat(page);
   await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
-  await page.getByTestId("LLMChatOptions.DatabaseAccess.data").click();
+  await page.getByTestId("DatabaseAccessEditor.Mode").click();
 
   await page
-    .getByTestId("LLMChatOptions.DatabaseAccess.data")
-    .locator(getDataKey("Run readonly SQL"))
+    .getByTestId("DatabaseAccessEditor.Mode")
+    .locator(getDataLabel("Run readonly SQL"))
     .click();
   await page.getByTestId("Popup.close").last().click();
 

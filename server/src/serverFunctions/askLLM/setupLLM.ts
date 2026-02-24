@@ -34,7 +34,7 @@ export const setupLLM = async (dbs: DBS) => {
             mcp_server_tools: {
               "prostgles-ui": ["ask_user_questions"],
             },
-            database_access: "Run readonly SQL",
+            database_access: "execute_sql_with_rollback",
           },
         },
         {
@@ -46,7 +46,7 @@ export const setupLLM = async (dbs: DBS) => {
             mcp_server_tools: {
               "prostgles-ui": ["suggest_dashboards", "ask_user_questions"],
             },
-            database_access: "Run readonly SQL",
+            database_access: "execute_sql_with_rollback",
           },
           icon: "ViewCarousel",
           prompt: [
@@ -66,7 +66,7 @@ export const setupLLM = async (dbs: DBS) => {
             mcp_server_tools: {
               "prostgles-ui": ["suggest_tools_and_prompt"],
             },
-            database_access: "Run readonly SQL",
+            database_access: "execute_sql_with_rollback",
           },
           prompt: [
             firstLine,
@@ -93,7 +93,7 @@ export const setupLLM = async (dbs: DBS) => {
                 "ask_user_questions",
               ],
             },
-            database_access: "Run readonly SQL",
+            database_access: "execute_sql_with_rollback",
           },
           prompt: [
             firstLine,
@@ -124,7 +124,7 @@ export const setupLLM = async (dbs: DBS) => {
               webdev: "*",
               "prostgles-ui": ["ask_user_questions"],
             },
-            database_access: "Run readonly SQL",
+            database_access: "execute_sql_with_rollback",
             max_tokens: 18_000,
           },
           prompt: [
@@ -145,14 +145,14 @@ export const setupLLM = async (dbs: DBS) => {
             "",
             LLM_PROMPT_VARIABLES.DB_HANDLER_SCHEMA,
           ].join("\n"),
-        } satisfies DBSSchemaForInsert["llm_prompts"],
+        },
         {
           name: "Empty",
           description: "Empty prompt",
           user_id,
           prompt: "",
         },
-      ] as DBSSchemaForInsert["llm_prompts"][],
+      ] as const satisfies DBSSchemaForInsert["llm_prompts"][],
       { onConflict: "DoUpdate", returning: { name: 1 } },
     );
 

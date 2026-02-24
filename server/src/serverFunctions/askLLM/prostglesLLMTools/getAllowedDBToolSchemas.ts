@@ -19,12 +19,12 @@ export const getAllowedDBToolSchemas = (
   dbPermissions: DbPermissions | undefined,
 ): DBTool[] => {
   const chatDBAccess = dbPermissions?.db_data_permissions;
-  if (!chatDBAccess || chatDBAccess.Mode === "None") {
+  if (!chatDBAccess) {
     return [];
   }
-  if (chatDBAccess.Mode === "Custom") {
+  if (chatDBAccess.mode === "custom") {
     const allowedCommands: Map<string, true> = new Map();
-    Object.values(chatDBAccess.tables).forEach((tableRule) => {
+    Object.values(chatDBAccess.tablePermissions).forEach((tableRule) => {
       for (const actionName of COMMANDS) {
         if (tableRule[actionName]) {
           allowedCommands.set(actionName, true);
@@ -70,7 +70,7 @@ export const getAllowedDBToolSchemas = (
 
       if (
         /** Allow all tools */
-        chatDBAccess.Mode === "Run commited SQL" ||
+        chatDBAccess.mode === "execute_sql_with_commit" ||
         /** Allow read only tools */
         toolName === "execute_sql_with_rollback" ||
         toolName === "select" ||

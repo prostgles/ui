@@ -123,14 +123,16 @@ export const getClientDBHandlersForChat = async (
   const chatDBPermissions = chat.db_data_permissions;
   const { connection_id } = chat;
   const tables =
-    chatDBPermissions?.Mode === "Custom" ? chatDBPermissions.tables : undefined;
+    chatDBPermissions?.mode === "custom" ?
+      chatDBPermissions.tablePermissions
+    : undefined;
   const connection =
     connectionManager.getConnectionStartedInstance(connection_id);
   const handlers = await connection.prgl.getClientDBHandlers(clientReq, {
     tables,
     sql:
-      chatDBPermissions?.Mode === "Run commited SQL" ? "commited"
-      : chatDBPermissions?.Mode === "Run readonly SQL" ? "rolledback"
+      chatDBPermissions?.mode === "execute_sql_with_commit" ? "commited"
+      : chatDBPermissions?.mode === "execute_sql_with_rollback" ? "rolledback"
       : undefined,
   });
   return handlers;

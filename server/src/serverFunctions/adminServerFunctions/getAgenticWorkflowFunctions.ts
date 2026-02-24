@@ -2,7 +2,7 @@ import { createAgentHandlers } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPSer
 import { startAgenticWorkflowContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/startAgenticWorkflowContainer";
 import { validateUserInput } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/validateUserInput";
 import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
-import { getSerialisableError } from "prostgles-types";
+import { getSerialisableError, omitKeys } from "prostgles-types";
 import { runConnectionQuery } from "../getServerFunctions";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
@@ -150,21 +150,9 @@ export const getAgenticWorkflowFunctions = (
           dbPermissions: {
             connection_id,
             db_data_permissions:
-              !databaseAccessDefinitions ? { Mode: "None" }
-              : databaseAccessDefinitions.mode === "custom" ?
-                {
-                  Mode: "Custom",
-                  tables: databaseAccessDefinitions.tablePermissions,
-                }
-              : {
-                  Mode:
-                    (
-                      databaseAccessDefinitions.mode ===
-                      "execute_sql_with_commit"
-                    ) ?
-                      "Run commited SQL"
-                    : "Run readonly SQL",
-                },
+              databaseAccessDefinitions?.mode === "custom" ?
+                omitKeys(databaseAccessDefinitions, ["tableCreateStatements"])
+              : (databaseAccessDefinitions ?? null),
           },
           handler: (data) => {
             const agentHandler = agentHandlers.get(data.agentName);
