@@ -279,7 +279,7 @@ export const AccessControlRuleEditor = ({
                 onChange({
                   ...rule,
                   ...newRule,
-                } as any);
+                } as AccessRule);
               }}
             />
 

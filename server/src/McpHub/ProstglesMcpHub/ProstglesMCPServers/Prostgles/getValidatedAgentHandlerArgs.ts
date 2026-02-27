@@ -1,16 +1,22 @@
 import type { DBS } from "@src/index";
 import { isEmpty } from "prostgles-types";
 import type { AgentDefinition } from "./defineAgenticWorkflow";
+import type { DBSSchema } from "@common/publishUtils";
+import { DEFAULT_AGENT_MODEL } from "@src/serverFunctions/askLLM/refreshModels";
 
 export const getValidatedAgentHandlerArgs = async (
   {
     agentName,
     agentConfig,
-  }: { agentName: string; agentConfig: AgentDefinition<string[]> },
+    definition_override,
+  }: { agentName: string; agentConfig: AgentDefinition<string[]> } & Pick<
+    DBSSchema["agentic_workflows"],
+    "definition_override"
+  >,
   dbs: DBS,
 ) => {
   const {
-    modelName = "claude-4.5-sonnet-20250929",
+    modelName = DEFAULT_AGENT_MODEL,
     prompt,
     outputSchema,
     maxCostUSD = 10,
@@ -18,7 +24,7 @@ export const getValidatedAgentHandlerArgs = async (
     maxTokens = 6_000,
     temperature = 0.0,
     allowedToolDefinitionNames,
-  } = agentConfig;
+  } = { ...agentConfig, ...definition_override?.agentDefinitions?.[agentName] };
   if (!prompt) {
     throw new Error(`Agent ${agentName} is missing a prompt`);
   }
@@ -56,8 +62,15 @@ export const getValidatedAgentHandlerArgs = async (
     );
   }
 
+  if (!model.mcp_tool_support) {
+    throw new Error(
+      `Model ${modelName} does not support tools and cannot be used in an agentic workflow`,
+    );
+  }
+
   return {
     model,
+    modelName: model.name,
     prompt,
     outputSchema,
     allowedToolDefinitionNames,

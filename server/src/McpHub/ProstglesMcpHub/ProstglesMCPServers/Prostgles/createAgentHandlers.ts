@@ -30,9 +30,10 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
     agentDefinitions,
     timeOutInSeconds,
     signal,
+    definition_override,
   }: Parameters<P>[0] & {
     signal?: AbortSignal;
-  },
+  } & Pick<DBSSchema["agentic_workflows"], "definition_override">,
   {
     dbs,
     chatId,
@@ -70,7 +71,18 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
     dbs,
   );
 
+  const agentConfigsWithDefaults: Record<
+    string,
+    Awaited<ReturnType<typeof getValidatedAgentHandlerArgs>>
+  > = {};
   for (const [agentName, config] of Object.entries(agentDefinitions)) {
+    const configWithDefaults = await getValidatedAgentHandlerArgs(
+      { agentName, agentConfig: config, definition_override },
+      dbs,
+    );
+
+    agentConfigsWithDefaults[agentName] = configWithDefaults;
+
     const {
       model,
       prompt,
@@ -80,10 +92,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
       maxIterations,
       maxTokens,
       temperature,
-    } = await getValidatedAgentHandlerArgs(
-      { agentName, agentConfig: config },
-      dbs,
-    );
+    } = configWithDefaults;
 
     const tools = allowedToolDefinitionNames
       ?.map((allowedToolDefName) => {
@@ -217,5 +226,6 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
 
   return {
     agentHandlers,
+    agentConfigsWithDefaults,
   };
 };

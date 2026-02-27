@@ -4,6 +4,7 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import { applySampleSchema } from "./serverFunctions/applySampleSchema";
+import { CSP_DEFAULTS } from "./init/CSP_DEFAULTS";
 
 export const upsertConnection = async (
   con: DBGeneratedSchema["connections"]["columns"],
@@ -35,6 +36,7 @@ export const upsertConnection = async (
         {
           ...pickKeys({ ...c }, ["db_host", "db_name", "db_port"]),
           cors: { allowedOrigins },
+          csp: CSP_DEFAULTS,
         },
         {
           removeDisallowedFields: true,

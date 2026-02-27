@@ -507,6 +507,8 @@ export class W_SQLEditor extends RTComp<P, S> {
             style={{
               /** Ensures we can click add chart btn */
               zIndex: 2,
+              /* Align with first line */
+              marginTop: "-2px",
             }}
           >
             <Btn

@@ -1055,8 +1055,18 @@ test.describe("Main test", () => {
 
     await page
       .getByTestId("DatabaseAccessEditor.Mode")
+      .locator(getDataLabel("None"))
+      .click();
+    await page.waitForTimeout(500);
+    await expect(page.getByTestId("DatabaseAccessEditor.Mode")).toContainText(
+      "None",
+    );
+    await page.getByTestId("DatabaseAccessEditor.Mode").click();
+    await page
+      .getByTestId("DatabaseAccessEditor.Mode")
       .locator(getDataLabel("Run readonly SQL"))
       .click();
+
     /** Auto approve to ensure the container can run the query */
     await page.getByLabel("Auto approve", { exact: true }).last().click();
     await page.getByTestId("Popup.close").last().click();

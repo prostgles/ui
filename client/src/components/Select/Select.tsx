@@ -11,7 +11,11 @@ import { Icon } from "../Icon/Icon";
 import type { LabelProps } from "../Label";
 import { Label } from "../Label";
 import Popup from "../Popup/Popup";
-import type { SearchListItem, SearchListProps } from "../SearchList/SearchList";
+import type {
+  SearchListItem,
+  SearchListItemContent,
+  SearchListProps,
+} from "../SearchList/SearchList";
 import { SearchList } from "../SearchList/SearchList";
 import { SelectTriggerButton } from "./SelectTriggerButton";
 import Btn from "../Btn";
@@ -27,7 +31,8 @@ export type FullOption<O extends OptionKey = string> = Pick<
   checked?: boolean;
   disabledInfo?: string;
   rightContent?: React.ReactNode;
-} & TestSelectors &
+} & Pick<SearchListItemContent, "contentTop"> &
+  TestSelectors &
   (
     | {
         iconPath?: string;
@@ -57,13 +62,15 @@ export type SelectProps<
   Multi extends boolean = false,
   Optional extends boolean = false,
 > = TestSelectors & {
-  onChange?: (
-    val: Multi extends true ? O[]
-    : O | Optional extends true ? undefined
-    : O,
-    e: E,
-    option: FullOption<O> | undefined,
-  ) => void;
+  onChange:
+    | undefined
+    | ((
+        val: Multi extends true ? O[]
+        : O | Optional extends true ? undefined
+        : O,
+        e: E,
+        option: FullOption<O> | undefined,
+      ) => void);
   onSearch?: (term: string) => void;
   onOpen?: (buttonAnchorEl: HTMLButtonElement) => void;
   onClose?: VoidFunction;
@@ -72,7 +79,6 @@ export type SelectProps<
   style?: React.CSSProperties;
   className?: string;
   id?: string;
-  required?: boolean;
   label?: string | Pick<LabelProps, "label" | "info">;
   /**
    * If true then will show the selected option sublabel underneath
@@ -144,12 +150,11 @@ export class Select<
 
   render() {
     const {
-      onChange: _onChange,
+      onChange: onChangeFromProps,
       className = "",
-      value: _value,
+      value: valueFromProps,
       id = this.id,
       style = {},
-      required,
       label,
       variant = "div",
       onSearch,
@@ -166,7 +171,7 @@ export class Select<
       placeholder = "Search...",
     } = this.props;
 
-    const value = this.state.multiSelection ?? _value;
+    const value = this.state.multiSelection ?? valueFromProps;
 
     let fullOptions: FullOption[] = [];
 
@@ -211,6 +216,11 @@ export class Select<
       label: o.label ?? ((o.label as any) === null ? "NULL" : ""),
     }));
 
+    type OptionType =
+      Multi extends true ? O[]
+      : O | Optional extends true ? undefined
+      : O;
+
     const selectStyle: React.CSSProperties =
       !label ?
         {
@@ -224,61 +234,65 @@ export class Select<
       : "";
     let selectedFullOptions: typeof fullOptions = [];
 
-    const onChange: typeof _onChange = (newValue, e: E) => {
-      if (JSON.stringify(value) === JSON.stringify(newValue)) {
-        return;
-      }
+    const onChange: typeof onChangeFromProps =
+      onChangeFromProps &&
+      ((newValue, e: E) => {
+        if (JSON.stringify(value) === JSON.stringify(newValue)) {
+          return;
+        }
 
-      if (Array.isArray(newValue) && this.state.popupAnchor) {
-        this.setState({ multiSelection: newValue });
-      } else {
-        _onChange?.(
-          newValue,
-          e,
-          Array.isArray(newValue) ? undefined : (
-            (fullOptions.find((fo) => fo.key === newValue) as
-              | FullOption<O>
-              | undefined)
-          ),
-        );
-      }
-    };
-    const toggleOne = (key: string, e: E) => {
-      if (multiSelect) {
-        const selected = fullOptions.filter((d) => d.checked).map((d) => d.key);
-        if (selected.includes(key)) {
-          onChange(
-            selected.filter((k) => k !== key) as Multi extends true ? O[]
-            : O | Optional extends true ? undefined
-            : O,
-            e,
-            undefined,
-          );
+        if (Array.isArray(newValue) && this.state.popupAnchor) {
+          this.setState({ multiSelection: newValue });
         } else {
-          onChange(
-            [...selected, key] as Multi extends true ? O[]
-            : O | Optional extends true ? undefined
-            : O,
+          onChangeFromProps(
+            newValue,
             e,
-            undefined,
+            Array.isArray(newValue) ? undefined : (
+              (fullOptions.find((fo) => fo.key === newValue) as
+                | FullOption<O>
+                | undefined)
+            ),
           );
         }
-      } else {
-        onChange(
-          key as any,
-          e,
-          fullOptions.find((fo) => fo.key === key) as FullOption<O> | undefined,
-        );
-      }
-    };
+      });
+    const toggleOne =
+      onChange &&
+      ((key: string, e: E) => {
+        if (multiSelect) {
+          const selected = fullOptions
+            .filter((d) => d.checked)
+            .map((d) => d.key);
+          if (selected.includes(key)) {
+            onChange(
+              selected.filter((k) => k !== key) as OptionType,
+              e,
+              undefined,
+            );
+          } else {
+            onChange([...selected, key] as OptionType, e, undefined);
+          }
+        } else {
+          onChange(
+            key as OptionType,
+            e,
+            fullOptions.find((fo) => fo.key === key) as
+              | FullOption<O>
+              | undefined,
+          );
+        }
+      });
 
     let select: React.ReactNode = null;
     const { popupAnchor, defaultSearch, fixedBtnWidth } = this.state;
 
     const closeDropDown = (e: E) => {
       this.props.onSearch?.("");
-      if (this.state.multiSelection && _onChange) {
-        _onChange(this.state.multiSelection as any, e, undefined);
+      if (this.state.multiSelection && onChangeFromProps) {
+        onChangeFromProps(
+          this.state.multiSelection as OptionType,
+          e,
+          undefined,
+        );
       }
       this.setState({
         popupAnchor: null,
@@ -365,9 +379,12 @@ export class Select<
               style={{
                 fontSize: "18px",
               }}
-              onDelete={(e) => {
-                toggleOne(key, e);
-              }}
+              onDelete={
+                toggleOne &&
+                ((e) => {
+                  toggleOne(key, e);
+                })
+              }
             >
               {label ?? key}
             </Chip>
@@ -398,21 +415,24 @@ export class Select<
         endOfResultsContent={endOfResultsContent}
         onSearch={onSearch}
         onMultiToggle={
-          multiSelect ?
+          multiSelect && onChange ?
             (items, e) => {
               onChange(
-                items
-                  .filter((d) => d.checked)
-                  .map((d) => d.key) as Multi extends true ? O[]
-                : O | Optional extends true ? undefined
-                : O,
+                items.filter((d) => d.checked).map((d) => d.key) as OptionType,
                 e,
                 undefined,
               );
             }
           : undefined
         }
-        onChange={multiSelect ? undefined : (onChange as any)}
+        onChange={
+          multiSelect || !onChange ? undefined : (
+            (onChange as (
+              val: Multi extends true ? OptionKey[] : OptionKey,
+              e: any,
+            ) => void)
+          )
+        }
         limit={limit}
         items={fullOptions.map(
           ({
@@ -442,12 +462,14 @@ export class Select<
                   whiteSpace: "pre-wrap",
                 },
               },
-              onPress: (e) => {
-                toggleOne(key, e);
-                if (!multiSelect) {
-                  closeDropDown(e);
-                }
-              },
+              onPress:
+                toggleOne &&
+                ((e) => {
+                  toggleOne(key, e);
+                  if (!multiSelect) {
+                    closeDropDown(e);
+                  }
+                }),
               selected: key === value,
               checked,
               disabledInfo,

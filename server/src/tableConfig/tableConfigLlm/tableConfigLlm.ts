@@ -138,12 +138,18 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         },
       },
       chat_suitability_rank: {
-        sqlDefinition: `NUMERIC`,
+        sqlDefinition: `INTEGER`,
         info: { hint: "Lowest number is used in new chats" },
+      },
+      agent_suitability_rank: {
+        sqlDefinition: `INTEGER`,
+        info: { hint: "Lowest number is used in new agentic workflows" },
       },
       model_created: `TIMESTAMPTZ DEFAULT NOW()`,
       mcp_tool_support: `BOOLEAN DEFAULT FALSE`,
       context_length: ` INTEGER NOT NULL DEFAULT 0`,
+      max_completion_tokens: ` INTEGER NOT NULL DEFAULT 0`,
+
       architecture: {
         nullable: true,
         jsonbSchemaType: {

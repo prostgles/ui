@@ -1,29 +1,11 @@
+import {
+  fieldFilterSchema,
+  forcedFilterSchema,
+} from "@common/tablePermissionsSchema";
 import type { JSONB } from "prostgles-types";
 
-const fields = {
-  optional: true,
-  oneOf: [
-    {
-      record: {
-        values: {
-          enum: [1],
-        },
-      },
-    },
-    {
-      record: {
-        values: {
-          enum: [0],
-        },
-      },
-    },
-  ],
-} as const satisfies JSONB.FieldType;
-
-const forcedFilter = {
-  optional: true,
-  record: {},
-} as const satisfies JSONB.FieldType;
+forcedFilterSchema satisfies JSONB.FieldType;
+fieldFilterSchema satisfies JSONB.FieldType;
 
 export const tablePermissionsSchema = {
   title: "Tables",
@@ -37,8 +19,8 @@ export const tablePermissionsSchema = {
             { enum: [true] },
             {
               type: {
-                forcedFilter,
-                fields,
+                forcedFilter: forcedFilterSchema,
+                fields: fieldFilterSchema,
               },
             },
           ],
@@ -49,8 +31,8 @@ export const tablePermissionsSchema = {
             { enum: [true] },
             {
               type: {
-                forcedFilter,
-                fields,
+                forcedFilter: forcedFilterSchema,
+                fields: fieldFilterSchema,
               },
             },
           ],
@@ -61,7 +43,7 @@ export const tablePermissionsSchema = {
             { enum: [true] },
             {
               type: {
-                fields,
+                fields: fieldFilterSchema,
               },
             },
           ],
@@ -72,22 +54,12 @@ export const tablePermissionsSchema = {
             { enum: [true] },
             {
               type: {
-                forcedFilter,
+                forcedFilter: forcedFilterSchema,
               },
             },
           ],
           optional: true,
         },
-        // columns: {
-        //   optional: true,
-        //   type: "Lookup[]",
-        //   lookup: {
-        //     type: "schema",
-        //     object: "column",
-        //   },
-        //   description:
-        //     "Columns the assistant can access in the table",
-        // },
       },
     },
   },

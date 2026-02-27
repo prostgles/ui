@@ -19,6 +19,7 @@ import { Icon } from "@components/Icon/Icon";
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
 import { getEntries } from "@common/utils";
 import { SyncRuleControl } from "../RuleTypeControls/SyncRuleControl";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 type TableRulesPopupProps = TablePermissionControlsProps & {
   table: DBSchemaTablesWJoins[number];
@@ -31,13 +32,13 @@ export const TableRulesPopup = ({
   tablesWithRules: allRules,
   tableRules,
   onChange,
-  prgl,
   table,
   tableErrors,
   userTypes,
   onClose,
   ...props
 }: TableRulesPopupProps) => {
+  const prgl = usePrgl();
   const [editedRuleType, setEditedRuleType] = useState<EditedRuleType>(
     props.editedRuleType,
   );

@@ -6,6 +6,7 @@ import { ChatFileAttachments } from "./ChatFileAttachments/ChatFileAttachments";
 import { ChatMessage } from "./ChatMessage";
 import { ChatSendControls } from "./ChatSendControls";
 import { useChatState } from "./useChatState";
+import { useWhyDidYouUpdate } from "@components/MonacoEditor/useWhyDidYouUpdate";
 
 export type Message = {
   id: number | string;

@@ -133,4 +133,17 @@ export const startAgenticWorkflowSchema = {
       },
     },
   },
-} as const;
+  newTables: {
+    optional: true,
+    arrayOfType: {
+      name: "string",
+      columns: {
+        arrayOfType: {
+          name: "string",
+          dataType: "string",
+        },
+      },
+    },
+  },
+} as const satisfies JSONB.ObjectType["type"];
+import type { JSONB } from "prostgles-types";

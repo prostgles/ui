@@ -2,6 +2,8 @@ import { omitKeys } from "prostgles-types";
 import type { McpCallContext } from "../../ProstglesMCPServerTypes";
 import { startAgenticWorkflowContainer } from "./startAgenticWorkflowContainer";
 import { validateAgenticWorkflowDefinitions } from "./validateAgenticWorkflowDefinitions";
+import type { DBSSchemaForInsert } from "@common/publishUtils";
+import { fromEntries, getEntries } from "@common/utils";
 
 export const createAgenticWorkflow = async (
   { workflow_function_definition }: { workflow_function_definition: string },
@@ -24,15 +26,17 @@ export const createAgenticWorkflow = async (
       {
         type: "definitions-only",
         handler: async (workflowData) => {
-          const { definitions } = workflowData;
+          const { definitions, newTables } = workflowData;
           const definition_data = omitKeys(definitions, ["name"]);
-          await validateAgenticWorkflowDefinitions(workflowData, {
-            chatId: chat.id,
-            connection_id,
-            dbs,
-            clientReq,
-            userId: user_id,
-          });
+          const { agentConfigsWithDefaults } =
+            await validateAgenticWorkflowDefinitions(workflowData, {
+              chatId: chat.id,
+              connection_id,
+              dbs,
+              clientReq,
+              userId: user_id,
+            });
+
           dbs.agentic_workflows
             .insert(
               {
@@ -42,8 +46,30 @@ export const createAgenticWorkflow = async (
                 definition_data: {
                   ...definition_data,
                   toolDefinitions: definition_data.toolDefinitions || {},
+                  newTables: newTables.map((t) => ({
+                    name: t.name,
+                    columns: t.columns.map((c) => ({
+                      name: c.name.name,
+                      dataType: c.dataType.name,
+                    })),
+                  })),
                 },
-              },
+                definition_override: {
+                  agentDefinitions: fromEntries(
+                    getEntries(agentConfigsWithDefaults).map(
+                      ([agentName, config]) =>
+                        [
+                          agentName,
+                          omitKeys(config, [
+                            "model",
+                            "outputSchema",
+                            "allowedToolDefinitionNames",
+                          ]),
+                        ] as const,
+                    ),
+                  ),
+                },
+              } satisfies DBSSchemaForInsert["agentic_workflows"],
               { returning: { id: 1 } },
             )
             .then(({ id }) => {
@@ -51,6 +77,7 @@ export const createAgenticWorkflow = async (
                 isValid: true,
                 workflowId: id,
                 ...definitions,
+                newTables,
               });
             })
             .catch(reject);

@@ -10,6 +10,7 @@ import type { EditedAccessRule } from "../AccessControl";
 import type { PermissionEditProps } from "../AccessControlRuleEditor";
 import type { TableInfoWithRules } from "../TableRules/TablePermissionControls";
 import { TablePermissionControls } from "../TableRules/TablePermissionControls";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 type DBPermissionCustomTables<
   T extends EditedAccessRule["dbPermissions"]["type"],
@@ -27,12 +28,19 @@ export const PCustomTables = ({
   dbPermissions,
   onChange,
   contextData,
-  prgl,
   userTypes,
   tablesWithRules,
   editedRule,
-}: DBPermissionEditorProps<"Custom">) => {
-  const { tables } = prgl;
+}: Pick<
+  DBPermissionEditorProps<"Custom">,
+  | "dbPermissions"
+  | "onChange"
+  | "contextData"
+  | "userTypes"
+  | "tablesWithRules"
+  | "editedRule"
+>) => {
+  const { tables } = usePrgl();
   const [hideNoRules, setHideNoRules] = useState(false);
 
   const tableRules = Object.fromEntries(
@@ -79,7 +87,6 @@ export const PCustomTables = ({
           Toggle All ({tables.length} tables)
         </div>
         <TablePermissionControls
-          prgl={prgl}
           userTypes={userTypes}
           contextData={contextData}
           className=" pr-2  mr-p25 "
@@ -215,7 +222,6 @@ export const PCustomTables = ({
                 <TablePermissionControls
                   key={t.name}
                   className={window.isLowWidthScreen ? "" : "ml-1"}
-                  prgl={prgl}
                   userTypes={userTypes}
                   contextData={contextData}
                   errors={{}}

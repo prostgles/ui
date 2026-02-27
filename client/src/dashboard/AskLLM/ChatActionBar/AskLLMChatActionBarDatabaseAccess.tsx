@@ -83,9 +83,9 @@ export const AskLLMChatActionBarDatabaseAccess = (
         (t) => t.update || t.insert || t.delete,
       );
     const icon = {
-      "Run readonly SQL": mdiDatabaseSearch,
-      Custom: canEditData ? mdiTable : mdiTableSearch,
-      "Run commited SQL": mdiDatabaseEdit,
+      execute_sql_with_rollback: mdiDatabaseSearch,
+      custom: canEditData ? mdiTable : mdiTableSearch,
+      execute_sql_with_commit: mdiDatabaseEdit,
     }[mode];
     return { icon, mode };
   }, [dataPermission]);
@@ -224,14 +224,18 @@ export const AskLLMChatActionBarDatabaseAccess = (
       </FlexRowWrap>
       <DatabaseAccessEditor
         value={dataPermission ?? undefined}
+        newTables={[]}
         onChange={(newAccess) => {
           void dbs.llm_chats.update(
             { id: activeChatId },
             {
-              db_data_permissions: {
-                ...(newAccess as any),
-                auto_approve: dataPermission?.auto_approve,
-              },
+              db_data_permissions:
+                newAccess.mode === "none" ?
+                  null
+                : {
+                    ...newAccess,
+                    auto_approve: dataPermission?.auto_approve,
+                  },
             },
           );
         }}

@@ -1,14 +1,16 @@
 import { FlexCol } from "@components/Flex";
 import { getDurationAsStr } from "@components/Stopwatch";
-import { mdiCogs, mdiRobotOutline, mdiTools } from "@mdi/js";
+import { mdiCogs, mdiRobotOutline, mdiTimerSand, mdiTools } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo } from "react";
+import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 import { isEmpty } from "src/utils/utils";
-import { DatabaseAccessPermissions } from "../common/DatabaseAccessPermissions";
 import { HeaderList } from "../common/HeaderList";
 import { AgenticWorkflowUserInput } from "./AgenticWorkflowUserInput";
 import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
 import { type ValidatedWorkflow } from "./useValidatedWorkflowJson";
-import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
+
+import { AgentDefinition } from "./AgentDefinition";
 
 export const AgenticWorkflowDetails = ({
   validatedWorkflow,
@@ -17,6 +19,7 @@ export const AgenticWorkflowDetails = ({
   validatedWorkflow: ValidatedWorkflow;
   userInputState: ReturnType<typeof useAgenticWorkflowUserInput>;
 }) => {
+  const { dbs } = usePrgl();
   const {
     name,
     timeOutInSeconds,
@@ -24,7 +27,12 @@ export const AgenticWorkflowDetails = ({
     toolDefinitions,
     databaseAccessDefinitions,
     userInput,
+    newTables,
   } = validatedWorkflow;
+  const { data: workflow } = dbs.agentic_workflows.useSubscribeOne(
+    { id: validatedWorkflow.workflowId },
+    {},
+  );
   const dbAccess = databaseAccessDefinitions;
   const combinedToolNames = useMemo(() => {
     const result = new Map<string, Set<string>>();
@@ -43,12 +51,20 @@ export const AgenticWorkflowDetails = ({
 
   return (
     <FlexCol className="w-full p-1 o-auto">
-      <div className="font-18 bold">{name}</div>
-      <div style={{ opacity: 0.7, marginBottom: "0.5em" }}>
-        Timeout: {getDurationAsStr(timeOutInSeconds * 1000)}
+      <div className="font-18 bold" title={`Workflow id: ${workflow?.id}`}>
+        {name}
       </div>
-      <DatabaseAccessPermissions dbAccess={dbAccess} />
-      <DatabaseAccessEditor value={dbAccess} />
+      <HeaderList
+        title="Timeout"
+        iconPath={mdiTimerSand}
+        items={[getDurationAsStr(timeOutInSeconds * 1000)]}
+      />
+      {/* <DatabaseAccessPermissions dbAccess={dbAccess} /> */}
+      <DatabaseAccessEditor
+        value={dbAccess}
+        onChange={undefined}
+        newTables={newTables}
+      />
       <HeaderList
         title="MCP Tools"
         iconPath={mdiTools}
@@ -63,13 +79,15 @@ export const AgenticWorkflowDetails = ({
       <HeaderList
         title="Agents"
         iconPath={mdiRobotOutline}
-        items={Object.entries(agentDefinitions).map(
-          ([agentName, { prompt }]) => (
-            <span>
-              {agentName}:{" "}
-              <span style={{ fontWeight: "normal" }}>{prompt}</span>
-            </span>
-          ),
+        items={Object.keys(agentDefinitions).map(
+          (agentName) =>
+            workflow && (
+              <AgentDefinition
+                key={agentName}
+                agentName={agentName}
+                workflow={workflow}
+              />
+            ),
         )}
       />
 

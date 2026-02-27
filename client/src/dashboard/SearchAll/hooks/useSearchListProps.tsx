@@ -55,9 +55,9 @@ export const useSearchAllListProps = ({
           contentLeft: (
             <div className="f-0">
               {icon ?
-                <SvgIcon icon={icon} className="text-1p5 p-p25" />
+                <SvgIcon icon={icon} className="text-1p5 m-p25" />
               : <Icon
-                  className="text-1p5 p-p25"
+                  className="text-1p5 m-p25"
                   path={
                     type === "table" ? mdiTable
                     : type === "function" ?

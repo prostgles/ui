@@ -62,7 +62,7 @@ export const SelectTriggerButton = <
   const noOtherOption =
     !options.length || (options.length === 1 && value === options[0]);
 
-  if (!onChange) return null;
+  // if (!onChange) return null;
 
   const showSelectedIcon =
     showIconOnly ? selectedFullOptions[0]?.iconPath : undefined;
@@ -132,7 +132,7 @@ export const SelectTriggerButton = <
         }
       }}
       onKeyDown={
-        noOtherOption ? undefined : (
+        noOtherOption || !onChange ? undefined : (
           (e) => {
             const { key, currentTarget } = e;
             const isFocused = document.activeElement === currentTarget;
@@ -174,12 +174,20 @@ export const SelectTriggerButton = <
         className={`${label ? "  " : className} flex-row gap-0 ai-center ${selectClass} `}
       >
         {triggerButton}
-        {![undefined, null].includes(value) && (
+        {onChange && ![undefined, null].includes(value) && (
           <Btn
             iconPath={mdiClose}
             title="Reset selection"
             size={size}
-            onClick={(e) => onChange(undefined as any, e, undefined)}
+            onClick={(e) =>
+              onChange(
+                undefined as Multi extends true ? O[]
+                : O | Optional extends true ? undefined
+                : O,
+                e,
+                undefined,
+              )
+            }
           />
         )}
       </div>

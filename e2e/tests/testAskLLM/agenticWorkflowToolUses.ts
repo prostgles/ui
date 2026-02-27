@@ -30,7 +30,16 @@ export default defineAgenticWorkflow(
         mode: "custom",
         tablePermissions: {
           users: { select: true, insert: true, update: true },
-          new_users: { select: true, insert: true, update: true },
+          new_users: {
+            select: true,
+            insert: true,
+            update: {
+              fields: { password: 1 },
+              forcedFilter: {
+                $and: [{ fieldName: "type", value: "from-agent" }],
+              },
+            },
+          },
           ...(mode === "invalidPermissionTable" ?
             { invalid_table: { select: true } }
           : {}),
@@ -40,6 +49,7 @@ export default defineAgenticWorkflow(
           CREATE TABLE IF NOT EXISTS new_users (
             id SERIAL PRIMARY KEY,
             username TEXT,
+            password TEXT,
             type TEXT
           );
         `,

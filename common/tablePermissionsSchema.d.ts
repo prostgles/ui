@@ -1,3 +1,28 @@
+export declare const fieldFilterSchema: {
+    readonly oneOf: readonly [{
+        readonly enum: readonly ["*"];
+    }, {
+        readonly record: {
+            readonly values: {
+                readonly enum: readonly [1];
+            };
+        };
+    }, {
+        readonly record: {
+            readonly values: {
+                readonly enum: readonly [0];
+            };
+        };
+    }];
+};
+export declare const forcedFilterSchema: {
+    readonly optional: true;
+    readonly oneOfType: readonly [{
+        readonly $and: "any[]";
+    }, {
+        readonly $or: "any[]";
+    }];
+};
 export declare const tablePermissionsSchema: {
     readonly title: "Tables";
     readonly description: "Tables the assistant can access";
@@ -12,11 +37,16 @@ export declare const tablePermissionsSchema: {
                         readonly type: {
                             readonly forcedFilter: {
                                 readonly optional: true;
-                                readonly record: {};
+                                readonly oneOfType: readonly [{
+                                    readonly $and: "any[]";
+                                }, {
+                                    readonly $or: "any[]";
+                                }];
                             };
                             readonly fields: {
-                                readonly optional: true;
                                 readonly oneOf: readonly [{
+                                    readonly enum: readonly ["*"];
+                                }, {
                                     readonly record: {
                                         readonly values: {
                                             readonly enum: readonly [1];
@@ -41,11 +71,16 @@ export declare const tablePermissionsSchema: {
                         readonly type: {
                             readonly forcedFilter: {
                                 readonly optional: true;
-                                readonly record: {};
+                                readonly oneOfType: readonly [{
+                                    readonly $and: "any[]";
+                                }, {
+                                    readonly $or: "any[]";
+                                }];
                             };
                             readonly fields: {
-                                readonly optional: true;
                                 readonly oneOf: readonly [{
+                                    readonly enum: readonly ["*"];
+                                }, {
                                     readonly record: {
                                         readonly values: {
                                             readonly enum: readonly [1];
@@ -69,8 +104,9 @@ export declare const tablePermissionsSchema: {
                     }, {
                         readonly type: {
                             readonly fields: {
-                                readonly optional: true;
                                 readonly oneOf: readonly [{
+                                    readonly enum: readonly ["*"];
+                                }, {
                                     readonly record: {
                                         readonly values: {
                                             readonly enum: readonly [1];
@@ -95,7 +131,11 @@ export declare const tablePermissionsSchema: {
                         readonly type: {
                             readonly forcedFilter: {
                                 readonly optional: true;
-                                readonly record: {};
+                                readonly oneOfType: readonly [{
+                                    readonly $and: "any[]";
+                                }, {
+                                    readonly $or: "any[]";
+                                }];
                             };
                         };
                     }];

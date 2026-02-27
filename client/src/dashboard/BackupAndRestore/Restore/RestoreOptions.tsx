@@ -26,10 +26,12 @@ export const RestoreOptions = (props: P) => {
     excludeSchema,
   } = restoreOpts;
 
-  const formats = FORMATS.slice(0).map((_f) => {
-    const f = { ..._f };
+  const formats = FORMATS.slice(0).map((f) => {
     if (!fromFile && f.key !== format) {
-      (f as any).disabledInfo = "Can only use the same format as the dump file";
+      return {
+        ...f,
+        disabledInfo: "Can only use the same format as the dump file",
+      };
     }
     return f;
   });

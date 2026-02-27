@@ -244,7 +244,7 @@ export const SearchListContent = <M extends boolean = false>(
                 }
               : undefined
             }
-            matchCase={
+            matchCaseState={
               props.matchCase?.hide ?
                 undefined
               : {

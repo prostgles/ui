@@ -2,6 +2,14 @@ import type { DBS } from "../..";
 import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
+import { getElectronConfig } from "@src/electronConfig";
+
+type UiToolName =
+  keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
+const allowProstglesUITools = (tools: UiToolName[]) => ({
+  "prostgles-ui": tools,
+});
+
 export const setupLLM = async (dbs: DBS) => {
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -31,9 +39,7 @@ export const setupLLM = async (dbs: DBS) => {
             LLM_PROMPT_VARIABLES.SCHEMA,
           ].join("\n"),
           options: {
-            mcp_server_tools: {
-              "prostgles-ui": ["ask_user_questions"],
-            },
+            mcp_server_tools: allowProstglesUITools(["ask_user_questions"]),
             database_access: "execute_sql_with_rollback",
           },
         },
@@ -43,9 +49,11 @@ export const setupLLM = async (dbs: DBS) => {
             "Includes database schema and dashboard view structure. Claude Sonnet recommended",
           user_id,
           options: {
-            mcp_server_tools: {
-              "prostgles-ui": ["suggest_dashboards", "ask_user_questions"],
-            },
+            mcp_server_tools: allowProstglesUITools([
+              "suggest_dashboards",
+              "ask_user_questions",
+            ]),
+
             database_access: "execute_sql_with_rollback",
           },
           icon: "ViewCarousel",
@@ -63,9 +71,9 @@ export const setupLLM = async (dbs: DBS) => {
             "Includes database schema and full tools list. Will suggest database access type and tools required to completed the task. Claude Sonnet recommended",
           user_id,
           options: {
-            mcp_server_tools: {
-              "prostgles-ui": ["suggest_tools_and_prompt"],
-            },
+            mcp_server_tools: allowProstglesUITools([
+              "suggest_tools_and_prompt",
+            ]),
             database_access: "execute_sql_with_rollback",
           },
           prompt: [
@@ -87,12 +95,10 @@ export const setupLLM = async (dbs: DBS) => {
           user_id,
           options: {
             max_tokens: 18_000,
-            mcp_server_tools: {
-              "prostgles-ui": [
-                "suggest_agentic_workflow" satisfies keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"],
-                "ask_user_questions",
-              ],
-            },
+            mcp_server_tools: allowProstglesUITools([
+              "suggest_agentic_workflow",
+              "ask_user_questions",
+            ]),
             database_access: "execute_sql_with_rollback",
           },
           prompt: [
@@ -115,6 +121,18 @@ export const setupLLM = async (dbs: DBS) => {
           ].join("\n"),
         },
         {
+          name: "Empty",
+          description: "Empty prompt",
+          user_id,
+          prompt: "",
+        },
+      ] as const satisfies DBSSchemaForInsert["llm_prompts"][],
+      { onConflict: "DoUpdate", returning: { name: 1 } },
+    );
+
+    if (!getElectronConfig()?.isElectron) {
+      await dbs.llm_prompts.insert(
+        {
           name: "Web app development",
           description:
             "Includes database schema and full tools list. Will suggest database access type, tools and workflow logic required to completed the task. Claude Sonnet recommended",
@@ -122,7 +140,7 @@ export const setupLLM = async (dbs: DBS) => {
           options: {
             mcp_server_tools: {
               webdev: "*",
-              "prostgles-ui": ["ask_user_questions"],
+              ...allowProstglesUITools(["ask_user_questions"]),
             },
             database_access: "execute_sql_with_rollback",
             max_tokens: 18_000,
@@ -145,16 +163,10 @@ export const setupLLM = async (dbs: DBS) => {
             "",
             LLM_PROMPT_VARIABLES.DB_HANDLER_SCHEMA,
           ].join("\n"),
-        },
-        {
-          name: "Empty",
-          description: "Empty prompt",
-          user_id,
-          prompt: "",
-        },
-      ] as const satisfies DBSSchemaForInsert["llm_prompts"][],
-      { onConflict: "DoUpdate", returning: { name: 1 } },
-    );
+        } satisfies DBSSchemaForInsert["llm_prompts"],
+        { onConflict: "DoUpdate", returning: { name: 1 } },
+      );
+    }
 
     // TODO: fix returning type for onconflict do nothing
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -215,7 +227,6 @@ export const setupLLM = async (dbs: DBS) => {
               cachedInput: 1.25,
               output: 10,
             },
-            chat_suitability_rank: "2",
           },
           {
             name: "gpt-4o-mini-2024-07-18",
@@ -265,7 +276,6 @@ export const setupLLM = async (dbs: DBS) => {
               cachedInput: 1,
               cachedOutput: 0.08,
             },
-            chat_suitability_rank: "1",
             mcp_tool_support: true,
           },
           {
@@ -317,7 +327,6 @@ export const setupLLM = async (dbs: DBS) => {
               output: 10,
               threshold: { tokenLimit: 200_000, input: 2.5, output: 15 },
             },
-            chat_suitability_rank: "3",
           },
           {
             name: "gemini-2.5-pro-preview-03-25",
@@ -326,7 +335,6 @@ export const setupLLM = async (dbs: DBS) => {
               output: 10,
               threshold: { tokenLimit: 200_000, input: 2.5, output: 15 },
             },
-            chat_suitability_rank: "3",
           },
           {
             name: "gemini-2.0-flash",
@@ -336,12 +344,10 @@ export const setupLLM = async (dbs: DBS) => {
               cachedInput: 1,
               cachedOutput: 0.025,
             },
-            chat_suitability_rank: "3",
           },
           {
             name: "gemini-2.0-flash-lite",
             pricing_info: { input: 0.075, output: 0.3 },
-            chat_suitability_rank: "7",
           },
           {
             name: "gemini-1.5-flash",
@@ -413,7 +419,6 @@ export const setupLLM = async (dbs: DBS) => {
             name: "deepseek/deepseek-r1:free",
             pricing_info: null,
             model_created: "2025-03-07 12:19:04.913961",
-            chat_suitability_rank: "5",
           },
           {
             name: "anthropic/claude-sonnet-4",
@@ -424,7 +429,7 @@ export const setupLLM = async (dbs: DBS) => {
               cachedOutput: 0.08,
             },
             model_created: "2024-10-22 12:00:00",
-            chat_suitability_rank: "1",
+            mcp_tool_support: true,
           },
         ],
       },
@@ -442,7 +447,7 @@ export const setupLLM = async (dbs: DBS) => {
               cachedOutput: 0.08,
             },
             model_created: "2024-10-22 12:00:00",
-            chat_suitability_rank: "1",
+            mcp_tool_support: true,
           },
         ],
       },

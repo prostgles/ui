@@ -64,7 +64,7 @@ export const ChatSendControls = ({
     <div
       className={`ChatSendControls ${window.isMobile ? "flex-col" : "flex-row"} as-end ai-center jc-center gap-p5`}
     >
-      <FlexRow className="gap-0">
+      <FlexRow className="gap-0 ai-end">
         <>
           <Btn
             data-command="Chat.addFiles"

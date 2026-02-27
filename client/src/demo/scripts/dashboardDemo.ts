@@ -173,7 +173,7 @@ export const dashboardDemo = async () => {
   await closeAllViews();
   await runDbSQL(
     "DELETE FROM futures WHERE (now() - timestamp) > interval '30 minutes'",
-  );
+  ).catch(console.error);
   await openTable("futures");
 
   await click("dashboard.window.toggleFilterBar");

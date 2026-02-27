@@ -23,7 +23,7 @@ import { RuleExpandSection } from "./SelectRuleControl";
 
 type P = Pick<
   Required<TablePermissionControlsProps>,
-  "prgl" | "table" | "tableRules" | "userTypes"
+  "table" | "tableRules" | "userTypes"
 > & {
   rule: TableRules["update"];
   onChange: (rule: UpdateRule | undefined) => void;
@@ -38,7 +38,6 @@ export const UpdateRuleControl = (props: P) => {
     table,
     contextDataSchema,
     contextData,
-    prgl,
     userTypes,
   } = props;
   const rule: UpdateRule | undefined =
@@ -80,10 +79,6 @@ export const UpdateRuleControl = (props: P) => {
                 </div>
               </div>
             }
-            db={prgl.db}
-            sql={prgl.sql}
-            methods={prgl.methods}
-            tables={prgl.tables}
             contextData={contextDataSchema}
             detailedFilter={rule.forcedFilterDetailed as SingleGroupFilter}
             tableName={table.name}
@@ -118,10 +113,6 @@ export const UpdateRuleControl = (props: P) => {
                 <div>New records must satisfy a condition</div>
               </div>
             }
-            db={prgl.db}
-            sql={prgl.sql}
-            methods={prgl.methods}
-            tables={prgl.tables}
             contextData={contextDataSchema}
             detailedFilter={rule.checkFilterDetailed as SingleGroupFilter}
             tableName={table.name}
@@ -145,7 +136,6 @@ export const UpdateRuleControl = (props: P) => {
               rule={rule}
               table={table}
               userTypes={userTypes}
-              prgl={prgl}
             />
           </RuleExpandSection>
         </>

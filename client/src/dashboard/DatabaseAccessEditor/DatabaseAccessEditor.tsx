@@ -1,8 +1,11 @@
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import Btn from "@components/Btn";
 import { FlexRowWrap } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
-import { SearchList } from "@components/SearchList/SearchList";
+import { Label } from "@components/Label";
+import {
+  SearchList,
+  type SearchListItem,
+} from "@components/SearchList/SearchList";
 import { Select } from "@components/Select/Select";
 import {
   mdiDatabaseEdit,
@@ -12,8 +15,20 @@ import {
   mdiTableSearch,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { JSONB } from "prostgles-types";
-import React from "react";
+import {
+  isDefined,
+  isEmpty,
+  type JSONB,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
+import React, { useState } from "react";
+import { TableAccessEditor } from "./TableAccessEditor";
+import { type ViewMode } from "./ViewModeToggle";
+import type {
+  DBSchemaTableColumn,
+  DBSchemaTableWJoins,
+} from "../Dashboard/dashboardUtils";
+import type { ValidatedWorkflow } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/useValidatedWorkflowJson";
 
 export type DatabaseAccessPermission = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]
@@ -21,86 +36,114 @@ export type DatabaseAccessPermission = JSONB.GetObjectType<
 
 type P = {
   value: DatabaseAccessPermission | undefined;
-  onChange?: (newValue: DatabaseAccessPermission) => void;
+  onChange: undefined | ((newValue: DatabaseAccessPermission) => void);
   contentRight?: React.ReactNode;
+  newTables: ValidatedWorkflow["newTables"];
 };
-export const DatabaseAccessEditor = ({ value, onChange, contentRight }: P) => {
+export const DatabaseAccessEditor = ({
+  value,
+  onChange,
+  contentRight,
+  newTables,
+}: P) => {
   const { tables } = usePrgl();
-
+  const [viewMode, setViewMode] = useState<ViewMode>("Overview");
   return (
     <FlexRowWrap
       className="gap-p5 ai-start"
       data-command="DatabaseAccessEditor"
     >
       <Icon className="text-1 mt-p25" path={mdiTableEye} />
-      <Select
-        label={{ label: "Data access" }}
-        value={value?.mode}
-        data-command="DatabaseAccessEditor.Mode"
-        btnProps={
-          value && value.mode !== "none" ?
-            {
-              color: "action",
-            }
-          : {}
-        }
-        fullOptions={
-          [
-            {
-              key: "none",
-              label: "None",
-              subLabel: "Cannot interact with the database.",
-              iconPath: mdiDatabaseOff,
-            },
-            {
-              key: "execute_sql_with_rollback",
-              label: "Run readonly SQL",
-              subLabel: "Can run readonly SQL queries",
-              iconPath: mdiTableSearch,
-            },
-            {
-              key: "execute_sql_with_commit",
-              label: "Run commited SQL",
-              subLabel:
-                "Can run SQL queries that will be commited. Use with caution",
-              iconPath: mdiDatabaseEdit,
-            },
-            {
-              key: "custom",
-              label: "Custom",
-              subLabel: "Can only access specific tables, rows and columns",
-              iconPath: mdiTable,
-            },
-          ] as const
-        }
-        onChange={(dataAccess) => {
-          void onChange?.(
-            dataAccess === "custom" ?
-              {
-                mode: dataAccess,
-                tablePermissions: {},
-              }
-            : {
-                mode: dataAccess,
-              },
-          );
-        }}
-      />
+      {onChange ?
+        <Select
+          label={{ label: "Data access" }}
+          value={value?.mode ?? "none"}
+          data-command="DatabaseAccessEditor.Mode"
+          btnProps={{
+            color: value && value.mode !== "none" ? "action" : undefined,
+          }}
+          fullOptions={MODES}
+          onChange={(dataAccess) => {
+            void onChange(
+              dataAccess === "custom" ?
+                {
+                  mode: dataAccess,
+                  tablePermissions: {},
+                }
+              : {
+                  mode: dataAccess,
+                },
+            );
+          }}
+        />
+      : <Label label={"Data access"} variant="normal" />}
+
       {contentRight}
       {value?.mode === "custom" && (
         <div
           className="w-full pl-2"
           data-command="DatabaseAccessEditor.TableRules"
         >
+          {/* <ViewModeToggle
+            className="w-fit mb-p5"
+            onChange={setViewMode}
+            value={viewMode}
+            allowedValues={getEntries(value.tablePermissions)
+              .map(([_, permissions]) => {
+                return getKeys(permissions);
+              })
+              .filter(isDefined)
+              .flat()}
+          /> */}
           <SearchList
             id="custom-tables"
-            className="shadow"
             style={{
               maxHeight: "min(400px, calc(100vh - 100px)",
             }}
             placeholder={`Search ${tables.length} tables & views`}
             limit={200}
             items={tables
+              .concat(
+                newTables
+                  ?.filter((nt) => !tables.some((t) => t.name === nt.name))
+                  .map(
+                    (t) =>
+                      ({
+                        joins: [],
+                        joinsV2: [],
+                        label: t.name,
+                        name: t.name,
+                        info: { oid: -1, isView: false },
+                        columns: t.columns.map(
+                          ({ name, dataType }) =>
+                            ({
+                              oid: -1,
+                              name,
+                              label: name,
+                              comment: "",
+                              icon: undefined,
+                              delete: true,
+                              ordinal_position: -1,
+                              is_nullable: true,
+                              is_updatable: true,
+                              is_generated: true,
+                              udt_name: "text",
+                              data_type: dataType,
+                              tsDataType: "string",
+                              element_type: undefined,
+                              element_udt_name: undefined,
+                              is_pkey: false,
+                              has_default: false,
+                              select: true,
+                              insert: true,
+                              update: true,
+                              orderBy: true,
+                              filter: true,
+                            }) as DBSchemaTableColumn,
+                        ),
+                      }) as DBSchemaTableWJoins,
+                  ) ?? [],
+              )
               .toSorted((a, b) => {
                 const aRule = value.tablePermissions[a.name];
                 const bRule = value.tablePermissions[b.name];
@@ -111,71 +154,99 @@ export const DatabaseAccessEditor = ({ value, onChange, contentRight }: P) => {
               })
               .map((t) => {
                 const tableRules = value.tablePermissions[t.name] ?? {};
-
+                if (!onChange && isEmpty(tableRules)) {
+                  return;
+                }
                 return {
                   key: t.name,
                   styles: {
                     labelWrapper: {
-                      fontWeight: 500,
-                      minWidth: "60px",
+                      fontWeight: 700,
+                      minWidth: "120px",
+                      // marginRight: "auto",
+                      ...(!onChange && { flex: "unset" }),
                     },
-                    rowInner:
-                      window.isLowWidthScreen ?
-                        {
-                          flexDirection: "column",
-                          gap: "1em",
-                          alignItems: "start",
-                          overflow: "auto",
-                        }
-                      : {},
+                    rowInner: {
+                      ...(window.isLowWidthScreen && {
+                        flexDirection: "column",
+                        gap: "1em",
+                        alignItems: "start",
+                        overflow: "auto",
+                      }),
+                    },
                   },
                   title: t.name,
-                  rowStyle: { border: "1px solid var(--b-default)" },
-                  contentLeft: (
+                  rowStyle: {
+                    /** Disable focus */
+                    background: "unset",
+                    padding: "0.25em",
+                    ...(onChange && {
+                      border: "1px solid var(--b-default)",
+                    }),
+                  },
+                  contentLeft: onChange && (
                     <Icon
-                      className="mr-p5 text-2"
+                      className="mr-p5 text-2 f-0"
                       title={t.info.isView ? "View" : "Table"}
                       path={t.info.isView ? mdiTableEye : mdiTable}
                     />
                   ),
                   contentRight: (
                     <>
-                      {(["select", "insert", "update", "delete"] as const).map(
-                        (ruleType) => {
-                          const isOn = tableRules[ruleType];
-                          return (
-                            <Btn
-                              key={ruleType}
-                              color={isOn ? "action" : "default"}
-                              variant={isOn ? "filled" : undefined}
-                              size="small"
-                              onClick={() => {
-                                const shouldTurnOn = !isOn;
-                                const newTableRules = {
-                                  ...value.tablePermissions,
-                                  [t.name]: {
-                                    ...tableRules,
-                                    [ruleType]: shouldTurnOn || undefined,
-                                  },
-                                } as const;
-                                void onChange?.({
-                                  mode: "custom",
-                                  tablePermissions: newTableRules,
-                                });
-                              }}
-                            >
-                              {ruleType.toUpperCase()}
-                            </Btn>
-                          );
-                        },
-                      )}
+                      <TableAccessEditor
+                        value={tableRules}
+                        table={t}
+                        viewMode={viewMode}
+                        onChange={
+                          onChange &&
+                          ((newTableRules) => {
+                            const newTablePermissions = {
+                              ...value.tablePermissions,
+                              [t.name]: newTableRules,
+                            } as const;
+                            void onChange({
+                              mode: "custom",
+                              tablePermissions: newTablePermissions,
+                            });
+                          })
+                        }
+                      />
+                      {/* {!onChange && <div className="f-1"></div>} */}
                     </>
                   ),
-                };
-              })}
+                } satisfies SearchListItem;
+              })
+              .filter(isDefined)}
           />
         </div>
       )}
     </FlexRowWrap>
   );
 };
+
+const MODES = [
+  {
+    key: "none",
+    label: "None",
+    subLabel: "Cannot interact with the database.",
+    iconPath: mdiDatabaseOff,
+  },
+  {
+    key: "execute_sql_with_rollback",
+    label: "Run readonly SQL",
+    subLabel: "Can run readonly SQL queries",
+    iconPath: mdiTableSearch,
+  },
+  {
+    key: "execute_sql_with_commit",
+    label: "Run commited SQL",
+    subLabel: "Can run SQL queries that will be commited. Use with caution",
+    iconPath: mdiDatabaseEdit,
+  },
+  {
+    key: "custom",
+    label: "Custom",
+    subLabel: "Can only access specific tables, rows and columns",
+    iconPath: mdiTable,
+  },
+] as const;

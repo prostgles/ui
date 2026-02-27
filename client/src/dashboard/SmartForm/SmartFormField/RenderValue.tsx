@@ -6,6 +6,7 @@ import { _PG_date, _PG_numbers, includes, isObject } from "prostgles-types";
 import React from "react";
 import { dateAsYMD_Time } from "../../Charts";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
+import { RenderJson } from "./RenderValue/RenderJson";
 
 type P = {
   column:
@@ -164,8 +165,8 @@ export const RenderValue = ({
 
   if (value && (c?.udt_name.startsWith("json") || isObject(value))) {
     return (
-      <span style={{ color: getColumnDataColor(c), ...style }}>
-        {getSliced(JSON.stringify(value))}
+      <span style={style}>
+        <RenderJson value={value} maxLength={maxLength} />
       </span>
     );
   }

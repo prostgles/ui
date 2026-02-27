@@ -38,6 +38,7 @@ import type {
 } from "./dashboardUtils";
 import { getViewRendererUtils } from "./getViewRendererUtils";
 import { W_Barchart } from "../W_Barchart/W_Barchart";
+import { isPlaywrightTest } from "src/i18n/i18nUtils";
 
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &
@@ -353,6 +354,14 @@ export class ViewRenderer extends RTComp<
       })
       .filter(isDefined);
 
+    const isCryptoDemo =
+      isPlaywrightTest && workspace.name === "Crypto markets";
+    if (isCryptoDemo) {
+      console.log(
+        "Rendered windows",
+        renderedWindows.map((r) => ({ id: r.id, title: r.title })),
+      );
+    }
     return (
       <div
         className="ViewRenderer min-h-0 f-1 flex-row relative"
@@ -406,6 +415,12 @@ export class ViewRenderer extends RTComp<
           className="min-h-0 relative"
           layout={workspace.layout}
           onChange={(newLayout) => {
+            if (isCryptoDemo) {
+              console.log("Layout change", {
+                new: newLayout,
+                old: workspace.layout,
+              });
+            }
             if (!isEqual(newLayout, workspace.layout)) {
               workspace.$update({ layout: newLayout });
             }

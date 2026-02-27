@@ -65,7 +65,63 @@ export type ToolDefinition = {
  */
 type TableName = string;
 
-type FieldFilter = Record<string, 1> | Record<string, 0>;
+/**
+ * A filter for a table, defined as a MongoDB-like query object.
+ * Supported operators:
+ * - Comparison: $eq, $ne, $gt, $gte, $lt, $lte
+ * - Logical: $and, $or
+ * - Evaluation: $like, $ilike
+ * - Array: $in, $nin
+ * - Joins: $existsJoined: { [tableName]: TableFilter }
+ * @example
+ * {
+      $and: [
+        { 
+          $or: [
+            { topic: { $in: ["Prostgles", "Postgres"] } },
+            { summary: { $ilike: "%postgres%" } },
+            { id: { $gt: 5 } },
+          ]
+        },
+        { summary: { $ne: null } }
+      ]
+    }
+ */
+type TableFilter = Record<string, unknown>;
+
+type DetailedTableFilter = {
+  fieldName: string;
+  /**
+   * Defaults to $eq
+   */
+  type?:
+    | "$ilike"
+    | "$like"
+    | "$nilike"
+    | "$nlike"
+    | "$between"
+    | "$gt"
+    | "$gte"
+    | "$lt"
+    | "$lte"
+    | "$eq"
+    | "$ne"
+    | "$in"
+    | "$nin"
+    | "@@.to_tsquery"
+    | "@@.plainto_tsquery"
+    | "@@.phraseto_tsquery"
+    | "@@.websearch_to_tsquery";
+  value: unknown;
+};
+type DetailedTableFilterGroup =
+  | { $and: DetailedTableFilter[] }
+  | { $or: DetailedTableFilter[] };
+
+/**
+ * Defines a list of columns with either 1 (include) or 0 (exclude).
+ */
+type FieldFilter = "*" | Record<string, 1> | Record<string, 0>;
 
 export type DatabaseAccessDefinition =
   | {
@@ -76,30 +132,48 @@ export type DatabaseAccessDefinition =
        * This is preferred over providing access to the entire database (execute_sql_with_commit mode) for better security.
        */
       tableCreateStatements?: string;
+      /**
+       * Defines the tables, columns and rows the agent can access. Only applicable if mode is "custom".
+       * The keys of the tablePermissions object must be the table names as they appear in the database, or as they will be created from tableCreateStatements.
+       * For irregular table names, the keys must contain the double quotes (quote_ident(tableName) result).
+       */
       tablePermissions: Record<
         TableName,
         {
           select?:
             | true
             | {
-                fields?: FieldFilter;
-                forcedFilter?: Record<string, unknown>;
+                /**
+                 * Fields that can be selected. Use "*" to allow all fields
+                 */
+                fields: FieldFilter;
+                /**
+                 * Conditions that must be met for a row to be selected.
+                 * This is applied in addition to any filter provided in the find/count methods, and cannot be overridden
+                 */
+                forcedFilter?: DetailedTableFilterGroup;
               };
           insert?:
             | true
             | {
-                fields?: FieldFilter;
+                /**
+                 * Fields that can be inserted into. Use "*" to allow all fields.
+                 */
+                fields: FieldFilter;
               };
           update?:
             | true
             | {
-                fields?: FieldFilter;
-                forcedFilter?: Record<string, unknown>;
+                /**
+                 * Fields that can be updated. Use "*" to allow all fields.
+                 */
+                fields: FieldFilter;
+                forcedFilter?: DetailedTableFilterGroup;
               };
           delete?:
             | true
             | {
-                forcedFilter?: Record<string, unknown>;
+                forcedFilter?: DetailedTableFilterGroup;
               };
         }
       >;
@@ -115,10 +189,10 @@ export type DatabaseHandler = {
    * Must provide the correct data type in filters (do not provide a boolean if the column is a string, etc.)
    */
 
-  count: (tableName: string, filter?: Record<string, any>) => Promise<number>;
+  count: (tableName: string, filter?: TableFilter) => Promise<number>;
   find: (
     tableName: TableName,
-    filter?: Record<string, any>,
+    filter?: TableFilter,
     options?: {
       select?: Select;
       limit?: number;
@@ -129,7 +203,7 @@ export type DatabaseHandler = {
   /** Must define "returning" to get anything back */
   update: (
     tableName: TableName,
-    filter: Record<string, any>,
+    filter: TableFilter,
     update: Record<string, any>,
     returning?: Select,
   ) => Promise<void | AnyObject[]>;
@@ -140,7 +214,7 @@ export type DatabaseHandler = {
   ) => Promise<void | AnyObject[]>;
   delete: (
     tableName: TableName,
-    filter: Record<string, any>,
+    filter: TableFilter,
     returning?: Select,
   ) => Promise<void | AnyObject[]>;
 
@@ -333,7 +407,7 @@ export type ProxyCallDataDefinitions = {
   newTables: {
     name: string;
     schema?: string;
-    columns: unknown[];
+    columns: { name: { name: string }; dataType: { name: string } }[];
     ifNotExists?: boolean;
   }[];
   usedTables: string[];

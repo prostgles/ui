@@ -319,10 +319,8 @@ export const TimeChartLayerOptions = ({
                         },
                       });
                     }}
-                    db={db}
                     tableName={lq.localTableName}
                     filter={dataSource.smartGroupFilter}
-                    tables={tables}
                   />
                 </FlexCol>
               )}

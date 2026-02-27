@@ -1,6 +1,3 @@
-import { mdiAlertCircleOutline, mdiCog } from "@mdi/js";
-import { getKeys, isObject } from "prostgles-types";
-import React, { useState } from "react";
 import type { GroupedDetailedFilter } from "@common/filterUtils";
 import type {
   BasicTablePermissions,
@@ -11,7 +8,9 @@ import type {
   UpdateRule,
 } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import { mdiAlertCircleOutline, mdiCog } from "@mdi/js";
+import { getKeys, isObject } from "prostgles-types";
+import React, { useState } from "react";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { useFileTableRefTableRules } from "./FileTableAccessControlInfo";
 import { TableRulesPopup } from "./TableRulesPopup";
@@ -21,7 +20,7 @@ export type TableInfoWithRules = DBSchemaTablesWJoins[number] & {
   rule?: TableRules;
 };
 
-export type TablePermissionControlsProps = Pick<CommonWindowProps, "prgl"> & {
+export type TablePermissionControlsProps = {
   tableRules: TableRules;
   tablesWithRules: TableInfoWithRules[];
   variant?: "mini" | "micro";
@@ -205,7 +204,7 @@ export const TablePermissionControls = (
                         }),
                       },
                     });
-                  } else if ((ruleType as any) === "select") {
+                  } else {
                     onChange({
                       [ruleType]: {
                         forcedFilterDetailed,

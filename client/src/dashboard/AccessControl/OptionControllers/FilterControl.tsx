@@ -5,10 +5,10 @@ import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
 import { omitKeys, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useEffect, useMemo, useState } from "react";
-import type { Prgl } from "src/App";
 import { pluralise } from "../../../pages/Connections/Connection";
 import { quickClone } from "../../../utils/utils";
 import { RenderFilter } from "../../RenderFilter";
@@ -23,11 +23,8 @@ export type SingleGroupFilter =
   | { $and: DetailedFilter[] }
   | { $or: DetailedFilter[] };
 
-export type ForcedFilterControlProps = Pick<
-  Prgl,
-  "db" | "tables" | "methods" | "sql"
-> & {
-  detailedFilter?: SingleGroupFilter;
+export type ForcedFilterControlProps = {
+  detailedFilter: SingleGroupFilter | undefined;
   tableName: string;
   onChange: (val?: SingleGroupFilter) => any;
   contextData: ContextDataSchema;
@@ -38,6 +35,7 @@ export type ForcedFilterControlProps = Pick<
   containerClassname?: string;
   onSetError: (error?: string) => void;
   mode?: "forcedFilter" | "checkFilter";
+  selectedColumns?: string[];
 };
 
 const OPTS = [
@@ -74,9 +72,10 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
     title,
     containerClassname = "  ",
     tableName,
-    db,
     mode = "forcedFilter",
+    selectedColumns,
   } = props;
+  const { db, sql, methods, tables } = usePrgl();
   const iconPath =
     props.iconPath ?? (mode === "checkFilter" ? mdiCheckAll : mdiTableFilter);
 
@@ -141,11 +140,12 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
                   )}
                 </div>
               )}
-              sql={props.sql}
-              db={props.db}
-              methods={props.methods}
+              selectedColumns={selectedColumns}
+              sql={sql}
+              db={db}
+              methods={methods}
               tableName={props.tableName}
-              tables={props.tables}
+              tables={tables}
               filterOperand={isAnd ? "and" : "or"}
               filter={filters}
               onFilterChange={(newFilter) => {

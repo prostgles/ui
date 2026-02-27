@@ -17,7 +17,7 @@ export const AIAssistantDemo = async () => {
     "input",
     { nth: -1 },
   );
-  await naturalType("prost", modelSearch);
+  await naturalType("sonn", modelSearch);
   pressEnter(modelSearch);
 
   const el = await waitForElement<HTMLTextAreaElement>(

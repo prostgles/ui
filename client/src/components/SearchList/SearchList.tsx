@@ -13,7 +13,9 @@ export type SearchListItemContent = {
   contentLeft?: React.ReactNode;
   contentRight?: React.ReactNode;
   contentBottom?: React.ReactNode;
-  contentTop?: React.ReactNode;
+  contentTop?:
+    | React.ReactNode
+    | ((renderedItems: ParsedListItem[], index: number) => React.ReactNode);
 };
 export type SearchListItem = TestSelectors & {
   key: OptionKey;

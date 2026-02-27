@@ -83,6 +83,17 @@ export const getAgenticWorkflowFunctions = (
         };
       }
 
+      const workflow = await dbs.agentic_workflows.findOne({
+        id: workflowId,
+        chat_id: chatId,
+      });
+      if (!workflow) {
+        return {
+          state: "init-error" as const,
+          message: `Workflow with id ${workflowId} not found for chat ${chatId}`,
+          error: undefined,
+        };
+      }
       const aborter = new AbortController();
       const { agentHandlers } = await createAgentHandlers(
         {
@@ -92,6 +103,7 @@ export const getAgenticWorkflowFunctions = (
           toolDefinitions,
           databaseAccessDefinitions,
           signal: aborter.signal,
+          definition_override: workflow.definition_override,
         },
         {
           chatId,

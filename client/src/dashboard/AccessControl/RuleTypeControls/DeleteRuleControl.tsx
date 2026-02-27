@@ -13,11 +13,9 @@ import type { TablePermissionControlsProps } from "../TableRules/TablePermission
 import { ExampleComparablePolicy } from "./ExampleComparablePolicy";
 import { RuleToggle } from "./RuleToggle";
 import { RuleExpandSection } from "./SelectRuleControl";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
-type P = Pick<
-  Required<TablePermissionControlsProps>,
-  "prgl" | "table" | "userTypes"
-> & {
+type P = Pick<Required<TablePermissionControlsProps>, "table" | "userTypes"> & {
   rule: TableRules["delete"];
   onChange: (rule: DeleteRule | undefined) => void;
   contextDataSchema: ContextDataSchema;
@@ -27,7 +25,6 @@ export const DeleteRuleControl = ({
   rule: rawRule,
   onChange,
   table,
-  prgl,
   contextDataSchema: contextData,
   userTypes,
 }: P) => {
@@ -61,10 +58,6 @@ export const DeleteRuleControl = ({
                 </div>
               </div>
             }
-            db={prgl.db}
-            sql={prgl.sql}
-            methods={prgl.methods}
-            tables={prgl.tables}
             contextData={contextData}
             detailedFilter={rule.forcedFilterDetailed as SingleGroupFilter}
             tableName={table.name}
@@ -92,7 +85,6 @@ export const DeleteRuleControl = ({
               rule={rule}
               table={table}
               userTypes={userTypes}
-              prgl={prgl}
             />
           </RuleExpandSection>
         </>

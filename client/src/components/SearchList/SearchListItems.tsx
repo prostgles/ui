@@ -115,14 +115,14 @@ export const SearchListItems = forwardRef<
       {isSearch && !!renderedItems.length && <ClickCatchOverlay />}
       <FlexCol
         className={
-          "f-1 max-h-fit min-h-0 min-w-0  rounded-b" +
+          "f-1 max-h-fit min-h-0 min-w-0 rounded-b" +
           (isSearch ? "  shadow bg-color-0 " : "")
         }
         style={listStyle}
       >
         <ul
           className={
-            "no-decor f-1 max-h-fit min-h-0 min-w-0 ul-search-list o-auto rounded-b  no-scroll-bar " +
+            "no-decor f-1 max-h-fit min-h-0 min-w-0 ul-search-list o-auto rounded-db  no-scroll-bar " +
             (isSearch ? "  shadow bg-color-0 " : "")
           }
           role="listbox"
@@ -150,9 +150,12 @@ export const SearchListItems = forwardRef<
                 }
                 return "";
               };
+              const { contentTop } = renderedItem;
               return (
                 <React.Fragment key={i}>
-                  {renderedItem.contentTop}
+                  {typeof contentTop === "function" ?
+                    contentTop(renderedItems, i)
+                  : contentTop}
                   <DraggableLI
                     role={onPress ? "option" : "listitem"}
                     data-command={renderedItem["data-command"]}

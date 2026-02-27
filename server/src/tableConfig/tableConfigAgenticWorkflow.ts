@@ -1,5 +1,5 @@
 import type { TableConfig } from "prostgles-server";
-import { pickKeys } from "prostgles-types";
+import { omitKeys, pickKeys } from "prostgles-types";
 import { startAgenticWorkflowSchema } from "./startAgenticWorkflowSchema";
 
 export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
@@ -16,7 +16,36 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
           "databaseAccessDefinitions",
           "userInput",
           "timeOutInSeconds",
+          "newTables",
         ]),
+      },
+      definition_override: {
+        nullable: true,
+        jsonbSchemaType: {
+          agentDefinitions: {
+            optional: true,
+            record: {
+              partial: true,
+              values: {
+                type: {
+                  ...omitKeys(
+                    startAgenticWorkflowSchema.agentDefinitions.record.values
+                      .type,
+                    ["outputSchema"],
+                  ),
+                  prompt: { type: "string", optional: true },
+                  modelName: { type: "string", optional: true },
+                  maxCostUSD: { type: "number", optional: true },
+                  maxIterations: { type: "number", optional: true },
+                },
+              },
+            },
+          },
+          timeOutInSeconds: {
+            optional: true,
+            type: "number",
+          },
+        },
       },
     },
   },

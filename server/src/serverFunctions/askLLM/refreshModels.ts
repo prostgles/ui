@@ -25,6 +25,14 @@ export const refreshModels = async (dbs: DBS) => {
 
       const { prompt, completion, input_cache_read, input_cache_write } =
         m.pricing;
+      const agenticModelIndex = AGENTIC_MODEL_RANKING.findIndex((namePart) =>
+        m.canonical_slug.includes(namePart),
+      );
+
+      const chatModelIndex = CHAT_MODEL_RANKING.findIndex((namePart) =>
+        m.canonical_slug.includes(namePart),
+      );
+      const model_created = new Date(m.created * 1e3).toISOString();
       return {
         name: m.canonical_slug,
         pricing_info: {
@@ -37,11 +45,16 @@ export const refreshModels = async (dbs: DBS) => {
         architecture: m.architecture,
         supported_parameters: m.supported_parameters,
         context_length: m.context_length,
+        max_completion_tokens: m.top_provider.max_completion_tokens || 0,
         mcp_tool_support: m.supported_parameters.includes("tools"),
         provider_id,
         extra_body: {
           max_tokens: Math.min(9_000, m.top_provider.max_completion_tokens),
         },
+        agent_suitability_rank:
+          agenticModelIndex >= 0 ? agenticModelIndex : null,
+        chat_suitability_rank: chatModelIndex >= 0 ? chatModelIndex : null,
+        model_created,
       } satisfies DBSSchemaForInsert["llm_models"];
     })
     .filter(isDefined)
@@ -58,7 +71,7 @@ export const refreshModels = async (dbs: DBS) => {
     );
 
   await dbs.tx(async (dbTx) => {
-    const existingModels = await dbTx.llm_models.find();
+    // const existingModels = await dbTx.llm_models.find();
     const nonOpenRouterModels = insertData
       .filter((m) => m.provider_id !== "OpenRouter")
       .map((m) => ({
@@ -72,17 +85,47 @@ export const refreshModels = async (dbs: DBS) => {
         ...d,
         provider_id: "OpenRouter",
       })),
-    ].filter(
-      (m) =>
-        !existingModels.some(
-          (em) => em.name === m.name && em.provider_id === m.provider_id,
-        ),
-    );
+    ];
+    // .filter(
+    //   (m) =>
+    //     !existingModels.some(
+    //       (em) => em.name === m.name && em.provider_id === m.provider_id,
+    //     ),
+    // );
     if (newModels.length) {
-      await dbTx.llm_models.insert(newModels, { onConflict: "DoNothing" });
+      await dbTx.llm_models.insert(newModels, { onConflict: "DoUpdate" });
     }
   });
 };
+
+const AGENTIC_MODEL_RANKING = [
+  "gpt-5.3-codex",
+  "gpt-5.2-codex",
+  "claude-4.5-haiku",
+  "claude-4.6-sonnet",
+  // "claude-4.6-opus",
+  "gemini-3.1-pro",
+  "gemini-3-flash",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "grok-4.1-fast",
+  "gpt-5.1-codex-mini",
+  "gpt-4.1-mini",
+  "gpt-4.1-nano",
+  "gpt-4o-mini",
+  "kimi-k2-thinking",
+  "glm-4.7",
+  "glm-5",
+  "deepseek-reasoner",
+];
+
+export const DEFAULT_AGENT_MODEL = "claude-4.6-sonnet";
+const CHAT_MODEL_RANKING = [
+  "gpt-5.3-codex",
+  "gpt-5.2-chat",
+  "claude-4.5-haiku",
+  "claude-4.6-sonnet",
+];
 
 const LLM_PROVIDERS = ["OpenAI", "Anthropic", "Google"];
 

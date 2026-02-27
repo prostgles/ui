@@ -4,6 +4,7 @@ import type { DBS } from "..";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { tableConfig } from "../tableConfig/tableConfig";
 import { upsertConnection } from "../upsertConnection";
+import { CSP_DEFAULTS } from "./CSP_DEFAULTS";
 
 /** Add state db if missing */
 export const insertStateDatabase = async (
@@ -44,27 +45,7 @@ export const insertStateDatabase = async (
           allowed_ips_enabled: false,
           allowed_ips: ["::ffff:127.0.0.1"],
           tableConfig,
-          csp: {
-            defaultSrc: ["'self'"],
-            imgSrc: [
-              "*",
-              "'self'",
-              "data:",
-              "blob:",
-              "https://*.tile.openstreetmap.org",
-            ],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"], // localLLMHeaders
-            /* data import (papaparse) requires: worker-src blob: 'self' */
-            workerSrc: ["'self'", "blob:"],
-            frameSrc: [
-              "self",
-              /** Allow rendering pdf in AskLLM chat */
-              "data:",
-              "blob:",
-            ],
-            connectSrc: ["'self'", "ws:", "wss:"],
-          },
+          csp: CSP_DEFAULTS,
           cors_csp_devmode_enabled: true,
         },
       );

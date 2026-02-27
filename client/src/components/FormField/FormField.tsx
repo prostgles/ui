@@ -712,7 +712,6 @@ export default class FormField<
             }
             asRow={variant === "row"}
             value={rawValue}
-            required={required}
             multiSelect={multiSelect}
             labelAsValue={labelAsValue}
             btnProps={{

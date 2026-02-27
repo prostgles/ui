@@ -2,7 +2,13 @@ import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import { ProgressBar } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
-import { mdiLockClock, mdiLockOpenAlert, mdiStop } from "@mdi/js";
+import {
+  mdiClock,
+  mdiLockClock,
+  mdiLockOpenAlert,
+  mdiPlay,
+  mdiStop,
+} from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined, omitKeys } from "prostgles-types";
 import React, { useMemo } from "react";
@@ -129,7 +135,7 @@ export const AgenticWorkflowActions = ({
             !startAgenticWorkflow ?
               "Starting agentic workflows is not allowed/available"
             : !toolUseResultJson ?
-              "Validating workflow"
+              "Validating the workflow"
             : toolUseResultJson.isError ?
               "Workflow validation failed"
             : undefined
@@ -147,7 +153,7 @@ export const AgenticWorkflowActions = ({
             const res = await startAgenticWorkflow!({
               chatId,
               workflowTs: inputData.workflow_function_definition,
-              ...omitKeys(validWorkflow, ["isValid"]),
+              ...omitKeys(validWorkflow, ["isValid", "newTables"]),
               userInputValue,
               messageId,
               executionMode,
@@ -171,6 +177,7 @@ export const AgenticWorkflowActions = ({
               onSuccess();
             }
           }}
+          iconPath={isRunning ? mdiClock : mdiPlay}
         >
           {isRunning ? "Running..." : "Start workflow"}
         </Btn>

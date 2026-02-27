@@ -152,10 +152,15 @@ const dbRequestHandler: RequestHandler = (req: Request, res: Response) => {
         error: "No database permissions granted for this container",
       });
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     req.cookies ??= {};
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     req.cookies[sidKeyName] = sid_token;
-    runProstglesDBTool(dbPermissions, { httpReq: req, res }, req.body, endpoint)
+    runProstglesDBTool(
+      dbPermissions,
+      { httpReq: req, res },
+      req.body,
+      endpoint.toString(),
+    )
       .then((result) => {
         res.json(result);
       })

@@ -45,7 +45,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await closeWorkspaceWindows(page);
   await addSceneAnimation(getCommandElemSelector("AskLLM"));
 
-  await setModelByText(page, "pros");
+  await setModelByText(page, "sonn");
   await setPromptByText(page, "dashboard");
   const deletePreviousMessages = async () => {
     const firstMessage = await page.getByTestId("AskLLM.DeleteMessage").first();
@@ -107,7 +107,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("AskLLM").click();
   await deletePreviousMessages();
   await setPromptByText(page, "chat");
-  await setModelByText(page, "pros");
+  await setModelByText(page, "sonn");
 
   await deletePreviousMessages();
   await setPromptByText(page, "create task");

@@ -13,6 +13,7 @@ import type {
 } from "./AccessControl/OptionControllers/FilterControl";
 import { SmartFilter, type SmartFilterProps } from "./SmartFilter/SmartFilter";
 import type { ColumnConfig } from "./W_Table/ColumnMenu/ColumnMenu";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type RenderFilterProps = {
   filter: SingleGroupFilter | undefined;
@@ -23,7 +24,7 @@ export type RenderFilterProps = {
   itemName: "filter" | "condition";
   selectedColumns: ColumnConfig[] | undefined;
   hideOperand?: boolean;
-} & Pick<ForcedFilterControlProps, "db" | "tableName" | "tables">;
+} & Pick<ForcedFilterControlProps, "tableName">;
 
 export const RenderFilter = (props: RenderFilterProps) => {
   const {
@@ -33,12 +34,11 @@ export const RenderFilter = (props: RenderFilterProps) => {
     mode,
     title = `Edit ${props.itemName}s`,
     itemName,
-    db,
     tableName,
-    tables,
     selectedColumns,
     hideOperand,
   } = props;
+  const { db, tables } = usePrgl();
   const isAndOrFilter = "$and" in f || "$or" in f;
   const minimised = mode && mode === "minimised";
   const { filters, ...filterProps } = useMemo(() => {

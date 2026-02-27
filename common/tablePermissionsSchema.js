@@ -1,7 +1,7 @@
 // import type { JSONB } from "prostgles-types";
-const fields = {
-    optional: true,
+export const fieldFilterSchema = {
     oneOf: [
+        { enum: ["*"] },
         {
             record: {
                 values: {
@@ -18,9 +18,16 @@ const fields = {
         },
     ],
 }; // satisfies JSONB.FieldType;
-const forcedFilter = {
+export const forcedFilterSchema = {
     optional: true,
-    record: {},
+    oneOfType: [
+        {
+            $and: "any[]",
+        },
+        {
+            $or: "any[]",
+        },
+    ],
 }; // satisfies JSONB.FieldType;
 export const tablePermissionsSchema = {
     title: "Tables",
@@ -34,8 +41,8 @@ export const tablePermissionsSchema = {
                         { enum: [true] },
                         {
                             type: {
-                                forcedFilter,
-                                fields,
+                                forcedFilter: forcedFilterSchema,
+                                fields: fieldFilterSchema,
                             },
                         },
                     ],
@@ -46,8 +53,8 @@ export const tablePermissionsSchema = {
                         { enum: [true] },
                         {
                             type: {
-                                forcedFilter,
-                                fields,
+                                forcedFilter: forcedFilterSchema,
+                                fields: fieldFilterSchema,
                             },
                         },
                     ],
@@ -58,7 +65,7 @@ export const tablePermissionsSchema = {
                         { enum: [true] },
                         {
                             type: {
-                                fields,
+                                fields: fieldFilterSchema,
                             },
                         },
                     ],
@@ -69,7 +76,7 @@ export const tablePermissionsSchema = {
                         { enum: [true] },
                         {
                             type: {
-                                forcedFilter,
+                                forcedFilter: forcedFilterSchema,
                             },
                         },
                     ],

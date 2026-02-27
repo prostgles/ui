@@ -22,7 +22,7 @@ export type SearchInputProps = Pick<
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     withShadow: boolean | undefined;
     isLoading?: boolean;
-    matchCase?: {
+    matchCaseState?: {
       value: boolean;
       onChange: (value: boolean) => void;
     };
@@ -40,7 +40,7 @@ export const SearchInput = (props: SearchInputProps) => {
     wrapperStyle,
     inputWrapperRef,
     inputRef,
-    matchCase,
+    matchCaseState,
     isLoading,
     withShadow,
     style,
@@ -80,7 +80,7 @@ export const SearchInput = (props: SearchInputProps) => {
             borderBottomRightRadius: 0,
             zIndex: 3,
           }),
-          ...(matchCase && {
+          ...(matchCaseState && {
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
           }),
@@ -114,7 +114,7 @@ export const SearchInput = (props: SearchInputProps) => {
           />
         )}
 
-        {matchCase && (
+        {matchCaseState && (
           <Btn
             data-command="SearchList.MatchCase"
             title={"Match case"}
@@ -123,9 +123,9 @@ export const SearchInput = (props: SearchInputProps) => {
               margin: "1px",
               visibility: isLoading ? "hidden" : "visible",
             }}
-            color={matchCase.value ? "action" : undefined}
+            color={matchCaseState.value ? "action" : undefined}
             onClick={() => {
-              matchCase.onChange(!matchCase);
+              matchCaseState.onChange(!matchCaseState.value);
             }}
           />
         )}

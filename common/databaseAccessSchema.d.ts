@@ -28,11 +28,16 @@ export declare const databaseAccessSchema: {
                                 readonly type: {
                                     readonly forcedFilter: {
                                         readonly optional: true;
-                                        readonly record: {};
+                                        readonly oneOfType: readonly [{
+                                            readonly $and: "any[]";
+                                        }, {
+                                            readonly $or: "any[]";
+                                        }];
                                     };
                                     readonly fields: {
-                                        readonly optional: true;
                                         readonly oneOf: readonly [{
+                                            readonly enum: readonly ["*"];
+                                        }, {
                                             readonly record: {
                                                 readonly values: {
                                                     readonly enum: readonly [1];
@@ -57,11 +62,16 @@ export declare const databaseAccessSchema: {
                                 readonly type: {
                                     readonly forcedFilter: {
                                         readonly optional: true;
-                                        readonly record: {};
+                                        readonly oneOfType: readonly [{
+                                            readonly $and: "any[]";
+                                        }, {
+                                            readonly $or: "any[]";
+                                        }];
                                     };
                                     readonly fields: {
-                                        readonly optional: true;
                                         readonly oneOf: readonly [{
+                                            readonly enum: readonly ["*"];
+                                        }, {
                                             readonly record: {
                                                 readonly values: {
                                                     readonly enum: readonly [1];
@@ -85,8 +95,9 @@ export declare const databaseAccessSchema: {
                             }, {
                                 readonly type: {
                                     readonly fields: {
-                                        readonly optional: true;
                                         readonly oneOf: readonly [{
+                                            readonly enum: readonly ["*"];
+                                        }, {
                                             readonly record: {
                                                 readonly values: {
                                                     readonly enum: readonly [1];
@@ -111,7 +122,11 @@ export declare const databaseAccessSchema: {
                                 readonly type: {
                                     readonly forcedFilter: {
                                         readonly optional: true;
-                                        readonly record: {};
+                                        readonly oneOfType: readonly [{
+                                            readonly $and: "any[]";
+                                        }, {
+                                            readonly $or: "any[]";
+                                        }];
                                     };
                                 };
                             }];

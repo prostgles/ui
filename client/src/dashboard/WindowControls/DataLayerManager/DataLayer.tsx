@@ -10,7 +10,6 @@ import {
   mdiSetCenter,
   mdiTable,
 } from "@mdi/js";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useCallback } from "react";
 import { RenderFilter } from "src/dashboard/RenderFilter";
 import type { Link, LinkSyncItem } from "../../Dashboard/dashboardUtils";
@@ -48,7 +47,6 @@ type P =
       >;
     });
 export const DataLayer = (props: P) => {
-  const { tables, db } = usePrgl();
   const { myLinks, layer, w, getLinksAndWindows } = props;
 
   const thisLink = myLinks.find((l) => l.id === layer.linkId);
@@ -133,8 +131,6 @@ export const DataLayer = (props: P) => {
 
       {dataSource?.type === "local-table" && (
         <RenderFilter
-          db={db}
-          tables={tables}
           title="Manage filters"
           mode="micro"
           selectedColumns={undefined}

@@ -26,6 +26,7 @@ type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> & {
   filter?: DetailedFilter[];
   tableName: string;
   tableCols?: ProstglesColumn[];
+  selectedColumns?: string[];
   onClosePopup?: () => void;
   onClickRow?: (row?: AnyObject) => void;
   title?:
@@ -45,7 +46,7 @@ type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> & {
 };
 
 type S = {
-  error?: any;
+  error?: unknown;
   rows: AnyObject[];
   sort: ColumnSort[];
   filter?: DetailedFilter[];
@@ -78,7 +79,14 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
   get columns(): ProstglesColumn[] {
     if (this.state.columns) return this.state.columns;
 
-    const { tableName, db, tableCols, tables, allowEdit = true } = this.props;
+    const {
+      tableName,
+      db,
+      tableCols,
+      tables,
+      allowEdit = true,
+      selectedColumns,
+    } = this.props;
     const tableHandler = db[tableName];
     let _tableCols = tableCols ?? [];
     if (!tableCols) {
@@ -116,18 +124,20 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           getEditColumn({
             table,
             columnConfig: cols,
-            tableHandler: tableHandler as any,
+            tableHandler: tableHandler,
             onClickRow: onClickEditRow,
           }),
         );
       }
     }
 
-    return _tableCols;
+    return _tableCols.filter(
+      (c) => !selectedColumns || selectedColumns.includes(c.name),
+    );
   }
 
   onMount() {
-    this.getData();
+    void this.getData();
   }
 
   async onUnmount() {

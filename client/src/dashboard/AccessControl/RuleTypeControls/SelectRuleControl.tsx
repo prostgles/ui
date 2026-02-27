@@ -1,3 +1,4 @@
+import ErrorComponent from "@components/ErrorComponent";
 import {
   mdiDotsHorizontal,
   mdiFilter,
@@ -6,11 +7,11 @@ import {
 } from "@mdi/js";
 import { getKeys, isObject } from "prostgles-types";
 import React, { useState } from "react";
-import ErrorComponent from "@components/ErrorComponent";
 
 import type { SelectRule, TableRules } from "@common/publishUtils";
 import { ExpandSection } from "@components/ExpandSection";
 import { FlexCol } from "@components/Flex";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
 import type {
   ContextDataSchema,
@@ -20,11 +21,10 @@ import { FilterControl } from "../OptionControllers/FilterControl";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { ExampleComparablePolicy } from "./ExampleComparablePolicy";
 import { RuleToggle } from "./RuleToggle";
-import { SwitchToggle } from "@components/SwitchToggle";
 
 export type SelectRuleControlProps = Pick<
   Required<TablePermissionControlsProps>,
-  "prgl" | "table"
+  "table"
 > & {
   tableRules: TableRules;
   onChange: (rule: SelectRule | undefined) => void;
@@ -36,18 +36,16 @@ export const SelectRuleControl = ({
   tableRules,
   onChange,
   table,
-  prgl,
   contextDataSchema: contextData,
   userTypes,
 }: SelectRuleControlProps) => {
-  const { db, methods: dbMethods, tables } = prgl;
   const rawRule = tableRules["select"];
   const rule: SelectRule | undefined =
     rawRule === true ? { fields: "*", subscribe: {} }
     : isObject(rawRule) ? rawRule
     : undefined;
   const [filterErr, setFilterError] = useState<string | undefined>();
-  const error = getSelectRuleError({ table, tableRules, prgl }) ?? filterErr;
+  const error = getSelectRuleError({ table, tableRules }) ?? filterErr;
 
   return (
     <FlexCol className="gap-2">
@@ -93,10 +91,6 @@ export const SelectRuleControl = ({
                 </div>
               </FlexCol>
             }
-            db={db}
-            sql={prgl.sql}
-            methods={dbMethods}
-            tables={tables}
             detailedFilter={rule.forcedFilterDetailed as SingleGroupFilter}
             tableName={table.name}
             contextData={contextData}
@@ -140,7 +134,6 @@ export const SelectRuleControl = ({
                 rule={rule}
                 table={table}
                 userTypes={userTypes}
-                prgl={prgl}
               />
             </>
           </RuleExpandSection>
@@ -153,7 +146,7 @@ export const SelectRuleControl = ({
 
 export const getSelectRuleError = ({
   tableRules,
-}: Pick<SelectRuleControlProps, "table" | "prgl" | "tableRules">):
+}: Pick<SelectRuleControlProps, "table" | "tableRules">):
   | string
   | undefined => {
   if (tableRules.select) {

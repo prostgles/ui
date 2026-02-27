@@ -15,7 +15,7 @@ export const AgenticWorkflowUserInput = ({
   localFilter,
   setLocalFilter,
 }: ReturnType<typeof useAgenticWorkflowUserInput>) => {
-  const { db, tables } = usePrgl();
+  const { tables } = usePrgl();
 
   return (
     <>
@@ -65,14 +65,12 @@ export const AgenticWorkflowUserInput = ({
                   selectedColumns={undefined}
                   itemName={"filter"}
                   contextData={[]}
-                  db={db}
                   mode={{
                     children: "Edit filters",
                     variant: "faded",
                     label: { label: title, variant: "normal" },
                   }}
                   filter={detailedFilter}
-                  tables={tables}
                   onChange={(newValue) => {
                     setLocalFilter((prev) => ({
                       ...prev,

@@ -65,7 +65,7 @@ export const AgenticWorkflow = ({
   );
   const { onMount } = useMonacoScrollToLastLine();
   if (!toolUseResult) {
-    return <div>Validating workflow...</div>;
+    return <div>Validating the workflow...</div>;
   }
   return (
     <FlexCol className="w-full" data-command="AgenticWorkflow">
@@ -75,19 +75,17 @@ export const AgenticWorkflow = ({
           maxHeight: "600px",
         }}
         items={{
-          ...(!validWorkflow ?
-            {}
-          : {
-              Details: {
-                label: "Details",
-                content: (
-                  <AgenticWorkflowDetails
-                    validatedWorkflow={validWorkflow}
-                    userInputState={userInputState}
-                  />
-                ),
-              },
-            }),
+          ...(validWorkflow && {
+            Details: {
+              label: "Details",
+              content: (
+                <AgenticWorkflowDetails
+                  validatedWorkflow={validWorkflow}
+                  userInputState={userInputState}
+                />
+              ),
+            },
+          }),
           Definition: {
             label: "Definition",
             content: (

@@ -1,6 +1,6 @@
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
-import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { RenderFilter, type RenderFilterProps } from "../RenderFilter";
 import { SortByControl } from "../SmartFilter/SortByControl";
 import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";
@@ -103,9 +103,7 @@ export const SmartCardListHeaderControls = (
 
       {filterProps && (
         <RenderFilter
-          db={db}
           contextData={undefined}
-          tables={tables}
           selectedColumns={undefined}
           itemName={"filter"}
           hideOperand={true}

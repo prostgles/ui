@@ -9,10 +9,7 @@ import { RuleToggle } from "./RuleToggle";
 import { InfoRow } from "@components/InfoRow";
 // import { _PG_date, _PG_numbers, _PG_strings } from "prostgles-types";
 
-type P = Pick<
-  Required<TablePermissionControlsProps>,
-  "prgl" | "table" | "userTypes"
-> & {
+type P = Pick<Required<TablePermissionControlsProps>, "table" | "userTypes"> & {
   rule: TableRules["sync"];
   tableRules: TableRules;
   onChange: (rule: SyncRule | undefined) => void;

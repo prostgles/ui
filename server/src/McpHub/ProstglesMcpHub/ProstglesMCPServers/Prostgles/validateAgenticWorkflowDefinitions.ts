@@ -26,6 +26,12 @@ export const validateAgenticWorkflowDefinitions = async (
   const activeConnection =
     connectionManager.getActiveConnectionSilentFail(connection_id);
   if (!activeConnection) {
+    if (
+      connectionManager.connections?.find((c) => c.id === connection_id)
+        ?.is_state_db
+    ) {
+      throw "State DB connection not allowed";
+    }
     throw new Error("Connection not found for chat");
   }
   const { databaseAccessDefinitions, userInput } = definitions;
@@ -140,11 +146,14 @@ export const validateAgenticWorkflowDefinitions = async (
     }
   });
 
-  await createAgentHandlers(definitions, {
-    dbs,
-    chatId,
-    clientReq,
-    connectionId: connection_id,
-    userId,
-  });
+  return await createAgentHandlers(
+    { ...definitions, definition_override: {} },
+    {
+      dbs,
+      chatId,
+      clientReq,
+      connectionId: connection_id,
+      userId,
+    },
+  );
 };

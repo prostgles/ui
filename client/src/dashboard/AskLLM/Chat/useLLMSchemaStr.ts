@@ -153,9 +153,9 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
           .concat(
             constraints
               .filter((c) => !singlePkeyConstraints.has(c.conname))
-              .map((c) => `CONSTRAINT ${c.escaped_conname} ${c.definition}`),
+              .map((c) => `  CONSTRAINT ${c.escaped_conname} ${c.definition}`),
           )
-          .join(",\n ");
+          .join(",\n");
         const query = `CREATE TABLE ${t.name} (\n${colDefs}\n)`;
         return {
           query,

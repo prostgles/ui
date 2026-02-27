@@ -9,6 +9,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import { mdiClose, mdiPlus, mdiTableFilter } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useEffect, useState } from "react";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { FieldFilterControl } from "./FieldFilterControl";
@@ -17,7 +18,7 @@ import { FilterControl } from "./FilterControl";
 
 type P = Pick<
   Required<TablePermissionControlsProps>,
-  "prgl" | "table" | "tableRules"
+  "table" | "tableRules"
 > & {
   rule: TableRules["update"];
   onChange: (rule: UpdateRule) => void;
@@ -30,9 +31,9 @@ export const DynamicFields = ({
   contextDataSchema,
   table,
   onChange,
-  prgl: { db, tables, methods, sql },
   contextData,
 }: P) => {
+  const { db } = usePrgl();
   const rule: UpdateRule = r === true || !r ? { fields: "*" } : r;
 
   const setValue = (
@@ -113,11 +114,7 @@ export const DynamicFields = ({
                   }}
                 />
                 <FilterControl
-                  db={db}
-                  sql={sql}
-                  methods={methods}
                   tableName={table.name}
-                  tables={tables}
                   detailedFilter={filterDetailed as SingleGroupFilter}
                   label={"Filter"}
                   onChange={(newFilter) => {
