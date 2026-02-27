@@ -104,6 +104,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   noBorder?: boolean;
   selectedKey?: OptionKey;
   rootStyle?: React.CSSProperties;
+  listStyle?: React.CSSProperties;
 
   /**
    * Number of rows to slice from result

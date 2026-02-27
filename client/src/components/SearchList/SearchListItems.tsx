@@ -27,6 +27,7 @@ export type SearchListItemsProps = Pick<
   | "noResultsContent"
   | "onReorder"
   | "onMultiToggle"
+  | "listStyle"
 > & {
   renderedItems: ParsedListItem[];
   isSearch: boolean | undefined;
@@ -127,6 +128,7 @@ export const SearchListItems = forwardRef<
           }
           role="listbox"
           ref={handleRef}
+          style={props.listStyle}
           data-command={"SearchList.List"}
         >
           {onSearch && !props.items ? null : (

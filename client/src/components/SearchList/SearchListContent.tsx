@@ -148,6 +148,7 @@ export const SearchListContent = <M extends boolean = false>(
         searchingItems={searchingItems}
         endSearch={endSearch}
         showHover={showHover}
+        listStyle={props.listStyle}
       />;
   return (
     <div

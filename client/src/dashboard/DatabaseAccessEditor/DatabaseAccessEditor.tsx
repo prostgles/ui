@@ -53,7 +53,7 @@ export const DatabaseAccessEditor = ({
       className="gap-p5 ai-start"
       data-command="DatabaseAccessEditor"
     >
-      <Icon className="text-1 mt-p25" path={mdiTableEye} />
+      <Icon className="text-1" path={mdiTableEye} />
       {onChange ?
         <Select
           label={{ label: "Data access" }}
@@ -102,6 +102,12 @@ export const DatabaseAccessEditor = ({
             }}
             placeholder={`Search ${tables.length} tables & views`}
             limit={200}
+            listStyle={{
+              display: "grid",
+              gridTemplateColumns: "max-content 1fr",
+              gap: "0.5em",
+              alignItems: "center",
+            }}
             items={tables
               .concat(
                 newTables
@@ -162,11 +168,15 @@ export const DatabaseAccessEditor = ({
                   styles: {
                     labelWrapper: {
                       fontWeight: 700,
-                      minWidth: "120px",
-                      // marginRight: "auto",
+                      // minWidth: "120px",
                       ...(!onChange && { flex: "unset" }),
                     },
+                    label: {
+                      fontWeight: 700,
+                      fontSize: "16px",
+                    },
                     rowInner: {
+                      display: "contents",
                       ...(window.isLowWidthScreen && {
                         flexDirection: "column",
                         gap: "1em",
@@ -183,6 +193,7 @@ export const DatabaseAccessEditor = ({
                     ...(onChange && {
                       border: "1px solid var(--b-default)",
                     }),
+                    display: "contents",
                   },
                   contentLeft: onChange && (
                     <Icon

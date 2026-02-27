@@ -25,7 +25,11 @@ export const Stopwatch = ({
   }, [endTime, startTime]);
 
   const displayTime = getDurationAsStr(elapsed);
-  return <div title={title}>{displayTime}</div>;
+  return (
+    <div title={title} className="ws-nowrap">
+      {displayTime}
+    </div>
+  );
 };
 
 export const getDurationAsStr = (elapsedMs: number) => {
