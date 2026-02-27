@@ -50,7 +50,7 @@
 }
 
 .chat-container.chat-component .message-list {
-  line-height: 1.75rem;
+  /* line-height: 1.75rem; */
   position: relative;
   flex: 1 1 0%;
   min-width: 0px;

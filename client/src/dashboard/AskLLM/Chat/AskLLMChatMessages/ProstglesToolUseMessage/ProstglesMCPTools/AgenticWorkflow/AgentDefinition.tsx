@@ -1,11 +1,13 @@
-import { FlexCol } from "@components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React from "react";
+import React, { useState } from "react";
 
 import type { DBSSchema } from "@common/publishUtils";
-import FormField from "@components/FormField/FormField";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { LLMModelSelector } from "src/dashboard/AskLLM/LLMModelSelector";
+import Btn from "@components/Btn";
+import { mdiChevronDown, mdiCogOutline } from "@mdi/js";
 
 export const AgentDefinition = ({
   workflow,
@@ -15,6 +17,7 @@ export const AgentDefinition = ({
   agentName: string;
 }) => {
   const { dbs } = usePrgl();
+  const [expanded, setExpanded] = useState(false);
   const { agentDefinitions } = workflow.definition_data;
 
   const agentInitialDefinition = agentDefinitions[agentName];
@@ -47,45 +50,73 @@ export const AgentDefinition = ({
     );
   };
   return (
-    <FlexCol className="rounded b b-color-0 p-p5 min-w-0">
-      {agentName}
-      <LLMModelSelector
-        modelName={modelName}
-        forAgent={true}
-        value={null}
-        onChange={(_, { name }) => {
-          void updateAgentDefinition({ modelName: name });
-        }}
-      />
+    <FlexCol
+      className="rounded b b-color p-p5 min-w-0 relative"
+      style={{ fontWeight: "normal" }}
+    >
+      <FlexRow>
+        <span style={{ fontWeight: "bold" }}>{agentName}</span>
+        <LLMModelSelector
+          modelName={modelName}
+          forAgent={true}
+          value={null}
+          onChange={(_, { name }) => {
+            void updateAgentDefinition({ modelName: name });
+          }}
+        />
+        <Btn
+          size="small"
+          onClick={() => setExpanded((e) => !e)}
+          iconPath={mdiCogOutline}
+          variant="faded"
+          color={expanded ? "action" : "default"}
+          style={{
+            transition: "transform 0.2s",
+            // position: "absolute",
+            right: "5px",
+            top: "5px",
+          }}
+        />
+      </FlexRow>
       <ScrollFade className="o-auto min-w-0" style={{ maxHeight: "150px" }}>
-        {prompt}
+        {expanded ? prompt : slicePrompt(prompt)}
       </ScrollFade>
-      <FormField
-        label="Max iterations"
-        value={maxIterations}
-        type="integer"
-        onChange={async (newVal) => {
-          await updateAgentDefinition({ maxIterations: newVal });
-        }}
-      />
-      <FormField
-        label="Max tokens"
-        value={maxTokens}
-        type="integer"
-        onChange={async (newVal) => {
-          await updateAgentDefinition({ maxTokens: newVal });
-        }}
-      />
-      <FormField
-        label="Temperature"
-        value={temperature}
-        type="number"
-        onChange={async (newVal) => {
-          await updateAgentDefinition({
-            temperature: Number(newVal),
-          });
-        }}
-      />
+      {expanded && (
+        <FlexRow>
+          <FormFieldDebounced
+            label="Max iterations"
+            value={maxIterations}
+            type="integer"
+            onChange={async (newVal) => {
+              await updateAgentDefinition({ maxIterations: Number(newVal) });
+            }}
+          />
+          <FormFieldDebounced
+            label="Max tokens"
+            value={maxTokens}
+            type="integer"
+            onChange={async (newVal) => {
+              await updateAgentDefinition({ maxTokens: Number(newVal) });
+            }}
+          />
+          <FormFieldDebounced
+            label="Temperature"
+            value={temperature}
+            type="number"
+            onChange={async (newVal) => {
+              await updateAgentDefinition({
+                temperature: Number(newVal),
+              });
+            }}
+          />
+        </FlexRow>
+      )}
     </FlexCol>
   );
+};
+
+const slicePrompt = (prompt: string | undefined) => {
+  if (!prompt) return "";
+  const sliced = prompt.split("\n").slice(0, 3).join("\n");
+  return sliced.length < prompt.length ? sliced + "..." : sliced;
 };
