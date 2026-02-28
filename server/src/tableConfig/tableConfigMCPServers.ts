@@ -105,6 +105,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       description: `TEXT NOT NULL`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
       inputSchema: `JSONB`,
+      outputSchema: `JSONB`,
       annotations: {
         jsonbSchemaType: {
           title: {

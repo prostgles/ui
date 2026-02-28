@@ -21,7 +21,7 @@ export const updateMcpServerTools = async (
   if (prostglesMCP) {
     tools = getEntries(
       prostglesMCP.definition.tools as ProstglesMcpServerDefinition["tools"],
-    ).map(([name, { schema, description, mode = null }]) => {
+    ).map(([name, { schema, description, mode = null, outputSchema }]) => {
       const inputSchema =
         !schema ? undefined : getJSONBSchemaAsJSONSchema("", "", schema);
       return {
@@ -29,6 +29,15 @@ export const updateMcpServerTools = async (
         description,
         mode,
         inputSchema: inputSchema as unknown as McpTool["inputSchema"],
+        outputSchema:
+          outputSchema &&
+          (getJSONBSchemaAsJSONSchema(
+            "",
+            "",
+            typeof outputSchema === "string" ?
+              { type: outputSchema }
+            : outputSchema,
+          ) as McpTool["outputSchema"]),
       };
     });
   } else {
@@ -77,6 +86,7 @@ export const updateMcpServerTools = async (
               description: description ?? "",
               server_name: serverName,
               inputSchema,
+              outputSchema,
               name,
               annotations,
               mode,

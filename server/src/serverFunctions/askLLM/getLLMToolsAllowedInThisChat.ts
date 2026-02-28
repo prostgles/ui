@@ -14,7 +14,7 @@ import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
 import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
 import { getPublishedMethodsTools } from "./prostglesLLMTools/getPublishedMethodsTools";
-import { getAgentGoalTool } from "./agentConstants";
+import { getAgentGoalTools } from "./agentConstants";
 
 export type GetLLMToolsArgs = {
   userType: string;
@@ -60,15 +60,17 @@ export const getLLMToolsAllowedInThisChat = async ({
   });
   const tools: Map<string, AllowedChatTool> = new Map();
   if (chat.agent_info) {
-    const agentGoalTool = getAgentGoalTool(chat.agent_info);
-    tools.set(agentGoalTool.name, {
-      ...agentGoalTool,
-      auto_approve: true,
-      mode: "structured-output",
-      server_name: "",
-      type: "mcp",
-      tool_name: agentGoalTool.name,
-      tool_id: -1,
+    const agentGoalTools = getAgentGoalTools(chat.agent_info);
+    agentGoalTools.forEach((agentGoalTool, index) => {
+      tools.set(agentGoalTool.name, {
+        ...agentGoalTool,
+        auto_approve: true,
+        mode: "structured-output",
+        server_name: "",
+        type: "mcp",
+        tool_name: agentGoalTool.name,
+        tool_id: -1 - index, // avoid collision with normal tools
+      });
     });
   }
   const allowedMcpToolsWithInfo = mcpToolsWithoutExtraInfo

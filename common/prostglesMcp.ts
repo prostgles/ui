@@ -420,6 +420,21 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
       },
     },
+    get_document_text: {
+      description: "Get text contents of a document",
+      schema: {
+        type: {
+          url: {
+            type: "string",
+          },
+        },
+      },
+      outputSchema: {
+        type: {
+          content: "string",
+        },
+      },
+    },
   },
   webdev: {
     list_directory: {

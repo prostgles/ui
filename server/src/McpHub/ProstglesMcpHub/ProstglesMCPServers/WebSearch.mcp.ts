@@ -39,33 +39,42 @@ const withRetries = async <T>(
 
 const handler = {
   start: async (dbs) => {
-    const searXngService = getServiceManager(dbs);
+    const serviceManager = getServiceManager(dbs);
 
     let logs: ProcessLog[] = [];
-    await withRetries(() => {
-      return searXngService.enableService("webSearchSearxng", (log) => {
-        logs = log;
-      });
-    }).catch((error) => {
-      console.error(
-        "Failed to start SearXNG service for Web Search MCP Server",
-        { error, logs: logs.map((l) => l.text).join("\n") },
-      );
-      throw new Error(
-        "Failed to start SearXNG service for Web Search MCP Server. Check server logs for details.",
-      );
-    });
 
-    const serviceInstance = searXngService.getService("webSearchSearxng");
-    if (serviceInstance?.status !== "running") {
-      throw new Error(
-        "Failed to start SearXNG service for Web Search MCP Server",
-      );
-    }
+    const getService = async <
+      S extends Parameters<typeof serviceManager.enableService>[0],
+    >(
+      serviceName: S,
+    ) => {
+      await withRetries(() => {
+        return serviceManager.enableService(serviceName, (log) => {
+          logs = log;
+        });
+      }).catch((error) => {
+        console.error(
+          `Failed to start ${serviceName} service for Web Search MCP Server`,
+          { error, logs: logs.map((l) => l.text).join("\n") },
+        );
+        throw new Error(
+          "Failed to start ${serviceName} service for Web Search MCP Server. Check server logs for details.",
+        );
+      });
+
+      const serviceInstance = serviceManager.getService(serviceName);
+      if (serviceInstance?.status !== "running") {
+        throw new Error(
+          `Failed to start ${serviceName} service for Web Search MCP Server`,
+        );
+      }
+      return serviceInstance;
+    };
+    const webSearchService = await getService("webSearchSearxng");
 
     return {
       stop: () => {
-        searXngService.stopService("webSearchSearxng");
+        serviceManager.stopService("webSearchSearxng");
       },
       tools: {
         websearch: async (toolArguments, { clientReq }) => {
@@ -73,7 +82,7 @@ const handler = {
             clientReq.httpReq?.ip ||
             clientReq.socket?.handshake.address ||
             "127.0.0.1";
-          const result = await serviceInstance.endpoints["/search"](
+          const result = await webSearchService.endpoints["/search"](
             { ...toolArguments, format: "json" },
             {
               headers: {
@@ -101,33 +110,85 @@ const handler = {
               server_name: "playwright",
             },
           });
-          const result1 = await mcpHub.callTool(
+          const navigationResult = await mcpHub.callTool(
             "playwright",
             "browser_navigate",
             toolArguments,
           );
-          if (result1.isError) {
+          if (navigationResult.isError) {
             await mcpHub.destroy();
             throw new Error(
-              `Failed to get snapshot: ${JSON.stringify(result1.content)}`,
+              `Failed to get snapshot: ${JSON.stringify(navigationResult.content)}`,
             );
           }
-          const result2 = await mcpHub.callTool(
+
+          // 2. Check Content Type using browser_evaluate
+          const contentTypeResult = await mcpHub.callTool(
+            "playwright",
+            "browser_evaluate",
+            { function: "() => document.contentType" },
+          );
+
+          if (contentTypeResult.isError) {
+            throw new Error(
+              `Failed to check content type: ${JSON.stringify(contentTypeResult.content)}`,
+            );
+          }
+
+          // Extract the text content from the MCP response
+          const contentType = contentTypeResult.content
+            .map((item) => (item.type === "text" ? item.text : ""))
+            .join("")
+            .trim()
+            .split(`### Result`)[1]
+            ?.split(`### Ran Playwright code`)[0];
+
+          // 3. Validate Content Type
+          // Allow text/html, reject application/pdf, image/*, etc.
+          if (!contentType?.includes("text/html")) {
+            await mcpHub.destroy();
+            throw new Error(
+              [
+                `Unsupported content type detected: "${contentType}".`,
+                `Snapshot only supports HTML pages.`,
+                `Use get_document_text tool for non-HTML content.`,
+              ].join(" "),
+            );
+          }
+          const snapshotResult = await mcpHub.callTool(
             "playwright",
             "browser_snapshot",
           );
-          if (result2.isError) {
+          if (snapshotResult.isError) {
             await mcpHub.destroy();
             throw new Error(
-              `Failed to get snapshot: ${JSON.stringify(result2.content)}`,
+              `Failed to get snapshot: ${JSON.stringify(snapshotResult.content)}`,
             );
           }
           await mcpHub.destroy();
           return (
-            result2.content
+            snapshotResult.content
               .map((item) => (item.type === "text" ? item.text : ""))
               .join("\n") || ""
           );
+        },
+        get_document_text: async ({ url }) => {
+          const docsService = await getService("documents");
+          const result = await docsService.endpoints["/v1/convert/source"](
+            {
+              sources: [{ kind: "http", url }],
+              options: {
+                image_export_mode: "placeholder",
+              },
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            },
+          );
+          return result.document.md_content;
         },
       },
       fetchTools: () => {

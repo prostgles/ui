@@ -16,6 +16,7 @@ import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashbo
 import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
 import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/CreateComponentQuickFeedbackPreview";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
+import { WebSnapshot } from "./ProstglesMCPTools/WebSearch/WebSnapshot";
 
 export const ProstglesMCPToolsWithUI = {
   [getMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]: {
@@ -55,6 +56,14 @@ export const ProstglesMCPToolsWithUI = {
   },
   [getMCPFullToolName("websearch", "websearch") as string]: {
     component: WebSearch,
+    displayMode: "inline",
+  },
+  [getMCPFullToolName("websearch", "get_snapshot") as string]: {
+    component: WebSnapshot,
+    displayMode: "inline",
+  },
+  [getMCPFullToolName("websearch", "get_document_text") as string]: {
+    component: WebSnapshot,
     displayMode: "inline",
   },
   [getMCPFullToolName(

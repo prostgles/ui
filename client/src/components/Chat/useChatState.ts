@@ -65,9 +65,13 @@ export const useChatState = (
 
   const onCurrentlyTypedMessageChangeDebounced = useDebouncedCallback(
     (value: string) => {
-      onCurrentlyTypedMessageChange(value);
+      if (sendingMsg) {
+        onCurrentlyTypedMessageChange("");
+      } else {
+        onCurrentlyTypedMessageChange(value);
+      }
     },
-    [onCurrentlyTypedMessageChange],
+    [sendingMsg, onCurrentlyTypedMessageChange],
   );
 
   const sendMsg = useCallback(async () => {

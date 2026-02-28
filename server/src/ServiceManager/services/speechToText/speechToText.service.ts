@@ -102,6 +102,7 @@ export const speechToTextService = {
         type: "any",
         description: "Audio file as multipart/form-data (webm, mp3, wav, etc.)",
       },
+      inputType: "body-as-is",
       outputSchema: TRANSCRIBE_OUTPUT_SCHEMA,
     },
     "/health": {

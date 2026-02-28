@@ -34,7 +34,7 @@ export const getServiceEndoints = <S extends ProstglesService>({
 
           const { data } = validatedInput ?? {};
           const asQueryOrBody =
-            (inputType ?? method === "POST") ? "body" : "query";
+            inputType ?? (method === "POST" ? "body" : "query");
           const query =
             asQueryOrBody === "query" && data ?
               `?${new URLSearchParams(
@@ -44,7 +44,13 @@ export const getServiceEndoints = <S extends ProstglesService>({
 
           const response = await fetch(`${baseUrl}${endpoint}${query}`, {
             ...fetchOptions,
-            body: asQueryOrBody === "body" ? (data as string) : undefined,
+            body:
+              asQueryOrBody === "body-as-is" ? (data as FormData | string)
+              : asQueryOrBody === "body" ?
+                typeof data === "string" ?
+                  data
+                : JSON.stringify(data)
+              : undefined,
             method: method,
           });
           if (!response.ok) {

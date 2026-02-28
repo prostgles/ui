@@ -20,7 +20,6 @@ export const webSearchSearxngService = {
     "/search": {
       method: "GET",
       description: "SearXNG search endpoint",
-
       inputSchema: inputSchema,
       outputSchema: {
         type: {

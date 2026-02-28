@@ -19,7 +19,7 @@ import {
   runProstglesDBTool,
 } from "../prostglesLLMTools/runProstglesDBTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
-import { AGENT_GOAL_TOOL_NAME } from "../agentConstants";
+import { AGENT_GOAL_TOOL_NAMES } from "../agentConstants";
 
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
@@ -74,8 +74,10 @@ export const runApprovedTools = async (
     });
   }
 
-  const agetGoalTool = toolUseRequestMessages.find(
-    (m) => m.name === AGENT_GOAL_TOOL_NAME,
+  const agetGoalTool = toolUseRequestMessages.find((m) =>
+    [AGENT_GOAL_TOOL_NAMES.REACHED, AGENT_GOAL_TOOL_NAMES.FAILED].includes(
+      m.name,
+    ),
   );
   if (agetGoalTool) {
     if (!agent_info) {
@@ -88,25 +90,30 @@ export const runApprovedTools = async (
         "Unexpected. Agent goal tool used but there are other tool use requests in the same message. Agent goal tool must be used alone.",
       );
     }
-    const validationResult = getJSONBSchemaValidationError(
-      { type: agent_info.outputSchema },
-      agetGoalTool.input,
-    );
+
+    const goalFailed = agetGoalTool.name === AGENT_GOAL_TOOL_NAMES.FAILED;
+    const validationResult =
+      goalFailed ? undefined : (
+        getJSONBSchemaValidationError(
+          { type: agent_info.outputSchema },
+          agetGoalTool.input,
+        )
+      );
     const toolResultContent = {
       type: "tool_result",
-      tool_name: AGENT_GOAL_TOOL_NAME,
+      tool_name: agetGoalTool.name,
       tool_use_id: agetGoalTool.id,
-      is_error: validationResult.error !== undefined,
+      is_error: validationResult?.error !== undefined,
       content:
-        validationResult.error !== undefined ?
-          "goal-data-validation-failure"
+        goalFailed ? "goal-failed"
+        : validationResult?.error !== undefined ? "goal-data-validation-failure"
         : "goal-reached",
-    } satisfies ToolResultMessage;
+    } as const satisfies ToolResultMessage;
 
     /**
      * Allow agent to fix issue
      */
-    if (toolResultContent.is_error) {
+    if (toolResultContent.is_error && !goalFailed) {
       await askLLM({
         ...args,
         type: "tool-use-result",
@@ -126,7 +133,13 @@ export const runApprovedTools = async (
       },
       {
         status:
-          validationResult.error !== undefined ?
+          goalFailed ?
+            {
+              state: "goal-failure",
+              data: agetGoalTool.input,
+              error: "Agent indicated goal failure",
+            }
+          : validationResult?.error !== undefined ?
             {
               state: "goal-data-validation-failure",
               data: agetGoalTool.input,
@@ -138,9 +151,9 @@ export const runApprovedTools = async (
             },
       },
     );
-    if (validationResult.error) {
+    if (validationResult?.error || goalFailed) {
       throw new Error(
-        `Agent goal tool input validation failed: ${validationResult.error}`,
+        `Agent goal tool input validation failed: ${goalFailed ? "goal failure" : validationResult?.error}`,
       );
     }
     return;

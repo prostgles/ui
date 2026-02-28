@@ -300,7 +300,7 @@ export type DBGeneratedSchema = {
        |  {  state: "stopped";  reason: "max_total_cost_usd" | "estimated_future_max_total_cost_usd" | "maximum_consecutive_tool_fails" | "manual" | "max_iterations_reached"; }
        |  {  state: "loading";  since: string; }
        |  {  state: "goal-reached";  data: unknown; }
-       |  {  state: "goal-data-validation-failure";  data: unknown;  error: string; }
+       |  {  state: "goal-data-validation-failure" | "goal-failure";  data: unknown;  error: string; }
       user_id: string;
     };
   };
@@ -485,6 +485,7 @@ export type DBGeneratedSchema = {
       inputSchema?: null | any;
       mode?: null | "structured-output" | "user-provides-response"
       name: string;
+      outputSchema?: null | any;
       server_name: string;
     };
   };

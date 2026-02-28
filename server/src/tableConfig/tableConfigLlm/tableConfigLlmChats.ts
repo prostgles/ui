@@ -106,7 +106,9 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
             },
             {
               type: {
-                state: { enum: ["goal-data-validation-failure"] },
+                state: {
+                  enum: ["goal-data-validation-failure", "goal-failure"],
+                },
                 data: "unknown",
                 error: "string",
               },

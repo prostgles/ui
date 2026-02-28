@@ -45,7 +45,7 @@ export const getValidatedAgentHandlerArgs = async (
           },
           {
             /** Match OpenRouter models which get prefixed then with provider name */
-            name: { $ilike: `%/${modelName}` },
+            name: { $ilike: `%${modelName}%` },
           },
         ],
       },

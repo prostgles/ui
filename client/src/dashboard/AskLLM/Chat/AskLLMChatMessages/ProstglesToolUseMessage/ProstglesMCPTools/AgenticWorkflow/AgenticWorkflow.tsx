@@ -98,7 +98,7 @@ export const AgenticWorkflow = ({
                 minHeight={400}
                 // scroll to end to avoid top data which is shown in Details tab
                 onMount={onMount}
-                options={MONACO_READONLY_DEFAULT_OPTIONS}
+                options={monacoOpts}
               />
             ),
           },
@@ -180,3 +180,8 @@ export const AgenticWorkflow = ({
     </FlexCol>
   );
 };
+
+const monacoOpts = {
+  ...MONACO_READONLY_DEFAULT_OPTIONS,
+  lineNumbers: "on",
+} as const;

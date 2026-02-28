@@ -76,6 +76,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
 
   const onCurrentlyTypedMessageChange = useCallback(
     (currently_typed_message: string) => {
+      console.log({ currently_typed_message, activeChatId });
       if (!activeChatId) return;
       void dbs.llm_chats.update(
         { id: activeChatId },

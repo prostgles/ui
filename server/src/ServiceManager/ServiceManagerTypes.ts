@@ -1,11 +1,12 @@
-import type { JSONB } from "prostgles-types";
-import { speechToTextService } from "./services/speechToText/speechToText.service";
-import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
-import { webSearchSearxngService } from "./services/webSearchSearxng/webSearchSearxng.service";
 import type {
   ExecutionResult,
   ProcessLog,
 } from "@src/McpHub/DockerSandbox/executeDockerCommand";
+import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
+import type { JSONB } from "prostgles-types";
+import { documentsService } from "./services/documents/documents.service";
+import { speechToTextService } from "./services/speechToText/speechToText.service";
+import { webSearchSearxngService } from "./services/webSearchSearxng/webSearchSearxng.service";
 
 export type DockerGPUS = "none" | "all" | number | number[];
 
@@ -64,7 +65,14 @@ export type ProstglesService = {
       method: "GET" | "POST";
       description: string;
       /* Defaults to 'body' for POST and 'query' for GET */
-      inputType?: "body" | "query";
+      inputType?:
+        | "body"
+        /**
+         * Pass the input to the endpoint as-is, without JSON parsing or stringifying.
+         */
+        | "body-as-is"
+        | "query";
+
       inputSchema: JSONB.FieldType | undefined;
       outputSchema: JSONB.FieldType | undefined;
     }
@@ -74,6 +82,7 @@ export type ProstglesService = {
 export const prostglesServices = {
   speechToText: speechToTextService,
   webSearchSearxng: webSearchSearxngService,
+  documents: documentsService,
 };
 
 export type RunningServiceInstance<
