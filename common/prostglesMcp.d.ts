@@ -212,8 +212,8 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ";
                     };
                     readonly networkMode: {
-                        readonly enum: readonly ["none", "bridge", "host"];
-                        readonly description: "Network mode for the container. Defaults to 'none'";
+                        readonly enum: readonly ["none", "bridge", "bridge-internal", "host"];
+                        readonly description: "Network mode for the container. Defaults to 'bridge-internal'. Use 'bridge' mode to be able to access the database. Use 'bridge-internal' to access the database but not the internet.";
                         readonly optional: true;
                     };
                     readonly environment: {
@@ -330,6 +330,18 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly answers: "string[]";
                 };
             };
+        };
+        readonly get_tool_schemas: {
+            readonly description: "Get MCP tool descriptions, input and output schemas in typescript format. Will return all tools by default. Use toolNames to specify which tools to return.";
+            readonly schema: {
+                readonly type: {
+                    readonly toolNames: {
+                        readonly optional: true;
+                        readonly arrayOf: "string";
+                    };
+                };
+            };
+            readonly outputSchema: "string";
         };
         readonly suggest_agentic_workflow: {
             readonly mode: "structured-output";
@@ -577,6 +589,21 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly url: {
                         readonly type: "string";
                         readonly description: "URL of the web page to snapshot";
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly type: {
+                    readonly content: "string";
+                };
+            };
+        };
+        readonly get_document_text: {
+            readonly description: "Get text contents of a document";
+            readonly schema: {
+                readonly type: {
+                    readonly url: {
+                        readonly type: "string";
                     };
                 };
             };

@@ -11,7 +11,8 @@ export const useDebouncedCallback = <
 
   useEffect(() => {
     return () => clearTimeout(timeoutRef.current);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [delay, ...deps]);
 
   return useCallback(
     (...args: Parameters<T>) => {

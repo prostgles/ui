@@ -60,6 +60,11 @@ export default defineAgenticWorkflow(
           toolNames: ["fetch"],
         },
       },
+      workflowAllowedTools: {
+        fetch: {
+          fetch: 1,
+        },
+      },
       agentDefinitions: {
         researcher: {
           prompt: "You are a research assistant. ",
@@ -107,10 +112,11 @@ export default defineAgenticWorkflow(
     null,
     2,
   )},
-  async ({ researcher }, dbHandler, userInputValue, setProgress) => {
+  async ({ researcher }, dbHandler, toolHandler, userInputValue, setProgress) => {
     setProgress(0, "Starting workflow");
     await dbHandler.insert("users", [{ username: "Prostgles", type: "from-agent" }]);
     const start = Date.now();
+    toolHandler.fetch.fetch({ url: "https://www.prostgles.com" }).then(console.log).catch(console.log);
     const filterCount = ${mode !== "input" ? "undefined;//" : ""} await dbHandler.count("users", userInputValue["table-filter"]);
     console.log("Filter count:", filterCount);
     setProgress(1, "Finished database operation, starting research");

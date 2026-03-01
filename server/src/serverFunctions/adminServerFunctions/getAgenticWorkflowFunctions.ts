@@ -1,4 +1,4 @@
-import { createAgentHandlers } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createAgentHandlers";
+import { createWorkflowProxyHandlers } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createWorkflowProxyHandlers";
 import { startAgenticWorkflowContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/startAgenticWorkflowContainer";
 import { validateUserInput } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/validateUserInput";
 import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
@@ -95,25 +95,26 @@ export const getAgenticWorkflowFunctions = (
         };
       }
       const aborter = new AbortController();
-      const { agentHandlers } = await createAgentHandlers(
-        {
-          name,
-          timeOutInSeconds,
-          agentDefinitions,
-          toolDefinitions,
-          databaseAccessDefinitions,
-          signal: aborter.signal,
-          definition_override: workflow.definition_override,
-        },
-        {
-          chatId,
-          dbs,
-          userId: user.id,
-          connectionId: connection_id,
-          clientReq,
-        },
-        executionMode !== "parallel",
-      );
+      const { agentHandlers, workflowToolsHandler } =
+        await createWorkflowProxyHandlers(
+          {
+            name,
+            timeOutInSeconds,
+            agentDefinitions,
+            toolDefinitions,
+            databaseAccessDefinitions,
+            signal: aborter.signal,
+            definition_override: workflow.definition_override,
+          },
+          {
+            chatId,
+            dbs,
+            userId: user.id,
+            connectionId: connection_id,
+            clientReq,
+          },
+          executionMode !== "parallel",
+        );
 
       if (
         databaseAccessDefinitions?.mode === "custom" &&
@@ -166,12 +167,20 @@ export const getAgenticWorkflowFunctions = (
                 omitKeys(databaseAccessDefinitions, ["tableCreateStatements"])
               : (databaseAccessDefinitions ?? null),
           },
-          handler: (data) => {
-            const agentHandler = agentHandlers.get(data.agentName);
-            if (!agentHandler) {
-              throw `Agent handler for ${data.agentName} not found`;
+          handler: (data, { httpReq, res }) => {
+            if (data.type === "agent") {
+              const agentHandler = agentHandlers.get(data.agentName);
+              if (!agentHandler) {
+                throw `Agent handler for ${data.agentName} not found`;
+              }
+              return agentHandler(data.input);
             }
-            return agentHandler(data.input);
+
+            const toolHandler = workflowToolsHandler.get(data.name);
+            if (!toolHandler) {
+              throw `Tool handler for ${data.name} not found`;
+            }
+            return toolHandler(data.input, { httpReq, res });
           },
         },
       ).catch((error: unknown) => {

@@ -1,5 +1,5 @@
 import { getProperty } from "@common/utils";
-import type { AgenticWorkflowDefinition } from "./defineAgenticWorkflow";
+import type { AgenticWorkflowDefinition } from "./defineAgenticWorkflowHandlers";
 
 export const validateUserInput = (
   userInputValue: Record<string, unknown>,

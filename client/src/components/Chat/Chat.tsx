@@ -64,7 +64,6 @@ export const Chat = (props: ChatProps) => {
     divHandlers,
     handleOnPaste,
     isEngaged,
-    onCurrentlyTypedMessageChangeDebounced,
   } = useChatState({
     isLoading,
     messages,
@@ -152,7 +151,7 @@ export const Chat = (props: ChatProps) => {
               defaultValue={getCurrentMessage()}
               onPaste={handleOnPaste}
               onChange={({ currentTarget }) => {
-                onCurrentlyTypedMessageChangeDebounced(currentTarget.value);
+                onCurrentlyTypedMessageChange(currentTarget.value);
               }}
               onKeyDown={(e) => {
                 if (

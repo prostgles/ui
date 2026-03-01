@@ -18,6 +18,9 @@ void describe("defineAgenticWorkflow", async () => {
               toolNames: ["select"],
             },
           },
+          workflowAllowedTools: {
+            fetch: { fetch: 1, getSnapshot: 1 },
+          },
           agentDefinitions: {
             researcher: {
               prompt: "You are a research assistant.",
@@ -42,10 +45,16 @@ void describe("defineAgenticWorkflow", async () => {
             invalid,
           },
           dbHandler,
+          toolHandlers,
           { test_input },
         ) => {
           const result = await researcher("Prostgles");
           result.summary satisfies string;
+
+          void toolHandlers.fetch.fetch();
+          void toolHandlers.fetch.getSnapshot({
+            url: "https://www.example.com",
+          });
 
           // @ts-expect-error
           result.invalid;

@@ -181,6 +181,15 @@ export const askLLM = async (args: AskLLMArgs) => {
     message: userMessage,
     llm_model_id: chat.model,
   });
+  if (type === "new-message") {
+    await dbs.llm_chats.update(
+      { id: chatId },
+      {
+        currently_typed_message: "",
+      },
+    );
+  }
+
   if (type === "tool-use-result-with-denied") {
     return;
   }

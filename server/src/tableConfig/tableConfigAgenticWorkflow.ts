@@ -17,6 +17,7 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
           "userInput",
           "timeOutInSeconds",
           "newTables",
+          "workflowAllowedTools",
         ]),
       },
       definition_override: {

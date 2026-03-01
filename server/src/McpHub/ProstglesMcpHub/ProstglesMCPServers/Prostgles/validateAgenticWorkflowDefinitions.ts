@@ -1,7 +1,7 @@
 import { connectionManager, type DBS } from "@src/index";
 import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
-import { createAgentHandlers } from "./createAgentHandlers";
-import type { ProxyCallDataDefinitions } from "./defineAgenticWorkflow";
+import { createWorkflowProxyHandlers } from "./createWorkflowProxyHandlers";
+import type { ProxyCallDataDefinitions } from "./defineAgenticWorkflowHandlers";
 import type { AuthClientRequest } from "prostgles-server";
 
 export const validateAgenticWorkflowDefinitions = async (
@@ -146,7 +146,7 @@ export const validateAgenticWorkflowDefinitions = async (
     }
   });
 
-  return await createAgentHandlers(
+  return await createWorkflowProxyHandlers(
     { ...definitions, definition_override: {} },
     {
       dbs,

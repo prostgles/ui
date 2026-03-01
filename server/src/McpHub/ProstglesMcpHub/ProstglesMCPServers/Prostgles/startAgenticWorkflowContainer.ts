@@ -1,7 +1,5 @@
 import type { DBS } from "@src/index";
 import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
-import { readFileSync } from "fs";
-import { join } from "path";
 import {
   getJSONBSchemaValidationError,
   getKeys,
@@ -9,42 +7,16 @@ import {
 } from "prostgles-types";
 import type {
   DbPermissions,
+  DockerMCPServerProxyHandler,
   McpProxyRequestContext,
 } from "../../../DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { runContainerWithProxyAccess } from "../../../DockerSandbox/runContainerWithProxyAccess";
-import {
-  END_OF_SCHEMA_PLACEHOLDER,
-  type AgenticWorkflowDefinition,
-  type ProxyCallData,
-  type ProxyCallDataDefinitions,
-} from "./defineAgenticWorkflow";
-
-const defineAgenticWorkflowDirectory = join(
-  __dirname,
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
-  "src",
-  "McpHub",
-  "ProstglesMcpHub",
-  "ProstglesMCPServers",
-  "Prostgles",
-);
-export const defineAgenticWorkflowTs = readFileSync(
-  join(defineAgenticWorkflowDirectory, "defineAgenticWorkflow.ts"),
-  "utf8",
-);
-export const defineAgenticWorkflowTsSchema = defineAgenticWorkflowTs.split(
-  END_OF_SCHEMA_PLACEHOLDER,
-)[0];
-
-if (!defineAgenticWorkflowTs || !defineAgenticWorkflowTsSchema) {
-  throw new Error("Failed to read defineAgenticWorkflow.ts");
-}
+import { AGENTIC_WORKFLOW_FILES } from "./AGENTIC_WORKFLOW_FILES";
+import type {
+  AgenticWorkflowDefinition,
+  ProxyCallData,
+  ProxyCallDataDefinitions,
+} from "./defineAgenticWorkflowHandlers";
 
 export const startAgenticWorkflowContainer = async (
   dbs: DBS,
@@ -76,7 +48,7 @@ export const startAgenticWorkflowContainer = async (
         definition: AgenticWorkflowDefinition;
         dbPermissions: DbPermissions;
         handler: (
-          args: Extract<ProxyCallData, { type: "agent" }>,
+          args: Extract<ProxyCallData, { type: "agent" } | { type: "tool" }>,
           ctx: McpProxyRequestContext,
         ) => Promise<unknown>;
       },
@@ -95,6 +67,54 @@ export const startAgenticWorkflowContainer = async (
         { returning: "*" },
       )
     : undefined;
+
+  const mainHandler: DockerMCPServerProxyHandler = (ctx, req, res) => {
+    if (mode.type !== "full") {
+      res.status(400).json({ error: "Invalid request for current mode" });
+      return;
+    }
+    const { data, error } = getJSONBSchemaValidationError(
+      {
+        oneOfType: [
+          {
+            type: { enum: ["agent"] },
+            agentName: "string",
+            input: "string",
+          },
+          {
+            type: { enum: ["tool"] },
+            name: "string",
+            input: {
+              oneOf: [
+                { enum: [undefined] },
+                {
+                  record: {
+                    values: "unknown",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      } as const,
+      req.body,
+    );
+    data satisfies
+      | Extract<ProxyCallData, { type: "agent" } | { type: "tool" }>
+      | undefined;
+    if (error !== undefined) {
+      throw new Error("Invalid request data: " + error);
+    }
+    mode
+      .handler(data, ctx)
+      .then((result) => {
+        res.json(result);
+      })
+      .catch((error) => {
+        console.error("Error in handler:", error);
+        res.status(500).json({ error: "Internal server error" });
+      });
+  };
   const result = await runContainerWithProxyAccess(
     dbs,
     {
@@ -136,6 +156,7 @@ export const startAgenticWorkflowContainer = async (
                         name: 1,
                         timeOutInSeconds: 1,
                         userInput: 1,
+                        workflowAllowedTools: 1,
                       } satisfies Record<
                         keyof Extract<
                           ProxyCallData,
@@ -155,14 +176,7 @@ export const startAgenticWorkflowContainer = async (
             }
             data satisfies undefined | ProxyCallDataDefinitions;
             mode
-              .handler(
-                {
-                  ...data,
-                  //@ts-expect-error
-                  defineAgenticWorkflowTs,
-                },
-                ctx,
-              )
+              .handler(data, ctx)
               .then(() => {
                 res.json({ success: true });
               })
@@ -173,41 +187,13 @@ export const startAgenticWorkflowContainer = async (
               });
           },
         },
+        ["/tool"]: {
+          method: "POST",
+          handler: mainHandler,
+        },
         ["/agent"]: {
           method: "POST",
-          handler: (ctx, req, res) => {
-            if (mode.type !== "full") {
-              res
-                .status(400)
-                .json({ error: "Invalid request for current mode" });
-              return;
-            }
-            const { data, error } = getJSONBSchemaValidationError(
-              {
-                type: {
-                  type: { enum: ["agent"] },
-                  agentName: "string",
-                  input: "string",
-                },
-              } as const,
-              req.body,
-            );
-            data satisfies
-              | Extract<ProxyCallData, { type: "agent" }>
-              | undefined;
-            if (error !== undefined) {
-              throw new Error("Invalid request data: " + error);
-            }
-            mode
-              .handler(data, ctx)
-              .then((result) => {
-                res.json(result);
-              })
-              .catch((error) => {
-                console.error("Error in handler:", error);
-                res.status(500).json({ error: "Internal server error" });
-              });
-          },
+          handler: mainHandler,
         },
         ["/progress"]: {
           method: "POST",
@@ -267,7 +253,8 @@ export const startAgenticWorkflowContainer = async (
     },
     {
       signal: abortSignal,
-      networkMode: "bridge",
+      // networkMode: "bridge",
+      networkMode: "bridge-internal",
       timeout:
         mode.type === "full" ? mode.definition.timeOutInSeconds * 1000 : 30_000,
       files: {
@@ -280,7 +267,7 @@ export const startAgenticWorkflowContainer = async (
           RUN npm run build
           CMD ["npm", "start", "--silent"]
         `,
-        "defineAgenticWorkflow.ts": defineAgenticWorkflowTs,
+        ...AGENTIC_WORKFLOW_FILES,
         "index.ts": workflowTs,
         "package.json": getPackageJson(mode.type === "definitions-only"),
         "tsconfig.json": tsconfigJson,

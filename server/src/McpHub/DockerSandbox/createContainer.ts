@@ -4,8 +4,13 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
-import { getDockerRunArgs } from "./getDockerRunArgs";
+import {
+  getDockerRunArgs,
+  INTERNAL_BRIDGE_NETWORK_NAME,
+} from "./getDockerRunArgs";
 import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
+import { isDocker } from "../utils";
+import { createBridgeInternalDockerNetwork } from "./createBridgeInternalDockerNetwork";
 
 type CreateContainerResult = JSONBTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["outputSchema"]
@@ -73,6 +78,9 @@ export const createContainer = async (
       };
     }
 
+    if (params.networkMode === "bridge-internal") {
+      await createBridgeInternalDockerNetwork();
+    }
     const { runArgs, config } = getDockerRunArgs({
       ...params,
       name,

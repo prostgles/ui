@@ -39,7 +39,13 @@ export type McpCallContextFetchTools = McpCallContext & {
    * Used for docker container description
    */
   dbTools: DBTool[];
-  mcpTools: { name: string; server_name: string; description: string }[];
+  mcpTools: {
+    name: string;
+    server_name: string;
+    description: string;
+    inputSchema: Record<string, unknown>;
+    outputSchema: Record<string, unknown>;
+  }[];
   chat: DBSSchema["llm_chats"];
   toolsAllowed: {
     tool_id: number;

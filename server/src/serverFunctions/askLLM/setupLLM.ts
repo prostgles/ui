@@ -39,7 +39,10 @@ export const setupLLM = async (dbs: DBS) => {
             LLM_PROMPT_VARIABLES.SCHEMA,
           ].join("\n"),
           options: {
-            mcp_server_tools: allowProstglesUITools(["ask_user_questions"]),
+            mcp_server_tools: allowProstglesUITools([
+              "ask_user_questions",
+              "get_tool_schemas",
+            ]),
             database_access: "execute_sql_with_rollback",
           },
         },
@@ -73,6 +76,7 @@ export const setupLLM = async (dbs: DBS) => {
           options: {
             mcp_server_tools: allowProstglesUITools([
               "suggest_tools_and_prompt",
+              "get_tool_schemas",
             ]),
             database_access: "execute_sql_with_rollback",
           },
@@ -98,6 +102,7 @@ export const setupLLM = async (dbs: DBS) => {
             mcp_server_tools: allowProstglesUITools([
               "suggest_agentic_workflow",
               "ask_user_questions",
+              "get_tool_schemas",
             ]),
             database_access: "execute_sql_with_rollback",
           },
@@ -140,7 +145,10 @@ export const setupLLM = async (dbs: DBS) => {
           options: {
             mcp_server_tools: {
               webdev: "*",
-              ...allowProstglesUITools(["ask_user_questions"]),
+              ...allowProstglesUITools([
+                "ask_user_questions",
+                "get_tool_schemas",
+              ]),
             },
             database_access: "execute_sql_with_rollback",
             max_tokens: 18_000,

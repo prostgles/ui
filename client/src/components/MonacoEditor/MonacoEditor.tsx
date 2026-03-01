@@ -224,7 +224,7 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
         Math.min(minHeight, (2 + value.trim().split("\n").length) * 20) + "px",
       flex: "f-1",
     };
-  }, [value, style, minHeight]);
+  }, [style, minWidth, minHeight, value]);
 
   return (
     <div

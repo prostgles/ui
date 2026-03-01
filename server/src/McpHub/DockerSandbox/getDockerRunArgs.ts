@@ -1,7 +1,25 @@
 import { isDocker } from "@src/McpHub/utils";
+import { readFileSync } from "fs";
+import { join } from "path";
 import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
 
 const CUSTOM_BRIDGE_NETWORK_NAME = "prostgles-bridge-net";
+export const INTERNAL_BRIDGE_NETWORK_NAME = "prostgles-bridge-internal-net";
+
+/** Test compose network names */
+if (process.env.NODE_ENV === "development") {
+  const dockerComposeFile = readFileSync(
+    join(__dirname, "..", "..", "..", "..", "..", "..", "docker-compose.yml"),
+    "utf8",
+  );
+  const networksSection = dockerComposeFile.split("networks:")[1];
+  if (!networksSection?.includes(`name: ${CUSTOM_BRIDGE_NETWORK_NAME}`)) {
+    throw new Error(
+      `Docker compose file must include a network named ${CUSTOM_BRIDGE_NETWORK_NAME}`,
+    );
+  }
+}
+
 const LABEL = "prostgles-docker-sandbox";
 
 type LocalDockerParams = {
@@ -40,11 +58,11 @@ export const getDockerRunArgs = ({
   }
 
   // Network settings
-  if (networkMode === "bridge" && isDocker) {
-    runArgs.push("--network", CUSTOM_BRIDGE_NETWORK_NAME);
-  } else {
-    runArgs.push("--network", networkMode);
-  }
+  const selectedNetwork =
+    networkMode === "bridge-internal" ? INTERNAL_BRIDGE_NETWORK_NAME
+    : isDocker && networkMode === "bridge" ? CUSTOM_BRIDGE_NETWORK_NAME
+    : networkMode;
+  runArgs.push("--network", selectedNetwork);
 
   // User
   if (user) {

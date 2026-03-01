@@ -279,6 +279,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
         onChange={onChange}
         onMount={onMountMonacoEditor}
         minHeight={minHeight}
+        minWidth={style?.minWidth}
       />
     </div>
   );

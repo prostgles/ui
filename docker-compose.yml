@@ -88,3 +88,7 @@ networks:
   default:
     name: prostgles-bridge-net
     driver: bridge
+  internal-bridge:
+    name: prostgles-bridge-internal-net
+    driver: bridge
+    internal: true

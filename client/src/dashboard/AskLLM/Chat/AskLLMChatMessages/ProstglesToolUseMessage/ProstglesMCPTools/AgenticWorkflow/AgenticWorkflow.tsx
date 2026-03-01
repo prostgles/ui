@@ -3,19 +3,14 @@ import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import {
-  MONACO_READONLY_DEFAULT_OPTIONS,
-  MonacoEditor,
-} from "@components/MonacoEditor/MonacoEditor";
-import {
-  MonacoLogs,
-  useMonacoScrollToLastLine,
-} from "@components/MonacoLogs/MonacoLogs";
+import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
+import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import React, { useMemo, useState } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { AgenticWorkflowActions } from "./AgenticWorkflowActions";
 import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity";
+import { AgenticWorkflowDefinition } from "./AgenticWorkflowDefinition";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
@@ -63,7 +58,6 @@ export const AgenticWorkflow = ({
     }),
     [],
   );
-  const { onMount } = useMonacoScrollToLastLine();
   if (!toolUseResult) {
     return <div>Validating the workflow...</div>;
   }
@@ -89,16 +83,10 @@ export const AgenticWorkflow = ({
           Definition: {
             label: "Definition",
             content: (
-              <MonacoEditor
-                key={inputData.workflow_function_definition}
-                className={"f-1"}
-                loadedSuggestions={undefined}
-                value={inputData.workflow_function_definition}
-                language={"typescript"}
-                minHeight={400}
-                // scroll to end to avoid top data which is shown in Details tab
-                onMount={onMount}
-                options={monacoOpts}
+              <AgenticWorkflowDefinition
+                workflow_function_definition={
+                  inputData.workflow_function_definition
+                }
               />
             ),
           },
@@ -180,8 +168,3 @@ export const AgenticWorkflow = ({
     </FlexCol>
   );
 };
-
-const monacoOpts = {
-  ...MONACO_READONLY_DEFAULT_OPTIONS,
-  lineNumbers: "on",
-} as const;

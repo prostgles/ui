@@ -8,6 +8,7 @@ import { getCreateContainerToolSchema } from "./schemas/getCreateContainerToolSc
 import { getSuggestToolsSchema } from "./schemas/getSuggestToolsSchema";
 import { suggestDashboardsToolSchema } from "./schemas/suggestDashboardsToolSchema";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
+import { getToolSchema } from "./schemas/getToolSchema";
 
 export const fetchTools: ProstglesMcpServerHandlerInstance["fetchTools"] =
   async (dbs, { dbTools, mcpTools, toolsAllowed }) => {
@@ -54,5 +55,6 @@ export const fetchTools: ProstglesMcpServerHandlerInstance["fetchTools"] =
         inputSchema: taskTool.input_schema as McpTool["inputSchema"],
       },
       askQuestionsToolSchema,
+      getToolSchema,
     ].filter(isDefined);
   };

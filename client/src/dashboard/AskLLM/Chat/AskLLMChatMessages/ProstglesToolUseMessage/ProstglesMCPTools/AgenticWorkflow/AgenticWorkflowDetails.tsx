@@ -59,7 +59,7 @@ export const AgenticWorkflowDetails = ({
         iconPath={mdiTimerSand}
         items={[getDurationAsStr(timeOutInSeconds * 1000)]}
       />
-      {/* <DatabaseAccessPermissions dbAccess={dbAccess} /> */}
+
       <DatabaseAccessEditor
         value={dbAccess}
         onChange={undefined}

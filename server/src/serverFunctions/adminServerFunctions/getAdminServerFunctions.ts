@@ -41,9 +41,10 @@ import { getNodeTypes } from "../getNodeTypes";
 import { runConnectionQuery } from "../getServerFunctions";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { setFileStorage } from "../setFileStorage";
-import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { getAgenticWorkflowFunctions } from "./getAgenticWorkflowFunctions";
+import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
+import { AGENTIC_WORKFLOW_FILES } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/AGENTIC_WORKFLOW_FILES";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -519,6 +520,11 @@ export const getAdminServerFunctions = (
     getNodeTypes: defineAdminFunction({
       run: () => {
         return getNodeTypes();
+      },
+    }),
+    getAgenticWorkflowTypes: defineAdminFunction({
+      run: () => {
+        return AGENTIC_WORKFLOW_FILES;
       },
     }),
     installMCPServer: defineAdminFunction({

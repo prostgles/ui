@@ -68,7 +68,9 @@ export const runContainerWithProxyAccess = async (
             NPM_CONFIG_UPDATE_NOTIFIER: "false",
             FORCE_COLOR: "1",
             ...args.environment,
-            [DOCKER_MCP_ENDPOINT_ENV_VAR]: proxy.baseUrl,
+            [DOCKER_MCP_ENDPOINT_ENV_VAR]: proxy.getBaseUrl(
+              args.networkMode ?? "bridge",
+            ),
           },
         };
         return createContainer(containerName, argsWithEnv, onLogs);

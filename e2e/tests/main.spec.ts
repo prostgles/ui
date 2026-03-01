@@ -997,7 +997,7 @@ test.describe("Main test", () => {
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
-      `Reloaded 5 tools for "prostgles-ui" server`,
+      `Reloaded 6 tools for "prostgles-ui" server`,
     );
     await page.getByText("OK", { exact: true }).click();
     await page

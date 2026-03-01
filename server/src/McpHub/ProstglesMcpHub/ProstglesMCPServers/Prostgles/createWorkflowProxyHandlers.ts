@@ -23,7 +23,9 @@ const enqueueAgentExecution = <T>(
   return executionPromise;
 };
 
-export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
+export const createWorkflowProxyHandlers = async <
+  P extends DefineAgenticWorkflow,
+>(
   {
     name,
     toolDefinitions,
@@ -31,6 +33,7 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
     timeOutInSeconds,
     signal,
     definition_override,
+    workflowAllowedTools,
   }: Parameters<P>[0] & {
     signal?: AbortSignal;
   } & Pick<DBSSchema["agentic_workflows"], "definition_override">,
@@ -66,10 +69,14 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
   if (!user) {
     throw new Error(`User with id ${userId} not found`);
   }
-  const { validatedTools } = await getValidatedWorkflowTools(
-    toolDefinitions || {},
-    dbs,
-  );
+  const { validatedTools, workflowToolsHandler } =
+    await getValidatedWorkflowTools({
+      toolDefinitions,
+      workflowAllowedTools,
+      dbs,
+      chatId,
+      userId,
+    });
 
   const agentConfigsWithDefaults: Record<
     string,
@@ -227,5 +234,6 @@ export const createAgentHandlers = async <P extends DefineAgenticWorkflow>(
   return {
     agentHandlers,
     agentConfigsWithDefaults,
+    workflowToolsHandler,
   };
 };

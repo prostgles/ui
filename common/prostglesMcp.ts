@@ -162,8 +162,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             // default: 30000,
           },
           networkMode: {
-            enum: ["none", "bridge", "host"],
-            description: "Network mode for the container. Defaults to 'none'",
+            enum: ["none", "bridge", "bridge-internal", "host"],
+            description:
+              "Network mode for the container. Defaults to 'bridge-internal'. Use 'bridge' mode to be able to access the database. Use 'bridge-internal' to access the database but not the internet.",
             // default: "none",
             optional: true,
           },
@@ -280,6 +281,19 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           answers: "string[]",
         },
       },
+    },
+    get_tool_schemas: {
+      description:
+        "Get MCP tool descriptions, input and output schemas in typescript format. Will return all tools by default. Use toolNames to specify which tools to return.",
+      schema: {
+        type: {
+          toolNames: {
+            optional: true,
+            arrayOf: "string",
+          },
+        },
+      },
+      outputSchema: "string",
     },
     suggest_agentic_workflow: {
       mode: "structured-output",

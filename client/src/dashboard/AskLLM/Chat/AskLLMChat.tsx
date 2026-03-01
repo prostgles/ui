@@ -3,7 +3,8 @@ import { Chat } from "@components/Chat/Chat";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React, { useCallback } from "react";
+import React from "react";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import { AskLLMChatActionBar } from "../ChatActionBar/AskLLMChatActionBar";
@@ -74,16 +75,15 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       dbSchemaForPrompt,
     });
 
-  const onCurrentlyTypedMessageChange = useCallback(
+  const onCurrentlyTypedMessageChange = useDebouncedCallback(
     (currently_typed_message: string) => {
-      console.log({ currently_typed_message, activeChatId });
-      if (!activeChatId) return;
+      if (!activeChatId || chatIsLoading) return;
       void dbs.llm_chats.update(
         { id: activeChatId },
         { currently_typed_message },
       );
     },
-    [activeChatId, dbs.llm_chats],
+    [activeChatId, chatIsLoading, dbs.llm_chats],
   );
 
   /* Prevents flickering when popup is opened */

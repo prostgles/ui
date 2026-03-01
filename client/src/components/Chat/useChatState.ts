@@ -4,7 +4,6 @@ import { usePromise } from "prostgles-client";
 import { useFileDropZone } from "../FileInput/useFileDropZone";
 import type { ChatProps } from "./Chat";
 import { useChatOnPaste } from "./useChatOnPaste";
-import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 
 export type ChatState = ReturnType<typeof useChatState>;
 export const useChatState = (
@@ -19,14 +18,8 @@ export const useChatState = (
     textAreaRef: React.RefObject<HTMLTextAreaElement>;
   },
 ) => {
-  const {
-    messages,
-    onSend,
-    isLoading,
-    textAreaRef,
-    currentlyTypedMessage,
-    onCurrentlyTypedMessageChange,
-  } = props;
+  const { messages, onSend, isLoading, textAreaRef, currentlyTypedMessage } =
+    props;
 
   const [files, setFiles] = useState<File[]>([]);
   const onAddFiles = useCallback(
@@ -63,17 +56,6 @@ export const useChatState = (
 
   const [sendingMsg, setSendingMsg] = useState(false);
 
-  const onCurrentlyTypedMessageChangeDebounced = useDebouncedCallback(
-    (value: string) => {
-      if (sendingMsg) {
-        onCurrentlyTypedMessageChange("");
-      } else {
-        onCurrentlyTypedMessageChange(value);
-      }
-    },
-    [sendingMsg, onCurrentlyTypedMessageChange],
-  );
-
   const sendMsg = useCallback(async () => {
     const msg = getCurrentMessage();
 
@@ -82,25 +64,14 @@ export const useChatState = (
     }
     setSendingMsg(true);
     try {
-      onCurrentlyTypedMessageChange("");
-      await onSend(msg, files).catch((e) => {
-        onCurrentlyTypedMessageChange(msg);
-        console.error("Reverting onCurrentlyTypedMessage", e);
-        throw e;
-      });
+      await onSend(msg, files);
       setCurrentMessage("");
       setFiles([]);
     } catch (e) {
       console.error(e);
     }
     setSendingMsg(false);
-  }, [
-    getCurrentMessage,
-    files,
-    onSend,
-    onCurrentlyTypedMessageChange,
-    setCurrentMessage,
-  ]);
+  }, [getCurrentMessage, files, onSend, setCurrentMessage]);
   const chatIsLoading = isLoading || sendingMsg;
 
   const filesAsBase64 = usePromise(async () => {
@@ -136,7 +107,6 @@ export const useChatState = (
     handleOnPaste,
     divHandlers,
     isEngaged,
-    onCurrentlyTypedMessageChangeDebounced,
   };
 };
 

@@ -1,21 +1,19 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fixIndent } from "@common/utils";
+import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import { defineAgenticWorkflowTsSchema } from "../startAgenticWorkflowContainer";
+import { defineAgenticWorkflowTsSchema } from "../AGENTIC_WORKFLOW_FILES";
 
 const name = "suggest_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = ({
   availableDBTools,
   availableMCPTools,
 }: {
-  availableMCPTools: {
-    name: string;
-    server_name: string;
-    description: string;
-  }[];
+  availableMCPTools: McpCallContextFetchTools["mcpTools"];
   availableDBTools: { name: string; description: string }[];
 }) => {
   const toolsByServer = new Map<string, string[]>();
+
   availableMCPTools.forEach((tool) => {
     const serverTools = toolsByServer.get(tool.server_name) || [];
     serverTools.push(tool.name);

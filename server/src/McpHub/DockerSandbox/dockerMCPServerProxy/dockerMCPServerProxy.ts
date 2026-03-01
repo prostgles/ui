@@ -22,8 +22,11 @@ import {
   type ContainerProxyContext,
 } from "./dockerContainerAuthRegistry";
 import { getDockerGatewayIP } from "./getDockerGatewayIP";
+import type { CreateContainerParams } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
+import { createBridgeInternalDockerNetwork } from "../createBridgeInternalDockerNetwork";
 
 const PREFERRED_PORT = 3089;
+const DEFAULT_GATEWAY_IP = "0.0.0.0" as const;
 
 let dockerMCPServerProxy:
   | ReturnType<typeof createDockerMCPServerProxy>
@@ -88,7 +91,12 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
     }
     const { handler } = matchedRequestHandler[1];
     try {
-      await handler({ dbPermissions, sid_token }, req, res, next);
+      await handler(
+        { dbPermissions, sid_token, httpReq: req, res },
+        req,
+        res,
+        next,
+      );
     } catch (error) {
       return res.status(500).json(getSerialisableError(error));
     }
@@ -99,44 +107,86 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
     "docker-mcp-proxy-request-handlers",
   );
 
-  const http = _http.createServer(app);
   const preferredPortIsFree = await isPortFree(PREFERRED_PORT);
 
-  const dockerGatewayIP = getDockerGatewayIP();
-  const hostname = isDocker || isElectron ? "0.0.0.0" : dockerGatewayIP;
+  await createBridgeInternalDockerNetwork();
+  const bridgeGatewayIP = getDockerGatewayIP("bridge");
+  const bridgeInternalGatewayIP = getDockerGatewayIP("bridge-internal");
+  const gateways =
+    (
+      isDocker ||
+      isElectron ||
+      [bridgeGatewayIP, bridgeInternalGatewayIP].includes(DEFAULT_GATEWAY_IP)
+    ) ?
+      [{ network: "all" as const, gateway: "0.0.0.0" }]
+    : (["bridge", "bridge-internal"] as const).map((network) => ({
+        network,
+        gateway: getDockerGatewayIP(network),
+      }));
 
-  return new Promise<{
-    app: express.Express;
-    server: _http.Server;
-    address: AddressInfo;
-    baseUrl: string;
-    destroy: () => void;
-  }>((resolve, reject) => {
-    const server = http.listen(
-      preferredPortIsFree ? PREFERRED_PORT : undefined,
-      hostname,
-      () => {
-        const address = server.address();
-        console.log("Docker MCP Router listening on", address);
-        if (!isObject(address)) {
-          reject(new Error("Server address is not an object"));
-        } else {
-          const actualPort = address.port;
-          const baseUrl =
-            isDocker ?
-              `http://prostgles-ui-docker-mcp:${actualPort}`
-            : `http://${dockerGatewayIP}:${actualPort}`;
-          resolve({
-            app,
-            server,
-            address,
-            baseUrl,
-            destroy: () => server.close(),
-          });
-        }
-      },
-    );
-  });
+  const instances = await Promise.all(
+    gateways.map(({ gateway, network }) => {
+      const http = _http.createServer(app);
+      return new Promise<{
+        server: _http.Server;
+        address: AddressInfo;
+        gateway: string;
+        network: "all" | "bridge" | "bridge-internal";
+        port: number;
+        destroy: () => void;
+      }>((resolve, reject) => {
+        const server = http.listen(
+          preferredPortIsFree ? PREFERRED_PORT : undefined,
+          gateway,
+          () => {
+            const address = server.address();
+            console.log("Docker MCP Router listening on", address);
+            if (!isObject(address)) {
+              reject(new Error("Server address is not an object"));
+            } else {
+              const actualPort = address.port;
+              resolve({
+                server,
+                address,
+                network,
+                gateway,
+                port: actualPort,
+                destroy: () => server.close(),
+              });
+            }
+          },
+        );
+      });
+    }),
+  );
+
+  return {
+    instances,
+    getBaseUrl: (
+      networkMode: CreateContainerParams["networkMode"] = "bridge",
+    ) => {
+      const networkModeToUse =
+        networkMode !== "bridge-internal" ? "bridge" : networkMode;
+      const instance = instances.find(
+        ({ network }) => network === "all" || network === networkModeToUse,
+      );
+      if (!instance) {
+        throw new Error(
+          `No Docker MCP server instance found for network mode: ${networkMode}`,
+        );
+      }
+      const { port, gateway } = instance;
+
+      const baseUrl =
+        isDocker ?
+          `http://prostgles-ui-docker-mcp:${port}`
+        : `http://${gateway}:${port}`;
+      return baseUrl;
+    },
+    destroy: () => {
+      instances.forEach(({ destroy }) => destroy());
+    },
+  };
 };
 
 const DB_ROUTE = `/db/:endpoint`;
