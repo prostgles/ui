@@ -52,6 +52,7 @@ export const getAgenticWorkflowFunctions = (
         workflowId,
         messageId,
         executionMode,
+        workflowAllowedTools,
       },
       { dbs, user, clientReq },
     ) => {
@@ -104,6 +105,7 @@ export const getAgenticWorkflowFunctions = (
             toolDefinitions,
             databaseAccessDefinitions,
             signal: aborter.signal,
+            workflowAllowedTools,
             definition_override: workflow.definition_override,
           },
           {

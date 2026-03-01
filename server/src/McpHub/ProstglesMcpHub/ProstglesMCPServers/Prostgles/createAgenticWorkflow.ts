@@ -45,6 +45,7 @@ export const createAgenticWorkflow = async (
                 chat_id: chat.id,
                 definition_data: {
                   ...definition_data,
+                  workflowAllowedTools: definition_data.workflowAllowedTools,
                   toolDefinitions: definition_data.toolDefinitions || {},
                   newTables: newTables.map((t) => ({
                     name: t.name,

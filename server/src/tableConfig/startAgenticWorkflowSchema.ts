@@ -82,14 +82,18 @@ export const startAgenticWorkflowSchema = {
     },
   },
   workflowAllowedTools: {
-    optional: true,
-    record: {
-      values: {
+    oneOf: [
+      { enum: [undefined] },
+      {
         record: {
-          values: { enum: [1] },
+          values: {
+            record: {
+              values: { enum: [1] },
+            },
+          },
         },
       },
-    },
+    ],
   },
   agentDefinitions: {
     record: {
