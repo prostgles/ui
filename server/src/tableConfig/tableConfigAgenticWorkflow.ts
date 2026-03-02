@@ -12,7 +12,6 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
       definition_data: {
         jsonbSchemaType: pickKeys(startAgenticWorkflowSchema, [
           "agentDefinitions",
-          "toolDefinitions",
           "databaseAccessDefinitions",
           "userInput",
           "timeOutInSeconds",

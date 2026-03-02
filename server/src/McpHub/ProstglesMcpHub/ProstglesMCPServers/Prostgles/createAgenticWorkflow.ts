@@ -6,7 +6,10 @@ import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { fromEntries, getEntries } from "@common/utils";
 
 export const createAgenticWorkflow = async (
-  { workflow_function_definition }: { workflow_function_definition: string },
+  {
+    workflow_function_definition,
+    workflowId,
+  }: { workflow_function_definition: string; workflowId?: number },
   { user_id, chat, dbs, clientReq }: McpCallContext,
 ) => {
   const { connection_id } = chat;
@@ -37,42 +40,54 @@ export const createAgenticWorkflow = async (
               userId: user_id,
             });
 
-          dbs.agentic_workflows
-            .insert(
-              {
-                user_id,
-                name: definitions.name,
-                chat_id: chat.id,
-                definition_data: {
-                  ...definition_data,
-                  workflowAllowedTools: definition_data.workflowAllowedTools,
-                  toolDefinitions: definition_data.toolDefinitions || {},
-                  newTables: newTables.map((t) => ({
-                    name: t.name,
-                    columns: t.columns.map((c) => ({
-                      name: c.name.name,
-                      dataType: c.dataType.name,
-                    })),
-                  })),
-                },
-                definition_override: {
-                  agentDefinitions: fromEntries(
-                    getEntries(agentConfigsWithDefaults).map(
-                      ([agentName, config]) =>
-                        [
-                          agentName,
-                          omitKeys(config, [
-                            "model",
-                            "outputSchema",
-                            "allowedToolDefinitionNames",
-                          ]),
-                        ] as const,
-                    ),
-                  ),
-                },
-              } satisfies DBSSchemaForInsert["agentic_workflows"],
+          const workflowInsertData = {
+            user_id,
+            name: definitions.name,
+            chat_id: chat.id,
+            definition_data: {
+              ...definition_data,
+              workflowAllowedTools: definition_data.workflowAllowedTools,
+              newTables: newTables.map((t) => ({
+                name: t.name,
+                columns: t.columns.map((c) => ({
+                  name: c.name.name,
+                  dataType: c.dataType.name,
+                })),
+              })),
+            },
+            definition_override: {
+              agentDefinitions: fromEntries(
+                getEntries(agentConfigsWithDefaults).map(
+                  ([agentName, config]) =>
+                    [
+                      agentName,
+                      omitKeys(config, ["model", "outputSchema", "tools"]),
+                    ] as const,
+                ),
+              ),
+            },
+          } satisfies DBSSchemaForInsert["agentic_workflows"];
+
+          if (workflowId) {
+            const res = await dbs.agentic_workflows.update(
+              { id: workflowId, chat_id: chat.id, user_id },
+              omitKeys(workflowInsertData, ["user_id", "chat_id"]),
               { returning: { id: 1 } },
-            )
+            );
+            if (res?.length !== 1) {
+              reject(`Failed to update workflow with id ${workflowId}`);
+              return;
+            }
+            resolve({
+              isValid: true,
+              workflowId,
+              ...definitions,
+              newTables,
+            });
+            return;
+          }
+          dbs.agentic_workflows
+            .insert(workflowInsertData, { returning: { id: 1 } })
             .then(({ id }) => {
               resolve({
                 isValid: true,

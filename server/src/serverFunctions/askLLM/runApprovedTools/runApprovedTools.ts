@@ -252,15 +252,15 @@ export const runApprovedTools = async (
           );
         }
         const { serverName, toolName } = toolNameParts;
-        const { content, isError } = await callMCPServerTool(
+        const { content, isError } = await callMCPServerTool({
           user,
-          chatId,
+          chat_id: chatId,
           dbs,
           serverName,
           toolName,
-          toolUseRequest.input,
+          toolArguments: toolUseRequest.input,
           clientReq,
-        ).catch((e) => ({
+        }).catch((e) => ({
           content: e instanceof Error ? e.message : JSON.stringify(e),
           isError: true,
         }));

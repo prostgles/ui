@@ -8,27 +8,18 @@ void describe("defineAgenticWorkflow", async () => {
         {
           name: "Test Workflow",
           timeOutInSeconds: 60,
-          toolDefinitions: {
-            fetch_webpage: {
-              mcpServerName: "fetch",
-              toolNames: ["fetch"],
-            },
-            query_database: {
-              mcpServerName: "database",
-              toolNames: ["select"],
-            },
-          },
-          workflowAllowedTools: {
-            fetch: { fetch: 1, getSnapshot: 1 },
-          },
           agentDefinitions: {
             researcher: {
               prompt: "You are a research assistant.",
+              tools: { fetch: { fetch_webpage: 1 } },
               outputSchema: {
                 summary: { type: "string" },
                 references: { type: "string[]" },
               },
             },
+          },
+          workflowAllowedTools: {
+            websearch: { search: 1, get_snapshot: 1 },
           },
           userInput: {
             test_input: {
@@ -51,8 +42,8 @@ void describe("defineAgenticWorkflow", async () => {
           const result = await researcher("Prostgles");
           result.summary satisfies string;
 
-          void toolHandlers.fetch.fetch();
-          void toolHandlers.fetch.getSnapshot({
+          void toolHandlers.websearch.search({ q: "Prostgles" });
+          void toolHandlers.websearch.get_snapshot({
             url: "https://www.example.com",
           });
 

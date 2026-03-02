@@ -20,7 +20,6 @@ export const ToolUseReRun = ({
   variant,
 }: P) => {
   const {
-    dbs,
     dbsMethods: { callMCPServerTool },
   } = usePrglCore();
   const { addAlert } = useAlert();
@@ -42,6 +41,7 @@ export const ToolUseReRun = ({
           serverName,
           toolName,
           args: toolRequest.input,
+          reRunToolUseId: toolRequest.id,
         });
         console.log("Re-run result:", result);
         if (result.isError) {
@@ -49,24 +49,6 @@ export const ToolUseReRun = ({
             title: "Error re-running tool",
             children: <ErrorComponent error={result.content} />,
           });
-        } else {
-          const { content } = result;
-          await dbs.llm_messages.update(
-            { id: toolResult.messageId },
-            {
-              message: [
-                {
-                  type: "tool_result",
-                  content: content as unknown as {
-                    type: "text";
-                    text: string;
-                  }[],
-                  tool_name: toolResult.messagePart.tool_name,
-                  tool_use_id: toolResult.messagePart.tool_use_id,
-                },
-              ],
-            },
-          );
         }
       }}
     />

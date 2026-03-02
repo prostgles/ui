@@ -19,12 +19,25 @@ export type PropertyType =
       optional?: boolean;
     };
 
-export type AgentDefinition<ToolNames extends string[]> = {
+/**
+ * Defines which tools can be used.
+ *
+ * Here for example we allow the "status" tool from the "github" MCP server:
+ * @example
+ * {
+ *    github: {
+ *      status: 1
+ *    }
+ * }
+ */
+export type McpServerToolsAllowed = Record<string, Record<string, 1>>;
+
+export type AgentDefinition = {
   prompt: string;
   modelName?: string;
   maxCostUSD?: number;
   maxIterations?: number;
-  allowedToolDefinitionNames?: ToolNames;
+  tools?: McpServerToolsAllowed;
   maxTokens?: number;
   temperature?: number;
   outputSchema: Record<string, PropertyType>;
@@ -52,11 +65,6 @@ type ParsePropertyType<S extends PropertyType> =
 
 type ParseSchema<S extends Record<string, PropertyType>> = {
   [K in keyof S]: ParsePropertyType<S[K]>;
-};
-
-export type ToolDefinition = {
-  mcpServerName: string;
-  toolNames: string[];
 };
 
 /**
@@ -262,18 +270,13 @@ export type ValueOfUserInput<UserInput extends Record<string, UserInputItem>> =
   };
 
 export type DefineAgenticWorkflow = <
-  ToolDefinitions extends Record<string, ToolDefinition>,
-  WorkflowAllowedTools extends Record<string, Record<string, 1>>,
-  AgentDefinitions extends Record<
-    string,
-    AgentDefinition<(keyof ToolDefinitions & string)[]>
-  >,
+  WorkflowAllowedTools extends McpServerToolsAllowed,
+  AgentDefinitions extends Record<string, AgentDefinition>,
   UserInput extends Record<string, UserInputItem>,
 >(
   {
     name,
     timeOutInSeconds,
-    toolDefinitions,
     databaseAccessDefinitions,
     agentDefinitions,
     userInput,
@@ -282,7 +285,6 @@ export type DefineAgenticWorkflow = <
     timeOutInSeconds: number;
     userInput?: UserInput;
     databaseAccessDefinitions?: DatabaseAccessDefinition;
-    toolDefinitions?: ToolDefinitions;
     workflowAllowedTools?: WorkflowAllowedTools;
     agentDefinitions: AgentDefinitions;
   },
@@ -328,20 +330,13 @@ void defineAgenticWorkflow(
         );
       `,
     },
-    toolDefinitions: {
-      fetchWebpage: {
-        mcpServerName: "fetch",
-        toolNames: ["fetch_webpage"],
-      },
-      getUsers: {
-        mcpServerName: "database",
-        toolNames: ["select"],
-      },
+    workflowAllowedTools: {
+      websearch: { search: 1, get_snapshot: 1 },
     },
     agentDefinitions: {
       researcher: {
         prompt: "You are a research assistant.",
-        allowedToolNames: ["fetchWebpage", "getUsers"],
+        tools: { fetch: { fetch_webpage: 1 } },
         outputSchema: {
           summary: { type: "string" },
           references: { type: "string[]" },
@@ -349,7 +344,7 @@ void defineAgenticWorkflow(
       },
     },
   },
-  async ({ researcher }, db) => {
+  async ({ researcher }, db, { websearch }) => {
 
     const doResearch = async () => {
       const result = await researcher(`research_topic: "Prostgles"`);
@@ -379,6 +374,8 @@ void defineAgenticWorkflow(
     if(finalTopics.length < 10) {
       await doResearch();
     }
+
+    await websearch.search({ q: "Prostgles" });
   },
 );
 

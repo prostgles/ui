@@ -11,15 +11,23 @@ import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
 import { getProstglesMcpHub } from "./ProstglesMcpHub/ProstglesMcpHub";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
-export const callMCPServerTool = async (
-  user: Pick<DBSSchema["users"], "id">,
-  chat_id: number,
-  dbs: DBS,
-  serverName: string,
-  toolName: string,
-  toolArguments: Record<string, unknown> | undefined,
-  clientReq: AuthClientRequest,
-): Promise<McpToolCallResponse> => {
+export const callMCPServerTool = async ({
+  dbs,
+  chat_id,
+  clientReq,
+  serverName,
+  toolArguments,
+  toolName,
+  user,
+}: {
+  user: Pick<DBSSchema["users"], "id">;
+  chat_id: number;
+  dbs: DBS;
+  serverName: string;
+  toolName: string;
+  toolArguments: Record<string, unknown> | undefined;
+  clientReq: AuthClientRequest;
+}): Promise<McpToolCallResponse> => {
   const start = new Date();
   const argErrors = getJSONBObjectSchemaValidationError(
     {
@@ -82,7 +90,7 @@ export const callMCPServerTool = async (
   });
 
   await dbs.mcp_server_tool_calls.insert({
-    duration: `${result.duration}ms` as {},
+    duration: { milliseconds: result.duration },
     called: start,
     mcp_server_name: serverName,
     mcp_tool_name: toolName,

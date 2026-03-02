@@ -1,109 +1,55 @@
+import { getMCPFullToolName } from "@common/prostglesMcp";
+import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import type { DBS } from "@src/index";
-import type { ToolDefinition } from "./defineAgenticWorkflow";
 import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
-import { getKeys, isEmpty } from "prostgles-types";
-import { getMCPFullToolName } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server";
+import { getKeys, isEmpty } from "prostgles-types";
+import type { McpServerToolsAllowed } from "./defineAgenticWorkflow";
 
-export const getValidatedWorkflowTools = async ({
-  chatId,
-  dbs,
-  userId,
-  workflowAllowedTools,
-  toolDefinitions = {},
-}: {
-  dbs: DBS;
-  chatId: number;
-  userId: string;
-  workflowAllowedTools: Record<string, Record<string, 1>> | undefined;
-  toolDefinitions: Record<string, ToolDefinition> | undefined;
-}) => {
-  const validatedTools = new Map(
-    await Promise.all(
-      getEntries(toolDefinitions).map(
-        async ([workflowToolName, { mcpServerName, toolNames }]) => {
-          const configId = undefined;
-          // if (configId !== undefined) {
-          //   const mcpServerConfig = await dbs.mcp_server_configs.findOne({
-          //     id: configId,
-          //     server_name: mcpServerName,
-          //   });
-          //   if (!mcpServerConfig) {
-          //     throw new Error(
-          //       `MCP Server config with id ${configId} for server ${mcpServerName} not found for workflow tool ${workflowToolName}`,
-          //     );
-          //   }
-          // }
-          const serverTools = await dbs.mcp_server_tools.find(
-            {
-              server_name: mcpServerName,
-              name: { $in: toolNames },
-            },
-            {
-              select: {
-                id: 1,
-                name: 1,
-                server_name: 1,
-                inputSchema: 1,
-                outputSchema: 1,
-              },
-            },
-          );
-          if (serverTools.length !== toolNames.length) {
-            throw new Error(
-              `Could not find all specified tools for workflow tool definition ${JSON.stringify(workflowToolName)}. Tools not found: ${toolNames
-                .filter((tn) => !serverTools.find((st) => st.name === tn))
-                .join(", ")}`,
-            );
-          }
-          return [workflowToolName, { configId, serverTools }] as const;
-        },
-      ),
-    ),
+export const getValidatedMcpServerToolsAllowed = async (
+  dbs: DBS,
+  tools: McpServerToolsAllowed | undefined,
+) => {
+  if (!tools || isEmpty(tools)) return;
+
+  const toolNameList = getEntries(tools)
+    .map(([serverName, toolNamesObj]) => {
+      const toolNames = getKeys(toolNamesObj);
+      return toolNames.map((toolName) => ({
+        toolName,
+        serverName,
+      }));
+    })
+    .flat();
+  if (!toolNameList.length) {
+    return;
+  }
+  const workflowToolsWithInfo = await dbs.mcp_server_tools.find(
+    {
+      $or: toolNameList.map(({ serverName, toolName }) => ({
+        server_name: serverName,
+        name: toolName,
+      })),
+    },
+    {
+      select: {
+        id: 1,
+        name: 1,
+        server_name: 1,
+        inputSchema: 1,
+        outputSchema: 1,
+        description: 1,
+      },
+    },
   );
 
-  const workflowTools =
-    !workflowAllowedTools || isEmpty(workflowAllowedTools) ?
-      []
-    : getEntries(workflowAllowedTools)
-        .map(([serverName, toolNamesObj]) => {
-          const toolNames = getKeys(toolNamesObj);
-          return toolNames.map((toolName) => ({
-            toolName,
-            serverName,
-          }));
-        })
-        .flat();
-
-  const toolsWithInfo =
-    !workflowTools.length ?
-      []
-    : await dbs.mcp_server_tools.find(
-        {
-          $or: workflowTools.map(({ serverName, toolName }) => ({
-            server_name: serverName,
-            name: toolName,
-          })),
-        },
-        {
-          select: {
-            id: 1,
-            name: 1,
-            server_name: 1,
-            inputSchema: 1,
-            outputSchema: 1,
-            description: 1,
-          },
-        },
-      );
-
-  if (toolsWithInfo.length !== workflowTools.length) {
+  if (workflowToolsWithInfo.length !== toolNameList.length) {
     throw new Error(
-      `Could not find all specified tools for workflow allowed tools. Tools not found: ${workflowTools
+      `Could not find all specified tools for workflow allowed tools. Tools not found: ${toolNameList
         .filter(
           ({ serverName, toolName }) =>
-            !toolsWithInfo.find(
+            !workflowToolsWithInfo.find(
               (t) => t.server_name === serverName && t.name === toolName,
             ),
         )
@@ -112,6 +58,53 @@ export const getValidatedWorkflowTools = async ({
     );
   }
 
+  return workflowToolsWithInfo;
+};
+export const getValidatedWorkflowTools = async ({
+  chatId,
+  dbs,
+  userId,
+  workflowAllowedTools,
+  connectionId,
+}: {
+  dbs: DBS;
+  chatId: number;
+  userId: string;
+  workflowAllowedTools: McpServerToolsAllowed | undefined;
+  connectionId: string;
+}) => {
+  const workflowToolsWithInfo = await getValidatedMcpServerToolsAllowed(
+    dbs,
+    workflowAllowedTools,
+  );
+
+  let workflowToolsChat: DBSSchema["llm_chats"] | null = null;
+  const getWorkflowToolsChat = async () => {
+    if (workflowToolsChat) return workflowToolsChat;
+    if (!workflowToolsWithInfo)
+      throw new Error(
+        "Workflow allowed tools were specified but no valid tools were found",
+      );
+    workflowToolsChat = await dbs.llm_chats.insert(
+      {
+        name: "Workflow Tools Chat",
+        user_id: userId,
+        connection_id: connectionId,
+        parent_chat_id: chatId,
+      },
+      { returning: "*" },
+    );
+    await dbs.llm_chats_allowed_mcp_tools.insert(
+      workflowToolsWithInfo.map(({ id, server_name }) => ({
+        chat_id: workflowToolsChat!.id,
+        tool_id: id,
+        server_name,
+        auto_approve: true, // TODO: make approvable in UI
+      })) satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"][],
+    );
+    return workflowToolsChat;
+  };
+
   const workflowToolsHandler = new Map<
     string,
     (
@@ -119,20 +112,21 @@ export const getValidatedWorkflowTools = async ({
       clientReq: AuthClientRequest,
     ) => Promise<unknown>
   >();
-  toolsWithInfo.forEach(({ name, server_name }) => {
+  workflowToolsWithInfo?.forEach(({ name, server_name }) => {
     const fullToolName = getMCPFullToolName(server_name, name);
-    workflowToolsHandler.set(fullToolName, (args, clientReq) => {
-      return callMCPServerTool(
-        { id: userId },
-        chatId,
+    workflowToolsHandler.set(fullToolName, async (args, clientReq) => {
+      const workflowToolsChat = await getWorkflowToolsChat();
+      return callMCPServerTool({
+        user: { id: userId },
+        chat_id: workflowToolsChat.id,
         dbs,
-        server_name,
-        name,
-        args,
+        serverName: server_name,
+        toolName: name,
+        toolArguments: args,
         clientReq,
-      );
+      });
     });
   });
 
-  return { validatedTools, workflowToolsHandler };
+  return { workflowToolsHandler };
 };

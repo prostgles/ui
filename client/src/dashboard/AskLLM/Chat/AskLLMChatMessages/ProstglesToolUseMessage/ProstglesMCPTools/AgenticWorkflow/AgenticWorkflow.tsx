@@ -3,7 +3,6 @@ import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
 import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import React, { useMemo, useState } from "react";
@@ -84,9 +83,12 @@ export const AgenticWorkflow = ({
             label: "Definition",
             content: (
               <AgenticWorkflowDefinition
+                workflowId={validWorkflow?.workflowId}
+                chatId={chatId}
                 workflow_function_definition={
                   inputData.workflow_function_definition
                 }
+                toolResultMessage={toolUseResult.toolUseResultMessage}
               />
             ),
           },

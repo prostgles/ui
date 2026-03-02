@@ -1,13 +1,13 @@
-import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useState } from "react";
 
 import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { mdiCogOutline } from "@mdi/js";
 import { LLMModelSelector } from "src/dashboard/AskLLM/LLMModelSelector";
-import Btn from "@components/Btn";
-import { mdiChevronDown, mdiCogOutline } from "@mdi/js";
 
 export const AgentDefinition = ({
   workflow,

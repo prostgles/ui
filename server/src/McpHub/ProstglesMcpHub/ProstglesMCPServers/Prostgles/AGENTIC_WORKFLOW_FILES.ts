@@ -17,11 +17,11 @@ const defineAgenticWorkflowDirectory = join(
   "ProstglesMCPServers",
   "Prostgles",
 );
-export const defineAgenticWorkflowTs = readFileSync(
+const defineAgenticWorkflowTs = readFileSync(
   join(defineAgenticWorkflowDirectory, "defineAgenticWorkflow.ts"),
   "utf8",
 );
-export const defineAgenticWorkflowHandlersTs = readFileSync(
+const defineAgenticWorkflowHandlersTs = readFileSync(
   join(defineAgenticWorkflowDirectory, "defineAgenticWorkflowHandlers.ts"),
   "utf8",
 );

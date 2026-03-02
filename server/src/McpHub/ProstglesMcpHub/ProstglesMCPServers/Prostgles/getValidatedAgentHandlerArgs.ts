@@ -9,7 +9,7 @@ export const getValidatedAgentHandlerArgs = async (
     agentName,
     agentConfig,
     definition_override,
-  }: { agentName: string; agentConfig: AgentDefinition<string[]> } & Pick<
+  }: { agentName: string; agentConfig: AgentDefinition } & Pick<
     DBSSchema["agentic_workflows"],
     "definition_override"
   >,
@@ -23,7 +23,7 @@ export const getValidatedAgentHandlerArgs = async (
     maxIterations = 5,
     maxTokens = 6_000,
     temperature = 0.0,
-    allowedToolDefinitionNames,
+    tools,
   } = { ...agentConfig, ...definition_override?.agentDefinitions?.[agentName] };
   if (!prompt) {
     throw new Error(`Agent ${agentName} is missing a prompt`);
@@ -73,7 +73,7 @@ export const getValidatedAgentHandlerArgs = async (
     modelName: model.name,
     prompt,
     outputSchema,
-    allowedToolDefinitionNames,
+    tools,
     maxCostUSD,
     maxIterations,
     maxTokens,

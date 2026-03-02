@@ -6,7 +6,10 @@ import { tout } from "@src/utils/tout";
 import type { AuthClientRequest } from "prostgles-server";
 import type { DefineAgenticWorkflow } from "./defineAgenticWorkflow";
 import { getValidatedAgentHandlerArgs } from "./getValidatedAgentHandlerArgs";
-import { getValidatedWorkflowTools } from "./getValidatedWorkflowTools";
+import {
+  getValidatedMcpServerToolsAllowed,
+  getValidatedWorkflowTools,
+} from "./getValidatedWorkflowTools";
 
 /**
  * Execute agent invocations in series to reduce risk of avoid runaway costs and allow for human feedback between steps.
@@ -28,7 +31,6 @@ export const createWorkflowProxyHandlers = async <
 >(
   {
     name,
-    toolDefinitions,
     agentDefinitions,
     timeOutInSeconds,
     signal,
@@ -69,14 +71,13 @@ export const createWorkflowProxyHandlers = async <
   if (!user) {
     throw new Error(`User with id ${userId} not found`);
   }
-  const { validatedTools, workflowToolsHandler } =
-    await getValidatedWorkflowTools({
-      toolDefinitions,
-      workflowAllowedTools,
-      dbs,
-      chatId,
-      userId,
-    });
+  const { workflowToolsHandler } = await getValidatedWorkflowTools({
+    workflowAllowedTools,
+    dbs,
+    chatId,
+    userId,
+    connectionId,
+  });
 
   const agentConfigsWithDefaults: Record<
     string,
@@ -94,29 +95,14 @@ export const createWorkflowProxyHandlers = async <
       model,
       prompt,
       outputSchema,
-      allowedToolDefinitionNames,
+      tools,
       maxCostUSD,
       maxIterations,
       maxTokens,
       temperature,
     } = configWithDefaults;
 
-    const tools = allowedToolDefinitionNames
-      ?.map((allowedToolDefName) => {
-        if (!toolDefinitions) {
-          throw new Error(
-            `Agent ${agentName} has allowedToolNames but no toolDefinitions provided`,
-          );
-        }
-        const tools = validatedTools.get(allowedToolDefName);
-        if (!tools) {
-          throw new Error(
-            `Agent ${agentName} has allowedToolNames but no toolDefinitions provided`,
-          );
-        }
-        return tools;
-      })
-      .flat();
+    const toolsWithInfo = await getValidatedMcpServerToolsAllowed(dbs, tools);
 
     const startAgent = async (agentInput?: string) => {
       const agentChat = await dbs.llm_chats.insert(
@@ -154,21 +140,16 @@ export const createWorkflowProxyHandlers = async <
         } satisfies DBSSchemaForInsert["llm_chats"],
         { returning: "*" },
       );
-      if (tools?.length) {
+      if (toolsWithInfo?.length) {
         await dbs.llm_chats_allowed_mcp_tools.insert(
-          tools
-            .map(({ serverTools, configId }) =>
-              serverTools.map(({ id, server_name }) => {
-                return {
-                  chat_id: agentChat.id,
-                  tool_id: id,
-                  server_name,
-                  server_config_id: configId,
-                  auto_approve: true, // TODO: make approvable in UI
-                } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
-              }),
-            )
-            .flat(),
+          toolsWithInfo.map(({ id, server_name }) => {
+            return {
+              chat_id: agentChat.id,
+              tool_id: id,
+              server_name,
+              auto_approve: true, // TODO: make approvable in UI
+            } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
+          }),
         );
       }
 

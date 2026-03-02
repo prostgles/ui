@@ -352,6 +352,11 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly type: "string";
                         readonly description: "Typescript code defining a function that returns an agent workflow. The function must satisfy the following type provided. The function can use available MCP tools and database access if needed. Available MCP tools and database access are determined by the fetchTools function and the input to this tool.";
                     };
+                    readonly workflowId: {
+                        readonly type: "integer";
+                        readonly optional: true;
+                        readonly description: "Workflow ID to update instead of creating a new workflow. If not provided, a new workflow will be created.";
+                    };
                 };
             };
             readonly outputSchema: undefined;

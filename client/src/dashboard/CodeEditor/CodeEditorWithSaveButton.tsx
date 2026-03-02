@@ -7,11 +7,12 @@ import { useEffectDeep } from "prostgles-client";
 import React, { useCallback, useRef, useState } from "react";
 import { isDefined } from "../../utils/utils";
 import { CodeEditor, type CodeEditorProps } from "./CodeEditor";
+import Loading from "@components/Loader/Loading";
 
 type P = {
   label: React.ReactNode;
   onSaveButton?: Pick<BtnProps, "children" | "iconPath" | "color" | "size">;
-  onSave?: (value: string) => void;
+  onSave?: (value: string) => void | Promise<void>;
   autoSave?: boolean;
   value: string | undefined | null;
   codePlaceholder?: string;
@@ -52,14 +53,18 @@ export const CodeEditorWithSaveButton = (props: P) => {
 
   const [didChange, setDidChange] = React.useState(false);
 
+  const [isSaving, setIsSaving] = useState(false);
   const onSaveMonaco = useCallback(async () => {
     if (!didChange || !onSave) return;
     try {
+      setIsSaving(true);
       await onSave(localValueRef.current ?? "");
       setError(undefined);
       setDidChange(false);
     } catch (err) {
       setError(err);
+    } finally {
+      setIsSaving(false);
     }
   }, [onSave, didChange]);
 
@@ -86,8 +91,8 @@ export const CodeEditorWithSaveButton = (props: P) => {
         right: 0,
         /** Must appear above minimap but beneath completion suggestions */
         zIndex: 5,
-        background: "#dfdfdf5c",
-        backdropFilter: "blur(1px)",
+        background: error !== undefined ? "var(--bg-color-0)" : "#dfdfdf5c",
+        backdropFilter: error !== undefined ? undefined : "blur(1px)",
       }}
       footerButtons={[
         {
@@ -104,7 +109,8 @@ export const CodeEditorWithSaveButton = (props: P) => {
             color: "action",
             variant: "filled",
             ...onSaveButton,
-            onClick: onClickSave,
+            loading: isSaving,
+            onClickPromise: onClickSave,
           }
         ),
       ]}
@@ -114,7 +120,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
   const onChange = useCallback(
     (newValue: string) => {
       if (autoSave) {
-        onSave?.(newValue);
+        void onSave?.(newValue);
       }
       localValueRef.current = newValue;
 
@@ -124,6 +130,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
       if (!autoSave && _didChange !== didChange) {
         setDidChange(_didChange);
       }
+      setError(undefined);
     },
     [onSave, autoSave, didChange],
   );
@@ -149,6 +156,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
           : {}
         }
       >
+        {isSaving && <Loading variant="cover" />}
         <CodeEditor
           className={codeEditorClassName}
           {...codeEditorProps}

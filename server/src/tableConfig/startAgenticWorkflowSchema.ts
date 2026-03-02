@@ -45,6 +45,16 @@ export const agentOutputSchemaType = {
   },
 } as const;
 
+const mcpServerToolsAllowed = {
+  record: {
+    values: {
+      record: {
+        values: { enum: [1] },
+      },
+    },
+  },
+} as const;
+
 export const startAgenticWorkflowSchema = {
   chatId: "integer",
   messageId: "string",
@@ -70,30 +80,8 @@ export const startAgenticWorkflowSchema = {
       },
     ],
   },
-  toolDefinitions: {
-    record: {
-      values: {
-        type: {
-          mcpServerName: "string",
-          toolNames: "string[]",
-          configId: { type: "number", optional: true },
-        },
-      },
-    },
-  },
   workflowAllowedTools: {
-    oneOf: [
-      { enum: [undefined] },
-      {
-        record: {
-          values: {
-            record: {
-              values: { enum: [1] },
-            },
-          },
-        },
-      },
-    ],
+    oneOf: [{ enum: [undefined] }, mcpServerToolsAllowed],
   },
   agentDefinitions: {
     record: {
@@ -103,8 +91,8 @@ export const startAgenticWorkflowSchema = {
           modelName: { type: "string", optional: true },
           maxCostUSD: { type: "number", optional: true },
           maxIterations: { type: "number", optional: true },
-          allowedToolDefinitionNames: {
-            type: "string[]",
+          tools: {
+            ...mcpServerToolsAllowed,
             optional: true,
           },
           maxTokens: { type: "number", optional: true },

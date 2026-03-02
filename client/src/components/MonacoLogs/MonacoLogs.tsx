@@ -68,17 +68,27 @@ export const MonacoLogs = ({
 
 const options = omitKeys(MONACO_READONLY_DEFAULT_OPTIONS, ["readOnly"]);
 
-export const useMonacoScrollToLastLine = () => {
-  const onMount = useCallback((editor: editor.IStandaloneCodeEditor) => {
-    const scrollToLastLine = () => {
-      const lineCount = editor.getModel()?.getLineCount();
-      editor.revealLineInCenter(lineCount ?? 1);
-    };
-    const disposable = editor.onDidChangeModelContent(scrollToLastLine);
-    scrollToLastLine();
-    return () => {
-      disposable.dispose();
-    };
-  }, []);
+export const useMonacoScrollToLastLine = (once = false) => {
+  const didScrollRef = React.useRef(false);
+  const onMount = useCallback(
+    (editor: editor.IStandaloneCodeEditor) => {
+      const scrollToLastLine = () => {
+        if (once && didScrollRef.current) {
+          return;
+        }
+        didScrollRef.current = true;
+        const lineCount = editor.getModel()?.getLineCount();
+        setTimeout(() => {
+          editor.revealLineInCenter(lineCount ?? 1);
+        }, 100);
+      };
+      const disposable = editor.onDidChangeModelContent(scrollToLastLine);
+      scrollToLastLine();
+      return () => {
+        disposable.dispose();
+      };
+    },
+    [once],
+  );
   return { onMount };
 };

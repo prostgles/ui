@@ -6,6 +6,7 @@ import { getSerialisableError, omitKeys } from "prostgles-types";
 import { runConnectionQuery } from "../getServerFunctions";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
+import { createAgenticWorkflow } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createAgenticWorkflow";
 
 const abortersByUserId = new Map<
   string,
@@ -15,6 +16,48 @@ export const getAgenticWorkflowFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
   const { defineAdminFunction } = getDefineAdminFunction(context);
+  const updateAgenticWorkflow = defineAdminFunction({
+    input: {
+      workflowId: "integer",
+      chatId: "integer",
+      workflow_function_definition: "string",
+    },
+    run: async (
+      { workflowId, workflow_function_definition, chatId },
+      { dbs, user, clientReq },
+    ) => {
+      const chat = await dbs.llm_chats.findOne({
+        id: chatId,
+        user_id: user.id,
+      });
+      if (!chat) {
+        throw new Error(`Chat with id ${chatId} not found`);
+      }
+      if (!chat.connection_id) {
+        throw new Error(`Chat with id ${chatId} does not have a connection_id`);
+      }
+      const workflow = await dbs.agentic_workflows.findOne({
+        id: workflowId,
+        user_id: user.id,
+        chat_id: chatId,
+      });
+      if (!workflow) {
+        throw new Error(
+          `Workflow with id ${workflowId} not found for chat ${chatId}`,
+        );
+      }
+      await createAgenticWorkflow(
+        { workflow_function_definition, workflowId },
+        {
+          user_id: user.id,
+          chat,
+          dbs,
+          clientReq,
+          connection_id: chat.connection_id,
+        },
+      );
+    },
+  });
   const stopAgenticWorkflow = defineAdminFunction({
     input: {
       chatId: "integer",
@@ -44,7 +87,6 @@ export const getAgenticWorkflowFunctions = (
         name,
         timeOutInSeconds,
         agentDefinitions,
-        toolDefinitions,
         databaseAccessDefinitions,
         workflowTs,
         userInputValue,
@@ -102,7 +144,6 @@ export const getAgenticWorkflowFunctions = (
             name,
             timeOutInSeconds,
             agentDefinitions,
-            toolDefinitions,
             databaseAccessDefinitions,
             signal: aborter.signal,
             workflowAllowedTools,
@@ -158,7 +199,6 @@ export const getAgenticWorkflowFunctions = (
             name,
             timeOutInSeconds,
             agentDefinitions,
-            toolDefinitions,
             userInput: {},
             databaseAccessDefinitions,
           },
@@ -197,5 +237,5 @@ export const getAgenticWorkflowFunctions = (
     },
   });
 
-  return { startAgenticWorkflow, stopAgenticWorkflow };
+  return { startAgenticWorkflow, stopAgenticWorkflow, updateAgenticWorkflow };
 };

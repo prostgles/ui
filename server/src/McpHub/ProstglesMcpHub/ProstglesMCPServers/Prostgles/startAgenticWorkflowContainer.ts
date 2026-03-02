@@ -151,7 +151,6 @@ export const startAgenticWorkflowContainer = async (
                       startAgenticWorkflowSchema,
                       getKeys({
                         agentDefinitions: 1,
-                        toolDefinitions: 1,
                         databaseAccessDefinitions: 1,
                         name: 1,
                         timeOutInSeconds: 1,

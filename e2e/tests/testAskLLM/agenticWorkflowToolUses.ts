@@ -54,12 +54,6 @@ export default defineAgenticWorkflow(
           );
         `,
       },
-      toolDefinitions: {
-        fetch_webpage: {
-          mcpServerName: "fetch",
-          toolNames: ["fetch"],
-        },
-      },
       workflowAllowedTools: {
         fetch: {
           fetch: 1,
@@ -69,6 +63,9 @@ export default defineAgenticWorkflow(
         researcher: {
           prompt: "You are a research assistant. ",
           modelName: "anthropic/claude-sonnet-4",
+          tools: {
+            fetch: { fetch: 1 },
+          },
           outputSchema: {
             summary: { type: "string" },
             references: {

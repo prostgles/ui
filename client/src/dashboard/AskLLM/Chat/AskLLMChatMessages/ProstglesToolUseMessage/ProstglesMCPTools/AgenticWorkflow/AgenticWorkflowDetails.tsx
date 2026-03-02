@@ -24,7 +24,7 @@ export const AgenticWorkflowDetails = ({
     name,
     timeOutInSeconds,
     agentDefinitions,
-    toolDefinitions,
+    workflowAllowedTools,
     databaseAccessDefinitions,
     userInput,
     newTables,
@@ -36,18 +36,21 @@ export const AgenticWorkflowDetails = ({
   const dbAccess = databaseAccessDefinitions;
   const combinedToolNames = useMemo(() => {
     const result = new Map<string, Set<string>>();
-    Object.values(toolDefinitions).forEach(({ mcpServerName, toolNames }) => {
-      const existing = result.get(mcpServerName) ?? new Set<string>();
-      toolNames.forEach((toolName) => {
-        existing.add(toolName);
-      });
-      result.set(mcpServerName, existing);
-    });
+    Object.entries(workflowAllowedTools ?? {}).forEach(
+      ([mcpServerName, toolNamesObj]) => {
+        const toolNames = Object.keys(toolNamesObj);
+        const existing = result.get(mcpServerName) ?? new Set<string>();
+        toolNames.forEach((toolName) => {
+          existing.add(toolName);
+        });
+        result.set(mcpServerName, existing);
+      },
+    );
     return Array.from(result.entries()).map(
       ([mcpServerName, toolNames]) =>
         [mcpServerName, Array.from(toolNames)] as const,
     );
-  }, [toolDefinitions]);
+  }, [workflowAllowedTools]);
 
   return (
     <FlexCol className="w-full p-1 o-auto">

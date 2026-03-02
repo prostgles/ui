@@ -3,22 +3,30 @@ import Loading from "@components/Loader/Loading";
 import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
 import { useMonacoScrollToLastLine } from "@components/MonacoLogs/MonacoLogs";
 import { usePromise } from "prostgles-client";
-import React from "react";
+import React, { useMemo } from "react";
 import {
-  CodeEditor,
+  type CodeEditorProps,
   type LanguageConfig,
 } from "src/dashboard/CodeEditor/CodeEditor";
+import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import type { ToolResultMessage } from "../../../ToolUseChatMessage/ToolUseChatMessage";
 
 export const AgenticWorkflowDefinition = ({
   workflow_function_definition,
+  chatId,
+  workflowId,
+  toolResultMessage,
 }: {
   workflow_function_definition: string;
+  chatId: number;
+  workflowId: number | undefined;
+  toolResultMessage: ToolResultMessage;
 }) => {
   const {
-    dbsMethods: { getAgenticWorkflowTypes },
+    dbsMethods: { getAgenticWorkflowTypes, callMCPServerTool },
   } = usePrglCore();
-  const { onMount } = useMonacoScrollToLastLine();
+  const { onMount } = useMonacoScrollToLastLine(true);
 
   const language = usePromise(async () => {
     if (!getAgenticWorkflowTypes) return "typescript";
@@ -33,22 +41,47 @@ export const AgenticWorkflowDefinition = ({
     } satisfies LanguageConfig;
   }, [getAgenticWorkflowTypes]);
 
+  const codeEditorProps = useMemo(() => {
+    const monacoOpts: CodeEditorProps["options"] = {
+      ...MONACO_READONLY_DEFAULT_OPTIONS,
+      lineNumbers: "on",
+      readOnly: !(callMCPServerTool && workflowId),
+    } as const;
+    const onSave: CodeEditorProps["onSave"] =
+      callMCPServerTool && workflowId ?
+        async (newValue) => {
+          await callMCPServerTool({
+            chatId,
+            serverName: "prostgles-ui",
+            toolName: toolResultMessage.tool_name,
+            args: {
+              workflow_function_definition: newValue,
+              workflowId,
+            },
+            reRunToolUseId: toolResultMessage.tool_use_id,
+          });
+        }
+      : undefined;
+    return { options: monacoOpts, onSave };
+  }, [
+    callMCPServerTool,
+    workflowId,
+    toolResultMessage.tool_name,
+    toolResultMessage.tool_use_id,
+    chatId,
+  ]);
+
   if (!language) return <Loading />;
   return (
-    <CodeEditor
+    <CodeEditorWithSaveButton
       key={workflow_function_definition}
-      className={"f-1"}
+      label={null}
       value={workflow_function_definition}
       language={language}
       minHeight={400}
       // scroll to end to avoid top data which is shown in Details tab
       onMount={onMount}
-      options={monacoOpts}
+      {...codeEditorProps}
     />
   );
 };
-
-const monacoOpts = {
-  ...MONACO_READONLY_DEFAULT_OPTIONS,
-  lineNumbers: "on",
-} as const;
