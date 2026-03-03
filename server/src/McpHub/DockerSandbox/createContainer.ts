@@ -3,24 +3,24 @@ import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMC
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
-import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
-import {
-  getDockerRunArgs,
-  INTERNAL_BRIDGE_NETWORK_NAME,
-} from "./getDockerRunArgs";
 import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
-import { isDocker } from "../utils";
 import { createBridgeInternalDockerNetwork } from "./createBridgeInternalDockerNetwork";
+import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
+import { getDockerRunArgs, getNetworkName } from "./getDockerRunArgs";
 
 type CreateContainerResult = JSONBTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["outputSchema"]
 >;
 
+type CreateContainerParamsWithBuildOptions = CreateContainerParams & {
+  signal?: AbortSignal;
+  buildNetworkMode?: CreateContainerParams["networkMode"];
+  buildEnvironment?: Record<string, string>;
+};
+
 export const createContainer = async (
   name: string,
-  params: CreateContainerParams & {
-    signal?: AbortSignal;
-  },
+  params: CreateContainerParamsWithBuildOptions,
   onLogs?: (logs: ProcessLog[]) => void,
 ): Promise<CreateContainerResult> => {
   let localDir = "";
@@ -47,8 +47,17 @@ export const createContainer = async (
       writeFileSync(tempFile, content);
     }
 
+    if (
+      params.networkMode === "bridge-internal" ||
+      params.buildNetworkMode === "bridge-internal"
+    ) {
+      await createBridgeInternalDockerNetwork();
+    }
+
     const buildArgs = [
       "build",
+      // "--network",
+      // getNetworkName(params.buildNetworkMode),
       "-t",
       name,
       "-f",
@@ -76,10 +85,6 @@ export const createContainer = async (
         runDuration: -1,
         exitCode: buildResult.exitCode,
       };
-    }
-
-    if (params.networkMode === "bridge-internal") {
-      await createBridgeInternalDockerNetwork();
     }
     const { runArgs, config } = getDockerRunArgs({
       ...params,

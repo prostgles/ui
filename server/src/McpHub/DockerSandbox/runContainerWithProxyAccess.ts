@@ -65,12 +65,18 @@ export const runContainerWithProxyAccess = async (
           ...args,
           environment: {
             NO_UPDATE_NOTIFIER: "1",
-            NPM_CONFIG_UPDATE_NOTIFIER: "false",
             FORCE_COLOR: "1",
             ...args.environment,
             [DOCKER_MCP_ENDPOINT_ENV_VAR]: proxy.getBaseUrl(
               args.networkMode ?? "bridge",
             ),
+          },
+          buildEnvironment: {
+            /** Speed things up */
+            NPM_CONFIG_AUDIT: "false",
+            NPM_CONFIG_UPDATE_NOTIFIER: "false",
+            NPM_CONFIG_FETCH_RETRIES: "0",
+            NPM_CONFIG_FETCH_TIMEOUT: "15000",
           },
         };
         return createContainer(containerName, argsWithEnv, onLogs);

@@ -27,7 +27,6 @@
     "express": "^5.2.1",
     "glob": "^13.0.6",
     "helmet": "^7.2.0",
-    "json-schema-to-typescript": "^15.0.4",
     "otplib": "^12.0.1",
     "path-to-regexp": "^8.3.0",
     "pidusage": "^4.0.1",

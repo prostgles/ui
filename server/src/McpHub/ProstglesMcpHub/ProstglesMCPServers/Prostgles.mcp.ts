@@ -1,8 +1,4 @@
-import {
-  getMCPFullToolName,
-  getMCPToolNameParts,
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "@common/prostglesMcp";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import { runContainerWithProxyAccess } from "../../DockerSandbox/runContainerWithProxyAccess";
 import type {
@@ -12,7 +8,7 @@ import type {
 } from "../ProstglesMCPServerTypes";
 import { createAgenticWorkflow } from "./Prostgles/createAgenticWorkflow";
 import { fetchTools } from "./Prostgles/fetchTools";
-import { compile } from "json-schema-to-typescript";
+import { getToolTypescriptSchemas } from "./Prostgles/getToolTypescriptSchemas";
 
 const serverName = "prostgles-ui" as const;
 const definition = {
@@ -55,50 +51,7 @@ const handler = {
         },
         suggest_agentic_workflow: createAgenticWorkflow,
         get_tool_schemas: async ({ toolNames }) => {
-          const splitToolNames = toolNames?.map((name) => {
-            const nameParts = getMCPToolNameParts(name);
-            if (!nameParts) {
-              throw new Error(
-                `Invalid tool name: ${name}. Expected format: ${getMCPFullToolName("serverName", "toolName")}`,
-              );
-            }
-            return nameParts;
-          });
-          const mcpTools = await dbs.mcp_server_tools.find(
-            !splitToolNames?.length ?
-              {}
-            : {
-                $and: splitToolNames.map(({ serverName, toolName }) => ({
-                  name: toolName,
-                  server_name: serverName,
-                })),
-              },
-          );
-
-          const getTsType = (
-            schema: Record<string, unknown> | null | undefined,
-          ) =>
-            !schema ? "string" : (
-              compile(schema, "ToolInput", {
-                bannerComment: "",
-              }).then((v) => v.slice(v.indexOf("{")))
-            );
-
-          const result = await Promise.all(
-            mcpTools.map(async (tool) => {
-              const argsTsSchema = await getTsType(tool.inputSchema);
-              const outputTsSchema = await getTsType(tool.outputSchema);
-
-              return [
-                "/**",
-                " * " + tool.description.split("\n").join("\n * "),
-                " */",
-                `${tool.server_name}--${tool.name} (args: ${argsTsSchema}): Promise<${outputTsSchema}>`,
-              ].join("\n");
-            }),
-          );
-
-          return result.join("\n");
+          return getToolTypescriptSchemas(dbs, toolNames);
         },
         suggest_dashboards: () => {
           return "Done";

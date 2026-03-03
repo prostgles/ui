@@ -1,3 +1,5 @@
+import { getMCPFullToolName } from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
 import { getPasswordHash } from "@src/authConfig/authUtils";
 import { checkClientIP } from "@src/authConfig/sessionUtils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
@@ -15,6 +17,7 @@ import {
   installMCPServer,
 } from "@src/McpHub/AnthropicMcpHub/installMCPServer";
 import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
+import { getAgenticWorkflowFiles } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/getAgenticWorkflowFiles";
 import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
 import { getStatus } from "@src/methods/getPidStats";
 import { killPID } from "@src/methods/statusMonitorUtils";
@@ -44,9 +47,6 @@ import { setFileStorage } from "../setFileStorage";
 import { getAgenticWorkflowFunctions } from "./getAgenticWorkflowFunctions";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
-import { AGENTIC_WORKFLOW_FILES } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/AGENTIC_WORKFLOW_FILES";
-import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
-import { getMCPFullToolName } from "@common/prostglesMcp";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -525,8 +525,8 @@ export const getAdminServerFunctions = (
       },
     }),
     getAgenticWorkflowTypes: defineAdminFunction({
-      run: () => {
-        return AGENTIC_WORKFLOW_FILES;
+      run: (_, { dbs }) => {
+        return getAgenticWorkflowFiles(dbs, "agent");
       },
     }),
     installMCPServer: defineAdminFunction({

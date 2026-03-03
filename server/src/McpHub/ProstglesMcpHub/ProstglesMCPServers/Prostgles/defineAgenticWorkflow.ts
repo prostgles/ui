@@ -19,6 +19,69 @@ export type PropertyType =
       optional?: boolean;
     };
 
+type McpServerToolDefinitions = Record<
+  string,
+  Record<string, (toolArguments?: unknown) => Promise<unknown>>
+>;
+// type McpServerToolDefinitions = {
+//   fetch: {
+//     fetch_webpage: (args: { url: string }) => Promise<{ content: string }>;
+//   };
+//   websearch: {
+//     search: (args: { q: string }) => Promise<{ results: string[] }>;
+//     get_snapshot: (args: { url: string }) => Promise<{ snapshot: string }>;
+//   };
+// };
+export const replaceMcpServerToolDefinitions = ({
+  defineAgenticWorkflowTs,
+  mcpServerToolDefinitions,
+}: {
+  defineAgenticWorkflowTs: string;
+  mcpServerToolDefinitions: Record<string, Record<string, string>> | undefined;
+}) => {
+  const startOfReplace = defineAgenticWorkflowTs.indexOf(
+    "type McpServerToolDefinitions = ",
+  );
+  const endOfReplace = defineAgenticWorkflowTs.lastIndexOf(
+    "//EndOfReplaceMcpServerToolDefinitions;",
+  );
+  if (
+    startOfReplace === -1 ||
+    endOfReplace === -1 ||
+    endOfReplace < startOfReplace
+  ) {
+    throw new Error(
+      "Could not find placeholder for McpServerToolDefinitions in defineAgenticWorkflow.ts",
+    );
+  }
+
+  if (!mcpServerToolDefinitions) {
+    return (
+      defineAgenticWorkflowTs.slice(
+        0,
+        defineAgenticWorkflowTs.indexOf("// type McpServerToolDefinitions ="),
+      ) + defineAgenticWorkflowTs.slice(endOfReplace)
+    );
+  }
+
+  const McpTypes = [
+    "type McpServerToolDefinitions = {",
+    ...Object.entries(mcpServerToolDefinitions).map(([serverName, tool]) => {
+      return [
+        `  ${JSON.stringify(serverName)}: {`,
+        ...Object.entries(tool).map(([_toolName, funcDef]) => ` ${funcDef}`),
+        "}",
+      ].join("\n");
+    }),
+    "}",
+  ].join("\n");
+  return (
+    defineAgenticWorkflowTs.slice(0, startOfReplace) +
+    McpTypes +
+    defineAgenticWorkflowTs.slice(endOfReplace)
+  );
+}; //EndOfReplaceMcpServerToolDefinitions;
+
 /**
  * Defines which tools can be used.
  *
@@ -30,7 +93,11 @@ export type PropertyType =
  *    }
  * }
  */
-export type McpServerToolsAllowed = Record<string, Record<string, 1>>;
+export type McpServerToolsAllowed = {
+  [McpServerName in keyof McpServerToolDefinitions]?: {
+    [ToolName in keyof McpServerToolDefinitions[McpServerName]]?: 1;
+  };
+};
 
 export type AgentDefinition = {
   prompt: string;
@@ -297,9 +364,11 @@ export type DefineAgenticWorkflow = <
     databaseHandler: DatabaseHandler,
     workflowToolHandlers: {
       [WorkflowMcpServerName in keyof WorkflowAllowedTools]: {
-        [ToolName in keyof WorkflowAllowedTools[WorkflowMcpServerName]]: (
-          toolArguments?: unknown,
-        ) => Promise<unknown>;
+        [ToolName in keyof WorkflowAllowedTools[WorkflowMcpServerName]]: WorkflowAllowedTools[WorkflowMcpServerName][ToolName] extends (
+          1
+        ) ?
+          (toolArguments?: unknown) => Promise<unknown>
+        : never;
       };
     },
     userInputValues: ValueOfUserInput<UserInput>,

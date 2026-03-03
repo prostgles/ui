@@ -1,6 +1,5 @@
 import { getMCPFullToolName } from "@common/prostglesMcp";
 import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
-import { getEntries } from "@common/utils";
 import type { DBS } from "@src/index";
 import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
 import type { AuthClientRequest } from "prostgles-server";
@@ -13,8 +12,11 @@ export const getValidatedMcpServerToolsAllowed = async (
 ) => {
   if (!tools || isEmpty(tools)) return;
 
-  const toolNameList = getEntries(tools)
+  const toolNameList = Object.entries(tools)
     .map(([serverName, toolNamesObj]) => {
+      if (!toolNamesObj || isEmpty(toolNamesObj)) {
+        return [];
+      }
       const toolNames = getKeys(toolNamesObj);
       return toolNames.map((toolName) => ({
         toolName,

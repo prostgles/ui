@@ -116,6 +116,7 @@ const init = async (dbs: DBS) => {
           `Invalid arguments for MCP server tool ${serverName}.${toolName}: ${validation.error}`,
         );
       }
+
       const res = await toolMethod(args, context);
       return res;
     });

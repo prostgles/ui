@@ -47,8 +47,10 @@ export const agentOutputSchemaType = {
 
 const mcpServerToolsAllowed = {
   record: {
+    partial: true,
     values: {
       record: {
+        partial: true,
         values: { enum: [1] },
       },
     },

@@ -193,7 +193,9 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
         );
       }
 
-      const serverTools = definitions.workflowAllowedTools[mcpServerName];
+      const serverTools = definitions.workflowAllowedTools[
+        mcpServerName as keyof typeof definitions.workflowAllowedTools
+      ] as Record<string, 1> | undefined;
       if (!serverTools) {
         throw new Error(
           `MCP server "${mcpServerName}" is not defined in workflowAllowedTools`,
@@ -206,7 +208,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
           get(_serverTarget, toolName: string) {
             if (typeof toolName !== "string") return undefined;
 
-            if (!(toolName in serverTools)) {
+            if (!(toolName in serverTools) || serverTools[toolName] !== 1) {
               throw new Error(
                 `Tool "${toolName}" is not allowed on MCP server "${mcpServerName}"`,
               );

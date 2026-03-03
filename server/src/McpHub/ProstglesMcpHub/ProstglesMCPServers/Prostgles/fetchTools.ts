@@ -26,9 +26,10 @@ export const fetchTools: ProstglesMcpServerHandlerInstance["fetchTools"] =
         /** Used to show error early if docker is not setup */
         await getOrCreateDockerMCPServerProxy(getProstglesState().isElectron);
 
-        const workflowSchema = getAgenticWorkflowToolSchema({
+        const workflowSchema = await getAgenticWorkflowToolSchema({
           availableDBTools: dbTools,
           availableMCPTools: mcpTools,
+          dbs,
         });
         const suggestAgenticWorkflowSchema = {
           ...workflowSchema,

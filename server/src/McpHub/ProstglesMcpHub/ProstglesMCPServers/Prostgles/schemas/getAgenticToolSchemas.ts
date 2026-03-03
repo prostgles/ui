@@ -2,15 +2,18 @@ import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fixIndent } from "@common/utils";
 import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import { defineAgenticWorkflowTsSchema } from "../AGENTIC_WORKFLOW_FILES";
+import { getDefineAgenticWorkflowTsSchema } from "../getAgenticWorkflowFiles";
+import type { DBS } from "@src/index";
 
 const name = "suggest_agentic_workflow" as const;
-export const getAgenticWorkflowToolSchema = ({
+export const getAgenticWorkflowToolSchema = async ({
   availableDBTools,
   availableMCPTools,
+  dbs,
 }: {
   availableMCPTools: McpCallContextFetchTools["mcpTools"];
   availableDBTools: { name: string; description: string }[];
+  dbs: DBS;
 }) => {
   const toolsByServer = new Map<string, string[]>();
 
@@ -19,6 +22,15 @@ export const getAgenticWorkflowToolSchema = ({
     serverTools.push(tool.name);
     toolsByServer.set(tool.server_name, serverTools);
   });
+
+  // ## Available MCP servers and their tools:
+  // ${
+  //   !toolsByServer.size ? "None" : (
+  //     Array.from(toolsByServer.entries())
+  //       .map(([server, tools]) => `{ ${server}: ${tools} }`)
+  //       .join("\n")
+  //   )
+  // }
   return {
     name,
     description: fixIndent(`
@@ -27,17 +39,9 @@ export const getAgenticWorkflowToolSchema = ({
     The "workflow_function_definition" should be the definition of the function that will be created to execute the agentic workflow. It should include the tools that should be used in the workflow and the prompt that should be given to the agent to execute the workflow. The tools included in the "workflow_function_definition" must be a subset of the available tools listed below.
     The structure of the "workflow_function_definition" should adhere to the types below:
     ${"```typescript"}
-    ${defineAgenticWorkflowTsSchema} 
+    ${await getDefineAgenticWorkflowTsSchema(dbs, "agent")} 
     ${"```"}
   
-    ## Available MCP servers and their tools: 
-    ${
-      !toolsByServer.size ? "None" : (
-        Array.from(toolsByServer.entries())
-          .map(([server, tools]) => `{ ${server}: ${tools} }`)
-          .join("\n")
-      )
-    }
 
     ## Available database tools:
     ${!availableDBTools.length ? "None" : availableDBTools.map((t) => JSON.stringify(t.name)).join(", ")}

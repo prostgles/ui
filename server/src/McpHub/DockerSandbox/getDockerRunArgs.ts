@@ -34,6 +34,16 @@ type LocalDockerParams = {
   name: string;
 };
 
+export const getNetworkName = (
+  networkMode: CreateContainerParams["networkMode"] = "none",
+) => {
+  return (
+    networkMode === "bridge-internal" ? INTERNAL_BRIDGE_NETWORK_NAME
+    : isDocker && networkMode === "bridge" ? CUSTOM_BRIDGE_NETWORK_NAME
+    : networkMode
+  );
+};
+
 export const getDockerRunArgs = ({
   cpus = "1",
   memory = "512m",
@@ -58,10 +68,7 @@ export const getDockerRunArgs = ({
   }
 
   // Network settings
-  const selectedNetwork =
-    networkMode === "bridge-internal" ? INTERNAL_BRIDGE_NETWORK_NAME
-    : isDocker && networkMode === "bridge" ? CUSTOM_BRIDGE_NETWORK_NAME
-    : networkMode;
+  const selectedNetwork = getNetworkName(networkMode);
   runArgs.push("--network", selectedNetwork);
 
   // User

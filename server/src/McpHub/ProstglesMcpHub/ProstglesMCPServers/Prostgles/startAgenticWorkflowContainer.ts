@@ -11,7 +11,7 @@ import type {
   McpProxyRequestContext,
 } from "../../../DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { runContainerWithProxyAccess } from "../../../DockerSandbox/runContainerWithProxyAccess";
-import { AGENTIC_WORKFLOW_FILES } from "./AGENTIC_WORKFLOW_FILES";
+import { getAgenticWorkflowFiles } from "./getAgenticWorkflowFiles";
 import type {
   AgenticWorkflowDefinition,
   ProxyCallData,
@@ -252,7 +252,7 @@ export const startAgenticWorkflowContainer = async (
     },
     {
       signal: abortSignal,
-      // networkMode: "bridge",
+      buildNetworkMode: "host",
       networkMode: "bridge-internal",
       timeout:
         mode.type === "full" ? mode.definition.timeOutInSeconds * 1000 : 30_000,
@@ -260,13 +260,13 @@ export const startAgenticWorkflowContainer = async (
         Dockerfile: `
           FROM node:22-slim
           WORKDIR /app
-          COPY . .
-          ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+          COPY . . 
+          
           RUN npm install --silent
           RUN npm run build
           CMD ["npm", "start", "--silent"]
         `,
-        ...AGENTIC_WORKFLOW_FILES,
+        ...(await getAgenticWorkflowFiles(dbs, "runtime")),
         "index.ts": workflowTs,
         "package.json": getPackageJson(mode.type === "definitions-only"),
         "tsconfig.json": tsconfigJson,
