@@ -1,10 +1,11 @@
-import { McpToolCallResponse } from "@common/mcp";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
   CallToolResultSchema,
   ReadResourceResultSchema,
+  type CallToolRequest,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import { getSerialisableError, isEqual, tryCatchV2 } from "prostgles-types";
 import {
@@ -197,3 +198,41 @@ export class McpHub {
     this.connections = {};
   }
 }
+
+export type McpToolCallResponse = Pick<
+  CallToolResult,
+  "content" | "isError"
+> & {
+  structuredContent?: unknown;
+};
+// & {
+//   _meta?: Record<string, any>;
+//   content: Array<
+//     | {
+//         type: "text";
+//         text: string;
+//       }
+//     | {
+//         type: "image" | "audio";
+//         data: string;
+//         mimeType: string;
+//       }
+//     | {
+//         type: "resource";
+//         resource: {
+//           uri: string;
+//           mimeType?: string;
+//           text?: string;
+//           blob?: string;
+//         };
+//       }
+//     | {
+//         type: "resource_link";
+//         uri: string;
+//         name: string;
+//         mimeType?: string;
+//         description?: string;
+//       }
+//   >;
+//   isError?: boolean;
+// };

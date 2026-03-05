@@ -1,4 +1,6 @@
-import { tablePermissionsSchema } from "./tablePermissionsSchema";
+import { databaseAccessSchema } from "@common/databaseAccessSchema";
+import { mcpServerToolsAllowed } from "@common/prostglesMcp";
+import type { JSONB } from "prostgles-types";
 
 const PrimitiveType = ["string", "number", "boolean", "unknown"] as const;
 const PrimitiveTypesWithArrays = [
@@ -45,18 +47,6 @@ export const agentOutputSchemaType = {
   },
 } as const;
 
-const mcpServerToolsAllowed = {
-  record: {
-    partial: true,
-    values: {
-      record: {
-        partial: true,
-        values: { enum: [1] },
-      },
-    },
-  },
-} as const;
-
 export const startAgenticWorkflowSchema = {
   chatId: "integer",
   messageId: "string",
@@ -69,20 +59,9 @@ export const startAgenticWorkflowSchema = {
   },
   databaseAccessDefinitions: {
     optional: true,
-    oneOfType: [
-      {
-        mode: { enum: ["custom"] },
-        tableCreateStatements: { type: "string", optional: true },
-        tablePermissions: tablePermissionsSchema,
-      },
-      {
-        mode: {
-          enum: ["execute_sql_with_commit", "execute_sql_with_rollback"],
-        },
-      },
-    ],
+    oneOfType: databaseAccessSchema.oneOfType,
   },
-  workflowAllowedTools: {
+  orchestrationTools: {
     oneOf: [{ enum: [undefined] }, mcpServerToolsAllowed],
   },
   agentDefinitions: {
@@ -150,4 +129,3 @@ export const startAgenticWorkflowSchema = {
     },
   },
 } as const satisfies JSONB.ObjectType["type"];
-import type { JSONB } from "prostgles-types";

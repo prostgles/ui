@@ -182,16 +182,8 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     page,
     addScene,
     "Upload some weather data for London for the last 4 years",
-    [
-      { type: "wait", duration: 1000 },
-      {
-        type: "click",
-        elementSelector: getCommandElemSelector("ToolUseMessage.toggle"),
-        duration: 1000,
-      },
-    ],
+    [{ type: "wait", duration: 1000 }],
   );
-  await page.getByTestId("ToolUseMessage.toggle").last().click();
   await page.waitForTimeout(2500);
   await expect(page.getByTestId("ToolUseMessage").last()).toContainText(
     "Fetching data from",

@@ -1,9 +1,9 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { useEffect, useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { ProstglesMCPToolsProps } from "../../../ProstglesToolUseMessage";
 import { useJSONBParsedData } from "../../common/useJSONBParsedData";
-import { useValidatedWorkflowJson } from "../useValidatedWorkflowJson";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import { useTypedToolUseResultData } from "../../common/useTypedToolUseResultData";
 
 export const useAgenticWorkflowState = ({
   message,
@@ -14,22 +14,34 @@ export const useAgenticWorkflowState = ({
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
       .schema,
   );
-  const validatedWorkflowJson = useValidatedWorkflowJson({
-    toolUseResult,
-  });
+  const workflowValidation = useTypedToolUseResultData(
+    toolUseResult?.toolUseResultMessage,
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
+      .outputSchema,
+    true,
+  );
   const messageId = toolUseResult?.toolUseResult.id;
-  const { validWorkflow } = validatedWorkflowJson;
-  const workflow_id = validWorkflow?.workflowId;
+  const workflow_id =
+    workflowValidation?.isValid ? workflowValidation.workflowId : undefined;
   const [activeTab, setActiveTab] = useState(
     workflow_id ? "Details" : "Definition",
   );
   useEffect(() => {
-    if (validWorkflow) {
+    if (workflowValidation?.isValid) {
       setActiveTab("Details");
     }
-  }, [validWorkflow]);
+  }, [workflowValidation?.isValid]);
 
   const { dbs } = usePrglCore();
+  const { data: workflow } = dbs.agentic_workflows.useSubscribeOne(
+    {
+      id: workflow_id,
+    },
+    undefined,
+    {
+      skip: workflow_id === undefined || messageId === undefined,
+    },
+  );
   const { data: latestRun } = dbs.agentic_workflow_runs.useSubscribeOne(
     {
       workflow_id,
@@ -48,7 +60,8 @@ export const useAgenticWorkflowState = ({
   );
 
   return {
-    validatedWorkflowJson,
+    workflowValidation,
+    workflow,
     activeTab,
     setActiveTab,
     inputValidation,

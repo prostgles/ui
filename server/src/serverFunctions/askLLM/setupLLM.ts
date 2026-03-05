@@ -6,7 +6,7 @@ import { getElectronConfig } from "@src/electronConfig";
 
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
-const allowProstglesUITools = (tools: UiToolName[]) => ({
+const allowProstglesUITools = (tools: Partial<Record<UiToolName, 1>>) => ({
   "prostgles-ui": tools,
 });
 
@@ -39,10 +39,10 @@ export const setupLLM = async (dbs: DBS) => {
             LLM_PROMPT_VARIABLES.SCHEMA,
           ].join("\n"),
           options: {
-            mcp_server_tools: allowProstglesUITools([
-              "ask_user_questions",
-              "get_tool_schemas",
-            ]),
+            mcp_server_tools: allowProstglesUITools({
+              ask_user_questions: 1,
+              get_tool_schemas: 1,
+            }),
             database_access: "execute_sql_with_rollback",
           },
         },
@@ -52,10 +52,10 @@ export const setupLLM = async (dbs: DBS) => {
             "Includes database schema and dashboard view structure. Claude Sonnet recommended",
           user_id,
           options: {
-            mcp_server_tools: allowProstglesUITools([
-              "suggest_dashboards",
-              "ask_user_questions",
-            ]),
+            mcp_server_tools: allowProstglesUITools({
+              suggest_dashboards: 1,
+              ask_user_questions: 1,
+            }),
 
             database_access: "execute_sql_with_rollback",
           },
@@ -74,10 +74,10 @@ export const setupLLM = async (dbs: DBS) => {
             "Includes database schema and full tools list. Will suggest database access type and tools required to completed the task. Claude Sonnet recommended",
           user_id,
           options: {
-            mcp_server_tools: allowProstglesUITools([
-              "suggest_tools_and_prompt",
-              "get_tool_schemas",
-            ]),
+            mcp_server_tools: allowProstglesUITools({
+              suggest_tools_and_prompt: 1,
+              get_tool_schemas: 1,
+            }),
             database_access: "execute_sql_with_rollback",
           },
           prompt: [
@@ -99,11 +99,10 @@ export const setupLLM = async (dbs: DBS) => {
           user_id,
           options: {
             max_tokens: 18_000,
-            mcp_server_tools: allowProstglesUITools([
-              "suggest_agentic_workflow",
-              "ask_user_questions",
-              "get_tool_schemas",
-            ]),
+            mcp_server_tools: allowProstglesUITools({
+              suggest_agentic_workflow: 1,
+              ask_user_questions: 1,
+            }),
             database_access: "execute_sql_with_rollback",
           },
           prompt: [
@@ -144,11 +143,20 @@ export const setupLLM = async (dbs: DBS) => {
           user_id,
           options: {
             mcp_server_tools: {
-              webdev: "*",
-              ...allowProstglesUITools([
-                "ask_user_questions",
-                "get_tool_schemas",
-              ]),
+              webdev: {
+                list_directory: 1,
+                read_files: 1,
+                create_component: 1,
+                create_component_quick_feedback_preview: 1,
+                search_files: 1,
+              } satisfies Record<
+                keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["webdev"],
+                1
+              >,
+              ...allowProstglesUITools({
+                ask_user_questions: 1,
+                get_tool_schemas: 1,
+              }),
             },
             database_access: "execute_sql_with_rollback",
             max_tokens: 18_000,

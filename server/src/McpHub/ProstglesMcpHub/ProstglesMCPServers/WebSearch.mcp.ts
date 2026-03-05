@@ -188,7 +188,7 @@ const handler = {
               },
             },
           );
-          return result.document.md_content;
+          return result.document.md_content || "";
         },
       },
       fetchTools: () => {

@@ -2,7 +2,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import { mdiOpenInNew, mdiRobotOutline } from "@mdi/js";
+import { mdiRobotOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { DBHandlerClient } from "prostgles-client";
 import { type FilterItem } from "prostgles-types";
@@ -49,7 +49,10 @@ export const AgenticWorkflowActivity = ({
               setAgentChatId(id);
             }}
           >
-            {agent_info?.name ?? ""} {value}
+            {agent_info === "orchestrator" ?
+              agent_info
+            : (agent_info?.name ?? "")}{" "}
+            {value}
           </Btn>
         ),
       },
@@ -97,6 +100,7 @@ export const AgenticWorkflowActivity = ({
 
     const filter = {
       parent_chat_id: chatId,
+      agent_info: { $ne: "orchestrator" },
     } satisfies FilterItem<DBSSchema[typeof tableName]>;
 
     return { fieldConfigs, filter, orderBy: { key: "id", asc: false } };

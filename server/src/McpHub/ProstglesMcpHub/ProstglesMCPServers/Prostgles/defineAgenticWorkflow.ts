@@ -126,9 +126,37 @@ type ParseUnion<S extends string> =
   S extends `${infer L} | ${infer R}` ? ParsePrimitive<L> | ParseUnion<R>
   : ParsePrimitive<S>;
 
-type ParsePropertyType<S extends PropertyType> =
-  S extends `${infer Inner}[]` ? ParseUnion<Inner & string>[]
-  : ParseUnion<S & string>;
+type ParsePropertyType<P extends PropertyType> =
+  P extends PrimitiveTypeWithArraysAndOptional ? ParsePrimitiveField<P>
+  : P extends (
+    {
+      type: infer Obj extends Record<
+        string,
+        PrimitiveTypeWithArraysAndOptional
+      >;
+    }
+  ) ?
+    ParseObjectFields<Obj>
+  : P extends (
+    {
+      arrayOfType: infer Obj extends Record<
+        string,
+        PrimitiveTypeWithArraysAndOptional
+      >;
+    }
+  ) ?
+    ParseObjectFields<Obj>[]
+  : never;
+
+type ParsePrimitiveField<T extends PrimitiveTypeWithArraysAndOptional> =
+  T["type"] extends `${infer Inner}[]` ? ParseUnion<Inner & string>[]
+  : ParseUnion<T["type"] & string>;
+
+type ParseObjectFields<
+  T extends Record<string, PrimitiveTypeWithArraysAndOptional>,
+> = {
+  [K in keyof T]: ParsePrimitiveField<T[K]>;
+};
 
 type ParseSchema<S extends Record<string, PropertyType>> = {
   [K in keyof S]: ParsePropertyType<S[K]>;
@@ -337,7 +365,7 @@ export type ValueOfUserInput<UserInput extends Record<string, UserInputItem>> =
   };
 
 export type DefineAgenticWorkflow = <
-  WorkflowAllowedTools extends McpServerToolsAllowed,
+  OrchestrationTools extends McpServerToolsAllowed,
   AgentDefinitions extends Record<string, AgentDefinition>,
   UserInput extends Record<string, UserInputItem>,
 >(
@@ -352,7 +380,7 @@ export type DefineAgenticWorkflow = <
     timeOutInSeconds: number;
     userInput?: UserInput;
     databaseAccessDefinitions?: DatabaseAccessDefinition;
-    workflowAllowedTools?: WorkflowAllowedTools;
+    orchestrationTools?: OrchestrationTools;
     agentDefinitions: AgentDefinitions;
   },
   workflow: (
@@ -362,12 +390,14 @@ export type DefineAgenticWorkflow = <
       ) => Promise<ParseSchema<AgentDefinitions[AgentName]["outputSchema"]>>;
     },
     databaseHandler: DatabaseHandler,
-    workflowToolHandlers: {
-      [WorkflowMcpServerName in keyof WorkflowAllowedTools]: {
-        [ToolName in keyof WorkflowAllowedTools[WorkflowMcpServerName]]: WorkflowAllowedTools[WorkflowMcpServerName][ToolName] extends (
-          1
+    orchestratorToolHandlers: {
+      [ServerName in keyof OrchestrationTools]: {
+        [ToolName in keyof OrchestrationTools[ServerName]]: ServerName extends (
+          keyof McpServerToolDefinitions
         ) ?
-          (toolArguments?: unknown) => Promise<unknown>
+          ToolName extends keyof McpServerToolDefinitions[ServerName] ?
+            McpServerToolDefinitions[ServerName][ToolName]
+          : never
         : never;
       };
     },
@@ -399,7 +429,7 @@ void defineAgenticWorkflow(
         );
       `,
     },
-    workflowAllowedTools: {
+    orchestrationTools: {
       websearch: { search: 1, get_snapshot: 1 },
     },
     agentDefinitions: {

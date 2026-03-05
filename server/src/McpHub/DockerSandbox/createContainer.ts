@@ -6,7 +6,7 @@ import { dirname, join } from "path";
 import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
 import { createBridgeInternalDockerNetwork } from "./createBridgeInternalDockerNetwork";
 import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
-import { getDockerRunArgs, getNetworkName } from "./getDockerRunArgs";
+import { getDockerRunArgs } from "./getDockerRunArgs";
 
 type CreateContainerResult = JSONBTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["outputSchema"]

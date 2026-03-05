@@ -98,7 +98,9 @@ export type ProstglesMcpServerHandlerTyped<
           ServerDefinition["tools"][ToolName]["schema"]
         >,
         context: McpCallContext,
-      ) => MaybePromise<unknown>;
+      ) => MaybePromise<
+        JSONBTypeIfDefined<ServerDefinition["tools"][ToolName]["outputSchema"]>
+      >;
     };
   }>;
 };

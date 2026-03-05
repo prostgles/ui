@@ -94,7 +94,8 @@ export const AskLLMChatActionBarDatabaseAccess = (
     <PopupMenu
       data-command="LLMChatOptions.DatabaseAccess"
       contentClassName="p-1 gap-2 max-w-700"
-      positioning="above-center"
+      // positioning="above-center"
+      positioning="center"
       title="Database access"
       clickCatchStyle={{ opacity: 1 }}
       button={
@@ -230,12 +231,12 @@ export const AskLLMChatActionBarDatabaseAccess = (
             { id: activeChatId },
             {
               db_data_permissions:
-                newAccess.mode === "none" ?
-                  null
-                : {
+                !newAccess ? null : (
+                  {
                     ...newAccess,
                     auto_approve: dataPermission?.auto_approve,
-                  },
+                  }
+                ),
             },
           );
         }}

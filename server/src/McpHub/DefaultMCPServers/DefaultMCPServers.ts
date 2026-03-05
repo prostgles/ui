@@ -2,6 +2,7 @@ import type { DEFAULT_MCP_SERVER_NAMES, MCPServerInfo } from "@common/mcp";
 import { mcpGithub } from "./mcpGithub";
 import { ProstglesMCPServers } from "../ProstglesMcpHub/ProstglesMCPServers";
 import { fromEntries, getEntries } from "@common/utils";
+import { getSchemasAsJsonSchema } from "../reloadMcpServerTools";
 
 export const getDefaultMCPServers = (): Record<
   (typeof DEFAULT_MCP_SERVER_NAMES)[number],
@@ -101,11 +102,11 @@ export const getDefaultMCPServers = (): Record<
           config_schema: undefined,
           icon_path,
           mcp_server_tools: getEntries(tools).map(
-            ([name, { schema, description, mode }]) => ({
+            ([name, { schema, outputSchema, description, mode }]) => ({
               name,
               mode,
               description,
-              inputSchema: schema,
+              ...getSchemasAsJsonSchema({ schema, outputSchema }),
             }),
           ),
         } satisfies MCPServerInfo,

@@ -119,7 +119,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
         />
       )}
       positioning={agentChat ? "center" : "right-panel"}
-      clickCatchStyle={{ opacity: 0.1 }}
+      clickCatchStyle={{ opacity: agentChat ? 1 : 0.1 }}
       onClickClose={false}
       onClose={onClose}
       anchorEl={anchorEl}

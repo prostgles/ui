@@ -48,7 +48,8 @@ export const getDefineAgenticWorkflowTsSchema = async (
 ) => {
   const mcpServerToolDefinitions = await getToolTypescriptSchemas(
     dbs,
-    undefined,
+    "*",
+    "compact",
   );
 
   const result = replaceMcpServerToolDefinitions({

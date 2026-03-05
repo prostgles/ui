@@ -951,6 +951,7 @@ test.describe("Main test", () => {
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Maximum total cost of the chat (5) reached. Current cost: 5.4`,
+      { timeout: 8_000 },
     );
 
     const maxCost = 4;
@@ -984,7 +985,6 @@ test.describe("Main test", () => {
       "Create dashboards",
     );
 
-    // await enableMCPServers(["prostgles-ui"]);
     await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
     await page
       .locator(getDataKey("prostgles-ui"))
@@ -1019,7 +1019,7 @@ test.describe("Main test", () => {
         .getByTestId("Chat.messageList")
         .locator(".Loading")
         .waitFor({ state: "detached", timeout: 40e3 });
-      await page.getByTestId("ToolUseMessage.toggle").last().click();
+
       if (inFullscreen) {
         await page.getByTestId("PopupSection.fullscreen").last().click();
       }
@@ -1028,13 +1028,12 @@ test.describe("Main test", () => {
           page.getByTestId("PopupSection.content").last()
         : page.getByTestId("ToolUseMessage").last(),
       ).toContainText(result, {
-        timeout: 10e3,
+        timeout: 20e3,
       });
     };
-    /** Must test to see if port 3089 is free to avoid confusing errors */
 
     await dockerRunAndExpect(
-      `No database permissions granted for this container`,
+      `Database permissions for this container require manual approval, but auto_approve is not enabled.`,
     );
 
     await page.getByTestId("LLMChatOptions.DatabaseAccess").click();

@@ -18,10 +18,7 @@ type P = {
   codePlaceholder?: string;
   codeEditorClassName?: string;
   headerButtons?: React.ReactNode;
-} & Omit<
-  CodeEditorProps,
-  "onSave" | "onChange" | "value" | "style" | "className"
->;
+} & Omit<CodeEditorProps, "onSave" | "onChange" | "value">;
 
 export const CodeEditorWithSaveButton = (props: P) => {
   const {
@@ -33,6 +30,8 @@ export const CodeEditorWithSaveButton = (props: P) => {
     autoSave,
     codeEditorClassName = "b",
     headerButtons,
+    style,
+    className,
     ...codeEditorProps
   } = props;
   const isReadonly = !onSave && !autoSave;
@@ -139,8 +138,9 @@ export const CodeEditorWithSaveButton = (props: P) => {
     <FlexCol
       className={classOverride(
         "SmartCodeEditor gap-0 f-1 ",
-        `${fullScreen ? "min-h-0" : ""}`,
+        `${fullScreen ? "min-h-0" : ""} ${className}`,
       )}
+      style={style}
     >
       {fullScreen ? null : titleNode}
       <FlexCol

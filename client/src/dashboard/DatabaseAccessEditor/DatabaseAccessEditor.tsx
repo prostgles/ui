@@ -1,4 +1,6 @@
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
+import Chip from "@components/Chip";
 import { FlexRowWrap } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { Label } from "@components/Label";
@@ -15,20 +17,14 @@ import {
   mdiTableSearch,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import {
-  isDefined,
-  isEmpty,
-  type JSONB,
-  type ValidatedColumnInfo,
-} from "prostgles-types";
+import { isDefined, isEmpty, type JSONB } from "prostgles-types";
 import React, { useState } from "react";
-import { TableAccessEditor } from "./TableAccessEditor";
-import { type ViewMode } from "./ViewModeToggle";
 import type {
   DBSchemaTableColumn,
   DBSchemaTableWJoins,
 } from "../Dashboard/dashboardUtils";
-import type { ValidatedWorkflow } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/useValidatedWorkflowJson";
+import { TableAccessEditor } from "./TableAccessEditor";
+import { type ViewMode } from "./ViewModeToggle";
 
 export type DatabaseAccessPermission = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]
@@ -38,7 +34,7 @@ type P = {
   value: DatabaseAccessPermission | undefined;
   onChange: undefined | ((newValue: DatabaseAccessPermission) => void);
   contentRight?: React.ReactNode;
-  newTables: ValidatedWorkflow["newTables"];
+  newTables: DBSSchema["agentic_workflows"]["definition_data"]["newTables"];
 };
 export const DatabaseAccessEditor = ({
   value,
@@ -60,12 +56,13 @@ export const DatabaseAccessEditor = ({
           value={value?.mode ?? "none"}
           data-command="DatabaseAccessEditor.Mode"
           btnProps={{
-            color: value && value.mode !== "none" ? "action" : undefined,
+            color: value ? "action" : undefined,
           }}
           fullOptions={MODES}
           onChange={(dataAccess) => {
             void onChange(
-              dataAccess === "custom" ?
+              dataAccess === "none" ? undefined
+              : dataAccess === "custom" ?
                 {
                   mode: dataAccess,
                   tablePermissions: {},
@@ -77,7 +74,7 @@ export const DatabaseAccessEditor = ({
           }}
         />
       : <Label label={"Data access"} variant="normal" />}
-
+      {value?.mode !== "custom" && <Chip>{value?.mode || "None"}</Chip>}
       {contentRight}
       {value?.mode === "custom" && (
         <div
@@ -165,10 +162,10 @@ export const DatabaseAccessEditor = ({
                 }
                 return {
                   key: t.name,
+                  title: t.name,
                   styles: {
                     labelWrapper: {
                       fontWeight: 700,
-                      // minWidth: "120px",
                       ...(!onChange && { flex: "unset" }),
                     },
                     label: {
@@ -185,23 +182,18 @@ export const DatabaseAccessEditor = ({
                       }),
                     },
                   },
-                  title: t.name,
                   rowStyle: {
-                    /** Disable focus */
-                    background: "unset",
                     padding: "0.25em",
-                    ...(onChange && {
-                      border: "1px solid var(--b-default)",
-                    }),
+                    ...(onChange ?
+                      {
+                        border: "1px solid var(--b-default)",
+                      }
+                    : {
+                        /** Disable focus */
+                        background: "unset",
+                      }),
                     display: "contents",
                   },
-                  contentLeft: onChange && (
-                    <Icon
-                      className="mr-p5 text-2 f-0"
-                      title={t.info.isView ? "View" : "Table"}
-                      path={t.info.isView ? mdiTableEye : mdiTable}
-                    />
-                  ),
                   contentRight: (
                     <>
                       <TableAccessEditor
@@ -222,7 +214,6 @@ export const DatabaseAccessEditor = ({
                           })
                         }
                       />
-                      {/* {!onChange && <div className="f-1"></div>} */}
                     </>
                   ),
                 } satisfies SearchListItem;

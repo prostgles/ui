@@ -31,6 +31,8 @@ export const getAgenticWorkflowToolSchema = async ({
   //       .join("\n")
   //   )
   // }
+
+  const workflowTsSchema = await getDefineAgenticWorkflowTsSchema(dbs, "agent");
   return {
     name,
     description: fixIndent(`
@@ -39,7 +41,7 @@ export const getAgenticWorkflowToolSchema = async ({
     The "workflow_function_definition" should be the definition of the function that will be created to execute the agentic workflow. It should include the tools that should be used in the workflow and the prompt that should be given to the agent to execute the workflow. The tools included in the "workflow_function_definition" must be a subset of the available tools listed below.
     The structure of the "workflow_function_definition" should adhere to the types below:
     ${"```typescript"}
-    ${await getDefineAgenticWorkflowTsSchema(dbs, "agent")} 
+    ${workflowTsSchema} 
     ${"```"}
   
 

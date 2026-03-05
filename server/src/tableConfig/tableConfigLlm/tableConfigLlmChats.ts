@@ -35,28 +35,35 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
       },
       agent_info: {
         nullable: true,
-        jsonbSchemaType: {
-          name: { type: "string", optional: true },
-          prompt: {
-            type: "string",
-            title: "Prompt",
-            description: "Prompt used for agentic chat",
-          },
-          maxIterations: {
-            type: "integer",
-            optional: true,
-            title: "Max iterations",
-            description:
-              "Maximum number of iterations for the agentic workflow. An iteration is a single cycle of the agent thinking, tool calling and observing the results. Set to 0 for unlimited iterations.",
-          },
-          outputSchema: {
-            title: "Output schema",
-            description: "JSON schema for validating agent output",
-            ...agentOutputSchemaType,
-            // record: {
-            //   values: "unknown",
-            // },
-          },
+        jsonbSchema: {
+          oneOf: [
+            { enum: ["orchestrator"] },
+            {
+              type: {
+                name: { type: "string", optional: true },
+                prompt: {
+                  type: "string",
+                  title: "Prompt",
+                  description: "Prompt used for agentic chat",
+                },
+                maxIterations: {
+                  type: "integer",
+                  optional: true,
+                  title: "Max iterations",
+                  description:
+                    "Maximum number of iterations for the agentic workflow. An iteration is a single cycle of the agent thinking, tool calling and observing the results. Set to 0 for unlimited iterations.",
+                },
+                outputSchema: {
+                  title: "Output schema",
+                  description: "JSON schema for validating agent output",
+                  ...agentOutputSchemaType,
+                  // record: {
+                  //   values: "unknown",
+                  // },
+                },
+              },
+            },
+          ],
         },
       },
       model: `INTEGER  REFERENCES llm_models(id)`,

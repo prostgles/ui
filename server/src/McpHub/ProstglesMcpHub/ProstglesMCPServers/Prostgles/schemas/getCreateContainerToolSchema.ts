@@ -1,9 +1,9 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { isDocker } from "@src/McpHub/utils";
 import { type DBTool } from "@src/serverFunctions/askLLM/prostglesLLMTools/getAllowedDBToolSchemas";
 import {
   getJSONBSchemaAsJSONSchema,
+  getJSONBTSTypes,
   omitKeys,
   type JSONB,
 } from "prostgles-types";
@@ -21,17 +21,8 @@ export const getCreateContainerToolSchema = (dbTools: DBTool[]) => {
         `e.g. using curl: \`curl -X POST $${DOCKER_MCP_ENDPOINT_ENV_VAR}/db/execute_sql_with_commit -H "Content-Type: application/json" -d '{"sql": "SELECT * FROM users;"}'\``,
         `The following endpoints are available:\n\n`,
         ...dbTools.map((t) => {
-          const argTSSchema = JSON.stringify(
-            omitKeys(getJSONBSchemaAsJSONSchema("", "", t.schema), [
-              "$id",
-              "$schema",
-            ]),
-          );
-          return ` - /${t.tool_name} - ${t.description}. JSON body input schema: ${argTSSchema}  `;
+          return ` - /${t.tool_name} - ${t.description} JSON body input schema: ${getJSONBTSTypes([], t.schema)}. Response schema: ${getJSONBTSTypes([], t.outputSchema)}`;
         }),
-        isDocker ?
-          "DO NOT USE WORKHOST to connect to prostgles-ui-docker-mcp. Just specify network mode 'bridge' and it will work."
-        : "",
       ].join("\n");
 
   return {

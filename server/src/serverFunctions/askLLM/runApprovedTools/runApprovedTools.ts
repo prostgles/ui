@@ -85,6 +85,11 @@ export const runApprovedTools = async (
         "Unexpected. Agent goal tool used but chat does not have agent_info",
       );
     }
+    if (agent_info === "orchestrator") {
+      throw new Error(
+        "Unexpected. Agent goal tool used but agent_info is 'orchestrator'. Orchestrator agent type does not support agent goal tools.",
+      );
+    }
     if (toolUseRequestMessages.length > 1) {
       throw new Error(
         "Unexpected. Agent goal tool used but there are other tool use requests in the same message. Agent goal tool must be used alone.",

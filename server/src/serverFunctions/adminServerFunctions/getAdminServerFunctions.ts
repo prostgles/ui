@@ -526,7 +526,7 @@ export const getAdminServerFunctions = (
     }),
     getAgenticWorkflowTypes: defineAdminFunction({
       run: (_, { dbs }) => {
-        return getAgenticWorkflowFiles(dbs, "agent");
+        return getAgenticWorkflowFiles(dbs, "runtime");
       },
     }),
     installMCPServer: defineAdminFunction({
@@ -592,7 +592,7 @@ export const getAdminServerFunctions = (
                 {
                   type: "tool_result",
                   tool_use_id: reRunToolUseId,
-                  tool_name: toolName,
+                  tool_name: name,
                 } as any,
               ],
             },
@@ -614,7 +614,7 @@ export const getAdminServerFunctions = (
             (m) =>
               m.type === "tool_result" &&
               m.tool_use_id === reRunToolUseId &&
-              m.tool_name === toolName,
+              m.tool_name === name,
           );
 
           if (
@@ -658,7 +658,7 @@ export const getAdminServerFunctions = (
                       type: "text";
                       text: string;
                     }[],
-                    tool_name: toolName,
+                    tool_name: name,
                     tool_use_id: reRunToolUseId!,
                     is_error: result.isError,
                   } as const;

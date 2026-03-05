@@ -25,7 +25,7 @@ export const AskLLMChatActionBarPromptSelector = (
   },
 ) => {
   const { setupState, activeChat, dbSchemaForPrompt } = props;
-  const activeChatId = activeChat.id;
+  const { id: activeChatId, agent_info } = activeChat;
   const { prompts } = setupState;
   const { dbs, dbsSql, connectionId, connection, dbsTables, dbsMethodSchema } =
     usePrgl();
@@ -87,20 +87,21 @@ export const AskLLMChatActionBarPromptSelector = (
         rootChildClassname="f-1"
         button={
           <Btn title="Prompt" {...ChatActionBarBtnStyleProps}>
-            {prompt?.name || activeChat.agent_info?.prompt.slice(0, 40) || (
-              <i>Select Prompt</i>
-            )}
+            {prompt?.name ||
+              (agent_info !== "orchestrator" ?
+                agent_info?.prompt.slice(0, 40)
+              : "") || <i>Select Prompt</i>}
           </Btn>
         }
       >
-        {activeChat.agent_info ?
+        {agent_info && agent_info !== "orchestrator" ?
           <Marked
             className="ta-start"
             codeHeader={undefined}
             loadedSuggestions={undefined}
             prgl={undefined}
             sqlHandler={undefined}
-            content={activeChat.agent_info.prompt}
+            content={agent_info.prompt}
           />
         : <>
             <SmartCardList

@@ -1,6 +1,6 @@
 import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
-import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
+import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
 import { DBS } from "..";
 import { fetchMCPToolsList } from "./AnthropicMcpHub/fetchMCPToolsList";
 import type { McpHub } from "./AnthropicMcpHub/McpHub";
@@ -8,7 +8,26 @@ import { type McpTool } from "./AnthropicMcpHub/McpTypes";
 import { startMcpHub } from "./AnthropicMcpHub/startMcpHub";
 import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
 import type { ProstglesMcpServerDefinition } from "./ProstglesMcpHub/ProstglesMCPServerTypes";
+export const getSchemasAsJsonSchema = ({
+  schema,
+  outputSchema,
+}: {
+  schema: JSONB.FieldTypeObj | undefined;
+  outputSchema: JSONB.FieldType | undefined;
+}) => {
+  const getJsonbAsJsonSchema = (schema: JSONB.FieldType | undefined) =>
+    schema &&
+    (getJSONBSchemaAsJSONSchema(
+      "",
+      "",
+      typeof schema === "string" ? { type: schema } : schema,
+    ) as McpTool["outputSchema"]);
 
+  return {
+    inputSchema: getJsonbAsJsonSchema(schema) as McpTool["inputSchema"],
+    outputSchema: getJsonbAsJsonSchema(outputSchema) as McpTool["inputSchema"],
+  };
+};
 export const updateMcpServerTools = async (
   dbs: DBS,
   serverName: string,
@@ -22,22 +41,11 @@ export const updateMcpServerTools = async (
     tools = getEntries(
       prostglesMCP.definition.tools as ProstglesMcpServerDefinition["tools"],
     ).map(([name, { schema, description, mode = null, outputSchema }]) => {
-      const inputSchema =
-        !schema ? undefined : getJSONBSchemaAsJSONSchema("", "", schema);
       return {
         name,
         description,
         mode,
-        inputSchema: inputSchema as unknown as McpTool["inputSchema"],
-        outputSchema:
-          outputSchema &&
-          (getJSONBSchemaAsJSONSchema(
-            "",
-            "",
-            typeof outputSchema === "string" ?
-              { type: outputSchema }
-            : outputSchema,
-          ) as McpTool["outputSchema"]),
+        ...getSchemasAsJsonSchema({ schema, outputSchema }),
       };
     });
   } else {

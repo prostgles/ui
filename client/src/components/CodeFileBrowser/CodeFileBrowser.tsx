@@ -7,13 +7,18 @@ import {
 } from "@components/MonacoEditor/MonacoEditor";
 import { mdiText } from "@mdi/js";
 import React, { useState } from "react";
+import { CodeEditor } from "src/dashboard/CodeEditor/CodeEditor";
+import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 
 export const CodeFileBrowser = ({
   files,
   onChange,
 }: {
   files: Record<string, string>;
-  onChange: (newFile: { fileName: string; content: string }) => void;
+  onChange: (newFile: {
+    fileName: string;
+    content: string;
+  }) => void | Promise<void>;
 }) => {
   // ADD REACT TYPES FROM node_modules/@types/react/index.d.ts
   // const { dbsMethods } = usePrglCore();
@@ -46,18 +51,32 @@ export const CodeFileBrowser = ({
         className="pointer bg-color-1 rounded-none"
         style={{ alignSelf: "stretch", fontSize: 14 }}
       />
-      <FlexRow className="o-auto f-1 w-full h-full">
+      <FlexRow className="o-auto f-1 w-full h-full ai-start">
         {activeFilePath && (
-          <MonacoEditor
+          // <MonacoEditor
+          //   className="f-1 h-full"
+          //   language={
+          //     FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext"
+          //   }
+          //   loadedSuggestions={undefined}
+          //   value={activeContent}
+          //   style={{ width: "min(600px, 100%)", minHeight: 200 }}
+          //   onChange={(newValue) => {
+          //     onChange({ fileName: activeFilePath, content: newValue });
+          //   }}
+          //   options={monacoOptions}
+          // />
+          <CodeEditorWithSaveButton
+            key={activeFilePath}
             className="f-1 h-full"
             language={
               FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext"
             }
-            loadedSuggestions={undefined}
+            label=""
             value={activeContent}
-            style={{ width: "min(600px, 100%)", minHeight: 200 }}
-            onChange={(newValue) => {
-              onChange({ fileName: activeFilePath, content: newValue });
+            // style={{ width: "min(600px, 100%)", minHeight: 200 }}
+            onSave={async (newValue) => {
+              await onChange({ fileName: activeFilePath, content: newValue });
             }}
             options={monacoOptions}
           />

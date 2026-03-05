@@ -2,6 +2,7 @@ import type { editor } from "monaco-editor";
 import type { CodeEditorProps, LanguageConfig } from "../CodeEditor";
 import { useEffect } from "react";
 import { useEffectDeep, useIsMounted } from "prostgles-client";
+import { installGoToDefinition } from "./installGoToDefinition";
 
 export type MonacoEditorImport = typeof import("monaco-editor");
 
@@ -54,6 +55,7 @@ export const useSetMonacoTsLibraries = (
     if (!getIsMounted()) return;
     try {
       editor.setModel(model);
+      installGoToDefinition(editor);
     } catch (e) {
       console.error(e);
     }

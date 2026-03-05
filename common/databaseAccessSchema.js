@@ -1,12 +1,17 @@
 import { tablePermissionsSchema } from "./tablePermissionsSchema";
 export const databaseAccessSchema = {
+    optional: true,
+    description: "Database access configuration. Use the most restrictive access type that is needed to complete the task.",
     oneOfType: [
-        { mode: { enum: ["none"] } },
-        { mode: { enum: ["execute_sql_with_rollback"] } },
-        { mode: { enum: ["execute_sql_with_commit"] } },
+        {
+            mode: {
+                enum: ["execute_sql_with_rollback", "execute_sql_with_commit"],
+            },
+        },
         {
             mode: { enum: ["custom"] },
             tablePermissions: tablePermissionsSchema,
+            tableCreateStatements: { type: "string", optional: true },
         },
     ],
 };

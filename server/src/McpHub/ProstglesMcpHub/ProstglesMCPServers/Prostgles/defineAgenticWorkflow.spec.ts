@@ -18,8 +18,11 @@ void describe("defineAgenticWorkflow", async () => {
               },
             },
           },
-          workflowAllowedTools: {
-            websearch: { search: 1, get_snapshot: 1 },
+          orchestrationTools: {
+            websearch: {
+              search: 1,
+              get_snapshot: 1,
+            },
           },
           userInput: {
             test_input: {

@@ -79,6 +79,7 @@ export const TableAccessAdvancedOptions = ({
               <div>Columns available for {ruleType}</div>
             </FlexCol>
           }
+          operator="int"
           columns={table.columns}
           value={fieldsOptions.fields}
           onChange={(fields) => {

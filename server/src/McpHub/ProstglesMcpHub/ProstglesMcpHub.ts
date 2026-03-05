@@ -1,4 +1,3 @@
-import type { McpToolCallResponse } from "@common/mcp";
 import type { DBS } from "@src/index";
 import {
   getJSONBSchemaValidationError,
@@ -14,6 +13,7 @@ import type {
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
 import { getProstglesMCPServer } from "./ProstglesMCPServers";
+import type { McpToolCallResponse } from "../AnthropicMcpHub/McpHub";
 
 const servers: Map<
   string,
@@ -96,7 +96,7 @@ const init = async (dbs: DBS) => {
     toolName: string,
     args: unknown,
     context: McpCallContext,
-  ): Promise<McpToolCallResponse> => {
+  ) => {
     const result = await tryCatchV2(async () => {
       const { server, serverDefinition } = getExpectedServer(serverName);
       const toolDefinition = getProperty(
@@ -131,8 +131,9 @@ const init = async (dbs: DBS) => {
             : JSON.stringify(result.data ?? {}),
         },
       ],
+      structuredContent: !result.hasError ? result.data : undefined,
       isError: result.hasError,
-    };
+    } satisfies McpToolCallResponse;
   };
 
   const fetchTools = async (

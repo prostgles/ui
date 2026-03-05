@@ -8,8 +8,8 @@ import type { DefineAgenticWorkflow } from "./defineAgenticWorkflow";
 import { getValidatedAgentHandlerArgs } from "./getValidatedAgentHandlerArgs";
 import {
   getValidatedMcpServerToolsAllowed,
-  getValidatedWorkflowTools,
-} from "./getValidatedWorkflowTools";
+  getOrchestrationToolsHandler,
+} from "./getOrchestrationToolsHandler";
 
 /**
  * Execute agent invocations in series to reduce risk of avoid runaway costs and allow for human feedback between steps.
@@ -35,7 +35,7 @@ export const createWorkflowProxyHandlers = async <
     timeOutInSeconds,
     signal,
     definition_override,
-    workflowAllowedTools,
+    orchestrationTools,
   }: Parameters<P>[0] & {
     signal?: AbortSignal;
   } & Pick<DBSSchema["agentic_workflows"], "definition_override">,
@@ -71,8 +71,8 @@ export const createWorkflowProxyHandlers = async <
   if (!user) {
     throw new Error(`User with id ${userId} not found`);
   }
-  const { workflowToolsHandler } = await getValidatedWorkflowTools({
-    workflowAllowedTools,
+  const { orchestrationToolsHandler } = await getOrchestrationToolsHandler({
+    orchestrationTools,
     dbs,
     chatId,
     userId,
@@ -102,7 +102,8 @@ export const createWorkflowProxyHandlers = async <
       temperature,
     } = configWithDefaults;
 
-    const toolsWithInfo = await getValidatedMcpServerToolsAllowed(dbs, tools);
+    const toolsWithInfo =
+      tools && (await getValidatedMcpServerToolsAllowed(dbs, tools));
 
     const startAgent = async (agentInput?: string) => {
       const agentChat = await dbs.llm_chats.insert(
@@ -215,6 +216,6 @@ export const createWorkflowProxyHandlers = async <
   return {
     agentHandlers,
     agentConfigsWithDefaults,
-    workflowToolsHandler,
+    orchestrationToolsHandler,
   };
 };

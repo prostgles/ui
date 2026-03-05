@@ -20,10 +20,12 @@ import {
 } from "../../../../../WorkspaceMenu/useWorkspaces";
 import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
+import ErrorComponent from "@components/ErrorComponent";
 
 export const LoadSuggestedDashboards = ({
   workspaceId,
   message,
+  toolUseResult,
 }: ProstglesMCPToolsProps) => {
   const { setWorkspace } = useSetActiveWorkspace(workspaceId);
   const { dbs, connectionId, tables } = usePrgl();
@@ -54,6 +56,15 @@ export const LoadSuggestedDashboards = ({
       </FlexCol>
     );
   }
+
+  if (!toolUseResult) {
+    return null;
+  }
+
+  if (toolUseResult.toolUseResultMessage.is_error) {
+    return <ErrorComponent error={"Failed to validate response"} />;
+  }
+
   const prostglesWorkspaces =
     json.prostglesWorkspaces as WorkspaceInsertModel[];
   return (
@@ -142,7 +153,7 @@ export const LoadSuggestedDashboards = ({
               { deleted: true },
             );
             setWorkspace(undefined);
-            pageReload("Workspaces deleted");
+            await pageReload("Workspaces deleted");
           }}
         >
           Remove suggested workspaces

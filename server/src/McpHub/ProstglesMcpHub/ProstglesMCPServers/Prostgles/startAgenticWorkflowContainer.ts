@@ -11,12 +11,12 @@ import type {
   McpProxyRequestContext,
 } from "../../../DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { runContainerWithProxyAccess } from "../../../DockerSandbox/runContainerWithProxyAccess";
-import { getAgenticWorkflowFiles } from "./getAgenticWorkflowFiles";
 import type {
   AgenticWorkflowDefinition,
   ProxyCallData,
   ProxyCallDataDefinitions,
 } from "./defineAgenticWorkflowHandlers";
+import { getOrchestrationContainerFiles } from "./getOrchestrationContainerFiles";
 
 export const startAgenticWorkflowContainer = async (
   dbs: DBS,
@@ -112,14 +112,23 @@ export const startAgenticWorkflowContainer = async (
       })
       .catch((error) => {
         console.error("Error in handler:", error);
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json(error);
       });
   };
+
+  const { db_data_permissions = null } =
+    mode.type === "full" ? mode.dbPermissions : {};
   const result = await runContainerWithProxyAccess(
     dbs,
     {
       user_id,
-      dbPermissions: mode.dbPermissions,
+      dbPermissions: mode.dbPermissions && {
+        ...mode.dbPermissions,
+        db_data_permissions: db_data_permissions && {
+          ...db_data_permissions,
+          auto_approve: true,
+        },
+      },
       requestHandlers: {
         ["/definitions"]: {
           method: "POST",
@@ -155,7 +164,7 @@ export const startAgenticWorkflowContainer = async (
                         name: 1,
                         timeOutInSeconds: 1,
                         userInput: 1,
-                        workflowAllowedTools: 1,
+                        orchestrationTools: 1,
                       } satisfies Record<
                         keyof Extract<
                           ProxyCallData,
@@ -256,21 +265,11 @@ export const startAgenticWorkflowContainer = async (
       networkMode: "bridge-internal",
       timeout:
         mode.type === "full" ? mode.definition.timeOutInSeconds * 1000 : 30_000,
-      files: {
-        Dockerfile: `
-          FROM node:22-slim
-          WORKDIR /app
-          COPY . . 
-          
-          RUN npm install --silent
-          RUN npm run build
-          CMD ["npm", "start", "--silent"]
-        `,
-        ...(await getAgenticWorkflowFiles(dbs, "runtime")),
-        "index.ts": workflowTs,
-        "package.json": getPackageJson(mode.type === "definitions-only"),
-        "tsconfig.json": tsconfigJson,
-      },
+      files: await getOrchestrationContainerFiles({
+        dbs,
+        workflowTs,
+        forDefinitions: mode.type === "definitions-only",
+      }),
       environment: {
         MODE: mode.type,
         USER_INPUT:
@@ -310,31 +309,3 @@ export const startAgenticWorkflowContainer = async (
   }
   return result;
 };
-
-const getPackageJson = (forDefinitions: boolean) =>
-  JSON.stringify({
-    name: "agentic-workflow",
-    version: "1.0.0",
-    main: "index.js",
-    scripts: {
-      build: "tsc",
-      start: "node index.js",
-    },
-    dependencies: {
-      "@types/node": "^22.15.2",
-      typescript: "^5.8.3",
-      "prostgles-types": "^4.0.208",
-      ...(forDefinitions ? { "pgsql-ast-parser": "^12.0.2" } : {}),
-    },
-  });
-
-const tsconfigJson = JSON.stringify({
-  compilerOptions: {
-    target: "ES2020",
-    module: "CommonJS",
-    strict: true,
-    esModuleInterop: true,
-    skipLibCheck: true,
-    forceConsistentCasingInFileNames: true,
-  },
-});

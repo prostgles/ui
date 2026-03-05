@@ -21,7 +21,7 @@ export const getAgenticWorkflowFunctions = (
       chatId: "integer",
       messageId: "string",
     },
-    run: ({ chatId, messageId }, { user }) => {
+    run: async ({ chatId, messageId }, { user, dbs }) => {
       const userAborters = abortersByUserId.get(user.id);
       const aborterEntryIndex = userAborters?.findIndex(
         (entry) => entry.chatId === chatId && entry.messageId === messageId,
@@ -33,6 +33,19 @@ export const getAgenticWorkflowFunctions = (
         abortersByUserId.set(user.id, userAborters);
         return { success: true };
       } else {
+        await dbs.agentic_workflow_runs.update(
+          {
+            chat_id: chatId,
+            message_id: messageId,
+            ["state->>status" as any]: "running",
+          },
+          {
+            state: {
+              status: "stopped",
+            },
+            finished: new Date(),
+          },
+        );
         return { success: false, message: "No running workflow found" };
       }
     },
@@ -52,7 +65,7 @@ export const getAgenticWorkflowFunctions = (
         workflowId,
         messageId,
         executionMode,
-        workflowAllowedTools,
+        orchestrationTools,
       },
       { dbs, user, clientReq },
     ) => {
@@ -96,7 +109,7 @@ export const getAgenticWorkflowFunctions = (
         };
       }
       const aborter = new AbortController();
-      const { agentHandlers, workflowToolsHandler } =
+      const { agentHandlers, orchestrationToolsHandler } =
         await createWorkflowProxyHandlers(
           {
             name,
@@ -104,7 +117,7 @@ export const getAgenticWorkflowFunctions = (
             agentDefinitions,
             databaseAccessDefinitions,
             signal: aborter.signal,
-            workflowAllowedTools,
+            orchestrationTools,
             definition_override: workflow.definition_override,
           },
           {
@@ -176,7 +189,7 @@ export const getAgenticWorkflowFunctions = (
               return agentHandler(data.input);
             }
 
-            const toolHandler = workflowToolsHandler.get(data.name);
+            const toolHandler = orchestrationToolsHandler.get(data.name);
             if (!toolHandler) {
               throw `Tool handler for ${data.name} not found`;
             }

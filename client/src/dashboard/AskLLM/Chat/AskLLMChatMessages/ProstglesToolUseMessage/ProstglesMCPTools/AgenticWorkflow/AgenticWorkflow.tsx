@@ -28,16 +28,19 @@ export const AgenticWorkflow = ({
     activeTab,
     inputValidation,
     setActiveTab,
-    validatedWorkflowJson,
+    workflowValidation,
     latestRun,
     executionMode,
     setExecutionMode,
+    workflow,
   } = useAgenticWorkflowState({
     message,
     toolUseResult,
   });
-  const { toolUseResultJson, validWorkflow } = validatedWorkflowJson;
-  const userInputState = useAgenticWorkflowUserInput(validWorkflow?.userInput);
+
+  const userInputState = useAgenticWorkflowUserInput(
+    workflow?.definition_data.userInput,
+  );
 
   if (inputValidation.error !== undefined) {
     return (
@@ -68,12 +71,12 @@ export const AgenticWorkflow = ({
           maxHeight: "600px",
         }}
         items={{
-          ...(validWorkflow && {
+          ...(workflow && {
             Details: {
               label: "Details",
               content: (
                 <AgenticWorkflowDetails
-                  validatedWorkflow={validWorkflow}
+                  workflow={workflow}
                   userInputState={userInputState}
                 />
               ),
@@ -83,7 +86,7 @@ export const AgenticWorkflow = ({
             label: "Definition",
             content: (
               <AgenticWorkflowDefinition
-                workflowId={validWorkflow?.workflowId}
+                workflowId={workflow?.id}
                 chatId={chatId}
                 workflow_function_definition={
                   inputData.workflow_function_definition
@@ -138,34 +141,37 @@ export const AgenticWorkflow = ({
           />
         </div>
       )}
-      <AgenticWorkflowActions
-        chatId={chatId}
-        userInputState={userInputState}
-        validatedWorkflowJson={validatedWorkflowJson}
-        inputData={inputData}
-        onStarted={() => {
-          setActiveTab("Logs");
-        }}
-        onInitError={() => {
-          setActiveTab("Details");
-        }}
-        onSuccess={() => setShowSuccessMessage(true)}
-        messageId={toolUseResult.toolUseResult.id}
-        latestRun={latestRun}
-        executionMode={executionMode}
-        setExecutionMode={setExecutionMode}
-      />
-      {toolUseResultJson?.isError &&
-        (typeof toolUseResultJson.result === "string" ?
-          <MonacoLogsWithFullscreen
+      {workflowValidation?.isValid && workflow && (
+        <AgenticWorkflowActions
+          chatId={chatId}
+          userInputState={userInputState}
+          workflow={workflow}
+          inputData={inputData}
+          onStarted={() => {
+            setActiveTab("Logs");
+          }}
+          onInitError={() => {
+            setActiveTab("Details");
+          }}
+          onSuccess={() => setShowSuccessMessage(true)}
+          messageId={toolUseResult.toolUseResult.id}
+          latestRun={latestRun}
+          executionMode={executionMode}
+          setExecutionMode={setExecutionMode}
+        />
+      )}
+      {workflowValidation &&
+        !workflowValidation.isValid &&
+        (workflowValidation.error !== undefined ?
+          <ErrorComponent
+            data-command="AgenticWorkflow.validationErrorLogs"
+            error={workflowValidation.error}
+            maxTextLength={2e3}
+          />
+        : <MonacoLogsWithFullscreen
             label="Error logs"
             data-command="AgenticWorkflow.validationErrorLogs"
-            logs={(toolUseResultJson as any).result}
-          />
-        : <ErrorComponent
-            data-command="AgenticWorkflow.validationErrorLogs"
-            error={toolUseResultJson}
-            maxTextLength={2e3}
+            logs={workflowValidation.logs}
           />)}
     </FlexCol>
   );

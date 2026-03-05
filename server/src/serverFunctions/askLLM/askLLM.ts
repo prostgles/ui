@@ -205,7 +205,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       {
         name:
           isOnlyImage ? "[Attached image]" : (
-            sliceText(questionText, 25).replaceAll("\n", " ")
+            sliceText(questionText, 35).replaceAll("\n", " ")
           ),
       },
     );
@@ -421,7 +421,8 @@ export const askLLM = async (args: AskLLMArgs) => {
       throw `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`;
     }
 
-    const { maxIterations } = agent_info ?? {};
+    const { maxIterations } =
+      agent_info !== "orchestrator" ? (agent_info ?? {}) : {};
     if (
       maxIterations !== undefined &&
       isAssistantMessageRequestingToolUse({ message: aiResponseMessage })

@@ -93,7 +93,8 @@ export const LoadSuggestedToolsAndPromptLoadBtn = ({
         await dbs.llm_chats.update(
           { id: chatId },
           {
-            db_data_permissions: { ...dbAccess, auto_approve: true } as any,
+            db_data_permissions:
+              !dbAccess ? null : { ...dbAccess, auto_approve: true },
           },
         );
 

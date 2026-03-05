@@ -7,6 +7,7 @@ import React from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { MCPServersProps } from "../MCPServers";
 import { AddMCPServer } from "./AddMCPServer";
+import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
 
 export const MCPServersToolbar = ({
   selectedTool,
@@ -59,11 +60,25 @@ export const MCPServersToolbar = ({
             },
           }}
           value={selectedTool?.id}
-          fullOptions={(tools ?? []).map((t) => ({
-            key: t.id,
-            label: `${t.server_name} ${t.name}`,
-            subLabel: t.description,
-          }))}
+          fullOptions={(tools ?? []).map((t) => {
+            const argsSchema =
+              t.inputSchema &&
+              getJsonSchemaAsTs(t.inputSchema, {
+                mode: "compact",
+              });
+            const outputSchema =
+              !t.outputSchema ? "unknown" : (
+                getJsonSchemaAsTs(t.outputSchema, { mode: "compact" })
+              );
+            return {
+              key: t.id,
+              label: `${t.server_name} ${t.name}`,
+              subLabel: [
+                t.description,
+                `(${argsSchema ? "args: " : ""}${argsSchema}) => Promise<${outputSchema}>`,
+              ].join("\n"),
+            };
+          })}
           onChange={(id) => {
             setSelectedTool(tools?.find((t) => t.id === id));
           }}

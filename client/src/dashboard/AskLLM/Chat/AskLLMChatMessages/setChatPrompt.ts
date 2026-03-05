@@ -38,10 +38,10 @@ export const setChatPrompt = async ({
   const getTools = (opts: DBSSchema["llm_prompts"]["options"]) => {
     return Promise.all(
       getEntries(opts?.mcp_server_tools ?? {}).map(
-        async ([server_name, toolList]) => {
+        async ([server_name, toolList = {}]) => {
           return dbs.mcp_server_tools.find({
             server_name,
-            name: toolList === "*" ? undefined : { $in: toolList },
+            name: { $in: Object.keys(toolList) },
           });
         },
       ),
@@ -73,20 +73,19 @@ export const setChatPrompt = async ({
   const mcpServersAndTools = getEntries(mcp_server_tools || {});
   if (mcpServersAndTools.length) {
     const allowedToolsInsert = await Promise.all(
-      mcpServersAndTools.flatMap(async ([server_name, toolList]) => {
+      mcpServersAndTools.flatMap(async ([server_name, toolListObj = {}]) => {
         await dbs.mcp_servers.update({ name: server_name }, { enabled: true });
         /** Wait for tools to load if missing */
         while (!(await dbs.mcp_server_tools.count({ server_name }))) {
           await tout(500);
         }
+
+        const toolList = Object.keys(toolListObj);
         const tools = await dbs.mcp_server_tools.find({
           server_name,
-          name: toolList === "*" ? undefined : { $in: toolList },
+          name: { $in: toolList },
         });
-        if (
-          !tools.length ||
-          (Array.isArray(toolList) && tools.length !== toolList.length)
-        ) {
+        if (!tools.length || tools.length !== toolList.length) {
           throw new Error(
             `Some tools not found for MCP server ${server_name}. Expected: ${toolList}, found: ${tools.map((t) => t.name).join(", ")}`,
           );

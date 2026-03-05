@@ -1,7 +1,9 @@
+import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import { ProgressBar } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
+import { Stopwatch } from "@components/Stopwatch";
 import {
   mdiClock,
   mdiLockClock,
@@ -10,16 +12,14 @@ import {
   mdiStop,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { isDefined, omitKeys } from "prostgles-types";
+import { isDefined } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import type { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import type { UseAgenticWorkflowUserInputReturn } from "./hooks/useAgenticWorkflowUserInput";
-import type { useValidatedWorkflowJson } from "./useValidatedWorkflowJson";
-import { Stopwatch } from "@components/Stopwatch";
 
 export const AgenticWorkflowActions = ({
-  validatedWorkflowJson: { toolUseResultJson, validWorkflow },
+  workflow,
   chatId,
   inputData,
   onStarted,
@@ -32,7 +32,7 @@ export const AgenticWorkflowActions = ({
   onSuccess,
 }: Pick<ProstglesMCPToolsProps, "chatId"> & {
   inputData: { workflow_function_definition: string };
-  validatedWorkflowJson: ReturnType<typeof useValidatedWorkflowJson>;
+  workflow: DBSSchema["agentic_workflows"];
   onStarted: () => void;
   onInitError: () => void;
   onSuccess: () => void;
@@ -134,26 +134,21 @@ export const AgenticWorkflowActions = ({
           disabledInfo={
             !startAgenticWorkflow ?
               "Starting agentic workflows is not allowed/available"
-            : !toolUseResultJson ?
-              "Validating the workflow"
-            : toolUseResultJson.isError ?
-              "Workflow validation failed"
             : undefined
           }
           data-command="AgenticWorkflow.start"
           loading={isRunning ? true : undefined}
           onClickPromise={async () => {
-            if (!validWorkflow) {
-              throw new Error(`validWorkflow missing`);
-            }
             if (!messageId) {
               throw new Error(`messageId missing`);
             }
             onStarted();
             const res = await startAgenticWorkflow!({
               chatId,
+              name: workflow.name,
+              workflowId: workflow.id,
+              ...workflow.definition_data,
               workflowTs: inputData.workflow_function_definition,
-              ...omitKeys(validWorkflow, ["isValid", "newTables"]),
               userInputValue,
               messageId,
               executionMode,

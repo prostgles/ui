@@ -3,6 +3,7 @@ import type { JSONB } from "prostgles-types";
 import { tableConfigLlmChats } from "./tableConfigLlmChats";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
 import { tableConfigAgenticWorkflow } from "../tableConfigAgenticWorkflow";
+import { mcpServerToolsAllowed } from "@common/prostglesMcp";
 
 const toolUseContent: JSONB.FieldType = {
   oneOf: [
@@ -257,9 +258,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
             description:
               "List of MCP servers and tools that will be enabled for this prompt.",
             optional: true,
-            record: {
-              values: { oneOf: [{ enum: ["*"] }, { type: "string[]" }] },
-            },
+            ...mcpServerToolsAllowed,
           },
           database_access: {
             optional: true,

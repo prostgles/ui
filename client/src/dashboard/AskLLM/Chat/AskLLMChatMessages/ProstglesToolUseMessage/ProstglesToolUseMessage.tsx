@@ -38,7 +38,7 @@ export const ProstglesMCPToolsWithUI = {
   },
   "prostgles-ui--create_container": {
     component: DockerSandboxCreateContainer,
-    displayMode: "inline",
+    displayMode: "full",
   },
   [getProstglesMCPFullToolName(
     "prostgles-db",

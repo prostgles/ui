@@ -32,19 +32,16 @@ let dockerMCPServerProxy:
   | ReturnType<typeof createDockerMCPServerProxy>
   | undefined;
 
-export const getOrCreateDockerMCPServerProxy = async (
-  isElectron: boolean | undefined,
-) => {
-  dockerMCPServerProxy ??= createDockerMCPServerProxy(isElectron);
+export const getOrCreateDockerMCPServerProxy = async () => {
+  dockerMCPServerProxy ??= createDockerMCPServerProxy();
   return dockerMCPServerProxy;
 };
 export const getDockerMCPServerProxy = () => dockerMCPServerProxy;
 
 /**
- * A separate server is used to improve security because we need to
- * bind it to 0.0.0.0 to ensure docker containers can access it.
+ * A separate server is used to improve security
  */
-const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
+const createDockerMCPServerProxy = async () => {
   const dockerVersion = execSync("docker --version").toString();
   if (!dockerVersion) {
     throw new Error("Docker not installed");
@@ -115,29 +112,38 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
   const gateways =
     (
       isDocker ||
-      isElectron ||
       [bridgeGatewayIP, bridgeInternalGatewayIP].includes(DEFAULT_GATEWAY_IP)
     ) ?
-      [{ network: "all" as const, gateway: "0.0.0.0" }]
-    : (["bridge", "bridge-internal"] as const).map((network) => ({
-        network,
-        gateway: getDockerGatewayIP(network),
-      }));
+      [
+        {
+          network: "all" as const,
+          listenHost: DEFAULT_GATEWAY_IP,
+        },
+      ]
+    : [
+        {
+          network: "bridge" as const,
+          listenHost: bridgeGatewayIP,
+        },
+        {
+          network: "bridge-internal" as const,
+          listenHost: bridgeInternalGatewayIP,
+        },
+      ];
 
   const instances = await Promise.all(
-    gateways.map(({ gateway, network }) => {
+    gateways.map(({ listenHost, network }) => {
       const http = _http.createServer(app);
       return new Promise<{
         server: _http.Server;
         address: AddressInfo;
-        gateway: string;
         network: "all" | "bridge" | "bridge-internal";
         port: number;
         destroy: () => void;
       }>((resolve, reject) => {
         const server = http.listen(
           preferredPortIsFree ? PREFERRED_PORT : undefined,
-          gateway,
+          listenHost,
           () => {
             const address = server.address();
             console.log("Docker MCP Router listening on", address);
@@ -149,7 +155,6 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
                 server,
                 address,
                 network,
-                gateway,
                 port: actualPort,
                 destroy: () => server.close(),
               });
@@ -175,8 +180,15 @@ const createDockerMCPServerProxy = async (isElectron: boolean | undefined) => {
           `No Docker MCP server instance found for network mode: ${networkMode}`,
         );
       }
-      const { port, gateway } = instance;
+      const { port, network } = instance;
 
+      const gateway =
+        (
+          network === "bridge-internal" ||
+          networkModeToUse === "bridge-internal"
+        ) ?
+          bridgeInternalGatewayIP
+        : bridgeGatewayIP;
       const baseUrl =
         isDocker ?
           `http://prostgles-ui-docker-mcp:${port}`
@@ -196,12 +208,21 @@ const dbRequestHandler: RequestHandler = (req: Request, res: Response) => {
   const { endpoint = "" } = req.params;
   try {
     const { dbPermissions, sid_token } = authContext;
-    const { mode = "none" } = dbPermissions?.db_data_permissions || {};
+    const { mode = "none", auto_approve } =
+      dbPermissions?.db_data_permissions || {};
     if (!dbPermissions || mode === "none") {
       return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
         error: "No database permissions granted for this container",
       });
     }
+
+    if (!auto_approve) {
+      return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
+        error:
+          "Database permissions for this container require manual approval, but auto_approve is not enabled.",
+      });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     req.cookies ??= {};
     req.cookies[sidKeyName] = sid_token;

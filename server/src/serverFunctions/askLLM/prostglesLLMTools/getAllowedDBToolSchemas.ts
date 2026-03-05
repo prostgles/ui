@@ -12,8 +12,24 @@ export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
   description: string;
   auto_approve: boolean;
   schema: JSONB.ObjectType;
+  outputSchema: JSONB.FieldType;
   mode: null;
 };
+
+const dbTools = getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"])
+  .map(([toolName, { description, schema, outputSchema }]) => {
+    return {
+      name: getProstglesMCPFullToolName("prostgles-db", toolName),
+      type: "prostgles-db",
+      tool_name: toolName,
+      description,
+      auto_approve: false,
+      schema,
+      mode: null,
+      outputSchema,
+    } satisfies DBTool;
+  })
+  .filter(isDefined);
 
 export const getAllowedDBToolSchemas = (
   dbPermissions: DbPermissions | undefined,
@@ -37,50 +53,35 @@ export const getAllowedDBToolSchemas = (
     if (allowedCommands.get("select")) {
       allowedCommands.set("count", true);
     }
-    const tableTools = getEntries(
-      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"],
-    )
-      .map(([toolName, { description, schema }]) => {
-        if (!allowedCommands.has(toolName)) return;
+    return dbTools
+      .map((tool) => {
+        if (!allowedCommands.has(tool.tool_name)) return;
         return {
-          name: getProstglesMCPFullToolName("prostgles-db", toolName),
-          type: "prostgles-db",
-          tool_name: toolName,
-          description,
+          ...tool,
           auto_approve: Boolean(chatDBAccess.auto_approve),
-          schema,
-          mode: null,
-        } satisfies DBTool;
+        };
       })
       .filter(isDefined);
-    return Object.values(tableTools);
   }
 
-  const sqlTools = getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"])
-    .map(([toolName, { description, schema }]) => {
-      const tool: DBTool = {
-        name: getProstglesMCPFullToolName("prostgles-db", toolName),
-        type: "prostgles-db",
-        tool_name: toolName,
-        description,
-        auto_approve: Boolean(chatDBAccess.auto_approve),
-        schema,
-        mode: null,
-      };
+  return dbTools
+    .map((tool) => {
+      const { tool_name } = tool;
 
       if (
         /** Allow all tools */
         chatDBAccess.mode === "execute_sql_with_commit" ||
         /** Allow read only tools */
-        toolName === "execute_sql_with_rollback" ||
-        toolName === "select" ||
-        toolName === "count"
+        tool_name === "execute_sql_with_rollback" ||
+        tool_name === "select" ||
+        tool_name === "count"
       ) {
-        return tool;
+        return {
+          ...tool,
+          auto_approve: Boolean(chatDBAccess.auto_approve),
+        };
       }
     })
     .filter(isDefined);
-
-  return sqlTools;
 };
 const COMMANDS = ["select", "update", "insert", "delete"] as const;

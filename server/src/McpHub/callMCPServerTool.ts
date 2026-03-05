@@ -1,4 +1,3 @@
-import type { McpToolCallResponse } from "@common/mcp";
 import type { DBSSchema } from "@common/publishUtils";
 import {
   getJSONBObjectSchemaValidationError,
@@ -10,6 +9,7 @@ import { startMcpHub } from "./AnthropicMcpHub/startMcpHub";
 import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
 import { getProstglesMcpHub } from "./ProstglesMcpHub/ProstglesMcpHub";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
+import type { McpToolCallResponse } from "./AnthropicMcpHub/McpHub";
 
 export const callMCPServerTool = async ({
   dbs,

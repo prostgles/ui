@@ -2,23 +2,30 @@ import { join } from "path";
 import {
   prostglesUICryptoDashboardSample,
   prostglesUIFoodDeliveryDashboardSample,
-} from "testAskLLM/sampleToolUseData";
-import { dockerWeatherToolUse } from "testAskLLM/sampleToolUseData";
+} from "./sampleToolUseData";
+import { dockerWeatherToolUse } from "./sampleToolUseData";
 import { createComponentToolUse } from "./createComponentToolUse";
 import { stringify, type ToolUse } from "./utils";
 import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
+import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { JSONB } from "prostgles-types";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../common/prostglesMcp";
 
 export const clientNodeModulesDirectory = join(
   __dirname,
   "../../../client/node_modules",
 );
 
+type DatabaseAccessPermission = JSONB.GetObjectType<
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]
+>;
+
 const taskToolArguments = {
   suggested_prompt:
     "I will paste receipt images in this chat. Please extract the following information from each receipt:\n- Company/merchant name\n- Total amount\n- Currency\n- Date of purchase\n- Full extracted text\n\nAfter extracting the data, insert it into the receipts table.",
   suggested_database_access: {
-    Mode: "Custom",
-    tables: {
+    mode: "custom",
+    tablePermissions: {
       receipts: {
         select: true,
         insert: true,
@@ -28,7 +35,7 @@ const taskToolArguments = {
   },
   suggested_database_tool_names: [],
   suggested_mcp_tool_names: ["fetch--fetch"],
-};
+} satisfies DatabaseAccessPermission;
 
 const taskToolUse: ToolUse = {
   content:

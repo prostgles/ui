@@ -1,14 +1,13 @@
-import { getProstglesState } from "@src/init/tryStartProstgles";
+import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import { isDefined } from "prostgles-types";
-import type { ProstglesMcpServerHandlerInstance } from "../../ProstglesMCPServerTypes";
 import { getOrCreateDockerMCPServerProxy } from "../../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
+import type { ProstglesMcpServerHandlerInstance } from "../../ProstglesMCPServerTypes";
 import { askQuestionsToolSchema } from "./schemas/askQuestionsToolSchema";
 import { getAgenticWorkflowToolSchema } from "./schemas/getAgenticToolSchemas";
 import { getCreateContainerToolSchema } from "./schemas/getCreateContainerToolSchema";
 import { getSuggestToolsSchema } from "./schemas/getSuggestToolsSchema";
-import { suggestDashboardsToolSchema } from "./schemas/suggestDashboardsToolSchema";
-import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import { getToolSchema } from "./schemas/getToolSchema";
+import { suggestDashboardsToolSchema } from "./schemas/suggestDashboardsToolSchema";
 
 export const fetchTools: ProstglesMcpServerHandlerInstance["fetchTools"] =
   async (dbs, { dbTools, mcpTools, toolsAllowed }) => {
@@ -24,7 +23,7 @@ export const fetchTools: ProstglesMcpServerHandlerInstance["fetchTools"] =
           return {};
         }
         /** Used to show error early if docker is not setup */
-        await getOrCreateDockerMCPServerProxy(getProstglesState().isElectron);
+        await getOrCreateDockerMCPServerProxy();
 
         const workflowSchema = await getAgenticWorkflowToolSchema({
           availableDBTools: dbTools,

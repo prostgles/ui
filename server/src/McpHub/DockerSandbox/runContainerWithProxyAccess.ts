@@ -1,6 +1,5 @@
 import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
 import { upsertSession } from "@src/authConfig/upsertSession";
-import { getElectronConfig } from "@src/electronConfig";
 import type { DBS } from "@src/index";
 import { createContainer } from "./createContainer";
 import {
@@ -23,9 +22,7 @@ export const runContainerWithProxyAccess = async (
   args: Parameters<typeof createContainer>[1],
   onLogs?: (logs: ProcessLog[]) => void,
 ) => {
-  const proxy = await getOrCreateDockerMCPServerProxy(
-    getElectronConfig()?.isElectron,
-  );
+  const proxy = await getOrCreateDockerMCPServerProxy();
   const user = await dbs.users.findOne({ id: user_id });
   if (!user) {
     throw new Error(`User with id ${user_id} not found`);
@@ -48,6 +45,16 @@ export const runContainerWithProxyAccess = async (
     throw new Error("Failed to create session for Docker MCP");
   }
 
+  const npmVars = {
+    /** Speed things up */
+    NPM_CONFIG_AUDIT: "false",
+    NPM_CONFIG_UPDATE_NOTIFIER: "false",
+    NPM_CONFIG_FETCH_RETRIES: "0",
+    NPM_CONFIG_FETCH_TIMEOUT: "15000",
+    NO_UPDATE_NOTIFIER: "1",
+    FORCE_COLOR: "1",
+  };
+
   const containerResult =
     await dockerContainerAuthRegistry.runContainerWithAuth(
       {
@@ -64,20 +71,13 @@ export const runContainerWithProxyAccess = async (
         const argsWithEnv: typeof args = {
           ...args,
           environment: {
-            NO_UPDATE_NOTIFIER: "1",
-            FORCE_COLOR: "1",
+            ...npmVars,
             ...args.environment,
             [DOCKER_MCP_ENDPOINT_ENV_VAR]: proxy.getBaseUrl(
               args.networkMode ?? "bridge",
             ),
           },
-          buildEnvironment: {
-            /** Speed things up */
-            NPM_CONFIG_AUDIT: "false",
-            NPM_CONFIG_UPDATE_NOTIFIER: "false",
-            NPM_CONFIG_FETCH_RETRIES: "0",
-            NPM_CONFIG_FETCH_TIMEOUT: "15000",
-          },
+          buildEnvironment: npmVars,
         };
         return createContainer(containerName, argsWithEnv, onLogs);
       },

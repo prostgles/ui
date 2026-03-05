@@ -34,9 +34,13 @@ export const loadingHTML = htmlToDataUrl(`
     
     <title>Prostgles Desktop</title>
     <style>
+      :root {
+        color-scheme: light dark;
+      }
       html, body {
         width: 100%;
         height: 100%;
+        margin: 0;
         text-align: center;
         display: flex;
         flex: 1;
@@ -46,13 +50,17 @@ export const loadingHTML = htmlToDataUrl(`
         overflow: hidden;
         align-items: center;
         justify-content: center;
+        background: light-dark(#fff, #111);
       }
+
+      #root { width: 100px; height: 100px; contain: layout paint style; transform: translateZ(0); backface-visibility: hidden; }
+      #root svg { display: block; width: 100%; height: 100%; }
 
       ${cssAnimation}
     </style>
   </head>
   <body>
-    <main id="root" style="width: 100px; height: 100px;">
+    <main id="root">
       ${logoWithoutFirstLine}
     </main>
     

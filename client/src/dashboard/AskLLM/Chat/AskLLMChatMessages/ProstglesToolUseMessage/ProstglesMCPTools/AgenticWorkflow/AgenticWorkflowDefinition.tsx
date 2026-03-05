@@ -11,6 +11,7 @@ import {
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { ToolResultMessage } from "../../../ToolUseChatMessage/ToolUseChatMessage";
+import { getMCPToolNameParts } from "@common/prostglesMcp";
 
 export const AgenticWorkflowDefinition = ({
   workflow_function_definition,
@@ -50,10 +51,17 @@ export const AgenticWorkflowDefinition = ({
     const onSave: CodeEditorProps["onSave"] =
       callMCPServerTool && workflowId ?
         async (newValue) => {
+          const toolNameParts = getMCPToolNameParts(
+            toolResultMessage.tool_name,
+          );
+          if (!toolNameParts) {
+            throw new Error(
+              `Invalid tool name: ${toolResultMessage.tool_name}`,
+            );
+          }
           await callMCPServerTool({
             chatId,
-            serverName: "prostgles-ui",
-            toolName: toolResultMessage.tool_name,
+            ...toolNameParts,
             args: {
               workflow_function_definition: newValue,
               workflowId,
@@ -77,6 +85,7 @@ export const AgenticWorkflowDefinition = ({
       key={workflow_function_definition}
       label={null}
       value={workflow_function_definition}
+      codeEditorClassName=""
       language={language}
       minHeight={400}
       // scroll to end to avoid top data which is shown in Details tab

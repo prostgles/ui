@@ -34,3 +34,29 @@
   line-height: 0;
 }
   */
+
+.Marked table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  display: block;
+  overflow-x: auto;
+}
+
+.Marked th,
+.Marked td {
+  padding: 0.5em 0.75em;
+  text-align: left;
+  vertical-align: top;
+  border: 1px solid var(--bg-color-2);
+}
+
+.Marked th {
+  background: var(--bg-color-2);
+  color: var(--text-0);
+}
+
+.Marked tr:nth-child(even) td {
+  background: var(--li-hover-bg);
+}

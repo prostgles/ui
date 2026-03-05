@@ -10,38 +10,6 @@ export type MCPServerInfo = Omit<
   >[];
 };
 
-export type McpToolCallResponse = {
-  _meta?: Record<string, any>;
-  content: Array<
-    | {
-        type: "text";
-        text: string;
-      }
-    | {
-        type: "image" | "audio";
-        data: string;
-        mimeType: string;
-      }
-    | {
-        type: "resource";
-        resource: {
-          uri: string;
-          mimeType?: string;
-          text?: string;
-          blob?: string;
-        };
-      }
-    | {
-        type: "resource_link";
-        uri: string;
-        name: string;
-        mimeType?: string;
-        description?: string;
-      }
-  >;
-  isError?: boolean;
-};
-
 export const DEFAULT_MCP_SERVER_NAMES = [
   "filesystem",
   "fetch",

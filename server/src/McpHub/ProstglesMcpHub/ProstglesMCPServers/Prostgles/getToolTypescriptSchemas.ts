@@ -1,41 +1,18 @@
-import { getMCPFullToolName, getMCPToolNameParts } from "@common/prostglesMcp";
 import type { DBS } from "@src/index";
-import { convertJsonSchemaToTypes } from "./getJsonSchemaAsTs";
+import { getJsonSchemaAsTs } from "../../../../../../common/getJsonSchemaAsTs";
+import { getValidatedMcpServerToolsAllowed } from "./getOrchestrationToolsHandler";
 
 export const getToolTypescriptSchemas = async (
   dbs: DBS,
-  toolNames: string[] | undefined,
+  mcpServerTools: Record<string, Record<string, 1>> | "*",
+  mode: "full" | "compact" = "full",
 ) => {
-  const splitToolNames = toolNames?.map((name) => {
-    const nameParts = getMCPToolNameParts(name);
-    if (!nameParts) {
-      throw new Error(
-        `Invalid tool name: ${name}. Expected format: ${getMCPFullToolName("serverName", "toolName")}`,
-      );
-    }
-    return nameParts;
-  });
-  const mcpTools = await dbs.mcp_server_tools.find(
-    !splitToolNames?.length ?
-      {}
-    : {
-        $and: splitToolNames.map(({ serverName, toolName }) => ({
-          name: toolName,
-          server_name: serverName,
-        })),
-      },
-  );
+  const mcpTools = await getValidatedMcpServerToolsAllowed(dbs, mcpServerTools);
 
   const getTsType = (schema: Record<string, unknown> | null | undefined) => {
-    let res =
-      !schema ? "string" : (
-        convertJsonSchemaToTypes(schema) //.then((v) => v.trim().slice(v.indexOf("{")))
-      );
+    let res = !schema ? "string" : getJsonSchemaAsTs(schema, { mode });
     res = res.trim();
     res = res || " unknown";
-    if (res.startsWith(`export type Root = `)) {
-      res = res.slice(`export type Root = `.length);
-    }
     if (res.endsWith(";")) {
       return res.slice(0, -1);
     }
@@ -53,14 +30,16 @@ export const getToolTypescriptSchemas = async (
     const argsTsSchema = getTsType(inputSchema);
     const outputTsSchema = getTsType(outputSchema);
 
-    const funcDef = [
+    const funcDef = `${JSON.stringify(name)}: (args: ${argsTsSchema}) => Promise<${outputTsSchema}>;`;
+    const funcDefWithDescription = [
       "/**",
       " * " + escapeForJsDoc(description).split("\n").join("\n * "),
       " */",
-      `${JSON.stringify(name)}: (args: ${argsTsSchema}) => Promise<${outputTsSchema}>;`,
+      funcDef,
     ].join("\n");
+    const def = mode === "compact" ? funcDef : funcDefWithDescription;
     result[server_name] ??= {};
-    result[server_name][name] = funcDef;
+    result[server_name][name] = def;
   }
 
   return result;

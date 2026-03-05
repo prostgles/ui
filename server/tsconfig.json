@@ -19,6 +19,8 @@
 		"noImplicitAny": true,
 		"noUncheckedIndexedAccess": true,
 		"baseUrl": ".",
+		"importHelpers":true,
+		"noEmitHelpers": true,
 		"paths": {
 			"@common/*": [
 				"../common/*"
@@ -38,5 +40,5 @@
 	"include": [
 		"src",
 		"**/*.spec.ts"
-	]
+, "../common/getJsonSchemaAsTs.ts"	]
 }

@@ -1,5 +1,5 @@
-import { stringify, type ToolUse } from "./utils";
 import { GeneratedFunctionSchema } from "../../../common/DBGeneratedSchema";
+import { stringify, type ToolUse } from "./utils";
 type UserInput = NonNullable<
   Parameters<GeneratedFunctionSchema["startAgenticWorkflow"]>[0]["userInput"]
 >;
@@ -54,7 +54,7 @@ export default defineAgenticWorkflow(
           );
         `,
       },
-      workflowAllowedTools: {
+      orchestrationTools: {
         fetch: {
           fetch: 1,
         },
@@ -105,7 +105,9 @@ export default defineAgenticWorkflow(
             },
           } satisfies Record<UserInput[string]["type"], UserInput[string]>)
         ),
-    },
+    } satisfies Partial<
+      Parameters<GeneratedFunctionSchema["startAgenticWorkflow"]>[0]
+    >,
     null,
     2,
   )},

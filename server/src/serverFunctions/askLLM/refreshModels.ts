@@ -101,6 +101,7 @@ export const refreshModels = async (dbs: DBS) => {
 const AGENTIC_MODEL_RANKING = [
   "gpt-5.3-codex",
   "gpt-5.2-codex",
+  "qwen3.5-397b-a17b",
   "claude-4.5-haiku",
   "claude-4.6-sonnet",
   // "claude-4.6-opus",

@@ -1,7 +1,7 @@
-import { findArr } from "@common/llmUtils";
 import { getJSONBSchemaValidationError, type JSONB } from "prostgles-types";
-import type { ToolResultMessage } from "../../../ToolUseChatMessage/ToolUseChatMessage";
 import { useMemo } from "react";
+import type { ToolResultMessage } from "../../../ToolUseChatMessage/ToolUseChatMessage";
+import { getToolUseResultString } from "./useToolUseResultString";
 export const useTypedToolUseResultData = <S extends JSONB.FieldType>(
   toolUseResult: ToolResultMessage | undefined,
   schema: S,
@@ -11,11 +11,7 @@ export const useTypedToolUseResultData = <S extends JSONB.FieldType>(
   const resultObj = useMemo(() => {
     try {
       if (toolUseResult && (parseErrors || !toolUseResult.is_error)) {
-        const { content } = toolUseResult;
-        const stringContent =
-          typeof content === "string" ? content : (
-            findArr(content, { type: "text" } as const)?.text
-          );
+        const stringContent = getToolUseResultString(toolUseResult);
         if (!stringContent) return undefined;
         const parseResult = getJSONBSchemaValidationError(
           schema,
@@ -39,7 +35,7 @@ export const useTypedToolUseResultData = <S extends JSONB.FieldType>(
       console.error("Error parsing tool use result content:", error);
     }
     return undefined;
-  }, [schema, toolUseResult]);
+  }, [parseErrors, schema, toolUseResult]);
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return resultObj;

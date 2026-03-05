@@ -10,7 +10,10 @@ export const AGENT_GOAL_TOOL_NAMES = {
   FAILED: "agent_goal_failed",
 };
 export const getAgentGoalTools = (
-  agent_info: NonNullable<DBSSchema["llm_chats"]["agent_info"]>,
+  agent_info: Exclude<
+    NonNullable<DBSSchema["llm_chats"]["agent_info"]>,
+    "orchestrator"
+  >,
 ) => {
   const jsonbSchema = {
     type: agent_info.outputSchema,

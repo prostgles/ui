@@ -1,12 +1,12 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
-import { runContainerWithProxyAccess } from "../../DockerSandbox/runContainerWithProxyAccess";
 import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
 import { createAgenticWorkflow } from "./Prostgles/createAgenticWorkflow";
+import { createContainer } from "./Prostgles/createContainer";
 import { fetchTools } from "./Prostgles/fetchTools";
 import { getToolTypescriptSchemas } from "./Prostgles/getToolTypescriptSchemas";
 
@@ -25,33 +25,14 @@ const handler = {
         await getDockerMCPServerProxy()?.then((s) => s.destroy());
       },
       tools: {
-        create_container: async (args, { user_id, chat, connection_id }) => {
-          const { db_data_permissions } = chat;
-          const autoApprovedPermissions =
-            db_data_permissions?.mode && db_data_permissions.auto_approve ?
-              db_data_permissions
-            : undefined;
-          return runContainerWithProxyAccess(
-            dbs,
-            {
-              user_id,
-              dbPermissions: autoApprovedPermissions && {
-                connection_id,
-                db_data_permissions: autoApprovedPermissions,
-              },
-            },
-            {
-              ...args,
-              networkMode: args.networkMode || "bridge-internal",
-            },
-          );
-        },
-        ask_user_questions: async () => {
+        create_container: createContainer,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        ask_user_questions: (async () => {
           // never called
-        },
+        }) as any,
         suggest_agentic_workflow: createAgenticWorkflow,
-        get_tool_schemas: async ({ toolNames }) => {
-          return getToolTypescriptSchemas(dbs, toolNames);
+        get_tool_schemas: async ({ mcpServerTools }) => {
+          return getToolTypescriptSchemas(dbs, mcpServerTools ?? "*");
         },
         suggest_dashboards: () => {
           return "Done";

@@ -10,11 +10,13 @@ import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { DatabaseAccessPermissions } from "../common/DatabaseAccessPermissions";
 import { HeaderList } from "../common/HeaderList";
 import { LoadSuggestedToolsAndPromptLoadBtn } from "./LoadSuggestedToolsAndPromptLoadBtn";
+import ErrorComponent from "@components/ErrorComponent";
 
 export const LoadSuggestedToolsAndPrompt = ({
   chatId,
   message,
-}: Pick<ProstglesMCPToolsProps, "chatId" | "message">) => {
+  toolUseResult,
+}: Pick<ProstglesMCPToolsProps, "chatId" | "message" | "toolUseResult">) => {
   const data = message.input as JSONB.GetObjectType<
     (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]
   >;
@@ -26,6 +28,13 @@ export const LoadSuggestedToolsAndPrompt = ({
     suggested_prompt,
     suggested_database_tool_names,
   } = data;
+
+  if (!toolUseResult) {
+    return null;
+  }
+  if (toolUseResult.toolUseResultMessage.is_error) {
+    return <ErrorComponent error={"Failed to validate response"} />;
+  }
 
   return (
     <FlexCol>

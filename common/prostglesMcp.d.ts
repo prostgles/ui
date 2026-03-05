@@ -1,4 +1,17 @@
 import type { DBSSchema } from "./publishUtils";
+export declare const mcpServerToolsAllowed: {
+    readonly record: {
+        readonly partial: true;
+        readonly values: {
+            readonly record: {
+                readonly partial: true;
+                readonly values: {
+                    readonly enum: readonly [1];
+                };
+            };
+        };
+    };
+};
 export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     readonly "prostgles-db-methods": {
         readonly [x: string]: "";
@@ -24,6 +37,13 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                 };
             };
+            readonly outputSchema: {
+                readonly arrayOf: {
+                    readonly record: {
+                        readonly values: "any";
+                    };
+                };
+            };
         };
         readonly execute_sql_with_commit: {
             readonly description: "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction commited at the end).";
@@ -45,6 +65,13 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                 };
             };
+            readonly outputSchema: {
+                readonly arrayOf: {
+                    readonly record: {
+                        readonly values: "any";
+                    };
+                };
+            };
         };
         readonly count: {
             readonly description: "Counts rows in a table that satisfy a filter.";
@@ -63,6 +90,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                 };
             };
+            readonly outputSchema: "number";
         };
         readonly select: {
             readonly description: "Selects rows from a table.";
@@ -95,6 +123,13 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly limit: "integer";
                 };
             };
+            readonly outputSchema: {
+                readonly arrayOf: {
+                    readonly record: {
+                        readonly values: "any";
+                    };
+                };
+            };
         };
         readonly insert: {
             readonly description: "Inserts rows into a table.";
@@ -120,6 +155,14 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                 };
                             };
                         }];
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly optional: true;
+                readonly arrayOf: {
+                    readonly record: {
+                        readonly values: "any";
                     };
                 };
             };
@@ -159,6 +202,14 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                 };
             };
+            readonly outputSchema: {
+                readonly optional: true;
+                readonly arrayOf: {
+                    readonly record: {
+                        readonly values: "any";
+                    };
+                };
+            };
         };
         readonly delete: {
             readonly description: "Deletes rows from a table.";
@@ -186,6 +237,14 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly tableName: {
                         readonly type: "string";
                         readonly description: "Table to delete from";
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly optional: true;
+                readonly arrayOf: {
+                    readonly record: {
+                        readonly values: "any";
                     };
                 };
             };
@@ -335,13 +394,32 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Get MCP tool descriptions, input and output schemas in typescript format. Will return all tools by default. Use toolNames to specify which tools to return.";
             readonly schema: {
                 readonly type: {
-                    readonly toolNames: {
+                    readonly mcpServerTools: {
+                        readonly record: {
+                            readonly partial: true;
+                            readonly values: {
+                                readonly record: {
+                                    readonly partial: true;
+                                    readonly values: {
+                                        readonly enum: readonly [1];
+                                    };
+                                };
+                            };
+                        };
+                        readonly descoription: "List of MCP server tools to get. Leave empty to get all tools.";
                         readonly optional: true;
-                        readonly arrayOf: "string";
                     };
                 };
             };
-            readonly outputSchema: "string";
+            readonly outputSchema: {
+                readonly record: {
+                    readonly values: {
+                        readonly record: {
+                            readonly values: "string";
+                        };
+                    };
+                };
+            };
         };
         readonly suggest_agentic_workflow: {
             readonly mode: "structured-output";
@@ -359,7 +437,23 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                 };
             };
-            readonly outputSchema: undefined;
+            readonly outputSchema: {
+                readonly oneOfType: readonly [{
+                    readonly isValid: {
+                        readonly enum: readonly [true];
+                    };
+                    readonly workflowId: "number";
+                }, {
+                    readonly isValid: {
+                        readonly enum: readonly [false];
+                    };
+                    readonly logs: "string";
+                    readonly error: {
+                        readonly type: "unknown";
+                        readonly optional: true;
+                    };
+                }];
+            };
         };
         readonly suggest_tools_and_prompt: {
             readonly mode: "structured-output";
@@ -380,17 +474,11 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly type: "string";
                     };
                     readonly suggested_database_access: {
+                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type.";
+                        readonly optional: true;
                         readonly oneOfType: readonly [{
                             readonly mode: {
-                                readonly enum: readonly ["none"];
-                            };
-                        }, {
-                            readonly mode: {
-                                readonly enum: readonly ["execute_sql_with_rollback"];
-                            };
-                        }, {
-                            readonly mode: {
-                                readonly enum: readonly ["execute_sql_with_commit"];
+                                readonly enum: readonly ["execute_sql_with_rollback", "execute_sql_with_commit"];
                             };
                         }, {
                             readonly mode: {
@@ -517,12 +605,15 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                     };
                                 };
                             };
+                            readonly tableCreateStatements: {
+                                readonly type: "string";
+                                readonly optional: true;
+                            };
                         }];
-                        readonly description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type.";
                     };
                 };
             };
-            readonly outputSchema: undefined;
+            readonly outputSchema: "string";
         };
         readonly suggest_dashboards: {
             readonly mode: "structured-output";
@@ -535,7 +626,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                 };
             };
-            readonly outputSchema: undefined;
+            readonly outputSchema: "string";
         };
     };
     readonly websearch: {
@@ -598,9 +689,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
             readonly outputSchema: {
-                readonly type: {
-                    readonly content: "string";
-                };
+                readonly type: "string";
             };
         };
         readonly get_document_text: {
@@ -613,9 +702,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
             readonly outputSchema: {
-                readonly type: {
-                    readonly content: "string";
-                };
+                readonly type: "string";
             };
         };
     };
@@ -646,11 +733,9 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
             readonly outputSchema: {
-                readonly record: {
-                    readonly values: {
-                        readonly type: "string";
-                        readonly description: "File content";
-                    };
+                readonly type: {
+                    readonly filePath: "string";
+                    readonly content: "string";
                 };
             };
         };

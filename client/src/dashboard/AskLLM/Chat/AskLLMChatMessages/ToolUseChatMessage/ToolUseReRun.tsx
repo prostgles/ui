@@ -1,29 +1,35 @@
 import { mdiReload } from "@mdi/js";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { ToolResultMessage, ToolUseMessage } from "./ToolUseChatMessage";
-import React from "react";
+import React, { useMemo } from "react";
 import Btn from "@components/Btn";
 import { useAlert } from "@components/AlertProvider";
 import ErrorComponent from "@components/ErrorComponent";
 import { getMCPToolNameParts } from "@common/prostglesMcp";
+import { isEqual } from "prostgles-types";
 
 type P = {
   chatId: number;
   toolRequest: ToolUseMessage;
   toolResult: { messageId: string; messagePart: ToolResultMessage } | undefined;
   variant: "icon" | "text";
+  newInput?: any;
 };
 export const ToolUseReRun = ({
   chatId,
   toolRequest,
   toolResult,
   variant,
+  newInput,
 }: P) => {
   const {
     dbsMethods: { callMCPServerTool },
   } = usePrglCore();
   const { addAlert } = useAlert();
   const nameParts = getMCPToolNameParts(toolRequest.name);
+  const inputChanged = useMemo(() => {
+    return !isEqual(toolRequest.input, newInput);
+  }, [toolRequest.input, newInput]);
   if (!toolResult || !callMCPServerTool || !nameParts) return null;
   const { serverName, toolName } = nameParts;
   return (
@@ -34,13 +40,19 @@ export const ToolUseReRun = ({
       className={variant === "icon" ? "show-on-parent-hover" : ""}
       iconPath={mdiReload}
       size="small"
-      children={variant === "text" ? "Re-run" : undefined}
+      children={
+        variant === "text" ?
+          inputChanged ?
+            "Re-run with changes"
+          : "Re-run"
+        : undefined
+      }
       onClickPromise={async () => {
         const result = await callMCPServerTool({
           chatId,
           serverName,
           toolName,
-          args: toolRequest.input,
+          args: newInput ?? toolRequest.input,
           reRunToolUseId: toolRequest.id,
         });
         console.log("Re-run result:", result);

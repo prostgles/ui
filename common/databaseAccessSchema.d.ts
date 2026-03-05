@@ -1,15 +1,9 @@
 export declare const databaseAccessSchema: {
+    readonly optional: true;
+    readonly description: "Database access configuration. Use the most restrictive access type that is needed to complete the task.";
     readonly oneOfType: readonly [{
         readonly mode: {
-            readonly enum: readonly ["none"];
-        };
-    }, {
-        readonly mode: {
-            readonly enum: readonly ["execute_sql_with_rollback"];
-        };
-    }, {
-        readonly mode: {
-            readonly enum: readonly ["execute_sql_with_commit"];
+            readonly enum: readonly ["execute_sql_with_rollback", "execute_sql_with_commit"];
         };
     }, {
         readonly mode: {
@@ -135,6 +129,10 @@ export declare const databaseAccessSchema: {
                     };
                 };
             };
+        };
+        readonly tableCreateStatements: {
+            readonly type: "string";
+            readonly optional: true;
         };
     }];
 };

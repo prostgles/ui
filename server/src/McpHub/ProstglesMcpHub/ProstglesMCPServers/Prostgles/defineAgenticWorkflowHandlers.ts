@@ -183,48 +183,51 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
     },
   });
 
-  const workflowToolHandlers = new Proxy({} as Parameters<typeof handler>[2], {
-    get(_target, mcpServerName: string) {
-      if (typeof mcpServerName !== "string") return undefined;
+  const orchestrationToolHandlers = new Proxy(
+    {} as Parameters<typeof handler>[2],
+    {
+      get(_target, mcpServerName: string) {
+        if (typeof mcpServerName !== "string") return undefined;
 
-      if (!definitions.workflowAllowedTools) {
-        throw new Error(
-          `No tools are allowed for this workflow, but tried to access tool server "${mcpServerName}"`,
-        );
-      }
+        if (!definitions.orchestrationTools) {
+          throw new Error(
+            `No tools are allowed for this workflow, but tried to access tool server "${mcpServerName}"`,
+          );
+        }
 
-      const serverTools = definitions.workflowAllowedTools[
-        mcpServerName as keyof typeof definitions.workflowAllowedTools
-      ] as Record<string, 1> | undefined;
-      if (!serverTools) {
-        throw new Error(
-          `MCP server "${mcpServerName}" is not defined in workflowAllowedTools`,
-        );
-      }
+        const serverTools = definitions.orchestrationTools[
+          mcpServerName as keyof typeof definitions.orchestrationTools
+        ] as Record<string, 1> | undefined;
+        if (!serverTools) {
+          throw new Error(
+            `MCP server "${mcpServerName}" is not defined in orchestrationTools`,
+          );
+        }
 
-      return new Proxy(
-        {} as Record<string, (input?: unknown) => Promise<unknown>>,
-        {
-          get(_serverTarget, toolName: string) {
-            if (typeof toolName !== "string") return undefined;
+        return new Proxy(
+          {} as Record<string, (input?: unknown) => Promise<unknown>>,
+          {
+            get(_serverTarget, toolName: string) {
+              if (typeof toolName !== "string") return undefined;
 
-            if (!(toolName in serverTools) || serverTools[toolName] !== 1) {
-              throw new Error(
-                `Tool "${toolName}" is not allowed on MCP server "${mcpServerName}"`,
-              );
-            }
+              if (!(toolName in serverTools) || serverTools[toolName] !== 1) {
+                throw new Error(
+                  `Tool "${toolName}" is not allowed on MCP server "${mcpServerName}"`,
+                );
+              }
 
-            return (input?: Record<string, unknown>) =>
-              callMcpProxy({
-                type: "tool",
-                name: `${mcpServerName}--${toolName}`,
-                input,
-              });
+              return (input?: Record<string, unknown>) =>
+                callMcpProxy({
+                  type: "tool",
+                  name: `${mcpServerName}--${toolName}`,
+                  input,
+                });
+            },
           },
-        },
-      );
+        );
+      },
     },
-  });
+  );
 
   const dbMode = definitions.databaseAccessDefinitions?.mode;
   const dbHandlerProxy = new Proxy({} as DatabaseHandler, {
@@ -393,7 +396,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   return handler(
     agentHandlersProxy,
     dbHandlerProxy,
-    workflowToolHandlers,
+    orchestrationToolHandlers,
     userInput,
     setProgress,
   );

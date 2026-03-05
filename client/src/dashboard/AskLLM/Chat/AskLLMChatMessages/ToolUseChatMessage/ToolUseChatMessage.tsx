@@ -1,6 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { mdiCodeJson } from "@mdi/js";
 import React, { useCallback, useState } from "react";
 
@@ -45,7 +45,12 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
           : undefined
         }
       >
-        <FlexRow className="ai-start">
+        <div
+          className={
+            (!ToolUI || displayMode !== "full" ? "flex-row" : "flex-row-wrap") +
+            " gap-p5 ai-start h-fit"
+          }
+        >
           {(!ToolUI || displayMode !== "full") && (
             <ToolUseChatMessageBtn
               {...toolUseInfo}
@@ -83,7 +88,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
               : undefined
             }
           />
-        </FlexRow>
+        </div>
 
         <ToolUseChatMessageResult
           {...toolUseInfo}

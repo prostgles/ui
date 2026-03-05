@@ -7,6 +7,9 @@
     "sourceMap": true,
     "outDir": "../tests-out",
     "strict": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "paths": {
+      "common/*": ["../../common/*"]
+    }
   }
 }

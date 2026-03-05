@@ -59,7 +59,7 @@ export const getLLMToolsAllowedInThisChat = async ({
     },
   });
   const tools: Map<string, AllowedChatTool> = new Map();
-  if (chat.agent_info) {
+  if (chat.agent_info && chat.agent_info !== "orchestrator") {
     const agentGoalTools = getAgentGoalTools(chat.agent_info);
     agentGoalTools.forEach((agentGoalTool, index) => {
       tools.set(agentGoalTool.name, {

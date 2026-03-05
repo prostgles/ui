@@ -1,9 +1,9 @@
-import { omitKeys } from "prostgles-types";
+import type { DBSSchemaForInsert } from "@common/publishUtils";
+import { fromEntries, getEntries } from "@common/utils";
+import { getSerialisableError, omitKeys } from "prostgles-types";
 import type { McpCallContext } from "../../ProstglesMCPServerTypes";
 import { startAgenticWorkflowContainer } from "./startAgenticWorkflowContainer";
 import { validateAgenticWorkflowDefinitions } from "./validateAgenticWorkflowDefinitions";
-import type { DBSSchemaForInsert } from "@common/publishUtils";
-import { fromEntries, getEntries } from "@common/utils";
 
 export const createAgenticWorkflow = async (
   {
@@ -17,7 +17,17 @@ export const createAgenticWorkflow = async (
     throw new Error("Chat is missing connection_id");
   }
   const aborter = new AbortController();
-  return new Promise((resolve, reject) => {
+  return new Promise<
+    | {
+        isValid: true;
+        workflowId: number;
+      }
+    | {
+        isValid: false;
+        error?: unknown;
+        logs: string;
+      }
+  >((resolve, reject) => {
     startAgenticWorkflowContainer(
       dbs,
       {
@@ -46,7 +56,7 @@ export const createAgenticWorkflow = async (
             chat_id: chat.id,
             definition_data: {
               ...definition_data,
-              workflowAllowedTools: definition_data.workflowAllowedTools,
+              orchestrationTools: definition_data.orchestrationTools,
               newTables: newTables.map((t) => ({
                 name: t.name,
                 columns: t.columns.map((c) => ({
@@ -81,8 +91,8 @@ export const createAgenticWorkflow = async (
             resolve({
               isValid: true,
               workflowId,
-              ...definitions,
-              newTables,
+              // ...definitions,
+              // newTables,
             });
             return;
           }
@@ -92,8 +102,8 @@ export const createAgenticWorkflow = async (
               resolve({
                 isValid: true,
                 workflowId: id,
-                ...definitions,
-                newTables,
+                // ...definitions,
+                // newTables,
               });
             })
             .catch(reject);
@@ -102,11 +112,18 @@ export const createAgenticWorkflow = async (
     )
       .then((containerResult) => {
         if (containerResult.state !== "finished") {
-          reject(containerResult.log.map((l) => l.text).join("\n"));
+          reject({
+            isValid: false,
+            logs: containerResult.log.map((l) => l.text).join("\n"),
+          });
         }
       })
-      .catch((err) => {
-        reject(err);
+      .catch((error) => {
+        reject({
+          isValid: false,
+          error: getSerialisableError(error),
+          logs: "",
+        });
       });
   });
 };

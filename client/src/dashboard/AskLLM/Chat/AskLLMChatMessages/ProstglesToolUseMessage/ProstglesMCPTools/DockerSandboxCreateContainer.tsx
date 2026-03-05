@@ -17,7 +17,7 @@ import {
   mdiTimerLockOutline,
 } from "@mdi/js";
 import { omitKeys, type JSONB } from "prostgles-types";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { PopupSection } from "../../ToolUseChatMessage/PopupSection";
 import { ToolUseReRun } from "../../ToolUseChatMessage/ToolUseReRun";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
@@ -48,7 +48,10 @@ export const DockerSandboxCreateContainer = ({
       "outputSchema"
     ];
   const resultObj = useTypedToolUseResultData(toolUseResult, schema);
-  const [showLogs, setShowLogs] = useState(Boolean(resultObj?.log.length));
+  const [showLogs, setShowLogs] = useState(true);
+  const logs = useMemo(() => {
+    return resultObj?.log.map((l) => l.text).join("") ?? "";
+  }, [resultObj?.log]);
 
   return (
     <PopupSection
@@ -94,6 +97,7 @@ export const DockerSandboxCreateContainer = ({
               chatId={chatId}
               toolRequest={message}
               variant="text"
+              newInput={data}
               toolResult={{
                 messagePart: toolResult.toolUseResultMessage,
                 messageId: toolResult.toolUseResult.id,
@@ -136,14 +140,16 @@ export const DockerSandboxCreateContainer = ({
             key={"logs"}
             className="f-p5"
             data-command="DockerSandboxCreateContainer.Logs"
-            style={{ width: "100%", minHeight: 100 }}
-            logs={resultObj?.log.map((l) => l.text).join("") ?? ""}
+            style={monacoStyle}
+            logs={logs}
           />
         )}
       </FlexCol>
     </PopupSection>
   );
 };
+
+const monacoStyle = { width: "100%", minHeight: 100 };
 
 const getMillisecondsAsSingleInterval = (ms: number) => {
   const seconds = ms / 1000;

@@ -1,7 +1,17 @@
 import { databaseAccessSchema } from "./databaseAccessSchema";
 import type { DBSSchema } from "./publishUtils";
-import { tablePermissionsSchema } from "./tablePermissionsSchema";
-import { fixIndent } from "./utils";
+
+export const mcpServerToolsAllowed = {
+  record: {
+    partial: true,
+    values: {
+      record: {
+        partial: true,
+        values: { enum: [1] },
+      },
+    },
+  },
+} as const;
 
 const runSQLSchema = {
   type: {
@@ -57,6 +67,14 @@ const selectSchema = {
   ],
 } as const;
 
+const outputSchemaArrayOfObjects = {
+  arrayOf: {
+    record: {
+      values: "any",
+    },
+  },
+} as const;
+
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   "prostgles-db-methods": { ["" as string]: "" },
   "prostgles-db": {
@@ -64,11 +82,13 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description:
         "Executes a SQL query on the connected database in readonly mode (no data can be changed, the transaction is rolled back at the end).",
       schema: runSQLSchema,
+      outputSchema: outputSchemaArrayOfObjects,
     },
     execute_sql_with_commit: {
       description:
         "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction commited at the end).",
       schema: runSQLSchema,
+      outputSchema: outputSchemaArrayOfObjects,
     },
     count: {
       description: "Counts rows in a table that satisfy a filter.",
@@ -81,6 +101,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           filter: { ...filterSchema.filter, optional: true },
         },
       },
+      outputSchema: "number",
     },
     select: {
       description: "Selects rows from a table.",
@@ -95,6 +116,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           limit: "integer",
         },
       },
+      outputSchema: outputSchemaArrayOfObjects,
     },
     insert: {
       description: "Inserts rows into a table.",
@@ -112,6 +134,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           returning: selectSchema,
         },
       },
+      outputSchema: { ...outputSchemaArrayOfObjects, optional: true },
     },
     update: {
       description: "Updates rows in a table.",
@@ -132,6 +155,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           returning: selectSchema,
         },
       },
+      outputSchema: { ...outputSchemaArrayOfObjects, optional: true },
     },
     delete: {
       description: "Deletes rows from a table.",
@@ -145,6 +169,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           returning: selectSchema,
         },
       },
+      outputSchema: { ...outputSchemaArrayOfObjects, optional: true },
     },
   },
   "prostgles-ui": {
@@ -153,6 +178,11 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.",
       schema: {
         type: {
+          // databaseAccess: {
+          //   ...databaseAccessSchema,
+          //   description:
+          //     "Database access configuration for the container. If not provided, the container will not have access to the database. Use the most restrictive access type that is needed to complete the task.",
+          // },
           files: filesSchema,
           timeout: {
             type: "number",
@@ -287,13 +317,23 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         "Get MCP tool descriptions, input and output schemas in typescript format. Will return all tools by default. Use toolNames to specify which tools to return.",
       schema: {
         type: {
-          toolNames: {
+          mcpServerTools: {
+            descoription:
+              "List of MCP server tools to get. Leave empty to get all tools.",
             optional: true,
-            arrayOf: "string",
+            ...mcpServerToolsAllowed,
           },
         },
       },
-      outputSchema: "string",
+      outputSchema: {
+        record: {
+          values: {
+            record: {
+              values: "string",
+            },
+          },
+        },
+      },
     },
     suggest_agentic_workflow: {
       mode: "structured-output",
@@ -321,7 +361,19 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           },
         },
       },
-      outputSchema: undefined,
+      outputSchema: {
+        oneOfType: [
+          {
+            isValid: { enum: [true] },
+            workflowId: "number",
+          },
+          {
+            isValid: { enum: [false] },
+            logs: "string",
+            error: { type: "unknown", optional: true },
+          },
+        ],
+      },
     },
     suggest_tools_and_prompt: {
       mode: "structured-output",
@@ -346,13 +398,13 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             type: "string",
           },
           suggested_database_access: {
+            ...databaseAccessSchema,
             description:
               "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type.",
-            ...databaseAccessSchema,
           },
         },
       },
-      outputSchema: undefined,
+      outputSchema: "string",
     },
     suggest_dashboards: {
       mode: "structured-output",
@@ -367,7 +419,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           },
         },
       },
-      outputSchema: undefined,
+      outputSchema: "string",
     },
   },
   websearch: {
@@ -435,9 +487,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
       },
       outputSchema: {
-        type: {
-          content: "string",
-        },
+        type: "string",
       },
     },
     get_document_text: {
@@ -450,9 +500,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
       },
       outputSchema: {
-        type: {
-          content: "string",
-        },
+        type: "string",
       },
     },
   },
@@ -485,11 +533,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
       },
       outputSchema: {
-        record: {
-          values: {
-            type: "string",
-            description: "File content",
-          },
+        arrayOfType: {
+          filePath: "string",
+          content: "string",
         },
       },
     },
@@ -554,9 +600,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
       },
       outputSchema: {
-        type: {
-          content: "string",
-        },
+        type: "unknown",
       },
     },
     create_component: {
@@ -594,9 +638,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
       },
       outputSchema: {
-        type: {
-          content: "string",
-        },
+        type: "unknown",
       },
     },
   },
