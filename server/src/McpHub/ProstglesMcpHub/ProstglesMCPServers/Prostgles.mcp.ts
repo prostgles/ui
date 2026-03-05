@@ -25,9 +25,13 @@ const handler = {
         await getDockerMCPServerProxy()?.then((s) => s.destroy());
       },
       tools: {
-        create_container: createContainer,
+        run_code_in_sandbox: createContainer,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         ask_user_questions: (async () => {
+          // never called
+        }) as any,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        request_tool_access: (async () => {
           // never called
         }) as any,
         suggest_agentic_workflow: createAgenticWorkflow,
@@ -39,6 +43,15 @@ const handler = {
         },
         suggest_tools_and_prompt: () => {
           // TODO: validate tools list
+          return "Done";
+        },
+        compact_context: async (args, { chat }) => {
+          const messageCount = await dbs.llm_messages.count({
+            chat_id: chat.id,
+          });
+          if (!messageCount) {
+            throw new Error("No messages to compact");
+          }
           return "Done";
         },
       },

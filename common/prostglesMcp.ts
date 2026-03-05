@@ -173,9 +173,27 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     },
   },
   "prostgles-ui": {
-    create_container: {
+    compact_context: {
+      description: [
+        "Reduce conversation history while preserving important information.",
+        "Include important details and information that might be relevant for future conversation. Be concise.",
+        "Always use this tool with type='previous-message' after receiving long tool outputs that are not important to keep in full detail in the conversation history.",
+      ].join("\n"),
+      schema: {
+        type: {
+          type: { enum: ["conversation", "previous-message"] },
+          summary: {
+            type: "string",
+            description:
+              "When type=conversation it is a summary of the conversation so far. When type=previous-message it is a summary of the previous message.",
+          },
+        },
+      },
+      outputSchema: "string",
+    },
+    run_code_in_sandbox: {
       description:
-        "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.",
+        "Executes code in a docker container. CANNOT ACCESS THE DATABASE DIRECTLY (must access the database only through POST requests to the exposed api). Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.",
       schema: {
         type: {
           // databaseAccess: {
@@ -334,6 +352,26 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           },
         },
       },
+    },
+    request_tool_access: {
+      mode: "structured-output",
+      description:
+        "Request access to mcp tools. The user will be prompted to approve or deny access. Use this tool when you need access to a tool that you don't have access to yet. The user will then approve access if they are comfortable with it based on the tool description and the context of the conversation.",
+      schema: {
+        type: {
+          schema: {
+            type: {
+              mcpServerTools: {
+                descoription:
+                  "List of MCP server tools to enable for this chat.",
+                optional: true,
+                ...mcpServerToolsAllowed,
+              },
+            },
+          },
+        },
+      },
+      outputSchema: "string",
     },
     suggest_agentic_workflow: {
       mode: "structured-output",
@@ -649,7 +687,10 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     | string
     | {
         description: string;
-        schema: any;
+        /**
+         * Must be an object
+         */
+        schema: { type: any };
         outputSchema?: any;
         mode?: DBSSchema["mcp_server_tools"]["mode"];
       }

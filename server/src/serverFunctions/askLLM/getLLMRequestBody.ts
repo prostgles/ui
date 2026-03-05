@@ -8,6 +8,7 @@ import {
 } from "prostgles-types";
 import type { LLMMessage } from "./askLLM";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
+import { getCompactedMessages } from "./getCompactedMessages";
 
 export const getLLMRequestBody = ({
   llm_provider,
@@ -34,7 +35,12 @@ export const getLLMRequestBody = ({
     })
     .filter((m) => m.content.length);
 
-  const systemMessage = nonEmptyMessages.filter((m) => m.role === "system");
+  const { messagesAfterCompaction } = getCompactedMessages({
+    nonEmptyMessages,
+  });
+  const systemMessage = messagesAfterCompaction.filter(
+    (m) => m.role === "system",
+  );
   const [systemMessageObj, ...otherSM] = systemMessage;
   if (otherSM.length) throw "Multiple prompts found";
   const { api_key } = llm_credential;
@@ -48,8 +54,8 @@ export const getLLMRequestBody = ({
     | "Ollama";
   const messages =
     includes(["OpenAI", "OpenRouter", "Prostgles", "Ollama"], provider) ?
-      nonEmptyMessages
-    : nonEmptyMessages.filter((m) => m.role !== "system");
+      messagesAfterCompaction
+    : messagesAfterCompaction.filter((m) => m.role !== "system");
   const headers: RequestInit["headers"] =
     provider === "Anthropic" ?
       {

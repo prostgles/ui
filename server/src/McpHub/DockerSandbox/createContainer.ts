@@ -9,7 +9,7 @@ import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
 import { getDockerRunArgs } from "./getDockerRunArgs";
 
 type CreateContainerResult = JSONBTypeIfDefined<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["outputSchema"]
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["run_code_in_sandbox"]["outputSchema"]
 >;
 
 type CreateContainerParamsWithBuildOptions = CreateContainerParams & {

@@ -10,7 +10,7 @@ import {
 import { DOCKER_MCP_ENDPOINT_ENV_VAR } from "../../../../DockerSandbox/runContainerWithProxyAccess";
 
 const createContainerToolInfo =
-  PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_container"];
+  PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["run_code_in_sandbox"];
 
 export const getCreateContainerToolSchema = (dbTools: DBTool[]) => {
   const databaseQueryDescription =
@@ -26,7 +26,7 @@ export const getCreateContainerToolSchema = (dbTools: DBTool[]) => {
       ].join("\n");
 
   return {
-    name: "create_container",
+    name: "run_code_in_sandbox",
     description: `${createContainerToolInfo.description}. ${databaseQueryDescription}`,
     inputSchema: omitKeys(
       getJSONBSchemaAsJSONSchema("", "", createContainerSchema),
@@ -40,5 +40,5 @@ export type CreateContainerParams = JSONB.GetSchemaType<
 >;
 
 const createContainerSchema = PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
-  "create_container"
+  "run_code_in_sandbox"
 ].schema satisfies JSONB.JSONBSchema;

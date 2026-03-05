@@ -176,7 +176,7 @@ const mcpSandboxToolUse: ToolUse = {
       id: "mcp-tool-use-sandbox1",
       type: "function",
       function: {
-        name: "prostgles-ui--create_container",
+        name: "prostgles-ui--run_code_in_sandbox",
         arguments: stringify({
           files: {
             Dockerfile: `FROM node:20 \nWORKDIR /app \nCOPY . . \nRUN npm install \nCMD ["npm", "start"]`,
@@ -242,7 +242,7 @@ const toolResponses: Record<string, ToolUse> = {
         id: "weather-tool-use",
         type: "function",
         function: {
-          name: "prostgles-ui--create_container",
+          name: "prostgles-ui--run_code_in_sandbox",
           arguments: stringify(dockerWeatherToolUse),
         },
       },

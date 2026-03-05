@@ -44,7 +44,7 @@ export type McpCallContextFetchTools = McpCallContext & {
     server_name: string;
     description: string;
     inputSchema: Record<string, unknown>;
-    outputSchema: Record<string, unknown>;
+    outputSchema: Record<string, unknown> | null;
   }[];
   chat: DBSSchema["llm_chats"];
   toolsAllowed: {
@@ -61,17 +61,38 @@ export type ProstglesMcpServerHandlerInstance = {
     dbs: DBS,
     context: McpCallContextFetchTools,
   ) => MaybePromise<
-    {
-      name: string;
-      description: string;
-      inputSchema: McpTool["inputSchema"];
-    }[]
+    Record<
+      string,
+      | undefined
+      | {
+          name: string;
+          description: string;
+          inputSchema: McpTool["inputSchema"];
+        }
+    >
   >;
   tools: Record<
     string,
     (toolArguments: unknown, context: McpCallContext) => MaybePromise<unknown>
   >;
 };
+
+export type ProstglesMcpServerHandlerTypedFetchTools<
+  Tools extends ProstglesMcpServerDefinition["tools"],
+> = (
+  dbs: DBS,
+  context: McpCallContextFetchTools,
+) => MaybePromise<
+  Record<
+    keyof Tools,
+    | {
+        name: string;
+        description: string;
+        inputSchema: McpTool["inputSchema"];
+      }
+    | undefined
+  >
+>;
 
 export type ProstglesMcpServerHandlerTyped<
   ServerDefinition extends Omit<
@@ -81,15 +102,8 @@ export type ProstglesMcpServerHandlerTyped<
 > = {
   start: (dbs: DBS) => MaybePromise<{
     stop: () => MaybePromise<void>;
-    fetchTools: (
-      dbs: DBS,
-      context: McpCallContextFetchTools,
-    ) => MaybePromise<
-      {
-        name: string;
-        description: string;
-        inputSchema: McpTool["inputSchema"];
-      }[]
+    fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
+      ServerDefinition["tools"]
     >;
 
     tools: {

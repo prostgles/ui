@@ -251,7 +251,30 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
     readonly "prostgles-ui": {
-        readonly create_container: {
+        readonly compact_context: {
+            readonly description: string;
+            readonly schema: {
+                readonly oneOfType: readonly [{
+                    readonly type: {
+                        readonly enum: readonly ["conversation"];
+                    };
+                    readonly summary: {
+                        readonly type: "string";
+                        readonly description: "Summary of the conversation so far.";
+                    };
+                }, {
+                    readonly type: {
+                        readonly enum: readonly ["previous-message"];
+                    };
+                    readonly summary: {
+                        readonly type: "string";
+                        readonly description: "Summary of the previous message. .";
+                    };
+                }];
+            };
+            readonly outputSchema: "string";
+        };
+        readonly run_code_in_sandbox: {
             readonly description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.";
             readonly schema: {
                 readonly type: {
@@ -733,7 +756,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
             readonly outputSchema: {
-                readonly type: {
+                readonly arrayOfType: {
                     readonly filePath: "string";
                     readonly content: "string";
                 };
@@ -788,9 +811,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
             readonly outputSchema: {
-                readonly type: {
-                    readonly content: "string";
-                };
+                readonly type: "unknown";
             };
         };
         readonly create_component: {
@@ -824,9 +845,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
             readonly outputSchema: {
-                readonly type: {
-                    readonly content: "string";
-                };
+                readonly type: "unknown";
             };
         };
     };

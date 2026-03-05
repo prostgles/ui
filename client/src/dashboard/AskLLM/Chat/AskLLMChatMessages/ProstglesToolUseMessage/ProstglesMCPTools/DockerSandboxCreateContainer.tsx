@@ -24,7 +24,7 @@ import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_container"]["schema"]["type"]
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["run_code_in_sandbox"]["schema"]["type"]
 >;
 
 export const DockerSandboxCreateContainer = ({
@@ -44,7 +44,7 @@ export const DockerSandboxCreateContainer = ({
   };
 
   const schema =
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_container"][
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["run_code_in_sandbox"][
       "outputSchema"
     ];
   const resultObj = useTypedToolUseResultData(toolUseResult, schema);

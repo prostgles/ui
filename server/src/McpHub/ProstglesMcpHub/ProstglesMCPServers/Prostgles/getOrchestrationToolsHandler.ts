@@ -82,8 +82,11 @@ export const getOrchestrationToolsHandler = async ({
     orchestrationTools &&
     (await getValidatedMcpServerToolsAllowed(dbs, orchestrationTools));
 
+  /**
+   * Holds the tool permissions
+   */
   let workflowToolsChat: DBSSchema["llm_chats"] | null = null;
-  const getWorkflowToolsChat = async () => {
+  const getOrchestratorToolsChat = async () => {
     if (workflowToolsChat) return workflowToolsChat;
     if (!orchestrationToolsWithInfo) {
       throw new Error(
@@ -92,7 +95,8 @@ export const getOrchestrationToolsHandler = async ({
     }
     workflowToolsChat = await dbs.llm_chats.insert(
       {
-        name: "Workflow Tools Chat",
+        name: "Workflow Orchestrator Tools Chat",
+        agent_info: "orchestrator",
         user_id: userId,
         connection_id: connectionId,
         parent_chat_id: chatId,
@@ -120,7 +124,7 @@ export const getOrchestrationToolsHandler = async ({
   orchestrationToolsWithInfo?.forEach(({ name, server_name }) => {
     const fullToolName = getMCPFullToolName(server_name, name);
     orchestrationToolsHandler.set(fullToolName, async (args, clientReq) => {
-      const workflowToolsChat = await getWorkflowToolsChat();
+      const workflowToolsChat = await getOrchestratorToolsChat();
       const result = await callMCPServerTool({
         user: { id: userId },
         chat_id: workflowToolsChat.id,

@@ -68,7 +68,11 @@ export const AgenticWorkflowUserInput = ({
                   mode={{
                     children: "Edit filters",
                     variant: "faded",
-                    label: { label: title, variant: "normal" },
+                    label: {
+                      label: title,
+                      variant: "normal",
+                      className: "mb-p25",
+                    },
                   }}
                   filter={detailedFilter}
                   onChange={(newValue) => {

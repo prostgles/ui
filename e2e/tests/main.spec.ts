@@ -988,7 +988,7 @@ test.describe("Main test", () => {
     await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
     await page
       .locator(getDataKey("prostgles-ui"))
-      .getByText("create_container", { exact: true })
+      .getByText("run_code_in_sandbox", { exact: true })
       .waitFor({ state: "visible", timeout: 15e3 });
     await page.waitForTimeout(2e3);
     /** Tools are loaded after enabling */
@@ -997,12 +997,12 @@ test.describe("Main test", () => {
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
-      `Reloaded 6 tools for "prostgles-ui" server`,
+      `Reloaded 7 tools for "prostgles-ui" server`,
     );
     await page.getByText("OK", { exact: true }).click();
     await page
       .locator(getDataKey("prostgles-ui"))
-      .getByText("create_container", { exact: true })
+      .getByText("run_code_in_sandbox", { exact: true })
       .click();
     await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
@@ -1261,18 +1261,8 @@ test.describe("Main test", () => {
       });
       await page.getByText("OK", { exact: true }).click();
     };
-    await startWorkFlowAndExpectError(
-      `Missing required user input: "Users filter"`,
-    );
 
     /** Fill user input form */
-    await page.getByTestId("RenderFilter.edit").click();
-    await page.getByTestId("SmartAddFilter").click();
-    await page.locator(getDataKey("type")).last().click();
-    await page.getByTestId("SearchList.Input").last().click();
-    await page.locator(`[data-label="regular"]`).first().click();
-    await page.getByTestId("RenderFilter.done").click();
-
     await startWorkFlowAndExpectError(
       `Missing required user input: "Sort column"`,
     );
@@ -1281,28 +1271,39 @@ test.describe("Main test", () => {
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table name"`,
     );
-
     await page.locator(getDataKey("table-name")).click();
     await page.locator(`[data-key="example_table"]`).last().click();
 
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table column"`,
     );
-
     await page.locator(getDataKey("table-column")).click();
     await page.locator(`[data-key="id"]`).last().click();
 
     await startWorkFlowAndExpectError(
+      `Missing required user input: "Users filter"`,
+    );
+    await page.getByTestId("RenderFilter.edit").click();
+    await page.getByTestId("SmartAddFilter").click();
+    await page.locator(getDataKey("type")).last().click();
+    await page.getByTestId("SearchList.Input").last().click();
+    await page.locator(`[data-label="regular"]`).first().click();
+    await page.getByTestId("RenderFilter.done").click();
+
+    await startWorkFlowAndExpectError(
       `Missing required user input: "Table and column"`,
     );
-
     await page.locator(getDataKey("table-and-column")).click();
     await page.locator(`[data-label="receipts.amount"]`).click();
 
-    await page.getByTestId("AgenticWorkflow.start").click({ timeout: 30e3 });
+    await page.waitForTimeout(1e3);
+    await page.getByTestId("AgenticWorkflow.start").click();
     /** Progress bar works */
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Processing user 2/",
+      {
+        timeout: 30e3,
+      },
     );
 
     await page.getByTestId("AgenticWorkflow.stop").click();

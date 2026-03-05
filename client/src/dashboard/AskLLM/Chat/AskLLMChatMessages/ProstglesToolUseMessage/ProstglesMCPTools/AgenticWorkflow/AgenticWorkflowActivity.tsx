@@ -100,7 +100,8 @@ export const AgenticWorkflowActivity = ({
 
     const filter = {
       parent_chat_id: chatId,
-      agent_info: { $ne: "orchestrator" },
+      /** TODO: must stringify in prostgles-server */
+      agent_info: { $ne: `"orchestrator"` as "orchestrator" },
     } satisfies FilterItem<DBSSchema[typeof tableName]>;
 
     return { fieldConfigs, filter, orderBy: { key: "id", asc: false } };

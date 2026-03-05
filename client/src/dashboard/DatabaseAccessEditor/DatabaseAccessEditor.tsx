@@ -1,9 +1,7 @@
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
-import Chip from "@components/Chip";
 import { FlexRowWrap } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
-import { Label } from "@components/Label";
 import {
   SearchList,
   type SearchListItem,
@@ -50,31 +48,34 @@ export const DatabaseAccessEditor = ({
       data-command="DatabaseAccessEditor"
     >
       <Icon className="text-1" path={mdiTableEye} />
-      {onChange ?
-        <Select
-          label={{ label: "Data access" }}
-          value={value?.mode ?? "none"}
-          data-command="DatabaseAccessEditor.Mode"
-          btnProps={{
-            color: value ? "action" : undefined,
-          }}
-          fullOptions={MODES}
-          onChange={(dataAccess) => {
-            void onChange(
-              dataAccess === "none" ? undefined
-              : dataAccess === "custom" ?
-                {
-                  mode: dataAccess,
-                  tablePermissions: {},
-                }
-              : {
-                  mode: dataAccess,
-                },
-            );
-          }}
-        />
-      : <Label label={"Data access"} variant="normal" />}
-      {value?.mode !== "custom" && <Chip>{value?.mode || "None"}</Chip>}
+
+      <Select
+        label={{ label: "Data access" }}
+        value={value?.mode ?? "none"}
+        data-command="DatabaseAccessEditor.Mode"
+        btnProps={{
+          color: value ? "action" : undefined,
+        }}
+        fullOptions={MODES}
+        onChange={
+          !onChange ? undefined : (
+            (dataAccess) => {
+              void onChange(
+                dataAccess === "none" ? undefined
+                : dataAccess === "custom" ?
+                  {
+                    mode: dataAccess,
+                    tablePermissions: {},
+                  }
+                : {
+                    mode: dataAccess,
+                  },
+              );
+            }
+          )
+        }
+      />
+
       {contentRight}
       {value?.mode === "custom" && (
         <div

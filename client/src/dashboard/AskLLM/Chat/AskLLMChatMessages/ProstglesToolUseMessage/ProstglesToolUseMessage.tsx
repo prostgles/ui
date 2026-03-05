@@ -36,7 +36,7 @@ export const ProstglesMCPToolsWithUI = {
     component: AskUserQuestions,
     displayMode: "full",
   },
-  "prostgles-ui--create_container": {
+  "prostgles-ui--run_code_in_sandbox": {
     component: DockerSandboxCreateContainer,
     displayMode: "full",
   },

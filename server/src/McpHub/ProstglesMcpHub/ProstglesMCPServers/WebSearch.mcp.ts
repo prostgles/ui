@@ -1,5 +1,5 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import { getEntries } from "@common/utils";
+import { fromEntries, getEntries } from "@common/utils";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
@@ -192,16 +192,21 @@ const handler = {
         },
       },
       fetchTools: () => {
-        return getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]).map(
-          ([name, { schema, description }]) => ({
-            name,
-            description,
-            inputSchema: getJSONBSchemaAsJSONSchema(
-              "",
-              "",
-              schema,
-            ) as McpTool["inputSchema"],
-          }),
+        return fromEntries(
+          getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]).map(
+            ([name, { schema, description }]) => [
+              name,
+              {
+                name,
+                description,
+                inputSchema: getJSONBSchemaAsJSONSchema(
+                  "",
+                  "",
+                  schema,
+                ) as McpTool["inputSchema"],
+              },
+            ],
+          ),
         );
       },
     };

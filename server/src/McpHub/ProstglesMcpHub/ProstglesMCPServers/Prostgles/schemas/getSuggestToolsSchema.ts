@@ -34,5 +34,7 @@ export const getSuggestToolsSchema = ({
     )}
     \`\`\`
   `),
-  input_schema: {},
+  inputSchema: {
+    type: "object",
+  } as const,
 });

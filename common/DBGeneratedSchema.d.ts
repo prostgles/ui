@@ -481,10 +481,10 @@ export type DBGeneratedSchema = {
       annotations?: null | {    title?: string;   readOnlyHint?: boolean;   openWorldHint?: boolean;   idempotentHint?: boolean;   destructiveHint?: boolean;  };
       description: string;
       id?: number;
-      inputSchema?: null | any;
+      inputSchema:  Record<string, unknown>
       mode?: null | "structured-output" | "user-provides-response"
       name: string;
-      outputSchema?: null | any;
+      outputSchema?: null | Record<string, unknown>
       server_name: string;
     };
   };

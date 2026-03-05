@@ -16,7 +16,6 @@ export const getMCPServerTools = async (
       name: getMCPFullToolName(t.server_name, t.name),
       description: t.description,
       mode: t.mode,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       input_schema: t.inputSchema,
     } satisfies MCPToolSchema & {
       id: number;

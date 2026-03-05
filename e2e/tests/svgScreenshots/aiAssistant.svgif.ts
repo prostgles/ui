@@ -170,7 +170,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("LLMChatOptions.MCPTools").click();
   await page
     .getByTestId("MCPServerTools")
-    .getByText("create_container")
+    .getByText("run_code_in_sandbox")
     .click();
   await page.getByText("Auto-approve: ON").click();
   await page.waitForTimeout(1000);

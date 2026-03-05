@@ -2,17 +2,22 @@ import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useCallback, useState } from "react";
 
+import { isDefined } from "@common/filterUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { Marked } from "@components/Chat/Marked";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
-import { mdiCogOutline, mdiTools } from "@mdi/js";
-import { LLMModelSelector } from "src/dashboard/AskLLM/LLMModelSelector";
-import { HeaderList } from "../common/HeaderList";
-import { useLLMSetupDone } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 import { Icon } from "@components/Icon/Icon";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { Select } from "@components/Select/Select";
+import { mdiCogOutline, mdiTools } from "@mdi/js";
+import { useMcpToolsSelectOptions } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpToolsSelectOptions";
+import { LLMModelSelector } from "src/dashboard/AskLLM/LLMModelSelector";
+import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
+import { isEmpty } from "src/utils/utils";
+import { isNotEmpty } from "prostgles-types";
+import { SvgIcon } from "@components/SvgIcon";
+import { sliceText } from "@common/utils";
 
 export const AgentDefinition = ({
   workflow,
@@ -39,10 +44,9 @@ export const AgentDefinition = ({
     modelName,
     maxTokens,
     temperature,
-    tools,
+    tools: agentTools,
   } = agentDefinition;
-  // const { mcpServerIcons } = useLLMSetupDone();
-  // const { data: mcpTools } = dbs.mcp_server_tools.useFind();
+  const { options, tools, mcpServerIcons } = useMcpToolsSelectOptions();
   const updateAgentDefinition = useCallback(
     async (updatedFields: Partial<typeof agentDefinition>) => {
       await dbs.agentic_workflows.update(
@@ -64,17 +68,24 @@ export const AgentDefinition = ({
     [agentConfigOverride, agentName, dbs.agentic_workflows, workflow.id],
   );
 
-  const agentTools =
-    tools &&
-    Object.entries(tools).flatMap(([mcpServerName, toolNameObj = {}]) => {
-      const toolNames = Object.keys(toolNameObj);
-      return toolNames.map((toolName) => {
-        return {
-          mcpServerName,
-          toolName,
-        };
-      });
-    });
+  const agentToolsList =
+    agentTools &&
+    Object.entries(agentTools)
+      .flatMap(([mcpServerName, toolNameObj = {}]) => {
+        const toolNames = Object.keys(toolNameObj);
+        return toolNames.map((toolName) => {
+          const tool = tools?.find(
+            (t) => t.server_name === mcpServerName && t.name === toolName,
+          );
+          if (!tool) return;
+          return {
+            mcpServerName,
+            toolName,
+            id: tool.id,
+          };
+        });
+      })
+      .filter(isDefined);
 
   return (
     <FlexCol
@@ -105,49 +116,92 @@ export const AgentDefinition = ({
           }}
         />
       </FlexRow>
-      {tools && (
-        <FlexRowWrap title="Agent tools" className="gap-p5">
-          <Icon path={mdiTools} />
-          {Object.entries(tools).map(([mcpServerName, toolNameObj = {}]) => {
-            const toolNames = Object.keys(toolNameObj);
-            return (
-              <span key={mcpServerName} title={toolNames.join(", ")}>
-                <strong>{mcpServerName}</strong>:{" "}
-                <span style={{ fontWeight: "normal" }}>
-                  {toolNames.join(", ")}
-                </span>
-              </span>
-            );
-          })}
-          {/* {mcpTools && (
-            <Select
-              value={agentTools?.map((t) => `${t.mcpServerName}:${t.toolName}`)}
-              size="small"
-              multiSelect={true}
-              fullOptions={mcpTools.map((t) => {
-                return {
-                  key: `${t.server_name}:${t.name}`,
-                  label: `${t.server_name}  ${t.name}`,
-                  subLabel: t.description,
-                  icon: mcpServerIcons.get(t.server_name),
-                };
-              })}
-              onChange={console.log}
-            />
-          )} */}
-        </FlexRowWrap>
-      )}
+      {expanded ?
+        <Select
+          value={agentToolsList?.map((t) => t.id)}
+          size="small"
+          multiSelect={true}
+          fullOptions={options}
+          btnProps={{
+            children:
+              agentToolsList ?
+                `${agentToolsList.length} tool${agentToolsList.length > 1 ? "s" : ""} selected`
+              : "Select tools",
+            variant: "faded",
+            iconPath: mdiTools,
+          }}
+          onChange={(newToolIds) => {
+            const newAgentTools: Partial<
+              Record<string, Partial<Record<string, 1>>>
+            > = {};
+            tools?.forEach(({ id, server_name, name }) => {
+              if (!newToolIds.includes(id)) return;
+              newAgentTools[server_name] ??= {};
+              newAgentTools[server_name][name] = 1;
+            });
+            void updateAgentDefinition({
+              tools: newAgentTools,
+            });
+          }}
+        />
+      : isNotEmpty(agentTools) ?
+        <ScrollFade
+          title="Agent tools"
+          className="flex-col gap-p5 oy-auto "
+          style={{ maxHeight: "100px" }}
+        >
+          {Object.entries(agentTools).map(
+            ([mcpServerName, toolNameObj = {}]) => {
+              const icon = mcpServerIcons.get(mcpServerName);
+              const toolNames = Object.keys(toolNameObj);
+              return (
+                <FlexRowWrap
+                  key={mcpServerName}
+                  title={toolNames.join(", ")}
+                  style={{ display: "inline-flex" }}
+                  className="gap-p25"
+                >
+                  <FlexRow className="f-0 w-fit gap-p25">
+                    {icon ?
+                      <SvgIcon icon={icon} className="text-1 f-0" />
+                    : <Icon
+                        path={mdiTools}
+                        sizeName="micro"
+                        className="text-1"
+                      />
+                    }
+                    <strong>{mcpServerName}:</strong>
+                  </FlexRow>
+                  <span style={{ fontWeight: "normal" }}>
+                    {sliceText(toolNames.join(", "), 50)}
+                  </span>
+                </FlexRowWrap>
+              );
+            },
+          )}
+        </ScrollFade>
+      : null}
       <ScrollFade
         className="o-auto min-w-0"
         style={{ maxHeight: expanded ? "400px" : "150px" }}
       >
-        <Marked
-          codeHeader={undefined}
-          content={expanded ? prompt : slicePrompt(prompt)}
-          loadedSuggestions={undefined}
-          prgl={prgl}
-          sqlHandler={undefined}
-        />
+        {expanded ?
+          <CodeEditorWithSaveButton
+            label="Agent prompt"
+            value={prompt}
+            language="markdown"
+            onSave={(newPrompt) => {
+              void updateAgentDefinition({ prompt: newPrompt });
+            }}
+          />
+        : <Marked
+            codeHeader={undefined}
+            content={slicePrompt(prompt)}
+            loadedSuggestions={undefined}
+            prgl={prgl}
+            sqlHandler={undefined}
+          />
+        }
       </ScrollFade>
       {expanded && (
         <FlexRow>

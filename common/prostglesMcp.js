@@ -146,7 +146,33 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
     },
     "prostgles-ui": {
-        create_container: {
+        compact_context: {
+            description: [
+                "Reduce conversation history while preserving important information.",
+                "Include important details and information that might be relevant for future conversation. Be concise.",
+                "Always use this tool with type='previous-message' after receiving long tool outputs that are not important to keep in full detail in the conversation history.",
+            ].join("\n"),
+            schema: {
+                oneOfType: [
+                    {
+                        type: { enum: ["conversation"] },
+                        summary: {
+                            type: "string",
+                            description: "Summary of the conversation so far.",
+                        },
+                    },
+                    {
+                        type: { enum: ["previous-message"] },
+                        summary: {
+                            type: "string",
+                            description: "Summary of the previous message. .",
+                        },
+                    },
+                ],
+            },
+            outputSchema: "string",
+        },
+        run_code_in_sandbox: {
             description: "Creates a docker container. Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.",
             schema: {
                 type: {
@@ -475,7 +501,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 },
             },
             outputSchema: {
-                type: {
+                arrayOfType: {
                     filePath: "string",
                     content: "string",
                 },
@@ -535,9 +561,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 },
             },
             outputSchema: {
-                type: {
-                    content: "string",
-                },
+                type: "unknown",
             },
         },
         create_component: {
@@ -571,9 +595,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 },
             },
             outputSchema: {
-                type: {
-                    content: "string",
-                },
+                type: "unknown",
             },
         },
     },

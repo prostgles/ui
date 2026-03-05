@@ -130,7 +130,7 @@ export const LLMModelSelector = ({
             }) => {
               const name = rawName.split("/")[1] || rawName;
               const noCredentials = !llm_credentials.length;
-              const iconUrl = llm_providers[0]?.logo_url;
+              const iconUrl = llm_providers[0]?.logo_url as string | undefined;
               const isFree = Object.values(pricing_info ?? {}).every(
                 (v) => v === 0,
               );
@@ -180,8 +180,8 @@ export const LLMModelSelector = ({
                             position: "sticky",
                             top: "10px",
                             left: "20px",
-                            // left: "50%",
-                            // transform: "translateX(-50%)",
+                            zIndex: 1,
+                            background: "var(--bg-color-0)",
                           }}
                           data-command="LLMChatOptions.Model.AddCredentials"
                           iconPath={mdiAccountKey}

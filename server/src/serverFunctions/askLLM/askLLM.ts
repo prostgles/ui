@@ -245,10 +245,15 @@ export const askLLM = async (args: AskLLMArgs) => {
     }
   }
 
-  const hasMessagesThatNeedsAIResponse = userMessage.some((m) => {
-    if (m.type === "tool_result" && !m.is_error) {
+  const hasMessagesThatNeedAIResponse = userMessage.some((m) => {
+    if (m.type === "tool_result") {
+      if (m.is_error) {
+        return true;
+      }
       const toolNameParts = getMCPToolNameParts(m.tool_name);
-      if (!toolNameParts) return true;
+      if (!toolNameParts) {
+        return true;
+      }
       const { serverName, toolName } = toolNameParts;
       /**
        * Somet of prostgles-ui tools don't need LLM response after their result
@@ -258,16 +263,16 @@ export const askLLM = async (args: AskLLMArgs) => {
           PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
           toolName,
         );
-        return (
+        return !(
           toolDefinition &&
           "mode" in toolDefinition &&
-          toolDefinition.mode === "user-provides-response"
+          toolDefinition.mode === "structured-output"
         );
       }
     }
     return true;
   });
-  if (!hasMessagesThatNeedsAIResponse) {
+  if (!hasMessagesThatNeedAIResponse) {
     return;
   }
 

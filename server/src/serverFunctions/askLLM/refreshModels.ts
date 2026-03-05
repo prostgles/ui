@@ -124,8 +124,12 @@ export const DEFAULT_AGENT_MODEL = "claude-4.6-sonnet";
 const CHAT_MODEL_RANKING = [
   "gpt-5.3-codex",
   "gpt-5.2-chat",
+  "qwen3.5-397b-a17b",
   "claude-4.5-haiku",
   "claude-4.6-sonnet",
+  "gemini-3.1-pro",
+  "kimi-k2-thinking",
+  "glm-4.7",
 ];
 
 const LLM_PROVIDERS = ["OpenAI", "Anthropic", "Google"];

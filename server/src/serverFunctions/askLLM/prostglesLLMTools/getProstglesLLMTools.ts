@@ -57,7 +57,7 @@ export const getProstglesLLMTools = async ({
   const prostglesMCPTools = new Map(
     await Promise.all(
       serverEntries.map(async ([name, { fetchTools }]) => {
-        const serverTools = await fetchTools(dbs, {
+        const serverToolsMap = await fetchTools(dbs, {
           chat,
           connection_id,
           user_id: chat.user_id,
@@ -72,6 +72,7 @@ export const getProstglesLLMTools = async ({
           }),
           dbs,
         });
+        const serverTools = Object.values(serverToolsMap).filter(isDefined);
         const res = [name, serverTools] as const;
         return res;
       }),

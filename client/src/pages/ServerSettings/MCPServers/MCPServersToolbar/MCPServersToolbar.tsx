@@ -6,8 +6,8 @@ import { mdiFilter, mdiMagnify, mdiPlay, mdiStop } from "@mdi/js";
 import React from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { MCPServersProps } from "../MCPServers";
+import { useMcpToolsSelectOptions } from "../MCPServerTools/useMcpToolsSelectOptions";
 import { AddMCPServer } from "./AddMCPServer";
-import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
 
 export const MCPServersToolbar = ({
   selectedTool,
@@ -17,8 +17,8 @@ export const MCPServersToolbar = ({
   setSelectedTool: (tool: undefined | DBSSchema["mcp_server_tools"]) => void;
 }) => {
   const { dbs } = usePrglCore();
-  const { data: tools } = dbs.mcp_server_tools.useFind();
   const globalSettings = dbs.global_settings.useSubscribeOne();
+  const { options, tools } = useMcpToolsSelectOptions();
 
   return (
     <>
@@ -60,25 +60,7 @@ export const MCPServersToolbar = ({
             },
           }}
           value={selectedTool?.id}
-          fullOptions={(tools ?? []).map((t) => {
-            const argsSchema =
-              t.inputSchema &&
-              getJsonSchemaAsTs(t.inputSchema, {
-                mode: "compact",
-              });
-            const outputSchema =
-              !t.outputSchema ? "unknown" : (
-                getJsonSchemaAsTs(t.outputSchema, { mode: "compact" })
-              );
-            return {
-              key: t.id,
-              label: `${t.server_name} ${t.name}`,
-              subLabel: [
-                t.description,
-                `(${argsSchema ? "args: " : ""}${argsSchema}) => Promise<${outputSchema}>`,
-              ].join("\n"),
-            };
-          })}
+          fullOptions={options}
           onChange={(id) => {
             setSelectedTool(tools?.find((t) => t.id === id));
           }}

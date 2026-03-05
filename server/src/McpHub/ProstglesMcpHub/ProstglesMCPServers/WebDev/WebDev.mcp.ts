@@ -5,7 +5,7 @@ import type {
   ProstglesMcpServerHandlerTyped,
 } from "../../ProstglesMCPServerTypes";
 
-import { getEntries } from "@common/utils";
+import { fromEntries, getEntries } from "@common/utils";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import { getValidatedWebAppPath } from "@src/serverFunctions/adminServerFunctions/webApp/getValidatedWebAppPath";
 import { readWebAppFiles } from "@src/serverFunctions/adminServerFunctions/webApp/readWebAppFiles";
@@ -85,14 +85,23 @@ const handler = {
         create_component: createComponent,
       },
       fetchTools: () => {
-        return getEntries(toolsSchema).map(([tool_name, tool_info]) => ({
-          name: tool_name,
-          description: tool_info.description,
-          inputSchema: omitKeys(
-            getJSONBSchemaAsJSONSchema("", "", tool_info.schema),
-            ["$id", "$schema"],
-          ) as McpTool["inputSchema"],
-        }));
+        const res = fromEntries(
+          getEntries(toolsSchema).map(
+            ([tool_name, tool_info]) =>
+              [
+                tool_name,
+                {
+                  name: tool_name,
+                  description: tool_info.description,
+                  inputSchema: omitKeys(
+                    getJSONBSchemaAsJSONSchema("", "", tool_info.schema),
+                    ["$id", "$schema"],
+                  ) as McpTool["inputSchema"],
+                },
+              ] as const,
+          ),
+        );
+        return res;
       },
     };
   },

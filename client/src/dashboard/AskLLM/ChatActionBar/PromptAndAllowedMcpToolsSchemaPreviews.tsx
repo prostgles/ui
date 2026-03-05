@@ -55,7 +55,7 @@ export const PromptAndAllowedMcpToolsSchemaPreviews = (props: {
         onClickClose={false}
       >
         <Marked
-          className="f-1 m-auto"
+          className="f-1 m-auto ta-start"
           content={promptContent || ""}
           loadedSuggestions={undefined}
           codeHeader={undefined}
@@ -75,7 +75,7 @@ export const PromptAndAllowedMcpToolsSchemaPreviews = (props: {
         <MonacoEditor
           loadedSuggestions={undefined}
           className="f-1 w-full h-full"
-          value={JSON.stringify(tools, null, 2)}
+          value={JSON.stringify(tools ?? [], null, 2)}
           language="json"
           options={MONACO_READONLY_DEFAULT_OPTIONS}
         />

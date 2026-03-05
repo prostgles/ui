@@ -8,7 +8,7 @@ export const createContainer = async (
 ) => {
   const { db_data_permissions } = chat;
 
-  return runContainerWithProxyAccess(
+  const res = await runContainerWithProxyAccess(
     dbs,
     {
       user_id,
@@ -22,4 +22,5 @@ export const createContainer = async (
       networkMode: args.networkMode || "bridge-internal",
     },
   );
+  return res;
 };

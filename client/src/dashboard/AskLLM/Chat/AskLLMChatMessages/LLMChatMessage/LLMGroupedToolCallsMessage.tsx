@@ -1,8 +1,7 @@
 import Btn from "@components/Btn";
-import { SvgIcon } from "@components/SvgIcon";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import React, { useMemo } from "react";
-import { useLLMSetupDone } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 import { isDefined } from "src/utils/utils";
 import {
   getMessageContentItems,
@@ -26,7 +25,7 @@ export const LLMGroupedToolCallsMessage = ({
   }, [messages]);
 
   const { sql } = usePrgl();
-  const { mcpServerIcons } = useLLMSetupDone();
+  const { mcpServerIcons } = useMcpServerIcons();
   const { icons, toolCallCount } = useMemo(() => {
     let toolCallCount = 0;
     const iconPaths = messageContentItems
