@@ -175,6 +175,11 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
   const agentHandlersProxy = new Proxy({} as Parameters<typeof handler>[0], {
     get(_target, prop: string) {
       if (typeof prop !== "string") return undefined;
+      if (!definitions.agentDefinitions) {
+        throw new Error(
+          `No agents are defined for this workflow, but tried to access agent "${prop}"`,
+        );
+      }
       if (!(prop in definitions.agentDefinitions)) {
         throw new Error(`Agent "${prop}" is not defined in agentDefinitions`);
       }

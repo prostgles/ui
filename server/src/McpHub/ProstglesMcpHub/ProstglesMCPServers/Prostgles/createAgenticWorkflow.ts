@@ -4,7 +4,6 @@ import { getSerialisableError, omitKeys } from "prostgles-types";
 import type { McpCallContext } from "../../ProstglesMCPServerTypes";
 import { startAgenticWorkflowContainer } from "./startAgenticWorkflowContainer";
 import { validateAgenticWorkflowDefinitions } from "./validateAgenticWorkflowDefinitions";
-
 export const createAgenticWorkflow = async (
   {
     workflow_function_definition,
@@ -91,8 +90,6 @@ export const createAgenticWorkflow = async (
             resolve({
               isValid: true,
               workflowId,
-              // ...definitions,
-              // newTables,
             });
             return;
           }
@@ -102,8 +99,6 @@ export const createAgenticWorkflow = async (
               resolve({
                 isValid: true,
                 workflowId: id,
-                // ...definitions,
-                // newTables,
               });
             })
             .catch(reject);

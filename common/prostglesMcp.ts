@@ -359,19 +359,29 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         "Request access to mcp tools. The user will be prompted to approve or deny access. Use this tool when you need access to a tool that you don't have access to yet. The user will then approve access if they are comfortable with it based on the tool description and the context of the conversation.",
       schema: {
         type: {
-          schema: {
-            type: {
-              mcpServerTools: {
-                descoription:
-                  "List of MCP server tools to enable for this chat.",
-                optional: true,
-                ...mcpServerToolsAllowed,
-              },
+          reason: {
+            description: "Reason for requesting access to the tool",
+            type: "string",
+            optional: true,
+          },
+          mcpServerTools: {
+            descoription: "List of MCP server tools to enable for this chat.",
+            optional: true,
+            ...mcpServerToolsAllowed,
+          },
+          databaseAccess: databaseAccessSchema,
+        },
+      },
+      outputSchema: {
+        type: {
+          validatedTools: {
+            arrayOfType: {
+              id: "number",
+              server_name: "string",
             },
           },
         },
       },
-      outputSchema: "string",
     },
     suggest_agentic_workflow: {
       mode: "structured-output",

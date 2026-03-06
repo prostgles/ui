@@ -349,6 +349,10 @@ export type UserInputItem =
   | UserInputBase<{
       type: "custom";
       dataType: "string" | "number" | "boolean" | "Date";
+    }>
+  | UserInputBase<{
+      type: "enum";
+      values: string[];
     }>;
 
 export type UserInputOutputMapping = {
@@ -356,6 +360,7 @@ export type UserInputOutputMapping = {
   "table-and-column": { tableName: string; columnName: string };
   "table-name": string;
   "table-column": string;
+  enum: string;
   custom: unknown;
 };
 
@@ -381,7 +386,7 @@ export type DefineAgenticWorkflow = <
     userInput?: UserInput;
     databaseAccessDefinitions?: DatabaseAccessDefinition;
     orchestrationTools?: OrchestrationTools;
-    agentDefinitions: AgentDefinitions;
+    agentDefinitions?: AgentDefinitions;
   },
   workflow: (
     agentHandlers: {

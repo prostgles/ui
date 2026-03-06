@@ -17,6 +17,7 @@ import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedTo
 import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/CreateComponentQuickFeedbackPreview";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 import { WebSnapshot } from "./ProstglesMCPTools/WebSearch/WebSnapshot";
+import { RequestToolAccess } from "./ProstglesMCPTools/RequestToolAccess";
 
 export const ProstglesMCPToolsWithUI = {
   [getMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]: {
@@ -38,6 +39,10 @@ export const ProstglesMCPToolsWithUI = {
   },
   "prostgles-ui--run_code_in_sandbox": {
     component: DockerSandboxCreateContainer,
+    displayMode: "full",
+  },
+  "prostgles-ui--request_tool_access": {
+    component: RequestToolAccess,
     displayMode: "full",
   },
   [getProstglesMCPFullToolName(

@@ -26,6 +26,27 @@ export const AgenticWorkflowUserInput = ({
             const title =
               (inputItem.title || inputKey) +
               (inputItem.optional ? " (optional)" : "");
+            if (inputItem.type === "enum") {
+              return (
+                <FormField
+                  key={inputKey}
+                  optional={inputItem.optional}
+                  value={(currentValue as string) || ""}
+                  labelStyle={{ lineHeight: "1em", fontWeight: "normal" }}
+                  label={title}
+                  title={title}
+                  data-key={inputKey}
+                  type={"text"}
+                  options={inputItem.values}
+                  onChange={(newValue) => {
+                    setUserInputValue((prev) => ({
+                      ...prev,
+                      [inputKey]: newValue,
+                    }));
+                  }}
+                />
+              );
+            }
             if (inputItem.type === "custom") {
               return (
                 <FormField
@@ -33,6 +54,7 @@ export const AgenticWorkflowUserInput = ({
                   value={currentValue}
                   labelStyle={{ lineHeight: "1em", fontWeight: "normal" }}
                   label={title}
+                  optional={inputItem.optional}
                   title={title}
                   data-key={inputKey}
                   type={getProperty(
@@ -96,6 +118,7 @@ export const AgenticWorkflowUserInput = ({
                 <Select
                   key={inputKey}
                   label={title}
+                  optional={inputItem.optional}
                   title={title}
                   data-key={inputKey}
                   options={tables.map((t) => t.name)}
@@ -122,6 +145,7 @@ export const AgenticWorkflowUserInput = ({
               return (
                 <Select
                   key={inputKey}
+                  optional={inputItem.optional}
                   label={title}
                   title={title}
                   data-key={inputKey}
@@ -153,6 +177,7 @@ export const AgenticWorkflowUserInput = ({
                 <Select
                   key={inputKey}
                   label={title}
+                  optional={inputItem.optional}
                   title={title}
                   data-key={inputKey}
                   fullOptions={fullOptions}

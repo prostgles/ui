@@ -62,9 +62,11 @@ export const startAgenticWorkflowSchema = {
     oneOfType: databaseAccessSchema.oneOfType,
   },
   orchestrationTools: {
+    optional: true,
     oneOf: [{ enum: [undefined] }, mcpServerToolsAllowed],
   },
   agentDefinitions: {
+    optional: true,
     record: {
       values: {
         type: {
@@ -98,6 +100,12 @@ export const startAgenticWorkflowSchema = {
             title: "string",
             optional: { type: "boolean", optional: true },
             type: { enum: ["table-name", "table-and-column"] },
+          },
+          {
+            title: "string",
+            optional: { type: "boolean", optional: true },
+            type: { enum: ["enum"] },
+            values: "string[]",
           },
           {
             title: "string",

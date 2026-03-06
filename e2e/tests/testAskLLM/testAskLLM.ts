@@ -310,6 +310,32 @@ const toolResponses: Record<string, ToolUse> = {
       },
     ],
   },
+  request_tool_access: {
+    tool: [
+      {
+        id: "request-tool-access-use",
+        type: "function",
+        function: {
+          name: "prostgles-ui--request_tool_access",
+          arguments: stringify({
+            mcpServerTools: {
+              websearch: { websearch: 1 },
+            },
+            databaseAccess: {
+              mode: "custom",
+              tablePermissions: {
+                receipts: {
+                  select: true,
+                },
+              },
+            },
+            reason:
+              "I need to fetch data from an external API to provide you with accurate information.",
+          }),
+        },
+      },
+    ],
+  },
   component: createComponentToolUse,
   agentic_workflow: agenticWorkflowToolUses.input,
   agentic_workflow_noinput: agenticWorkflowToolUses.noinput,

@@ -4,20 +4,19 @@ import React, { useCallback, useState } from "react";
 
 import { isDefined } from "@common/filterUtils";
 import type { DBSSchema } from "@common/publishUtils";
+import { sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import { Marked } from "@components/Chat/Marked";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { Icon } from "@components/Icon/Icon";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { Select } from "@components/Select/Select";
+import { SvgIcon } from "@components/SvgIcon";
 import { mdiCogOutline, mdiTools } from "@mdi/js";
 import { useMcpToolsSelectOptions } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpToolsSelectOptions";
+import { isNotEmpty } from "prostgles-types";
 import { LLMModelSelector } from "src/dashboard/AskLLM/LLMModelSelector";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
-import { isEmpty } from "src/utils/utils";
-import { isNotEmpty } from "prostgles-types";
-import { SvgIcon } from "@components/SvgIcon";
-import { sliceText } from "@common/utils";
 
 export const AgentDefinition = ({
   workflow,
@@ -29,7 +28,7 @@ export const AgentDefinition = ({
   const prgl = usePrgl();
   const { dbs } = prgl;
   const [expanded, setExpanded] = useState(false);
-  const { agentDefinitions } = workflow.definition_data;
+  const { agentDefinitions = {} } = workflow.definition_data;
 
   const agentInitialDefinition = agentDefinitions[agentName]!;
   const agentConfigOverride =

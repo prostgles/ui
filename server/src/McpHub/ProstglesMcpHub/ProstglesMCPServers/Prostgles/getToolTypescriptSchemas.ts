@@ -1,6 +1,6 @@
 import type { DBS } from "@src/index";
 import { getJsonSchemaAsTs } from "../../../../../../common/getJsonSchemaAsTs";
-import { getValidatedMcpServerToolsAllowed } from "./getOrchestrationToolsHandler";
+import { getValidatedMcpServerToolsAllowed } from "./getValidatedMcpServerToolsAllowed";
 
 export const getToolTypescriptSchemas = async (
   dbs: DBS,

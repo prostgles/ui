@@ -85,7 +85,7 @@ export const AgenticWorkflowDefinition = ({
       key={workflow_function_definition}
       label={null}
       value={workflow_function_definition}
-      codeEditorClassName=""
+      codeEditorClassName="b-unset"
       language={language}
       minHeight={400}
       // scroll to end to avoid top data which is shown in Details tab

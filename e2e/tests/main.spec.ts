@@ -61,6 +61,7 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
+import { send } from "process";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -762,6 +763,13 @@ test.describe("Main test", () => {
     ]);
 
     await page.getByTestId("AskLLM").click();
+
+    await sendAskLLMMessage(page, " request_tool_access ");
+    await page
+      .getByTestId("RequestToolAccess.Approve")
+      .click({ timeout: 10e3 });
+    await page.getByTestId("Chat.messageList").locator(".dwadwadwadwa").click();
+
     await setModelByText(page, "son");
 
     await setPromptByText(page, "Create task");

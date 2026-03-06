@@ -33,6 +33,19 @@ export const validateUserInput = (
           )}`,
         };
       }
+    } else if (definition.type === "enum") {
+      if (typeof value !== "string") {
+        return {
+          error: `Invalid type for user input ${JSON.stringify(titleOrKey)}: expected string for enum`,
+        };
+      }
+      if (!definition.values.includes(value)) {
+        return {
+          error: `Invalid value for user input ${JSON.stringify(titleOrKey)}: expected one of ${JSON.stringify(
+            definition.values,
+          )}`,
+        };
+      }
     } else if (definition.type === "custom") {
       if (definition.dataType === "string" && typeof value !== "string") {
         return {

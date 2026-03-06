@@ -42,6 +42,7 @@ export const setupLLM = async (dbs: DBS) => {
             mcp_server_tools: allowProstglesUITools({
               ask_user_questions: 1,
               get_tool_schemas: 1,
+              request_tool_access: 1,
             }),
             database_access: "execute_sql_with_rollback",
           },

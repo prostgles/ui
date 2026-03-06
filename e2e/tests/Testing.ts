@@ -542,6 +542,8 @@ export const COMMANDS = {
   "DatabaseAccessEditor.Mode": "",
   "DatabaseAccessEditor.TableRules": "",
   "LLMChatOptions.DatabaseAccess.schema": "",
+  RequestToolAccess: "",
+  "RequestToolAccess.Approve": "",
 } as const satisfies Record<
   string,
   | string

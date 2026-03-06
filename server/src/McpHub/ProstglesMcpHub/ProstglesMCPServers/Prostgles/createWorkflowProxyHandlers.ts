@@ -6,10 +6,8 @@ import { tout } from "@src/utils/tout";
 import type { AuthClientRequest } from "prostgles-server";
 import type { DefineAgenticWorkflow } from "./defineAgenticWorkflow";
 import { getValidatedAgentHandlerArgs } from "./getValidatedAgentHandlerArgs";
-import {
-  getValidatedMcpServerToolsAllowed,
-  getOrchestrationToolsHandler,
-} from "./getOrchestrationToolsHandler";
+import { getOrchestrationToolsHandler } from "./getOrchestrationToolsHandler";
+import { getValidatedMcpServerToolsAllowed } from "./getValidatedMcpServerToolsAllowed";
 
 /**
  * Execute agent invocations in series to reduce risk of avoid runaway costs and allow for human feedback between steps.
@@ -83,7 +81,7 @@ export const createWorkflowProxyHandlers = async <
     string,
     Awaited<ReturnType<typeof getValidatedAgentHandlerArgs>>
   > = {};
-  for (const [agentName, config] of Object.entries(agentDefinitions)) {
+  for (const [agentName, config] of Object.entries(agentDefinitions ?? {})) {
     const configWithDefaults = await getValidatedAgentHandlerArgs(
       { agentName, agentConfig: config, definition_override },
       dbs,

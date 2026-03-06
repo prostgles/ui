@@ -1,4 +1,6 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { connectionManager } from "@src/index";
+import { isEmpty } from "prostgles-types";
 import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import type {
   ProstglesMcpServerDefinition,
@@ -9,6 +11,7 @@ import { createAgenticWorkflow } from "./Prostgles/createAgenticWorkflow";
 import { createContainer } from "./Prostgles/createContainer";
 import { fetchTools } from "./Prostgles/fetchTools";
 import { getToolTypescriptSchemas } from "./Prostgles/getToolTypescriptSchemas";
+import { getValidatedMcpServerToolsAllowed } from "./Prostgles/getValidatedMcpServerToolsAllowed";
 
 const serverName = "prostgles-ui" as const;
 const definition = {
@@ -26,14 +29,55 @@ const handler = {
       },
       tools: {
         run_code_in_sandbox: createContainer,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        ask_user_questions: (async () => {
+        ask_user_questions: () => {
           // never called
-        }) as any,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        request_tool_access: (async () => {
-          // never called
-        }) as any,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return "" as any;
+        },
+        request_tool_access: async (
+          { databaseAccess, mcpServerTools },
+          { connection_id },
+        ) => {
+          const validatedTools =
+            mcpServerTools &&
+            (await getValidatedMcpServerToolsAllowed(dbs, mcpServerTools));
+          if (databaseAccess && databaseAccess.mode === "custom") {
+            if (
+              isEmpty(databaseAccess.tablePermissions) &&
+              !databaseAccess.tableCreateStatements
+            ) {
+              throw new Error(
+                `Custom database access must have either tablePermissions or tableCreateStatements`,
+              );
+            }
+            const connPrgl =
+              connectionManager.getActiveConnectionSilentFail(connection_id);
+            if (!connPrgl) {
+              throw new Error(`Connection with id ${connection_id} not found`);
+            }
+            Object.keys(databaseAccess.tablePermissions).forEach(
+              (tableName) => {
+                const matchingTable = connPrgl.prgl.db[tableName];
+                if (!matchingTable || !matchingTable.find) {
+                  const allTables = Object.keys(connPrgl.prgl.db)
+                    .filter((k) => connPrgl.prgl.db[k]?.find)
+                    .join(", ");
+                  throw new Error(
+                    `Table ${tableName} not found in current schema. Available tables: ${allTables}`,
+                  );
+                }
+              },
+            );
+          }
+          return {
+            validatedTools:
+              validatedTools?.map((t) => ({
+                id: t.id,
+                server_name: t.server_name,
+              })) ?? [],
+            databaseAccess,
+          };
+        },
         suggest_agentic_workflow: createAgenticWorkflow,
         get_tool_schemas: async ({ mcpServerTools }) => {
           return getToolTypescriptSchemas(dbs, mcpServerTools ?? "*");
