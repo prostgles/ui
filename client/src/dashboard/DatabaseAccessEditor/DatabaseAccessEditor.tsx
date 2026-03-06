@@ -1,6 +1,5 @@
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
-import { FlexRowWrap } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import {
   SearchList,
@@ -17,6 +16,7 @@ import {
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined, isEmpty, type JSONB } from "prostgles-types";
 import React, { useState } from "react";
+import { HeaderSection } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/common/HeaderSection";
 import type {
   DBSchemaTableColumn,
   DBSchemaTableWJoins,
@@ -42,46 +42,44 @@ export const DatabaseAccessEditor = ({
 }: P) => {
   const { tables } = usePrgl();
   const [viewMode, setViewMode] = useState<ViewMode>("Overview");
+
   return (
-    <FlexRowWrap
+    <HeaderSection
       className="gap-p5 ai-start"
       data-command="DatabaseAccessEditor"
+      title="Database access"
     >
-      <Icon className="text-1" path={mdiTableEye} />
-
-      <Select
-        label={{ label: "Data access" }}
-        value={value?.mode ?? "none"}
-        data-command="DatabaseAccessEditor.Mode"
-        btnProps={{
-          color: value ? "action" : undefined,
-        }}
-        fullOptions={MODES}
-        onChange={
-          !onChange ? undefined : (
-            (dataAccess) => {
-              void onChange(
-                dataAccess === "none" ? undefined
-                : dataAccess === "custom" ?
-                  {
-                    mode: dataAccess,
-                    tablePermissions: {},
-                  }
-                : {
-                    mode: dataAccess,
-                  },
-              );
-            }
-          )
-        }
-      />
+      {(value?.mode !== "custom" || onChange) && (
+        <Select
+          value={value?.mode ?? "none"}
+          data-command="DatabaseAccessEditor.Mode"
+          btnProps={{
+            color: value ? "action" : undefined,
+          }}
+          fullOptions={MODES}
+          onChange={
+            !onChange ? undefined : (
+              (dataAccess) => {
+                void onChange(
+                  dataAccess === "none" ? undefined
+                  : dataAccess === "custom" ?
+                    {
+                      mode: dataAccess,
+                      tablePermissions: {},
+                    }
+                  : {
+                      mode: dataAccess,
+                    },
+                );
+              }
+            )
+          }
+        />
+      )}
 
       {contentRight}
       {value?.mode === "custom" && (
-        <div
-          className="w-full pl-2"
-          data-command="DatabaseAccessEditor.TableRules"
-        >
+        <div className="w-full" data-command="DatabaseAccessEditor.TableRules">
           {/* <ViewModeToggle
             className="w-fit mb-p5"
             onChange={setViewMode}
@@ -102,7 +100,7 @@ export const DatabaseAccessEditor = ({
             limit={200}
             listStyle={{
               display: "grid",
-              gridTemplateColumns: "max-content 1fr",
+              gridTemplateColumns: "max-content max-content 1fr",
               gap: "0.5em",
               alignItems: "center",
             }}
@@ -164,6 +162,7 @@ export const DatabaseAccessEditor = ({
                 return {
                   key: t.name,
                   title: t.name,
+                  contentLeft: <Icon className="text-1" path={mdiTableEye} />,
                   styles: {
                     labelWrapper: {
                       fontWeight: 700,
@@ -223,7 +222,7 @@ export const DatabaseAccessEditor = ({
           />
         </div>
       )}
-    </FlexRowWrap>
+    </HeaderSection>
   );
 };
 

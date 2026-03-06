@@ -17,6 +17,7 @@ import { useMcpToolsSelectOptions } from "@pages/ServerSettings/MCPServers/MCPSe
 import { isNotEmpty } from "prostgles-types";
 import { LLMModelSelector } from "src/dashboard/AskLLM/LLMModelSelector";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
+import { McpToolAccess } from "./McpToolAccess";
 
 export const AgentDefinition = ({
   workflow,
@@ -144,41 +145,7 @@ export const AgentDefinition = ({
           }}
         />
       : isNotEmpty(agentTools) ?
-        <ScrollFade
-          title="Agent tools"
-          className="flex-col gap-p5 oy-auto "
-          style={{ maxHeight: "100px" }}
-        >
-          {Object.entries(agentTools).map(
-            ([mcpServerName, toolNameObj = {}]) => {
-              const icon = mcpServerIcons.get(mcpServerName);
-              const toolNames = Object.keys(toolNameObj);
-              return (
-                <FlexRowWrap
-                  key={mcpServerName}
-                  title={toolNames.join(", ")}
-                  style={{ display: "inline-flex" }}
-                  className="gap-p25"
-                >
-                  <FlexRow className="f-0 w-fit gap-p25">
-                    {icon ?
-                      <SvgIcon icon={icon} className="text-1 f-0" />
-                    : <Icon
-                        path={mdiTools}
-                        sizeName="micro"
-                        className="text-1"
-                      />
-                    }
-                    <strong>{mcpServerName}:</strong>
-                  </FlexRow>
-                  <span style={{ fontWeight: "normal" }}>
-                    {sliceText(toolNames.join(", "), 50)}
-                  </span>
-                </FlexRowWrap>
-              );
-            },
-          )}
-        </ScrollFade>
+        <McpToolAccess title="Agent tools" value={agentTools} />
       : null}
       <ScrollFade
         className="o-auto min-w-0"

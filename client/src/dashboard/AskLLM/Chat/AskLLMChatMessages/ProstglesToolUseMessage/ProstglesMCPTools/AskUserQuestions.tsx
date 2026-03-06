@@ -1,5 +1,6 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { Select } from "@components/Select/Select";
@@ -14,18 +15,15 @@ import { useEffectDeep } from "prostgles-client";
 import type { JSONB } from "prostgles-types";
 import React from "react";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
-import { useTypedToolUseResultData } from "./common/useTypedToolUseResultData";
+import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData";
+import { useSendToolUseResult } from "./common/useSendToolUseResult";
 
 export const AskUserQuestions = ({
   chatId,
   message,
   toolUseResult,
 }: Pick<ProstglesMCPToolsProps, "chatId" | "message" | "toolUseResult">) => {
-  const {
-    dbsMethods: { askLLM },
-    connectionId,
-    tables,
-  } = usePrgl();
+  const { tables } = usePrgl();
   const data = message.input as JSONB.GetObjectType<
     (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["ask_user_questions"]["schema"]["type"]
   >;
@@ -34,12 +32,13 @@ export const AskUserQuestions = ({
     Map<string, Set<string>>
   >(new Map());
 
-  const sentAnswers = useTypedToolUseResultData(
+  const result = useTypedToolUseResultDataV2(
     toolUseResult?.toolUseResultMessage,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["ask_user_questions"][
       "outputSchema"
     ],
   );
+  const sentAnswers = result?.data;
   useEffectDeep(() => {
     if (sentAnswers) {
       setSelectedAnswers(
@@ -55,8 +54,11 @@ export const AskUserQuestions = ({
     }
   }, [questions, sentAnswers]);
 
+  const { sendToolUseResult } = useSendToolUseResult();
+
   return (
     <FlexCol className="w-full ta-left" data-command="AskUserQuestions">
+      <ErrorComponent error={result?.error} />
       {questions.map(({ question, ...questionData }, questionIndex) => {
         const questionResponseValues = Array.from(
           selectedAnswers.get(question)?.values() ?? [],
@@ -199,37 +201,29 @@ export const AskUserQuestions = ({
           className="ml-auto"
           color="action"
           onClickPromise={async () => {
-            await askLLM!({
+            await sendToolUseResult({
               chatId,
-              connectionId,
-              type: "tool-use-result",
-              userMessage: [
+              toolUseId: message.id,
+              toolName: message.name,
+              content: [
                 {
-                  type: "tool_result",
-                  tool_use_id: message.id,
-                  tool_name: message.name,
-                  content: [
-                    {
-                      type: "text",
-                      text: JSON.stringify(
-                        Array.from(selectedAnswers.entries()).map(
-                          ([question, answerSet]) => {
-                            return {
-                              question,
-                              answers: Array.from(answerSet),
-                            };
-                          },
-                        ),
-                      ),
-                    },
-                    {
-                      type: "text",
-                      text: "The answers have been provided as a JSON array of objects with 'question' and 'answers' fields. DO NOT ASK THE USER FOR THESE ANSWERS AGAIN.",
-                    },
-                  ],
+                  type: "text",
+                  text: JSON.stringify(
+                    Array.from(selectedAnswers.entries()).map(
+                      ([question, answerSet]) => {
+                        return {
+                          question,
+                          answers: Array.from(answerSet),
+                        };
+                      },
+                    ),
+                  ),
+                },
+                {
+                  type: "text",
+                  text: "The answers have been provided as a JSON array of objects with 'question' and 'answers' fields. DO NOT ASK THE USER FOR THESE ANSWERS AGAIN.",
                 },
               ],
-              schema: "",
             });
           }}
         >

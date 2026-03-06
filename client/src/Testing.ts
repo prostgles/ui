@@ -544,6 +544,7 @@ export const COMMANDS = {
   "LLMChatOptions.DatabaseAccess.schema": "",
   RequestToolAccess: "",
   "RequestToolAccess.Approve": "",
+  "RequestToolAccess.AutoApprove": "",
 } as const satisfies Record<
   string,
   | string

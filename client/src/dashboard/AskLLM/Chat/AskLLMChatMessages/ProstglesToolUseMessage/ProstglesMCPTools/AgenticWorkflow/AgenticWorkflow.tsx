@@ -69,6 +69,7 @@ export const AgenticWorkflow = ({
         controlled={{ activeTab, setActiveTab }}
         style={{
           maxHeight: "600px",
+          minHeight: "400px",
         }}
         items={{
           ...(workflow && {

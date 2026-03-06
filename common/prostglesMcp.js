@@ -332,7 +332,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     validatedTools: {
                         arrayOfType: {
                             id: "number",
-                            name: "string",
+                            server_name: "string",
                         },
                     },
                 },

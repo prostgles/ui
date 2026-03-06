@@ -62,6 +62,7 @@ import {
   uploadFile,
 } from "./utils/utils";
 import { send } from "process";
+import { mkdir } from "fs/promises";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -567,9 +568,11 @@ test.describe("Main test", () => {
       </body>
     </html>    
     `;
-    const indexFilePath = join(__dirname, "../demo", "index.html");
+    const demoDir = resolve(__dirname, "../demo");
+    await mkdir(demoDir, { recursive: true });
+    const indexFilePath = join(demoDir, "index.html");
     await writeFileSync(indexFilePath, indexHtml);
-    const scriptFilePath = join(__dirname, "../demo", "script.js");
+    const scriptFilePath = join(demoDir, "script.js");
     await writeFileSync(
       scriptFilePath,
       `

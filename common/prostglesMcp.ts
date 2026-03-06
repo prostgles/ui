@@ -380,6 +380,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
               server_name: "string",
             },
           },
+          status: { optional: true, enum: ["approved", "denied"] },
         },
       },
     },

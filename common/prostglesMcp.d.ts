@@ -606,7 +606,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly validatedTools: {
                         readonly arrayOfType: {
                             readonly id: "number";
-                            readonly name: "string";
+                            readonly server_name: "string";
                         };
                     };
                 };
