@@ -10,6 +10,7 @@ import {
   mdiDatabaseEdit,
   mdiDatabaseOff,
   mdiTable,
+  mdiTableEdit,
   mdiTableEye,
   mdiTableSearch,
 } from "@mdi/js";
@@ -162,7 +163,12 @@ export const DatabaseAccessEditor = ({
                 return {
                   key: t.name,
                   title: t.name,
-                  contentLeft: <Icon className="text-1" path={mdiTableEye} />,
+                  contentLeft: (
+                    <Icon
+                      className="text-1"
+                      path={tableRules.update ? mdiTableEdit : mdiTable}
+                    />
+                  ),
                   styles: {
                     labelWrapper: {
                       fontWeight: 700,

@@ -39,6 +39,6 @@ export type CreateContainerParams = JSONB.GetSchemaType<
   typeof createContainerSchema
 >;
 
-const createContainerSchema = PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][
-  "run_code_in_sandbox"
-].schema satisfies JSONB.JSONBSchema;
+export const createContainerSchema = PROSTGLES_MCP_SERVERS_AND_TOOLS[
+  "prostgles-ui"
+]["run_code_in_sandbox"].schema satisfies JSONB.JSONBSchema;

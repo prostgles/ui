@@ -376,13 +376,39 @@ export type DefineAgenticWorkflow = <
 >(
   {
     name,
-    timeOutInSeconds,
+    containerConfiguration,
     databaseAccessDefinitions,
     agentDefinitions,
     userInput,
   }: {
     name: string;
-    timeOutInSeconds: number;
+    containerConfiguration: {
+      /**
+       * Maximum time in seconds the container will be allowed to run in milliseconds.
+       * Defaults to 30000.
+       */
+      timeout: number;
+      /**
+       * CPU limit (e.g., '0.5', '1'). Defaults to 1
+       */
+      cpus?: string;
+      /**
+       * Memory limit (e.g., '512m', '1g'). Defaults to 512m
+       */
+      memory?: string;
+      environment?: Record<string, string>;
+      /**
+       * Whether to mount the filesystem as read-only. Defaults to true
+       */
+      readOnly?: boolean;
+      /**
+       * Whether the container should have access to the internet.
+       * Defaults to 'none'.
+       * If set to 'full', the container will have access to the internet and the database (if database access is enabled).
+       * If set to 'none', the container will not have access to the internet but will still have access to the database (if database access is enabled).
+       */
+      internetAccess?: "none" | "full";
+    };
     userInput?: UserInput;
     databaseAccessDefinitions?: DatabaseAccessDefinition;
     orchestrationTools?: OrchestrationTools;
@@ -418,7 +444,7 @@ import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
 void defineAgenticWorkflow(
   {
     name: "Test Workflow",
-    timeOutInSeconds: 60,
+    containerConfiguration: { timeout: 60_000 },
     databaseAccessDefinitions: {
       mode: "custom",
       tablePermissions: {

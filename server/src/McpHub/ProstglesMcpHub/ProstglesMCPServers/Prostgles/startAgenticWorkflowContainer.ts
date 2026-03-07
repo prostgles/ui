@@ -162,9 +162,9 @@ export const startAgenticWorkflowContainer = async (
                         agentDefinitions: 1,
                         databaseAccessDefinitions: 1,
                         name: 1,
-                        timeOutInSeconds: 1,
                         userInput: 1,
                         orchestrationTools: 1,
+                        containerConfiguration: 1,
                       } satisfies Record<
                         keyof Extract<
                           ProxyCallData,
@@ -260,11 +260,25 @@ export const startAgenticWorkflowContainer = async (
       },
     },
     {
+      ...(mode.type === "full" ?
+        pickKeys(mode.definition.containerConfiguration, [
+          "timeout",
+          "internetAccess",
+        ])
+      : {}),
+      // buildNetworkMode: "host",
       signal: abortSignal,
-      buildNetworkMode: "host",
-      networkMode: "bridge-internal",
+      networkMode:
+        (
+          mode.type === "full" &&
+          mode.definition.containerConfiguration.internetAccess === "full"
+        ) ?
+          "bridge"
+        : "bridge-internal",
       timeout:
-        mode.type === "full" ? mode.definition.timeOutInSeconds * 1000 : 30_000,
+        mode.type === "full" ?
+          mode.definition.containerConfiguration.timeout
+        : 30_000,
       files: await getOrchestrationContainerFiles({
         dbs,
         workflowTs,

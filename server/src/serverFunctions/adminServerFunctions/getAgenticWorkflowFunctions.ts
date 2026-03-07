@@ -56,7 +56,7 @@ export const getAgenticWorkflowFunctions = (
       {
         chatId,
         name,
-        timeOutInSeconds,
+        containerConfiguration,
         agentDefinitions,
         databaseAccessDefinitions,
         workflowTs,
@@ -108,12 +108,16 @@ export const getAgenticWorkflowFunctions = (
           error: undefined,
         };
       }
+      const containerConfigurationWithOverrides = {
+        ...workflow.definition_data.containerConfiguration,
+        ...workflow.definition_override?.containerConfiguration,
+      };
       const aborter = new AbortController();
       const { agentHandlers, orchestrationToolsHandler } =
         await createWorkflowProxyHandlers(
           {
             name,
-            timeOutInSeconds,
+            containerConfiguration: containerConfigurationWithOverrides,
             agentDefinitions,
             databaseAccessDefinitions,
             signal: aborter.signal,
@@ -168,7 +172,7 @@ export const getAgenticWorkflowFunctions = (
           messageId,
           definition: {
             name,
-            timeOutInSeconds,
+            containerConfiguration,
             agentDefinitions,
             userInput: {},
             databaseAccessDefinitions,

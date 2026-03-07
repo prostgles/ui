@@ -25,7 +25,7 @@ export default defineAgenticWorkflow(
   ${JSON.stringify(
     {
       name: "Test Workflow",
-      timeOutInSeconds: 60,
+      containerConfiguration: { timeout: 60_000 },
       databaseAccessDefinitions: {
         mode: "custom",
         tablePermissions: {
@@ -102,6 +102,11 @@ export default defineAgenticWorkflow(
             "table-and-column": {
               title: "Table and column",
               type: "table-and-column",
+            },
+            enum: {
+              title: "Enum value",
+              type: "enum",
+              values: ["value1", "value2", "value3"],
             },
           } satisfies Record<UserInput[string]["type"], UserInput[string]>)
         ),

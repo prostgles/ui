@@ -30,7 +30,7 @@ export const createWorkflowProxyHandlers = async <
   {
     name,
     agentDefinitions,
-    timeOutInSeconds,
+    containerConfiguration,
     signal,
     definition_override,
     orchestrationTools,
@@ -166,11 +166,12 @@ export const createWorkflowProxyHandlers = async <
       });
 
       let chatStatus = null as DBSSchema["llm_chats"]["status"];
+      const { timeout } = containerConfiguration;
       do {
-        if (Date.now() - started > timeOutInSeconds * 1000) {
+        if (Date.now() - started > timeout) {
           throw new Error(
             [
-              `Agent ${agentName} timed out after ${timeOutInSeconds} seconds.`,
+              `Agent ${agentName} timed out after ${(timeout / 1000).toFixed(2)} seconds.`,
               `chat id: ${agentChat.id}`,
               `chat status: ${JSON.stringify(chatStatus)}`,
             ].join("\n"),

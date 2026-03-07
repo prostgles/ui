@@ -252,6 +252,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     };
     readonly "prostgles-ui": {
         readonly compact_context: {
+            readonly mode: undefined;
             readonly description: string;
             readonly schema: {
                 readonly type: {
@@ -267,6 +268,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly outputSchema: "string";
         };
         readonly run_code_in_sandbox: {
+            readonly mode: undefined;
             readonly description: "Executes code in a docker container. CANNOT ACCESS THE DATABASE DIRECTLY (must access the database only through POST requests to the exposed api). Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.";
             readonly schema: {
                 readonly type: {
@@ -406,6 +408,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
         };
         readonly get_tool_schemas: {
+            readonly mode: undefined;
             readonly description: "Get MCP tool descriptions, input and output schemas in typescript format. Will return all tools by default. Use toolNames to specify which tools to return.";
             readonly schema: {
                 readonly type: {
@@ -870,6 +873,34 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly engine: "string";
                     readonly img_src: "string";
                     readonly thumbnail: "any";
+                    readonly template: {
+                        readonly optional: true;
+                        readonly type: "any";
+                    };
+                    readonly publishedDate: {
+                        readonly optional: true;
+                        readonly type: "any";
+                    };
+                    readonly parsed_url: {
+                        readonly optional: true;
+                        readonly type: "any";
+                    };
+                    readonly priority: {
+                        readonly optional: true;
+                        readonly type: "any";
+                    };
+                    readonly engines: {
+                        readonly optional: true;
+                        readonly type: "any";
+                    };
+                    readonly positions: {
+                        readonly optional: true;
+                        readonly type: "any";
+                    };
+                    readonly pubdate: {
+                        readonly optional: true;
+                        readonly type: "any";
+                    };
                 };
             };
         };

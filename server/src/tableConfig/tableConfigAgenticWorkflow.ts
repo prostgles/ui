@@ -1,6 +1,7 @@
 import type { TableConfig } from "prostgles-server";
 import { omitKeys, pickKeys } from "prostgles-types";
 import { startAgenticWorkflowSchema } from "./startAgenticWorkflowSchema";
+import { fromEntries, getEntries } from "@common/utils";
 
 export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
   agentic_workflows: {
@@ -11,10 +12,10 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
       name: "TEXT NOT NULL",
       definition_data: {
         jsonbSchemaType: pickKeys(startAgenticWorkflowSchema, [
+          "containerConfiguration",
           "agentDefinitions",
           "databaseAccessDefinitions",
           "userInput",
-          "timeOutInSeconds",
           "newTables",
           "orchestrationTools",
         ]),
@@ -41,9 +42,15 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
               },
             },
           },
-          timeOutInSeconds: {
+          containerConfiguration: {
             optional: true,
-            type: "number",
+            type: fromEntries(
+              getEntries(
+                startAgenticWorkflowSchema.containerConfiguration.type,
+              ).map(([key, value]) => {
+                return [key, { ...value, optional: true }] as const;
+              }),
+            ),
           },
         },
       },

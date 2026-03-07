@@ -147,6 +147,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     },
     "prostgles-ui": {
         compact_context: {
+            mode: undefined,
             description: [
                 "Reduce conversation history while preserving important information.",
                 "Include important details and information that might be relevant for future conversation. Be concise.",
@@ -164,6 +165,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             outputSchema: "string",
         },
         run_code_in_sandbox: {
+            mode: undefined,
             description: "Executes code in a docker container. CANNOT ACCESS THE DATABASE DIRECTLY (must access the database only through POST requests to the exposed api). Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.",
             schema: {
                 type: {
@@ -233,6 +235,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             mode: "user-provides-response",
             description: [
                 "Ask a question to gather information from the user.",
+                "DO NOT SEND OTHER TOOL USE REQUESTS TOGETHER WITH THIS TOOL. It must be a single tool use request",
                 "Be as short and as consice as possible.",
                 "Do not ask more than 8 questions at a time.",
                 `Each "choice" type question should have a list of suggested answers to choose from.`,
@@ -297,6 +300,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             },
         },
         get_tool_schemas: {
+            mode: undefined,
             description: "Get MCP tool descriptions, input and output schemas in typescript format. Will return all tools by default. Use toolNames to specify which tools to return.",
             schema: {
                 type: {
@@ -460,6 +464,13 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     engine: "string",
                     img_src: "string",
                     thumbnail: "any",
+                    template: { optional: true, type: "any" },
+                    publishedDate: { optional: true, type: "any" },
+                    parsed_url: { optional: true, type: "any" },
+                    priority: { optional: true, type: "any" },
+                    engines: { optional: true, type: "any" },
+                    positions: { optional: true, type: "any" },
+                    pubdate: { optional: true, type: "any" },
                 },
             },
         },

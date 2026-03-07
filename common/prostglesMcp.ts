@@ -205,41 +205,41 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           // },
           files: filesSchema,
           timeout: {
-            type: "number",
             optional: true,
+            type: "integer",
             description:
               "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ",
             // default: 30000,
           },
           networkMode: {
+            optional: true,
             enum: ["none", "bridge", "bridge-internal", "host"],
             description:
               "Network mode for the container. Defaults to 'bridge-internal'. Use 'bridge' mode to be able to access the database. Use 'bridge-internal' to access the database but not the internet.",
             // default: "none",
-            optional: true,
           },
           environment: {
+            optional: true,
             description: "Environment variables to set in the container",
             record: { values: "string", partial: true },
-            optional: true,
           },
           memory: {
+            optional: true,
             type: "string",
             description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m",
-            optional: true,
             // default: "512m",
           },
           cpus: {
+            optional: true,
             type: "string",
             description: "CPU limit (e.g., '0.5', '1'). Defaults to 1",
-            optional: true,
             // default: "1",
           },
           readOnly: {
+            optional: true,
             type: "boolean",
             description:
               "Whether to mount the filesystem as read-only. Defaults to true",
-            optional: true,
             // default: true,
           },
         },

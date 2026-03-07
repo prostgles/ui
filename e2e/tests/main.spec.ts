@@ -1291,6 +1291,12 @@ test.describe("Main test", () => {
 
     /** Fill user input form */
     await startWorkFlowAndExpectError(
+      `Missing required user input: "Enum value"`,
+    );
+    await page.locator(getDataKey("enum")).click();
+    await page.locator(`[data-key="value1"]`).last().click();
+
+    await startWorkFlowAndExpectError(
       `Missing required user input: "Sort column"`,
     );
     await page.locator(getDataKey("custom") + " input").fill("a");

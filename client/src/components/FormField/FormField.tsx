@@ -489,7 +489,7 @@ export default class FormField<
       : {
           paddingBottom: "4px",
         }),
-      minHeight: window.isLowWidthScreen ? "36px" : "42px",
+      minHeight: window.isLowWidthScreen ? "36px" : "40px",
       ...inputProps.style,
       ...(rval === null && { fontStyle: "italic" }),
     };
@@ -662,7 +662,7 @@ export default class FormField<
         inputWrapperStyle={{
           ...wrapperStyle,
           maxWidth: asTextArea ? "100%" : maxWidth,
-          ...(asJSON === "codeEditor" && { minHeight: "42px" }),
+          ...(asJSON === "codeEditor" && { minHeight: "40px" }),
           ...(((readOnly && asJSON !== "codeEditor") ||
             asJSON === "JSONBSchema") && {
             border: "unset",

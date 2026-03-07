@@ -23,7 +23,7 @@ export const McpToolAccess = ({ value, title }: P) => {
     <HeaderSection title={title}>
       <ScrollFade
         title={title}
-        className="flex-col gap-p5 oy-auto "
+        className="flex-col gap-p5 oy-auto py-p25"
         style={{ maxHeight: "100px" }}
       >
         {Object.entries(value).map(([mcpServerName, toolNameObj = {}]) => {

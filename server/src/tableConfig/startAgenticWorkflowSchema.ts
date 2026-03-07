@@ -1,6 +1,7 @@
 import { databaseAccessSchema } from "@common/databaseAccessSchema";
 import { mcpServerToolsAllowed } from "@common/prostglesMcp";
-import type { JSONB } from "prostgles-types";
+import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
+import { omitKeys, pickKeys, type JSONB } from "prostgles-types";
 
 const PrimitiveType = ["string", "number", "boolean", "unknown"] as const;
 const PrimitiveTypesWithArrays = [
@@ -53,7 +54,20 @@ export const startAgenticWorkflowSchema = {
   workflowId: "integer",
   name: "string",
   workflowTs: "string",
-  timeOutInSeconds: "number",
+  containerConfiguration: {
+    type: {
+      timeout: {
+        ...omitKeys(createContainerSchema.type.timeout, ["optional"]),
+      },
+      ...pickKeys(createContainerSchema.type, ["cpus", "memory", "readOnly"]),
+      internetAccess: {
+        optional: true,
+        enum: ["none", "full"],
+        description:
+          "Whether the container should have access to the internet. Defaults to 'none'. If set to 'full', the container will have access to the internet and the database (if database access is enabled). If set to 'none', the container will not have access to the internet but will still have access to the database (if database access is enabled).",
+      },
+    },
+  },
   executionMode: {
     enum: ["series", "parallel"],
   },

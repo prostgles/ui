@@ -7,7 +7,7 @@ void describe("defineAgenticWorkflow", async () => {
       void defineAgenticWorkflow(
         {
           name: "Test Workflow",
-          timeOutInSeconds: 60,
+          containerConfiguration: { timeout: 60_000 },
           agentDefinitions: {
             researcher: {
               prompt: "You are a research assistant.",

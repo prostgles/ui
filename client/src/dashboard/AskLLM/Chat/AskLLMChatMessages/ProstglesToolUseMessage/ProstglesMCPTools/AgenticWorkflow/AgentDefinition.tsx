@@ -1,18 +1,16 @@
-import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useCallback, useState } from "react";
 
 import { isDefined } from "@common/filterUtils";
 import type { DBSSchema } from "@common/publishUtils";
-import { sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import { Marked } from "@components/Chat/Marked";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { Icon } from "@components/Icon/Icon";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { Select } from "@components/Select/Select";
-import { SvgIcon } from "@components/SvgIcon";
-import { mdiCogOutline, mdiTools } from "@mdi/js";
+import { mdiCogOutline, mdiRobotOutline, mdiTools } from "@mdi/js";
 import { useMcpToolsSelectOptions } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpToolsSelectOptions";
 import { isNotEmpty } from "prostgles-types";
 import { LLMModelSelector } from "src/dashboard/AskLLM/LLMModelSelector";
@@ -46,7 +44,7 @@ export const AgentDefinition = ({
     temperature,
     tools: agentTools,
   } = agentDefinition;
-  const { options, tools, mcpServerIcons } = useMcpToolsSelectOptions();
+  const { options, tools } = useMcpToolsSelectOptions();
   const updateAgentDefinition = useCallback(
     async (updatedFields: Partial<typeof agentDefinition>) => {
       await dbs.agentic_workflows.update(
@@ -92,7 +90,8 @@ export const AgentDefinition = ({
       className="rounded b b-color p-p5 min-w-0 relative"
       style={{ fontWeight: "normal" }}
     >
-      <FlexRow>
+      <FlexRow className="gap-p5">
+        <Icon path={mdiRobotOutline} />
         <span style={{ fontWeight: "bold" }}>{agentName}</span>
         <LLMModelSelector
           modelName={modelName}
