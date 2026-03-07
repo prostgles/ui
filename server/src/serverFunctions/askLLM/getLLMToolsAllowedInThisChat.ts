@@ -65,7 +65,7 @@ export const getLLMToolsAllowedInThisChat = async ({
       tools.set(agentGoalTool.name, {
         ...agentGoalTool,
         auto_approve: true,
-        mode: "structured-output",
+        mode: "auto-approved-user-actionable",
         server_name: "",
         type: "mcp",
         tool_name: agentGoalTool.name,

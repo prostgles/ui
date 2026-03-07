@@ -335,6 +335,8 @@ const toolResponses: Record<string, ToolUse> = {
         },
       },
     ],
+    result_content:
+      "Requested access to websearch tool and read access to receipts table in the database.",
   },
   component: createComponentToolUse,
   agentic_workflow: agenticWorkflowToolUses.input,

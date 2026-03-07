@@ -1,4 +1,8 @@
-import { getMCPFullToolName } from "@common/prostglesMcp";
+import {
+  getMCPFullToolName,
+  getMCPToolNameParts,
+  PROSTGLES_MCP_SERVERS_AND_TOOLS,
+} from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { getPasswordHash } from "@src/authConfig/authUtils";
 import { checkClientIP } from "@src/authConfig/sessionUtils";
@@ -35,7 +39,14 @@ import { glob } from "glob";
 import * as os from "os";
 import path, { join } from "path";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import { getKeys, includes, isEmpty, type SQLHandler } from "prostgles-types";
+import {
+  getJSONBSchemaValidationError,
+  getKeys,
+  getProperty,
+  includes,
+  isEmpty,
+  type SQLHandler,
+} from "prostgles-types";
 import { getSampleSchemas } from "../applySampleSchema";
 import { refreshModels } from "../askLLM/refreshModels";
 import { deleteConnection } from "../deleteConnection";
@@ -47,6 +58,7 @@ import { setFileStorage } from "../setFileStorage";
 import { getAgenticWorkflowFunctions } from "./getAgenticWorkflowFunctions";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
+import { askLLM } from "../askLLM/askLLM";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {

@@ -5,7 +5,11 @@ import {
 import type { LLMMessageWithRole } from "./fetchLLMResponse";
 import { filterArr } from "@common/llmUtils";
 import { isDefined } from "prostgles-types";
+import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 
+type CompactionInput = JSONBTypeIfDefined<
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["compact_context"]["schema"]
+>;
 export const getCompactedMessages = ({
   nonEmptyMessages,
 }: {
@@ -21,7 +25,9 @@ export const getCompactedMessages = ({
     type: "conversation" | "previous-message",
   ) =>
     filterArr(message.content, { type: "tool_use" as const }).find(
-      (c) => c.name === compactionToolName && c.input?.compaction_type === type,
+      (c) =>
+        c.name === compactionToolName &&
+        (c.input as CompactionInput).type === type,
     );
 
   const lastConversationCompactionIndex = nonEmptyMessages.findLastIndex((m) =>
@@ -29,10 +35,6 @@ export const getCompactedMessages = ({
   );
   const lastConversationCompactionMessage =
     nonEmptyMessages[lastConversationCompactionIndex];
-
-  const conversationSummary =
-    lastConversationCompactionMessage &&
-    getCompactionToolUse(lastConversationCompactionMessage, "conversation");
 
   const messagesAfterCompaction: LLMMessageWithRole[] = nonEmptyMessages
     .map((message, index) => {
@@ -48,6 +50,10 @@ export const getCompactedMessages = ({
           return undefined;
         }
         if (index === lastConversationCompactionIndex) {
+          const conversationSummary = getCompactionToolUse(
+            lastConversationCompactionMessage,
+            "conversation",
+          );
           return {
             ...message,
             content: [
@@ -60,26 +66,28 @@ export const getCompactedMessages = ({
         }
       }
 
-      const isMessageSummaryToolUse = getCompactionToolUse(
-        message,
-        "previous-message",
-      );
-      if (isMessageSummaryToolUse) {
-        return;
-      }
-
-      const prevMessage = nonEmptyMessages[index - 1];
-      const previousMessageCompaction =
-        prevMessage && getCompactionToolUse(prevMessage, "previous-message");
-      if (previousMessageCompaction) {
+      const nextMessage = nonEmptyMessages[index + 1];
+      const hasCompactionToolUse =
+        !nextMessage ? undefined : (
+          getCompactionToolUse(nextMessage, "previous-message")
+        );
+      if (hasCompactionToolUse) {
+        const summary = hasCompactionToolUse.input!.summary;
         return {
-          role: "user",
-          content: [
-            {
+          ...message,
+          content: message.content.map((c) => {
+            const text = `This message has been compacted to reduce context length. Summary: ${summary}`;
+            if (c.type === "tool_result") {
+              return {
+                ...c,
+                content: text,
+              };
+            }
+            return {
               type: "text",
-              text: `Previous message has been compacted to reduce context length. Summary: ${previousMessageCompaction.input!.summary}`,
-            },
-          ],
+              text,
+            };
+          }),
         } satisfies LLMMessageWithRole;
       }
 

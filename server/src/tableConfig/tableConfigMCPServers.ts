@@ -147,14 +147,15 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         info: { hint: "Used by prostgles mcp tools" },
         nullable: true,
         /**
-         * - structured-output:
-         *        The tool input is displayed in a rich interface for the user to inspect before taking actions on it.
-         *        The execution logic is made of user functions and not the normal mcp tool flow.
+         * - auto-approved-user-actionable:
+         *        The tool is executed without approval and result is not passed to the llm.
+         *        Input and/or output can then be displayed to the user to take actions on it.
+         *        Tool result can be overwritten by the user and that overwritten and passed to the llm.
          * - user-provides-response:
          *        The tool input is provided to the user to interact with and give feedback (which will be incorporated into the tool result).
          *        No execution logic and mostly used for structured questions and answers
          */
-        enum: ["structured-output", "user-provides-response"],
+        enum: ["auto-approved-user-actionable", "user-provides-response"],
       },
     },
     indexes: {

@@ -75,7 +75,6 @@ const handler = {
                 id: t.id,
                 server_name: t.server_name,
               })) ?? [],
-            databaseAccess,
           };
         },
         suggest_agentic_workflow: createAgenticWorkflow,

@@ -483,7 +483,7 @@ export type DBGeneratedSchema = {
       description: string;
       id?: number;
       inputSchema:  Record<string, unknown>
-      mode?: null | "structured-output" | "user-provides-response"
+      mode?: null | "auto-approved-user-actionable" | "user-provides-response"
       name: string;
       outputSchema?: null | Record<string, unknown>
       server_name: string;
@@ -724,7 +724,7 @@ export type DBSchemaForInsert = {
 
 
 export type GeneratedFunctionSchema = { 
-  "askLLM": (args: {    connectionId: string;   schema: string;   chatId: number;   type: "new-message" | "approve-tool-use" | "tool-use-result";   userMessage: ( 
+  "askLLM": (args: {    connectionId: string;   schema: string;   chatId: number;   type: "new-message" | "approve-tool-use" | "tool-use-result" | "tool-use-result-confirmation";   userMessage: ( 
  |  {  type: "text";  text: string;  reasoning?: string; }
  |  {  type: "image" | "audio" | "video" | "application" | "text";  source: {  type: "base64";  media_type: string;  data: string; }; }
  |  {  type: "tool_use";  id: string;  name: string;  input?: Record<string, unknown>; }
@@ -738,7 +738,7 @@ export type GeneratedFunctionSchema = {
   "enable2FA": (args: {    token: string;  }) => Promise<string>;
   "disable2FA": () => Promise<(undefined | Array<void>)>;
   "changePassword": (args: {    oldPassword: string;   newPassword: string;  }) => Promise<void>;
-  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<(({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "mcp"; tool_id: number }) | ({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db-methods"; server_function_id: number }) | ({ description: string; server_name: string; mode: (null | "structured-output" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db"; tool_name: ("select" | "insert" | "update" | "delete" | "execute_sql_with_rollback" | "execute_sql_with_commit" | "count") }))>)>;
+  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<(({ description: string; server_name: string; mode: (null | "auto-approved-user-actionable" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "mcp"; tool_id: number }) | ({ description: string; server_name: string; mode: (null | "auto-approved-user-actionable" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db-methods"; server_function_id: number }) | ({ description: string; server_name: string; mode: (null | "auto-approved-user-actionable" | "user-provides-response") } & { name: string; tool_name: string; input_schema: any; auto_approve: boolean } & { type: "prostgles-db"; tool_name: ("select" | "insert" | "update" | "delete" | "execute_sql_with_rollback" | "execute_sql_with_commit" | "count") }))>)>;
   "createWebAppFromTemplate": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<string>;
   "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;
   "testWebApp": (args: {    connectionId: string;  }) => Promise<{ state: ("close" | "error" | "timed-out" | "aborted"); command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> }>;

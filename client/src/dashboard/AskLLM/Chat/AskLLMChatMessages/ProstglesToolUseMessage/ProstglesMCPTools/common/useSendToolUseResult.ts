@@ -13,6 +13,7 @@ export const useSendToolUseResult = () => {
       toolName,
       toolUseId,
       content,
+      type,
     }: {
       chatId: number;
       toolUseId: string;
@@ -21,11 +22,12 @@ export const useSendToolUseResult = () => {
         type: "text";
         text: string;
       }[];
+      type: "tool-use-result" | "tool-use-result-confirmation";
     }) => {
       return askLLM!({
         chatId,
         connectionId,
-        type: "tool-use-result",
+        type,
         userMessage: [
           {
             type: "tool_result",

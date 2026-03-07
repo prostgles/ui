@@ -437,7 +437,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
         };
         readonly request_tool_access: {
-            readonly mode: "structured-output";
+            readonly mode: "auto-approved-user-actionable";
             readonly description: "Request access to mcp tools. The user will be prompted to approve or deny access. Use this tool when you need access to a tool that you don't have access to yet. The user will then approve access if they are comfortable with it based on the tool description and the context of the conversation.";
             readonly schema: {
                 readonly type: {
@@ -609,11 +609,15 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                             readonly server_name: "string";
                         };
                     };
+                    readonly status: {
+                        readonly optional: true;
+                        readonly enum: readonly ["approved", "denied"];
+                    };
                 };
             };
         };
         readonly suggest_agentic_workflow: {
-            readonly mode: "structured-output";
+            readonly mode: "auto-approved-user-actionable";
             readonly description: string;
             readonly schema: {
                 readonly type: {
@@ -647,7 +651,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
         };
         readonly suggest_tools_and_prompt: {
-            readonly mode: "structured-output";
+            readonly mode: "auto-approved-user-actionable";
             readonly description: "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.";
             readonly schema: {
                 readonly type: {
@@ -807,7 +811,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly outputSchema: "string";
         };
         readonly suggest_dashboards: {
-            readonly mode: "structured-output";
+            readonly mode: "auto-approved-user-actionable";
             readonly description: "Suggest Prostgles UI dashboards to visualize data for the specified task.";
             readonly schema: {
                 readonly type: {

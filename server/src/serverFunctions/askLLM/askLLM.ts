@@ -29,6 +29,7 @@ import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 import { getFullPrompt } from "./getFullPrompt";
 import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
+import { handleToolUseResultConfirmation } from "./handleToolUseResultConfirmation";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -58,6 +59,7 @@ export type AskLLMArgs = {
     | "new-message"
     | "approve-tool-use"
     | "tool-use-result"
+    | "tool-use-result-confirmation"
     | "tool-use-result-with-denied";
   aborter: AbortController | undefined;
 };
@@ -175,12 +177,30 @@ export const askLLM = async (args: AskLLMArgs) => {
     return;
   }
 
-  await dbs.llm_messages.insert({
-    user_id: user.id,
-    chat_id: chatId,
-    message: userMessage,
-    llm_model_id: chat.model,
-  });
+  const confirmedToolResult =
+    args.type === "tool-use-result-confirmation" ?
+      handleToolUseResultConfirmation(args, lastMessage)
+    : undefined;
+
+  if (confirmedToolResult) {
+    await dbs.tx(async (tx) => {
+      await tx.llm_messages.delete({ id: lastMessage?.id });
+      await tx.llm_messages.insert({
+        user_id: user.id,
+        chat_id: chatId,
+        message: userMessage,
+        llm_model_id: chat.model,
+      });
+    });
+  } else {
+    await dbs.llm_messages.insert({
+      user_id: user.id,
+      chat_id: chatId,
+      message: userMessage,
+      llm_model_id: chat.model,
+    });
+  }
+
   if (type === "new-message") {
     await dbs.llm_chats.update(
       { id: chatId },
@@ -245,33 +265,35 @@ export const askLLM = async (args: AskLLMArgs) => {
     }
   }
 
-  const hasMessagesThatNeedAIResponse = userMessage.some((m) => {
-    if (m.type === "tool_result") {
-      if (m.is_error) {
-        return true;
+  const hasMessagesThatNeedAIResponse =
+    confirmedToolResult ||
+    userMessage.some((m) => {
+      if (m.type === "tool_result") {
+        if (m.is_error) {
+          return true;
+        }
+        const toolNameParts = getMCPToolNameParts(m.tool_name);
+        if (!toolNameParts) {
+          return true;
+        }
+        const { serverName, toolName } = toolNameParts;
+        /**
+         * Somet of prostgles-ui tools don't need LLM response after their result
+         */
+        if (serverName === "prostgles-ui") {
+          const toolDefinition = getProperty(
+            PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
+            toolName,
+          );
+          return !(
+            toolDefinition &&
+            "mode" in toolDefinition &&
+            toolDefinition.mode === "auto-approved-user-actionable"
+          );
+        }
       }
-      const toolNameParts = getMCPToolNameParts(m.tool_name);
-      if (!toolNameParts) {
-        return true;
-      }
-      const { serverName, toolName } = toolNameParts;
-      /**
-       * Somet of prostgles-ui tools don't need LLM response after their result
-       */
-      if (serverName === "prostgles-ui") {
-        const toolDefinition = getProperty(
-          PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
-          toolName,
-        );
-        return !(
-          toolDefinition &&
-          "mode" in toolDefinition &&
-          toolDefinition.mode === "structured-output"
-        );
-      }
-    }
-    return true;
-  });
+      return true;
+    });
   if (!hasMessagesThatNeedAIResponse) {
     return;
   }

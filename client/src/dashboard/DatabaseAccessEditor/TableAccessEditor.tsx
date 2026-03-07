@@ -46,16 +46,17 @@ export const TableAccessEditor = ({
   //   );
   // }
 
+  const isNewTable = table.info.oid === -1;
   return (
     <FlexRow className="gap-0">
       <Btn
         variant="faded"
-        color="action"
+        color={isNewTable ? "action" : undefined}
         size="small"
         className="mr-1"
         title="New table to be created"
         style={{
-          visibility: table.info.oid === -1 ? "visible" : "hidden",
+          visibility: isNewTable ? "visible" : "hidden",
         }}
         iconPath={mdiTablePlus}
       />

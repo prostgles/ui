@@ -1,3 +1,5 @@
+import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
+import { getMCPFullToolName } from "@common/prostglesMcp";
 import type { DBS } from "@src/index";
 import {
   getJSONBSchemaValidationError,
@@ -5,7 +7,9 @@ import {
   getSerialisableError,
   includes,
   tryCatchV2,
+  getJSONBSchemaTSTypes,
 } from "prostgles-types";
+import type { McpToolCallResponse } from "../AnthropicMcpHub/McpHub";
 import type {
   McpCallContext,
   McpCallContextFetchTools,
@@ -13,7 +17,6 @@ import type {
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
 import { getProstglesMCPServer } from "./ProstglesMCPServers";
-import type { McpToolCallResponse } from "../AnthropicMcpHub/McpHub";
 
 const servers: Map<
   string,
@@ -97,6 +100,7 @@ const init = async (dbs: DBS) => {
     args: unknown,
     context: McpCallContext,
   ) => {
+    const name = getMCPFullToolName(serverName, toolName);
     const result = await tryCatchV2(async () => {
       const { server, serverDefinition } = getExpectedServer(serverName);
       const toolDefinition = getProperty(
@@ -105,19 +109,46 @@ const init = async (dbs: DBS) => {
       );
       const toolMethod = getProperty(server.tools, toolName);
       if (!toolMethod || !toolDefinition) {
-        throw new Error(`MCP server tool ${serverName}.${toolName} not found`);
+        throw new Error(`MCP server tool ${name} not found`);
       }
-      const { schema } = toolDefinition;
+      const { schema, outputSchema } = toolDefinition;
       const validation =
         //@ts-ignore
         schema ? getJSONBSchemaValidationError(schema, args) : undefined;
       if (validation?.error !== undefined) {
         throw new Error(
-          `Invalid arguments for MCP server tool ${serverName}.${toolName}: ${validation.error}`,
+          [
+            `Invalid arguments for MCP tool ${name}: ${validation.error}.`,
+            !schema ? "" : (
+              `Expected argument structure expressed in typescript types: ${getJSONBSchemaTSTypes(schema, {}, undefined, [])}`
+            ),
+          ].join("\n"),
         );
       }
 
       const res = await toolMethod(args, context);
+      const outputValidation =
+        //@ts-ignore
+        outputSchema ?
+          getJSONBSchemaValidationError(outputSchema, res)
+        : undefined;
+      if (outputValidation?.error !== undefined) {
+        throw new Error(
+          [
+            `Invalid output from MCP tool ${name}: ${outputValidation.error}.`,
+            !outputSchema ? "" : (
+              `Expected output structure expressed in typescript types: ${getJSONBSchemaTSTypes(
+                typeof outputSchema === "string" ?
+                  { type: outputSchema }
+                : outputSchema,
+                {},
+                undefined,
+                [],
+              )}`
+            ),
+          ].join("\n"),
+        );
+      }
       return res;
     });
 

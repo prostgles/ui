@@ -3,7 +3,7 @@ import { Chat } from "@components/Chat/Chat";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
@@ -75,6 +75,16 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       dbSchemaForPrompt,
     });
 
+  const [currentlyTypedMessage, setCurrentlyTypedMessage] = useState(
+    activeChat?.currently_typed_message,
+  );
+  useEffect(() => {
+    if (chatIsLoading) {
+      setCurrentlyTypedMessage("");
+    } else {
+      setCurrentlyTypedMessage(activeChat?.currently_typed_message);
+    }
+  }, [activeChat?.currently_typed_message, chatIsLoading]);
   const onCurrentlyTypedMessageChange = useDebouncedCallback(
     (currently_typed_message: string) => {
       if (!activeChatId || chatIsLoading) return;
@@ -154,7 +164,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             disabledInfo={activeChat.disabled_message ?? undefined}
             maxWidth={CHAT_WIDTH}
             onSend={sendMessage}
-            currentlyTypedMessage={activeChat.currently_typed_message}
+            currentlyTypedMessage={currentlyTypedMessage}
             onCurrentlyTypedMessageChange={onCurrentlyTypedMessageChange}
             isLoading={chatIsLoading}
             onStopSending={onStopSending}

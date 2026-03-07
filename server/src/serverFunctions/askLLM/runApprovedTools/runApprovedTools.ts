@@ -4,11 +4,9 @@ import {
 } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
-import {
-  getJSONBSchemaValidationError,
-  getSerialisableError,
-} from "prostgles-types";
+import { getSerialisableError } from "prostgles-types";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
+import { AGENT_GOAL_TOOL_NAMES } from "../agentConstants";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import {
   getAllToolNames,
@@ -18,8 +16,8 @@ import {
   getClientDBHandlersForChat,
   runProstglesDBTool,
 } from "../prostglesLLMTools/runProstglesDBTool";
+import { runAgentGoalTool } from "./runAgentGoalTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
-import { AGENT_GOAL_TOOL_NAMES } from "../agentConstants";
 
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
@@ -39,7 +37,10 @@ type ToolUseMessageWithInfo =
       tool: undefined;
       state: "tool-missing";
     });
-type ToolResultMessage = Extract<LLMMessage[number], { type: "tool_result" }>;
+export type ToolResultMessage = Extract<
+  LLMMessage[number],
+  { type: "tool_result" }
+>;
 
 export const runApprovedTools = async (
   allowedTools: Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>>,
@@ -54,8 +55,10 @@ export const runApprovedTools = async (
   if (!toolUseRequestMessages.length) {
     return;
   }
-
-  const { connection_id, db_data_permissions, agent_info } = chat;
+  if (chatId !== chat.id) {
+    throw new Error(`Chat id mismatch. Expected ${chatId} but got ${chat.id}`);
+  }
+  const { connection_id, db_data_permissions } = chat;
   if (!connection_id) {
     throw new Error(`Chat with id ${chatId} does not have a connection_id`);
   }
@@ -80,88 +83,14 @@ export const runApprovedTools = async (
     ),
   );
   if (agetGoalTool) {
-    if (!agent_info) {
-      throw new Error(
-        "Unexpected. Agent goal tool used but chat does not have agent_info",
-      );
-    }
-    if (agent_info === "orchestrator") {
-      throw new Error(
-        "Unexpected. Agent goal tool used but agent_info is 'orchestrator'. Orchestrator agent type does not support agent goal tools.",
-      );
-    }
-    if (toolUseRequestMessages.length > 1) {
-      throw new Error(
-        "Unexpected. Agent goal tool used but there are other tool use requests in the same message. Agent goal tool must be used alone.",
-      );
-    }
-
-    const goalFailed = agetGoalTool.name === AGENT_GOAL_TOOL_NAMES.FAILED;
-    const validationResult =
-      goalFailed ? undefined : (
-        getJSONBSchemaValidationError(
-          { type: agent_info.outputSchema },
-          agetGoalTool.input,
-        )
-      );
-    const toolResultContent = {
-      type: "tool_result",
-      tool_name: agetGoalTool.name,
-      tool_use_id: agetGoalTool.id,
-      is_error: validationResult?.error !== undefined,
-      content:
-        goalFailed ? "goal-failed"
-        : validationResult?.error !== undefined ? "goal-data-validation-failure"
-        : "goal-reached",
-    } as const satisfies ToolResultMessage;
-
-    /**
-     * Allow agent to fix issue
-     */
-    if (toolResultContent.is_error && !goalFailed) {
-      await askLLM({
-        ...args,
-        type: "tool-use-result",
-        userMessage: [toolResultContent],
-        aborter,
-      });
-      return;
-    }
-
-    await dbs.llm_messages.insert({
-      chat_id: chatId,
-      message: [toolResultContent],
+    return runAgentGoalTool({
+      chat,
+      agetGoalTool,
+      dbs,
+      aborter,
+      args,
+      toolUseRequestMessages,
     });
-    await dbs.llm_chats.update(
-      {
-        id: chat.id,
-      },
-      {
-        status:
-          goalFailed ?
-            {
-              state: "goal-failure",
-              data: agetGoalTool.input,
-              error: "Agent indicated goal failure",
-            }
-          : validationResult?.error !== undefined ?
-            {
-              state: "goal-data-validation-failure",
-              data: agetGoalTool.input,
-              error: validationResult.error,
-            }
-          : {
-              state: "goal-reached",
-              data: agetGoalTool.input,
-            },
-      },
-    );
-    if (validationResult?.error || goalFailed) {
-      throw new Error(
-        `Agent goal tool input validation failed: ${goalFailed ? "goal failure" : validationResult?.error}`,
-      );
-    }
-    return;
   }
 
   const toolUseRequests = toolUseRequestMessages.map((toolUse) => {
@@ -183,7 +112,7 @@ export const runApprovedTools = async (
       state:
         (
           tool.auto_approve ||
-          tool.mode === "structured-output" ||
+          tool.mode === "auto-approved-user-actionable" ||
           wasApprovedByUser
         ) ?
           "approved"
@@ -192,8 +121,14 @@ export const runApprovedTools = async (
     } satisfies ToolUseMessageWithInfo;
   });
 
-  /** Wait for user to approve/deny all pending requests */
-  if (toolUseRequests.some((tr) => tr.state === "needs-approval")) {
+  /** Wait for user to approve/deny/respond to all pending requests */
+  if (
+    toolUseRequests.some(
+      (tr) =>
+        tr.state === "needs-approval" ||
+        tr.tool?.mode === "user-provides-response",
+    )
+  ) {
     return;
   }
 
@@ -234,6 +169,16 @@ export const runApprovedTools = async (
                 ` Try enabling and reloading the tools for ${JSON.stringify(serverName)} MCP Server`
               : "")
           }`,
+          true,
+        );
+      }
+
+      if (
+        toolUseRequest.tool.mode === "user-provides-response" &&
+        toolUseRequests.length > 1
+      ) {
+        return asResponse(
+          `Tool use request for "${toolUseRequest.name}" is invalid. This tool cannot be used together with other tools. Please use it in a single tool use request and try again.`,
           true,
         );
       }

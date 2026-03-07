@@ -44,6 +44,7 @@ export const ProstglesMCPToolsWithUI = {
   "prostgles-ui--request_tool_access": {
     component: RequestToolAccess,
     displayMode: "full",
+    showsError: true,
   },
   [getProstglesMCPFullToolName(
     "prostgles-db",
@@ -89,7 +90,10 @@ export const ProstglesMCPToolsWithUI = {
      * - full: will render component and a side button to show source JSON in popup
      */
     displayMode: "full" | "inline";
-    /* whether the tool component itself shows errors or if errors should be shown by the parent component */
+    /**
+     * If true then no error message will be shown outside the tool component.
+     * It is expected that the tool component itself shows/handles errors
+     */
     showsError?: boolean;
   }
 >;

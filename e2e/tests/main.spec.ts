@@ -771,7 +771,23 @@ test.describe("Main test", () => {
     await page
       .getByTestId("RequestToolAccess.Approve")
       .click({ timeout: 10e3 });
-    await page.getByTestId("Chat.messageList").locator(".dwadwadwadwa").click();
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Requested access to websearch tool and read access to receipts table in the database.`,
+      { timeout: 10e3 },
+    );
+    await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
+    await expect(page.getByTestId("DatabaseAccessEditor.Mode")).toContainText(
+      "Custom",
+    );
+    await expect(
+      page
+        .getByTestId("DatabaseAccessEditor.TableRules")
+        .last()
+        .locator(getDataKey("receipts"))
+        .locator(`button[data-color="action"]`),
+    ).toContainText("SELECT", { ignoreCase: false });
+    await page.getByTestId("Popup.close").last().click();
+    await newChat(page);
 
     await setModelByText(page, "son");
 
@@ -1008,7 +1024,7 @@ test.describe("Main test", () => {
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
-      `Reloaded 7 tools for "prostgles-ui" server`,
+      `Reloaded 8 tools for "prostgles-ui" server`,
     );
     await page.getByText("OK", { exact: true }).click();
     await page

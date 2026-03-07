@@ -36,7 +36,12 @@ export const getUserServerFunctions = async (
         schema: "string",
         chatId: "integer",
         type: {
-          enum: ["new-message", "approve-tool-use", "tool-use-result"] as const,
+          enum: [
+            "new-message",
+            "approve-tool-use",
+            "tool-use-result",
+            "tool-use-result-confirmation",
+          ] as const,
         },
         userMessage: {
           arrayOf: { oneOfType: USER_MESSAGE_CONTENT_SCHEMA_OPTIONS },

@@ -314,7 +314,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             },
         },
         request_tool_access: {
-            mode: "structured-output",
+            mode: "auto-approved-user-actionable",
             description: "Request access to mcp tools. The user will be prompted to approve or deny access. Use this tool when you need access to a tool that you don't have access to yet. The user will then approve access if they are comfortable with it based on the tool description and the context of the conversation.",
             schema: {
                 type: {
@@ -335,11 +335,12 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                             server_name: "string",
                         },
                     },
+                    status: { optional: true, enum: ["approved", "denied"] },
                 },
             },
         },
         suggest_agentic_workflow: {
-            mode: "structured-output",
+            mode: "auto-approved-user-actionable",
             description: [
                 "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
                 "Return workflow_function_definition as valid TypeScript that calls defineAgenticWorkflow(...) directly.",
@@ -377,7 +378,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             },
         },
         suggest_tools_and_prompt: {
-            mode: "structured-output",
+            mode: "auto-approved-user-actionable",
             description: "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.",
             schema: {
                 type: {
@@ -400,7 +401,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             outputSchema: "string",
         },
         suggest_dashboards: {
-            mode: "structured-output",
+            mode: "auto-approved-user-actionable",
             description: "Suggest Prostgles UI dashboards to visualize data for the specified task.",
             schema: {
                 type: {

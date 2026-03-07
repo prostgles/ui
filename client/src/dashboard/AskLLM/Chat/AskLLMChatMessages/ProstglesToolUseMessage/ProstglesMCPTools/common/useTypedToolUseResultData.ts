@@ -2,6 +2,7 @@ import { getJSONBSchemaValidationError, type JSONB } from "prostgles-types";
 import { useMemo } from "react";
 import type { ToolResultMessage } from "../../../ToolUseChatMessage/ToolUseChatMessage";
 import { getToolUseResultString } from "./useToolUseResultString";
+
 /**
  * @deprecated use useTypedToolUseResultDataV2 instead, which returns the validation error as well
  */
@@ -56,21 +57,28 @@ export const useTypedToolUseResultDataV2 = <S extends JSONB.FieldType>(
   schema: S,
   allowExtraProperties = true,
 ): TypedToolUseValidationResult<S> | undefined => {
-  //@ts-ignore
   const resultObj = useMemo<TypedToolUseValidationResult<S> | undefined>(() => {
     if (!toolUseResult) {
       return undefined;
     }
     const stringContent = getToolUseResultString(toolUseResult);
     if (!stringContent) return undefined;
-    const parseResult = getJSONBSchemaValidationError(
-      schema,
-      JSON.parse(stringContent),
-      {
-        allowExtraProperties,
-      },
-    );
-    return parseResult;
+    try {
+      const parseResult = getJSONBSchemaValidationError(
+        schema,
+        JSON.parse(stringContent),
+        {
+          allowExtraProperties,
+        },
+      );
+      return parseResult;
+    } catch (error) {
+      //@ts-ignore
+      return {
+        error: `Error parsing tool use result content: ${error}`,
+        data: undefined,
+      } as TypedToolUseValidationResult<S>;
+    }
   }, [allowExtraProperties, schema, toolUseResult]);
 
   return resultObj;

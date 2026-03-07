@@ -31,6 +31,7 @@ export const RequestToolAccess = ({
       "outputSchema"
     ],
   );
+
   const dbAccess = input.data?.databaseAccess;
   const toolResultData = result?.data;
 
@@ -38,8 +39,28 @@ export const RequestToolAccess = ({
   const onAddTools = useCallback(
     async (
       accessInfo: NonNullable<typeof toolResultData>,
-      auto_approve = false,
+      state: "approved" | "auto_approve" | "deny",
     ) => {
+      await sendToolUseResult({
+        chatId,
+        toolName: message.name,
+        toolUseId: message.id,
+        type: "tool-use-result-confirmation",
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              ...accessInfo,
+              status: state === "deny" ? "denied" : "approved",
+            } satisfies typeof accessInfo),
+          },
+        ],
+      });
+
+      if (state === "deny") {
+        return;
+      }
+
       if (accessInfo.validatedTools.length) {
         await dbs.llm_chats_allowed_mcp_tools.insert(
           accessInfo.validatedTools.map(
@@ -48,9 +69,12 @@ export const RequestToolAccess = ({
                 chat_id: chatId,
                 server_name,
                 tool_id: id,
-                auto_approve,
+                auto_approve: state === "auto_approve",
               }) satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"],
           ),
+          {
+            onConflict: "DoUpdate",
+          },
         );
         await dbs.mcp_servers.update(
           {
@@ -69,17 +93,6 @@ export const RequestToolAccess = ({
           { db_data_permissions: dbAccess },
         );
       }
-      await sendToolUseResult({
-        chatId,
-        toolName: message.name,
-        toolUseId: message.id,
-        content: [
-          {
-            type: "text",
-            text: "Tool access granted",
-          },
-        ],
-      });
     },
     [
       chatId,
@@ -92,18 +105,34 @@ export const RequestToolAccess = ({
       sendToolUseResult,
     ],
   );
-
+  const { mcpServerTools } = input.data ?? {};
+  const { status } = toolResultData ?? {};
   return (
     <FlexCol
       data-command="RequestToolAccess"
       className="rounded b b-color shadow"
     >
       <FlexCol className="p-1">
-        <div className="font-medium text-lg">Requesting tool access</div>
-        <div className="text-gray-700 mb-2">
-          The assistant is requesting access to mcp tools/database. Please
-          review the request and grant or deny access.
+        <div className="font-medium text-lg">
+          {status === "approved" ?
+            "Added tool access"
+          : status === "denied" ?
+            "Denied tool access"
+          : "Requesting tool access"}
         </div>
+        {!status && (
+          <div className="text-gray-700 mb-2">
+            The assistant is requesting access to{" "}
+            {mcpServerTools ?
+              <strong>mcp tools</strong>
+            : null}
+            {mcpServerTools && dbAccess ? " and " : " "}
+            {dbAccess ?
+              <strong>database</strong>
+            : null}
+            . Please review the request and grant or deny access.
+          </div>
+        )}
         {dbAccess && (
           <DatabaseAccessEditor
             newTables={[]}
@@ -116,13 +145,20 @@ export const RequestToolAccess = ({
           <McpToolAccess value={input.data.mcpServerTools} title="Mcp tools" />
         )}
 
-        <ErrorComponent error={result?.error ?? input.error} />
+        <ErrorComponent
+          error={
+            toolResult?.toolUseResultMessage.is_error ?
+              toolResult.toolUseResultMessage.content
+            : (result?.error ?? input.error)
+          }
+        />
       </FlexCol>
-      {toolResultData && input.data && (
+      {toolResultData && input.data && !status && (
         <FooterButtons
           footerButtons={[
             {
               label: "Deny",
+              onClickPromise: () => onAddTools(toolResultData, "deny"),
             },
             {
               label: "Add tools",
@@ -131,7 +167,7 @@ export const RequestToolAccess = ({
               variant: "filled",
               "data-command": "RequestToolAccess.Approve",
               iconPath: mdiCheck,
-              onClickPromise: () => onAddTools(toolResultData),
+              onClickPromise: () => onAddTools(toolResultData, "approved"),
             },
             {
               label: "Add and auto-approve",
@@ -140,7 +176,7 @@ export const RequestToolAccess = ({
               variant: "filled",
               iconPath: mdiCheckAll,
               "data-command": "RequestToolAccess.AutoApprove",
-              onClickPromise: () => onAddTools(toolResultData, true),
+              onClickPromise: () => onAddTools(toolResultData, "auto_approve"),
             },
           ]}
         />

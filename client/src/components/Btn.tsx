@@ -570,7 +570,7 @@ const Btn = <HREF extends string | void = void>(allProps: BtnProps<HREF>) => {
       ...props,
       onClickPromise: async (e) => {
         await onErrorAlert(async () => {
-          await onClickPromise(e);
+          return onClickPromise(e);
         });
       },
     };

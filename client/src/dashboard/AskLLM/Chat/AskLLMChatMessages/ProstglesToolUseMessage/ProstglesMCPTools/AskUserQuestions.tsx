@@ -205,6 +205,7 @@ export const AskUserQuestions = ({
               chatId,
               toolUseId: message.id,
               toolName: message.name,
+              type: "tool-use-result",
               content: [
                 {
                   type: "text",

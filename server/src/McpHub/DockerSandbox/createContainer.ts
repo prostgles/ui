@@ -113,7 +113,7 @@ export const createContainer = async (
     return {
       command: ["docker", ...runArgs].join(" "),
       state: runResult.state === "close" ? "finished" : runResult.state,
-      ...config,
+      name: config.name,
       log: runResult.log,
       exitCode: runResult.exitCode,
       runDuration: Date.now() - runStartTime,
