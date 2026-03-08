@@ -107,6 +107,13 @@ export const startAgenticWorkflowSchema = {
           {
             title: "string",
             optional: { type: "boolean", optional: true },
+            type: { enum: ["table-column-value", "table-column-values"] },
+            tableName: "string",
+            columnName: "string",
+          },
+          {
+            title: "string",
+            optional: { type: "boolean", optional: true },
             type: { enum: ["table-filter", "table-column"] },
             tableName: "string",
           },

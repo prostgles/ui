@@ -41,6 +41,11 @@ const handler = {
           const validatedTools =
             mcpServerTools &&
             (await getValidatedMcpServerToolsAllowed(dbs, mcpServerTools));
+          if (mcpServerTools && !validatedTools?.length) {
+            throw new Error(
+              `mcpServerTools is empty. Either exclude it or provide valid tool server names.`,
+            );
+          }
           if (databaseAccess && databaseAccess.mode === "custom") {
             if (
               isEmpty(databaseAccess.tablePermissions) &&
@@ -69,6 +74,11 @@ const handler = {
               },
             );
           }
+          if (!mcpServerTools && !databaseAccess) {
+            throw new Error(
+              `At least one of mcpServerTools or databaseAccess must be provided`,
+            );
+          }
           return {
             validatedTools:
               validatedTools?.map((t) => ({
@@ -82,10 +92,6 @@ const handler = {
           return getToolTypescriptSchemas(dbs, mcpServerTools ?? "*");
         },
         suggest_dashboards: () => {
-          return "Done";
-        },
-        suggest_tools_and_prompt: () => {
-          // TODO: validate tools list
           return "Done";
         },
         compact_context: async (args, { chat }) => {

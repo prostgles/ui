@@ -1,6 +1,6 @@
 import { FlexCol, FlexRow } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import { isDefined } from "@common/filterUtils";
 import type { DBSSchema } from "@common/publishUtils";
@@ -85,6 +85,10 @@ export const AgentDefinition = ({
       })
       .filter(isDefined);
 
+  const selectedToolIds = useMemo(
+    () => agentToolsList?.map((t) => t.id) ?? [],
+    [agentToolsList],
+  );
   return (
     <FlexCol
       className="rounded b b-color p-p5 min-w-0 relative"
@@ -117,7 +121,7 @@ export const AgentDefinition = ({
       </FlexRow>
       {expanded ?
         <Select
-          value={agentToolsList?.map((t) => t.id)}
+          value={selectedToolIds}
           size="small"
           multiSelect={true}
           fullOptions={options}
@@ -160,6 +164,7 @@ export const AgentDefinition = ({
             }}
           />
         : <Marked
+            style={{ fontStyle: "italic" }}
             codeHeader={undefined}
             content={slicePrompt(prompt)}
             loadedSuggestions={undefined}

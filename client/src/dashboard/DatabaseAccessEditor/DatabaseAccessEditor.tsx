@@ -1,37 +1,29 @@
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { databaseAccessSchema } from "@common/databaseAccessSchema";
 import type { DBSSchema } from "@common/publishUtils";
-import { Icon } from "@components/Icon/Icon";
-import {
-  SearchList,
-  type SearchListItem,
-} from "@components/SearchList/SearchList";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import { HeaderSection } from "@components/HeaderSection";
 import { Select } from "@components/Select/Select";
 import {
   mdiDatabaseEdit,
   mdiDatabaseOff,
+  mdiDotsHorizontal,
   mdiTable,
-  mdiTableEdit,
-  mdiTableEye,
   mdiTableSearch,
 } from "@mdi/js";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { isDefined, isEmpty, type JSONB } from "prostgles-types";
+import { type JSONB } from "prostgles-types";
 import React, { useState } from "react";
-import { HeaderSection } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/common/HeaderSection";
-import type {
-  DBSchemaTableColumn,
-  DBSchemaTableWJoins,
-} from "../Dashboard/dashboardUtils";
-import { TableAccessEditor } from "./TableAccessEditor";
-import { type ViewMode } from "./ViewModeToggle";
+import { DatabaseAccessEditorCustomTables } from "./DatabaseAccessEditorCustomTables";
 
-export type DatabaseAccessPermission = JSONB.GetObjectType<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]
->["suggested_database_access"];
+export type DatabaseAccessPermission = JSONB.GetType<
+  typeof databaseAccessSchema
+>;
 
-type P = {
+export type DatabaseAccessEditorProps = {
   value: DatabaseAccessPermission | undefined;
-  onChange: undefined | ((newValue: DatabaseAccessPermission) => void);
+  onChange:
+    | undefined
+    | ((newValue: DatabaseAccessPermission | undefined) => void);
   contentRight?: React.ReactNode;
   newTables: DBSSchema["agentic_workflows"]["definition_data"]["newTables"];
 };
@@ -40,193 +32,65 @@ export const DatabaseAccessEditor = ({
   onChange,
   contentRight,
   newTables,
-}: P) => {
-  const { tables } = usePrgl();
-  const [viewMode, setViewMode] = useState<ViewMode>("Overview");
-
+}: DatabaseAccessEditorProps) => {
+  const showSelect = value?.mode !== "custom" || onChange;
+  const [showDetails, setShowDetails] = useState(false);
   return (
     <HeaderSection
       className="gap-p5 ai-start"
       data-command="DatabaseAccessEditor"
-      title="Database access"
-    >
-      {(value?.mode !== "custom" || onChange) && (
-        <Select
-          value={value?.mode ?? "none"}
-          data-command="DatabaseAccessEditor.Mode"
-          btnProps={{
-            color: value ? "action" : undefined,
-          }}
-          fullOptions={MODES}
-          onChange={
-            !onChange ? undefined : (
-              (dataAccess) => {
-                void onChange(
-                  dataAccess === "none" ? undefined
-                  : dataAccess === "custom" ?
-                    {
-                      mode: dataAccess,
-                      tablePermissions: {},
-                    }
-                  : {
-                      mode: dataAccess,
-                    },
-                );
-              }
-            )
-          }
+      title={showSelect ? "" : "Database access"}
+      titleEndContent={
+        <Btn
+          iconPath={mdiDotsHorizontal}
+          variant="faded"
+          color={showDetails ? "action" : undefined}
+          onClick={() => setShowDetails(!showDetails)}
+          size="micro"
         />
-      )}
-
-      {contentRight}
-      {value?.mode === "custom" && (
-        <div className="w-full" data-command="DatabaseAccessEditor.TableRules">
-          {/* <ViewModeToggle
-            className="w-fit mb-p5"
-            onChange={setViewMode}
-            value={viewMode}
-            allowedValues={getEntries(value.tablePermissions)
-              .map(([_, permissions]) => {
-                return getKeys(permissions);
-              })
-              .filter(isDefined)
-              .flat()}
-          /> */}
-          <SearchList
-            id="custom-tables"
-            style={{
-              maxHeight: "min(400px, calc(100vh - 100px)",
-            }}
-            placeholder={`Search ${tables.length} tables & views`}
-            limit={200}
-            listStyle={{
-              display: "grid",
-              gridTemplateColumns: "max-content max-content 1fr",
-              gap: "0.5em",
-              alignItems: "center",
-            }}
-            items={tables
-              .concat(
-                newTables
-                  ?.filter((nt) => !tables.some((t) => t.name === nt.name))
-                  .map(
-                    (t) =>
-                      ({
-                        joins: [],
-                        joinsV2: [],
-                        label: t.name,
-                        name: t.name,
-                        info: { oid: -1, isView: false },
-                        columns: t.columns.map(
-                          ({ name, dataType }) =>
-                            ({
-                              oid: -1,
-                              name,
-                              label: name,
-                              comment: "",
-                              icon: undefined,
-                              delete: true,
-                              ordinal_position: -1,
-                              is_nullable: true,
-                              is_updatable: true,
-                              is_generated: true,
-                              udt_name: "text",
-                              data_type: dataType,
-                              tsDataType: "string",
-                              element_type: undefined,
-                              element_udt_name: undefined,
-                              is_pkey: false,
-                              has_default: false,
-                              select: true,
-                              insert: true,
-                              update: true,
-                              orderBy: true,
-                              filter: true,
-                            }) as DBSchemaTableColumn,
-                        ),
-                      }) as DBSchemaTableWJoins,
-                  ) ?? [],
-              )
-              .toSorted((a, b) => {
-                const aRule = value.tablePermissions[a.name];
-                const bRule = value.tablePermissions[b.name];
-                /** Bring tables with rules first */
-                if (aRule && !bRule) return -1;
-                if (!aRule && bRule) return 1;
-                return a.name.localeCompare(b.name);
-              })
-              .map((t) => {
-                const tableRules = value.tablePermissions[t.name] ?? {};
-                if (!onChange && isEmpty(tableRules)) {
-                  return;
-                }
-                return {
-                  key: t.name,
-                  title: t.name,
-                  contentLeft: (
-                    <Icon
-                      className="text-1"
-                      path={tableRules.update ? mdiTableEdit : mdiTable}
-                    />
-                  ),
-                  styles: {
-                    labelWrapper: {
-                      fontWeight: 700,
-                      ...(!onChange && { flex: "unset" }),
-                    },
-                    label: {
-                      fontWeight: 700,
-                      fontSize: "16px",
-                    },
-                    rowInner: {
-                      display: "contents",
-                      ...(window.isLowWidthScreen && {
-                        flexDirection: "column",
-                        gap: "1em",
-                        alignItems: "start",
-                        overflow: "auto",
-                      }),
-                    },
-                  },
-                  rowStyle: {
-                    padding: "0.25em",
-                    ...(onChange ?
-                      {
-                        border: "1px solid var(--b-default)",
-                      }
-                    : {
-                        /** Disable focus */
-                        background: "unset",
-                      }),
-                    display: "contents",
-                  },
-                  contentRight: (
-                    <>
-                      <TableAccessEditor
-                        value={tableRules}
-                        table={t}
-                        viewMode={viewMode}
-                        onChange={
-                          onChange &&
-                          ((newTableRules) => {
-                            const newTablePermissions = {
-                              ...value.tablePermissions,
-                              [t.name]: newTableRules,
-                            } as const;
-                            void onChange({
-                              mode: "custom",
-                              tablePermissions: newTablePermissions,
-                            });
-                          })
+      }
+    >
+      {(showSelect || contentRight) && (
+        <FlexRow>
+          {showSelect && (
+            <Select
+              value={value?.mode ?? "none"}
+              data-command="DatabaseAccessEditor.Mode"
+              btnProps={{
+                color: value ? "action" : undefined,
+              }}
+              label={"Database access"}
+              fullOptions={MODES}
+              onChange={
+                !onChange ? undefined : (
+                  (dataAccess) => {
+                    void onChange(
+                      dataAccess === "none" ? undefined
+                      : dataAccess === "custom" ?
+                        {
+                          mode: dataAccess,
+                          tablePermissions: {},
                         }
-                      />
-                    </>
-                  ),
-                } satisfies SearchListItem;
-              })
-              .filter(isDefined)}
-          />
-        </div>
+                      : {
+                          mode: dataAccess,
+                        },
+                    );
+                  }
+                )
+              }
+            />
+          )}
+
+          {contentRight}
+        </FlexRow>
+      )}
+      {value?.mode === "custom" && (
+        <DatabaseAccessEditorCustomTables
+          newTables={newTables}
+          onChange={onChange}
+          value={value}
+          showDetails={showDetails}
+        />
       )}
     </HeaderSection>
   );

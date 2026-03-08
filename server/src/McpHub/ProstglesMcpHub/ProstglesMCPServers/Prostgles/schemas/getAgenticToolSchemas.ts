@@ -1,7 +1,7 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fixIndent } from "@common/utils";
 import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
-import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
+import { getJSONBSchemaAsJSONSchema, omitKeys } from "prostgles-types";
 import { getDefineAgenticWorkflowTsSchema } from "../getAgenticWorkflowFiles";
 import type { DBS } from "@src/index";
 
@@ -32,6 +32,8 @@ export const getAgenticWorkflowToolSchema = async ({
   //   )
   // }
 
+  const args =
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][name].schema.type;
   const workflowTsSchema = await getDefineAgenticWorkflowTsSchema(dbs, "agent");
   return {
     name,
@@ -53,10 +55,8 @@ export const getAgenticWorkflowToolSchema = async ({
     Use the most restrictive access type that is needed to complete the task (type custom with specific tables and allowed commands).
  
   `),
-    input_schema: getJSONBSchemaAsJSONSchema(
-      "",
-      "",
-      PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][name].schema,
-    ),
+    input_schema: getJSONBSchemaAsJSONSchema("", "", {
+      type: omitKeys(args, ["workflowId"]),
+    } as const),
   };
 };

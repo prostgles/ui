@@ -110,20 +110,18 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await setModelByText(page, "sonn");
 
   await deletePreviousMessages();
-  await setPromptByText(page, "create task");
+  // await setPromptByText(page, "create task");
   await typeSendAddScenes(
     page,
     addScene,
     "The task involves importing data from receipt images I will paste in this chat",
   );
   const loadTaskBtn = await page
-    .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
+    .getByTestId("RequestToolAccess.Approve")
     .last();
 
   await loadTaskBtn.waitFor({ state: "visible", timeout: 15000 });
-  await addSceneAnimation(
-    getCommandElemSelector("AskLLMChat.LoadSuggestedToolsAndPrompt"),
-  );
+  await addSceneAnimation(getCommandElemSelector("RequestToolAccess.Approve"));
 
   await page.getByTestId("Alert").getByText("OK").waitFor({ state: "visible" });
   await page.waitForTimeout(1000);

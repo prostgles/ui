@@ -1,12 +1,10 @@
 import Btn from "@components/Btn";
-import { FlexRow, FlexRowWrap } from "@components/Flex";
+import { FlexRow } from "@components/Flex";
+import { mdiTablePlus } from "@mdi/js";
 import React from "react";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import type { DatabaseAccessPermission } from "./DatabaseAccessEditor";
-import { TableAccessAdvancedOptions } from "./TableAccessAdvancedOptions";
 import { TableAccessAdvancedOptionsMenu } from "./TableAccessAdvancedOptionsMenu";
-import type { ViewMode } from "./ViewModeToggle";
-import { mdiPlus, mdiTablePlus } from "@mdi/js";
 
 export type TableAccessPermissions = Extract<
   DatabaseAccessPermission,
@@ -26,27 +24,12 @@ export const TableAccessEditor = ({
   value,
   onChange,
   table,
-  viewMode,
 }: {
   value: TableAccessPermissions;
-  table: DBSchemaTableWJoins;
+  table: DBSchemaTableWJoins & { isNewTable?: boolean };
   onChange: undefined | ((newTableRules: TableAccessPermissions) => void);
-  viewMode: ViewMode;
 }) => {
-  // if (viewMode !== "Overview") {
-  //   return (
-  //     <FlexRowWrap>
-  //       <TableAccessAdvancedOptions
-  //         table={table}
-  //         onChange={onChange}
-  //         ruleType={viewMode}
-  //         tableRules={value}
-  //       />
-  //     </FlexRowWrap>
-  //   );
-  // }
-
-  const isNewTable = table.info.oid === -1;
+  const { isNewTable } = table;
   return (
     <FlexRow className="gap-0">
       <Btn
@@ -67,7 +50,17 @@ export const TableAccessEditor = ({
             <Btn
               key={ruleType}
               title={ruleType.toUpperCase()}
-              color={ruleValue ? "action" : "default"}
+              color={
+                ruleValue ?
+                  ruleType === "select" ?
+                    "action"
+                  : ruleType === "update" ?
+                    "warn"
+                  : ruleType === "delete" ?
+                    "danger"
+                  : "green"
+                : "default"
+              }
               variant={
                 ruleValue ?
                   !onChange ?

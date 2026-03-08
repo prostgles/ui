@@ -340,6 +340,21 @@ type UserInputBase<T> = T & {
 
 export type UserInputItem =
   | UserInputBase<{
+      /**
+       * Prefer to use this over "custom" or "enum" to restrict the input and make it easier for the user to choose the correct value.
+       */
+      type: "table-column-value" | "table-column-values";
+      tableName: string;
+      columnName: string;
+    }>
+  | UserInputBase<{
+      /**
+       * Prefer to use this over "custom" to restrict the input and make it easier for the user to choose the correct value.
+       */
+      type: "enum";
+      values: string[];
+    }>
+  | UserInputBase<{
       type: "table-filter" | "table-column";
       tableName: string;
     }>
@@ -349,15 +364,13 @@ export type UserInputItem =
   | UserInputBase<{
       type: "custom";
       dataType: "string" | "number" | "boolean" | "Date";
-    }>
-  | UserInputBase<{
-      type: "enum";
-      values: string[];
     }>;
 
 export type UserInputOutputMapping = {
   "table-filter": Record<string, any>;
   "table-and-column": { tableName: string; columnName: string };
+  "table-column-value": unknown;
+  "table-column-values": unknown[];
   "table-name": string;
   "table-column": string;
   enum: string;

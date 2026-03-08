@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { ProstglesMCPToolsProps } from "../../../ProstglesToolUseMessage";
 import { useJSONBParsedData } from "../../common/useJSONBParsedData";
-import { useTypedToolUseResultData } from "../../common/useTypedToolUseResultData";
+import { useTypedToolUseResultDataV2 } from "../../common/useTypedToolUseResultData";
 
 export const useAgenticWorkflowState = ({
   message,
@@ -14,23 +14,26 @@ export const useAgenticWorkflowState = ({
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
       .schema,
   );
-  const workflowValidation = useTypedToolUseResultData(
+  const workflowValidation = useTypedToolUseResultDataV2(
     toolUseResult?.toolUseResultMessage,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
       .outputSchema,
     true,
   );
+  const validatedWorkflowData = workflowValidation?.data;
   const messageId = toolUseResult?.toolUseResult.id;
   const workflow_id =
-    workflowValidation?.isValid ? workflowValidation.workflowId : undefined;
+    validatedWorkflowData?.isValid ?
+      validatedWorkflowData.workflowId
+    : undefined;
   const [activeTab, setActiveTab] = useState(
     workflow_id ? "Details" : "Definition",
   );
   useEffect(() => {
-    if (workflowValidation?.isValid) {
+    if (validatedWorkflowData?.isValid) {
       setActiveTab("Details");
     }
-  }, [workflowValidation?.isValid]);
+  }, [validatedWorkflowData?.isValid]);
 
   const { dbs } = usePrglCore();
   const { data: workflow } = dbs.agentic_workflows.useSubscribeOne(
@@ -59,8 +62,19 @@ export const useAgenticWorkflowState = ({
     latestRun?.execution_mode ?? "series",
   );
 
+  const workflowValidationError =
+    workflowValidation?.error ?
+      ({ type: "error", error: workflowValidation.error } as const)
+    : workflowValidation?.data?.isValid === false ?
+      workflowValidation.data.error !== undefined ?
+        ({ type: "error", error: workflowValidation.data.error } as const)
+      : ({ type: "error-logs", logs: workflowValidation.data.logs } as const)
+    : undefined;
+
   return {
     workflowValidation,
+    validatedWorkflowData,
+    workflowValidationError,
     workflow,
     activeTab,
     setActiveTab,

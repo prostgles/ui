@@ -1,29 +1,28 @@
 import { join } from "path";
+import type { JSONB } from "prostgles-types";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../common/prostglesMcp";
+import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
+import { createComponentToolUse } from "./createComponentToolUse";
 import {
+  dockerWeatherToolUse,
   prostglesUICryptoDashboardSample,
   prostglesUIFoodDeliveryDashboardSample,
 } from "./sampleToolUseData";
-import { dockerWeatherToolUse } from "./sampleToolUseData";
-import { createComponentToolUse } from "./createComponentToolUse";
 import { stringify, type ToolUse } from "./utils";
-import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import type { JSONB } from "prostgles-types";
-import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../common/prostglesMcp";
+
+type RequestToolAccess = JSONB.GetType<
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
+>;
 
 export const clientNodeModulesDirectory = join(
   __dirname,
   "../../../client/node_modules",
 );
 
-type DatabaseAccessPermission = JSONB.GetObjectType<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_tools_and_prompt"]["schema"]["type"]
->;
-
-const taskToolArguments = {
-  suggested_prompt:
+const requestToolAccessArgs = {
+  reason:
     "I will paste receipt images in this chat. Please extract the following information from each receipt:\n- Company/merchant name\n- Total amount\n- Currency\n- Date of purchase\n- Full extracted text\n\nAfter extracting the data, insert it into the receipts table.",
-  suggested_database_access: {
+  databaseAccess: {
     mode: "custom",
     tablePermissions: {
       receipts: {
@@ -33,9 +32,10 @@ const taskToolArguments = {
       },
     },
   },
-  suggested_database_tool_names: [],
-  suggested_mcp_tool_names: ["fetch--fetch"],
-} satisfies DatabaseAccessPermission;
+  mcpServerTools: {
+    fetch: { fetch: 1 },
+  },
+} satisfies RequestToolAccess;
 
 const taskToolUse: ToolUse = {
   content:
@@ -45,11 +45,13 @@ const taskToolUse: ToolUse = {
       id: "task-tool-use",
       type: "function",
       function: {
-        name: "prostgles-ui--suggest_tools_and_prompt",
-        arguments: stringify(taskToolArguments),
+        name: "prostgles-ui--request_tool_access",
+        arguments: stringify(requestToolAccessArgs),
       },
     },
   ],
+  result_content:
+    "Added fetch tool access and database permissions for receipts table.",
 };
 
 const webSearchToolUse: ToolUse = {

@@ -8,7 +8,7 @@ import { SvgIcon } from "@components/SvgIcon";
 import { mdiTools } from "@mdi/js";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import React from "react";
-import { HeaderSection } from "../common/HeaderSection";
+import { HeaderSection } from "@components/HeaderSection";
 
 type P = {
   title: string;

@@ -1,0 +1,73 @@
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { useMemo } from "react";
+import type {
+  DBSchemaTableColumn,
+  DBSchemaTableWJoins,
+} from "../Dashboard/dashboardUtils";
+import type { DatabaseAccessEditorProps } from "./DatabaseAccessEditor";
+
+const NEW_TABLE_OID = -1;
+
+export const useDatabaseAccessEditorTables = ({
+  value,
+  newTables,
+}: Pick<DatabaseAccessEditorProps, "newTables"> & {
+  value: Extract<DatabaseAccessEditorProps["value"], { mode: "custom" }>;
+}) => {
+  const { tables } = usePrgl();
+  return useMemo(
+    () =>
+      tables
+        .concat(
+          newTables
+            ?.filter((nt) => !tables.some((t) => t.name === nt.name))
+            .map(
+              (t) =>
+                ({
+                  joins: [],
+                  joinsV2: [],
+                  label: t.name,
+                  name: t.name,
+                  isNewTable: true,
+                  info: { oid: NEW_TABLE_OID, isView: false },
+                  columns: t.columns.map(
+                    ({ name, dataType }) =>
+                      ({
+                        oid: -1,
+                        name,
+                        label: name,
+                        comment: "",
+                        icon: undefined,
+                        delete: true,
+                        ordinal_position: -1,
+                        is_nullable: true,
+                        is_updatable: true,
+                        is_generated: true,
+                        udt_name: "text",
+                        data_type: dataType,
+                        tsDataType: "string",
+                        element_type: undefined,
+                        element_udt_name: undefined,
+                        is_pkey: false,
+                        has_default: false,
+                        select: true,
+                        insert: true,
+                        update: true,
+                        orderBy: true,
+                        filter: true,
+                      }) as DBSchemaTableColumn,
+                  ),
+                }) as DBSchemaTableWJoins,
+            ) ?? [],
+        )
+        .toSorted((a, b) => {
+          const aRule = value.tablePermissions[a.name];
+          const bRule = value.tablePermissions[b.name];
+          /** Bring tables with rules first */
+          if (aRule && !bRule) return -1;
+          if (!aRule && bRule) return 1;
+          return a.name.localeCompare(b.name);
+        }),
+    [newTables, tables, value.tablePermissions],
+  );
+};

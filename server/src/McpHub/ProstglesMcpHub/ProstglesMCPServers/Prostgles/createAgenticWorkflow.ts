@@ -1,14 +1,20 @@
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { fromEntries, getEntries } from "@common/utils";
-import { getSerialisableError, omitKeys } from "prostgles-types";
+import {
+  getSerialisableError,
+  omitKeys,
+  type JSONBObjectTypeIfDefined,
+} from "prostgles-types";
 import type { McpCallContext } from "../../ProstglesMCPServerTypes";
 import { startAgenticWorkflowContainer } from "./startAgenticWorkflowContainer";
 import { validateAgenticWorkflowDefinitions } from "./validateAgenticWorkflowDefinitions";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+
+type Args = JSONBObjectTypeIfDefined<
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_agentic_workflow"]["schema"]["type"]
+>;
 export const createAgenticWorkflow = async (
-  {
-    workflow_function_definition,
-    workflowId,
-  }: { workflow_function_definition: string; workflowId?: number },
+  { workflow_function_definition, workflowId }: Args,
   { user_id, chat, dbs, clientReq }: McpCallContext,
 ) => {
   const { connection_id } = chat;

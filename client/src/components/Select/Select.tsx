@@ -211,10 +211,22 @@ export class Select<
       );
     }
 
-    fullOptions = fullOptions.map((o) => ({
-      ...o,
-      label: o.label ?? ((o.label as any) === null ? "NULL" : ""),
-    }));
+    fullOptions = fullOptions
+      .map((o) => ({
+        ...o,
+        label: o.label ?? ((o.label as any) === null ? "NULL" : ""),
+      }))
+      .toSorted((a, b) => {
+        /** Bring selected first */
+        if (multiSelect) {
+          if (a.checked && !b.checked) return -1;
+          if (!a.checked && b.checked) return 1;
+        } else {
+          if (a.key === value) return -1;
+          if (b.key === value) return 1;
+        }
+        return 0;
+      });
 
     type OptionType =
       Multi extends true ? O[]

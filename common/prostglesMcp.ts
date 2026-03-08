@@ -198,11 +198,6 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         "Executes code in a docker container. CANNOT ACCESS THE DATABASE DIRECTLY (must access the database only through POST requests to the exposed api). Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.",
       schema: {
         type: {
-          // databaseAccess: {
-          //   ...databaseAccessSchema,
-          //   description:
-          //     "Database access configuration for the container. If not provided, the container will not have access to the database. Use the most restrictive access type that is needed to complete the task.",
-          // },
           files: filesSchema,
           timeout: {
             optional: true,
@@ -410,7 +405,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             type: "integer",
             optional: true,
             description:
-              "Workflow ID to update instead of creating a new workflow. If not provided, a new workflow will be created.",
+              "FOR INTERNAL USE ONLY. DO NOT ASK USER ABOUT THIS. Workflow ID to update instead of creating a new workflow. If not provided, a new workflow will be created.",
           },
         },
       },
@@ -427,37 +422,6 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           },
         ],
       },
-    },
-    suggest_tools_and_prompt: {
-      mode: "auto-approved-user-actionable",
-      description:
-        "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.",
-      schema: {
-        type: {
-          suggested_mcp_tool_names: {
-            description:
-              "List of MCP tools that can be used to complete the task",
-            arrayOf: "string",
-          },
-          suggested_database_tool_names: {
-            description:
-              "List of database tools that can be used to complete the task",
-            arrayOf: "string",
-            optional: true,
-          },
-          suggested_prompt: {
-            description:
-              "System prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.",
-            type: "string",
-          },
-          suggested_database_access: {
-            ...databaseAccessSchema,
-            description:
-              "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type.",
-          },
-        },
-      },
-      outputSchema: "string",
     },
     suggest_dashboards: {
       mode: "auto-approved-user-actionable",

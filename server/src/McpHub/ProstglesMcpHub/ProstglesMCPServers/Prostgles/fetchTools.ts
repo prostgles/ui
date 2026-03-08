@@ -4,7 +4,6 @@ import { getOrCreateDockerMCPServerProxy } from "../../../DockerSandbox/dockerMC
 import type { ProstglesMcpServerHandlerTypedFetchTools } from "../../ProstglesMCPServerTypes";
 import { getAgenticWorkflowToolSchema } from "./schemas/getAgenticToolSchemas";
 import { getCreateContainerToolSchema } from "./schemas/getCreateContainerToolSchema";
-import { getSuggestToolsSchema } from "./schemas/getSuggestToolsSchema";
 import { prostglesUiToolSchemas } from "./schemas/prostglesUiToolSchemas";
 import { suggestDashboardsToolSchema } from "./schemas/suggestDashboardsToolSchema";
 
@@ -41,16 +40,10 @@ export const fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
       };
     })();
 
-  const taskTool = getSuggestToolsSchema({
-    availableDBTools: dbTools,
-    availableMCPTools: mcpTools,
-  });
-
   return {
     ...prostglesUiToolSchemas,
     suggest_agentic_workflow: suggestAgenticWorkflowSchema,
     run_code_in_sandbox: createContainerToolSchema,
-    suggest_tools_and_prompt: taskTool,
     suggest_dashboards: suggestDashboardsToolSchema,
   };
 };

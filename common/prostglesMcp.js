@@ -169,45 +169,40 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             description: "Executes code in a docker container. CANNOT ACCESS THE DATABASE DIRECTLY (must access the database only through POST requests to the exposed api). Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.",
             schema: {
                 type: {
-                    // databaseAccess: {
-                    //   ...databaseAccessSchema,
-                    //   description:
-                    //     "Database access configuration for the container. If not provided, the container will not have access to the database. Use the most restrictive access type that is needed to complete the task.",
-                    // },
                     files: filesSchema,
                     timeout: {
-                        type: "number",
                         optional: true,
+                        type: "integer",
                         description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ",
                         // default: 30000,
                     },
                     networkMode: {
+                        optional: true,
                         enum: ["none", "bridge", "bridge-internal", "host"],
                         description: "Network mode for the container. Defaults to 'bridge-internal'. Use 'bridge' mode to be able to access the database. Use 'bridge-internal' to access the database but not the internet.",
                         // default: "none",
-                        optional: true,
                     },
                     environment: {
+                        optional: true,
                         description: "Environment variables to set in the container",
                         record: { values: "string", partial: true },
-                        optional: true,
                     },
                     memory: {
+                        optional: true,
                         type: "string",
                         description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m",
-                        optional: true,
                         // default: "512m",
                     },
                     cpus: {
+                        optional: true,
                         type: "string",
                         description: "CPU limit (e.g., '0.5', '1'). Defaults to 1",
-                        optional: true,
                         // default: "1",
                     },
                     readOnly: {
+                        optional: true,
                         type: "boolean",
                         description: "Whether to mount the filesystem as read-only. Defaults to true",
-                        optional: true,
                         // default: true,
                     },
                 },
@@ -363,7 +358,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     workflowId: {
                         type: "integer",
                         optional: true,
-                        description: "Workflow ID to update instead of creating a new workflow. If not provided, a new workflow will be created.",
+                        description: "FOR INTERNAL USE ONLY. DO NOT ASK USER ABOUT THIS. Workflow ID to update instead of creating a new workflow. If not provided, a new workflow will be created.",
                     },
                 },
             },
@@ -380,29 +375,6 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     },
                 ],
             },
-        },
-        suggest_tools_and_prompt: {
-            mode: "auto-approved-user-actionable",
-            description: "Suggest MCP tools and a system prompt to complete the specified task using MCP tools and database access if needed.",
-            schema: {
-                type: {
-                    suggested_mcp_tool_names: {
-                        description: "List of MCP tools that can be used to complete the task",
-                        arrayOf: "string",
-                    },
-                    suggested_database_tool_names: {
-                        description: "List of database tools that can be used to complete the task",
-                        arrayOf: "string",
-                        optional: true,
-                    },
-                    suggested_prompt: {
-                        description: "System prompt that will be used in the LLM chat in conjunction with the selected tools to complete the task. Expand on the task description and include any relevant details and edge cases.",
-                        type: "string",
-                    },
-                    suggested_database_access: Object.assign(Object.assign({}, databaseAccessSchema), { description: "If access to the database is needed, an access type can be specified. Use the most restrictive access type that is needed to complete the task. If new tables are needed, use the 'execute_sql_with_commit' access type." }),
-                },
-            },
-            outputSchema: "string",
         },
         suggest_dashboards: {
             mode: "auto-approved-user-actionable",

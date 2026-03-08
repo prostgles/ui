@@ -72,10 +72,10 @@ export const useTypedToolUseResultDataV2 = <S extends JSONB.FieldType>(
         },
       );
       return parseResult;
-    } catch (error) {
+    } catch {
       //@ts-ignore
       return {
-        error: `Error parsing tool use result content: ${error}`,
+        error: toolUseResult.content,
         data: undefined,
       } as TypedToolUseValidationResult<S>;
     }

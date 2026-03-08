@@ -771,6 +771,7 @@ test.describe("Main test", () => {
     await page
       .getByTestId("RequestToolAccess.Approve")
       .click({ timeout: 10e3 });
+    await page.getByText("OK", { exact: true }).click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Requested access to websearch tool and read access to receipts table in the database.`,
       { timeout: 10e3 },
@@ -791,8 +792,13 @@ test.describe("Main test", () => {
 
     await setModelByText(page, "son");
 
-    await setPromptByText(page, "Create task");
     await sendAskLLMMessage(page, " task ");
+
+    await expect(page.getByTestId("Alert")).toContainText(
+      "Tool access updated successfully",
+      { timeout: 10e3 },
+    );
+    await page.getByText("OK", { exact: true }).click();
 
     /** Refresh tools */
     await runDbsSql(
@@ -804,11 +810,6 @@ test.describe("Main test", () => {
       page,
       `UPDATE mcp_servers SET enabled = false WHERE name = 'fetch';`,
     );
-
-    await page
-      .getByTestId("AskLLMChat.LoadSuggestedToolsAndPrompt")
-      .click({ timeout: 10e3 });
-    await page.getByText("OK", { exact: true }).click();
 
     const mcpToolsBtn = await page.getByTestId("LLMChatOptions.MCPTools");
     await expect(mcpToolsBtn).toContainText("1");

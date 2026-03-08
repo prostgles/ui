@@ -98,6 +98,8 @@
   --text-green: #057a55;
 
   --b-warning: var(--yellow-400);
+  --b-green: var(--green-500);
+  --b-light-green: var(--green-300);
   --b-danger: var(--red-700);
   --b-default: var(--gray-200);
   --b-action: var(--active);
@@ -172,6 +174,8 @@
   --text-green: #057a55;
 
   --b-warning: var(--yellow-300);
+  --b-green: var(--green-500);
+  --b-light-green: var(--green-300);
   --b-danger: var(--red-500);
   /* var(--gray-500); */
   --b-default: #4d4d4d;

@@ -13,7 +13,6 @@ import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
 import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
-import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
 import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/CreateComponentQuickFeedbackPreview";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 import { WebSnapshot } from "./ProstglesMCPTools/WebSearch/WebSnapshot";
@@ -22,10 +21,6 @@ import { RequestToolAccess } from "./ProstglesMCPTools/RequestToolAccess";
 export const ProstglesMCPToolsWithUI = {
   [getMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]: {
     component: LoadSuggestedDashboards,
-    displayMode: "full",
-  },
-  [getMCPFullToolName("prostgles-ui", "suggest_tools_and_prompt") as string]: {
-    component: LoadSuggestedToolsAndPrompt,
     displayMode: "full",
   },
   [getMCPFullToolName("prostgles-ui", "suggest_agentic_workflow") as string]: {

@@ -28,11 +28,12 @@ export const AgenticWorkflow = ({
     activeTab,
     inputValidation,
     setActiveTab,
-    workflowValidation,
+    workflowValidationError,
     latestRun,
     executionMode,
     setExecutionMode,
     workflow,
+    validatedWorkflowData,
   } = useAgenticWorkflowState({
     message,
     toolUseResult,
@@ -142,7 +143,7 @@ export const AgenticWorkflow = ({
           />
         </div>
       )}
-      {workflowValidation?.isValid && workflow && (
+      {validatedWorkflowData && workflow && (
         <AgenticWorkflowActions
           chatId={chatId}
           userInputState={userInputState}
@@ -161,18 +162,17 @@ export const AgenticWorkflow = ({
           setExecutionMode={setExecutionMode}
         />
       )}
-      {workflowValidation &&
-        !workflowValidation.isValid &&
-        (workflowValidation.error !== undefined ?
+      {workflowValidationError &&
+        (workflowValidationError.type === "error" ?
           <ErrorComponent
             data-command="AgenticWorkflow.validationErrorLogs"
-            error={workflowValidation.error}
+            error={workflowValidationError.error}
             maxTextLength={2e3}
           />
         : <MonacoLogsWithFullscreen
             label="Error logs"
             data-command="AgenticWorkflow.validationErrorLogs"
-            logs={workflowValidation.logs}
+            logs={workflowValidationError.logs}
           />)}
     </FlexCol>
   );

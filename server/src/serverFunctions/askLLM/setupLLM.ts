@@ -43,6 +43,7 @@ export const setupLLM = async (dbs: DBS) => {
               ask_user_questions: 1,
               get_tool_schemas: 1,
               request_tool_access: 1,
+              compact_context: 1,
             }),
             database_access: "execute_sql_with_rollback",
           },
@@ -56,6 +57,9 @@ export const setupLLM = async (dbs: DBS) => {
             mcp_server_tools: allowProstglesUITools({
               suggest_dashboards: 1,
               ask_user_questions: 1,
+              compact_context: 1,
+              get_tool_schemas: 1,
+              request_tool_access: 1,
             }),
 
             database_access: "execute_sql_with_rollback",
@@ -64,30 +68,6 @@ export const setupLLM = async (dbs: DBS) => {
           prompt: [
             firstLine,
             "Assist user with any queries they might have about creating dashboards.",
-            "",
-            LLM_PROMPT_VARIABLES.SCHEMA,
-            "",
-          ].join("\n"),
-        },
-        {
-          name: "Create task",
-          description:
-            "Includes database schema and full tools list. Will suggest database access type and tools required to completed the task. Claude Sonnet recommended",
-          user_id,
-          options: {
-            mcp_server_tools: allowProstglesUITools({
-              suggest_tools_and_prompt: 1,
-              get_tool_schemas: 1,
-            }),
-            database_access: "execute_sql_with_rollback",
-          },
-          prompt: [
-            firstLine,
-            "Assist the user with any queries they might have in their current task mode.",
-            "They expect you to look at the schema and the tools available to them and return a list of tools are best suited for accomplishing their task.",
-            "Ask the user for more information if you are not sure.",
-            "When suggesting a prompt make sure you add a ${today} placeholder that will be replaced with today's date.",
-            "",
             "",
             LLM_PROMPT_VARIABLES.SCHEMA,
             "",
@@ -103,15 +83,21 @@ export const setupLLM = async (dbs: DBS) => {
             mcp_server_tools: allowProstglesUITools({
               suggest_agentic_workflow: 1,
               ask_user_questions: 1,
+              compact_context: 1,
+              get_tool_schemas: 1,
+              request_tool_access: 1,
             }),
             database_access: "execute_sql_with_rollback",
           },
           prompt: [
             firstLine,
-            "Assist the user in creating a workflow.",
+            "Assist the user in creating an agentic workflow.",
             "They expect you to look at the schema and tools available and return the best suited tools, database schema and workflow logic for accomplishing their task.",
+            `It is crucial that you do not bother the user with questions that can be easily answered by looking at the schema or tools available. Always try to infer missing information from the schema and tools before asking the user.`,
+            `If user input controls are necessary explore the data involved sufficiently to ensure "enum" inputs are used as much as possible instead of "custom" to provide better UX and accuracy.`,
             `Always use the ${"suggest_agentic_workflow" satisfies keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]} tool to return a workflow_function_definition instead of only describing the workflow in plain text.`,
-            `The workflow_function_definition must compile and call defineAgenticWorkflow(...`,
+            `The workflow_function_definition must compile into valid typescript and call defineAgenticWorkflow().`,
+            `The file is an executable entry point. The code must be top-level execution only. You are prohibited from wrapping the defineAgenticWorkflow call in any functions`,
             "Choose the minimum required database access and minimum required tools; prefer custom tablePermissions over broad SQL modes.",
             "IMPORTANT: Do not provide CREATE statements for table names that are already present in the schema unless the user specifically asks for it.",
             "If databaseAccessDefinitions.mode is custom, ensure every table used by dbHandler (find/count/insert/update/delete) exists in current schema or in tableCreateStatements, and that each used table is included in tablePermissions.",

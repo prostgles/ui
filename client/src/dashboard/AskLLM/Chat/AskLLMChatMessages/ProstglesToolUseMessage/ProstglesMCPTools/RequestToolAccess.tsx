@@ -12,13 +12,14 @@ import { useJSONBParsedData } from "./common/useJSONBParsedData";
 import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
 import { useSendToolUseResult } from "./common/useSendToolUseResult";
+import { useAlert } from "@components/AlertProvider";
 
 export const RequestToolAccess = ({
   message,
   toolUseResult: toolResult,
   chatId,
 }: ProstglesMCPToolsProps) => {
-  const { dbs } = usePrglCore();
+  const { dbs, dbsMethods } = usePrglCore();
   const input = useJSONBParsedData(
     message.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["request_tool_access"][
@@ -35,6 +36,7 @@ export const RequestToolAccess = ({
   const dbAccess = input.data?.databaseAccess;
   const toolResultData = result?.data;
 
+  const { addAlert } = useAlert();
   const { sendToolUseResult } = useSendToolUseResult();
   const onAddTools = useCallback(
     async (
@@ -62,6 +64,22 @@ export const RequestToolAccess = ({
       }
 
       if (accessInfo.validatedTools.length) {
+        const serverNames = new Set(
+          accessInfo.validatedTools.map((t) => t.server_name),
+        );
+        await dbs.mcp_servers.update(
+          {
+            name: {
+              $in: accessInfo.validatedTools.map((t) => t.server_name),
+            },
+          },
+          {
+            enabled: true,
+          },
+        );
+        for (const serverName of serverNames) {
+          await dbsMethods.reloadMcpServerTools?.({ serverName });
+        }
         await dbs.llm_chats_allowed_mcp_tools.insert(
           accessInfo.validatedTools.map(
             ({ id, server_name }) =>
@@ -76,16 +94,6 @@ export const RequestToolAccess = ({
             onConflict: "DoUpdate",
           },
         );
-        await dbs.mcp_servers.update(
-          {
-            name: {
-              $in: accessInfo.validatedTools.map((t) => t.server_name),
-            },
-          },
-          {
-            enabled: true,
-          },
-        );
       }
       if (dbAccess) {
         await dbs.llm_chats.update(
@@ -93,13 +101,18 @@ export const RequestToolAccess = ({
           { db_data_permissions: dbAccess },
         );
       }
+      addAlert({
+        children: "Tool access updated successfully",
+      });
     },
     [
+      addAlert,
       chatId,
       dbAccess,
       dbs.llm_chats,
       dbs.llm_chats_allowed_mcp_tools,
       dbs.mcp_servers,
+      dbsMethods,
       message.id,
       message.name,
       sendToolUseResult,

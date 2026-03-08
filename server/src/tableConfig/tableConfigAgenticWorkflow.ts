@@ -54,6 +54,7 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
           },
         },
       },
+      created: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
     },
   },
   agentic_workflow_runs: {

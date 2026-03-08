@@ -426,7 +426,6 @@ export const COMMANDS = {
   "LLMChatOptions.Prompt": "",
   "LLMChatOptions.Model": "",
   "AskLLMChat.NewChat": "",
-  "AskLLMChat.LoadSuggestedToolsAndPrompt": "",
   "AskLLMChat.LoadSuggestedDashboards": "",
   "AskLLMChat.UnloadSuggestedDashboards": "",
   "AskLLMToolApprover.AllowAlways": "",

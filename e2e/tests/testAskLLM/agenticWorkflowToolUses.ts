@@ -103,6 +103,18 @@ export default defineAgenticWorkflow(
               title: "Table and column",
               type: "table-and-column",
             },
+            "table-column-value": {
+              title: "Table column value",
+              type: "table-column-value",
+              tableName: "users",
+              columnName: "type",
+            },
+            "table-column-values": {
+              title: "Table column values",
+              type: "table-column-values",
+              tableName: "users",
+              columnName: "type",
+            },
             enum: {
               title: "Enum value",
               type: "enum",
