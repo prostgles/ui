@@ -9,7 +9,7 @@ import { suggestDashboardsToolSchema } from "./schemas/suggestDashboardsToolSche
 
 export const fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]
-> = async (dbs, { dbTools, mcpTools, toolsAllowed }) => {
+> = async (dbs, { dbTools, mcpTools, toolsAllowed, connection_id }) => {
   const { createContainerToolSchema, suggestAgenticWorkflowSchema } =
     await (async () => {
       if (
@@ -28,6 +28,7 @@ export const fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
         availableDBTools: dbTools,
         availableMCPTools: mcpTools,
         dbs,
+        connection_id,
       });
       const suggestAgenticWorkflowSchema = {
         ...workflowSchema,

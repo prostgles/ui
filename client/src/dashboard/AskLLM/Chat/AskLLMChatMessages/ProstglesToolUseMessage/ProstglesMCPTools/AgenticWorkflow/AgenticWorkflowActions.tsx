@@ -70,10 +70,9 @@ export const AgenticWorkflowActions = ({
           <ProgressBar
             totalValue={100}
             message={
-              state?.message ??
-              (state?.status === "error" ?
-                <span className="text-danger">Error</span>
-              : state?.status)
+              state?.status === "error" ?
+                <span className="text-danger">{state.message ?? "Error"}</span>
+              : (state?.message ?? state?.status)
             }
             value={
               state?.status !== "running" ? 100 : (state.progressPercent ?? -1)
@@ -103,7 +102,7 @@ export const AgenticWorkflowActions = ({
           btnProps={{
             variant: "icon",
           }}
-          showIconOnly={true}
+          showSelected={"icon"}
           disabledInfo={
             state?.status === "running" ?
               "Cannot change execution mode while workflow is running"
@@ -145,10 +144,10 @@ export const AgenticWorkflowActions = ({
             onStarted();
             const res = await startAgenticWorkflow!({
               chatId,
-              name: workflow.name,
+              // name: workflow.name,
               workflowId: workflow.id,
-              ...workflow.definition_data,
-              workflowTs: inputData.workflow_function_definition,
+              // ...workflow.definition_data,
+              // workflowTs: inputData.workflow_function_definition,
               userInputValue,
               messageId,
               executionMode,

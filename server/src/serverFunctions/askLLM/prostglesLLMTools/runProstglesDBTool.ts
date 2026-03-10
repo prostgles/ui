@@ -8,6 +8,7 @@ import {
 } from "prostgles-types";
 import { connectionManager } from "../../../index";
 import { getAllowedDBToolSchemas } from "./getAllowedDBToolSchemas";
+import type { ProxyDbCallData } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/defineAgenticWorkflowHandlers.types";
 
 export const runProstglesDBTool = async (
   chat: DbPermissions,
@@ -86,34 +87,53 @@ export const runProstglesDBTool = async (
     >;
     const tableHandler = getTableHandler(tableName);
     return tableHandler.count(filter);
-  } else if (tool_name === "select") {
-    const { tableName, filter, limit } = validatedData as JSONB.GetObjectType<
-      ProstglesDbTools[typeof tool_name]["schema"]["type"]
-    >;
-    const tableHandler = getTableHandler(tableName);
-    return tableHandler.find(filter, { limit });
-  } else if (tool_name === "insert") {
-    const { tableName, data } = validatedData as JSONB.GetObjectType<
-      ProstglesDbTools[typeof tool_name]["schema"]["type"]
-    >;
-    const tableHandler = getTableHandler(tableName);
-    const rows = await tableHandler.insert(data, { returning: "*" });
-    return `rows inserted: ${rows.length}`;
-  } else if (tool_name === "update") {
-    const { tableName, data, filter } = validatedData as JSONB.GetObjectType<
-      ProstglesDbTools[typeof tool_name]["schema"]["type"]
-    >;
-    const tableHandler = getTableHandler(tableName);
-    const rows = await tableHandler.update(filter, data, { returning: "*" });
-    return `rows updated: ${rows?.length ?? 0}`;
-  } else {
-    const { tableName, filter } = validatedData as JSONB.GetObjectType<
-      ProstglesDbTools[typeof tool_name]["schema"]["type"]
-    >;
-    const tableHandler = getTableHandler(tableName);
-    const rows = await tableHandler.delete(filter, { returning: "*" });
-    return `rows deleted: ${rows?.length ?? 0}`;
   }
+  if (tool_name === "find") {
+    const { tableName, filter, limit, orderBy, offset, select } =
+      validatedData as JSONB.GetObjectType<
+        ProstglesDbTools[typeof tool_name]["schema"]["type"]
+      >;
+    const tableHandler = getTableHandler(tableName);
+    const res = await tableHandler.find(filter, {
+      orderBy,
+      offset,
+      select: select as {},
+      limit,
+    });
+    return res;
+  }
+  if (tool_name === "insert") {
+    const { tableName, data, onConflict, returning } =
+      validatedData as JSONB.GetObjectType<
+        ProstglesDbTools[typeof tool_name]["schema"]["type"]
+      >;
+    const tableHandler = getTableHandler(tableName);
+    const rows = await tableHandler.insert(data, {
+      onConflict,
+      returning: returning as {},
+    });
+    return rows;
+  }
+  if (tool_name === "update") {
+    const { tableName, data, filter, returning } =
+      validatedData as JSONB.GetObjectType<
+        ProstglesDbTools[typeof tool_name]["schema"]["type"]
+      >;
+    const tableHandler = getTableHandler(tableName);
+    const result = await tableHandler.update(filter, data, {
+      returning: returning as {},
+    });
+    return result;
+  }
+
+  const { tableName, filter, returning } = validatedData as JSONB.GetObjectType<
+    ProstglesDbTools[typeof tool_name]["schema"]["type"]
+  >;
+  const tableHandler = getTableHandler(tableName);
+  const rows = await tableHandler.delete(filter, {
+    returning: returning as {},
+  });
+  return rows;
 };
 
 export const getClientDBHandlersForChat = async (
@@ -129,7 +149,7 @@ export const getClientDBHandlersForChat = async (
   const connection =
     connectionManager.getConnectionStartedInstance(connection_id);
   const handlers = await connection.prgl.getClientDBHandlers(clientReq, {
-    tables,
+    tables: tables,
     sql:
       chatDBPermissions?.mode === "execute_sql_with_commit" ? "commited"
       : chatDBPermissions?.mode === "execute_sql_with_rollback" ? "rolledback"
@@ -137,3 +157,13 @@ export const getClientDBHandlersForChat = async (
   });
   return handlers;
 };
+
+/**
+ * Hacky type check to ensure ProxyDbCallData is in sync with the actual tool schemas defined in getAllowedDBToolSchemas.
+ */
+const sdkCheck = {} as ProxyDbCallData;
+sdkCheck satisfies {
+  [K in keyof ProstglesDbTools as `db/${K}`]: {
+    type: `db/${K}`;
+  } & JSONB.GetObjectType<ProstglesDbTools[K]["schema"]["type"]>;
+}[ProxyDbCallData["type"]];

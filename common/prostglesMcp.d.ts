@@ -32,8 +32,12 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                     readonly query_params: {
                         readonly optional: true;
-                        readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema.";
-                        readonly type: "unknown";
+                        readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema. Supports index based ($1, $2, etc.) and named parameters (${paramName}).";
+                        readonly oneOf: readonly ["any[]", {
+                            readonly record: {
+                                readonly values: "any";
+                            };
+                        }];
                     };
                 };
             };
@@ -60,8 +64,12 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                     readonly query_params: {
                         readonly optional: true;
-                        readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema.";
-                        readonly type: "unknown";
+                        readonly description: "Query parameters to use in the SQL query. Must satisfy the query schema. Supports index based ($1, $2, etc.) and named parameters (${paramName}).";
+                        readonly oneOf: readonly ["any[]", {
+                            readonly record: {
+                                readonly values: "any";
+                            };
+                        }];
                     };
                 };
             };
@@ -83,16 +91,16 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                     readonly filter: {
                         readonly optional: true;
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { $or: [{ id: 1 }, { name: { $in: ['John'] } }] }";
                         readonly record: {
                             readonly values: "any";
                         };
-                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
                     };
                 };
             };
             readonly outputSchema: "number";
         };
-        readonly select: {
+        readonly find: {
             readonly description: "Selects rows from a table.";
             readonly schema: {
                 readonly type: {
@@ -101,11 +109,11 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly description: "Table to select from";
                     };
                     readonly filter: {
-                        readonly optional: true;
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { $or: [{ id: 1 }, { name: { $in: ['John'] } }] }";
                         readonly record: {
                             readonly values: "any";
                         };
-                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
+                        readonly optional: true;
                     };
                     readonly select: {
                         readonly optional: true;
@@ -120,7 +128,27 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                             };
                         }];
                     };
-                    readonly limit: "integer";
+                    readonly orderBy: {
+                        readonly optional: true;
+                        readonly arrayOfType: {
+                            readonly key: "string";
+                            readonly asc: {
+                                readonly enum: readonly [true, false];
+                            };
+                            readonly nulls: {
+                                readonly enum: readonly ["first", "last"];
+                                readonly optional: true;
+                            };
+                        };
+                    };
+                    readonly limit: {
+                        readonly optional: true;
+                        readonly type: "integer";
+                    };
+                    readonly offset: {
+                        readonly optional: true;
+                        readonly type: "integer";
+                    };
                 };
             };
             readonly outputSchema: {
@@ -141,7 +169,16 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                     readonly data: {
                         readonly description: "Data to insert into the table. Must satisfy the table schema.";
-                        readonly arrayOf: "any";
+                        readonly arrayOf: {
+                            readonly record: {
+                                readonly values: "any";
+                            };
+                        };
+                    };
+                    readonly onConflict: {
+                        readonly enum: readonly ["DoNothing", "DoUpdate"];
+                        readonly optional: true;
+                        readonly description: string;
                     };
                     readonly returning: {
                         readonly optional: true;
@@ -155,6 +192,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                 };
                             };
                         }];
+                        readonly description: "Fields to return for newly inserted data. Nothing will be returned otherwise";
                     };
                 };
             };
@@ -189,12 +227,13 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                 };
                             };
                         }];
+                        readonly description: "Fields to return for updated data. Nothing will be returned otherwise";
                     };
                     readonly filter: {
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { $or: [{ id: 1 }, { name: { $in: ['John'] } }] }";
                         readonly record: {
                             readonly values: "any";
                         };
-                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
                     };
                     readonly tableName: {
                         readonly type: "string";
@@ -227,12 +266,13 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                 };
                             };
                         }];
+                        readonly description: "Fields to return for the deleted rows. Nothing will be returned otherwise";
                     };
                     readonly filter: {
+                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { $or: [{ id: 1 }, { name: { $in: ['John'] } }] }";
                         readonly record: {
                             readonly values: "any";
                         };
-                        readonly description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }";
                     };
                     readonly tableName: {
                         readonly type: "string";

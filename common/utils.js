@@ -50,6 +50,28 @@ export const DESTINATIONS = [
     { key: "Local", subLabel: "Saved locally (server in address bar)" },
     { key: "Cloud", subLabel: "Saved to Amazon S3" },
 ];
+export const DEFAULT_DUMP_OPTS = {
+    options: {
+        command: "pg_dump",
+        excludeSchema: "prostgles",
+        format: "c",
+        clean: true,
+        ifExists: true,
+        keepLogs: true,
+    },
+    destination: "Local",
+};
+export const DEFAULT_RESTORE_OPTS = {
+    clean: true,
+    create: false,
+    dataOnly: false,
+    noOwner: false,
+    command: "pg_restore",
+    excludeSchema: "prostgles",
+    ifExists: true,
+    format: "c",
+    keepLogs: false,
+};
 export function matchObj(obj1, obj2) {
     if (obj1 && obj2) {
         return !Object.keys(obj1).some((k) => obj1[k] !== obj2[k]);

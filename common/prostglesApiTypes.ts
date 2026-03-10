@@ -1,6 +1,5 @@
 /**
  * Generated file. Do not edit.
- * https://github.com/electron-userland/electron-builder/issues/5064
  */
 export const prostglesApiTypes = `/**
  * Data fetching and manipulation methods for interacting with the database
@@ -339,17 +338,27 @@ export type ViewHandler<TD extends AnyObject = AnyObject, S extends DBSchema | v
      */
     find: <P extends SelectParams<TD, S>>(
     /**
-     * Filter to apply. Undefined will return all records
+     * A filter for a table, defined as a MongoDB-like query object.
+     * Supported operators:
+     * - Comparison: $eq, $ne, $gt, $gte, $lt, $lte
+     * - Logical: $and, $or
+     * - Evaluation: $like, $ilike
+     * - Array: $in, $nin
+     * - Joins: $existsJoined: { [tableName]: TableFilter }
      * @example
-     * - { "field": "value" }
-     * - { "field": { $in: ["value", "value2"] } }
-     * - { $or: [
-     *      { "field1": "value" },
-     *      { "field2": "value" }
-     *     ]
-     *   }
-     * - { $existsJoined: { linkedTable: { "linkedTableField": "value" } } }
-     */
+     * {
+          $and: [
+            {
+              $or: [
+                { topic: { $in: ["Prostgles", "Postgres"] } },
+                { summary: { $ilike: "%postgres%" } },
+                { id: { $gt: 5 } },
+              ]
+            },
+            { summary: { $ne: null } }
+          ]
+        }
+    */
     filter?: FullFilter<TD, S>, 
     /**
      * @example
@@ -357,6 +366,7 @@ export type ViewHandler<TD extends AnyObject = AnyObject, S extends DBSchema | v
      *    select: {
      *      field1: 1,
      *      field2: 1,
+     *      referencedTable: "*", // all fields from the referenced table will be included in an array under the "referencedTable" key
      *    },
      *    orderBy: { field1: -1 },
      *    limit: 10,

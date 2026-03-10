@@ -6,7 +6,7 @@ import {
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
-import Popup from "@components/Popup/Popup";
+import Popup, { type PopupProps } from "@components/Popup/Popup";
 import type { PaginationProps } from "@components/Table/Pagination";
 import { Table } from "@components/Table/Table";
 import { type AnyObject, type SubscriptionHandler } from "prostgles-types";
@@ -22,28 +22,29 @@ import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
 import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
 import type { ProstglesColumn } from "./W_Table/W_Table";
 
-type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> & {
-  filter?: DetailedFilter[];
-  tableName: string;
-  tableCols?: ProstglesColumn[];
-  selectedColumns?: string[];
-  onClosePopup?: () => void;
-  onClickRow?: (row?: AnyObject) => void;
-  title?:
-    | React.ReactNode
-    | ((dataCounts: {
-        totalRows: number;
-        filteredRows: number;
-      }) => React.ReactNode);
-  titlePrefix?: string;
-  showInsert?: boolean;
-  allowEdit?: boolean;
-  className?: string;
-  noDataComponent?: React.ReactNode;
-  onFilterChange?: (filter: DetailedFilter[]) => void;
-  filterOperand?: "and" | "or";
-  realtime?: { throttle?: number };
-};
+type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
+  Pick<PopupProps, "clickCatchStyle"> & {
+    filter?: DetailedFilter[];
+    tableName: string;
+    tableCols?: ProstglesColumn[];
+    selectedColumns?: string[];
+    onClosePopup?: () => void;
+    onClickRow?: (row?: AnyObject) => void;
+    title?:
+      | React.ReactNode
+      | ((dataCounts: {
+          totalRows: number;
+          filteredRows: number;
+        }) => React.ReactNode);
+    titlePrefix?: string;
+    showInsert?: boolean;
+    allowEdit?: boolean;
+    className?: string;
+    noDataComponent?: React.ReactNode;
+    onFilterChange?: (filter: DetailedFilter[]) => void;
+    filterOperand?: "and" | "or";
+    realtime?: { throttle?: number };
+  };
 
 type S = {
   error?: unknown;
@@ -233,6 +234,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       noDataComponent,
       titlePrefix,
       title,
+      clickCatchStyle,
     } = this.props;
     const {
       filter,
@@ -364,6 +366,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           maxWidth: "calc(100vw - 20px)",
           padding: 0,
         }}
+        clickCatchStyle={clickCatchStyle}
         contentClassName={className}
       >
         {content}

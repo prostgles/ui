@@ -123,13 +123,12 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await loadTaskBtn.waitFor({ state: "visible", timeout: 15000 });
   await addSceneAnimation(getCommandElemSelector("RequestToolAccess.Approve"));
 
-  await page.getByTestId("Alert").getByText("OK").waitFor({ state: "visible" });
+  await page.getByText("Added tool access").waitFor({ state: "visible" });
   await page.waitForTimeout(1000);
   await addScene({
     svgFileName: "tasks",
     animations: [{ type: "wait", duration: 1000 }],
   });
-  await page.getByTestId("Alert").getByText("OK").click();
   await page.waitForTimeout(4000);
   const { filePath } = await createReceipt(page);
   const fileChooserPromise = page.waitForEvent("filechooser");

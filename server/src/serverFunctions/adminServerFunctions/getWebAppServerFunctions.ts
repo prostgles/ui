@@ -10,6 +10,7 @@ import { getTemplatedWebAppConnection } from "./webApp/getTemplatedWebAppConnect
 import { getValidatedWebAppPath } from "./webApp/getValidatedWebAppPath";
 import { testWebApp } from "./webApp/testWebApp";
 import { writeWebAppFiles } from "./webApp/writeWebAppFiles";
+import { getDefineAdminFunction } from "./getDefineAdminFunction";
 
 /** Copy template files over */
 const templateDir = join(
@@ -29,9 +30,7 @@ const templateDir = join(
 export const getWebAppServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
-  const defineAdminFunction = createServerFunctionWithContext(
-    context?.type === "admin" ? context : undefined,
-  );
+  const { defineAdminFunction } = getDefineAdminFunction(context);
 
   return {
     createWebAppFromTemplate: defineAdminFunction({

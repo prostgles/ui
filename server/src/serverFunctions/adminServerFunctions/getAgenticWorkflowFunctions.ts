@@ -1,216 +1,119 @@
-import { createWorkflowProxyHandlers } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/createWorkflowProxyHandlers";
-import { startAgenticWorkflowContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/startAgenticWorkflowContainer";
-import { validateUserInput } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/validateUserInput";
+import { validateUserInput } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/definitionValidation/validateUserInput";
+import { getAgenticWorkflowFiles } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSetup/getAgenticWorkflowFiles";
+import {
+  startAgenticWorkflow,
+  stopAgenticWorkflow,
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/startAgenticWorkflow";
 import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
-import { getSerialisableError, omitKeys } from "prostgles-types";
-import { runConnectionQuery } from "../getServerFunctions";
+import { pickKeys } from "prostgles-types";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 
-const abortersByUserId = new Map<
-  string,
-  { chatId: number; messageId: string; aborter: AbortController }[]
->();
 export const getAgenticWorkflowFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
   const { defineAdminFunction } = getDefineAdminFunction(context);
 
-  const stopAgenticWorkflow = defineAdminFunction({
-    input: {
-      chatId: "integer",
-      messageId: "string",
-    },
-    run: async ({ chatId, messageId }, { user, dbs }) => {
-      const userAborters = abortersByUserId.get(user.id);
-      const aborterEntryIndex = userAborters?.findIndex(
-        (entry) => entry.chatId === chatId && entry.messageId === messageId,
-      );
-      const aborterEntry = userAborters?.[aborterEntryIndex ?? -1];
-      if (aborterEntry) {
-        aborterEntry.aborter.abort();
-        userAborters.splice(aborterEntryIndex!, 1);
-        abortersByUserId.set(user.id, userAborters);
-        return { success: true };
-      } else {
-        await dbs.agentic_workflow_runs.update(
-          {
-            chat_id: chatId,
-            message_id: messageId,
-            ["state->>status" as any]: "running",
-          },
-          {
-            state: {
-              status: "stopped",
-            },
-            finished: new Date(),
-          },
-        );
-        return { success: false, message: "No running workflow found" };
-      }
-    },
-  });
-  const startAgenticWorkflow = defineAdminFunction({
-    input: startAgenticWorkflowSchema,
-    run: async (
-      {
-        chatId,
-        name,
-        containerConfiguration,
-        agentDefinitions,
-        databaseAccessDefinitions,
-        workflowTs,
-        userInputValue,
-        userInput,
-        workflowId,
-        messageId,
-        executionMode,
-        orchestrationTools,
-      },
-      { dbs, user, clientReq },
-    ) => {
-      const validationError = validateUserInput(userInputValue, userInput);
-      if (validationError) {
-        return {
-          state: "init-error" as const,
-          message: validationError.error,
-          error: undefined,
-        };
-      }
-      const chat = await dbs.llm_chats.findOne({
-        id: chatId,
-        user_id: user.id,
-      });
-      if (!chat) {
-        return {
-          state: "init-error" as const,
-          message: "Chat not found",
-          error: undefined,
-        };
-      }
-      const { connection_id } = chat;
-      if (!connection_id) {
-        return {
-          state: "init-error" as const,
-          message: `Chat with id ${chatId} does not have a connection_id`,
-          error: undefined,
-        };
-      }
-
-      const workflow = await dbs.agentic_workflows.findOne({
-        id: workflowId,
-        chat_id: chatId,
-      });
-      if (!workflow) {
-        return {
-          state: "init-error" as const,
-          message: `Workflow with id ${workflowId} not found for chat ${chatId}`,
-          error: undefined,
-        };
-      }
-      const containerConfigurationWithOverrides = {
-        ...workflow.definition_data.containerConfiguration,
-        ...workflow.definition_override?.containerConfiguration,
-      };
-      const aborter = new AbortController();
-      const { agentHandlers, orchestrationToolsHandler } =
-        await createWorkflowProxyHandlers(
-          {
-            name,
-            containerConfiguration: containerConfigurationWithOverrides,
-            agentDefinitions,
-            databaseAccessDefinitions,
-            signal: aborter.signal,
-            orchestrationTools,
-            definition_override: workflow.definition_override,
-          },
-          {
-            chatId,
-            dbs,
-            userId: user.id,
-            connectionId: connection_id,
-            clientReq,
-          },
-          executionMode !== "parallel",
-        );
-
-      if (
-        databaseAccessDefinitions?.mode === "custom" &&
-        databaseAccessDefinitions.tableCreateStatements
-      ) {
-        try {
-          await runConnectionQuery(
-            connection_id,
-            databaseAccessDefinitions.tableCreateStatements,
-          );
-        } catch (error) {
+  return {
+    startAgenticWorkflow: defineAdminFunction({
+      input: pickKeys(startAgenticWorkflowSchema, [
+        "chatId",
+        "workflowId",
+        "userInputValue",
+        "messageId",
+        "executionMode",
+      ]),
+      run: async (
+        { chatId, userInputValue, workflowId, messageId, executionMode },
+        { dbs, user, clientReq },
+      ) => {
+        const chat = await dbs.llm_chats.findOne({
+          id: chatId,
+          user_id: user.id,
+        });
+        if (!chat) {
           return {
             state: "init-error" as const,
-            message: `Error creating tables from tableCreateStatements`,
-            error: getSerialisableError(error),
+            message: "Chat not found",
+            error: undefined,
           };
         }
-      }
+        const { connection_id } = chat;
+        if (!connection_id) {
+          return {
+            state: "init-error" as const,
+            message: `Chat with id ${chatId} does not have a connection_id`,
+            error: undefined,
+          };
+        }
 
-      const existingAborters = abortersByUserId.get(user.id) || [];
-      abortersByUserId.set(user.id, [
-        ...existingAborters,
-        { chatId, messageId, aborter },
-      ]);
-      const res = await startAgenticWorkflowContainer(
-        dbs,
-        {
-          user_id: user.id,
-          workflowTs,
+        const workflow = await dbs.agentic_workflows.findOne({
+          id: workflowId,
           chat_id: chatId,
-          abortSignal: aborter.signal,
-        },
-        {
-          type: "full",
+        });
+        if (!workflow) {
+          return {
+            state: "init-error" as const,
+            message: `Workflow with id ${workflowId} not found for chat ${chatId}`,
+            error: undefined,
+          };
+        }
+        const validationError = validateUserInput(
           userInputValue,
-          workflowId,
+          workflow.definition_data.userInput,
+        );
+        if (validationError) {
+          return {
+            state: "init-error" as const,
+            message: validationError.error,
+            error: undefined,
+          };
+        }
+        return startAgenticWorkflow({
+          workflow,
+          dbs,
+          user,
+          connection_id,
+          chatId,
           messageId,
-          definition: {
-            name,
-            containerConfiguration,
-            agentDefinitions,
-            userInput: {},
-            databaseAccessDefinitions,
-          },
-          dbPermissions: {
-            connection_id,
-            db_data_permissions:
-              databaseAccessDefinitions?.mode === "custom" ?
-                omitKeys(databaseAccessDefinitions, ["tableCreateStatements"])
-              : (databaseAccessDefinitions ?? null),
-          },
-          handler: (data, { httpReq, res }) => {
-            if (data.type === "agent") {
-              const agentHandler = agentHandlers.get(data.agentName);
-              if (!agentHandler) {
-                throw `Agent handler for ${data.agentName} not found`;
-              }
-              return agentHandler(data.input);
-            }
-
-            const toolHandler = orchestrationToolsHandler.get(data.name);
-            if (!toolHandler) {
-              throw `Tool handler for ${data.name} not found`;
-            }
-            return toolHandler(data.input, { httpReq, res });
-          },
-        },
-      ).catch((error: unknown) => {
-        return {
-          state: "init-error" as const,
-          message: "Failed to start agentic workflow",
-          error,
-        };
-      });
-
-      return res;
-    },
-  });
-
-  return { startAgenticWorkflow, stopAgenticWorkflow };
+          clientReq,
+          executionMode,
+          userInputValue,
+        });
+      },
+    }),
+    stopAgenticWorkflow: defineAdminFunction({
+      input: {
+        chatId: "integer",
+        messageId: "string",
+      },
+      run: async ({ chatId, messageId }, { user, dbs }) => {
+        return stopAgenticWorkflow({
+          dbs,
+          chatId,
+          messageId,
+          userId: user.id,
+        });
+      },
+    }),
+    getAgenticWorkflowTypes: defineAdminFunction({
+      input: {
+        connectionId: "string",
+        workflowId: { optional: true, type: "number" },
+      },
+      run: async ({ connectionId, workflowId }, { dbs, user }) => {
+        const workflow =
+          !workflowId ? undefined : (
+            await dbs.agentic_workflows.findOne({
+              id: workflowId,
+              user_id: user.id,
+            })
+          );
+        return getAgenticWorkflowFiles(dbs, "runtime", connectionId, {
+          type: "full",
+          newTables: workflow?.definition_data.newTables,
+        });
+      },
+    }),
+  };
 };

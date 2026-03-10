@@ -39,12 +39,16 @@ export const getLLMUsageCost = (
     : meta.type === "OpenAI" ? (meta.meta.usage?.completion_tokens ?? 0)
     : meta.meta.usage.output_tokens;
 
-  return getLlmMessageCost(model, {
+  const total_tokens =
+    cacheReadTokens + cacheWriteTokens + inputTokens + outputTokens;
+
+  const cost = getLlmMessageCost(model, {
     cacheReadTokens,
     cacheWriteTokens,
     inputTokens,
     outputTokens,
   });
+  return { cost, total_tokens };
 };
 
 export const getLlmMessageCost = (

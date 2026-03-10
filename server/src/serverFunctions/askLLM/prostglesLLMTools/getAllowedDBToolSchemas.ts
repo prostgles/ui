@@ -52,6 +52,7 @@ export const getAllowedDBToolSchemas = (
     });
     if (allowedCommands.get("select")) {
       allowedCommands.set("count", true);
+      allowedCommands.set("find", true);
     }
     return dbTools
       .map((tool) => {
@@ -73,7 +74,7 @@ export const getAllowedDBToolSchemas = (
         chatDBAccess.mode === "execute_sql_with_commit" ||
         /** Allow read only tools */
         tool_name === "execute_sql_with_rollback" ||
-        tool_name === "select" ||
+        tool_name === "find" ||
         tool_name === "count"
       ) {
         return {

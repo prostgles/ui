@@ -1,9 +1,3 @@
-import {
-  getMCPFullToolName,
-  getMCPToolNameParts,
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "@common/prostglesMcp";
-import type { DBSSchema } from "@common/publishUtils";
 import { getPasswordHash } from "@src/authConfig/authUtils";
 import { checkClientIP } from "@src/authConfig/sessionUtils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
@@ -15,22 +9,10 @@ import { getElectronConfig } from "@src/electronConfig";
 import { connectionManager } from "@src/index";
 import { getPasswordlessAdmin } from "@src/init/initUsers";
 import { statePrgl } from "@src/init/startProstgles";
-import {
-  getMcpHostInfo,
-  getMCPServersStatus,
-  installMCPServer,
-} from "@src/McpHub/AnthropicMcpHub/installMCPServer";
-import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
-import { getAgenticWorkflowFiles } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/getAgenticWorkflowFiles";
-import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
 import { getStatus } from "@src/methods/getPidStats";
 import { killPID } from "@src/methods/statusMonitorUtils";
 import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import { prostglesServices } from "@src/ServiceManager/ServiceManagerTypes";
-import {
-  DUMP_OPTIONS_SCHEMA,
-  RESTORE_OPTIONS_SCHEMA,
-} from "@src/tableConfig/tableConfigBackups";
 import { FILE_TABLE_CONFIG_SCHEMA } from "@src/tableConfig/tableConfigDatabaseConfig";
 import { upsertConnection } from "@src/upsertConnection";
 import { existsSync, readdirSync, statSync } from "fs";
@@ -39,14 +21,7 @@ import { glob } from "glob";
 import * as os from "os";
 import path, { join } from "path";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import {
-  getJSONBSchemaValidationError,
-  getKeys,
-  getProperty,
-  includes,
-  isEmpty,
-  type SQLHandler,
-} from "prostgles-types";
+import { getKeys, includes, isEmpty, type SQLHandler } from "prostgles-types";
 import { getSampleSchemas } from "../applySampleSchema";
 import { refreshModels } from "../askLLM/refreshModels";
 import { deleteConnection } from "../deleteConnection";
@@ -56,9 +31,10 @@ import { runConnectionQuery } from "../getServerFunctions";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { setFileStorage } from "../setFileStorage";
 import { getAgenticWorkflowFunctions } from "./getAgenticWorkflowFunctions";
+import { getBackupServerFunctions } from "./getBackupServerFunctions";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
+import { getMcpServerFunctions } from "./getMcpServerFunctions";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
-import { askLLM } from "../askLLM/askLLM";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -318,95 +294,7 @@ export const getAdminServerFunctions = (
         return connectionManager.disconnect(conId);
       },
     }),
-    pgDump: defineAdminFunction({
-      input: {
-        conId: "string",
-        credId: { oneOf: ["number", { enum: [null] }] },
-        opts: {
-          type: {
-            name: { type: "string", optional: true },
-            initiator: { type: "string", optional: true },
-            options: DUMP_OPTIONS_SCHEMA.jsonbSchema,
-          },
-        },
-      },
-      run: ({ conId, credId, opts }, { backupManager }) => {
-        return backupManager.pgDump(conId, credId, opts);
-      },
-    }),
-    pgRestore: defineAdminFunction({
-      input: {
-        bkpId: "string",
-        connId: { type: "string", optional: true },
-        opts: "any",
-      },
-      run: async ({ bkpId, opts, connId }, { backupManager }) =>
-        backupManager.pgRestore({ bkpId, connId }, undefined, opts),
-    }),
-    bkpDelete: defineAdminFunction({
-      input: {
-        bkpId: "string",
-        force: { type: "boolean", optional: true },
-      },
-      run: ({ bkpId, force }, { backupManager }) =>
-        backupManager.bkpDelete(bkpId, force),
-    }),
-
-    streamBackupFile: defineAdminFunction({
-      input: {
-        data: {
-          oneOfType: [
-            {
-              type: { enum: ["start"] },
-              fileName: "string",
-              connectionId: "string",
-              sizeBytes: "integer",
-              restoreOptions: {
-                type: RESTORE_OPTIONS_SCHEMA["jsonbSchemaType"],
-              },
-            },
-            {
-              type: { enum: ["chunk"] },
-              streamId: "string",
-              chunk: "string",
-            },
-            {
-              type: { enum: ["end"] },
-              streamId: "string",
-            },
-          ] as const,
-        },
-      },
-      run: async ({ data }, { user, backupManager }) => {
-        if (data.type === "start") {
-          const stream = backupManager.getTempFileStream(
-            data.fileName,
-            user.id,
-          );
-          await backupManager.pgRestoreStream(
-            data.fileName,
-            data.connectionId,
-            stream.stream,
-            data.sizeBytes,
-            data.restoreOptions,
-          );
-
-          return stream.streamId;
-        } else if (data.type === "chunk") {
-          return new Promise<string>((resolve, reject) => {
-            backupManager.pushToStream(data.streamId, data.chunk, (err) => {
-              if (err) {
-                reject(err);
-              } else {
-                resolve(data.streamId);
-              }
-            });
-          });
-        } else {
-          backupManager.closeStream(data.streamId);
-        }
-      },
-    }),
+    ...getBackupServerFunctions(context),
     setFileStorage: defineAdminFunction({
       input: {
         connId: "string",
@@ -536,196 +424,7 @@ export const getAdminServerFunctions = (
         return getNodeTypes();
       },
     }),
-    getAgenticWorkflowTypes: defineAdminFunction({
-      run: (_, { dbs }) => {
-        return getAgenticWorkflowFiles(dbs, "runtime");
-      },
-    }),
-    installMCPServer: defineAdminFunction({
-      input: { name: "string" },
-      run: async ({ name }, { dbs }) => {
-        return installMCPServer(dbs, name);
-      },
-    }),
-    getMCPServersStatus: defineAdminFunction({
-      input: { serverName: "string" },
-      run: ({ serverName }, { dbs }) => getMCPServersStatus(dbs, serverName),
-    }),
-    callMCPServerTool: defineAdminFunction({
-      input: {
-        chatId: "integer",
-        serverName: "string",
-        toolName: "string",
-        reRunToolUseId: {
-          type: "string",
-          optional: true,
-        },
-        args: { record: {}, optional: true },
-      },
-      run: async (
-        { chatId, serverName, toolName, args, reRunToolUseId },
-        { dbs, user, clientReq },
-      ) => {
-        const name = getMCPFullToolName(serverName, toolName);
-        let reRunInfo:
-          | {
-              reRunResultMessageIndex: number;
-              reRunResultMessage: DBSSchema["llm_messages"];
-              reRunToolUseMessageIndex: number;
-              reRunToolUseMessage: DBSSchema["llm_messages"];
-            }
-          | undefined = undefined;
-        const chat = await dbs.llm_chats.findOne({
-          id: chatId,
-          user_id: user.id,
-        });
-        if (!chat) {
-          throw new Error(
-            `Chat with id ${chatId} not found for user ${user.id}`,
-          );
-        }
-        if (reRunToolUseId) {
-          const reRunToolUseMessage = await dbs.llm_messages.findOne({
-            chat_id: chatId,
-            message: {
-              "@>": [{ type: "tool_use", id: reRunToolUseId, name }],
-            },
-          });
-          if (!reRunToolUseMessage) {
-            throw new Error(
-              `Tool use with id ${reRunToolUseId} not found for chat ${chatId}`,
-            );
-          }
-
-          const reRunResultMessage = await dbs.llm_messages.findOne({
-            chat_id: chatId,
-            message: {
-              "@>": [
-                {
-                  type: "tool_result",
-                  tool_use_id: reRunToolUseId,
-                  tool_name: name,
-                } as any,
-              ],
-            },
-          });
-          if (!reRunResultMessage) {
-            throw new Error(
-              `Tool result for tool use id ${reRunToolUseId} not found for chat ${chatId}`,
-            );
-          }
-
-          const reRunToolUseMessageIndex =
-            reRunToolUseMessage.message.findIndex(
-              (m) =>
-                m.type === "tool_use" &&
-                m.id === reRunToolUseId &&
-                m.name === name,
-            );
-          const reRunResultMessageIndex = reRunResultMessage.message.findIndex(
-            (m) =>
-              m.type === "tool_result" &&
-              m.tool_use_id === reRunToolUseId &&
-              m.tool_name === name,
-          );
-
-          if (
-            reRunToolUseMessageIndex === -1 ||
-            reRunResultMessageIndex === -1
-          ) {
-            throw new Error(
-              `Could not find tool use or result message for tool use id ${reRunToolUseId} in chat ${chatId}`,
-            );
-          }
-
-          reRunInfo = {
-            reRunToolUseMessageIndex,
-            reRunToolUseMessage,
-            reRunResultMessageIndex,
-            reRunResultMessage,
-          };
-        }
-        const result = await callMCPServerTool({
-          user,
-          chat_id: chatId,
-          dbs,
-          serverName,
-          toolName,
-          toolArguments: args,
-          clientReq,
-        });
-
-        if (reRunInfo) {
-          const { content } = result;
-          await dbs.llm_messages.update(
-            {
-              id: reRunInfo.reRunResultMessage.id,
-            },
-            {
-              message: reRunInfo.reRunResultMessage.message.map((m, i) => {
-                if (i === reRunInfo.reRunResultMessageIndex) {
-                  return {
-                    type: "tool_result",
-                    content: content as unknown as {
-                      type: "text";
-                      text: string;
-                    }[],
-                    tool_name: name,
-                    tool_use_id: reRunToolUseId!,
-                    is_error: result.isError,
-                  } as const;
-                }
-                return m;
-              }),
-            },
-          );
-          await dbs.llm_messages.update(
-            {
-              id: reRunInfo.reRunToolUseMessage.id,
-            },
-            {
-              message: reRunInfo.reRunToolUseMessage.message.map((m, i) => {
-                if (i === reRunInfo.reRunToolUseMessageIndex) {
-                  return {
-                    type: "tool_use",
-                    id: reRunToolUseId!,
-                    name,
-                    input: args,
-                  } as const satisfies DBSSchema["llm_messages"]["message"][number];
-                }
-                return m;
-              }),
-            },
-          );
-        }
-        return result;
-      },
-    }),
-    reloadMcpServerTools: defineAdminFunction({
-      input: { serverName: "string" },
-      run: async ({ serverName }, { dbs }) =>
-        reloadMcpServerTools(dbs, serverName),
-    }),
-    getMcpHostInfo: defineAdminFunction({
-      run: () => getMcpHostInfo(),
-    }),
-    transcribeAudio: defineAdminFunction({
-      input: { audioBlob: "Blob" },
-      run: async ({ audioBlob }, { servicesManager }) => {
-        const speechToTextService = servicesManager.getService("speechToText");
-        if (speechToTextService?.status !== "running") {
-          throw "Speech to Text service is not enabled/running";
-        }
-        const formData = new FormData();
-        const audioBlobWithMime = new Blob([audioBlob], { type: "audio/webm" });
-
-        formData.append("audio", audioBlobWithMime, "recording.webm");
-        const result =
-          await speechToTextService.endpoints["/transcribe"](formData);
-
-        return result;
-      },
-    }),
+    ...getMcpServerFunctions(context),
     ...getAgenticWorkflowFunctions(context),
   };
   /** Ensure we didn't miss anything.  */

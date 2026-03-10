@@ -286,7 +286,7 @@ export class FilterWrapper extends RTComp<
                     color: btnColor,
                     variant: "default",
                   }}
-                  showIconOnly={true}
+                  showSelected={"icon"}
                   onChange={(type) => {
                     rootFilter.onChange({
                       ...rootFilter.value,

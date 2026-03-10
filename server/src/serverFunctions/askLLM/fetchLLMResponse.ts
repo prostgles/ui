@@ -1,9 +1,5 @@
-import {
-  getSerialisableError,
-  isObject,
-  type AnyObject,
-} from "prostgles-types";
 import type { DBSSchema } from "@common/publishUtils";
+import { getSerialisableError, type AnyObject } from "prostgles-types";
 import { getLLMRequestBody } from "./getLLMRequestBody";
 import type { MCPToolSchema } from "./getLLMToolsAllowedInThisChat";
 import {
@@ -47,7 +43,11 @@ export const fetchLLMResponse = async (
     .replace("$KEY", api_key)
     .replace("$MODEL", model);
   if (api_url === "http://localhost:3004/mocked-llm") {
-    return { content: [{ type: "text", text: "Mocked response" }], cost: 0 };
+    return {
+      content: [{ type: "text", text: "Mocked response" }],
+      cost: 0,
+      total_tokens: 0,
+    };
   }
 
   const res = await fetch(api_url, {

@@ -1,0 +1,355 @@
+import type { DBS } from "@src/index";
+import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
+import {
+  getJSONBSchemaValidationError,
+  getKeys,
+  getSerialisableError,
+  pickKeys,
+} from "prostgles-types";
+import type {
+  DbPermissions,
+  DockerMCPServerProxyHandler,
+  McpProxyRequestContext,
+} from "../../../../../DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
+import { runContainerWithProxyAccess } from "../../../../../DockerSandbox/runContainerWithProxyAccess";
+import type {
+  AgenticWorkflowDefinition,
+  ProxyCallData,
+  ProxyCallDataDefinitions,
+} from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
+import { getOrchestrationContainerFiles } from "../runtimeSetup/getOrchestrationContainerFiles";
+import type { DBSSchema } from "@common/publishUtils";
+
+export const startAgenticWorkflowContainer = async (
+  dbs: DBS,
+  {
+    workflow_function_definition,
+    package_dependencies,
+    user_id,
+    chat_id,
+    connection_id,
+    abortSignal,
+  }: {
+    workflow_function_definition: string;
+    package_dependencies: undefined | Record<string, string>;
+    user_id: string;
+    chat_id: number;
+    connection_id: string;
+    abortSignal: AbortSignal;
+  },
+  mode:
+    | {
+        type: "definitions-only";
+        dbPermissions?: undefined;
+        newTables:
+          | DBSSchema["agentic_workflows"]["definition_data"]["newTables"]
+          | undefined;
+        handler: (
+          args: Extract<ProxyCallData, { type: "definitions" }>,
+          ctx: McpProxyRequestContext,
+        ) => Promise<void>;
+      }
+    | {
+        type: "full";
+        workflowId: number;
+        messageId: string;
+        workflow: DBSSchema["agentic_workflows"];
+        userInputValue: Record<string, unknown>;
+        definition: AgenticWorkflowDefinition;
+        dbPermissions: DbPermissions;
+        handler: (
+          args: Extract<ProxyCallData, { type: "agent" } | { type: "tool" }>,
+          ctx: McpProxyRequestContext,
+        ) => Promise<unknown>;
+      },
+) => {
+  const workflowRun =
+    mode.type === "full" ?
+      await dbs.agentic_workflow_runs.insert(
+        {
+          workflow_id: mode.workflowId,
+          message_id: mode.messageId,
+          chat_id,
+          user_input_value: mode.userInputValue,
+          log: [],
+          state: { status: "running" },
+        },
+        { returning: "*" },
+      )
+    : undefined;
+
+  const mainHandler: DockerMCPServerProxyHandler = (ctx, req, res) => {
+    if (mode.type !== "full") {
+      res.status(400).json({ error: "Invalid request for current mode" });
+      return;
+    }
+    const { data, error } = getJSONBSchemaValidationError(
+      {
+        oneOfType: [
+          {
+            type: { enum: ["agent"] },
+            agentName: "string",
+            input: "string",
+          },
+          {
+            type: { enum: ["tool"] },
+            name: "string",
+            input: {
+              oneOf: [
+                { enum: [undefined] },
+                {
+                  record: {
+                    values: "unknown",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      } as const,
+      req.body,
+    );
+    data satisfies
+      | Extract<ProxyCallData, { type: "agent" } | { type: "tool" }>
+      | undefined;
+    if (error !== undefined) {
+      throw new Error("Invalid request data: " + error);
+    }
+    mode
+      .handler(data, ctx)
+      .then((result) => {
+        res.json(result);
+      })
+      .catch((error) => {
+        console.error("Error in handler:", error);
+        res.status(500).json(error);
+      });
+  };
+
+  const { db_data_permissions = null } =
+    mode.type === "full" ? mode.dbPermissions : {};
+  const result = await runContainerWithProxyAccess(
+    dbs,
+    {
+      user_id,
+      dbPermissions: mode.dbPermissions && {
+        ...mode.dbPermissions,
+        db_data_permissions: db_data_permissions && {
+          ...db_data_permissions,
+          auto_approve: true,
+        },
+      },
+      requestHandlers: {
+        ["/definitions"]: {
+          method: "POST",
+          handler: (ctx, req, res) => {
+            if (mode.type !== "definitions-only") {
+              res
+                .status(400)
+                .json({ error: "Invalid request for current mode" });
+              return;
+            }
+            const { data, error } = getJSONBSchemaValidationError(
+              {
+                type: {
+                  type: { enum: ["definitions"] },
+                  newTables: {
+                    arrayOfType: {
+                      name: "string",
+                      schema: { type: "string", optional: true },
+                      columns: "unknown[]",
+                      ifNotExists: {
+                        type: "boolean",
+                        optional: true,
+                      },
+                    },
+                  },
+                  usedTables: "string[]",
+                  definitions: {
+                    type: pickKeys(
+                      startAgenticWorkflowSchema,
+                      getKeys({
+                        agentDefinitions: 1,
+                        databaseAccessDefinitions: 1,
+                        name: 1,
+                        userInput: 1,
+                        orchestrationTools: 1,
+                        containerConfiguration: 1,
+                      } satisfies Record<
+                        keyof Extract<
+                          ProxyCallData,
+                          { type: "definitions" }
+                        >["definitions"],
+                        1
+                      >),
+                    ),
+                  },
+                },
+              } as const,
+              req.body,
+            );
+
+            if (error !== undefined) {
+              throw new Error("Invalid request data: " + error);
+            }
+            data satisfies undefined | ProxyCallDataDefinitions;
+            mode
+              .handler(data, ctx)
+              .then(() => {
+                res.json({ success: true });
+              })
+              .catch((error) => {
+                res
+                  .status(500)
+                  .json({ error: "Internal server error: " + String(error) });
+              });
+          },
+        },
+        ["/tool"]: {
+          method: "POST",
+          handler: mainHandler,
+        },
+        ["/agent"]: {
+          method: "POST",
+          handler: mainHandler,
+        },
+        ["/progress"]: {
+          method: "POST",
+          handler: (ctx, req, res) => {
+            if (mode.type !== "full") {
+              res
+                .status(400)
+                .json({ error: "Invalid request for current mode" });
+              return;
+            }
+            const { data, error } = getJSONBSchemaValidationError(
+              {
+                type: {
+                  type: { enum: ["progress"] },
+                  percent: "number",
+                  message: { type: "string" },
+                },
+              } as const,
+              req.body,
+            );
+
+            data satisfies
+              | Extract<ProxyCallData, { type: "progress" }>
+              | undefined;
+
+            if (error !== undefined) {
+              throw new Error("Invalid request data: " + error);
+            }
+
+            if (!workflowRun) {
+              res.status(500).json({ error: "Workflow run not found" });
+              return;
+            }
+            void dbs.agentic_workflow_runs
+              .update(
+                { id: workflowRun.id },
+                {
+                  state: {
+                    $merge: [
+                      {
+                        progressPercent: data.percent,
+                        message: data.message,
+                      },
+                    ],
+                  },
+                },
+              )
+              .then(() => {
+                res.json({ success: true });
+              })
+              .catch((e) => {
+                console.error("Failed to update workflow log:", e);
+              });
+          },
+        },
+      },
+    },
+    {
+      ...(mode.type === "full" ?
+        pickKeys(mode.definition.containerConfiguration, [
+          "timeout",
+          "internetAccess",
+        ])
+      : {}),
+      signal: abortSignal,
+      networkMode:
+        (
+          mode.type === "full" &&
+          mode.definition.containerConfiguration.internetAccess &&
+          mode.definition.containerConfiguration.internetAccess !== "none"
+        ) ?
+          mode.definition.containerConfiguration.internetAccess
+        : "bridge-internal",
+      timeout:
+        mode.type === "full" ?
+          mode.definition.containerConfiguration.timeout
+        : 30_000,
+      files: await getOrchestrationContainerFiles({
+        dbs,
+        workflowTs: workflow_function_definition,
+        package_dependencies,
+        newTables:
+          mode.type === "definitions-only" ?
+            mode.newTables
+          : mode.workflow.definition_data.newTables,
+        forDefinitions: mode.type === "definitions-only",
+        connection_id,
+      }),
+      environment: {
+        MODE: mode.type,
+        USER_INPUT:
+          mode.type === "full" ? JSON.stringify(mode.userInputValue) : "{}",
+      },
+    },
+    (log) => {
+      if (!workflowRun) return;
+      void dbs.agentic_workflow_runs
+        .update(
+          { id: workflowRun.id },
+          {
+            log,
+          },
+        )
+        .catch((e) => {
+          console.error("Failed to update workflow log:", e);
+        });
+    },
+  ).catch((error: unknown) => {
+    if (workflowRun) {
+      void dbs.agentic_workflow_runs.update(
+        { id: workflowRun.id },
+        {
+          state: {
+            status: "error",
+            message: JSON.stringify(getSerialisableError(error)),
+          },
+          finished: new Date(),
+        },
+      );
+    }
+    return Promise.reject(getSerialisableError(error));
+  });
+
+  if (workflowRun) {
+    await dbs.agentic_workflow_runs
+      .update(
+        { id: workflowRun.id },
+        {
+          state: {
+            status: result.state === "finished" ? "completed" : "error",
+          },
+          finished: new Date(),
+          log: result.log,
+        },
+      )
+      .catch((e) => {
+        console.error("Failed to update workflow log:", e);
+      });
+  }
+  return result;
+};

@@ -62,6 +62,9 @@ export const LLMModelSelector = ({
     return models.find((m) => m.name === modelName);
   }, [modelName, models]);
   const value = valueFromProps ?? modelFromName?.id ?? null;
+  const model = useMemo(() => {
+    return models?.find((m) => m.id === value) ?? null;
+  }, [value, models]);
 
   const [addProviderCredentials, setAddProviderCredentials] = useState("");
   const [viewModelForm, setViewModelForm] = useState<DetailedFilterBase>();
@@ -115,6 +118,54 @@ export const LLMModelSelector = ({
       )}
       <Select
         data-command="LLMChatOptions.Model"
+        size="small"
+        btnProps={btnProps}
+        title="Model"
+        emptyLabel="Select model..."
+        className={className}
+        multiSelect={false}
+        value={value}
+        onChange={(id) => {
+          const model = models?.find((m) => m.id === id);
+          onChange(id, model!);
+        }}
+        endOfResultsContent={
+          <FlexCol className="p-1">
+            <div className="text-1">End of results.</div>
+            <FlexRowWrap>
+              <Btn
+                title="Refresh models"
+                iconPath={mdiRefresh}
+                onClickPromise={async () => {
+                  setRefreshing(true);
+                  await dbsMethods
+                    .refreshModels?.()
+                    .finally(() => setRefreshing(false));
+                }}
+                color="action"
+                variant="faded"
+              >
+                Refresh models
+              </Btn>
+              <SmartFormPopup
+                asPopup={true}
+                label="Add model"
+                db={dbs as DBHandlerClient}
+                tableName="llm_models"
+                methods={dbsMethodSchema}
+                tables={dbsTables}
+                sql={dbsSql}
+                triggerButton={{
+                  iconPath: mdiPlus,
+                  title: "Add model",
+                  color: "action",
+                  children: "Add model",
+                  variant: "faded",
+                }}
+              />
+            </FlexRowWrap>
+          </FlexCol>
+        }
         fullOptions={
           Array.from(sortedModelsMap.values()).map(
             ({
@@ -214,54 +265,6 @@ export const LLMModelSelector = ({
           //     (a.disabledInfo?.length ?? 0) - (b.disabledInfo?.length ?? 0) ||
           //     a.label.localeCompare(b.label),
           // ) ?? []
-        }
-        size="small"
-        btnProps={btnProps}
-        title="Model"
-        emptyLabel="Select model..."
-        className={className}
-        multiSelect={false}
-        value={value}
-        onChange={(id) => {
-          const model = models?.find((m) => m.id === id);
-          onChange(id, model!);
-        }}
-        endOfResultsContent={
-          <FlexCol className="p-1">
-            <div className="text-1">End of results.</div>
-            <FlexRowWrap>
-              <Btn
-                title="Refresh models"
-                iconPath={mdiRefresh}
-                onClickPromise={async () => {
-                  setRefreshing(true);
-                  await dbsMethods
-                    .refreshModels?.()
-                    .finally(() => setRefreshing(false));
-                }}
-                color="action"
-                variant="faded"
-              >
-                Refresh models
-              </Btn>
-              <SmartFormPopup
-                asPopup={true}
-                label="Add model"
-                db={dbs as DBHandlerClient}
-                tableName="llm_models"
-                methods={dbsMethodSchema}
-                tables={dbsTables}
-                sql={dbsSql}
-                triggerButton={{
-                  iconPath: mdiPlus,
-                  title: "Add model",
-                  color: "action",
-                  children: "Add model",
-                  variant: "faded",
-                }}
-              />
-            </FlexRowWrap>
-          </FlexCol>
         }
       />
     </>

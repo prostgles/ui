@@ -229,7 +229,7 @@ type Args = {
   filter: AnyObject | undefined;
   db: DBHandlerClient;
 };
-const fetchSearchResults = async ({
+export const fetchSearchResults = async ({
   mainColumn,
   textColumn,
   db,

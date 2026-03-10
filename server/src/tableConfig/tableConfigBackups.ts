@@ -41,6 +41,7 @@ export const RESTORE_OPTIONS_SCHEMA = {
     command: { enum: ["pg_restore", "psql"] },
     format: { enum: ["p", "t", "c"] },
     clean: { type: "boolean" },
+    singleTransaction: { type: "boolean", optional: true },
     excludeSchema: { type: "string", optional: true },
     newDbName: { type: "string", optional: true },
     create: { type: "boolean", optional: true },

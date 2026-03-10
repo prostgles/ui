@@ -62,9 +62,9 @@ export const startAgenticWorkflowSchema = {
       ...pickKeys(createContainerSchema.type, ["cpus", "memory", "readOnly"]),
       internetAccess: {
         optional: true,
-        enum: ["none", "full"],
+        enum: ["none", "bridge", "host"],
         description:
-          "Whether the container should have access to the internet. Defaults to 'none'. If set to 'full', the container will have access to the internet and the database (if database access is enabled). If set to 'none', the container will not have access to the internet but will still have access to the database (if database access is enabled).",
+          "Whether the container should have access to the internet. Defaults to 'none'. Do not use 'host' unless it is strictly necessary, as it can be a security risk.",
       },
     },
   },
@@ -149,10 +149,13 @@ export const startAgenticWorkflowSchema = {
     optional: true,
     arrayOfType: {
       name: "string",
+      schema: { type: "string", optional: true },
       columns: {
         arrayOfType: {
           name: "string",
           dataType: "string",
+          nullable: { type: "boolean", optional: true },
+          isPrimaryKey: { type: "boolean", optional: true },
         },
       },
     },

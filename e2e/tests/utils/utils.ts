@@ -272,8 +272,18 @@ export const fillLoginFormAndSubmit = async (
   await page.locator("#username").waitFor({ state: "visible", timeout: 30e3 });
   await page.locator("#username").fill("");
   await page.locator("#username").fill(userNameAndPassword);
+  const continueBtn = page.getByRole("button", { name: "Continue" });
+  let isContinueBtnVisible = false;
+  if (await continueBtn.count()) {
+    isContinueBtnVisible = true;
+    await continueBtn.click();
+  }
   await page.locator("#password").fill(userNameAndPassword);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  if (isContinueBtnVisible) {
+    await continueBtn.click();
+  } else {
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  }
 };
 
 export const login = async (
@@ -517,6 +527,39 @@ export const runDbsSql = async (
   opts?: any,
 ) => {
   return runDbSql(page, query, args, opts, "dbs");
+};
+
+export const runDbsMethod = async (
+  page: PageWIds,
+  methodName: string,
+  args?: any,
+) => {
+  /** Wait for dbsMethod to become available */
+  await page.waitForFunction(() => {
+    return (window as any).dbsMethods !== undefined;
+  });
+
+  const result = await page.evaluate(
+    async ([methodName, args]) => {
+      const dbsMethods = (window as any).dbsMethods;
+      if (!dbsMethods) throw "dbsMethods is missing";
+      const method = dbsMethods[methodName];
+      if (!method) throw `Method ${methodName} is missing in dbsMethods`;
+      const [data, err] = await method(args)
+        .then((data: any) => [data, undefined])
+        .catch((err: any) => {
+          console.error(`Error running dbs method ${methodName}:`, err);
+          return [undefined, err];
+        });
+      return [data, err];
+    },
+    [methodName, args],
+  );
+  const [data, err] = result as any;
+  if (err) {
+    throw err;
+  }
+  return data;
 };
 
 export const runDbSql = async (
@@ -814,7 +857,7 @@ export const enableAskLLM = async (
   await page.getByTestId("Popup.close").click();
 };
 export const getAskLLMLastMessage = async (page: PageWIds) => {
-  const lastIncomingMessage = await page
+  const lastIncomingMessage = page
     .getByTestId("AskLLM.popup")
     .locator(".message.incoming")
     .last();
@@ -929,12 +972,15 @@ export const openConnection = async (
   await page.waitForTimeout(1000);
 };
 
-export const loginWhenSignupIsEnabled = async (page: PageWIds) => {
+export const loginWhenSignupIsEnabled = async (
+  page: PageWIds,
+  userNameAndPassword = "test_user",
+) => {
   await goTo(page, "/login");
-  await page.locator("#username").fill(USERS.test_user);
+  await page.locator("#username").fill(userNameAndPassword);
   await page.getByRole("button", { name: "Continue" }).click();
   await page.locator("#password").waitFor({ state: "visible" });
-  await page.locator("#password").fill(USERS.test_user);
+  await page.locator("#password").fill(userNameAndPassword);
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
   await page.waitForTimeout(500);
@@ -1159,4 +1205,30 @@ export const clickAndWait = async (
   await btnLocator.page().waitForTimeout(200);
   await expect(btnLocator).toBeDisabled();
   await expect(btnLocator).toBeEnabled({ timeout }); // waits until loading finishes
+};
+
+export const enableMCPServers = async (
+  page: PageWIds,
+  serverNames: string[],
+  needsConfigSetup = false,
+  toggleOn = true,
+) => {
+  await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
+  for (const serverName of serverNames) {
+    const toggleCheckbox = page
+      .locator(getDataKey(serverName))
+      .getByTestId("MCPServerFooterActions.enableToggle");
+
+    await toggleCheckbox.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+    await toggleCheckbox.click();
+    await page.waitForTimeout(500);
+    if (!needsConfigSetup) {
+      if (toggleOn) {
+        await expect(toggleCheckbox).toBeChecked({ timeout: 15e3 });
+      } else {
+        await expect(toggleCheckbox).not.toBeChecked({ timeout: 15e3 });
+      }
+    }
+  }
 };

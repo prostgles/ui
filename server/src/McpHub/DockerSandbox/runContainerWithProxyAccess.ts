@@ -8,6 +8,7 @@ import {
 } from "./dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { getOrCreateDockerMCPServerProxy } from "./dockerMCPServerProxy/dockerMCPServerProxy";
 import type { ProcessLog } from "./executeDockerCommand";
+import { randomBytes } from "crypto";
 
 export const DOCKER_MCP_ENDPOINT_ENV_VAR = "DOCKER_MCP_ENDPOINT";
 export const runContainerWithProxyAccess = async (
@@ -55,27 +56,25 @@ export const runContainerWithProxyAccess = async (
     FORCE_COLOR: "1",
   };
 
+  const secret = randomBytes(32).toString("base64url");
   const containerResult =
     await dockerContainerAuthRegistry.runContainerWithAuth(
       {
         dbPermissions,
         sid_token,
         requestHandlers,
+        secret,
       },
       (containerName) => {
-        if (args.networkMode === "host") {
-          throw new Error(
-            "Bridge network mode is required to use the Docker MCP proxy. Host network mode is not supported.",
-          );
-        }
         const argsWithEnv: typeof args = {
           ...args,
           environment: {
             ...npmVars,
             ...args.environment,
-            [DOCKER_MCP_ENDPOINT_ENV_VAR]: proxy.getBaseUrl(
-              args.networkMode ?? "bridge",
-            ),
+            [DOCKER_MCP_ENDPOINT_ENV_VAR]:
+              proxy.getBaseUrl(args.networkMode ?? "bridge") +
+              "/mcp-proxy/" +
+              secret,
           },
           buildEnvironment: npmVars,
         };

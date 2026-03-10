@@ -7,11 +7,11 @@ import type {
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
-import { createAgenticWorkflow } from "./Prostgles/createAgenticWorkflow";
+import { createAgenticWorkflow } from "./Prostgles/agenticWorkflow/createAgenticWorkflow";
 import { createContainer } from "./Prostgles/createContainer";
 import { fetchTools } from "./Prostgles/fetchTools";
-import { getToolTypescriptSchemas } from "./Prostgles/getToolTypescriptSchemas";
-import { getValidatedMcpServerToolsAllowed } from "./Prostgles/getValidatedMcpServerToolsAllowed";
+import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSetup/getToolTypescriptSchemas";
+import { getValidatedMcpServerToolsAllowed } from "./Prostgles/agenticWorkflow/definitionValidation/getValidatedMcpServerToolsAllowed";
 
 const serverName = "prostgles-ui" as const;
 const definition = {

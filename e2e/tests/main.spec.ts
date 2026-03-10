@@ -28,6 +28,7 @@ import {
   disablePwdlessAdminAndCreateUser,
   dropConnectionAndDatabase,
   enableAskLLM,
+  enableMCPServers,
   fileName,
   fillLoginFormAndSubmit,
   fillSmartForm,
@@ -48,6 +49,7 @@ import {
   openTable,
   PageWIds,
   restoreFromBackup,
+  runDbsMethod,
   runDbSql,
   runDbsSql,
   runSql,
@@ -61,7 +63,6 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
-import { send } from "process";
 import { mkdir } from "fs/promises";
 
 const DB_NAMES = {
@@ -70,6 +71,7 @@ const DB_NAMES = {
   // sample_database: "sample_database",
   video_demo_database: "prostgles_video_demo",
 };
+const backupDir = resolve(__dirname, "../demo/backups");
 
 test.describe.configure({ mode: "serial" });
 test.describe("Main test", () => {
@@ -84,10 +86,32 @@ test.describe("Main test", () => {
     return { getEmails };
   });
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browser }, testInfo) => {
     page.on("console", console.log);
     page.on("pageerror", console.error);
     await page.waitForTimeout(200);
+
+    if (testInfo.title.includes("[no-backup]")) return;
+
+    // Do auth + backup/restore in an isolated helper context
+    const helperContext = await browser.newContext();
+    const helperPage = (await helperContext.newPage()) as PageWIds;
+
+    await login(helperPage, USERS.test_user, "/login");
+    const backupName = testInfo.title;
+
+    const restoreCount = await runDbsMethod(helperPage, "restoreConnections", {
+      backupName,
+    });
+
+    if (!restoreCount) {
+      await runDbsMethod(helperPage, "backupConnections", {
+        name: backupName,
+        allActive: true,
+      });
+    }
+    await helperPage.request.post("/logout").catch(() => {});
+    await helperContext.close();
   });
 
   const deleteAllBackups = async (page: PageWIds) => {
@@ -106,12 +130,12 @@ test.describe("Main test", () => {
     }
   };
 
-  test("port 3089 must be available for mcpsandbox test", async () => {
+  test("port 3089 must be available for mcpsandbox test [no-backup]", async () => {
     const free = await isPortFree(3089);
     await expect(free).toBe(true);
   });
 
-  test("Connecting with an existing sid to a fresh instance will ignore the sid IF passwordless admin did not claim a session yet", async ({
+  test("Connecting with an existing sid to a fresh instance will ignore the sid IF passwordless admin did not claim a session yet [no-backup]", async ({
     page: p,
   }) => {
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -185,7 +209,7 @@ test.describe("Main test", () => {
     });
   });
 
-  test("Can disable passwordless admin by creating a new admin user. User data is reassigned and accessible to the new user", async ({
+  test("Can disable passwordless admin by creating a new admin user. User data is reassigned and accessible to the new user [no-backup]", async ({
     page: p,
   }) => {
     const page = p as PageWIds;
@@ -252,7 +276,92 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", timeout: 15e3 });
   });
 
-  test("Server settings and account tabs work", async ({ page: p }) => {
+  test("State db backup and restore works", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await login(page, USERS.test_user, "/login");
+    await openConnection(page, "Prostgles UI state");
+
+    const table = page.locator(`[data-table-name="user_types"]`);
+    await expect(table).toBeVisible();
+    await page.getByTestId("dashboard.goToConnConfig").click({ timeout: 15e3 });
+    await page.getByTestId("config.bkp").click();
+    await page
+      .getByRole("button", { name: "Create backup", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Start backup", exact: true })
+      .click();
+    await page.getByText("Completed");
+
+    await page.getByTestId("config.goToConnDashboard").click();
+    await closeWorkspaceWindows(page);
+    await page.reload();
+    await expect(table).not.toBeAttached();
+
+    await page.getByTestId("dashboard.goToConnConfig").click({ timeout: 15e3 });
+    await page.getByTestId("config.bkp").click();
+    await page.getByTestId("BackupControls.Restore").first().click();
+    await typeConfirmationCode(page);
+
+    await page.getByText("Restore", { exact: true }).click();
+    await page.waitForTimeout(4e3);
+    await page.reload();
+    await page.getByTestId("config.goToConnDashboard").click();
+    await expect(table).toBeVisible();
+  });
+
+  test("State db restore from file works", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await login(page, USERS.test_user, "/login");
+    await openConnection(page, "Prostgles UI state");
+
+    const table = page.locator(`[data-table-name="user_types"]`);
+    await expect(table).toBeVisible();
+    await page.getByTestId("dashboard.goToConnConfig").click({ timeout: 15e3 });
+    await page.getByTestId("config.bkp").click();
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByTestId("BackupsControls.Completed.download").first().click(),
+    ]);
+
+    const backupFilePath = join(backupDir, download.suggestedFilename());
+    await download.saveAs(backupFilePath);
+
+    // Optional: keep for later steps in this test
+    console.log("Saved backup dump:", backupFilePath);
+
+    await page.getByTestId("config.goToConnDashboard").click();
+    await closeWorkspaceWindows(page);
+    await page.reload();
+
+    await expect(table).not.toBeAttached();
+
+    await page.getByTestId("dashboard.goToConnConfig").click({ timeout: 15e3 });
+    await page.getByTestId("config.bkp").click();
+
+    await page.getByTestId("BackupsControls.restoreFromFile").click();
+
+    // Feed the previously downloaded dump file into the restore form
+    await page
+      .getByTestId("Popup.content")
+      .last()
+      .locator('input[type="file"]')
+      .setInputFiles(backupFilePath);
+
+    await typeConfirmationCode(page);
+
+    await page.getByText("Restore", { exact: true }).click();
+    await page.waitForTimeout(8e3);
+    await page.reload();
+
+    await login(page, USERS.test_user, "/login");
+    await openConnection(page, "Prostgles UI state");
+    // await page.getByTestId("config.goToConnDashboard").click();
+    await expect(table).toBeVisible();
+  });
+
+  test("Server settings and account tabs work ", async ({ page: p }) => {
     const page = p as PageWIds;
     await login(page, USERS.test_user, "/login");
 
@@ -771,7 +880,7 @@ test.describe("Main test", () => {
     await page
       .getByTestId("RequestToolAccess.Approve")
       .click({ timeout: 10e3 });
-    await page.getByText("OK", { exact: true }).click();
+
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Requested access to websearch tool and read access to receipts table in the database.`,
       { timeout: 10e3 },
@@ -792,27 +901,31 @@ test.describe("Main test", () => {
 
     await setModelByText(page, "son");
 
+    /** Refresh tools */
+    await enableMCPServers(page, ["fetch"]);
+    await enableMCPServers(page, ["fetch"], false, false);
+    await page.getByTestId("Popup.close").last().click();
+
+    await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
+      "4",
+    );
     await sendAskLLMMessage(page, " task ");
 
-    await expect(page.getByTestId("Alert")).toContainText(
-      "Tool access updated successfully",
+    await page
+      .getByTestId("RequestToolAccess.Approve")
+      .click({ timeout: 10e3 });
+    await expect(page.getByTestId("RequestToolAccess")).toContainText(
+      "Added tool access",
       { timeout: 10e3 },
     );
-    await page.getByText("OK", { exact: true }).click();
-
-    /** Refresh tools */
-    await runDbsSql(
-      page,
-      `UPDATE mcp_servers SET enabled = true WHERE name = 'fetch';`,
-    );
-    await page.waitForTimeout(5e3);
-    await runDbsSql(
-      page,
-      `UPDATE mcp_servers SET enabled = false WHERE name = 'fetch';`,
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "Added fetch tool access and database permissions for receipts table.",
+      { timeout: 10e3 },
     );
 
-    const mcpToolsBtn = await page.getByTestId("LLMChatOptions.MCPTools");
-    await expect(mcpToolsBtn).toContainText("1");
+    await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
+      "5",
+    );
 
     const dbToolsBtn = await page
       .getByTestId("LLMChatOptions.DatabaseAccess")
@@ -842,8 +955,8 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLM").click();
-    await sendAskLLMMessage(page, " mcp ", true);
-
+    await sendAskLLMMessage(page, " mcp ");
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
     await expect(mcpToolUse).toContain("successfully fetched the login page");
@@ -857,34 +970,7 @@ test.describe("Main test", () => {
       `Tool name "playwright--browser_snapshot" is invalid. Try enabling and reloading the tools`,
     );
 
-    const enableMCPServers = async (
-      serverNames: string[],
-      needsConfigSetup = false,
-      toggleOn = true,
-    ) => {
-      await page
-        .getByTestId("LLMChatOptions.MCPTools")
-        .click({ timeout: 10e3 });
-      for (const serverName of serverNames) {
-        const toggleCheckbox = page
-          .locator(getDataKey(serverName))
-          .getByTestId("MCPServerFooterActions.enableToggle");
-
-        await toggleCheckbox.scrollIntoViewIfNeeded();
-        await page.waitForTimeout(500);
-        await toggleCheckbox.click();
-        await page.waitForTimeout(500);
-        if (!needsConfigSetup) {
-          if (toggleOn) {
-            await expect(toggleCheckbox).toBeChecked({ timeout: 15e3 });
-          } else {
-            await expect(toggleCheckbox).not.toBeChecked({ timeout: 15e3 });
-          }
-        }
-      }
-    };
-
-    await enableMCPServers(["playwright"]);
+    await enableMCPServers(page, ["playwright"]);
     await page
       .getByText("browser_tabs")
       .waitFor({ state: "visible", timeout: 10e3 }); // wait for tools list to refresh
@@ -990,7 +1076,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
     /** Test max speculative chat cost */
     await newChat(page);
-    await enableMCPServers(["filesystem"], true);
+    await enableMCPServers(page, ["filesystem"], true);
     await fileBrowserGoToPath(page, ["ui", "client", "node_modules"]);
 
     await page.getByTestId("MCPServerConfig.save").click();
@@ -1025,7 +1111,7 @@ test.describe("Main test", () => {
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
-      `Reloaded 8 tools for "prostgles-ui" server`,
+      `Reloaded 7 tools for "prostgles-ui" server`,
     );
     await page.getByText("OK", { exact: true }).click();
     await page
@@ -1330,6 +1416,20 @@ test.describe("Main test", () => {
     await page.locator(getDataKey("table-and-column")).click();
     await page.locator(`[data-label="receipts.amount"]`).click();
 
+    await startWorkFlowAndExpectError(
+      `Missing required user input: "Table column value"`,
+    );
+    await page.locator(getDataKey("table-column-value")).click();
+    await page.locator(`[data-key="regular"]`).last().click();
+
+    await startWorkFlowAndExpectError(
+      `Missing required user input: "Table column values"`,
+    );
+    await page.locator(getDataKey("table-column-values")).click();
+    await page.locator(`[data-key="regular"]`).last().click();
+
+    await page.keyboard.press("Escape"); // close multi select dropdown
+
     await page.waitForTimeout(1e3);
     await page.getByTestId("AgenticWorkflow.start").click();
     /** Progress bar works */
@@ -1400,7 +1500,7 @@ test.describe("Main test", () => {
     await expect(
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
     ).toContainText(
-      `the following table names do not match any new tables or existing tables: ["invalid_table"]`,
+      `Property 'invalid_table' does not exist on type 'DbTableHandler'`,
       {
         timeout: 30e3,
       },

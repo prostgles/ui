@@ -1,10 +1,10 @@
-import { mdiRefreshAuto } from "@mdi/js";
-import React, { useState } from "react";
-import type { AppContextProps, Prgl } from "../../App";
 import Btn from "@components/Btn";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
+import { mdiRefreshAuto } from "@mdi/js";
+import React, { useState } from "react";
+import type { Prgl } from "../../App";
 
 const DESTINATIONS = [
   { key: "Local", subLabel: "Saved locally (server in address bar)" },
@@ -28,10 +28,10 @@ const DAYS_OF_WEEK = [
 ] as const;
 
 import type { DBSSchema } from "@common/publishUtils";
-import type { PGDumpParams } from "@common/utils";
+import { DEFAULT_DUMP_OPTS, type PGDumpParams } from "@common/utils";
 import FormField from "@components/FormField/FormField";
 import { CloudStorageCredentialSelector } from "./CloudStorageCredentialSelector";
-import { DEFAULT_DUMP_OPTS, PGDumpOptions } from "./PGDumpOptions";
+import { PGDumpOptions } from "./PGDumpOptions";
 
 type P = Pick<Prgl, "db" | "dbs" | "dbsMethods" | "dbsTables" | "sql"> & {
   connectionId: string;

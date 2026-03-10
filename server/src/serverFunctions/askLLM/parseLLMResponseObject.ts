@@ -22,6 +22,7 @@ export type LLMResponseParser<T = AnyObject> = (args: {
 export type LLMParsedResponse = Pick<LLMMessageWithRole, "content"> & {
   meta?: AnyObject | null;
   cost: number | undefined;
+  total_tokens: number | undefined;
 };
 
 export const parseLLMResponseObject: LLMResponseParser = ({
@@ -60,7 +61,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
         ...meta,
         finishReason: candidates[0]?.finishReason,
       },
-      cost: getLLMUsageCost(model, { type: "Gemini", meta }),
+      ...getLLMUsageCost(model, { type: "Gemini", meta }),
     };
   }
   if (provider === "Anthropic") {
@@ -89,7 +90,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
     return {
       content,
       meta,
-      cost: getLLMUsageCost(model, { type: "Anthropic", meta }),
+      ...getLLMUsageCost(model, { type: "Anthropic", meta }),
     };
   } else if (
     provider === "OpenAI" ||
@@ -143,16 +144,18 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       })
       .filter(isDefined);
     const metaCost = meta.usage?.cost;
+    const { cost, total_tokens } = getLLMUsageCost(model, {
+      type: "OpenAI",
+      meta,
+    });
     return {
       content,
       meta: {
         ...meta,
         finish_reason: choices[0]?.finish_reason,
       },
-      cost:
-        Number.isFinite(metaCost) ? metaCost : (
-          getLLMUsageCost(model, { type: "OpenAI", meta })
-        ),
+      total_tokens: meta.usage?.total_tokens ?? total_tokens,
+      cost: Number.isFinite(metaCost) ? metaCost : cost,
     };
   } else {
     const path = ["choices", 0, "message", "content"];
@@ -171,6 +174,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       content: [{ type: "text", text: messageText }],
       meta,
       cost: undefined,
+      total_tokens: undefined,
     };
   }
 };

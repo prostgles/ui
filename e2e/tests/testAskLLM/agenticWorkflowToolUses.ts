@@ -1,7 +1,7 @@
-import { GeneratedFunctionSchema } from "../../../common/DBGeneratedSchema";
+import type { DBSSchema } from "common/publishUtils";
 import { stringify, type ToolUse } from "./utils";
 type UserInput = NonNullable<
-  Parameters<GeneratedFunctionSchema["startAgenticWorkflow"]>[0]["userInput"]
+  DBSSchema["agentic_workflows"]["definition_data"]["userInput"]
 >;
 
 const clashingTableDefinition = `
@@ -122,27 +122,42 @@ export default defineAgenticWorkflow(
             },
           } satisfies Record<UserInput[string]["type"], UserInput[string]>)
         ),
-    } satisfies Partial<
-      Parameters<GeneratedFunctionSchema["startAgenticWorkflow"]>[0]
-    >,
+    } satisfies Partial<DBSSchema["agentic_workflows"]["definition_data"]> & {
+      name: string;
+    },
     null,
     2,
   )},
-  async ({ researcher }, dbHandler, toolHandler, userInputValue, setProgress) => {
+  async ({ researcher }, { db, runSQL }, toolHandler, userInputValue, setProgress) => {
     setProgress(0, "Starting workflow");
-    await dbHandler.insert("users", [{ username: "Prostgles", type: "from-agent" }]);
+    await db.users.insert({ username: "Prostgles", type: "from-agent" });
+/* need to allow db access for this
+    await db.new_users
+      .insert(
+        {
+          username: "New User",
+          password: "securepassword",
+          type: "from-agent",
+        },
+        { returning: "*" },
+      )
+      .then((newUser) => {
+        console.log("Inserted new user:", newUser);
+      });
+      runSQL("SELECT * FROM new_users").then((res) => console.log("Users:", res));
+    */
     const start = Date.now();
     toolHandler.fetch.fetch({ url: "https://www.prostgles.com" }).then(console.log).catch(console.log);
-    const filterCount = ${mode !== "input" ? "undefined;//" : ""} await dbHandler.count("users", userInputValue["table-filter"]);
+    const filterCount = ${mode !== "input" ? "undefined;//" : ""} await db.users.count(userInputValue["table-filter"]);
     console.log("Filter count:", filterCount);
     setProgress(1, "Finished database operation, starting research");
-    ${mode === "invalidTable" ? "await dbHandler.count('invalid_table');" : ""}
-    dbHandler.find("users").then((users) => {
+    ${mode === "invalidTable" ? "await db.invalid_table.count();" : ""}
+    db.users.find().then((users) => {
       users.forEach(async (user, index) => {
         setProgress((100/users.length) * index, "Processing user " + (index + 1) + "/" + users.length);
         const result = await researcher(" ${research} Prostgles"); 
         const sinceStart = Date.now() - start;
-        await dbHandler.update("users", { id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });
+        await db.users.update({ id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });
       })
     })
   },

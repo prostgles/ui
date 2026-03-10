@@ -11,6 +11,7 @@ export const MonacoLogsWithFullscreen = ({
   label,
   minHeight = 100,
   maxHeight = 300,
+  style,
   ...testSelectors
 }: {
   logs: string;
@@ -50,8 +51,9 @@ export const MonacoLogsWithFullscreen = ({
     <FlexCol
       {...testSelectors}
       className="bg-color-0 gap-p25"
-      style={
-        fullscreen ?
+      style={{
+        ...style,
+        ...(fullscreen ?
           {
             position: "fixed",
             top: 0,
@@ -60,8 +62,8 @@ export const MonacoLogsWithFullscreen = ({
             height: "100vh",
             zIndex: 1000,
           }
-        : undefined
-      }
+        : undefined),
+      }}
     >
       <FullScreenHeader fullscreen={fullscreen} setFullscreen={setFullscreen}>
         {label}

@@ -283,6 +283,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       llm_model_id: `INTEGER REFERENCES llm_models(id) ON DELETE SET NULL`,
       cost: `NUMERIC NOT NULL DEFAULT 0`,
+      total_tokens: `INTEGER NOT NULL CHECK (total_tokens >= 0)`,
       message: {
         jsonbSchema: {
           arrayOf: {

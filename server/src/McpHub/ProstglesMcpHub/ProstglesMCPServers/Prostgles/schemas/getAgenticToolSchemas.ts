@@ -2,18 +2,21 @@ import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fixIndent } from "@common/utils";
 import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { getJSONBSchemaAsJSONSchema, omitKeys } from "prostgles-types";
-import { getDefineAgenticWorkflowTsSchema } from "../getAgenticWorkflowFiles";
+import { getDefineAgenticWorkflowTsSchema } from "../agenticWorkflow/runtimeSetup/getAgenticWorkflowFiles";
 import type { DBS } from "@src/index";
+import { prostglesApiTypes } from "@common/prostglesApiTypes";
 
 const name = "suggest_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = async ({
   availableDBTools,
   availableMCPTools,
   dbs,
+  connection_id,
 }: {
   availableMCPTools: McpCallContextFetchTools["mcpTools"];
   availableDBTools: { name: string; description: string }[];
   dbs: DBS;
+  connection_id: string;
 }) => {
   const toolsByServer = new Map<string, string[]>();
 
@@ -23,18 +26,13 @@ export const getAgenticWorkflowToolSchema = async ({
     toolsByServer.set(tool.server_name, serverTools);
   });
 
-  // ## Available MCP servers and their tools:
-  // ${
-  //   !toolsByServer.size ? "None" : (
-  //     Array.from(toolsByServer.entries())
-  //       .map(([server, tools]) => `{ ${server}: ${tools} }`)
-  //       .join("\n")
-  //   )
-  // }
-
   const args =
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][name].schema.type;
-  const workflowTsSchema = await getDefineAgenticWorkflowTsSchema(dbs, "agent");
+  const workflowTsSchema = await getDefineAgenticWorkflowTsSchema(
+    dbs,
+    "agent",
+    connection_id,
+  );
   return {
     name,
     description: fixIndent(`
@@ -46,6 +44,10 @@ export const getAgenticWorkflowToolSchema = async ({
     ${workflowTsSchema} 
     ${"```"}
   
+    Database table handler definition:
+    ${"```typescript"}
+    ${prostglesApiTypes}
+    ${"```"}
 
     ## Available database tools:
     ${!availableDBTools.length ? "None" : availableDBTools.map((t) => JSON.stringify(t.name)).join(", ")}

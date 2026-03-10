@@ -54,7 +54,7 @@ export const startConnection = async function (
     });
 
   if (!connection) {
-    throw "Connection not found";
+    throw new Error("Connection not found");
   }
   if (connection.is_state_db) {
     return {

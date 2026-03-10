@@ -1,4 +1,5 @@
 import { databaseAccessSchema } from "./databaseAccessSchema";
+import { fixIndent } from "./utils";
 export const mcpServerToolsAllowed = {
     record: {
         partial: true,
@@ -23,8 +24,8 @@ const runSQLSchema = {
         },
         query_params: {
             optional: true,
-            description: "Query parameters to use in the SQL query. Must satisfy the query schema.",
-            type: "unknown",
+            description: "Query parameters to use in the SQL query. Must satisfy the query schema. Supports index based ($1, $2, etc.) and named parameters (${paramName}).",
+            oneOf: ["any[]", { record: { values: "any" } }],
         },
     },
 };
@@ -40,8 +41,8 @@ const filesSchema = {
 };
 const filterSchema = {
     filter: {
+        description: "Row filter. Must satisfy the table schema. Example filters: { $or: [{ id: 1 }, { name: { $in: ['John'] } }] }",
         record: { values: "any" },
-        description: "Row filter. Must satisfy the table schema. Example filters: { id: 1 } or { name: 'John' }",
     },
 };
 const selectSchema = {
@@ -87,7 +88,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             },
             outputSchema: "number",
         },
-        select: {
+        find: {
             description: "Selects rows from a table.",
             schema: {
                 type: {
@@ -95,9 +96,18 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                         type: "string",
                         description: "Table to select from",
                     },
-                    filter: Object.assign(Object.assign({}, filterSchema.filter), { optional: true }),
+                    filter: Object.assign({ optional: true }, filterSchema.filter),
                     select: selectSchema,
-                    limit: "integer",
+                    orderBy: {
+                        optional: true,
+                        arrayOfType: {
+                            key: "string",
+                            asc: { enum: [true, false] },
+                            nulls: { enum: ["first", "last"], optional: true },
+                        },
+                    },
+                    limit: { optional: true, type: "integer" },
+                    offset: { optional: true, type: "integer" },
                 },
             },
             outputSchema: outputSchemaArrayOfObjects,
@@ -112,9 +122,17 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     },
                     data: {
                         description: "Data to insert into the table. Must satisfy the table schema.",
-                        arrayOf: "any",
+                        arrayOf: { record: { values: "any" } },
                     },
-                    returning: selectSchema,
+                    onConflict: {
+                        enum: ["DoNothing", "DoUpdate"],
+                        optional: true,
+                        description: fixIndent(`
+              By default the insert may fail due to a unique/exclusion constraint violation error. To control this:
+              - DoNothing: will ignore the error and do nothing
+              - DoUpdate: will update all non conflicting columns of the conflicting row`),
+                    },
+                    returning: Object.assign({ description: "Fields to return for newly inserted data. Nothing will be returned otherwise" }, selectSchema),
                 },
             },
             outputSchema: Object.assign(Object.assign({}, outputSchemaArrayOfObjects), { optional: true }),
@@ -130,7 +148,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                         record: {
                             values: "any",
                         },
-                    }, returning: selectSchema }),
+                    }, returning: Object.assign({ description: "Fields to return for updated data. Nothing will be returned otherwise" }, selectSchema) }),
             },
             outputSchema: Object.assign(Object.assign({}, outputSchemaArrayOfObjects), { optional: true }),
         },
@@ -140,7 +158,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 type: Object.assign(Object.assign({ tableName: {
                         type: "string",
                         description: "Table to delete from",
-                    } }, filterSchema), { returning: selectSchema }),
+                    } }, filterSchema), { returning: Object.assign({ description: "Fields to return for the deleted rows. Nothing will be returned otherwise" }, selectSchema) }),
             },
             outputSchema: Object.assign(Object.assign({}, outputSchemaArrayOfObjects), { optional: true }),
         },

@@ -7,6 +7,7 @@ import { getProperty } from "prostgles-types";
 import React from "react";
 import { RenderFilter } from "src/dashboard/RenderFilter";
 import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
+import { UserInputColumnValues } from "./UserInputColumnValues";
 
 export const AgenticWorkflowUserInput = ({
   setUserInputValue,
@@ -161,7 +162,6 @@ export const AgenticWorkflowUserInput = ({
               );
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             if (inputItem.type === "table-and-column") {
               const separator = "&^%.";
               const fullOptions = tables.flatMap((t) =>
@@ -194,6 +194,31 @@ export const AgenticWorkflowUserInput = ({
                     setUserInputValue((prev) => ({
                       ...prev,
                       [inputKey]: { tableName, columnName },
+                    }));
+                  }}
+                />
+              );
+            }
+
+            if (
+              inputItem.type === "table-column-value" ||
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              inputItem.type === "table-column-values"
+            ) {
+              return (
+                <UserInputColumnValues
+                  key={inputKey}
+                  type={inputItem.type}
+                  title={title}
+                  inputValue={currentValue}
+                  tableName={inputItem.tableName}
+                  columnName={inputItem.columnName}
+                  optional={inputItem.optional}
+                  inputKey={inputKey}
+                  onChange={(newValue) => {
+                    setUserInputValue((prev) => ({
+                      ...prev,
+                      [inputKey]: newValue,
                     }));
                   }}
                 />

@@ -1,5 +1,8 @@
-import type { DBSSchema } from "@common/publishUtils";
-import { sliceText } from "@common/utils";
+import {
+  DEFAULT_RESTORE_OPTS,
+  sliceText,
+  type RestoreOpts,
+} from "@common/utils";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Section } from "@components/Section";
@@ -15,20 +18,6 @@ import {
 import { DumpRestoreAlerts } from "../DumpRestoreAlerts";
 import { RestoreOptions } from "./RestoreOptions";
 import { useRestoreDatabaseFromFile } from "./useRestoreDatabaseFromFile";
-
-export type RestoreOpts = DBSSchema["backups"]["restore_options"];
-
-const DEFAULT_RESTORE_OPTS: RestoreOpts = {
-  clean: true,
-  create: false,
-  dataOnly: false,
-  noOwner: false,
-  command: "pg_restore",
-  excludeSchema: "prostgles",
-  ifExists: true,
-  format: "c",
-  keepLogs: false,
-};
 
 export type RestoreProps = {
   button: React.ReactNode;

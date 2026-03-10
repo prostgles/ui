@@ -26,6 +26,7 @@ export type DockerMCPServerProxyHandler = (
 export type ContainerProxyContext = {
   dbPermissions: DbPermissions | undefined;
   sid_token: string;
+  secret: string;
   requestHandlers?: Record<
     string,
     {
@@ -98,13 +99,24 @@ const getContainerFromIP = (ip: string): ContainerProxyContext | undefined => {
   const containerInfo = containers.get(containerName);
   return (
     containerInfo &&
-    pickKeys(containerInfo, ["dbPermissions", "sid_token", "requestHandlers"])
+    pickKeys(containerInfo, [
+      "dbPermissions",
+      "sid_token",
+      "requestHandlers",
+      "secret",
+    ])
   );
+};
+const getContainerFromSecret = (
+  secret: string,
+): ContainerProxyContext | undefined => {
+  return Array.from(containers.values()).find((c) => c.secret === secret);
 };
 
 export const dockerContainerAuthRegistry = {
   getContainerFromIP,
   runContainerWithAuth,
+  getContainerFromSecret,
 };
 
 type ContainerInspect = {

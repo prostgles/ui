@@ -1,7 +1,7 @@
+import { fromEntries, getEntries } from "@common/utils";
 import type { TableConfig } from "prostgles-server";
 import { omitKeys, pickKeys } from "prostgles-types";
 import { startAgenticWorkflowSchema } from "./startAgenticWorkflowSchema";
-import { fromEntries, getEntries } from "@common/utils";
 
 export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
   agentic_workflows: {
@@ -10,6 +10,18 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       name: "TEXT NOT NULL",
+      definition: "TEXT NOT NULL",
+
+      package_dependencies: {
+        nullable: true,
+        jsonbSchema: {
+          description:
+            "A list of npm packages to be added to the container package.json dependencies.",
+          record: {
+            values: "string",
+          },
+        },
+      },
       definition_data: {
         jsonbSchemaType: pickKeys(startAgenticWorkflowSchema, [
           "containerConfiguration",

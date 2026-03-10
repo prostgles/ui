@@ -1,0 +1,437 @@
+import { TableHandler } from "prostgles-types";
+
+type PrimitiveType = "string" | "number" | "boolean" | "unknown";
+
+type PrimitiveTypeWithArraysAndOptional = {
+  type: PrimitiveType | `${PrimitiveType}[]`;
+  optional?: boolean;
+};
+export type PropertyType =
+  | PrimitiveTypeWithArraysAndOptional
+  /** Object */
+  | {
+      type: Record<string, PrimitiveTypeWithArraysAndOptional>;
+      optional?: boolean;
+    }
+  /** Array of objects */
+  | {
+      arrayOfType: Record<string, PrimitiveTypeWithArraysAndOptional>;
+      optional?: boolean;
+    };
+
+type McpServerToolDefinitions = Record<
+  string,
+  Record<string, (toolArguments?: unknown) => Promise<unknown>>
+>;
+// type McpServerToolDefinitions = {
+//   fetch: {
+//     fetch_webpage: (args: { url: string }) => Promise<{ content: string }>;
+//   };
+//   websearch: {
+//     search: (args: { q: string }) => Promise<{ results: string[] }>;
+//     get_snapshot: (args: { url: string }) => Promise<{ snapshot: string }>;
+//   };
+// };
+//EndOfReplaceMcpServerToolDefinitions;
+
+export type DBGeneratedSchema = {
+  tbl1: { columns: { col1: string; col2: number } };
+}; //EndOfDBGeneratedSchema;
+
+/**
+ * Defines which tools can be used.
+ *
+ * Here for example we allow the "status" tool from the "github" MCP server:
+ * @example
+ * {
+ *    github: {
+ *      status: 1
+ *    }
+ * }
+ */
+export type McpServerToolsAllowed = {
+  [McpServerName in keyof McpServerToolDefinitions]?: {
+    [ToolName in keyof McpServerToolDefinitions[McpServerName]]?: 1;
+  };
+};
+
+export type AgentDefinition = {
+  prompt: string;
+  modelName?: string;
+  maxCostUSD?: number;
+  maxIterations?: number;
+  tools?: McpServerToolsAllowed;
+  maxTokens?: number;
+  temperature?: number;
+  outputSchema: Record<string, PropertyType>;
+};
+
+type PrimitiveMap = {
+  string: string;
+  number: number;
+  boolean: boolean;
+  null: null;
+  undefined: undefined;
+  unknown: unknown;
+};
+
+type ParsePrimitive<S extends string> =
+  S extends keyof PrimitiveMap ? PrimitiveMap[S] : never;
+
+type ParseUnion<S extends string> =
+  S extends `${infer L} | ${infer R}` ? ParsePrimitive<L> | ParseUnion<R>
+  : ParsePrimitive<S>;
+
+type ParsePropertyType<P extends PropertyType> =
+  P extends PrimitiveTypeWithArraysAndOptional ? ParsePrimitiveField<P>
+  : P extends (
+    {
+      type: infer Obj extends Record<
+        string,
+        PrimitiveTypeWithArraysAndOptional
+      >;
+    }
+  ) ?
+    ParseObjectFields<Obj>
+  : P extends (
+    {
+      arrayOfType: infer Obj extends Record<
+        string,
+        PrimitiveTypeWithArraysAndOptional
+      >;
+    }
+  ) ?
+    ParseObjectFields<Obj>[]
+  : never;
+
+type ParsePrimitiveField<T extends PrimitiveTypeWithArraysAndOptional> =
+  T["type"] extends `${infer Inner}[]` ? ParseUnion<Inner & string>[]
+  : ParseUnion<T["type"] & string>;
+
+type ParseObjectFields<
+  T extends Record<string, PrimitiveTypeWithArraysAndOptional>,
+> = {
+  [K in keyof T]: ParsePrimitiveField<T[K]>;
+};
+
+type ParseSchema<S extends Record<string, PropertyType>> = {
+  [K in keyof S]: ParsePropertyType<S[K]>;
+};
+
+type DetailedTableFilter = {
+  fieldName: string;
+  /**
+   * Defaults to $eq
+   */
+  type?:
+    | "$ilike"
+    | "$like"
+    | "$nilike"
+    | "$nlike"
+    | "$between"
+    | "$gt"
+    | "$gte"
+    | "$lt"
+    | "$lte"
+    | "$eq"
+    | "$ne"
+    | "$in"
+    | "$nin"
+    | "@@.to_tsquery"
+    | "@@.plainto_tsquery"
+    | "@@.phraseto_tsquery"
+    | "@@.websearch_to_tsquery";
+  value: unknown;
+};
+type DetailedTableFilterGroup =
+  | { $and: DetailedTableFilter[] }
+  | { $or: DetailedTableFilter[] };
+
+/**
+ * Defines a list of columns with either 1 (include) or 0 (exclude).
+ */
+type FieldFilter = "*" | Record<string, 1> | Record<string, 0>;
+
+export type DatabaseAccessDefinition =
+  | {
+      mode: "custom";
+      /**
+       * An sql statement that creates custom tables the agent will interact with.
+       * Permissions for these tables can be defined in `tablePermissions`.
+       * This is preferred over providing access to the entire database (execute_sql_with_commit mode) for better security.
+       */
+      tableCreateStatements?: string;
+      /**
+       * Defines the tables, columns and rows the agent can access. Only applicable if mode is "custom".
+       * The keys of the tablePermissions object must be the table names as they appear in the database, or as they will be created from tableCreateStatements.
+       * For irregular table names, the keys must contain the double quotes (quote_ident(tableName) result).
+       */
+      tablePermissions: Record<
+        /**
+         * keyof DBGeneratedSchema or new table names from tableCreateStatements
+         * */
+        string,
+        {
+          select?:
+            | true
+            | {
+                /**
+                 * Fields that can be selected. Use "*" to allow all fields
+                 */
+                fields: FieldFilter;
+                /**
+                 * Conditions that must be met for a row to be selected.
+                 * This is applied in addition to any filter provided in the find/count methods, and cannot be overridden
+                 */
+                forcedFilter?: DetailedTableFilterGroup;
+              };
+          insert?:
+            | true
+            | {
+                /**
+                 * Fields that can be inserted into. Use "*" to allow all fields.
+                 */
+                fields: FieldFilter;
+              };
+          update?:
+            | true
+            | {
+                /**
+                 * Fields that can be updated. Use "*" to allow all fields.
+                 */
+                fields: FieldFilter;
+                forcedFilter?: DetailedTableFilterGroup;
+              };
+          delete?:
+            | true
+            | {
+                forcedFilter?: DetailedTableFilterGroup;
+              };
+        }
+      >;
+    }
+  | {
+      mode: "execute_sql_with_commit" | "execute_sql_with_rollback";
+    };
+
+type DbTableHandler = {
+  [TableName in keyof DBGeneratedSchema]: TableHandler<
+    DBGeneratedSchema[TableName]["columns"],
+    DBGeneratedSchema
+  >;
+};
+
+export type DatabaseHandler = {
+  /**
+   * The table handlers below are only available if databaseAccessDefinitions are defined
+   * Must provide the correct data type in filters (do not provide a boolean if the column is a string, etc.)
+   */
+  db: DbTableHandler;
+
+  /**
+   * Runs a raw SQL query.
+   * Prefer to use the table handlers above when possible, as they are safer.
+   * Only available if databaseAccessDefinitions.mode is "execute_sql_with_commit" or "execute_sql_with_rollback".
+   */
+  runSQL: (
+    sql: string,
+    params?: Record<string, any> | any[],
+    timeout?: number,
+  ) => Promise<Record<string, unknown>[]>;
+};
+
+type UserInputBase<T> = T & {
+  title: string;
+  optional?: boolean;
+};
+
+export type UserInputItem =
+  | UserInputBase<{
+      /**
+       * Prefer to use this over "custom" or "enum" to restrict the input and make it easier for the user to choose the correct value.
+       */
+      type: "table-column-value" | "table-column-values";
+      tableName: string;
+      columnName: string;
+    }>
+  | UserInputBase<{
+      /**
+       * Prefer to use this over "custom" to restrict the input and make it easier for the user to choose the correct value.
+       */
+      type: "enum";
+      values: string[];
+    }>
+  | UserInputBase<{
+      type: "table-filter" | "table-column";
+      tableName: string;
+    }>
+  | UserInputBase<{
+      type: "table-name" | "table-and-column";
+    }>
+  | UserInputBase<{
+      type: "custom";
+      dataType: "string" | "number" | "boolean" | "Date";
+    }>;
+
+export type UserInputOutputMapping = {
+  "table-filter": Record<string, any>;
+  "table-and-column": { tableName: string; columnName: string };
+  "table-column-value": unknown;
+  "table-column-values": unknown[];
+  "table-name": string;
+  "table-column": string;
+  enum: string;
+  custom: unknown;
+};
+
+export type ValueOfUserInput<UserInput extends Record<string, UserInputItem>> =
+  {
+    [InputName in keyof UserInput]?: UserInputOutputMapping[UserInput[InputName]["type"]];
+  };
+
+export type DefineAgenticWorkflow = <
+  OrchestrationTools extends McpServerToolsAllowed,
+  AgentDefinitions extends Record<string, AgentDefinition>,
+  UserInput extends Record<string, UserInputItem>,
+>(
+  {
+    name,
+    containerConfiguration,
+    databaseAccessDefinitions,
+    agentDefinitions,
+    userInput,
+  }: {
+    name: string;
+    containerConfiguration: {
+      /**
+       * Maximum time in seconds the container will be allowed to run in milliseconds.
+       * Defaults to 30000.
+       */
+      timeout: number;
+      /**
+       * CPU limit (e.g., '0.5', '1'). Defaults to 1
+       */
+      cpus?: string;
+      /**
+       * Memory limit (e.g., '512m', '1g'). Defaults to 512m
+       */
+      memory?: string;
+      environment?: Record<string, string>;
+      /**
+       * Whether to mount the filesystem as read-only. Defaults to true
+       */
+      readOnly?: boolean;
+      /**
+       * Whether the container should have access to the internet.
+       * Defaults to 'none'.
+       * 'bridge' provides access to the internet through NAT, which is more secure than 'host' but may not work for all use cases.
+       * Do not use 'host' unless it is strictly necessary, as it can be a security risk.
+       */
+      internetAccess?: "none" | "bridge" | "host";
+    };
+    userInput?: UserInput;
+    databaseAccessDefinitions?: DatabaseAccessDefinition;
+    orchestrationTools?: OrchestrationTools;
+    agentDefinitions?: AgentDefinitions;
+  },
+  workflow: (
+    agentHandlers: {
+      [AgentName in keyof AgentDefinitions]: (
+        agentInput?: string,
+      ) => Promise<ParseSchema<AgentDefinitions[AgentName]["outputSchema"]>>;
+    },
+    databaseHandler: DatabaseHandler,
+    orchestratorToolHandlers: {
+      [ServerName in keyof OrchestrationTools]: {
+        [ToolName in keyof OrchestrationTools[ServerName]]: ServerName extends (
+          keyof McpServerToolDefinitions
+        ) ?
+          ToolName extends keyof McpServerToolDefinitions[ServerName] ?
+            McpServerToolDefinitions[ServerName][ToolName]
+          : never
+        : never;
+      };
+    },
+    userInputValues: ValueOfUserInput<UserInput>,
+    setProgress: (progressPercent: number, message?: string) => Promise<void>,
+  ) => Promise<void>,
+) => void | Promise<void>;
+
+/**
+ * Example usage:
+ * 
+import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
+void defineAgenticWorkflow(
+  {
+    name: "Test Workflow",
+    containerConfiguration: { timeout: 60_000 },
+    databaseAccessDefinitions: {
+      mode: "custom",
+      tablePermissions: {
+        '"MyUsers"': { select: true, insert: true, update: true },
+        my_research_topics: { select: true, insert: true, update: true },
+      },
+      tableCreateStatements: `
+        CREATE TABLE IF NOT EXISTS my_research_topics (
+          id SERIAL PRIMARY KEY,
+          topic TEXT NOT NULL,
+          summary TEXT,
+          references TEXT[]
+        );
+      `,
+    },
+    orchestrationTools: {
+      websearch: { search: 1, get_snapshot: 1 },
+    },
+    agentDefinitions: {
+      researcher: {
+        prompt: "You are a research assistant.",
+        tools: { fetch: { fetch: 1 } },
+        outputSchema: {
+          summary: { type: "string" },
+          references: { type: "string[]" },
+        },
+      },
+    },
+  },
+  async ({ researcher }, db, { websearch }) => {
+
+    const doResearch = async () => {
+      const result = await researcher(`research_topic: "Prostgles"`);
+      await db.insert("my_research_topics", [
+        {
+          topic: "Prostgles",
+          summary: result.summary,
+          references: result.references,
+        },
+      ]);
+    }
+    await doResearch();
+    
+    const finalTopics = await db.find("my_research_topics", {
+      $and: [
+        { 
+          $or: [
+            { topic: { $in: ["Prostgles", "Postgres"] } },
+            { summary: { $ilike: "%postgres%" } },
+            { id: { $gt: 5 } },
+          ]
+        },
+        { summary: { $ne: null } }
+      ]
+    });
+
+    if(finalTopics.length < 10) {
+      await doResearch();
+    }
+
+    await websearch.search({ q: "Prostgles" });
+  },
+);
+
+ */
+
+export const END_OF_SCHEMA_PLACEHOLDER =
+  "export const END_OF_SCHEMA_PLACEHOLDER =";
+
+export { defineAgenticWorkflow } from "./defineAgenticWorkflowHandlers";

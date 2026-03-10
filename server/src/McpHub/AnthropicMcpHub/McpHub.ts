@@ -4,7 +4,6 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import {
   CallToolResultSchema,
   ReadResourceResultSchema,
-  type CallToolRequest,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import { getSerialisableError, isEqual, tryCatchV2 } from "prostgles-types";
@@ -205,34 +204,3 @@ export type McpToolCallResponse = Pick<
 > & {
   structuredContent?: unknown;
 };
-// & {
-//   _meta?: Record<string, any>;
-//   content: Array<
-//     | {
-//         type: "text";
-//         text: string;
-//       }
-//     | {
-//         type: "image" | "audio";
-//         data: string;
-//         mimeType: string;
-//       }
-//     | {
-//         type: "resource";
-//         resource: {
-//           uri: string;
-//           mimeType?: string;
-//           text?: string;
-//           blob?: string;
-//         };
-//       }
-//     | {
-//         type: "resource_link";
-//         uri: string;
-//         name: string;
-//         mimeType?: string;
-//         description?: string;
-//       }
-//   >;
-//   isError?: boolean;
-// };

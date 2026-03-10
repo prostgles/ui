@@ -168,6 +168,7 @@ export const askLLM = async (args: AskLLMArgs) => {
           : "Tool use requests were interrupted by the user",
       })),
       llm_model_id: chat.model,
+      total_tokens: 0,
     });
     pastMessages = await getPastMessages();
   }
@@ -190,6 +191,7 @@ export const askLLM = async (args: AskLLMArgs) => {
         chat_id: chatId,
         message: userMessage,
         llm_model_id: chat.model,
+        total_tokens: 0,
       });
     });
   } else {
@@ -198,6 +200,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       chat_id: chatId,
       message: userMessage,
       llm_model_id: chat.model,
+      total_tokens: 0,
     });
   }
 
@@ -310,6 +313,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       chat_id: chatId,
       message: [{ type: "text", text: "" }],
       llm_model_id: chat.model,
+      total_tokens: 0,
     },
     { returning: "*" },
   );
@@ -365,6 +369,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       content: aiResponseMessageRaw,
       meta,
       cost,
+      total_tokens,
     } = await fetchLLMResponse({
       llm_chat: chat,
       llm_model,
@@ -422,6 +427,7 @@ export const askLLM = async (args: AskLLMArgs) => {
         message: aiResponseMessage,
         meta,
         cost,
+        total_tokens,
       },
     );
 

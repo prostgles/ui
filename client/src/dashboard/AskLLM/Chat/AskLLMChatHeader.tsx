@@ -97,7 +97,7 @@ export const AskLLMChatHeader = (
           ]}
           iconPath={mdiDotsHorizontal}
           value={user.options?.llm_chat_window_positioning ?? "right-panel"}
-          showIconOnly={true}
+          showSelected={"icon"}
           btnProps={{
             variant: "icon",
           }}

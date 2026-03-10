@@ -495,7 +495,7 @@ export const DeckGLFeatureEditor = ({
           }),
         )}
         iconPath={mdiPlus}
-        showIconOnly={true}
+        showSelected={"icon"}
         value={modeKey}
         onChange={(modeKey) => {
           setEditMode({

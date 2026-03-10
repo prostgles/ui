@@ -81,6 +81,32 @@ export type PGDumpParams = {
   name?: string;
 };
 
+export const DEFAULT_DUMP_OPTS: PGDumpParams = {
+  options: {
+    command: "pg_dump",
+    excludeSchema: "prostgles",
+    format: "c",
+    clean: true,
+    ifExists: true,
+    keepLogs: true,
+  },
+  destination: "Local",
+};
+
+export type RestoreOpts = DBSSchema["backups"]["restore_options"];
+
+export const DEFAULT_RESTORE_OPTS: RestoreOpts = {
+  clean: true,
+  create: false,
+  dataOnly: false,
+  noOwner: false,
+  command: "pg_restore",
+  excludeSchema: "prostgles",
+  ifExists: true,
+  format: "c",
+  keepLogs: false,
+};
+
 export type DeepWriteable<T> = {
   -readonly [P in keyof T]: DeepWriteable<T[P]>;
 };

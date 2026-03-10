@@ -1,4 +1,4 @@
-import { classOverride } from "@components/Flex";
+import { classOverride, FlexCol } from "@components/Flex";
 import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
 import React from "react";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
@@ -43,7 +43,7 @@ export const SelectTriggerButton = <
     btnProps,
     disabledInfo,
     optional = false,
-    showIconOnly,
+    showSelected,
     fullOptions,
     multiSelection,
     fixedBtnWidth,
@@ -65,11 +65,17 @@ export const SelectTriggerButton = <
   // if (!onChange) return null;
 
   const showSelectedIcon =
-    showIconOnly ? selectedFullOptions[0]?.iconPath : undefined;
+    showSelected === "icon" ? selectedFullOptions[0]?.iconPath : undefined;
 
+  const firstSelectedOption = selectedFullOptions[0];
   const btnText = btnLabel ?? emptyLabel;
   const btnChildren =
-    chipMode || showSelectedIcon ? null
+    showSelected === "fullOption" && firstSelectedOption ?
+      <FlexCol className="gap-p25">
+        <div>{firstSelectedOption.label ?? firstSelectedOption.key}</div>
+        <div>{firstSelectedOption.subLabel}</div>
+      </FlexCol>
+    : chipMode || showSelectedIcon ? null
     : iconPath || btnProps?.children !== undefined ?
       (btnProps?.children ?? null)
     : <>

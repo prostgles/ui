@@ -1,13 +1,12 @@
-import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
 import { getMCPFullToolName } from "@common/prostglesMcp";
 import type { DBS } from "@src/index";
 import {
+  getJSONBSchemaTSTypes,
   getJSONBSchemaValidationError,
   getKeys,
   getSerialisableError,
   includes,
   tryCatchV2,
-  getJSONBSchemaTSTypes,
 } from "prostgles-types";
 import type { McpToolCallResponse } from "../AnthropicMcpHub/McpHub";
 import type {

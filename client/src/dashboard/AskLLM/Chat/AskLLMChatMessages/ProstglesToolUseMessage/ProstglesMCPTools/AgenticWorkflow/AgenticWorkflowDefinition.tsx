@@ -1,7 +1,9 @@
+import { getMCPToolNameParts } from "@common/prostglesMcp";
 import { getEntries } from "@common/utils";
 import Loading from "@components/Loader/Loading";
 import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
 import { useMonacoScrollToLastLine } from "@components/MonacoLogs/MonacoLogs";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
 import React, { useMemo } from "react";
 import {
@@ -9,9 +11,7 @@ import {
   type LanguageConfig,
 } from "src/dashboard/CodeEditor/CodeEditor";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { ToolResultMessage } from "../../../ToolUseChatMessage/ToolUseChatMessage";
-import { getMCPToolNameParts } from "@common/prostglesMcp";
 
 export const AgenticWorkflowDefinition = ({
   workflow_function_definition,
@@ -26,21 +26,27 @@ export const AgenticWorkflowDefinition = ({
 }) => {
   const {
     dbsMethods: { getAgenticWorkflowTypes, callMCPServerTool },
-  } = usePrglCore();
+    connectionId,
+  } = usePrgl();
   const { onMount } = useMonacoScrollToLastLine(true);
 
   const language = usePromise(async () => {
     if (!getAgenticWorkflowTypes) return "typescript";
-    const types = await getAgenticWorkflowTypes();
+    const types = await getAgenticWorkflowTypes({ connectionId, workflowId });
     return {
       lang: "typescript",
-      modelFileName: "workflow.ts",
+      modelFileName: `workflow_${toolResultMessage.tool_use_id}.ts`,
       tsLibraries: getEntries(types).map(([filePath, content]) => ({
         filePath: `file:///${filePath}`,
         content,
       })),
     } satisfies LanguageConfig;
-  }, [getAgenticWorkflowTypes]);
+  }, [
+    connectionId,
+    getAgenticWorkflowTypes,
+    toolResultMessage.tool_use_id,
+    workflowId,
+  ]);
 
   const codeEditorProps = useMemo(() => {
     const monacoOpts: CodeEditorProps["options"] = {

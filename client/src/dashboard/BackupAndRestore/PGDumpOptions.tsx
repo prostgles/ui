@@ -1,4 +1,4 @@
-import type { PGDumpParams } from "@common/utils";
+import { DEFAULT_DUMP_OPTS, type PGDumpParams } from "@common/utils";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
@@ -37,18 +37,6 @@ const DUMP_COMMANDS = [
     subLabel: "Backup this server (all databases and global data) - pg_dumpall",
   },
 ] as const;
-
-export const DEFAULT_DUMP_OPTS: PGDumpParams = {
-  options: {
-    command: "pg_dump",
-    excludeSchema: "prostgles",
-    format: "c",
-    clean: true,
-    ifExists: true,
-    keepLogs: true,
-  },
-  destination: "Local",
-};
 
 const DEFAULT_DUMP_ALL_OPTS: PGDumpParams = {
   options: {

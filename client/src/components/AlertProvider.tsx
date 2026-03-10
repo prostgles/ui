@@ -73,19 +73,19 @@ export const useAlert = () => {
   return context;
 };
 
-export const useOnErrorAlert = () => {
+export const useOnErrorAlert = (immediateUnmount = false) => {
   const alert = useAlert();
   const getIsMounted = useIsMounted();
   const onErrorAlert = useCallback(
     async (promiseFunc: () => Promise<void>) => {
       await promiseFunc().catch((error: unknown) => {
-        if (!getIsMounted()) return;
+        if (!getIsMounted() && immediateUnmount) return;
         alert.addAlert({
           children: <ErrorComponent error={error} findMsg={true} />,
         });
       });
     },
-    [alert, getIsMounted],
+    [alert, getIsMounted, immediateUnmount],
   );
   return { onErrorAlert };
 };

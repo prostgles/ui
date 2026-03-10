@@ -41,6 +41,9 @@ export type PGDumpParams = {
     initiator?: string;
     name?: string;
 };
+export declare const DEFAULT_DUMP_OPTS: PGDumpParams;
+export type RestoreOpts = DBSSchema["backups"]["restore_options"];
+export declare const DEFAULT_RESTORE_OPTS: RestoreOpts;
 export type DeepWriteable<T> = {
     -readonly [P in keyof T]: DeepWriteable<T[P]>;
 };

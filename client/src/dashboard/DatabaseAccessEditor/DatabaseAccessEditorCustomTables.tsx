@@ -7,7 +7,7 @@ import {
 import { mdiTable, mdiTableEdit } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined, isEmpty } from "prostgles-types";
-import React from "react";
+import React, { useState } from "react";
 import SmartTable from "../SmartTable";
 import type { DatabaseAccessEditorProps } from "./DatabaseAccessEditor";
 import { TableAccessEditor } from "./TableAccessEditor";
@@ -25,6 +25,7 @@ export const DatabaseAccessEditorCustomTables = ({
 } & Pick<DatabaseAccessEditorProps, "onChange" | "newTables">) => {
   const { tables, db, sql, methods } = usePrgl();
 
+  const [showTable, setShowTable] = useState<string>();
   const tableList = useDatabaseAccessEditorTables({ value, newTables });
   return (
     <div className="w-full" data-command="DatabaseAccessEditor.TableRules">
@@ -52,26 +53,25 @@ export const DatabaseAccessEditorCustomTables = ({
               label: t.name,
               title: t.name,
               contentLeft: (
-                <PopupMenu
-                  button={
-                    <Btn
-                      iconPath={tableRules.update ? mdiTableEdit : mdiTable}
-                      variant="faded"
-                      size="small"
-                    />
-                  }
-                  positioning="center"
-                  contentClassName=""
-                  clickCatchStyle={{ opacity: 1 }}
-                >
-                  <SmartTable
-                    db={db}
-                    methods={methods}
-                    sql={sql}
-                    tableName={t.name}
-                    tables={tables}
+                <>
+                  <Btn
+                    iconPath={tableRules.update ? mdiTableEdit : mdiTable}
+                    variant="faded"
+                    size="small"
+                    onClick={() => setShowTable(t.name)}
                   />
-                </PopupMenu>
+                  {showTable && (
+                    <SmartTable
+                      db={db}
+                      methods={methods}
+                      sql={sql}
+                      tableName={showTable}
+                      tables={tables}
+                      onClosePopup={() => setShowTable(undefined)}
+                      clickCatchStyle={{ opacity: 1 }}
+                    />
+                  )}
+                </>
               ),
               styles: {
                 labelWrapper: {

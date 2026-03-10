@@ -170,7 +170,10 @@ export const AgenticWorkflow = ({
             maxTextLength={2e3}
           />
         : <MonacoLogsWithFullscreen
-            label="Error logs"
+            style={{
+              border: "1px solid var(--b-danger)",
+            }}
+            label={<span className="pl-p5 text-danger">Error logs</span>}
             data-command="AgenticWorkflow.validationErrorLogs"
             logs={workflowValidationError.logs}
           />)}

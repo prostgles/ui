@@ -1,12 +1,12 @@
-import { asName, omitKeys } from "prostgles-types";
-import type { Readable } from "stream";
 import { throttle } from "@common/utils";
+import { asName } from "prostgles-types";
+import type { Readable } from "stream";
+import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
 import type { Backups } from "./BackupManager";
 import { envToStr } from "./pipeFromCommand";
 import { pipeToCommand } from "./pipeToCommand";
 import { addOptions, getBkp, getConnectionEnvVars, makeLogs } from "./utils";
-import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 
 export async function pgRestore(
   this: BackupManager,
@@ -17,12 +17,18 @@ export async function pgRestore(
   const { bkpId, connId } = arg1;
   const { fileMgr, bkp } = await getBkp(this.dbs, bkpId);
   if (!bkp.id && !connId)
-    throw "Must provide a connection id if backup does not have a connection_id";
+    throw new Error(
+      "Must provide a connection id if backup does not have a connection_id",
+    );
   const connection_id = connId ?? bkp.connection_id!;
   const con = await this.dbs.connections.findOne({ id: connection_id });
-  if (!con) throw "Connection not found";
-  if (!o) throw "Restore options missing";
-
+  if (!con) throw new Error("Connection not found");
+  if (!o) throw new Error("Restore options missing");
+  const { is_state_db } = con;
+  if (is_state_db && !o.singleTransaction) {
+    console.warn("Single transaction enabled for state db restore.");
+    o.singleTransaction = true;
+  }
   const setError = async (err: any) => {
     const currBkp = await this.dbs.backups.findOne({ id: bkpId });
     if (currBkp) {
@@ -30,7 +36,6 @@ export async function pgRestore(
         { id: bkpId },
         {
           restore_status: {
-            ...omitKeys(currBkp.restore_status as any, ["ok"]),
             err: (err ?? "").toString(),
           },
           last_updated: new Date(),
@@ -68,13 +73,11 @@ export async function pgRestore(
       o.command === "psql" || o.format === "p" ?
         {
           command: this.getCmd("psql"),
-          // opts: [getConnectionUri(con as any)] // NOT SAFE ps aux
           opts: [],
         }
       : {
           command: this.getCmd("pg_restore"),
           opts: addOptions(
-            // ["-d", getConnectionUri(con as any) NOT SAFE FROM ps aux],
             [],
             [
               [true, "--dbname=" + ConnectionEnvVars.PGDATABASE], // Prevent error: "d -f/--file must be specified"
@@ -85,6 +88,7 @@ export async function pgRestore(
               [!!o.format, ["--format", o.format]],
               [o.dataOnly, "--data-only"],
               [o.ifExists, "--if-exists"],
+              [o.singleTransaction, "--single-transaction"],
               [!!o.excludeSchema, ["--exclude-schema", o.excludeSchema!]],
               [Number.isInteger(o.numberOfJobs), "--jobs"],
               [true, "-v"],
@@ -113,7 +117,11 @@ export async function pgRestore(
     let chunkSum = 0;
     const throttledUpdate = throttle(async () => {
       if (!(await this.dbs.backups.findOne({ id: bkpId }))) {
-        bkpStream.emit("error", "Backup file not found");
+        if (!is_state_db) {
+          bkpStream.emit("error", "Backup file not found");
+        } else {
+          console.warn(`Backup with id ${bkpId} not found`);
+        }
       } else {
         const finished = chunkSum >= +(bkp.sizeInBytes ?? bkp.dbSizeInBytes);
         void this.dbs.backups.update(
@@ -158,7 +166,11 @@ export async function pgRestore(
 
     bkpStream.on("data", (chunk) => {
       chunkSum += chunk.length;
-      // console.log(chunk.toString(), { chunk })
+      if (is_state_db) {
+        if (typeof chunk === "string" || Buffer.byteLength(chunk) < 1e6) {
+          console.log(chunk.toString());
+        }
+      }
       throttledUpdate();
     });
 
@@ -170,8 +182,10 @@ export async function pgRestore(
       (err) => {
         if (err) {
           console.error("pipeToCommand ERR:", err);
-          bkpStream.destroy();
-          void setError(err);
+          if (!is_state_db) {
+            bkpStream.destroy();
+            void setError(err);
+          }
         } else {
           void this.dbs.backups.update(
             { id: bkpId },

@@ -13,6 +13,7 @@ import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData"
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
 import { useSendToolUseResult } from "./common/useSendToolUseResult";
 import { useAlert } from "@components/AlertProvider";
+import { tout } from "src/utils/utils";
 
 export const RequestToolAccess = ({
   message,
@@ -43,24 +44,25 @@ export const RequestToolAccess = ({
       accessInfo: NonNullable<typeof toolResultData>,
       state: "approved" | "auto_approve" | "deny",
     ) => {
-      await sendToolUseResult({
-        chatId,
-        toolName: message.name,
-        toolUseId: message.id,
-        type: "tool-use-result-confirmation",
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              ...accessInfo,
-              status: state === "deny" ? "denied" : "approved",
-            } satisfies typeof accessInfo),
-          },
-        ],
-      });
+      const onSendResult = () =>
+        sendToolUseResult({
+          chatId,
+          toolName: message.name,
+          toolUseId: message.id,
+          type: "tool-use-result-confirmation",
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                ...accessInfo,
+                status: state === "deny" ? "denied" : "approved",
+              } satisfies typeof accessInfo),
+            },
+          ],
+        });
 
       if (state === "deny") {
-        return;
+        return await onSendResult();
       }
 
       if (accessInfo.validatedTools.length) {
@@ -77,6 +79,9 @@ export const RequestToolAccess = ({
             enabled: true,
           },
         );
+        /** TODO: listen for actual reload finish */
+        await tout(2000);
+
         for (const serverName of serverNames) {
           await dbsMethods.reloadMcpServerTools?.({ serverName });
         }
@@ -101,12 +106,10 @@ export const RequestToolAccess = ({
           { db_data_permissions: dbAccess },
         );
       }
-      addAlert({
-        children: "Tool access updated successfully",
-      });
+      await tout(500);
+      void onSendResult();
     },
     [
-      addAlert,
       chatId,
       dbAccess,
       dbs.llm_chats,

@@ -3,7 +3,6 @@ import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexRowWrap } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
 import { JSONBSchemaLookup } from "@components/JSONBSchema/JSONBSchemaLookup";
 import {
   MONACO_READONLY_DEFAULT_OPTIONS,
@@ -18,7 +17,6 @@ import {
   mdiDatabaseEye,
   mdiDatabaseOff,
   mdiDatabaseSearch,
-  mdiEye,
   mdiLinkVariant,
   mdiTable,
   mdiTableSearch,
@@ -94,7 +92,6 @@ export const AskLLMChatActionBarDatabaseAccess = (
     <PopupMenu
       data-command="LLMChatOptions.DatabaseAccess"
       contentClassName="p-1 gap-2 max-w-700"
-      // positioning="above-center"
       positioning="center"
       title="Database access"
       clickCatchStyle={{ opacity: 1 }}
@@ -120,7 +117,6 @@ export const AskLLMChatActionBarDatabaseAccess = (
       onClickClose={false}
     >
       <FlexRowWrap className="gap-p5 ai-start">
-        <Icon className="text-1 mt-p25" path={mdiDatabaseEye} />
         <Select
           label={{ label: "Schema access" }}
           data-command="LLMChatOptions.DatabaseAccess.schema"
@@ -143,7 +139,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
               {
                 key: "Full",
                 subLabel: "Send schema for all dashboard tables.",
-                iconPath: mdiDatabase,
+                iconPath: mdiDatabaseEye,
               },
               {
                 key: "Custom",
@@ -182,7 +178,9 @@ export const AskLLMChatActionBarDatabaseAccess = (
           className="as-end"
           onClickClose={false}
           button={
-            <Btn title="Preview schema" variant="faded" iconPath={mdiEye} />
+            <Btn title="Preview schema" variant="faded">
+              Preview
+            </Btn>
           }
         >
           <MonacoEditor

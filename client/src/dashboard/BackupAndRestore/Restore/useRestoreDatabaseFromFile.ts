@@ -1,5 +1,6 @@
+import type { RestoreOpts } from "@common/utils";
+import { useAlert, useOnErrorAlert } from "@components/AlertProvider";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { RestoreOpts } from "./Restore";
 import { useCallback } from "react";
 
 export const useRestoreDatabaseFromFile = ({
@@ -12,6 +13,8 @@ export const useRestoreDatabaseFromFile = ({
   const {
     dbsMethods: { streamBackupFile },
   } = usePrgl();
+
+  const { onErrorAlert } = useOnErrorAlert();
 
   const restoreFile = useCallback(
     async (file: File) => {
@@ -28,7 +31,7 @@ export const useRestoreDatabaseFromFile = ({
           sizeBytes: file.size,
           restoreOptions: restoreOpts,
         },
-      });
+      }).catch(onErrorAlert);
       if (!streamId) {
         throw new Error("No streamId received from server");
       }
@@ -43,7 +46,7 @@ export const useRestoreDatabaseFromFile = ({
                 streamId,
                 chunk,
               },
-            });
+            }).catch(onErrorAlert);
           } catch (err) {
             console.error(err);
             controller.error(err);
@@ -52,7 +55,9 @@ export const useRestoreDatabaseFromFile = ({
         },
         async close() {
           await (async () => {
-            await streamBackupFile({ data: { type: "end", streamId } });
+            await streamBackupFile({ data: { type: "end", streamId } }).catch(
+              onErrorAlert,
+            );
           })();
         },
         abort(reason) {
@@ -61,7 +66,7 @@ export const useRestoreDatabaseFromFile = ({
       });
       void stream.pipeTo(writableStream);
     },
-    [connectionId, restoreOpts, streamBackupFile],
+    [connectionId, onErrorAlert, restoreOpts, streamBackupFile],
   );
 
   return { restoreFile };

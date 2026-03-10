@@ -1,5 +1,5 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { ProstglesMCPToolsProps } from "../../../ProstglesToolUseMessage";
 import { useJSONBParsedData } from "../../common/useJSONBParsedData";
@@ -62,14 +62,34 @@ export const useAgenticWorkflowState = ({
     latestRun?.execution_mode ?? "series",
   );
 
-  const workflowValidationError =
-    workflowValidation?.error ?
-      ({ type: "error", error: workflowValidation.error } as const)
-    : workflowValidation?.data?.isValid === false ?
-      workflowValidation.data.error !== undefined ?
-        ({ type: "error", error: workflowValidation.data.error } as const)
-      : ({ type: "error-logs", logs: workflowValidation.data.logs } as const)
-    : undefined;
+  const workflowValidationError = useMemo(() => {
+    if (workflowValidation?.error) {
+      return { type: "error", error: workflowValidation.error } as const;
+    }
+    if (validatedWorkflowData?.isValid === false) {
+      if (validatedWorkflowData.error !== undefined) {
+        return { type: "error", error: validatedWorkflowData.error } as const;
+      }
+      const { logs } = validatedWorkflowData;
+
+      const startOfActualError = logs.lastIndexOf(`] RUN npm run build:`);
+
+      const startOfBoilerplate = logs.lastIndexOf(`------
+
+Dockerfile`);
+
+      const errorLogs =
+        (
+          startOfActualError !== -1 &&
+          startOfBoilerplate !== -1 &&
+          startOfBoilerplate > startOfActualError
+        ) ?
+          logs.slice(0, startOfBoilerplate)
+        : logs;
+
+      return { type: "error-logs", logs: errorLogs } as const;
+    }
+  }, [validatedWorkflowData, workflowValidation?.error]);
 
   return {
     workflowValidation,

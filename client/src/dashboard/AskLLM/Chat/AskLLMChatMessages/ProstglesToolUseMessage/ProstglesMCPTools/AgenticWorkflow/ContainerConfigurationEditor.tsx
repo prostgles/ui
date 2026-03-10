@@ -11,15 +11,10 @@ import React, { useState } from "react";
 
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import Chip from "@components/Chip";
 import FormField from "@components/FormField/FormField";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { HeaderSection } from "@components/HeaderSection";
-import {
-  getIntervalAsText,
-  getPGIntervalAsText,
-} from "src/dashboard/W_SQL/customRenderers";
 import { getDurationAsStr } from "@components/Stopwatch";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 export const ContainerConfigurationEditor = ({
   workflow,
@@ -73,41 +68,39 @@ export const ContainerConfigurationEditor = ({
     >
       {!showEdit ?
         <FlexRowWrap className="pointer " onClick={() => setShowEdit(true)}>
-          <Chip
+          <Btn
+            variant="faded"
             className="text-1"
             title="Timeout"
-            leftIcon={{
-              path: mdiTimelapse,
-            }}
+            iconPath={mdiTimelapse}
           >
             {getDurationAsStr(timeout)}
-          </Chip>
-          <Chip
-            title="Internet access"
+          </Btn>
+          <Btn
+            title={"Internet access: " + internetAccess}
             className="text-1"
-            leftIcon={{
-              path: internetAccess === "none" ? mdiWebOff : mdiWeb,
-            }}
+            color={
+              internetAccess === "host" ? "warn"
+              : internetAccess === "bridge" ?
+                "action"
+              : undefined
+            }
+            variant="faded"
+            iconPath={internetAccess === "none" ? mdiWebOff : mdiWeb}
           >
             {internetAccess}
-          </Chip>
-          <Chip
+          </Btn>
+          <Btn
             className="text-1"
+            variant="faded"
             title="CPUs"
-            leftIcon={{
-              path: mdiCpu64Bit,
-            }}
+            iconPath={mdiCpu64Bit}
           >
             {cpus}
-          </Chip>
-          <Chip
-            title="Memory"
-            leftIcon={{
-              path: mdiMemory,
-            }}
-          >
+          </Btn>
+          <Btn title="Memory" variant="faded" iconPath={mdiMemory}>
             {memory}
-          </Chip>
+          </Btn>
         </FlexRowWrap>
       : <FlexRowWrap>
           <FormField
@@ -129,15 +122,25 @@ export const ContainerConfigurationEditor = ({
                   key: "none",
                   label: "None",
                   subLabel:
-                    "Container can access internet. Uses bridge network mode.",
-                },
-                {
-                  key: "full",
-                  label: "Full",
-                  subLabel:
                     "Container cannot access the internet. Uses bridge-internal network mode.",
                 },
-              ] as const
+                {
+                  key: "bridge",
+                  label: "Bridge",
+                  subLabel:
+                    "Container can access the internet. Uses bridge network mode.",
+                },
+                {
+                  key: "host",
+                  label: "Host",
+                  subLabel:
+                    "Container can access the internet AND other services running on your machine. Uses host network mode. Not recommended for security reasons.",
+                },
+              ] as const satisfies {
+                key: typeof internetAccess;
+                label: string;
+                subLabel: string;
+              }[]
             }
             onChange={(newValue) =>
               updateContainerConfiguration({ internetAccess: newValue })

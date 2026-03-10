@@ -1,5 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
-import type { PGDumpParams } from "@common/utils";
+import { DEFAULT_DUMP_OPTS, type PGDumpParams } from "@common/utils";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
@@ -25,7 +25,7 @@ import { AutomaticBackups } from "./AutomaticBackups";
 import { BackupsInProgress } from "./BackupsInProgress";
 import { CodeConfirmation } from "./CodeConfirmation";
 import { CompletedBackups } from "./CompletedBackups";
-import { DEFAULT_DUMP_OPTS, PGDumpOptions } from "./PGDumpOptions";
+import { PGDumpOptions } from "./PGDumpOptions";
 import { RenderBackupLogs } from "./RenderBackupLogs";
 import { RenderBackupStatus } from "./RenderBackupStatus";
 import { Restore } from "./Restore/Restore";

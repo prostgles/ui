@@ -27,6 +27,7 @@ import { createBridgeInternalDockerNetwork } from "../createBridgeInternalDocker
 
 const PREFERRED_PORT = 3089;
 const DEFAULT_GATEWAY_IP = "0.0.0.0" as const;
+const MCP_PROXY_PREFIX = "/mcp-proxy/:secret" as const;
 
 let dockerMCPServerProxy:
   | ReturnType<typeof createDockerMCPServerProxy>
@@ -51,30 +52,34 @@ const createDockerMCPServerProxy = async () => {
   app.use(json({ limit: "1000mb" }));
   app.use(urlencoded({ extended: true, limit: "1000mb" }));
 
+  const scopedProxyRouter = express.Router({ mergeParams: true });
+
   const authContextMiddleware: RequestHandler = (req, res, next) => {
+    const { secret } = req.params as { secret?: string };
     const ip = req.ip || req.socket.remoteAddress || "";
 
-    const authContext = dockerContainerAuthRegistry.getContainerFromIP(ip);
+    const authContext =
+      secret ?
+        dockerContainerAuthRegistry.getContainerFromSecret(secret.toString())
+      : dockerContainerAuthRegistry.getContainerFromIP(ip);
     if (!authContext) {
       return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
         error:
-          "Container and/or Chat not found for the given IP address: " + ip,
+          secret ?
+            "Container and/or Chat not found for provided MCP secret"
+          : "Container and/or Chat not found for the given IP address: " + ip,
       });
     }
     res.locals.authContext = authContext;
     next();
   };
-  upsertNamedExpressMiddleware(
-    app,
-    authContextMiddleware,
-    "docker-mcp-proxy-auth-context",
-  );
 
-  app.post(DB_ROUTE, dbRequestHandler);
+  scopedProxyRouter.use(authContextMiddleware);
+  scopedProxyRouter.post(DB_ROUTE, dbRequestHandler);
 
   const dockerProxyRouter: RequestHandler = async (req, res, next) => {
     const authContext = res.locals.authContext as ContainerProxyContext;
-    const { dbPermissions, sid_token, requestHandlers } = authContext;
+    const { dbPermissions, sid_token, requestHandlers, secret } = authContext;
 
     const matchedRequestHandler = getEntries(requestHandlers ?? {}).find(
       ([route]) => {
@@ -89,7 +94,13 @@ const createDockerMCPServerProxy = async () => {
     const { handler } = matchedRequestHandler[1];
     try {
       await handler(
-        { dbPermissions, sid_token, httpReq: req, res },
+        {
+          dbPermissions,
+          sid_token,
+          httpReq: req,
+          res,
+          secret,
+        },
         req,
         res,
         next,
@@ -98,9 +109,16 @@ const createDockerMCPServerProxy = async () => {
       return res.status(500).json(getSerialisableError(error));
     }
   };
+
+  scopedProxyRouter.use(dockerProxyRouter);
+
+  const rootProxyRouter = express.Router();
+  rootProxyRouter.use(MCP_PROXY_PREFIX, scopedProxyRouter);
+
   upsertNamedExpressMiddleware(
     app,
-    dockerProxyRouter,
+    rootProxyRouter,
+    // dockerProxyRouter,
     "docker-mcp-proxy-request-handlers",
   );
 

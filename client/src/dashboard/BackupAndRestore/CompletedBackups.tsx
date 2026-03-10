@@ -30,7 +30,7 @@ import {
 } from "./useBackupsControlsState";
 import { t } from "src/i18n/i18nUtils";
 
-export const orderByCreated = {
+const orderByCreated = {
   key: "created",
   asc: false,
 } as const;
@@ -128,7 +128,7 @@ export const CompletedBackups = ({
           ),
         },
         {
-          name: "created",
+          name: "created_ago" as "created",
           label: "Created",
           select: { $ageNow: ["created", null, "second"] },
           render: (value: AnyObject) => <StyledInterval value={value} />,

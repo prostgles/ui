@@ -84,7 +84,7 @@ export type SelectProps<
    * If true then will show the selected option sublabel underneath
    */
   showSelectedSublabel?: boolean;
-  showIconOnly?: boolean;
+  showSelected?: "icon" | "fullOption";
   title?: string;
   placeholder?: string;
   variant?:

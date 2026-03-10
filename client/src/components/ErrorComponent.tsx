@@ -42,9 +42,8 @@ export default class ErrorComponent extends React.Component<P> {
     this.scrollIntoView();
   }
 
-  prevError: any;
-  componentDidUpdate() {
-    if (!isEqual(this.props.error, this.prevError)) {
+  componentDidUpdate(prevProps: P) {
+    if (!isEqual(this.props.error, prevProps.error)) {
       this.scrollIntoView();
     }
   }

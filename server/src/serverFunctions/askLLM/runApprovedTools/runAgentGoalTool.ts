@@ -72,6 +72,7 @@ export const runAgentGoalTool = async ({
   await dbs.llm_messages.insert({
     chat_id: chat.id,
     message: [toolResultContent],
+    total_tokens: 0,
   });
   await dbs.llm_chats.update(
     {
