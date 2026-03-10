@@ -1,4 +1,5 @@
 import { fromEntries, getEntries } from "@common/utils";
+import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
 import type { TableConfig } from "prostgles-server";
 import { omitKeys, pickKeys } from "prostgles-types";
 import { startAgenticWorkflowSchema } from "./startAgenticWorkflowSchema";
@@ -109,6 +110,48 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
           },
         },
       },
+    },
+  },
+  docker_containers: {
+    columns: {
+      id: "INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY",
+      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      tool_use_id: `TEXT NOT NULL`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      user_input_value: {
+        jsonbSchema: {
+          record: {
+            values: "unknown",
+          },
+        },
+      },
+      created: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+      finished: `TIMESTAMPTZ`,
+      configuration: { jsonbSchema: createContainerSchema },
+      state: {
+        jsonbSchema: {
+          oneOfType: [
+            {
+              status: {
+                enum: ["running", "completed", "error", "stopped"],
+              },
+              progressPercent: { type: "number", optional: true },
+              message: { type: "string", optional: true },
+            },
+          ],
+        },
+      },
+      log: {
+        jsonbSchema: {
+          arrayOfType: {
+            type: { enum: ["stdout", "stderr", "error"] },
+            text: "string",
+          },
+        },
+      },
+    },
+    indexes: {
+      uniqueToolUseId: { unique: true, columns: "id, tool_use_id" },
     },
   },
 };

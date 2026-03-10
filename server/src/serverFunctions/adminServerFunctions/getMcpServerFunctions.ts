@@ -127,6 +127,7 @@ export const getMcpServerFunctions = (
           toolName,
           toolArguments: args,
           clientReq,
+          toolUseId: reRunToolUseId,
         });
 
         if (reRunInfo) {

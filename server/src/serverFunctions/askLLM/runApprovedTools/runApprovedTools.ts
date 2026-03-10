@@ -210,6 +210,7 @@ export const runApprovedTools = async (
           toolName,
           toolArguments: toolUseRequest.input,
           clientReq,
+          toolUseId: toolUseRequest.id,
         }).catch((e) => ({
           content: e instanceof Error ? e.message : JSON.stringify(e),
           isError: true,

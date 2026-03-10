@@ -31,6 +31,7 @@ export type McpCallContext = {
   user_id: DBSSchema["users"]["id"];
   clientReq: AuthClientRequest;
   dbs: DBS;
+  toolUseId: string | undefined;
 };
 
 export type McpCallContextFetchTools = McpCallContext & {

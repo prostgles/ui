@@ -1,4 +1,4 @@
-import { mdiFullscreen } from "@mdi/js";
+import { mdiClose, mdiFullscreen } from "@mdi/js";
 import React from "react";
 import Btn, { type BtnProps } from "../Btn";
 import { classOverride, FlexCol, FlexRow } from "../Flex";
@@ -9,7 +9,7 @@ export const FullscreenWrapper = ({
   className,
   style,
   title,
-  content,
+  children,
   endActions,
   maxContentHeight,
   ...testSelectors
@@ -18,7 +18,7 @@ export const FullscreenWrapper = ({
   style?: React.CSSProperties;
   maxContentHeight?: number | string;
   title: React.ReactNode;
-  content: React.ReactNode;
+  children: React.ReactNode;
   endActions?: (Pick<
     BtnProps,
     "disabledInfo" | "title" | "onClick" | "onClickPromise" | "color"
@@ -59,13 +59,13 @@ export const FullscreenWrapper = ({
           />
         ))}
         <Btn
-          title="Toggle Fullscreen"
-          iconPath={mdiFullscreen}
+          title={fullscreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
+          iconPath={fullscreen ? mdiClose : mdiFullscreen}
           size="small"
           onClick={() => setFullscreen(!fullscreen)}
         />
       </FlexRow>
-      {content}
+      {children}
     </FlexCol>
   );
 };

@@ -41,7 +41,9 @@ export const MarkdownMonacoCodeHeader = (
       </div>
       {codeHeader && codeHeader({ language, codeString })}
       {sqlResult && sqlResult.state !== "loading" ?
-        <Btn onClick={() => setSqlResult(undefined)}>Close result</Btn>
+        <Btn size="small" onClick={() => setSqlResult(undefined)}>
+          Close result
+        </Btn>
       : <>
           {language === "sql" && sqlHandler && (
             <>
@@ -110,6 +112,7 @@ export const MarkdownMonacoCodeHeader = (
           />
           <Btn
             title="Download"
+            size="small"
             iconPath={mdiDownload}
             onClick={() => {
               download(
@@ -123,6 +126,7 @@ export const MarkdownMonacoCodeHeader = (
       }
       <Btn
         title="Toggle Fullscreen"
+        size="small"
         iconPath={mdiFullscreen}
         onClick={() => setFullscreen(!fullscreen)}
       />

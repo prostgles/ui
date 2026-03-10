@@ -241,6 +241,21 @@ export type DBGeneratedSchema = {
       trust_proxy?: boolean;
     };
   };
+  docker_containers: {
+    columns: {
+      chat_id: number;
+      configuration: {    files: Partial<Record<string, string>>;   timeout?: number;   networkMode?: "none" | "bridge" | "bridge-internal" | "host";   environment?: Partial<Record<string, string>>;   memory?: string;   cpus?: string;   readOnly?: boolean;  };
+      created?: string;
+      finished?: null | string;
+      id?: number;
+      log:  (  {  type: "stdout" | "stderr" | "error";  text: string; } )[]
+      state: 
+       |  {  status: "running" | "completed" | "error" | "stopped";  progressPercent?: number;  message?: string; }
+      tool_use_id: string;
+      user_id: string;
+      user_input_value:  Record<string, unknown>
+    };
+  };
   global_settings: {
     columns: {
       id?: number;
@@ -798,5 +813,6 @@ export type GeneratedFunctionSchema = {
   "startAgenticWorkflow": (args: {    chatId: number;   workflowId: number;   userInputValue: Record<string, unknown>;   messageId: string;   executionMode: "series" | "parallel";  }) => Promise<(({} & { state: ("error" | "finished" | "build-error" | "timed-out" | "aborted"); name: string; command: string; log: Array<({} & { type: ("error" | "stdout" | "stderr"); text: string })>; exitCode: number; runDuration: number; buildDuration: number }) | { state: "init-error"; message: string; error: unknown })>;
   "stopAgenticWorkflow": (args: {    chatId: number;   messageId: string;  }) => Promise<({ success: boolean; message?: undefined } | { success: boolean; message: string })>;
   "getAgenticWorkflowTypes": (args: {    connectionId: string;   workflowId?: number;  }) => Promise<{ "defineAgenticWorkflow.ts": string; "defineAgenticWorkflowHandlers.ts": string }>;
+  "stopDockerContainer": (args: {    chatId: number;   containerId: number;  }) => Promise<{ success: boolean }>;
   "startConnection": (args: {    connectionId: string;  }) => Promise<(undefined | { socketPath: string; socketUrl: (undefined | string) })>;
 }

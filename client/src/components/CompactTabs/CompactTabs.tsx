@@ -57,25 +57,24 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
         </Btn>
       ))}
       maxContentHeight={maxHeight}
-      content={
-        <>
-          {getEntries(items).map(([tabName, { content }]) => (
-            <div
-              key={tabName as string}
-              style={{
-                /**
-                 * Avoid layout shift when switching tabs
-                 */
-                display: tabName === activeTab ? "flex" : "none",
-                flex: 1,
-                minHeight: 0,
-              }}
-            >
-              {content}
-            </div>
-          ))}
-        </>
-      }
-    />
+    >
+      <>
+        {getEntries(items).map(([tabName, { content }]) => (
+          <div
+            key={tabName as string}
+            style={{
+              /**
+               * Avoid layout shift when switching tabs
+               */
+              display: tabName === activeTab ? "flex" : "none",
+              flex: 1,
+              minHeight: 0,
+            }}
+          >
+            {content}
+          </div>
+        ))}
+      </>
+    </FullscreenWrapper>
   );
 };

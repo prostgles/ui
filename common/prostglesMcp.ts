@@ -181,6 +181,18 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
               values: "any",
             },
           },
+          removeDisallowedFields: {
+            type: "boolean",
+            optional: true,
+            description:
+              "Whether to remove fields that are not allowed to be updated instead of throwing an error.",
+          },
+          multi: {
+            description:
+              "true by default. When set to false the update will throw an error if more than one row is updated (but the update will commit).",
+            type: "boolean",
+            optional: true,
+          },
           returning: {
             description:
               "Fields to return for updated data. Nothing will be returned otherwise",

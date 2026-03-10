@@ -1,0 +1,112 @@
+import { runContainerWithProxyAccess } from "@src/McpHub/DockerSandbox/runContainerWithProxyAccess";
+import type { McpCallContext } from "../../ProstglesMCPServerTypes";
+import type { CreateContainerParams } from "./schemas/getCreateContainerToolSchema";
+import { getSerialisableError } from "prostgles-types";
+
+const aborters = new Map<number, AbortController>();
+export const stopContainer = (containerId: number) => {
+  const aborter = aborters.get(containerId);
+  if (!aborter) {
+    throw new Error(`No running container found with id ${containerId}`);
+  }
+  aborter.abort();
+  aborters.delete(containerId);
+};
+export const runCodeInSandboxContainer = async (
+  args: CreateContainerParams,
+  { user_id, chat, connection_id, dbs, toolUseId }: McpCallContext,
+) => {
+  const { db_data_permissions } = chat;
+  if (!toolUseId) {
+    throw new Error(
+      "toolUseId is required for runCodeInSandboxContainer. Cannot be called from orchestration tools.",
+    );
+  }
+  await dbs.docker_containers.delete({
+    chat_id: chat.id,
+    tool_use_id: toolUseId,
+  });
+  const container = await dbs.docker_containers.insert(
+    {
+      user_id,
+      chat_id: chat.id,
+      configuration: args,
+      state: {
+        status: "stopped",
+      },
+      log: [],
+      user_input_value: {},
+      tool_use_id: toolUseId,
+    },
+    { returning: { id: 1 } },
+  );
+  const aborter = new AbortController();
+  aborters.set(container.id, aborter);
+  const res = await runContainerWithProxyAccess(
+    dbs,
+    {
+      user_id,
+      dbPermissions: {
+        connection_id,
+        db_data_permissions,
+      },
+    },
+    {
+      ...args,
+      networkMode: args.networkMode || "bridge-internal",
+      signal: aborter.signal,
+    },
+    (logs) => {
+      void dbs.docker_containers.update(
+        {
+          id: container.id,
+        },
+        {
+          log: logs.map((log) => ({
+            type: log.type,
+            text: log.text,
+          })),
+        },
+      );
+    },
+  )
+    .catch((e) => {
+      void dbs.docker_containers.update(
+        {
+          id: container.id,
+        },
+        {
+          state: {
+            status: "error",
+            message:
+              e instanceof Error ?
+                e.message
+              : JSON.stringify(getSerialisableError(e)),
+          },
+          finished: new Date(),
+        },
+      );
+      return Promise.reject(e);
+    })
+    .finally(() => {
+      aborters.delete(container.id);
+    });
+  await dbs.docker_containers.update(
+    {
+      id: container.id,
+    },
+    {
+      state:
+        res.state === "finished" ?
+          {
+            status: "completed",
+          }
+        : {
+            status: "error",
+            message: res.state,
+          },
+      finished: new Date(),
+    },
+  );
+  return res;
+};

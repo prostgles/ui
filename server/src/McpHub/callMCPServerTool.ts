@@ -19,6 +19,7 @@ export const callMCPServerTool = async ({
   toolArguments,
   toolName,
   user,
+  toolUseId,
 }: {
   user: Pick<DBSSchema["users"], "id">;
   chat_id: number;
@@ -27,6 +28,7 @@ export const callMCPServerTool = async ({
   toolName: string;
   toolArguments: Record<string, unknown> | undefined;
   clientReq: AuthClientRequest;
+  toolUseId: string | undefined;
 }): Promise<McpToolCallResponse> => {
   const start = new Date();
   const argErrors = getJSONBObjectSchemaValidationError(
@@ -75,6 +77,7 @@ export const callMCPServerTool = async ({
         user_id: user.id,
         clientReq,
         dbs,
+        toolUseId,
       });
     }
 

@@ -8,6 +8,7 @@ import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflo
 import { pickKeys } from "prostgles-types";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
+import { stopContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/runCodeInSandboxContainer";
 
 export const getAgenticWorkflowFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -113,6 +114,36 @@ export const getAgenticWorkflowFunctions = (
           type: "full",
           newTables: workflow?.definition_data.newTables,
         });
+      },
+    }),
+    stopDockerContainer: defineAdminFunction({
+      input: {
+        chatId: "integer",
+        containerId: "integer",
+      },
+      run: async ({ chatId, containerId }, { dbs, user }) => {
+        const container = await dbs.docker_containers.findOne({
+          chat_id: chatId,
+          user_id: user.id,
+          id: containerId,
+        });
+        if (!container) {
+          throw new Error(
+            `Container with id ${containerId} not found for chat ${chatId}`,
+          );
+        }
+        stopContainer(containerId);
+        await dbs.docker_containers.update(
+          {
+            id: containerId,
+          },
+          {
+            state: {
+              status: "stopped",
+            },
+          },
+        );
+        return { success: true };
       },
     }),
   };

@@ -165,6 +165,8 @@ export type DatabaseAccessDefinition =
        * Defines the tables, columns and rows the agent can access. Only applicable if mode is "custom".
        * The keys of the tablePermissions object must be the table names as they appear in the database, or as they will be created from tableCreateStatements.
        * For irregular table names, the keys must contain the double quotes (quote_ident(tableName) result).
+       * Use "true" to allow all fields/filters for a command, or provide a more specific definition for better security.
+       * Avoid writing more rule info than necessary. For example, to allow selectingn all fields from all data just use "select: true" instead of defining all the fields and using "select: { fields: "*" }".
        */
       tablePermissions: Record<
         /**

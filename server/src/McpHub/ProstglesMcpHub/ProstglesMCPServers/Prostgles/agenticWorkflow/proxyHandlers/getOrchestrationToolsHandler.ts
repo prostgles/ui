@@ -74,6 +74,7 @@ export const getOrchestrationToolsHandler = async ({
         toolName: name,
         toolArguments: args,
         clientReq,
+        toolUseId: undefined,
       });
 
       const data = result.structuredContent || result.content;

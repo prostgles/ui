@@ -8,10 +8,10 @@ import type {
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
 import { createAgenticWorkflow } from "./Prostgles/agenticWorkflow/createAgenticWorkflow";
-import { createContainer } from "./Prostgles/createContainer";
-import { fetchTools } from "./Prostgles/fetchTools";
-import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSetup/getToolTypescriptSchemas";
 import { getValidatedMcpServerToolsAllowed } from "./Prostgles/agenticWorkflow/definitionValidation/getValidatedMcpServerToolsAllowed";
+import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSetup/getToolTypescriptSchemas";
+import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer";
+import { fetchTools } from "./Prostgles/fetchTools";
 
 const serverName = "prostgles-ui" as const;
 const definition = {
@@ -28,7 +28,7 @@ const handler = {
         await getDockerMCPServerProxy()?.then((s) => s.destroy());
       },
       tools: {
-        run_code_in_sandbox: createContainer,
+        run_code_in_sandbox: runCodeInSandboxContainer,
         ask_user_questions: () => {
           // never called
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return

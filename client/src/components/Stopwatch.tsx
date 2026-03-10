@@ -37,11 +37,13 @@ export const getDurationAsStr = (elapsedMs: number) => {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
+  const milliseconds = elapsedMs % 1000;
 
   const displayTime = [
     hours > 0 ? `${hours}h` : null,
     hours > 0 || minutes > 0 ? `${minutes}m` : null,
     `${seconds}s`,
+    `${milliseconds}ms`,
   ]
     .filter(Boolean)
     .join(" ");

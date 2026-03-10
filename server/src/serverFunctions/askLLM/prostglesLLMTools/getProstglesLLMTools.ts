@@ -71,6 +71,7 @@ export const getProstglesLLMTools = async ({
             };
           }),
           dbs,
+          toolUseId: undefined,
         });
         const serverTools = Object.values(serverToolsMap).filter(isDefined);
         const res = [name, serverTools] as const;

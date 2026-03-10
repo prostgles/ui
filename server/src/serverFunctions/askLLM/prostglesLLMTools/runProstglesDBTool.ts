@@ -33,7 +33,7 @@ export const runProstglesDBTool = async (
     "",
   );
   if (validatedInput.error !== undefined) {
-    throw new Error(`Input validation error: ${validatedInput.error}`);
+    throw new Error(`Validation error: ${validatedInput.error}`);
   }
   const { data: validatedData } = validatedInput;
   if (
