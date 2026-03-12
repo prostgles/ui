@@ -1,5 +1,4 @@
 import Btn from "@components/Btn";
-import PopupMenu from "@components/PopupMenu";
 import {
   SearchList,
   type SearchListItem,
@@ -10,9 +9,9 @@ import { isDefined, isEmpty } from "prostgles-types";
 import React, { useState } from "react";
 import SmartTable from "../SmartTable";
 import type { DatabaseAccessEditorProps } from "./DatabaseAccessEditor";
+import { TableAccessDetails } from "./TableAccessDetails";
 import { TableAccessEditor } from "./TableAccessEditor";
 import { useDatabaseAccessEditorTables } from "./useDatabaseAccessEditorTables";
-import { TableAccessDetails } from "./TableAccessDetails";
 
 export const DatabaseAccessEditorCustomTables = ({
   value,
@@ -29,10 +28,22 @@ export const DatabaseAccessEditorCustomTables = ({
   const tableList = useDatabaseAccessEditorTables({ value, newTables });
   return (
     <div className="w-full" data-command="DatabaseAccessEditor.TableRules">
+      {showTable && (
+        <SmartTable
+          db={db}
+          methods={methods}
+          sql={sql}
+          tableName={showTable}
+          tables={tables}
+          onClosePopup={() => setShowTable(undefined)}
+          clickCatchStyle={{ opacity: 1 }}
+        />
+      )}
       <SearchList
         id="custom-tables"
         style={{
           maxHeight: "min(400px, calc(100vh - 100px)",
+          gap: "0.5em",
         }}
         placeholder={`Search ${tables.length} tables & views`}
         limit={200}
@@ -60,26 +71,13 @@ export const DatabaseAccessEditorCustomTables = ({
                     size="small"
                     onClick={() => setShowTable(t.name)}
                   />
-                  {showTable && (
-                    <SmartTable
-                      db={db}
-                      methods={methods}
-                      sql={sql}
-                      tableName={showTable}
-                      tables={tables}
-                      onClosePopup={() => setShowTable(undefined)}
-                      clickCatchStyle={{ opacity: 1 }}
-                    />
-                  )}
                 </>
               ),
               styles: {
                 labelWrapper: {
-                  fontWeight: 700,
                   ...(!onChange && { flex: "unset" }),
                 },
                 label: {
-                  fontWeight: 700,
                   fontSize: "16px",
                 },
                 rowInner: {

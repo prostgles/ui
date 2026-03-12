@@ -16,7 +16,7 @@ export const fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
         !toolsAllowed.find(
           (t) =>
             t.tool_name === "run_code_in_sandbox" ||
-            t.tool_name === "suggest_agentic_workflow",
+            t.tool_name === "create_agentic_workflow",
         )
       ) {
         return {};
@@ -43,8 +43,8 @@ export const fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
 
   return {
     ...prostglesUiToolSchemas,
-    suggest_agentic_workflow: suggestAgenticWorkflowSchema,
+    create_agentic_workflow: suggestAgenticWorkflowSchema,
     run_code_in_sandbox: createContainerToolSchema,
-    suggest_dashboards: suggestDashboardsToolSchema,
+    create_dashboards: suggestDashboardsToolSchema,
   };
 };

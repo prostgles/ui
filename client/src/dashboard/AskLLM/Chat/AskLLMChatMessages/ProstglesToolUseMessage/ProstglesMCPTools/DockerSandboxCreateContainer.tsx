@@ -24,6 +24,8 @@ import React, { useMemo, useState } from "react";
 import { ToolUseReRun } from "../../ToolUseChatMessage/ToolUseReRun";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData";
+import { AgenticWorkflowUserInput } from "./AgenticWorkflow/AgenticWorkflowUserInput";
+import { useAgenticWorkflowUserInput } from "./AgenticWorkflow/hooks/useAgenticWorkflowUserInput";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["run_code_in_sandbox"]["schema"]["type"]
@@ -37,11 +39,17 @@ export const DockerSandboxCreateContainer = ({
   const toolUseResult = toolResult?.toolUseResultMessage;
   const initialData = message.input as DockerSandboxCreateContainerData;
   const [editedFiles, setEditedFiles] = useState<Record<string, string>>();
+  const userInputState = useAgenticWorkflowUserInput(initialData.userInput);
+  const { userInputValue } = userInputState;
   const data = {
     ...initialData,
     files: {
       ...initialData.files,
       ...editedFiles,
+    },
+    userInputValue: {
+      ...initialData.userInputValue,
+      ...userInputValue,
     },
   };
   const { tool_use_id = "" } = toolUseResult ?? {};
@@ -142,34 +150,46 @@ export const DockerSandboxCreateContainer = ({
             }));
           }}
         />
-        <FlexRow className="bt b-color bg-color-2 w-full ta-start">
-          <Btn
-            size="small"
-            title="Toggle"
-            iconPosition="right"
-            iconPath={showLogs ? mdiChevronDown : mdiChevronUp}
-            onClick={() => setShowLogs(!showLogs)}
-          >
-            Logs
-          </Btn>
-          {container && (
-            <Stopwatch
-              startTime={new Date(container.created)}
-              endTime={
-                container.finished ? new Date(container.finished) : undefined
-              }
+
+        <FullscreenWrapper
+          className="bt b-color bg-color-2 w-full ta-start rounded-unset"
+          title={
+            <FlexRow>
+              <Btn
+                size="small"
+                title="Toggle"
+                iconPosition="right"
+                iconPath={showLogs ? mdiChevronDown : mdiChevronUp}
+                onClick={() => setShowLogs(!showLogs)}
+              >
+                Logs
+              </Btn>
+              {container && (
+                <Stopwatch
+                  title="Runtime"
+                  startTime={new Date(container.created)}
+                  endTime={
+                    container.finished ?
+                      new Date(container.finished)
+                    : undefined
+                  }
+                />
+              )}
+            </FlexRow>
+          }
+        >
+          {showLogs && (
+            <MonacoLogs
+              key={"logs"}
+              className="f-p5 b-unset"
+              data-command="DockerSandboxCreateContainer.Logs"
+              style={monacoStyle}
+              logs={logs}
             />
           )}
-        </FlexRow>
-        {showLogs && (
-          <MonacoLogs
-            key={"logs"}
-            className="f-p5 b-unset"
-            data-command="DockerSandboxCreateContainer.Logs"
-            style={monacoStyle}
-            logs={logs}
-          />
-        )}
+        </FullscreenWrapper>
+
+        <AgenticWorkflowUserInput {...userInputState} />
       </FlexCol>
       <ErrorComponent error={resultObj?.error} />
     </FullscreenWrapper>

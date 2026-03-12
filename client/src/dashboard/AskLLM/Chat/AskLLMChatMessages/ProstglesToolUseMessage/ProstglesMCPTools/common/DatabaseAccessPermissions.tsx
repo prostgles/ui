@@ -46,7 +46,7 @@ export const DatabaseAccessPermissions = ({
       });
     }
 
-    return dbAccess.mode === "execute_sql_with_rollback" ?
+    return dbAccess.mode === "execute_readonly_sql" ?
         ["Execute SQL with rollback"]
       : ["Execute SQL with commit"];
   }, [dbAccess]);

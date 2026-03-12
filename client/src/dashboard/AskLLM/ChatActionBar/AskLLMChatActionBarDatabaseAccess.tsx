@@ -81,7 +81,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
         (t) => t.update || t.insert || t.delete,
       );
     const icon = {
-      execute_sql_with_rollback: mdiDatabaseSearch,
+      execute_readonly_sql: mdiDatabaseSearch,
       custom: canEditData ? mdiTable : mdiTableSearch,
       execute_sql_with_commit: mdiDatabaseEdit,
     }[mode];
@@ -91,7 +91,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
   return (
     <PopupMenu
       data-command="LLMChatOptions.DatabaseAccess"
-      contentClassName="p-1 gap-2 max-w-700"
+      contentClassName="p-1 gap-2 max-w-800"
       positioning="center"
       title="Database access"
       clickCatchStyle={{ opacity: 1 }}

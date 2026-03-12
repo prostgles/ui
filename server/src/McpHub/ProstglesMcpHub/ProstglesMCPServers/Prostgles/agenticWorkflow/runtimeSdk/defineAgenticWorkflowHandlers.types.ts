@@ -2,7 +2,7 @@ import type { DefineAgenticWorkflow } from "./defineAgenticWorkflow";
 
 export type ProxyDbCallData =
   | {
-      type: "db/execute_sql_with_commit" | "db/execute_sql_with_rollback";
+      type: "db/execute_sql_with_commit" | "db/execute_readonly_sql";
       sql: string;
       query_timeout?: number;
       query_params?: unknown[] | Record<string, unknown>;

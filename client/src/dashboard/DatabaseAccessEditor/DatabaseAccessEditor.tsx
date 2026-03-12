@@ -104,7 +104,7 @@ const MODES = [
     iconPath: mdiDatabaseOff,
   },
   {
-    key: "execute_sql_with_rollback",
+    key: "execute_readonly_sql",
     label: "Run readonly SQL",
     subLabel: "Can run readonly SQL queries",
     iconPath: mdiTableSearch,

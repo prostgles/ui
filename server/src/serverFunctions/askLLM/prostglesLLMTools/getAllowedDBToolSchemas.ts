@@ -73,7 +73,7 @@ export const getAllowedDBToolSchemas = (
         /** Allow all tools */
         chatDBAccess.mode === "execute_sql_with_commit" ||
         /** Allow read only tools */
-        tool_name === "execute_sql_with_rollback" ||
+        tool_name === "execute_readonly_sql" ||
         tool_name === "find" ||
         tool_name === "count"
       ) {

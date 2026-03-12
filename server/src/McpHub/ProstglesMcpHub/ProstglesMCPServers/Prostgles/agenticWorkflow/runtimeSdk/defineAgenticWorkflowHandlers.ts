@@ -77,7 +77,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
       runSQL: (sql, query_params, query_timeout) => {
         if (
           dbMode !== "execute_sql_with_commit" &&
-          dbMode !== "execute_sql_with_rollback"
+          dbMode !== "execute_readonly_sql"
         ) {
           throw new Error(
             `Database access is not enabled for this workflow, but tried to run SQL with args: ${JSON.stringify(

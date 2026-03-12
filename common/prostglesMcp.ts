@@ -2,6 +2,80 @@ import { databaseAccessSchema } from "./databaseAccessSchema";
 import type { DBSSchema } from "./publishUtils";
 import { fixIndent } from "./utils";
 
+export const USER_INPUT_VALUE_ENV_VARIABLE_NAME = "USER_INPUT_VALUE" as const;
+
+export const userInputSchema = {
+  optional: true,
+  description: fixIndent(`
+    Prefer to use the most ergonomic types ("table-column-value", "table-column-values", "enum", ...etc) over "custom" to restrict the input and make it easier for the user to choose the correct value.
+  `),
+  record: {
+    values: {
+      oneOfType: [
+        {
+          title: "string",
+          optional: { type: "boolean", optional: true },
+          type: { enum: ["table-column-value"] },
+          tableName: "string",
+          columnName: "string",
+          defaultValue: { type: "any", optional: true },
+        },
+        {
+          title: "string",
+          optional: { type: "boolean", optional: true },
+          type: { enum: ["table-column-values"] },
+          tableName: "string",
+          columnName: "string",
+          defaultValue: { type: "any[]", optional: true },
+        },
+        {
+          title: "string",
+          optional: { type: "boolean", optional: true },
+          type: { enum: ["table-filter"] },
+          tableName: "string",
+          defaultValue: { record: { values: "any" }, optional: true },
+        },
+        {
+          title: "string",
+          optional: { type: "boolean", optional: true },
+          type: { enum: ["table-column"] },
+          tableName: "string",
+          defaultValue: { type: "string", optional: true },
+        },
+        {
+          title: "string",
+          optional: { type: "boolean", optional: true },
+          type: { enum: ["table-name"] },
+          defaultValue: { type: "string", optional: true },
+        },
+        {
+          title: "string",
+          optional: { type: "boolean", optional: true },
+          type: { enum: ["table-and-column"] },
+          defaultValue: {
+            type: { tableName: "string", columnName: "string" },
+            optional: true,
+          },
+        },
+        {
+          title: "string",
+          optional: { type: "boolean", optional: true },
+          type: { enum: ["enum"] },
+          values: "string[]",
+          defaultValue: { type: "string", optional: true },
+        },
+        {
+          title: "string",
+          optional: { type: "boolean", optional: true },
+          type: { enum: ["custom"] },
+          dataType: { enum: ["string", "number", "boolean", "Date"] },
+          defaultValue: { type: "unknown", optional: true },
+        },
+      ],
+    },
+  },
+} as const;
+
 export const mcpServerToolsAllowed = {
   record: {
     partial: true,
@@ -36,8 +110,10 @@ const runSQLSchema = {
 } as const;
 
 const filesSchema = {
-  description:
-    'Files to copy into the container. Must include a Dockerfile. Example { "index.ts": "import type { JSONB } from "prostgles-types";" }',
+  description: fixIndent(`
+    Files to copy into the container. 
+    Must include a Dockerfile.
+    Example { "index.ts": "import type { JSONB } from \"prostgles-types\"; ..." }`),
   record: {
     partial: true,
     values: {
@@ -79,7 +155,7 @@ const outputSchemaArrayOfObjects = {
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   "prostgles-db-methods": { ["" as string]: "" },
   "prostgles-db": {
-    execute_sql_with_rollback: {
+    execute_readonly_sql: {
       description:
         "Executes a SQL query on the connected database in readonly mode (no data can be changed, the transaction is rolled back at the end).",
       schema: runSQLSchema,
@@ -87,7 +163,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     },
     execute_sql_with_commit: {
       description:
-        "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction commited at the end).",
+        "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction committed at the end).",
       schema: runSQLSchema,
       outputSchema: outputSchemaArrayOfObjects,
     },
@@ -95,10 +171,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description: "Counts rows in a table that satisfy a filter.",
       schema: {
         type: {
-          tableName: {
-            type: "string",
-            description: "Table to select from",
-          },
+          tableName: "string",
           filter: { ...filterSchema.filter, optional: true },
         },
       },
@@ -108,10 +181,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description: "Selects rows from a table.",
       schema: {
         type: {
-          tableName: {
-            type: "string",
-            description: "Table to select from",
-          },
+          tableName: "string",
           filter: { optional: true, ...filterSchema.filter },
           select: selectSchema,
           orderBy: {
@@ -132,10 +202,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description: "Inserts rows into a table.",
       schema: {
         type: {
-          tableName: {
-            type: "string",
-            description: "Table to insert into",
-          },
+          tableName: "string",
           data: {
             description:
               "Data to insert into the table. Must satisfy the table schema.",
@@ -169,10 +236,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description: "Updates rows in a table.",
       schema: {
         type: {
-          tableName: {
-            type: "string",
-            description: "Table to insert into",
-          },
+          tableName: "string",
           ...filterSchema,
           data: {
             description:
@@ -206,10 +270,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description: "Deletes rows from a table.",
       schema: {
         type: {
-          tableName: {
-            type: "string",
-            description: "Table to delete from",
-          },
+          tableName: "string",
           ...filterSchema,
 
           returning: {
@@ -244,10 +305,35 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     },
     run_code_in_sandbox: {
       mode: undefined,
-      description:
-        "Executes code in a docker container. CANNOT ACCESS THE DATABASE DIRECTLY (must access the database only through POST requests to the exposed api). Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.",
+      description: fixIndent(`
+        Executes code in a docker container.
+        User will see realtime logs and the final output of the container execution. 
+        User can also choose to re-run the container with different user input (if provided).
+        Use descriptive log messages to make it easier for the user to understand progress, what is happening and provide feedback.
+        Use this tool to execute code in any language, with any dependencies, and with access to the database if needed. 
+        To access the database must use POST requests to the exposed api endpoint. Cannot use direct DB sockets or drivers. 
+        Useful for doing bulk data insert/analysis/processing/ETL. 
+        The database permissions must be set to 'Auto approve' to allow the container access to the database. 
+        Otherwise, permissions have no effect.`),
       schema: {
         type: {
+          userInput: {
+            ...userInputSchema,
+            description:
+              fixIndent(`
+                Custom controls/user input to provide to the container. 
+                Use this to allow the user to re-run the container with custom configuration/input. 
+                Will be available in the container through the ${USER_INPUT_VALUE_ENV_VARIABLE_NAME} environment variable as stringified JSON.\n`) +
+              userInputSchema.description,
+          },
+          userInputValue: {
+            optional: true,
+            description:
+              "User populated values for the userInput keys. It will override the default values in userInput if provided. ",
+            record: {
+              values: "unknown",
+            },
+          },
           files: filesSchema,
           timeout: {
             optional: true,
@@ -313,7 +399,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description: [
         "Ask a question to gather information from the user.",
         "DO NOT SEND OTHER TOOL USE REQUESTS TOGETHER WITH THIS TOOL. It must be a single tool use request",
-        "Be as short and as consice as possible.",
+        "Be as short and as concise as possible.",
         "Do not ask more than 8 questions at a time.",
         `Each "choice" type question should have a list of suggested answers to choose from.`,
         `If allowMultipleChoices is true on "choice" type question, the user can select multiple answers.`,
@@ -385,8 +471,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       schema: {
         type: {
           mcpServerTools: {
-            descoription:
-              "List of MCP server tools to get. Leave empty to get all tools.",
+            description: fixIndent(`
+                Which MCP server tools to get in this format: { [serverName]: { [toolName1]: 1, [toolName2]: 1 } } which means toolName1 and toolName2 from serverName. 
+                Leave empty to get all tools. Example: { fetch: { fetch: 1 } }`),
             optional: true,
             ...mcpServerToolsAllowed,
           },
@@ -414,7 +501,8 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             optional: true,
           },
           mcpServerTools: {
-            descoription: "List of MCP server tools to enable for this chat.",
+            description:
+              "List of MCP server tools to enable for this chat. Example: { fetch: { fetch: 1 } }",
             optional: true,
             ...mcpServerToolsAllowed,
           },
@@ -433,7 +521,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
       },
     },
-    suggest_agentic_workflow: {
+    create_agentic_workflow: {
       mode: "auto-approved-user-actionable",
       description: [
         "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
@@ -450,6 +538,11 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             type: "string",
             description:
               "Typescript code defining a function that returns an agent workflow. The function must satisfy the following type provided. The function can use available MCP tools and database access if needed. Available MCP tools and database access are determined by the fetchTools function and the input to this tool.",
+          },
+          workflow_function_definition_summary: {
+            type: "string",
+            description:
+              "A concise summary of the workflow function definition for the user to understand what the workflow does without having to read the code. This will be shown to the user when asking for approval to run the workflow.",
           },
           package_dependencies: {
             optional: true,
@@ -481,7 +574,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         ],
       },
     },
-    suggest_dashboards: {
+    create_dashboards: {
       mode: "auto-approved-user-actionable",
       description:
         "Suggest Prostgles UI dashboards to visualize data for the specified task.",

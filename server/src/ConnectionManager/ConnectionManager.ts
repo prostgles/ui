@@ -503,7 +503,7 @@ export class ConnectionManager {
   };
 
   disconnect = async (conId: string): Promise<boolean> => {
-    await cdbCache[conId]?.destroy();
+    await cdbCache.get(conId)?.destroy();
     const conn = this.prglConnections.get(conId);
     let destroyed = false;
     if (conn?.state === "started") {
@@ -563,37 +563,41 @@ export class ConnectionManager {
   };
 }
 
-export const cdbCache: Record<
+export const cdbCache = new Map<
   string,
   {
     db: DB;
     isSuperUser?: boolean;
     hasSuperUser?: boolean;
+    opts?: pg.IConnectionParameters<pg.IClient>;
     destroy: () => Promise<void>;
   }
-> = {};
+>();
 export const getCDB = async (
   connId: string,
   opts?: pg.IConnectionParameters<pg.IClient>,
   isTemporary = false,
 ) => {
-  if (!cdbCache[connId] || cdbCache[connId].db.$pool.ending || isTemporary) {
+  const connIdWithOpts = !opts ? connId : `${connId}_${JSON.stringify(opts)}`;
+  const cached = cdbCache.get(connIdWithOpts);
+  if (!cached || cached.db.$pool.ending || isTemporary) {
     const destroy: () => Promise<void> = async () => {
       await db.$pool.end();
-      delete cdbCache[connId];
+      cdbCache.delete(connIdWithOpts);
     };
     const db = await connectionManager.getNewConnectionDb(connId, {
       application_name: "prostgles getCDB",
       ...opts,
     });
-    if (isTemporary) return { db, destroy };
-    cdbCache[connId] = {
+    if (isTemporary) return { db, destroy, opts };
+    cdbCache.set(connIdWithOpts, {
       db,
       destroy,
-    };
+      opts,
+    });
   }
 
-  return cdbCache[connId];
+  return cdbCache.get(connIdWithOpts)!;
 };
 export const getSuperUserCDB = async (connId: string, dbs: DBS) => {
   const dbInfo = await getCDB(connId);
@@ -602,7 +606,7 @@ export const getSuperUserCDB = async (connId: string, dbs: DBS) => {
   if (dbInfo.hasSuperUser === false) {
     return dbInfo;
   } else if (dbInfo.hasSuperUser === true) {
-    const su = cdbCache[connIdSuperUser];
+    const su = cdbCache.get(connIdSuperUser);
     if (!su) throw "No super user db found";
     return su;
   }
@@ -616,8 +620,11 @@ export const getSuperUserCDB = async (connId: string, dbs: DBS) => {
     );
 
   if (_superUsers.some((s) => s.is_current_user)) {
-    cdbCache[connId]!.isSuperUser = true;
-    cdbCache[connId]!.hasSuperUser = true;
+    const cached = cdbCache.get(connIdSuperUser);
+    if (cached) {
+      cached.hasSuperUser = true;
+      cached.isSuperUser = true;
+    }
     return dbInfo;
   }
 
@@ -637,16 +644,23 @@ export const getSuperUserCDB = async (connId: string, dbs: DBS) => {
       { user: firstConn.db_user, password: firstConn.db_pass! },
       true,
     );
-    cdbCache[connIdSuperUser] = {
+    cdbCache.set(connIdSuperUser, {
       ...dbSu,
       isSuperUser: true,
       hasSuperUser: true,
-    };
-    cdbCache[connId]!.hasSuperUser = true;
-    return cdbCache[connIdSuperUser];
+    });
+
+    const cached = cdbCache.get(connId);
+    if (cached) {
+      cached.hasSuperUser = true;
+    }
+    return cdbCache.get(connIdSuperUser)!;
   }
-  cdbCache[connId]!.hasSuperUser = false;
-  cdbCache[connId]!.isSuperUser = false;
+  const cached = cdbCache.get(connId);
+  if (cached) {
+    cached.hasSuperUser = false;
+    cached.isSuperUser = false;
+  }
 
   return dbInfo;
 };

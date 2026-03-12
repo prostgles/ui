@@ -45,7 +45,7 @@ export const setupLLM = async (dbs: DBS) => {
               request_tool_access: 1,
               compact_context: 1,
             }),
-            database_access: "execute_sql_with_rollback",
+            database_access: "execute_readonly_sql",
           },
         },
         {
@@ -55,14 +55,14 @@ export const setupLLM = async (dbs: DBS) => {
           user_id,
           options: {
             mcp_server_tools: allowProstglesUITools({
-              suggest_dashboards: 1,
+              create_dashboards: 1,
               ask_user_questions: 1,
               compact_context: 1,
               get_tool_schemas: 1,
               request_tool_access: 1,
             }),
 
-            database_access: "execute_sql_with_rollback",
+            database_access: "execute_readonly_sql",
           },
           icon: "ViewCarousel",
           prompt: [
@@ -81,13 +81,13 @@ export const setupLLM = async (dbs: DBS) => {
           options: {
             max_tokens: 18_000,
             mcp_server_tools: allowProstglesUITools({
-              suggest_agentic_workflow: 1,
+              create_agentic_workflow: 1,
               ask_user_questions: 1,
               compact_context: 1,
               get_tool_schemas: 1,
               request_tool_access: 1,
             }),
-            database_access: "execute_sql_with_rollback",
+            database_access: "execute_readonly_sql",
           },
           prompt: [
             firstLine,
@@ -95,7 +95,7 @@ export const setupLLM = async (dbs: DBS) => {
             "They expect you to look at the schema and tools available and return the best suited tools, database schema and workflow logic for accomplishing their task.",
             `It is crucial that you do not bother the user with questions that can be easily answered by looking at the schema or tools available. Always try to infer missing information from the schema and tools before asking the user.`,
             `If user input controls are necessary explore the data involved sufficiently to ensure "enum" inputs are used as much as possible instead of "custom" to provide better UX and accuracy.`,
-            `Always use the ${"suggest_agentic_workflow" satisfies keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]} tool to return a workflow_function_definition instead of only describing the workflow in plain text.`,
+            `Always use the ${"create_agentic_workflow" satisfies keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]} tool to return a workflow_function_definition instead of only describing the workflow in plain text.`,
             `The workflow_function_definition must compile into valid typescript and call defineAgenticWorkflow().`,
             `The file is an executable entry point. The code must be top-level execution only. You are prohibited from wrapping the defineAgenticWorkflow call in any functions`,
             "Choose the minimum required database access and minimum required tools; prefer custom tablePermissions over broad SQL modes.",
@@ -145,7 +145,7 @@ export const setupLLM = async (dbs: DBS) => {
                 get_tool_schemas: 1,
               }),
             },
-            database_access: "execute_sql_with_rollback",
+            database_access: "execute_readonly_sql",
             max_tokens: 18_000,
           },
           prompt: [

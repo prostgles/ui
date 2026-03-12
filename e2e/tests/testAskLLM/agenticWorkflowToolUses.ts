@@ -185,8 +185,9 @@ export const agenticWorkflowToolUses = Object.fromEntries(
               id: `agentic-workflow-tool-use-${mode}`,
               type: "function",
               function: {
-                name: "prostgles-ui--suggest_agentic_workflow",
+                name: "prostgles-ui--create_agentic_workflow",
                 arguments: stringify({
+                  workflow_function_definition_summary: `Agentic workflow definition for mode ${mode}`,
                   workflow_function_definition: getFunc(mode),
                 }),
               },

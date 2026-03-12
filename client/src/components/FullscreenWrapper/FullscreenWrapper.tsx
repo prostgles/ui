@@ -31,11 +31,14 @@ export const FullscreenWrapper = ({
   return (
     <FlexCol
       {...testSelectors}
+      /** This is done to ensure that monaco editors revert to initial size within chat */
+      key={fullscreen.toString()}
       className={classOverride(
         "FullscreenWrapper relative b b-color rounded gap-0 f-0 o-hidden ",
         className,
       )}
       aria-modal={fullscreen}
+      data-command="FullscreenWrapper"
       style={{
         minWidth: "min(100%, 600px, 100vw)",
         ...style,
@@ -60,6 +63,7 @@ export const FullscreenWrapper = ({
         ))}
         <Btn
           title={fullscreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
+          data-command="FullscreenWrapper.toggleFullscreen"
           iconPath={fullscreen ? mdiClose : mdiFullscreen}
           size="small"
           onClick={() => setFullscreen(!fullscreen)}

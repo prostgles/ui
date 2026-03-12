@@ -38,7 +38,7 @@ export const LoadSuggestedDashboards = ({
   }, [message.id, workspaces]);
   const json = message.input as
     | JSONB.GetObjectType<
-        (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_dashboards"]["schema"]["type"]
+        (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_dashboards"]["schema"]["type"]
       >
     | undefined;
   const { addAlert } = useAlert();

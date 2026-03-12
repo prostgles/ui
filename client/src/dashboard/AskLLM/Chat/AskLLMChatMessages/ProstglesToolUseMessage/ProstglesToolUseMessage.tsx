@@ -19,11 +19,11 @@ import { WebSnapshot } from "./ProstglesMCPTools/WebSearch/WebSnapshot";
 import { RequestToolAccess } from "./ProstglesMCPTools/RequestToolAccess";
 
 export const ProstglesMCPToolsWithUI = {
-  [getMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]: {
+  [getMCPFullToolName("prostgles-ui", "create_dashboards") as string]: {
     component: LoadSuggestedDashboards,
     displayMode: "full",
   },
-  [getMCPFullToolName("prostgles-ui", "suggest_agentic_workflow") as string]: {
+  [getMCPFullToolName("prostgles-ui", "create_agentic_workflow") as string]: {
     component: AgenticWorkflow,
     displayMode: "full",
     showsError: true,
@@ -35,6 +35,7 @@ export const ProstglesMCPToolsWithUI = {
   "prostgles-ui--run_code_in_sandbox": {
     component: DockerSandboxCreateContainer,
     displayMode: "full",
+    showsError: true,
   },
   "prostgles-ui--request_tool_access": {
     component: RequestToolAccess,
@@ -50,7 +51,7 @@ export const ProstglesMCPToolsWithUI = {
   },
   [getProstglesMCPFullToolName(
     "prostgles-db",
-    "execute_sql_with_rollback",
+    "execute_readonly_sql",
   ) as string]: {
     component: ExecuteSQL,
     displayMode: "inline",

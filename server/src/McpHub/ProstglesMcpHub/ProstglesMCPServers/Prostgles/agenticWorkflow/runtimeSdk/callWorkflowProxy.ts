@@ -10,7 +10,7 @@ export const callWorkflowProxy = async (args: ProxyCallData) => {
   const logData: [string, ...any] = (() => {
     if (
       args.type === "db/execute_sql_with_commit" ||
-      args.type === "db/execute_sql_with_rollback"
+      args.type === "db/execute_readonly_sql"
     ) {
       return ["db.runSQL", args.type];
     }

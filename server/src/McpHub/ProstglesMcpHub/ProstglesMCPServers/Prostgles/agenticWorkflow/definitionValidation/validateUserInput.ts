@@ -1,100 +1,115 @@
 import { getProperty } from "@common/utils";
-import type { AgenticWorkflowDefinition } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
+import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { isObject } from "prostgles-types";
 
+type UserInput = JSONBTypeIfDefined<
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["run_code_in_sandbox"]["schema"]["type"]["userInput"]
+>;
+
+type UserInputItem = UserInput[keyof UserInput];
 export const validateUserInput = (
   userInputValue: Record<string, unknown>,
-  userInputDefinition: AgenticWorkflowDefinition["userInput"],
+  userInputDefinition: UserInput,
 ) => {
-  if (!userInputDefinition) return;
+  const resultWithDefaults: Record<string, unknown> = {};
   for (const [key, definition] of Object.entries(userInputDefinition)) {
     const titleOrKey = definition.title || key;
-    const value = userInputValue[key];
+    const value = userInputValue[key] ?? definition.defaultValue;
+    resultWithDefaults[key] = value;
+    const prepareError = (message: string) =>
+      ({
+        isValid: false,
+        error: `${message}: ${JSON.stringify(titleOrKey)}`,
+        inputKey: key,
+      }) as const;
     if (definition.optional && value === undefined) continue;
     if (!definition.optional && value === undefined) {
-      return {
-        error: `Missing required user input: ${JSON.stringify(titleOrKey)}`,
-      };
+      return prepareError(`Missing required user input`);
     }
-    if (definition.type === "table-filter") {
-      if (!value) {
-        return {
-          error: `Missing value for user input ${JSON.stringify(titleOrKey)}`,
-        };
-      }
-    } else if (definition.type === "table-column-values") {
-      if (!Array.isArray(value)) {
-        return {
-          error: `Invalid user input. Expecting array ${JSON.stringify(
-            titleOrKey,
-          )}`,
-        };
-      }
-    } else if (definition.type === "table-column-value") {
-      if (value === undefined) {
-        return {
-          error: `Missing user input. ${JSON.stringify(titleOrKey)}`,
-        };
-      }
-    } else if (definition.type === "table-and-column") {
-      if (
-        !value ||
-        typeof getProperty(value, "tableName") !== "string" ||
-        typeof getProperty(value, "columnName") !== "string"
-      ) {
-        return {
-          error: `Invalid or missing tableName for user input ${JSON.stringify(
-            titleOrKey,
-          )}`,
-        };
-      }
-    } else if (definition.type === "enum") {
-      if (typeof value !== "string") {
-        return {
-          error: `Invalid type for user input ${JSON.stringify(titleOrKey)}: expected string for enum`,
-        };
-      }
-      if (!definition.values.includes(value)) {
-        return {
-          error: `Invalid value for user input ${JSON.stringify(titleOrKey)}: expected one of ${JSON.stringify(
-            definition.values,
-          )}`,
-        };
-      }
-    } else if (definition.type === "custom") {
-      if (definition.dataType === "string" && typeof value !== "string") {
-        return {
-          error: `Invalid type for user input ${JSON.stringify(titleOrKey)}: expected string`,
-        };
-      }
-      if (definition.dataType === "number" && typeof value !== "number") {
-        return {
-          error: `Invalid type for user input ${JSON.stringify(titleOrKey)}: expected number`,
-        };
-      }
-      if (definition.dataType === "boolean" && typeof value !== "boolean") {
-        return {
-          error: `Invalid type for user input ${JSON.stringify(titleOrKey)}: expected boolean`,
-        };
-      }
-      if (definition.dataType === "Date" && isNaN(Date.parse(String(value)))) {
-        return {
-          error: `Invalid type for user input ${JSON.stringify(titleOrKey)}: expected Date`,
-        };
-      }
-    } else if (
-      ["table-column", "table-name", "table-and-column"].includes(
-        definition.type,
-      )
-    ) {
-      if (typeof value !== "string") {
-        return {
-          error: `Invalid type for user input ${JSON.stringify(titleOrKey)}: expected string for ${definition.type}`,
-        };
-      }
-    } else {
-      return {
-        error: `Unknown user input type for ${JSON.stringify(titleOrKey)}`,
-      };
-    }
+    const validators = {
+      "table-and-column": () => {
+        if (
+          !value ||
+          typeof getProperty(value, "tableName") !== "string" ||
+          typeof getProperty(value, "columnName") !== "string"
+        ) {
+          return prepareError(`Invalid or missing tableName`);
+        }
+      },
+      "table-filter": () => {
+        if (!isObject(value)) {
+          return prepareError(
+            `Invalid type for user input. Expected object with filter conditions`,
+          );
+        }
+      },
+      "table-column": () => {
+        if (typeof value !== "string") {
+          return prepareError(
+            `Invalid type for user input. Expected string with column name`,
+          );
+        }
+      },
+      custom: (v, definition) => {
+        if (definition.dataType === "string" && typeof value !== "string") {
+          return prepareError(`Invalid type for user input. Expected string`);
+        }
+        if (definition.dataType === "number" && typeof value !== "number") {
+          return prepareError(`Invalid type for user input. Expected number`);
+        }
+        if (definition.dataType === "boolean" && typeof value !== "boolean") {
+          return prepareError(`Invalid type for user input. Expected boolean`);
+        }
+        if (
+          definition.dataType === "Date" &&
+          isNaN(Date.parse(String(value)))
+        ) {
+          return prepareError(
+            `Invalid type for user input. Expected valid Date string`,
+          );
+        }
+      },
+      enum: (v, definition) => {
+        if (typeof value !== "string") {
+          return prepareError(
+            `Invalid type for user input. Expected string for enum`,
+          );
+        }
+        if (!definition.values.includes(value)) {
+          return prepareError(
+            `Invalid value for user input. Expected one of ${JSON.stringify(definition.values)}`,
+          );
+        }
+      },
+      "table-column-value": () => {
+        // any value
+      },
+      "table-column-values": () => {
+        if (!Array.isArray(value)) {
+          return prepareError(`Invalid user input. Expecting array`);
+        }
+      },
+      "table-name": () => {
+        if (typeof value !== "string") {
+          return prepareError(
+            `Invalid type for user input. Expected string with table name`,
+          );
+        }
+      },
+    } satisfies {
+      [Type in UserInputItem["type"]]: (
+        value: unknown,
+        definition: Extract<UserInputItem, { type: Type }>,
+      ) => { error: string } | undefined | void;
+    };
+
+    const { type: typeName } = definition;
+    validators[typeName](
+      value,
+      //@ts-expect-error union of functions with different signatures
+      definition,
+    );
   }
+  return { isValid: true, value: resultWithDefaults } as const;
 };

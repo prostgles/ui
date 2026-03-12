@@ -87,11 +87,11 @@ const handler = {
               })) ?? [],
           };
         },
-        suggest_agentic_workflow: createAgenticWorkflow,
+        create_agentic_workflow: createAgenticWorkflow,
         get_tool_schemas: async ({ mcpServerTools }) => {
           return getToolTypescriptSchemas(dbs, mcpServerTools ?? "*");
         },
-        suggest_dashboards: () => {
+        create_dashboards: () => {
           return "Done";
         },
         compact_context: async (args, { chat }) => {

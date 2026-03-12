@@ -9,6 +9,7 @@ import {
   prostglesUIFoodDeliveryDashboardSample,
 } from "./sampleToolUseData";
 import { stringify, type ToolUse } from "./utils";
+import { mcpSandboxToolUse } from "./mcpSandboxToolUse";
 
 type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -109,7 +110,7 @@ const dashboardToolUse: ToolUse = {
       id: "dashboard-tool-use",
       type: "function",
       function: {
-        name: "prostgles-ui--suggest_dashboards",
+        name: "prostgles-ui--create_dashboards",
         arguments: stringify(prostglesUIFoodDeliveryDashboardSample),
       },
     },
@@ -122,7 +123,7 @@ const cryptoDashboardToolUse: ToolUse = {
       id: "dashboard-tool-use",
       type: "function",
       function: {
-        name: "prostgles-ui--suggest_dashboards",
+        name: "prostgles-ui--create_dashboards",
         arguments: stringify(prostglesUICryptoDashboardSample),
       },
     },
@@ -171,42 +172,6 @@ const playwrightMCPToolUse: ToolUse = {
   ],
 };
 const isDocker = Boolean(process.env.IS_DOCKER);
-const mcpSandboxToolUse: ToolUse = {
-  content: `I'll create a container that runs a simple Node.js application.`,
-  tool: [
-    {
-      id: "mcp-tool-use-sandbox1",
-      type: "function",
-      function: {
-        name: "prostgles-ui--run_code_in_sandbox",
-        arguments: stringify({
-          files: {
-            Dockerfile: `FROM node:20 \nWORKDIR /app \nCOPY . . \nRUN npm install \nCMD ["npm", "start"]`,
-            "package.json": JSON.stringify({
-              name: "test-app",
-              version: "1.0.0",
-              scripts: {
-                start: "node index.js",
-              },
-              depenencies: {
-                "node-fetch": "^3.3.0",
-              },
-            }),
-            "index.js": dedent(`
-            fetch(
-              process.env.DOCKER_MCP_ENDPOINT + "/db/execute_sql_with_rollback", 
-              { headers: { "Content-Type": "application/json" }, 
-              method: "POST", 
-              body: JSON.stringify({ sql: "SELECT * FROM users" }) 
-            }).then(res => res.json()).then(console.log).catch(console.error);`),
-          },
-          networkMode: "bridge",
-          timeout: 30_000,
-        }),
-      },
-    },
-  ],
-};
 
 const toolResponses: Record<string, ToolUse> = {
   task: taskToolUse,
@@ -260,7 +225,7 @@ const toolResponses: Record<string, ToolUse> = {
         id: "sql-tool-use",
         type: "function",
         function: {
-          name: "prostgles-db--execute_sql_with_rollback",
+          name: "prostgles-db--execute_readonly_sql",
           arguments: stringify({
             sql: "SELECT * FROM orders WHERE created_at >= NOW() - INTERVAL '30 days';",
           }),
@@ -449,13 +414,3 @@ return {
     total_tokens: 0, 
   },
 };//`;
-
-function dedent(str: string) {
-  const lines = str.replace(/^\n/, "").split("\n");
-  const indent = Math.min(
-    ...lines
-      .filter((line) => line.trim().length > 0)
-      .map((line) => line.match(/^(\s*)/)![1].length),
-  );
-  return lines.map((line) => line.slice(indent)).join("\n");
-}

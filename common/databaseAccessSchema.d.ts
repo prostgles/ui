@@ -3,7 +3,7 @@ export declare const databaseAccessSchema: {
     readonly description: "Database access configuration. Use the most restrictive access type that is needed to complete the task.";
     readonly oneOfType: readonly [{
         readonly mode: {
-            readonly enum: readonly ["execute_sql_with_rollback", "execute_sql_with_commit"];
+            readonly enum: readonly ["execute_readonly_sql", "execute_sql_with_commit"];
         };
     }, {
         readonly mode: {

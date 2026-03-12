@@ -7,6 +7,11 @@ import { getProperty, isDefined } from "prostgles-types";
 import { END_OF_SCHEMA_PLACEHOLDER } from "../runtimeSdk/defineAgenticWorkflow";
 import { getToolTypescriptSchemas } from "./getToolTypescriptSchemas";
 import { getDefineAgenticWorkflowWithSchemas } from "./getDefineAgenticWorkflowWithSchemas";
+import {
+  renderSummary,
+  summariseWorkflowFile,
+} from "../runtimeSdk/getTsLogicSummary";
+import { instrumentWorkflowFile } from "../runtimeSdk/addInstrumentationToTsLogic";
 
 const defineAgenticWorkflowDirectory = join(
   __dirname,
@@ -165,3 +170,10 @@ const dataTypeToUdtNameMap = {
   integer: "integer",
   boolean: "boolean",
 } as const;
+
+const exampleSlice = defineAgenticWorkflowTs.slice(
+  defineAgenticWorkflowTs.lastIndexOf("* \n") + 3,
+  defineAgenticWorkflowTs.lastIndexOf(`*/`),
+);
+const nodes = summariseWorkflowFile(exampleSlice);
+console.log(nodes, renderSummary(nodes), instrumentWorkflowFile(exampleSlice));

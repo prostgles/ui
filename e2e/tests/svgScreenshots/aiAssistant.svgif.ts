@@ -105,22 +105,22 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
       `,
   );
   await page.getByTestId("AskLLM").click();
+  await newChat(page);
   await deletePreviousMessages();
   await setPromptByText(page, "chat");
   await setModelByText(page, "sonn");
 
   await deletePreviousMessages();
-  // await setPromptByText(page, "create task");
   await typeSendAddScenes(
     page,
     addScene,
     "The task involves importing data from receipt images I will paste in this chat",
   );
-  const loadTaskBtn = await page
+  const loadToolsBtn = await page
     .getByTestId("RequestToolAccess.Approve")
     .last();
 
-  await loadTaskBtn.waitFor({ state: "visible", timeout: 15000 });
+  await loadToolsBtn.waitFor({ state: "visible", timeout: 15000 });
   await addSceneAnimation(getCommandElemSelector("RequestToolAccess.Approve"));
 
   await page.getByText("Added tool access").waitFor({ state: "visible" });
@@ -136,20 +136,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   const fileChooser = await fileChooserPromise;
   await fileChooser.setFiles(filePath);
 
-  await typeSendAddScenes(
-    page,
-    addScene,
-    ``,
-    //   [
-    //   { type: "wait", duration: 500 },
-    //   {
-    //     type: "click",
-    //     elementSelector:
-    //       getCommandElemSelector("ToolUseMessage.toggle") + ":last-child",
-    //     duration: 1000,
-    //   },
-    // ]
-  );
+  await typeSendAddScenes(page, addScene, ``);
 
   await page.waitForTimeout(2000);
   await addScene({
@@ -157,20 +144,23 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     animations: [{ type: "wait", duration: 1000 }],
   });
 
+  await page.getByTestId("AskLLMToolApprover.AllowOnce").last().click();
   await page.getByTestId("ToolUseMessage.toggle").last().click();
   await expect(page.getByTestId("Popup.content").last()).toContainText(
     "Grand Ocean Hotel",
   );
 
   await deletePreviousMessages();
+  await page.waitForTimeout(1000);
   await setPromptByText(page, "chat");
   await page.getByTestId("LLMChatOptions.MCPTools").click();
   await page
     .getByTestId("MCPServerTools")
     .getByText("run_code_in_sandbox")
     .click();
-  await page.getByText("Auto-approve: ON").click();
+
   await page.waitForTimeout(1000);
+  await page.getByText("Auto-approve: OFF").scrollIntoViewIfNeeded();
   await page.getByText("Auto-approve: OFF").click();
   await page.waitForTimeout(1000);
   await page.getByTestId("Popup.close").last().click();
@@ -187,19 +177,6 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   );
 
   await addSceneAnimation(getDataKey("fetch_weather.js"));
-
-  // await page.getByTestId("ToolUseMessage").last().scrollIntoViewIfNeeded();
-  // await addScene({
-  //   svgFileName: "docker_js",
-  //   animations: [
-  //     { type: "wait", duration: 1000 },
-  //     {
-  //       type: "click",
-  //       elementSelector: getDataKeyElemSelector("fetch_weather.js"),
-  //       duration: 1000,
-  //     },
-  //   ],
-  // });
 
   await addScene({
     svgFileName: "docker",

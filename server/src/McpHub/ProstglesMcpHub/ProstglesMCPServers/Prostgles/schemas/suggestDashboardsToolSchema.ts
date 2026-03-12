@@ -3,7 +3,7 @@ import { dashboardTypesContent } from "@src/init/saveTypescriptFilesForProductio
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 
-const name = "suggest_dashboards" as const;
+const name = "create_dashboards" as const;
 export const suggestDashboardsToolSchema = {
   name,
   description: [

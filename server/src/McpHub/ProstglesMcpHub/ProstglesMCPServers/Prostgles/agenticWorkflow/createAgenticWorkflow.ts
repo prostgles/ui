@@ -11,12 +11,13 @@ import { validateAgenticWorkflowDefinitions } from "./definitionValidation/valid
 import { startAgenticWorkflowContainer } from "./execution/startAgenticWorkflowContainer";
 
 type Args = JSONBObjectTypeIfDefined<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_agentic_workflow"]["schema"]["type"]
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_agentic_workflow"]["schema"]["type"]
 >;
 
 const getValidWorkflowDefinition = async (
   {
     workflow_function_definition,
+    workflow_function_definition_summary,
     newTables,
     connection_id,
     aborter,
@@ -71,6 +72,7 @@ const getValidWorkflowDefinition = async (
             name: definitions.name,
             chat_id: chat.id,
             definition: workflow_function_definition,
+            definition_summary: workflow_function_definition_summary,
             package_dependencies,
             definition_data: {
               ...definition_data,
@@ -128,7 +130,11 @@ const getValidWorkflowDefinition = async (
 };
 
 export const createAgenticWorkflow = async (
-  { workflow_function_definition, workflowId }: Args,
+  {
+    workflow_function_definition,
+    workflow_function_definition_summary,
+    workflowId,
+  }: Args,
   ctx: McpCallContext,
 ) => {
   const { dbs, chat, user_id } = ctx;
@@ -141,6 +147,7 @@ export const createAgenticWorkflow = async (
   const initialBuild = await getValidWorkflowDefinition(
     {
       workflow_function_definition,
+      workflow_function_definition_summary,
       workflowId,
       connection_id,
       aborter,
@@ -157,6 +164,7 @@ export const createAgenticWorkflow = async (
     res = await getValidWorkflowDefinition(
       {
         workflow_function_definition,
+        workflow_function_definition_summary,
         workflowId,
         connection_id,
         aborter,

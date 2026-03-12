@@ -184,7 +184,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
           oneOfType: [
             {
               mode: {
-                enum: ["execute_sql_with_rollback"],
+                enum: ["execute_readonly_sql"],
                 description:
                   "Can run readonly SQL queries (if the current user is allowed)",
               },

@@ -2,6 +2,8 @@ import { runContainerWithProxyAccess } from "@src/McpHub/DockerSandbox/runContai
 import type { McpCallContext } from "../../ProstglesMCPServerTypes";
 import type { CreateContainerParams } from "./schemas/getCreateContainerToolSchema";
 import { getSerialisableError } from "prostgles-types";
+import { validateUserInput } from "./agenticWorkflow/definitionValidation/validateUserInput";
+import { USER_INPUT_VALUE_ENV_VARIABLE_NAME } from "@common/prostglesMcp";
 
 const aborters = new Map<number, AbortController>();
 export const stopContainer = (containerId: number) => {
@@ -12,6 +14,7 @@ export const stopContainer = (containerId: number) => {
   aborter.abort();
   aborters.delete(containerId);
 };
+
 export const runCodeInSandboxContainer = async (
   args: CreateContainerParams,
   { user_id, chat, connection_id, dbs, toolUseId }: McpCallContext,
@@ -42,6 +45,9 @@ export const runCodeInSandboxContainer = async (
   );
   const aborter = new AbortController();
   aborters.set(container.id, aborter);
+  const userInputValidation =
+    args.userInput &&
+    validateUserInput(args.userInputValue ?? {}, args.userInput);
   const res = await runContainerWithProxyAccess(
     dbs,
     {
@@ -53,6 +59,12 @@ export const runCodeInSandboxContainer = async (
     },
     {
       ...args,
+      environment: {
+        ...args.environment,
+        [USER_INPUT_VALUE_ENV_VARIABLE_NAME]: JSON.stringify(
+          !userInputValidation?.isValid ? {} : userInputValidation.value,
+        ),
+      },
       networkMode: args.networkMode || "bridge-internal",
       signal: aborter.signal,
     },

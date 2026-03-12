@@ -1,5 +1,6 @@
 import { type ProstglesDbTools } from "@common/prostglesMcp";
 import type { DbPermissions } from "@src/McpHub/DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
+import type { ProxyDbCallData } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/defineAgenticWorkflowHandlers.types";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import {
   getJSONBObjectSchemaValidationError,
@@ -8,7 +9,7 @@ import {
 } from "prostgles-types";
 import { connectionManager } from "../../../index";
 import { getAllowedDBToolSchemas } from "./getAllowedDBToolSchemas";
-import type { ProxyDbCallData } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/defineAgenticWorkflowHandlers.types";
+import { getTemplateUserConnection } from "./getDbConnectionWithPermissions";
 
 export const runProstglesDBTool = async (
   chat: DbPermissions,
@@ -22,10 +23,7 @@ export const runProstglesDBTool = async (
     throw new Error(`Tool "${toolName}" not found`);
   }
 
-  const { clientDb, clientSql } = await getClientDBHandlersForChat(
-    chat,
-    clientReq,
-  );
+  const { clientDb } = await getClientDBHandlersForChat(chat, clientReq);
 
   const validatedInput = getJSONBObjectSchemaValidationError(
     tool.schema.type,
@@ -38,7 +36,7 @@ export const runProstglesDBTool = async (
   const { data: validatedData } = validatedInput;
   if (
     tool.tool_name === "execute_sql_with_commit" ||
-    tool.tool_name === "execute_sql_with_rollback"
+    tool.tool_name === "execute_readonly_sql"
   ) {
     const {
       sql,
@@ -51,21 +49,19 @@ export const runProstglesDBTool = async (
       throw new Error("SQL query is required");
     }
 
+    const db = await getTemplateUserConnection(
+      chat.connection_id,
+      tool.tool_name === "execute_sql_with_commit" ? undefined : "readonly",
+    );
     const queryWithTimeout =
       query_timeout && Number.isInteger(query_timeout) ?
         [`SET LOCAL statement_timeout to '${query_timeout}s'`, sql].join(";\n")
       : sql;
-    const result = await clientSql(queryWithTimeout, query_params as any[], {
-      returnType:
-        tool.tool_name === "execute_sql_with_rollback" ?
-          "default-with-rollback"
-        : "rows",
-    });
-    if (tool.tool_name === "execute_sql_with_commit") {
-      return result;
-    } else {
-      return result.rows;
-    }
+    const result = await db.any<Record<string, any>>(
+      queryWithTimeout,
+      query_params,
+    );
+    return result;
   }
 
   const getTableHandler = (tableName: string) => {
@@ -150,10 +146,7 @@ export const getClientDBHandlersForChat = async (
     connectionManager.getConnectionStartedInstance(connection_id);
   const handlers = await connection.prgl.getClientDBHandlers(clientReq, {
     tables: tables,
-    sql:
-      chatDBPermissions?.mode === "execute_sql_with_commit" ? "commited"
-      : chatDBPermissions?.mode === "execute_sql_with_rollback" ? "rolledback"
-      : undefined,
+    allowSql: chatDBPermissions?.mode === "execute_sql_with_commit",
   });
   return handlers;
 };

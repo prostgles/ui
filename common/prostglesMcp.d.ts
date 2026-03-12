@@ -1,4 +1,133 @@
 import type { DBSSchema } from "./publishUtils";
+export declare const USER_INPUT_VALUE_ENV_VARIABLE_NAME: "USER_INPUT_VALUE";
+export declare const userInputSchema: {
+    readonly optional: true;
+    readonly description: string;
+    readonly record: {
+        readonly values: {
+            readonly oneOfType: readonly [{
+                readonly title: "string";
+                readonly optional: {
+                    readonly type: "boolean";
+                    readonly optional: true;
+                };
+                readonly type: {
+                    readonly enum: readonly ["table-column-value"];
+                };
+                readonly tableName: "string";
+                readonly columnName: "string";
+                readonly defaultValue: {
+                    readonly type: "any";
+                    readonly optional: true;
+                };
+            }, {
+                readonly title: "string";
+                readonly optional: {
+                    readonly type: "boolean";
+                    readonly optional: true;
+                };
+                readonly type: {
+                    readonly enum: readonly ["table-column-values"];
+                };
+                readonly tableName: "string";
+                readonly columnName: "string";
+                readonly defaultValue: {
+                    readonly type: "any[]";
+                    readonly optional: true;
+                };
+            }, {
+                readonly title: "string";
+                readonly optional: {
+                    readonly type: "boolean";
+                    readonly optional: true;
+                };
+                readonly type: {
+                    readonly enum: readonly ["table-filter"];
+                };
+                readonly tableName: "string";
+                readonly defaultValue: {
+                    readonly record: {
+                        readonly values: "any";
+                    };
+                    readonly optional: true;
+                };
+            }, {
+                readonly title: "string";
+                readonly optional: {
+                    readonly type: "boolean";
+                    readonly optional: true;
+                };
+                readonly type: {
+                    readonly enum: readonly ["table-column"];
+                };
+                readonly tableName: "string";
+                readonly defaultValue: {
+                    readonly type: "string";
+                    readonly optional: true;
+                };
+            }, {
+                readonly title: "string";
+                readonly optional: {
+                    readonly type: "boolean";
+                    readonly optional: true;
+                };
+                readonly type: {
+                    readonly enum: readonly ["table-name"];
+                };
+                readonly defaultValue: {
+                    readonly type: "string";
+                    readonly optional: true;
+                };
+            }, {
+                readonly title: "string";
+                readonly optional: {
+                    readonly type: "boolean";
+                    readonly optional: true;
+                };
+                readonly type: {
+                    readonly enum: readonly ["table-and-column"];
+                };
+                readonly defaultValue: {
+                    readonly type: {
+                        readonly tableName: "string";
+                        readonly columnName: "string";
+                    };
+                    readonly optional: true;
+                };
+            }, {
+                readonly title: "string";
+                readonly optional: {
+                    readonly type: "boolean";
+                    readonly optional: true;
+                };
+                readonly type: {
+                    readonly enum: readonly ["enum"];
+                };
+                readonly values: "string[]";
+                readonly defaultValue: {
+                    readonly type: "string";
+                    readonly optional: true;
+                };
+            }, {
+                readonly title: "string";
+                readonly optional: {
+                    readonly type: "boolean";
+                    readonly optional: true;
+                };
+                readonly type: {
+                    readonly enum: readonly ["custom"];
+                };
+                readonly dataType: {
+                    readonly enum: readonly ["string", "number", "boolean", "Date"];
+                };
+                readonly defaultValue: {
+                    readonly type: "unknown";
+                    readonly optional: true;
+                };
+            }];
+        };
+    };
+};
 export declare const mcpServerToolsAllowed: {
     readonly record: {
         readonly partial: true;
@@ -17,7 +146,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         readonly [x: string]: "";
     };
     readonly "prostgles-db": {
-        readonly execute_sql_with_rollback: {
+        readonly execute_readonly_sql: {
             readonly description: "Executes a SQL query on the connected database in readonly mode (no data can be changed, the transaction is rolled back at the end).";
             readonly schema: {
                 readonly type: {
@@ -50,7 +179,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
         };
         readonly execute_sql_with_commit: {
-            readonly description: "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction commited at the end).";
+            readonly description: "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction committed at the end).";
             readonly schema: {
                 readonly type: {
                     readonly sql: {
@@ -85,10 +214,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Counts rows in a table that satisfy a filter.";
             readonly schema: {
                 readonly type: {
-                    readonly tableName: {
-                        readonly type: "string";
-                        readonly description: "Table to select from";
-                    };
+                    readonly tableName: "string";
                     readonly filter: {
                         readonly optional: true;
                         readonly description: "Row filter. Must satisfy the table schema. Example filters: { $or: [{ id: 1 }, { name: { $in: ['John'] } }] }";
@@ -104,10 +230,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Selects rows from a table.";
             readonly schema: {
                 readonly type: {
-                    readonly tableName: {
-                        readonly type: "string";
-                        readonly description: "Table to select from";
-                    };
+                    readonly tableName: "string";
                     readonly filter: {
                         readonly description: "Row filter. Must satisfy the table schema. Example filters: { $or: [{ id: 1 }, { name: { $in: ['John'] } }] }";
                         readonly record: {
@@ -163,17 +286,20 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Inserts rows into a table.";
             readonly schema: {
                 readonly type: {
-                    readonly tableName: {
-                        readonly type: "string";
-                        readonly description: "Table to insert into";
-                    };
+                    readonly tableName: "string";
                     readonly data: {
                         readonly description: "Data to insert into the table. Must satisfy the table schema.";
-                        readonly arrayOf: {
+                        readonly oneOf: readonly [{
+                            readonly arrayOf: {
+                                readonly record: {
+                                    readonly values: "any";
+                                };
+                            };
+                        }, {
                             readonly record: {
                                 readonly values: "any";
                             };
-                        };
+                        }];
                     };
                     readonly onConflict: {
                         readonly enum: readonly ["DoNothing", "DoUpdate"];
@@ -215,6 +341,16 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                             readonly values: "any";
                         };
                     };
+                    readonly removeDisallowedFields: {
+                        readonly type: "boolean";
+                        readonly optional: true;
+                        readonly description: "Whether to remove fields that are not allowed to be updated instead of throwing an error.";
+                    };
+                    readonly multi: {
+                        readonly description: "true by default. When set to false the update will throw an error if more than one row is updated (but the update will commit).";
+                        readonly type: "boolean";
+                        readonly optional: true;
+                    };
                     readonly returning: {
                         readonly optional: true;
                         readonly oneOf: readonly [{
@@ -235,10 +371,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                             readonly values: "any";
                         };
                     };
-                    readonly tableName: {
-                        readonly type: "string";
-                        readonly description: "Table to insert into";
-                    };
+                    readonly tableName: "string";
                 };
             };
             readonly outputSchema: {
@@ -274,10 +407,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                             readonly values: "any";
                         };
                     };
-                    readonly tableName: {
-                        readonly type: "string";
-                        readonly description: "Table to delete from";
-                    };
+                    readonly tableName: "string";
                 };
             };
             readonly outputSchema: {
@@ -309,11 +439,146 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
         readonly run_code_in_sandbox: {
             readonly mode: undefined;
-            readonly description: "Executes code in a docker container. CANNOT ACCESS THE DATABASE DIRECTLY (must access the database only through POST requests to the exposed api). Useful for doing bulk data insert/analysis/processing/ETL. The database permissions must be set to 'Auto approve' to allow the container access to the database. Otherwise, permissions have no effect.";
+            readonly description: string;
             readonly schema: {
                 readonly type: {
+                    readonly userInput: {
+                        readonly description: string;
+                        readonly optional: true;
+                        readonly record: {
+                            readonly values: {
+                                readonly oneOfType: readonly [{
+                                    readonly title: "string";
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["table-column-value"];
+                                    };
+                                    readonly tableName: "string";
+                                    readonly columnName: "string";
+                                    readonly defaultValue: {
+                                        readonly type: "any";
+                                        readonly optional: true;
+                                    };
+                                }, {
+                                    readonly title: "string";
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["table-column-values"];
+                                    };
+                                    readonly tableName: "string";
+                                    readonly columnName: "string";
+                                    readonly defaultValue: {
+                                        readonly type: "any[]";
+                                        readonly optional: true;
+                                    };
+                                }, {
+                                    readonly title: "string";
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["table-filter"];
+                                    };
+                                    readonly tableName: "string";
+                                    readonly defaultValue: {
+                                        readonly record: {
+                                            readonly values: "any";
+                                        };
+                                        readonly optional: true;
+                                    };
+                                }, {
+                                    readonly title: "string";
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["table-column"];
+                                    };
+                                    readonly tableName: "string";
+                                    readonly defaultValue: {
+                                        readonly type: "string";
+                                        readonly optional: true;
+                                    };
+                                }, {
+                                    readonly title: "string";
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["table-name"];
+                                    };
+                                    readonly defaultValue: {
+                                        readonly type: "string";
+                                        readonly optional: true;
+                                    };
+                                }, {
+                                    readonly title: "string";
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["table-and-column"];
+                                    };
+                                    readonly defaultValue: {
+                                        readonly type: {
+                                            readonly tableName: "string";
+                                            readonly columnName: "string";
+                                        };
+                                        readonly optional: true;
+                                    };
+                                }, {
+                                    readonly title: "string";
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["enum"];
+                                    };
+                                    readonly values: "string[]";
+                                    readonly defaultValue: {
+                                        readonly type: "string";
+                                        readonly optional: true;
+                                    };
+                                }, {
+                                    readonly title: "string";
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["custom"];
+                                    };
+                                    readonly dataType: {
+                                        readonly enum: readonly ["string", "number", "boolean", "Date"];
+                                    };
+                                    readonly defaultValue: {
+                                        readonly type: "unknown";
+                                        readonly optional: true;
+                                    };
+                                }];
+                            };
+                        };
+                    };
+                    readonly userInputValue: {
+                        readonly optional: true;
+                        readonly description: "User populated values for the userInput keys. It will override the default values in userInput if provided. ";
+                        readonly record: {
+                            readonly values: "unknown";
+                        };
+                    };
                     readonly files: {
-                        readonly description: "Files to copy into the container. Must include a Dockerfile. Example { \"index.ts\": \"import type { JSONB } from \"prostgles-types\";\" }";
+                        readonly description: string;
                         readonly record: {
                             readonly partial: true;
                             readonly values: {
@@ -464,7 +729,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                 };
                             };
                         };
-                        readonly descoription: "List of MCP server tools to get. Leave empty to get all tools.";
+                        readonly description: string;
                         readonly optional: true;
                     };
                 };
@@ -501,7 +766,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                 };
                             };
                         };
-                        readonly descoription: "List of MCP server tools to enable for this chat.";
+                        readonly description: "List of MCP server tools to enable for this chat. Example: { fetch: { fetch: 1 } }";
                         readonly optional: true;
                     };
                     readonly databaseAccess: {
@@ -509,7 +774,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly description: "Database access configuration. Use the most restrictive access type that is needed to complete the task.";
                         readonly oneOfType: readonly [{
                             readonly mode: {
-                                readonly enum: readonly ["execute_sql_with_rollback", "execute_sql_with_commit"];
+                                readonly enum: readonly ["execute_readonly_sql", "execute_sql_with_commit"];
                             };
                         }, {
                             readonly mode: {
@@ -659,7 +924,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 };
             };
         };
-        readonly suggest_agentic_workflow: {
+        readonly create_agentic_workflow: {
             readonly mode: "auto-approved-user-actionable";
             readonly description: string;
             readonly schema: {
@@ -667,6 +932,17 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly workflow_function_definition: {
                         readonly type: "string";
                         readonly description: "Typescript code defining a function that returns an agent workflow. The function must satisfy the following type provided. The function can use available MCP tools and database access if needed. Available MCP tools and database access are determined by the fetchTools function and the input to this tool.";
+                    };
+                    readonly workflow_function_definition_summary: {
+                        readonly type: "string";
+                        readonly description: "A concise summary of the workflow function definition for the user to understand what the workflow does without having to read the code. This will be shown to the user when asking for approval to run the workflow.";
+                    };
+                    readonly package_dependencies: {
+                        readonly optional: true;
+                        readonly description: "A list of npm packages to be added to the container package.json dependencies.";
+                        readonly record: {
+                            readonly values: "string";
+                        };
                     };
                     readonly workflowId: {
                         readonly type: "integer";
@@ -693,7 +969,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                 }];
             };
         };
-        readonly suggest_dashboards: {
+        readonly create_dashboards: {
             readonly mode: "auto-approved-user-actionable";
             readonly description: "Suggest Prostgles UI dashboards to visualize data for the specified task.";
             readonly schema: {

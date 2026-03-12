@@ -1121,7 +1121,10 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
 
-    const dockerRunAndExpect = async (result: string, inFullscreen = false) => {
+    const dockerRunAndExpect = async (
+      result: string[] | string,
+      prepareCb: (() => Promise<void>) | undefined = undefined,
+    ) => {
       await sendAskLLMMessage(page, " mcpsandbox ");
       await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
       await expect(page.getByTestId("Chat.messageList")).toContainText(
@@ -1134,16 +1137,16 @@ test.describe("Main test", () => {
         .locator(".Loading")
         .waitFor({ state: "detached", timeout: 40e3 });
 
-      if (inFullscreen) {
-        await page.getByTestId("PopupSection.fullscreen").last().click();
+      await prepareCb?.();
+
+      for (const res of Array.isArray(result) ? result : [result]) {
+        await expect(page.getByTestId("ToolUseMessage").last()).toContainText(
+          res,
+          {
+            timeout: 20e3,
+          },
+        );
       }
-      await expect(
-        inFullscreen ?
-          page.getByTestId("PopupSection.content").last()
-        : page.getByTestId("ToolUseMessage").last(),
-      ).toContainText(result, {
-        timeout: 20e3,
-      });
     };
 
     await dockerRunAndExpect(
@@ -1183,10 +1186,23 @@ test.describe("Main test", () => {
     /** Auto approve to ensure the container can run the query */
     await page.getByLabel("Auto approve", { exact: true }).last().click();
     await page.getByTestId("Popup.close").last().click();
-    await dockerRunAndExpect(`username: 'fresh_user'`, true);
+    await dockerRunAndExpect(
+      [
+        `username: 'fresh_user'`,
+        `cannot execute CREATE TABLE in a read-only transaction`,
+      ],
+      async () => {
+        await page
+          .getByTestId("ToolUseMessage")
+          .last()
+          .getByTestId("FullscreenWrapper.toggleFullscreen")
+          .nth(1)
+          .click();
+      },
+    );
+    await page.keyboard.press("Escape");
 
     /** Test stopping chat */
-    await page.getByTestId("Popup.close").last().click();
     await newChat(page);
     await sendAskLLMMessage(page, " longresponse ", {
       onAfterSend: async () => {

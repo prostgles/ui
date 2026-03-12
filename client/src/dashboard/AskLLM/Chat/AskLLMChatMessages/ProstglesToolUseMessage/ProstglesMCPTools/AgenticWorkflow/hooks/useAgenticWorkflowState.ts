@@ -11,12 +11,12 @@ export const useAgenticWorkflowState = ({
 }: Pick<ProstglesMCPToolsProps, "message" | "toolUseResult">) => {
   const inputValidation = useJSONBParsedData(
     message.input,
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_agentic_workflow"]
       .schema,
   );
   const workflowValidation = useTypedToolUseResultDataV2(
     toolUseResult?.toolUseResultMessage,
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["suggest_agentic_workflow"]
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_agentic_workflow"]
       .outputSchema,
     true,
   );

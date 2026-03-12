@@ -59,14 +59,13 @@ export const getAgenticWorkflowFunctions = (
             error: undefined,
           };
         }
-        const validationError = validateUserInput(
-          userInputValue,
-          workflow.definition_data.userInput,
-        );
-        if (validationError) {
+        const userInputValidation =
+          workflow.definition_data.userInput &&
+          validateUserInput(userInputValue, workflow.definition_data.userInput);
+        if (userInputValidation?.isValid === false) {
           return {
             state: "init-error" as const,
-            message: validationError.error,
+            message: userInputValidation.error,
             error: undefined,
           };
         }
@@ -79,7 +78,7 @@ export const getAgenticWorkflowFunctions = (
           messageId,
           clientReq,
           executionMode,
-          userInputValue,
+          userInputValue: userInputValidation?.value ?? {},
         });
       },
     }),

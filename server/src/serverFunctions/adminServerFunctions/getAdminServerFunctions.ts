@@ -35,6 +35,7 @@ import { getBackupServerFunctions } from "./getBackupServerFunctions";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { getMcpServerFunctions } from "./getMcpServerFunctions";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
+import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getDbConnectionWithPermissions";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -146,6 +147,38 @@ export const getAdminServerFunctions = (
         const c = connectionManager.getConnectionStartedInstance(conId);
         return c.prgl.getTSSchema();
       },
+    }),
+    runSql: defineAdminFunction({
+      input: {
+        connectionId: "string",
+        query: "string",
+        mode: { enum: ["default", "readOnly"], optional: true },
+        args: { type: "any", optional: true },
+      },
+      run: async ({ connectionId, query, args, mode }) => {
+        const db = await getTemplateUserConnection(
+          connectionId,
+          mode === "" ? "readonly" : undefined,
+        );
+        const { command, fields, rowCount, rows, duration } = await db.result(
+          query,
+          args,
+        );
+        const activeConnection =
+          connectionManager.getActiveConnection(connectionId);
+        const fieldsWithTypes =
+          await activeConnection.prgl.getFieldsWithTypes(fields);
+        return { command, fields: fieldsWithTypes, rowCount, rows, duration };
+      },
+    }),
+    runConnectionQuery: defineAdminFunction({
+      input: {
+        conId: "string",
+        query: "string",
+        args: { type: "any", optional: true },
+      },
+      run: ({ conId, query, args }) =>
+        runConnectionQuery(conId, query, args, undefined, true),
     }),
     getMyIP: defineAdminFunction({
       run: async (_, { db, clientReq: { socket } }) => {
@@ -316,15 +349,6 @@ export const getAdminServerFunctions = (
     getStatus: defineAdminFunction({
       input: { connId: "string" },
       run: ({ connId }, { dbs }) => getStatus(connId, dbs),
-    }),
-    runConnectionQuery: defineAdminFunction({
-      input: {
-        conId: "string",
-        query: "string",
-        args: { type: "any", optional: true },
-      },
-      run: ({ conId, query, args }) =>
-        runConnectionQuery(conId, query, args, undefined, true),
     }),
     getSampleSchemas: defineAdminFunction({
       run: () => getSampleSchemas(),

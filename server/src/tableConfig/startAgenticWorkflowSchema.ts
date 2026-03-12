@@ -1,5 +1,5 @@
 import { databaseAccessSchema } from "@common/databaseAccessSchema";
-import { mcpServerToolsAllowed } from "@common/prostglesMcp";
+import { mcpServerToolsAllowed, userInputSchema } from "@common/prostglesMcp";
 import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
 import { omitKeys, pickKeys, type JSONB } from "prostgles-types";
 
@@ -99,45 +99,7 @@ export const startAgenticWorkflowSchema = {
       },
     },
   },
-  userInput: {
-    optional: true,
-    record: {
-      values: {
-        oneOfType: [
-          {
-            title: "string",
-            optional: { type: "boolean", optional: true },
-            type: { enum: ["table-column-value", "table-column-values"] },
-            tableName: "string",
-            columnName: "string",
-          },
-          {
-            title: "string",
-            optional: { type: "boolean", optional: true },
-            type: { enum: ["table-filter", "table-column"] },
-            tableName: "string",
-          },
-          {
-            title: "string",
-            optional: { type: "boolean", optional: true },
-            type: { enum: ["table-name", "table-and-column"] },
-          },
-          {
-            title: "string",
-            optional: { type: "boolean", optional: true },
-            type: { enum: ["enum"] },
-            values: "string[]",
-          },
-          {
-            title: "string",
-            optional: { type: "boolean", optional: true },
-            type: { enum: ["custom"] },
-            dataType: { enum: ["string", "number", "boolean", "Date"] },
-          },
-        ],
-      },
-    },
-  },
+  userInput: userInputSchema,
   userInputValue: {
     record: {
       values: {

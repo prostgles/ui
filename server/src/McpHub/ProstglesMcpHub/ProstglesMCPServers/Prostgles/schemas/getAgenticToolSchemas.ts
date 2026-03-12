@@ -6,7 +6,7 @@ import { getDefineAgenticWorkflowTsSchema } from "../agenticWorkflow/runtimeSetu
 import type { DBS } from "@src/index";
 import { prostglesApiTypes } from "@common/prostglesApiTypes";
 
-const name = "suggest_agentic_workflow" as const;
+const name = "create_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = async ({
   availableDBTools,
   availableMCPTools,

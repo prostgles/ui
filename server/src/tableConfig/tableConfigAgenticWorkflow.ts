@@ -12,6 +12,7 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       name: "TEXT NOT NULL",
       definition: "TEXT NOT NULL",
+      definition_summary: `TEXT NOT NULL DEFAULT ''`,
 
       package_dependencies: {
         nullable: true,

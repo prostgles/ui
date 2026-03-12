@@ -85,9 +85,9 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                           mode: "execute_sql_with_commit",
                           auto_approve,
                         }
-                      : req.tool_name === "execute_sql_with_rollback" ?
+                      : req.tool_name === "execute_readonly_sql" ?
                         {
-                          mode: "execute_sql_with_rollback",
+                          mode: "execute_readonly_sql",
                           auto_approve,
                         }
                       : {
