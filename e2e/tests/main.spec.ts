@@ -1087,7 +1087,9 @@ test.describe("Main test", () => {
       await sendAskLLMMessage(page, "cost", true);
     }
     await sendAskLLMMessage(page, " estimated_cost ");
-    await expect(page.getByTestId("Chat.messageList")).toContainText(
+    await expect(
+      page.getByTestId("Chat.messageList").locator(".message").last(),
+    ).toContainText(
       `Maximum total cost of the chat (5) will be reached after sending this message`,
       { timeout: 30_000 },
     );
@@ -1499,6 +1501,9 @@ test.describe("Main test", () => {
       {
         timeout: 120e3,
       },
+    );
+    await expect(page.getByTestId("AgenticWorkflow")).toContainText(
+      `text: 'Contents of https://www.prostgles.com/`,
     );
     await page.locator(getDataKey("Activity")).click({
       timeout: 10e3,

@@ -59,55 +59,65 @@ const getValidWorkflowDefinition = async (
         handler: async (workflowData) => {
           const { definitions, newTables } = workflowData;
           const definition_data = omitKeys(definitions, ["name"]);
-          const { agentConfigsWithDefaults } =
-            await validateAgenticWorkflowDefinitions(workflowData, {
-              chatId: chat.id,
-              connection_id,
-              dbs,
-              clientReq,
-              userId: user_id,
-            });
-          const workflowInsertData = {
-            user_id,
-            name: definitions.name,
-            chat_id: chat.id,
-            definition: workflow_function_definition,
-            definition_summary: workflow_function_definition_summary,
-            package_dependencies,
-            definition_data: {
-              ...definition_data,
-              databaseAccessDefinitions:
-                definition_data.databaseAccessDefinitions,
-              containerConfiguration: definition_data.containerConfiguration,
-              orchestrationTools: definition_data.orchestrationTools,
-              newTables: newTables.map((t) => ({
-                name: t.name,
-                columns: t.columns.map((c) => ({
-                  name: c.name.name,
-                  dataType: c.dataType.name,
-                  nullable:
-                    c.constraints?.some((con) => con.type === "not null") ?
-                      false
-                    : true,
-                  isPrimaryKey: c.constraints?.some(
-                    (con) => con.type === "primary key",
+
+          await validateAgenticWorkflowDefinitions(workflowData, {
+            chatId: chat.id,
+            connection_id,
+            dbs,
+            clientReq,
+            userId: user_id,
+          })
+            .then(({ agentConfigsWithDefaults }) => {
+              const workflowInsertData = {
+                user_id,
+                name: definitions.name,
+                chat_id: chat.id,
+                definition: workflow_function_definition,
+                definition_summary: workflow_function_definition_summary,
+                package_dependencies,
+                definition_data: {
+                  ...definition_data,
+                  databaseAccessDefinitions:
+                    definition_data.databaseAccessDefinitions,
+                  containerConfiguration:
+                    definition_data.containerConfiguration,
+                  orchestrationTools: definition_data.orchestrationTools,
+                  newTables: newTables.map((t) => ({
+                    name: t.name,
+                    columns: t.columns.map((c) => ({
+                      name: c.name.name,
+                      dataType: c.dataType.name,
+                      nullable:
+                        c.constraints?.some((con) => con.type === "not null") ?
+                          false
+                        : true,
+                      isPrimaryKey: c.constraints?.some(
+                        (con) => con.type === "primary key",
+                      ),
+                    })),
+                  })),
+                },
+                definition_override: {
+                  agentDefinitions: fromEntries(
+                    getEntries(agentConfigsWithDefaults).map(
+                      ([agentName, config]) =>
+                        [
+                          agentName,
+                          omitKeys(config, ["model", "outputSchema", "tools"]),
+                        ] as const,
+                    ),
                   ),
-                })),
-              })),
-            },
-            definition_override: {
-              agentDefinitions: fromEntries(
-                getEntries(agentConfigsWithDefaults).map(
-                  ([agentName, config]) =>
-                    [
-                      agentName,
-                      omitKeys(config, ["model", "outputSchema", "tools"]),
-                    ] as const,
-                ),
-              ),
-            },
-          } satisfies DBSSchemaForInsert["agentic_workflows"];
-          resolve({ isValid: true, data: workflowInsertData });
+                },
+              } satisfies DBSSchemaForInsert["agentic_workflows"];
+              resolve({ isValid: true, data: workflowInsertData });
+            })
+            .catch((error) => {
+              reject({
+                isValid: false,
+                error: getSerialisableError(error),
+                logs: "",
+              });
+            });
         },
       },
     )

@@ -48,7 +48,11 @@ export const callWorkflowProxy = async (args: ProxyCallData) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(args.type.startsWith("db/") ? argsWithoutType : args),
+    body: JSON.stringify(
+      args.type.startsWith("db/") ? argsWithoutType
+      : args.type === "tool" ? args.input
+      : args,
+    ),
   });
 
   const elapsed = `T+ ${Date.now() - startTime}ms`;

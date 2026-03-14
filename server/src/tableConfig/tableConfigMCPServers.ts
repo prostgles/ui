@@ -1,4 +1,8 @@
+import type { DBSSchema } from "@common/publishUtils";
+import type { ValidateRowsArgsCommon } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { DBS } from "..";
+import { isDefined } from "prostgles-types";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -192,6 +196,34 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         unique: true,
         columns: "chat_id, tool_id",
       },
+    },
+    hooks: {
+      afterAll: [
+        {
+          commands: { insert: 1, update: 1 },
+          validate: async (args) => {
+            const { dbx: dbs, data } =
+              args as unknown as ValidateRowsArgsCommon<
+                DBSSchema["llm_chats_allowed_mcp_tools"],
+                DBS
+              >;
+            const serverNames = Array.from(
+              new Set(data.map((row) => row.server_name).filter(isDefined)),
+            );
+            if (serverNames.length) {
+              await dbs.mcp_servers.update(
+                {
+                  name: { $in: serverNames },
+                  enabled: false,
+                },
+                {
+                  enabled: true,
+                },
+              );
+            }
+          },
+        },
+      ],
     },
   },
   mcp_tool_approval_requests: {

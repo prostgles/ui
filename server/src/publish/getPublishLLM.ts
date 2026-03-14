@@ -146,6 +146,16 @@ export const getPublishLLM = (
         forcedFilter: userOwnsRelatedChat,
       },
     },
+    mcp_tool_approval_requests: {
+      select: {
+        fields: "*",
+        forcedFilter,
+      },
+      update: {
+        fields: "*",
+        forcedFilter,
+      },
+    },
     mcp_servers:
       isAdmin ?
         {

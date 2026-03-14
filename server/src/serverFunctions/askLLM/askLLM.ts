@@ -306,6 +306,19 @@ export const askLLM = async (args: AskLLMArgs) => {
     },
     { returning: "*" },
   );
+  const updateLlmResponseMessageTextWithError = async (messageText: string) => {
+    await dbs.llm_messages.update(
+      { id: aiResponseMessagePlaceholder.id },
+      {
+        message: [
+          {
+            type: "text",
+            text: ["🔴 Something went wrong!", messageText].join("\n"),
+          },
+        ],
+      },
+    );
+  };
   try {
     const modelData = (await dbs.llm_models.findOne(
       { id: chat.model },
@@ -321,7 +334,10 @@ export const askLLM = async (args: AskLLMArgs) => {
         })
       | undefined;
 
-    if (!modelData) throw "Model not found";
+    if (!modelData) {
+      await updateLlmResponseMessageTextWithError("Model not found");
+      return;
+    }
 
     await checkMaxCostLimitForChat(
       dbs,
@@ -341,7 +357,10 @@ export const askLLM = async (args: AskLLMArgs) => {
       llm_providers: [llm_provider],
       ...llm_model
     } = modelData;
-    if (!llm_provider) throw "Provider not found";
+    if (!llm_provider) {
+      await updateLlmResponseMessageTextWithError("Provider not found");
+      return;
+    }
 
     const tools = toolsWithInfo?.map(
       ({ name, description, input_schema, auto_approve }) => {
@@ -439,7 +458,11 @@ export const askLLM = async (args: AskLLMArgs) => {
           },
         },
       );
-      throw `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`;
+
+      await updateLlmResponseMessageTextWithError(
+        `Maximum number (${maximum_consecutive_tool_fails}) of failed consecutive tool requests reached`,
+      );
+      return;
     }
 
     const { maxIterations } =
@@ -463,7 +486,11 @@ export const askLLM = async (args: AskLLMArgs) => {
             },
           },
         );
-        throw `Maximum number (${maxIterations}) of iterations reached`;
+
+        await updateLlmResponseMessageTextWithError(
+          `Maximum number (${maxIterations}) of iterations reached`,
+        );
+        return;
       }
     }
 
@@ -497,18 +524,12 @@ export const askLLM = async (args: AskLLMArgs) => {
       : errorObjOrString;
     const errorText = isAdmin ? `${errorTextOrEmpty}` : "";
     const messageText = [
-      "🔴 Something went wrong",
       isObject(err) && err.name === "AbortError" ?
         "Response generation was aborted by user."
       : errorIsString ? errorText
       : ["```json", errorText, "```"].join("\n"),
     ].join(".\n");
-    await dbs.llm_messages.update(
-      { id: aiResponseMessagePlaceholder.id },
-      {
-        message: [{ type: "text", text: messageText }],
-      },
-    );
+    await updateLlmResponseMessageTextWithError(messageText);
   }
 
   if ((await getChat())?.status?.state === "loading") {

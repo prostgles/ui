@@ -65,10 +65,11 @@ export const AgenticWorkflowActions = ({
   const isRunning = state?.status === "running";
   return (
     <>
-      <FlexRow className="ml-auto">
+      <FlexRow className="f-1">
         {created && (
           <ProgressBar
             totalValue={100}
+            className="f-1"
             message={
               state?.status === "error" ?
                 <span className="text-danger">{state.message ?? "Error"}</span>
@@ -80,7 +81,7 @@ export const AgenticWorkflowActions = ({
             endContent={
               <>
                 {isDefined(totalCost) && (
-                  <div className="ml-2" title="Cost">
+                  <div className="ml-auto" title="Cost">
                     ${totalCost.toFixed(2)}
                   </div>
                 )}

@@ -9,15 +9,16 @@ type P = {
   value: number;
   totalValue: number;
   endContent?: React.ReactNode;
-};
+} & Omit<DivProps, "children">;
+
 export const MINI_BARCHART_COLOR = "var(--active)";
 
 export const ProgressBar = ({
   message,
   value,
   totalValue,
-  style,
   endContent,
+  ...divProps
 }: P) => {
   const perc =
     totalValue >= value ? Math.round((100 * value) / totalValue) : -1;
@@ -26,7 +27,13 @@ export const ProgressBar = ({
   const isIndeterminate = perc === -1;
 
   return (
-    <div className="ProgressBar flex-col gap-p25" style={style}>
+    <div
+      {...divProps}
+      className={classOverride(
+        "ProgressBar flex-col gap-p25",
+        divProps.className,
+      )}
+    >
       <div
         className="ProgressBarOuter shadow"
         style={{

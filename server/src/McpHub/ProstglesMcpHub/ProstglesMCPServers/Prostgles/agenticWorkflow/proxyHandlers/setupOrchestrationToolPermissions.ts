@@ -26,6 +26,10 @@ export const setupOrchestrationToolPermissions = async ({
   /**
    * Holds the orchestrator tool and db permissions
    */
+  const dataPermissions =
+    databaseAccessDefinitions?.mode === "custom" ?
+      omitKeys(databaseAccessDefinitions, ["tableCreateStatements"])
+    : databaseAccessDefinitions;
   const workflowToolsChat = await dbs.llm_chats.insert(
     {
       name: "Workflow Orchestrator Tools Chat",
@@ -33,11 +37,11 @@ export const setupOrchestrationToolPermissions = async ({
       user_id: userId,
       connection_id: connectionId,
       parent_chat_id: chatId,
-      db_data_permissions:
-        databaseAccessDefinitions?.mode === "custom" ?
-          omitKeys(databaseAccessDefinitions, ["tableCreateStatements"])
-        : databaseAccessDefinitions,
-    },
+      db_data_permissions: dataPermissions && {
+        ...dataPermissions,
+        auto_approve: autoApproveAllTools,
+      },
+    } satisfies DBSSchemaForInsert["llm_chats"],
     { returning: "*" },
   );
 

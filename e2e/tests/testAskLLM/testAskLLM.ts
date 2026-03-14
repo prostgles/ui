@@ -225,7 +225,7 @@ const toolResponses: Record<string, ToolUse> = {
         id: "sql-tool-use",
         type: "function",
         function: {
-          name: "prostgles-db--execute_readonly_sql",
+          name: "db--execute_readonly_sql",
           arguments: stringify({
             sql: "SELECT * FROM orders WHERE created_at >= NOW() - INTERVAL '30 days';",
           }),
@@ -243,7 +243,7 @@ const toolResponses: Record<string, ToolUse> = {
         id: "db-tool-use",
         type: "function",
         function: {
-          name: "prostgles-db--insert",
+          name: "db--insert",
           arguments: stringify({
             tableName: "receipts",
             data: [

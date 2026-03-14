@@ -244,7 +244,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
           commands: { insert: 1, update: 1 },
           changedFields: ["db_data_permissions"],
           validate: async (args) => {
-            const { row, dbx } = args as ValidateRowArgsCommon<
+            const { row, dbx } = args as unknown as ValidateRowArgsCommon<
               DBSSchema["llm_chats"],
               DBS
             >;
