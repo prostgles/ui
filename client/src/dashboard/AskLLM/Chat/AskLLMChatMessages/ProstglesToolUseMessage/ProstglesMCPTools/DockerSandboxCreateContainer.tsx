@@ -39,7 +39,7 @@ export const DockerSandboxCreateContainer = ({
   const toolUseResult = toolResult?.toolUseResultMessage;
   const initialData = message.input as DockerSandboxCreateContainerData;
   const [editedFiles, setEditedFiles] = useState<Record<string, string>>();
-  const userInputState = useAgenticWorkflowUserInput(initialData.userInput);
+  const userInputState = useAgenticWorkflowUserInput(initialData.userInput, {});
   const { userInputValue } = userInputState;
   const data = {
     ...initialData,

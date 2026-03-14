@@ -88,6 +88,7 @@ export const runContainerWithProxyAccess = async (
     await dbs.mcp_tool_approval_requests.update(
       {
         chat_id: mcpToolsScope.chat.id,
+        response: null,
       },
       { response: "timed-out", updated: new Date() },
     );

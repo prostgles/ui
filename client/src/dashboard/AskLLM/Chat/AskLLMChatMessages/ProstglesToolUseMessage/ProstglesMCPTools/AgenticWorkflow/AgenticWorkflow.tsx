@@ -37,7 +37,10 @@ export const AgenticWorkflow = ({
     toolUseResult,
   });
 
-  const userInputState = useAgenticWorkflowUserInput(workflow, latestRun);
+  const userInputState = useAgenticWorkflowUserInput(
+    workflow?.definition_data.userInput,
+    latestRun?.user_input_value,
+  );
 
   if (inputValidation.error !== undefined) {
     return (

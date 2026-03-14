@@ -7,10 +7,11 @@ export type UseAgenticWorkflowUserInputReturn = ReturnType<
   typeof useAgenticWorkflowUserInput
 >;
 export const useAgenticWorkflowUserInput = (
-  workflow: DBSSchema["agentic_workflows"] | undefined,
-  latestRun: DBSSchema["agentic_workflow_runs"] | undefined,
+  userInput:
+    | DBSSchema["agentic_workflows"]["definition_data"]["userInput"]
+    | undefined,
+  lastValueUsed: Record<string, unknown> | undefined,
 ) => {
-  const userInput = workflow?.definition_data.userInput;
   const userInputDefaults = useMemo(
     () =>
       Object.fromEntries(
@@ -27,7 +28,7 @@ export const useAgenticWorkflowUserInput = (
   const [editedUserInputValue, setUserInputValue] =
     useState<Record<string, unknown>>();
   const userInputValue =
-    editedUserInputValue ?? latestRun?.user_input_value ?? userInputDefaults;
+    editedUserInputValue ?? lastValueUsed ?? userInputDefaults;
 
   const [localFilter, setLocalFilter] = useState<
     Record<string, SingleGroupFilter>

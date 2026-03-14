@@ -41,7 +41,7 @@ export const AgenticWorkflowActions = ({
   const [executionMode, setExecutionMode] = useState(
     latestRun?.execution_mode ?? "series",
   );
-  const [autoApproveAllTools, setAutoApproveAllTools] = useState(false);
+  const [autoApproveAllTools, setAutoApproveAllTools] = useState(true);
   const {
     dbsMethods: { startAgenticWorkflow, stopAgenticWorkflow },
     dbs,
