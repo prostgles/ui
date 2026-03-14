@@ -1,88 +1,7 @@
 import { databaseAccessSchema } from "./databaseAccessSchema";
+import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
+import { mcpServerToolsAllowed } from "./startAgenticWorkflowSchema";
 import { fixIndent } from "./utils";
-export const USER_INPUT_VALUE_ENV_VARIABLE_NAME = "USER_INPUT_VALUE";
-export const userInputSchema = {
-    optional: true,
-    description: fixIndent(`
-    Prefer to use the most ergonomic types ("table-column-value", "table-column-values", "enum", ...etc) over "custom" to restrict the input and make it easier for the user to choose the correct value.
-  `),
-    record: {
-        values: {
-            oneOfType: [
-                {
-                    title: "string",
-                    optional: { type: "boolean", optional: true },
-                    type: { enum: ["table-column-value"] },
-                    tableName: "string",
-                    columnName: "string",
-                    defaultValue: { type: "any", optional: true },
-                },
-                {
-                    title: "string",
-                    optional: { type: "boolean", optional: true },
-                    type: { enum: ["table-column-values"] },
-                    tableName: "string",
-                    columnName: "string",
-                    defaultValue: { type: "any[]", optional: true },
-                },
-                {
-                    title: "string",
-                    optional: { type: "boolean", optional: true },
-                    type: { enum: ["table-filter"] },
-                    tableName: "string",
-                    defaultValue: { record: { values: "any" }, optional: true },
-                },
-                {
-                    title: "string",
-                    optional: { type: "boolean", optional: true },
-                    type: { enum: ["table-column"] },
-                    tableName: "string",
-                    defaultValue: { type: "string", optional: true },
-                },
-                {
-                    title: "string",
-                    optional: { type: "boolean", optional: true },
-                    type: { enum: ["table-name"] },
-                    defaultValue: { type: "string", optional: true },
-                },
-                {
-                    title: "string",
-                    optional: { type: "boolean", optional: true },
-                    type: { enum: ["table-and-column"] },
-                    defaultValue: {
-                        type: { tableName: "string", columnName: "string" },
-                        optional: true,
-                    },
-                },
-                {
-                    title: "string",
-                    optional: { type: "boolean", optional: true },
-                    type: { enum: ["enum"] },
-                    values: "string[]",
-                    defaultValue: { type: "string", optional: true },
-                },
-                {
-                    title: "string",
-                    optional: { type: "boolean", optional: true },
-                    type: { enum: ["custom"] },
-                    dataType: { enum: ["string", "number", "boolean", "Date"] },
-                    defaultValue: { type: "unknown", optional: true },
-                },
-            ],
-        },
-    },
-};
-export const mcpServerToolsAllowed = {
-    record: {
-        partial: true,
-        values: {
-            record: {
-                partial: true,
-                values: { enum: [1] },
-            },
-        },
-    },
-};
 const runSQLSchema = {
     type: {
         sql: {
@@ -98,19 +17,6 @@ const runSQLSchema = {
             optional: true,
             description: "Query parameters to use in the SQL query. Must satisfy the query schema. Supports index based ($1, $2, etc.) and named parameters (${paramName}).",
             oneOf: ["any[]", { record: { values: "any" } }],
-        },
-    },
-};
-const filesSchema = {
-    description: fixIndent(`
-    Files to copy into the container. 
-    Must include a Dockerfile.
-    Example { "index.ts": "import type { JSONB } from \"prostgles-types\"; ..." }`),
-    record: {
-        partial: true,
-        values: {
-            type: "string",
-            description: "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ",
         },
     },
 };
@@ -138,20 +44,22 @@ const outputSchemaArrayOfObjects = {
     },
 };
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
-    "prostgles-db-methods": { [""]: "" },
-    "prostgles-db": {
+    db: {
         execute_readonly_sql: {
+            annotations: { readOnlyHint: true },
             description: "Executes a SQL query on the connected database in readonly mode (no data can be changed, the transaction is rolled back at the end).",
             schema: runSQLSchema,
             outputSchema: outputSchemaArrayOfObjects,
         },
-        execute_sql_with_commit: {
+        execute_sql: {
+            annotations: { readOnlyHint: false, destructiveHint: true },
             description: "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction committed at the end).",
             schema: runSQLSchema,
             outputSchema: outputSchemaArrayOfObjects,
         },
         count: {
             description: "Counts rows in a table that satisfy a filter.",
+            annotations: { readOnlyHint: true },
             schema: {
                 type: {
                     tableName: "string",
@@ -162,6 +70,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
         find: {
             description: "Selects rows from a table.",
+            annotations: { readOnlyHint: true },
             schema: {
                 type: {
                     tableName: "string",
@@ -183,6 +92,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         },
         insert: {
             description: "Inserts rows into a table.",
+            annotations: { readOnlyHint: false },
             schema: {
                 type: {
                     tableName: "string",
@@ -190,10 +100,10 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                         description: "Data to insert into the table. Must satisfy the table schema.",
                         oneOf: [
                             {
-                                arrayOf: { record: { values: "any" } },
+                                record: { values: "any" },
                             },
                             {
-                                record: { values: "any" },
+                                arrayOf: { record: { values: "any" } },
                             },
                         ],
                     },
@@ -208,10 +118,22 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     returning: Object.assign({ description: "Fields to return for newly inserted data. Nothing will be returned otherwise" }, selectSchema),
                 },
             },
-            outputSchema: Object.assign(Object.assign({}, outputSchemaArrayOfObjects), { optional: true }),
+            outputSchema: {
+                optional: true,
+                description: "Inserted rows returned based on the returning schema. Nothing will be returned if returning is not provided. Return type based on input data: if data is an array of objects, returns an array of objects. If data is a single object, returns a single object.",
+                oneOf: [
+                    {
+                        record: {
+                            values: "any",
+                        },
+                    },
+                    outputSchemaArrayOfObjects,
+                ],
+            },
         },
         update: {
             description: "Updates rows in a table.",
+            annotations: { destructiveHint: true, readOnlyHint: false },
             schema: {
                 type: Object.assign(Object.assign({ tableName: "string" }, filterSchema), { data: {
                         description: "Data to insert into the table. Must satisfy the table schema.",
@@ -228,14 +150,27 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                         optional: true,
                     }, returning: Object.assign({ description: "Fields to return for updated data. Nothing will be returned otherwise" }, selectSchema) }),
             },
-            outputSchema: Object.assign(Object.assign({}, outputSchemaArrayOfObjects), { optional: true }),
+            outputSchema: {
+                optional: true,
+                oneOf: [
+                    {
+                        record: {
+                            values: "any",
+                        },
+                    },
+                    outputSchemaArrayOfObjects,
+                ],
+            },
         },
         delete: {
+            annotations: { destructiveHint: true, readOnlyHint: false },
             description: "Deletes rows from a table.",
             schema: {
                 type: Object.assign(Object.assign({ tableName: "string" }, filterSchema), { returning: Object.assign({ description: "Fields to return for the deleted rows. Nothing will be returned otherwise" }, selectSchema) }),
             },
-            outputSchema: Object.assign(Object.assign({}, outputSchemaArrayOfObjects), { optional: true }),
+            outputSchema: {
+                oneOf: [outputSchemaArrayOfObjects, { enum: [undefined] }],
+            },
         },
     },
     "prostgles-ui": {
@@ -258,6 +193,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             outputSchema: "string",
         },
         run_code_in_sandbox: {
+            annotations: {
+                openWorldHint: true,
+            },
             mode: undefined,
             description: fixIndent(`
         Executes code in a docker container.
@@ -268,59 +206,18 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         To access the database must use POST requests to the exposed api endpoint. Cannot use direct DB sockets or drivers. 
         Useful for doing bulk data insert/analysis/processing/ETL. 
         The database permissions must be set to 'Auto approve' to allow the container access to the database. 
-        Otherwise, permissions have no effect.`),
-            schema: {
-                type: {
-                    userInput: Object.assign(Object.assign({}, userInputSchema), { description: fixIndent(`
-                Custom controls/user input to provide to the container. 
-                Use this to allow the user to re-run the container with custom configuration/input. 
-                Will be available in the container through the ${USER_INPUT_VALUE_ENV_VARIABLE_NAME} environment variable as stringified JSON.\n`) +
-                            userInputSchema.description }),
-                    userInputValue: {
-                        optional: true,
-                        description: "User populated values for the userInput keys. It will override the default values in userInput if provided. ",
-                        record: {
-                            values: "unknown",
-                        },
-                    },
-                    files: filesSchema,
-                    timeout: {
-                        optional: true,
-                        type: "integer",
-                        description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ",
-                        // default: 30000,
-                    },
-                    networkMode: {
-                        optional: true,
-                        enum: ["none", "bridge", "bridge-internal", "host"],
-                        description: "Network mode for the container. Defaults to 'bridge-internal'. Use 'bridge' mode to be able to access the database. Use 'bridge-internal' to access the database but not the internet.",
-                        // default: "none",
-                    },
-                    environment: {
-                        optional: true,
-                        description: "Environment variables to set in the container",
-                        record: { values: "string", partial: true },
-                    },
-                    memory: {
-                        optional: true,
-                        type: "string",
-                        description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m",
-                        // default: "512m",
-                    },
-                    cpus: {
-                        optional: true,
-                        type: "string",
-                        description: "CPU limit (e.g., '0.5', '1'). Defaults to 1",
-                        // default: "1",
-                    },
-                    readOnly: {
-                        optional: true,
-                        type: "boolean",
-                        description: "Whether to mount the filesystem as read-only. Defaults to true",
-                        // default: true,
-                    },
-                },
-            },
+        Otherwise, permissions have no effect.
+        
+        Example input payload:
+        
+        {
+          "files": {
+            "Dockerfile": "FROM node:18\nWORKDIR /app\nCOPY . .\nRUN npm install\nCMD [\"node\", \"index.js\"]",
+            "index.ts": "import type { JSONB } from \"prostgles-types\"; console.log('hello world');"
+          }
+        }
+        `),
+            schema: runCodeInSandboxSchema,
             outputSchema: {
                 type: {
                     state: {

@@ -8,7 +8,7 @@ import type { DBHandlerClient } from "prostgles-client";
 import { type FilterItem } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
-import { useLLMSetupDone } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
+import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "src/dashboard/SmartCardList/SmartCardList";
 import { StyledInterval } from "src/dashboard/W_SQL/customRenderers";
@@ -25,7 +25,7 @@ export const AgenticWorkflowActivity = ({
 >) => {
   const tableName = "llm_chats" as const;
   const { dbs, dbsTables, dbsMethods } = usePrgl();
-  const setupState = useLLMSetupDone();
+  const setupState = useAskLLMSetupState();
   const [agentChatId, setAgentChatId] = useState<number>();
 
   const listProps = useMemo(() => {
@@ -127,8 +127,7 @@ export const AgenticWorkflowActivity = ({
       />
       {agentChatId && (
         <AskLLMChat
-          agentChat={{ id: agentChatId }}
-          anchorEl={undefined}
+          selectedChat={{ id: agentChatId, type: "agent" }}
           askLLM={dbsMethods.askLLM!}
           loadedSuggestions={loadedSuggestions}
           onClose={() => {

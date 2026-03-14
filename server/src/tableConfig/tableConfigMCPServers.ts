@@ -176,27 +176,6 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       last_updated: `TIMESTAMPTZ DEFAULT NOW()`,
     },
   },
-  mcp_server_tool_calls: {
-    columns: {
-      id: `SERIAL PRIMARY KEY `,
-      chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE SET NULL`,
-      user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
-      mcp_server_name: `TEXT REFERENCES mcp_servers(name) ON DELETE SET NULL`,
-      mcp_tool_name: `TEXT NOT NULL`,
-      mcp_server_config_id: `INTEGER`,
-      input: `JSONB`,
-      output: `JSONB`,
-      error: `JSON`,
-      called: `TIMESTAMPTZ DEFAULT NOW()`,
-      duration: `INTERVAL NOT NULL`,
-    },
-    constraints: {
-      mcp_tool_name_server_name_fk:
-        "FOREIGN KEY (mcp_server_name, mcp_tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE SET NULL",
-      mcp_server_config_id_fk:
-        "FOREIGN KEY (mcp_server_name, mcp_server_config_id) REFERENCES mcp_server_configs(server_name, id) ON DELETE SET NULL",
-    },
-  },
   llm_chats_allowed_mcp_tools: {
     info: {
       label: "Allowed MCP tools",
@@ -213,6 +192,70 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         unique: true,
         columns: "chat_id, tool_id",
       },
+    },
+  },
+  mcp_tool_approval_requests: {
+    columns: {
+      id: `SERIAL PRIMARY KEY`,
+      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL`,
+      message_id: `int8 REFERENCES llm_messages(id) ON DELETE CASCADE`,
+      source: {
+        jsonbSchema: {
+          oneOfType: [
+            {
+              type: { enum: ["chat"] },
+              responseCount: {
+                type: "integer",
+                description:
+                  "Total number of responses needed for the message to be considered fully responded to. Used to determine when to run requests and respond to AI",
+              },
+            },
+            {
+              type: { enum: ["proxy"] },
+              parentToolUseMessageId: "string",
+            },
+          ],
+        },
+      },
+      tool_name: `TEXT NOT NULL`,
+      input: { jsonbSchema: { record: { values: "unknown" } } },
+      server_name: `TEXT NOT NULL`,
+      tool_use_id: `TEXT NOT NULL`,
+      /** TODO: finish multi-config */
+      server_config_id: `INTEGER REFERENCES mcp_server_configs(id) ON DELETE SET NULL`,
+      response: {
+        nullable: true,
+        enum: ["approve", "deny", "auto-approve", "timed-out"],
+      },
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
+      updated: `TIMESTAMPTZ DEFAULT NOW()`,
+    },
+    constraints: {
+      tool_name_server_name_fk:
+        "FOREIGN KEY (server_name, tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE CASCADE",
+    },
+  },
+  mcp_server_tool_calls: {
+    columns: {
+      id: `SERIAL PRIMARY KEY `,
+      chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE SET NULL`,
+      user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
+      mcp_tool_approval_requests_id: `INTEGER REFERENCES mcp_tool_approval_requests(id) ON DELETE SET NULL`,
+      mcp_server_name: `TEXT REFERENCES mcp_servers(name) ON DELETE SET NULL`,
+      mcp_tool_name: `TEXT NOT NULL`,
+      mcp_server_config_id: `INTEGER`,
+      input: `JSONB`,
+      output: `JSONB`,
+      error: `JSON`,
+      called: `TIMESTAMPTZ DEFAULT NOW()`,
+      duration: `INTERVAL NOT NULL`,
+    },
+    constraints: {
+      mcp_tool_name_server_name_fk:
+        "FOREIGN KEY (mcp_server_name, mcp_tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE SET NULL",
+      mcp_server_config_id_fk:
+        "FOREIGN KEY (mcp_server_name, mcp_server_config_id) REFERENCES mcp_server_configs(server_name, id) ON DELETE SET NULL",
     },
   },
 };

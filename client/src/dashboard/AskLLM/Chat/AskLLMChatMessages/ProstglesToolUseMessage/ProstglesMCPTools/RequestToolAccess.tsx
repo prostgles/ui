@@ -3,17 +3,16 @@ import type { DBSSchemaForInsert } from "@common/publishUtils";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { FooterButtons } from "@components/Popup/FooterButtons";
+import { mdiCheck, mdiCheckAll } from "@mdi/js";
 import React, { useCallback } from "react";
 import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import { tout } from "src/utils/utils";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { McpToolAccess } from "./AgenticWorkflow/McpToolAccess";
 import { useJSONBParsedData } from "./common/useJSONBParsedData";
-import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData";
-import { mdiCheck, mdiCheckAll } from "@mdi/js";
 import { useSendToolUseResult } from "./common/useSendToolUseResult";
-import { useAlert } from "@components/AlertProvider";
-import { tout } from "src/utils/utils";
+import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData";
 
 export const RequestToolAccess = ({
   message,
@@ -37,7 +36,6 @@ export const RequestToolAccess = ({
   const dbAccess = input.data?.databaseAccess;
   const toolResultData = result?.data;
 
-  const { addAlert } = useAlert();
   const { sendToolUseResult } = useSendToolUseResult();
   const onAddTools = useCallback(
     async (
@@ -79,6 +77,7 @@ export const RequestToolAccess = ({
             enabled: true,
           },
         );
+
         /** TODO: listen for actual reload finish */
         await tout(2000);
 

@@ -1,13 +1,14 @@
 import Btn from "@components/Btn";
+import { ErrorTrap } from "@components/ErrorComponent";
 import { mdiAssistant } from "@mdi/js";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../../i18n/i18nUtils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { AskLLMChat } from "./Chat/AskLLMChat";
-import { SetupLLMCredentials } from "./Setup/SetupLLMCredentials";
 import { useLLMSetup } from "./Setup/LLMSetupProvider";
-import { ErrorTrap } from "@components/ErrorComponent";
+import { SetupLLMCredentials } from "./Setup/SetupLLMCredentials";
+import { AskLLMToolApprover } from "./Tools/AskLLMToolApprover";
 
 type AskLLMProps = {
   workspaceId: string | undefined;
@@ -19,9 +20,16 @@ export const AskLLM = (props: AskLLMProps) => {
   const { dbsMethods } = usePrglCore();
   const { askLLM, stopAskLLM } = dbsMethods;
 
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [showChat, setShowChat] = useState<{ selectedChatId?: number }>();
+  const selectedChat = useMemo(
+    () =>
+      showChat?.selectedChatId ?
+        ({ type: "toolApproval", id: showChat.selectedChatId } as const)
+      : undefined,
+    [showChat],
+  );
   const onClose = () => {
-    setAnchorEl(null);
+    setShowChat(undefined);
   };
   const state = useLLMSetup();
 
@@ -35,8 +43,8 @@ export const AskLLM = (props: AskLLMProps) => {
         color="action"
         iconPath={mdiAssistant}
         data-command="AskLLM"
-        onClick={(e) => {
-          setAnchorEl(e.currentTarget);
+        onClick={() => {
+          setShowChat({});
         }}
         loading={state.state === "loading"}
         disabledInfo={
@@ -48,7 +56,17 @@ export const AskLLM = (props: AskLLMProps) => {
         {/* {window.isMediumWidthScreen ? null : t.AskLLM["AI Assistant"]} */}
       </Btn>
 
-      {!anchorEl || !askLLM || !stopAskLLM ?
+      {state.state === "ready" && state.toolApprovalState && (
+        <AskLLMToolApprover
+          loadedSuggestions={loadedSuggestions}
+          workspaceId={workspaceId}
+          onOpenChat={(selectedChatId) => setShowChat({ selectedChatId })}
+          openedChatId={showChat?.selectedChatId}
+          {...state.toolApprovalState}
+        />
+      )}
+
+      {!showChat || !askLLM || !stopAskLLM ?
         null
       : state.state !== "ready" ?
         <SetupLLMCredentials
@@ -62,9 +80,8 @@ export const AskLLM = (props: AskLLMProps) => {
           stopAskLLM={stopAskLLM}
           workspaceId={workspaceId}
           setupState={state}
-          anchorEl={anchorEl}
           onClose={onClose}
-          agentChat={undefined}
+          selectedChat={selectedChat}
         />
       }
     </ErrorTrap>

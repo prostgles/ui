@@ -1,12 +1,6 @@
 import ErrorComponent from "@components/ErrorComponent";
 import Popup from "@components/Popup/Popup";
-import {
-  mdiDownload,
-  mdiFullscreen,
-  mdiOpenInNew,
-  mdiPlay,
-  mdiStop,
-} from "@mdi/js";
+import { mdiDownload, mdiOpenInNew, mdiPlay, mdiStop } from "@mdi/js";
 import React, { useMemo, useState } from "react";
 import { download } from "../../../dashboard/W_SQL/W_SQL";
 import Btn from "../../Btn";
@@ -16,26 +10,22 @@ import type { MonacoCodeInMarkdownProps } from "./MonacoCodeInMarkdown";
 import type { useOnRunSQL } from "./useOnRunSQL";
 
 export const MarkdownMonacoCodeHeader = (
-  props: MonacoCodeInMarkdownProps & {
-    titleOrLanguage: string;
-    fullscreen: boolean;
-    setFullscreen: (val: boolean) => void;
-  } & ReturnType<typeof useOnRunSQL>,
+  props: MonacoCodeInMarkdownProps & ReturnType<typeof useOnRunSQL>,
 ) => {
   const {
     codeHeader,
     language,
     codeString,
-    fullscreen,
-    setFullscreen,
     sqlHandler,
     onRunSQL,
-    titleOrLanguage,
     sqlResult,
     setSqlResult,
+    title,
   } = props;
+
+  const titleOrLanguage = title ?? language;
   return (
-    <FlexRow className="MarkdownMonacoCodeHeader bg-color-2 p-p25">
+    <FlexRow className="MarkdownMonacoCodeHeader bg-color-2 p-0 f-1">
       <div className="text-sm text-color-4 f-1 px-1 ta-start">
         {titleOrLanguage}
       </div>
@@ -124,12 +114,6 @@ export const MarkdownMonacoCodeHeader = (
           />
         </>
       }
-      <Btn
-        title="Toggle Fullscreen"
-        size="small"
-        iconPath={mdiFullscreen}
-        onClick={() => setFullscreen(!fullscreen)}
-      />
     </FlexRow>
   );
 };

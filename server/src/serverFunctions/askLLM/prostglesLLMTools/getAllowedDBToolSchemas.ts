@@ -7,7 +7,7 @@ import {
 import { getEntries } from "@common/utils";
 import type { DbPermissions } from "@src/McpHub/DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
 
-export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
+export type DBTool = Extract<ProstglesMcpTool, { type: "db" }> & {
   name: string;
   description: string;
   auto_approve: boolean;
@@ -16,11 +16,11 @@ export type DBTool = Extract<ProstglesMcpTool, { type: "prostgles-db" }> & {
   mode: null;
 };
 
-const dbTools = getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"])
+const dbTools = getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["db"])
   .map(([toolName, { description, schema, outputSchema }]) => {
     return {
-      name: getProstglesMCPFullToolName("prostgles-db", toolName),
-      type: "prostgles-db",
+      name: getProstglesMCPFullToolName("db", toolName),
+      type: "db",
       tool_name: toolName,
       description,
       auto_approve: false,
@@ -71,7 +71,7 @@ export const getAllowedDBToolSchemas = (
 
       if (
         /** Allow all tools */
-        chatDBAccess.mode === "execute_sql_with_commit" ||
+        chatDBAccess.mode === "execute_sql" ||
         /** Allow read only tools */
         tool_name === "execute_readonly_sql" ||
         tool_name === "find" ||

@@ -30,8 +30,6 @@ export const AgenticWorkflow = ({
     setActiveTab,
     workflowValidationError,
     latestRun,
-    executionMode,
-    setExecutionMode,
     workflow,
     validatedWorkflowData,
   } = useAgenticWorkflowState({
@@ -39,9 +37,7 @@ export const AgenticWorkflow = ({
     toolUseResult,
   });
 
-  const userInputState = useAgenticWorkflowUserInput(
-    workflow?.definition_data.userInput,
-  );
+  const userInputState = useAgenticWorkflowUserInput(workflow, latestRun);
 
   if (inputValidation.error !== undefined) {
     return (
@@ -90,6 +86,9 @@ export const AgenticWorkflow = ({
               <AgenticWorkflowDefinition
                 workflowId={workflow?.id}
                 chatId={chatId}
+                workflow_function_definition_summary={
+                  inputData.workflow_function_definition_summary
+                }
                 workflow_function_definition={
                   inputData.workflow_function_definition
                 }
@@ -158,8 +157,6 @@ export const AgenticWorkflow = ({
           onSuccess={() => setShowSuccessMessage(true)}
           messageId={toolUseResult.toolUseResult.id}
           latestRun={latestRun}
-          executionMode={executionMode}
-          setExecutionMode={setExecutionMode}
         />
       )}
       {workflowValidationError &&

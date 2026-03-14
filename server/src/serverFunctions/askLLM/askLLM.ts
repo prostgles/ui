@@ -57,7 +57,6 @@ export type AskLLMArgs = {
   clientReq: AuthClientRequest;
   type:
     | "new-message"
-    | "approve-tool-use"
     | "tool-use-result"
     | "tool-use-result-confirmation"
     | "tool-use-result-with-denied";
@@ -66,6 +65,11 @@ export type AskLLMArgs = {
 
 const activeLLMFetchRequests = new Map<number, AbortController>();
 
+export const getChatAborter = (chatId: number) => {
+  const aborter = activeLLMFetchRequests.get(chatId) ?? new AbortController();
+  activeLLMFetchRequests.set(chatId, aborter);
+  return aborter;
+};
 export const stopAskLLM = (chatId: number) => {
   const aborter = activeLLMFetchRequests.get(chatId);
   if (aborter) {
@@ -105,7 +109,6 @@ export const askLLM = async (args: AskLLMArgs) => {
         userType: user.type,
         dbs,
         chat,
-        connectionId,
         clientReq,
       }),
   );
@@ -119,24 +122,6 @@ export const askLLM = async (args: AskLLMArgs) => {
   const aborter = args.aborter ?? new AbortController();
   activeLLMFetchRequests.set(chat.id, aborter);
   const lastMessage = pastMessages.at(-1);
-  if (type === "approve-tool-use") {
-    if (!lastMessage) {
-      throw new Error("Last message not found for tool use approval");
-    }
-    const toolUseMessages = filterArr(lastMessage.message, {
-      type: "tool_use",
-    } as const);
-
-    return runApprovedTools(
-      toolsWithInfo,
-      args,
-      chat,
-      toolUseMessages,
-      userMessage,
-      aborter,
-      clientReq,
-    );
-  }
 
   /** If user stopped chat must add tool use responses to prevent errors */
   const awaitingToolUseResult = pastMessages.flatMap(({ message }, index) => {
@@ -170,6 +155,15 @@ export const askLLM = async (args: AskLLMArgs) => {
       llm_model_id: chat.model,
       total_tokens: 0,
     });
+    await dbs.mcp_tool_approval_requests.update(
+      {
+        tool_use_id: { $in: awaitingToolUseResult.map((m) => m.id) },
+        chat_id: chatId,
+      },
+      {
+        response: "deny",
+      },
+    );
     pastMessages = await getPastMessages();
   }
 
@@ -183,25 +177,20 @@ export const askLLM = async (args: AskLLMArgs) => {
       handleToolUseResultConfirmation(args, lastMessage)
     : undefined;
 
+  const newMessageData = {
+    user_id: user.id,
+    chat_id: chatId,
+    message: userMessage,
+    llm_model_id: chat.model,
+    total_tokens: 0,
+  };
   if (confirmedToolResult) {
     await dbs.tx(async (tx) => {
       await tx.llm_messages.delete({ id: lastMessage?.id });
-      await tx.llm_messages.insert({
-        user_id: user.id,
-        chat_id: chatId,
-        message: userMessage,
-        llm_model_id: chat.model,
-        total_tokens: 0,
-      });
+      await tx.llm_messages.insert(newMessageData);
     });
   } else {
-    await dbs.llm_messages.insert({
-      user_id: user.id,
-      chat_id: chatId,
-      message: userMessage,
-      llm_model_id: chat.model,
-      total_tokens: 0,
-    });
+    await dbs.llm_messages.insert(newMessageData);
   }
 
   if (type === "new-message") {
@@ -383,7 +372,7 @@ export const askLLM = async (args: AskLLMArgs) => {
           content: [{ type: "text", text: promptWithContext }],
         },
         ...pastMessages
-          /**all messages must have non-empty content */
+          /** Will fail on empty content */
           .filter((m) => m.message.length)
           .map(
             (m) =>
@@ -434,7 +423,6 @@ export const askLLM = async (args: AskLLMArgs) => {
     const { maximum_consecutive_tool_fails, agent_info } = chat;
     if (
       maximum_consecutive_tool_fails &&
-      args.type !== "approve-tool-use" &&
       isAssistantMessageRequestingToolUse({ message: aiResponseMessage }) &&
       reachedMaximumNumberOfConsecutiveToolRequests(
         [...pastMessages, { message: userMessage }],
@@ -488,15 +476,16 @@ export const askLLM = async (args: AskLLMArgs) => {
       type: "tool_use",
     } as const);
     if (newToolUseMessages.length) {
-      await runApprovedTools(
-        toolsWithInfo,
+      await runApprovedTools({
+        allowedTools: toolsWithInfo,
         args,
-        latestChat,
-        newToolUseMessages,
-        undefined,
+        chat: latestChat,
+        toolUseRequestMessages: newToolUseMessages,
+        userApprovals: undefined,
         aborter,
         clientReq,
-      );
+        messageId: aiResponseMessagePlaceholder.id,
+      });
     }
   } catch (err) {
     const isAdmin = user.type === "admin";

@@ -24,7 +24,18 @@ export type DockerMCPServerProxyHandler = (
 ) => MaybePromise<void>;
 
 export type ContainerProxyContext = {
-  dbPermissions: DbPermissions | undefined;
+  /**
+   * If present, this will enable the container to access MCP tools allowed for the chat.
+   * messageId is used to identify the parent tool use that created this container
+   */
+  mcpToolsScope:
+    | undefined
+    | {
+        chat: DBSSchema["llm_chats"];
+        messageId: string;
+      };
+
+  user: DBSSchema["users"];
   sid_token: string;
   secret: string;
   requestHandlers?: Record<
@@ -100,7 +111,8 @@ const getContainerFromIP = (ip: string): ContainerProxyContext | undefined => {
   return (
     containerInfo &&
     pickKeys(containerInfo, [
-      "dbPermissions",
+      "mcpToolsScope",
+      "user",
       "sid_token",
       "requestHandlers",
       "secret",

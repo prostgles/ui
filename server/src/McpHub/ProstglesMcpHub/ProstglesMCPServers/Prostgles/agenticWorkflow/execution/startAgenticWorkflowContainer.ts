@@ -1,5 +1,4 @@
 import type { DBS } from "@src/index";
-import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
 import {
   getJSONBSchemaValidationError,
   getKeys,
@@ -19,6 +18,7 @@ import type {
 } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
 import { getOrchestrationContainerFiles } from "../runtimeSetup/getOrchestrationContainerFiles";
 import type { DBSSchema } from "@common/publishUtils";
+import { startAgenticWorkflowSchema } from "@common/startAgenticWorkflowSchema";
 
 export const startAgenticWorkflowContainer = async (
   dbs: DBS,
@@ -26,16 +26,18 @@ export const startAgenticWorkflowContainer = async (
     workflow_function_definition,
     package_dependencies,
     user_id,
-    chat_id,
+    chat,
     connection_id,
     abortSignal,
+    messageId,
   }: {
     workflow_function_definition: string;
     package_dependencies: undefined | Record<string, string>;
     user_id: string;
-    chat_id: number;
+    chat: DBSSchema["llm_chats"];
     connection_id: string;
     abortSignal: AbortSignal;
+    messageId: string;
   },
   mode:
     | {
@@ -52,13 +54,13 @@ export const startAgenticWorkflowContainer = async (
     | {
         type: "full";
         workflowId: number;
-        messageId: string;
         workflow: DBSSchema["agentic_workflows"];
+        orchestratorChat: DBSSchema["llm_chats"];
         userInputValue: Record<string, unknown>;
         definition: AgenticWorkflowDefinition;
         dbPermissions: DbPermissions;
         handler: (
-          args: Extract<ProxyCallData, { type: "agent" } | { type: "tool" }>,
+          args: Extract<ProxyCallData, { type: "agent" }>,
           ctx: McpProxyRequestContext,
         ) => Promise<unknown>;
       },
@@ -68,8 +70,8 @@ export const startAgenticWorkflowContainer = async (
       await dbs.agentic_workflow_runs.insert(
         {
           workflow_id: mode.workflowId,
-          message_id: mode.messageId,
-          chat_id,
+          message_id: messageId,
+          chat_id: chat.id,
           user_input_value: mode.userInputValue,
           log: [],
           state: { status: "running" },
@@ -85,33 +87,15 @@ export const startAgenticWorkflowContainer = async (
     }
     const { data, error } = getJSONBSchemaValidationError(
       {
-        oneOfType: [
-          {
-            type: { enum: ["agent"] },
-            agentName: "string",
-            input: "string",
-          },
-          {
-            type: { enum: ["tool"] },
-            name: "string",
-            input: {
-              oneOf: [
-                { enum: [undefined] },
-                {
-                  record: {
-                    values: "unknown",
-                  },
-                },
-              ],
-            },
-          },
-        ],
+        type: {
+          type: { enum: ["agent"] },
+          agentName: "string",
+          input: "string",
+        },
       } as const,
       req.body,
     );
-    data satisfies
-      | Extract<ProxyCallData, { type: "agent" } | { type: "tool" }>
-      | undefined;
+    data satisfies Extract<ProxyCallData, { type: "agent" }> | undefined;
     if (error !== undefined) {
       throw new Error("Invalid request data: " + error);
     }
@@ -126,19 +110,17 @@ export const startAgenticWorkflowContainer = async (
       });
   };
 
-  const { db_data_permissions = null } =
-    mode.type === "full" ? mode.dbPermissions : {};
   const result = await runContainerWithProxyAccess(
     dbs,
     {
       user_id,
-      dbPermissions: mode.dbPermissions && {
-        ...mode.dbPermissions,
-        db_data_permissions: db_data_permissions && {
-          ...db_data_permissions,
-          auto_approve: true,
-        },
-      },
+      mcpToolsScope:
+        mode.type === "full" ?
+          {
+            messageId,
+            chat: mode.orchestratorChat,
+          }
+        : undefined,
       requestHandlers: {
         ["/definitions"]: {
           method: "POST",
@@ -193,21 +175,16 @@ export const startAgenticWorkflowContainer = async (
               throw new Error("Invalid request data: " + error);
             }
             data satisfies undefined | ProxyCallDataDefinitions;
-            mode
-              .handler(data, ctx)
-              .then(() => {
-                res.json({ success: true });
-              })
-              .catch((error) => {
-                res
-                  .status(500)
-                  .json({ error: "Internal server error: " + String(error) });
-              });
+            void mode.handler(data, ctx);
+            // .then(() => {
+            //   res.status(400).json({ success: true });
+            // })
+            // .catch((error) => {
+            //   res
+            //     .status(500)
+            //     .json({ error: "Internal server error: " + String(error) });
+            // });
           },
-        },
-        ["/tool"]: {
-          method: "POST",
-          handler: mainHandler,
         },
         ["/agent"]: {
           method: "POST",

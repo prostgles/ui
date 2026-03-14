@@ -20,6 +20,9 @@ export const callMCPServerTool = async ({
   toolName,
   user,
   toolUseId,
+  isReRun,
+  mcp_tool_approval_requests_id,
+  messageId,
 }: {
   user: Pick<DBSSchema["users"], "id">;
   chat_id: number;
@@ -29,6 +32,9 @@ export const callMCPServerTool = async ({
   toolArguments: Record<string, unknown> | undefined;
   clientReq: AuthClientRequest;
   toolUseId: string | undefined;
+  isReRun?: boolean;
+  mcp_tool_approval_requests_id: number | undefined;
+  messageId: string;
 }): Promise<McpToolCallResponse> => {
   const start = new Date();
   const argErrors = getJSONBObjectSchemaValidationError(
@@ -45,7 +51,9 @@ export const callMCPServerTool = async ({
     undefined,
     false,
   );
-  if (argErrors.error) throw new Error(argErrors.error);
+  if (argErrors.error) {
+    throw new Error(argErrors.error);
+  }
   const result = await tryCatchV2(async () => {
     const chat = await dbs.llm_chats.findOne({ id: chat_id, user_id: user.id });
     if (!chat) {
@@ -78,6 +86,7 @@ export const callMCPServerTool = async ({
         clientReq,
         dbs,
         toolUseId,
+        messageId,
       });
     }
 
@@ -92,17 +101,21 @@ export const callMCPServerTool = async ({
     return res;
   });
 
-  await dbs.mcp_server_tool_calls.insert({
-    duration: { milliseconds: result.duration },
-    called: start,
-    mcp_server_name: serverName,
-    mcp_tool_name: toolName,
-    input: toolArguments,
-    output: result.data,
-    error: getSerialisableError(result.error) || null,
-    chat_id,
-    user_id: user.id,
-  });
+  await dbs.mcp_server_tool_calls.insert(
+    {
+      duration: { milliseconds: result.duration },
+      called: start,
+      mcp_server_name: serverName,
+      mcp_tool_name: toolName,
+      input: toolArguments,
+      output: result.data,
+      error: getSerialisableError(result.error) || null,
+      chat_id,
+      user_id: user.id,
+      mcp_tool_approval_requests_id,
+    },
+    { onConflict: isReRun ? "DoUpdate" : undefined },
+  );
 
   if (result.hasError) {
     return {
@@ -116,6 +129,7 @@ export const callMCPServerTool = async ({
             : JSON.stringify(result.error),
         },
       ],
+      structuredContent: getSerialisableError(result.error) || null,
     };
   }
 

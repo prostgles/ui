@@ -79,6 +79,7 @@ const handler = {
               `At least one of mcpServerTools or databaseAccess must be provided`,
             );
           }
+
           return {
             validatedTools:
               validatedTools?.map((t) => ({
@@ -109,7 +110,7 @@ const handler = {
   },
 } satisfies ProstglesMcpServerHandlerTyped<typeof definition>;
 
-export const ProstglesMCPServer = {
+export const ProstglesUiMCPServer = {
   definition,
   handler: handler as ProstglesMcpServerHandler,
 };

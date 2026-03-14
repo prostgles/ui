@@ -14,9 +14,9 @@ export const runAgentGoalTool = async ({
   toolUseRequestMessages,
 }: {
   chat: DBSSchema["llm_chats"];
-  args: Omit<AskLLMArgs, "userMessage" | "type">;
+  args: Omit<AskLLMArgs, "userMessage" | "type" | "aborter">;
   agetGoalTool: ToolUseMessage;
-  aborter: AbortController;
+  aborter: AbortController | undefined;
   dbs: DBS;
   toolUseRequestMessages: ToolUseMessage[];
 }) => {

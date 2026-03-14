@@ -1,16 +1,33 @@
+import { isDefined } from "@common/filterUtils";
 import type { DBSSchema } from "@common/publishUtils";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { SingleGroupFilter } from "src/dashboard/AccessControl/OptionControllers/FilterControl";
 
 export type UseAgenticWorkflowUserInputReturn = ReturnType<
   typeof useAgenticWorkflowUserInput
 >;
 export const useAgenticWorkflowUserInput = (
-  userInput: DBSSchema["agentic_workflows"]["definition_data"]["userInput"],
+  workflow: DBSSchema["agentic_workflows"] | undefined,
+  latestRun: DBSSchema["agentic_workflow_runs"] | undefined,
 ) => {
-  const [userInputValue, setUserInputValue] = useState<Record<string, unknown>>(
-    {},
+  const userInput = workflow?.definition_data.userInput;
+  const userInputDefaults = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(userInput ?? {})
+          .map(([key, item]) =>
+            item.defaultValue !== undefined ?
+              ([key, item.defaultValue ?? ""] as const)
+            : undefined,
+          )
+          .filter(isDefined),
+      ),
+    [userInput],
   );
+  const [editedUserInputValue, setUserInputValue] =
+    useState<Record<string, unknown>>();
+  const userInputValue =
+    editedUserInputValue ?? latestRun?.user_input_value ?? userInputDefaults;
 
   const [localFilter, setLocalFilter] = useState<
     Record<string, SingleGroupFilter>

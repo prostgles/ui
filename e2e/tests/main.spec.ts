@@ -907,7 +907,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "4",
+      "7",
     );
     await sendAskLLMMessage(page, " task ");
 
@@ -924,7 +924,7 @@ test.describe("Main test", () => {
     );
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "5",
+      "9",
     );
 
     const dbToolsBtn = await page
@@ -1150,9 +1150,21 @@ test.describe("Main test", () => {
     };
 
     await dockerRunAndExpect(
-      `Database permissions for this container require manual approval, but auto_approve is not enabled.`,
+      `cannot execute CREATE TABLE in a read-only transaction`,
+      async () => {
+        await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+        await page.waitForTimeout(1e3);
+        await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+        await page
+          .getByTestId("ToolUseMessage")
+          .last()
+          .getByTestId("FullscreenWrapper.toggleFullscreen")
+          .nth(1)
+          .click();
+      },
     );
 
+    await page.keyboard.press("Escape");
     await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
 
     await runDbSql(

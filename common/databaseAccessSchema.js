@@ -5,7 +5,7 @@ export const databaseAccessSchema = {
     oneOfType: [
         {
             mode: {
-                enum: ["execute_readonly_sql", "execute_sql_with_commit"],
+                enum: ["execute_readonly_sql", "execute_sql"],
             },
         },
         {

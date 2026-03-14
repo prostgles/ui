@@ -1,7 +1,23 @@
-import { databaseAccessSchema } from "@common/databaseAccessSchema";
-import { mcpServerToolsAllowed, userInputSchema } from "@common/prostglesMcp";
-import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
-import { omitKeys, pickKeys, type JSONB } from "prostgles-types";
+// import { databaseAccessSchema } from "@common/databaseAccessSchema";
+// import { mcpServerToolsAllowed, userInputSchema } from "@common/prostglesMcp";
+// import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
+// import { omitKeys, pickKeys, type JSONB } from "prostgles-types";
+
+import { databaseAccessSchema } from "./databaseAccessSchema";
+import { userInputSchema } from "./userInputSchema";
+import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
+
+export const mcpServerToolsAllowed = {
+  record: {
+    partial: true,
+    values: {
+      record: {
+        partial: true,
+        values: { enum: [1] },
+      },
+    },
+  },
+} as const;
 
 const PrimitiveType = ["string", "number", "boolean", "unknown"] as const;
 const PrimitiveTypesWithArrays = [
@@ -48,18 +64,24 @@ export const agentOutputSchemaType = {
   },
 } as const;
 
+const { cpus, memory, readOnly, timeout } = runCodeInSandboxSchema.type;
+
 export const startAgenticWorkflowSchema = {
   chatId: "integer",
   messageId: "string",
   workflowId: "integer",
   name: "string",
   workflowTs: "string",
+  autoApproveAllTools: "boolean",
   containerConfiguration: {
     type: {
       timeout: {
-        ...omitKeys(createContainerSchema.type.timeout, ["optional"]),
+        ...timeout,
+        optional: false,
       },
-      ...pickKeys(createContainerSchema.type, ["cpus", "memory", "readOnly"]),
+      cpus,
+      memory,
+      readOnly,
       internetAccess: {
         optional: true,
         enum: ["none", "bridge", "host"],
@@ -122,4 +144,4 @@ export const startAgenticWorkflowSchema = {
       },
     },
   },
-} as const satisfies JSONB.ObjectType["type"];
+} as const; // satisfies JSONB.ObjectType["type"];

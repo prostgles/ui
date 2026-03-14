@@ -1,6 +1,7 @@
 import { DOCKER_USER_AGENT } from "@common/OAuthUtils";
 import { upsertSession } from "@src/authConfig/upsertSession";
 import type { DBS } from "@src/index";
+import { randomBytes } from "crypto";
 import { createContainer } from "./createContainer";
 import {
   dockerContainerAuthRegistry,
@@ -8,18 +9,17 @@ import {
 } from "./dockerMCPServerProxy/dockerContainerAuthRegistry";
 import { getOrCreateDockerMCPServerProxy } from "./dockerMCPServerProxy/dockerMCPServerProxy";
 import type { ProcessLog } from "./executeDockerCommand";
-import { randomBytes } from "crypto";
 
 export const DOCKER_MCP_ENDPOINT_ENV_VAR = "DOCKER_MCP_ENDPOINT";
 export const runContainerWithProxyAccess = async (
   dbs: DBS,
   {
     user_id,
-    dbPermissions,
     requestHandlers,
+    mcpToolsScope,
   }: {
     user_id: string;
-  } & Pick<ContainerProxyContext, "requestHandlers" | "dbPermissions">,
+  } & Pick<ContainerProxyContext, "requestHandlers" | "mcpToolsScope">,
   args: Parameters<typeof createContainer>[1],
   onLogs?: (logs: ProcessLog[]) => void,
 ) => {
@@ -60,10 +60,11 @@ export const runContainerWithProxyAccess = async (
   const containerResult =
     await dockerContainerAuthRegistry.runContainerWithAuth(
       {
-        dbPermissions,
+        mcpToolsScope,
         sid_token,
         requestHandlers,
         secret,
+        user,
       },
       (containerName) => {
         const argsWithEnv: typeof args = {
@@ -81,5 +82,16 @@ export const runContainerWithProxyAccess = async (
         return createContainer(containerName, argsWithEnv, onLogs);
       },
     );
+
+  /** Cleanup pending tool requests */
+  if (mcpToolsScope) {
+    await dbs.mcp_tool_approval_requests.update(
+      {
+        chat_id: mcpToolsScope.chat.id,
+      },
+      { response: "timed-out", updated: new Date() },
+    );
+  }
+
   return containerResult;
 };

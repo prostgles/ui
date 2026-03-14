@@ -102,9 +102,18 @@ export const getDefaultMCPServers = (): Record<
           config_schema: undefined,
           icon_path,
           mcp_server_tools: getEntries(tools).map(
-            ([name, { schema, outputSchema, description, mode }]) => ({
+            ([
               name,
-              mode,
+              {
+                schema,
+                outputSchema,
+                description,
+                //@ts-ignore
+                ...otherOpts
+              },
+            ]) => ({
+              name,
+              ...otherOpts,
               description,
               ...getSchemasAsJsonSchema({ schema, outputSchema }),
             }),

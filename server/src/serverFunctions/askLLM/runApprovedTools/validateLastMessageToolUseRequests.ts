@@ -1,4 +1,5 @@
-import type { LLMMessage } from "../askLLM";
+import { getMCPFullToolName } from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
 import type { ToolUseMessage } from "./runApprovedTools";
 
 export const validateLastMessageToolUseRequests = ({
@@ -6,7 +7,7 @@ export const validateLastMessageToolUseRequests = ({
   userToolUseApprovals,
 }: {
   toolUseMessages: ToolUseMessage[];
-  userToolUseApprovals: LLMMessage;
+  userToolUseApprovals: DBSSchema["mcp_tool_approval_requests"][];
 }) => {
   if (!toolUseMessages.length) {
     throw new Error(
@@ -14,9 +15,13 @@ export const validateLastMessageToolUseRequests = ({
     );
   }
   const invalidUserApprovals = userToolUseApprovals.filter(
-    (m) =>
-      m.type !== "tool_use" ||
-      !toolUseMessages.some((lm) => lm.id === m.id && lm.name === m.name),
+    (approval) =>
+      !toolUseMessages.some(
+        (toolUseRequest) =>
+          toolUseRequest.id === approval.tool_use_id &&
+          toolUseRequest.name ===
+            getMCPFullToolName(approval.server_name, approval.tool_name),
+      ),
   );
   if (invalidUserApprovals.length) {
     throw new Error(

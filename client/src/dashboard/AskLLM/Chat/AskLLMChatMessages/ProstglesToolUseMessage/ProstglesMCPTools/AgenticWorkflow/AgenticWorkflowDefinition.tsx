@@ -1,4 +1,7 @@
-import { getMCPToolNameParts } from "@common/prostglesMcp";
+import {
+  getMCPToolNameParts,
+  type PROSTGLES_MCP_SERVERS_AND_TOOLS,
+} from "@common/prostglesMcp";
 import { getEntries } from "@common/utils";
 import Loading from "@components/Loader/Loading";
 import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
@@ -12,20 +15,23 @@ import {
 } from "src/dashboard/CodeEditor/CodeEditor";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 import type { ToolResultMessage } from "../../../ToolUseChatMessage/ToolUseChatMessage";
+import type { JSONB } from "prostgles-types";
 
 export const AgenticWorkflowDefinition = ({
   workflow_function_definition,
+  workflow_function_definition_summary,
   chatId,
   workflowId,
   toolResultMessage,
 }: {
   workflow_function_definition: string;
+  workflow_function_definition_summary: string;
   chatId: number;
   workflowId: number | undefined;
   toolResultMessage: ToolResultMessage;
 }) => {
   const {
-    dbsMethods: { getAgenticWorkflowTypes, callMCPServerTool },
+    dbsMethods: { getAgenticWorkflowTypes, reRunMCPServerTool },
     connectionId,
   } = usePrgl();
   const { onMount } = useMonacoScrollToLastLine(true);
@@ -52,10 +58,10 @@ export const AgenticWorkflowDefinition = ({
     const monacoOpts: CodeEditorProps["options"] = {
       ...MONACO_READONLY_DEFAULT_OPTIONS,
       lineNumbers: "on",
-      readOnly: !(callMCPServerTool && workflowId),
+      readOnly: !(reRunMCPServerTool && workflowId),
     } as const;
     const onSave: CodeEditorProps["onSave"] =
-      callMCPServerTool && workflowId ?
+      reRunMCPServerTool && workflowId ?
         async (newValue) => {
           const toolNameParts = getMCPToolNameParts(
             toolResultMessage.tool_name,
@@ -65,23 +71,27 @@ export const AgenticWorkflowDefinition = ({
               `Invalid tool name: ${toolResultMessage.tool_name}`,
             );
           }
-          await callMCPServerTool({
+          await reRunMCPServerTool({
             chatId,
             ...toolNameParts,
             args: {
+              workflow_function_definition_summary,
               workflow_function_definition: newValue,
               workflowId,
-            },
+            } satisfies JSONB.GetObjectType<
+              (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_agentic_workflow"]["schema"]["type"]
+            >,
             reRunToolUseId: toolResultMessage.tool_use_id,
           });
         }
       : undefined;
     return { options: monacoOpts, onSave };
   }, [
-    callMCPServerTool,
+    reRunMCPServerTool,
     workflowId,
     toolResultMessage.tool_name,
     toolResultMessage.tool_use_id,
+    workflow_function_definition_summary,
     chatId,
   ]);
 

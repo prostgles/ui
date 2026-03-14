@@ -13,7 +13,7 @@ export type UseLLMChatProps = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
     workspaceId: string | undefined;
     loadedSuggestions: LoadedSuggestions | undefined;
-  } & Pick<AskLLMChatProps, "agentChat">;
+  } & Pick<AskLLMChatProps, "selectedChat">;
 
 export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = (props: UseLLMChatProps) => {
@@ -23,15 +23,15 @@ export const useLLMChat = (props: UseLLMChatProps) => {
     firstPromptId,
     defaultCredential,
     prompts,
-    agentChat,
+    selectedChat,
   } = props;
   const chatsFilter = useMemo(() => {
     return {
       connection_id: { $in: [props.connectionId, null] },
-      parent_chat_id: agentChat ? { $ne: null } : null,
+      parent_chat_id: selectedChat?.type === "agent" ? { $ne: null } : null,
     } satisfies FilterItem<DBSSchema["llm_chats"]>;
-  }, [agentChat, props.connectionId]);
-  const [selectedChatId, setSelectedChat] = useState(agentChat?.id);
+  }, [selectedChat, props.connectionId]);
+  const [selectedChatId, setSelectedChat] = useState(selectedChat?.id);
   const { data: latestChats } = dbs.llm_chats.useSubscribe(chatsFilter, {
     select: { "*": 1, created_ago: { $ageNow: ["created"] } },
     orderBy: { created: -1 },

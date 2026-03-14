@@ -8,8 +8,12 @@ export const getValidatedAskLLMChatOptions = async ({
   dbs,
   user,
 }: AskLLMArgs) => {
-  if (!userMessage.length && type === "new-message") throw "Message is empty";
-  if (!Number.isInteger(chatId)) throw "chatId must be an integer";
+  if (!userMessage.length && type === "new-message") {
+    throw "Message is empty";
+  }
+  if (!Number.isInteger(chatId)) {
+    throw "chatId must be an integer";
+  }
   const getChat = () => dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
   let maybeChat = await getChat();
   if (!maybeChat) throw "Chat not found";

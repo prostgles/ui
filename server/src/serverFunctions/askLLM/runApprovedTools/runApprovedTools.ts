@@ -1,10 +1,10 @@
 import {
+  getMCPFullToolName,
   getMCPToolNameParts,
   type AllowedChatTool,
 } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
-import { getSerialisableError } from "prostgles-types";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { AGENT_GOAL_TOOL_NAMES } from "../agentConstants";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
@@ -12,10 +12,6 @@ import {
   getAllToolNames,
   type getLLMToolsAllowedInThisChat,
 } from "../getLLMToolsAllowedInThisChat";
-import {
-  getClientDBHandlersForChat,
-  runProstglesDBTool,
-} from "../prostglesLLMTools/runProstglesDBTool";
 import { runAgentGoalTool } from "./runAgentGoalTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
 
@@ -23,34 +19,49 @@ export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
   | (ToolUseMessage & {
       tool: AllowedChatTool;
-      state: "approved";
+      userApprovalResponse: DBSSchema["mcp_tool_approval_requests"] | undefined;
+      state: "approved" | "user-provides-response";
     })
   | (ToolUseMessage & {
       tool: AllowedChatTool;
+      userApprovalResponse: DBSSchema["mcp_tool_approval_requests"] | undefined;
       state: "needs-approval";
     })
   | (ToolUseMessage & {
       tool: AllowedChatTool;
+      userApprovalResponse: DBSSchema["mcp_tool_approval_requests"] | undefined;
       state: "denied";
     })
   | (ToolUseMessage & {
       tool: undefined;
+      userApprovalResponse: DBSSchema["mcp_tool_approval_requests"] | undefined;
       state: "tool-missing";
     });
+
 export type ToolResultMessage = Extract<
   LLMMessage[number],
   { type: "tool_result" }
 >;
 
-export const runApprovedTools = async (
-  allowedTools: Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>>,
-  args: Omit<AskLLMArgs, "userMessage" | "type">,
-  chat: DBSSchema["llm_chats"],
-  toolUseRequestMessages: ToolUseMessage[],
-  userApprovals: LLMMessage | undefined,
-  aborter: AbortController,
-  clientReq: AuthClientRequest,
-) => {
+export const runApprovedTools = async ({
+  allowedTools,
+  aborter,
+  args,
+  chat,
+  toolUseRequestMessages,
+  userApprovals,
+  clientReq,
+  messageId,
+}: {
+  allowedTools: Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>>;
+  args: Omit<AskLLMArgs, "userMessage" | "type" | "aborter">;
+  chat: DBSSchema["llm_chats"];
+  toolUseRequestMessages: ToolUseMessage[];
+  userApprovals: DBSSchema["mcp_tool_approval_requests"][] | undefined;
+  aborter: AbortController;
+  clientReq: AuthClientRequest;
+  messageId: string;
+}) => {
   const { user, chatId, dbs } = args;
   if (!toolUseRequestMessages.length) {
     return;
@@ -58,14 +69,10 @@ export const runApprovedTools = async (
   if (chatId !== chat.id) {
     throw new Error(`Chat id mismatch. Expected ${chatId} but got ${chat.id}`);
   }
-  const { connection_id, db_data_permissions } = chat;
+  const { connection_id } = chat;
   if (!connection_id) {
     throw new Error(`Chat with id ${chatId} does not have a connection_id`);
   }
-  const dbPermissions = {
-    connection_id,
-    db_data_permissions,
-  };
 
   /**
    * Here we expect the user to return a list of approved tools. Anything not in this list that is not auto-approved means denied.
@@ -99,23 +106,28 @@ export const runApprovedTools = async (
       return {
         ...toolUse,
         tool: undefined,
+        userApprovalResponse: undefined,
         state: "tool-missing",
       } satisfies ToolUseMessageWithInfo;
     }
-    const wasApprovedByUser = userApprovals?.some(
-      (m) =>
-        m.type === "tool_use" && m.id === toolUse.id && m.name === toolUse.name,
+    const userApprovalResponse = userApprovals?.find(
+      ({ tool_use_id, server_name, tool_name }) =>
+        tool_use_id === toolUse.id &&
+        toolUse.name === getMCPFullToolName(server_name, tool_name),
     );
     return {
       ...toolUse,
+      userApprovalResponse,
       tool,
       state:
         (
           tool.auto_approve ||
           tool.mode === "auto-approved-user-actionable" ||
-          wasApprovedByUser
+          userApprovalResponse?.response === "approve" ||
+          userApprovalResponse?.response === "auto-approve"
         ) ?
           "approved"
+        : tool.mode === "user-provides-response" ? "user-provides-response"
         : userApprovals ? "denied"
         : "needs-approval",
     } satisfies ToolUseMessageWithInfo;
@@ -124,11 +136,33 @@ export const runApprovedTools = async (
   /** Wait for user to approve/deny/respond to all pending requests */
   if (
     toolUseRequests.some(
-      (tr) =>
-        tr.state === "needs-approval" ||
-        tr.tool?.mode === "user-provides-response",
+      ({ state }) =>
+        state === "needs-approval" || state === "user-provides-response",
     )
   ) {
+    const requestsThatNeedApproval = toolUseRequests.filter(
+      (tr) => tr.state === "needs-approval",
+    );
+    for (const toolUseRequest of requestsThatNeedApproval) {
+      const toolNameParts = getMCPToolNameParts(toolUseRequest.name);
+      if (!toolNameParts) {
+        throw new Error(`Invalid tool name ${toolUseRequest.name}`);
+      }
+      const { serverName, toolName } = toolNameParts;
+      await dbs.mcp_tool_approval_requests.insert({
+        chat_id: chatId,
+        tool_use_id: toolUseRequest.id,
+        tool_name: toolName,
+        input: toolUseRequest.input ?? {},
+        server_name: serverName,
+        user_id: user.id,
+        message_id: messageId,
+        source: {
+          type: "chat",
+          responseCount: requestsThatNeedApproval.length,
+        },
+      });
+    }
     return;
   }
 
@@ -193,76 +227,36 @@ export const runApprovedTools = async (
       if (aborter.signal.aborted) {
         return asResponse(`Operation was aborted by user.`, true);
       }
-      if (tool.type === "mcp") {
-        const toolNameParts = getMCPToolNameParts(toolUseRequest.name);
-        if (!toolNameParts) {
-          return asResponse(
-            `Tool name "${toolUseRequest.name}" is invalid`,
-            true,
-          );
-        }
-        const { serverName, toolName } = toolNameParts;
-        const { content, isError } = await callMCPServerTool({
-          user,
-          chat_id: chatId,
-          dbs,
-          serverName,
-          toolName,
-          toolArguments: toolUseRequest.input,
-          clientReq,
-          toolUseId: toolUseRequest.id,
-        }).catch((e) => ({
-          content: e instanceof Error ? e.message : JSON.stringify(e),
-          isError: true,
-        }));
 
-        return asResponse(content, isError);
-      }
-
-      const { clientMethods } = await getClientDBHandlersForChat(
-        dbPermissions,
-        args.clientReq,
-      );
-      if (tool.type === "prostgles-db-methods") {
-        const { content, is_error } = await parseToolResultToMessage(
-          async () => {
-            const method = clientMethods[tool.tool_name];
-            if (!method) {
-              throw new Error(
-                `Invalid or disallowed method: "${tool.tool_name}"`,
-              );
-            }
-            const methodFunc = method.run!;
-            const res = await methodFunc(toolUseRequest.input);
-            return JSON.stringify(res ?? "");
-          },
-        );
-        return asResponse(content, is_error);
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (tool.type !== "prostgles-db") {
+      const toolNameParts = getMCPToolNameParts(toolUseRequest.name);
+      if (!toolNameParts) {
         return asResponse(
           `Tool name "${toolUseRequest.name}" is invalid`,
           true,
         );
       }
+      const { serverName, toolName } = toolNameParts;
+      const { content, isError } = await callMCPServerTool({
+        user,
+        chat_id: chatId,
+        dbs,
+        serverName,
+        toolName,
+        toolArguments: toolUseRequest.input,
+        clientReq,
+        toolUseId: toolUseRequest.id,
+        mcp_tool_approval_requests_id: toolUseRequest.userApprovalResponse?.id,
+        messageId,
+      }).catch((e) => ({
+        content: e instanceof Error ? e.message : JSON.stringify(e),
+        isError: true,
+      }));
 
-      const { content, is_error } = await parseToolResultToMessage(async () => {
-        const result = await runProstglesDBTool(
-          dbPermissions,
-          args.clientReq,
-          toolUseRequest.input,
-          tool.tool_name,
-        );
-
-        return typeof result === "string" ? result : JSON.stringify(result);
-      });
-      return asResponse(content, is_error);
+      return asResponse(content, isError);
     }),
   );
 
-  const denied = toolUseRequests.some((tr) => tr.state === "denied");
+  const denied = toolUseRequests.some(({ state }) => state === "denied");
   if (toolResults.length) {
     await askLLM({
       ...args,
@@ -271,18 +265,4 @@ export const runApprovedTools = async (
       aborter,
     });
   }
-};
-
-const parseToolResultToMessage = (
-  func: () => Promise<string | undefined>,
-): Promise<
-  | { content: string; is_error?: undefined }
-  | { content: string; is_error: boolean }
-> => {
-  return func()
-    .then((content: string | undefined) => ({ content: content ?? "" }))
-    .catch((e) => ({
-      content: JSON.stringify(getSerialisableError(e)),
-      is_error: true as const,
-    }));
 };

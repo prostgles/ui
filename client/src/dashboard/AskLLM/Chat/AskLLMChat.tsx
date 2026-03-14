@@ -9,7 +9,6 @@ import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import { AskLLMChatActionBar } from "../ChatActionBar/AskLLMChatActionBar";
 import type { LLMSetupStateReady } from "../Setup/LLMSetupProvider";
-import { AskLLMToolApprover } from "../Tools/AskLLMToolApprover";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useAskLLMChatSend } from "./useAskLLMChatSend";
 import { useLLMChat } from "./useLLMChat";
@@ -21,26 +20,23 @@ export type AskLLMChatProps = Pick<
   "askLLM" | "stopAskLLM"
 > & {
   setupState: LLMSetupStateReady;
-  anchorEl: HTMLElement | undefined;
   onClose: VoidFunction;
   workspaceId: string | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
-  agentChat: { id: number } | undefined;
+  selectedChat: { type: "agent" | "toolApproval"; id: number } | undefined;
 };
 
 export const AskLLMChat = (props: AskLLMChatProps) => {
   const {
-    anchorEl,
     onClose,
     setupState,
     workspaceId,
     loadedSuggestions,
     askLLM,
     stopAskLLM,
-    agentChat,
+    selectedChat,
   } = props;
-  const { tables, user, connectionId, connection, dbs, methods, sql } =
-    usePrgl();
+  const { tables, user, connectionId, connection, dbs, sql } = usePrgl();
   const chatState = useLLMChat({
     ...setupState,
     loadedSuggestions,
@@ -48,7 +44,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     user,
     connectionId,
     workspaceId,
-    agentChat,
+    selectedChat,
   });
   const {
     messages,
@@ -66,14 +62,13 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     activeChat,
   });
   const isAdmin = user?.type === "admin";
-  const { chatIsLoading, onStopSending, sendMessage, sendQuery } =
-    useAskLLMChatSend({
-      askLLM,
-      stopAskLLM,
-      activeChatId,
-      activeChat,
-      dbSchemaForPrompt,
-    });
+  const { chatIsLoading, onStopSending, sendMessage } = useAskLLMChatSend({
+    askLLM,
+    stopAskLLM,
+    activeChatId,
+    activeChat,
+    dbSchemaForPrompt,
+  });
 
   const [currentlyTypedMessage, setCurrentlyTypedMessage] = useState(
     activeChat?.currently_typed_message,
@@ -95,6 +90,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     },
     [activeChatId, chatIsLoading, dbs.llm_chats],
   );
+
+  const agentChat = selectedChat?.type === "agent" ? activeChat : undefined;
 
   /* Prevents flickering when popup is opened */
   if (!messages) return;
@@ -125,6 +122,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
         <AskLLMChatHeader
           {...setupState}
           {...chatState}
+          selectedChat={selectedChat}
           chatRootDiv={rootDiv}
         />
       )}
@@ -132,7 +130,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       clickCatchStyle={{ opacity: agentChat ? 1 : 0.1 }}
       onClickClose={false}
       onClose={onClose}
-      anchorEl={anchorEl}
       contentClassName="p-0 f-1"
       rootStyle={{
         flex: 1,
@@ -180,19 +177,9 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               )
             }
           />
-          {prompt && (
-            <AskLLMToolApprover
-              connection={connection}
-              activeChat={activeChat}
-              messages={llmMessages ?? []}
-              methods={methods}
-              sendQuery={sendQuery}
-              loadedSuggestions={loadedSuggestions}
-              workspaceId={workspaceId}
-            />
-          )}
         </FlexCol>
       )}
+
       {latestChats && !activeChat && (
         <Btn
           onClickPromise={async () => createNewChat(preferredPromptId)}

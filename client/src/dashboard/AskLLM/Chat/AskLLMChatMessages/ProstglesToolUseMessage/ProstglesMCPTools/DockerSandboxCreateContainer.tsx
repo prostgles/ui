@@ -185,13 +185,18 @@ export const DockerSandboxCreateContainer = ({
               data-command="DockerSandboxCreateContainer.Logs"
               style={monacoStyle}
               logs={logs}
+              maxHeight={0}
             />
           )}
         </FullscreenWrapper>
 
         <AgenticWorkflowUserInput {...userInputState} />
       </FlexCol>
-      <ErrorComponent error={resultObj?.error} />
+      <ErrorComponent
+        error={
+          toolUseResult?.is_error ? toolUseResult.content : resultObj?.error
+        }
+      />
     </FullscreenWrapper>
   );
 };

@@ -1,20 +1,21 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { FlexCol } from "@components/Flex";
 import { mdiCodeJson } from "@mdi/js";
 import React, { useCallback, useState } from "react";
 
 import { ErrorTrap } from "@components/ErrorComponent";
 import PopupMenu from "@components/PopupMenu";
 import { ProstglesMCPToolsWithUI } from "../ProstglesToolUseMessage/ProstglesToolUseMessage";
+import { InChatToolApprover } from "./InChatToolApprover";
 import { ToolUseChatMessageBtn } from "./ToolUseChatMessageBtn";
 import { ToolUseChatMessageJSONData } from "./ToolUseChatMessageJSONData";
 import { ToolUseChatMessageResult } from "./ToolUseChatMessageResult";
+import { ToolUseReRun } from "./ToolUseReRun";
 import {
   useToolUseChatMessage,
   type ToolUseMessageProps,
 } from "./useToolUseChatMessage";
-import { ToolUseReRun } from "./ToolUseReRun";
 
 export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
   const [toolDataAnchorEl, setToolDataAnchorEl] = useState<HTMLButtonElement>();
@@ -26,6 +27,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
     },
     [toolDataAnchorEl],
   );
+
   if (typeof toolUseInfo === "string") {
     return <>{toolUseInfo}</>;
   }
@@ -97,6 +99,13 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
           setAnchorEl={setToolDataAnchorEl}
         />
       </FlexCol>
+      {typeof toolUseInfo !== "string" && (
+        <InChatToolApprover
+          toolUseId={toolUseInfo.toolUseMessageContent.id}
+          messageId={toolUseInfo.toolUseMessage.id}
+          chatId={toolUseInfo.toolUseMessage.chat_id}
+        />
+      )}
     </ErrorTrap>
   );
 };

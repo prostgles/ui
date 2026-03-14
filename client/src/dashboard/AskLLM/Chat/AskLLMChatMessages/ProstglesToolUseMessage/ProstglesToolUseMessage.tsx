@@ -42,17 +42,11 @@ export const ProstglesMCPToolsWithUI = {
     displayMode: "full",
     showsError: true,
   },
-  [getProstglesMCPFullToolName(
-    "prostgles-db",
-    "execute_sql_with_commit",
-  ) as string]: {
+  [getProstglesMCPFullToolName("db", "execute_sql") as string]: {
     component: ExecuteSQL,
     displayMode: "inline",
   },
-  [getProstglesMCPFullToolName(
-    "prostgles-db",
-    "execute_readonly_sql",
-  ) as string]: {
+  [getProstglesMCPFullToolName("db", "execute_readonly_sql") as string]: {
     component: ExecuteSQL,
     displayMode: "inline",
   },

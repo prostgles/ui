@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from "react";
 import type { DbsByUserType } from "src/dashboard/Dashboard/DBS";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import { useAskLLMToolApprove } from "../Tools/useAskLLMToolApprover";
 
 export type LLMSetupState = ReturnType<typeof useLLMSetupState>;
 export type LLMSetupStateReady = Extract<LLMSetupState, { state: "ready" }>;
@@ -22,6 +23,8 @@ const useLLMSetupState = () => {
     { orderBy: { id: 1 } },
   );
   const firstPromptId = prompts?.[0]?.id;
+
+  const toolApprovalState = useAskLLMToolApprove();
 
   if (isAdmin) {
     if (!globalSettings?.data || !credentials || !prompts) {
@@ -56,6 +59,7 @@ const useLLMSetupState = () => {
 
   const result = {
     state: "ready" as const,
+    toolApprovalState,
     defaultCredential,
     globalSettings,
     credentials,
@@ -88,7 +92,7 @@ export const useLLMSetup = () => {
   if (!ctx) throw new Error("useLLMSetup must be used inside LLMSetupProvider");
   return ctx;
 };
-export const useLLMSetupDone = () => {
+export const useAskLLMSetupState = () => {
   const ctx = useContext(LLMSetupContext);
   if (!ctx) throw new Error("useLLMSetup must be used inside LLMSetupProvider");
   if (ctx.state !== "ready") {

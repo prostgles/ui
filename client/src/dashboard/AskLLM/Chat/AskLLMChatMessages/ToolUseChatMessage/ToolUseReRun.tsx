@@ -23,14 +23,14 @@ export const ToolUseReRun = ({
   newInput,
 }: P) => {
   const {
-    dbsMethods: { callMCPServerTool },
+    dbsMethods: { reRunMCPServerTool },
   } = usePrglCore();
   const { addAlert } = useAlert();
   const nameParts = getMCPToolNameParts(toolRequest.name);
   const inputChanged = useMemo(() => {
     return !isEqual(toolRequest.input, newInput);
   }, [toolRequest.input, newInput]);
-  if (!toolResult || !callMCPServerTool || !nameParts) return null;
+  if (!toolResult || !reRunMCPServerTool || !nameParts) return null;
   const { serverName, toolName } = nameParts;
   return (
     <Btn
@@ -48,7 +48,7 @@ export const ToolUseReRun = ({
         : undefined
       }
       onClickPromise={async () => {
-        const result = await callMCPServerTool({
+        const result = await reRunMCPServerTool({
           chatId,
           serverName,
           toolName,

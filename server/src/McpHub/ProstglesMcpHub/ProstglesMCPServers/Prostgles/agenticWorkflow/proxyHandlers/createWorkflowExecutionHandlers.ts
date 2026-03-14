@@ -6,7 +6,7 @@ import { tout } from "@src/utils/tout";
 import type { AuthClientRequest } from "prostgles-server";
 import type { DefineAgenticWorkflow } from "../runtimeSdk/defineAgenticWorkflow";
 import { getAgentConfigWithDefaults } from "./getAgentConfigWithDefaults";
-import { getOrchestrationToolsHandler } from "./getOrchestrationToolsHandler";
+import { setupOrchestrationToolPermissions } from "./setupOrchestrationToolPermissions";
 import { getValidatedMcpServerToolsAllowed } from "../definitionValidation/getValidatedMcpServerToolsAllowed";
 
 /**
@@ -24,7 +24,7 @@ const enqueueAgentExecution = <T>(
   return executionPromise;
 };
 
-export const createWorkflowProxyHandlers = async <
+export const createWorkflowExecutionHandlers = async <
   P extends DefineAgenticWorkflow,
 >(
   {
@@ -34,8 +34,11 @@ export const createWorkflowProxyHandlers = async <
     signal,
     definition_override,
     orchestrationTools,
+    databaseAccessDefinitions,
+    mode,
   }: Parameters<P>[0] & {
     signal?: AbortSignal;
+    mode: "definitions-only" | "full";
   } & Pick<DBSSchema["agentic_workflows"], "definition_override">,
   {
     dbs,
@@ -50,7 +53,13 @@ export const createWorkflowProxyHandlers = async <
     connectionId: string;
     clientReq: AuthClientRequest;
   },
-  runInSequence = true,
+  {
+    runInSequence = true,
+    autoApproveAllTools = false,
+  }: {
+    runInSequence?: boolean;
+    autoApproveAllTools?: boolean;
+  },
 ) => {
   if (!statePrgl) {
     throw new Error("Prostgles state is not initialized");
@@ -69,13 +78,6 @@ export const createWorkflowProxyHandlers = async <
   if (!user) {
     throw new Error(`User with id ${userId} not found`);
   }
-  const { orchestrationToolsHandler } = await getOrchestrationToolsHandler({
-    orchestrationTools,
-    dbs,
-    chatId,
-    userId,
-    connectionId,
-  });
 
   const agentConfigsWithDefaults: Record<
     string,
@@ -146,7 +148,7 @@ export const createWorkflowProxyHandlers = async <
               chat_id: agentChat.id,
               tool_id: id,
               server_name,
-              auto_approve: true, // TODO: make approvable in UI
+              auto_approve: autoApproveAllTools,
             } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
           }),
         );
@@ -212,9 +214,25 @@ export const createWorkflowProxyHandlers = async <
     agentHandlers.set(agentName, agentHandler);
   }
 
+  const orchestrationToolsWithInfo =
+    orchestrationTools &&
+    (await getValidatedMcpServerToolsAllowed(dbs, orchestrationTools));
+
   return {
     agentHandlers,
     agentConfigsWithDefaults,
-    orchestrationToolsHandler,
+    orchestrationToolsWithInfo,
+    orchestratorChat:
+      mode !== "full" ? undefined : (
+        await setupOrchestrationToolPermissions({
+          orchestrationToolsWithInfo,
+          dbs,
+          chatId,
+          userId,
+          connectionId,
+          databaseAccessDefinitions,
+          autoApproveAllTools,
+        })
+      ),
   };
 };

@@ -1,18 +1,14 @@
-import { getJSONBSchemaAsJSONSchema, isDefined } from "prostgles-types";
+import { isDefined } from "prostgles-types";
 
-import {
-  getMCPToolNameParts,
-  type AllowedChatTool,
-} from "@common/prostglesMcp";
+import { getMCPToolNameParts } from "@common/prostglesMcp";
 
+import type { DBSSchema } from "@common/publishUtils";
 import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { type GetLLMToolsArgs } from "../getLLMToolsAllowedInThisChat";
-import { getAllowedDBToolSchemas } from "./getAllowedDBToolSchemas";
 import { getMCPServerTools } from "./getMCPServerTools";
-import type { DBSSchema } from "@common/publishUtils";
 
-export const getProstglesLLMTools = async ({
+export const getAllowedMcpTools = async ({
   dbs,
   chat,
   allowedMcpToolsWithInfo,
@@ -27,30 +23,15 @@ export const getProstglesLLMTools = async ({
     chat_id: number;
     tool_id: number;
     name: `${string}--${string}`;
-    type: "mcp";
   })[];
   clientReq: AuthClientRequest;
 }) => {
   const { mcp_server_tools } = await getMCPServerTools(dbs, {});
 
-  const { connection_id, db_data_permissions } = chat;
+  const { connection_id } = chat;
   if (!connection_id) {
     throw new Error(`Chat with id ${chat.id} does not have a connection_id`);
   }
-  const dbPermissions = {
-    connection_id,
-    db_data_permissions,
-  };
-
-  const dbTools = getAllowedDBToolSchemas(dbPermissions);
-  const dbToolsWithJsonSchema = dbTools.map((tool) => {
-    return {
-      ...tool,
-      server_name: tool.type,
-      input_schema: getJSONBSchemaAsJSONSchema("", "", tool.schema),
-      mode: null,
-    } satisfies AllowedChatTool;
-  });
 
   const prostglesMCPHub = await getProstglesMcpHub(dbs);
   const serverEntries = prostglesMCPHub.getServers();
@@ -62,7 +43,6 @@ export const getProstglesLLMTools = async ({
           connection_id,
           user_id: chat.user_id,
           clientReq,
-          dbTools,
           mcpTools: mcp_server_tools,
           toolsAllowed: allowedMcpToolsWithInfo.map((t) => {
             return {
@@ -71,7 +51,6 @@ export const getProstglesLLMTools = async ({
             };
           }),
           dbs,
-          toolUseId: undefined,
         });
         const serverTools = Object.values(serverToolsMap).filter(isDefined);
         const res = [name, serverTools] as const;
@@ -101,5 +80,5 @@ export const getProstglesLLMTools = async ({
     })
     .filter(isDefined);
 
-  return { mcpTools, dbTools: dbToolsWithJsonSchema };
+  return { mcpTools };
 };

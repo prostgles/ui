@@ -41,7 +41,8 @@ export const AgenticWorkflowUserInput = ({
         {show && (
           <FlexRowWrap className="p-1">
             {Object.entries(userInput).map(([inputKey, inputItem]) => {
-              const currentValue = userInputValue[inputKey];
+              const currentValue =
+                userInputValue[inputKey] ?? inputItem.defaultValue;
               const title =
                 (inputItem.title || inputKey) +
                 (inputItem.optional ? " (optional)" : "");

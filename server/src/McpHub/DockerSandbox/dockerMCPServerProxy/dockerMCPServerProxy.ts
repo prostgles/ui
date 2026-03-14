@@ -1,7 +1,9 @@
 import { sidKeyName } from "@common/authTypesAndConstants";
 import { getEntries } from "@common/utils";
+import type { CreateContainerParams } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
+import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
 import { isDocker } from "@src/McpHub/utils";
-import { runProstglesDBTool } from "@src/serverFunctions/askLLM/prostglesLLMTools/runProstglesDBTool";
+import { statePrgl } from "@src/init/startProstgles";
 import { isPortFree } from "@src/utils/isPortFree";
 import { execSync } from "child_process";
 import express, {
@@ -17,13 +19,14 @@ import { match } from "path-to-regexp";
 import { upsertNamedExpressMiddleware } from "prostgles-server";
 import { HTTP_FAIL_CODES } from "prostgles-server/dist/Auth/AuthHandler";
 import { getSerialisableError, isObject } from "prostgles-types";
+import { createBridgeInternalDockerNetwork } from "../createBridgeInternalDockerNetwork";
 import {
   dockerContainerAuthRegistry,
   type ContainerProxyContext,
 } from "./dockerContainerAuthRegistry";
 import { getDockerGatewayIP } from "./getDockerGatewayIP";
-import type { CreateContainerParams } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
-import { createBridgeInternalDockerNetwork } from "../createBridgeInternalDockerNetwork";
+import { createSessionSecret } from "@src/authConfig/sessionUtils";
+import { tout } from "@src/utils/tout";
 
 const PREFERRED_PORT = 3089;
 const DEFAULT_GATEWAY_IP = "0.0.0.0" as const;
@@ -75,11 +78,12 @@ const createDockerMCPServerProxy = async () => {
   };
 
   scopedProxyRouter.use(authContextMiddleware);
-  scopedProxyRouter.post(DB_ROUTE, dbRequestHandler);
+  scopedProxyRouter.post(MCP_ROUTE, mcpRequestHandler);
 
   const dockerProxyRouter: RequestHandler = async (req, res, next) => {
     const authContext = res.locals.authContext as ContainerProxyContext;
-    const { dbPermissions, sid_token, requestHandlers, secret } = authContext;
+    const { sid_token, requestHandlers, secret, user, mcpToolsScope } =
+      authContext;
 
     const matchedRequestHandler = getEntries(requestHandlers ?? {}).find(
       ([route]) => {
@@ -95,11 +99,12 @@ const createDockerMCPServerProxy = async () => {
     try {
       await handler(
         {
-          dbPermissions,
           sid_token,
           httpReq: req,
           res,
           secret,
+          mcpToolsScope,
+          user,
         },
         req,
         res,
@@ -118,7 +123,6 @@ const createDockerMCPServerProxy = async () => {
   upsertNamedExpressMiddleware(
     app,
     rootProxyRouter,
-    // dockerProxyRouter,
     "docker-mcp-proxy-request-handlers",
   );
 
@@ -219,45 +223,140 @@ const createDockerMCPServerProxy = async () => {
   };
 };
 
-const DB_ROUTE = `/db/:endpoint`;
+const MCP_ROUTE = `/:server_name/:tool_name` as const;
 
-const dbRequestHandler: RequestHandler = (req: Request, res: Response) => {
-  const authContext = res.locals.authContext as ContainerProxyContext;
-  const { endpoint = "" } = req.params;
+const mcpRequestHandler: RequestHandler = async (
+  req: Request,
+  res: Response,
+) => {
+  const { server_name = "", tool_name } = req.params;
   try {
-    const { dbPermissions, sid_token } = authContext;
-    const { mode = "none", auto_approve } =
-      dbPermissions?.db_data_permissions || {};
-    if (!dbPermissions || mode === "none") {
+    const { user, sid_token, mcpToolsScope } = res.locals
+      .authContext as ContainerProxyContext;
+
+    if (!mcpToolsScope) {
       return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
-        error: "No database permissions granted for this container",
+        error: "MCP Tools scope chat not found in auth context",
       });
     }
 
-    if (!auto_approve) {
-      return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
+    const dbs = statePrgl?.db;
+    if (!dbs) {
+      throw new Error("Database not initialized");
+    }
+
+    if (
+      !server_name ||
+      !tool_name ||
+      typeof server_name !== "string" ||
+      typeof tool_name !== "string"
+    ) {
+      return res.status(HTTP_FAIL_CODES.BAD_REQUEST).json({
         error:
-          "Database permissions for this container require manual approval, but auto_approve is not enabled.",
+          "Missing server_name or tool_name in request params. Expecting /serverName/toolName in the URL.",
       });
+    }
+    const { chat, messageId } = mcpToolsScope;
+    const toolAllowedInfo = await dbs.llm_chats_allowed_mcp_tools.findOne({
+      $existsJoined: {
+        mcp_server_tools: {
+          server_name,
+          name: tool_name,
+        },
+      },
+      chat_id: chat.id,
+    });
+
+    if (!toolAllowedInfo) {
+      return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
+        error: `Tool ${server_name}/${tool_name} is not allowed`,
+      });
+    }
+    if (server_name === "prostgles-ui") {
+      return res.status(HTTP_FAIL_CODES.BAD_REQUEST).json({
+        error: `Tool server "prostgles-ui" is reserved for internal use and cannot be called directly.`,
+      });
+    }
+    const timeoutMinutes = 5;
+    const waitForApprovalTimeout = timeoutMinutes * 60 * 1000;
+    const now = Date.now();
+    let approvalRequestId: number | undefined = undefined;
+    if (!toolAllowedInfo.auto_approve) {
+      const toolUseId = `tool-use-${createSessionSecret().slice(0, 6)}`;
+      const approval = await dbs.mcp_tool_approval_requests.insert(
+        {
+          chat_id: chat.id,
+          user_id: user.id,
+          message_id: null,
+          tool_name,
+          server_name,
+          tool_use_id: toolUseId,
+          response: null,
+          input: req.body,
+          source: {
+            type: "proxy",
+            parentToolUseMessageId: messageId,
+          },
+        },
+        { returning: "*" },
+      );
+      let latestApproval: typeof approval | undefined = approval;
+      let timedOut = false;
+      do {
+        await tout(1000);
+        if (Date.now() - now >= waitForApprovalTimeout) {
+          timedOut = true;
+        }
+        latestApproval = await dbs.mcp_tool_approval_requests.findOne({
+          id: approval.id,
+        });
+      } while (latestApproval && !latestApproval.response && !timedOut);
+
+      const approveFailReason =
+        !latestApproval ? "Approval request not found"
+        : latestApproval.response === "deny" ? "Tool use denied by user"
+        : timedOut ?
+          `Tool use not approved within timeout period of ${timeoutMinutes} minutes`
+        : undefined;
+
+      if (approveFailReason) {
+        return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
+          error: `Tool ${server_name}/${tool_name} failed: ${approveFailReason}. Tool must be approved in the UI or be set to auto-approve.`,
+        });
+      }
+      approvalRequestId = approval.id;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     req.cookies ??= {};
     req.cookies[sidKeyName] = sid_token;
-    runProstglesDBTool(
-      dbPermissions,
-      { httpReq: req, res },
-      req.body,
-      endpoint.toString(),
-    )
+    const clientReq = { httpReq: req, res };
+    callMCPServerTool({
+      dbs,
+      clientReq,
+      chat_id: chat.id,
+      user,
+      serverName: server_name,
+      toolName: tool_name,
+      toolArguments: req.body,
+      toolUseId: undefined,
+      mcp_tool_approval_requests_id: approvalRequestId,
+      messageId,
+    })
       .then((result) => {
-        res.json(result);
+        res
+          .status(result.isError ? HTTP_FAIL_CODES.BAD_REQUEST : 200)
+          .json(result.structuredContent || result.content);
       })
       .catch((error) => {
-        res.status(400).json({ error: getSerialisableError(error) });
+        res
+          .status(HTTP_FAIL_CODES.BAD_REQUEST)
+          .json({ error: getSerialisableError(error) });
       });
   } catch (error) {
     console.error("Error in request handler:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res
+      .status(HTTP_FAIL_CODES.INTERNAL_SERVER_ERROR)
+      .json({ error: "Internal server error" });
   }
 };

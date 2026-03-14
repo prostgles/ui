@@ -1,5 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { createWorkflowProxyHandlers } from "./proxyHandlers/createWorkflowProxyHandlers";
+import { createWorkflowExecutionHandlers } from "./proxyHandlers/createWorkflowExecutionHandlers";
 import type { DBS } from "@src/index";
 import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
 import { getSerialisableError, omitKeys } from "prostgles-types";
@@ -54,20 +54,22 @@ export const startAgenticWorkflow = async ({
   workflow,
   user,
   dbs,
-  chatId,
+  chat,
   messageId,
   clientReq,
   executionMode,
   userInputValue,
   connection_id,
+  autoApproveAllTools,
 }: {
   workflow: DBSSchema["agentic_workflows"];
   user: DBSSchema["users"];
   dbs: DBS;
-  chatId: number;
+  chat: DBSSchema["llm_chats"];
   messageId: string;
   clientReq: AuthClientRequest;
   executionMode: "parallel" | "series";
+  autoApproveAllTools: boolean;
   userInputValue: Record<string, unknown>;
   connection_id: string;
 }) => {
@@ -83,8 +85,8 @@ export const startAgenticWorkflow = async ({
     userInput,
   } = definition_data;
   const aborter = new AbortController();
-  const { agentHandlers, orchestrationToolsHandler } =
-    await createWorkflowProxyHandlers(
+  const { agentHandlers, orchestratorChat } =
+    await createWorkflowExecutionHandlers(
       {
         name,
         containerConfiguration: containerConfigurationWithOverrides,
@@ -93,6 +95,7 @@ export const startAgenticWorkflow = async ({
         signal: aborter.signal,
         orchestrationTools,
         definition_override: workflow.definition_override,
+        mode: "full",
       },
       {
         chatId: workflow.chat_id,
@@ -101,7 +104,7 @@ export const startAgenticWorkflow = async ({
         connectionId: connection_id,
         clientReq,
       },
-      executionMode !== "parallel",
+      { runInSequence: executionMode !== "parallel", autoApproveAllTools },
     );
 
   if (
@@ -125,7 +128,7 @@ export const startAgenticWorkflow = async ({
   const existingAborters = abortersByUserId.get(user.id) || [];
   abortersByUserId.set(user.id, [
     ...existingAborters,
-    { chatId, messageId, aborter },
+    { chatId: chat.id, messageId, aborter },
   ]);
   const res = await startAgenticWorkflowContainer(
     dbs,
@@ -133,16 +136,17 @@ export const startAgenticWorkflow = async ({
       user_id: user.id,
       workflow_function_definition: workflow.definition,
       package_dependencies: workflow.package_dependencies ?? undefined,
-      chat_id: chatId,
+      chat,
       abortSignal: aborter.signal,
       connection_id,
+      messageId,
     },
     {
       type: "full",
       userInputValue,
       workflowId: workflow.id,
       workflow,
-      messageId,
+      orchestratorChat: orchestratorChat!,
       definition: {
         name,
         containerConfiguration: containerConfigurationWithOverrides,
@@ -157,20 +161,12 @@ export const startAgenticWorkflow = async ({
             omitKeys(databaseAccessDefinitions, ["tableCreateStatements"])
           : (databaseAccessDefinitions ?? null),
       },
-      handler: (data, { httpReq, res }) => {
-        if (data.type === "agent") {
-          const agentHandler = agentHandlers.get(data.agentName);
-          if (!agentHandler) {
-            throw `Agent handler for ${data.agentName} not found`;
-          }
-          return agentHandler(data.input);
+      handler: (data) => {
+        const agentHandler = agentHandlers.get(data.agentName);
+        if (!agentHandler) {
+          throw `Agent handler for ${data.agentName} not found`;
         }
-
-        const toolHandler = orchestrationToolsHandler.get(data.name);
-        if (!toolHandler) {
-          throw `Tool handler for ${data.name} not found`;
-        }
-        return toolHandler(data.input, { httpReq, res });
+        return agentHandler(data.input);
       },
     },
   ).catch((error: unknown) => {

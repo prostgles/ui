@@ -40,5 +40,5 @@
 	"include": [
 		"src",
 		"**/*.spec.ts"
-, "../common/getJsonSchemaAsTs.ts"	]
+, "../common/getJsonSchemaAsTs.ts", "../common/startAgenticWorkflowSchema.ts"	]
 }

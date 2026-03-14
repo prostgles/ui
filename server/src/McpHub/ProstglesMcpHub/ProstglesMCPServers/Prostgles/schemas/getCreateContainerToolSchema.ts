@@ -1,28 +1,31 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { type DBTool } from "@src/serverFunctions/askLLM/prostglesLLMTools/getAllowedDBToolSchemas";
 import {
   getJSONBSchemaAsJSONSchema,
-  getJSONBTSTypes,
   omitKeys,
   type JSONB,
 } from "prostgles-types";
 import { DOCKER_MCP_ENDPOINT_ENV_VAR } from "../../../../DockerSandbox/runContainerWithProxyAccess";
+import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 
 const createContainerToolInfo =
   PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["run_code_in_sandbox"];
 
-export const getCreateContainerToolSchema = (dbTools: DBTool[]) => {
+export const getCreateContainerToolSchema = (
+  mcpTools: McpCallContextFetchTools["mcpTools"],
+) => {
   const databaseQueryDescription =
-    !dbTools.length ?
-      "Access to the database is not allowed. If user wants to run queries, they need to set the Mode to Custom or SQL."
+    !mcpTools.length ?
+      "No MCP tools allowed. Must request access to MCP tools to be able to call MCP tools from the container."
     : [
-        `To run queries against the database you need to POST JSON body parameters to the "${DOCKER_MCP_ENDPOINT_ENV_VAR}" environment variable endpoint:`,
-        `e.g. using curl: \`curl -X POST $${DOCKER_MCP_ENDPOINT_ENV_VAR}/db/execute_sql_with_commit -H "Content-Type: application/json" -d '{"sql": "SELECT * FROM users;"}'\``,
+        `To call mcp tools you need to POST JSON body parameters to the "${DOCKER_MCP_ENDPOINT_ENV_VAR}" environment variable endpoint.`,
+        `The endpoint is in the format \`${DOCKER_MCP_ENDPOINT_ENV_VAR}/[tool_server_name]/[tool_name]\`.`,
+        `Foe example, if using curl: \`curl -X POST $${DOCKER_MCP_ENDPOINT_ENV_VAR}/db/execute_sql -H "Content-Type: application/json" -d '{"sql": "SELECT * FROM users;"}'\``,
         `The following endpoints are available:\n\n`,
-        ...dbTools.map((t) => {
-          return ` - /${t.tool_name} - ${t.description} JSON body input schema: ${getJSONBTSTypes([], t.schema)}. Response schema: ${getJSONBTSTypes([], t.outputSchema)}`;
-        }),
+        // TODO: check if showing tool schemas here is useful or just adds confusion
+        // ...dbTools.map((t) => {
+        //   return ` - /${t.tool_name} - ${t.description} JSON body input schema: ${getJSONBTSTypes([], t.schema)}. Response schema: ${getJSONBTSTypes([], t.outputSchema)}`;
+        // }),
       ].join("\n");
 
   return {

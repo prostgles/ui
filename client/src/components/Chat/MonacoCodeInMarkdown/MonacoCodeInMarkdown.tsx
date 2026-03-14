@@ -1,3 +1,4 @@
+import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapper";
 import type { editor } from "monaco-editor";
 import type { SQLHandler } from "prostgles-types";
 import React, { useCallback, useMemo, useState } from "react";
@@ -9,7 +10,6 @@ import {
   MONACO_READONLY_DEFAULT_OPTIONS,
   MonacoEditor,
 } from "../../MonacoEditor/MonacoEditor";
-import Popup from "../../Popup/Popup";
 import { Table } from "../../Table/Table";
 import { MarkdownMonacoCodeHeader } from "./MarkdownMonacoCodeHeader";
 import { useOnRunSQL } from "./useOnRunSQL";
@@ -40,12 +40,6 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
       lineNumbers: fullscreen ? "on" : "off",
     } satisfies editor.IStandaloneEditorConstructionOptions;
   }, [fullscreen]);
-
-  const onExit = useCallback(() => {
-    setFullscreen(false);
-  }, []);
-
-  const titleOrLanguage = title ?? language;
 
   const runSQLState = useOnRunSQL(props);
   const { sqlResult } = runSQLState;
@@ -80,7 +74,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
   return (
     <FlexCol
       className={classOverride(
-        "MarkdownMonacoCode relative b b-color rounded gap-0 f-0 o-hidden ",
+        "MarkdownMonacoCode relative rounded gap-0 f-0 o-hidden ",
         className,
       )}
       style={{
@@ -88,18 +82,9 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
       }}
       data-command="MarkdownMonacoCode"
     >
-      <MarkdownMonacoCodeHeader
-        {...props}
-        {...runSQLState}
-        fullscreen={fullscreen}
-        setFullscreen={setFullscreen}
-        titleOrLanguage={titleOrLanguage}
-      />
       <FullscreenWrapper
         key={codeString}
-        isFullscreen={fullscreen}
-        title={titleOrLanguage}
-        onExit={onExit}
+        title={<MarkdownMonacoCodeHeader {...props} {...runSQLState} />}
       >
         <MonacoEditor
           key={codeString}
@@ -109,6 +94,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
           language={LANGUAGE_FALLBACK.get(language) ?? language}
           options={monacoOptions}
           onMount={onListenToContentHeightChange}
+          minHeight={100}
         />
         {sqlResult?.state === "ok-command-result" ?
           <SuccessMessage message={sqlResult.commandResult} />
@@ -126,32 +112,5 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
         : null}
       </FullscreenWrapper>
     </FlexCol>
-  );
-};
-
-const FullscreenWrapper = (props: {
-  isFullscreen: boolean;
-  onExit: VoidFunction;
-  children: React.ReactNode;
-  title: string;
-}) => {
-  const { children, isFullscreen, onExit, title } = props;
-
-  if (!isFullscreen) {
-    return children;
-  }
-  return (
-    <Popup
-      title={title}
-      positioning="fullscreen"
-      onClickClose={false}
-      contentClassName="p-1"
-      onClose={onExit}
-      contentStyle={{
-        overflow: "visible",
-      }}
-    >
-      {children}
-    </Popup>
   );
 };

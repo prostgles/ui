@@ -34,7 +34,7 @@ export const mcpSandboxToolUse: ToolUse = {
                 if(res.ok){
                   console.log("Table created successfully", json);
                 } else {
-                  console.error(json.error.message);
+                  console.error(json.message);
                 }
               })) 
               fetch(

@@ -1,9 +1,8 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { type DBS } from "@src/index";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { type JSONB } from "prostgles-types";
 import type { McpTool } from "../AnthropicMcpHub/McpTypes";
-import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBTool } from "@src/serverFunctions/askLLM/prostglesLLMTools/getAllowedDBToolSchemas";
 
 export type ProstglesMcpServerDefinition = {
   icon_path: string;
@@ -32,14 +31,13 @@ export type McpCallContext = {
   clientReq: AuthClientRequest;
   dbs: DBS;
   toolUseId: string | undefined;
+  messageId: string;
 };
 
-export type McpCallContextFetchTools = McpCallContext & {
-  /**
-   * List of db tools allowed in this chat.
-   * Used for docker container description
-   */
-  dbTools: DBTool[];
+export type McpCallContextFetchTools = Omit<
+  McpCallContext,
+  "toolUseId" | "messageId"
+> & {
   mcpTools: {
     name: string;
     server_name: string;

@@ -25,15 +25,12 @@ export const getMcpServerFunctions = (
       input: { serverName: "string" },
       run: ({ serverName }, { dbs }) => getMCPServersStatus(dbs, serverName),
     }),
-    callMCPServerTool: defineAdminFunction({
+    reRunMCPServerTool: defineAdminFunction({
       input: {
         chatId: "integer",
         serverName: "string",
         toolName: "string",
-        reRunToolUseId: {
-          type: "string",
-          optional: true,
-        },
+        reRunToolUseId: "string",
         args: { record: {}, optional: true },
       },
       run: async (
@@ -41,14 +38,7 @@ export const getMcpServerFunctions = (
         { dbs, user, clientReq },
       ) => {
         const name = getMCPFullToolName(serverName, toolName);
-        let reRunInfo:
-          | {
-              reRunResultMessageIndex: number;
-              reRunResultMessage: DBSSchema["llm_messages"];
-              reRunToolUseMessageIndex: number;
-              reRunToolUseMessage: DBSSchema["llm_messages"];
-            }
-          | undefined = undefined;
+
         const chat = await dbs.llm_chats.findOne({
           id: chatId,
           user_id: user.id,
@@ -58,67 +48,59 @@ export const getMcpServerFunctions = (
             `Chat with id ${chatId} not found for user ${user.id}`,
           );
         }
-        if (reRunToolUseId) {
-          const reRunToolUseMessage = await dbs.llm_messages.findOne({
-            chat_id: chatId,
-            message: {
-              "@>": [{ type: "tool_use", id: reRunToolUseId, name }],
-            },
-          });
-          if (!reRunToolUseMessage) {
-            throw new Error(
-              `Tool use with id ${reRunToolUseId} not found for chat ${chatId}`,
-            );
-          }
-
-          const reRunResultMessage = await dbs.llm_messages.findOne({
-            chat_id: chatId,
-            message: {
-              "@>": [
-                {
-                  type: "tool_result",
-                  tool_use_id: reRunToolUseId,
-                  tool_name: name,
-                } as any,
-              ],
-            },
-          });
-          if (!reRunResultMessage) {
-            throw new Error(
-              `Tool result for tool use id ${reRunToolUseId} not found for chat ${chatId}`,
-            );
-          }
-
-          const reRunToolUseMessageIndex =
-            reRunToolUseMessage.message.findIndex(
-              (m) =>
-                m.type === "tool_use" &&
-                m.id === reRunToolUseId &&
-                m.name === name,
-            );
-          const reRunResultMessageIndex = reRunResultMessage.message.findIndex(
-            (m) =>
-              m.type === "tool_result" &&
-              m.tool_use_id === reRunToolUseId &&
-              m.tool_name === name,
+        const reRunToolUseMessage = await dbs.llm_messages.findOne({
+          chat_id: chatId,
+          message: {
+            "@>": [{ type: "tool_use", id: reRunToolUseId, name }],
+          },
+        });
+        if (!reRunToolUseMessage) {
+          throw new Error(
+            `Tool use with id ${reRunToolUseId} not found for chat ${chatId}`,
           );
-
-          if (
-            reRunToolUseMessageIndex === -1 ||
-            reRunResultMessageIndex === -1
-          ) {
-            throw new Error(
-              `Could not find tool use or result message for tool use id ${reRunToolUseId} in chat ${chatId}`,
-            );
-          }
-
-          reRunInfo = {
-            reRunToolUseMessageIndex,
-            reRunToolUseMessage,
-            reRunResultMessageIndex,
-            reRunResultMessage,
-          };
         }
+
+        const reRunResultMessage = await dbs.llm_messages.findOne({
+          chat_id: chatId,
+          message: {
+            "@>": [
+              {
+                type: "tool_result",
+                tool_use_id: reRunToolUseId,
+                tool_name: name,
+              } as any,
+            ],
+          },
+        });
+        if (!reRunResultMessage) {
+          throw new Error(
+            `Tool result for tool use id ${reRunToolUseId} not found for chat ${chatId}`,
+          );
+        }
+
+        const reRunToolUseMessageIndex = reRunToolUseMessage.message.findIndex(
+          (m) =>
+            m.type === "tool_use" && m.id === reRunToolUseId && m.name === name,
+        );
+        const reRunResultMessageIndex = reRunResultMessage.message.findIndex(
+          (m) =>
+            m.type === "tool_result" &&
+            m.tool_use_id === reRunToolUseId &&
+            m.tool_name === name,
+        );
+
+        if (reRunToolUseMessageIndex === -1 || reRunResultMessageIndex === -1) {
+          throw new Error(
+            `Could not find tool use or result message for tool use id ${reRunToolUseId} in chat ${chatId}`,
+          );
+        }
+
+        const reRunInfo = {
+          reRunToolUseMessageIndex,
+          reRunToolUseMessage,
+          reRunResultMessageIndex,
+          reRunResultMessage,
+        };
         const result = await callMCPServerTool({
           user,
           chat_id: chatId,
@@ -128,51 +110,52 @@ export const getMcpServerFunctions = (
           toolArguments: args,
           clientReq,
           toolUseId: reRunToolUseId,
+          isReRun: Boolean(reRunToolUseId),
+          mcp_tool_approval_requests_id: undefined,
+          messageId: reRunInfo.reRunToolUseMessage.id,
         });
 
-        if (reRunInfo) {
-          const { content } = result;
-          await dbs.llm_messages.update(
-            {
-              id: reRunInfo.reRunResultMessage.id,
-            },
-            {
-              message: reRunInfo.reRunResultMessage.message.map((m, i) => {
-                if (i === reRunInfo.reRunResultMessageIndex) {
-                  return {
-                    type: "tool_result",
-                    content: content as unknown as {
-                      type: "text";
-                      text: string;
-                    }[],
-                    tool_name: name,
-                    tool_use_id: reRunToolUseId!,
-                    is_error: result.isError,
-                  } as const;
-                }
-                return m;
-              }),
-            },
-          );
-          await dbs.llm_messages.update(
-            {
-              id: reRunInfo.reRunToolUseMessage.id,
-            },
-            {
-              message: reRunInfo.reRunToolUseMessage.message.map((m, i) => {
-                if (i === reRunInfo.reRunToolUseMessageIndex) {
-                  return {
-                    type: "tool_use",
-                    id: reRunToolUseId!,
-                    name,
-                    input: args,
-                  } as const satisfies DBSSchema["llm_messages"]["message"][number];
-                }
-                return m;
-              }),
-            },
-          );
-        }
+        const { content } = result;
+        await dbs.llm_messages.update(
+          {
+            id: reRunInfo.reRunResultMessage.id,
+          },
+          {
+            message: reRunInfo.reRunResultMessage.message.map((m, i) => {
+              if (i === reRunInfo.reRunResultMessageIndex) {
+                return {
+                  type: "tool_result",
+                  content: content as unknown as {
+                    type: "text";
+                    text: string;
+                  }[],
+                  tool_name: name,
+                  tool_use_id: reRunToolUseId,
+                  is_error: result.isError,
+                } as const;
+              }
+              return m;
+            }),
+          },
+        );
+        await dbs.llm_messages.update(
+          {
+            id: reRunInfo.reRunToolUseMessage.id,
+          },
+          {
+            message: reRunInfo.reRunToolUseMessage.message.map((m, i) => {
+              if (i === reRunInfo.reRunToolUseMessageIndex) {
+                return {
+                  type: "tool_use",
+                  id: reRunToolUseId,
+                  name,
+                  input: args,
+                } as const satisfies DBSSchema["llm_messages"]["message"][number];
+              }
+              return m;
+            }),
+          },
+        );
         return result;
       },
     }),

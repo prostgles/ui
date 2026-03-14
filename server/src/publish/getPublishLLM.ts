@@ -1,12 +1,12 @@
-import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
-import { getBestLLMChatModel } from "../serverFunctions/askLLM/askLLM";
-import { fetchLLMResponse } from "../serverFunctions/askLLM/fetchLLMResponse";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
 import { refreshModels } from "@src/serverFunctions/askLLM/refreshModels";
+import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBS } from "..";
+import { getBestLLMChatModel } from "../serverFunctions/askLLM/askLLM";
+import { fetchLLMResponse } from "../serverFunctions/askLLM/fetchLLMResponse";
+import { getPublishLlmChats } from "./getPublishLlmChats";
 
 export const getPublishLLM = (
   user_id: string,
@@ -129,35 +129,7 @@ export const getPublishLLM = (
         forcedData,
       },
     },
-    llm_chats: {
-      select: {
-        fields: "*",
-        forcedFilter,
-      },
-      delete: isAdmin && "*",
-      insert: {
-        fields: "*",
-        forcedData,
-        preValidate: async ({ row, dbx }) => {
-          if (row.model) return row;
-
-          const preferredChatModel = await getBestLLMChatModel(dbx, {
-            $existsJoined: {
-              "llm_providers.llm_credentials": {},
-            },
-          } as Filter);
-          return {
-            ...row,
-            model: preferredChatModel.id,
-          };
-        },
-      },
-      update: {
-        fields: { created: 0, user_id: 0, connection_id: 0 },
-        forcedData,
-        forcedFilter,
-      },
-    },
+    ...getPublishLlmChats(user_id, isAdmin),
     llm_messages: {
       select: {
         fields: "*",

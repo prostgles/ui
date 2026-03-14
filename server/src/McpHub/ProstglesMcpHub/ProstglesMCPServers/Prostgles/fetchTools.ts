@@ -9,7 +9,7 @@ import { suggestDashboardsToolSchema } from "./schemas/suggestDashboardsToolSche
 
 export const fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]
-> = async (dbs, { dbTools, mcpTools, toolsAllowed, connection_id }) => {
+> = async (dbs, { mcpTools, toolsAllowed, connection_id }) => {
   const { createContainerToolSchema, suggestAgenticWorkflowSchema } =
     await (async () => {
       if (
@@ -25,7 +25,6 @@ export const fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
       await getOrCreateDockerMCPServerProxy();
 
       const workflowSchema = await getAgenticWorkflowToolSchema({
-        availableDBTools: dbTools,
         availableMCPTools: mcpTools,
         dbs,
         connection_id,
@@ -34,7 +33,7 @@ export const fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
         ...workflowSchema,
         inputSchema: workflowSchema.input_schema as McpTool["inputSchema"],
       };
-      const createContainerToolSchema = getCreateContainerToolSchema(dbTools);
+      const createContainerToolSchema = getCreateContainerToolSchema(mcpTools);
       return {
         suggestAgenticWorkflowSchema,
         createContainerToolSchema,

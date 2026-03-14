@@ -151,6 +151,8 @@ const init = async (dbs: DBS) => {
       return res;
     });
 
+    const errorData =
+      result.hasError ? getSerialisableError(result.error) : undefined;
     return {
       content: [
         {
@@ -161,7 +163,7 @@ const init = async (dbs: DBS) => {
             : JSON.stringify(result.data ?? {}),
         },
       ],
-      structuredContent: !result.hasError ? result.data : undefined,
+      structuredContent: !result.hasError ? result.data : errorData,
       isError: result.hasError,
     } satisfies McpToolCallResponse;
   };

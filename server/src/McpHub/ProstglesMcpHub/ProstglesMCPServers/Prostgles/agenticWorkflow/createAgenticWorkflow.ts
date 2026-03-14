@@ -29,7 +29,7 @@ const getValidWorkflowDefinition = async (
       | DBSSchema["agentic_workflows"]["definition_data"]["newTables"]
       | undefined;
   },
-  { user_id, chat, dbs, clientReq }: McpCallContext,
+  { user_id, chat, dbs, clientReq, messageId }: McpCallContext,
 ) => {
   return new Promise<
     | {
@@ -48,9 +48,10 @@ const getValidWorkflowDefinition = async (
         user_id,
         workflow_function_definition,
         package_dependencies,
-        chat_id: chat.id,
+        chat,
         abortSignal: aborter.signal,
         connection_id,
+        messageId,
       },
       {
         type: "definitions-only",
@@ -66,7 +67,6 @@ const getValidWorkflowDefinition = async (
               clientReq,
               userId: user_id,
             });
-
           const workflowInsertData = {
             user_id,
             name: definitions.name,

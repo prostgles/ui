@@ -15,6 +15,7 @@ import { askLLM, stopAskLLM } from "../askLLM/askLLM";
 import { getFullPrompt } from "../askLLM/getFullPrompt";
 import { getLLMToolsAllowedInThisChat } from "../askLLM/getLLMToolsAllowedInThisChat";
 import { prostglesSignup } from "../prostglesSignup";
+import { approveToolUse } from "./approveToolUse";
 import { getLLMAccessParams } from "./getLLMAccessParams";
 
 export const getUserServerFunctions = async (
@@ -30,6 +31,14 @@ export const getUserServerFunctions = async (
     createServerFunctionWithContext(llmAccessParams);
 
   const userServerFunctions = {
+    approveToolUse: defineUserWithAccessRulesOrAdminFunction({
+      input: {
+        id: "integer",
+        response: { enum: ["approve", "deny", "auto-approve"] as const },
+        schema: "string",
+      },
+      run: approveToolUse,
+    }),
     askLLM: defineUserWithAccessRulesOrAdminFunction({
       input: {
         connectionId: "string",
@@ -38,7 +47,6 @@ export const getUserServerFunctions = async (
         type: {
           enum: [
             "new-message",
-            "approve-tool-use",
             "tool-use-result",
             "tool-use-result-confirmation",
           ] as const,
@@ -237,7 +245,6 @@ export const getUserServerFunctions = async (
           chat,
           userType: user.type,
           dbs,
-          connectionId,
           clientReq,
         });
         return allowedTools;

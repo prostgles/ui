@@ -1,8 +1,13 @@
+import type { ProstglesDbTools } from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
+import type { DBS } from "@src/index";
+import type { LocalParams } from "prostgles-server/dist/DboBuilder/DboBuilder";
+import type { ValidateRowArgsCommon } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import type { JSONB } from "prostgles-types";
-import { extraRequestData } from "./tableConfigLlmExtraRequestData";
-import { agentOutputSchemaType } from "../startAgenticWorkflowSchema";
+import { isDefined, type JSONB } from "prostgles-types";
+import { agentOutputSchemaType } from "../../../../common/startAgenticWorkflowSchema";
 import { tablePermissionsSchema } from "../tablePermissionsSchema";
+import { extraRequestData } from "./tableConfigLlmExtraRequestData";
 
 const commonrunSQLOpts = {
   query_timeout: {
@@ -192,7 +197,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
             },
             {
               mode: {
-                enum: ["execute_sql_with_commit"],
+                enum: ["execute_sql"],
                 description:
                   "Can run SQL queries that will be commited (if the current user is allowed). Use with caution",
               },
@@ -232,6 +237,74 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
         columns: "id, connection_id",
         unique: true,
       },
+    },
+    hooks: {
+      afterEach: [
+        {
+          commands: { insert: 1, update: 1 },
+          changedFields: ["db_data_permissions"],
+          validate: async (args) => {
+            const { row, dbx } = args as ValidateRowArgsCommon<
+              DBSSchema["llm_chats"],
+              DBS
+            >;
+            await dbx.llm_chats_allowed_mcp_tools.delete({
+              chat_id: row.id,
+              server_name: "db",
+            });
+            const ALL_TOOLS = [
+              "execute_readonly_sql",
+              "execute_sql",
+              "count",
+              "find",
+              "insert",
+              "update",
+              "delete",
+            ];
+            const dataAccess = row.db_data_permissions;
+            if (dataAccess?.mode) {
+              const toolsToAllow =
+                dataAccess.mode === "custom" ?
+                  Array.from(
+                    new Set(
+                      Object.values(dataAccess.tablePermissions)
+                        .map((v) => {
+                          return [
+                            ...(v.select ? ["find", "count"] : []),
+                            ...(v.delete ? ["delete"] : []),
+                            ...(v.insert ? ["insert"] : []),
+                            ...(v.update ? ["update"] : []),
+                          ].filter(isDefined);
+                        })
+                        .filter(isDefined)
+                        .flat(),
+                    ),
+                  )
+                : dataAccess.mode === "execute_sql" ? ALL_TOOLS
+                : ([
+                    "execute_readonly_sql",
+                    "count",
+                    "find",
+                  ] satisfies (keyof ProstglesDbTools)[]);
+              const tools = await dbx.mcp_server_tools.find({
+                server_name: "db",
+                name: { $in: toolsToAllow },
+              });
+              if (tools.length !== toolsToAllow.length) {
+                throw new Error("Some tools not found");
+              }
+              await dbx.llm_chats_allowed_mcp_tools.insert(
+                tools.map((tool) => ({
+                  chat_id: row.id,
+                  tool_id: tool.id,
+                  server_name: tool.server_name,
+                  auto_approve: dataAccess.auto_approve,
+                })),
+              );
+            }
+          },
+        },
+      ],
     },
   },
 };

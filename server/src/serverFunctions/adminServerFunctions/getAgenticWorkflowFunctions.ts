@@ -4,11 +4,11 @@ import {
   startAgenticWorkflow,
   stopAgenticWorkflow,
 } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/startAgenticWorkflow";
-import { startAgenticWorkflowSchema } from "@src/tableConfig/startAgenticWorkflowSchema";
 import { pickKeys } from "prostgles-types";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { stopContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/runCodeInSandboxContainer";
+import { startAgenticWorkflowSchema } from "@common/startAgenticWorkflowSchema";
 
 export const getAgenticWorkflowFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -23,9 +23,17 @@ export const getAgenticWorkflowFunctions = (
         "userInputValue",
         "messageId",
         "executionMode",
+        "autoApproveAllTools",
       ]),
       run: async (
-        { chatId, userInputValue, workflowId, messageId, executionMode },
+        {
+          chatId,
+          userInputValue,
+          workflowId,
+          messageId,
+          executionMode,
+          autoApproveAllTools,
+        },
         { dbs, user, clientReq },
       ) => {
         const chat = await dbs.llm_chats.findOne({
@@ -59,6 +67,10 @@ export const getAgenticWorkflowFunctions = (
             error: undefined,
           };
         }
+        // await dbs.agentic_workflow_runs.update(
+        //   { id: workflowId },
+        //   { last_run: new Date() },
+        // );
         const userInputValidation =
           workflow.definition_data.userInput &&
           validateUserInput(userInputValue, workflow.definition_data.userInput);
@@ -74,11 +86,12 @@ export const getAgenticWorkflowFunctions = (
           dbs,
           user,
           connection_id,
-          chatId,
+          chat,
           messageId,
           clientReq,
           executionMode,
           userInputValue: userInputValidation?.value ?? {},
+          autoApproveAllTools,
         });
       },
     }),

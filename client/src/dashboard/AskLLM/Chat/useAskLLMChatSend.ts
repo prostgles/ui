@@ -24,7 +24,7 @@ export const useAskLLMChatSend = ({
   const { connectionId } = usePrgl();
   const { addAlert } = useAlert();
   const sendQuery = useCallback(
-    (msg: LLMMessage["message"] | undefined, isToolApproval: boolean) => {
+    (msg: LLMMessage["message"] | undefined) => {
       if (!msg || !activeChatId) return;
       /** TODO: move dbSchemaForPrompt to server-side */
       void askLLM({
@@ -32,7 +32,7 @@ export const useAskLLMChatSend = ({
         userMessage: msg,
         schema: dbSchemaForPrompt,
         chatId: activeChatId,
-        type: isToolApproval ? "approve-tool-use" : "new-message",
+        type: "new-message",
       }).catch((error) => {
         const errorText = error?.message || error;
         const errorTextMessage =
@@ -56,7 +56,6 @@ export const useAskLLMChatSend = ({
           text ? ({ type: "text", text } as const) : undefined,
           ...fileMessages,
         ].filter(isDefined),
-        false,
       );
     },
     [sendQuery],

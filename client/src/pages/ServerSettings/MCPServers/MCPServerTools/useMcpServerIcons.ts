@@ -15,7 +15,6 @@ export const useMcpServerIcons = () => {
         iconMap.set(s.name, s.icon_path);
       }
     });
-    iconMap.set("prostgles-db", "Database");
     return iconMap;
   }, [mcpServers]);
   return { mcpServerIcons };

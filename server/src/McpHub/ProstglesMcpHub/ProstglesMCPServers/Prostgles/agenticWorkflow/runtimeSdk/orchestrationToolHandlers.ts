@@ -38,7 +38,8 @@ export const getOrchestrationToolHandlers = (
             return (input?: Record<string, unknown>) =>
               callWorkflowProxy({
                 type: "tool",
-                name: `${mcpServerName}--${toolName}`,
+                serverName: mcpServerName,
+                toolName,
                 input,
               });
           },

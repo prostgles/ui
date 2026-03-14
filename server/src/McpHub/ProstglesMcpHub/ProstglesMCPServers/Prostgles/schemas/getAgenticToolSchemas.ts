@@ -8,13 +8,11 @@ import { prostglesApiTypes } from "@common/prostglesApiTypes";
 
 const name = "create_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = async ({
-  availableDBTools,
   availableMCPTools,
   dbs,
   connection_id,
 }: {
   availableMCPTools: McpCallContextFetchTools["mcpTools"];
-  availableDBTools: { name: string; description: string }[];
   dbs: DBS;
   connection_id: string;
 }) => {
@@ -48,9 +46,6 @@ export const getAgenticWorkflowToolSchema = async ({
     ${"```typescript"}
     ${prostglesApiTypes}
     ${"```"}
-
-    ## Available database tools:
-    ${!availableDBTools.length ? "None" : availableDBTools.map((t) => JSON.stringify(t.name)).join(", ")}
 
     ## Database Access
     If access to the database is needed, an access type can be specified. 

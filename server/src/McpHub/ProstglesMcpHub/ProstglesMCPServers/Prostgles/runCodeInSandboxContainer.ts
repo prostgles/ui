@@ -3,7 +3,7 @@ import type { McpCallContext } from "../../ProstglesMCPServerTypes";
 import type { CreateContainerParams } from "./schemas/getCreateContainerToolSchema";
 import { getSerialisableError } from "prostgles-types";
 import { validateUserInput } from "./agenticWorkflow/definitionValidation/validateUserInput";
-import { USER_INPUT_VALUE_ENV_VARIABLE_NAME } from "@common/prostglesMcp";
+import { USER_INPUT_VALUE_ENV_VARIABLE_NAME } from "@common/runCodeInSandboxSchema";
 
 const aborters = new Map<number, AbortController>();
 export const stopContainer = (containerId: number) => {
@@ -17,9 +17,8 @@ export const stopContainer = (containerId: number) => {
 
 export const runCodeInSandboxContainer = async (
   args: CreateContainerParams,
-  { user_id, chat, connection_id, dbs, toolUseId }: McpCallContext,
+  { user_id, chat, dbs, toolUseId, messageId }: McpCallContext,
 ) => {
-  const { db_data_permissions } = chat;
   if (!toolUseId) {
     throw new Error(
       "toolUseId is required for runCodeInSandboxContainer. Cannot be called from orchestration tools.",
@@ -52,9 +51,9 @@ export const runCodeInSandboxContainer = async (
     dbs,
     {
       user_id,
-      dbPermissions: {
-        connection_id,
-        db_data_permissions,
+      mcpToolsScope: {
+        messageId,
+        chat,
       },
     },
     {

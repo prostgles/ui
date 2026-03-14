@@ -1,12 +1,3 @@
-// import type { ProstglesDbTools } from "@common/prostglesMcp";
-// import { getProperty, type JSONB } from "prostgles-types";
-// export type ProxyDbCallData<
-//   K extends keyof ProstglesDbTools = keyof ProstglesDbTools,
-// > = {
-//   type: "db";
-//   command: K;
-//   params: JSONB.GetObjectType<ProstglesDbTools[K]["schema"]["type"]>;
-// };
 import type {
   DatabaseHandler,
   DefineAgenticWorkflow,
@@ -75,10 +66,7 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
     {
       db: tableHandlers as DatabaseHandler["db"],
       runSQL: (sql, query_params, query_timeout) => {
-        if (
-          dbMode !== "execute_sql_with_commit" &&
-          dbMode !== "execute_readonly_sql"
-        ) {
+        if (dbMode !== "execute_sql" && dbMode !== "execute_readonly_sql") {
           throw new Error(
             `Database access is not enabled for this workflow, but tried to run SQL with args: ${JSON.stringify(
               sql,

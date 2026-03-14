@@ -18,6 +18,10 @@ export const MonacoLogs = ({
 }: {
   logs: string;
   minHeight?: number;
+  /**
+   * Use 0 to disable.
+   * @default 300
+   */
   maxHeight?: number;
   style?: React.CSSProperties;
   className?: string;

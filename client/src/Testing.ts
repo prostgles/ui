@@ -430,6 +430,7 @@ export const COMMANDS = {
   "AskLLMChat.UnloadSuggestedDashboards": "",
   "AskLLMToolApprover.AllowAlways": "",
   "AskLLMToolApprover.AllowOnce": "",
+  "AskLLMToolApprover.ShowChat": "",
   "AskLLMToolApprover.Deny": "",
   MonacoEditor: "",
   MCPServerTools: "",

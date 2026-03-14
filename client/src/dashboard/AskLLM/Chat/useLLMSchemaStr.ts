@@ -9,12 +9,12 @@ type P = Pick<Prgl, "connection" | "sql" | "tables"> & {
 export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
   const { db_schema_permissions, db_data_permissions } = activeChat ?? {};
   const cachedSchemaPermissions = useMemoDeep(
-    () => db_schema_permissions || undefined,
+    () => db_schema_permissions ?? undefined,
     [db_schema_permissions],
   );
 
   const definitions = usePromise(async () => {
-    if (!sql) return;
+    if (!sql) return "";
 
     const schemas = Object.entries(connection.db_schema_filter || { public: 1 })
       .filter(([k, v]) => v)
@@ -78,8 +78,9 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
       !definitions ||
       !cachedSchemaPermissions ||
       cachedSchemaPermissions.type === "None"
-    )
+    ) {
       return "";
+    }
     const allowedTables =
       cachedSchemaPermissions.type === "Full" ?
         tables
@@ -174,7 +175,7 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
     return res;
   }, [definitions, cachedSchemaPermissions, tables, db_data_permissions]);
 
-  return { dbSchemaForPrompt };
+  return { dbSchemaForPrompt, loaded: definitions !== undefined };
 };
 
 const addDoubleQuotesIfNeeded = (name: string) => {

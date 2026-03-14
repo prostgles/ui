@@ -1,19 +1,27 @@
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import { mdiDotsHorizontal, mdiPlus, mdiRobot } from "@mdi/js";
+import {
+  mdiDotsHorizontal,
+  mdiPlus,
+  mdiRobot,
+  mdiShieldCheckOutline,
+} from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
+import type { AskLLMChatProps } from "./AskLLMChat";
 import {
   AskLLMChatOptions,
   type LLMChatOptionsProps,
 } from "./AskLLMChatOptions";
 import type { LLMChatState } from "./useLLMChat";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const AskLLMChatHeader = (
-  props: LLMChatState & Pick<LLMChatOptionsProps, "chatRootDiv" | "prompts">,
+  props: LLMChatState &
+    Pick<LLMChatOptionsProps, "chatRootDiv" | "prompts"> &
+    Pick<AskLLMChatProps, "selectedChat">,
 ) => {
   const {
     activeChat,
@@ -25,6 +33,7 @@ export const AskLLMChatHeader = (
     setActiveChat,
     chatRootDiv,
     prompts,
+    selectedChat,
   } = props;
 
   const { dbs, user } = usePrgl();
@@ -88,6 +97,7 @@ export const AskLLMChatHeader = (
           />
         )}
       </FlexRow>
+
       {user && (
         <Select
           className="ml-auto"

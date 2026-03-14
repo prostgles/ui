@@ -3,7 +3,7 @@ import type { JSONB } from "prostgles-types";
 import { tableConfigLlmChats } from "./tableConfigLlmChats";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
 import { tableConfigAgenticWorkflow } from "../tableConfigAgenticWorkflow";
-import { mcpServerToolsAllowed } from "@common/prostglesMcp";
+import { mcpServerToolsAllowed } from "@common/startAgenticWorkflowSchema";
 
 const toolUseContent: JSONB.FieldType = {
   oneOf: [

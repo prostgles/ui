@@ -83,7 +83,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
     const icon = {
       execute_readonly_sql: mdiDatabaseSearch,
       custom: canEditData ? mdiTable : mdiTableSearch,
-      execute_sql_with_commit: mdiDatabaseEdit,
+      execute_sql: mdiDatabaseEdit,
     }[mode];
     return { icon, mode };
   }, [dataPermission]);

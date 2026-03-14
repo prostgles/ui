@@ -43,7 +43,7 @@ export const getDurationAsStr = (elapsedMs: number) => {
     hours > 0 ? `${hours}h` : null,
     hours > 0 || minutes > 0 ? `${minutes}m` : null,
     `${seconds}s`,
-    `${milliseconds}ms`,
+    hours || minutes ? "" : `${milliseconds}ms`,
   ]
     .filter(Boolean)
     .join(" ");

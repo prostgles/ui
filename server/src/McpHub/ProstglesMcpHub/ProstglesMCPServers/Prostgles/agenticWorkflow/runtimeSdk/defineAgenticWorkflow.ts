@@ -158,7 +158,7 @@ export type DatabaseAccessDefinition =
       /**
        * An sql statement that creates custom tables the agent will interact with.
        * Permissions for these tables can be defined in `tablePermissions`.
-       * This is preferred over providing access to the entire database (execute_sql_with_commit mode) for better security.
+       * This is preferred over providing access to the entire database (execute_sql mode) for better security.
        */
       tableCreateStatements?: string;
       /**
@@ -213,7 +213,7 @@ export type DatabaseAccessDefinition =
       >;
     }
   | {
-      mode: "execute_sql_with_commit" | "execute_readonly_sql";
+      mode: "execute_sql" | "execute_readonly_sql";
     };
 
 type DbTableHandler = {
@@ -233,7 +233,7 @@ export type DatabaseHandler = {
   /**
    * Runs a raw SQL query.
    * Prefer to use the table handlers above when possible, as they are safer.
-   * Only available if databaseAccessDefinitions.mode is "execute_sql_with_commit" or "execute_readonly_sql".
+   * Only available if databaseAccessDefinitions.mode is "execute_sql" or "execute_readonly_sql".
    */
   runSQL: (
     sql: string,

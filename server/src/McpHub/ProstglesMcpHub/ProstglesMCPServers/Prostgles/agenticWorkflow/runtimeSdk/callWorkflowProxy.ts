@@ -6,10 +6,9 @@ const { DOCKER_MCP_ENDPOINT } = WORKFLOW_ENV_VARS;
 
 const startTime = Date.now();
 export const callWorkflowProxy = async (args: ProxyCallData) => {
-  const route = args.type;
   const logData: [string, ...any] = (() => {
     if (
-      args.type === "db/execute_sql_with_commit" ||
+      args.type === "db/execute_sql" ||
       args.type === "db/execute_readonly_sql"
     ) {
       return ["db.runSQL", args.type];
@@ -18,7 +17,7 @@ export const callWorkflowProxy = async (args: ProxyCallData) => {
       return ["agent." + args.agentName, args.input];
     }
     if (args.type === "tool") {
-      return ["agent." + args.name, args.input];
+      return [args.serverName, args.toolName, args.input];
     }
     if (args.type === "progress") {
       const { percent, message } = args;
@@ -40,6 +39,10 @@ export const callWorkflowProxy = async (args: ProxyCallData) => {
   })();
 
   const { type, ...argsWithoutType } = args;
+  const route =
+    args.type === "tool" ?
+      [args.serverName, args.toolName].join("/")
+    : args.type;
   const result = await fetch(`${DOCKER_MCP_ENDPOINT}/${route}`, {
     method: "POST",
     headers: {

@@ -110,7 +110,7 @@ const MODES = [
     iconPath: mdiTableSearch,
   },
   {
-    key: "execute_sql_with_commit",
+    key: "execute_sql",
     label: "Run commited SQL",
     subLabel: "Can run SQL queries that will be commited. Use with caution",
     iconPath: mdiDatabaseEdit,

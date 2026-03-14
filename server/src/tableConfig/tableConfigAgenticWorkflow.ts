@@ -2,7 +2,7 @@ import { fromEntries, getEntries } from "@common/utils";
 import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
 import type { TableConfig } from "prostgles-server";
 import { omitKeys, pickKeys } from "prostgles-types";
-import { startAgenticWorkflowSchema } from "./startAgenticWorkflowSchema";
+import { startAgenticWorkflowSchema } from "../../../common/startAgenticWorkflowSchema";
 
 export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
   agentic_workflows: {
@@ -76,7 +76,7 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
       id: "INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY",
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       workflow_id: `INTEGER NOT NULL REFERENCES agentic_workflows(id) ON DELETE CASCADE`,
-      message_id: `INTEGER REFERENCES llm_messages(id) ON DELETE SET NULL`,
+      message_id: `int8 REFERENCES llm_messages(id) ON DELETE SET NULL`,
       user_input_value: {
         jsonbSchema: {
           record: {

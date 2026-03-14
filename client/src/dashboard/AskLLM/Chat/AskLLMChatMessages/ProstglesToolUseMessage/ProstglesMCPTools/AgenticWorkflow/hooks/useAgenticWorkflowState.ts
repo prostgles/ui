@@ -58,10 +58,6 @@ export const useAgenticWorkflowState = ({
     },
   );
 
-  const [executionMode, setExecutionMode] = useState(
-    latestRun?.execution_mode ?? "series",
-  );
-
   const workflowValidationError = useMemo(() => {
     if (workflowValidation?.error) {
       return { type: "error", error: workflowValidation.error } as const;
@@ -102,7 +98,5 @@ Dockerfile`);
     workflow_id,
     messageId,
     latestRun,
-    executionMode,
-    setExecutionMode,
   };
 };

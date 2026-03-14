@@ -5,6 +5,7 @@ import { ProgressBar } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
 import { Stopwatch } from "@components/Stopwatch";
 import {
+  mdiCheckAll,
   mdiClock,
   mdiLockClock,
   mdiLockOpenAlert,
@@ -13,7 +14,7 @@ import {
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "prostgles-types";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import type { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import type { UseAgenticWorkflowUserInputReturn } from "./hooks/useAgenticWorkflowUserInput";
@@ -27,8 +28,6 @@ export const AgenticWorkflowActions = ({
   userInputState,
   messageId,
   latestRun,
-  executionMode,
-  setExecutionMode,
   onSuccess,
 }: Pick<ProstglesMCPToolsProps, "chatId"> & {
   inputData: { workflow_function_definition: string };
@@ -38,10 +37,11 @@ export const AgenticWorkflowActions = ({
   onSuccess: () => void;
   userInputState: UseAgenticWorkflowUserInputReturn;
   messageId: string | undefined;
-} & Pick<
-    ReturnType<typeof useAgenticWorkflowState>,
-    "latestRun" | "executionMode" | "setExecutionMode"
-  >) => {
+} & Pick<ReturnType<typeof useAgenticWorkflowState>, "latestRun">) => {
+  const [executionMode, setExecutionMode] = useState(
+    latestRun?.execution_mode ?? "series",
+  );
+  const [autoApproveAllTools, setAutoApproveAllTools] = useState(false);
   const {
     dbsMethods: { startAgenticWorkflow, stopAgenticWorkflow },
     dbs,
@@ -93,6 +93,15 @@ export const AgenticWorkflowActions = ({
             }
           />
         )}
+        <Btn
+          iconPath={mdiCheckAll}
+          title={
+            "If enabled, all tools used by the agent will be automatically approved."
+          }
+          color={autoApproveAllTools ? "action" : undefined}
+          variant="icon"
+          onClick={() => setAutoApproveAllTools(!autoApproveAllTools)}
+        />
         <Select
           title="Execution mode"
           value={executionMode}
@@ -144,13 +153,11 @@ export const AgenticWorkflowActions = ({
             onStarted();
             const res = await startAgenticWorkflow!({
               chatId,
-              // name: workflow.name,
               workflowId: workflow.id,
-              // ...workflow.definition_data,
-              // workflowTs: inputData.workflow_function_definition,
               userInputValue,
               messageId,
               executionMode,
+              autoApproveAllTools,
             }).catch((err) => {
               return Promise.reject(err);
             });

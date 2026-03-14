@@ -4,23 +4,18 @@ import type { DBS } from "../..";
 import {
   getMCPFullToolName,
   getMCPToolNameParts,
-  getProstglesMCPFullToolName,
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
   type AllowedChatTool,
 } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
-import { getEntries } from "@common/utils";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
-import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
-import { getProstglesLLMTools } from "./prostglesLLMTools/getProstglesLLMTools";
-import { getPublishedMethodsTools } from "./prostglesLLMTools/getPublishedMethodsTools";
 import { getAgentGoalTools } from "./agentConstants";
+import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
+import { getAllowedMcpTools } from "./prostglesLLMTools/getAllowedMcpTools";
 
 export type GetLLMToolsArgs = {
   userType: string;
   chat: DBSSchema["llm_chats"];
   dbs: DBS;
-  connectionId: string;
   clientReq: AuthClientRequest;
 };
 
@@ -34,18 +29,9 @@ export const getLLMToolsAllowedInThisChat = async ({
   userType,
   dbs,
   chat,
-  connectionId,
   clientReq,
 }: GetLLMToolsArgs): Promise<undefined | AllowedChatTool[]> => {
   const { id: chatId } = chat;
-  const { serverSideFuncTools } = await getPublishedMethodsTools(dbs, {
-    chatId,
-    connectionId,
-  });
-  const llm_chats_allowed_functions =
-    await dbs.llm_chats_allowed_functions.find({
-      chat_id: chatId,
-    });
 
   const llm_chats_allowed_mcp_tools =
     await dbs.llm_chats_allowed_mcp_tools.find({
@@ -67,7 +53,6 @@ export const getLLMToolsAllowedInThisChat = async ({
         auto_approve: true,
         mode: "auto-approved-user-actionable",
         server_name: "",
-        type: "mcp",
         tool_name: agentGoalTool.name,
         tool_id: -1 - index, // avoid collision with normal tools
       });
@@ -80,7 +65,6 @@ export const getLLMToolsAllowedInThisChat = async ({
       );
       if (!info) return;
       return {
-        type: "mcp" as const,
         ...tool,
         ...info,
         auto_approve: Boolean(info.auto_approve),
@@ -88,7 +72,7 @@ export const getLLMToolsAllowedInThisChat = async ({
     })
     .filter(isDefined);
 
-  const { mcpTools, dbTools } = await getProstglesLLMTools({
+  const { mcpTools } = await getAllowedMcpTools({
     userType,
     dbs,
     chat,
@@ -109,27 +93,6 @@ export const getLLMToolsAllowedInThisChat = async ({
         server_name: toolNameParts.serverName,
       } satisfies AllowedChatTool;
     }),
-    ...serverSideFuncTools
-      .map(({ id, ...t }) => {
-        const info = llm_chats_allowed_functions.find(
-          ({ server_function_id }) => server_function_id === id,
-        );
-        if (!info) return;
-        return {
-          type: "prostgles-db-methods" as const,
-          ...t,
-          ...info,
-          server_name: "prostgles-db-methods",
-          auto_approve: Boolean(info.auto_approve),
-          mode: null,
-        } satisfies AllowedChatTool;
-      })
-      .filter(isDefined),
-    ...dbTools.map((t) => {
-      return {
-        ...t,
-      } satisfies AllowedChatTool;
-    }),
   ].forEach((tool) => {
     const { name } = tool;
     if (tools.has(name)) {
@@ -146,15 +109,6 @@ export const getLLMToolsAllowedInThisChat = async ({
 
 export const getAllToolNames = async (dbs: DBS): Promise<string[]> => {
   const mcpTools = await dbs.mcp_server_tools.find();
-  const publishedMethods = await dbs.published_methods.find();
 
-  return [
-    ...mcpTools.map((t) => getMCPFullToolName(t.server_name, t.name)),
-    ...publishedMethods.map((t) =>
-      getProstglesMCPFullToolName("prostgles-db-methods", t.name),
-    ),
-    ...getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-db"]).map(
-      ([toolName]) => getProstglesMCPFullToolName("prostgles-db", toolName),
-    ),
-  ];
+  return mcpTools.map((t) => getMCPFullToolName(t.server_name, t.name));
 };

@@ -1,6 +1,6 @@
 import { connectionManager, type DBS } from "@src/index";
 import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
-import { createWorkflowProxyHandlers } from "../proxyHandlers/createWorkflowProxyHandlers";
+import { createWorkflowExecutionHandlers } from "../proxyHandlers/createWorkflowExecutionHandlers";
 import type { ProxyCallDataDefinitions } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
 import type { AuthClientRequest } from "prostgles-server";
 
@@ -150,14 +150,18 @@ export const validateAgenticWorkflowDefinitions = async (
     }
   });
 
-  return await createWorkflowProxyHandlers(
-    { ...definitions, definition_override: {} },
+  return await createWorkflowExecutionHandlers(
+    { ...definitions, definition_override: {}, mode: "definitions-only" },
     {
       dbs,
       chatId,
       clientReq,
       connectionId: connection_id,
       userId,
+    },
+    {
+      autoApproveAllTools: false,
+      runInSequence: true,
     },
   );
 };

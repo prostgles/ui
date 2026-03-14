@@ -8,7 +8,7 @@ import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 
 export type InputSchema = JSONB.GetObjectType<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"]["execute_sql_with_commit"]["schema"]["type"]
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["db"]["execute_sql"]["schema"]["type"]
 >;
 
 export const ExecuteSQL = ({ message }: ProstglesMCPToolsProps) => {
