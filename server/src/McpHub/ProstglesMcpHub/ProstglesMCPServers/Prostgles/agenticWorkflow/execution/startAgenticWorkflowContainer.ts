@@ -49,7 +49,7 @@ export const startAgenticWorkflowContainer = async (
         handler: (
           args: Extract<ProxyCallData, { type: "definitions" }>,
           ctx: McpProxyRequestContext,
-        ) => Promise<void>;
+        ) => Promise<void> | void;
       }
     | {
         type: "full";

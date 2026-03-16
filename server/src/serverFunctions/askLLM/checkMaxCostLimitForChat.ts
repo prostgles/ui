@@ -1,15 +1,17 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { getUserMessageCost } from "./getUserMessageCost";
-import type { LLMMessage } from "./askLLM";
 import type { DBS } from "@src/index";
+import { getUserMessageCost } from "./getUserMessageCost";
 
 export const checkMaxCostLimitForChat = async (
   dbs: DBS,
   chat: DBSSchema["llm_chats"],
   model: DBSSchema["llm_models"],
   pastMessages: DBSSchema["llm_messages"][],
-  userMessage: LLMMessage,
 ) => {
+  const userMessage = pastMessages.at(-1)?.message;
+  if (!userMessage) {
+    return;
+  }
   const { max_total_cost_usd } = chat;
   const maxTotalCost = parseFloat(max_total_cost_usd || "0");
   if (maxTotalCost && maxTotalCost > 0) {

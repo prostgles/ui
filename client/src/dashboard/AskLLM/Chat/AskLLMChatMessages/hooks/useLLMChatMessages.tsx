@@ -28,6 +28,7 @@ export const useLLMChatMessages = (props: P) => {
   const { llmMessagesWithGroups } = useLLMChatMessageGrouper({
     llmMessages,
   });
+
   const actualMessages: Message[] | undefined = useMemo(
     () =>
       !llmMessages ? undefined : (

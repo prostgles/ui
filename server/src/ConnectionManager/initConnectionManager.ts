@@ -1,7 +1,7 @@
 import { fromEntries, getConnectionApiPaths } from "@common/utils";
 import { setHttpAppSecurity } from "@src/createHttpAndIOServers/setHttpAppSecurity";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { isDefined } from "prostgles-types";
+import { getSerialisableError, isDefined } from "prostgles-types";
 import { type DBS } from "../index";
 import { type ConnectionManager } from "./ConnectionManager";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
@@ -27,7 +27,12 @@ export async function initConnectionManager(
         (updatedConnection.port || updatedConnection.web_app_directory)
       ) {
         /** Auto start connections that are setup for API or Web app usage */
-        void this.startConnection(updatedConnection.id, dbs, db);
+        void this.startConnection(updatedConnection.id, dbs, db).catch((e) => {
+          throw new Error(
+            `Error auto starting connection ${JSON.stringify(updatedConnection.name)} on server start: ` +
+              JSON.stringify(getSerialisableError(e)),
+          );
+        });
         return;
       }
       const currentConnection = this.connections?.find(

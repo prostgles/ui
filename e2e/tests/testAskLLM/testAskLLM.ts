@@ -175,6 +175,19 @@ const isDocker = Boolean(process.env.IS_DOCKER);
 
 const toolResponses: Record<string, ToolUse> = {
   task: taskToolUse,
+  get_tool_schemas: {
+    tool: [
+      {
+        id: "get-tool-schemas-use",
+        type: "function",
+        function: {
+          name: "prostgles-ui--get_tool_schemas",
+          arguments: stringify({ mcpServerTools: { fetch: { fetch: 1 } } }),
+        },
+      },
+    ],
+    content: `Here are the available tools and their input schemas.`,
+  },
   dashboards: dashboardToolUse,
   funding: cryptoDashboardToolUse,
   mcp: mcpToolUse,

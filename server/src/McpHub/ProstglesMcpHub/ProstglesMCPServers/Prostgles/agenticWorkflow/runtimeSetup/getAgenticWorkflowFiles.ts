@@ -11,7 +11,10 @@ import {
   renderSummary,
   summariseWorkflowFile,
 } from "../runtimeSdk/getTsLogicSummary";
-import { instrumentWorkflowFile } from "../runtimeSdk/addInstrumentationToTsLogic";
+import {
+  consoleStepLogger,
+  instrumentWorkflowFile,
+} from "../runtimeSdk/addInstrumentationToTsLogic";
 
 const defineAgenticWorkflowDirectory = join(
   __dirname,
@@ -81,7 +84,8 @@ export const getDefineAgenticWorkflowTsSchema = async (
       purpose === "agent" ?
         defineAgenticWorkflowTsSchema
       : defineAgenticWorkflowTs,
-    mcpServerToolDefinitions,
+    mcpServerToolDefinitions:
+      purpose === "agent" ? undefined : mcpServerToolDefinitions,
     dbGeneratedSchema,
   });
   return result;
@@ -94,7 +98,7 @@ export const getAgenticWorkflowFiles = async (
   tableSchemaOpts:
     | {
         type: "full";
-        newTables?: DBSSchema["agentic_workflows"]["definition_data"]["newTables"];
+        newTables: DBSSchema["agentic_workflows"]["definition_data"]["newTables"];
       }
     | { type: "generic" },
 ) => {
@@ -171,9 +175,10 @@ const dataTypeToUdtNameMap = {
   boolean: "boolean",
 } as const;
 
-const exampleSlice = defineAgenticWorkflowTs.slice(
-  defineAgenticWorkflowTs.lastIndexOf("* \n") + 3,
-  defineAgenticWorkflowTs.lastIndexOf(`*/`),
-);
-const nodes = summariseWorkflowFile(exampleSlice);
-console.log(nodes, renderSummary(nodes), instrumentWorkflowFile(exampleSlice));
+console.error("FINISH OR REMOVE");
+// const exampleSlice = defineAgenticWorkflowTs.slice(
+//   defineAgenticWorkflowTs.lastIndexOf("* \n") + 3,
+//   defineAgenticWorkflowTs.lastIndexOf(`*/`),
+// );
+// const nodes = summariseWorkflowFile(exampleSlice);
+// console.log(nodes, renderSummary(nodes), instrumentWorkflowFile(exampleSlice));

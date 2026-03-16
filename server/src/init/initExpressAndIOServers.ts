@@ -55,9 +55,19 @@ export const initExpressAndIOServers = () => {
     }),
   );
   app.use(
-    express.static(path.resolve(actualRootDir + "/../client/static"), {
+    "/icons",
+    express.static(path.resolve(actualRootDir + "/../client/static/icons"), {
+      cacheControl: true,
+      maxAge: "1y",
       index: false,
-      cacheControl: false,
+      fallthrough: false,
+    }),
+  );
+  app.use(
+    express.static(path.resolve(actualRootDir + "/../client/static"), {
+      cacheControl: true,
+      maxAge: "1y",
+      index: false,
     }),
   );
   app.use(
@@ -65,15 +75,6 @@ export const initExpressAndIOServers = () => {
     express.static(path.resolve(actualRootDir + "/../docs/screenshots"), {
       index: false,
       cacheControl: false,
-      fallthrough: false,
-    }),
-  );
-  app.use(
-    "/icons",
-    express.static(path.resolve(actualRootDir + "/../client/static/icons"), {
-      cacheControl: true,
-      index: false,
-      maxAge: 31536000,
       fallthrough: false,
     }),
   );

@@ -65,7 +65,7 @@ export const AgenticWorkflowActions = ({
   const isRunning = state?.status === "running";
   return (
     <>
-      <FlexRow className="f-1">
+      <FlexRow className="f-1 jc-end">
         {created && (
           <ProgressBar
             totalValue={100}

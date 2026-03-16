@@ -1,10 +1,9 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fixIndent } from "@common/utils";
+import type { DBS } from "@src/index";
 import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { getJSONBSchemaAsJSONSchema, omitKeys } from "prostgles-types";
 import { getDefineAgenticWorkflowTsSchema } from "../agenticWorkflow/runtimeSetup/getAgenticWorkflowFiles";
-import type { DBS } from "@src/index";
-import { prostglesApiTypes } from "@common/prostglesApiTypes";
 
 const name = "create_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = async ({
@@ -31,6 +30,10 @@ export const getAgenticWorkflowToolSchema = async ({
     "agent",
     connection_id,
   );
+  // Database table handler definition:
+  //   ${"```typescript"}
+  //   ${prostglesApiTypes}
+  //   ${"```"}
   return {
     name,
     description: fixIndent(`
@@ -40,11 +43,6 @@ export const getAgenticWorkflowToolSchema = async ({
     The structure of the "workflow_function_definition" should adhere to the types below:
     ${"```typescript"}
     ${workflowTsSchema} 
-    ${"```"}
-  
-    Database table handler definition:
-    ${"```typescript"}
-    ${prostglesApiTypes}
     ${"```"}
 
     ## Database Access

@@ -60,6 +60,7 @@ import {
   setTableRule,
   setupMagicLinkAuth,
   setWspColLayout,
+  toggleMCPTools,
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
@@ -954,12 +955,52 @@ test.describe("Main test", () => {
     await expect(workspaceBtn).not.toContainText("Customer Insights");
 
     await page.waitForTimeout(2e3);
+  });
+
+  test("Test LLM tools", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await loginWhenSignupIsEnabled(page);
+
+    await openConnection(page, "cloud");
     await page.getByTestId("AskLLM").click();
+    await newChat(page);
+    await toggleMCPTools(page, ["fetch"]);
     await sendAskLLMMessage(page, " mcp ");
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
     await expect(mcpToolUse).toContain("successfully fetched the login page");
+
+    await sendAskLLMMessage(page, " mcp ");
+    await page
+      .getByTestId("AskLLMToolApprover.AllowOnce")
+      .waitFor({ state: "visible", timeout: 10e3 });
+    await page.getByTestId("Popup.close").last().click();
+    await page.waitForTimeout(1e3);
+    await sendAskLLMMessage(page, " interrupt tool call ");
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "Tool use requests were interrupted by the user",
+      {
+        timeout: 10e3,
+      },
+    );
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      "free ai assistant interrupt tool call",
+    );
+
+    await sendAskLLMMessage(page, " get_tool_schemas ");
+    await page
+      .getByTestId("AskLLMToolApprover.AllowOnce")
+      .click({ timeout: 10e3 });
+    await page
+      .getByTestId("ToolUseMessage.toggle")
+      .getByText(
+        'prostgles-ui--get_tool_schemas\nmcpServerTools: {"fetch":{"fetch":1}}',
+      )
+      .click();
+    await expect(page.getByTestId("Chat.messageList")).toContainText(
+      `Fetches a URL from the internet`,
+    );
 
     await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " mcpplaywright ");
@@ -984,30 +1025,8 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_snapshot" is not allowed`,
     );
-    const toggleMCPTools = async (
-      toolNames: string[],
-      toggleAutoApprove?: boolean,
-    ) => {
-      await page
-        .getByTestId("LLMChatOptions.MCPTools")
-        .click({ timeout: 10e3 });
-      await page.waitForTimeout(1000);
-      for (const toolName of toolNames) {
-        await page
-          .getByTestId("LLMChatOptions.MCPTools")
-          .getByTestId("MCPServerTools")
-          .getByText(toolName, { exact: true })
-          .click({ timeout: 30e3 }); //force: true,???????
-        await page.waitForTimeout(1500);
-      }
-      if (toggleAutoApprove) {
-        await page.getByTestId("MCPServers.toggleAutoApprove").click();
-      }
-      await page.getByTestId("Popup.close").last().click();
-      await page.waitForTimeout(500);
-    };
 
-    await toggleMCPTools(["browser_navigate", "browser_snapshot"]);
+    await toggleMCPTools(page, ["browser_navigate", "browser_snapshot"]);
 
     await sendAskLLMMessage(page, " mcpplaywright ");
     await page.waitForTimeout(2e3);
@@ -1081,7 +1100,7 @@ test.describe("Main test", () => {
 
     await page.getByTestId("MCPServerConfig.save").click();
     await page.getByTestId("Popup.close").last().click();
-    await toggleMCPTools(["directory_tree"], true);
+    await toggleMCPTools(page, ["directory_tree"], true);
     for (let step = 0; step < Math.floor(maxCost / costPerMsg); step++) {
       await page.waitForTimeout(1500);
       await sendAskLLMMessage(page, "cost", true);
@@ -1253,7 +1272,7 @@ test.describe("Main test", () => {
     ).toHaveCount(3, { timeout: 30e3 });
 
     await newChat(page);
-    await toggleMCPTools(["fetch"]);
+    await toggleMCPTools(page, ["fetch"]);
     await sendAskLLMMessage(page, " parallel_calls ");
 
     /** Should not request approval for the other 2 requests */
@@ -1277,7 +1296,7 @@ test.describe("Main test", () => {
     });
 
     await newChat(page);
-    await toggleMCPTools(["websearch", "get_snapshot"]);
+    await toggleMCPTools(page, ["websearch", "get_snapshot"]);
     await page.waitForTimeout(7e3); // wait for the server to start
     await sendAskLLMMessage(page, " websearch ");
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();

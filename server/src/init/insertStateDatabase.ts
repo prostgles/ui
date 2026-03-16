@@ -14,10 +14,16 @@ export const insertStateDatabase = async (
   port: number,
   isElectron: boolean,
 ) => {
-  const matchingStateConnectionCount = await db.connections.count(
+  /** Update changed passwords */
+  await db.connections.update(
+    pickKeys(con, ["db_host", "db_port", "db_user"]),
+    pickKeys(con, ["db_pass", "db_conn", "db_ssl"]),
+  );
+  const matchingStateConnections = await db.connections.find(
     pickKeys(con, ["db_name", "db_host", "db_port", "db_user"]),
   );
-  if (!matchingStateConnectionCount) {
+
+  if (!matchingStateConnections.length) {
     const { data: state_db, error } = await tryCatchV2(async () => {
       const { connection: state_db, database_config } = await upsertConnection(
         {

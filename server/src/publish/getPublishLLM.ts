@@ -83,6 +83,7 @@ export const getPublishLLM = (
             llm_chat: {
               extra_body: {},
               extra_headers: {},
+              options: {},
             },
             llm_model: preferredModel,
             llm_provider: provider,

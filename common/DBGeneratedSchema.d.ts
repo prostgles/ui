@@ -327,6 +327,7 @@ export type DBGeneratedSchema = {
       maximum_consecutive_tool_fails?: number;
       model?: null | number;
       name?: string;
+      options?: null | {    useTsTypesForTools?: boolean;  };
       parent_chat_id?: null | number;
       status?: 
        | null

@@ -1,7 +1,8 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesInitState } from "@common/electronInitTypes";
+import { getServerFunctions } from "@src/serverFunctions/getServerFunctions";
 import type { Express } from "express";
-import path, { dirname, join } from "path";
+import path, { join } from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
@@ -19,7 +20,7 @@ import { tableConfig } from "../tableConfig/tableConfig";
 import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
 import { prostglesOnReady } from "./prostglesOnReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
-import { getServerFunctions } from "@src/serverFunctions/getServerFunctions";
+import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 
 type StartArguments = {
   app: Express;
@@ -69,7 +70,7 @@ export const startProstgles = async ({
       return { state: "error", error, errorType: "connection" };
     }
 
-    let validatedDbConnection: pg.IConnectionParameters<pg.IClient> | undefined;
+    let validatedDbConnection: ConnectionDetails | undefined;
     try {
       const tested = await testDBConnection(con, true);
       if (tested.isSSLModeFallBack) {

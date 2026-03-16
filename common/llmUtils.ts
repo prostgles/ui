@@ -76,7 +76,7 @@ export const filterArrInverse = <T, U extends Partial<T>>(
 ): FilterUnMatch<T, U>[] => {
   const patternEntries = Object.entries(pattern);
   return arr.filter((item) => {
-    return patternEntries.every(
+    return patternEntries.some(
       ([key, value]) => item[key as keyof T] !== value,
     );
   }) as FilterUnMatch<T, U>[];

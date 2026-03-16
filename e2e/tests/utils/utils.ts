@@ -953,6 +953,28 @@ export const getLLMResponses = async (
   return result;
 };
 
+export const toggleMCPTools = async (
+  page: PageWIds,
+  toolNames: string[],
+  toggleAutoApprove?: boolean,
+) => {
+  await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
+  await page.waitForTimeout(1000);
+  for (const toolName of toolNames) {
+    await page
+      .getByTestId("LLMChatOptions.MCPTools")
+      .getByTestId("MCPServerTools")
+      .getByText(toolName, { exact: true })
+      .click({ timeout: 30e3 }); //force: true,???????
+    await page.waitForTimeout(1500);
+  }
+  if (toggleAutoApprove) {
+    await page.getByTestId("MCPServers.toggleAutoApprove").click();
+  }
+  await page.getByTestId("Popup.close").last().click();
+  await page.waitForTimeout(500);
+};
+
 export const openConnection = async (
   page: PageWIds,
   connectionName:

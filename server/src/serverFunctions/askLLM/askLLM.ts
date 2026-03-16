@@ -30,6 +30,7 @@ import { getFullPrompt } from "./getFullPrompt";
 import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 import { handleToolUseResultConfirmation } from "./handleToolUseResultConfirmation";
+import { getPastMessages } from "./getPastMessages";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -94,9 +95,8 @@ export const askLLM = async (args: AskLLMArgs) => {
 
   const { chat, prompt, getChat, llm_credential, llm_prompt_id } =
     await getValidatedAskLLMChatOptions(args);
-  const getPastMessages = () =>
-    dbs.llm_messages.find({ chat_id: chatId }, { orderBy: { created: 1 } });
-  let pastMessages = await getPastMessages();
+
+  let pastMessages = await getPastMessages(dbs, chatId);
 
   /** It's crucial we reduce the posibility that a new user message fails to insert due to some non critical error */
   const {
@@ -124,7 +124,7 @@ export const askLLM = async (args: AskLLMArgs) => {
   const lastMessage = pastMessages.at(-1);
 
   /** If user stopped chat must add tool use responses to prevent errors */
-  const awaitingToolUseResult = pastMessages.flatMap(({ message }, index) => {
+  const pendingToolUseMessages = pastMessages.flatMap(({ message }, index) => {
     const result = filterArr(message, {
       type: "tool_use",
     } as const).filter(
@@ -139,14 +139,15 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
     return result;
   });
-  if (awaitingToolUseResult.length && args.type === "new-message") {
+  if (pendingToolUseMessages.length && args.type === "new-message") {
     await dbs.llm_messages.insert({
       user_id: user.id,
       chat_id: chatId,
-      message: awaitingToolUseResult.map((m) => ({
+      message: pendingToolUseMessages.map((m) => ({
         type: "tool_result" as const,
         tool_name: m.name,
         tool_use_id: m.id,
+        is_error: true,
         content:
           chat.status?.state === "stopped" ?
             "Tool use requests were stopped by the user"
@@ -157,17 +158,17 @@ export const askLLM = async (args: AskLLMArgs) => {
     });
     await dbs.mcp_tool_approval_requests.update(
       {
-        tool_use_id: { $in: awaitingToolUseResult.map((m) => m.id) },
+        tool_use_id: { $in: pendingToolUseMessages.map((m) => m.id) },
         chat_id: chatId,
       },
       {
         response: "deny",
       },
     );
-    pastMessages = await getPastMessages();
+    pastMessages = await getPastMessages(dbs, chatId);
   }
 
-  if (args.type === "tool-use-result" && !awaitingToolUseResult.length) {
+  if (args.type === "tool-use-result" && !pendingToolUseMessages.length) {
     // Chat might have since been stopped and other user messages were added
     return;
   }
@@ -185,13 +186,17 @@ export const askLLM = async (args: AskLLMArgs) => {
     total_tokens: 0,
   };
   if (confirmedToolResult) {
+    if (!lastMessage) {
+      throw "Last message not found for tool use result confirmation";
+    }
     await dbs.tx(async (tx) => {
-      await tx.llm_messages.delete({ id: lastMessage?.id });
+      await tx.llm_messages.delete({ id: lastMessage.id });
       await tx.llm_messages.insert(newMessageData);
     });
   } else {
     await dbs.llm_messages.insert(newMessageData);
   }
+  pastMessages = await getPastMessages(dbs, chatId);
 
   if (type === "new-message") {
     await dbs.llm_chats.update(
@@ -272,7 +277,10 @@ export const askLLM = async (args: AskLLMArgs) => {
         /**
          * Somet of prostgles-ui tools don't need LLM response after their result
          */
-        if (serverName === "prostgles-ui") {
+        if (
+          serverName ===
+          ("prostgles-ui" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)
+        ) {
           const toolDefinition = getProperty(
             PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
             toolName,
@@ -339,13 +347,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       return;
     }
 
-    await checkMaxCostLimitForChat(
-      dbs,
-      chat,
-      modelData,
-      pastMessages,
-      userMessage,
-    );
+    await checkMaxCostLimitForChat(dbs, chat, modelData, pastMessages);
 
     const promptWithContext = await getFullPrompt({
       prompt,
@@ -403,10 +405,6 @@ export const askLLM = async (args: AskLLMArgs) => {
                 content: m.message,
               }) satisfies LLMMessageWithRole,
           ),
-        {
-          role: "user",
-          content: userMessage,
-        } satisfies LLMMessageWithRole,
       ],
       aborter,
     });
@@ -444,7 +442,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       maximum_consecutive_tool_fails &&
       isAssistantMessageRequestingToolUse({ message: aiResponseMessage }) &&
       reachedMaximumNumberOfConsecutiveToolRequests(
-        [...pastMessages, { message: userMessage }],
+        pastMessages,
         maximum_consecutive_tool_fails,
         true,
       )

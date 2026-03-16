@@ -34,7 +34,8 @@ export const FullscreenWrapper = ({
       /** This is done to ensure that monaco editors revert to initial size within chat */
       key={fullscreen.toString()}
       className={classOverride(
-        "FullscreenWrapper relative b b-color rounded gap-0 f-0 o-hidden ",
+        "FullscreenWrapper relative b b-color rounded gap-0 o-hidden " +
+          (fullscreen ? "f-1" : "f-0"),
         className,
       )}
       aria-modal={fullscreen}

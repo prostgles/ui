@@ -38,7 +38,7 @@ export const getOrchestrationContainerFiles = async ({
       dbs,
       "runtime",
       connection_id,
-      !forDefinitions || newTables ?
+      newTables ?
         {
           type: "full",
           newTables,

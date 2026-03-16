@@ -145,8 +145,9 @@ export const Chat = (props: ChatProps) => {
               rows={1}
               style={{
                 maxHeight: "50vh",
+                minHeight: "40px", // To prevent the height decrease when it's disabled
               }}
-              disabled={!!disabledInfo}
+              disabled={!!disabledInfo || chatIsLoading}
               defaultValue={getCurrentMessage()}
               onPaste={handleOnPaste}
               onChange={({ currentTarget }) => {

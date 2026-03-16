@@ -2,6 +2,7 @@ import { filterArr } from "@common/llmUtils";
 import {
   includes,
   isDefined,
+  isEmpty,
   omitKeys,
   tryCatchV2,
   type AnyObject,
@@ -9,6 +10,7 @@ import {
 import type { LLMMessage } from "./askLLM";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 import { getCompactedMessages } from "./getCompactedMessages";
+import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
 
 export const getLLMRequestBody = ({
   llm_provider,
@@ -21,8 +23,25 @@ export const getLLMRequestBody = ({
   /**
    * Sending an empty array of tools or messages produces an error in openrouter: tool_choice may only be specified while providing tools
    */
-  const tools =
+  const toolsWithDefaultSchemas =
     maybeEmptyTools && maybeEmptyTools.length ? maybeEmptyTools : undefined;
+  const tools =
+    llm_chat.options?.useTsTypesForTools ?
+      toolsWithDefaultSchemas?.map((t) => {
+        if (isEmpty(t.input_schema)) return t;
+        return {
+          ...t,
+          input_schema: {},
+          description: [
+            t.description,
+            `\nThe tool acceppts the following input (must be valid json) expressed in typescript types:`,
+            "```typescript",
+            getJsonSchemaAsTs(t.input_schema as any),
+            "```",
+          ].join("\n"),
+        };
+      })
+    : toolsWithDefaultSchemas;
   const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
       const nonEmptyMessageContent = m.content.filter(
@@ -34,6 +53,16 @@ export const getLLMRequestBody = ({
       };
     })
     .filter((m) => m.content.length);
+
+  const toolNames = new Set<string>();
+  tools?.forEach((tool) => {
+    if (toolNames.has(tool.name)) {
+      throw new Error(
+        `Duplicate tool name ${JSON.stringify(tool.name)} in tools array`,
+      );
+    }
+    toolNames.add(tool.name);
+  });
 
   const { messagesAfterCompaction } = getCompactedMessages({
     nonEmptyMessages,
@@ -268,6 +297,34 @@ export const getLLMRequestBody = ({
           stream: false,
         }),
       };
+
+  const toolCalls = new Map<string, { resultCount: number }>();
+  messages.forEach((message) => {
+    message.content.forEach((m) => {
+      if (m.type === "tool_use") {
+        const match = toolCalls.get(m.id);
+        if (match) {
+          throw new Error(
+            `Duplicate tool_use id ${m.id} for ${m.name}, this should not happen`,
+          );
+        }
+        toolCalls.set(m.id, { resultCount: 0 });
+      } else if (m.type === "tool_result" && m.tool_use_id) {
+        const toolCall = toolCalls.get(m.tool_use_id);
+        if (!toolCall) {
+          throw new Error(
+            `tool_result with tool_use_id for ${m.tool_name} has no matching tool_use, this should not happen`,
+          );
+        }
+        if (toolCall.resultCount) {
+          throw new Error(
+            `Multiple tool_result with the same tool_use_id for ${m.tool_name}, this should not happen`,
+          );
+        }
+        toolCall.resultCount++;
+      }
+    });
+  });
 
   const bodyWithExtras = {
     ...body,

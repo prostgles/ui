@@ -30,7 +30,7 @@
     "otplib": "^12.0.1",
     "path-to-regexp": "^8.3.0",
     "pidusage": "^4.0.1",
-    "prostgles-server": "^4.2.474",
+    "prostgles-server": "^4.2.477",
     "qrcode": "^1.5.4",
     "simple-git": "^3.32.3",
     "smtp-server": "^3.18.1",

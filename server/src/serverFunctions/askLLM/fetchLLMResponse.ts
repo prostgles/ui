@@ -12,7 +12,10 @@ export type LLMMessageWithRole = {
   content: DBSSchema["llm_messages"]["message"];
 };
 export type FetchLLMResponseArgs = {
-  llm_chat: Pick<DBSSchema["llm_chats"], "extra_body" | "extra_headers">;
+  llm_chat: Pick<
+    DBSSchema["llm_chats"],
+    "extra_body" | "extra_headers" | "options"
+  >;
   llm_model: DBSSchema["llm_models"];
   llm_provider: DBSSchema["llm_providers"];
   llm_credential: DBSSchema["llm_credentials"];
@@ -24,17 +27,8 @@ export type FetchLLMResponseArgs = {
 export const fetchLLMResponse = async (
   args: FetchLLMResponseArgs,
 ): Promise<LLMParsedResponse> => {
-  const { llm_provider, llm_credential, llm_model, aborter, tools } = args;
+  const { llm_provider, llm_credential, llm_model, aborter } = args;
 
-  const toolNames = new Set<string>();
-  tools?.forEach((tool) => {
-    if (toolNames.has(tool.name)) {
-      throw new Error(
-        `Duplicate tool name ${JSON.stringify(tool.name)} in tools array`,
-      );
-    }
-    toolNames.add(tool.name);
-  });
   const model = llm_model.name;
   const provider = llm_provider.id;
   const { api_key } = llm_credential;

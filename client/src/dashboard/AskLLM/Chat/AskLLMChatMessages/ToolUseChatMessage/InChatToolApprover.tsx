@@ -26,61 +26,60 @@ export const InChatToolApprover = ({
     );
   }, [requests, chatId, toolUseId, messageId]);
 
-  if (!setShowRequestId) {
+  if (!setShowRequestId || !toolApprovalState || !matchingRequests?.length) {
     return null;
   }
   return (
     <FlexCol>
-      {toolApprovalState &&
-        matchingRequests?.map(({ id, tool_name, source }) => (
-          <FlexRow key={id}>
-            {source.type === "proxy" && (
-              <Btn onClick={() => setShowRequestId(id)}>Tool: {tool_name}</Btn>
-            )}
-            <Btn
-              color="danger"
-              variant="faded"
-              size="small"
-              onClickPromise={async () => {
-                await toolApprovalState.respond({
-                  id,
-                  response: "deny",
-                  schema: toolApprovalState.dbSchemaForPrompt,
-                });
-              }}
-            >
-              Deny
-            </Btn>
-            <Btn
-              color="action"
-              variant="filled"
-              size="small"
-              onClickPromise={async () => {
-                await toolApprovalState.respond({
-                  id,
-                  response: "approve",
-                  schema: toolApprovalState.dbSchemaForPrompt,
-                });
-              }}
-            >
-              Approve Once
-            </Btn>
-            <Btn
-              color="action"
-              variant="filled"
-              size="small"
-              onClickPromise={async () => {
-                await toolApprovalState.respond({
-                  id,
-                  response: "auto-approve",
-                  schema: toolApprovalState.dbSchemaForPrompt,
-                });
-              }}
-            >
-              Approve Always
-            </Btn>
-          </FlexRow>
-        ))}
+      {matchingRequests.map(({ id, tool_name, source }) => (
+        <FlexRow key={id}>
+          {source.type === "proxy" && (
+            <Btn onClick={() => setShowRequestId(id)}>Tool: {tool_name}</Btn>
+          )}
+          <Btn
+            color="danger"
+            variant="faded"
+            size="small"
+            onClickPromise={async () => {
+              await toolApprovalState.respond({
+                id,
+                response: "deny",
+                schema: toolApprovalState.dbSchemaForPrompt,
+              });
+            }}
+          >
+            Deny
+          </Btn>
+          <Btn
+            color="action"
+            variant="filled"
+            size="small"
+            onClickPromise={async () => {
+              await toolApprovalState.respond({
+                id,
+                response: "approve",
+                schema: toolApprovalState.dbSchemaForPrompt,
+              });
+            }}
+          >
+            Approve Once
+          </Btn>
+          <Btn
+            color="action"
+            variant="filled"
+            size="small"
+            onClickPromise={async () => {
+              await toolApprovalState.respond({
+                id,
+                response: "auto-approve",
+                schema: toolApprovalState.dbSchemaForPrompt,
+              });
+            }}
+          >
+            Approve Always
+          </Btn>
+        </FlexRow>
+      ))}
     </FlexCol>
   );
 };

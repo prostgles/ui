@@ -168,7 +168,12 @@ const createDockerMCPServerProxy = async () => {
           listenHost,
           () => {
             const address = server.address();
-            console.log("Docker MCP Router listening on", address);
+            console.log(
+              "Docker MCP Router listening on",
+              address,
+              "for network mode:",
+              network,
+            );
             if (!isObject(address)) {
               reject(new Error("Server address is not an object"));
             } else {

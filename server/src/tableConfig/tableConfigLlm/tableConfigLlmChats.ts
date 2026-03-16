@@ -230,6 +230,15 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
       currently_typed_message: {
         sqlDefinition: `TEXT`,
       },
+      options: {
+        nullable: true,
+        jsonbSchemaType: {
+          useTsTypesForTools: {
+            type: "boolean",
+            optional: true,
+          },
+        },
+      },
       ...extraRequestData,
     },
     indexes: {
