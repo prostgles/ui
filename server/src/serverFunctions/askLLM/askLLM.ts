@@ -212,7 +212,7 @@ export const askLLM = async (args: AskLLMArgs) => {
   }
 
   /** Update chat name based on first user message */
-  const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
+  const isFirstUserMessage = pastMessages.length === 2;
   if (isFirstUserMessage) {
     const questionText = getLLMMessageText({ message: userMessage });
     const isOnlyImage =

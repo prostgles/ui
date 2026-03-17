@@ -100,7 +100,7 @@ export const setupLLM = async (dbs: DBS) => {
             `The file is an executable entry point. The code must be top-level execution only. You are prohibited from wrapping the defineAgenticWorkflow call in any functions`,
             "Choose the minimum required database access and minimum required tools; prefer custom tablePermissions over broad SQL modes.",
             "IMPORTANT: Do not provide CREATE statements for table names that are already present in the schema unless the user specifically asks for it.",
-            "If databaseAccessDefinitions.mode is custom, ensure every table used by dbHandler (find/count/insert/update/delete) exists in current schema or in tableCreateStatements, and that each used table is included in tablePermissions.",
+            "If databaseAccessDefinitions.mode is custom, ensure every table used by dbHandler (find/count/insert/update/delete) exists in current schema or in ddlStatements, and that each used table is included in tablePermissions.",
             "Take into account that the user has the ability to stop and re-run the workflow.",
             "Prefer short iterative steps with progress updates via setProgress, and await async operations (avoid fire-and-forget promises) so stop/re-run works predictably.",
             "Without over-engineering make the workflow resilient to re-runs unless it goes against the nature of the workflow.",

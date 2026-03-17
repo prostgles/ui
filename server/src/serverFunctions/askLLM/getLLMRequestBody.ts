@@ -2,7 +2,6 @@ import { filterArr } from "@common/llmUtils";
 import {
   includes,
   isDefined,
-  isEmpty,
   omitKeys,
   tryCatchV2,
   type AnyObject,
@@ -10,7 +9,6 @@ import {
 import type { LLMMessage } from "./askLLM";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 import { getCompactedMessages } from "./getCompactedMessages";
-import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
 
 export const getLLMRequestBody = ({
   llm_provider,
@@ -23,25 +21,9 @@ export const getLLMRequestBody = ({
   /**
    * Sending an empty array of tools or messages produces an error in openrouter: tool_choice may only be specified while providing tools
    */
-  const toolsWithDefaultSchemas =
-    maybeEmptyTools && maybeEmptyTools.length ? maybeEmptyTools : undefined;
   const tools =
-    llm_chat.options?.useTsTypesForTools ?
-      toolsWithDefaultSchemas?.map((t) => {
-        if (isEmpty(t.input_schema)) return t;
-        return {
-          ...t,
-          input_schema: {},
-          description: [
-            t.description,
-            `\nThe tool acceppts the following input (must be valid json) expressed in typescript types:`,
-            "```typescript",
-            getJsonSchemaAsTs(t.input_schema as any),
-            "```",
-          ].join("\n"),
-        };
-      })
-    : toolsWithDefaultSchemas;
+    maybeEmptyTools && maybeEmptyTools.length ? maybeEmptyTools : undefined;
+
   const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
       const nonEmptyMessageContent = m.content.filter(

@@ -24,13 +24,10 @@ const requestToolAccessArgs = {
   reason:
     "I will paste receipt images in this chat. Please extract the following information from each receipt:\n- Company/merchant name\n- Total amount\n- Currency\n- Date of purchase\n- Full extracted text\n\nAfter extracting the data, insert it into the receipts table.",
   databaseAccess: {
-    mode: "custom",
-    tablePermissions: {
-      receipts: {
-        select: true,
-        insert: true,
-        update: true,
-      },
+    receipts: {
+      select: true,
+      insert: true,
+      update: true,
     },
   },
   mcpServerTools: {
@@ -302,11 +299,8 @@ const toolResponses: Record<string, ToolUse> = {
               websearch: { websearch: 1 },
             },
             databaseAccess: {
-              mode: "custom",
-              tablePermissions: {
-                receipts: {
-                  select: true,
-                },
+              receipts: {
+                select: true,
               },
             },
             reason:

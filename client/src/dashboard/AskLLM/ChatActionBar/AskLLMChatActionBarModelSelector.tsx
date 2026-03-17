@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
-import { FlexRow } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
 import { SwitchToggle } from "@components/SwitchToggle";
@@ -13,6 +13,7 @@ import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { LLMModelSelector } from "../LLMModelSelector";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 import { Select } from "@components/Select/Select";
+import { ProgressBar } from "@components/ProgressBar";
 
 export const AskLLMChatActionBarModelSelector = (
   props: Pick<AskLLMChatProps, "setupState"> & {
@@ -95,7 +96,11 @@ export const AskLLMChatActionBarModelSelector = (
     },
     [activeChat.id, dbs.llm_chats, extra_body],
   );
-
+  const tokensUsed = nFormatter(totalUsage.tokens, 0);
+  const contextUsedMessage =
+    !context_length ?
+      `${tokensUsed} tokens used`
+    : `${tokensUsed} / ${nFormatter(context_length, 0)} tokens used (${Math.round(usageRatio * 100)}%)`;
   return (
     <FlexRow className="ml-auto text-2 gap-p25">
       {show && (
@@ -106,6 +111,12 @@ export const AskLLMChatActionBarModelSelector = (
           onClose={() => setShow(false)}
           contentClassName="flex-col gap-1 p-1"
         >
+          <ProgressBar
+            messageTop={<div className="bold w-fit">Context usage</div>}
+            message={<div className="font-14">{contextUsedMessage}</div>}
+            totalValue={context_length ?? 1e6}
+            value={totalUsage.tokens}
+          />
           <FormField
             label={"Max tokens"}
             type="integer"
@@ -150,6 +161,26 @@ export const AskLLMChatActionBarModelSelector = (
               });
             }}
           />
+
+          <SwitchToggle
+            label={{
+              label: "Use TS for mcp tools",
+              info: "If enabled, the LLM will receive TypeScript types for the tools instead of JSON Schema. This can help the LLM better understand how to use the tools.",
+            }}
+            variant="col"
+            checked={activeChat.options?.useTsTypesForTools ?? false}
+            onChange={async (newValue) => {
+              await dbs.llm_chats.update(
+                { id: activeChat.id },
+                {
+                  options: {
+                    ...activeChat.options,
+                    useTsTypesForTools: newValue,
+                  },
+                },
+              );
+            }}
+          />
         </Popup>
       )}
       <LLMModelSelector
@@ -175,11 +206,7 @@ export const AskLLMChatActionBarModelSelector = (
         </Chip>
       )}
       <Btn
-        title={
-          !context_length ? "Model settings. " : (
-            `${totalUsage.tokens} / ${nFormatter(context_length, 0)} tokens used`
-          )
-        }
+        title={!context_length ? "Model settings. " : contextUsedMessage}
         className=" text-2"
         size="small"
         iconNode={!context_length ? null : contextIcon}

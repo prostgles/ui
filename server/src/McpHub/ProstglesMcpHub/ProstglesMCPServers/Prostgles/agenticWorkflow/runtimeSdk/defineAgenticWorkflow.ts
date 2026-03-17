@@ -155,25 +155,33 @@ type DetailedTableFilterGroup =
  */
 type FieldFilter = "*" | Record<string, 1> | Record<string, 0>;
 
+export const ALLOWED_DDL_STATEMENT_TYPES = [
+  "alter table",
+  "create index",
+  "create table",
+  "create view",
+] as const;
+
 export type DatabaseAccessDefinition =
   | {
       mode: "custom";
       /**
-       * An sql statement that creates custom tables the agent will interact with.
-       * Permissions for these tables can be defined in `tablePermissions`.
+       * An sql statement that creates/alters tables the agent will interact with.
+       * Permissions for these tables MUST be defined in `tablePermissions`.
        * This is preferred over providing access to the entire database (execute_sql mode) for better security.
+       * Only ALLOWED_DDL_STATEMENT_TYPES are allowed.
        */
-      tableCreateStatements?: string;
+      ddlStatements?: string;
       /**
        * Defines the tables, columns and rows the agent can access. Only applicable if mode is "custom".
-       * The keys of the tablePermissions object must be the table names as they appear in the database, or as they will be created from tableCreateStatements.
+       * The keys of the tablePermissions object must be the table names as they appear in the database, or as they will be created from ddlStatements.
        * For irregular table names, the keys must contain the double quotes (quote_ident(tableName) result).
        * Use "true" to allow all fields/filters for a command, or provide a more specific definition for better security.
        * Avoid writing more rule info than necessary. For example, to allow selectingn all fields from all data just use "select: true" instead of defining all the fields and using "select: { fields: "*" }".
        */
       tablePermissions: Record<
         /**
-         * keyof DBGeneratedSchema or new table names from tableCreateStatements
+         * keyof DBGeneratedSchema or new table names from ddlStatements
          * */
         string,
         {
@@ -434,7 +442,7 @@ void defineAgenticWorkflow(
         '"MyUsers"': { select: true, insert: true, update: true },
         my_research_topics: { select: true, insert: true, update: true },
       },
-      tableCreateStatements: `
+      ddlStatements: `
         CREATE TABLE IF NOT EXISTS my_research_topics (
           id SERIAL PRIMARY KEY,
           topic TEXT NOT NULL,

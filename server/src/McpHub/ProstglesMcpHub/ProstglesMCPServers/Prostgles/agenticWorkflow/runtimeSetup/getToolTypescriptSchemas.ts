@@ -5,12 +5,15 @@ import { getValidatedMcpServerToolsAllowed } from "../definitionValidation/getVa
 export const getToolTypescriptSchemas = async (
   dbs: DBS,
   mcpServerTools: Record<string, Record<string, 1>> | "*",
-  mode: "full" | "compact" = "full",
+  mode: "full" | "basic" | "compact" = "full",
 ) => {
   const mcpTools = await getValidatedMcpServerToolsAllowed(dbs, mcpServerTools);
 
   const getTsType = (schema: Record<string, unknown> | null | undefined) => {
-    let res = !schema ? "string" : getJsonSchemaAsTs(schema, { mode });
+    let res =
+      !schema ? "string" : (
+        getJsonSchemaAsTs(schema, { mode: mode === "basic" ? "compact" : mode })
+      );
     res = res.trim();
     res = res || " unknown";
     if (res.endsWith(";")) {
@@ -37,7 +40,10 @@ export const getToolTypescriptSchemas = async (
       " */",
       funcDef,
     ].join("\n");
-    const def = mode === "compact" ? funcDef : funcDefWithDescription;
+    const def =
+      mode === "basic" ? description
+      : mode === "compact" ? funcDef
+      : funcDefWithDescription;
     result[server_name] ??= {};
     result[server_name][name] = def;
   }

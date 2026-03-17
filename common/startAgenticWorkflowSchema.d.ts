@@ -72,6 +72,111 @@ export declare const agentOutputSchemaType: {
         };
     };
 };
+export declare const agentDefinitionsSchema: {
+    optional: boolean;
+    record: {
+        values: {
+            type: {
+                readonly prompt: "string";
+                readonly modelName: {
+                    readonly type: "string";
+                    readonly optional: true;
+                };
+                readonly maxCostUSD: {
+                    readonly type: "number";
+                    readonly optional: true;
+                };
+                readonly maxIterations: {
+                    readonly type: "number";
+                    readonly optional: true;
+                };
+                readonly tools: {
+                    readonly optional: true;
+                    readonly record: {
+                        readonly partial: true;
+                        readonly values: {
+                            readonly record: {
+                                readonly partial: true;
+                                readonly values: {
+                                    readonly enum: readonly [1];
+                                };
+                            };
+                        };
+                    };
+                };
+                readonly maxTokens: {
+                    readonly type: "number";
+                    readonly optional: true;
+                };
+                readonly temperature: {
+                    readonly type: "number";
+                    readonly optional: true;
+                };
+                readonly outputSchema: {
+                    readonly record: {
+                        readonly values: {
+                            readonly oneOf: readonly [{
+                                readonly type: {
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["string", "number", "boolean", "unknown", ...("string[]" | "number[]" | "boolean[]" | "unknown[]")[]];
+                                    };
+                                };
+                            }, {
+                                readonly type: {
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly record: {
+                                            readonly values: {
+                                                readonly type: {
+                                                    readonly optional: {
+                                                        readonly type: "boolean";
+                                                        readonly optional: true;
+                                                    };
+                                                    readonly type: {
+                                                        readonly enum: readonly ["string", "number", "boolean", "unknown", ...("string[]" | "number[]" | "boolean[]" | "unknown[]")[]];
+                                                    };
+                                                };
+                                            };
+                                        };
+                                    };
+                                };
+                            }, {
+                                readonly type: {
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly arrayOfType: {
+                                        readonly record: {
+                                            readonly values: {
+                                                readonly type: {
+                                                    readonly optional: {
+                                                        readonly type: "boolean";
+                                                        readonly optional: true;
+                                                    };
+                                                    readonly type: {
+                                                        readonly enum: readonly ["string", "number", "boolean", "unknown", ...("string[]" | "number[]" | "boolean[]" | "unknown[]")[]];
+                                                    };
+                                                };
+                                            };
+                                        };
+                                    };
+                                };
+                            }];
+                        };
+                    };
+                };
+            };
+        };
+    };
+};
 export declare const startAgenticWorkflowSchema: {
     readonly chatId: "integer";
     readonly messageId: "string";
@@ -242,7 +347,7 @@ export declare const startAgenticWorkflowSchema: {
                     };
                 };
             };
-            readonly tableCreateStatements: {
+            readonly ddlStatements: {
                 readonly type: "string";
                 readonly optional: true;
             };
@@ -267,10 +372,10 @@ export declare const startAgenticWorkflowSchema: {
         }];
     };
     readonly agentDefinitions: {
-        readonly optional: true;
-        readonly record: {
-            readonly values: {
-                readonly type: {
+        optional: boolean;
+        record: {
+            values: {
+                type: {
                     readonly prompt: "string";
                     readonly modelName: {
                         readonly type: "string";

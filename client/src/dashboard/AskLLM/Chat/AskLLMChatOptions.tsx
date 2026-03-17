@@ -36,6 +36,7 @@ export const AskLLMChatOptions = (props: LLMChatOptionsProps) => {
         extra_headers: 1,
         created: 1,
         id: 1,
+        options: 1,
       } as const satisfies Partial<Record<keyof DBSSchema["llm_chats"], 1>>,
       methods: {},
       rowFilter: [{ fieldName: "id", value: activeChatId }],

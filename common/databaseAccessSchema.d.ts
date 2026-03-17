@@ -130,7 +130,7 @@ export declare const databaseAccessSchema: {
                 };
             };
         };
-        readonly tableCreateStatements: {
+        readonly ddlStatements: {
             readonly type: "string";
             readonly optional: true;
         };

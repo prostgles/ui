@@ -124,7 +124,13 @@ export const getAgenticWorkflowFunctions = (
           );
         return getAgenticWorkflowFiles(dbs, "runtime", connectionId, {
           type: "full",
-          newTables: workflow?.definition_data.newTables,
+          ddlStatements:
+            (
+              workflow?.definition_data.databaseAccessDefinitions?.mode ===
+              "custom"
+            ) ?
+              workflow.definition_data.databaseAccessDefinitions.ddlStatements
+            : undefined,
         });
       },
     }),

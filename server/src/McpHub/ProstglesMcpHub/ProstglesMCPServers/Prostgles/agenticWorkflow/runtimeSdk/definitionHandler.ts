@@ -1,61 +1,14 @@
-import { callWorkflowProxy } from "./callWorkflowProxy";
-import type { DefineAgenticWorkflow } from "./defineAgenticWorkflow";
-import type { ProxyCallDataDefinitions } from "./defineAgenticWorkflowHandlers.types";
 import ts from "typescript";
+import { callWorkflowProxy } from "./callWorkflowProxy";
+import { type DefineAgenticWorkflow } from "./defineAgenticWorkflow";
 
 export const definitionHandler = async (
   definitions: Parameters<DefineAgenticWorkflow>[0],
 ) => {
-  const createStatement =
-    definitions.databaseAccessDefinitions?.mode === "custom" ?
-      definitions.databaseAccessDefinitions.tableCreateStatements
-    : undefined;
-
-  const newTables: ProxyCallDataDefinitions["newTables"] = [];
-  if (typeof createStatement === "string") {
-    if (!createStatement.trim()) {
-      throw new Error("tableCreateStatements is an empty string");
-    }
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //@ts-ignore
-    const { parse } = (await import("pgsql-ast-parser")) as {
-      parse: (sql: string) => any[];
-    };
-    const ast = parse(createStatement) as {
-      type: string;
-      name: { name: string; schema?: string };
-      columns: {
-        name: { name: string };
-        dataType: { name: string };
-        constraints?: { type: "primary key" | "not null" }[];
-      }[];
-      ifNotExists?: boolean;
-    }[];
-
-    for (const {
-      type,
-      name: { name: tableName, schema },
-      ifNotExists,
-      columns,
-    } of ast) {
-      if (type !== "create table") {
-        throw new Error(
-          "Only CREATE TABLE statements are allowed in tableCreateStatements",
-        );
-      }
-      newTables.push({
-        name: tableName,
-        schema: schema,
-        columns: columns,
-        ifNotExists,
-      });
-    }
-  }
   const usedTables = extractTableNames();
   await callWorkflowProxy({
     type: "definitions",
     definitions,
-    newTables,
     usedTables,
   });
   console.log(
@@ -63,8 +16,16 @@ export const definitionHandler = async (
   );
   process.exit(0);
 };
-
-const dbMethods = new Set(["find", "insert", "update", "delete", "count"]);
+const dbTableMethods = new Set([
+  "find",
+  "findOne",
+  "insert",
+  "update",
+  "delete",
+  "count",
+  "upsert",
+  "findOneOrCreate",
+]);
 
 const extractTableNames = (): string[] => {
   const configPath = ts.findConfigFile(
@@ -84,35 +45,59 @@ const extractTableNames = (): string[] => {
   );
 
   const program = ts.createProgram(parsed.fileNames, parsed.options);
-  const sourceFile = program.getSourceFile(__dirname + "/index.ts");
-  if (!sourceFile) {
-    throw new Error("index.ts not found");
-  }
+  const sourceFile = program.getSourceFile(`${__dirname}/index.ts`);
+  if (!sourceFile) throw new Error("index.ts not found");
+
   const checker = program.getTypeChecker();
   const tables: string[] = [];
 
-  function isDatabaseHandler(node: ts.Expression): boolean {
+  /**
+   * Matches both:
+   *   - `db.tableName.method()` where `db` is a destructured DbTableHandler
+   *   - `databaseHandler.db.tableName.method()` where the parent is DatabaseHandler
+   */
+  const isDbTableHandlerExpr = (node: ts.Expression): boolean => {
     const type = checker.getTypeAtLocation(node);
-    const symbol = type.aliasSymbol ?? type.getSymbol();
-    return symbol?.getName() === "DatabaseHandler";
-  }
 
-  function visit(node: ts.Node) {
+    // Covers the destructured case: `const { db } = databaseHandler`
+    if (type.aliasSymbol?.getName() === "DbTableHandler") return true;
+
+    // Covers the direct property access case: `databaseHandler.db`
+    if (ts.isPropertyAccessExpression(node) && node.name.text === "db") {
+      const parentType = checker.getTypeAtLocation(node.expression);
+      const parentSymbol = parentType.aliasSymbol ?? parentType.getSymbol();
+      return parentSymbol?.getName() === "DatabaseHandler";
+    }
+
+    return false;
+  };
+
+  const visit = (node: ts.Node): void => {
+    /**
+     * Target AST shape:
+     *   CallExpression
+     *     PropertyAccessExpression          <- `.method()`
+     *       PropertyAccessExpression        <- `.tableName`  ← extract this
+     *         Expression (DbTableHandler)   <- `db`
+     */
     if (ts.isCallExpression(node)) {
       const expr = node.expression;
-      if (ts.isPropertyAccessExpression(expr)) {
-        const method = expr.name.text;
-
-        if (dbMethods.has(method) && isDatabaseHandler(expr.expression)) {
-          const arg0 = node.arguments[0];
-          if (arg0 && ts.isStringLiteralLike(arg0)) {
-            tables.push(arg0.text);
-          }
+      if (
+        ts.isPropertyAccessExpression(expr) &&
+        dbTableMethods.has(expr.name.text)
+      ) {
+        const tableAccess = expr.expression;
+        if (
+          ts.isPropertyAccessExpression(tableAccess) &&
+          isDbTableHandlerExpr(tableAccess.expression)
+        ) {
+          tables.push(tableAccess.name.text);
         }
       }
     }
+
     ts.forEachChild(node, visit);
-  }
+  };
 
   visit(sourceFile);
   return Array.from(new Set(tables));

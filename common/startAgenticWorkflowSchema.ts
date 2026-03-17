@@ -66,6 +66,27 @@ export const agentOutputSchemaType = {
 
 const { cpus, memory, readOnly, timeout } = runCodeInSandboxSchema.type;
 
+export const agentDefinitionsSchema = {
+  optional: true,
+  record: {
+    values: {
+      type: {
+        prompt: "string",
+        modelName: { type: "string", optional: true },
+        maxCostUSD: { type: "number", optional: true },
+        maxIterations: { type: "number", optional: true },
+        tools: {
+          ...mcpServerToolsAllowed,
+          optional: true,
+        },
+        maxTokens: { type: "number", optional: true },
+        temperature: { type: "number", optional: true },
+        outputSchema: agentOutputSchemaType,
+      } as const,
+    },
+  },
+};
+
 export const startAgenticWorkflowSchema = {
   chatId: "integer",
   messageId: "string",
@@ -101,26 +122,7 @@ export const startAgenticWorkflowSchema = {
     optional: true,
     oneOf: [{ enum: [undefined] }, mcpServerToolsAllowed],
   },
-  agentDefinitions: {
-    optional: true,
-    record: {
-      values: {
-        type: {
-          prompt: "string",
-          modelName: { type: "string", optional: true },
-          maxCostUSD: { type: "number", optional: true },
-          maxIterations: { type: "number", optional: true },
-          tools: {
-            ...mcpServerToolsAllowed,
-            optional: true,
-          },
-          maxTokens: { type: "number", optional: true },
-          temperature: { type: "number", optional: true },
-          outputSchema: agentOutputSchemaType,
-        },
-      },
-    },
-  },
+  agentDefinitions: agentDefinitionsSchema,
   userInput: userInputSchema,
   userInputValue: {
     record: {

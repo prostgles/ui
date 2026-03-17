@@ -14,6 +14,7 @@ import {
 } from "../getLLMToolsAllowedInThisChat";
 import { runAgentGoalTool } from "./runAgentGoalTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
+import { getMostSimilar } from "./getMostSimilar";
 
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
@@ -194,15 +195,22 @@ export const runApprovedTools = async ({
               name: serverName,
             })
           );
+        const errorHint = (() => {
+          if (matchedTool) {
+            return "is not allowed. Must enable it for this chat";
+          }
+
+          const mostSimilar = getMostSimilar(toolUseRequest.name, allToolNames);
+          return (
+            `is invalid.` +
+            (matchedMCPServer ?
+              ` Try enabling and reloading the tools for ${JSON.stringify(serverName)} MCP Server`
+            : mostSimilar ? ` Did you mean ${JSON.stringify(mostSimilar)} ?`
+            : ` Valid tool names: ${allToolNames}`)
+          );
+        })();
         return asResponse(
-          `Tool name "${toolUseRequest.name}" ${
-            matchedTool ?
-              "is not allowed. Must enable it for this chat"
-            : "is invalid." +
-              (matchedMCPServer ?
-                ` Try enabling and reloading the tools for ${JSON.stringify(serverName)} MCP Server`
-              : "")
-          }`,
+          `Tool name "${toolUseRequest.name}" ${errorHint}`,
           true,
         );
       }

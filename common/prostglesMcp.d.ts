@@ -612,7 +612,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
         readonly get_tool_schemas: {
             readonly mode: undefined;
-            readonly description: "Get MCP tool descriptions, input and output schemas in typescript format. Will return all tools by default. Use toolNames to specify which tools to return.";
+            readonly description: string;
             readonly schema: {
                 readonly type: {
                     readonly mcpServerTools: {
@@ -629,6 +629,10 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         };
                         readonly description: string;
                         readonly optional: true;
+                    };
+                    readonly infoLevel: {
+                        readonly optional: true;
+                        readonly enum: readonly ["full", "basic"];
                     };
                 };
             };
@@ -669,139 +673,127 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     };
                     readonly databaseAccess: {
                         readonly optional: true;
-                        readonly description: "Database access configuration. Use the most restrictive access type that is needed to complete the task.";
-                        readonly oneOfType: readonly [{
-                            readonly mode: {
-                                readonly enum: readonly ["execute_readonly_sql", "execute_sql"];
-                            };
+                        readonly oneOf: readonly [{
+                            readonly enum: readonly ["execute_readonly_sql", "execute_sql"];
                         }, {
-                            readonly mode: {
-                                readonly enum: readonly ["custom"];
-                            };
-                            readonly tablePermissions: {
-                                readonly title: "Tables";
-                                readonly description: "Tables the assistant can access";
-                                readonly record: {
-                                    readonly values: {
-                                        readonly type: {
-                                            readonly select: {
-                                                readonly oneOf: readonly [{
-                                                    readonly enum: readonly [true];
-                                                }, {
-                                                    readonly type: {
-                                                        readonly forcedFilter: {
-                                                            readonly optional: true;
-                                                            readonly oneOfType: readonly [{
-                                                                readonly $and: "any[]";
-                                                            }, {
-                                                                readonly $or: "any[]";
-                                                            }];
-                                                        };
-                                                        readonly fields: {
-                                                            readonly oneOf: readonly [{
-                                                                readonly enum: readonly ["*"];
-                                                            }, {
-                                                                readonly record: {
-                                                                    readonly values: {
-                                                                        readonly enum: readonly [1];
-                                                                    };
-                                                                };
-                                                            }, {
-                                                                readonly record: {
-                                                                    readonly values: {
-                                                                        readonly enum: readonly [0];
-                                                                    };
-                                                                };
-                                                            }];
-                                                        };
+                            readonly title: "Tables";
+                            readonly description: "Tables the assistant can access";
+                            readonly record: {
+                                readonly values: {
+                                    readonly type: {
+                                        readonly select: {
+                                            readonly oneOf: readonly [{
+                                                readonly enum: readonly [true];
+                                            }, {
+                                                readonly type: {
+                                                    readonly forcedFilter: {
+                                                        readonly optional: true;
+                                                        readonly oneOfType: readonly [{
+                                                            readonly $and: "any[]";
+                                                        }, {
+                                                            readonly $or: "any[]";
+                                                        }];
                                                     };
-                                                }];
-                                                readonly optional: true;
-                                            };
-                                            readonly update: {
-                                                readonly oneOf: readonly [{
-                                                    readonly enum: readonly [true];
-                                                }, {
-                                                    readonly type: {
-                                                        readonly forcedFilter: {
-                                                            readonly optional: true;
-                                                            readonly oneOfType: readonly [{
-                                                                readonly $and: "any[]";
-                                                            }, {
-                                                                readonly $or: "any[]";
-                                                            }];
-                                                        };
-                                                        readonly fields: {
-                                                            readonly oneOf: readonly [{
-                                                                readonly enum: readonly ["*"];
-                                                            }, {
-                                                                readonly record: {
-                                                                    readonly values: {
-                                                                        readonly enum: readonly [1];
-                                                                    };
+                                                    readonly fields: {
+                                                        readonly oneOf: readonly [{
+                                                            readonly enum: readonly ["*"];
+                                                        }, {
+                                                            readonly record: {
+                                                                readonly values: {
+                                                                    readonly enum: readonly [1];
                                                                 };
-                                                            }, {
-                                                                readonly record: {
-                                                                    readonly values: {
-                                                                        readonly enum: readonly [0];
-                                                                    };
+                                                            };
+                                                        }, {
+                                                            readonly record: {
+                                                                readonly values: {
+                                                                    readonly enum: readonly [0];
                                                                 };
-                                                            }];
-                                                        };
+                                                            };
+                                                        }];
                                                     };
-                                                }];
-                                                readonly optional: true;
-                                            };
-                                            readonly insert: {
-                                                readonly oneOf: readonly [{
-                                                    readonly enum: readonly [true];
-                                                }, {
-                                                    readonly type: {
-                                                        readonly fields: {
-                                                            readonly oneOf: readonly [{
-                                                                readonly enum: readonly ["*"];
-                                                            }, {
-                                                                readonly record: {
-                                                                    readonly values: {
-                                                                        readonly enum: readonly [1];
-                                                                    };
-                                                                };
-                                                            }, {
-                                                                readonly record: {
-                                                                    readonly values: {
-                                                                        readonly enum: readonly [0];
-                                                                    };
-                                                                };
-                                                            }];
-                                                        };
+                                                };
+                                            }];
+                                            readonly optional: true;
+                                        };
+                                        readonly update: {
+                                            readonly oneOf: readonly [{
+                                                readonly enum: readonly [true];
+                                            }, {
+                                                readonly type: {
+                                                    readonly forcedFilter: {
+                                                        readonly optional: true;
+                                                        readonly oneOfType: readonly [{
+                                                            readonly $and: "any[]";
+                                                        }, {
+                                                            readonly $or: "any[]";
+                                                        }];
                                                     };
-                                                }];
-                                                readonly optional: true;
-                                            };
-                                            readonly delete: {
-                                                readonly oneOf: readonly [{
-                                                    readonly enum: readonly [true];
-                                                }, {
-                                                    readonly type: {
-                                                        readonly forcedFilter: {
-                                                            readonly optional: true;
-                                                            readonly oneOfType: readonly [{
-                                                                readonly $and: "any[]";
-                                                            }, {
-                                                                readonly $or: "any[]";
-                                                            }];
-                                                        };
+                                                    readonly fields: {
+                                                        readonly oneOf: readonly [{
+                                                            readonly enum: readonly ["*"];
+                                                        }, {
+                                                            readonly record: {
+                                                                readonly values: {
+                                                                    readonly enum: readonly [1];
+                                                                };
+                                                            };
+                                                        }, {
+                                                            readonly record: {
+                                                                readonly values: {
+                                                                    readonly enum: readonly [0];
+                                                                };
+                                                            };
+                                                        }];
                                                     };
-                                                }];
-                                                readonly optional: true;
-                                            };
+                                                };
+                                            }];
+                                            readonly optional: true;
+                                        };
+                                        readonly insert: {
+                                            readonly oneOf: readonly [{
+                                                readonly enum: readonly [true];
+                                            }, {
+                                                readonly type: {
+                                                    readonly fields: {
+                                                        readonly oneOf: readonly [{
+                                                            readonly enum: readonly ["*"];
+                                                        }, {
+                                                            readonly record: {
+                                                                readonly values: {
+                                                                    readonly enum: readonly [1];
+                                                                };
+                                                            };
+                                                        }, {
+                                                            readonly record: {
+                                                                readonly values: {
+                                                                    readonly enum: readonly [0];
+                                                                };
+                                                            };
+                                                        }];
+                                                    };
+                                                };
+                                            }];
+                                            readonly optional: true;
+                                        };
+                                        readonly delete: {
+                                            readonly oneOf: readonly [{
+                                                readonly enum: readonly [true];
+                                            }, {
+                                                readonly type: {
+                                                    readonly forcedFilter: {
+                                                        readonly optional: true;
+                                                        readonly oneOfType: readonly [{
+                                                            readonly $and: "any[]";
+                                                        }, {
+                                                            readonly $or: "any[]";
+                                                        }];
+                                                    };
+                                                };
+                                            }];
+                                            readonly optional: true;
                                         };
                                     };
                                 };
-                            };
-                            readonly tableCreateStatements: {
-                                readonly type: "string";
-                                readonly optional: true;
                             };
                         }];
                     };
@@ -820,6 +812,65 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly enum: readonly ["approved", "denied"];
                     };
                 };
+            };
+        };
+        readonly create_agent: {
+            readonly description: string;
+            readonly schema: {
+                readonly type: {
+                    readonly tools: {
+                        readonly record: {
+                            readonly partial: true;
+                            readonly values: {
+                                readonly record: {
+                                    readonly partial: true;
+                                    readonly values: {
+                                        readonly enum: readonly [1];
+                                    };
+                                };
+                            };
+                        };
+                        readonly description: "List of MCP server tools available to the agent. Example: { fetch: { fetch: 1 } }";
+                        readonly optional: true;
+                    };
+                    readonly prompt: "string";
+                    readonly modelName: {
+                        readonly type: "string";
+                        readonly optional: true;
+                    };
+                    readonly maxCostUSD: {
+                        readonly type: "number";
+                        readonly optional: true;
+                    };
+                    readonly maxIterations: {
+                        readonly type: "number";
+                        readonly optional: true;
+                    };
+                    readonly maxTokens: {
+                        readonly type: "number";
+                        readonly optional: true;
+                    };
+                    readonly temperature: {
+                        readonly type: "number";
+                        readonly optional: true;
+                    };
+                    readonly name: "string";
+                    readonly autoApproveAllTools: "boolean";
+                    readonly timeout: "integer";
+                };
+            };
+            readonly outputSchema: {
+                readonly oneOfType: readonly [{
+                    readonly success: {
+                        readonly enum: readonly [true];
+                    };
+                    readonly result: "string";
+                }, {
+                    readonly success: {
+                        readonly enum: readonly [false];
+                    };
+                    readonly error: "string";
+                }];
             };
         };
         readonly create_agentic_workflow: {

@@ -11,7 +11,7 @@ export const databaseAccessSchema = {
         {
             mode: { enum: ["custom"] },
             tablePermissions: tablePermissionsSchema,
-            tableCreateStatements: { type: "string", optional: true },
+            ddlStatements: { type: "string", optional: true },
         },
     ],
 };

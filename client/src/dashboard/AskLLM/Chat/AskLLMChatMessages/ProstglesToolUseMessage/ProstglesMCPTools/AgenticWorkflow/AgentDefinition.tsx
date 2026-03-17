@@ -1,6 +1,6 @@
 import { FlexCol, FlexRow } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import { isDefined } from "@common/filterUtils";
 import type { DBSSchema } from "@common/publishUtils";
@@ -18,53 +18,27 @@ import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWit
 import { McpToolAccess } from "./McpToolAccess";
 
 export const AgentDefinition = ({
-  workflow,
+  config,
   agentName,
+  onChange,
 }: {
-  workflow: DBSSchema["agentic_workflows"];
+  config: NonNullable<
+    DBSSchema["agentic_workflows"]["definition_data"]["agentDefinitions"]
+  >[string];
   agentName: string;
+  onChange: (updatedFields: Partial<typeof config>) => void | Promise<void>;
 }) => {
   const prgl = usePrgl();
-  const { dbs } = prgl;
   const [expanded, setExpanded] = useState(false);
-  const { agentDefinitions = {} } = workflow.definition_data;
-
-  const agentInitialDefinition = agentDefinitions[agentName]!;
-  const agentConfigOverride =
-    workflow.definition_override?.agentDefinitions?.[agentName];
-  const agentDefinition = {
-    ...agentInitialDefinition,
-    ...agentConfigOverride,
-  };
   const {
-    prompt = agentInitialDefinition.prompt,
+    prompt,
     maxIterations,
     modelName,
     maxTokens,
     temperature,
     tools: agentTools,
-  } = agentDefinition;
+  } = config;
   const { options, tools } = useMcpToolsSelectOptions();
-  const updateAgentDefinition = useCallback(
-    async (updatedFields: Partial<typeof agentDefinition>) => {
-      await dbs.agentic_workflows.update(
-        {
-          id: workflow.id,
-        },
-        {
-          definition_override: {
-            agentDefinitions: {
-              [agentName]: {
-                ...agentConfigOverride,
-                ...updatedFields,
-              },
-            },
-          },
-        },
-      );
-    },
-    [agentConfigOverride, agentName, dbs.agentic_workflows, workflow.id],
-  );
 
   const agentToolsList =
     agentTools &&
@@ -102,7 +76,7 @@ export const AgentDefinition = ({
           forAgent={true}
           value={null}
           onChange={(_, { name }) => {
-            void updateAgentDefinition({ modelName: name });
+            void onChange({ modelName: name });
           }}
         />
         <Btn
@@ -142,7 +116,7 @@ export const AgentDefinition = ({
               newAgentTools[server_name] ??= {};
               newAgentTools[server_name][name] = 1;
             });
-            void updateAgentDefinition({
+            void onChange({
               tools: newAgentTools,
             });
           }}
@@ -160,7 +134,7 @@ export const AgentDefinition = ({
             value={prompt}
             language="markdown"
             onSave={(newPrompt) => {
-              void updateAgentDefinition({ prompt: newPrompt });
+              void onChange({ prompt: newPrompt });
             }}
           />
         : <Marked
@@ -180,7 +154,7 @@ export const AgentDefinition = ({
             value={maxIterations}
             type="integer"
             onChange={async (newVal) => {
-              await updateAgentDefinition({ maxIterations: Number(newVal) });
+              await onChange({ maxIterations: Number(newVal) });
             }}
           />
           <FormFieldDebounced
@@ -188,7 +162,7 @@ export const AgentDefinition = ({
             value={maxTokens}
             type="integer"
             onChange={async (newVal) => {
-              await updateAgentDefinition({ maxTokens: Number(newVal) });
+              await onChange({ maxTokens: Number(newVal) });
             }}
           />
           <FormFieldDebounced
@@ -196,7 +170,7 @@ export const AgentDefinition = ({
             value={temperature}
             type="number"
             onChange={async (newVal) => {
-              await updateAgentDefinition({
+              await onChange({
                 temperature: Number(newVal),
               });
             }}

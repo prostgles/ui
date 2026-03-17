@@ -42,6 +42,7 @@ export function ifEmpty<V, R>(v: V, replaceValue: R): R | V {
 }
 
 export function nFormatter(num: number, digits: number): string {
+  if (!num) return "0";
   if (Math.abs(num) < 1) return num.toExponential(digits);
   const lookup = [
     { value: 1, symbol: "" },

@@ -44,7 +44,7 @@ export const findArr = (arr, pattern) => {
 export const filterArrInverse = (arr, pattern) => {
     const patternEntries = Object.entries(pattern);
     return arr.filter((item) => {
-        return patternEntries.every(([key, value]) => item[key] !== value);
+        return patternEntries.some(([key, value]) => item[key] !== value);
     });
 };
 export const LLM_PROMPT_VARIABLES = {

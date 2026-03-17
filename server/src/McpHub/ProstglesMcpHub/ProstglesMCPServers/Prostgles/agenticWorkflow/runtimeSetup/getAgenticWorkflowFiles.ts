@@ -91,16 +91,17 @@ export const getDefineAgenticWorkflowTsSchema = async (
   return result;
 };
 
+export type TableSchemaOpts =
+  | {
+      type: "full";
+      ddlStatements: string | undefined;
+    }
+  | { type: "generic" };
 export const getAgenticWorkflowFiles = async (
   dbs: DBS,
   purpose: "runtime" | "agent",
   connection_id: string,
-  tableSchemaOpts:
-    | {
-        type: "full";
-        newTables: DBSSchema["agentic_workflows"]["definition_data"]["newTables"];
-      }
-    | { type: "generic" },
+  tableSchemaOpts: TableSchemaOpts,
 ) => {
   const { prgl } = connectionManager.getActiveConnection(connection_id);
 
@@ -108,55 +109,11 @@ export const getAgenticWorkflowFiles = async (
     export type DBGeneratedSchema = Record<string, { columns: Record<string, any> }>;
   `;
   if (tableSchemaOpts.type === "full") {
-    const newTables = tableSchemaOpts.newTables ?? [];
-    dbSchema = prgl.getTSSchema({
+    const futureSchema = await prgl.getTSSchema({
       excludeFunctions: true,
-      extraTables: newTables.map((t) => {
-        return {
-          oid: -1,
-          view_definition: null,
-          view_related_tables: undefined,
-          parent_tables: [],
-          privileges: {
-            delete: true,
-            insert: true,
-            select: true,
-            update: true,
-          },
-
-          name: t.name,
-          is_view: false,
-          comment: "",
-          schema: t.schema || "public",
-          escaped_identifier: t.name,
-          columns: t.columns.map((c, idx) => {
-            return {
-              is_nullable: c.nullable ?? true,
-              is_updatable: true,
-              is_generated: false,
-              element_type: undefined,
-              element_udt_name: undefined,
-              is_pkey: false,
-              has_default: false,
-              privileges: {
-                INSERT: true,
-                REFERENCES: true,
-                SELECT: true,
-                UPDATE: true,
-              },
-              ordinal_position: idx + 1,
-              name: c.name,
-              label: c.name,
-              comment: "",
-              udt_name:
-                getProperty(dataTypeToUdtNameMap, c.dataType) ??
-                (c.dataType as any),
-              data_type: c.dataType,
-            } satisfies TableSchema["columns"][number];
-          }),
-        };
-      }),
+      ddlWithRollback: tableSchemaOpts.ddlStatements,
     });
+    dbSchema = futureSchema.tsSchema;
   }
   const defineAgenticWorkflowTsWithSchemas =
     await getDefineAgenticWorkflowTsSchema(dbs, purpose, dbSchema);
@@ -166,14 +123,6 @@ export const getAgenticWorkflowFiles = async (
     "defineAgenticWorkflowHandlers.ts": defineAgenticWorkflowHandlersTs,
   };
 };
-
-const dataTypeToUdtNameMap = {
-  ARRAY: "any",
-  serial: "integer",
-  text: "text",
-  integer: "integer",
-  boolean: "boolean",
-} as const;
 
 console.error("FINISH OR REMOVE");
 // const exampleSlice = defineAgenticWorkflowTs.slice(

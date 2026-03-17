@@ -22,7 +22,7 @@ export const InChatToolApprover = ({
         r.response === null &&
         (r.tool_use_id === toolUseId ||
           (r.source.type === "proxy" &&
-            r.source.parentToolUseMessageId === messageId)),
+            r.source.parentToolUseMessageId === String(messageId))),
     );
   }, [requests, chatId, toolUseId, messageId]);
 

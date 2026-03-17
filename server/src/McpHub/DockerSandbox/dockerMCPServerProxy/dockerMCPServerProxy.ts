@@ -27,6 +27,7 @@ import {
 import { getDockerGatewayIP } from "./getDockerGatewayIP";
 import { createSessionSecret } from "@src/authConfig/sessionUtils";
 import { tout } from "@src/utils/tout";
+import type { DBSSchemaForInsert } from "@common/publishUtils";
 
 const PREFERRED_PORT = 3089;
 const DEFAULT_GATEWAY_IP = "0.0.0.0" as const;
@@ -300,9 +301,9 @@ const mcpRequestHandler: RequestHandler = async (
           input: req.body,
           source: {
             type: "proxy",
-            parentToolUseMessageId: messageId,
+            parentToolUseMessageId: String(messageId),
           },
-        },
+        } satisfies DBSSchemaForInsert["mcp_tool_approval_requests"],
         { returning: "*" },
       );
       let latestApproval: typeof approval | undefined = approval;

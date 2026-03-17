@@ -28,7 +28,7 @@ export const setupOrchestrationToolPermissions = async ({
    */
   const dataPermissions =
     databaseAccessDefinitions?.mode === "custom" ?
-      omitKeys(databaseAccessDefinitions, ["tableCreateStatements"])
+      omitKeys(databaseAccessDefinitions, ["ddlStatements"])
     : databaseAccessDefinitions;
   const workflowToolsChat = await dbs.llm_chats.insert(
     {

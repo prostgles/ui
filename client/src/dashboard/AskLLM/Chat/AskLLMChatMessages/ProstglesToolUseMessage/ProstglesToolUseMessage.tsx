@@ -17,6 +17,7 @@ import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 import { WebSnapshot } from "./ProstglesMCPTools/WebSearch/WebSnapshot";
 import { RequestToolAccess } from "./ProstglesMCPTools/RequestToolAccess";
+import { Agent } from "./ProstglesMCPTools/Agent/Agent";
 
 export const ProstglesMCPToolsWithUI = {
   [getMCPFullToolName("prostgles-ui", "create_dashboards") as string]: {
@@ -25,6 +26,11 @@ export const ProstglesMCPToolsWithUI = {
   },
   [getMCPFullToolName("prostgles-ui", "create_agentic_workflow") as string]: {
     component: AgenticWorkflow,
+    displayMode: "full",
+    showsError: true,
+  },
+  [getMCPFullToolName("prostgles-ui", "create_agent") as string]: {
+    component: Agent,
     displayMode: "full",
     showsError: true,
   },

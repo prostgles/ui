@@ -109,17 +109,17 @@ export const startAgenticWorkflow = async ({
 
   if (
     databaseAccessDefinitions?.mode === "custom" &&
-    databaseAccessDefinitions.tableCreateStatements
+    databaseAccessDefinitions.ddlStatements
   ) {
     try {
       await runConnectionQuery(
         connection_id,
-        databaseAccessDefinitions.tableCreateStatements,
+        databaseAccessDefinitions.ddlStatements,
       );
     } catch (error) {
       return {
         state: "init-error" as const,
-        message: `Error creating tables from tableCreateStatements`,
+        message: `Error creating tables from ddlStatements`,
         error: getSerialisableError(error),
       };
     }
@@ -158,7 +158,7 @@ export const startAgenticWorkflow = async ({
         connection_id,
         db_data_permissions:
           databaseAccessDefinitions?.mode === "custom" ?
-            omitKeys(databaseAccessDefinitions, ["tableCreateStatements"])
+            omitKeys(databaseAccessDefinitions, ["ddlStatements"])
           : (databaseAccessDefinitions ?? null),
       },
       handler: (data) => {

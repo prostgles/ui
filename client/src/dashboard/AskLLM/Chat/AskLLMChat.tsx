@@ -122,7 +122,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
         <AskLLMChatHeader
           {...setupState}
           {...chatState}
-          selectedChat={selectedChat}
           chatRootDiv={rootDiv}
         />
       )}

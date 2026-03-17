@@ -47,10 +47,11 @@ export const getFullPrompt = async ({
       wrapCode(
         "typescript",
         (() => {
-          if (connInfo.is_state_db) return statePrgl?.getTSSchema() ?? "";
+          if (connInfo.is_state_db)
+            return statePrgl?.getTSSchema().tsSchema ?? "";
           const prglConn = connectionManager.prglConnections.get(connectionId);
           if (!prglConn || prglConn.state !== "started") return "";
-          return prglConn.prgl.getTSSchema();
+          return prglConn.prgl.getTSSchema().tsSchema;
         })(),
       ),
     )

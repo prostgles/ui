@@ -1,8 +1,9 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
+import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { fromEntries, getEntries } from "@common/utils";
 import {
   getSerialisableError,
+  isDefined,
   omitKeys,
   type JSONBObjectTypeIfDefined,
 } from "prostgles-types";
@@ -10,6 +11,7 @@ import type { McpCallContext } from "../../../ProstglesMCPServerTypes";
 import { validateAgenticWorkflowDefinitions } from "./definitionValidation/validateAgenticWorkflowDefinitions";
 import { startAgenticWorkflowContainer } from "./execution/startAgenticWorkflowContainer";
 import type { ProxyCallDataDefinitions } from "./runtimeSdk/defineAgenticWorkflowHandlers.types";
+import type { TableSchemaOpts } from "./runtimeSetup/getAgenticWorkflowFiles";
 
 type Args = JSONBObjectTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_agentic_workflow"]["schema"]["type"]
@@ -19,16 +21,14 @@ const getValidWorkflowDefinition = async (
   {
     workflow_function_definition,
     workflow_function_definition_summary,
-    newTables,
+    tableSchemaOpts,
     connection_id,
     aborter,
     package_dependencies,
   }: Args & {
     connection_id: string;
     aborter: AbortController;
-    newTables:
-      | DBSSchema["agentic_workflows"]["definition_data"]["newTables"]
-      | undefined;
+    tableSchemaOpts: TableSchemaOpts;
   },
   { user_id, chat, dbs, clientReq, messageId }: McpCallContext,
 ) => {
@@ -57,7 +57,7 @@ const getValidWorkflowDefinition = async (
       },
       {
         type: "definitions-only",
-        newTables,
+        tableSchemaOpts,
         handler: (workflowData, { res }) => {
           definitionData = workflowData;
           res.json({ success: true });
@@ -76,7 +76,7 @@ const getValidWorkflowDefinition = async (
         if (!definitionData) {
           throw new Error("Definition data is missing from container result");
         }
-        const { definitions, newTables } = definitionData;
+        const { definitions } = definitionData;
         const definition_data = omitKeys(definitions, ["name"]);
 
         await validateAgenticWorkflowDefinitions(definitionData, {
@@ -85,7 +85,7 @@ const getValidWorkflowDefinition = async (
           dbs,
           clientReq,
           userId: user_id,
-        }).then(({ agentConfigsWithDefaults }) => {
+        }).then(({ agentConfigsWithDefaults, tsSchema, newTables }) => {
           const workflowInsertData = {
             user_id,
             name: definitions.name,
@@ -99,20 +99,19 @@ const getValidWorkflowDefinition = async (
                 definition_data.databaseAccessDefinitions,
               containerConfiguration: definition_data.containerConfiguration,
               orchestrationTools: definition_data.orchestrationTools,
-              newTables: newTables.map((t) => ({
-                name: t.name,
-                columns: t.columns.map((c) => ({
-                  name: c.name.name,
-                  dataType: c.dataType.name,
-                  nullable:
-                    c.constraints?.some((con) => con.type === "not null") ?
-                      false
-                    : true,
-                  isPrimaryKey: c.constraints?.some(
-                    (con) => con.type === "primary key",
-                  ),
-                })),
-              })),
+              newTables: newTables
+                .map((t) => {
+                  return {
+                    name: t.name,
+                    columns: t.columns.map((c) => ({
+                      name: c.name,
+                      dataType: c.udt_name,
+                      nullable: c.is_nullable,
+                      isPrimaryKey: c.is_pkey,
+                    })),
+                  };
+                })
+                .filter(isDefined),
             },
             definition_override: {
               agentDefinitions: fromEntries(
@@ -161,7 +160,9 @@ export const createAgenticWorkflow = async (
       workflowId,
       connection_id,
       aborter,
-      newTables: undefined,
+      tableSchemaOpts: {
+        type: "generic",
+      },
     },
     ctx,
   );
@@ -169,6 +170,7 @@ export const createAgenticWorkflow = async (
   /** We check a second time with actual table schemas */
   let res = initialBuild;
   if (initialBuild.isValid) {
+    const { databaseAccessDefinitions } = initialBuild.data.definition_data;
     res = await getValidWorkflowDefinition(
       {
         workflow_function_definition,
@@ -176,7 +178,13 @@ export const createAgenticWorkflow = async (
         workflowId,
         connection_id,
         aborter,
-        newTables: initialBuild.data.definition_data.newTables ?? [],
+        tableSchemaOpts: {
+          type: "full",
+          ddlStatements:
+            databaseAccessDefinitions?.mode === "custom" ?
+              databaseAccessDefinitions.ddlStatements
+            : undefined,
+        },
       },
       ctx,
     );

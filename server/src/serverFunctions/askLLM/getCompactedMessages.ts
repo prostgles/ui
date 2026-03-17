@@ -46,7 +46,11 @@ export const getCompactedMessages = ({
         lastConversationCompactionMessage &&
         lastConversationCompactionIndex !== -1
       ) {
-        if (index < lastConversationCompactionIndex) {
+        if (
+          index < lastConversationCompactionIndex ||
+          /** Remove the compaction tool_result */
+          index === lastConversationCompactionIndex + 1
+        ) {
           return undefined;
         }
         if (index === lastConversationCompactionIndex) {

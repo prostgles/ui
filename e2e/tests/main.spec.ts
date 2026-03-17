@@ -1132,7 +1132,7 @@ test.describe("Main test", () => {
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
-      `Reloaded 7 tools for "prostgles-ui" server`,
+      `Reloaded 8 tools for "prostgles-ui" server`,
     );
     await page.getByText("OK", { exact: true }).click();
     await page
@@ -1543,7 +1543,7 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, " agentic_workflow_clashing ");
     await expect(
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
-    ).toContainText("the following tables already exist: public.users", {
+    ).toContainText(`relation "users" already exists`, {
       timeout: 30e3,
     });
 
@@ -1552,7 +1552,7 @@ test.describe("Main test", () => {
     await expect(
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
     ).toContainText(
-      `Property 'invalid_table' does not exist on type 'DbTableHandler'`,
+      `Validation error for databaseHandler usage: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
       {
         timeout: 30e3,
       },
@@ -1564,7 +1564,7 @@ test.describe("Main test", () => {
     await expect(
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
     ).toContainText(
-      `tablePermissions: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
+      `"invalid_table" does not match any new or existing tables`,
       {
         timeout: 30e3,
       },

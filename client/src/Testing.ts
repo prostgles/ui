@@ -545,6 +545,7 @@ export const COMMANDS = {
   RequestToolAccess: "",
   "RequestToolAccess.Approve": "",
   "RequestToolAccess.AutoApprove": "",
+  Agent: "",
 } as const satisfies Record<
   string,
   | string

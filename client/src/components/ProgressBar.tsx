@@ -4,6 +4,7 @@ import type { DivProps } from "./Flex";
 import { classOverride, FlexRow } from "./Flex";
 
 type P = {
+  messageTop?: React.ReactNode;
   message?: React.ReactNode;
   style?: React.CSSProperties;
   value: number;
@@ -14,6 +15,7 @@ type P = {
 export const MINI_BARCHART_COLOR = "var(--active)";
 
 export const ProgressBar = ({
+  messageTop,
   message,
   value,
   totalValue,
@@ -21,7 +23,9 @@ export const ProgressBar = ({
   ...divProps
 }: P) => {
   const perc =
-    totalValue >= value ? Math.round((100 * value) / totalValue) : -1;
+    value === 0 ? 0
+    : totalValue >= value ? Math.round((100 * value) / totalValue)
+    : -1;
   const lightColor = "var(--bg-action)";
   const height = 4;
   const isIndeterminate = perc === -1;
@@ -34,6 +38,7 @@ export const ProgressBar = ({
         divProps.className,
       )}
     >
+      {messageTop}
       <div
         className="ProgressBarOuter shadow"
         style={{

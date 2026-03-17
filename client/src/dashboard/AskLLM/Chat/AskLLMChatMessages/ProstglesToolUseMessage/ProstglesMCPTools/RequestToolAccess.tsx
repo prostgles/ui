@@ -4,7 +4,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { FooterButtons } from "@components/Popup/FooterButtons";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { tout } from "src/utils/utils";
@@ -33,7 +33,22 @@ export const RequestToolAccess = ({
     ],
   );
 
-  const dbAccess = input.data?.databaseAccess;
+  const compactDatabaseAccess = input.data?.databaseAccess;
+  const dbAccess = useMemo(
+    () =>
+      typeof compactDatabaseAccess === "string" ?
+        {
+          mode: compactDatabaseAccess,
+        }
+      : compactDatabaseAccess ?
+        ({
+          mode: "custom",
+          tablePermissions: compactDatabaseAccess,
+        } as const)
+      : undefined,
+    [compactDatabaseAccess],
+  );
+
   const toolResultData = result?.data;
 
   const { sendToolUseResult } = useSendToolUseResult();
@@ -102,7 +117,9 @@ export const RequestToolAccess = ({
       if (dbAccess) {
         await dbs.llm_chats.update(
           { id: chatId },
-          { db_data_permissions: dbAccess },
+          {
+            db_data_permissions: dbAccess,
+          },
         );
       }
       await tout(500);

@@ -64,7 +64,7 @@ export const DockerSandboxCreateContainer = ({
       skip: !tool_use_id,
     },
   );
-
+  console.log(container);
   const schema =
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["run_code_in_sandbox"][
       "outputSchema"

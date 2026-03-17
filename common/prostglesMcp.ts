@@ -1,7 +1,11 @@
 import { databaseAccessSchema } from "./databaseAccessSchema";
 import type { DBSSchema } from "./publishUtils";
 import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
-import { mcpServerToolsAllowed } from "./startAgenticWorkflowSchema";
+import {
+  agentDefinitionsSchema,
+  mcpServerToolsAllowed,
+} from "./startAgenticWorkflowSchema";
+import { tablePermissionsSchema } from "./tablePermissionsSchema";
 import { fixIndent } from "./utils";
 
 const runSQLSchema = {
@@ -52,6 +56,9 @@ const outputSchemaArrayOfObjects = {
     },
   },
 } as const;
+
+const { outputSchema, ...agentSchemaWithoutOutput } =
+  agentDefinitionsSchema.record.values.type;
 
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   db: {
@@ -351,8 +358,14 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     },
     get_tool_schemas: {
       mode: undefined,
-      description:
-        "Get MCP tool descriptions, input and output schemas in typescript format. Will return all tools by default. Use toolNames to specify which tools to return.",
+      description: fixIndent(`
+          Get MCP tool descriptions, input and output schemas in typescript format. 
+          Will return all tools by default. 
+          Use toolNames to specify which tools to return.
+          infoLevel controls how much information to return about the tools:
+          - full: returns detailed descriptions and schemas for the tools to allow for better understanding of how to use them.
+          - basic (default): returns only the tool descriptions.
+        `),
       schema: {
         type: {
           mcpServerTools: {
@@ -361,6 +374,10 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 Leave empty to get all tools. Example: { fetch: { fetch: 1 } }`),
             optional: true,
             ...mcpServerToolsAllowed,
+          },
+          infoLevel: {
+            optional: true,
+            enum: ["full", "basic"],
           },
         },
       },
@@ -391,7 +408,14 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             optional: true,
             ...mcpServerToolsAllowed,
           },
-          databaseAccess: databaseAccessSchema,
+          // databaseAccess: databaseAccessSchema,
+          databaseAccess: {
+            optional: true,
+            oneOf: [
+              { enum: ["execute_readonly_sql", "execute_sql"] },
+              tablePermissionsSchema,
+            ],
+          },
         },
       },
       outputSchema: {
@@ -404,6 +428,40 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           },
           status: { optional: true, enum: ["approved", "denied"] },
         },
+      },
+    },
+    create_agent: {
+      mode: undefined, //"auto-approved-user-actionable",
+      description: [
+        "Creates and runs an agent to iteratively complete the specified task using MCP tools if needed.",
+        "The agent works in its own chat, can take multiple tool-assisted steps up to its configured iteration limit, and returns a final result.",
+        "Use least-privilege tool scope.",
+      ].join("\n"),
+      schema: {
+        type: {
+          name: "string",
+          autoApproveAllTools: "boolean",
+          timeout: "integer",
+          ...agentSchemaWithoutOutput,
+          tools: {
+            description:
+              "List of MCP server tools available to the agent. Example: { fetch: { fetch: 1 } }",
+            optional: true,
+            ...mcpServerToolsAllowed,
+          },
+        },
+      },
+      outputSchema: {
+        oneOfType: [
+          {
+            success: { enum: [true] },
+            result: "string",
+          },
+          {
+            success: { enum: [false] },
+            error: "string",
+          },
+        ],
       },
     },
     create_agentic_workflow: {

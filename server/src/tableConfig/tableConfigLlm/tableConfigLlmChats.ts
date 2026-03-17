@@ -46,6 +46,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
             {
               type: {
                 name: { type: "string", optional: true },
+                toolUseId: { type: "string", optional: true },
                 prompt: {
                   type: "string",
                   title: "Prompt",
@@ -62,9 +63,6 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                   title: "Output schema",
                   description: "JSON schema for validating agent output",
                   ...agentOutputSchemaType,
-                  // record: {
-                  //   values: "unknown",
-                  // },
                 },
               },
             },

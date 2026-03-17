@@ -19,6 +19,7 @@ import type {
 import { getOrchestrationContainerFiles } from "../runtimeSetup/getOrchestrationContainerFiles";
 import type { DBSSchema } from "@common/publishUtils";
 import { startAgenticWorkflowSchema } from "@common/startAgenticWorkflowSchema";
+import type { TableSchemaOpts } from "../runtimeSetup/getAgenticWorkflowFiles";
 
 export const startAgenticWorkflowContainer = async (
   dbs: DBS,
@@ -43,9 +44,7 @@ export const startAgenticWorkflowContainer = async (
     | {
         type: "definitions-only";
         dbPermissions?: undefined;
-        newTables:
-          | DBSSchema["agentic_workflows"]["definition_data"]["newTables"]
-          | undefined;
+        tableSchemaOpts: TableSchemaOpts;
         handler: (
           args: Extract<ProxyCallData, { type: "definitions" }>,
           ctx: McpProxyRequestContext,
@@ -135,17 +134,17 @@ export const startAgenticWorkflowContainer = async (
               {
                 type: {
                   type: { enum: ["definitions"] },
-                  newTables: {
-                    arrayOfType: {
-                      name: "string",
-                      schema: { type: "string", optional: true },
-                      columns: "unknown[]",
-                      ifNotExists: {
-                        type: "boolean",
-                        optional: true,
-                      },
-                    },
-                  },
+                  // newTables: {
+                  //   arrayOfType: {
+                  //     name: "string",
+                  //     schema: { type: "string", optional: true },
+                  //     columns: "unknown[]",
+                  //     ifNotExists: {
+                  //       type: "boolean",
+                  //       optional: true,
+                  //     },
+                  //   },
+                  // },
                   usedTables: "string[]",
                   definitions: {
                     type: pickKeys(
@@ -270,10 +269,20 @@ export const startAgenticWorkflowContainer = async (
         dbs,
         workflowTs: workflow_function_definition,
         package_dependencies,
-        newTables:
+        tableSchemaOpts:
           mode.type === "definitions-only" ?
-            mode.newTables
-          : mode.workflow.definition_data.newTables,
+            mode.tableSchemaOpts
+          : {
+              type: "full",
+              ddlStatements:
+                (
+                  mode.workflow.definition_data.databaseAccessDefinitions
+                    ?.mode === "custom"
+                ) ?
+                  mode.workflow.definition_data.databaseAccessDefinitions
+                    .ddlStatements
+                : undefined,
+            },
         forDefinitions: mode.type === "definitions-only",
         connection_id,
       }),

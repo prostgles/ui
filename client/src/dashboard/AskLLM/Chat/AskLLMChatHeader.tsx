@@ -1,17 +1,11 @@
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import {
-  mdiDotsHorizontal,
-  mdiPlus,
-  mdiRobot,
-  mdiShieldCheckOutline,
-} from "@mdi/js";
+import { mdiDotsHorizontal, mdiPlus, mdiRobot } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
-import type { AskLLMChatProps } from "./AskLLMChat";
 import {
   AskLLMChatOptions,
   type LLMChatOptionsProps,
@@ -19,9 +13,7 @@ import {
 import type { LLMChatState } from "./useLLMChat";
 
 export const AskLLMChatHeader = (
-  props: LLMChatState &
-    Pick<LLMChatOptionsProps, "chatRootDiv" | "prompts"> &
-    Pick<AskLLMChatProps, "selectedChat">,
+  props: LLMChatState & Pick<LLMChatOptionsProps, "chatRootDiv" | "prompts">,
 ) => {
   const {
     activeChat,
@@ -33,7 +25,6 @@ export const AskLLMChatHeader = (
     setActiveChat,
     chatRootDiv,
     prompts,
-    selectedChat,
   } = props;
 
   const { dbs, user } = usePrgl();

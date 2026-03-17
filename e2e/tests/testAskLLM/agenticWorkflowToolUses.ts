@@ -44,7 +44,7 @@ export default defineAgenticWorkflow(
             { invalid_table: { select: true } }
           : {}),
         },
-        tableCreateStatements: `
+        ddlStatements: `
           ${mode === "clashing" ? clashingTableDefinition : ""}
           CREATE TABLE IF NOT EXISTS new_users (
             id SERIAL PRIMARY KEY,

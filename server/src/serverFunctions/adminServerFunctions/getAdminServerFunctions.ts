@@ -142,10 +142,10 @@ export const getAdminServerFunctions = (
         if (!statePrgl) throw "statePrgl missing";
         /** No connection id = state connection */
         if (!conId) {
-          return statePrgl.getTSSchema();
+          return statePrgl.getTSSchema().tsSchema;
         }
         const c = connectionManager.getConnectionStartedInstance(conId);
-        return c.prgl.getTSSchema();
+        return c.prgl.getTSSchema().tsSchema;
       },
     }),
     runSql: defineAdminFunction({

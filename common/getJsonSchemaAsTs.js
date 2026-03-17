@@ -5,6 +5,22 @@ const DEFAULT_OPTIONS = {
     indent: "  ",
 };
 const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/u;
+/**
+ * Converts a JSON Schema object to a TypeScript type string (no "type X =" wrapper).
+ *
+ * Full mode  (default): multi-line, indentation, JSDoc comments from descriptions.
+ * Compact mode: single-line, no comments.
+ */
+export const getJsonSchemaAsTs = (schema, options = {}) => {
+    var _a, _b;
+    const ctx = {
+        mode: (_a = options.mode) !== null && _a !== void 0 ? _a : DEFAULT_OPTIONS.mode,
+        indent: (_b = options.indent) !== null && _b !== void 0 ? _b : DEFAULT_OPTIONS.indent,
+        root: schema,
+        resolvingRefs: new Set(),
+    };
+    return renderSchema(schema, 0, ctx);
+};
 const isRecord = (value) => typeof value === "object" && value !== null;
 const isValidIdentifier = (name) => IDENTIFIER_RE.test(name);
 const formatPropertyName = (name) => isValidIdentifier(name) ? name : JSON.stringify(name);
@@ -177,20 +193,4 @@ const renderSchema = (schema, level, ctx) => {
         return withNullable(renderArray(schema, level, ctx), schema, ctx);
     }
     return withNullable("unknown", schema, ctx);
-};
-/**
- * Converts a JSON Schema object to a TypeScript type string (no "type X =" wrapper).
- *
- * Full mode  (default): multi-line, indentation, JSDoc comments from descriptions.
- * Compact mode: single-line, no comments.
- */
-export const getJsonSchemaAsTs = (schema, options = {}) => {
-    var _a, _b;
-    const ctx = {
-        mode: (_a = options.mode) !== null && _a !== void 0 ? _a : DEFAULT_OPTIONS.mode,
-        indent: (_b = options.indent) !== null && _b !== void 0 ? _b : DEFAULT_OPTIONS.indent,
-        root: schema,
-        resolvingRefs: new Set(),
-    };
-    return renderSchema(schema, 0, ctx);
 };

@@ -41,16 +41,6 @@ export type AgenticWorkflowDefinition = Parameters<DefineAgenticWorkflow>[0];
 export type ProxyCallDataDefinitions = {
   type: "definitions";
   definitions: Parameters<DefineAgenticWorkflow>[0];
-  newTables: {
-    name: string;
-    schema?: string;
-    columns: {
-      name: { name: string };
-      dataType: { name: string };
-      constraints?: { type: "primary key" | "not null" }[];
-    }[];
-    ifNotExists?: boolean;
-  }[];
   usedTables: string[];
 };
 export type ProxyCallData =

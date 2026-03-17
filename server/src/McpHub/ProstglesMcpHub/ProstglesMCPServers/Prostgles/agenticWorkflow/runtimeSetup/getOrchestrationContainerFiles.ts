@@ -1,20 +1,20 @@
-import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
-import { getAgenticWorkflowFiles } from "./getAgenticWorkflowFiles";
+import {
+  getAgenticWorkflowFiles,
+  type TableSchemaOpts,
+} from "./getAgenticWorkflowFiles";
 
 export const getOrchestrationContainerFiles = async ({
   dbs,
   workflowTs,
-  newTables,
+  tableSchemaOpts,
   forDefinitions,
   connection_id,
   package_dependencies,
 }: {
   dbs: DBS;
   workflowTs: string;
-  newTables:
-    | DBSSchema["agentic_workflows"]["definition_data"]["newTables"]
-    | undefined;
+  tableSchemaOpts: TableSchemaOpts;
   forDefinitions: boolean;
   connection_id: string;
   package_dependencies: Record<string, string> | undefined;
@@ -38,14 +38,7 @@ export const getOrchestrationContainerFiles = async ({
       dbs,
       "runtime",
       connection_id,
-      newTables ?
-        {
-          type: "full",
-          newTables,
-        }
-      : {
-          type: "generic",
-        },
+      tableSchemaOpts,
     )),
     "index.ts": workflowTs,
     "package.json": JSON.stringify(packageJson, null, 2),
@@ -124,6 +117,7 @@ const getPackageJson = (forDefinitions: boolean) => ({
   dependencies: {
     "@types/node": "^22.15.2",
     typescript: "^5.8.3",
+    tslib: "^2.8.1",
     "prostgles-types": "^4.0.208",
     ...(forDefinitions ? { "pgsql-ast-parser": "^12.0.2" } : {}),
   },
@@ -137,5 +131,7 @@ const tsconfigJson = JSON.stringify({
     esModuleInterop: true,
     skipLibCheck: true,
     forceConsistentCasingInFileNames: true,
+    importHelpers: true,
+    noEmitHelpers: true,
   },
 });

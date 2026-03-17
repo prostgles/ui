@@ -32,7 +32,7 @@ export const createContainer = async (
     const dockerFileName = "Dockerfile";
     const dockerFile = files[dockerFileName];
     if (!dockerFile) {
-      throw new Error("Dockerfile is required in the files array");
+      throw new Error("Dockerfile is required in the files");
     }
     if (dockerFile.toLowerCase().includes("expose")) {
       throw new Error("Dockerfile should not contain EXPOSE instruction");
@@ -56,8 +56,6 @@ export const createContainer = async (
 
     const buildArgs = [
       "build",
-      // "--network",
-      // getNetworkName(params.buildNetworkMode),
       "-t",
       name,
       "-f",

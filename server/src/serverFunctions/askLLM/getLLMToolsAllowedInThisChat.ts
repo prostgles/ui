@@ -1,4 +1,8 @@
-import { getJSONBSchemaAsJSONSchema, isDefined } from "prostgles-types";
+import {
+  getJSONBSchemaAsJSONSchema,
+  isDefined,
+  isEmpty,
+} from "prostgles-types";
 import type { DBS } from "../..";
 
 import {
@@ -11,6 +15,7 @@ import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getAgentGoalTools } from "./agentConstants";
 import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
 import { getAllowedMcpTools } from "./prostglesLLMTools/getAllowedMcpTools";
+import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
 
 export type GetLLMToolsArgs = {
   userType: string;
@@ -104,6 +109,22 @@ export const getLLMToolsAllowedInThisChat = async ({
   });
   const toolList = Array.from(tools.values());
 
+  if (chat.options?.useTsTypesForTools) {
+    return toolList.map((t) => {
+      if (isEmpty(t.input_schema)) return t;
+      return {
+        ...t,
+        input_schema: {},
+        description: [
+          t.description,
+          `\nThe tool acceppts the following input (must be valid json) expressed in typescript types:`,
+          "```typescript",
+          getJsonSchemaAsTs(t.input_schema),
+          "```",
+        ].join("\n"),
+      };
+    });
+  }
   return toolList;
 };
 
