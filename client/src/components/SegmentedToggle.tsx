@@ -4,13 +4,13 @@ import { classOverride, FlexRow, type DivProps } from "@components/Flex";
 import React from "react";
 
 type SegmentedToggleProps<O extends string> = {
-  value: string;
+  value: O | undefined;
   options: Record<
     O,
     { title: string; iconPath: string; disabledInfo?: string }
   >;
   onChange: (value: O) => void;
-} & DivProps;
+} & Omit<DivProps, "onChange">;
 
 export const SegmentedToggle = <O extends string>({
   onChange,

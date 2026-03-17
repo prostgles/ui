@@ -29,12 +29,12 @@ export const Agent = ({
     message.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_agent"].schema,
   );
-  const outputValidation = useTypedToolUseResultDataV2(
-    toolUseResult?.toolUseResultMessage,
-    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_agent"]
-      .outputSchema,
-    true,
-  );
+  // const outputValidation = useTypedToolUseResultDataV2(
+  //   toolUseResult?.toolUseResultMessage,
+  //   PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_agent"]
+  //     .outputSchema,
+  //   true,
+  // );
   const { data: agentChat } = dbs.llm_chats.useSubscribeOne({
     parent_chat_id: chatId,
   });

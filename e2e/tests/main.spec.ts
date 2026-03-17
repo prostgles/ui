@@ -1153,12 +1153,12 @@ test.describe("Main test", () => {
         { timeout: 60e3 },
       );
       await page.waitForTimeout(3e3);
-      await page
-        .getByTestId("Chat.messageList")
-        .locator(".Loading")
-        .waitFor({ state: "detached", timeout: 40e3 });
 
       await prepareCb?.();
+
+      await page
+        .getByTestId("DockerSandboxCreateContainer.stop")
+        .waitFor({ state: "detached", timeout: 40e3 });
 
       for (const res of Array.isArray(result) ? result : [result]) {
         await expect(page.getByTestId("ToolUseMessage").last()).toContainText(
@@ -1173,7 +1173,9 @@ test.describe("Main test", () => {
     await dockerRunAndExpect(
       `cannot execute CREATE TABLE in a read-only transaction`,
       async () => {
-        await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+        await page
+          .getByTestId("AskLLMToolApprover.AllowOnce")
+          .click({ timeout: 10e3 });
         await page.waitForTimeout(1e3);
         await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
         await page

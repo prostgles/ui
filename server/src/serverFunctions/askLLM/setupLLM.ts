@@ -1,6 +1,9 @@
 import type { DBS } from "../..";
 import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import {
+  getProstglesMCPFullToolName,
+  type PROSTGLES_MCP_SERVERS_AND_TOOLS,
+} from "@common/prostglesMcp";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { getElectronConfig } from "@src/electronConfig";
 
@@ -22,6 +25,8 @@ export const setupLLM = async (dbs: DBS) => {
       `It allows managing and exploring data within Postgres databases as well as creating internal tools. \n`,
       `Today is ${LLM_PROMPT_VARIABLES.TODAY}.`,
       `DO NOT USE HARDCODED DATA UNLESS STRICTLY NECESSARY OR THE USER ASKS FOR IT.`,
+      `Use ${getProstglesMCPFullToolName("prostgles-ui", "compact_context")} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
+      `Use ${getProstglesMCPFullToolName("prostgles-ui", "create_agent")} when the task is iterative, requires multiple tool-assisted steps, or is better delegated to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
     ].join("\n");
     const upsertedPrompts = await dbs.llm_prompts.insert(
       [

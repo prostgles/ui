@@ -1,16 +1,163 @@
 import * as ts from "typescript";
 
+// ─── Position ─────────────────────────────────────────────────────────────────
+
+export type Position = {
+  /** 1-indexed line number */
+  line: number;
+  /** 1-indexed column number */
+  col: number;
+};
+
+// ─── Function registry ────────────────────────────────────────────────────────
+
+export type FunctionRisk = "safe" | "warn" | "danger";
+
+export type FunctionInfo = {
+  /** Stable key — also used as `fnId` on call/await nodes */
+  id: string;
+  /** Human-readable callee label, e.g. `fetch`, `db.query` */
+  label: string;
+  risk: FunctionRisk;
+  /** Short human-readable explanation of *why* this is risky */
+  riskReason?: string;
+  /** How many times this function is called in the summarised scope */
+  callCount: number;
+};
+
+/** All functions encountered during traversal, keyed by their `id`. */
+export type FunctionRegistry = Record<string, FunctionInfo>;
+
+// ─── Risk classification ──────────────────────────────────────────────────────
+
+type RiskRule = {
+  pattern: RegExp;
+  risk: FunctionRisk;
+  reason: string;
+};
+
+/**
+ * Ordered list of rules — first match wins.
+ * Rules are matched against the full callee label (e.g. `"fs.writeFile"`).
+ */
+const RISK_RULES: RiskRule[] = [
+  // ── Danger ───────────────────────────────────────────────────────────────
+  {
+    pattern: /\beval\b/,
+    risk: "danger",
+    reason: "eval() executes arbitrary code and is a common injection vector",
+  },
+  {
+    pattern: /\b(execSync|spawnSync|exec|spawn|fork)\b/,
+    risk: "danger",
+    reason:
+      "Spawns child processes; command-injection risk if inputs are unsanitised",
+  },
+  {
+    pattern: /\b(unlink|rmdir|rm)\b/,
+    risk: "danger",
+    reason: "Permanently deletes files or directories",
+  },
+  {
+    pattern: /\bwriteFile(Sync)?\b/,
+    risk: "danger",
+    reason: "Writes arbitrary data to the filesystem",
+  },
+  // ── Warn ─────────────────────────────────────────────────────────────────
+  {
+    pattern: /\bfetch\b/,
+    risk: "warn",
+    reason:
+      "Makes an outbound HTTP request; review URL and credential handling",
+  },
+  {
+    pattern: /\b(axios|got|request|http\.get|https\.get)\b/,
+    risk: "warn",
+    reason: "Outbound HTTP call; review URL source and authentication",
+  },
+  {
+    pattern: /\breadFile(Sync)?\b/,
+    risk: "warn",
+    reason: "Reads from the filesystem; verify path is not user-controlled",
+  },
+  {
+    pattern: /\b(readdir|glob|stat)\b/,
+    risk: "warn",
+    reason: "Filesystem enumeration; may expose directory structure",
+  },
+  {
+    pattern: /\b(db|sql|pg|mysql|mongo|redis|prisma)\./i,
+    risk: "warn",
+    reason: "Database operation; verify inputs are sanitised / parameterised",
+  },
+  {
+    pattern: /\brequire\b/,
+    risk: "warn",
+    reason:
+      "Dynamic module load; ensure the module path is not user-controlled",
+  },
+];
+
+const classifyRisk = (
+  label: string,
+): Pick<FunctionInfo, "risk" | "riskReason"> => {
+  for (const rule of RISK_RULES) {
+    if (rule.pattern.test(label)) {
+      return { risk: rule.risk, reason: rule.reason } as Pick<
+        FunctionInfo,
+        "risk" | "riskReason"
+      >;
+    }
+  }
+  return { risk: "safe" };
+};
+
+// ─── Visitor context ──────────────────────────────────────────────────────────
+
+type VisitorContext = {
+  sf: ts.SourceFile;
+  registry: FunctionRegistry;
+};
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type SummaryNode =
-  | { kind: "await"; label: string; children?: SummaryNode[] }
-  | { kind: "call"; label: string; children?: SummaryNode[] }
-  | { kind: "assign"; name: string; value: SummaryNode }
-  | { kind: "fn-def"; name: string; body: SummaryNode[] }
-  | { kind: "if"; condition: string; then: SummaryNode[]; else?: SummaryNode[] }
-  | { kind: "loop"; over: string; body: SummaryNode[] }
-  | { kind: "return"; value?: string }
-  | { kind: "block"; nodes: SummaryNode[] };
+  | {
+      kind: "await";
+      label: string;
+      /** Key into `SummaryResult.functions` */
+      fnId: string;
+      pos: Position;
+      children?: SummaryNode[];
+    }
+  | {
+      kind: "call";
+      label: string;
+      /** Key into `SummaryResult.functions` */
+      fnId: string;
+      pos: Position;
+      children?: SummaryNode[];
+    }
+  | { kind: "assign"; name: string; value: SummaryNode; pos: Position }
+  | { kind: "fn-def"; name: string; body: SummaryNode[]; pos: Position }
+  | {
+      kind: "if";
+      condition: string;
+      then: SummaryNode[];
+      else?: SummaryNode[];
+      pos: Position;
+    }
+  | { kind: "loop"; over: string; body: SummaryNode[]; pos: Position }
+  | { kind: "return"; value?: string; pos: Position }
+  | { kind: "block"; nodes: SummaryNode[]; pos: Position };
+
+// ─── Public result type ───────────────────────────────────────────────────────
+
+export type SummaryResult = {
+  nodes: SummaryNode[];
+  /** All functions encountered, keyed by their stable `fnId` */
+  functions: FunctionRegistry;
+};
 
 // ─── Expression helpers ───────────────────────────────────────────────────────
 
@@ -54,10 +201,49 @@ const callLabel = (node: ts.CallExpression): string => {
   return truncate(`${callee}(${args})`);
 };
 
+// ─── Position helpers ─────────────────────────────────────────────────────────
+
+const getPos = (node: ts.Node, sf: ts.SourceFile): Position => {
+  const { line, character } = sf.getLineAndCharacterOfPosition(
+    node.getStart(sf),
+  );
+  return { line: line + 1, col: character + 1 };
+};
+
+// ─── Function registry helpers ────────────────────────────────────────────────
+
+/**
+ * Derives a stable, normalised key from a callee label.
+ * Strips argument lists so `fetch(url)` and `fetch(other)` share one entry.
+ */
+const toFnId = (label: string): string =>
+  label
+    .replace(/\(.*$/, "") // strip args
+    .replace(/\s+/g, "") // strip whitespace
+    .toLowerCase();
+
+const registerCall = (label: string, registry: FunctionRegistry): string => {
+  const id = toFnId(label);
+  if (registry[id]) {
+    registry[id].callCount += 1;
+  } else {
+    const { risk, riskReason } = classifyRisk(label);
+    registry[id] = {
+      id,
+      label: label.replace(/\(.*$/, ""),
+      risk,
+      riskReason,
+      callCount: 1,
+    };
+  }
+  return id;
+};
+
 // ─── AST Visitor ──────────────────────────────────────────────────────────────
 
 const extractCallbackChildren = (
   call: ts.CallExpression,
+  ctx: VisitorContext,
 ): SummaryNode[] | undefined => {
   const children: SummaryNode[] = [];
   for (const arg of call.arguments) {
@@ -72,34 +258,56 @@ const extractCallbackChildren = (
       children.push({
         kind: "fn-def",
         name: `(${paramName}) =>`,
-        body: visitBlock(arg.body),
+        body: visitBlock(arg.body, ctx),
+        pos: getPos(arg, ctx.sf),
       });
     }
   }
   return children.length > 0 ? children : undefined;
 };
 
-const extractValue = (expr: ts.Expression): SummaryNode => {
+const extractValue = (
+  expr: ts.Expression,
+  ctx: VisitorContext,
+): SummaryNode => {
   if (ts.isAwaitExpression(expr)) {
     const inner = expr.expression;
-    if (ts.isCallExpression(inner))
+    if (ts.isCallExpression(inner)) {
+      const label = callLabel(inner);
+      const fnId = registerCall(label, ctx.registry);
       return {
         kind: "await",
-        label: callLabel(inner),
-        children: extractCallbackChildren(inner),
+        label,
+        fnId,
+        pos: getPos(expr, ctx.sf),
+        children: extractCallbackChildren(inner, ctx),
       };
-    return { kind: "await", label: truncate(shortExpr(inner)) };
+    }
+    const label = truncate(shortExpr(inner));
+    const fnId = registerCall(label, ctx.registry);
+    return { kind: "await", label, fnId, pos: getPos(expr, ctx.sf) };
   }
-  if (ts.isCallExpression(expr))
+  if (ts.isCallExpression(expr)) {
+    const label = callLabel(expr);
+    const fnId = registerCall(label, ctx.registry);
     return {
       kind: "call",
-      label: callLabel(expr),
-      children: extractCallbackChildren(expr),
+      label,
+      fnId,
+      pos: getPos(expr, ctx.sf),
+      children: extractCallbackChildren(expr, ctx),
     };
-  return { kind: "call", label: truncate(shortExpr(expr)) };
+  }
+  // Non-call expression wrapped as a call node (e.g. bare identifier)
+  const label = truncate(shortExpr(expr));
+  const fnId = registerCall(label, ctx.registry);
+  return { kind: "call", label, fnId, pos: getPos(expr, ctx.sf) };
 };
 
-const visitStatement = (stmt: ts.Statement): SummaryNode | null => {
+const visitStatement = (
+  stmt: ts.Statement,
+  ctx: VisitorContext,
+): SummaryNode | null => {
   if (ts.isVariableStatement(stmt)) {
     const decls = stmt.declarationList.declarations;
     if (decls.length !== 1) return null;
@@ -112,51 +320,87 @@ const visitStatement = (stmt: ts.Statement): SummaryNode | null => {
         ts.isFunctionExpression(decl.initializer)) &&
       ts.isBlock(decl.initializer.body)
     ) {
-      return { kind: "fn-def", name, body: visitBlock(decl.initializer.body) };
+      return {
+        kind: "fn-def",
+        name,
+        body: visitBlock(decl.initializer.body, ctx),
+        pos: getPos(stmt, ctx.sf),
+      };
     }
 
-    return { kind: "assign", name, value: extractValue(decl.initializer) };
+    return {
+      kind: "assign",
+      name,
+      value: extractValue(decl.initializer, ctx),
+      pos: getPos(stmt, ctx.sf),
+    };
   }
 
-  if (ts.isExpressionStatement(stmt)) return extractValue(stmt.expression);
+  if (ts.isExpressionStatement(stmt)) return extractValue(stmt.expression, ctx);
 
   if (ts.isIfStatement(stmt)) {
     const condition = truncate(shortExpr(stmt.expression));
     const thenBlock =
       ts.isBlock(stmt.thenStatement) ?
-        visitBlock(stmt.thenStatement)
-      : ([visitStatement(stmt.thenStatement)].filter(Boolean) as SummaryNode[]);
+        visitBlock(stmt.thenStatement, ctx)
+      : ([visitStatement(stmt.thenStatement, ctx)].filter(
+          Boolean,
+        ) as SummaryNode[]);
     const elseBlock =
       stmt.elseStatement ?
         ts.isBlock(stmt.elseStatement) ?
-          visitBlock(stmt.elseStatement)
-        : ([visitStatement(stmt.elseStatement)].filter(
+          visitBlock(stmt.elseStatement, ctx)
+        : ([visitStatement(stmt.elseStatement, ctx)].filter(
             Boolean,
           ) as SummaryNode[])
       : undefined;
-    return { kind: "if", condition, then: thenBlock, else: elseBlock };
+    return {
+      kind: "if",
+      condition,
+      then: thenBlock,
+      else: elseBlock,
+      pos: getPos(stmt, ctx.sf),
+    };
   }
 
   if (ts.isReturnStatement(stmt)) {
     return {
       kind: "return",
       value: stmt.expression ? truncate(shortExpr(stmt.expression)) : undefined,
+      pos: getPos(stmt, ctx.sf),
     };
   }
 
   if (ts.isForOfStatement(stmt) || ts.isForInStatement(stmt)) {
     const over = truncate(shortExpr(stmt.expression));
-    const body = ts.isBlock(stmt.statement) ? visitBlock(stmt.statement) : [];
-    return { kind: "loop", over, body };
+    const body =
+      ts.isBlock(stmt.statement) ? visitBlock(stmt.statement, ctx) : [];
+    return { kind: "loop", over, body, pos: getPos(stmt, ctx.sf) };
   }
 
   return null;
 };
 
-const visitBlock = (block: ts.Block): SummaryNode[] =>
+const visitBlock = (block: ts.Block, ctx: VisitorContext): SummaryNode[] =>
   block.statements
-    .map(visitStatement)
+    .map((s) => visitStatement(s, ctx))
     .filter((n): n is SummaryNode => n !== null);
+
+// ─── Source-file factory ──────────────────────────────────────────────────────
+
+const makeSourceFile = (
+  source: string,
+  fileName = "workflow.ts",
+): ts.SourceFile =>
+  ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+
+const makeCtx = (sf: ts.SourceFile): VisitorContext => ({ sf, registry: {} });
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -164,150 +408,52 @@ const visitBlock = (block: ts.Block): SummaryNode[] =>
  * Parse and summarise the body of an async arrow/function expression.
  *
  * @example
- * summariseWorkflowSource(`async ({ researcher }, db) => { ... }`);
+ * const result = summariseWorkflowSource(`async ({ researcher }, db) => { ... }`);
+ * console.log(result.nodes, result.functions);
  */
-export const summariseWorkflowSource = (source: string): SummaryNode[] => {
+export const summariseWorkflowSource = (source: string): SummaryResult => {
   const wrapped = `const __fn = ${source};`;
-  const sf = ts.createSourceFile(
-    "workflow.ts",
-    wrapped,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TS,
-  );
+  const sf = makeSourceFile(wrapped);
+  const ctx = makeCtx(sf);
+
   const stmt = sf.statements[0];
-  if (!stmt || !ts.isVariableStatement(stmt)) return [];
+  if (!stmt || !ts.isVariableStatement(stmt))
+    return { nodes: [], functions: {} };
   const decl = stmt.declarationList.declarations[0];
-  if (!decl?.initializer) return [];
+  if (!decl?.initializer) return { nodes: [], functions: {} };
   const fn = decl.initializer;
-  if (!ts.isArrowFunction(fn) && !ts.isFunctionExpression(fn)) return [];
-  if (!ts.isBlock(fn.body)) return [];
-  return visitBlock(fn.body);
+  if (!ts.isArrowFunction(fn) && !ts.isFunctionExpression(fn))
+    return { nodes: [], functions: {} };
+  if (!ts.isBlock(fn.body)) return { nodes: [], functions: {} };
+
+  const nodes = visitBlock(fn.body, ctx);
+  return { nodes, functions: ctx.registry };
 };
 
 /**
  * Parse and summarise a block of TypeScript statements not wrapped in a function.
  */
-export const summariseStatements = (source: string): SummaryNode[] => {
-  const sf = ts.createSourceFile(
-    "workflow.ts",
-    source,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TS,
-  );
-  return sf.statements
-    .map((s) => visitStatement(s))
+export const summariseStatements = (source: string): SummaryResult => {
+  const sf = makeSourceFile(source);
+  const ctx = makeCtx(sf);
+  const nodes = sf.statements
+    .map((s) => visitStatement(s, ctx))
     .filter((n): n is SummaryNode => n !== null);
-};
-
-// ─── Structured text renderer ─────────────────────────────────────────────────
-
-const INDENT = "  ";
-
-export const renderSummaryNode = (node: SummaryNode, depth = 0): string => {
-  const pad = INDENT.repeat(depth);
-  switch (node.kind) {
-    case "await":
-      return (
-        `${pad}⏳ await ${node.label}` +
-        (node.children ?
-          "\n" +
-          node.children.map((c) => renderSummaryNode(c, depth + 1)).join("\n")
-        : "")
-      );
-    case "call":
-      return (
-        `${pad}▶ ${node.label}` +
-        (node.children ?
-          "\n" +
-          node.children.map((c) => renderSummaryNode(c, depth + 1)).join("\n")
-        : "")
-      );
-    case "assign":
-      return `${pad}📦 ${node.name} = ${renderSummaryNode(node.value, 0).trimStart()}`;
-    case "fn-def":
-      return (
-        `${pad}🔧 define ${node.name}:\n` +
-        node.body.map((c) => renderSummaryNode(c, depth + 1)).join("\n")
-      );
-    case "if":
-      return (
-        `${pad}🔀 if (${node.condition}):\n` +
-        node.then.map((c) => renderSummaryNode(c, depth + 1)).join("\n") +
-        (node.else ?
-          `\n${pad}  else:\n` +
-          node.else.map((c) => renderSummaryNode(c, depth + 1)).join("\n")
-        : "")
-      );
-    case "loop":
-      return (
-        `${pad}🔁 forEach ${node.over}:\n` +
-        node.body.map((c) => renderSummaryNode(c, depth + 1)).join("\n")
-      );
-    case "return":
-      return `${pad}↩ return${node.value ? ` ${node.value}` : ""}`;
-    case "block":
-      return node.nodes.map((c) => renderSummaryNode(c, depth)).join("\n");
-  }
-};
-
-export const renderSummary = (nodes: SummaryNode[], depth = 0): string =>
-  nodes.map((n) => renderSummaryNode(n, depth)).join("\n");
-
-// ─── Compact one-liner renderer ───────────────────────────────────────────────
-
-const walkCompact = (node: SummaryNode): string => {
-  switch (node.kind) {
-    case "await":
-    case "call": {
-      const inner =
-        node.children?.length ?
-          ` → [${node.children.map(walkCompact).join(", ")}]`
-        : "";
-      return `${node.label}${inner}`;
-    }
-    case "assign":
-      return `${node.name} = ${walkCompact(node.value)}`;
-    case "fn-def":
-      return `${node.name} { ${node.body.map(walkCompact).join("; ")} }`;
-    case "if":
-      return `if (${node.condition}) { ${node.then.map(walkCompact).join("; ")} }`;
-    case "loop":
-      return `forEach(${node.over}) { ${node.body.map(walkCompact).join("; ")} }`;
-    case "return":
-      return `return${node.value ? ` ${node.value}` : ""}`;
-    case "block":
-      return node.nodes.map(walkCompact).join(" → ");
-  }
+  return { nodes, functions: ctx.registry };
 };
 
 /**
- * Render nodes as a single chained line:
- * `doResearch() → db.find({ … }) → if (x < 10) { doResearch() } → …`
- */
-export const renderCompact = (nodes: SummaryNode[]): string =>
-  nodes.map(walkCompact).join(" → ");
-
-/**
- * Parses a full TypeScript file, finds the `defineAgenticWorkflow(config, workflowFn)`
- * call, and summarises the body of the workflow function (second argument).
- *
- * This is the main entry point for agentic workflow files.
+ * Parses a full TypeScript file, finds `defineAgenticWorkflow(config, workflowFn)`,
+ * and summarises the body of the workflow function (second argument).
  *
  * @example
  * const source = fs.readFileSync("my-workflow.ts", "utf8");
- * const nodes = summariseWorkflowFile(source);
+ * const { nodes, functions } = summariseWorkflowFile(source);
  * console.log(renderSummary(nodes));
  */
-export const summariseWorkflowFile = (fileSource: string): SummaryNode[] => {
-  const sf = ts.createSourceFile(
-    "workflow.ts",
-    fileSource,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TS,
-  );
+export const summariseWorkflowFile = (fileSource: string): SummaryResult => {
+  const sf = makeSourceFile(fileSource);
+  const ctx = makeCtx(sf);
 
   let workflowFn = null as ts.ArrowFunction | ts.FunctionExpression | null;
 
@@ -331,6 +477,163 @@ export const summariseWorkflowFile = (fileSource: string): SummaryNode[] => {
 
   find(sf);
 
-  if (!workflowFn) return [];
-  return visitBlock((workflowFn as ts.ArrowFunction).body as ts.Block);
+  if (!workflowFn) return { nodes: [], functions: {} };
+  const nodes = visitBlock(
+    (workflowFn as ts.ArrowFunction).body as ts.Block,
+    ctx,
+  );
+  return { nodes, functions: ctx.registry };
+};
+
+// ─── Structured text renderer ─────────────────────────────────────────────────
+
+const INDENT = "  ";
+
+const riskBadge = (risk: FunctionRisk): string => {
+  switch (risk) {
+    case "danger":
+      return " ⛔";
+    case "warn":
+      return " ⚠️";
+    case "safe":
+      return "";
+  }
+};
+
+export const renderSummaryNode = (
+  node: SummaryNode,
+  functions: FunctionRegistry,
+  depth = 0,
+): string => {
+  const pad = INDENT.repeat(depth);
+  const posHint = ` [${node.pos.line}:${node.pos.col}]`;
+
+  switch (node.kind) {
+    case "await": {
+      const badge = riskBadge(functions[node.fnId]?.risk ?? "safe");
+      return (
+        `${pad}⏳ await ${node.label}${badge}${posHint}` +
+        (node.children ?
+          "\n" +
+          node.children
+            .map((c) => renderSummaryNode(c, functions, depth + 1))
+            .join("\n")
+        : "")
+      );
+    }
+    case "call": {
+      const badge = riskBadge(functions[node.fnId]?.risk ?? "safe");
+      return (
+        `${pad}▶ ${node.label}${badge}${posHint}` +
+        (node.children ?
+          "\n" +
+          node.children
+            .map((c) => renderSummaryNode(c, functions, depth + 1))
+            .join("\n")
+        : "")
+      );
+    }
+    case "assign":
+      return `${pad}📦 ${node.name}${posHint} = ${renderSummaryNode(node.value, functions, 0).trimStart()}`;
+    case "fn-def":
+      return (
+        `${pad}🔧 define ${node.name}${posHint}:\n` +
+        node.body
+          .map((c) => renderSummaryNode(c, functions, depth + 1))
+          .join("\n")
+      );
+    case "if":
+      return (
+        `${pad}🔀 if (${node.condition})${posHint}:\n` +
+        node.then
+          .map((c) => renderSummaryNode(c, functions, depth + 1))
+          .join("\n") +
+        (node.else ?
+          `\n${pad}  else:\n` +
+          node.else
+            .map((c) => renderSummaryNode(c, functions, depth + 1))
+            .join("\n")
+        : "")
+      );
+    case "loop":
+      return (
+        `${pad}🔁 forEach ${node.over}${posHint}:\n` +
+        node.body
+          .map((c) => renderSummaryNode(c, functions, depth + 1))
+          .join("\n")
+      );
+    case "return":
+      return `${pad}↩ return${node.value ? ` ${node.value}` : ""}${posHint}`;
+    case "block":
+      return node.nodes
+        .map((c) => renderSummaryNode(c, functions, depth))
+        .join("\n");
+  }
+};
+
+export const renderSummary = (result: SummaryResult, depth = 0): string =>
+  result.nodes
+    .map((n) => renderSummaryNode(n, result.functions, depth))
+    .join("\n");
+
+// ─── Compact one-liner renderer ───────────────────────────────────────────────
+
+const walkCompact = (
+  node: SummaryNode,
+  functions: FunctionRegistry,
+): string => {
+  switch (node.kind) {
+    case "await":
+    case "call": {
+      const badge = riskBadge(functions[node.fnId]?.risk ?? "safe");
+      const inner =
+        node.children?.length ?
+          ` → [${node.children.map((c) => walkCompact(c, functions)).join(", ")}]`
+        : "";
+      return `${node.label}${badge}${inner}`;
+    }
+    case "assign":
+      return `${node.name} = ${walkCompact(node.value, functions)}`;
+    case "fn-def":
+      return `${node.name} { ${node.body.map((c) => walkCompact(c, functions)).join("; ")} }`;
+    case "if":
+      return `if (${node.condition}) { ${node.then.map((c) => walkCompact(c, functions)).join("; ")} }`;
+    case "loop":
+      return `forEach(${node.over}) { ${node.body.map((c) => walkCompact(c, functions)).join("; ")} }`;
+    case "return":
+      return `return${node.value ? ` ${node.value}` : ""}`;
+    case "block":
+      return node.nodes.map((c) => walkCompact(c, functions)).join(" → ");
+  }
+};
+
+/**
+ * Render nodes as a single chained line:
+ * `doResearch() → fetch(url) ⚠️ → if (x < 10) { … } → …`
+ */
+export const renderCompact = (result: SummaryResult): string =>
+  result.nodes.map((n) => walkCompact(n, result.functions)).join(" → ");
+
+// ─── Registry helpers (useful for React UIs) ──────────────────────────────────
+
+/** Returns all functions with risk ≥ the given threshold, sorted by risk then label. */
+export const filterByRisk = (
+  registry: FunctionRegistry,
+  minRisk: FunctionRisk = "warn",
+): FunctionInfo[] => {
+  const order: Record<FunctionRisk, number> = { danger: 2, warn: 1, safe: 0 };
+  const threshold = order[minRisk];
+  return Object.values(registry)
+    .filter((f) => order[f.risk] >= threshold)
+    .sort(
+      (a, b) => order[b.risk] - order[a.risk] || a.label.localeCompare(b.label),
+    );
+};
+
+/** Returns a deduplicated list of all risks present in a registry. */
+export const highestRisk = (registry: FunctionRegistry): FunctionRisk => {
+  const values = Object.values(registry);
+  if (values.some((f) => f.risk === "danger")) return "danger";
+  if (values.some((f) => f.risk === "warn")) return "warn";
+  return "safe";
 };

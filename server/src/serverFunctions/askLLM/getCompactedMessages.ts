@@ -1,11 +1,11 @@
+import { filterArr } from "@common/llmUtils";
 import {
-  getMCPFullToolName,
+  getProstglesMCPFullToolName,
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
-import type { LLMMessageWithRole } from "./fetchLLMResponse";
-import { filterArr } from "@common/llmUtils";
-import { isDefined } from "prostgles-types";
 import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
+import { isDefined } from "prostgles-types";
+import type { LLMMessageWithRole } from "./fetchLLMResponse";
 
 type CompactionInput = JSONBTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["compact_context"]["schema"]
@@ -15,9 +15,9 @@ export const getCompactedMessages = ({
 }: {
   nonEmptyMessages: LLMMessageWithRole[];
 }) => {
-  const compactionToolName = getMCPFullToolName(
+  const compactionToolName = getProstglesMCPFullToolName(
     "prostgles-ui",
-    "compact_context" satisfies keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"],
+    "compact_context",
   );
 
   const getCompactionToolUse = (

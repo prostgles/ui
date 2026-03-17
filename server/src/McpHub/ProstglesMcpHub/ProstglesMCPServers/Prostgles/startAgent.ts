@@ -5,6 +5,10 @@ import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import { tout } from "@src/utils/tout";
 import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import { AGENT_GOAL_TOOL_NAMES } from "@src/serverFunctions/askLLM/agentConstants";
+import {
+  getProstglesMCPFullToolName,
+  type PROSTGLES_MCP_SERVERS_AND_TOOLS,
+} from "@common/prostglesMcp";
 
 export const startAgent = async (
   agentInput: string | undefined,
@@ -64,7 +68,9 @@ export const startAgent = async (
           "Use the tools as needed to complete your tasks.",
           "Be concise and to the point.",
           "It is crucial that you use the least amount of steps, input and output that is necessary to complete your goal and instructions. ",
-          "When you are ready you must respond with the required output format.",
+          `Use ${getProstglesMCPFullToolName("prostgles-ui", "compact_context")} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. `,
+          `Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
+          `\n`,
           `You must use the ${Object.values(AGENT_GOAL_TOOL_NAMES)} tools to return your final answer or bail out, and the output of that tool must match the expected output schema.`,
           "",
           "Below is your prompt:",

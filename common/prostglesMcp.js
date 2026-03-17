@@ -189,8 +189,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         compact_context: {
             mode: undefined,
             description: [
-                "Reduce conversation history while preserving important information.",
-                "Include important details and information that might be relevant for future conversation. Be concise.",
+                "Reduces the conversation history sent to the LLM while preserving important context.",
+                "IMPORTANT: Must keep irrelevant tool result/output to a minimum to improve response quality and reduce chat cost. ",
+                "Retain details that may matter later, but keep the summary concise.",
                 "Always use this tool with type='previous-message' after receiving long tool outputs that are not important to keep in full detail in the conversation history.",
             ].join("\n"),
             schema: {
@@ -382,7 +383,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             },
         },
         create_agent: {
-            // mode: "auto-approved-user-actionable",
+            mode: undefined, //"auto-approved-user-actionable",
             description: [
                 "Creates and runs an agent to iteratively complete the specified task using MCP tools if needed.",
                 "The agent works in its own chat, can take multiple tool-assisted steps up to its configured iteration limit, and returns a final result.",

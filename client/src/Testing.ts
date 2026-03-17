@@ -545,6 +545,7 @@ export const COMMANDS = {
   RequestToolAccess: "",
   "RequestToolAccess.Approve": "",
   "RequestToolAccess.AutoApprove": "",
+  "DockerSandboxCreateContainer.stop": "",
   Agent: "",
 } as const satisfies Record<
   string,

@@ -26,6 +26,7 @@ import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData";
 import { AgenticWorkflowUserInput } from "./AgenticWorkflow/AgenticWorkflowUserInput";
 import { useAgenticWorkflowUserInput } from "./AgenticWorkflow/hooks/useAgenticWorkflowUserInput";
+import { StatusDotCircleIcon } from "@pages/Account/Sessions";
 
 export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["run_code_in_sandbox"]["schema"]["type"]
@@ -38,6 +39,7 @@ export const DockerSandboxCreateContainer = ({
 }: ProstglesMCPToolsProps) => {
   const toolUseResult = toolResult?.toolUseResultMessage;
   const initialData = message.input as DockerSandboxCreateContainerData;
+  const toolUseId = message.id;
   const [editedFiles, setEditedFiles] = useState<Record<string, string>>();
   const userInputState = useAgenticWorkflowUserInput(initialData.userInput, {});
   const { userInputValue } = userInputState;
@@ -53,7 +55,10 @@ export const DockerSandboxCreateContainer = ({
     },
   };
   const { tool_use_id = "" } = toolUseResult ?? {};
-  const { dbs } = usePrgl();
+  const {
+    dbs,
+    dbsMethods: { stopDockerContainer },
+  } = usePrgl();
   const { data: container } = dbs.docker_containers.useSubscribeOne(
     {
       chat_id: chatId,
@@ -64,7 +69,7 @@ export const DockerSandboxCreateContainer = ({
       skip: !tool_use_id,
     },
   );
-  console.log(container);
+
   const schema =
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["run_code_in_sandbox"][
       "outputSchema"
@@ -83,6 +88,7 @@ export const DockerSandboxCreateContainer = ({
       title={
         <>
           <FlexRow className="pl-p5 f-1 min-w-0">
+            {!container?.finished && <StatusDotCircleIcon color="green" />}
             <div
               className="text-ellipsis min-w-0 ws-nowrap f-1 ta-start"
               title={`${resultData?.command ?? ""}\n\n${JSON.stringify(omitKeys(data, ["files"]))}`}
@@ -115,14 +121,20 @@ export const DockerSandboxCreateContainer = ({
               <div>{data.networkMode ?? "none"}</div>
             </FlexRow>
           </ScrollFade>
-          {container && !container.finished && (
+          {!container?.finished && stopDockerContainer && (
             <Btn
               title="Stop"
               color="danger"
               variant="faded"
               size="small"
+              data-command="DockerSandboxCreateContainer.stop"
               iconPath={mdiStopCircleOutline}
-              onClickPromise={async () => {}}
+              onClickPromise={async () => {
+                await stopDockerContainer({
+                  chatId,
+                  toolUseId,
+                });
+              }}
             />
           )}
           {toolResult && (
@@ -178,7 +190,7 @@ export const DockerSandboxCreateContainer = ({
             </FlexRow>
           }
         >
-          {showLogs && (
+          {showLogs && logs && (
             <MonacoLogs
               key={"logs"}
               className="f-p5 b-unset"

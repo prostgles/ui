@@ -815,6 +815,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
         };
         readonly create_agent: {
+            readonly mode: undefined;
             readonly description: string;
             readonly schema: {
                 readonly type: {
@@ -1159,7 +1160,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     };
 };
 export type ProstglesDbTools = (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["db"];
-type ProstglesMcpTools = Pick<typeof PROSTGLES_MCP_SERVERS_AND_TOOLS, "db">;
+type ProstglesMcpTools = typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
 export type ProstglesMcpTool = {
     [K in keyof ProstglesMcpTools]: {
         type: K;

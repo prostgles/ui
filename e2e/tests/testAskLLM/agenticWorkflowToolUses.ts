@@ -1,5 +1,6 @@
 import type { DBSSchema } from "common/publishUtils";
 import { stringify, type ToolUse } from "./utils";
+import { getProstglesMCPFullToolName } from "common/prostglesMcp";
 type UserInput = NonNullable<
   DBSSchema["agentic_workflows"]["definition_data"]["userInput"]
 >;
@@ -185,7 +186,10 @@ export const agenticWorkflowToolUses = Object.fromEntries(
               id: `agentic-workflow-tool-use-${mode}`,
               type: "function",
               function: {
-                name: "prostgles-ui--create_agentic_workflow",
+                name: getProstglesMCPFullToolName(
+                  "prostgles-ui",
+                  "create_agentic_workflow",
+                ),
                 arguments: stringify({
                   workflow_function_definition_summary: `Agentic workflow definition for mode ${mode}`,
                   workflow_function_definition: getFunc(mode),

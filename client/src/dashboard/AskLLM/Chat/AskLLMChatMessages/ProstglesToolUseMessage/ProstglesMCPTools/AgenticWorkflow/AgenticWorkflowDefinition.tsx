@@ -3,19 +3,25 @@ import {
   type PROSTGLES_MCP_SERVERS_AND_TOOLS,
 } from "@common/prostglesMcp";
 import { getEntries } from "@common/utils";
+import { FlexCol } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
-import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
+import {
+  MONACO_READONLY_DEFAULT_OPTIONS,
+  MonacoEditor,
+} from "@components/MonacoEditor/MonacoEditor";
 import { useMonacoScrollToLastLine } from "@components/MonacoLogs/MonacoLogs";
+import { SegmentedToggle } from "@components/SegmentedToggle";
+import { mdiGraph, mdiLanguageTypescript, mdiText } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
-import React, { useMemo } from "react";
+import type { JSONB } from "prostgles-types";
+import React, { useMemo, useState } from "react";
 import {
   type CodeEditorProps,
   type LanguageConfig,
 } from "src/dashboard/CodeEditor/CodeEditor";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 import type { ToolResultMessage } from "../../../ToolUseChatMessage/ToolUseChatMessage";
-import type { JSONB } from "prostgles-types";
 
 export const AgenticWorkflowDefinition = ({
   workflow_function_definition,
@@ -35,29 +41,32 @@ export const AgenticWorkflowDefinition = ({
     connectionId,
   } = usePrgl();
   const { onMount } = useMonacoScrollToLastLine(true);
+  const agentFiles = usePromise(async () => {
+    if (!getAgenticWorkflowTypes) return;
 
-  const language = usePromise(async () => {
-    if (!getAgenticWorkflowTypes) return "typescript";
-    const types = await getAgenticWorkflowTypes({ connectionId, workflowId });
+    return await getAgenticWorkflowTypes({
+      connectionId,
+      workflowId,
+    });
+  }, [connectionId, getAgenticWorkflowTypes, workflowId]);
+  const language = useMemo(() => {
+    if (!agentFiles) return "typescript";
+    const { files } = agentFiles;
     return {
       lang: "typescript",
       modelFileName: `workflow_${toolResultMessage.tool_use_id}.ts`,
-      tsLibraries: getEntries(types).map(([filePath, content]) => ({
+      tsLibraries: getEntries(files).map(([filePath, content]) => ({
         filePath: `file:///${filePath}`,
         content,
       })),
     } satisfies LanguageConfig;
-  }, [
-    connectionId,
-    getAgenticWorkflowTypes,
-    toolResultMessage.tool_use_id,
-    workflowId,
-  ]);
+  }, [agentFiles, toolResultMessage.tool_use_id]);
 
   const codeEditorProps = useMemo(() => {
     const monacoOpts: CodeEditorProps["options"] = {
       ...MONACO_READONLY_DEFAULT_OPTIONS,
       lineNumbers: "on",
+      lineNumbersMinChars: 4,
       readOnly: !(reRunMCPServerTool && workflowId),
     } as const;
     const onSave: CodeEditorProps["onSave"] =
@@ -94,19 +103,69 @@ export const AgenticWorkflowDefinition = ({
     workflow_function_definition_summary,
     chatId,
   ]);
+  const [tab, setTab] = useState<"Code" | "ASTSummary" | "AST" | "TextSummary">(
+    "Code",
+  );
 
-  if (!language) return <Loading />;
+  if (!agentFiles) return <Loading />;
   return (
-    <CodeEditorWithSaveButton
-      key={workflow_function_definition}
-      label={null}
-      value={workflow_function_definition}
-      codeEditorClassName="b-unset"
-      language={language}
-      minHeight={400}
-      // scroll to end to avoid top data which is shown in Details tab
-      onMount={onMount}
-      {...codeEditorProps}
-    />
+    <FlexCol className="f-1 gap-p25">
+      <SegmentedToggle
+        className="w-fit "
+        value={tab}
+        options={TABS}
+        onChange={setTab}
+        style={{
+          /** Hacky but will do for now */
+          position: "absolute",
+          right: "3em",
+          top: "4px",
+        }}
+      />
+      {tab === "Code" ?
+        <CodeEditorWithSaveButton
+          key={workflow_function_definition}
+          label={null}
+          value={workflow_function_definition}
+          codeEditorClassName="b-unset"
+          language={language}
+          minHeight={400}
+          // scroll to end to avoid top data which is shown in Details tab
+          onMount={onMount}
+          {...codeEditorProps}
+        />
+      : tab === "ASTSummary" ?
+        <div className="p-1 ws-pre-line">{agentFiles.summary}</div>
+      : tab === "TextSummary" ?
+        <div className="p-1 ws-pre-line">
+          {workflow_function_definition_summary}
+        </div>
+      : <MonacoEditor
+          language={"json"}
+          loadedSuggestions={undefined}
+          className="f-1"
+          value={JSON.stringify(agentFiles.astNodes, null, 2)}
+        />
+      }
+    </FlexCol>
   );
 };
+
+const TABS = {
+  Code: {
+    title: "Code",
+    iconPath: mdiLanguageTypescript,
+  },
+  ASTSummary: {
+    title: "AST Summary",
+    iconPath: mdiText,
+  },
+  AST: {
+    title: "AST",
+    iconPath: mdiGraph,
+  },
+  TextSummary: {
+    title: "Text Summary",
+    iconPath: mdiText,
+  },
+} as const;

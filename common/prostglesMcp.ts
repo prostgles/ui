@@ -225,8 +225,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     compact_context: {
       mode: undefined,
       description: [
-        "Reduce conversation history while preserving important information.",
-        "Include important details and information that might be relevant for future conversation. Be concise.",
+        "Reduces the conversation history sent to the LLM while preserving important context.",
+        "IMPORTANT: Must keep irrelevant tool result/output to a minimum to improve response quality and reduce chat cost. ",
+        "Retain details that may matter later, but keep the summary concise.",
         "Always use this tool with type='previous-message' after receiving long tool outputs that are not important to keep in full detail in the conversation history.",
       ].join("\n"),
       schema: {
@@ -779,7 +780,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
 >;
 
 export type ProstglesDbTools = (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["db"];
-type ProstglesMcpTools = Pick<typeof PROSTGLES_MCP_SERVERS_AND_TOOLS, "db">;
+type ProstglesMcpTools = typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
 export type ProstglesMcpTool = {
   [K in keyof ProstglesMcpTools]: {
     type: K;

@@ -8,7 +8,7 @@ import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { type GetLLMToolsArgs } from "../getLLMToolsAllowedInThisChat";
 import { getMCPServerTools } from "./getMCPServerTools";
 
-export const getAllowedMcpTools = async ({
+export const getMcpToolsWithDynamicDescription = async ({
   dbs,
   chat,
   allowedMcpToolsWithInfo,
@@ -58,6 +58,7 @@ export const getAllowedMcpTools = async ({
       }),
     ),
   );
+
   const mcpTools = allowedMcpToolsWithInfo
     .map((tool) => {
       const toolNameParts = getMCPToolNameParts(tool.name);
@@ -68,7 +69,9 @@ export const getAllowedMcpTools = async ({
           (ts) => ts.name === toolNameParts.toolName,
         );
         if (!matchingTool) {
-          throw new Error(`Tool ${tool.name} not found in Docker MCP tools`);
+          throw new Error(
+            `Tool ${tool.name} not found in ${JSON.stringify(toolNameParts.serverName)} server tools`,
+          );
         }
         return {
           ...tool,

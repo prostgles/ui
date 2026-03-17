@@ -1,20 +1,10 @@
-import type { DBSSchema } from "@common/publishUtils";
 import { connectionManager, type DBS } from "@src/index";
 import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
-import type { TableSchema } from "prostgles-server/dist/DboBuilder/DboBuilder";
-import { getProperty, isDefined } from "prostgles-types";
+import { isDefined } from "prostgles-types";
 import { END_OF_SCHEMA_PLACEHOLDER } from "../runtimeSdk/defineAgenticWorkflow";
-import { getToolTypescriptSchemas } from "./getToolTypescriptSchemas";
 import { getDefineAgenticWorkflowWithSchemas } from "./getDefineAgenticWorkflowWithSchemas";
-import {
-  renderSummary,
-  summariseWorkflowFile,
-} from "../runtimeSdk/getTsLogicSummary";
-import {
-  consoleStepLogger,
-  instrumentWorkflowFile,
-} from "../runtimeSdk/addInstrumentationToTsLogic";
+import { getToolTypescriptSchemas } from "./getToolTypescriptSchemas";
 
 const defineAgenticWorkflowDirectory = join(
   __dirname,
@@ -123,11 +113,3 @@ export const getAgenticWorkflowFiles = async (
     "defineAgenticWorkflowHandlers.ts": defineAgenticWorkflowHandlersTs,
   };
 };
-
-console.error("FINISH OR REMOVE");
-// const exampleSlice = defineAgenticWorkflowTs.slice(
-//   defineAgenticWorkflowTs.lastIndexOf("* \n") + 3,
-//   defineAgenticWorkflowTs.lastIndexOf(`*/`),
-// );
-// const nodes = summariseWorkflowFile(exampleSlice);
-// console.log(nodes, renderSummary(nodes), instrumentWorkflowFile(exampleSlice));

@@ -9,6 +9,11 @@ import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { stopContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/runCodeInSandboxContainer";
 import { startAgenticWorkflowSchema } from "@common/startAgenticWorkflowSchema";
+import {
+  renderSummary,
+  summariseWorkflowFile,
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/getTsLogicSummary";
+import { instrumentWorkflowFile } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/addInstrumentationToTsLogic";
 
 export const getAgenticWorkflowFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -122,38 +127,49 @@ export const getAgenticWorkflowFunctions = (
               user_id: user.id,
             })
           );
-        return getAgenticWorkflowFiles(dbs, "runtime", connectionId, {
-          type: "full",
-          ddlStatements:
-            (
-              workflow?.definition_data.databaseAccessDefinitions?.mode ===
-              "custom"
-            ) ?
-              workflow.definition_data.databaseAccessDefinitions.ddlStatements
-            : undefined,
-        });
+        const files = await getAgenticWorkflowFiles(
+          dbs,
+          "runtime",
+          connectionId,
+          {
+            type: "full",
+            ddlStatements:
+              (
+                workflow?.definition_data.databaseAccessDefinitions?.mode ===
+                "custom"
+              ) ?
+                workflow.definition_data.databaseAccessDefinitions.ddlStatements
+              : undefined,
+          },
+        );
+        const astInfo = summariseWorkflowFile(workflow?.definition ?? "");
+        const summary = renderSummary(astInfo);
+        const instrumentedFile = instrumentWorkflowFile(
+          files["defineAgenticWorkflow.ts"],
+        );
+        return { files, astNodes: astInfo as any, summary, instrumentedFile };
       },
     }),
     stopDockerContainer: defineAdminFunction({
       input: {
         chatId: "integer",
-        containerId: "integer",
+        toolUseId: "string",
       },
-      run: async ({ chatId, containerId }, { dbs, user }) => {
+      run: async ({ chatId, toolUseId }, { dbs, user }) => {
         const container = await dbs.docker_containers.findOne({
           chat_id: chatId,
           user_id: user.id,
-          id: containerId,
+          tool_use_id: toolUseId,
         });
         if (!container) {
           throw new Error(
-            `Container with id ${containerId} not found for chat ${chatId}`,
+            `Container with tool use id ${toolUseId} not found for chat ${chatId}`,
           );
         }
-        stopContainer(containerId);
+        stopContainer(container.id);
         await dbs.docker_containers.update(
           {
-            id: containerId,
+            id: container.id,
           },
           {
             state: {

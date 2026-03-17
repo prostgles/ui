@@ -2,20 +2,22 @@ import {
   getJSONBSchemaAsJSONSchema,
   isDefined,
   isEmpty,
+  type FullFilter,
 } from "prostgles-types";
 import type { DBS } from "../..";
 
+import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
 import {
   getMCPFullToolName,
   getMCPToolNameParts,
+  getProstglesMCPFullToolName,
   type AllowedChatTool,
 } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getAgentGoalTools } from "./agentConstants";
 import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
-import { getAllowedMcpTools } from "./prostglesLLMTools/getAllowedMcpTools";
-import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
+import { getMcpToolsWithDynamicDescription } from "./prostglesLLMTools/getMcpToolsWithDynamicDescription";
 
 export type GetLLMToolsArgs = {
   userType: string;
@@ -38,31 +40,34 @@ export const getLLMToolsAllowedInThisChat = async ({
 }: GetLLMToolsArgs): Promise<undefined | AllowedChatTool[]> => {
   const { id: chatId } = chat;
 
+  const isAgentChat = chat.agent_info && chat.agent_info !== "orchestrator";
   const llm_chats_allowed_mcp_tools =
     await dbs.llm_chats_allowed_mcp_tools.find({
       chat_id: chatId,
     });
-  const { mcpTools: mcpToolsWithoutExtraInfo } = await getMCPServerTools(dbs, {
-    $existsJoined: {
-      llm_chats_allowed_mcp_tools: {
-        chat_id: chatId,
-      },
-    },
-  });
-  const tools: Map<string, AllowedChatTool> = new Map();
-  if (chat.agent_info && chat.agent_info !== "orchestrator") {
-    const agentGoalTools = getAgentGoalTools(chat.agent_info);
-    agentGoalTools.forEach((agentGoalTool, index) => {
-      tools.set(agentGoalTool.name, {
-        ...agentGoalTool,
-        auto_approve: true,
-        mode: "auto-approved-user-actionable",
-        server_name: "",
-        tool_name: agentGoalTool.name,
-        tool_id: -1 - index, // avoid collision with normal tools
-      });
-    });
-  }
+  const allowedToolsFilter = (() => {
+    const filter = {
+      id: { $in: llm_chats_allowed_mcp_tools.map(({ tool_id }) => tool_id) },
+      // $existsJoined: {
+      //   llm_chats_allowed_mcp_tools: {
+      //     chat_id: chatId,
+      //   },
+      // },
+    } as const;
+    if (isAgentChat) {
+      const { serverName, toolName } = getMCPToolNameParts(
+        getProstglesMCPFullToolName("prostgles-ui", "compact_context"),
+      )!;
+      return {
+        $or: [filter, { name: toolName, server_name: serverName }],
+      } as const satisfies FullFilter<DBSSchema["mcp_server_tools"], void>;
+    }
+    return filter;
+  })();
+  const { mcpTools: mcpToolsWithoutExtraInfo } = await getMCPServerTools(
+    dbs,
+    allowedToolsFilter,
+  );
   const allowedMcpToolsWithInfo = mcpToolsWithoutExtraInfo
     .map(({ id, ...tool }) => {
       const info = llm_chats_allowed_mcp_tools.find(
@@ -77,7 +82,9 @@ export const getLLMToolsAllowedInThisChat = async ({
     })
     .filter(isDefined);
 
-  const { mcpTools } = await getAllowedMcpTools({
+  const tools: Map<string, AllowedChatTool> = new Map();
+
+  const { mcpTools } = await getMcpToolsWithDynamicDescription({
     userType,
     dbs,
     chat,
@@ -107,6 +114,21 @@ export const getLLMToolsAllowedInThisChat = async ({
     }
     tools.set(name, tool);
   });
+
+  if (chat.agent_info && chat.agent_info !== "orchestrator") {
+    const agentGoalTools = getAgentGoalTools(chat.agent_info);
+    agentGoalTools.forEach((agentGoalTool, index) => {
+      tools.set(agentGoalTool.name, {
+        ...agentGoalTool,
+        auto_approve: true,
+        mode: "auto-approved-user-actionable",
+        server_name: "",
+        tool_name: agentGoalTool.name,
+        tool_id: -1 - index, // avoid collision with normal tools
+      });
+    });
+  }
+
   const toolList = Array.from(tools.values());
 
   if (chat.options?.useTsTypesForTools) {

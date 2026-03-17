@@ -48,7 +48,7 @@ export declare const LLM_PROMPT_VARIABLES: {
     readonly DB_HANDLER_SCHEMA: "${dbHandlerSchema}";
     readonly TODAY: "${today}";
 };
-export declare const wrapCode: (language: "sql" | "typescript" | "html", code: string) => string;
+export declare const wrapCode: (language: "sql" | "typescript" | "html" | "json", code: string) => string;
 export declare const reachedMaximumNumberOfConsecutiveToolRequests: (messages: Pick<DBSSchema["llm_messages"], "message">[], limit: number, onlyFailed?: boolean) => boolean;
 export declare const isAssistantMessageRequestingToolUse: (message: Pick<DBSSchema["llm_messages"], "message"> | undefined) => message is DBSSchema["llm_messages"];
 export {};

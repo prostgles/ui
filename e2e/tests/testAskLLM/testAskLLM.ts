@@ -1,6 +1,9 @@
 import { join } from "path";
 import type { JSONB } from "prostgles-types";
-import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "../../../common/prostglesMcp";
+import {
+  getProstglesMCPFullToolName,
+  PROSTGLES_MCP_SERVERS_AND_TOOLS,
+} from "../../../common/prostglesMcp";
 import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
 import { createComponentToolUse } from "./createComponentToolUse";
 import {
@@ -43,7 +46,10 @@ const taskToolUse: ToolUse = {
       id: "task-tool-use",
       type: "function",
       function: {
-        name: "prostgles-ui--request_tool_access",
+        name: getProstglesMCPFullToolName(
+          "prostgles-ui",
+          "request_tool_access",
+        ),
         arguments: stringify(requestToolAccessArgs),
       },
     },
@@ -59,7 +65,7 @@ const webSearchToolUse: ToolUse = {
       id: "websearch-tool-use",
       type: "function",
       function: {
-        name: "websearch--websearch",
+        name: getProstglesMCPFullToolName("websearch", "websearch"),
         arguments: stringify({
           q: '"prostgles websearch"',
         }),
@@ -70,7 +76,7 @@ const webSearchToolUse: ToolUse = {
       id: "websearch-tool-use2",
       type: "function",
       function: {
-        name: "websearch--websearch",
+        name: getProstglesMCPFullToolName("websearch", "websearch"),
         arguments: stringify({
           q: '"prostgles docs"',
         }),
@@ -80,7 +86,7 @@ const webSearchToolUse: ToolUse = {
       id: "websearch-tool-use-snapshot",
       type: "function",
       function: {
-        name: "websearch--get_snapshot",
+        name: getProstglesMCPFullToolName("websearch", "get_snapshot"),
         arguments: stringify({
           url: "http://127.0.0.1:3004/login",
         }),
@@ -90,7 +96,7 @@ const webSearchToolUse: ToolUse = {
       id: "websearch-tool-use-snapshot",
       type: "function",
       function: {
-        name: "websearch--get_snapshot",
+        name: getProstglesMCPFullToolName("websearch", "get_snapshot"),
         arguments: stringify({
           url: "http://127.0.0.1:3004/manifest.json",
         }),
@@ -107,7 +113,7 @@ const dashboardToolUse: ToolUse = {
       id: "dashboard-tool-use",
       type: "function",
       function: {
-        name: "prostgles-ui--create_dashboards",
+        name: getProstglesMCPFullToolName("prostgles-ui", "create_dashboards"),
         arguments: stringify(prostglesUIFoodDeliveryDashboardSample),
       },
     },
@@ -120,7 +126,7 @@ const cryptoDashboardToolUse: ToolUse = {
       id: "dashboard-tool-use",
       type: "function",
       function: {
-        name: "prostgles-ui--create_dashboards",
+        name: getProstglesMCPFullToolName("prostgles-ui", "create_dashboards"),
         arguments: stringify(prostglesUICryptoDashboardSample),
       },
     },
@@ -178,7 +184,7 @@ const toolResponses: Record<string, ToolUse> = {
         id: "get-tool-schemas-use",
         type: "function",
         function: {
-          name: "prostgles-ui--get_tool_schemas",
+          name: getProstglesMCPFullToolName("prostgles-ui", "get_tool_schemas"),
           arguments: stringify({ mcpServerTools: { fetch: { fetch: 1 } } }),
         },
       },
@@ -219,7 +225,10 @@ const toolResponses: Record<string, ToolUse> = {
         id: "weather-tool-use",
         type: "function",
         function: {
-          name: "prostgles-ui--run_code_in_sandbox",
+          name: getProstglesMCPFullToolName(
+            "prostgles-ui",
+            "run_code_in_sandbox",
+          ),
           arguments: stringify(dockerWeatherToolUse),
         },
       },
@@ -235,7 +244,7 @@ const toolResponses: Record<string, ToolUse> = {
         id: "sql-tool-use",
         type: "function",
         function: {
-          name: "db--execute_readonly_sql",
+          name: getProstglesMCPFullToolName("db", "execute_readonly_sql"),
           arguments: stringify({
             sql: "SELECT * FROM orders WHERE created_at >= NOW() - INTERVAL '30 days';",
           }),
@@ -253,7 +262,7 @@ const toolResponses: Record<string, ToolUse> = {
         id: "db-tool-use",
         type: "function",
         function: {
-          name: "db--insert",
+          name: getProstglesMCPFullToolName("db", "insert"),
           arguments: stringify({
             tableName: "receipts",
             data: [
@@ -293,7 +302,10 @@ const toolResponses: Record<string, ToolUse> = {
         id: "request-tool-access-use",
         type: "function",
         function: {
-          name: "prostgles-ui--request_tool_access",
+          name: getProstglesMCPFullToolName(
+            "prostgles-ui",
+            "request_tool_access",
+          ),
           arguments: stringify({
             mcpServerTools: {
               websearch: { websearch: 1 },
@@ -344,7 +356,10 @@ const toolResponses: Record<string, ToolUse> = {
         id: "ask-tool-use",
         type: "function",
         function: {
-          name: "prostgles-ui--ask_user_questions",
+          name: getProstglesMCPFullToolName(
+            "prostgles-ui",
+            "ask_user_questions",
+          ),
           arguments: stringify({
             questions: [
               {

@@ -92,7 +92,7 @@ export const LLM_PROMPT_VARIABLES = {
 } as const;
 
 export const wrapCode = (
-  language: "sql" | "typescript" | "html",
+  language: "sql" | "typescript" | "html" | "json",
   code: string,
 ) => {
   return "```" + language + "\n" + code + "\n```";
