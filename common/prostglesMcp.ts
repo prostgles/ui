@@ -1,4 +1,5 @@
 import { databaseAccessSchema } from "./databaseAccessSchema";
+import { documentsServiceInputSchema } from "./documentsServiceInputSchema";
 import type { DBSSchema } from "./publishUtils";
 import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
 import {
@@ -613,6 +614,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description: "Get text contents of a document",
       schema: {
         type: {
+          ...documentsServiceInputSchema.type,
           url: {
             type: "string",
           },

@@ -67,10 +67,10 @@ export const AgenticWorkflowDefinition = ({
       ...MONACO_READONLY_DEFAULT_OPTIONS,
       lineNumbers: "on",
       lineNumbersMinChars: 4,
-      readOnly: !(reRunMCPServerTool && workflowId),
+      readOnly: !reRunMCPServerTool,
     } as const;
     const onSave: CodeEditorProps["onSave"] =
-      reRunMCPServerTool && workflowId ?
+      reRunMCPServerTool ?
         async (newValue) => {
           const toolNameParts = getMCPToolNameParts(
             toolResultMessage.tool_name,

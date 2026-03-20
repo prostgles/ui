@@ -129,11 +129,11 @@ export default defineAgenticWorkflow(
     null,
     2,
   )},
-  async ({ researcher }, { db, runSQL }, toolHandler, userInputValue, setProgress) => {
+  async ({ agentHandlers: { researcher }, orchestratorToolHandlers, tableHandlers, runSQL , toolHandler, userInputValues, setProgress }) => {
     setProgress(0, "Starting workflow");
-    await db.users.insert({ username: "Prostgles", type: "from-agent" });
+    await tableHandlers.users.insert({ username: "Prostgles", type: "from-agent" });
 /* need to allow db access for this
-    await db.new_users
+    await tableHandlers.new_users
       .insert(
         {
           username: "New User",
@@ -148,17 +148,17 @@ export default defineAgenticWorkflow(
       runSQL("SELECT * FROM new_users").then((res) => console.log("Users:", res));
     */
     const start = Date.now();
-    toolHandler.fetch.fetch({ url: "https://www.prostgles.com" }).then(console.log).catch(console.log);
-    const filterCount = ${mode !== "input" ? "undefined;//" : ""} await db.users.count(userInputValue["table-filter"]);
+    orchestratorToolHandlers.fetch.fetch({ url: "https://www.prostgles.com" }).then(console.log).catch(console.log);
+    const filterCount = ${mode !== "input" ? "undefined;//" : ""} await tableHandlers.users.count(userInputValues["table-filter"]);
     console.log("Filter count:", filterCount);
     setProgress(1, "Finished database operation, starting research");
-    ${mode === "invalidTable" ? "await db.invalid_table.count();" : ""}
-    db.users.find().then((users) => {
+    ${mode === "invalidTable" ? "await tableHandlers.invalid_table.count();" : ""}
+    tableHandlers.users.find().then((users) => {
       users.forEach(async (user, index) => {
         setProgress((100/users.length) * index, "Processing user " + (index + 1) + "/" + users.length);
         const result = await researcher(" ${research} Prostgles"); 
         const sinceStart = Date.now() - start;
-        await db.users.update({ id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });
+        await tableHandlers.users.update({ id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });
       })
     })
   },

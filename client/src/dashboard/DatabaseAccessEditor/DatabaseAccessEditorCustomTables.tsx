@@ -79,6 +79,7 @@ export const DatabaseAccessEditorCustomTables = ({
                 },
                 label: {
                   fontSize: "16px",
+                  userSelect: "text",
                 },
                 rowInner: {
                   display: "contents",

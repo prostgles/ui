@@ -1,4 +1,5 @@
-import type { ProstglesService } from "../../ServiceManagerTypes";
+import { documentsServiceInputSchema } from "@common/documentsServiceInputSchema";
+import type { ProstglesService } from "@src/ServiceManager/ServiceManagerTypes";
 
 export const documentsService = {
   icon: "FileDocumentOutline",
@@ -18,17 +19,18 @@ export const documentsService = {
         cpu: {
           env: {},
           buildArgs: {
-            BASE_IMAGE: "quay.io/docling-project/docling-serve:v1.14.0",
+            BASE_IMAGE: "quay.io/docling-project/docling-serve:v1.14.3",
           },
         },
         cuda: {
           env: {
-            DOCLING_SERVE_ENG_LOC_NUM_WORKERS: "2",
+            DOCLING_SERVE_ENG_LOC_NUM_WORKERS: "1",
+            DOCLING_SERVE_NUM_WORKERS: "2",
             OMP_NUM_THREADS: "4",
             MKL_NUM_THREADS: "4",
           },
           buildArgs: {
-            BASE_IMAGE: "quay.io/docling-project/docling-serve-cu128:v1.14.0",
+            BASE_IMAGE: "quay.io/docling-project/docling-serve-cu128:v1.14.3",
           },
           gpus: "all",
         },
@@ -111,99 +113,7 @@ export const documentsService = {
               base64_string: "string",
             },
           },
-          options: {
-            optional: true,
-            type: {
-              from_formats: {
-                optional: true,
-                type: "string[]",
-                allowedValues: [
-                  "docx",
-                  "pptx",
-                  "html",
-                  "image",
-                  "pdf",
-                  "asciidoc",
-                  "md",
-                  "csv",
-                  "xlsx",
-                  "xml_uspto",
-                  "xml_jats",
-                  "xml_xbrl",
-                  "mets_gbs",
-                  "json_docling",
-                  "audio",
-                  "vtt",
-                  "latex",
-                ],
-              },
-              to_formats: {
-                optional: true,
-                type: "string[]",
-                allowedValues: [
-                  "md",
-                  "json",
-                  "yaml",
-                  "html",
-                  "html_split_page",
-                  "text",
-                  "doctags",
-                ],
-              },
-              /**
-               * Image export mode for the document (in case of JSON, Markdown or HTML). Allowed values: placeholder, embedded, referenced. Optional, defaults to Embedded.
-               */
-              image_export_mode: {
-                optional: true,
-                enum: ["placeholder", "embedded", "referenced"],
-              },
-              do_ocr: {
-                optional: true,
-                type: "boolean",
-              },
-              force_ocr: {
-                optional: true,
-                type: "boolean",
-              },
-              ocr_engine: {
-                optional: true,
-                enum: [
-                  "auto",
-                  "easyocr",
-                  "ocrmac",
-                  "rapidocr",
-                  "tesserocr",
-                  "tesseract",
-                  "easyocr",
-                ],
-              },
-              ocr_lang: {
-                optional: true,
-                type: "string[]",
-              },
-              pdf_backend: {
-                optional: true,
-                enum: [
-                  "pypdfium2",
-                  "docling_parse",
-                  "dlparse_v1",
-                  "dlparse_v2",
-                  "dlparse_v4",
-                  "docling_parse",
-                ],
-              },
-              table_mode: {
-                optional: true,
-                enum: ["fast", "accurate"],
-              },
-              document_timeout: {
-                optional: true,
-                type: "number",
-                description:
-                  "The timeout for processing each document, in seconds.",
-              },
-            },
-          },
+          options: documentsServiceInputSchema,
         },
       },
       outputSchema: {

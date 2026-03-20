@@ -29,8 +29,8 @@ export const AgenticWorkflowDetails = ({
   const { dbs } = usePrgl();
 
   return (
-    <FlexCol className="f-1 gap-0">
-      <FlexCol className="w-full p-1 o-auto">
+    <FlexCol className="AgenticWorkflowDetails f-1 gap-0">
+      <FlexCol className="w-full f-1 p-1 o-auto">
         <div title={`Workflow id: ${workflow.id}`}>
           <div className="font-18 bold">{name}</div>
           <div className="font-14">{definition_summary}</div>

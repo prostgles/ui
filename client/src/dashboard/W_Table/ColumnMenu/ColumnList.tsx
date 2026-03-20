@@ -61,9 +61,9 @@ export const ColumnList = ({
   return (
     <SearchList
       id="cols"
-      onReorder={async (nc) => {
+      onReorder={(nc) => {
         setOrder(Object.fromEntries(nc.map((d, i) => [d.key, i])));
-        await onChange(
+        onChange(
           nc.map((n) => ({ ...(n.data as ColumnConfig), show: n.checked })),
         );
       }}

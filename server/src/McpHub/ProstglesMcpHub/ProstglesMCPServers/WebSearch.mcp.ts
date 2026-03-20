@@ -172,13 +172,14 @@ const handler = {
               .join("\n") || ""
           );
         },
-        get_document_text: async ({ url }) => {
+        get_document_text: async ({ url, ...otherOpts }) => {
           const docsService = await getService("documents");
           const result = await docsService.endpoints["/v1/convert/source"](
             {
               sources: [{ kind: "http", url }],
               options: {
                 image_export_mode: "placeholder",
+                ...otherOpts,
               },
             },
             {

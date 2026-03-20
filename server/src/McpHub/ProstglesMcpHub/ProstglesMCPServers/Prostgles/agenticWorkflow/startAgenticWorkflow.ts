@@ -5,10 +5,11 @@ import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
 import { getSerialisableError, omitKeys } from "prostgles-types";
 import { startAgenticWorkflowContainer } from "./execution/startAgenticWorkflowContainer";
 import type { AuthClientRequest } from "prostgles-server";
+import { KeyObjMap } from "@common/KeyObjMap";
 
-const abortersByUserId = new Map<
-  string,
-  { chatId: number; messageId: string; aborter: AbortController }[]
+const abortersByUserId = new KeyObjMap<
+  { userId: string; chatId: number; messageId: string },
+  AbortController
 >();
 
 export const stopAgenticWorkflow = async ({
@@ -22,15 +23,10 @@ export const stopAgenticWorkflow = async ({
   messageId: string;
   userId: string;
 }) => {
-  const userAborters = abortersByUserId.get(userId);
-  const aborterEntryIndex = userAborters?.findIndex(
-    (entry) => entry.chatId === chatId && entry.messageId === messageId,
-  );
-  const aborterEntry = userAborters?.[aborterEntryIndex ?? -1];
-  if (aborterEntry) {
-    aborterEntry.aborter.abort();
-    userAborters.splice(aborterEntryIndex!, 1);
-    abortersByUserId.set(userId, userAborters);
+  const aborter = abortersByUserId.get({ userId, chatId, messageId });
+  if (aborter) {
+    aborter.abort();
+    abortersByUserId.delete({ userId, chatId, messageId });
     return { success: true };
   } else {
     await dbs.agentic_workflow_runs.update(
@@ -125,11 +121,10 @@ export const startAgenticWorkflow = async ({
     }
   }
 
-  const existingAborters = abortersByUserId.get(user.id) || [];
-  abortersByUserId.set(user.id, [
-    ...existingAborters,
-    { chatId: chat.id, messageId, aborter },
-  ]);
+  abortersByUserId.set(
+    { userId: user.id, chatId: chat.id, messageId },
+    aborter,
+  );
   const res = await startAgenticWorkflowContainer(
     dbs,
     {

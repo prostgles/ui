@@ -48,6 +48,7 @@ export const serverSettingsUIDoc = {
       selector: getDataKey("llmProviders"),
       description:
         "Manage LLM providers, credentials and models to be used in the Ask AI chat",
+      componentName: "LLMProviderSetup",
       children: [],
     },
     {
@@ -55,6 +56,7 @@ export const serverSettingsUIDoc = {
       title: "Services",
       selector: getDataKey("services"),
       description: "Manage services",
+      componentName: "Services",
       children: [],
     },
   ],

@@ -1,13 +1,10 @@
-import type {
-  DatabaseHandler,
-  DefineAgenticWorkflow,
-} from "./defineAgenticWorkflow";
-import { assertWorkflowStarted } from "./ensureWorkflowIsExecuted";
-import { definitionHandler } from "./definitionHandler";
-import { tableHandlers } from "./tableHandlers";
 import { callWorkflowProxy } from "./callWorkflowProxy";
-import { getOrchestrationToolHandlers } from "./orchestrationToolHandlers";
+import type { DefineAgenticWorkflow } from "./defineAgenticWorkflow";
 import { WORKFLOW_ENV_VARS } from "./defineAgenticWorkflowHandlers.types";
+import { definitionHandler } from "./definitionHandler";
+import { assertWorkflowStarted } from "./ensureWorkflowIsExecuted";
+import { getOrchestrationToolHandlers } from "./orchestrationToolHandlers";
+import { tableHandlers } from "./tableHandlers";
 
 const { DOCKER_MCP_ENDPOINT, MODE, USER_INPUT } = WORKFLOW_ENV_VARS;
 
@@ -23,17 +20,20 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
     throw new Error("DOCKER_MCP_ENDPOINT environment variable is not set");
   }
 
+  type ArgsObject = Parameters<typeof handler>[0];
   if (!USER_INPUT) {
     throw new Error("USER_INPUT environment variable is not set");
   }
 
-  const userInput = JSON.parse(USER_INPUT) as Parameters<typeof handler>[3];
+  const userInputValues = JSON.parse(
+    USER_INPUT,
+  ) as ArgsObject["userInputValues"];
 
   if (MODE === "definitions-only") {
     return definitionHandler(definitions);
   }
 
-  const agentHandlersProxy = new Proxy({} as Parameters<typeof handler>[0], {
+  const agentHandlersProxy = new Proxy({} as ArgsObject["agentHandlers"], {
     get(_target, prop: string) {
       if (typeof prop !== "string") return undefined;
       if (!definitions.agentDefinitions) {
@@ -61,28 +61,28 @@ export const defineAgenticWorkflow: DefineAgenticWorkflow = async (
     });
   };
 
-  return handler(
-    agentHandlersProxy,
-    {
-      db: tableHandlers as DatabaseHandler["db"],
-      runSQL: (sql, query_params, query_timeout) => {
-        if (dbMode !== "execute_sql" && dbMode !== "execute_readonly_sql") {
-          throw new Error(
-            `Database access is not enabled for this workflow, but tried to run SQL with args: ${JSON.stringify(
-              sql,
-            )}`,
-          );
-        }
-        return callWorkflowProxy({
-          type: `db/${dbMode}` as const,
-          sql,
-          query_params,
-          query_timeout,
-        });
-      },
-    },
-    getOrchestrationToolHandlers(definitions) as Parameters<typeof handler>[2],
-    userInput,
+  return handler({
+    agentHandlers: agentHandlersProxy,
+    tableHandlers: tableHandlers as ArgsObject["tableHandlers"],
+    runSQL: ((sql, query_params, query_timeout) => {
+      if (dbMode !== "execute_sql" && dbMode !== "execute_readonly_sql") {
+        throw new Error(
+          `Database access is not enabled for this workflow, but tried to run SQL with args: ${JSON.stringify(
+            sql,
+          )}`,
+        );
+      }
+      return callWorkflowProxy({
+        type: `db/${dbMode}` as const,
+        sql,
+        query_params,
+        query_timeout,
+      });
+    }) as ArgsObject["runSQL"],
+    orchestratorToolHandlers: getOrchestrationToolHandlers(
+      definitions,
+    ) as ArgsObject["orchestratorToolHandlers"],
+    userInputValues,
     setProgress,
-  );
+  });
 };

@@ -116,6 +116,8 @@ export const AgenticWorkflowActions = ({
           disabledInfo={
             state?.status === "running" ?
               "Cannot change execution mode while workflow is running"
+            : !workflow.definition_data.agentDefinitions ?
+              "Execution mode selection is not available for workflows without agents"
             : undefined
           }
           fullOptions={

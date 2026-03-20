@@ -29,6 +29,14 @@ const DYNAMIC_COMPONENT_REGISTRY = {
         default: mod.ServerSideFunctions,
       }),
     ),
+  Services: () =>
+    import("src/pages/ServerSettings/Services").then((mod) => ({
+      default: mod.Services,
+    })),
+  LLMProviderSetup: () =>
+    import("src/dashboard/AskLLM/Setup/LLMProviderSetup").then((mod) => ({
+      default: mod.LLMProviderSetup,
+    })),
 } as const satisfies Record<
   string,
   () => Promise<{ default: React.ComponentType<any> }>

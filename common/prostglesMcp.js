@@ -9,6 +9,7 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
+import { documentsServiceInputSchema } from "./documentsServiceInputSchema";
 import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
 import { agentDefinitionsSchema, mcpServerToolsAllowed, } from "./startAgenticWorkflowSchema";
 import { tablePermissionsSchema } from "./tablePermissionsSchema";
@@ -541,11 +542,9 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         get_document_text: {
             description: "Get text contents of a document",
             schema: {
-                type: {
-                    url: {
+                type: Object.assign(Object.assign({}, documentsServiceInputSchema.type), { url: {
                         type: "string",
-                    },
-                },
+                    } }),
             },
             outputSchema: {
                 type: "string",

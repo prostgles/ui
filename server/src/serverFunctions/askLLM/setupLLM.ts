@@ -27,6 +27,9 @@ export const setupLLM = async (dbs: DBS) => {
       `DO NOT USE HARDCODED DATA UNLESS STRICTLY NECESSARY OR THE USER ASKS FOR IT.`,
       `Use ${getProstglesMCPFullToolName("prostgles-ui", "compact_context")} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
       `Use ${getProstglesMCPFullToolName("prostgles-ui", "create_agent")} when the task is iterative, requires multiple tool-assisted steps, or is better delegated to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
+      `When writing typescript code, ensure it compiles and do not include type or eslint errors. Assume strict: true (including noImplicitAny, strictNullChecks).`,
+      `Let TS infer obvious local variable types. Avoid i < arr.length - 1 patterns; split into parents + last where needed.`,
+      `Prefer to use types instead of interfaces. Prefer for...of over index-based for loops. Only use indexed loops when the numeric index itself is required.`,
     ].join("\n");
     const upsertedPrompts = await dbs.llm_prompts.insert(
       [

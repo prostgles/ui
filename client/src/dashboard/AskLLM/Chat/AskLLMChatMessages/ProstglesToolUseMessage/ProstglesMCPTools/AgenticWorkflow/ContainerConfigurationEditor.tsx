@@ -72,6 +72,7 @@ export const ContainerConfigurationEditor = ({
             variant="faded"
             className="text-1"
             title="Timeout"
+            size="small"
             iconPath={mdiTimelapse}
           >
             {getDurationAsStr(timeout)}
@@ -79,6 +80,7 @@ export const ContainerConfigurationEditor = ({
           <Btn
             title={"Internet access: " + internetAccess}
             className="text-1"
+            size="small"
             color={
               internetAccess === "host" ? "warn"
               : internetAccess === "bridge" ?
@@ -92,13 +94,14 @@ export const ContainerConfigurationEditor = ({
           </Btn>
           <Btn
             className="text-1"
+            size="small"
             variant="faded"
             title="CPUs"
             iconPath={mdiCpu64Bit}
           >
             {cpus}
           </Btn>
-          <Btn title="Memory" variant="faded" iconPath={mdiMemory}>
+          <Btn size="small" title="Memory" variant="faded" iconPath={mdiMemory}>
             {memory}
           </Btn>
         </FlexRowWrap>
@@ -121,24 +124,28 @@ export const ContainerConfigurationEditor = ({
                 {
                   key: "none",
                   label: "None",
+                  iconPath: mdiWebOff,
                   subLabel:
                     "Container cannot access the internet. Uses bridge-internal network mode.",
                 },
                 {
                   key: "bridge",
                   label: "Bridge",
+                  iconPath: mdiWeb,
                   subLabel:
                     "Container can access the internet. Uses bridge network mode.",
                 },
                 {
                   key: "host",
                   label: "Host",
+                  iconPath: mdiWeb,
                   subLabel:
                     "Container can access the internet AND other services running on your machine. Uses host network mode. Not recommended for security reasons.",
                 },
               ] as const satisfies {
                 key: typeof internetAccess;
                 label: string;
+                iconPath: string;
                 subLabel: string;
               }[]
             }

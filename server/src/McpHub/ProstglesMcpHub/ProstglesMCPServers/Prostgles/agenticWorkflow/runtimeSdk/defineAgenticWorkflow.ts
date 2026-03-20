@@ -234,65 +234,95 @@ type DbTableHandler = {
   >;
 };
 
-export type DatabaseHandler = {
-  /**
-   * The table handlers below are only available if databaseAccessDefinitions are defined
-   * Must provide the correct data type in filters (do not provide a boolean if the column is a string, etc.)
-   *
-   * @example
-   * db.my_table.find({ name: "John", age: { $gt: 30 } }, { orderBy: { key: "created", asc: false, nulls: "last" }, limit: 20, select: { id: 1, name: 1 } });
-   * db.my_table.insert({ email: "john@gmail.com", name: "John", age: 35 }, { returning: "*", onConflict: "DoUpdate" }); // Will update all non conflicting fields
-   * db.my_table.insert({ email: "john@gmail.com", name: "John", age: 35 }, { returning: { email: 1 }, onConflict: "DoNothing" });
-   * db.my_table.insert({ name: "John", age: 35 }, { returning: { id: 1 } });
-   * db.my_table.update({ name: "John" }, { age: 36 }, { returning: { id: 1 } });
-   * db.my_table.delete({ age: { $lt: 20 } }, { returning: "*" });
-   *
-   * A filter is defined as a MongoDB-like query object.
-   * Supported operators:
-   * - Comparison: $eq, $ne, $gt, $gte, $lt, $lte
-   * - Logical: $and, $or
-   * - Evaluation: $like, $ilike
-   * - Array: $in, $nin
-   * - Joins: $existsJoined: { [tableName]: TableFilter }
-   * For Example:
-   * {
-   *   $and: [
-   *     {
-   *       $or: [
-   *         { topic: { $in: ["Prostgles", "Postgres"] } },
-   *         { summary: { $ilike: "%postgres%" } },
-   *         { id: { $gt: 5 } },
-   *       ]
-   *     },
-   *     { summary: { $ne: null } }
-   *   ]
-   * }
-   *
-   * A table select definition is either "*" to select all fields, or an object with the field names as keys and 1 as values (to select) or 0 to exclude.
-   *
-   * {
-   *   field1: 1,
-   *   field2: 1,
-   *   referencedTable: "*", // all fields from the referenced table will be included in an array under the "referencedTable" key
-   * }
-   *
-   *
-   *
-   *
-   * */
-  db: DbTableHandler;
+/**
+ * The table handlers below are only available if databaseAccessDefinitions are defined
+ * Must provide the correct data type in filters (do not provide a boolean if the column is a string, etc.)
+ *
+ * @example
+ * db.my_table.find({ name: "John", age: { $gt: 30 } }, { orderBy: { key: "created", asc: false, nulls: "last" }, limit: 20, select: { id: 1, name: 1 } });
+ * db.my_table.insert({ email: "john@gmail.com", name: "John", age: 35 }, { returning: "*", onConflict: "DoUpdate" }); // Will update all non conflicting fields
+ * db.my_table.insert({ email: "john@gmail.com", name: "John", age: 35 }, { returning: { email: 1 }, onConflict: "DoNothing" });
+ * db.my_table.insert({ name: "John", age: 35 }, { returning: { id: 1 } });
+ * db.my_table.update({ name: "John" }, { age: 36 }, { returning: { id: 1 } });
+ * db.my_table.delete({ age: { $lt: 20 } }, { returning: "*" });
+ *
+ * A filter is defined as a MongoDB-like query object.
+ * Supported operators:
+ * - Comparison: $eq, $ne, $gt, $gte, $lt, $lte
+ * - Logical: $and, $or
+ * - Evaluation: $like, $ilike
+ * - Array: $in, $nin
+ * - Joins: $existsJoined: { [tableName]: TableFilter }
+ * For Example:
+ * {
+ *   $and: [
+ *     {
+ *       $or: [
+ *         { topic: { $in: ["Prostgles", "Postgres"] } },
+ *         { summary: { $ilike: "%postgres%" } },
+ *         { id: { $gt: 5 } },
+ *       ]
+ *     },
+ *     { summary: { $ne: null } }
+ *   ]
+ * }
+ *
+ * A table select definition is either "*" to select all fields, or an object with the field names as keys and 1 as values (to select) or 0 to exclude.
+ *
+ * {
+ *   field1: 1,
+ *   field2: 1,
+ *   referencedTable: "*", // all fields from the referenced table will be included in an array under the "referencedTable" key
+ * }
+ *
+ *
+ *
+ *
+ * */
+type TableHandlers<
+  AccessMode extends DatabaseAccessDefinition["mode"] | undefined,
+> =
+  AccessMode extends "custom" | "execute_sql" | "execute_readonly_sql" ?
+    DbTableHandler
+  : never;
 
-  /**
-   * Runs a raw SQL query.
-   * Prefer to use the table handlers above when possible, as they are safer.
-   * Only available if databaseAccessDefinitions.mode is "execute_sql" or "execute_readonly_sql".
-   */
-  runSQL: (
-    sql: string,
-    params?: Record<string, any> | any[],
-    timeout?: number,
-  ) => Promise<Record<string, unknown>[]>;
-};
+/**
+ * Runs a raw SQL query.
+ * Prefer to use the table handlers above when possible, as they are safer.
+ * Only available if databaseAccessDefinitions.mode is "execute_sql" or "execute_readonly_sql".
+ */
+type SqlHandler<
+  AccessMode extends DatabaseAccessDefinition["mode"] | undefined,
+> =
+  AccessMode extends "execute_sql" | "execute_readonly_sql" ?
+    (
+      sql: string,
+      params?: Record<string, any> | any[],
+      timeout?: number,
+    ) => Promise<Record<string, unknown>[]>
+  : never;
+
+// export type DatabaseHandlers<
+//   M extends DatabaseAccessDefinition["mode"] | void,
+// > =
+//   M extends "custom" | "execute_sql" | "execute_readonly_sql" ?
+//     {
+//       tableHandlers: DbTableHandler;
+//       runSQL: undefined;
+//     }
+//   : M extends "execute_sql" | "execute_readonly_sql" ?
+//     {
+//       tableHandlers: DbTableHandler;
+//       runSQL: (
+//         sql: string,
+//         params?: Record<string, any> | any[],
+//         timeout?: number,
+//       ) => Promise<Record<string, unknown>[]>;
+//     }
+//   : {
+//       tableHandlers: undefined;
+//       runSQL: undefined;
+//     };
 
 type UserInputBase<T> = T & {
   title: string;
@@ -364,6 +394,7 @@ export type DefineAgenticWorkflow = <
   OrchestrationTools extends McpServerToolsAllowed,
   AgentDefinitions extends Record<string, AgentDefinition>,
   UserInput extends Record<string, UserInputItem>,
+  DatabaseAccess extends DatabaseAccessDefinition | undefined = undefined,
 >(
   {
     name,
@@ -401,17 +432,24 @@ export type DefineAgenticWorkflow = <
       internetAccess?: "none" | "bridge" | "host";
     };
     userInput?: UserInput;
-    databaseAccessDefinitions?: DatabaseAccessDefinition;
+    databaseAccessDefinitions?: DatabaseAccess;
     orchestrationTools?: OrchestrationTools;
     agentDefinitions?: AgentDefinitions;
   },
-  workflow: (
-    agentHandlers: {
-      [AgentName in keyof AgentDefinitions]: (
-        agentInput?: string,
-      ) => Promise<ParseSchema<AgentDefinitions[AgentName]["outputSchema"]>>;
-    },
-    databaseHandler: DatabaseHandler,
+  workflow: (args: {
+    tableHandlers: TableHandlers<
+      DatabaseAccess extends { mode: infer M } ? M : undefined
+    >;
+    runSQL: SqlHandler<
+      DatabaseAccess extends { mode: infer M } ? M : undefined
+    >;
+    agentHandlers: AgentDefinitions extends Record<string, AgentDefinition> ?
+      {
+        [AgentName in keyof AgentDefinitions]: (
+          agentInput?: string,
+        ) => Promise<ParseSchema<AgentDefinitions[AgentName]["outputSchema"]>>;
+      }
+    : undefined;
     orchestratorToolHandlers: {
       [ServerName in keyof OrchestrationTools]: {
         [ToolName in keyof OrchestrationTools[ServerName]]: ServerName extends (
@@ -422,10 +460,10 @@ export type DefineAgenticWorkflow = <
           : never
         : never;
       };
-    },
-    userInputValues: ValueOfUserInput<UserInput>,
-    setProgress: (progressPercent: number, message?: string) => Promise<void>,
-  ) => Promise<void>,
+    };
+    userInputValues: ValueOfUserInput<UserInput>;
+    setProgress: (progressPercent: number, message?: string) => Promise<void>;
+  }) => Promise<void>,
 ) => void | Promise<void>;
 
 /**
@@ -465,11 +503,11 @@ void defineAgenticWorkflow(
       },
     },
   },
-  async ({ researcher }, { db }, { websearch }) => {
+  async ({ agentHandlers: { researcher }, tableHandlers, orchestrationTools: { websearch } }) => {
 
     const doResearch = async () => {
       const result = await researcher(`research_topic: "Prostgles"`);
-      await db.my_research_topics.insert({
+      await tableHandlers.my_research_topics.insert({
         topic: "Prostgles",
         summary: result.summary,
         references: result.references,
@@ -477,7 +515,7 @@ void defineAgenticWorkflow(
     }
     await doResearch();
     
-    const finalTopics = await db.my_research_topics.find({
+    const finalTopics = await tableHandlers.my_research_topics.find({
       $and: [
         { 
           $or: [

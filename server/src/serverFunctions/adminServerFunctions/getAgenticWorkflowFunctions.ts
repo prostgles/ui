@@ -72,10 +72,6 @@ export const getAgenticWorkflowFunctions = (
             error: undefined,
           };
         }
-        // await dbs.agentic_workflow_runs.update(
-        //   { id: workflowId },
-        //   { last_run: new Date() },
-        // );
         const userInputValidation =
           workflow.definition_data.userInput &&
           validateUserInput(userInputValue, workflow.definition_data.userInput);

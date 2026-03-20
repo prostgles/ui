@@ -8,6 +8,7 @@ void describe("defineAgenticWorkflow", async () => {
         {
           name: "Test Workflow",
           containerConfiguration: { timeout: 60_000 },
+          // databaseAccessDefinitions: undefined,
           agentDefinitions: {
             researcher: {
               prompt: "You are a research assistant.",
@@ -32,21 +33,26 @@ void describe("defineAgenticWorkflow", async () => {
             },
           },
         },
-        async (
-          {
+        async ({
+          agentHandlers: {
             researcher,
             //@ts-expect-error
             invalid,
           },
-          dbHandler,
-          toolHandlers,
-          { test_input },
-        ) => {
+          tableHandlers,
+          runSQL,
+          orchestratorToolHandlers,
+          userInputValues: { test_input },
+        }) => {
+          // @ts-expect-error
+          void tableHandlers.tbl1.insert({ col1: "value1", col2: 123 });
+          // @ts-expect-error
+          void runSQL("SELECT * FROM tbl1");
           const result = await researcher("Prostgles");
           result.summary satisfies string;
 
-          void toolHandlers.websearch.search({ q: "Prostgles" });
-          void toolHandlers.websearch.get_snapshot({
+          void orchestratorToolHandlers.websearch.search({ q: "Prostgles" });
+          void orchestratorToolHandlers.websearch.get_snapshot({
             url: "https://www.example.com",
           });
 
