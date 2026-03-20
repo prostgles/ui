@@ -108,7 +108,7 @@ async function getTimeChartLayerWithBin(
           : await tableHandler.subscribe(
               tableFilters,
               {
-                select: "",
+                select: "*",
                 limit: 0,
                 throttle: +realtimeOpts.throttleSeconds * 1000,
               },

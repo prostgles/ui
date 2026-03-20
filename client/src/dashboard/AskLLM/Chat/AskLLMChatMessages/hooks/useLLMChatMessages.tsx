@@ -83,8 +83,12 @@ export const useLLMChatMessages = (props: P) => {
         activeChat.disabled_message
       ) ?
         activeChat.disabled_message
+      : (
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      : lastMessage?.meta?.finish_reason === "length" ?
+        lastMessage?.meta?.finish_reason === "length" ||
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        lastMessage?.meta?.native_finish_reason === "max_output_tokens"
+      ) ?
         <FlexCol>
           <ErrorComponent
             error={

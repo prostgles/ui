@@ -163,7 +163,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           sub: await tableHandler.subscribe(
             filter,
             {
-              select: "",
+              select: "*",
               limit: 0,
               throttle: this.props.realtime?.throttle ?? 100,
             },

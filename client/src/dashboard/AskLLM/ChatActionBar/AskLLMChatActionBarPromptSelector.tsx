@@ -37,11 +37,11 @@ export const AskLLMChatActionBarPromptSelector = (
   const { onErrorAlert } = useOnErrorAlert();
 
   const { data: enabledWebdevMcpTools } =
-    dbs.llm_chats_allowed_mcp_tools.useSubscribe(
+    dbs.llm_chats_allowed_mcp_tools.useSubscribeOne(
       { chat_id: activeChatId, server_name: "webdev" },
-      { select: "" },
+      { select: { count: { $countAll: [] } } },
     );
-  const enabledWebdevMcpToolsCount = enabledWebdevMcpTools?.length || 0;
+  const enabledWebdevMcpToolsCount = Number(enabledWebdevMcpTools?.count || 0);
   const [webDevAlert, setWebDevAlert] = useState(false);
   useEffect(() => {
     if (enabledWebdevMcpToolsCount && !connection.web_app_templated) {

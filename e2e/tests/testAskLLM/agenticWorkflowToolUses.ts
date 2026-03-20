@@ -129,7 +129,7 @@ export default defineAgenticWorkflow(
     null,
     2,
   )},
-  async ({ agentHandlers: { researcher }, orchestratorToolHandlers, tableHandlers, runSQL , toolHandler, userInputValues, setProgress }) => {
+  async ({ agentHandlers: { researcher }, orchestratorToolHandlers, tableHandlers, runSQL ,  userInputValues, setProgress }) => {
     setProgress(0, "Starting workflow");
     await tableHandlers.users.insert({ username: "Prostgles", type: "from-agent" });
 /* need to allow db access for this

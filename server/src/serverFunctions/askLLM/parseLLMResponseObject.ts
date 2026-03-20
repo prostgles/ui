@@ -109,12 +109,19 @@ export const parseLLMResponseObject: LLMResponseParser = ({
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 input = JSON.parse(toolCall.function.arguments);
               } catch (_e) {
-                const error = new Error(
-                  `Could not parse tool arguments as JSON: ${toolCall.function.arguments}. ` +
-                    JSON.stringify(getSerialisableError(_e)),
-                );
-                error.name = "ToolArgumentsParsingError";
-                throw error;
+                // const error = new Error(
+                //   `Could not parse tool arguments as JSON: ${toolCall.function.arguments}. ` +
+                //     JSON.stringify(getSerialisableError(_e)),
+                // );
+                input = {
+                  error_type:
+                    "ToolArgumentsParsingError. Could not parse tool arguments as JSON",
+                  error: getSerialisableError(_e),
+                  raw_arguments: toolCall.function.arguments,
+                  finish_reason: c.finish_reason,
+                  native_finish_reason: c.native_finish_reason,
+                };
+                // throw error;
               }
             }
 
@@ -153,6 +160,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       meta: {
         ...meta,
         finish_reason: choices[0]?.finish_reason,
+        native_finish_reason: choices[0]?.native_finish_reason,
       },
       total_tokens: meta.usage?.total_tokens ?? total_tokens,
       cost: Number.isFinite(metaCost) ? metaCost : cost,

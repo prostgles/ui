@@ -103,6 +103,7 @@ type Choice = {
     | "tool_calls"
     | "content_filter"
     | "function_call";
+  native_finish_reason?: "max_output_tokens"; // The raw finish reason returned by the provider, in case we want to handle it differently in the future or for debugging purposes.
 
   /**
    * The index of the choice in the list of choices.
