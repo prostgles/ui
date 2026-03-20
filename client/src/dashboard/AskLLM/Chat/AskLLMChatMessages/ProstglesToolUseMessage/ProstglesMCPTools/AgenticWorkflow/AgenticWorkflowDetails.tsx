@@ -1,8 +1,8 @@
 import { FlexCol } from "@components/Flex";
 import React from "react";
 import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
-import { AgenticWorkflowUserInput } from "./AgenticWorkflowUserInput";
-import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
+import { UserInput } from "./UserInput";
+import type { useUserInput } from "./hooks/useUserInput";
 
 import type { DBSSchema } from "@common/publishUtils";
 import { HeaderSection } from "@components/HeaderSection";
@@ -16,7 +16,7 @@ export const AgenticWorkflowDetails = ({
   userInputState,
 }: {
   workflow: DBSSchema["agentic_workflows"];
-  userInputState: ReturnType<typeof useAgenticWorkflowUserInput>;
+  userInputState: ReturnType<typeof useUserInput>;
 }) => {
   const {
     agentDefinitions,
@@ -96,7 +96,7 @@ export const AgenticWorkflowDetails = ({
           </HeaderSection>
         )}
       </FlexCol>
-      <AgenticWorkflowUserInput {...userInputState} />
+      <UserInput {...userInputState} />
     </FlexCol>
   );
 };

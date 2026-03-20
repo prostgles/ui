@@ -24,7 +24,7 @@ export const Stopwatch = ({
     return () => clearInterval(interval);
   }, [endTime, startTime]);
 
-  const displayTime = getDurationAsStr(elapsed);
+  const displayTime = getDurationAsStr(elapsed, endTime === undefined);
   return (
     <div title={title} className="ws-nowrap">
       {displayTime}
@@ -32,7 +32,7 @@ export const Stopwatch = ({
   );
 };
 
-export const getDurationAsStr = (elapsedMs: number) => {
+export const getDurationAsStr = (elapsedMs: number, excludeMs = false) => {
   const totalSeconds = Math.floor(elapsedMs / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -43,7 +43,7 @@ export const getDurationAsStr = (elapsedMs: number) => {
     hours > 0 ? `${hours}h` : null,
     hours > 0 || minutes > 0 ? `${minutes}m` : null,
     `${seconds}s`,
-    hours || minutes ? "" : `${milliseconds}ms`,
+    hours || minutes || excludeMs ? "" : `${milliseconds}ms`,
   ]
     .filter(Boolean)
     .join(" ");

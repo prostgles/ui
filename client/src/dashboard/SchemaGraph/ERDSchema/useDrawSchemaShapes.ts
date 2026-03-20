@@ -6,7 +6,8 @@ import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
 import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue";
 import type { ColumnColorMode } from "./ERDSchema";
-import { getInitialPlacement } from "./getInitialPlacement";
+// import { getInitialPlacement } from "./getInitialPlacement";
+import { getInitialPlacement } from "./getInitialPlacementV2";
 import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
 import { useDrawHiddenSvgForNativeTextSearch } from "./useDrawHiddenSvgForNativeTextSearch";
 

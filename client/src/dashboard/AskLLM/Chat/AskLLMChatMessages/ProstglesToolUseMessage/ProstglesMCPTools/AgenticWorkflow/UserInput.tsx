@@ -1,24 +1,24 @@
 import { getTableFilterFromDetailedGroupFilter } from "@common/filterUtils";
-import { FlexRow, FlexRowWrap } from "@components/Flex";
+import Btn from "@components/Btn";
+import { FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
+import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapper";
 import { Select, type FullOption } from "@components/Select/Select";
+import { mdiChevronDown, mdiChevronUp } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { getProperty } from "prostgles-types";
 import React, { useState } from "react";
 import { RenderFilter } from "src/dashboard/RenderFilter";
-import type { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
+import type { useUserInput } from "./hooks/useUserInput";
 import { UserInputColumnValues } from "./UserInputColumnValues";
-import Btn from "@components/Btn";
-import { mdiChevronDown, mdiChevronUp } from "@mdi/js";
-import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapper";
 
-export const AgenticWorkflowUserInput = ({
+export const UserInput = ({
   setUserInputValue,
   userInputValue,
   userInput,
   localFilter,
   setLocalFilter,
-}: ReturnType<typeof useAgenticWorkflowUserInput>) => {
+}: ReturnType<typeof useUserInput>) => {
   const { tables } = usePrgl();
   const [show, setShow] = useState(true);
   if (!userInput) return null;
@@ -42,7 +42,7 @@ export const AgenticWorkflowUserInput = ({
           <FlexRowWrap className="p-1">
             {Object.entries(userInput).map(([inputKey, inputItem]) => {
               const currentValue =
-                userInputValue[inputKey] ?? inputItem.defaultValue;
+                userInputValue?.[inputKey] ?? inputItem.defaultValue;
               const title =
                 (inputItem.title || inputKey) +
                 (inputItem.optional ? " (optional)" : "");

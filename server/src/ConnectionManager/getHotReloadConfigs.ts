@@ -10,6 +10,7 @@ import type { ConnectionManager } from "./ConnectionManager";
 import { join } from "path";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
+import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
 
 export type HotReloadConfigOptions = Pick<
   UpdateableOptions<void, SUser>,
@@ -21,6 +22,12 @@ export type HotReloadConfigOptions = Pick<
   | "functions"
   | "tsGeneratedTypesDir"
 >;
+
+export type ConnectionHotReloadProperties = Pick<
+  Connections,
+  (typeof CONNECTION_HOT_RELOAD_COLUMNS)[number]
+>;
+
 export const getHotReloadConfigs = async ({
   dbs,
   _dbs,
@@ -31,7 +38,7 @@ export const getHotReloadConfigs = async ({
   connectionInfo,
 }: {
   connectionManager: ConnectionManager;
-  connection: Connections;
+  connection: ConnectionHotReloadProperties;
   databaseConfig: DatabaseConfigs;
   stateDatabaseConfig: DatabaseConfigs;
   dbs: DBS;

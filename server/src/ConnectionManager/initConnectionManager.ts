@@ -9,6 +9,21 @@ import { saveCertificates } from "./saveCertificates";
 import { startConnectionOnRequestHandler } from "./startConnectionOnRequestHandler";
 import type { DBSSchema } from "@common/publishUtils";
 
+export const CONNECTION_HOT_RELOAD_COLUMNS = [
+  "id",
+  "name",
+  "url_path",
+  "port",
+  "is_state_db",
+  "web_app_directory",
+  "web_app_templated",
+  "db_name",
+  "db_host",
+  "db_port",
+  "db_schema_filter",
+  "db_watch_shema",
+] as const;
+
 export async function initConnectionManager(
   this: ConnectionManager,
   dbs: DBS,
@@ -60,7 +75,10 @@ export async function initConnectionManager(
     {
       select: {
         ...dbConfColumnListSelect,
-        connections: { id: 1, is_state_db: 1, port: 1 },
+        connections: CONNECTION_HOT_RELOAD_COLUMNS.reduce(
+          (a, name) => ({ ...a, [name]: 1 }),
+          {},
+        ), //{ id: 1, is_state_db: 1, port: 1 },
         access_control_user_types: "*",
         published_methods: "*",
       },
@@ -97,12 +115,9 @@ export async function initConnectionManager(
             prglCon?.prgl &&
             !prglCon.con.is_state_db
           ) {
-            const connection = await this.getConnectionData(
-              connectionPartialItem.id,
-            );
             const { config: hotReloadConfig } = await getHotReloadConfigs({
               connectionManager: this,
-              connection,
+              connection: connectionPartialItem,
               databaseConfig: databaseConfig,
               stateDatabaseConfig,
               dbs,
@@ -112,7 +127,7 @@ export async function initConnectionManager(
             /** Can happen due to error in onMount */
             await prglCon.prgl.update(hotReloadConfig).catch((e) => {
               console.error(
-                `Error updating connection ${connection.id} with hot reload config`,
+                `Error updating connection ${connectionPartialItem.id} with hot reload config`,
                 e,
                 { hotReloadConfig },
               );

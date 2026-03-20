@@ -30,7 +30,10 @@ import {
   parseTableConfig,
 } from "./connectionManagerUtils";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
-import { initConnectionManager } from "./initConnectionManager";
+import {
+  initConnectionManager,
+  type CONNECTION_HOT_RELOAD_COLUMNS,
+} from "./initConnectionManager";
 import { startConnection } from "./startConnection";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
@@ -131,7 +134,7 @@ export class ConnectionManager {
   dbConfigs: (DBSSchema["database_configs"] & {
     connections: Pick<
       DBSSchema["connections"],
-      "id" | "is_state_db" | "port"
+      (typeof CONNECTION_HOT_RELOAD_COLUMNS)[number]
     >[];
     access_control_user_types: DBSSchema["access_control_user_types"][];
   })[] = [];

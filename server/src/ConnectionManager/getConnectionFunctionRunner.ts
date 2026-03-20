@@ -1,7 +1,8 @@
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
-import type { Connections, DatabaseConfigs, DBS } from "..";
+import type { DatabaseConfigs, DBS } from "..";
 import type { ConnectionManager } from "./ConnectionManager";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
+import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 
 export const getConnectionFunctionRunner = async ({
   connection,
@@ -11,7 +12,7 @@ export const getConnectionFunctionRunner = async ({
   dbs,
 }: {
   dbs: DBS;
-  connection: Pick<Connections, "id" | "db_watch_shema">;
+  connection: ConnectionHotReloadProperties;
   connectionManager: ConnectionManager;
   databaseConfig: DatabaseConfigs;
   connectionInfo: ConnectionDetails;

@@ -6,14 +6,14 @@ import Btn from "@components/Btn";
 import { useAlert } from "@components/AlertProvider";
 import ErrorComponent from "@components/ErrorComponent";
 import { getMCPToolNameParts } from "@common/prostglesMcp";
-import { isEqual } from "prostgles-types";
+import { isEmpty, isEqual } from "prostgles-types";
 
 type P = {
   chatId: number;
   toolRequest: ToolUseMessage;
   toolResult: { messageId: string; messagePart: ToolResultMessage } | undefined;
   variant: "icon" | "text";
-  newInput?: any;
+  newInput?: unknown;
 };
 export const ToolUseReRun = ({
   chatId,
@@ -28,7 +28,9 @@ export const ToolUseReRun = ({
   const { addAlert } = useAlert();
   const nameParts = getMCPToolNameParts(toolRequest.name);
   const inputChanged = useMemo(() => {
-    return !isEqual(toolRequest.input, newInput);
+    return (
+      newInput && !isEmpty(newInput) && !isEqual(toolRequest.input, newInput)
+    );
   }, [toolRequest.input, newInput]);
   if (!toolResult || !reRunMCPServerTool || !nameParts) return null;
   const { serverName, toolName } = nameParts;

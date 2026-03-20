@@ -24,6 +24,7 @@ export const cleanupTestDatabases = async (con: DBSConnectionInfo) => {
       "drop database sample_db; ",
       "drop database my_new_db; ",
       "drop database db_with_owner;",
+      "drop database financial;",
       "drop user db_with_owner;",
       "create database db with owner usr;",
     ];

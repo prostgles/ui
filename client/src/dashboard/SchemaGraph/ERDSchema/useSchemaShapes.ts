@@ -8,10 +8,7 @@ import type {
 } from "../../Charts/CanvasChart";
 import { measureText } from "../../Charts/TimeChart/measureText";
 import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue";
-import type {
-  DBSchemaTableColumn,
-  DBSchemaTableWJoins,
-} from "../../Dashboard/dashboardUtils";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { ERDSchemaProps } from "./ERDSchema";
 import { useFetchSchemaForDiagram } from "./useFetchSchemaForDiagram";
 import { CASCADE_LEGEND } from "../SchemaGraphControls";

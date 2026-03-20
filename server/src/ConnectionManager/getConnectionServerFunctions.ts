@@ -10,11 +10,12 @@ import { getAccessRule } from "./startConnection";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import { getConnectionFunctionRunner } from "./getConnectionFunctionRunner";
+import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 
 type Args = {
   dbs: DBS;
   databaseConfig: DBSSchema["database_configs"];
-  connection: DBSSchema["connections"];
+  connection: ConnectionHotReloadProperties;
   connectionManager: ConnectionManager;
   connectionInfo: ConnectionDetails;
 };

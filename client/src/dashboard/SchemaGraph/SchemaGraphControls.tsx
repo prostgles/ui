@@ -54,7 +54,7 @@ export const SchemaGraphControls = ({
             className: "ml-auto",
           }}
           onChange={(newDbSchemaFilter) => {
-            dbs.connections.update(
+            void dbs.connections.update(
               {
                 id: connectionId,
               },

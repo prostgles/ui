@@ -4,6 +4,8 @@ import type { CreateContainerParams } from "./schemas/getCreateContainerToolSche
 import { getSerialisableError } from "prostgles-types";
 import { validateUserInput } from "./agenticWorkflow/definitionValidation/validateUserInput";
 import { USER_INPUT_VALUE_ENV_VARIABLE_NAME } from "@common/runCodeInSandboxSchema";
+import { connectionManager } from "@src/index";
+import { validateUserInputDefinitions } from "./agenticWorkflow/definitionValidation/validateUserInputDefinitions";
 
 const aborters = new Map<number, AbortController>();
 export const stopContainer = (containerId: number) => {
@@ -17,13 +19,25 @@ export const stopContainer = (containerId: number) => {
 
 export const runCodeInSandboxContainer = async (
   args: CreateContainerParams,
-  { user_id, chat, dbs, toolUseId, messageId }: McpCallContext,
+  { user_id, chat, dbs, toolUseId, messageId, connection_id }: McpCallContext,
 ) => {
   if (!toolUseId) {
     throw new Error(
       "toolUseId is required for runCodeInSandboxContainer. Cannot be called from orchestration tools.",
     );
   }
+
+  const activeConnection = connectionManager.getActiveConnection(connection_id);
+  const tables = activeConnection.prgl.getSchema();
+
+  if (args.userInput) {
+    validateUserInputDefinitions(tables, args.userInput);
+  }
+
+  const userInputValidation =
+    args.userInput &&
+    validateUserInput(args.userInputValue ?? {}, args.userInput);
+
   await dbs.docker_containers.delete({
     chat_id: chat.id,
     tool_use_id: toolUseId,
@@ -44,9 +58,7 @@ export const runCodeInSandboxContainer = async (
   );
   const aborter = new AbortController();
   aborters.set(container.id, aborter);
-  const userInputValidation =
-    args.userInput &&
-    validateUserInput(args.userInputValue ?? {}, args.userInput);
+
   const res = await runContainerWithProxyAccess(
     dbs,
     {

@@ -12,7 +12,7 @@ import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity";
 import { AgenticWorkflowDefinition } from "./AgenticWorkflowDefinition";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
-import { useAgenticWorkflowUserInput } from "./hooks/useAgenticWorkflowUserInput";
+import { useUserInput } from "./hooks/useUserInput";
 
 export const AgenticWorkflow = ({
   message,
@@ -37,7 +37,7 @@ export const AgenticWorkflow = ({
     toolUseResult,
   });
 
-  const userInputState = useAgenticWorkflowUserInput(
+  const userInputState = useUserInput(
     workflow?.definition_data.userInput,
     latestRun?.user_input_value,
   );

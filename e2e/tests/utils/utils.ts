@@ -981,6 +981,7 @@ export const openConnection = async (
     | "sample_database"
     | "cloud"
     | "crypto"
+    | "financial"
     | "food_delivery"
     | "Prostgles UI state"
     | "prostgles_video_demo"

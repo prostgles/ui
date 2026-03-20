@@ -69,7 +69,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     activeChat,
     dbSchemaForPrompt,
   });
-
   const [currentlyTypedMessage, setCurrentlyTypedMessage] = useState(
     activeChat?.currently_typed_message,
   );

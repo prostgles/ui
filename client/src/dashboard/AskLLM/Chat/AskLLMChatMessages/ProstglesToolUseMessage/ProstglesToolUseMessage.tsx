@@ -101,6 +101,7 @@ export type ProstglesMCPToolsProps = {
   workspaceId: string | undefined;
   message: ToolUseMessage;
   chatId: number;
+  isShownInToolUseRequest?: boolean;
   toolUseResult:
     | {
         toolUseResult: DBSSchema["llm_messages"];

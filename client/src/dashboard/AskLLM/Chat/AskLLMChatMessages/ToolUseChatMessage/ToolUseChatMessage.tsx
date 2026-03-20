@@ -35,7 +35,6 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
 
   const ToolUI = ProstglesMCPToolsWithUI[m.name];
   const { displayMode } = ToolUI ?? {};
-
   return (
     <ErrorTrap>
       <FlexCol

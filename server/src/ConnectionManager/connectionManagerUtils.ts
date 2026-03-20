@@ -11,18 +11,19 @@ import type { DB, OnInitReason } from "prostgles-server/dist/initProstgles";
 import type { FileColumnConfig } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
-import type { Connections, DatabaseConfigs, DBS } from "..";
+import type { DatabaseConfigs, DBS } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
+import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 
-export const getDatabaseConfigFilter = (c: Connections) =>
+export const getDatabaseConfigFilter = (c: ConnectionHotReloadProperties) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
 
 type ParseTableConfigArgs = {
   dbs: DBS;
   conMgr: ConnectionManager;
   app: e.Express;
-  con: Connections;
+  con: ConnectionHotReloadProperties;
 } & (
   | {
       type: "saved";
@@ -133,7 +134,7 @@ export const getCompiledTS = (code: string) => {
 
 export const getRestApiConfig = (
   app: e.Express,
-  con: Pick<Connections, "id" | "url_path" | "port" | "is_state_db" | "name">,
+  con: ConnectionHotReloadProperties,
   { rest_api_enabled }: Pick<DatabaseConfigs, "rest_api_enabled">,
 ) => {
   const res: ProstglesInitOptions["restApi"] =

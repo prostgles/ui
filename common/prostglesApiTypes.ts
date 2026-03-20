@@ -273,6 +273,10 @@ export type UpdateParams<T extends AnyObject | void = void, S extends DBSchema |
      * If true then only valid and allowed fields will be updated
      */
     removeDisallowedFields?: boolean;
+    /**
+     * true by default.
+     * When set to false the update will throw an error if more than one row is updated (but the update will commit).
+     * */
     multi?: boolean;
 } & Pick<CommonSelectParams, "returnType">;
 type GetReturningReturnType<O extends UpdateParams<TD, S>, TD extends AnyObject, S extends DBSchema | void = void> = O extends {

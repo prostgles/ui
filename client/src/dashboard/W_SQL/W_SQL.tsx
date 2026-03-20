@@ -360,7 +360,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
           style={{
             inset: 0,
             background: "#00000040",
-            zIndex: 6, // Ensure it's above the right minimap scrollbar
+            zIndex: 1,
           }}
         >
           <div className="SQLHotkeysWrapper min-s-0 bg-color-0 p-1 rounded max-s-fit flex-col gap-1">
@@ -421,6 +421,14 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 this.editorContainer = r;
               }
             }}
+            style={
+              infoPlaceholder ?
+                {
+                  // Ensure infoPlaceholder appears above the right minimap scrollbar but beneath the askLLM chat
+                  zIndex: 0,
+                }
+              : {}
+            }
             className={`min-h-0 min-w-0 flex-col relative ${hideCodeEditor ? "f-0" : "f-1"}`}
           >
             {error && <ErrorComponent error={error} className="m-2" />}

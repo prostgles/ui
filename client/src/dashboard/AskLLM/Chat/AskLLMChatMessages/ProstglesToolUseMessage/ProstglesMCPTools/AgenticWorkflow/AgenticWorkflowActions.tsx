@@ -17,7 +17,7 @@ import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import type { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
-import type { UseAgenticWorkflowUserInputReturn } from "./hooks/useAgenticWorkflowUserInput";
+import type { UseAgenticWorkflowUserInputReturn } from "./hooks/useUserInput";
 
 export const AgenticWorkflowActions = ({
   workflow,
@@ -155,7 +155,7 @@ export const AgenticWorkflowActions = ({
             const res = await startAgenticWorkflow!({
               chatId,
               workflowId: workflow.id,
-              userInputValue,
+              userInputValue: userInputValue ?? {},
               messageId,
               executionMode,
               autoApproveAllTools,

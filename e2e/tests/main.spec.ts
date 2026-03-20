@@ -66,6 +66,7 @@ import {
 } from "./utils/utils";
 import { mkdir } from "fs/promises";
 
+const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
   test: TEST_DB_NAME,
   food_delivery: "food_delivery",
@@ -233,7 +234,6 @@ test.describe("Main test", () => {
     await goToWorkspace();
 
     await page.waitForTimeout(500);
-
     if (!localNoAuthSetup) {
       await disablePwdlessAdminAndCreateUser(page);
     }
@@ -268,13 +268,6 @@ test.describe("Main test", () => {
     await page.getByTestId("SmartForm.close").waitFor({ state: "visible" });
     await page.getByTestId("SmartForm.delete").waitFor({ state: "visible" });
     await page.getByTestId("SmartForm.close").click();
-
-    /** Schema diagram works */
-    await page.getByTestId("SchemaGraph").click();
-    await page.waitForTimeout(1e3);
-    await page
-      .getByText("Reset layout")
-      .waitFor({ state: "visible", timeout: 15e3 });
   });
 
   test("State db backup and restore works", async ({ page: p }) => {
@@ -360,6 +353,104 @@ test.describe("Main test", () => {
     await openConnection(page, "Prostgles UI state");
     // await page.getByTestId("config.goToConnDashboard").click();
     await expect(table).toBeVisible();
+  });
+
+  test("Create db for Schema graph", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await login(page, USERS.test_user);
+
+    await createDatabase(schemaGraphTestDbName, page, true);
+  });
+
+  test("Schema graph renders and can be zoomed and panned", async ({
+    page: p,
+  }) => {
+    const page = p as PageWIds;
+    await login(page, USERS.test_user);
+
+    await openConnection(page, "financial");
+
+    /** Schema diagram works */
+    await page.getByTestId("SchemaGraph").click();
+    await page.waitForTimeout(1e3);
+    await page
+      .getByText("Reset layout")
+      .waitFor({ state: "visible", timeout: 15e3 });
+
+    await page.getByTestId("SchemaGraph.TopControls.resetLayout").click();
+    await page.getByTestId("Btn.ClickConfirmation.Confirm").click();
+
+    const getDrawnInfo = async () => {
+      const drawnInfo: {
+        scale: number;
+        translate: { x: number; y: number };
+        shapes: (
+          | {
+              type: "rectangle";
+              coords: [number, number];
+              data: {
+                name: string;
+              };
+            }
+          | {
+              type: "linkline";
+            }
+        )[];
+      } = await page.evaluate(() => {
+        //@ts-ignore
+        return document.querySelector("canvas")?._drawn;
+      });
+      return drawnInfo;
+    };
+    const initialShapesInfo = await getDrawnInfo();
+
+    /** Scroll wheel zoom works */
+    await page.mouse.move(300, 300);
+    await page.mouse.wheel(100, 0);
+
+    await page.waitForTimeout(1500);
+
+    const zoomedInShapesInfo = await getDrawnInfo();
+    await expect(zoomedInShapesInfo.scale).toBeGreaterThan(
+      initialShapesInfo.scale,
+    );
+
+    const accountsTablePos = [155, 88] as const;
+    await page.mouse.move(...accountsTablePos);
+    await page.waitForTimeout(1e3);
+    await page.mouse.down({ button: "left" });
+    const newPosition = [
+      accountsTablePos[0] + 200,
+      accountsTablePos[1] + 50,
+    ] as const;
+    await page.mouse.move(...newPosition, {
+      steps: 5,
+    });
+    await page.waitForTimeout(1e3);
+    await page.mouse.up({ button: "left" });
+    await page.waitForTimeout(1e3);
+    // await page.mouse.move(...accountsTablePos, {
+    //   steps: 5,
+    // });
+    // await page.getByTestId("Popup.close").click();
+    // await page.getByTestId("SchemaGraph").click();
+    // await page.waitForTimeout(2e3);
+    const movedShapesInfo = await getDrawnInfo();
+    const accountsTableInfo = initialShapesInfo.shapes.find(
+      (t) => t.type === "rectangle" && t.data.name === "accounts",
+    ) as
+      | Extract<(typeof movedShapesInfo.shapes)[number], { type: "rectangle" }>
+      | undefined;
+    const movedAccountsTableInfo = movedShapesInfo.shapes.find(
+      (t) => t.type === "rectangle" && t.data.name === "accounts",
+    ) as
+      | Extract<(typeof movedShapesInfo.shapes)[number], { type: "rectangle" }>
+      | undefined;
+    await expect(accountsTableInfo).toBeDefined();
+    await expect(movedAccountsTableInfo).toBeDefined();
+    await expect(movedAccountsTableInfo!.coords[0]).toBeGreaterThan(
+      accountsTableInfo!.coords[0],
+    );
   });
 
   test("Server settings and account tabs work ", async ({ page: p }) => {
@@ -971,6 +1062,9 @@ test.describe("Main test", () => {
     const mcpToolUse = await getAskLLMLastMessage(page);
     await expect(mcpToolUse).toContain("successfully fetched the login page");
 
+    /** Ensure chat name updates based on first message */
+    await expect(page.getByTestId("LLMChat.select")).toContainText("mcp");
+
     await sendAskLLMMessage(page, " mcp ");
     await page
       .getByTestId("AskLLMToolApprover.AllowOnce")
@@ -1112,7 +1206,14 @@ test.describe("Main test", () => {
       `Maximum total cost of the chat (5) will be reached after sending this message`,
       { timeout: 30_000 },
     );
+  });
 
+  test("Test LLM sandbox tools", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await loginWhenSignupIsEnabled(page);
+
+    await openConnection(page, "cloud");
+    await page.getByTestId("AskLLM").click();
     /* MCP Docker sandbox */
     await newChat(page);
     /* Prompt persists from the prev chat */
@@ -1147,7 +1248,9 @@ test.describe("Main test", () => {
       prepareCb: (() => Promise<void>) | undefined = undefined,
     ) => {
       await sendAskLLMMessage(page, " mcpsandbox ");
-      await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+      await page
+        .getByTestId("AskLLMToolApprover.AllowOnce")
+        .click({ timeout: 20e3 });
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "create a container that runs",
         { timeout: 60e3 },
@@ -1169,13 +1272,23 @@ test.describe("Main test", () => {
         );
       }
     };
+    await runDbSql(page, `DROP TABLE IF EXISTS users ;`);
+
+    await dockerRunAndExpect(
+      `Validation error for userInput definition key1: the following table names do not match any new tables or existing tables: ["users"]`,
+    );
+
+    await runDbSql(
+      page,
+      `CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT);`,
+    );
 
     await dockerRunAndExpect(
       `cannot execute CREATE TABLE in a read-only transaction`,
       async () => {
         await page
           .getByTestId("AskLLMToolApprover.AllowOnce")
-          .click({ timeout: 10e3 });
+          .click({ timeout: 20e3 });
         await page.waitForTimeout(1e3);
         await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
         await page
@@ -1186,6 +1299,7 @@ test.describe("Main test", () => {
           .click();
       },
     );
+    await runDbSql(page, `DROP TABLE users;`);
 
     await page.keyboard.press("Escape");
     await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
@@ -2352,6 +2466,27 @@ test.describe("Main test", () => {
     await page.waitForTimeout(2e3);
   });
 
+  /** Used in debugging  User can insert and view */
+  // test("RESEST User can insert and view files through allowed reference columns", async ({
+  //   page: p,
+  // }) => {
+  //   const page = p as PageWIds;
+
+  //   await login(page, USERS.test_user);
+  //   await page.getByRole("link", { name: "Connections" }).click();
+  //   await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
+  //   await page.waitForTimeout(1e3);
+  //   await runDbSql(page, `DELETE FROM my_table WHERE id > 4;`);
+  //   await runDbSql(
+  //     page,
+  //     `SELECT setval(
+  //     pg_get_serial_sequence('my_table', 'id'),
+  //     COALESCE((SELECT MAX(id) FROM my_table), 0),
+  //     true
+  //   );`,
+  //   );
+  // });
+
   test("User can insert and view files through allowed reference columns", async ({
     page: p,
   }) => {
@@ -2361,6 +2496,9 @@ test.describe("Main test", () => {
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
     await page.waitForTimeout(1e3);
+
+    await expect(page.getByText(fileName)).toHaveCount(0);
+
     await clickInsertRow(page, "my_table");
     await selectAndUpsertFile(
       page,
@@ -2414,6 +2552,9 @@ test.describe("Main test", () => {
     await page
       .getByRole("button", { name: "Update row!", exact: true })
       .click();
+    await page.waitForTimeout(500);
+
+    /** If it fails you might need to exit my_table fullscreen and it will be in the top files table */
     await expect(page.getByText(fileName)).toHaveCount(0);
 
     // Updating row with file works

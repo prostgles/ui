@@ -117,7 +117,11 @@ export const ERDSchema = ({
       style={{ overflow: "hidden" }}
     >
       <canvas ref={canvasRef} onWheel={handleWheel} className="f-1" />
-      <svg ref={svgRef} className="text-search-svg absolute w-full h-full" />
+      <svg
+        ref={svgRef}
+        className="text-search-svg absolute w-full h-full"
+        style={{ pointerEvents: "none" }}
+      />
     </FlexCol>
   );
 };

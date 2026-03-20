@@ -53,6 +53,29 @@ const logRecords: {
 const isPlaywright = process.env.PLAYWRIGHT_TEST === "true";
 
 export const addLog = (e: EventInfo, connection_id: string | null) => {
+  // if (
+  //   e.type === "syncOrSub" &&
+  //   e.command === "addTrigger" &&
+  //   (e.tableName === "connections" || e.tableName === "database_configs")
+  // ) {
+  //   // if (item?.columnInfo?.tracked_columns.port) {
+  //   //   console.error("Port", item);
+  //   // }
+  //   // console.log(e.tableName, item);
+  // }
+  // if (e.type === "syncOrSub" && e.command === "refreshTriggers") {
+  //   const items = Array.from(
+  //     structuredClone(e).triggers?.get("connections")?.values() ?? [],
+  //   );
+  //   const item = items.find(
+  //     ({ hash }) => hash === "daaf113dfd1f8e2deaaa3eb5af1d0f80",
+  //   );
+  //   if (item && !item.columnInfo?.tracked_columns.port) {
+  //     // eslint-disable-next-line no-debugger
+  //     debugger;
+  //   }
+  //   console.log(item);
+  // }
   if (isPlaywright) {
     console.log(
       //@ts-ignore

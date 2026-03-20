@@ -18,7 +18,6 @@ export const useMCPChatAllowedTools = (
         },
       },
     );
-
   return { llm_chats_allowed_mcp_tools };
 };
 export type MCPChatAllowedTools = NonNullable<

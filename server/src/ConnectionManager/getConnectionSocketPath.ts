@@ -1,8 +1,9 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { getConnectionApiPaths } from "@common/utils";
+import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 
 export const getConnectionSocketPath = (
-  connection: DBSSchema["connections"],
+  connection: ConnectionHotReloadProperties,
 ) => {
   const socketPath = getConnectionApiPaths(connection).ws;
   const socketUrl =

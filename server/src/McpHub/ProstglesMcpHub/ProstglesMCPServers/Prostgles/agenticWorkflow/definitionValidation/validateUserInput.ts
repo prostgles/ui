@@ -1,6 +1,6 @@
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getProperty } from "@common/utils";
 import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { isObject } from "prostgles-types";
 
 type UserInput = JSONBTypeIfDefined<

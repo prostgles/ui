@@ -3,6 +3,7 @@ import { createHttpServer } from "@src/createHttpAndIOServers/createHttpServer";
 import { createIOWebsocketServer } from "@src/createHttpAndIOServers/createIOWebsocketServer";
 import { isEqual } from "prostgles-types";
 import type { ConnectionManager } from "./ConnectionManager";
+import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 
 export function getConnectionHttpServer(
   this: ConnectionManager,
@@ -11,7 +12,7 @@ export function getConnectionHttpServer(
     databaseConfig,
     socketPath,
   }: {
-    connection: DBSSchema["connections"];
+    connection: ConnectionHotReloadProperties;
     databaseConfig: DBSSchema["database_configs"];
     socketPath: string;
   },
