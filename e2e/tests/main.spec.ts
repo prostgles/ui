@@ -4,7 +4,8 @@ import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
 import { spawn } from "child_process";
 import { fileBrowserGoToPath } from "fileBrowserGoToPath";
-import { readFileSync, writeFileSync } from "fs";
+import { writeFileSync } from "fs";
+import { mkdir } from "fs/promises";
 import { join, resolve } from "path";
 import {
   localNoAuthSetup,
@@ -64,8 +65,6 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
-import { mkdir } from "fs/promises";
-import exp = require("constants");
 
 const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
@@ -1163,7 +1162,12 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
-    await expect(mcpToolUse).toContain("successfully fetched the login page");
+    await expect(mcpToolUse).toContainText(
+      "successfully fetched the login page",
+      {
+        timeout: 10_000,
+      },
+    );
 
     /** Ensure chat name updates based on first message */
     await expect(page.getByTestId("LLMChat.select")).toContainText("mcp");

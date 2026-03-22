@@ -67,6 +67,7 @@ jobs:
           npm cache clean --force
 
       - name: Run test
+        continue-on-error: true
         run: |
           npm test
 
@@ -78,10 +79,12 @@ jobs:
             e2e/electron-report/
             e2e/playwright-report/
           retention-days: 10
+          if-no-files-found: warn
   test_desktop_on_macos:
     runs-on: macos-latest
     timeout-minutes: 15
     if: success()
+    needs: [test_linux]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3

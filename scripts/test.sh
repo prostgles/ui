@@ -1,6 +1,9 @@
 set -e
 
-trap 'kill 0' EXIT
+# Ensure the pw report is saved
+if [ "$CI" != "true" ]; then
+  trap 'kill 0' EXIT
+fi
 
 # Compile TS to Ensure any errors are caught
 cd client

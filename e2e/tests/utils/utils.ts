@@ -869,12 +869,13 @@ export const getAskLLMLastMessage = async (page: PageWIds) => {
 
   await Promise.all(
     [...toolCallBtns, lastIncomingMessage].map((btn) =>
-      btn.locator(".Loading").waitFor({ state: "detached", timeout: 30_000 }),
+      btn
+        .getByTestId("Loading")
+        .waitFor({ state: "detached", timeout: 30_000 }),
     ),
   );
   await page.waitForTimeout(1500);
-  const response = await lastIncomingMessage.textContent();
-  return response;
+  return lastIncomingMessage;
 };
 
 const waitForAllMatchingLocatorsToDisappear = async (
@@ -941,7 +942,8 @@ export const getLLMResponses = async (
 
   for (const question of questions) {
     await sendAskLLMMessage(page, question);
-    const response = await getAskLLMLastMessage(page);
+    const responseMessage = await getAskLLMLastMessage(page);
+    const response = await responseMessage.textContent();
     result.push({
       response,
       isOk: !!response?.includes("Mocked response"),
