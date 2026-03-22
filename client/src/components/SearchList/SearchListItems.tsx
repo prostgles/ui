@@ -36,6 +36,7 @@ export type SearchListItemsProps = Pick<
   searchingItems: boolean;
   endSearch: (force?: boolean) => void;
   showHover: boolean;
+  showFirstItemAsFocused: boolean;
 };
 export const SearchListItems = forwardRef<
   HTMLUListElement | null,
@@ -54,17 +55,18 @@ export const SearchListItems = forwardRef<
     endSearch,
     onReorder,
     onMultiToggle,
+    showFirstItemAsFocused,
   } = props;
   const inputWrapper = inputWrapperRef.current;
   const notAllItemsShown =
     renderedItems.length && renderedItems.length < items.length && !searchTerm;
 
-  const [node, setNode] = useState<HTMLUListElement | null>(null);
+  const [ulNode, setNode] = useState<HTMLUListElement | null>(null);
   const handleRef = useCallback((el: HTMLUListElement | null) => {
     setNode(el);
   }, []);
-  useImperativeHandle(ref, () => node as HTMLUListElement, [node]);
-  useScrollFade(node);
+  useImperativeHandle(ref, () => ulNode as HTMLUListElement, [ulNode]);
+  useScrollFade(ulNode);
 
   const listStyle = useMemo(() => {
     return {
@@ -132,7 +134,7 @@ export const SearchListItems = forwardRef<
           data-command={"SearchList.List"}
         >
           {onSearch && !props.items ? null : (
-            renderedItems.map((renderedItem, i) => {
+            renderedItems.map((renderedItem, index) => {
               const onPress: SearchListItem["onPress"] =
                 !renderedItem.onPress || renderedItem.disabledInfo ?
                   undefined
@@ -154,9 +156,9 @@ export const SearchListItems = forwardRef<
               };
               const { contentTop } = renderedItem;
               return (
-                <React.Fragment key={i}>
+                <React.Fragment key={index}>
                   {typeof contentTop === "function" ?
-                    contentTop(renderedItems, i)
+                    contentTop(renderedItems, index)
                   : contentTop}
                   <DraggableLI
                     role={onPress ? "option" : "listitem"}
@@ -178,11 +180,14 @@ export const SearchListItems = forwardRef<
                       : {}),
                     }}
                     tabIndex={-1}
-                    idx={i}
+                    idx={index}
                     items={items.slice(0)}
                     onReorder={onReorder}
                     className={classOverride(
                       "noselect bg-li flex-row ai-start p-p5 min-w-0 " +
+                        (index === 0 && showFirstItemAsFocused ?
+                          " focused "
+                        : "") +
                         (onMultiToggle ? " px-1 " : "") +
                         (renderedItem.selected ? " selected " : "") +
                         (renderedItem.disabledInfo ? " not-allowed "

@@ -95,20 +95,6 @@ export const AgenticWorkflowActions = ({
           />
         )}
         <Btn
-          iconPath={workflow.saved ? mdiBookmark : mdiBookmarkOutline}
-          title={"Save workflow to workspace."}
-          color={workflow.saved ? "action" : undefined}
-          variant="icon"
-          onClickPromise={async () => {
-            await dbs.agentic_workflows.update(
-              { id: workflow.id },
-              {
-                saved: !workflow.saved,
-              },
-            );
-          }}
-        />
-        <Btn
           iconPath={mdiCheckAll}
           title={
             "If enabled, all tools used by the agent will be automatically approved."

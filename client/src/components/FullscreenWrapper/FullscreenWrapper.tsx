@@ -50,8 +50,8 @@ export const FullscreenWrapper = ({
           }),
       }}
     >
-      <FlexRow className="bg-color-2 p-p25">
-        <div className="text-sm text-color-4 f-1 px-1no ta-start flex-row gap-p5">
+      <FlexRow className="bg-color-2 p-p25 gap-0">
+        <div className="text-sm text-color-4 f-1 ta-start flex-row gap-p5">
           {title}
         </div>
         {endActions?.map((action, i) => (

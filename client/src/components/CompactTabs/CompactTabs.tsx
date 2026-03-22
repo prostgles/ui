@@ -15,6 +15,7 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
   items,
   controlled,
   maxHeight,
+  titleEndContent,
 }: {
   items: T;
   defaultTab?: keyof T;
@@ -25,6 +26,7 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
     activeTab: string;
     setActiveTab: (tab: string) => void;
   };
+  titleEndContent?: React.ReactNode;
 }) => {
   const [localActiveTab, setLocalActiveTab] = useState(
     defaultTab ??
@@ -42,20 +44,25 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
     <FullscreenWrapper
       className={className}
       style={style}
-      title={Object.entries(items).map(([key, { disabledInfo }]) => (
-        <Btn
-          key={key}
-          data-key={key}
-          disabledInfo={disabledInfo}
-          size="small"
-          variant={activeTab === key ? "faded" : undefined}
-          onClick={() => {
-            setActiveTab(key);
-          }}
-        >
-          {key}
-        </Btn>
-      ))}
+      title={
+        <>
+          {Object.entries(items).map(([key, { disabledInfo }]) => (
+            <Btn
+              key={key}
+              data-key={key}
+              disabledInfo={disabledInfo}
+              size="small"
+              variant={activeTab === key ? "faded" : undefined}
+              onClick={() => {
+                setActiveTab(key);
+              }}
+            >
+              {key}
+            </Btn>
+          ))}
+          {titleEndContent}
+        </>
+      }
       maxContentHeight={maxHeight}
     >
       <>

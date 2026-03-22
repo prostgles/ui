@@ -12,6 +12,9 @@ import { AgenticWorkflowDefinition } from "./AgenticWorkflowDefinition";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import { useUserInput } from "./hooks/useUserInput";
+import Btn from "@components/Btn";
+import { mdiBookmark, mdiBookmarkOutline } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const AgenticWorkflow = ({
   messageId,
@@ -43,6 +46,7 @@ export const AgenticWorkflow = ({
       }
     | undefined;
 } & Parameters<typeof useAgenticWorkflowState>[0]) => {
+  const { dbs } = usePrgl();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const successDuration = useMemo(
     () => ({
@@ -89,6 +93,27 @@ export const AgenticWorkflow = ({
           maxHeight: "600px",
           minHeight: "400px",
         }}
+        titleEndContent={
+          workflow && (
+            <Btn
+              iconPath={workflow.saved ? mdiBookmark : mdiBookmarkOutline}
+              title={"Save workflow to workspace."}
+              color={workflow.saved ? "action" : undefined}
+              variant="text"
+              className="ml-auto"
+              size="small"
+              onClickPromiseMode="noTickIcon"
+              onClickPromise={async () => {
+                await dbs.agentic_workflows.update(
+                  { id: workflow.id },
+                  {
+                    saved: !workflow.saved,
+                  },
+                );
+              }}
+            />
+          )
+        }
         items={{
           ...(workflow && {
             Details: {

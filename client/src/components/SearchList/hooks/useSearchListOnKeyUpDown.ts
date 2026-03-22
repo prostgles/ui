@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import type { SearchListProps } from "../SearchList";
 
 export const SEARCH_LIST_INPUT_CLASSNAME = "search-list-comp-input";
@@ -19,10 +25,27 @@ export const useSearchListOnKeyUpDown = ({
   endSearch,
   searchTerm,
 }: SearchListOnKeyUpDownProps) => {
-  const focusedRowIndexRef = useRef<number | undefined>(undefined);
+  const getFocusInfo = useCallback(() => {
+    const list = refList.current;
+    const { activeElement } = document;
+    const listIsFocused = Boolean(
+      activeElement && list?.contains(activeElement),
+    );
+
+    const inputIsFocused = !!activeElement?.closest(
+      "." + SEARCH_LIST_INPUT_CLASSNAME,
+    );
+    return { listIsFocused, inputIsFocused };
+  }, [refList]);
+
+  const focusedRowIndexRef = useRef<number | undefined>(0);
+  const [showFirstItemAsFocused, setShowFirstItemAsFocused] = useState(true);
   useEffect(() => {
     focusedRowIndexRef.current = undefined;
-  }, [searchTerm]);
+    setTimeout(() => {
+      setShowFirstItemAsFocused(getFocusInfo().inputIsFocused);
+    }, 200);
+  }, [getFocusInfo, searchTerm, refInput]);
 
   const onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = useCallback(
     (e) => {
@@ -30,19 +53,20 @@ export const useSearchListOnKeyUpDown = ({
       const input = refInput.current;
       if (!list) return;
       const { activeElement } = document;
-      if (!activeElement || !e.currentTarget.contains(document.activeElement))
+      if (!activeElement || !e.currentTarget.contains(document.activeElement)) {
         return;
+      }
       const listItems = [...list.children].filter(
         (el) => el instanceof HTMLLIElement,
       );
       const firstListItem = listItems.at(0);
       const lastListItem = listItems.at(-1);
 
-      const listNotFocused = !list.contains(activeElement);
-
-      const inputIsFocused = !!activeElement.closest(
-        "." + SEARCH_LIST_INPUT_CLASSNAME,
-      );
+      const { listIsFocused, inputIsFocused } = getFocusInfo();
+      if (listIsFocused && e.key === "ArrowLeft") {
+        input?.focus();
+      }
+      setShowFirstItemAsFocused(inputIsFocused);
 
       /* Prevent annoying select all when not within input */
       if (e.key === "a" && e.ctrlKey && !inputIsFocused) {
@@ -67,7 +91,7 @@ export const useSearchListOnKeyUpDown = ({
       }
 
       if (
-        !listNotFocused &&
+        listIsFocused &&
         e.key.length === 1 &&
         !e.shiftKey &&
         !e.ctrlKey &&
@@ -78,14 +102,14 @@ export const useSearchListOnKeyUpDown = ({
       }
 
       if (e.key === "ArrowUp") {
-        if (activeElement === firstListItem || listNotFocused) {
+        if (activeElement === firstListItem || !listIsFocused) {
           lastListItem?.focus();
         } else if (listItems.length && activeElement instanceof HTMLLIElement) {
           listItems[listItems.indexOf(activeElement) - 1]?.focus();
         }
         e.preventDefault();
       } else if (e.key === "ArrowDown") {
-        if (activeElement === lastListItem || listNotFocused) {
+        if (activeElement === lastListItem || !listIsFocused) {
           firstListItem?.focus();
         } else if (listItems.length && activeElement instanceof HTMLLIElement) {
           listItems[listItems.indexOf(activeElement) + 1]?.focus();
@@ -100,8 +124,8 @@ export const useSearchListOnKeyUpDown = ({
           : -1;
       }
     },
-    [endSearch, onPressEnter, refInput, refList, searchTerm],
+    [endSearch, onPressEnter, refInput, refList, searchTerm, getFocusInfo],
   );
 
-  return { onKeyDown };
+  return { onKeyDown, showFirstItemAsFocused };
 };

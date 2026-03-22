@@ -73,7 +73,7 @@ export const SearchListContent = <M extends boolean = false>(
     matchCase,
   });
 
-  const noList = isSearch ? searchClosed : false; // !renderedItems.length && !searchTerm;
+  const noList = isSearch ? searchClosed : false;
 
   const wrapperStyleFinal = useMemo(() => {
     if (noBorder) {
@@ -111,7 +111,7 @@ export const SearchListContent = <M extends boolean = false>(
     }
   }, [autoFocus]);
 
-  const { onKeyDown } = useSearchListOnKeyUpDown({
+  const { onKeyDown, showFirstItemAsFocused } = useSearchListOnKeyUpDown({
     refList,
     onPressEnter,
     endSearch,
@@ -149,11 +149,14 @@ export const SearchListContent = <M extends boolean = false>(
         endSearch={endSearch}
         showHover={showHover}
         listStyle={props.listStyle}
+        showFirstItemAsFocused={showFirstItemAsFocused}
       />;
   return (
     <div
       data-command="SearchList"
-      className={"SearchList list-comp ta-left flex-col min-h-0 " + className}
+      className={
+        "SearchList list-comp ta-left flex-col min-h-0 gap-p5 " + className
+      }
       ref={rootRef}
       onKeyDown={onKeyDown}
       style={{ ...style, ...(!isSearch ? rootStyle : {}) }}

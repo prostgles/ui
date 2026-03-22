@@ -11,12 +11,7 @@ export default defineConfig({
 
   retries: 0,
   workers: process.env.CI ? 1 : 4,
-  reporter: [
-    [
-      "html",
-      { noCopyPrompt: true, open: process.env.CI ? "never" : "on-failure" },
-    ],
-  ],
+  reporter: [["html", { noCopyPrompt: true }]],
   use: {
     baseURL: "http://localhost:3004",
     trace: "retain-on-failure",
