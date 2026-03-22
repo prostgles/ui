@@ -6,7 +6,7 @@ import type {
   ToolUseMessage,
 } from "../ToolUseChatMessage/ToolUseChatMessage";
 import { Agent } from "./ProstglesMCPTools/Agent/Agent";
-import { AgenticWorkflow } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
+import { AgenticWorkflowMessage } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflowMessage";
 import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
 import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
@@ -26,7 +26,7 @@ export const ProstglesMCPToolsWithUI = {
     "prostgles-ui",
     "create_agentic_workflow",
   ) as string]: {
-    component: AgenticWorkflow,
+    component: AgenticWorkflowMessage,
     displayMode: "full",
     showsError: true,
   },

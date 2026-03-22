@@ -12,13 +12,15 @@ export const useChatFileUpload = () => {
     dbsMethods: { getDocumentText, toggleService },
   } = usePrglCore();
   const [files, setFiles] = useState<File[]>([]);
+  const [convertDocsToMarkdown, _setConvertDocsToMarkdown] =
+    useState<Partial<{ docs: true; images: true }>>();
 
   const filesWithInfo = usePromise(async () => {
     if (!files.length) return [];
     return Promise.all(
       files.map(async (file) => {
         const base64Data = await blobToBase64(file);
-        const isDoc = CONVERTABLE_DOCUMENT_TYPES.includes(file.type);
+        const isDoc = CONVERTABLE_TYPES.includes(file.type);
         return {
           file,
           base64Data,
@@ -34,9 +36,8 @@ export const useChatFileUpload = () => {
       }),
     );
   }, [files]);
-  const [convertDocsToMarkdown, _setConvertDocsToMarkdown] = useState(false);
   const setConvertDocsToMarkdown = useCallback(
-    async (value: boolean) => {
+    async (value: typeof convertDocsToMarkdown) => {
       if (value) {
         if (!toggleService) {
           throw new Error(
@@ -71,8 +72,19 @@ export const useChatFileUpload = () => {
   const getConvertedDocs = useCallback(async () => {
     const docFilesMessages: LLMMessage["message"] = [];
     const otherFiles = filesWithInfo?.filter((f) => !f.docFile) ?? [];
+    const applicableTypes = [
+      ...(convertDocsToMarkdown?.docs ? CONVERTABLE_DOCUMENT_TYPES : []),
+      ...(convertDocsToMarkdown?.images ? CONVERTABLE_IMAGE_TYPES : []),
+    ];
     const docFiles =
-      filesWithInfo?.map((f) => f.docFile).filter(isDefined) ?? [];
+      filesWithInfo
+        ?.map((f) => {
+          if (!applicableTypes.includes(f.file.type)) {
+            return undefined;
+          }
+          return f.docFile;
+        })
+        .filter(isDefined) ?? [];
     if (!convertDocsToMarkdown || !getDocumentText) {
       return { otherFiles: filesWithInfo, docFilesMessages };
     }
@@ -148,11 +160,17 @@ const CONVERTABLE_DOCUMENT_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // XLSX
   "application/vnd.openxmlformats-officedocument.presentationml.presentation", // PPTX
-
+];
+const CONVERTABLE_IMAGE_TYPES = [
   // Images
-  // "image/png",
-  // "image/jpeg",
-  // "image/tiff",
-  // "image/bmp",
-  // "image/webp",
+  "image/png",
+  "image/jpeg",
+  "image/tiff",
+  "image/bmp",
+  "image/webp",
+];
+
+const CONVERTABLE_TYPES = [
+  ...CONVERTABLE_DOCUMENT_TYPES,
+  ...CONVERTABLE_IMAGE_TYPES,
 ];

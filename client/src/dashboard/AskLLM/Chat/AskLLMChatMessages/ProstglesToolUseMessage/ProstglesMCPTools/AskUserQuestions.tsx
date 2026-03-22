@@ -12,11 +12,11 @@ import {
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useEffectDeep } from "prostgles-client";
-import type { JSONB } from "prostgles-types";
 import React from "react";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData";
 import { useSendToolUseResult } from "./common/useSendToolUseResult";
+import { useJSONBParsedData } from "./common/useJSONBParsedData";
 
 export const AskUserQuestions = ({
   chatId,
@@ -24,10 +24,13 @@ export const AskUserQuestions = ({
   toolUseResult,
 }: Pick<ProstglesMCPToolsProps, "chatId" | "message" | "toolUseResult">) => {
   const { tables } = usePrgl();
-  const data = message.input as JSONB.GetObjectType<
-    (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["ask_user_questions"]["schema"]["type"]
-  >;
-  const { questions } = data;
+  const { data, error } = useJSONBParsedData(
+    message.input,
+    PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["ask_user_questions"][
+      "schema"
+    ],
+  );
+  const { questions } = data ?? {};
   const [selectedAnswers, setSelectedAnswers] = React.useState<
     Map<string, Set<string>>
   >(new Map());
@@ -58,8 +61,8 @@ export const AskUserQuestions = ({
 
   return (
     <FlexCol className="w-full ta-left" data-command="AskUserQuestions">
-      <ErrorComponent error={result?.error} />
-      {questions.map(({ question, ...questionData }, questionIndex) => {
+      <ErrorComponent error={error ?? result?.error} />
+      {questions?.map(({ question, ...questionData }, questionIndex) => {
         const questionResponseValues = Array.from(
           selectedAnswers.get(question)?.values() ?? [],
         );

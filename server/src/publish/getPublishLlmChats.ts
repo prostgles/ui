@@ -37,5 +37,37 @@ export const getPublishLlmChats = (user_id: string, isAdmin: boolean) => {
         forcedFilter,
       },
     },
+    agentic_workflows: {
+      select: {
+        fields: "*",
+        forcedFilter,
+      },
+      insert: {
+        fields: "*",
+        forcedData,
+      },
+      update: {
+        fields: "*",
+        forcedData,
+        forcedFilter,
+      },
+      delete: { forcedFilter, filterFields: "*" },
+    },
+    agentic_workflow_runs: {
+      select: {
+        fields: "*",
+        forcedFilter,
+      },
+      insert: {
+        fields: "*",
+        forcedData,
+      },
+      update: {
+        fields: "*",
+        forcedData,
+        forcedFilter,
+      },
+      delete: { forcedFilter, filterFields: "*" },
+    },
   } satisfies Publish<DBGeneratedSchema>;
 };

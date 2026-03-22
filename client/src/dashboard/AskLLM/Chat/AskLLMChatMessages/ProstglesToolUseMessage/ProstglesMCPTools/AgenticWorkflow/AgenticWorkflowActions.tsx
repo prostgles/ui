@@ -5,6 +5,8 @@ import { ProgressBar } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
 import { Stopwatch } from "@components/Stopwatch";
 import {
+  mdiBookmark,
+  mdiBookmarkOutline,
   mdiCheckAll,
   mdiClock,
   mdiLockClock,
@@ -22,7 +24,6 @@ import type { UseAgenticWorkflowUserInputReturn } from "./hooks/useUserInput";
 export const AgenticWorkflowActions = ({
   workflow,
   chatId,
-  inputData,
   onStarted,
   onInitError,
   userInputState,
@@ -30,7 +31,6 @@ export const AgenticWorkflowActions = ({
   latestRun,
   onSuccess,
 }: Pick<ProstglesMCPToolsProps, "chatId"> & {
-  inputData: { workflow_function_definition: string };
   workflow: DBSSchema["agentic_workflows"];
   onStarted: () => void;
   onInitError: () => void;
@@ -65,7 +65,7 @@ export const AgenticWorkflowActions = ({
   const isRunning = state?.status === "running";
   return (
     <>
-      <FlexRow className="f-1 jc-end">
+      <FlexRow className="f-1 jc-end gap-0">
         {created && (
           <ProgressBar
             totalValue={100}
@@ -94,6 +94,20 @@ export const AgenticWorkflowActions = ({
             }
           />
         )}
+        <Btn
+          iconPath={workflow.saved ? mdiBookmark : mdiBookmarkOutline}
+          title={"Save workflow to workspace."}
+          color={workflow.saved ? "action" : undefined}
+          variant="icon"
+          onClickPromise={async () => {
+            await dbs.agentic_workflows.update(
+              { id: workflow.id },
+              {
+                saved: !workflow.saved,
+              },
+            );
+          }}
+        />
         <Btn
           iconPath={mdiCheckAll}
           title={
@@ -142,6 +156,7 @@ export const AgenticWorkflowActions = ({
         <Btn
           variant="filled"
           color="action"
+          className="mx-p25"
           disabledInfo={
             !startAgenticWorkflow ?
               "Starting agentic workflows is not allowed/available"
@@ -149,6 +164,7 @@ export const AgenticWorkflowActions = ({
           }
           data-command="AgenticWorkflow.start"
           loading={isRunning ? true : undefined}
+          onClickPromiseMode="noTickIcon"
           onClickPromise={async () => {
             if (!messageId) {
               throw new Error(`messageId missing`);

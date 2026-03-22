@@ -51,6 +51,7 @@ export type DBGeneratedSchema = {
       message_id?: null | string;
       state: 
        |  {  status: "running" | "completed" | "error" | "stopped";  progressPercent?: number;  message?: string; }
+      user_id: string;
       user_input_value:  Record<string, unknown>
       workflow_id: number;
     };
@@ -58,6 +59,7 @@ export type DBGeneratedSchema = {
   agentic_workflows: {
     columns: {
       chat_id: number;
+      connection_id?: null | string;
       created?: string;
       definition: string;
       definition_data: {    containerConfiguration: {  timeout: number;  cpus?: string;  memory?: string;  readOnly?: boolean;  internetAccess?: "none" | "bridge" | "host"; };   agentDefinitions?: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  tools?: Partial<Record<string,  Partial<Record<string, 1>>>>;  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   databaseAccessDefinitions?: |  {  mode: "execute_readonly_sql" | "execute_sql"; }
@@ -74,8 +76,11 @@ export type DBGeneratedSchema = {
       definition_override?: null | {    agentDefinitions?: Partial<Record<string,  {  prompt?: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  tools?: Partial<Record<string,  Partial<Record<string, 1>>>>;  maxTokens?: number;  temperature?: number; }>>;   containerConfiguration?: {  timeout?: number;  cpus?: string;  memory?: string;  readOnly?: boolean;  internetAccess?: "none" | "bridge" | "host"; };  };
       definition_summary?: string;
       id?: number;
+      message_id: string;
       name: string;
       package_dependencies?: null | Record<string, string>
+      saved?: boolean;
+      tool_use_id: string;
       user_id: string;
     };
   };
@@ -261,6 +266,8 @@ export type DBGeneratedSchema = {
       finished?: null | string;
       id?: number;
       log:  (  {  type: "stdout" | "stderr" | "error";  text: string; } )[]
+      name?: string;
+      saved?: boolean;
       state: 
        |  {  status: "running" | "completed" | "error" | "stopped";  progressPercent?: number;  message?: string; }
       tool_use_id: string;

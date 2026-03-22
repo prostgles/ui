@@ -1,7 +1,5 @@
-import {
-  getMCPToolNameParts,
-  type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "@common/prostglesMcp";
+import { type PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import { FlexCol } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
@@ -21,26 +19,28 @@ import {
   type LanguageConfig,
 } from "src/dashboard/CodeEditor/CodeEditor";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
-import type { ToolResultMessage } from "../../../ToolUseChatMessage/ToolUseChatMessage";
 
 export const AgenticWorkflowDefinition = ({
   workflow_function_definition,
   workflow_function_definition_summary,
   chatId,
+  // workflow,
   workflowId,
-  toolResultMessage,
+  tool_use_id,
 }: {
   workflow_function_definition: string;
   workflow_function_definition_summary: string;
   chatId: number;
+  // workflow: DBSSchema["agentic_workflows"] | undefined;
+  tool_use_id: string;
   workflowId: number | undefined;
-  toolResultMessage: ToolResultMessage;
 }) => {
   const {
     dbsMethods: { getAgenticWorkflowTypes, reRunMCPServerTool },
     connectionId,
   } = usePrgl();
   const { onMount } = useMonacoScrollToLastLine(true);
+  // const workflowId = workflow?.id;
   const agentFiles = usePromise(async () => {
     if (!getAgenticWorkflowTypes) return;
 
@@ -54,13 +54,13 @@ export const AgenticWorkflowDefinition = ({
     const { files } = agentFiles;
     return {
       lang: "typescript",
-      modelFileName: `workflow_${toolResultMessage.tool_use_id}.ts`,
+      modelFileName: `workflow_${tool_use_id}.ts`,
       tsLibraries: getEntries(files).map(([filePath, content]) => ({
         filePath: `file:///${filePath}`,
         content,
       })),
     } satisfies LanguageConfig;
-  }, [agentFiles, toolResultMessage.tool_use_id]);
+  }, [agentFiles, tool_use_id]);
 
   const codeEditorProps = useMemo(() => {
     const monacoOpts: CodeEditorProps["options"] = {
@@ -72,17 +72,10 @@ export const AgenticWorkflowDefinition = ({
     const onSave: CodeEditorProps["onSave"] =
       reRunMCPServerTool ?
         async (newValue) => {
-          const toolNameParts = getMCPToolNameParts(
-            toolResultMessage.tool_name,
-          );
-          if (!toolNameParts) {
-            throw new Error(
-              `Invalid tool name: ${toolResultMessage.tool_name}`,
-            );
-          }
           await reRunMCPServerTool({
             chatId,
-            ...toolNameParts,
+            serverName: "prostgles-ui",
+            toolName: "create_agentic_workflow",
             args: {
               workflow_function_definition_summary,
               workflow_function_definition: newValue,
@@ -90,7 +83,7 @@ export const AgenticWorkflowDefinition = ({
             } satisfies JSONB.GetObjectType<
               (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_agentic_workflow"]["schema"]["type"]
             >,
-            reRunToolUseId: toolResultMessage.tool_use_id,
+            reRunToolUseId: tool_use_id,
           });
         }
       : undefined;
@@ -98,8 +91,7 @@ export const AgenticWorkflowDefinition = ({
   }, [
     reRunMCPServerTool,
     workflowId,
-    toolResultMessage.tool_name,
-    toolResultMessage.tool_use_id,
+    tool_use_id,
     workflow_function_definition_summary,
     chatId,
   ]);

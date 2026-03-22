@@ -6,7 +6,6 @@ import { InfoRow } from "@components/InfoRow";
 import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import React, { useMemo, useState } from "react";
-import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { AgenticWorkflowActions } from "./AgenticWorkflowActions";
 import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity";
 import { AgenticWorkflowDefinition } from "./AgenticWorkflowDefinition";
@@ -15,41 +14,35 @@ import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import { useUserInput } from "./hooks/useUserInput";
 
 export const AgenticWorkflow = ({
-  message,
-  toolUseResult,
-  chatId,
-  loadedSuggestions,
-  workspaceId,
-}: Pick<
-  ProstglesMCPToolsProps,
-  "chatId" | "message" | "toolUseResult" | "loadedSuggestions" | "workspaceId"
->) => {
-  const {
-    activeTab,
-    inputValidation,
-    setActiveTab,
-    workflowValidationError,
-    latestRun,
-    workflow,
-    validatedWorkflowData,
-  } = useAgenticWorkflowState({
-    message,
-    toolUseResult,
-  });
-
-  const userInputState = useUserInput(
-    workflow?.definition_data.userInput,
-    latestRun?.user_input_value,
-  );
-
-  if (inputValidation.error !== undefined) {
-    return (
-      <ErrorComponent
-        error={`Error parsing tool input: ${inputValidation.error}`}
-      />
-    );
-  }
-  const { data: inputData } = inputValidation;
+  messageId,
+  validatedWorkflowDataIsValid,
+  workflowValidationError,
+  workflow_id,
+  chatId: propsChatId,
+  inputData,
+  tool_use_id: toolUseIdFromProps,
+}: {
+  chatId: number | undefined;
+  tool_use_id: string | undefined;
+  inputData:
+    | {
+        workflow_function_definition: string;
+        workflow_function_definition_summary: string;
+      }
+    | undefined;
+  workflowValidationError:
+    | {
+        readonly type: "error";
+        readonly error: {} | null;
+        readonly logs?: undefined;
+      }
+    | {
+        readonly type: "error-logs";
+        readonly logs: string;
+        readonly error?: undefined;
+      }
+    | undefined;
+} & Parameters<typeof useAgenticWorkflowState>[0]) => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const successDuration = useMemo(
     () => ({
@@ -60,8 +53,33 @@ export const AgenticWorkflow = ({
     }),
     [],
   );
-  if (!toolUseResult) {
-    return <div>Validating the workflow...</div>;
+  const { activeTab, setActiveTab, latestRun, workflow } =
+    useAgenticWorkflowState({
+      messageId,
+      validatedWorkflowDataIsValid,
+      workflow_id,
+    });
+
+  const userInputState = useUserInput(
+    workflow?.definition_data.userInput,
+    latestRun?.user_input_value,
+  );
+
+  const chatId = propsChatId ?? workflow?.chat_id;
+  const workflow_function_definition =
+    inputData?.workflow_function_definition ?? workflow?.definition;
+  const workflow_function_definition_summary =
+    inputData?.workflow_function_definition ?? workflow?.definition_summary;
+  const tool_use_id = toolUseIdFromProps ?? workflow?.tool_use_id;
+  if (
+    !chatId ||
+    !workflow_function_definition ||
+    !workflow_function_definition_summary ||
+    !tool_use_id
+  ) {
+    return (
+      <ErrorComponent error={"Missing required data to display the workflow"} />
+    );
   }
   return (
     <FlexCol className="w-full" data-command="AgenticWorkflow">
@@ -90,12 +108,10 @@ export const AgenticWorkflow = ({
                 workflowId={workflow?.id}
                 chatId={chatId}
                 workflow_function_definition_summary={
-                  inputData.workflow_function_definition_summary
+                  workflow_function_definition_summary
                 }
-                workflow_function_definition={
-                  inputData.workflow_function_definition
-                }
-                toolResultMessage={toolUseResult.toolUseResultMessage}
+                workflow_function_definition={workflow_function_definition}
+                tool_use_id={tool_use_id}
               />
             ),
           },
@@ -104,8 +120,8 @@ export const AgenticWorkflow = ({
             content: (
               <AgenticWorkflowActivity
                 chatId={chatId}
-                loadedSuggestions={loadedSuggestions}
-                workspaceId={workspaceId}
+                loadedSuggestions={undefined}
+                workspaceId={undefined}
               />
             ),
           },
@@ -145,12 +161,11 @@ export const AgenticWorkflow = ({
           />
         </div>
       )}
-      {validatedWorkflowData && workflow && (
+      {workflow && (
         <AgenticWorkflowActions
           chatId={chatId}
           userInputState={userInputState}
           workflow={workflow}
-          inputData={inputData}
           onStarted={() => {
             setActiveTab("Logs");
           }}
@@ -158,7 +173,7 @@ export const AgenticWorkflow = ({
             setActiveTab("Details");
           }}
           onSuccess={() => setShowSuccessMessage(true)}
-          messageId={toolUseResult.toolUseResult.id}
+          messageId={messageId}
           latestRun={latestRun}
         />
       )}

@@ -1,4 +1,4 @@
-import { isDefined } from "prostgles-types";
+import { isDefined, tryCatchV2 } from "prostgles-types";
 import type { DBS } from "../..";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 
@@ -69,6 +69,46 @@ export const refreshModels = async (dbs: DBS) => {
       },
       [] as DBSSchemaForInsert["llm_models"][],
     );
+
+  await tryCatchV2(async () => {
+    const ollamaProvider = await dbs.llm_providers.findOne({ id: "Ollama" });
+    if (!ollamaProvider) return;
+    const { models } = await fetch(
+      ollamaProvider.api_url.replace("/v1/chat/completions", "/api/tags"),
+    ).then(
+      (res) =>
+        res.json() as Promise<{
+          models: {
+            name: string;
+            model: string;
+            modified_at: string;
+            size: number;
+            digest: string;
+            details: {
+              parent_model: string;
+              format: string;
+              family: string;
+              families: string[];
+              parameter_size: string;
+              quantization_level: string;
+            };
+          }[];
+        }>,
+    );
+    models.forEach((m) => {
+      insertData.push({
+        name: m.name,
+        provider_id: "Ollama",
+        mcp_tool_support: false,
+        pricing_info: {
+          input: 0,
+          output: 0,
+          cachedInput: 0,
+          cachedOutput: 0,
+        },
+      });
+    });
+  });
 
   await dbs.tx(async (dbTx) => {
     // const existingModels = await dbTx.llm_models.find();

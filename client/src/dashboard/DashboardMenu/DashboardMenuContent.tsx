@@ -28,6 +28,7 @@ import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import type { TablesWithInfo } from "./useTableSizeInfo";
+import { SavedAgenticWorkflowsAndContainers } from "./SavedAgenticWorkflowsAndContainers";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
@@ -308,6 +309,7 @@ export const DashboardMenuContent = (props: P) => {
           }))}
         />
       )}
+      <SavedAgenticWorkflowsAndContainers />
       <FlexRowWrap className="f-0 mt-1 mx-p5 jc-between">
         {!tables.length && !sql && (
           <InfoRow>

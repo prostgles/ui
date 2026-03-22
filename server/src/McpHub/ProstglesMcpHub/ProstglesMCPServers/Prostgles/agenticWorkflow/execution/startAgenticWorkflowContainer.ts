@@ -74,6 +74,7 @@ export const startAgenticWorkflowContainer = async (
           user_input_value: mode.userInputValue,
           log: [],
           state: { status: "running" },
+          user_id,
         },
         { returning: "*" },
       )

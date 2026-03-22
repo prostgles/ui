@@ -9,7 +9,6 @@ import {
 import type { LLMMessage } from "./askLLM";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 import { getCompactedMessages } from "./getCompactedMessages";
-import { text } from "node:stream/consumers";
 
 export const getLLMRequestBody = ({
   llm_provider,

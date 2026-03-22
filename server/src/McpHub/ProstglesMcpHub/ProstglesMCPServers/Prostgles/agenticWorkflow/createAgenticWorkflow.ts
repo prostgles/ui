@@ -30,8 +30,13 @@ const getValidWorkflowDefinition = async (
     aborter: AbortController;
     tableSchemaOpts: TableSchemaOpts;
   },
-  { user_id, chat, dbs, clientReq, messageId }: McpCallContext,
+  { user_id, chat, dbs, clientReq, messageId, toolUseId }: McpCallContext,
 ) => {
+  if (!toolUseId) {
+    throw new Error(
+      "tool_use_id is required to create or update an agentic workflow",
+    );
+  }
   return new Promise<
     | {
         isValid: true;
@@ -86,10 +91,12 @@ const getValidWorkflowDefinition = async (
           clientReq,
           userId: user_id,
         }).then(({ agentConfigsWithDefaults, tsSchema, newTables }) => {
-          const workflowInsertData = {
+          const workflowInsertData: DBSSchemaForInsert["agentic_workflows"] = {
             user_id,
             name: definitions.name,
             chat_id: chat.id,
+            message_id: messageId,
+            tool_use_id: toolUseId,
             definition: workflow_function_definition,
             definition_summary: workflow_function_definition_summary,
             package_dependencies,
@@ -206,9 +213,12 @@ export const createAgenticWorkflow = async (
         workflowId,
       } as const;
     }
-    const newWorkflow = await dbs.agentic_workflows.insert(workflowInsertData, {
-      returning: { id: 1 },
-    });
+    const newWorkflow = await dbs.agentic_workflows.insert(
+      { ...workflowInsertData, connection_id },
+      {
+        returning: { id: 1 },
+      },
+    );
     return {
       isValid: true,
       workflowId: newWorkflow.id,
