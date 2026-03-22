@@ -174,21 +174,13 @@ const handler = {
         },
         get_document_text: async ({ url, ...otherOpts }) => {
           const docsService = await getService("documents");
-          const result = await docsService.endpoints["/v1/convert/source"](
-            {
-              sources: [{ kind: "http", url }],
-              options: {
-                image_export_mode: "placeholder",
-                ...otherOpts,
-              },
+          const result = await docsService.endpoints["/v1/convert/source"]({
+            sources: [{ kind: "http", url }],
+            options: {
+              image_export_mode: "placeholder",
+              ...otherOpts,
             },
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
-            },
-          );
+          });
           return result.document.md_content || "";
         },
       },

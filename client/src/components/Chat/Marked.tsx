@@ -113,7 +113,7 @@ export const Marked = (props: MarkedProps) => {
     <ScrollFade
       {...divProps}
       className={classOverride(
-        "Marked flex-col o-auto min-w-0 max-w-full",
+        "Marked flex-col o-auto min-w-0 max-w-full ta-start",
         divProps.className,
       )}
     >

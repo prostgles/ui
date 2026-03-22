@@ -99,10 +99,12 @@ export const speechToTextService = {
       method: "POST",
       description: "Audio file upload for speech-to-text transcription",
       inputSchema: {
-        type: "any",
+        type: {
+          audio: "Blob",
+        },
         description: "Audio file as multipart/form-data (webm, mp3, wav, etc.)",
       },
-      inputType: "body-as-is",
+      inputType: "FormData",
       outputSchema: TRANSCRIBE_OUTPUT_SCHEMA,
     },
     "/health": {

@@ -6,6 +6,7 @@ import { ChatFileAttachments } from "./ChatFileAttachments/ChatFileAttachments";
 import { ChatMessage } from "./ChatMessage";
 import { ChatSendControls } from "./ChatSendControls";
 import { useChatState } from "./useChatState";
+import type { LLMMessage } from "@common/llmUtils";
 
 export type Message = {
   id: number | string;
@@ -19,7 +20,10 @@ export type Message = {
 export type ChatProps = {
   style?: React.CSSProperties;
   className?: string;
-  onSend: (msg?: string, files?: File[]) => Promise<void>;
+  onSend: (
+    userMessage: LLMMessage["message"] | undefined,
+    files?: File[],
+  ) => Promise<void>;
   onStopSending: undefined | (() => void);
   messages: Message[];
   disabledInfo?: string;
@@ -55,7 +59,7 @@ export const Chat = (props: ChatProps) => {
     setFiles,
     onAddFiles,
     chatIsLoading,
-    filesAsBase64,
+    filesWithInfo,
     sendingMsg,
     setScrollRef,
     setCurrentMessage,
@@ -63,6 +67,9 @@ export const Chat = (props: ChatProps) => {
     divHandlers,
     handleOnPaste,
     isEngaged,
+    setConvertDocsToMarkdown,
+    convertDocsToMarkdown,
+    convertingDocumentName,
   } = useChatState({
     isLoading,
     messages,
@@ -134,8 +141,11 @@ export const Chat = (props: ChatProps) => {
             {...divHandlers}
           >
             <ChatFileAttachments
-              filesAsBase64={filesAsBase64}
+              filesWithInfo={filesWithInfo}
               setFiles={setFiles}
+              convertDocsToMarkdown={convertDocsToMarkdown}
+              setConvertDocsToMarkdown={setConvertDocsToMarkdown}
+              convertingDocumentName={convertingDocumentName}
             />
             <textarea
               ref={textAreaRef}

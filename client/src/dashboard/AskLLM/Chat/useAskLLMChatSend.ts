@@ -47,15 +47,12 @@ export const useAskLLMChatSend = ({
   );
 
   const sendMessage: ChatProps["onSend"] = useCallback(
-    async (text: string | undefined, files) => {
+    async (userMessage: LLMMessage["message"] | undefined, files) => {
       const fileMessages = await Promise.all(
         (files ?? []).map(async (file) => toMediaMessage(file)),
       );
       return sendQuery(
-        [
-          text ? ({ type: "text", text } as const) : undefined,
-          ...fileMessages,
-        ].filter(isDefined),
+        [...(userMessage ?? []), ...fileMessages].filter(isDefined),
       );
     },
     [sendQuery],

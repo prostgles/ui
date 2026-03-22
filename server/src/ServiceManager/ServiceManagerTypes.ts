@@ -65,12 +65,12 @@ export type ProstglesService = {
       method: "GET" | "POST";
       description: string;
       /* Defaults to 'body' for POST and 'query' for GET */
-      inputType?:
-        | "body"
+      inputType?: /** Will stringify if needed */
+      | "body"
         /**
-         * Pass the input to the endpoint as-is, without JSON parsing or stringifying.
+         * Will convert to FormData. Only supports string and Blob values.
          */
-        | "body-as-is"
+        | "FormData"
         | "query";
 
       inputSchema: JSONB.FieldType | undefined;

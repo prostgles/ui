@@ -546,7 +546,12 @@ export const COMMANDS = {
   "RequestToolAccess.Approve": "",
   "RequestToolAccess.AutoApprove": "",
   "DockerSandboxCreateContainer.stop": "",
+  "ChatFileAttachments.convertDocsToMarkdown": "",
+  "ChatFileAttachments.removeFile": "",
+  "LLMChatMessageContent.textDocument": "",
+  MediaViewer: "",
   Agent: "",
+  Loading: "",
 } as const satisfies Record<
   string,
   | string

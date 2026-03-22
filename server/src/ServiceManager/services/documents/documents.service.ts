@@ -1,6 +1,32 @@
 import { documentsServiceInputSchema } from "@common/documentsServiceInputSchema";
 import type { ProstglesService } from "@src/ServiceManager/ServiceManagerTypes";
 
+const outputSchema = {
+  type: {
+    document: {
+      type: {
+        filename: { oneOf: ["string", { enum: [null] }] },
+        md_content: { oneOf: ["string", { enum: [null] }] },
+        json_content: "any",
+        html_content: { oneOf: ["string", { enum: [null] }] },
+        text_content: { oneOf: ["string", { enum: [null] }] },
+        doctags_content: { oneOf: ["string", { enum: [null] }] },
+      },
+    },
+    status: {
+      enum: [
+        "pending",
+        "started",
+        "failure",
+        "success",
+        "partial_success",
+        "skipped",
+      ],
+    },
+    errors: "any[]",
+  },
+} as const;
+
 export const documentsService = {
   icon: "FileDocumentOutline",
   label: "Documents",
@@ -71,6 +97,22 @@ export const documentsService = {
         type: "string",
       },
     },
+    "/v1/convert/file": {
+      method: "POST",
+      description: "Convert a document from a file",
+      inputSchema: {
+        type: {
+          files: "Blob[]",
+          // files: {
+          //   type: "FileLike[]",
+          //   mimeTypes: { "application/pdf": 1 },
+          // },
+          options: documentsServiceInputSchema,
+        },
+      },
+      inputType: "FormData",
+      outputSchema,
+    },
     "/v1/convert/source": {
       method: "POST",
       description: "Convert a document from a URL",
@@ -106,41 +148,10 @@ export const documentsService = {
               ],
             },
           },
-          file_sources: {
-            optional: true,
-            arrayOfType: {
-              filename: "string",
-              base64_string: "string",
-            },
-          },
           options: documentsServiceInputSchema,
         },
       },
-      outputSchema: {
-        type: {
-          document: {
-            type: {
-              filename: { oneOf: ["string", { enum: [null] }] },
-              md_content: { oneOf: ["string", { enum: [null] }] },
-              json_content: "any",
-              html_content: { oneOf: ["string", { enum: [null] }] },
-              text_content: { oneOf: ["string", { enum: [null] }] },
-              doctags_content: { oneOf: ["string", { enum: [null] }] },
-            },
-          },
-          status: {
-            enum: [
-              "pending",
-              "started",
-              "failure",
-              "success",
-              "partial_success",
-              "skipped",
-            ],
-          },
-          errors: "any[]",
-        },
-      },
+      outputSchema,
     },
     "/health": {
       method: "GET",

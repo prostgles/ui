@@ -28,7 +28,6 @@ import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import type { TablesWithInfo } from "./useTableSizeInfo";
-import { sql } from "sql-formatter";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;

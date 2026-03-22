@@ -1,25 +1,53 @@
-import React from "react";
-import { mdiClose } from "@mdi/js";
-import type { ChatState } from "../useChatState";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiClose } from "@mdi/js";
+import React from "react";
 import { t } from "src/i18n/i18nUtils";
-import Btn from "@components/Btn";
+import type { ChatState } from "../useChatState";
 
 export const ChatFileAttachments = ({
-  filesAsBase64,
+  filesWithInfo,
   setFiles,
-}: Pick<ChatState, "filesAsBase64" | "setFiles">) => {
+  convertDocsToMarkdown,
+  setConvertDocsToMarkdown,
+  convertingDocumentName,
+}: Pick<
+  ChatState,
+  | "filesWithInfo"
+  | "setFiles"
+  | "convertDocsToMarkdown"
+  | "setConvertDocsToMarkdown"
+  | "convertingDocumentName"
+>) => {
+  const someFilesAreDocs = filesWithInfo?.some(({ docFile }) => docFile);
   return (
     <>
-      {!!filesAsBase64?.length && (
+      {someFilesAreDocs && !convertingDocumentName && (
+        <SwitchToggle
+          label={"Convert docs to markdown"}
+          checked={convertDocsToMarkdown}
+          data-command="ChatFileAttachments.convertDocsToMarkdown"
+          onChange={async (newChecked) => {
+            await setConvertDocsToMarkdown(newChecked);
+          }}
+        />
+      )}
+      {convertingDocumentName && (
+        <Btn
+          loading={true}
+          variant="text"
+        >{`Converting ${convertingDocumentName} to markdown...`}</Btn>
+      )}
+      {!!filesWithInfo?.length && (
         <ScrollFade
           data-command="Chat.attachedFiles"
           className="flex-row-wrap gap-1 o-auto"
           style={{ maxHeight: "40vh" }}
         >
-          {filesAsBase64.map(({ file, base64Data }, index) => (
+          {filesWithInfo.map(({ file, base64Data }, index) => (
             <FlexCol
               key={file.name + index}
               data-key={file.name}
@@ -28,6 +56,7 @@ export const ChatFileAttachments = ({
             >
               <MediaViewer
                 url={base64Data}
+                name={file.name}
                 style={{
                   maxHeight: "100px",
                   borderRadius: "var(--rounded)",
@@ -36,6 +65,7 @@ export const ChatFileAttachments = ({
               />
               <Btn
                 title={t.common.Remove}
+                data-command="ChatFileAttachments.removeFile"
                 iconPath={mdiClose}
                 style={{
                   position: "absolute",
@@ -44,7 +74,7 @@ export const ChatFileAttachments = ({
                   borderRadius: "50%",
                 }}
                 variant="filled"
-                size="small"
+                size="micro"
                 onClick={() => {
                   setFiles((prev) =>
                     prev.filter((f, i) => f.name + i !== file.name + index),

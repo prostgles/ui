@@ -1,5 +1,5 @@
 import { getEntries } from "@common/utils";
-import { getJSONBSchemaValidationError } from "prostgles-types";
+import { getJSONBSchemaValidationError, isObject } from "prostgles-types";
 import type {
   ProstglesService,
   RunningServiceInstance,
@@ -42,15 +42,51 @@ export const getServiceEndoints = <S extends ProstglesService>({
               ).toString()}`
             : "";
 
+          const { body, headers } = (() => {
+            if (asQueryOrBody === "FormData") {
+              if (!isObject(data)) {
+                throw new Error("FormData input must be an object");
+              }
+              const formData = new FormData();
+              getEntries(data).forEach(([key, value]) => {
+                const appendValue = (value: unknown) => {
+                  if (value instanceof Blob) {
+                    formData.append(key, value);
+                  } else if (typeof value === "string") {
+                    formData.append(key, value);
+                  } else {
+                    formData.append(key, JSON.stringify(value));
+                  }
+                };
+
+                if (Array.isArray(value)) {
+                  value.forEach((v) => {
+                    appendValue(v);
+                  });
+                } else {
+                  appendValue(value);
+                }
+              });
+              return { body: formData };
+            }
+            if (asQueryOrBody !== "body") {
+              return { body: undefined };
+            }
+            if (typeof data === "string") {
+              return { body: data };
+            }
+            return {
+              body: JSON.stringify(data),
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            };
+          })();
           const response = await fetch(`${baseUrl}${endpoint}${query}`, {
+            headers,
             ...fetchOptions,
-            body:
-              asQueryOrBody === "body-as-is" ? (data as FormData | string)
-              : asQueryOrBody === "body" ?
-                typeof data === "string" ?
-                  data
-                : JSON.stringify(data)
-              : undefined,
+            body,
             method: method,
           });
           if (!response.ok) {

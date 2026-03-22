@@ -91,13 +91,16 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
               disabledInfo ? undefined : (
                 async (e) => {
                   if (isLoading && disableOnChangeDuringLoading) return;
+                  const onChangeResult = onChange(e.target.checked, e);
                   const isPromise =
-                    "then" in onChange && typeof onChange.then === "function";
+                    onChangeResult &&
+                    "then" in onChangeResult &&
+                    typeof onChangeResult.then === "function";
                   if (isPromise) {
                     setIsLoading(true);
                   }
                   try {
-                    await onChange(e.target.checked, e);
+                    await onChangeResult;
                   } finally {
                     setIsLoading(false);
                   }

@@ -167,6 +167,7 @@ export const JSONBSchemaLookup = ({
                   } as const
                 }
                 onChange={(newLookupOpts) => {
+                  //@ts-ignore
                   setLookupMerged({
                     ...newLookupOpts,
                     type: "data",

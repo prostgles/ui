@@ -9,6 +9,7 @@ import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
 import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
+import { documentsServiceInputSchema } from "@common/documentsServiceInputSchema";
 export const getMcpServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -167,19 +168,48 @@ export const getMcpServerFunctions = (
     getMcpHostInfo: defineAdminFunction({
       run: () => getMcpHostInfo(),
     }),
+    getDocumentText: defineAdminFunction({
+      input: {
+        files: {
+          arrayOf: {
+            type: "FileLike",
+            // mimeTypes: { "application/pdf": 1 },
+          },
+        },
+        options: documentsServiceInputSchema,
+      },
+      run: async ({ files, options }, { servicesManager }) => {
+        const docService = servicesManager.getService("documents");
+        // if(user.type === "admin") {
+        //   await servicesManager.enableService("documents");
+        // }
+        if (docService?.status !== "running") {
+          throw "Document service is not enabled/running";
+        }
+
+        const result = await docService.endpoints["/v1/convert/file"]({
+          files: files.map(
+            ({ data }) => new Blob([data], { type: "application/pdf" }),
+          ),
+          options,
+        });
+        return result;
+      },
+    }),
     transcribeAudio: defineAdminFunction({
-      input: { audioBlob: "Blob" },
-      run: async ({ audioBlob }, { servicesManager }) => {
+      input: { audio: { type: "FileLike", mimeTypes: { "audio/webm": 1 } } },
+      run: async ({ audio }, { servicesManager }) => {
         const speechToTextService = servicesManager.getService("speechToText");
         if (speechToTextService?.status !== "running") {
           throw "Speech to Text service is not enabled/running";
         }
-        const formData = new FormData();
-        const audioBlobWithMime = new Blob([audioBlob], { type: "audio/webm" });
+        const audioBlobWithMime = new Blob([audio.data], {
+          type: "audio/webm",
+        });
 
-        formData.append("audio", audioBlobWithMime, "recording.webm");
-        const result =
-          await speechToTextService.endpoints["/transcribe"](formData);
+        const result = await speechToTextService.endpoints["/transcribe"]({
+          audio: audioBlobWithMime,
+        });
 
         return result;
       },

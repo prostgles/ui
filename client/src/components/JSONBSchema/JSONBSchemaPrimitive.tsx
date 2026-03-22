@@ -194,6 +194,14 @@ const schemaTypeToColType: Record<
     tsDataType: "any",
     udt_name: "bytea",
   },
+  FileLike: {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  "FileLike[]": {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
 };
 
 const parseNumber = (str: string) =>

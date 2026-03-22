@@ -83,6 +83,7 @@ export const useOnErrorAlert = (immediateUnmount = false) => {
         alert.addAlert({
           children: <ErrorComponent error={error} findMsg={true} />,
         });
+        throw error;
       });
     },
     [alert, getIsMounted, immediateUnmount],

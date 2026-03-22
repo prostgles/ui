@@ -14,6 +14,10 @@ import {
   summariseWorkflowFile,
 } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/getTsLogicSummary";
 import { instrumentWorkflowFile } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/addInstrumentationToTsLogic";
+import { join } from "node:path";
+import { glob } from "glob";
+import { getRootDir } from "@src/electronConfig";
+import { readFile } from "node:fs/promises";
 
 export const getAgenticWorkflowFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -123,6 +127,29 @@ export const getAgenticWorkflowFunctions = (
               user_id: user.id,
             })
           );
+
+        // TODO: merge this prostgles-types logic with getNodeTypes and move to a cached GET route
+        const nodeModulesPath =
+          getRootDir() + "/node_modules/prostgles-types/dist/";
+        const pattern = join(nodeModulesPath, "**/*.d.ts");
+        const prostglesTypesFiles = await glob(pattern, {
+          signal: AbortSignal.timeout(5000),
+          withFileTypes: true,
+        });
+        const prostglesTypesFilesObj: Record<string, string> = {};
+        for (const file of prostglesTypesFiles) {
+          const absolutePath = file.fullpath();
+          const code = await readFile(absolutePath, "utf-8");
+
+          const relativePath = absolutePath
+            .slice(absolutePath.indexOf("/node_modules/"))
+            .replace(
+              "/node_modules/prostgles-types/dist/",
+              "node_modules/prostgles-types/",
+            );
+          prostglesTypesFilesObj[relativePath] = code;
+        }
+
         const files = await getAgenticWorkflowFiles(
           dbs,
           "runtime",
@@ -143,7 +170,12 @@ export const getAgenticWorkflowFunctions = (
         const instrumentedFile = instrumentWorkflowFile(
           files["defineAgenticWorkflow.ts"],
         );
-        return { files, astNodes: astInfo as any, summary, instrumentedFile };
+        return {
+          files: { ...files, ...prostglesTypesFilesObj },
+          astNodes: astInfo as any,
+          summary,
+          instrumentedFile,
+        };
       },
     }),
     stopDockerContainer: defineAdminFunction({

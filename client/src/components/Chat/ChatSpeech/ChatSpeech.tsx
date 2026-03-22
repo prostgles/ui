@@ -45,7 +45,11 @@ export const ChatSpeech = ({ onFinished, isSending }: P) => {
           }
           setIsTranscribing(true);
           const sttResult = await transcribeAudio({
-            audioBlob: audioOrTranscript as Blob,
+            audio: {
+              name: "recording.webm",
+              type: "audio/webm",
+              data: new Blob([audioOrTranscript], { type: "audio/webm" }),
+            },
           });
           if ("success" in sttResult) {
             if (sttResult.transcription) {

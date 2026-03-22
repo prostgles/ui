@@ -70,6 +70,12 @@ export const USER_MESSAGE_CONTENT_SCHEMA_OPTIONS = [
     },
   },
   {
+    type: { enum: ["text-document"] },
+    fileName: "string",
+    mimeType: { enum: ["text/markdown", "text/plain"] },
+    text: "string",
+  },
+  {
     type: {
       enum: ["image", "audio", "video", "application", "text"],
     },

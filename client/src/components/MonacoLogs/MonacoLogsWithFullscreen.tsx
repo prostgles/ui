@@ -5,6 +5,7 @@ import { mdiFullscreen } from "@mdi/js";
 import React, { useEffect, useMemo, useState } from "react";
 import { MonacoLogs } from "./MonacoLogs";
 import type { TestSelectors } from "src/Testing";
+import Popup from "@components/Popup/Popup";
 
 export const MonacoLogsWithFullscreen = ({
   logs,
@@ -46,9 +47,32 @@ export const MonacoLogsWithFullscreen = ({
     }),
     [fullscreen, maxHeight],
   );
+  const divRef = React.useRef<HTMLDivElement>(null);
+  const isInsidePopup = !!divRef.current?.closest(
+    `[aria-modal="true"],[role="dialog"]`,
+  );
+
+  if (isInsidePopup && fullscreen) {
+    return (
+      <Popup
+        positioning="fullscreen"
+        onClose={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setFullscreen(false);
+        }}
+      >
+        <FullScreenHeader fullscreen={fullscreen} setFullscreen={setFullscreen}>
+          {label}
+        </FullScreenHeader>
+        <MonacoLogs style={monacoStyle} minHeight={minHeight} logs={logs} />
+      </Popup>
+    );
+  }
 
   return (
     <FlexCol
+      ref={divRef}
       {...testSelectors}
       className="bg-color-0 gap-p25"
       style={{

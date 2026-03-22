@@ -4,7 +4,7 @@ import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
 import { spawn } from "child_process";
 import { fileBrowserGoToPath } from "fileBrowserGoToPath";
-import { writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { join, resolve } from "path";
 import {
   localNoAuthSetup,
@@ -65,6 +65,7 @@ import {
   uploadFile,
 } from "./utils/utils";
 import { mkdir } from "fs/promises";
+import exp = require("constants");
 
 const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
@@ -1046,6 +1047,107 @@ test.describe("Main test", () => {
     await expect(workspaceBtn).not.toContainText("Customer Insights");
 
     await page.waitForTimeout(2e3);
+  });
+
+  test("Test doc converter", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await loginWhenSignupIsEnabled(page);
+
+    await openConnection(page, "cloud");
+    await page.getByTestId("AskLLM").click();
+
+    /**
+     * Document to markdown service and conversion works.
+     * Only test locally due to service image size
+     */
+    if (!process.env.CI) {
+      const addFile = async () => {
+        const pdfFilePath = join(
+          __dirname,
+          "..",
+          "tests",
+          "testAskLLM",
+          "sample.pdf",
+        );
+        const fileChooserPromise = page.waitForEvent("filechooser");
+        await page.getByTestId("Chat.addFiles").click();
+        const fileChooser = await fileChooserPromise;
+        await fileChooser.setFiles(pdfFilePath);
+      };
+      await addFile();
+      const toggle = page.getByTestId(
+        "ChatFileAttachments.convertDocsToMarkdown",
+      );
+      await toggle.click();
+      /** Expect the switch toggle to show loader */
+      await expect(
+        page
+          .getByTestId("Chat.sendWrapper")
+          .locator(".SwitchToggle")
+          .getByTestId("Loading"),
+      ).toBeVisible();
+
+      /** Service finished starting. This might take much longer if it needs installing */
+      await expect(page.getByLabel("Convert docs to markdown")).toBeChecked({
+        timeout: 90e3,
+      });
+
+      await page.keyboard.press("Control+KeyK");
+      await page.waitForTimeout(1500);
+      await page.keyboard.type("serv");
+      await page.keyboard.press("Enter");
+      await expect(
+        page.locator(getDataKey("documents")).getByTitle("Stop service"),
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+
+      const itemBtn = page
+        .getByTestId("Chat.attachedFiles")
+        .getByTestId("MediaViewer")
+        .getByText("sample.pdf");
+      await expect(itemBtn).toBeVisible({ timeout: 15e3 });
+
+      /** Shows content in popup */
+      await itemBtn.click();
+      await expect(page.getByTestId("Popup.header").last()).toContainText(
+        "sample.pdf",
+      );
+
+      await page.getByTestId("Popup.close").last().click();
+
+      /** Removing works */
+      await page.getByTestId("ChatFileAttachments.removeFile").click();
+      await expect(itemBtn).not.toBeAttached();
+
+      /** Re-adding the same file works */
+      await addFile();
+
+      await expect(itemBtn).toBeVisible({ timeout: 15e3 });
+
+      await page.getByTestId("Chat.send").click();
+
+      /** In chat file visible */
+      const inChatItemBtn = page
+        .getByTestId("Chat.messageList")
+        .getByTestId("LLMChatMessageContent.textDocument")
+        .getByText("sample.pdf");
+      await expect(inChatItemBtn).toBeVisible({ timeout: 15e3 });
+
+      /** Agent was provided the text content */
+      await expect(page.getByTestId("Chat.messageList")).toContainText(
+        "This is a sample PDF",
+        { timeout: 15e3 },
+      );
+
+      await inChatItemBtn.click();
+      await expect(page.getByTestId("Popup.header").last()).toContainText(
+        "sample.pdf",
+      );
+      await expect(page.getByTestId("Popup.content").last()).toContainText(
+        "This is a sample PDF",
+      );
+      await page.getByTestId("Popup.close").last().click();
+    }
   });
 
   test("Test LLM tools", async ({ page: p }) => {

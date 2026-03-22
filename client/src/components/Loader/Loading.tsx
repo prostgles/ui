@@ -187,6 +187,7 @@ export default class Loading extends RTComp<P, S> {
     return (
       <div
         style={{ ...style, ...rootStyle, ...commonStyle }}
+        data-command="Loading"
         className={classOverride(
           "Loading spinner-loader ws-nowrap flex-row gap-1 ai-center ",
           className,

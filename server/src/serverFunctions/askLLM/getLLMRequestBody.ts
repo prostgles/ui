@@ -9,6 +9,7 @@ import {
 import type { LLMMessage } from "./askLLM";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 import { getCompactedMessages } from "./getCompactedMessages";
+import { text } from "node:stream/consumers";
 
 export const getLLMRequestBody = ({
   llm_provider,
@@ -26,9 +27,17 @@ export const getLLMRequestBody = ({
 
   const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
-      const nonEmptyMessageContent = m.content.filter(
-        (m) => m.type !== "text" || !("text" in m) || m.text.trim(),
-      );
+      const nonEmptyMessageContent = m.content
+        .filter((m) => m.type !== "text" || !("text" in m) || m.text.trim())
+        .map((c) => {
+          if (c.type === "text-document") {
+            return {
+              type: "text",
+              text: `<document name=${JSON.stringify(c.fileName)}>\n${c.text}\n</document>`,
+            } as const;
+          }
+          return c;
+        });
       return {
         ...m,
         content: nonEmptyMessageContent,
