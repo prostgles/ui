@@ -12,6 +12,7 @@ import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { ERDSchemaProps } from "./ERDSchema";
 import { useFetchSchemaForDiagram } from "./useFetchSchemaForDiagram";
 import { CASCADE_LEGEND } from "../SchemaGraphControls";
+import type { ValidatedColumnInfo } from "prostgles-types";
 
 export type SchemaShape =
   | Rectangle<DBSchemaTableWJoins, { width: number } | undefined>
@@ -278,7 +279,6 @@ export const useSchemaShapes = (
   };
 };
 
-import type { ValidatedColumnInfo } from "prostgles-types";
 const getRootTable = <T extends DBSchemaTableWJoins>(
   references: ValidatedColumnInfo["references"],
   tables: T[],

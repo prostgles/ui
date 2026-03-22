@@ -10,6 +10,7 @@ import {
   SchemaGraphControls,
   useSchemaGraphControls,
 } from "./SchemaGraphControls";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type SchemaGraphProps = Pick<
   Prgl,
@@ -19,9 +20,10 @@ export type SchemaGraphProps = Pick<
   db_schema_filter: Connection["db_schema_filter"];
 };
 
-export const SchemaGraph = (props: SchemaGraphProps) => {
+export const SchemaGraph = () => {
   const [showSchemaDiagram, setShowSchemaDiagram] = useState(false);
   const controlState = useSchemaGraphControls();
+  const { theme } = usePrgl();
   return (
     <>
       <Btn
@@ -37,24 +39,19 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
 
       {showSchemaDiagram && (
         <Popup
-          title={<SchemaGraphControls {...props} {...controlState} />}
+          title={<SchemaGraphControls {...controlState} />}
           positioning="fullscreen"
           clickCatchStyle={{ opacity: 1 }}
           contentClassName="o-visible relative "
           onClose={() => setShowSchemaDiagram(false)}
           data-command="SchemaGraph"
         >
-          <ERDSchema
-            key={controlState.schemaKey + props.theme}
-            {...props}
-            {...controlState}
-          />
+          <ERDSchema key={controlState.schemaKey + theme} {...controlState} />
         </Popup>
       )}
     </>
   );
 };
-// }
 
 export const getSchemaTableColY = (i, height) => {
   return (!i ? 8 : 16) + i * 20 - height / 2;

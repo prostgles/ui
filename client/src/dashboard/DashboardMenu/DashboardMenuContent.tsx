@@ -278,7 +278,7 @@ export const DashboardMenuContent = (props: P) => {
                 </span>
               ),
               onPress: () => {
-                loadTable({ type: "table", table: t.name, name: t.label });
+                void loadTable({ type: "table", table: t.name, name: t.label });
                 onClose?.();
               },
             };
@@ -324,15 +324,9 @@ export const DashboardMenuContent = (props: P) => {
           }}
         />
 
-        <SchemaGraph
-          tables={tables}
-          connectionId={props.prgl.connectionId}
-          db_schema_filter={props.prgl.connection.db_schema_filter}
-          dbs={dbs}
-          sql={sql}
-          theme={theme}
-        />
+        <SchemaGraph />
       </FlexRowWrap>
     </FlexCol>
   );
 };
+console.error("FINISH ADDING agentic workflows and sandboxes here");

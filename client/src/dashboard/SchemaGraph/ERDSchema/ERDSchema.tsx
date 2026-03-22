@@ -1,6 +1,6 @@
 import { FlexCol } from "@components/Flex";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useCallback, useRef } from "react";
-import type { SchemaGraphProps } from "../SchemaGraph";
 import type { useSchemaGraphControls } from "../SchemaGraphControls";
 import { useCanvasPanZoom } from "./useCanvasPanZoom";
 import { useDrawSchemaShapes } from "./useDrawSchemaShapes";
@@ -9,33 +9,22 @@ import { useSchemaShapes, type SchemaShape } from "./useSchemaShapes";
 
 export type ColumnDisplayMode = "none" | "all" | "references";
 export type ColumnColorMode = "default" | "root" | "on-update" | "on-delete";
-export type ERDSchemaProps = Omit<
-  SchemaGraphProps,
-  "theme" | "db_schema_filter"
-> &
-  Pick<
-    ReturnType<typeof useSchemaGraphControls>,
-    "displayMode" | "columnDisplayMode" | "columnColorMode"
-  >;
+export type ERDSchemaProps = Pick<
+  ReturnType<typeof useSchemaGraphControls>,
+  "displayMode" | "columnDisplayMode" | "columnColorMode"
+>;
 export const ERDSchema = ({
-  tables,
-  sql,
-  dbs,
-  connectionId,
   displayMode,
   columnDisplayMode,
   columnColorMode,
-}: ERDSchemaProps & Pick<SchemaGraphProps, "db_schema_filter">) => {
+}: ERDSchemaProps) => {
+  const { dbs, theme } = usePrgl();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
   const { shapesRef, dbConfId, shapesVersion, canAutoPosition, dbConf } =
     useSchemaShapes({
-      tables,
-      sql,
-      dbs,
-      connectionId,
       canvasRef,
       displayMode,
       columnDisplayMode,
@@ -112,6 +101,7 @@ export const ERDSchema = ({
   });
   return (
     <FlexCol
+      key={theme}
       ref={divRef}
       className="f-1 bg-color-1"
       style={{ overflow: "hidden" }}

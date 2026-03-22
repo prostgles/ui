@@ -5,21 +5,15 @@ import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue"
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
 import type { ERDSchemaProps } from "./ERDSchema";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const useFetchSchemaForDiagram = (
   props: ERDSchemaProps & {
     canvasRef: React.RefObject<HTMLCanvasElement>;
   },
 ) => {
-  const {
-    dbs,
-    connectionId,
-    tables: dbTables,
-    columnColorMode,
-    columnDisplayMode,
-    displayMode,
-    sql,
-  } = props;
+  const { columnColorMode, columnDisplayMode, displayMode } = props;
+  const { connectionId, dbs, sql, tables: dbTables } = usePrgl();
   const { data: dbConf } = dbs.database_configs.useFindOne(
     {
       $existsJoined: {

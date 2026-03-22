@@ -1049,7 +1049,9 @@ test.describe("Main test", () => {
     await page.waitForTimeout(2e3);
   });
 
-  test("Test doc converter", async ({ page: p }) => {
+  test("Document to markdown service and conversion works", async ({
+    page: p,
+  }) => {
     const page = p as PageWIds;
     await loginWhenSignupIsEnabled(page);
 
@@ -1057,7 +1059,6 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLM").click();
 
     /**
-     * Document to markdown service and conversion works.
      * Only test locally due to service image size
      */
     if (!process.env.CI) {

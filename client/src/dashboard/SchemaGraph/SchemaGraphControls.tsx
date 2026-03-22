@@ -4,6 +4,7 @@ import Chip from "@components/Chip";
 import { FlexRow, FlexRowWrap } from "@components/Flex";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { Select } from "@components/Select/Select";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useState } from "react";
 import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
 import { getCssVariableValue } from "../Charts/TimeChart/getCssVariableValue";
@@ -12,26 +13,19 @@ import {
   type ColumnColorMode,
   type ColumnDisplayMode,
 } from "./ERDSchema/ERDSchema";
-import type { SchemaGraphProps } from "./SchemaGraph";
 
 export const SchemaGraphControls = ({
   columnColorMode,
   columnDisplayMode,
   displayMode,
   setColumnColorMode,
-  connectionId,
-  dbs,
-  sql,
   setColumnDisplayMode,
   setDisplayMode,
   setSchemaKey,
   schemaKey,
-  db_schema_filter,
-}: ReturnType<typeof useSchemaGraphControls> &
-  Pick<
-    SchemaGraphProps,
-    "dbs" | "sql" | "connectionId" | "db_schema_filter"
-  >) => {
+}: ReturnType<typeof useSchemaGraphControls>) => {
+  const { connectionId, dbs, sql, connection } = usePrgl();
+  const { db_schema_filter } = connection;
   return (
     <FlexRow
       className="w-full"
