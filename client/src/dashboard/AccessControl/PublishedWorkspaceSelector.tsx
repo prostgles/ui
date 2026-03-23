@@ -51,7 +51,7 @@ export const PublishedWorkspaceSelector = ({
       const workspaceIds =
         dbsPermissions?.viewPublishedWorkspaces?.workspaceIds ?? [];
       if (workspaceIds.length) {
-        const wsps = await dbs.workspaces.find({ "id.$in": workspaceIds });
+        const wsps = await dbs.workspaces.find({ id: { $in: workspaceIds } });
         if (!getIsMounted()) return;
         const missingWorkspaceIds = workspaceIds.filter(
           (wid) => !wsps.some((w) => w.id === wid),
@@ -207,7 +207,7 @@ export const getWorkspaceTables = async (
   const worspaceTableAndColumns: WorspaceTableAndColumns[] = [];
   if (dbPermissions.type === "Custom") {
     const workspaceWindows = await dbs.windows.find({
-      "workspace_id.$in": workspaceIds,
+      workspace_id: { $in: workspaceIds },
     });
     const tableWindows = workspaceWindows.filter(
       (w) => w.type === "table" && !!w.table_name,

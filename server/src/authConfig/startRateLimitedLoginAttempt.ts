@@ -54,7 +54,7 @@ export const getFailedTooManyTimes = async (
   const previousFails = await db.login_attempts.find({
     ...matchByFilter,
     failed: true,
-    "created.>=": lastHour,
+    created: { ">=": lastHour },
   });
   const maxAttemptsPerHour = Math.max(
     1,
@@ -157,7 +157,7 @@ export const startRateLimitedLoginAttempt = async (
           ...matchByFilter,
           username,
           failed: true,
-          "created.>=": new Date(Date.now() - 24 * HOUR).toISOString(),
+          created: { ">=": new Date(Date.now() - 24 * HOUR).toISOString() },
         });
       }
     },

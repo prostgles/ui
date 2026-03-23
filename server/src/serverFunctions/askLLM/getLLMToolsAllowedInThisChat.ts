@@ -40,7 +40,8 @@ export const getLLMToolsAllowedInThisChat = async ({
 }: GetLLMToolsArgs): Promise<undefined | AllowedChatTool[]> => {
   const { id: chatId } = chat;
 
-  const isAgentChat = chat.agent_info && chat.agent_info !== "orchestrator";
+  const isAgentChat =
+    chat.agent_info && chat.agent_info.type !== "orchestrator";
   const llm_chats_allowed_mcp_tools =
     await dbs.llm_chats_allowed_mcp_tools.find({
       chat_id: chatId,
@@ -115,7 +116,7 @@ export const getLLMToolsAllowedInThisChat = async ({
     tools.set(name, tool);
   });
 
-  if (chat.agent_info && chat.agent_info !== "orchestrator") {
+  if (chat.agent_info && chat.agent_info.type !== "orchestrator") {
     const agentGoalTools = getAgentGoalTools(chat.agent_info);
     agentGoalTools.forEach((agentGoalTool, index) => {
       tools.set(agentGoalTool.name, {

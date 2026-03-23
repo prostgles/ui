@@ -92,6 +92,8 @@ export const startAgenticWorkflow = async ({
         orchestrationTools,
         definition_override: workflow.definition_override,
         mode: "full",
+        message_id: messageId,
+        userInput,
       },
       {
         chatId: workflow.chat_id,

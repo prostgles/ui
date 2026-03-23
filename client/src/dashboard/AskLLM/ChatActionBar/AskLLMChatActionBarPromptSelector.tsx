@@ -66,7 +66,7 @@ export const AskLLMChatActionBarPromptSelector = (
               {
                 llm_prompt_id: (
                   await dbs.llm_prompts.findOne({
-                    "name.$eq": "Chat",
+                    name: "Chat",
                   })
                 )?.id,
               },
@@ -88,13 +88,13 @@ export const AskLLMChatActionBarPromptSelector = (
         button={
           <Btn title="Prompt" {...ChatActionBarBtnStyleProps}>
             {prompt?.name ||
-              (agent_info !== "orchestrator" ?
+              (agent_info?.type !== "orchestrator" ?
                 agent_info?.prompt.slice(0, 40)
               : "") || <i>Select Prompt</i>}
           </Btn>
         }
       >
-        {agent_info && agent_info !== "orchestrator" ?
+        {agent_info && agent_info.type !== "orchestrator" ?
           <Marked
             className="ta-start"
             codeHeader={undefined}

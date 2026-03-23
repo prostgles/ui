@@ -31,6 +31,7 @@ export const startAgent = async (
     askLLM,
     started,
     timeout,
+    messageId,
   }: {
     dbs: DBS;
     userId: string;
@@ -40,6 +41,7 @@ export const startAgent = async (
     signal: AbortSignal | undefined;
     timeout: number;
     started: number;
+    messageId: string;
   },
 ) => {
   const {
@@ -56,8 +58,10 @@ export const startAgent = async (
       name,
       user_id: userId,
       parent_chat_id: chatId,
+      parent_chat_message_id: messageId,
       connection_id: connectionId,
       agent_info: {
+        type: "agent",
         name,
         prompt: [
           "You are part of an agentic workflow and you have the following limits: " +

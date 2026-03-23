@@ -46,7 +46,7 @@ export const getConnectionOnReady = ({
      */
     const refreshSamedatabaseForOtherUsers = async () => {
       const sameDbs = await dbs.connections.find({
-        "id.<>": con.id,
+        id: { "<>": con.id },
         ...pickKeys(con, ["db_host", "db_port", "db_name"]),
       });
       sameDbs.forEach(({ id }) => {

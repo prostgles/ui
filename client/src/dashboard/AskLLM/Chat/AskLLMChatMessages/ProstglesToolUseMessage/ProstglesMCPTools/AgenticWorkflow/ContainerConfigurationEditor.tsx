@@ -1,6 +1,6 @@
 import { FlexRowWrap } from "@components/Flex";
 import {
-  mdiCog,
+  mdiCogOutline,
   mdiCpu64Bit,
   mdiMemory,
   mdiTimelapse,
@@ -58,7 +58,7 @@ export const ContainerConfigurationEditor = ({
       title="Container configuration"
       titleEndContent={
         <Btn
-          iconPath={mdiCog}
+          iconPath={mdiCogOutline}
           variant="faded"
           color={showEdit ? "action" : undefined}
           onClick={() => setShowEdit(!showEdit)}

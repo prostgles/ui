@@ -12,7 +12,7 @@ export const AGENT_GOAL_TOOL_NAMES = {
 export const getAgentGoalTools = (
   agent_info: Exclude<
     NonNullable<DBSSchema["llm_chats"]["agent_info"]>,
-    "orchestrator"
+    { type: "orchestrator" }
   >,
 ) => {
   const jsonbSchema = {

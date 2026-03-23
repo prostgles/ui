@@ -12,12 +12,14 @@ export const validateAgenticWorkflowDefinitions = async (
     chatId,
     clientReq,
     userId,
+    messageId,
   }: {
     connection_id: string;
     dbs: DBS;
     chatId: number;
     clientReq: AuthClientRequest;
     userId: string;
+    messageId: string;
   },
 ) => {
   if (!connection_id) {
@@ -66,7 +68,12 @@ export const validateAgenticWorkflowDefinitions = async (
   });
 
   const result = await createWorkflowExecutionHandlers(
-    { ...definitions, definition_override: {}, mode: "definitions-only" },
+    {
+      ...definitions,
+      definition_override: {},
+      message_id: messageId,
+      mode: "definitions-only",
+    },
     {
       dbs,
       chatId,

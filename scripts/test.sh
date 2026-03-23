@@ -1,7 +1,9 @@
 set -e
 
-# Ensure the pw report is saved
-if [ "$CI" != "true" ]; then
+# Ensure the pw report is saved before the process is killed
+if [ "$CI" = "true" ]; then
+  trap 'kill -9 $START_SCRIPT_PID 2>/dev/null || true' EXIT
+else
   trap 'kill 0' EXIT
 fi
 

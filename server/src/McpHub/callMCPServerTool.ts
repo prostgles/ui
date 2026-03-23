@@ -1,4 +1,4 @@
-import type { DBSSchema } from "@common/publishUtils";
+import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import {
   getJSONBObjectSchemaValidationError,
   getSerialisableError,
@@ -104,7 +104,7 @@ export const callMCPServerTool = async ({
   await dbs.mcp_server_tool_calls.insert(
     {
       duration: { milliseconds: result.duration },
-      called: start,
+      called_at: start.toISOString(),
       mcp_server_name: serverName,
       mcp_tool_name: toolName,
       input: toolArguments,
@@ -113,7 +113,7 @@ export const callMCPServerTool = async ({
       chat_id,
       user_id: user.id,
       mcp_tool_approval_requests_id,
-    },
+    } satisfies DBSSchemaForInsert["mcp_server_tool_calls"],
     { onConflict: isReRun ? "DoUpdate" : undefined },
   );
 

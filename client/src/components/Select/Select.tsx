@@ -130,7 +130,7 @@ export type SelectState = {
    * To prevent things moving around during multi selection
    *    we will fire onChange after the popup is closed
    */
-  multiSelection?: any[];
+  multiSelection?: unknown[];
   fixedBtnWidth?: number;
 };
 

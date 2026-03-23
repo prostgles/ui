@@ -1,7 +1,6 @@
 import type { ProstglesDbTools } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
-import type { LocalParams } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import type { ValidateRowArgsCommon } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { isDefined, type JSONB } from "prostgles-types";
@@ -27,6 +26,11 @@ const commonrunSQLOpts = {
 
 export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
   llm_chats: {
+    /** Breaks ts generated schema  */
+    // constraints: {
+    //   parent_chat_message_fk:
+    //     "FOREIGN KEY (parent_chat_message_id) REFERENCES llm_messages(id) ON DELETE SET NULL",
+    // },
     columns: {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New chat'`,
@@ -38,13 +42,15 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
           hint: "If defined then is Agentic chat",
         },
       },
+      parent_chat_message_id: "INT8",
       agent_info: {
         nullable: true,
         jsonbSchema: {
           oneOf: [
-            { enum: ["orchestrator"] },
+            { type: { type: { enum: ["orchestrator"] } } },
             {
               type: {
+                type: { enum: ["agent"] },
                 name: { type: "string", optional: true },
                 toolUseId: { type: "string", optional: true },
                 prompt: {
@@ -74,7 +80,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
         label: "Prompt",
         sqlDefinition: `INTEGER REFERENCES llm_prompts(id) ON DELETE SET NULL`,
       },
-      created: `TIMESTAMPTZ DEFAULT NOW()`,
+      created: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
       disabled_message: {
         sqlDefinition: `TEXT`,
         info: { hint: "Message shown when chat is disabled" },

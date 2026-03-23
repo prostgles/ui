@@ -322,7 +322,7 @@ export class ConnectionManager {
       { select: { last_updated: 1 }, orderBy: { last_updated: -1 } },
     );
     const lastUpdateDbs = await this.dbs.users.findOne(
-      { "type.$in": userTypes },
+      { type: { $in: userTypes } },
       { select: { last_updated: 1 }, orderBy: { last_updated: -1 } },
     );
     if (
@@ -332,7 +332,7 @@ export class ConnectionManager {
     ) {
       const newUsers = await this.dbs.users.find(
         {
-          "type.$in": userTypes,
+          type: { $in: userTypes },
           "last_updated.>": lastUpdateDb?.last_updated ?? 0,
         } as Filter,
         { limit: 1000, orderBy: { last_updated: 1 } },

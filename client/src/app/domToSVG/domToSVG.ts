@@ -68,6 +68,7 @@ export const domToSVG = async (node: HTMLElement) => {
   /** Does not really seem effective */
   // deduplicateSVGPaths(svg);
   // await addFragmentViewBoxes(svg, 10);
+
   repositionAbsoluteFixedAndSticky(svg);
   moveBordersToTop(svg);
   removeOverflowedElements(svg);

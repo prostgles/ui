@@ -38,14 +38,11 @@ export const elementToSVG = async (
   context: SVGContext,
 ) => {
   /** Ensures bbox calculations are stable */
-
   const copyAnimations = getAnimationsHandler(element);
 
   const _whatToRender = await getWhatToRenderOnSVG(element, context, parentSvg);
-
   const { elemInfo, ...whatToRender } = _whatToRender;
   const { x, y, width, height, style, isVisible } = elemInfo;
-
   if (!isVisible && !_whatToRender.mightBeHovered) {
     return whatToRender;
   }
@@ -205,6 +202,7 @@ export const elementToSVG = async (
     bboxRect.setAttribute("fill", "transparent");
     g.appendChild(bboxRect);
   }
+
   if (g.childNodes.length) {
     addOverflowClipPath(
       element,

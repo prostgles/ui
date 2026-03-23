@@ -90,6 +90,7 @@ const getValidWorkflowDefinition = async (
           dbs,
           clientReq,
           userId: user_id,
+          messageId,
         }).then(({ agentConfigsWithDefaults, tsSchema, newTables }) => {
           const workflowInsertData: DBSSchemaForInsert["agentic_workflows"] = {
             user_id,

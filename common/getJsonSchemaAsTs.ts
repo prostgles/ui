@@ -121,7 +121,7 @@ const withNullable = (
     schema.nullable === true && !hasNullInTypeArray && base !== "null";
   if (!shouldAddNull) return base;
 
-  return ctx.mode === "compact" ? `${base}|null` : `${base} | null`;
+  return ctx.mode === "compact" ? `${base} | null` : `${base} | null`;
 };
 
 const parenthesizeIfNeeded = (type: string): string =>
@@ -136,7 +136,8 @@ const joinTypes = (
   if (clean.length === 0) return "unknown";
   if (clean.length === 1) return clean[0]!;
 
-  const sep = ctx.mode === "compact" ? joiner : ` ${joiner} `;
+  // const sep = ctx.mode === "compact" ? joiner : ` ${joiner} `;
+  const sep = ` ${joiner} `;
   return clean.join(sep);
 };
 

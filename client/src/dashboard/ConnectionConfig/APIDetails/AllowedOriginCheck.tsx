@@ -45,6 +45,9 @@ export const AllowedOriginCheck = ({
               t.APIDetailsWs["Allowed origin is required"]
             : undefined,
           onClickPromise: async () => {
+            if (!allowedOrigin) {
+              throw new Error("Allowed origin is required");
+            }
             await dbs.database_configs.update(
               { id: databaseConfig.id },
               { cors: { allowedOrigins: [allowedOrigin] } },

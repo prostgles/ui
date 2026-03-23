@@ -114,7 +114,7 @@ export const AskLLMChatActionBarModelSelector = (
           <ProgressBar
             messageTop={<div className="bold w-fit">Context usage</div>}
             message={<div className="font-14">{contextUsedMessage}</div>}
-            totalValue={context_length ?? 1e6}
+            totalValue={context_length || totalUsage.tokens + 1}
             value={totalUsage.tokens}
           />
           <FormField

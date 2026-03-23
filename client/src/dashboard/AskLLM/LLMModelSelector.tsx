@@ -30,6 +30,7 @@ export const LLMModelSelector = ({
 }: P) => {
   const { dbs, dbsMethods, dbsSql, dbsTables, dbsMethodSchema } = usePrgl();
   const [refreshing, setRefreshing] = useState(false);
+  const [addProviderCredentials, setAddProviderCredentials] = useState("");
 
   const { data: models } = dbs.llm_models.useFind(
     forAgent ?
@@ -55,18 +56,14 @@ export const LLMModelSelector = ({
         nulls: "last",
       },
     },
-    { deps: [refreshing] },
+    { deps: [refreshing, addProviderCredentials] },
   );
   const modelFromName = useMemo(() => {
     if (!modelName || !models) return null;
     return models.find((m) => m.name === modelName);
   }, [modelName, models]);
   const value = valueFromProps ?? modelFromName?.id ?? null;
-  const model = useMemo(() => {
-    return models?.find((m) => m.id === value) ?? null;
-  }, [value, models]);
 
-  const [addProviderCredentials, setAddProviderCredentials] = useState("");
   const [viewModelForm, setViewModelForm] = useState<DetailedFilterBase>();
 
   const sortedModelsMap = useMemo(() => {

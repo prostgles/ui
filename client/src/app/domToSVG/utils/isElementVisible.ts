@@ -1,8 +1,8 @@
-import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { includes } from "prostgles-types";
 
 export const isElementVisible = (element: Element) => {
   const style = window.getComputedStyle(element);
-  const bbox = element.getBoundingClientRect();
+  const bbox = getBoundingClientRect(element);
 
   if (!isElementNode(element) && !isTextNode(element))
     return { isVisible: false, style, bbox };
@@ -14,16 +14,48 @@ export const isElementVisible = (element: Element) => {
       bbox,
     };
   }
-  const mightBeVisible = element.checkVisibility({
-    checkOpacity: true,
-    checkVisibilityCSS: true,
-  });
-
+  const mightBeVisible = getMightBeVisible(element);
   if (!mightBeVisible) return { isVisible: false, style, bbox };
   const parent = element.parentElement;
   if (!parent) return { isVisible: true, style, bbox };
   const isOnParentScreen = isInParentViewport(element, bbox);
   return { isVisible: isOnParentScreen, style, bbox };
+};
+
+const getMightBeVisible = (element: Element): boolean => {
+  const style = window.getComputedStyle(element);
+  if (style.display === "contents" && element instanceof HTMLElement) {
+    return Array.from(element.children).some((child) =>
+      getMightBeVisible(child),
+    );
+  }
+
+  const mightBeVisible = element.checkVisibility({
+    checkOpacity: true,
+    checkVisibilityCSS: true,
+  });
+  return mightBeVisible;
+};
+
+const getBoundingClientRect = (element: Element) => {
+  const style = window.getComputedStyle(element);
+  if (style.display === "contents" && element instanceof HTMLElement) {
+    return getListItemRect(element);
+  }
+  return element.getBoundingClientRect();
+};
+
+const getListItemRect = (li: HTMLElement): DOMRect => {
+  const children = [...li.children] as HTMLElement[];
+  if (!children.length) return new DOMRect();
+
+  const rects = children.map((c) => getBoundingClientRect(c));
+  const top = Math.min(...rects.map((r) => r.top));
+  const bottom = Math.max(...rects.map((r) => r.bottom));
+  const left = Math.min(...rects.map((r) => r.left));
+  const right = Math.max(...rects.map((r) => r.right));
+
+  return new DOMRect(left, top, right - left, bottom - top);
 };
 
 const isInViewport = (
@@ -45,8 +77,8 @@ export const isInParentViewport = (
   const parent = element.parentElement;
   if (!parent) return true;
   const parentHidesOverflow =
-    includes(getComputedStyle(parent).overflow, ["hidden", "scroll", "auto"]) &&
-    !includes(getComputedStyle(element).position, ["absolute", "fixed"]);
+    includes(["hidden", "scroll", "auto"], getComputedStyle(parent).overflow) &&
+    !includes(["absolute", "fixed"], getComputedStyle(element).position);
   if (!parentHidesOverflow) {
     const isVisible = isInViewport(bbox, {
       x: 0,

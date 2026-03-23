@@ -338,7 +338,7 @@ export const publish: Publish<
           },
           delete: {
             filterFields: "*",
-            forcedFilter: { "id.<>": user.id }, // Cannot delete your admin user
+            forcedFilter: { id: { "<>": user.id } }, // Cannot delete your admin user
           },
         }
       : {

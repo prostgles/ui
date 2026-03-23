@@ -49,7 +49,7 @@ export const AgenticWorkflowActivity = ({
               setAgentChatId(id);
             }}
           >
-            {agent_info === "orchestrator" ?
+            {agent_info?.type === "orchestrator" ?
               agent_info
             : (agent_info?.name ?? "")}{" "}
             {value}
@@ -101,16 +101,20 @@ export const AgenticWorkflowActivity = ({
     const filter = {
       parent_chat_id: chatId,
       /** TODO: must stringify in prostgles-server */
-      agent_info: { $ne: `"orchestrator"` as "orchestrator" },
-    } satisfies FilterItem<DBSSchema[typeof tableName]>;
+      agent_info: { "@>": { type: "orchestrator" } },
+    }; // satisfies FilterItem<DBSSchema[typeof tableName]>;
 
     return { fieldConfigs, filter, orderBy: { key: "id", asc: false } };
   }, [chatId, loadedSuggestions, workspaceId]);
 
   return (
-    <FlexCol className="p-p5 f-1">
+    <FlexCol className="f-1">
       <SmartCardList<DBSSchema[typeof tableName]>
         db={dbs as unknown as DBHandlerClient}
+        className="p-1"
+        style={{
+          padding: "1em",
+        }}
         tableName={tableName}
         methods={{}}
         sql={undefined}

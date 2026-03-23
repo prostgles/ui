@@ -50,6 +50,7 @@ export const AgenticWorkflowActions = ({
     $existsJoined: {
       llm_chats: {
         parent_chat_id: chatId,
+        parent_chat_message_id: messageId,
       },
     },
   });
@@ -69,7 +70,7 @@ export const AgenticWorkflowActions = ({
         {created && (
           <ProgressBar
             totalValue={100}
-            className="f-1"
+            className="f-1 mr-2"
             message={
               state?.status === "error" ?
                 <span className="text-danger">{state.message ?? "Error"}</span>

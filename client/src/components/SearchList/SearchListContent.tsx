@@ -151,6 +151,7 @@ export const SearchListContent = <M extends boolean = false>(
         listStyle={props.listStyle}
         showFirstItemAsFocused={showFirstItemAsFocused}
       />;
+
   return (
     <div
       data-command="SearchList"
@@ -187,11 +188,13 @@ export const SearchListContent = <M extends boolean = false>(
               Boolean(leftContent || multiSelect) && (
                 <>
                   {leftContent}
-
                   {!!multiSelect && (
                     <Checkbox
                       title="Toggle all"
-                      className={!renderedItems.length ? "hidden" : "mx-p5"}
+                      className={"mx-p5"}
+                      disabledInfo={
+                        !renderedItems.length ? "No items to toggle" : undefined
+                      }
                       data-command="SearchList.toggleAll"
                       checked={Boolean(renderedSelected.length)}
                       onChange={(e) => {

@@ -499,7 +499,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     c.name &&
                     (await dbs.connections.findOne({
                       name: c.name,
-                      "id.<>": conn.id,
+                      id: { "<>": conn.id },
                     }))
                   ) {
                     this.setState({

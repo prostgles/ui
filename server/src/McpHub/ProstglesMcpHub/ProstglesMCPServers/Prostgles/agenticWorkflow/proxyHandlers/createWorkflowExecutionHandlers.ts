@@ -35,10 +35,14 @@ export const createWorkflowExecutionHandlers = async <
     orchestrationTools,
     databaseAccessDefinitions,
     mode,
+    message_id,
   }: Parameters<P>[0] & {
     signal?: AbortSignal;
     mode: "definitions-only" | "full";
-  } & Pick<DBSSchema["agentic_workflows"], "definition_override">,
+  } & Pick<
+      DBSSchema["agentic_workflows"],
+      "definition_override" | "message_id"
+    >,
   {
     dbs,
     chatId,
@@ -114,6 +118,7 @@ export const createWorkflowExecutionHandlers = async <
             askLLM: dbsClientFunctions.askLLM.run,
             started,
             timeout: containerConfiguration.timeout,
+            messageId: message_id,
           },
         );
       };
@@ -144,6 +149,7 @@ export const createWorkflowExecutionHandlers = async <
           connectionId,
           databaseAccessDefinitions,
           autoApproveAllTools,
+          messageId: message_id,
         })
       ),
   };

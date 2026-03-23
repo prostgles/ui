@@ -464,7 +464,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     }
 
     const { maxIterations } =
-      agent_info !== "orchestrator" ? (agent_info ?? {}) : {};
+      agent_info?.type !== "orchestrator" ? (agent_info ?? {}) : {};
     if (
       maxIterations !== undefined &&
       isAssistantMessageRequestingToolUse({ message: aiResponseMessage })

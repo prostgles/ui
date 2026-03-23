@@ -280,7 +280,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       input: `JSONB`,
       output: `JSONB`,
       error: `JSON`,
-      called: `TIMESTAMPTZ DEFAULT NOW()`,
+      called_at: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
       duration: `INTERVAL NOT NULL`,
     },
     constraints: {

@@ -117,7 +117,9 @@ export async function checkAutomaticBackup(
             limit: bkpConf.keepLast,
           })
         ).map((c) => c.id);
-        await this.dbs.backups.delete({ "id.$nin": toKeepIds, ...bkpFilter });
+        await this.dbs.backups.delete({
+          id: { $nin: toKeepIds },
+        });
       }
     }
   };

@@ -39,12 +39,9 @@ export const useSearchListOnKeyUpDown = ({
   }, [refList]);
 
   const focusedRowIndexRef = useRef<number | undefined>(0);
-  const [showFirstItemAsFocused, setShowFirstItemAsFocused] = useState(true);
+  const [showFirstItemAsFocused, setShowFirstItemAsFocused] = useState(false);
   useEffect(() => {
     focusedRowIndexRef.current = undefined;
-    setTimeout(() => {
-      setShowFirstItemAsFocused(getFocusInfo().inputIsFocused);
-    }, 200);
   }, [getFocusInfo, searchTerm, refInput]);
 
   const onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = useCallback(
@@ -66,7 +63,7 @@ export const useSearchListOnKeyUpDown = ({
       if (listIsFocused && e.key === "ArrowLeft") {
         input?.focus();
       }
-      setShowFirstItemAsFocused(inputIsFocused);
+      setShowFirstItemAsFocused(Boolean(inputIsFocused && searchTerm?.length));
 
       /* Prevent annoying select all when not within input */
       if (e.key === "a" && e.ctrlKey && !inputIsFocused) {

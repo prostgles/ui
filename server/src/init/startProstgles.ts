@@ -148,7 +148,7 @@ export const startProstgles = async ({
 
           const deletedWindows = await dbo.windows.delete(
             {
-              $or: [{ deleted: true }, { closed: true, "type.<>": "sql" }],
+              $or: [{ deleted: true }, { closed: true, type: { "<>": "sql" } }],
             },
             {
               returning: { id: 1 },

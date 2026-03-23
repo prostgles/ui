@@ -26,7 +26,7 @@ export const runAgentGoalTool = async ({
       "Unexpected. Agent goal tool used but chat does not have agent_info",
     );
   }
-  if (agent_info === "orchestrator") {
+  if (agent_info.type === "orchestrator") {
     throw new Error(
       "Unexpected. Agent goal tool used but agent_info is 'orchestrator'. Orchestrator agent type does not support agent goal tools.",
     );

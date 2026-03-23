@@ -40,7 +40,7 @@ const handler = {
         },
         create_agent: async (
           { name, autoApproveAllTools, tools, timeout, ...config },
-          { clientReq, connection_id, toolUseId, user_id, chat },
+          { clientReq, connection_id, toolUseId, user_id, chat, messageId },
         ) => {
           if (!statePrgl) {
             throw new Error("Prostgles state is not initialized");
@@ -88,6 +88,7 @@ const handler = {
                 started: Date.now(),
                 timeout,
                 chatId: chat.id,
+                messageId,
               },
             );
             const res = rawRes as {

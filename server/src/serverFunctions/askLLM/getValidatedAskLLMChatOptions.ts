@@ -41,7 +41,8 @@ export const getValidatedAskLLMChatOptions = async ({
   } as Filter);
   if (!llm_credential) throw "LLM credentials missing";
   const { agent_info } = chat;
-  let prompt = agent_info !== "orchestrator" ? (agent_info?.prompt ?? "") : "";
+  let prompt =
+    agent_info?.type !== "orchestrator" ? (agent_info?.prompt ?? "") : "";
   if (llm_prompt_id) {
     const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
     if (!promptObj) throw "Prompt not found";

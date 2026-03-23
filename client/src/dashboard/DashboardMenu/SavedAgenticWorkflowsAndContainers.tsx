@@ -1,6 +1,6 @@
 import { Icon } from "@components/Icon/Icon";
 import Loading from "@components/Loader/Loading";
-import type { FilterItem } from "prostgles-types";
+import Popup from "@components/Popup/Popup";
 import {
   SearchList,
   type SearchListItem,
@@ -9,11 +9,13 @@ import { mdiDocker } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflow } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
-import Popup from "@components/Popup/Popup";
+import { useLLMSetup } from "../AskLLM/Setup/LLMSetupProvider";
 
 export const SavedAgenticWorkflowsAndContainers = () => {
   const { dbs, connectionId } = usePrgl();
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<number>();
+
+  const state = useLLMSetup();
   const { data: agenticWorkflows } = dbs.agentic_workflows.useSubscribe(
     {
       connection_id: connectionId,
