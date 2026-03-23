@@ -6,21 +6,9 @@ import type { AuthClientRequest } from "prostgles-server";
 import { startAgent } from "../../startAgent";
 import { getValidatedMcpServerToolsAllowed } from "../definitionValidation/getValidatedMcpServerToolsAllowed";
 import type { DefineAgenticWorkflow } from "../runtimeSdk/defineAgenticWorkflow";
+import { createQueue } from "../runtimeSdk/defineAgenticWorkflowHandlers";
 import { getAgentConfigWithDefaults } from "./getAgentConfigWithDefaults";
 import { setupOrchestrationToolPermissions } from "./setupOrchestrationToolPermissions";
-
-/**
- * Execute agent invocations in series to reduce risk of avoid runaway costs and allow for human feedback between steps.
- */
-let agentExecutionChain: Promise<void> = Promise.resolve();
-
-const enqueueAgentExecution = <T>(
-  agentExecution: () => Promise<T>,
-): Promise<T> => {
-  const executionPromise = agentExecutionChain.then(agentExecution);
-  agentExecutionChain = executionPromise.catch(() => {}) as Promise<void>;
-  return executionPromise;
-};
 
 export const createWorkflowExecutionHandlers = async <
   P extends DefineAgenticWorkflow,
@@ -82,6 +70,8 @@ export const createWorkflowExecutionHandlers = async <
   if (!user) {
     throw new Error(`User with id ${userId} not found`);
   }
+
+  const { enqueueAgentExecution } = createQueue();
 
   const agentConfigsWithDefaults: Record<
     string,

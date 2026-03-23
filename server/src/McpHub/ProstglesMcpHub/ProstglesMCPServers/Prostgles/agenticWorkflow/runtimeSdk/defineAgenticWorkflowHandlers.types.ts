@@ -63,9 +63,10 @@ export type ProxyCallData =
     }
   | ProxyDbCallData;
 
-const { DOCKER_MCP_ENDPOINT, MODE, USER_INPUT } = process.env;
+const { DOCKER_MCP_ENDPOINT, MODE, USER_INPUT, EXECUTION_MODE } = process.env;
 export const WORKFLOW_ENV_VARS = {
   DOCKER_MCP_ENDPOINT,
   MODE,
   USER_INPUT,
+  EXECUTION_MODE,
 };

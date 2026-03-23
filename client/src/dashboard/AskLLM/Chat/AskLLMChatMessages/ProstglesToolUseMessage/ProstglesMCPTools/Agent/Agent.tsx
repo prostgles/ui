@@ -10,7 +10,6 @@ import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { AgentDefinition } from "../AgenticWorkflow/AgentDefinition";
 import { useJSONBParsedData } from "../common/useJSONBParsedData";
-import { useTypedToolUseResultDataV2 } from "../common/useTypedToolUseResultData";
 
 export const Agent = ({
   message,
@@ -72,7 +71,11 @@ export const Agent = ({
           </Btn>
           {showAgentChatId && (
             <AskLLMChat
-              selectedChat={{ id: showAgentChatId, type: "agent" }}
+              selectedChat={{
+                id: showAgentChatId,
+                type: "agent",
+                parent_message_id: message.id,
+              }}
               askLLM={dbsMethods.askLLM!}
               loadedSuggestions={loadedSuggestions}
               onClose={() => {

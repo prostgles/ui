@@ -158,6 +158,7 @@ export const startAgenticWorkflow = async ({
             omitKeys(databaseAccessDefinitions, ["ddlStatements"])
           : (databaseAccessDefinitions ?? null),
       },
+      executionMode,
       handler: (data, { httpReq, timestamp }) => {
         const agentHandler = agentHandlers.get(data.agentName);
         if (!agentHandler) {

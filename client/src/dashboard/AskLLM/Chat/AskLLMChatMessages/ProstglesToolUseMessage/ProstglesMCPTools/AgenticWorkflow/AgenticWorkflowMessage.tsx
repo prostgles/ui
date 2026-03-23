@@ -73,7 +73,6 @@ Dockerfile`);
       chatId={chatId}
       inputData={inputValidation.data}
       workflow_id={workflow_id}
-      messageId={messageId}
       tool_use_id={toolUseResult.toolUseResult.id}
       validatedWorkflowDataIsValid={workflowValidation?.data?.isValid}
       workflowValidationError={workflowValidationError}

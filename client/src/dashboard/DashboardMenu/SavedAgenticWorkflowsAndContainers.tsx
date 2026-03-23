@@ -77,7 +77,6 @@ export const SavedAgenticWorkflowsAndContainers = () => {
           <AgenticWorkflow
             workflow_id={selectedWorkflowId}
             validatedWorkflowDataIsValid={true}
-            messageId={selectedWorkflow.message_id}
             chatId={undefined}
             inputData={undefined}
             tool_use_id={selectedWorkflow.tool_use_id}

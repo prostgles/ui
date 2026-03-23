@@ -58,6 +58,7 @@ export const startAgenticWorkflowContainer = async (
         userInputValue: Record<string, unknown>;
         definition: AgenticWorkflowDefinition;
         dbPermissions: DbPermissions;
+        executionMode: "parallel" | "series";
         handler: (
           args: Extract<ProxyCallData, { type: "agent" }>,
           ctx: McpProxyRequestContext,
@@ -165,14 +166,6 @@ export const startAgenticWorkflowContainer = async (
             }
             data satisfies undefined | ProxyCallDataDefinitions;
             void mode.handler(data, ctx);
-            // .then(() => {
-            //   res.status(400).json({ success: true });
-            // })
-            // .catch((error) => {
-            //   res
-            //     .status(500)
-            //     .json({ error: "Internal server error: " + String(error) });
-            // });
           },
         },
         ["/agent"]: {
@@ -280,6 +273,7 @@ export const startAgenticWorkflowContainer = async (
         MODE: mode.type,
         USER_INPUT:
           mode.type === "full" ? JSON.stringify(mode.userInputValue) : "{}",
+        EXECUTION_MODE: mode.type === "full" ? mode.executionMode : "series",
       },
     },
     (log) => {
