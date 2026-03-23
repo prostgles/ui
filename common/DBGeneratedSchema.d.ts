@@ -508,8 +508,8 @@ export type DBGeneratedSchema = {
     columns: {
       called_at?: string;
       chat_id?: null | number;
-      duration: { years?: number; months?: number; days?: number; hours?: number; minutes?: number; seconds?: number; milliseconds?: number; };
       error?: null | any;
+      finished_at?: null | string;
       id?: number;
       input?: null | any;
       mcp_server_config_id?: null | number;

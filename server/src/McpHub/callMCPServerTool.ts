@@ -104,8 +104,8 @@ export const callMCPServerTool = async ({
 
   await dbs.mcp_server_tool_calls.insert(
     {
-      duration: { milliseconds: result.duration },
       called_at: called_at.toISOString(),
+      finished_at: new Date().toISOString(),
       mcp_server_name: serverName,
       mcp_tool_name: toolName,
       input: toolArguments,

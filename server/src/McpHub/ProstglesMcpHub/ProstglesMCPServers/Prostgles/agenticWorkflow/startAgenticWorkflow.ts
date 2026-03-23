@@ -159,7 +159,7 @@ export const startAgenticWorkflow = async ({
           : (databaseAccessDefinitions ?? null),
       },
       executionMode,
-      handler: (data, { httpReq, timestamp }) => {
+      handler: (data, { timestamp }) => {
         const agentHandler = agentHandlers.get(data.agentName);
         if (!agentHandler) {
           throw `Agent handler for ${data.agentName} not found`;

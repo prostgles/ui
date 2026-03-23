@@ -90,7 +90,7 @@ export const createWorkflowExecutionHandlers = async <
     const toolsWithInfo =
       tools && (await getValidatedMcpServerToolsAllowed(dbs, tools));
 
-    const agentHandler = (input: string) => {
+    const agentHandler = (input: string, requestTimestamp: Date) => {
       const run = () => {
         return startAgent(
           input,
@@ -99,6 +99,7 @@ export const createWorkflowExecutionHandlers = async <
             toolsWithInfo,
             configWithDefaults,
             autoApproveAllTools,
+            requestTimestamp,
           },
           {
             dbs,

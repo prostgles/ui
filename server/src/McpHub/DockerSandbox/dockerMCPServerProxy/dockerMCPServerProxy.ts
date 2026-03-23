@@ -62,7 +62,6 @@ const createDockerMCPServerProxy = async () => {
     const { secret } = req.params as { secret?: string };
     const ip = req.ip || req.socket.remoteAddress || "";
 
-    console.warn(req.path, req.body);
     const authContext =
       secret ?
         dockerContainerAuthRegistry.getContainerFromSecret(secret.toString())
@@ -93,7 +92,6 @@ const createDockerMCPServerProxy = async () => {
       timestamp,
     } = authContext;
 
-    console.error(req.path, req.body);
     const matchedRequestHandler = getEntries(requestHandlers ?? {}).find(
       ([route]) => {
         return match(route)(req.path);

@@ -1,12 +1,13 @@
 import { fixIndent, getEntries } from "@common/utils";
 import { isEqual } from "prostgles-types";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
 import type { TestSelectors } from "../../Testing";
 import { isDefined, scrollIntoViewIfNeeded } from "../../utils/utils";
 import { classOverride, type DivProps } from "../Flex";
 import { useResizeObserver } from "./useResizeObserver";
 import "./ScrollFade.css";
+import { useAutoScrollToBottom } from "./useAutoScrollToBottom";
 
 type P = TestSelectors &
   DivProps & {
@@ -33,19 +34,7 @@ export const ScrollFade = ({
   }, []);
   useScrollFade(elem);
   useScrollRestore(scrollRestore ? elem : undefined);
-
-  const scrolledRef = React.useRef(false);
-  useEffect(() => {
-    if (
-      scrollToBottomOnMount &&
-      elem &&
-      elem.scrollHeight > elem.clientHeight &&
-      !scrolledRef.current
-    ) {
-      scrolledRef.current = true;
-      elem.scrollTop = elem.scrollHeight;
-    }
-  }, [elem, scrollToBottomOnMount, children]);
+  useAutoScrollToBottom(elem, children, scrollToBottomOnMount ?? false);
 
   return (
     <div

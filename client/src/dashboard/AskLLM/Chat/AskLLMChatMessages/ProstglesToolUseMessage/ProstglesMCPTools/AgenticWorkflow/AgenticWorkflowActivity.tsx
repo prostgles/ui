@@ -1,11 +1,12 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
-import Btn from "@components/Btn";
 import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import { FlexCol, FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
 import Popup from "@components/Popup/Popup";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { SearchList } from "@components/SearchList/SearchList";
 import { Stopwatch } from "@components/Stopwatch";
 import { SvgIcon } from "@components/SvgIcon";
 import { mdiRobotOutline } from "@mdi/js";
@@ -90,83 +91,6 @@ export const AgenticWorkflowActivity = ({
     });
   }, [agentChats, orchestratorToolCalls]);
 
-  // const listProps = useMemo(() => {
-  //   const fieldConfigs = [
-  //     {
-  //       name: "agent_info",
-  //       hide: true,
-  //     },
-  //     {
-  //       name: "id",
-  //       renderMode: "valueNode",
-  //       render: (value, { id, agent_info }) => (
-  //         <Btn
-  //           title={`Open chat ${value}`}
-  //           iconPath={mdiRobotOutline}
-  //           data-command="AgenticWorkflow.openChat"
-  //           variant="faded"
-  //           size="small"
-  //           onClick={() => {
-  //             console.log("Opening chat with id", id);
-  //             setAgentChatId(id);
-  //           }}
-  //         >
-  //           {agent_info === "orchestrator" ?
-  //             agent_info
-  //           : (agent_info?.name ?? "")}{" "}
-  //           {value}
-  //         </Btn>
-  //       ),
-  //     },
-  //     {
-  //       name: "created",
-  //       renderMode: "value",
-  //       select: { $ageNow: ["created", null, "second"] },
-  //       render: (value) => <StyledInterval value={value} />,
-  //     },
-  //     {
-  //       name: "latestMessages" as "name",
-  //       label: "Latest messages",
-  //       select: {
-  //         $leftJoin: "llm_messages",
-  //         orderBy: { created: -1 },
-  //         limit: 2,
-  //       },
-  //       renderMode: "valueNode",
-  //       render: (_, data) => {
-  //         const { latestMessages: lm } = data as unknown as {
-  //           latestMessages: DBSSchema["llm_messages"][];
-  //         };
-  //         /* reverse to show oldest first */
-  //         const latestMessages = lm.toReversed();
-  //         const [message, nextMessage] = latestMessages;
-  //         if (!message) {
-  //           return null;
-  //         }
-  //         return (
-  //           <LLMChatMessage
-  //             isLoadingSinceDate={undefined}
-  //             messageItem={{
-  //               type: "single_message",
-  //               message,
-  //               nextMessage,
-  //               onToggle: undefined,
-  //             }}
-  //             workspaceId={workspaceId}
-  //             loadedSuggestions={loadedSuggestions}
-  //           />
-  //         );
-  //       },
-  //     },
-  //   ] satisfies FieldConfig<DBSSchema[typeof tableName]>[];
-
-  //   const filter = {
-  //     parent_chat_id: chatId,
-  //     agent_info: { $ne: `"orchestrator"` as "orchestrator" },
-  //   } satisfies FilterItem<DBSSchema[typeof tableName]>;
-
-  //   return { fieldConfigs, filter, orderBy: { key: "id", asc: false } };
-  // }, [chatId, loadedSuggestions, workspaceId]);
   const { mcpServerIcons } = useMcpServerIcons();
 
   return (
@@ -176,78 +100,81 @@ export const AgenticWorkflowActivity = ({
           No activity yet. Agent chats will appear here once the workflow starts
           running.
         </InfoRow>
-      : <ScrollFade
-          className="flex-col o-auto p-1 gap-1"
-          scrollToBottomOnMount={true}
-        >
-          {items.map((item) => {
-            if (item.type === "agent_chat") {
-              const { agent_info, id, status, created } = item;
-              if (agent_info?.type !== "agent") {
-                return <>Not expected</>;
-              }
-              const startDate = new Date(created);
-              const endDate =
-                !status || status.state === "loading" ?
+      : <SearchList
+          className="m-p5"
+          limit={500}
+          autoScrollToBottom={true}
+          items={items.map((item) => {
+            const icon =
+              item.type === "agent_chat" ?
+                <Icon path={mdiRobotOutline} />
+              : <SvgIcon
+                  icon={
+                    (item.mcp_server_name &&
+                      mcpServerIcons.get(item.mcp_server_name)) ??
+                    "Tools"
+                  }
+                />;
+            const name =
+              item.type === "agent_chat" ? item.name : item.mcp_tool_name;
+
+            const startedAt =
+              item.type === "agent_chat" ?
+                new Date(item.created)
+              : new Date(item.called_at);
+            const endedAt =
+              item.type === "agent_chat" ?
+                !item.status || item.status.state === "loading" ?
                   finishedAt
-                : new Date(status.timestamp);
-              return (
-                <FlexRow key={item.type + item.id}>
-                  {startDate.getTime()}
-                  <Btn
-                    title={`Open chat ${id}`}
-                    iconPath={mdiRobotOutline}
-                    data-command="AgenticWorkflow.openChat"
-                    variant="faded"
-                    size="small"
-                    loading={!endDate}
-                    onClick={() => {
-                      console.log("Opening chat with id", id);
-                      setAgentChatId(id);
-                    }}
-                  >
-                    {agent_info.name} ({id})
-                  </Btn>
+                : new Date(item.status.timestamp)
+              : item.finished_at ? new Date(item.finished_at)
+              : finishedAt;
+
+            return {
+              key: item.type + item.id,
+              contentLeft:
+                !endedAt ?
+                  <FlexCol>
+                    <Loading className="my-p5 mx-p25" sizePx={16} delay={0} />
+                    <Stopwatch
+                      className="text-2"
+                      startTime={startedAt}
+                      endTime={endedAt}
+                    />
+                  </FlexCol>
+                : icon,
+              label: name,
+              styles: {
+                subLabel: { whiteSpace: "nowrap" },
+              },
+              subLabel: sliceText(
+                item.type === "agent_chat" ?
+                  item.agent_info?.type === "agent" ?
+                    item.agent_info.prompt
+                  : ""
+                : JSON.stringify(item.input),
+                100,
+              ).replaceAll("\n", " "),
+              contentRight: (
+                <FlexRow>
+                  {!endedAt && <Loading sizePx={16} />}
                   <Stopwatch
                     className="text-2"
-                    startTime={startDate}
-                    endTime={endDate}
+                    startTime={startedAt}
+                    endTime={endedAt}
                   />
                 </FlexRow>
-              );
-            }
-
-            const mcpIconName =
-              (item.mcp_server_name &&
-                mcpServerIcons.get(item.mcp_server_name)) ??
-              "Tools";
-            const loading = !finishedAt && !item.duration;
-            return (
-              <FlexRow key={item.type + item.id}>
-                {new Date(item.called_at).getTime()}
-                <Btn
-                  variant="faded"
-                  size="small"
-                  loading={loading}
-                  iconNode={
-                    <SvgIcon size={18} icon={mcpIconName} className="text-1" />
-                  }
-                  onClick={() => setSelectedMcpToolCall(item)}
-                >
-                  {item.mcp_tool_name}
-                </Btn>{" "}
-                {/* <StyledInterval
-                  className="text-2"
-                  mode="full"
-                  value={item.duration}
-                /> */}
-                <span className="text-2">
-                  {sliceText(JSON.stringify(item.input), 70)}
-                </span>
-              </FlexRow>
-            );
+              ),
+              onPress: () => {
+                if (item.type === "agent_chat") {
+                  setAgentChatId(item.id);
+                } else {
+                  setSelectedMcpToolCall(item);
+                }
+              },
+            };
           })}
-        </ScrollFade>
+        />
       }
       {agentChatId && (
         <AskLLMChat
@@ -271,6 +198,7 @@ export const AgenticWorkflowActivity = ({
           title={`${selectedMcpToolCall.mcp_server_name} ${selectedMcpToolCall.mcp_tool_name} tool call details`}
           contentClassName="flex-col gap-1 p-1"
           onClose={() => setSelectedMcpToolCall(undefined)}
+          clickCatchStyle={{ opacity: 1 }}
         >
           <MonacoCodeInMarkdown
             title="Input:"

@@ -16,6 +16,7 @@ import type {
   SearchListProps,
 } from "./SearchList";
 import { SearchListRowContent } from "./SearchListRowContent";
+import { useAutoScrollToBottom } from "@components/ScrollFade/useAutoScrollToBottom";
 
 export type SearchListItemsProps = Pick<
   SearchListProps,
@@ -28,6 +29,7 @@ export type SearchListItemsProps = Pick<
   | "onReorder"
   | "onMultiToggle"
   | "listStyle"
+  | "autoScrollToBottom"
 > & {
   renderedItems: ParsedListItem[];
   isSearch: boolean | undefined;
@@ -56,6 +58,7 @@ export const SearchListItems = forwardRef<
     onReorder,
     onMultiToggle,
     showFirstItemAsFocused,
+    autoScrollToBottom,
   } = props;
   const inputWrapper = inputWrapperRef.current;
   const notAllItemsShown =
@@ -105,7 +108,7 @@ export const SearchListItems = forwardRef<
         }),
     } satisfies React.CSSProperties;
   }, [inputWrapper, isSearch]);
-
+  useAutoScrollToBottom(ulNode, renderedItems.length, !!autoScrollToBottom);
   return (
     <div
       className={

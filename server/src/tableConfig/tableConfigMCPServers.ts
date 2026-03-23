@@ -281,7 +281,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       output: `JSONB`,
       error: `JSON`,
       called_at: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
-      duration: `INTERVAL NOT NULL`,
+      finished_at: `TIMESTAMPTZ`,
     },
     constraints: {
       mcp_tool_name_server_name_fk:

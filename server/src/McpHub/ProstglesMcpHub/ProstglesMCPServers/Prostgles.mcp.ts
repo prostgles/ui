@@ -78,6 +78,7 @@ const handler = {
                   (await getValidatedMcpServerToolsAllowed(dbs, tools)),
                 configWithDefaults,
                 autoApproveAllTools,
+                requestTimestamp: new Date(),
               },
               {
                 askLLM: dbsClientFunctions.askLLM.run,

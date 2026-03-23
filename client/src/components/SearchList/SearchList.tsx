@@ -145,6 +145,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   endOfResultsContent?: React.ReactNode;
 
   rowStyleVariant?: "row-wrap";
+  autoScrollToBottom?: boolean;
 };
 
 export const SearchList = <M extends boolean = false>(

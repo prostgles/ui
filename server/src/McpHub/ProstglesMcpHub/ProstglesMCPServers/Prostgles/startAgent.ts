@@ -14,6 +14,7 @@ export const startAgent = async (
     toolsWithInfo,
     configWithDefaults,
     autoApproveAllTools,
+    requestTimestamp,
   }: {
     name: string;
     toolsWithInfo:
@@ -21,6 +22,7 @@ export const startAgent = async (
       | Awaited<ReturnType<typeof getValidatedMcpServerToolsAllowed>>;
     configWithDefaults: Awaited<ReturnType<typeof getAgentConfigWithDefaults>>;
     autoApproveAllTools: boolean;
+    requestTimestamp: Date;
   },
   {
     dbs,
@@ -86,7 +88,7 @@ export const startAgent = async (
         max_tokens: maxTokens,
         temperature,
       },
-      created: new Date().toISOString(),
+      created: requestTimestamp.toISOString(),
       /**
        * satisfies added due to weird ts behaviour (hidden conversion to any) but.
        * TODO: detect why and where else TS is silently failing to show errors due to outputSchema complexity
