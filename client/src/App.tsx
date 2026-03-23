@@ -41,6 +41,7 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { PrglCoreProvider } from "./useAppState/PrglCoreContextProvider";
 import { useAppState } from "./useAppState/useAppState";
+import { ElectronSearchBar } from "@components/ElectronSearchBar";
 
 export type ClientUser = {
   sid: string;
@@ -65,9 +66,9 @@ export type PrglReadyState = {
   dbsSocket: Socket;
   dbsSql: SQLHandler | undefined;
   auth: AuthHandler<ClientUser>;
-  isAdminOrSupport: boolean;
   sid: string | undefined;
   user: DBSSchema["users"] | undefined;
+  isElectron: boolean;
 };
 export type AppContextProps = PrglReadyState & {
   setTitle: (content: string | React.ReactNode) => void;
@@ -188,6 +189,7 @@ export const App = () => {
   return (
     <AppContextProvider appContextProps={appContextProps}>
       <PrglCoreProvider prglCore={prglState}>
+        <ElectronSearchBar />
         <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
           {!prglLoaded && (
             <CommandPalette isElectron={isElectron} prglLoaded={false} />

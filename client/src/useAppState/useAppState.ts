@@ -1,6 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { type DBHandlerClient, useAsyncEffectQueue } from "prostgles-client";
-import { includes } from "prostgles-types";
 import { useMemo, useState } from "react";
 import type { PrglReadyState } from "../App";
 import type { DBS, DBSMethods } from "../dashboard/Dashboard/DBS";
@@ -15,7 +14,7 @@ export const useAppState = (
   const serverState = useServerState();
   const dbsClient = useDBSClient(onDisconnect, serverState);
   const [user, setUser] = useState<DBSSchema["users"]>();
-
+  const { isElectron = false } = serverState ?? {};
   const prglStateWaiting = dbsClient.hasError || dbsClient.isLoading;
   const prglState: PrglReadyState | undefined = useMemo(() => {
     if (prglStateWaiting) return;
@@ -46,13 +45,13 @@ export const useAppState = (
       dbsMethodSchema: dbsClient.methodSchema ?? {},
       dbsTables,
       auth,
-      isAdminOrSupport: includes(["admin", "support"], auth.user?.type),
       dbsSocket: socket,
       sid: auth.user?.sid,
       dbsKey: Date.now() + "",
       user: auth.user,
+      isElectron,
     };
-  }, [dbsClient, prglStateWaiting]);
+  }, [dbsClient, prglStateWaiting, isElectron]);
 
   const { dbs, auth } = prglState ?? {};
 
