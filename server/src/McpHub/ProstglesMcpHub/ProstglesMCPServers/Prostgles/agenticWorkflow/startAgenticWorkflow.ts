@@ -33,7 +33,7 @@ export const stopAgenticWorkflow = async ({
       {
         chat_id: chatId,
         message_id: messageId,
-        state: { status: "running" },
+        state: { "@>": { status: "running" } },
       },
       {
         state: {
@@ -158,12 +158,12 @@ export const startAgenticWorkflow = async ({
             omitKeys(databaseAccessDefinitions, ["ddlStatements"])
           : (databaseAccessDefinitions ?? null),
       },
-      handler: (data) => {
+      handler: (data, { httpReq, timestamp }) => {
         const agentHandler = agentHandlers.get(data.agentName);
         if (!agentHandler) {
           throw `Agent handler for ${data.agentName} not found`;
         }
-        return agentHandler(data.input);
+        return agentHandler(data.input, timestamp);
       },
     },
   ).catch((error: unknown) => {

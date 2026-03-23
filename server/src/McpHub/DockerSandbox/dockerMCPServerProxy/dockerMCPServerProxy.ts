@@ -62,6 +62,7 @@ const createDockerMCPServerProxy = async () => {
     const { secret } = req.params as { secret?: string };
     const ip = req.ip || req.socket.remoteAddress || "";
 
+    console.warn(req.path, req.body);
     const authContext =
       secret ?
         dockerContainerAuthRegistry.getContainerFromSecret(secret.toString())
@@ -74,7 +75,7 @@ const createDockerMCPServerProxy = async () => {
           : "Container and/or Chat not found for the given IP address: " + ip,
       });
     }
-    res.locals.authContext = authContext;
+    res.locals.authContext = { ...authContext, timestamp: new Date() };
     next();
   };
 
@@ -83,9 +84,16 @@ const createDockerMCPServerProxy = async () => {
 
   const dockerProxyRouter: RequestHandler = async (req, res, next) => {
     const authContext = res.locals.authContext as ContainerProxyContext;
-    const { sid_token, requestHandlers, secret, user, mcpToolsScope } =
-      authContext;
+    const {
+      sid_token,
+      requestHandlers,
+      secret,
+      user,
+      mcpToolsScope,
+      timestamp,
+    } = authContext;
 
+    console.error(req.path, req.body);
     const matchedRequestHandler = getEntries(requestHandlers ?? {}).find(
       ([route]) => {
         return match(route)(req.path);
@@ -106,6 +114,7 @@ const createDockerMCPServerProxy = async () => {
           secret,
           mcpToolsScope,
           user,
+          timestamp,
         },
         req,
         res,
@@ -237,9 +246,9 @@ const mcpRequestHandler: RequestHandler = async (
 ) => {
   const { server_name = "", tool_name } = req.params;
   try {
-    const { user, sid_token, mcpToolsScope } = res.locals
+    const { user, sid_token, mcpToolsScope, timestamp } = res.locals
       .authContext as ContainerProxyContext;
-
+    const called_at = timestamp;
     if (!mcpToolsScope) {
       return res.status(HTTP_FAIL_CODES.UNAUTHORIZED).json({
         error: "MCP Tools scope chat not found in auth context",
@@ -348,6 +357,7 @@ const mcpRequestHandler: RequestHandler = async (
       toolUseId: undefined,
       mcp_tool_approval_requests_id: approvalRequestId,
       messageId,
+      called_at,
     })
       .then((result) => {
         res

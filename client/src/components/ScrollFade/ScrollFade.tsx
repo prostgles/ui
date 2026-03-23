@@ -1,17 +1,19 @@
+import { fixIndent, getEntries } from "@common/utils";
+import { isEqual } from "prostgles-types";
 import React, { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import type { TestSelectors } from "../../Testing";
+import { isDefined, scrollIntoViewIfNeeded } from "../../utils/utils";
 import { classOverride, type DivProps } from "../Flex";
 import { useResizeObserver } from "./useResizeObserver";
-import { fixIndent, getEntries } from "@common/utils";
-import { isDefined, scrollIntoViewIfNeeded } from "../../utils/utils";
-import { isEqual } from "prostgles-types";
-import { useLocation } from "react-router";
+import "./ScrollFade.css";
 
 type P = TestSelectors &
   DivProps & {
     children: React.ReactNode;
     className?: string;
     scrollRestore?: boolean;
+    scrollToBottomOnMount?: boolean;
   };
 
 type Sides = Record<"top" | "bottom" | "left" | "right", boolean>;
@@ -19,7 +21,12 @@ type Sides = Record<"top" | "bottom" | "left" | "right", boolean>;
 /**
  * Given a list of children, this component will add a fade effect to the bottom of the children if the children are scrollable
  */
-export const ScrollFade = ({ children, scrollRestore, ...divProps }: P) => {
+export const ScrollFade = ({
+  children,
+  scrollRestore,
+  scrollToBottomOnMount,
+  ...divProps
+}: P) => {
   const [elem, setElem] = useState<HTMLDivElement | null>(null);
   const handleRef = useCallback((el: HTMLDivElement | null) => {
     setElem(el);
@@ -27,13 +34,35 @@ export const ScrollFade = ({ children, scrollRestore, ...divProps }: P) => {
   useScrollFade(elem);
   useScrollRestore(scrollRestore ? elem : undefined);
 
+  const scrolledRef = React.useRef(false);
+  useEffect(() => {
+    if (
+      scrollToBottomOnMount &&
+      elem &&
+      elem.scrollHeight > elem.clientHeight &&
+      !scrolledRef.current
+    ) {
+      scrolledRef.current = true;
+      elem.scrollTop = elem.scrollHeight;
+    }
+  }, [elem, scrollToBottomOnMount, children]);
+
   return (
     <div
       ref={handleRef}
       {...divProps}
-      className={classOverride("ScrollFade", divProps.className ?? "")}
+      className={classOverride(
+        "ScrollFade " + (scrollToBottomOnMount ? "scrollToBottomOnMount" : ""),
+        divProps.className ?? "",
+      )}
     >
       {children}
+      {scrollToBottomOnMount && (
+        <div
+          className="ScrollFade-ScrollAnchor"
+          style={{ overflowAnchor: "auto", height: 0 }}
+        />
+      )}
     </div>
   );
 };

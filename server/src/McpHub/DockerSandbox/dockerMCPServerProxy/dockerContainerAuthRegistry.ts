@@ -17,6 +17,7 @@ export type McpProxyRequestContext = Omit<
 > & {
   httpReq: e.Request;
   res: e.Response;
+  timestamp: Date;
 };
 export type DockerMCPServerProxyHandler = (
   authContext: McpProxyRequestContext,
@@ -45,6 +46,7 @@ export type ContainerProxyContext = {
       handler: DockerMCPServerProxyHandler;
     }
   >;
+  timestamp: Date;
 };
 
 const containers = new Map<string, ContainerProxyContext>();
@@ -108,16 +110,19 @@ const getContainerFromIP = (ip: string): ContainerProxyContext | undefined => {
 
   if (!containerName) return;
   const containerInfo = containers.get(containerName);
-  return (
-    containerInfo &&
-    pickKeys(containerInfo, [
+  if (!containerInfo) {
+    return;
+  }
+  return {
+    timestamp: new Date(),
+    ...pickKeys(containerInfo, [
       "mcpToolsScope",
       "user",
       "sid_token",
       "requestHandlers",
       "secret",
-    ])
-  );
+    ]),
+  };
 };
 const getContainerFromSecret = (
   secret: string,

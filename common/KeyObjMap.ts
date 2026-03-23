@@ -2,20 +2,14 @@ type AnyRecord = Record<string, unknown>;
 
 export class KeyObjMap<K extends AnyRecord, V> {
   private readonly root = new Map<unknown, unknown>();
-  private get keyOrder(): readonly (keyof K)[] {
-    if (!this._keys) {
-      throw new Error(
-        "Cannot access the keys before defining them through set().",
-      );
-    }
-    return this._keys;
-  }
-  _keys?: (keyof K)[];
+  private keyOrder: readonly (keyof K)[] = [];
 
   constructor() {}
 
   set(keyObj: K, value: V): this {
-    this._keys ??= Object.keys(keyObj).toSorted() as (keyof K)[];
+    if (!this.keyOrder.length) {
+      this.keyOrder = Object.keys(keyObj).toSorted() as (keyof K)[];
+    }
     let node: Map<unknown, unknown> = this.root;
 
     for (const key of this.keyOrder) {

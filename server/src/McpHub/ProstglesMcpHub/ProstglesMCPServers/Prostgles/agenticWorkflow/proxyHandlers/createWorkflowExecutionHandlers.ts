@@ -18,9 +18,7 @@ const enqueueAgentExecution = <T>(
   agentExecution: () => Promise<T>,
 ): Promise<T> => {
   const executionPromise = agentExecutionChain.then(agentExecution);
-  agentExecutionChain = executionPromise.catch((error) => {
-    console.error("Error executing agent:", error);
-  }) as Promise<void>;
+  agentExecutionChain = executionPromise.catch(() => {}) as Promise<void>;
   return executionPromise;
 };
 
@@ -75,7 +73,10 @@ export const createWorkflowExecutionHandlers = async <
       run: GeneratedFunctionSchema[K];
     };
   };
-  const agentHandlers = new Map<string, (agentInput: string) => Promise<any>>();
+  const agentHandlers = new Map<
+    string,
+    (agentInput: string, requestTimestamp: Date) => Promise<any>
+  >();
   const started = Date.now();
   const user = await dbs.users.findOne({ id: userId });
   if (!user) {

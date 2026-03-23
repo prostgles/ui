@@ -105,6 +105,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                     "max_iterations_reached",
                   ],
                 },
+                timestamp: "Date",
               },
             },
             {
@@ -118,6 +119,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
               type: {
                 state: { enum: ["goal-reached"] },
                 data: "unknown",
+                timestamp: "Date",
               },
             },
             {
@@ -127,6 +129,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                 },
                 data: "unknown",
                 error: "string",
+                timestamp: "Date",
               },
             },
           ],

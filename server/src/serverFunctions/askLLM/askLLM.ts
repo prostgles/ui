@@ -453,6 +453,7 @@ export const askLLM = async (args: AskLLMArgs) => {
           status: {
             state: "stopped",
             reason: "maximum_consecutive_tool_fails",
+            timestamp: new Date().toISOString(),
           },
         },
       );
@@ -481,6 +482,7 @@ export const askLLM = async (args: AskLLMArgs) => {
             status: {
               state: "stopped",
               reason: "max_iterations_reached",
+              timestamp: new Date().toISOString(),
             },
           },
         );

@@ -4,11 +4,9 @@ import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 export const useAgenticWorkflowState = ({
   workflow_id,
   validatedWorkflowDataIsValid,
-  messageId,
 }: {
   workflow_id: number | undefined;
   validatedWorkflowDataIsValid: boolean | undefined;
-  messageId: string | undefined;
 }) => {
   const [activeTab, setActiveTab] = useState(
     workflow_id ? "Details" : "Definition",
@@ -26,19 +24,19 @@ export const useAgenticWorkflowState = ({
     },
     undefined,
     {
-      skip: workflow_id === undefined || messageId === undefined,
+      skip: workflow_id === undefined, //|| messageId === undefined,
     },
   );
   const { data: latestRun } = dbs.agentic_workflow_runs.useSubscribeOne(
     {
       workflow_id,
-      message_id: messageId,
+      message_id: workflow?.message_id,
     },
     {
       orderBy: { created: -1 },
     },
     {
-      skip: workflow_id === undefined || messageId === undefined,
+      skip: workflow_id === undefined, //|| messageId === undefined,
     },
   );
 
@@ -47,7 +45,6 @@ export const useAgenticWorkflowState = ({
     activeTab,
     setActiveTab,
     workflow_id,
-    messageId,
     latestRun,
   };
 };

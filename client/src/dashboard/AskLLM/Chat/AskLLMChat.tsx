@@ -23,7 +23,10 @@ export type AskLLMChatProps = Pick<
   onClose: VoidFunction;
   workspaceId: string | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
-  selectedChat: { type: "agent" | "toolApproval"; id: number } | undefined;
+  selectedChat:
+    | { type: "toolApproval"; id: number }
+    | { type: "agent"; id: number; parent_message_id: string }
+    | undefined;
 };
 
 export const AskLLMChat = (props: AskLLMChatProps) => {

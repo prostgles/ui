@@ -74,6 +74,7 @@ export const runAgentGoalTool = async ({
     message: [toolResultContent],
     total_tokens: 0,
   });
+  const timestamp = new Date().toISOString();
   await dbs.llm_chats.update(
     {
       id: chat.id,
@@ -85,15 +86,18 @@ export const runAgentGoalTool = async ({
             state: "goal-failure",
             data: agetGoalTool.input,
             error: "Agent indicated goal failure",
+            timestamp,
           }
         : validationResult?.error !== undefined ?
           {
             state: "goal-data-validation-failure",
             data: agetGoalTool.input,
+            timestamp,
             error: validationResult.error,
           }
         : {
             state: "goal-reached",
+            timestamp,
             data: agetGoalTool.input,
           },
     },

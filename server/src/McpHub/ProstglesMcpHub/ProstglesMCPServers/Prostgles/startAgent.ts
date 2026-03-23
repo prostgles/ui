@@ -86,6 +86,7 @@ export const startAgent = async (
         max_tokens: maxTokens,
         temperature,
       },
+      created: new Date().toISOString(),
       /**
        * satisfies added due to weird ts behaviour (hidden conversion to any) but.
        * TODO: detect why and where else TS is silently failing to show errors due to outputSchema complexity

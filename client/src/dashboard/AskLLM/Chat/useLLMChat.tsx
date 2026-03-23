@@ -28,7 +28,8 @@ export const useLLMChat = (props: UseLLMChatProps) => {
   const chatsFilter = useMemo(() => {
     return {
       connection_id: { $in: [props.connectionId, null] },
-      parent_chat_id: selectedChat?.type === "agent" ? { $ne: null } : null,
+      parent_chat_message_id:
+        selectedChat?.type === "agent" ? selectedChat.parent_message_id : null,
     } satisfies FilterItem<DBSSchema["llm_chats"]>;
   }, [selectedChat, props.connectionId]);
   const [selectedChatId, setSelectedChat] = useState(selectedChat?.id);

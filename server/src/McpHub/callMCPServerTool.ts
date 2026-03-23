@@ -23,6 +23,7 @@ export const callMCPServerTool = async ({
   isReRun,
   mcp_tool_approval_requests_id,
   messageId,
+  called_at = new Date(),
 }: {
   user: Pick<DBSSchema["users"], "id">;
   chat_id: number;
@@ -35,8 +36,8 @@ export const callMCPServerTool = async ({
   isReRun?: boolean;
   mcp_tool_approval_requests_id: number | undefined;
   messageId: string;
+  called_at?: Date;
 }): Promise<McpToolCallResponse> => {
-  const start = new Date();
   const argErrors = getJSONBObjectSchemaValidationError(
     {
       serverName: "string",
@@ -104,7 +105,7 @@ export const callMCPServerTool = async ({
   await dbs.mcp_server_tool_calls.insert(
     {
       duration: { milliseconds: result.duration },
-      called_at: start.toISOString(),
+      called_at: called_at.toISOString(),
       mcp_server_name: serverName,
       mcp_tool_name: toolName,
       input: toolArguments,

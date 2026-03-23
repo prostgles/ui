@@ -65,6 +65,7 @@ export const runContainerWithProxyAccess = async (
         requestHandlers,
         secret,
         user,
+        timestamp: new Date(),
       },
       (containerName) => {
         const argsWithEnv: typeof args = {

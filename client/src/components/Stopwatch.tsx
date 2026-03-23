@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from "react";
+import { classOverride } from "./Flex";
 
 export const Stopwatch = ({
   startTime,
   endTime,
   title,
+  className,
+  style,
 }: {
   startTime: Date;
   endTime: Date | undefined;
   title?: string;
+  className?: string;
+  style?: React.CSSProperties;
 }) => {
   const [elapsed, setElapsed] = useState(0);
 
@@ -26,7 +31,11 @@ export const Stopwatch = ({
 
   const displayTime = getDurationAsStr(elapsed, endTime === undefined);
   return (
-    <div title={title} className="ws-nowrap">
+    <div
+      title={title}
+      className={classOverride("Stopwatch ws-nowrap", className)}
+      style={style}
+    >
       {displayTime}
     </div>
   );

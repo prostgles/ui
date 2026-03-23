@@ -29,6 +29,7 @@ export const checkMaxCostLimitForChat = async (
           status: {
             state: "stopped",
             reason,
+            timestamp: new Date().toISOString(),
           },
         },
       );

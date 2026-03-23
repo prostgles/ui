@@ -135,17 +135,6 @@ export const startAgenticWorkflowContainer = async (
               {
                 type: {
                   type: { enum: ["definitions"] },
-                  // newTables: {
-                  //   arrayOfType: {
-                  //     name: "string",
-                  //     schema: { type: "string", optional: true },
-                  //     columns: "unknown[]",
-                  //     ifNotExists: {
-                  //       type: "boolean",
-                  //       optional: true,
-                  //     },
-                  //   },
-                  // },
                   usedTables: "string[]",
                   definitions: {
                     type: pickKeys(

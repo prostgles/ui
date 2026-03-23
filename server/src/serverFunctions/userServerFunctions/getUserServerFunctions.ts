@@ -108,7 +108,13 @@ export const getUserServerFunctions = async (
         stopAskLLM(chatId);
         await dbs.llm_chats.update(
           { id: chatId },
-          { status: { state: "stopped", reason: "manual" } },
+          {
+            status: {
+              state: "stopped",
+              reason: "manual",
+              timestamp: new Date().toISOString(),
+            },
+          },
         );
       },
     }),

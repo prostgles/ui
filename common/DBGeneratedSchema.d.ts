@@ -339,10 +339,10 @@ export type DBGeneratedSchema = {
       parent_chat_message_id?: null | string;
       status?: 
        | null
-       |  {  state: "stopped";  reason: "max_total_cost_usd" | "estimated_future_max_total_cost_usd" | "maximum_consecutive_tool_fails" | "manual" | "max_iterations_reached"; }
+       |  {  state: "stopped";  reason: "max_total_cost_usd" | "estimated_future_max_total_cost_usd" | "maximum_consecutive_tool_fails" | "manual" | "max_iterations_reached";  timestamp: string; }
        |  {  state: "loading";  since: string; }
-       |  {  state: "goal-reached";  data: unknown; }
-       |  {  state: "goal-data-validation-failure" | "goal-failure";  data: unknown;  error: string; }
+       |  {  state: "goal-reached";  data: unknown;  timestamp: string; }
+       |  {  state: "goal-data-validation-failure" | "goal-failure";  data: unknown;  error: string;  timestamp: string; }
       user_id: string;
     };
   };

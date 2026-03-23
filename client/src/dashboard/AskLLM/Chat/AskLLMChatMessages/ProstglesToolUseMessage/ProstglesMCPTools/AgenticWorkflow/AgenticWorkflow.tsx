@@ -7,8 +7,7 @@ import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflowActions } from "./AgenticWorkflowActions";
-// import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity";
-import { AgenticWorkflowActivity } from "./AgenticWorkflowActivityV2";
+import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity";
 import { AgenticWorkflowDefinition } from "./AgenticWorkflowDefinition";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
@@ -18,7 +17,6 @@ import { mdiBookmark, mdiBookmarkOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const AgenticWorkflow = ({
-  messageId,
   validatedWorkflowDataIsValid,
   workflowValidationError,
   workflow_id,
@@ -60,7 +58,6 @@ export const AgenticWorkflow = ({
   );
   const { activeTab, setActiveTab, latestRun, workflow } =
     useAgenticWorkflowState({
-      messageId,
       validatedWorkflowDataIsValid,
       workflow_id,
     });
@@ -141,16 +138,22 @@ export const AgenticWorkflow = ({
               />
             ),
           },
-          Activity: {
-            label: "Activity",
-            content: (
-              <AgenticWorkflowActivity
-                chatId={chatId}
-                loadedSuggestions={undefined}
-                workspaceId={undefined}
-              />
-            ),
-          },
+          ...(workflow && {
+            Activity: {
+              label: "Activity",
+              content: (
+                <AgenticWorkflowActivity
+                  chatId={chatId}
+                  messageId={workflow.message_id}
+                  finishedAt={
+                    latestRun?.finished ?
+                      new Date(latestRun.finished)
+                    : undefined
+                  }
+                />
+              ),
+            },
+          }),
           Logs: {
             label: "Logs",
             content:
@@ -199,7 +202,7 @@ export const AgenticWorkflow = ({
             setActiveTab("Details");
           }}
           onSuccess={() => setShowSuccessMessage(true)}
-          messageId={messageId}
+          messageId={workflow.message_id}
           latestRun={latestRun}
         />
       )}

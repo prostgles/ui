@@ -5,8 +5,6 @@ import { ProgressBar } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
 import { Stopwatch } from "@components/Stopwatch";
 import {
-  mdiBookmark,
-  mdiBookmarkOutline,
   mdiCheckAll,
   mdiClock,
   mdiLockClock,
@@ -70,7 +68,7 @@ export const AgenticWorkflowActions = ({
         {created && (
           <ProgressBar
             totalValue={100}
-            className="f-1 mr-2"
+            className="f-1 mr-2 gap-p5"
             message={
               state?.status === "error" ?
                 <span className="text-danger">{state.message ?? "Error"}</span>

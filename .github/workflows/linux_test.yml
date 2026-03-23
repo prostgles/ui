@@ -67,7 +67,6 @@ jobs:
           npm cache clean --force
 
       - name: Run test
-        continue-on-error: true
         run: |
           npm test
 
