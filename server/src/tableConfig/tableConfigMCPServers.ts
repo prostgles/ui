@@ -230,7 +230,8 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     columns: {
       id: `SERIAL PRIMARY KEY`,
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
-      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      connection_id: `UUID REFERENCES connections(id) ON DELETE CASCADE`,
       message_id: `int8 REFERENCES llm_messages(id) ON DELETE CASCADE`,
       source: {
         jsonbSchema: {

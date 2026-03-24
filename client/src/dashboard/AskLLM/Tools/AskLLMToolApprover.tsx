@@ -10,12 +10,15 @@ import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 import { isEmpty } from "../../../utils/utils";
 import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
 import type { useAskLLMToolApprove } from "./useAskLLMToolApprover";
+import { NavLink } from "react-router";
+import { getConnectionPaths } from "@common/utils";
 
 export type AskLLMToolsProps = {
   workspaceId: string | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
   onOpenChat: (selectedChatId: number) => void;
   openedChatId: number | undefined;
+  connectionId: string;
 } & ReturnType<typeof useAskLLMToolApprove>;
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
@@ -29,6 +32,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     respond,
     showRequestId,
     setShowRequestId,
+    connectionId,
   } = props;
 
   const [ignoredRequestIds, setIgnoredRequestIds] = useState<number[]>([]);
@@ -46,15 +50,27 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   }
 
   const { chat_id, server_name, tool_name, input, tool_use_id } = requestItem;
+  const connections = requestItem.connections as
+    | Pick<DBSSchema["connections"], "id" | "name">[]
+    | undefined;
   const description =
     (requestItem.mcp_server_tools as DBSSchema["mcp_server_tools"][])[0]
       ?.description ?? "Could not find tool description";
   const name = getMCPFullToolName(server_name, tool_name);
   const ToolUI = ProstglesMCPToolsWithUI[name];
-
+  const differentConnection = connections?.find((c) => c.id !== connectionId);
   return (
     <Popup
-      title={`Allow tool from ${server_name} to run?`}
+      title={
+        <FlexRow>
+          <div>Allow tool from {server_name} to run?</div>
+          {differentConnection && (
+            <NavLink to={getConnectionPaths(differentConnection).dashboard}>
+              {differentConnection.name}
+            </NavLink>
+          )}
+        </FlexRow>
+      }
       showFullscreenToggle={{}}
       onClose={() => {
         setIgnoredRequestIds((prev) => [...prev, requestItem.id]);
@@ -150,6 +166,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                 toolUseResult={undefined}
                 workspaceId={workspaceId}
                 loadedSuggestions={loadedSuggestions}
+                isShownInToolUseRequest={true}
               />
             : <CodeEditorWithSaveButton
                 label="Input"

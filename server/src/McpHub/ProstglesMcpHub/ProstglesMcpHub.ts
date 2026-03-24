@@ -129,7 +129,9 @@ const init = async (dbs: DBS) => {
       const outputValidation =
         //@ts-ignore
         outputSchema ?
-          getJSONBSchemaValidationError(outputSchema, res)
+          getJSONBSchemaValidationError(outputSchema, res, {
+            allowExtraProperties: true,
+          })
         : undefined;
       if (outputValidation?.error !== undefined) {
         throw new Error(

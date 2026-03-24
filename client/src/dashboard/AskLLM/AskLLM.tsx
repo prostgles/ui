@@ -1,8 +1,8 @@
 import Btn from "@components/Btn";
 import { ErrorTrap } from "@components/ErrorComponent";
 import { mdiAssistant } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo, useState } from "react";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../../i18n/i18nUtils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { AskLLMChat } from "./Chat/AskLLMChat";
@@ -17,7 +17,7 @@ type AskLLMProps = {
 
 export const AskLLM = (props: AskLLMProps) => {
   const { workspaceId, loadedSuggestions } = props;
-  const { dbsMethods } = usePrglCore();
+  const { dbsMethods, connectionId } = usePrgl();
   const { askLLM, stopAskLLM } = dbsMethods;
 
   const [showChat, setShowChat] = useState<{ selectedChatId?: number }>();
@@ -62,6 +62,7 @@ export const AskLLM = (props: AskLLMProps) => {
           workspaceId={workspaceId}
           onOpenChat={(selectedChatId) => setShowChat({ selectedChatId })}
           openedChatId={showChat?.selectedChatId}
+          connectionId={connectionId}
           {...state.toolApprovalState}
         />
       )}

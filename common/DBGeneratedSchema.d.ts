@@ -558,6 +558,7 @@ export type DBGeneratedSchema = {
   mcp_tool_approval_requests: {
     columns: {
       chat_id: number;
+      connection_id?: null | string;
       created?: null | string;
       id?: number;
       input:  Record<string, unknown>

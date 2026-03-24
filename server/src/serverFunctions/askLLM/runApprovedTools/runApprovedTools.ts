@@ -158,6 +158,7 @@ export const runApprovedTools = async ({
         server_name: serverName,
         user_id: user.id,
         message_id: messageId,
+        connection_id,
         source: {
           type: "chat",
           responseCount: requestsThatNeedApproval.length,

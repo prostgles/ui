@@ -19,7 +19,11 @@ export const useAskLLMToolApprove = () => {
       select: {
         "*": 1,
         mcp_server_tools: {
+          id: 1,
           description: 1,
+        },
+        connections: {
+          name: 1,
         },
       },
       orderBy: { created: 1 },
