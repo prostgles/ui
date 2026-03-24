@@ -97,8 +97,14 @@ export const WebAppConfigFooterActions = ({
                 await onErrorAlert(async () => {
                   const result = await buildWebApp!({
                     connectionId,
+                  }).catch((err) => {
+                    console.error("Error building web app: ", err);
+                    throw err;
                   });
-                  console.log("Docker build result: ", result);
+                  console.error(
+                    "Docker build result: ",
+                    JSON.stringify(result, null, 2),
+                  );
                   if (result.state === "error") {
                     throw result.log;
                   }
