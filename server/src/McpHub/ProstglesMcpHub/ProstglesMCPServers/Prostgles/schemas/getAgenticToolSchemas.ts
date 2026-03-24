@@ -4,6 +4,7 @@ import type { DBS } from "@src/index";
 import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { getJSONBSchemaAsJSONSchema, omitKeys } from "prostgles-types";
 import { getDefineAgenticWorkflowTsSchema } from "../agenticWorkflow/runtimeSetup/getAgenticWorkflowFiles";
+import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 
 const name = "create_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = async ({
@@ -50,8 +51,8 @@ export const getAgenticWorkflowToolSchema = async ({
     Use the most restrictive access type that is needed to complete the task (type custom with specific tables and allowed commands).
  
   `),
-    input_schema: getJSONBSchemaAsJSONSchema("", "", {
+    inputSchema: getJSONBSchemaAsJSONSchema("", "", {
       type: omitKeys(args, ["workflowId"]),
-    } as const),
+    } as const) as McpTool["inputSchema"],
   };
 };

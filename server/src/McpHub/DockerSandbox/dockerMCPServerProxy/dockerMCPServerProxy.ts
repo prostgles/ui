@@ -1,6 +1,6 @@
 import { sidKeyName } from "@common/authTypesAndConstants";
 import { getEntries } from "@common/utils";
-import type { CreateContainerParams } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
+import type { CreateContainerParams } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas";
 import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
 import { isDocker } from "@src/McpHub/utils";
 import { statePrgl } from "@src/init/startProstgles";
@@ -358,9 +358,22 @@ const mcpRequestHandler: RequestHandler = async (
       called_at,
     })
       .then((result) => {
-        res
-          .status(result.isError ? HTTP_FAIL_CODES.BAD_REQUEST : 200)
-          .json(result.structuredContent || result.content);
+        res.status(result.isError ? HTTP_FAIL_CODES.BAD_REQUEST : 200).json(
+          (() => {
+            const { structuredContent, content } = result;
+            if (structuredContent !== undefined) {
+              return structuredContent;
+            }
+            /** Prefer to return string */
+            const [firstContent, ...otherContentItems] = content;
+            if (!otherContentItems.length) {
+              return firstContent?.type === "text" ?
+                  firstContent.text
+                : content;
+            }
+            return JSON.stringify(content);
+          })(),
+        );
       })
       .catch((error) => {
         res

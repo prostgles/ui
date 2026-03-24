@@ -1,6 +1,6 @@
 import { runContainerWithProxyAccess } from "@src/McpHub/DockerSandbox/runContainerWithProxyAccess";
 import type { McpCallContext } from "../../ProstglesMCPServerTypes";
-import type { CreateContainerParams } from "./schemas/getCreateContainerToolSchema";
+import type { CreateContainerParams } from "./schemas/getContainerToolSchemas";
 import { getSerialisableError } from "prostgles-types";
 import { validateUserInput } from "./agenticWorkflow/definitionValidation/validateUserInput";
 import { USER_INPUT_VALUE_ENV_VARIABLE_NAME } from "@common/runCodeInSandboxSchema";
@@ -22,9 +22,7 @@ export const runCodeInSandboxContainer = async (
   { user_id, chat, dbs, toolUseId, messageId, connection_id }: McpCallContext,
 ) => {
   if (!toolUseId) {
-    throw new Error(
-      "toolUseId is required for runCodeInSandboxContainer. Cannot be called from orchestration tools.",
-    );
+    throw new Error("toolUseId is required");
   }
 
   const activeConnection = connectionManager.getActiveConnection(connection_id);

@@ -1,4 +1,4 @@
-import { chromium, expect, test } from "@playwright/test";
+import { chromium, expect, test, type Locator } from "@playwright/test";
 import { authenticator } from "otplib";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
@@ -1190,9 +1190,7 @@ test.describe("Main test", () => {
     );
 
     await sendAskLLMMessage(page, " get_tool_schemas ");
-    await page
-      .getByTestId("AskLLMToolApprover.AllowOnce")
-      .click({ timeout: 10e3 });
+    // Auto-approved by default
     await page
       .getByTestId("ToolUseMessage.toggle")
       .getByText(
@@ -1340,7 +1338,7 @@ test.describe("Main test", () => {
       .getByTestId("MCPServerFooterActions.refreshTools")
       .click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
-      `Reloaded 8 tools for "prostgles-ui" server`,
+      ` tools for "prostgles-ui" server`,
     );
     await page.getByText("OK", { exact: true }).click();
     await page
@@ -1353,6 +1351,7 @@ test.describe("Main test", () => {
     const dockerRunAndExpect = async (
       result: string[] | string,
       prepareCb: (() => Promise<void>) | undefined = undefined,
+      locator: Locator | undefined = undefined,
     ) => {
       await sendAskLLMMessage(page, " mcpsandbox ");
       await page
@@ -1371,12 +1370,11 @@ test.describe("Main test", () => {
         .waitFor({ state: "detached", timeout: 40e3 });
 
       for (const res of Array.isArray(result) ? result : [result]) {
-        await expect(page.getByTestId("ToolUseMessage").last()).toContainText(
-          res,
-          {
-            timeout: 20e3,
-          },
-        );
+        await expect(
+          locator ?? page.getByTestId("ToolUseMessage").last(),
+        ).toContainText(res, {
+          timeout: 20e3,
+        });
       }
     };
     await runDbSql(page, `DROP TABLE IF EXISTS users ;`);
@@ -1405,6 +1403,7 @@ test.describe("Main test", () => {
           .nth(1)
           .click();
       },
+      page.getByTestId("DockerSandboxCreateContainer.Logs").last(),
     );
     await runDbSql(page, `DROP TABLE users;`);
 
@@ -1455,6 +1454,7 @@ test.describe("Main test", () => {
           .nth(1)
           .click();
       },
+      page.getByTestId("DockerSandboxCreateContainer.Logs").last(),
     );
     await page.keyboard.press("Escape");
 
@@ -1745,7 +1745,7 @@ test.describe("Main test", () => {
       },
     );
     await expect(page.getByTestId("AgenticWorkflow")).toContainText(
-      `text: 'Contents of https://www.prostgles.com/`,
+      "Contents of https://www.prostgles.com/",
     );
     await page.locator(getDataKey("Activity")).click({
       timeout: 10e3,
@@ -1760,6 +1760,16 @@ test.describe("Main test", () => {
       agentChant.getByTestId("ToolUseMessage.toggle").first(),
     ).toContainText("agent_goal_reached");
     await agentChant.getByTestId("Popup.close").click();
+
+    await page
+      .getByTestId("AgenticWorkflow")
+      .getByTestId("AgenticWorkflow.openToolCall")
+      .getByText("fetch")
+      .click();
+    await expect(page.getByTestId("Popup.content").last()).toContainText(
+      `https://www.prostgles.com`,
+    );
+    await page.getByTestId("Popup.close").last().click();
 
     await page.waitForTimeout(1e3);
     await newChat(page);

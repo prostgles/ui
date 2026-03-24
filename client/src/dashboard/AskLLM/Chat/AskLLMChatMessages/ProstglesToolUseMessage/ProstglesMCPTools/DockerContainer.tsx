@@ -22,29 +22,37 @@ import { StatusDotCircleIcon } from "@pages/Account/Sessions";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { omitKeys, type JSONB } from "prostgles-types";
 import React, { useMemo, useState } from "react";
+import type {
+  ToolResultMessage,
+  ToolUseMessage,
+} from "../../ToolUseChatMessage/ToolUseChatMessage";
 import { ToolUseReRun } from "../../ToolUseChatMessage/ToolUseReRun";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
-import { UserInput } from "./AgenticWorkflow/UserInput";
 import { useUserInput } from "./AgenticWorkflow/hooks/useUserInput";
+import { UserInput } from "./AgenticWorkflow/UserInput";
 import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData";
 import { ToolUseResultError } from "./ToolUseResultError";
 
-export type DockerSandboxCreateContainerData = JSONB.GetObjectType<
+export type DockerContainerInputData = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["run_code_in_sandbox"]["schema"]["type"]
 >;
 
-export const DockerSandboxCreateContainer = ({
-  message,
-  toolUseResult: toolResult,
+export const DockerContainer = ({
+  toolUseId,
+  toolUseResult,
+  input,
   chatId,
   isShownInToolUseRequest,
-}: ProstglesMCPToolsProps) => {
-  const toolUseResult = toolResult?.toolUseResultMessage;
-  const initialData = message.input as DockerSandboxCreateContainerData;
-  const toolUseId = message.id;
+  onGetNewInput,
+}: Pick<ProstglesMCPToolsProps, "chatId" | "isShownInToolUseRequest"> & {
+  toolUseId: string;
+  input: DockerContainerInputData;
+  toolUseResult: ToolResultMessage | undefined;
+  onGetNewInput: (input: DockerContainerInputData) => ToolUseMessage;
+}) => {
   const [editedFiles, setEditedFiles] = useState<Record<string, string>>();
 
-  const { tool_use_id = "" } = toolUseResult ?? {};
+  const tool_use_id = toolUseId;
   const {
     dbs,
     dbsMethods: { stopDockerContainer },
@@ -59,21 +67,29 @@ export const DockerSandboxCreateContainer = ({
       skip: !tool_use_id,
     },
   );
-  const userInputState = useUserInput(initialData.userInput, undefined);
+  const userInputState = useUserInput(input.userInput, undefined);
   const { userInputValue } = userInputState;
-  const data = {
-    ...initialData,
-    files: {
-      ...initialData.files,
-      ...editedFiles,
-    },
-    ...((userInputValue || initialData.userInputValue) && {
-      userInputValue: {
-        ...initialData.userInputValue,
-        ...userInputValue,
+
+  const { data, updatedToolUse } = useMemo(() => {
+    const data = {
+      ...input,
+      files: {
+        ...input.files,
+        ...editedFiles,
       },
-    }),
-  };
+      ...((userInputValue || input.userInputValue) && {
+        userInputValue: {
+          ...input.userInputValue,
+          ...userInputValue,
+        },
+      }),
+    };
+    const updatedToolUse = onGetNewInput(data);
+    return {
+      updatedToolUse,
+      data,
+    };
+  }, [input, editedFiles, userInputValue, onGetNewInput]);
 
   const schema =
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["run_code_in_sandbox"][
@@ -117,6 +133,7 @@ export const DockerSandboxCreateContainer = ({
 
   return (
     <FullscreenWrapper
+      data-command="DockerSandboxCreateContainer"
       title={
         <>
           <FlexRow className="pl-p5 f-1 min-w-0">
@@ -175,22 +192,18 @@ export const DockerSandboxCreateContainer = ({
               }}
             />
           )}
-          {toolResult && (
+          {toolUseResult && (
             <ToolUseReRun
               chatId={chatId}
-              toolRequest={message}
+              toolRequest={updatedToolUse}
               variant="text"
               newInput={data}
-              toolResult={{
-                messagePart: toolResult.toolUseResultMessage,
-                messageId: toolResult.toolUseResult.id,
-              }}
             />
           )}
         </>
       }
     >
-      <FlexCol className="DockerSandboxCreateContainer ai-start gap-0 f-1">
+      <FlexCol className=" ai-start gap-0 f-1">
         <CodeFileBrowser
           files={data.files}
           onChange={({ fileName, content }) => {
@@ -204,6 +217,7 @@ export const DockerSandboxCreateContainer = ({
         {container && (
           <FullscreenWrapper
             className="bt b-color bg-color-2 w-full ta-start rounded-unset"
+            data-command="DockerSandboxCreateContainer.Logs"
             title={
               <FlexRow>
                 <Btn
@@ -233,7 +247,6 @@ export const DockerSandboxCreateContainer = ({
               <MonacoLogs
                 key={"logs"}
                 className="f-p5 b-unset"
-                data-command="DockerSandboxCreateContainer.Logs"
                 style={monacoStyle}
                 logs={logs}
                 maxHeight={0}
@@ -244,7 +257,7 @@ export const DockerSandboxCreateContainer = ({
 
         <UserInput {...userInputState} />
       </FlexCol>
-      <ToolUseResultError className="p-1" toolUseResult={toolResult} />
+      <ToolUseResultError className="p-1" toolUseResult={toolUseResult} />
     </FullscreenWrapper>
   );
 };

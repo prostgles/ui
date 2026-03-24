@@ -264,7 +264,15 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
             description:
               "List of MCP servers and tools that will be enabled for this prompt.",
             optional: true,
-            ...mcpServerToolsAllowed,
+            record: {
+              partial: true,
+              values: {
+                record: {
+                  partial: true,
+                  values: { enum: [1, "auto-approve"] },
+                },
+              },
+            },
           },
           database_access: {
             optional: true,

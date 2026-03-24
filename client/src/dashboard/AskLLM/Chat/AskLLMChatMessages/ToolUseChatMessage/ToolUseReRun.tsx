@@ -1,27 +1,20 @@
-import { mdiReload } from "@mdi/js";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
-import type { ToolResultMessage, ToolUseMessage } from "./ToolUseChatMessage";
-import React, { useMemo } from "react";
-import Btn from "@components/Btn";
-import { useAlert } from "@components/AlertProvider";
-import ErrorComponent from "@components/ErrorComponent";
 import { getMCPToolNameParts } from "@common/prostglesMcp";
+import { useAlert } from "@components/AlertProvider";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { mdiReload } from "@mdi/js";
 import { isEmpty, isEqual } from "prostgles-types";
+import React, { useMemo } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import type { ToolUseMessage } from "./ToolUseChatMessage";
 
 type P = {
   chatId: number;
   toolRequest: ToolUseMessage;
-  toolResult: { messageId: string; messagePart: ToolResultMessage } | undefined;
   variant: "icon" | "text";
   newInput?: unknown;
 };
-export const ToolUseReRun = ({
-  chatId,
-  toolRequest,
-  toolResult,
-  variant,
-  newInput,
-}: P) => {
+export const ToolUseReRun = ({ chatId, toolRequest, variant, newInput }: P) => {
   const {
     dbsMethods: { reRunMCPServerTool },
   } = usePrglCore();
@@ -32,7 +25,7 @@ export const ToolUseReRun = ({
       newInput && !isEmpty(newInput) && !isEqual(toolRequest.input, newInput)
     );
   }, [toolRequest.input, newInput]);
-  if (!toolResult || !reRunMCPServerTool || !nameParts) return null;
+  if (!reRunMCPServerTool || !nameParts) return null;
   const { serverName, toolName } = nameParts;
   return (
     <Btn

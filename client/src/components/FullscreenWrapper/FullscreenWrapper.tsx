@@ -39,6 +39,7 @@ export const FullscreenWrapper = ({
     >
       <FlexCol
         ref={divRef}
+        data-command="FullscreenWrapper"
         {...testSelectors}
         /** This is done to ensure that monaco editors revert to initial size within chat */
         key={fullscreen.toString()}
@@ -48,7 +49,6 @@ export const FullscreenWrapper = ({
           className,
         )}
         aria-modal={fullscreen}
-        data-command="FullscreenWrapper"
         style={{
           minWidth: "min(100%, 600px, 100vw)",
           ...style,

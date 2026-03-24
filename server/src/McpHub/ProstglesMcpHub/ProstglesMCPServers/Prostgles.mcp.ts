@@ -1,5 +1,7 @@
+import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { connectionManager } from "@src/index";
+import { statePrgl } from "@src/init/startProstgles";
 import { isEmpty } from "prostgles-types";
 import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import type {
@@ -9,13 +11,12 @@ import type {
 } from "../ProstglesMCPServerTypes";
 import { createAgenticWorkflow } from "./Prostgles/agenticWorkflow/createAgenticWorkflow";
 import { getValidatedMcpServerToolsAllowed } from "./Prostgles/agenticWorkflow/definitionValidation/getValidatedMcpServerToolsAllowed";
-import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSetup/getToolTypescriptSchemas";
-import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer";
-import { fetchTools } from "./Prostgles/fetchTools";
-import { statePrgl } from "@src/init/startProstgles";
-import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
-import { startAgent } from "./Prostgles/startAgent";
 import { getAgentConfigWithDefaults } from "./Prostgles/agenticWorkflow/proxyHandlers/getAgentConfigWithDefaults";
+import { getAgenticWorkflowDockerCoreFiles } from "./Prostgles/agenticWorkflow/runtimeSetup/getAgenticWorkflowDockerCoreFiles";
+import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSetup/getToolTypescriptSchemas";
+import { fetchTools } from "./Prostgles/fetchTools";
+import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer";
+import { startAgent } from "./Prostgles/startAgent";
 
 const serverName = "prostgles-ui" as const;
 const definition = {
@@ -25,6 +26,16 @@ const definition = {
   tools: PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
 } as const satisfies ProstglesMcpServerDefinition;
 
+export const getRunTypescriptInNodejsFiles = (
+  entrypointTs: string,
+  packageDependencies: Record<string, string>,
+) => {
+  return {
+    ...getAgenticWorkflowDockerCoreFiles(packageDependencies, true),
+    "index.ts": entrypointTs,
+  };
+};
+
 const handler = {
   start: (dbs) => {
     return {
@@ -33,6 +44,21 @@ const handler = {
       },
       tools: {
         run_code_in_sandbox: runCodeInSandboxContainer,
+        run_typescript_in_nodejs: async (
+          { entrypointTs, packageDependencies, ...otherOpts },
+          context,
+        ) => {
+          return runCodeInSandboxContainer(
+            {
+              ...otherOpts,
+              files: {
+                ...getAgenticWorkflowDockerCoreFiles(packageDependencies, true),
+                "index.ts": entrypointTs,
+              },
+            },
+            context,
+          );
+        },
         ask_user_questions: () => {
           // never called
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return

@@ -1,5 +1,5 @@
 import { fromEntries, getEntries } from "@common/utils";
-import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
+import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas";
 import type { TableConfig } from "prostgles-server";
 import { omitKeys, pickKeys } from "prostgles-types";
 import { startAgenticWorkflowSchema } from "../../../common/startAgenticWorkflowSchema";
@@ -11,7 +11,7 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       connection_id: `UUID REFERENCES connections(id) ON DELETE CASCADE`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
-      message_id: `int8 NOT NULL REFERENCES llm_messages(id) ON DELETE SET NULL`,
+      message_id: `int8 NOT NULL REFERENCES llm_messages(id) ON DELETE CASCADE`,
       tool_use_id: `TEXT NOT NULL `,
       name: "TEXT NOT NULL",
       saved: "BOOLEAN NOT NULL DEFAULT FALSE",

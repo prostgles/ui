@@ -9,7 +9,9 @@ import { getElectronConfig } from "@src/electronConfig";
 
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
-const allowProstglesUITools = (tools: Partial<Record<UiToolName, 1>>) => ({
+const allowProstglesUITools = (
+  tools: Partial<Record<UiToolName, 1 | "auto-approve">>,
+) => ({
   "prostgles-ui": tools,
 });
 
@@ -17,7 +19,6 @@ export const setupLLM = async (dbs: DBS) => {
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (dbs.llm_prompts) {
-    // && !(await dbs.llm_prompts.findOne())
     const adminUser = await dbs.users.findOne({ passwordless_admin: true });
     const user_id = adminUser?.id;
     const firstLine = [
@@ -49,9 +50,9 @@ export const setupLLM = async (dbs: DBS) => {
           options: {
             mcp_server_tools: allowProstglesUITools({
               ask_user_questions: 1,
-              get_tool_schemas: 1,
+              get_tool_schemas: "auto-approve",
               request_tool_access: 1,
-              compact_context: 1,
+              compact_context: "auto-approve",
             }),
             database_access: "execute_readonly_sql",
           },
@@ -65,8 +66,8 @@ export const setupLLM = async (dbs: DBS) => {
             mcp_server_tools: allowProstglesUITools({
               create_dashboards: 1,
               ask_user_questions: 1,
-              compact_context: 1,
-              get_tool_schemas: 1,
+              compact_context: "auto-approve",
+              get_tool_schemas: "auto-approve",
               request_tool_access: 1,
             }),
 
@@ -91,9 +92,10 @@ export const setupLLM = async (dbs: DBS) => {
             mcp_server_tools: allowProstglesUITools({
               create_agentic_workflow: 1,
               ask_user_questions: 1,
-              compact_context: 1,
-              get_tool_schemas: 1,
+              compact_context: "auto-approve",
+              get_tool_schemas: "auto-approve",
               request_tool_access: 1,
+              run_typescript_in_nodejs: 1,
             }),
             database_access: "execute_readonly_sql",
           },
@@ -103,7 +105,8 @@ export const setupLLM = async (dbs: DBS) => {
             "They expect you to look at the schema and tools available and return the best suited tools, database schema and workflow logic for accomplishing their task.",
             `It is crucial that you do not bother the user with questions that can be easily answered by looking at the schema or tools available. Always try to infer missing information from the schema and tools before asking the user.`,
             `If user input controls are necessary explore the data involved sufficiently to ensure "enum" inputs are used as much as possible instead of "custom" to provide better UX and accuracy.`,
-            `Always use the ${"create_agentic_workflow" satisfies keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]} tool to return a workflow_function_definition instead of only describing the workflow in plain text.`,
+            `Always use the ${getProstglesMCPFullToolName("prostgles-ui", "create_agentic_workflow")} tool to return a workflow_function_definition instead of only describing the workflow in plain text.`,
+            `Prefer to use ${getProstglesMCPFullToolName("prostgles-ui", "run_typescript_in_nodejs")} tool to perform exploratory work and data intensive tasks to prepare the workflow_function_definition.`,
             `The workflow_function_definition must compile into valid typescript and call defineAgenticWorkflow().`,
             `The file is an executable entry point. The code must be top-level execution only. You are prohibited from wrapping the defineAgenticWorkflow call in any functions`,
             "Choose the minimum required database access and minimum required tools; prefer custom tablePermissions over broad SQL modes.",
@@ -114,6 +117,9 @@ export const setupLLM = async (dbs: DBS) => {
             "Without over-engineering make the workflow resilient to re-runs unless it goes against the nature of the workflow.",
             "Interleave agent steps and database writes; avoid collecting all agent output first and applying DB changes only at the end unless truly necessary.",
             "When user requirements are ambiguous, ask targeted follow-up questions using ask_user_questions and include a best-guess default workflow.",
+            "When writing typescript code, ensure it compiles and do not include type or eslint errors. Assume strict: true (including noImplicitAny, strictNullChecks).",
+            "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
+            "Do not add 'optional' to user input. It will be added automatically",
             "",
             LLM_PROMPT_VARIABLES.SCHEMA,
             "",

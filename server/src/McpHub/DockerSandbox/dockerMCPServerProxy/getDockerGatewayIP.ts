@@ -1,4 +1,4 @@
-import type { CreateContainerParams } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
+import type { CreateContainerParams } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas";
 import { execSync } from "child_process";
 import { INTERNAL_BRIDGE_NETWORK_NAME } from "../getDockerRunArgs";
 

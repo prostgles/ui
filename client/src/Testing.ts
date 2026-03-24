@@ -538,6 +538,7 @@ export const COMMANDS = {
   AgenticWorkflow: "",
   "AgenticWorkflow.validationErrorLogs": "",
   "AgenticWorkflow.openChat": "",
+  "AgenticWorkflow.openToolCall": "",
   DatabaseAccessEditor: "",
   "DatabaseAccessEditor.Mode": "",
   "DatabaseAccessEditor.TableRules": "",
@@ -552,6 +553,7 @@ export const COMMANDS = {
   MediaViewer: "",
   Agent: "",
   Loading: "",
+  DockerSandboxCreateContainer: "",
 } as const satisfies Record<
   string,
   | string

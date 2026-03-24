@@ -1,15 +1,16 @@
-import React, { useMemo } from "react";
-import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
-import ErrorComponent from "@components/ErrorComponent";
 import { filterArr } from "@common/llmUtils";
+import ErrorComponent from "@components/ErrorComponent";
+import React, { useMemo } from "react";
+import type { ToolResultMessage } from "../../ToolUseChatMessage/ToolUseChatMessage";
 
 export const ToolUseResultError = ({
   toolUseResult,
   className,
-}: Pick<ProstglesMCPToolsProps, "toolUseResult"> & {
+}: {
   className?: string;
+  toolUseResult: ToolResultMessage | undefined;
 }) => {
-  const content = toolUseResult?.toolUseResultMessage;
+  const content = toolUseResult;
   const error = useMemo(() => {
     if (!content?.is_error) return;
     if (typeof content.content === "string") {

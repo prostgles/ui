@@ -10,6 +10,7 @@ import React, { useMemo } from "react";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
 import { t } from "src/i18n/i18nUtils";
 import type { LLMMessageItem } from "../hooks/useLLMChatMessageGrouper";
+import { useOnErrorAlert } from "@components/AlertProvider";
 
 export const LLMChatMessageHeader = ({
   item,
@@ -63,6 +64,8 @@ export const LLMChatMessageHeader = ({
     }, [item]);
 
   const canCollapse = item.type === "single_message";
+
+  const { onErrorAlert } = useOnErrorAlert();
   return (
     <FlexRow
       className={"LLMChatMessageHeader show-on-parent-hover f-1 gap-p25"}
@@ -95,16 +98,18 @@ export const LLMChatMessageHeader = ({
           children: "",
         }}
         onChange={async (option) => {
-          if (option === "thisMessage") {
-            await dbs.llm_messages.delete({ id });
-          } else {
-            await dbs.llm_messages.delete({
-              chat_id,
-              created: {
-                $gte: created,
-              },
-            });
-          }
+          await onErrorAlert(async () => {
+            if (option === "thisMessage") {
+              await dbs.llm_messages.delete({ id });
+            } else {
+              await dbs.llm_messages.delete({
+                chat_id,
+                created: {
+                  $gte: created,
+                },
+              });
+            }
+          });
         }}
         className="ml-auto"
       />

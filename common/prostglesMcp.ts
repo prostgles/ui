@@ -61,6 +61,9 @@ const outputSchemaArrayOfObjects = {
 const { outputSchema, ...agentSchemaWithoutOutput } =
   agentDefinitionsSchema.record.values.type;
 
+const { files, userInput, userInputValue, ...runTsSchema } =
+  runCodeInSandboxSchema.type;
+
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   db: {
     execute_readonly_sql: {
@@ -269,6 +272,70 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         }
         `),
       schema: runCodeInSandboxSchema,
+      outputSchema: {
+        type: {
+          state: {
+            enum: ["finished", "error", "build-error", "timed-out", "aborted"],
+          },
+          name: "string",
+          command: "string",
+          log: {
+            arrayOfType: {
+              type: { enum: ["stdout", "stderr", "error"] },
+              text: "string",
+            },
+          },
+          exitCode: "number",
+          runDuration: "number",
+          buildDuration: "number",
+        },
+      },
+    },
+    run_typescript_in_nodejs: {
+      annotations: {
+        openWorldHint: true,
+      },
+      mode: undefined,
+      description: fixIndent(`
+        Executes TypeScript code in a Docker container.
+        It gets compiled as CommonJS which means top level await is not allowed and must be executed inside an async function.
+        User will see realtime logs and the final output.
+        User can also choose to re-run the container with different user input (if provided).
+        Use descriptive log messages to make it easier for the user to understand progress, what is happening and provide feedback.
+        Use this tool to execute typescript code that compiles with no errors (assume strict tsconfig and recommended eslint rules).
+        Prefer to use nodejs existing modules and can also specify custom dependencies to be installed as long as they are reputable.
+        Can specify access to the database if needed. 
+        To access the database must use POST requests to the exposed api endpoint. Cannot use direct DB sockets or drivers. 
+        Useful for doing bulk data insert/analysis/processing/ETL. 
+        Otherwise, permissions have no effect.
+        
+        Example input payload:
+        
+        {
+          "indexTs": "import type { JSONB } from \"prostgles-types\"; console.log('hello world');",
+          "packageJson": {
+            "prostgles-types": "^4.0.217",
+          }
+        }
+        `),
+      schema: {
+        type: {
+          entrypointTs: {
+            type: "string",
+            description:
+              "Typescript code to execute. Must compile with no errors assuming strict tsconfig and recommended eslint rules.",
+          },
+          packageDependencies: {
+            optional: true,
+            description:
+              'Dependencies to install in the container. Must be reputable npm packages. Example: { "prostgles-types": "^4.0.217" }',
+            record: {
+              values: "string",
+            },
+          },
+          ...runTsSchema,
+        },
+      },
       outputSchema: {
         type: {
           state: {

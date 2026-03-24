@@ -19,6 +19,7 @@ const filesSchema = {
 
 export const runCodeInSandboxSchema = {
   type: {
+    files: filesSchema,
     userInputValue: {
       optional: true,
       description:
@@ -27,7 +28,6 @@ export const runCodeInSandboxSchema = {
         values: "unknown",
       },
     },
-    files: filesSchema,
     timeout: {
       optional: true,
       type: "integer",

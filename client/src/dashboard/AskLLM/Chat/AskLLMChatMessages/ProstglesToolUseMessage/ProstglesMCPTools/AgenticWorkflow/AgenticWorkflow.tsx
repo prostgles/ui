@@ -196,7 +196,7 @@ export const AgenticWorkflow = ({
           userInputState={userInputState}
           workflow={workflow}
           onStarted={() => {
-            setActiveTab("Activity");
+            setActiveTab("Logs");
           }}
           onInitError={() => {
             setActiveTab("Details");

@@ -44,13 +44,19 @@ export const approveToolUse = async (
   if (!chat) throw "Chat not found";
   const connectionId = chat.connection_id;
   if (!connectionId) throw "Chat connection_id not found";
-  await dbs.mcp_tool_approval_requests.update(
+  const updatedRows = await dbs.mcp_tool_approval_requests.update(
     { id },
     {
       response,
       updated: new Date(),
     },
+    {
+      returning: "*",
+    },
   );
+  if (!updatedRows?.length) {
+    throw "Failed to update tool use request";
+  }
   if (response === "auto-approve") {
     if (toolUseRequest.source.type === "chat" && toolUseRequest.message_id) {
       /** Must approve matching parallel chat requests */

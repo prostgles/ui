@@ -23,7 +23,6 @@ export const AgenticWorkflowMessage = ({
     true,
   );
   const validatedWorkflowData = workflowValidation?.data;
-  const messageId = toolUseResult?.toolUseResult.id;
   const workflow_id =
     validatedWorkflowData?.isValid ?
       validatedWorkflowData.workflowId
@@ -73,7 +72,7 @@ Dockerfile`);
       chatId={chatId}
       inputData={inputValidation.data}
       workflow_id={workflow_id}
-      tool_use_id={toolUseResult.toolUseResult.id}
+      tool_use_id={message.id}
       validatedWorkflowDataIsValid={workflowValidation?.data?.isValid}
       workflowValidationError={workflowValidationError}
     />

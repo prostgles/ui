@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
 import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexCol } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
@@ -132,16 +132,13 @@ export const AgenticWorkflowActivity = ({
 
             return {
               key: item.type + item.id,
+              "data-command":
+                item.type === "agent_chat" ?
+                  "AgenticWorkflow.openChat"
+                : "AgenticWorkflow.openToolCall",
               contentLeft:
                 !endedAt ?
-                  <FlexCol>
-                    <Loading className="my-p5 mx-p25" sizePx={16} delay={0} />
-                    <Stopwatch
-                      className="text-2"
-                      startTime={startedAt}
-                      endTime={endedAt}
-                    />
-                  </FlexCol>
+                  <Loading className="my-p5 mx-p25" sizePx={16} delay={0} />
                 : icon,
               label: name,
               styles: {
@@ -156,14 +153,11 @@ export const AgenticWorkflowActivity = ({
                 100,
               ).replaceAll("\n", " "),
               contentRight: (
-                <FlexRow>
-                  {!endedAt && <Loading sizePx={16} />}
-                  <Stopwatch
-                    className="text-2"
-                    startTime={startedAt}
-                    endTime={endedAt}
-                  />
-                </FlexRow>
+                <Stopwatch
+                  className="text-2"
+                  startTime={startedAt}
+                  endTime={endedAt}
+                />
               ),
               onPress: () => {
                 if (item.type === "agent_chat") {

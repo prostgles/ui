@@ -971,7 +971,13 @@ export const toggleMCPTools = async (
     await page.waitForTimeout(1500);
   }
   if (toggleAutoApprove) {
-    await page.getByTestId("MCPServers.toggleAutoApprove").click();
+    const node = page.getByTestId("MCPServers.toggleAutoApprove");
+    await node.waitFor({ state: "visible", timeout: 10e3 });
+    if ((await node.textContent())?.includes(": ON")) {
+      await node.click();
+    }
+    await page.waitForTimeout(1000);
+    await node.click();
   }
   await page.getByTestId("Popup.close").last().click();
   await page.waitForTimeout(500);

@@ -8,13 +8,14 @@ import type {
 import { Agent } from "./ProstglesMCPTools/Agent/Agent";
 import { AgenticWorkflowMessage } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflowMessage";
 import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
-import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
+import { RunCodeInSandbox } from "./ProstglesMCPTools/RunCodeInSandbox";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
 import { RequestToolAccess } from "./ProstglesMCPTools/RequestToolAccess";
 import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/CreateComponentQuickFeedbackPreview";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 import { WebSnapshot } from "./ProstglesMCPTools/WebSearch/WebSnapshot";
+import { RunTypescriptInNodejs } from "./ProstglesMCPTools/RunTypescriptInNodejs";
 
 export const ProstglesMCPToolsWithUI = {
   [getProstglesMCPFullToolName("prostgles-ui", "create_dashboards") as string]:
@@ -41,7 +42,12 @@ export const ProstglesMCPToolsWithUI = {
       displayMode: "full",
     },
   [getProstglesMCPFullToolName("prostgles-ui", "run_code_in_sandbox")]: {
-    component: DockerSandboxCreateContainer,
+    component: RunCodeInSandbox,
+    displayMode: "full",
+    showsError: true,
+  },
+  [getProstglesMCPFullToolName("prostgles-ui", "run_typescript_in_nodejs")]: {
+    component: RunTypescriptInNodejs,
     displayMode: "full",
     showsError: true,
   },

@@ -1,7 +1,7 @@
 import { isDocker } from "@src/McpHub/utils";
 import { readFileSync } from "fs";
 import { join } from "path";
-import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getCreateContainerToolSchema";
+import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas";
 
 const CUSTOM_BRIDGE_NETWORK_NAME = "prostgles-bridge-net";
 export const INTERNAL_BRIDGE_NETWORK_NAME = "prostgles-bridge-internal-net";

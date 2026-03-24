@@ -90,11 +90,12 @@ export const setChatPrompt = async ({
             `Some tools not found for MCP server ${server_name}. Expected: ${toolList}, found: ${tools.map((t) => t.name).join(", ")}`,
           );
         }
-        return tools.flatMap(({ id }) => {
+        return tools.flatMap(({ id, name }) => {
           return {
             chat_id: chatId,
             server_name,
             tool_id: id,
+            auto_approve: toolListObj[name] === "auto-approve",
           } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
         });
       }),

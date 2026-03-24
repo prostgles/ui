@@ -160,8 +160,8 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     .click();
 
   await page.waitForTimeout(1000);
-  await page.getByText("Auto-approve: OFF").scrollIntoViewIfNeeded();
-  await page.getByText("Auto-approve: OFF").click();
+  await page.getByText("Auto-approve: ON").scrollIntoViewIfNeeded();
+  await page.getByText("Auto-approve: ON").click();
   await page.waitForTimeout(1000);
   await page.getByTestId("Popup.close").last().click();
 

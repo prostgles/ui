@@ -1,3 +1,4 @@
+import { documentsServiceInputSchema } from "@common/documentsServiceInputSchema";
 import { getMCPFullToolName } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import {
@@ -6,10 +7,10 @@ import {
   installMCPServer,
 } from "@src/McpHub/AnthropicMcpHub/installMCPServer";
 import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
+import { getRunTypescriptInNodejsFiles } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles.mcp";
 import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
-import { documentsServiceInputSchema } from "@common/documentsServiceInputSchema";
 export const getMcpServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -212,6 +213,15 @@ export const getMcpServerFunctions = (
         });
 
         return result;
+      },
+    }),
+    getRunTypescriptInNodejsFiles: defineAdminFunction({
+      input: {
+        entrypointTs: "string",
+        packageDependencies: { record: { values: "string" } },
+      },
+      run: ({ entrypointTs, packageDependencies }) => {
+        return getRunTypescriptInNodejsFiles(entrypointTs, packageDependencies);
       },
     }),
   };

@@ -24,17 +24,21 @@ export const UserInputColumnValues = ({
   onChange: (newValue: any) => void;
 }) => {
   const { tables, db } = usePrgl();
+  const table = tables.find((t) => t.name === tableName);
 
-  const options = usePromise(() => {
-    return fetchSearchResults({
-      mainColumn: columnName,
-      textColumn: undefined,
-      db,
-      table: tables.find((t) => t.name === tableName)!,
-      term: "",
-      filter: undefined,
-    });
-  }, [columnName, db, tables, tableName]);
+  const options = usePromise(async () => {
+    return (
+      table &&
+      (await fetchSearchResults({
+        mainColumn: columnName,
+        textColumn: undefined,
+        db,
+        table,
+        term: "",
+        filter: undefined,
+      }))
+    );
+  }, [table, columnName, db]);
 
   return (
     <Select
@@ -46,6 +50,12 @@ export const UserInputColumnValues = ({
       fullOptions={options ?? []}
       value={inputValue}
       onChange={onChange}
+      disabledInfo={
+        !table ? "Table not found"
+        : options === undefined ?
+          "Loading options..."
+        : undefined
+      }
     />
   );
 };

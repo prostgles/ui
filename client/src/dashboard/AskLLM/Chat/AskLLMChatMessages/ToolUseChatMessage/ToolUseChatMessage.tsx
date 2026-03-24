@@ -76,19 +76,13 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
               <ToolUseChatMessageJSONData {...props} />
             </PopupMenu>
           )}
-          <ToolUseReRun
-            variant="icon"
-            chatId={toolUseInfo.toolUseMessage.chat_id}
-            toolRequest={toolUseInfo.toolUseMessageContent}
-            toolResult={
-              toolUseInfo.toolUseResult ?
-                {
-                  messageId: toolUseInfo.toolUseResult.toolUseResult.id,
-                  messagePart: toolUseInfo.toolUseResult.toolUseResultMessage,
-                }
-              : undefined
-            }
-          />
+          {toolUseInfo.toolUseResult && (
+            <ToolUseReRun
+              variant="icon"
+              chatId={toolUseInfo.toolUseMessage.chat_id}
+              toolRequest={toolUseInfo.toolUseMessageContent}
+            />
+          )}
         </div>
 
         <ToolUseChatMessageResult

@@ -26,6 +26,7 @@ export const UserInput = ({
     <>
       <FullscreenWrapper
         className="bt b-color bg-color-2 w-full ta-start rounded-unset"
+        maxContentHeight={300}
         title={
           <Btn
             size="small"
@@ -39,7 +40,7 @@ export const UserInput = ({
         }
       >
         {show && (
-          <FlexRowWrap className="p-1">
+          <FlexRowWrap className="p-1 o-auto">
             {Object.entries(userInput).map(([inputKey, inputItem]) => {
               const currentValue =
                 userInputValue?.[inputKey] ?? inputItem.defaultValue;
