@@ -151,7 +151,7 @@ export const Chat = (props: ChatProps) => {
               ref={textAreaRef}
               name="chat-input"
               data-command={"Chat.textarea"}
-              className="no-scroll-bar text-0 bg-transparent"
+              className=" text-0 bg-transparent"
               rows={1}
               style={{
                 maxHeight: "50vh",

@@ -27,6 +27,7 @@ export type DatabaseAccessEditorProps = {
   contentRight?: React.ReactNode;
   newTables: DBSSchema["agentic_workflows"]["definition_data"]["newTables"];
 };
+
 export const DatabaseAccessEditor = ({
   value,
   onChange,

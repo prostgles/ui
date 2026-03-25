@@ -16,7 +16,6 @@ export const useChatOnPaste = ({
       const files = e.clipboardData.files;
       if (files.length) {
         e.preventDefault();
-        // onSend("", file, file.name, file.type);
         onAddFiles(Array.from(files));
       } else {
         const types = e.clipboardData.types;
@@ -100,6 +99,4 @@ const insertCodeSnippetAtCursor = (
       }),
     );
   }
-  /** scroll to end if necessary */
-  textarea.scrollTop = textarea.scrollHeight;
 };

@@ -16,6 +16,10 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
+import {
+  AgenticWorkflowSchemaDrift,
+  useAgenticWorkflowSchemaDrift,
+} from "./AgenticWorkflowSchemaDrift";
 import type { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import type { UseAgenticWorkflowUserInputReturn } from "./hooks/useUserInput";
 
@@ -62,9 +66,20 @@ export const AgenticWorkflowActions = ({
 
   const { state, created, finished } = latestRun ?? {};
   const isRunning = state?.status === "running";
+
+  const schemaDrift = useAgenticWorkflowSchemaDrift(workflow.definition_data);
+  const [showSchemaDriftAlert, setShowSchemaDriftAlert] =
+    useState<typeof schemaDrift>();
+
   return (
     <>
       <FlexRow className="f-1 jc-end gap-0">
+        {showSchemaDriftAlert && (
+          <AgenticWorkflowSchemaDrift
+            {...showSchemaDriftAlert}
+            onClose={() => setShowSchemaDriftAlert(undefined)}
+          />
+        )}
         {created && (
           <ProgressBar
             totalValue={100}
@@ -154,6 +169,12 @@ export const AgenticWorkflowActions = ({
             if (!messageId) {
               throw new Error(`messageId missing`);
             }
+
+            if (schemaDrift) {
+              setShowSchemaDriftAlert(schemaDrift);
+              return;
+            }
+
             onStarted();
             const res = await startAgenticWorkflow!({
               chatId,

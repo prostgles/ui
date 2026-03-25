@@ -554,6 +554,9 @@ export const COMMANDS = {
   Agent: "",
   Loading: "",
   DockerSandboxCreateContainer: "",
+  AgenticWorkflowSchemaDrift: "",
+  "AgenticWorkflowSchemaDrift.applyPatches": "",
+  "AgenticWorkflowSchemaDrift.dropWorkflowTables": "",
 } as const satisfies Record<
   string,
   | string

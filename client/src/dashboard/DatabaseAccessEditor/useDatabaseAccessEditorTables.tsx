@@ -5,8 +5,16 @@ import type {
   DBSchemaTableWJoins,
 } from "../Dashboard/dashboardUtils";
 import type { DatabaseAccessEditorProps } from "./DatabaseAccessEditor";
+import {
+  getTableSchemaDriftState,
+  type TableSchemaDriftState,
+} from "./getTableSchemaDriftState";
 
-const NEW_TABLE_OID = -1;
+const NEW_OBJECT_OID = -1;
+
+export type TableSchemaWithDriftState = DBSchemaTableWJoins & {
+  ddlState: TableSchemaDriftState | undefined;
+};
 
 export const useDatabaseAccessEditorTables = ({
   value,
@@ -15,9 +23,18 @@ export const useDatabaseAccessEditorTables = ({
   value: Extract<DatabaseAccessEditorProps["value"], { mode: "custom" }>;
 }) => {
   const { tables } = usePrgl();
+  const newTablesDdl = value.ddlStatements ?? "";
   return useMemo(
     () =>
       tables
+        .map((t) => {
+          const newTable = newTables?.find((nt) => nt.name === t.name);
+          return {
+            ...t,
+            ddlState:
+              newTable && getTableSchemaDriftState(t, newTable, newTablesDdl),
+          } as TableSchemaWithDriftState;
+        })
         .concat(
           newTables
             ?.filter((nt) => !tables.some((t) => t.name === nt.name))
@@ -28,12 +45,16 @@ export const useDatabaseAccessEditorTables = ({
                   joinsV2: [],
                   label: t.name,
                   name: t.name,
-                  isNewTable: true,
-                  info: { oid: NEW_TABLE_OID, isView: false },
+                  ddlState: getTableSchemaDriftState(
+                    tables.find((et) => et.name === t.name),
+                    t,
+                    newTablesDdl,
+                  ),
+                  info: { oid: NEW_OBJECT_OID, isView: false },
                   columns: t.columns.map(
                     ({ name, dataType }) =>
                       ({
-                        oid: -1,
+                        oid: NEW_OBJECT_OID,
                         name,
                         label: name,
                         comment: "",
@@ -57,7 +78,7 @@ export const useDatabaseAccessEditorTables = ({
                         filter: true,
                       }) as DBSchemaTableColumn,
                   ),
-                }) as DBSchemaTableWJoins,
+                }) as TableSchemaWithDriftState,
             ) ?? [],
         )
         .toSorted((a, b) => {
@@ -68,6 +89,6 @@ export const useDatabaseAccessEditorTables = ({
           if (!aRule && bRule) return 1;
           return a.name.localeCompare(b.name);
         }),
-    [newTables, tables, value.tablePermissions],
+    [newTables, newTablesDdl, tables, value.tablePermissions],
   );
 };

@@ -38,7 +38,7 @@ const withRetries = async <T>(
 };
 
 const handler = {
-  start: async (dbs) => {
+  start: (dbs) => {
     const serviceManager = getServiceManager(dbs);
 
     let logs: ProcessLog[] = [];
@@ -48,6 +48,10 @@ const handler = {
     >(
       serviceName: S,
     ) => {
+      let serviceInstance = serviceManager.getService(serviceName);
+      if (serviceInstance?.status === "running") {
+        return serviceInstance;
+      }
       await withRetries(() => {
         return serviceManager.enableService(serviceName, (log) => {
           logs = log;
@@ -62,7 +66,7 @@ const handler = {
         );
       });
 
-      const serviceInstance = serviceManager.getService(serviceName);
+      serviceInstance = serviceManager.getService(serviceName);
       if (serviceInstance?.status !== "running") {
         throw new Error(
           `Failed to start ${serviceName} service for Web Search MCP Server`,
@@ -70,7 +74,6 @@ const handler = {
       }
       return serviceInstance;
     };
-    const webSearchService = await getService("webSearchSearxng");
 
     return {
       stop: () => {
@@ -82,6 +85,7 @@ const handler = {
             clientReq.httpReq?.ip ||
             clientReq.socket?.handshake.address ||
             "127.0.0.1";
+          const webSearchService = await getService("webSearchSearxng");
           const result = await webSearchService.endpoints["/search"](
             { ...toolArguments, format: "json" },
             {

@@ -1,17 +1,27 @@
 import { spawn, type SpawnOptionsWithoutStdio } from "child_process";
+import { getSerialisableError } from "prostgles-types";
 
 export type ProcessLog = {
   type: "stdout" | "stderr" | "error";
   text: string;
 };
-export interface ExecutionResult {
-  state: "close" | "error" | "timed-out" | "aborted";
+
+type CommonExecutionResult = {
   command: string;
   exitCode: number;
   timedOut: boolean;
   executionTime: number;
   log: ProcessLog[];
-}
+};
+
+export type ExecutionResult =
+  | (CommonExecutionResult & {
+      state: "close" | "error" | "timed-out" | "aborted";
+    })
+  | (CommonExecutionResult & {
+      state: "error";
+      error: ReturnType<typeof getSerialisableError>;
+    });
 
 /**
  * Execute a command inside the container
@@ -80,6 +90,10 @@ export const executeDockerCommand = async (
       resolve({
         state: reason.type,
         command,
+        error:
+          reason.type === "error" ?
+            getSerialisableError(reason.error)
+          : undefined,
         exitCode: reason.code ?? 0,
         timedOut,
         executionTime,

@@ -25,7 +25,10 @@ export const DatabaseAccessEditorCustomTables = ({
   const { tables, db, sql, methods } = usePrgl();
 
   const [showTable, setShowTable] = useState<string>();
-  const tableList = useDatabaseAccessEditorTables({ value, newTables });
+  const tableList = useDatabaseAccessEditorTables({
+    value,
+    newTables,
+  });
   return (
     <div className="w-full" data-command="DatabaseAccessEditor.TableRules">
       {showTable && (

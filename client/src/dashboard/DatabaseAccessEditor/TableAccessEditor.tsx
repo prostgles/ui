@@ -1,13 +1,17 @@
+import { fixIndent } from "@common/utils";
 import Btn from "@components/Btn";
-import { FlexRow } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
+import {
+  MONACO_READONLY_DEFAULT_OPTIONS,
+  MonacoEditor,
+} from "@components/MonacoEditor/MonacoEditor";
 import PopupMenu from "@components/PopupMenu";
-import { SearchList } from "@components/SearchList/SearchList";
-import { mdiTablePlus } from "@mdi/js";
+import { mdiDelta, mdiPlus } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
-import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
-import { getColumnListItem } from "../W_Table/ColumnMenu/ColumnSelect/getColumnListItem";
 import type { DatabaseAccessPermission } from "./DatabaseAccessEditor";
 import { TableAccessAdvancedOptionsMenu } from "./TableAccessAdvancedOptionsMenu";
+import type { TableSchemaWithDriftState } from "./useDatabaseAccessEditorTables";
 
 export type TableAccessPermissions = Extract<
   DatabaseAccessPermission,
@@ -29,28 +33,120 @@ export const TableAccessEditor = ({
   table,
 }: {
   value: TableAccessPermissions;
-  table: DBSchemaTableWJoins & { isNewTable?: boolean };
+  table: TableSchemaWithDriftState;
   onChange: undefined | ((newTableRules: TableAccessPermissions) => void);
 }) => {
-  const { isNewTable, columns } = table;
+  const { sql, db } = usePrgl();
+  const { ddlState } = table;
   return (
     <FlexRow className="gap-0">
       <PopupMenu
+        title={"Table created in this workflow"}
+        onClickClose={false}
+        showFullscreenToggle={{}}
+        clickCatchStyle={{ opacity: 1 }}
         button={
           <Btn
             variant="faded"
-            color={isNewTable ? "action" : undefined}
+            color={
+              ddlState?.state === "new" ? "action"
+              : ddlState?.state === "drifted" ?
+                "warn"
+              : undefined
+            }
             size="small"
             className="mr-1"
-            title="New table to be created"
+            title={"Table created in this workflow"}
             style={{
-              visibility: isNewTable ? "visible" : "hidden",
+              visibility: ddlState ? "visible" : "hidden",
             }}
-            iconPath={mdiTablePlus}
+            iconPath={ddlState?.state === "drifted" ? mdiDelta : mdiPlus}
           />
         }
+        footerButtons={[
+          {
+            label: "Close",
+            onClickClose: true,
+            className: "mr-auto",
+          },
+          ddlState?.state === "matches" ?
+            {
+              label: "Delete all data",
+              color: "danger",
+              variant: "faded",
+              clickConfirmation: {
+                buttonText: "Delete",
+                message: (
+                  <span>
+                    Are you sure you want to delete all data from{" "}
+                    <strong>{table.name}</strong>?
+                  </span>
+                ),
+                color: "danger",
+              },
+              onClickPromise: async () => {
+                const tableHandle = db[table.name];
+                if (!tableHandle) {
+                  throw new Error("Table handle missing or table not allowed");
+                }
+                if (!tableHandle.delete) {
+                  throw new Error("Table delete operation not allowed");
+                }
+
+                const deletedRows = await tableHandle.delete(
+                  {},
+                  { returning: "" },
+                );
+                throw new Error(
+                  `Deleted ${deletedRows?.length ?? 0} rows from ${table.name}`,
+                );
+              },
+            }
+          : ddlState?.state === "drifted" ?
+            {
+              label: "Apply patch",
+              color: "warn",
+              variant: "filled",
+              clickConfirmation: {
+                buttonText: "Apply",
+                message:
+                  "Applying the patch will update the live table schema to match this workflow's definition. This may cause data loss if columns are being removed or changed. Are you sure you want to apply the patch?",
+                color: "danger",
+              },
+              disabledInfo: !sql ? "SQL client not available" : undefined,
+              onClickPromise: async () => {
+                if (!sql) {
+                  throw new Error("SQL client not available");
+                }
+
+                await sql(ddlState.patchDdl);
+              },
+            }
+          : undefined,
+        ]}
       >
-        <SearchList items={columns.map((c) => getColumnListItem(c))} />
+        {ddlState && (
+          <FlexCol>
+            <p className="ta-start">
+              {
+                {
+                  new: "This table does not exist in the database yet. It will be created with the DDL below.",
+                  drifted:
+                    "The live table schema differs from this workflow's definition. Apply the patch below to bring it in sync.",
+                  matches:
+                    "The live table schema matches this workflow's definition.",
+                }[ddlState.state]
+              }
+            </p>
+            <MonacoEditor
+              className="b b-color-0"
+              language={"sql"}
+              loadedSuggestions={undefined}
+              value={fixIndent(ddlState.patchDdl ?? ddlState.ddl)}
+              options={MONACO_READONLY_DEFAULT_OPTIONS}
+            />
+          </FlexCol>
+        )}
       </PopupMenu>
       {TABLE_RULE_TYPES.map((ruleType) => {
         const ruleValue = value[ruleType];

@@ -4,7 +4,13 @@ export const fileBrowserGoToPath = async (
   page: PageWIds,
   targetPath: string[],
 ) => {
-  const githubWorkerPath = ["work", "ui"] as const;
+  /**
+   * The runner checks out repos under a nested structure:
+   * ~/work/{repo-name}/{repo-name}/
+   */
+  const [_repoOwner, repoName = "ui"] =
+    process.env.GITHUB_REPOSITORY?.split("/") ?? [];
+  const githubWorkerPath = ["work", repoName] as const;
   const path = [
     ...(process.env.CI === "true" ? githubWorkerPath : []),
     ...targetPath,

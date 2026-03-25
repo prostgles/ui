@@ -242,7 +242,7 @@ class Button<HREF extends string | void = void> extends RTComp<
       if (duration < minDuration) {
         await tout(Math.max(0, minDuration - duration));
       }
-      this.clickMessage({ ok: "" });
+      this.clickMessage({ loading: 0 });
     } catch (err) {
       this.clickMessage({
         err:

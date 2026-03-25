@@ -7,7 +7,12 @@ type SegmentedToggleProps<O extends string> = {
   value: O | undefined;
   options: Record<
     O,
-    { title: string; iconPath: string; disabledInfo?: string }
+    {
+      title: string;
+      children?: React.ReactNode;
+      iconPath: string;
+      disabledInfo?: string;
+    }
   >;
   onChange: (value: O) => void;
 } & Omit<DivProps, "onChange">;
@@ -31,19 +36,18 @@ export const SegmentedToggle = <O extends string>({
         ...divProps.style,
       }}
     >
-      {getEntries(options).map(([key, { iconPath, title, disabledInfo }]) => {
+      {getEntries(options).map(([key, btnProps]) => {
         return (
           <Btn
             key={key}
             size="micro"
-            title={title}
-            disabledInfo={disabledInfo}
+            data-key={key}
+            {...btnProps}
             variant={value === key ? "faded" : undefined}
             style={{
               background: value === key ? "var(--bg-color-0)" : "transparent",
             }}
             onClick={() => onChange(key)}
-            iconPath={iconPath}
           />
         );
       })}

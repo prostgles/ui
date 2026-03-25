@@ -2,15 +2,14 @@ import { connectionManager } from "@src/index";
 import { copyFile, mkdir, readdir, readFile, rm, writeFile } from "fs/promises";
 import { glob } from "glob";
 import { join } from "path";
-import { createServerFunctionWithContext } from "prostgles-server";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
+import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { buildWebApp } from "./webApp/buildWebApp";
 import { getReactComponents } from "./webApp/getReactComponents";
 import { getTemplatedWebAppConnection } from "./webApp/getTemplatedWebAppConnection";
 import { getValidatedWebAppPath } from "./webApp/getValidatedWebAppPath";
 import { testWebApp } from "./webApp/testWebApp";
 import { writeWebAppFiles } from "./webApp/writeWebAppFiles";
-import { getDefineAdminFunction } from "./getDefineAdminFunction";
 
 /** Copy template files over */
 const templateDir = join(
