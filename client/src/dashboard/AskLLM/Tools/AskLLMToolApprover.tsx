@@ -12,6 +12,7 @@ import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToo
 import type { useAskLLMToolApprove } from "./useAskLLMToolApprover";
 import { NavLink } from "react-router";
 import { getConnectionPaths } from "@common/utils";
+import { isDefined } from "@common/filterUtils";
 
 export type AskLLMToolsProps = {
   workspaceId: string | undefined;
@@ -49,7 +50,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     return null;
   }
 
-  const { chat_id, server_name, tool_name, input, tool_use_id } = requestItem;
+  const { chat_id, server_name, tool_name, input, tool_use_id, llm_messages } =
+    requestItem;
   const connections = requestItem.connections as
     | Pick<DBSSchema["connections"], "id" | "name">[]
     | undefined;
@@ -62,6 +64,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     requestItem.connection_id !== connectionId ?
       connections?.find((c) => c.id === requestItem.connection_id)
     : undefined;
+  const toolUseMessage = llm_messages[0];
   return (
     <Popup
       title={
@@ -158,19 +161,33 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         {!isEmpty(input) && (
           <>
             {ToolUI ?
-              <ToolUI.component
-                chatId={chat_id}
-                message={{
-                  type: "tool_use",
-                  id: tool_use_id,
-                  name,
-                  input,
-                }}
-                toolUseResult={undefined}
-                workspaceId={workspaceId}
-                loadedSuggestions={loadedSuggestions}
-                isShownInToolUseRequest={true}
-              />
+              !toolUseMessage ?
+                <div>Loading message...</div>
+              : <ToolUI.component
+                  chatId={chat_id}
+                  toolUseMessage={toolUseMessage}
+                  message={{
+                    type: "tool_use",
+                    id: tool_use_id,
+                    name,
+                    input:
+                      toolUseMessage.message
+                        .map((content) =>
+                          (
+                            content.type === "tool_use" &&
+                            content.id === tool_use_id
+                          ) ?
+                            content
+                          : undefined,
+                        )
+                        .find(isDefined)?.input ?? input,
+                  }}
+                  toolUseResult={undefined}
+                  workspaceId={workspaceId}
+                  loadedSuggestions={loadedSuggestions}
+                  isShownInToolUseRequest={true}
+                />
+
             : <CodeEditorWithSaveButton
                 label="Input"
                 value={JSON.stringify(input, null, 2)}

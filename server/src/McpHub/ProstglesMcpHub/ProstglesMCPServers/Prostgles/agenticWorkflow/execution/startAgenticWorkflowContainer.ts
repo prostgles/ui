@@ -311,7 +311,10 @@ export const startAgenticWorkflowContainer = async (
         { id: workflowRun.id },
         {
           state: {
-            status: result.state === "finished" ? "completed" : "error",
+            status:
+              result.state === "finished" ? "completed"
+              : result.state === "timed-out" ? "timed-out"
+              : "error",
           },
           finished: new Date(),
           log: result.log,

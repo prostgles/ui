@@ -95,7 +95,7 @@ export const TableAccessEditor = ({
 
                 const deletedRows = await tableHandle.delete(
                   {},
-                  { returning: "" },
+                  { returning: { ctid: 1 } },
                 );
                 throw new Error(
                   `Deleted ${deletedRows?.length ?? 0} rows from ${table.name}`,

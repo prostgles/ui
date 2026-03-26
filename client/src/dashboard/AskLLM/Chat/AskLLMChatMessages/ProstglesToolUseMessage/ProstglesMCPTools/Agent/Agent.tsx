@@ -4,7 +4,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { Label } from "@components/Label";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
 import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
@@ -13,13 +13,13 @@ import { useJSONBParsedData } from "../common/useJSONBParsedData";
 
 export const Agent = ({
   message,
-  toolUseResult,
   chatId,
   loadedSuggestions,
   workspaceId,
+  toolUseMessage,
 }: Pick<
   ProstglesMCPToolsProps,
-  "chatId" | "message" | "toolUseResult" | "loadedSuggestions" | "workspaceId"
+  "chatId" | "message" | "loadedSuggestions" | "workspaceId" | "toolUseMessage"
 >) => {
   const { dbs, dbsMethods } = usePrgl();
   const setupState = useAskLLMSetupState();
@@ -39,6 +39,52 @@ export const Agent = ({
   });
   const [showAgentChatId, setShowAgentChatId] = useState<number>();
 
+  const onUpdateInput = useCallback(
+    async (updates: Record<string, unknown>) => {
+      const toolUseMessage = await dbs.llm_messages.findOne({
+        message: {
+          "@>": [
+            {
+              type: "tool_use",
+              id: message.id,
+            },
+          ],
+        },
+      });
+      if (!toolUseMessage) {
+        throw new Error("Tool use message not found");
+      }
+      const toolUseContent = toolUseMessage.message.find(
+        (content) => content.type === "tool_use" && content.id === message.id,
+      );
+      if (!toolUseContent) {
+        throw new Error("Tool use content not found in message");
+      }
+      const updatedRows = await dbs.llm_messages.update(
+        { id: toolUseMessage.id },
+        {
+          message: toolUseMessage.message.map((content) => {
+            if (content.type === "tool_use" && content.id === message.id) {
+              return {
+                ...content,
+                input: { ...message.input, ...updates },
+              };
+            }
+            return content;
+          }),
+        },
+        {
+          returning: { id: 1 },
+        },
+      );
+      if (!updatedRows?.length) {
+        throw new Error("Failed to update tool use message");
+      }
+      console.log("Updated tool input with", updates);
+    },
+    [dbs.llm_messages, message.id, message.input],
+  );
+
   if (inputValidation.error !== undefined) {
     return (
       <ErrorComponent
@@ -55,8 +101,8 @@ export const Agent = ({
       <AgentDefinition
         agentName={inputData.name}
         config={{ ...inputData, outputSchema: { result: { type: "string" } } }}
-        onChange={() => {
-          throw new Error("Not implemented");
+        onChange={(opts) => {
+          void onUpdateInput(opts);
         }}
       />
 
@@ -74,7 +120,7 @@ export const Agent = ({
               selectedChat={{
                 id: showAgentChatId,
                 type: "agent",
-                parent_message_id: message.id,
+                parent_message_id: toolUseMessage.id,
               }}
               askLLM={dbsMethods.askLLM!}
               loadedSuggestions={loadedSuggestions}

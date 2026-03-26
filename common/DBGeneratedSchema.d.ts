@@ -50,7 +50,7 @@ export type DBGeneratedSchema = {
       log:  (  {  type: "stdout" | "stderr" | "error";  text: string; } )[]
       message_id?: null | string;
       state: 
-       |  {  status: "running" | "completed" | "error" | "stopped";  progressPercent?: number;  message?: string; }
+       |  {  status: "running" | "completed" | "error" | "stopped" | "timed-out";  progressPercent?: number;  message?: string; }
       user_id: string;
       user_input_value:  Record<string, unknown>
       workflow_id: number;

@@ -27,6 +27,7 @@ export const ToolUseChatMessageResult = (
     toolUseMessageContent,
     toolUseMessage,
     loadedSuggestions,
+    message,
   } = props;
 
   const toolCallError =
@@ -47,6 +48,7 @@ export const ToolUseChatMessageResult = (
             message={toolUseMessageContent}
             chatId={toolUseMessage.chat_id}
             toolUseResult={toolUseResult}
+            toolUseMessage={message}
             loadedSuggestions={loadedSuggestions}
           />
         )}

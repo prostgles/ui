@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useState } from "react";
 import type { DbsByUserType } from "src/dashboard/Dashboard/DBS";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { useAskLLMToolApprove } from "../Tools/useAskLLMToolApprover";
@@ -12,6 +12,7 @@ const useLLMSetupState = () => {
   const { data: credentials } = dbs.llm_credentials.useSubscribe();
   const isAdmin = user?.type === "admin";
   const globalSettings = dbs.global_settings?.useSubscribeOne?.();
+  const [showChat, setShowChat] = useState<{ selectedChatId?: number }>();
 
   /** For backward compatibility pick last credential as default */
   const defaultCredential =
@@ -31,6 +32,8 @@ const useLLMSetupState = () => {
       return {
         state: "loading" as const,
         prompts,
+        showChat,
+        setShowChat,
       };
     }
 
@@ -39,6 +42,8 @@ const useLLMSetupState = () => {
         state: "mustSetup" as const,
         prompts,
         globalSettings,
+        showChat,
+        setShowChat,
       };
     }
 
@@ -54,6 +59,8 @@ const useLLMSetupState = () => {
     return {
       state: "cannotSetupOrNotAllowed" as const,
       prompts,
+      showChat,
+      setShowChat,
     };
   }
 
@@ -65,6 +72,8 @@ const useLLMSetupState = () => {
     credentials,
     prompts,
     firstPromptId,
+    showChat,
+    setShowChat,
   };
 
   return result;

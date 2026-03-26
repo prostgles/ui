@@ -108,6 +108,7 @@ export type ProstglesMCPToolsProps = {
   message: ToolUseMessage;
   chatId: number;
   isShownInToolUseRequest?: boolean;
+  toolUseMessage: Pick<DBSSchema["llm_messages"], "id">;
   toolUseResult:
     | {
         toolUseResult: DBSSchema["llm_messages"];

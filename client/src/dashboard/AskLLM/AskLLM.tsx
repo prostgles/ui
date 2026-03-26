@@ -20,7 +20,8 @@ export const AskLLM = (props: AskLLMProps) => {
   const { dbsMethods, connectionId } = usePrgl();
   const { askLLM, stopAskLLM } = dbsMethods;
 
-  const [showChat, setShowChat] = useState<{ selectedChatId?: number }>();
+  const state = useLLMSetup();
+  const { showChat, setShowChat } = state;
   const selectedChat = useMemo(
     () =>
       showChat?.selectedChatId ?
@@ -31,7 +32,6 @@ export const AskLLM = (props: AskLLMProps) => {
   const onClose = () => {
     setShowChat(undefined);
   };
-  const state = useLLMSetup();
 
   return (
     <ErrorTrap>

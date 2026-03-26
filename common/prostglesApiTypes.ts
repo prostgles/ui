@@ -302,7 +302,7 @@ export type UpdateReturnType<O extends UpdateParams<TD, S>, TD extends AnyObject
  * If an array of records is inserted then an array of records will be returned
  * otherwise a single record will be returned.
  */
-export type InsertReturnType<Data extends InsertData<AnyObject>, O extends UpdateParams<TD, S>, TD extends AnyObject, S extends DBSchema | void = void> = Data extends any[] | readonly any[] ? GetReturningReturnType<O, TD, S>[] : GetReturningReturnType<O, TD, S>;
+export type InsertReturnType<Data extends AnyObject, O extends UpdateParams<TD, S>, TD extends AnyObject, S extends DBSchema | void = void> = Data extends any[] | readonly any[] ? GetReturningReturnType<O, TD, S>[] : GetReturningReturnType<O, TD, S>;
 export type SubscriptionHandler = {
     unsubscribe: () => Promise<void>;
     filter: FullFilter<void, void> | {};

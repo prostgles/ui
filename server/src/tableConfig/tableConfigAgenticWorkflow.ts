@@ -100,7 +100,7 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
           oneOfType: [
             {
               status: {
-                enum: ["running", "completed", "error", "stopped"],
+                enum: ["running", "completed", "error", "stopped", "timed-out"],
               },
               progressPercent: { type: "number", optional: true },
               message: { type: "string", optional: true },

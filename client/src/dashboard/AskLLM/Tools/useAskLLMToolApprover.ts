@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useLLMSchemaStr } from "../Chat/useLLMSchemaStr";
+import type { DBSSchema } from "@common/publishUtils";
 
 export const useAskLLMToolApprove = () => {
   const {
@@ -18,6 +19,10 @@ export const useAskLLMToolApprove = () => {
     {
       select: {
         "*": 1,
+        llm_messages: {
+          id: 1,
+          message: 1,
+        },
         mcp_server_tools: {
           id: 1,
           description: 1,
@@ -71,7 +76,16 @@ export const useAskLLMToolApprove = () => {
     return;
   }
   return {
-    requests,
+    requests: requests as
+      | (DBSSchema["mcp_tool_approval_requests"] & {
+          llm_messages: Pick<DBSSchema["llm_messages"], "id" | "message">[];
+          mcp_server_tools: Pick<
+            DBSSchema["mcp_server_tools"],
+            "id" | "description"
+          >[];
+          connections: Pick<DBSSchema["connections"], "id" | "name">[];
+        })[]
+      | undefined,
     respond,
     dbSchemaForPrompt,
     showRequestId,

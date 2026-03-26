@@ -1,9 +1,8 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { JSONB } from "prostgles-types";
+import { tableConfigAgenticWorkflow } from "../tableConfigAgenticWorkflow";
 import { tableConfigLlmChats } from "./tableConfigLlmChats";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
-import { tableConfigAgenticWorkflow } from "../tableConfigAgenticWorkflow";
-import { mcpServerToolsAllowed } from "@common/startAgenticWorkflowSchema";
 
 const toolUseContent: JSONB.FieldType = {
   oneOf: [

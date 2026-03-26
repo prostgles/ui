@@ -1,3 +1,4 @@
+import { sliceText } from "@common/utils";
 import { Icon } from "@components/Icon/Icon";
 import Loading from "@components/Loader/Loading";
 import Popup from "@components/Popup/Popup";
@@ -5,11 +6,14 @@ import {
   SearchList,
   type SearchListItem,
 } from "@components/SearchList/SearchList";
-import { mdiCubeOutline, mdiDocker } from "@mdi/js";
+import { mdiChat, mdiCubeOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflow } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
 import { useLLMSetup } from "../AskLLM/Setup/LLMSetupProvider";
+import Btn from "@components/Btn";
+import { FlexRowWrap } from "@components/Flex";
+import Chip from "@components/Chip";
 
 export const SavedAgenticWorkflowsAndContainers = () => {
   const { dbs, connectionId } = usePrgl();
@@ -41,13 +45,24 @@ export const SavedAgenticWorkflowsAndContainers = () => {
     const items = (agenticWorkflows || [])
       .filter((w) => w.saved || w.agentic_workflow_runs.length)
       .map((workflow) => {
+        const dbAccess = workflow.definition_data.databaseAccessDefinitions;
         return {
           key: workflow.id,
           label: workflow.name,
-          subLabel: workflow.definition_summary
-            .split("\n")
-            .slice(0, 3)
-            .join("\n"),
+          subLabel: sliceText(workflow.definition_summary, 200),
+          contentBottom:
+            dbAccess?.mode === "custom" ?
+              <FlexRowWrap className="mt-p5 gap-p5">
+                {Object.keys(dbAccess.tablePermissions).map((tableName) => (
+                  <Chip
+                    style={{ background: "var(--bg-color-3)" }}
+                    key={tableName}
+                  >
+                    {tableName}
+                  </Chip>
+                ))}
+              </FlexRowWrap>
+            : null,
           onPress: () => {
             setSelectedWorkflowId(workflow.id);
           },
@@ -80,6 +95,20 @@ export const SavedAgenticWorkflowsAndContainers = () => {
         <Popup
           positioning="fullscreen"
           title={selectedWorkflow.name}
+          headerRightContent={
+            <Btn
+              onClick={() => {
+                state.setShowChat({
+                  selectedChatId: selectedWorkflow.chat_id,
+                });
+              }}
+              iconPath={mdiChat}
+              variant="faded"
+              color="action"
+            >
+              Show chat
+            </Btn>
+          }
           onClose={() => setSelectedWorkflowId(undefined)}
         >
           <AgenticWorkflow

@@ -21,6 +21,7 @@ import {
 import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import ErrorComponent from "@components/ErrorComponent";
+import { useLLMSetup } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
 export const LoadSuggestedDashboards = ({
   workspaceId,
@@ -30,6 +31,7 @@ export const LoadSuggestedDashboards = ({
   const { setWorkspace } = useSetActiveWorkspace(workspaceId);
   const { dbs, connectionId, tables } = usePrgl();
 
+  const { setShowChat } = useLLMSetup();
   const workspaces = useWorkspacesSync(dbs, connectionId);
   const alreadyLoadedWorkspaceIds = useMemo(() => {
     return workspaces
@@ -124,6 +126,7 @@ export const LoadSuggestedDashboards = ({
                 const [first] = insertedWorkspaces;
                 if (first) {
                   setWorkspace(first);
+                  setShowChat(undefined);
                 }
               })
               .catch((error) => {

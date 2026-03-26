@@ -65,7 +65,7 @@ export const AgentDefinition = ({
   );
   return (
     <FlexCol
-      className="rounded b b-color p-p5 min-w-0 relative"
+      className="AgentDefinition rounded b b-color p-p5 min-w-0 relative o-auto"
       style={{ fontWeight: "normal" }}
     >
       <FlexRow className="gap-p5">
