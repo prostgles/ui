@@ -557,6 +557,7 @@ export const COMMANDS = {
   AgenticWorkflowSchemaDrift: "",
   "AgenticWorkflowSchemaDrift.applyPatches": "",
   "AgenticWorkflowSchemaDrift.dropWorkflowTables": "",
+  SavedAgenticWorkflowsAndContainers: "",
 } as const satisfies Record<
   string,
   | string

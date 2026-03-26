@@ -23,6 +23,7 @@ export const useAskLLMToolApprove = () => {
           description: 1,
         },
         connections: {
+          id: 1,
           name: 1,
         },
       },

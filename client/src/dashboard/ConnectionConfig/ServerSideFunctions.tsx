@@ -78,13 +78,7 @@ export const ServerSideFunctions = () => {
               onSave={onSave}
               onTSLibraryChange={onLoaded}
             />
-            <ProcessLogs
-              key={dbKey + "logs"}
-              connectionId={connectionId}
-              dbsMethods={dbsMethods}
-              type="onMount"
-              dbs={dbs}
-            />
+            <ProcessLogs key={dbKey + "logs"} type="onMount" />
           </>
         )}
       </FlexCol>

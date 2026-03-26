@@ -156,7 +156,7 @@ export const setupLLM = async (dbs: DBS) => {
               >,
               ...allowProstglesUITools({
                 ask_user_questions: 1,
-                get_tool_schemas: 1,
+                get_tool_schemas: "auto-approve",
               }),
             },
             database_access: "execute_readonly_sql",

@@ -71,7 +71,8 @@ export const AgenticWorkflow = ({
   const workflow_function_definition =
     inputData?.workflow_function_definition ?? workflow?.definition;
   const workflow_function_definition_summary =
-    inputData?.workflow_function_definition ?? workflow?.definition_summary;
+    inputData?.workflow_function_definition_summary ??
+    workflow?.definition_summary;
   const tool_use_id = toolUseIdFromProps ?? workflow?.tool_use_id;
   if (
     !chatId ||
@@ -158,7 +159,7 @@ export const AgenticWorkflow = ({
             label: "Logs",
             content:
               !latestRun ?
-                <InfoRow variant="filled" color="info" className="m-1">
+                <InfoRow variant="filled" color="info" className="m-1 h-fit">
                   No logs yet. Logs will appear here once the workflow starts
                   running.
                 </InfoRow>

@@ -84,6 +84,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
     >
       <FullscreenWrapper
         key={codeString}
+        className={"f-1"}
         title={<MarkdownMonacoCodeHeader {...props} {...runSQLState} />}
       >
         <MonacoEditor

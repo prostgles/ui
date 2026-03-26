@@ -151,6 +151,7 @@ export const createAgenticWorkflow = async (
     workflow_function_definition,
     workflow_function_definition_summary,
     workflowId,
+    package_dependencies,
   }: Args,
   ctx: McpCallContext,
 ) => {
@@ -171,6 +172,7 @@ export const createAgenticWorkflow = async (
       tableSchemaOpts: {
         type: "generic",
       },
+      package_dependencies,
     },
     ctx,
   );

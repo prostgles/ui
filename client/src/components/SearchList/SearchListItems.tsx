@@ -222,8 +222,11 @@ export const SearchListItems = forwardRef<
           )}
           {!renderedItems.length && !searchingItems && (
             <div className="p-p5 text-1 no-data">
-              {noResultsContent ??
-                (!endOfResultsContent ? <div>No results</div> : null)}
+              {noResultsContent !== undefined ?
+                noResultsContent
+              : !endOfResultsContent ?
+                <div>No results</div>
+              : null}
             </div>
           )}
           {notAllItemsShown ?

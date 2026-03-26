@@ -80,13 +80,7 @@ export const PublishedMethods = ({
                 clickCatchStyle={{ opacity: 0.5 }}
                 positioning="center"
               >
-                <ProcessLogs
-                  noMaxHeight={true}
-                  type="methods"
-                  connectionId={connectionId}
-                  dbs={dbs}
-                  dbsMethods={dbsMethods}
-                />
+                <ProcessLogs noMaxHeight={true} type="methods" />
               </PopupMenu>
             </FlexRow>
           }

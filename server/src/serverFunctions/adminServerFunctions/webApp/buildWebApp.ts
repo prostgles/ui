@@ -25,7 +25,7 @@ export const buildWebApp = async (
 
   const result = await runDockerForWebApp({
     web_app_directory,
-    image: "node:20-slim",
+    image: "node:24-slim",
     shCommand: "cd client && npm install --silent && npm run build",
   });
 

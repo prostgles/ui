@@ -106,12 +106,14 @@ export const executeDockerCommand = async (
     };
 
     child.stdout.on("data", (data: Buffer) => {
-      log.push({ type: "stdout", text: data.toString() });
+      const text = sanitizeForPostgres(data.toString());
+      log.push({ type: "stdout", text });
       onLogs?.(log);
     });
 
     child.stderr.on("data", (data: Buffer) => {
-      log.push({ type: "stderr", text: data.toString() });
+      const text = sanitizeForPostgres(data.toString());
+      log.push({ type: "stderr", text });
       onLogs?.(log);
     });
 
@@ -143,3 +145,7 @@ export const executeDockerCommand = async (
     });
   });
 };
+
+const sanitizeForPostgres = (input: string): string =>
+  // eslint-disable-next-line no-control-regex
+  input.replace(/\u0000/g, "");

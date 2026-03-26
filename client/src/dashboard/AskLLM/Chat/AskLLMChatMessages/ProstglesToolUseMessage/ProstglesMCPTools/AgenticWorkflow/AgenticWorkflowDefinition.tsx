@@ -1,6 +1,7 @@
 import { type PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
+import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import {
@@ -41,14 +42,23 @@ export const AgenticWorkflowDefinition = ({
   } = usePrgl();
   const { onMount } = useMonacoScrollToLastLine(true);
   // const workflowId = workflow?.id;
-  const agentFiles = usePromise(async () => {
+  const agentFilesInfo = usePromise(async () => {
     if (!getAgenticWorkflowTypes) return;
 
-    return await getAgenticWorkflowTypes({
-      connectionId,
-      workflowId,
-    });
+    try {
+      const agentFiles = await getAgenticWorkflowTypes({
+        connectionId,
+        workflowId,
+      });
+      return { agentFiles, error: undefined };
+    } catch (error) {
+      return {
+        agentFiles: undefined,
+        error,
+      };
+    }
   }, [connectionId, getAgenticWorkflowTypes, workflowId]);
+  const { agentFiles, error } = agentFilesInfo || {};
   const language = useMemo(() => {
     if (!agentFiles) return "typescript";
     const { files } = agentFiles;
@@ -99,21 +109,25 @@ export const AgenticWorkflowDefinition = ({
     "Code",
   );
 
-  if (!agentFiles) return <Loading />;
+  if (!agentFilesInfo) return <Loading />;
   return (
     <FlexCol className="f-1 gap-p25">
-      <SegmentedToggle
+      <ErrorComponent
+        title="Error while getting workflow types"
+        error={agentFilesInfo.error}
+      />
+      {/* <SegmentedToggle
         className="w-fit "
         value={tab}
         options={TABS}
         onChange={setTab}
         style={{
-          /** Hacky but will do for now */
+          // Hacky but will do for now
           position: "absolute",
           right: "3em",
           top: "4px",
         }}
-      />
+      /> */}
       {tab === "Code" ?
         <CodeEditorWithSaveButton
           key={workflow_function_definition}
@@ -127,7 +141,7 @@ export const AgenticWorkflowDefinition = ({
           {...codeEditorProps}
         />
       : tab === "ASTSummary" ?
-        <div className="p-1 ws-pre-line">{agentFiles.summary}</div>
+        <div className="p-1 ws-pre-line">{agentFiles?.summary}</div>
       : tab === "TextSummary" ?
         <div className="p-1 ws-pre-line">
           {workflow_function_definition_summary}
@@ -136,7 +150,7 @@ export const AgenticWorkflowDefinition = ({
           language={"json"}
           loadedSuggestions={undefined}
           className="f-1"
-          value={JSON.stringify(agentFiles.astNodes, null, 2)}
+          value={JSON.stringify(agentFiles?.astNodes, null, 2)}
         />
       }
     </FlexCol>

@@ -58,7 +58,10 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       ?.description ?? "Could not find tool description";
   const name = getMCPFullToolName(server_name, tool_name);
   const ToolUI = ProstglesMCPToolsWithUI[name];
-  const differentConnection = connections?.find((c) => c.id !== connectionId);
+  const differentConnection =
+    requestItem.connection_id !== connectionId ?
+      connections?.find((c) => c.id === requestItem.connection_id)
+    : undefined;
   return (
     <Popup
       title={

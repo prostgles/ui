@@ -10,7 +10,7 @@ import { Icon } from "./Icon/Icon";
 import { getSerialisableError, isEqual } from "prostgles-types";
 
 type P = TestSelectors & {
-  error: any;
+  error: unknown;
   className?: string;
   noScroll?: boolean;
   style?: React.CSSProperties;
@@ -30,11 +30,11 @@ type P = TestSelectors & {
   autoScrollIntoView?: boolean;
 };
 export default class ErrorComponent extends React.Component<P> {
-  ref?: any;
+  ref?: HTMLDivElement;
 
   scrollIntoView = () => {
     const { error, autoScrollIntoView = true } = this.props;
-    if (error && autoScrollIntoView && this.ref && this.ref.scrollIntoView) {
+    if (error && autoScrollIntoView && this.ref) {
       scrollIntoViewIfNeeded(this.ref);
     }
   };
@@ -66,7 +66,7 @@ export default class ErrorComponent extends React.Component<P> {
       ...testSelectors
     } = this.props;
 
-    if ([null, undefined].includes(error)) {
+    if ([null, undefined].includes(error as any)) {
       return null;
     }
     const colorClass = color ? `text-${color}` : "text-danger";
@@ -104,11 +104,11 @@ export default class ErrorComponent extends React.Component<P> {
         {withIcon && <Icon className="as-start f-0" path={mdiAlertOutline} />}
         <FlexCol
           className={
-            "gap-1 as-center-thisbreakslongerrors " +
+            "gap-p5 as-center-thisbreakslongerrors " +
             (noScroll ? "ws-break" : "o-auto")
           }
         >
-          {title && <div className="font-18 bold">{title}</div>}
+          {title && <div className="font-16 bold">{title}</div>}
           {(parsedError(error, findMsg) + "").slice(0, maxTextLength)}
         </FlexCol>
         {onClear && (

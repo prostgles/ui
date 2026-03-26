@@ -58,10 +58,11 @@ export const W_MethodControls = ({
   const [expandControls, setExpandControls] = useState(true);
   const [showJSONBErrors, setshowJSONBErrors] = useState(false);
   const { dbs, connectionId, sql } = prgl;
-  const { data: methodFullData } = dbs.published_methods.useSubscribeOne(
-    { name: w?.method_name, connection_id: connectionId },
-    { limit: w?.method_name ? 1 : 0 },
-  );
+  const { data: methodFullData, isLoading } =
+    dbs.published_methods.useSubscribeOne(
+      { name: w?.method_name, connection_id: connectionId },
+      { limit: w?.method_name ? 1 : 0 },
+    );
   const methodFullDataArgs =
     methodFullData &&
     fromEntries(methodFullData.arguments.map((m) => [m.name, m]));
@@ -149,7 +150,7 @@ export const W_MethodControls = ({
     : undefined;
   const { showCode = false, showLogs } = w?.options ?? {};
 
-  if (!methodFullData) {
+  if (isLoading) {
     return <Loading />;
   }
 
@@ -158,21 +159,27 @@ export const W_MethodControls = ({
       className="W_MethodControls f-1  min-s-0 o-auto bg-color-2"
       style={{ gap: "2px" }}
     >
-      {showCode && (
-        <MethodDefinition
-          renderMode="Code"
-          {...prgl}
-          db={db}
-          tables={tables}
-          method={methodFullData}
-          onChange={(code) => {
-            dbs.published_methods.update(
-              { id: methodFullData.id },
-              { run: code.run },
-            );
-          }}
-        />
-      )}
+      {showCode ?
+        !methodFullData ?
+          <ErrorComponent
+            title="Cannot display method definition"
+            error={"Could not find method data"}
+          />
+        : <MethodDefinition
+            renderMode="Code"
+            {...prgl}
+            db={db}
+            tables={tables}
+            method={methodFullData}
+            onChange={(code) => {
+              void dbs.published_methods.update(
+                { id: methodFullData.id },
+                { run: code.run },
+              );
+            }}
+          />
+
+      : null}
       {methodFromSchema && (
         <div
           className="flex-col gap-1 p-1 shadow bg-color-0"
@@ -288,7 +295,7 @@ export const W_MethodControls = ({
           </FlexRow>
         </div>
       )}
-      {methodFullData.outputTable && !outputTableInfo && (
+      {methodFullData?.outputTable && !outputTableInfo && (
         <ErrorComponent
           error={`Results table ( ${methodFullData.outputTable} ) missing or not allowed`}
           className="m-1"
@@ -316,14 +323,7 @@ export const W_MethodControls = ({
           : null}
         </div>
       )}
-      {showLogs && (
-        <ProcessLogs
-          connectionId={connectionId}
-          dbs={dbs}
-          dbsMethods={prgl.dbsMethods}
-          type="methods"
-        />
-      )}
+      {showLogs && <ProcessLogs type="methods" />}
       <ErrorComponent
         error={error}
         findMsg={true}

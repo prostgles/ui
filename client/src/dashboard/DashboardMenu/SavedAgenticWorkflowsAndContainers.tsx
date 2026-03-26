@@ -5,7 +5,7 @@ import {
   SearchList,
   type SearchListItem,
 } from "@components/SearchList/SearchList";
-import { mdiDocker } from "@mdi/js";
+import { mdiCubeOutline, mdiDocker } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflow } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
@@ -44,14 +44,17 @@ export const SavedAgenticWorkflowsAndContainers = () => {
         return {
           key: workflow.id,
           label: workflow.name,
-          subLabel: workflow.definition_summary,
+          subLabel: workflow.definition_summary
+            .split("\n")
+            .slice(0, 3)
+            .join("\n"),
           onPress: () => {
             setSelectedWorkflowId(workflow.id);
           },
           contentLeft:
             workflow.agentic_workflow_runs.length ?
               <Loading />
-            : <Icon path={mdiDocker} />,
+            : <Icon path={mdiCubeOutline} />,
         } satisfies SearchListItem;
       });
     return {
@@ -64,9 +67,14 @@ export const SavedAgenticWorkflowsAndContainers = () => {
   return (
     <>
       <SearchList
-        {...searchListProps}
-        searchEmpty={true}
         placeholder="Search agentic workflows"
+        data-command="SavedAgenticWorkflowsAndContainers"
+        {...searchListProps}
+        noResultsContent={null}
+        searchEmpty={true}
+        style={{
+          maxWidth: "600px",
+        }}
       />
       {selectedWorkflow && (
         <Popup

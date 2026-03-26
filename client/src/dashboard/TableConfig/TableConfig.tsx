@@ -58,12 +58,7 @@ export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
           });
         }}
       />
-      <ProcessLogs
-        type="tableConfig"
-        connectionId={connectionId}
-        dbsMethods={dbsMethods}
-        dbs={dbs}
-      />
+      <ProcessLogs type="tableConfig" />
     </FlexCol>
   );
 };
