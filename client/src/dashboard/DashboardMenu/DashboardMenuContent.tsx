@@ -331,4 +331,3 @@ export const DashboardMenuContent = (props: P) => {
     </FlexCol>
   );
 };
-console.error("FINISH ADDING agentic workflows and sandboxes here");

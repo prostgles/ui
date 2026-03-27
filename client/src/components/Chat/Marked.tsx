@@ -143,9 +143,13 @@ export const Marked = (props: MarkedProps) => {
           code: CodeComponent,
           a: ({ node, ...props }) => {
             const { href } = props;
-            const tableNameRaw = props["data-table-name"] as string | undefined;
-            const columnName = props["data-column-name"] as string | undefined;
-            const columnValue = props["data-column-value"] as
+            const tableNameRaw = props[JOINED_RECORD_PROP_NAMES.tableName] as
+              | string
+              | undefined;
+            const columnName = props[JOINED_RECORD_PROP_NAMES.columnName] as
+              | string
+              | undefined;
+            const columnValue = props[JOINED_RECORD_PROP_NAMES.columnValue] as
               | string
               | number
               | undefined;
@@ -205,3 +209,10 @@ export const Marked = (props: MarkedProps) => {
     </ScrollFade>
   );
 };
+
+export const JOINED_RECORD_PROP_NAMES = {
+  "#record": "href",
+  tableName: "data-table-name",
+  columnName: "data-column-name",
+  columnValue: "data-column-value",
+} as const;

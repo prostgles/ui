@@ -22,6 +22,7 @@ const LANGUAGE_FALLBACK = new Map<string, string>([
 export type MonacoCodeInMarkdownProps = {
   title?: string;
   className?: string;
+  style?: React.CSSProperties;
   language: string;
   codeString: string;
   codeHeader:
@@ -31,7 +32,8 @@ export type MonacoCodeInMarkdownProps = {
   loadedSuggestions: LoadedSuggestions | undefined;
 };
 export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
-  const { language, codeString, title, loadedSuggestions, className } = props;
+  const { language, codeString, title, loadedSuggestions, className, style } =
+    props;
   const [fullscreen, setFullscreen] = useState(false);
 
   const monacoOptions = useMemo(() => {
@@ -79,6 +81,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
       )}
       style={{
         minWidth: "min(600px, calc(100vw - 4em))",
+        ...style,
       }}
       data-command="MarkdownMonacoCode"
     >

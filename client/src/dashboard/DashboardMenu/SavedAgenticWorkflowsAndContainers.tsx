@@ -49,6 +49,11 @@ export const SavedAgenticWorkflowsAndContainers = () => {
         return {
           key: workflow.id,
           label: workflow.name,
+          styles: {
+            subLabel: {
+              whiteSpace: "nowrap",
+            },
+          },
           subLabel: sliceText(workflow.definition_summary, 200),
           contentBottom:
             dbAccess?.mode === "custom" ?

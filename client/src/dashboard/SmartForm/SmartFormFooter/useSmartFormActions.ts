@@ -24,6 +24,8 @@ type Args = Pick<
   SmartFormNewRowState &
   SmartFormState;
 
+export type SmartFormActionsState = ReturnType<typeof useSmartFormActions>;
+
 export const useSmartFormActions = ({
   mode,
   fixedData,
@@ -262,4 +264,3 @@ export const useSmartFormActions = ({
 
   return { successMessage, setSuccessMessage, confirmPopup, buttons };
 };
-export type SmartFormActionsState = ReturnType<typeof useSmartFormActions>;

@@ -9,6 +9,7 @@ import { FlexRow } from "./Flex";
 import Btn from "./Btn";
 import { mdiArrowDown, mdiArrowUp, mdiClose } from "@mdi/js";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import Popup from "./Popup/Popup";
 
 declare class Highlight {
   constructor(...ranges: Range[]);
@@ -111,7 +112,16 @@ export const ElectronSearchBar = (): JSX.Element | null => {
       return;
     }
 
-    const ranges = buildRanges(document.body, query, containerRef.current);
+    const topMostPopup = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        `[role="dialog"]:not([data-command=${"ElectronSearchBar"}])`,
+      ),
+    ).at(-1);
+    const ranges = buildRanges(
+      topMostPopup || document.body,
+      query,
+      containerRef.current,
+    );
     rangesRef.current = ranges;
     const count = ranges.length;
     setMatchCount(count);
@@ -146,6 +156,7 @@ export const ElectronSearchBar = (): JSX.Element | null => {
   const navigate = useCallback(
     (direction: 1 | -1) => {
       if (matchCount === 0) return;
+      console.log(rangesRef.current);
       setActiveIndex((prev) => (prev + direction + matchCount) % matchCount);
     },
     [matchCount],
@@ -189,83 +200,93 @@ export const ElectronSearchBar = (): JSX.Element | null => {
   const displayIndex = matchCount > 0 ? activeIndex + 1 : 0;
 
   return (
-    <FlexRow
-      ref={containerRef}
-      role="search"
-      aria-label="Find in page"
-      className="ElectronSearchBar shadow bg-color-0 p-1 rounded gap-p25"
-      style={{
+    <Popup
+      data-command="ElectronSearchBar"
+      positioning="as-is"
+      contentClassName="bg-transparent"
+      rootStyle={{
         position: "fixed",
-        top: "48px",
+        top: "16px",
         right: "16px",
         zIndex: 2147483647,
         alignItems: "center",
         minWidth: "300px",
       }}
     >
-      <input
-        ref={inputRef}
-        type="text"
-        aria-label="Search text"
-        className="font-18"
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setActiveIndex(0);
-        }}
-        onKeyDown={onKeyDown}
-        placeholder="Find…"
-        spellCheck={false}
-        style={{
-          flex: 1,
-          borderRadius: "4px",
-          border: "unset",
-          outline: "none",
-          padding: "4px 8px",
-        }}
-      />
-
-      <span
-        aria-live="polite"
-        aria-atomic="true"
-        className="text-1p5"
-        style={{
-          minWidth: "56px",
-          textAlign: "center",
-          userSelect: "none",
-          whiteSpace: "nowrap",
-        }}
+      <FlexRow
+        ref={containerRef}
+        role="search"
+        aria-label="Find in page"
+        className="ElectronSearchBar shadow bg-color-0 p-1 rounded gap-p25"
       >
-        {!hasQuery || noResults ? "" : `${displayIndex} / ${matchCount}`}
-      </span>
+        <input
+          ref={inputRef}
+          type="text"
+          aria-label="Search text"
+          className="font-18"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setActiveIndex(0);
+          }}
+          onKeyDown={onKeyDown}
+          placeholder="Find…"
+          spellCheck={false}
+          style={{
+            flex: 1,
+            borderRadius: "4px",
+            border: "unset",
+            outline: "none",
+            padding: "4px 8px",
+          }}
+        />
 
-      <Btn
-        onClick={() => navigate(-1)}
-        disabledInfo={matchCount === 0 ? "No matches" : undefined}
-        aria-label="Previous match (Shift+Enter)"
-        style={navBtn(matchCount === 0)}
-        iconPath={mdiArrowUp}
-        size="small"
-      />
+        <span
+          aria-live="polite"
+          aria-atomic="true"
+          className="text-1p5"
+          style={{
+            minWidth: "56px",
+            textAlign: "center",
+            userSelect: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {!hasQuery || noResults ? "" : `${displayIndex} / ${matchCount}`}
+        </span>
 
-      <Btn
-        onClick={() => navigate(1)}
-        disabledInfo={matchCount === 0 ? "No matches" : undefined}
-        aria-label="Next match (Enter)"
-        style={navBtn(matchCount === 0)}
-        iconPath={mdiArrowDown}
-        size="small"
-      />
+        <Btn
+          onClick={() => navigate(-1)}
+          disabledInfo={matchCount === 0 ? "No matches" : undefined}
+          aria-label="Previous match (Shift+Enter)"
+          style={navBtn(matchCount === 0)}
+          iconPath={mdiArrowUp}
+          size="small"
+        />
 
-      <Btn
-        onClick={close}
-        aria-label="Close search (Escape)"
-        style={{ ...navBtn(false), marginLeft: "2px", color: "var(--text-1)" }}
-        iconPath={mdiClose}
-        size="small"
-      />
-      <style>{highlighstyle}</style>
-    </FlexRow>
+        <Btn
+          onClick={() => navigate(1)}
+          disabledInfo={matchCount === 0 ? "No matches" : undefined}
+          aria-label="Next match (Enter)"
+          style={navBtn(matchCount === 0)}
+          iconPath={mdiArrowDown}
+          size="small"
+        />
+
+        <Btn
+          onClick={close}
+          aria-label="Close search (Escape)"
+          style={{
+            ...navBtn(false),
+            marginLeft: "2px",
+            color: "var(--text-1)",
+          }}
+          iconPath={mdiClose}
+          size="small"
+        />
+        <style>{highlighstyle}</style>
+      </FlexRow>
+    </Popup>
   );
 };
 
