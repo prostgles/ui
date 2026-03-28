@@ -180,8 +180,6 @@ export const WorkspaceMenuDropDown = ({
       )}
       footer={() => (
         <WorkspaceAddBtn
-          dbs={dbs}
-          connection_id={workspace.connection_id}
           setWorkspace={setWorkspace}
           btnProps={{
             children: "New workspace",
