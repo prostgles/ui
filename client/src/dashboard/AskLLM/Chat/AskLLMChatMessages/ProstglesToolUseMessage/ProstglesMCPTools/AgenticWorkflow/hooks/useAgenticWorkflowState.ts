@@ -24,7 +24,7 @@ export const useAgenticWorkflowState = ({
     },
     undefined,
     {
-      skip: workflow_id === undefined, //|| messageId === undefined,
+      skip: workflow_id === undefined,
     },
   );
   const { data: latestRun } = dbs.agentic_workflow_runs.useSubscribeOne(
@@ -36,7 +36,7 @@ export const useAgenticWorkflowState = ({
       orderBy: { created: -1 },
     },
     {
-      skip: workflow_id === undefined, //|| messageId === undefined,
+      skip: workflow_id === undefined,
     },
   );
 

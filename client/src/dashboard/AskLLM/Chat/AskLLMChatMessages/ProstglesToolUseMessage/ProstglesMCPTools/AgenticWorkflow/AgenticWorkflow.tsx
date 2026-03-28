@@ -87,6 +87,11 @@ export const AgenticWorkflow = ({
   return (
     <FlexCol className="w-full" data-command="AgenticWorkflow">
       <CompactTabs
+        titleWhenMinimised={
+          <strong className="ml-1">
+            {workflow?.name ?? "Agentic workflow"}
+          </strong>
+        }
         controlled={{ activeTab, setActiveTab }}
         style={{
           maxHeight: "600px",

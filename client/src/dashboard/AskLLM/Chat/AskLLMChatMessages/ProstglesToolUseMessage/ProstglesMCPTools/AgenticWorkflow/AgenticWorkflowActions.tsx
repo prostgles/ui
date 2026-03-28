@@ -87,7 +87,7 @@ export const AgenticWorkflowActions = ({
             message={
               state?.status === "error" ?
                 <span className="text-danger">{state.message ?? "Error"}</span>
-              : (state?.message ?? state?.status)
+              : (state?.message ?? capitalize(state?.status ?? ""))
             }
             value={
               state?.status !== "running" ? 100 : (state.progressPercent ?? -1)
@@ -116,6 +116,7 @@ export const AgenticWorkflowActions = ({
           color={autoApproveAllTools ? "action" : undefined}
           variant="icon"
           onClick={() => setAutoApproveAllTools(!autoApproveAllTools)}
+          size="small"
         />
         <Select
           title="Execution mode"
@@ -125,6 +126,7 @@ export const AgenticWorkflowActions = ({
           }}
           btnProps={{
             variant: "icon",
+            size: "small",
           }}
           showSelected={"icon"}
           disabledInfo={
@@ -156,6 +158,7 @@ export const AgenticWorkflowActions = ({
         <Btn
           variant="filled"
           color="action"
+          size="small"
           className="mx-p25"
           disabledInfo={
             !startAgenticWorkflow ?
@@ -209,6 +212,7 @@ export const AgenticWorkflowActions = ({
         </Btn>
         {state?.status === "running" && (
           <Btn
+            size="small"
             title="Stop"
             iconPath={mdiStop}
             data-command="AgenticWorkflow.stop"
@@ -230,3 +234,5 @@ export const AgenticWorkflowActions = ({
     </>
   );
 };
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

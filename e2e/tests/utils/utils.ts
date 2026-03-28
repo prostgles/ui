@@ -967,7 +967,7 @@ export const toggleMCPTools = async (
       .getByTestId("LLMChatOptions.MCPTools")
       .getByTestId("MCPServerTools")
       .getByText(toolName, { exact: true })
-      .click({ timeout: 30e3 }); //force: true,???????
+      .click({ timeout: 30e3 });
     await page.waitForTimeout(1500);
   }
   if (toggleAutoApprove) {

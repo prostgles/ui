@@ -1,12 +1,10 @@
 export declare const USER_INPUT_VALUE_ENV_VARIABLE_NAME: "USER_INPUT_VALUE";
 export declare const runCodeInSandboxSchema: {
     readonly type: {
-        readonly userInputValue: {
+        readonly reason: {
+            readonly type: "string";
             readonly optional: true;
-            readonly description: "User populated values for the userInput keys. It will override the default values in userInput if provided. ";
-            readonly record: {
-                readonly values: "unknown";
-            };
+            readonly description: "Reason for executing the code to provide context to the user. One short sentence is enough. ";
         };
         readonly files: {
             readonly description: string;
@@ -16,6 +14,13 @@ export declare const runCodeInSandboxSchema: {
                     readonly type: "string";
                     readonly description: "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ";
                 };
+            };
+        };
+        readonly userInputValue: {
+            readonly optional: true;
+            readonly description: "User populated values for the userInput keys. It will override the default values in userInput if provided. ";
+            readonly record: {
+                readonly values: "unknown";
             };
         };
         readonly timeout: {

@@ -14,6 +14,7 @@ import { useLLMSetup } from "../AskLLM/Setup/LLMSetupProvider";
 import Btn from "@components/Btn";
 import { FlexRowWrap } from "@components/Flex";
 import Chip from "@components/Chip";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export const SavedAgenticWorkflowsAndContainers = () => {
   const { dbs, connectionId } = usePrgl();
@@ -50,6 +51,9 @@ export const SavedAgenticWorkflowsAndContainers = () => {
           key: workflow.id,
           label: workflow.name,
           styles: {
+            label: {
+              whiteSpace: "nowrap",
+            },
             subLabel: {
               whiteSpace: "nowrap",
             },
@@ -57,7 +61,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
           subLabel: sliceText(workflow.definition_summary, 200),
           contentBottom:
             dbAccess?.mode === "custom" ?
-              <FlexRowWrap className="mt-p5 gap-p5">
+              <ScrollFade className="flex-row o-auto mt-p5 gap-p5">
                 {Object.keys(dbAccess.tablePermissions).map((tableName) => (
                   <Chip
                     style={{ background: "var(--bg-color-3)" }}
@@ -66,7 +70,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
                     {tableName}
                   </Chip>
                 ))}
-              </FlexRowWrap>
+              </ScrollFade>
             : null,
           onPress: () => {
             setSelectedWorkflowId(workflow.id);

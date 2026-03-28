@@ -1,10 +1,15 @@
-import { mdiClose, mdiFullscreen } from "@mdi/js";
-import React from "react";
+import Popup from "@components/Popup/Popup";
+import {
+  mdiClose,
+  mdiFullscreen,
+  mdiUnfoldLessHorizontal,
+  mdiUnfoldMoreHorizontal,
+} from "@mdi/js";
+import React, { useState } from "react";
+import type { TestSelectors } from "src/Testing";
 import Btn, { type BtnProps } from "../Btn";
 import { classOverride, FlexCol, FlexRow } from "../Flex";
 import { useFullscreen } from "./useFullscreen";
-import type { TestSelectors } from "src/Testing";
-import Popup from "@components/Popup/Popup";
 
 export const FullscreenWrapper = ({
   className,
@@ -18,7 +23,7 @@ export const FullscreenWrapper = ({
   className?: string;
   style?: React.CSSProperties;
   maxContentHeight?: number | string;
-  title: React.ReactNode;
+  title: React.ReactNode | ((minimized: boolean) => React.ReactNode);
   children: React.ReactNode;
   endActions?: (Pick<
     BtnProps,
@@ -28,6 +33,7 @@ export const FullscreenWrapper = ({
   })[];
 }) => {
   const { fullscreen, setFullscreen, fullscreenStyle } = useFullscreen();
+  const [minimized, setMinimized] = useState(false);
   const divRef = React.useRef<HTMLDivElement>(null);
   const isInsidePopup = !!divRef.current?.closest(
     `[aria-modal="true"],[role="dialog"]`,
@@ -57,11 +63,20 @@ export const FullscreenWrapper = ({
             maxContentHeight && {
               maxHeight: maxContentHeight,
             }),
+          ...(minimized && !fullscreen ?
+            { minHeight: 0, height: undefined }
+          : {}),
         }}
       >
         <FlexRow className="bg-color-2 p-p25 gap-0">
-          <div className="text-sm text-color-4 f-1 ta-start flex-row gap-p5">
-            {title}
+          <div
+            className={
+              "ai-center text-sm text-color-4 f-1 ta-start flex-row gap-p5" +
+              (minimized ? " noselect pointer " : "")
+            }
+            onClick={minimized ? () => setMinimized(false) : undefined}
+          >
+            {typeof title === "function" ? title(minimized) : title}
           </div>
           {endActions?.map((action, i) => (
             <Btn
@@ -72,14 +87,32 @@ export const FullscreenWrapper = ({
             />
           ))}
           <Btn
+            title={minimized ? "Maximize" : "Minimize"}
+            data-command="FullscreenWrapper.toggleMinimize"
+            iconPath={
+              minimized ? mdiUnfoldMoreHorizontal : mdiUnfoldLessHorizontal
+            }
+            size="small"
+            disabledInfo={
+              fullscreen ? "Cannot minimize in fullscreen mode" : undefined
+            }
+            onClick={() => {
+              setMinimized((m) => !m);
+              setFullscreen(false);
+            }}
+          />
+          <Btn
             title={fullscreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
             data-command="FullscreenWrapper.toggleFullscreen"
             iconPath={fullscreen ? mdiClose : mdiFullscreen}
             size="small"
-            onClick={() => setFullscreen(!fullscreen)}
+            onClick={() => {
+              setFullscreen(!fullscreen);
+              setMinimized(false);
+            }}
           />
         </FlexRow>
-        {children}
+        {minimized ? null : children}
       </FlexCol>
     </WrapInPopupIfNeeded>
   );

@@ -30,13 +30,15 @@ import { RenderBackupLogs } from "./RenderBackupLogs";
 import { RenderBackupStatus } from "./RenderBackupStatus";
 import { Restore } from "./Restore/Restore";
 import { useBackupsControlsState } from "./useBackupsControlsState";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const orderByCreated = {
   key: "created",
   asc: false,
 } as const;
 
-export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
+export const BackupsControls = () => {
+  const prgl = usePrgl();
   const {
     connectionId,
     serverState,

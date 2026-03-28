@@ -69,9 +69,7 @@ export const ProjectConnection = (props: ProjectProps) => {
   if (showConnectionConfig && connectionId) {
     return (
       <PrglProvider prgl={prgl}>
-        <LLMSetupProvider>
-          <ConnectionConfig connection={connection} />
-        </LLMSetupProvider>
+        <ConnectionConfig connection={connection} />
       </PrglProvider>
     );
   }
@@ -89,13 +87,11 @@ export const ProjectConnection = (props: ProjectProps) => {
         style={prgl.theme === "dark" ? { background: "black" } : {}}
       >
         <PrglProvider prgl={prgl}>
-          <LLMSetupProvider>
-            <Dashboard
-              key={workspaceId}
-              workspaceId={workspaceId}
-              onLoaded={() => {}}
-            />
-          </LLMSetupProvider>
+          <Dashboard
+            key={workspaceId}
+            workspaceId={workspaceId}
+            onLoaded={() => {}}
+          />
         </PrglProvider>
       </div>
     </div>

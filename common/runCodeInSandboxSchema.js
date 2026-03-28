@@ -16,6 +16,12 @@ const filesSchema = {
 };
 export const runCodeInSandboxSchema = {
     type: {
+        reason: {
+            type: "string",
+            optional: true,
+            description: "Reason for executing the code to provide context to the user. One short sentence is enough. ",
+        },
+        files: filesSchema,
         userInputValue: {
             optional: true,
             description: "User populated values for the userInput keys. It will override the default values in userInput if provided. ",
@@ -23,7 +29,6 @@ export const runCodeInSandboxSchema = {
                 values: "unknown",
             },
         },
-        files: filesSchema,
         timeout: {
             optional: true,
             type: "integer",

@@ -22,7 +22,10 @@ export const ToolUseReRun = ({ chatId, toolRequest, variant, newInput }: P) => {
   const nameParts = getMCPToolNameParts(toolRequest.name);
   const inputChanged = useMemo(() => {
     return (
-      newInput && !isEmpty(newInput) && !isEqual(toolRequest.input, newInput)
+      toolRequest.input &&
+      newInput &&
+      !isEmpty(newInput) &&
+      !isEqual(toolRequest.input, newInput)
     );
   }, [toolRequest.input, newInput]);
   if (!reRunMCPServerTool || !nameParts) return null;

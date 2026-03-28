@@ -1,8 +1,7 @@
 type AnyRecord = Record<string, unknown>;
 export declare class KeyObjMap<K extends AnyRecord, V> {
     private readonly root;
-    private get keyOrder();
-    _keys?: (keyof K)[];
+    private keyOrder;
     constructor();
     set(keyObj: K, value: V): this;
     get(keyObj: K): V | undefined;

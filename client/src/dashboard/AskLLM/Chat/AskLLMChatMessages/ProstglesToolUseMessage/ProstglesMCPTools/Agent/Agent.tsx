@@ -10,6 +10,7 @@ import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { AgentDefinition } from "../AgenticWorkflow/AgentDefinition";
 import { useJSONBParsedData } from "../common/useJSONBParsedData";
+import { mdiChat } from "@mdi/js";
 
 export const Agent = ({
   message,
@@ -109,6 +110,9 @@ export const Agent = ({
       {agentChat && (
         <>
           <Btn
+            variant="faded"
+            color="action"
+            iconPath={mdiChat}
             onClick={() => {
               setShowAgentChatId(agentChat.id);
             }}

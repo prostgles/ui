@@ -7,9 +7,9 @@ import React from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import {
-  AskLLMChatOptions,
+  AskLLMChatSettings,
   type LLMChatOptionsProps,
-} from "./AskLLMChatOptions";
+} from "./AskLLMChatSettings";
 import type { LLMChatState } from "./useLLMChat";
 
 export const AskLLMChatHeader = (
@@ -37,15 +37,13 @@ export const AskLLMChatHeader = (
         </FlexCol>
       )}
       <FlexRow className="gap-p25 min-w-0">
-        {!activeChat?.agent_info && (
-          <AskLLMChatOptions
-            prompts={prompts}
-            activeChat={activeChat}
-            activeChatId={activeChatId}
-            credentials={credentials}
-            chatRootDiv={chatRootDiv}
-          />
-        )}
+        <AskLLMChatSettings
+          prompts={prompts}
+          activeChat={activeChat}
+          activeChatId={activeChatId}
+          credentials={credentials}
+          chatRootDiv={chatRootDiv}
+        />
         <Select
           title={t.AskLLMChatHeader.Chat}
           data-command="LLMChat.select"

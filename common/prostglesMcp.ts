@@ -64,6 +64,9 @@ const { outputSchema, ...agentSchemaWithoutOutput } =
 const { files, userInput, userInputValue, ...runTsSchema } =
   runCodeInSandboxSchema.type;
 
+const TYPESCRIPT_CODE_QUALITY =
+  "Ensure the typescript code compiles with no errors (assume strict tsconfig and recommended eslint rules). Use top level imports, not require or dynamic imports.";
+
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   db: {
     execute_readonly_sql: {
@@ -302,7 +305,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         User will see realtime logs and the final output.
         User can also choose to re-run the container with different user input (if provided).
         Use descriptive log messages to make it easier for the user to understand progress, what is happening and provide feedback.
-        Use this tool to execute typescript code that compiles with no errors (assume strict tsconfig and recommended eslint rules).
+        ${TYPESCRIPT_CODE_QUALITY}
         Prefer to use nodejs existing modules and can also specify custom dependencies to be installed as long as they are reputable.
         Can specify access to the database if needed. 
         To access the database must use POST requests to the exposed api endpoint. Cannot use direct DB sockets or drivers. 
@@ -538,6 +541,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       description: [
         "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
         "Return workflow_function_definition as valid TypeScript that calls defineAgenticWorkflow(...) directly.",
+        TYPESCRIPT_CODE_QUALITY,
         "The user will initially execute it in series mode (agent calls and responses will be queued) to ensure it works as expected,",
         "Prefer series-first, human-in-the-loop flow: interleave agent steps and DB operations to enable feedback and safe re-runs.",
         "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",

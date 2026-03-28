@@ -1,16 +1,12 @@
 export class KeyObjMap {
-    get keyOrder() {
-        if (!this._keys) {
-            throw new Error("Cannot access the keys before defining them through set().");
-        }
-        return this._keys;
-    }
     constructor() {
         this.root = new Map();
+        this.keyOrder = [];
     }
     set(keyObj, value) {
-        var _a;
-        (_a = this._keys) !== null && _a !== void 0 ? _a : (this._keys = Object.keys(keyObj).toSorted());
+        if (!this.keyOrder.length) {
+            this.keyOrder = Object.keys(keyObj).toSorted();
+        }
         let node = this.root;
         for (const key of this.keyOrder) {
             const part = keyObj[key];

@@ -7,6 +7,7 @@ export const backupAndRestoreUIDoc = {
   title: "Backup and Restore",
   description: "Manage database backups and restore operations.",
   docOptions: "asSeparateFile",
+  componentName: "BackupsControls",
   iconPath: mdiDatabaseSync,
   docs: `
     Manage database backups and restore operations for this PostgreSQL connection. 

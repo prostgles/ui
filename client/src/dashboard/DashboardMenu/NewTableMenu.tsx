@@ -6,6 +6,7 @@ import { FileImporter } from "../FileImporter/FileImporter";
 import { NewMethod } from "../W_Method/NewMethod";
 import { CreateTable } from "./CreateTable";
 import type { DashboardMenuProps } from "./DashboardMenu";
+import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 
 const items = [
   { key: "new table", label: "Create table", iconPath: mdiTable },
@@ -23,11 +24,13 @@ const items = [
   },
 ] as const satisfies FullOption[];
 
-export const NewTableMenu = (p: DashboardMenuProps) => {
-  const { prgl, tables, loadTable } = p;
+export const NewTableMenu = (
+  p: DashboardMenuProps & { onClose: VoidFunction | undefined },
+) => {
+  const { prgl, tables, onClose, workspace } = p;
   const { sql } = prgl;
   const [show, setShow] = useState<(typeof items)[number]["key"]>();
-
+  const { addViewToWorkspace } = useAddViewToWorkspace();
   if (!sql) return null;
 
   return (
@@ -67,7 +70,12 @@ export const NewTableMenu = (p: DashboardMenuProps) => {
             setShow(undefined);
           }}
           openTable={(table) => {
-            loadTable({ type: "table", table });
+            onClose?.();
+            void addViewToWorkspace({
+              workspace_id: workspace.id,
+              type: "table",
+              table,
+            });
           }}
         />
       )}

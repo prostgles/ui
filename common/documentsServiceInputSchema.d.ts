@@ -19,6 +19,11 @@ export declare const documentsServiceInputSchema: {
             readonly enum: readonly ["placeholder", "embedded", "referenced"];
             readonly description: "Image export mode for the document (in case of JSON, Markdown or HTML). Allowed values: placeholder, embedded, referenced. Optional, defaults to Embedded.";
         };
+        readonly page_range: {
+            readonly type: "integer[]";
+            readonly optional: true;
+            readonly description: "Only convert a range of pages. The page number starts at 1.";
+        };
         readonly do_ocr: {
             readonly type: "boolean";
             readonly optional: true;

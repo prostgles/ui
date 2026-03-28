@@ -43,7 +43,6 @@ export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables" | "sql"> & {
   searchType?: (typeof SEARCH_TYPES)[number]["key"];
   defaultTerm?: string;
   queries?: SyncDataItem<WindowData<"sql">>[];
-  loadTable: _Dashboard["loadTable"];
 };
 
 export const SearchAll = (props: SearchAllProps) => {

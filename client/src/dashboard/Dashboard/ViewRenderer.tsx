@@ -43,7 +43,6 @@ import { isPlaywrightTest } from "src/i18n/i18nUtils";
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &
   Pick<DashboardState, "tables" | "suggestions" | "isReadonly"> & {
-    loadTable: _Dashboard["loadTable"];
     onCloseUnsavedSQL: (
       q: WindowSyncItem<ChartType>,
       e: React.MouseEvent<HTMLButtonElement, MouseEvent>,

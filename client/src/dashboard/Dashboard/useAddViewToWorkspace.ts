@@ -1,8 +1,11 @@
 import type { DetailedFilter } from "@common/filterUtils";
-import type { Prgl } from "../../App";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { type WindowData } from "./dashboardUtils";
+import { useOnErrorAlert } from "@components/AlertProvider";
+import { useCallback } from "react";
+import type { Prgl } from "src/App";
 
-export type LoadTableArgs = Pick<Prgl, "db" | "dbs"> & {
+export type AddViewToWorkspaceArgs = {
   type: "sql" | "table" | "method";
   workspace_id: string;
   table?: string;
@@ -13,10 +16,27 @@ export type LoadTableArgs = Pick<Prgl, "db" | "dbs"> & {
   method_name?: string;
 };
 
-export const loadTable = async (args: LoadTableArgs): Promise<string> => {
+export const useAddViewToWorkspace = () => {
+  const { db, dbs } = usePrgl();
+  const { onErrorAlert } = useOnErrorAlert();
+
+  const addViewToWorkspaceWithErrorAlert = useCallback(
+    async (args: AddViewToWorkspaceArgs) => {
+      await onErrorAlert(async () => {
+        await addViewToWorkspace(args, { db, dbs });
+      });
+    },
+    [db, dbs, onErrorAlert],
+  );
+
+  return { addViewToWorkspace: addViewToWorkspaceWithErrorAlert };
+};
+
+export const addViewToWorkspace = async (
+  args: AddViewToWorkspaceArgs,
+  { db, dbs }: Pick<Prgl, "db" | "dbs">,
+) => {
   const {
-    db,
-    dbs,
     type,
     table = null,
     filter = [],
@@ -62,6 +82,7 @@ export const loadTable = async (args: LoadTableArgs): Promise<string> => {
       method_name,
       fullscreen: false,
       workspace_id,
+      /** TODO: add auth to client schema */
       last_updated: undefined as any,
       user_id: undefined as any,
     },

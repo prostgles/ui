@@ -45,6 +45,11 @@ export const documentsServiceInputSchema = {
             enum: ["placeholder", "embedded", "referenced"],
             description: "Image export mode for the document (in case of JSON, Markdown or HTML). Allowed values: placeholder, embedded, referenced. Optional, defaults to Embedded.",
         },
+        page_range: {
+            type: "integer[]",
+            optional: true,
+            description: "Only convert a range of pages. The page number starts at 1.",
+        },
         do_ocr: {
             type: "boolean",
             optional: true,

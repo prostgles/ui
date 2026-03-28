@@ -17,6 +17,7 @@ import type {
 } from "./dashboardUtils";
 import { PALETTE } from "./PALETTE";
 import type { ViewRenderer, ViewRendererProps } from "./ViewRenderer";
+import { addViewToWorkspace } from "./useAddViewToWorkspace";
 
 type Args = ViewRendererProps & {
   links: LinkSyncItem[];
@@ -116,11 +117,18 @@ export const getViewRendererUtils = function (
     tblName: string,
     tablePath: ParsedJoinPath[],
   ) => {
-    const w2_id = await this.props.loadTable({
-      type: "table",
-      table: tblName,
-      fullscreen: false,
-    });
+    const w2_id = await addViewToWorkspace(
+      {
+        workspace_id: workspace.id,
+        type: "table",
+        table: tblName,
+        fullscreen: false,
+      },
+      {
+        db: prgl.db,
+        dbs: prgl.dbs,
+      },
+    );
     await addLink({
       w1_id: q.id,
       w2_id,

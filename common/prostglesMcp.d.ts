@@ -340,12 +340,10 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: string;
             readonly schema: {
                 readonly type: {
-                    readonly userInputValue: {
+                    readonly reason: {
+                        readonly type: "string";
                         readonly optional: true;
-                        readonly description: "User populated values for the userInput keys. It will override the default values in userInput if provided. ";
-                        readonly record: {
-                            readonly values: "unknown";
-                        };
+                        readonly description: "Reason for executing the code to provide context to the user. One short sentence is enough. ";
                     };
                     readonly files: {
                         readonly description: string;
@@ -355,6 +353,13 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                 readonly type: "string";
                                 readonly description: "File content. E.g.: 'import type { JSONB } from \"prostgles-types\";' ";
                             };
+                        };
+                    };
+                    readonly userInputValue: {
+                        readonly optional: true;
+                        readonly description: "User populated values for the userInput keys. It will override the default values in userInput if provided. ";
+                        readonly record: {
+                            readonly values: "unknown";
                         };
                     };
                     readonly timeout: {
@@ -516,6 +521,86 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                     };
                                 }];
                             };
+                        };
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly type: {
+                    readonly state: {
+                        readonly enum: readonly ["finished", "error", "build-error", "timed-out", "aborted"];
+                    };
+                    readonly name: "string";
+                    readonly command: "string";
+                    readonly log: {
+                        readonly arrayOfType: {
+                            readonly type: {
+                                readonly enum: readonly ["stdout", "stderr", "error"];
+                            };
+                            readonly text: "string";
+                        };
+                    };
+                    readonly exitCode: "number";
+                    readonly runDuration: "number";
+                    readonly buildDuration: "number";
+                };
+            };
+        };
+        readonly run_typescript_in_nodejs: {
+            readonly annotations: {
+                readonly openWorldHint: true;
+            };
+            readonly mode: undefined;
+            readonly description: string;
+            readonly schema: {
+                readonly type: {
+                    readonly reason: {
+                        readonly type: "string";
+                        readonly optional: true;
+                        readonly description: "Reason for executing the code to provide context to the user. One short sentence is enough. ";
+                    };
+                    readonly timeout: {
+                        readonly optional: true;
+                        readonly type: "integer";
+                        readonly description: "Maximum time in milliseconds the container will be allowed to run. Defaults to 30000. ";
+                    };
+                    readonly networkMode: {
+                        readonly optional: true;
+                        readonly enum: readonly ["none", "bridge", "bridge-internal", "host"];
+                        readonly description: "Network mode for the container. Defaults to 'bridge-internal'. Use 'bridge' mode to be able to access the database. Use 'bridge-internal' to access the database but not the internet.";
+                    };
+                    readonly environment: {
+                        readonly optional: true;
+                        readonly description: "Environment variables to set in the container";
+                        readonly record: {
+                            readonly values: "string";
+                            readonly partial: true;
+                        };
+                    };
+                    readonly memory: {
+                        readonly optional: true;
+                        readonly type: "string";
+                        readonly description: "Memory limit (e.g., '512m', '1g'). Defaults to 512m";
+                    };
+                    readonly cpus: {
+                        readonly optional: true;
+                        readonly type: "string";
+                        readonly description: "CPU limit (e.g., '0.5', '1'). Defaults to 1";
+                    };
+                    readonly readOnly: {
+                        readonly optional: true;
+                        readonly type: "boolean";
+                        readonly description: "Whether to mount the filesystem as read-only. Defaults to true";
+                    };
+                    readonly entrypointTs: {
+                        readonly type: "string";
+                        readonly description: "Typescript code to execute. Must compile with no errors assuming strict tsconfig and recommended eslint rules.";
+                    };
+                    readonly packageDependencies: {
+                        readonly optional: true;
+                        readonly description: "Dependencies to install in the container. Must be reputable npm packages. Example: { \"prostgles-types\": \"^4.0.217\" }";
+                        readonly record: {
+                            readonly values: "string";
                         };
                     };
                 };
@@ -1045,6 +1130,11 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly optional: true;
                         readonly enum: readonly ["placeholder", "embedded", "referenced"];
                         readonly description: "Image export mode for the document (in case of JSON, Markdown or HTML). Allowed values: placeholder, embedded, referenced. Optional, defaults to Embedded.";
+                    };
+                    readonly page_range: {
+                        readonly type: "integer[]";
+                        readonly optional: true;
+                        readonly description: "Only convert a range of pages. The page number starts at 1.";
                     };
                     readonly do_ocr: {
                         readonly type: "boolean";

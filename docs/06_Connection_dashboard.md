@@ -45,6 +45,7 @@ For wider screens the centered layout mode can be enabled through the settings.
   - **Tables and views**: List of tables and views from the current database. Click to open a table or view. By default only the tables from the public schema are shown. Schema list from the connection settings controls which schemas are shown.  
   - **Server-side functions**: List of server-side functions for the current database. Click to open a function.  
   - <a href="#create/import">Create/Import</a>: Opens the menu for creating new tables, server-side functions or importing csv/json files.  
+  - **Agentic workflows**: List of saved agentic workflows of the current user from the current connection. Click to open an agentic workflow or container.  
   - <a href="#schema_diagram">Schema diagram</a>: Opens the schema diagram for visualizing the relationships between tables in the current database.  
 
 <h3 id="create/import"> Create/Import </h3> 

@@ -17,7 +17,7 @@ export type LLMChatOptionsProps = {
   chatRootDiv: HTMLDivElement;
 };
 
-export const AskLLMChatOptions = (props: LLMChatOptionsProps) => {
+export const AskLLMChatSettings = (props: LLMChatOptionsProps) => {
   const { chatRootDiv, activeChatId } = props;
   const { dbs, dbsTables, dbsMethodSchema, dbsSql } = usePrgl();
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement>();

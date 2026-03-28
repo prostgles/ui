@@ -182,6 +182,14 @@ export const dashboardMenuUIDoc = {
       ],
     },
     {
+      type: "section",
+      title: "Agentic workflows",
+      selectorCommand: "SavedAgenticWorkflowsAndContainers",
+      componentName: "SavedAgenticWorkflowsAndContainers",
+      description: `List of saved agentic workflows of the current user from the current connection. Click to open an agentic workflow or container.`,
+      children: [],
+    },
+    {
       type: "popup",
       selectorCommand: "SchemaGraph",
       title: "Schema diagram",

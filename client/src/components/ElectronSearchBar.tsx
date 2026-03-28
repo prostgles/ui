@@ -10,6 +10,7 @@ import Btn from "./Btn";
 import { mdiArrowDown, mdiArrowUp, mdiClose } from "@mdi/js";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import Popup from "./Popup/Popup";
+import { getCommandElemSelector, type Command } from "src/Testing";
 
 declare class Highlight {
   constructor(...ranges: Range[]);
@@ -114,7 +115,7 @@ export const ElectronSearchBar = (): JSX.Element | null => {
 
     const topMostPopup = Array.from(
       document.querySelectorAll<HTMLElement>(
-        `[role="dialog"]:not([data-command=${"ElectronSearchBar"}])`,
+        `[role="dialog"]:not(${getCommandElemSelector("ElectronSearchBar")})`,
       ),
     ).at(-1);
     const ranges = buildRanges(

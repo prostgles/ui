@@ -14,6 +14,7 @@ import { useLocalSettings } from "../localSettings";
 import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
 import { DashboardHotkeys } from "./DashboardHotkeys";
 import { SettingsSection } from "./SettingsSection";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 export { useEffectAsync };
 
 const layoutType = [
@@ -22,20 +23,18 @@ const layoutType = [
   { key: "row", label: "Rows", subLabel: "Windows placed left to right" },
 ];
 
-type P = Pick<DashboardProps, "prgl"> & {
+type P = {
   workspace: SyncDataItem<Workspace, true>;
 };
 
-export const DashboardMenuSettings = ({
-  workspace,
-  prgl: {
+export const DashboardMenuSettings = ({ workspace }: P) => {
+  const {
     dbsMethods: { getDBSize },
     dbsMethodSchema,
     dbs,
     dbsTables,
     dbsSql,
-  },
-}: P) => {
+  } = usePrgl();
   const dbSize = usePromise(async () => {
     if (!getDBSize) return;
     return getDBSize({ conId: workspace.connection_id }).catch(() => {

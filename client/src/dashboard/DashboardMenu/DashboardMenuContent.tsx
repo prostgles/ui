@@ -1,23 +1,10 @@
 import { getEntries } from "@common/utils";
-import Btn from "@components/Btn";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
 import { SearchList } from "@components/SearchList/SearchList";
-import { SvgIcon } from "@components/SvgIcon";
-import {
-  mdiFile,
-  mdiFilter,
-  mdiFunction,
-  mdiRefresh,
-  mdiScriptTextPlay,
-  mdiTableEdit,
-  mdiTableEye,
-} from "@mdi/js";
+import { mdiFunction, mdiScriptTextPlay } from "@mdi/js";
 import React, { useRef } from "react";
-import { dataCommand } from "../../Testing";
-import { t } from "../../i18n/i18nUtils";
-import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
 import { SchemaGraph } from "../SchemaGraph/SchemaGraph";
 import { WorkspaceAddBtn } from "../WorkspaceMenu/WorkspaceAddBtn";
@@ -27,35 +14,20 @@ import type { DashboardMenuProps, DashboardMenuState } from "./DashboardMenu";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
-import type { TablesWithInfo } from "./useTableSizeInfo";
 import { SavedAgenticWorkflowsAndContainers } from "./SavedAgenticWorkflowsAndContainers";
+import { TableList } from "./TableList";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
   onClickSearchAll: VoidFunction;
-  tablesWithInfo: TablesWithInfo;
 } & Pick<DashboardMenuState, "queries">;
 
 export const DashboardMenuContent = (props: P) => {
-  const {
-    tables,
-    loadTable,
-    workspace,
-    prgl,
-    queries,
-    onClose,
-    onClickSearchAll,
-    tablesWithInfo,
-  } = props;
-  const {
-    db,
-    methods,
-    theme,
-    user,
-    dbsMethods: { reloadSchema },
-    dbs,
-    sql,
-  } = prgl;
+  const { tables, workspace, queries, onClose, onClickSearchAll } = props;
+  const { methods, theme, user, sql } = usePrgl();
+  const { addViewToWorkspace } = useAddViewToWorkspace();
 
   const pinnedMenu = getIsPinnedMenu(workspace);
   const isPublishedReadonlyWorkspace =
@@ -75,7 +47,6 @@ export const DashboardMenuContent = (props: P) => {
   const { setWorkspace } = useSetActiveWorkspace(workspace.id);
 
   const ref = useRef<HTMLDivElement>(null);
-  const ensureFadeDoesNotShowForOneItem = { minHeight: "120px" } as const;
   const bgColorClass =
     theme === "light" || !pinnedMenu ? "bg-color-0" : "bg-color-1";
 
@@ -122,8 +93,6 @@ export const DashboardMenuContent = (props: P) => {
             Create your own workspace to open table/views.
           </div>
           <WorkspaceAddBtn
-            connection_id={workspace.connection_id}
-            dbs={prgl.dbs}
             setWorkspace={setWorkspace}
             btnProps={{
               children: "Create workspace",
@@ -184,108 +153,8 @@ export const DashboardMenuContent = (props: P) => {
         />
       )}
 
-      {!tables.length ?
-        <div className="text-1p5 p-1">0 tables/views</div>
-      : <SearchList
-          className={"search-list-tables min-h-0  f-1"}
-          data-command="dashboard.menu.tablesSearchList"
-          limit={100}
-          style={ensureFadeDoesNotShowForOneItem}
-          noSearchLimit={0}
-          leftContent={
-            <SchemaFilter
-              asSelect={{
-                btnProps: {
-                  children: "",
-                  title: t.NewConnectionForm["Schemas"],
-                  iconPath: mdiFilter,
-                  variant: "text",
-                  size: "small",
-                  className: "mr-p5",
-                },
-                label: "",
-              }}
-              sql={sql}
-              db_schema_filter={props.prgl.connection.db_schema_filter}
-              onChange={(newDbSchemaFilter) => {
-                void dbs.connections.update(
-                  {
-                    id: prgl.connectionId,
-                  },
-                  {
-                    db_schema_filter: newDbSchemaFilter,
-                  },
-                );
-              }}
-            />
-          }
-          inputProps={{
-            "data-command": "dashboard.menu.tablesSearchListInput",
-          }}
-          placeholder={`${tables.length} tables/views`}
-          noResultsContent={
-            <FlexCol>
-              <InfoRow color="info" variant="filled">
-                Table/view not found.
-              </InfoRow>
-              <Btn
-                variant="faded"
-                color="action"
-                disabledInfo={!reloadSchema ? "Must be admin" : ""}
-                onClickPromise={async () => {
-                  await reloadSchema!({ conId: props.prgl.connectionId });
-                }}
-                iconPath={mdiRefresh}
-              >
-                Refresh schema
-              </Btn>
-            </FlexCol>
-          }
-          items={tablesWithInfo.map((t, i) => {
-            return {
-              contentLeft: (
-                <div
-                  className="flex-col ai-start f-0 text-1"
-                  {...(t.info.isFileTable ?
-                    dataCommand("dashboard.menu.fileTable")
-                  : {})}
-                >
-                  {t.icon ?
-                    <SvgIcon icon={t.icon} />
-                  : <Icon
-                      title={
-                        t.info.isFileTable ? "File table"
-                        : t.info.isView ?
-                          "View"
-                        : "Table"
-                      }
-                      path={
-                        t.info.isFileTable ? mdiFile
-                        : db[t.name]?.insert ?
-                          mdiTableEdit
-                        : mdiTableEye
-                      }
-                      size={1}
-                    />
-                  }
-                </div>
-              ),
-              key: t.name,
-              label: t.label,
-              title: t.info.comment,
-              contentRight: t.endText.length > 0 && (
-                <span title={t.endTitle} className="text-2 ml-auto">
-                  {t.endText}
-                </span>
-              ),
-              onPress: () => {
-                void loadTable({ type: "table", table: t.name, name: t.label });
-                onClose?.();
-              },
-            };
-          })}
-        />
-      }
+      <TableList workspace={workspace} />
+
       {detailedMethods.length > 0 && (
         <SearchList
           limit={100}
@@ -303,7 +172,11 @@ export const DashboardMenuContent = (props: P) => {
             key: t.name,
             label: t.name,
             onPress: () => {
-              void loadTable({ type: "method", method_name: t.name });
+              void addViewToWorkspace({
+                workspace_id: workspace.id,
+                type: "method",
+                method_name: t.name,
+              });
               onClose?.();
             },
           }))}
@@ -318,16 +191,12 @@ export const DashboardMenuContent = (props: P) => {
           </InfoRow>
         )}
 
-        <NewTableMenu
-          {...props}
-          loadTable={(args) => {
-            onClose?.();
-            return loadTable(args);
-          }}
-        />
+        <NewTableMenu {...props} onClose={onClose} />
 
         <SchemaGraph />
       </FlexRowWrap>
     </FlexCol>
   );
 };
+
+export const ensureFadeDoesNotShowForOneItem = { minHeight: "120px" } as const;

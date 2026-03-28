@@ -56,6 +56,8 @@ const outputSchemaArrayOfObjects = {
     },
 };
 const _a = agentDefinitionsSchema.record.values.type, { outputSchema } = _a, agentSchemaWithoutOutput = __rest(_a, ["outputSchema"]);
+const _b = runCodeInSandboxSchema.type, { files, userInput, userInputValue } = _b, runTsSchema = __rest(_b, ["files", "userInput", "userInputValue"]);
+const TYPESCRIPT_CODE_QUALITY = "Ensure the typescript code compiles with no errors (assume strict tsconfig and recommended eslint rules). Use top level imports, not require or dynamic imports.";
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
     db: {
         execute_readonly_sql: {
@@ -251,6 +253,64 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 },
             },
         },
+        run_typescript_in_nodejs: {
+            annotations: {
+                openWorldHint: true,
+            },
+            mode: undefined,
+            description: fixIndent(`
+        Executes TypeScript code in a Docker container.
+        It gets compiled as CommonJS which means top level await is not allowed and must be executed inside an async function.
+        User will see realtime logs and the final output.
+        User can also choose to re-run the container with different user input (if provided).
+        Use descriptive log messages to make it easier for the user to understand progress, what is happening and provide feedback.
+        ${TYPESCRIPT_CODE_QUALITY}
+        Prefer to use nodejs existing modules and can also specify custom dependencies to be installed as long as they are reputable.
+        Can specify access to the database if needed. 
+        To access the database must use POST requests to the exposed api endpoint. Cannot use direct DB sockets or drivers. 
+        Useful for doing bulk data insert/analysis/processing/ETL. 
+        Otherwise, permissions have no effect.
+        
+        Example input payload:
+        
+        {
+          "indexTs": "import type { JSONB } from \"prostgles-types\"; console.log('hello world');",
+          "packageJson": {
+            "prostgles-types": "^4.0.217",
+          }
+        }
+        `),
+            schema: {
+                type: Object.assign({ entrypointTs: {
+                        type: "string",
+                        description: "Typescript code to execute. Must compile with no errors assuming strict tsconfig and recommended eslint rules.",
+                    }, packageDependencies: {
+                        optional: true,
+                        description: 'Dependencies to install in the container. Must be reputable npm packages. Example: { "prostgles-types": "^4.0.217" }',
+                        record: {
+                            values: "string",
+                        },
+                    } }, runTsSchema),
+            },
+            outputSchema: {
+                type: {
+                    state: {
+                        enum: ["finished", "error", "build-error", "timed-out", "aborted"],
+                    },
+                    name: "string",
+                    command: "string",
+                    log: {
+                        arrayOfType: {
+                            type: { enum: ["stdout", "stderr", "error"] },
+                            text: "string",
+                        },
+                    },
+                    exitCode: "number",
+                    runDuration: "number",
+                    buildDuration: "number",
+                },
+            },
+        },
         ask_user_questions: {
             mode: "user-provides-response",
             description: [
@@ -411,6 +471,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             description: [
                 "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
                 "Return workflow_function_definition as valid TypeScript that calls defineAgenticWorkflow(...) directly.",
+                TYPESCRIPT_CODE_QUALITY,
                 "The user will initially execute it in series mode (agent calls and responses will be queued) to ensure it works as expected,",
                 "Prefer series-first, human-in-the-loop flow: interleave agent steps and DB operations to enable feedback and safe re-runs.",
                 "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",

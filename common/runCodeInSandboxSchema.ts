@@ -19,6 +19,12 @@ const filesSchema = {
 
 export const runCodeInSandboxSchema = {
   type: {
+    reason: {
+      type: "string",
+      optional: true,
+      description:
+        "Reason for executing the code to provide context to the user. One short sentence is enough. ",
+    },
     files: filesSchema,
     userInputValue: {
       optional: true,

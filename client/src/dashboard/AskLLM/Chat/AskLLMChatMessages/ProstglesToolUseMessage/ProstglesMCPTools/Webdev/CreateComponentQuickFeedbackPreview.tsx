@@ -44,6 +44,7 @@ export const CreateComponentQuickFeedbackPreview = ({
 
   return (
     <CompactTabs
+      titleWhenMinimised={"Component Quick Feedback"}
       maxHeight={"500px"}
       items={{
         Code: {

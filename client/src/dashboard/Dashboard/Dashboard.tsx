@@ -8,7 +8,7 @@ import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll/SearchAll";
 
-import { getConnectionPaths, ROUTES } from "@common/utils";
+import { getConnectionPaths } from "@common/utils";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -44,7 +44,6 @@ import type {
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
 import { getTables } from "./getTables";
-import { loadTable, type LoadTableArgs } from "./loadTable";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -355,15 +354,6 @@ export class _Dashboard extends RTComp<
     }
   };
 
-  loadTable = async (
-    args: Omit<LoadTableArgs, "db" | "dbs" | "workspace_id">,
-  ): Promise<string> => {
-    const { db, dbs } = this.props.prgl;
-    const { workspace } = this.d;
-    if (!workspace) throw new Error("Workspace not found");
-    return loadTable({ ...args, db, dbs, workspace_id: workspace.id });
-  };
-
   checkedIfNoOpenWindows = false;
   checkIfNoOpenWindows = async () => {
     const {
@@ -466,7 +456,6 @@ export class _Dashboard extends RTComp<
           isReadonly={isReadonly}
           prgl={prgl}
           workspace={workspace}
-          loadTable={this.loadTable}
           links={this.d.links}
           windows={this.d.windows}
           tables={tables}
@@ -489,7 +478,6 @@ export class _Dashboard extends RTComp<
         menuAnchorState={this.menuAnchorState}
         prgl={prgl}
         suggestions={suggestions}
-        loadTable={this.loadTable}
         tables={tables}
         workspace={workspace}
       />

@@ -90,7 +90,6 @@ export const SmartFormFooterButtons = (props: P): JSX.Element => {
           iconPath={mdiContentCopy}
           variant="filled"
           title="Prepare a duplicate insert that excludes primary key fields"
-          className="ml-auto"
           onClick={buttons.onClickClone}
         >
           Clone

@@ -13,6 +13,7 @@ import {
   mdiChevronDown,
   mdiChevronUp,
   mdiChip,
+  mdiDocker,
   mdiLanConnect,
   mdiMemory,
   mdiStopCircleOutline,
@@ -134,7 +135,7 @@ export const DockerContainer = ({
   return (
     <FullscreenWrapper
       data-command="DockerSandboxCreateContainer"
-      title={
+      title={(minimised) => (
         <>
           <FlexRow className="pl-p5 f-1 min-w-0">
             {toolUseState.state === "loading" ?
@@ -144,9 +145,15 @@ export const DockerContainer = ({
                 color={toolUseState.state === "running" ? "green" : "gray"}
               />
             }
+            {minimised && (
+              <Icon path={mdiDocker} sizeName="small" className="text-1" />
+            )}
             <div
               className="text-ellipsis min-w-0 ws-nowrap f-1 ta-start"
-              title={`${resultData?.command ?? ""}\n\n${JSON.stringify(omitKeys(data, ["files"]))}`}
+              title={
+                data.reason ||
+                `${resultData?.command ?? ""}\n\n${JSON.stringify(omitKeys(data, ["files"]))}`
+              }
             >
               {sliceText(resultData?.command, 100) ??
                 "Docker Sandbox Create Container"}
@@ -176,22 +183,24 @@ export const DockerContainer = ({
               <div>{data.networkMode ?? "none"}</div>
             </FlexRow>
           </ScrollFade>
-          {toolUseState.state === "running" && stopDockerContainer && (
-            <Btn
-              title="Stop"
-              color="danger"
-              variant="faded"
-              size="small"
-              data-command="DockerSandboxCreateContainer.stop"
-              iconPath={mdiStopCircleOutline}
-              onClickPromise={async () => {
-                await stopDockerContainer({
-                  chatId,
-                  toolUseId,
-                });
-              }}
-            />
-          )}
+          {(toolUseState.state === "running" ||
+            toolUseState.state === "loading") &&
+            stopDockerContainer && (
+              <Btn
+                title="Stop"
+                color="danger"
+                variant="faded"
+                size="small"
+                data-command="DockerSandboxCreateContainer.stop"
+                iconPath={mdiStopCircleOutline}
+                onClickPromise={async () => {
+                  await stopDockerContainer({
+                    chatId,
+                    toolUseId,
+                  });
+                }}
+              />
+            )}
           {toolUseResult && (
             <ToolUseReRun
               chatId={chatId}
@@ -201,7 +210,7 @@ export const DockerContainer = ({
             />
           )}
         </>
-      }
+      )}
     >
       <FlexCol className=" ai-start gap-0 f-1">
         <CodeFileBrowser

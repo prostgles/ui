@@ -117,7 +117,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           listProps: dataCommand("config.bkp"),
           leftIconPath: mdiDatabaseSync,
           disabledText,
-          content: <BackupsControls {...propsWithPrgl} />,
+          content: <BackupsControls />,
         },
         authentication: {
           label: t.ServerSettings.Authentication,

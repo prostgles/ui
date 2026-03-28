@@ -20,9 +20,6 @@ export const getAgenticWorkflowDockerCoreFiles = (
     compilerOptions: {
       target: "ES2022",
       module: "CommonJS",
-      /** Allow top level await */
-      // module: "NodeNext",
-      // moduleResolution: "NodeNext",
       strict: true,
       esModuleInterop: true,
       skipLibCheck: true,
@@ -35,6 +32,7 @@ export const getAgenticWorkflowDockerCoreFiles = (
   return {
     Dockerfile: DockerfileForAgenticWorkflow,
     "package.json": JSON.stringify(packageJson, null, 2),
+    "eslint.config.mjs": eslintConfigMjs,
     "tsconfig.json": tsconfigJson,
   };
 };
@@ -108,14 +106,95 @@ const getPackageJsonForAgenticWorkflow = ({
   version: "1.0.0",
   main: "index.js",
   scripts: {
-    build: "tsc",
+    lint: "eslint index.ts --quiet --fix",
+    build: "tsc && npm run lint",
     start: "node index.js",
   },
   dependencies: {
     "@types/node": "^22.15.2",
     typescript: "^5.8.3",
     tslib: "^2.8.1",
+    eslint: "^9.39.4",
+    "@eslint/js": "^9.39.1",
     "prostgles-types": "^4.0.208",
+    "typescript-eslint": "^8.57.1",
     ...(forDefinitions ? { "pgsql-ast-parser": "^12.0.2" } : {}),
   },
 });
+
+const eslintConfigMjs = `
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
+import { defineConfig } from "eslint/config";
+
+export default defineConfig(
+  eslint.configs.recommended,
+  tseslint.configs.recommendedTypeChecked,
+  {
+    ignores: [
+      "node_modules",
+      "dist",
+      "**/*.d.ts",
+    ],
+  },
+  {
+    languageOptions: {
+      parserOptions: {
+        projectService: {
+          allowDefaultProject: ["*.js", "*.mjs"],
+        },
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    files: ["**/*.js", "**/*.ts"],
+    rules: {
+      "no-cond-assign": "error",
+      "@typescript-eslint/no-namespace": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/ban-types": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "no-async-promise-executor": "off",
+      "@typescript-eslint/no-var-requires": "off",
+      "@typescript-eslint/no-unnecessary-condition": "error",
+      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/no-misused-promises": "off",
+      "no-unused-vars": "off",
+      "global-require": "error",          // disallow require() except at top-level
+      "@typescript-eslint/no-var-requires": "error", // disallow var require()
+      "@typescript-eslint/no-require-imports": "error",
+      //"import/first": "error",            // enforce all imports at top-level
+      "no-empty": "off",
+      "security/detect-object-injection": "off",
+      "security/detect-non-literal-fs-filename": "off",
+      "@typescript-eslint/only-throw-error": "off",
+      "@typescript-eslint/prefer-promise-reject-errors": "off",
+      "@typescript-eslint/restrict-template-expressions": "warn",
+      "@typescript-eslint/no-unsafe-assignment": "warn",
+      "@typescript-eslint/no-unsafe-argument": "warn",
+      "@typescript-eslint/no-unsafe-return": "warn",
+      "@typescript-eslint/await-thenable": "warn",
+      "@typescript-eslint/no-unsafe-member-access": "warn",
+      "@typescript-eslint/no-unsafe-call": "warn",
+      "@typescript-eslint/restrict-template-expressions": [
+        "warn",
+        { allowNumber: true, allowArray: true },
+      ],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
+);
+
+`;

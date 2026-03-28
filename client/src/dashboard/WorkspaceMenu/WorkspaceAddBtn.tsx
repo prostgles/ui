@@ -1,30 +1,28 @@
-import { mdiPlus } from "@mdi/js";
-import React, { useCallback, useState } from "react";
+import type { DBSSchema } from "@common/publishUtils";
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
-import { isObject } from "prostgles-types";
 import PopupMenu from "@components/PopupMenu";
-import type { WorkspaceSchema } from "../Dashboard/dashboardUtils";
-import type { Prgl } from "../../App";
-import type { DBSSchema } from "@common/publishUtils";
+import { mdiPlus } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useIsMounted } from "prostgles-client";
+import { isObject } from "prostgles-types";
+import React, { useCallback, useState } from "react";
+import type { WorkspaceSchema } from "../Dashboard/dashboardUtils";
 
-type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> & {
-  connection_id: string;
+type WorkspaceDeleteBtnProps = {
   setWorkspace: (w: Required<WorkspaceSchema>) => void;
   btnProps?: BtnProps<void>;
   className?: string;
 };
 export const WorkspaceAddBtn = ({
-  dbs,
-  connection_id,
   setWorkspace,
   btnProps,
   className,
 }: WorkspaceDeleteBtnProps) => {
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<unknown>();
   const [name, setName] = useState("");
+  const { dbs, connectionId } = usePrgl();
 
   const getIsMounted = useIsMounted();
   const insertNewWorkspace = useCallback(async () => {
@@ -32,7 +30,7 @@ export const WorkspaceAddBtn = ({
       const newWsp = await dbs.workspaces.insert(
         {
           name,
-          connection_id,
+          connection_id: connectionId,
         } as DBSSchema["workspaces"],
         { returning: "*" },
       );
@@ -49,7 +47,7 @@ export const WorkspaceAddBtn = ({
         setError(newWspErr);
       }
     }
-  }, [dbs, name, connection_id, setError, setWorkspace, getIsMounted]);
+  }, [dbs, name, connectionId, setError, setWorkspace, getIsMounted]);
 
   return (
     <PopupMenu

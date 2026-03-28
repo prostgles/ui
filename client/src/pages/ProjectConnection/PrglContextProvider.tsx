@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect } from "react";
 import { CommandPalette } from "src/app/CommandPalette/CommandPalette";
 import { createStore } from "src/hooks/createStore";
 import type { Prgl } from "../../App";
+import { LLMSetupProvider } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
 const PrglContext = createContext<Prgl | undefined>(undefined);
 
@@ -20,11 +21,13 @@ export const PrglProvider = ({
   }, [prgl]);
   return (
     <PrglContext.Provider value={prgl}>
-      <CommandPalette
-        isElectron={prgl.serverState.isElectron}
-        prglLoaded={true}
-      />
-      {children}
+      <LLMSetupProvider>
+        <CommandPalette
+          isElectron={prgl.serverState.isElectron}
+          prglLoaded={true}
+        />
+        {children}{" "}
+      </LLMSetupProvider>
     </PrglContext.Provider>
   );
 };

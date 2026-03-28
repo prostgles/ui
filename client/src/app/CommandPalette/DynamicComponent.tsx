@@ -37,6 +37,16 @@ const DYNAMIC_COMPONENT_REGISTRY = {
     import("src/dashboard/AskLLM/Setup/LLMProviderSetup").then((mod) => ({
       default: mod.LLMProviderSetup,
     })),
+  SavedAgenticWorkflowsAndContainers: () =>
+    import(
+      "src/dashboard/DashboardMenu/SavedAgenticWorkflowsAndContainers"
+    ).then((mod) => ({
+      default: mod.SavedAgenticWorkflowsAndContainers,
+    })),
+  BackupsControls: () =>
+    import("src/dashboard/BackupAndRestore/BackupsControls").then((mod) => ({
+      default: mod.BackupsControls,
+    })),
 } as const satisfies Record<
   string,
   () => Promise<{ default: React.ComponentType<any> }>
