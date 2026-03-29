@@ -1,13 +1,14 @@
-import type { DBHandlerClient } from "prostgles-client";
+import type { DBHandlerClient, TableHandlerClient } from "prostgles-client";
 import type { AnyObject, SQLHandler } from "prostgles-types";
 import type { Theme } from "src/App";
 import { chipColorsFadedBorder } from "../ColumnDisplayFormat/ChipStylePalette";
 import { getRandomElement, type ConditionalStyle } from "./ColumnStyleControls";
+import type { DBS } from "src/dashboard/Dashboard/DBS";
 
 type DefaultConditionalStyleArgs =
   | {
       type: "table";
-      db: DBHandlerClient;
+      db: DBHandlerClient | DBS;
       tableName: string;
       columnName: string;
       filter?: AnyObject;
@@ -52,7 +53,7 @@ export const getValueColors = async (
 export const fetchColumnValues = async (args: DefaultConditionalStyleArgs) => {
   if (args.type === "table") {
     const { columnName, db, tableName, filter = {} } = args;
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as TableHandlerClient | undefined;
     if (!tableHandler?.find) return undefined;
     const rows = await tableHandler.find(filter, {
       select: { [columnName]: 1 },

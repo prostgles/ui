@@ -1,13 +1,13 @@
-import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import { getComputedColumnSelect } from "src/dashboard/W_Table/tableUtils/getTableSelect";
 import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
 import { colIs } from "./fieldUtils";
+import type { Prgl } from "src/App";
 const OPTIONS_LIMIT = 20;
 
 export const fetchColumnValueSuggestions = async (args: {
   table: string;
-  db: DBHandlerClient;
+  db: Prgl["db"];
   column: FilterColumn;
   term?: string;
   groupBy?: boolean;

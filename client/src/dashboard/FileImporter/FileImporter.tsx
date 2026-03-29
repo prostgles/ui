@@ -23,6 +23,7 @@ import { ApplySuggestedDataTypes } from "./checkCSVColumnDataTypes";
 import { FileImporterFooter } from "./FileImporterFooter";
 import { importFile, type ImportProgress } from "./importFile";
 import { setFile } from "./setFile";
+import type { Prgl } from "src/App";
 const streamColumnDataTypes = ["TEXT", "JSON", "JSONB"] as const;
 
 type Papa = typeof import("papaparse");
@@ -30,7 +31,7 @@ export const getPapa = () =>
   import(/* webpackChunkName: "papaparse" */ "papaparse");
 
 export type FileImporterProps = {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   sql: SQLHandler;
   onClose: VoidFunction;
   openTable: (tableName: string) => void;

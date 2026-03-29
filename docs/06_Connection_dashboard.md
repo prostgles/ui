@@ -25,7 +25,7 @@ With quick search, saved queries, AI-powered assistance, and instant access to e
 - **Workspaces**: List of available workspaces for the selected connection. Each workspace stores opened views and their layout.  
 - <a href="#workspaces_menu">Workspaces menu</a>: Opens the workspaces menu, allowing you to create, manage, and switch between workspaces.  
 - <a href="#workspace_area">Workspace area</a>: Main content area of the dashboard, where the tables, views, SQL editors and other visualisations are displayed.  
-- <a href="#ai_assistant">AI Assistant</a>: Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.  
+- <a href="#ai_assistant">AI Assistant</a>: Opens an AI assistant chat to help generate SQL queries, understand database schema, or perform other tasks.  
 - **Feedback**: Opens the feedback form, allowing you to provide feedback about the application.  
 - **Go to Connections**: Opens the connections list page.  
 
@@ -45,7 +45,7 @@ For wider screens the centered layout mode can be enabled through the settings.
   - **Tables and views**: List of tables and views from the current database. Click to open a table or view. By default only the tables from the public schema are shown. Schema list from the connection settings controls which schemas are shown.  
   - **Server-side functions**: List of server-side functions for the current database. Click to open a function.  
   - <a href="#create/import">Create/Import</a>: Opens the menu for creating new tables, server-side functions or importing csv/json files.  
-  - **Agentic workflows**: List of saved agentic workflows of the current user from the current connection. Click to open an agentic workflow or container.  
+  - <a href="#agentic_workflows">Agentic workflows</a>: List of saved agentic workflows of the current user for the current connection.  
   - <a href="#schema_diagram">Schema diagram</a>: Opens the schema diagram for visualizing the relationships between tables in the current database.  
 
 <h3 id="create/import"> Create/Import </h3> 

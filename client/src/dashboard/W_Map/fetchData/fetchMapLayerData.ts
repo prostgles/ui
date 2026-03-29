@@ -12,6 +12,7 @@ import type { W_MapState } from "../W_Map";
 import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
 import { getMapFeatureStyle } from "../getMapFeatureStyle";
 import { scaleLinear } from "d3";
+import type { TableHandlerClient } from "prostgles-client";
 
 export const DEFAULT_GET_COLOR: Pick<
   GeoJsonLayerProps,
@@ -124,7 +125,9 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 return;
               }
 
-              const tableHandler = db[tableName];
+              const tableHandler = db[tableName] as
+                | Partial<TableHandlerClient>
+                | undefined;
               if (
                 !tableHandler?.find ||
                 !tableHandler.findOne ||

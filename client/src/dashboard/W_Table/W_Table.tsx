@@ -63,6 +63,7 @@ import { getTableCols } from "./tableUtils/getTableCols";
 import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
 import { getSort, getSortColumn, updateWCols } from "./tableUtils/tableUtils";
+import type { TableHandlerClient } from "prostgles-client";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
@@ -308,7 +309,7 @@ export default class W_Table extends RTComp<
     let ns: Partial<W_TableState> | undefined;
     if (!w || !tableName) return;
 
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as TableHandlerClient | undefined;
 
     /** Show count if user requires it  */
     const showCounts = !!(
@@ -318,7 +319,7 @@ export default class W_Table extends RTComp<
 
     /* Table was renamed. Replace from oid or fail gracefully */
     if (tableName && table_oid && !tableHandler) {
-      const match = this.props.tables.find((ti) => ti.info.oid === table_oid);
+      const match = this.props.tables.find((ti) => ti.oid === table_oid);
       if (match) {
         await w.$update({ table_name: match.name });
         return;
@@ -482,7 +483,7 @@ export default class W_Table extends RTComp<
     const { w } = this.d;
     if (!w) return null;
     const { table_name: tableName } = w;
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as TableHandlerClient | undefined;
 
     try {
       // const columnsConfig = await getAndFixWColumnsConfig(tables, w); //columns: columnsConfig,
@@ -546,7 +547,7 @@ export default class W_Table extends RTComp<
     } = this.props;
     const { tables, db, dbs } = prgl;
 
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as TableHandlerClient | undefined;
     if (!w) {
       if (tableName && !tableHandler) {
         return showTableNotFound(tableName);

@@ -303,7 +303,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
               action={action}
               row={row}
               column={column}
-              tableInfo={table.info}
+              tableInfo={table}
               jsonbSchemaWithControls={jsonbSchemaWithControls}
               hideNullBtn={hideNullBtn}
               newRowDataHandler={newRowDataHandler}

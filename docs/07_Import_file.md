@@ -13,3 +13,10 @@ The import process allows you to specify the table name, infer column data types
   - **Insert as**: Select list for choosing the method of inserting JSON/GeoJSON data into the table. Options include: Single text value, JSONB rows, and Properties with geometry.  
   - **Import**: Button to initiate the import process. Click to start importing the selected file into the specified table.  
 
+<h3 id="agentic_workflows"> Agentic workflows </h3> 
+
+Agentic workflows consist of typescript logic that runs in an isolated environment with granular access controls to your data and MCP tools.
+They are ideal for automating tedious data intensive tasks that may involve using agentic chats.
+Agentic workflows can be saved and reused, making it easier to manage and execute recurring tasks efficiently.
+
+

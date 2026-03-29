@@ -309,7 +309,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
               if (tools.length !== toolsToAllow.length) {
                 throw new Error("Some tools not found");
               }
-              await dbx.llm_chats_allowed_mcp_tools.insert(
+              await dbx.llm_chats_allowed_mcp_tools.insertMany(
                 tools.map((tool) => ({
                   chat_id: row.id,
                   tool_id: tool.id,

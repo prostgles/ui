@@ -163,7 +163,9 @@ export const Marked = (props: MarkedProps) => {
                 }
                 return undefined;
               }
-              const tableHandler = prgl.db[tableName];
+              const tableHandler = prgl.db[tableName] as
+                | TableHandlerClient
+                | undefined;
               if (!tableHandler) return undefined;
               return { tableName, tableHandler };
             };

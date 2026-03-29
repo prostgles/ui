@@ -10,24 +10,24 @@ import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiFilterPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { _PG_date, _PG_numbers, includes } from "prostgles-types";
 import React, { useState } from "react";
+import type { Prgl } from "src/App";
 import { isDefined } from "../../utils/utils";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { JoinV2 } from "../Dashboard/dashboardUtils";
+import { getDefaultAgeFilter } from "../DetailedFilterControl/DetailedFilterBaseTypes/AgeFilter";
 import { getColumnDataColor } from "../SmartForm/SmartFormField/RenderValue";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import { getJoinPathLabel } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getJoinPaths } from "../W_Table/tableUtils/getJoinPaths";
 import { getComputedColumnSelect } from "../W_Table/tableUtils/getTableSelect";
 import { AddJoinFilter } from "./AddJoinFilter";
-import { getDefaultAgeFilter } from "../DetailedFilterControl/DetailedFilterBaseTypes/AgeFilter";
 import { getFilterableCols } from "./SmartSearch/SmartSearch";
 
 export type SmartAddFilterProps = {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   tableName: string;
   tables: CommonWindowProps["tables"];
   selectedColumns: ColumnConfig[] | undefined;

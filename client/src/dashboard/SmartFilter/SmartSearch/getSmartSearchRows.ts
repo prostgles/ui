@@ -1,11 +1,11 @@
 import { getSmartGroupFilter, type DetailedFilter } from "@common/filterUtils";
 import { isObject } from "@common/publishUtils";
-import type { DBHandlerClient } from "prostgles-client";
 import {
   _PG_numbers,
   type AnyObject,
   type ValidatedColumnInfo,
 } from "prostgles-types";
+import type { Prgl } from "src/App";
 import type { DashboardState } from "../../Dashboard/Dashboard";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
 import {
@@ -17,7 +17,7 @@ type Args = {
   currentlySearchedColumn: string;
   term: string;
   matchCase: boolean;
-  db: DBHandlerClient;
+  db: Prgl["db"];
   tableName: string;
   columns: Pick<ValidatedColumnInfo, "name" | "is_pkey" | "udt_name">[];
   detailedFilter: DetailedFilter[];

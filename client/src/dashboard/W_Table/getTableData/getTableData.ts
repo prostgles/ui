@@ -6,6 +6,7 @@ import W_Table from "../W_Table";
 import { getTableSelect } from "../tableUtils/getTableSelect";
 import { getSort } from "../tableUtils/tableUtils";
 import { getTableFilter } from "./getTableFilter";
+import type { TableHandlerClient } from "prostgles-client";
 
 export async function getTableData(
   this: W_Table,
@@ -27,7 +28,7 @@ export async function getTableData(
 
   let ns: Partial<W_TableState> | undefined;
 
-  const tableHandler = db[tableName];
+  const tableHandler = db[tableName] as Partial<TableHandlerClient> | undefined;
   if (!tableHandler) return;
   try {
     if (!tableHandler.find) {

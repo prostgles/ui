@@ -28,7 +28,7 @@ export const UserManager = () => {
     content = (
       <SmartTable
         className="w-full"
-        db={dbs as DBHandlerClient}
+        db={dbs}
         sql={dbsSql}
         methods={dbsMethodSchema}
         titlePrefix={t.Users["Prostgles UI users"]}

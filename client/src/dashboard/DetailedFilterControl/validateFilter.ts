@@ -1,6 +1,7 @@
 import { getFinalFilter, type DetailedFilter } from "@common/filterUtils";
 import type { BaseFilterProps } from "../SmartFilter/SmartFilter";
 import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
+import type { TableHandlerClient } from "prostgles-client";
 
 export const validateFilter = async (
   filter: DetailedFilter,
@@ -12,7 +13,9 @@ export const validateFilter = async (
   }: Pick<BaseFilterProps, "db" | "tableName" | "column" | "tables">,
 ) => {
   try {
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as
+      | Partial<TableHandlerClient>
+      | undefined;
     const finalFilter = getFinalFilter(filter);
     const isHaving =
       column.type === "computed" && column.computedConfig.funcDef.isAggregate;

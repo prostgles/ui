@@ -121,7 +121,7 @@ export const useSchemaShapes = (
             : c.references?.length ? fkey
             : c.is_nullable ? nullable
             : (
-              table.info.uniqueColumnGroups?.some(
+              table.uniqueColumnGroups?.some(
                 (ug) => ug.length === 1 && ug.includes(c.name),
               )
             ) ?
@@ -183,7 +183,7 @@ export const useSchemaShapes = (
           .filter(isDefined);
 
         const box: Rectangle<typeof table, { width: number } | undefined> = {
-          id: table.info.oid,
+          id: table.oid,
           type: "rectangle",
           coords: [x - PADDING, y - COL_SPACING - PADDING],
           w: rectangleContentWidth + 2 * PADDING,
@@ -303,7 +303,7 @@ const getRootTable = <T extends DBSchemaTableWJoins>(
         (c) =>
           c.is_pkey ||
           (!c.references &&
-            table.info.uniqueColumnGroups?.some((cg) => cg.includes(c.name))),
+            table.uniqueColumnGroups?.some((cg) => cg.includes(c.name))),
       )
     ) {
       return table;

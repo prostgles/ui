@@ -34,7 +34,7 @@ export const NestedColumnRender = ({
   tables,
 }: P): JSX.Element => {
   const table = tables.find((t) => t.name === c.nested?.path.at(-1)?.table);
-  const isMedia = table?.info.isFileTable;
+  const isMedia = table?.isFileTable;
   const nestedColumns =
     c.nested && table ? getColWInfo(table, c.nested.columns) : undefined;
   const layers: TimeChartLayer[] = useMemo(

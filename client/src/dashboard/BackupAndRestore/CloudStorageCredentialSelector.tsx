@@ -73,7 +73,7 @@ export function CloudStorageCredentialSelector({
       />
       {credentialsTable && Boolean(credentials?.length) && (
         <ViewMoreSmartCardList
-          db={dbs as DBHandlerClient}
+          db={dbs}
           sql={dbsSql}
           methods={dbsMethodSchema}
           ftable={credentialsTable}
@@ -101,7 +101,7 @@ export function CloudStorageCredentialSelector({
             label=""
             contentClassname="p-1"
             methods={dbsMethodSchema}
-            db={dbs as DBHandlerClient}
+            db={dbs}
             sql={dbsSql}
             tableName="credentials"
             tables={dbsTables}

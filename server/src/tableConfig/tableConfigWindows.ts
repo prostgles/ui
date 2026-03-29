@@ -2,6 +2,10 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 
 export const tableConfigWindows = {
   windows: {
+    syncConfig: {
+      id_fields: ["id"],
+      synced_field: "last_updated",
+    },
     columns: {
       id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
       parent_window_id: {

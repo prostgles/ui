@@ -17,10 +17,11 @@ import ErrorComponent from "@components/ErrorComponent";
 import { t } from "../../i18n/i18nUtils";
 import { getDBCloneQuery, SSL_MODES } from "./newConnectionUtils";
 import { SchemaFilter } from "./SchemaFilter";
+import type { Prgl } from "src/App";
 
 type DBProps = {
   origCon: Partial<Connection>;
-  dbProject: FullExtraProps["dbProject"];
+  dbProject: Prgl["db"];
   sql: SQLHandler | undefined;
   dbsTables: FullExtraProps["dbsTables"];
   dbsMethods: FullExtraProps["dbsMethods"];

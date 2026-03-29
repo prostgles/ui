@@ -1,13 +1,13 @@
 import type { DBSSchema } from "@common/publishUtils";
-import type { DBHandlerClient } from "prostgles-client";
 import type { DBSchemaTable } from "prostgles-types";
+import type { Prgl } from "src/App";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
 import type { DBSchemaTablesWJoins } from "./dashboardUtils";
 
 export const getTables = (
   schemaTables: DBSchemaTable[],
   connectionTableOptions: DBSSchema["connections"]["table_options"],
-  db: DBHandlerClient,
+  db: Prgl["db"],
   capitaliseNames = false,
 ): { tables: DBSchemaTablesWJoins } => {
   const tables = schemaTables.map((t) => {
@@ -15,9 +15,9 @@ export const getTables = (
       connectionTableOptions?.[t.name] ?? {};
     const result = {
       ...tableOpts,
-      label:
-        label || (capitaliseNames ? convertSnakeToReadable(t.name) : t.name),
       ...t,
+      label:
+        label ?? (capitaliseNames ? convertSnakeToReadable(t.name) : t.name),
       ...getJoinedTables(schemaTables, t.name, db),
       columns: t.columns
         .map((c) => ({

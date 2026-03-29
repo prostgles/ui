@@ -19,5 +19,5 @@ export const insertMcpServerList = async (dbs: DBS) => {
       } satisfies DBSSchemaForInsert["mcp_servers"];
     },
   );
-  await dbs.mcp_servers.insert(defaultServers, { onConflict: "DoUpdate" });
+  await dbs.mcp_servers.insertMany(defaultServers, { onConflict: "DoUpdate" });
 };

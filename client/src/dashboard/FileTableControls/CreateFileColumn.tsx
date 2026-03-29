@@ -68,7 +68,7 @@ export const CreateFileColumn = ({
         iconPath: mdiPlus,
       }}
       fullOptions={tables
-        .filter((t) => !t.info.isFileTable)
+        .filter((t) => !t.isFileTable)
         .map((t) => ({
           key: t.name,
           disabledInfo:

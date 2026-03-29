@@ -298,8 +298,7 @@ export const useNewRowDataHandler = (args: Args) => {
       };
       let _errors: AnyObject | undefined;
 
-      const tableInfo = table?.info;
-
+      const tableInfo = table;
       displayedColumns
         .filter((c) => c.insert || c.update)
         .forEach((c) => {
@@ -339,7 +338,7 @@ export const useNewRowDataHandler = (args: Args) => {
           }
         });
 
-      table?.info.requiredNestedInserts?.forEach(
+      table?.publishInfo.insert?.requiredNestedInserts?.forEach(
         ({ ftable, maxRows, minRows }) => {
           const ftableData = data[ftable];
           if (!ftableData || !Array.isArray(ftableData) || !ftableData.length) {

@@ -115,7 +115,7 @@ export const AskLLMChatActionBarPromptSelector = (
               }}
               showEdit={true}
               tableName={"llm_prompts"}
-              db={dbs as DBHandlerClient}
+              db={dbs}
               methods={dbsMethodSchema}
               tables={dbsTables}
               fieldConfigs={

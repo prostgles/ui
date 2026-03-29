@@ -8,7 +8,7 @@ export const useTablesAndViewsSearchItems = ({
   db,
 }: Pick<SearchAllProps, "tables" | "suggestions" | "db">) => {
   const tableMap: Map<number, (typeof tables)[number]> = useMemo(
-    () => new Map(tables.map((t) => [t.info.oid, t])),
+    () => new Map(tables.map((t) => [t.oid, t])),
     [tables],
   );
   const searchItems: SearchAllSuggestion[] = useMemo(

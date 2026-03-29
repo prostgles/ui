@@ -89,7 +89,7 @@ export const LLMModelSelector = ({
         <SmartForm
           asPopup={true}
           sql={dbsSql}
-          db={dbs as DBHandlerClient}
+          db={dbs}
           tableName="llm_models"
           rowFilter={[viewModelForm]}
           tables={dbsTables}
@@ -102,7 +102,7 @@ export const LLMModelSelector = ({
           label={"Add LLM credentials for " + addProviderCredentials}
           asPopup={true}
           tableName="llm_credentials"
-          db={dbs as DBHandlerClient}
+          db={dbs}
           sql={dbsSql}
           methods={dbsMethodSchema}
           defaultData={{
@@ -147,7 +147,7 @@ export const LLMModelSelector = ({
               <SmartFormPopup
                 asPopup={true}
                 label="Add model"
-                db={dbs as DBHandlerClient}
+                db={dbs}
                 tableName="llm_models"
                 methods={dbsMethodSchema}
                 tables={dbsTables}

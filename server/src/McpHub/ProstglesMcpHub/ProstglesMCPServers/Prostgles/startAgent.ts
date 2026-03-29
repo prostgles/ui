@@ -97,7 +97,7 @@ export const startAgent = async (
     { returning: "*" },
   );
   if (toolsWithInfo?.length) {
-    await dbs.llm_chats_allowed_mcp_tools.insert(
+    await dbs.llm_chats_allowed_mcp_tools.insertMany(
       toolsWithInfo.map(({ id, server_name }) => {
         return {
           chat_id: agentChat.id,

@@ -48,7 +48,8 @@ export const useActiveJoinedRecordsTab = ({
   useEffect(() => {
     if (isDefined(activeJoinedRecordsTab) || actionType !== "insert") return;
     const table = tables.find((t) => t.name === tableName);
-    const requiredNestedInsert = table?.info.requiredNestedInserts?.[0];
+    const requiredNestedInsert =
+      table?.publishInfo.insert?.requiredNestedInserts?.[0];
     if (requiredNestedInsert) {
       setActiveJoinedRecordsTab(requiredNestedInsert.ftable);
     }

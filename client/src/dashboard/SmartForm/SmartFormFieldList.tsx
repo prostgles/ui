@@ -63,9 +63,6 @@ export const SmartFormFieldList = (props: P) => {
   } = props;
 
   const hideNullBtn = mode.type === "view" || props.hideNullBtn;
-
-  const tableInfo = table.info;
-
   const someColumnsHaveIcons = useMemo(() => {
     return displayedColumns.some((c) => {
       if (c.icon) return true;
@@ -99,14 +96,14 @@ export const SmartFormFieldList = (props: P) => {
           geoJsonLayersDataFilterSignature=""
         />
       )} */}
-      {tableInfo.isFileTable && tableInfo.fileTableName && (
+      {table.isFileTable && table.fileTableName && (
         <SmartFormFileSection
           {...props}
           table={table}
           newRowDataHandler={newRowDataHandler}
           row={row}
           mode={mode}
-          mediaTableName={tableInfo.fileTableName}
+          mediaTableName={table.fileTableName}
         />
       )}
       {displayedColumns.map((c, i) => {

@@ -63,7 +63,7 @@ export const Account = () => {
       content: (
         <SmartForm
           label=""
-          db={dbs as DBHandlerClient}
+          db={dbs}
           sql={dbsSql}
           methods={dbsMethodSchema}
           tableName="users"

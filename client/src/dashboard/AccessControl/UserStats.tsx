@@ -65,7 +65,7 @@ export const UserStats = ({
         >
           <SmartTable
             key={"selectedRuleId"}
-            db={dbs as DBHandlerClient}
+            db={dbs}
             sql={dbsSql}
             methods={dbsMethodSchema}
             filter={[

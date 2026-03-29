@@ -24,7 +24,7 @@ type P = {
 export const MapBasemapOptions = ({ w, className, asPopup }: P) => {
   const prgl = usePrgl();
   const { tables } = prgl;
-  const mediaTable = tables.find((t) => t.info.isFileTable);
+  const mediaTable = tables.find((t) => t.isFileTable);
   const [localOptions, setLocalOptions] = useState(w.options);
   const [newTileUrl, setNewTileUrl] = useState("");
   const {

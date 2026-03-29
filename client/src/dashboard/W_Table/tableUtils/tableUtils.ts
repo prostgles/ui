@@ -10,6 +10,7 @@ import type {
 import type { ColumnConfig, ColumnSortSQL } from "../ColumnMenu/ColumnMenu";
 import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
 import type { ColumnConfigWInfo } from "../W_Table";
+import type { Prgl } from "src/App";
 
 /** It's a record to ensure all keys are present */
 const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
@@ -138,7 +139,7 @@ export const getSort = (
 export const getJoinedTables = (
   tables: DBSchemaTable[],
   tableName: string,
-  db: DBHandlerClient,
+  db: Prgl["db"],
 ): { joins: Join[]; joinsV2: JoinV2[] } => {
   const myCols = tables.find((t) => t.name === tableName)?.columns;
   const upsertJoin = (joins: Join[], upsertedJoin: Join) => {

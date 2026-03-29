@@ -13,11 +13,12 @@ import {
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type { MinMax, MinMaxVals } from "../W_Table";
 import { getFullColumnConfig } from "./getFullColumnConfig";
+import type { Prgl } from "src/App";
 
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
   tables: CommonWindowProps["tables"],
-  db: DBHandlerClient,
+  db: Prgl["db"],
   filter: AnyObject,
   withoutData = false,
 ): Promise<{ barchartVals?: AnyObject; select: AnyObject }> => {
@@ -148,7 +149,7 @@ export const getComputedColumnSelect = (
 
 export const getNestedColumnSelect = async (
   c: ColumnConfig,
-  db: DBHandlerClient,
+  db: Prgl["db"],
   tables: CommonWindowProps["tables"],
   withoutData = false,
 ): Promise<{ select: AnyObject; dateExtent?: MinMax<Date> } | undefined> => {
@@ -161,7 +162,7 @@ export const getNestedColumnSelect = async (
     dateExtent =
       withoutData ?
         { min: new Date(), max: new Date() }
-      : await getTimeChartMinMax(db[targetTable]!, {}, c.nested.chart.dateCol);
+      : await getTimeChartMinMax(db[targetTable], {}, c.nested.chart.dateCol);
 
     const { bin } =
       withoutData ?

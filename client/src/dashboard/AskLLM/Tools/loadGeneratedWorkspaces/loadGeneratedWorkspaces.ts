@@ -17,7 +17,7 @@ export const loadGeneratedWorkspaces = async (
   tool_use_id: string,
   { dbs, connectionId, tables }: Pick<Prgl, "dbs" | "connectionId" | "tables">,
 ) => {
-  const workspaces = generatedWorkspaces.map((wsp, i) => {
+  const workspaces = generatedWorkspaces.map((wsp) => {
     const windows: WindowInsertModel[] = wsp.windows.map((generatedWindow) => {
       if (generatedWindow.type === "barchart") {
         return loadGeneratedBarchart(generatedWindow, tables);
@@ -121,7 +121,7 @@ export const loadGeneratedWorkspaces = async (
     };
   });
 
-  const insertedWorkspaces = await dbs.workspaces.insert(workspaces, {
+  const insertedWorkspaces = await dbs.workspaces.insertMany(workspaces, {
     returning: "*",
   });
 
@@ -166,7 +166,7 @@ export const loadGeneratedWorkspaces = async (
                 const insertedChart: DBSSchema["windows"] | undefined =
                   insertedWindow;
                 if (insertedChart) {
-                  await dbs.links.insert(
+                  await dbs.links.insertMany(
                     generatedWindowChartOptions.linkOptions.map((options) => {
                       return {
                         w1_id: insertedChart.id,

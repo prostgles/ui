@@ -4,16 +4,16 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { mdiFilter, mdiSortAscending, mdiSortDescending } from "@mdi/js";
-import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { type ValidatedColumnInfo } from "prostgles-types";
 import React, { useState } from "react";
+import type { Prgl } from "src/App";
 import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
 import { useColumnStats } from "./useColumnQuickStats";
 
 export type ColumnQuickStatsProps = {
   column: ValidatedColumnInfo;
-  db: DBHandlerClient;
+  db: Prgl["db"];
   w: SyncDataItem<Required<WindowData<"table">>, true>;
 };
 export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {

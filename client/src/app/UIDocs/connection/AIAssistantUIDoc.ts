@@ -9,7 +9,7 @@ export const AIAssistantUIDoc = {
   selectorCommand: "AskLLM",
   title: "AI Assistant",
   description:
-    "Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.",
+    "Opens an AI assistant chat to help generate SQL queries, understand database schema, or perform other tasks.",
   docs: fixIndent(`
     The AI assistant is an intelligent companion that helps you work more efficiently with your PostgreSQL databases. 
     It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.
@@ -17,9 +17,9 @@ export const AIAssistantUIDoc = {
 
     <img src="./screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" />
  
-    Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
+    Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, Ollama and any other Local Models that support the openai spec. 
 
-    *Note: AI providers are configured by administrators in Server Settings > LLM Providers*
+    *Note: AI providers are configured in Server Settings > LLM Providers*
   `),
   docOptions: "asSeparateFile",
   children: [

@@ -40,9 +40,8 @@ export const useSmartForm = (props: SmartFormProps) => {
   );
 
   const mediaTableInfo = useMemo(() => {
-    const tableInfo = table?.info;
-    if (tableInfo?.hasFiles && tableInfo.fileTableName) {
-      return tables.find((t) => t.info.isFileTable)?.info;
+    if (table?.hasFiles && table.fileTableName) {
+      return tables.find((t) => t.isFileTable);
     }
   }, [table, tables]);
 

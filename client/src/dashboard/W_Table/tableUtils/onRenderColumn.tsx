@@ -96,7 +96,7 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
         }
         return formatRender.render(value, row, c, c.format!, maxCellChars);
       }
-    : table?.info.isFileTable && c.name === "url" ?
+    : table?.isFileTable && c.name === "url" ?
       ({ value, row }) => {
         return <MediaViewer key={value} url={value} />;
       }

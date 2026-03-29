@@ -154,8 +154,7 @@ export const SmartFormFieldForeignKey = (
       return (
         <FileInput
           className={
-            "mt-p5 f-0 formfield-bg-color " +
-            (table.info.isFileTable ? "mt-2" : "")
+            "mt-p5 f-0 formfield-bg-color " + (table.isFileTable ? "mt-2" : "")
           }
           label={column.label}
           media={media}

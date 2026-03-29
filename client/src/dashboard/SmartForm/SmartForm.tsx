@@ -178,9 +178,8 @@ export const SmartForm = (props: SmartFormProps) => {
   const { tableName } = props;
   const stateOrError = useSmartForm(props);
   const { mode, error, table } = stateOrError;
-  const tableInfo = table?.info;
 
-  if (!tableInfo) {
+  if (!table) {
     return <>Table {tableName} not found.</>;
   }
 
@@ -208,7 +207,6 @@ const SmartFormWithNoError = ({
   const [showAsMarkdown, setShowAsMarkdown] = useState(false);
 
   const { mode, displayedColumns, errors, error, table, loading } = state;
-  const tableInfo = table.info;
 
   const isLoading = loading || ("loading" in mode ? mode.loading : false);
   const headerFromCardConfig =
@@ -222,7 +220,7 @@ const SmartFormWithNoError = ({
     : undefined;
   const headerText =
     label ??
-    (headerFromCardConfig || table.label || tableInfo.comment || tableName);
+    (headerFromCardConfig || table.label || table.comment || tableName);
 
   const formHeader =
     asPopup ? null

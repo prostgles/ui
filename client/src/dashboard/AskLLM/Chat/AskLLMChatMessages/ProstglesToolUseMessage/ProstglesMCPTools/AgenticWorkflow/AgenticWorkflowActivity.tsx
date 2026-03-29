@@ -12,11 +12,15 @@ import { SvgIcon } from "@components/SvgIcon";
 import { mdiRobotOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
-import { tryCatchV2 } from "prostgles-types";
+import { getKeys, includes, tryCatchV2 } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
 import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
+import {
+  PROSTGLES_MCP_SERVERS_AND_TOOLS,
+  ProstglesDbTools,
+} from "@common/prostglesMcp";
 
 export const AgenticWorkflowActivity = ({
   chatId,
@@ -115,8 +119,24 @@ export const AgenticWorkflowActivity = ({
                     "Tools"
                   }
                 />;
-            const name =
-              item.type === "agent_chat" ? item.name : item.mcp_tool_name;
+            const name = (() => {
+              if (item.type === "agent_chat") {
+                return item.name;
+              }
+              const { mcp_server_name, mcp_tool_name } = item;
+              const dbTools = getKeys(PROSTGLES_MCP_SERVERS_AND_TOOLS["db"]);
+              const toolInput = item.input;
+              const mcpToolDisplayName = `${mcp_server_name} ${mcp_tool_name}`;
+              if (
+                mcp_server_name ===
+                  ("db" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS) &&
+                includes(dbTools, mcp_tool_name) &&
+                typeof toolInput.tableName === "string"
+              ) {
+                return `${mcpToolDisplayName} ${toolInput.tableName} `;
+              }
+              return mcpToolDisplayName;
+            })();
 
             const startedAt =
               item.type === "agent_chat" ?

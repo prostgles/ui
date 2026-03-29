@@ -78,7 +78,7 @@ export const ServerSettings = ({ serverState }: ServerSettingsProps) => {
                     </InfoRow>
                     <SmartCardList
                       sql={dbsSql}
-                      db={dbs as DBHandlerClient}
+                      db={dbs}
                       methods={dbsMethodSchema}
                       tableName="credentials"
                       tables={dbsTables}

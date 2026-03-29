@@ -338,7 +338,7 @@ export class ConnectionManager {
         { limit: 1000, orderBy: { last_updated: 1 } },
       );
       if (newUsers.length) {
-        await db.users.insert?.(
+        await db.users.insertMany?.(
           newUsers.map((u) => pickKeys(u, syncableColumns)),
           { onConflict: "DoUpdate" },
         );

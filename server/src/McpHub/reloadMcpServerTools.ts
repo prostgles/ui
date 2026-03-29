@@ -76,7 +76,7 @@ export const updateMcpServerTools = async (
         );
       });
     if (tools.length) {
-      await tx.mcp_server_tools.insert(
+      await tx.mcp_server_tools.insertMany(
         tools.map(
           ({
             name,

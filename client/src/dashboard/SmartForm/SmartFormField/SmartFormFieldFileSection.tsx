@@ -11,7 +11,7 @@ type P = {
 } & Pick<SmartFormProps, "db">;
 
 export const SmartFormFieldFileSection = ({ db, table, media }: P) => {
-  const { fileTableName } = table.info;
+  const { fileTableName } = table;
   const mediaFile = usePromise(async () => {
     if (!fileTableName || !media) return undefined;
     if (typeof media === "string") {

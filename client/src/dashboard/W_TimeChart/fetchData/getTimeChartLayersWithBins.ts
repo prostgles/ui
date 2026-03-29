@@ -71,7 +71,9 @@ async function getTimeChartLayerWithBin(
       : layer.localTableName;
     const { dateColumn } = layer;
 
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as
+      | Partial<TableHandlerClient>
+      | undefined;
     if (!tableHandler?.findOne || !tableHandler.find) {
       throw `Cannot query table ${tableName}: Missing or disallowed`;
     }

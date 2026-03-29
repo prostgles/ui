@@ -91,7 +91,7 @@ export const DashboardMenuSettings = ({ workspace }: P) => {
               <SmartForm
                 tableName="connections"
                 label=""
-                db={dbs as DBHandlerClient}
+                db={dbs}
                 sql={dbsSql}
                 {...smartFormProps}
                 contentClassname="p-0"

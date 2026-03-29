@@ -47,7 +47,7 @@ export const PublishedMethods = ({
         <p className="p-0 m-0">Server-side user triggered functions</p>
         <SmartCardList
           sql={dbsSql}
-          db={dbs as DBHandlerClient}
+          db={dbs}
           methods={dbsMethodSchema}
           tables={dbsTables}
           tableName="published_methods"

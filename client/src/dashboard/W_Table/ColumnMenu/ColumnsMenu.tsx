@@ -1,11 +1,12 @@
 import Popup from "@components/Popup/Popup";
 
+import type { SQLHandler } from "prostgles-client";
 import type {
   SingleSyncHandles,
   SyncDataItem,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
+import type { Prgl } from "src/App";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
   WindowData,
@@ -21,10 +22,9 @@ import { ColumnList } from "./ColumnList";
 import type { ColumnConfig } from "./ColumnMenu";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
-import type { SQLHandler } from "prostgles-client";
 
 type P = {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   sql: SQLHandler | undefined;
   w: WindowSyncItem<"table">;
   nestedColumnOpts: NestedColumnOpts | undefined;

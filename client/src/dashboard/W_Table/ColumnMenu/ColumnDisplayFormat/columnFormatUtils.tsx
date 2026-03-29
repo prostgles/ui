@@ -336,7 +336,7 @@ export const DISPLAY_FORMATS = [
     type: "URL",
     tsDataType: ["string"],
     match: (t, c) =>
-      t.info.isFileTable && ["cloud_url", "signed_url"].includes(c.name),
+      t.isFileTable && ["cloud_url", "signed_url"].includes(c.name),
     render: HREFRender,
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "URL" }>>,
   {

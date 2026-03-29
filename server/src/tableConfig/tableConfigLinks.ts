@@ -73,6 +73,10 @@ const CommonChartLinkOpts = {
 
 export const tableConfigLinks: TableConfig<{ en: 1 }> = {
   links: {
+    syncConfig: {
+      id_fields: ["id"],
+      synced_field: "last_updated",
+    },
     columns: {
       id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
       user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,

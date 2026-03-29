@@ -32,7 +32,7 @@ export const Services = ({ showSpecificService }: P) => {
   return (
     <SmartCardList
       sql={dbsSql}
-      db={dbs as DBHandlerClient}
+      db={dbs}
       title={
         showSpecificService && (
           <Label

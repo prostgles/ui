@@ -12,23 +12,27 @@ SQL Editor and internal tool builder for Postgres
   <img src="./docs/screenshots/overview.svgif.svg" width="100%"/>  
 </p>
 
+### Quick start
+
+Prostgles UI can be quickly set up through either one of these options:
+
+- By installing the [desktop version](#installation---desktop-version)
+- Through [Docker Compose](#installation---docker-compose-recommended)
+
 ### Features
 
 - SQL Editor with context-aware schema auto-completion and documentation extracts and hints
-- Realtime data exploration dashboard with versatile layout system (tab and side-by-side view)
+- AI assitant with MCP support, agentic workflow generation and granular data access permissions
+- Data exploration dashboard with customiseable layout
 - Table view with controls to view related data, sort, filter and cross-filter
 - Map and Time charts with aggregations
-- Data insert/update forms with autocomplete
-- Role based access control rules
-- Isomorphic TypeScript API with schema types, end to end type safety and React hooks
-- File upload (locally or to cloud)
-- Search all tables from public schema
+- Isomorphic TypeScript API with schema types and React hooks support
+- File storage (locally or to cloud)
+- Global search and command palette
 - Media file display (audio/video/image/html/svg)
 - Data import (CSV, JSON and GeoJSON)
 - Backup/Restore (locally or to cloud)
 - TypeScript server-side functions (experimental)
-- Mobile friendly
-- LISTEN NOTIFY support
 
 ### Installation - Docker compose (recommended)
 
@@ -57,6 +61,12 @@ To use with docker mcp experimental feature:
 ```bash
 docker compose --profile=docker-mcp up --build
 ```
+
+### Installation - Desktop version
+
+- To install the pre-built installation files follow [these instructions](<./docs/03_Installation_(Desktop_Version).md>)
+
+- To build the installation files yourself you can follow the [these instructions](./electron/README.md)
 
 ### Installation - use existing PostgreSQL instance
 

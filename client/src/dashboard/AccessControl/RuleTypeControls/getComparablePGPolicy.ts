@@ -1,11 +1,12 @@
-import { asName, type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import {
   getFinalFilter,
   parseContextVal,
-  type GroupedDetailedFilter,
   type DetailedFilter,
+  type GroupedDetailedFilter,
 } from "@common/filterUtils";
 import type { ForcedData } from "@common/publishUtils";
+import { asName } from "prostgles-client/dist/prostgles";
+import type { Prgl } from "src/App";
 import type { SelectRuleControlProps } from "./SelectRuleControl";
 type GetComparablePGPolicyArgs = Pick<
   SelectRuleControlProps,
@@ -16,7 +17,7 @@ type GetComparablePGPolicyArgs = Pick<
   checkFilterDetailed: GroupedDetailedFilter | undefined;
   forcedDataDetail: ForcedData[] | undefined;
   excludeRLSStatement?: boolean;
-  db: DBHandlerClient;
+  db: Prgl["db"];
 };
 
 export const getComparablePGPolicy = async ({

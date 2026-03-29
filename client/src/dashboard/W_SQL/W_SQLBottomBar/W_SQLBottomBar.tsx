@@ -1,16 +1,3 @@
-import {
-  mdiAlertOutline,
-  mdiCancel,
-  mdiChevronDown,
-  mdiPlay,
-  mdiStopCircleOutline,
-  mdiTable,
-} from "@mdi/js";
-import { isDefined, type DBHandler, type SQLHandler } from "prostgles-types";
-import React, { useEffect, useRef, useState } from "react";
-import type { Prgl } from "../../../App";
-import { dataCommand } from "../../../Testing";
-import { useReactiveState } from "../../../appUtils";
 import Btn from "@components/Btn";
 import ButtonGroup from "@components/ButtonGroup";
 import ErrorComponent from "@components/ErrorComponent";
@@ -20,14 +7,26 @@ import Loading from "@components/Loader/Loading";
 import Popup from "@components/Popup/Popup";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
+import {
+  mdiAlertOutline,
+  mdiCancel,
+  mdiChevronDown,
+  mdiPlay,
+  mdiStopCircleOutline,
+  mdiTable,
+} from "@mdi/js";
+import { isDefined, type SQLHandler } from "prostgles-types";
+import React, { useEffect, useRef, useState } from "react";
+import type { Prgl } from "../../../App";
+import { dataCommand } from "../../../Testing";
+import { useReactiveState } from "../../../appUtils";
+import { t } from "../../../i18n/i18nUtils";
 import type { DBS, DBSMethods } from "../../Dashboard/DBS";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { CopyResultBtn } from "../CopyResultBtn";
-import type { W_SQL } from "../W_SQL";
-import type { W_SQLState } from "../W_SQL";
+import type { W_SQL, W_SQLState } from "../W_SQL";
 import { Counter, SQL_NOT_ALLOWED } from "../W_SQL";
 import { W_SQLBottomBarProcStats } from "./W_SQLBottomBarProcStats";
-import { t } from "../../../i18n/i18nUtils";
 
 /**
  * @deprecated use from prostgles-types
@@ -39,7 +38,7 @@ export const includes = <T extends string | undefined, ArrV extends T>(
 
 export type W_SQLBottomBarProps = {
   killQuery: (terminate: boolean) => void;
-  db: DBHandler;
+  db: Prgl["db"];
   sql: SQLHandler | undefined;
   dbs: DBS;
   dbsMethods: DBSMethods;

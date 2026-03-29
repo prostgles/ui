@@ -47,7 +47,7 @@ const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
       Date.now(),
       "onDebug",
       ev.type,
-      Object.keys(ev.type === "schemaChanged" ? ev.data.schema : ev.data.db),
+      Object.keys(ev.type === "schemaChanged" ? ev.data : ev.data.db),
     );
   }
 };
@@ -210,7 +210,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       dbKey: "db-onReady-" + Date.now(),
       databaseId,
       sql: is_state_db ? dbsSql : sql,
-      db: is_state_db ? (dbs as DBHandlerClient) : (db as DBHandlerClient),
+      db: is_state_db ? dbs : (db as DBHandlerClient),
       tables: is_state_db ? dbsTables : dbTables,
       methods: is_state_db ? dbsMethodSchema : methodSchema,
       projectPath: path,

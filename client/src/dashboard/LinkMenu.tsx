@@ -15,9 +15,10 @@ import type {
 import RTComp from "./RTComp";
 import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
+import type { Prgl } from "src/App";
 
 type P = {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   dbs: DBS;
   onClose: VoidFunction;
 

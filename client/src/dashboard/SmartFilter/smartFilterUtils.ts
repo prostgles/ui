@@ -1,14 +1,12 @@
 import type { DetailedFilter, DetailedFilterBase } from "@common/filterUtils";
 import { getFinalFilter } from "@common/filterUtils";
-import type {
-  DBHandlerClient,
-  TableHandlerClient,
-} from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
+import type { Prgl } from "src/App";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
+import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 
 export const testFilter = (
   f: DetailedFilter,
@@ -56,7 +54,7 @@ type ComputedColumn = Pick<
 export type FilterColumn = TableColumn | ComputedColumn;
 
 export type BaseFilterProps = Pick<FilterWrapperProps, "variant"> & {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   tableName: string;
   onChange: (filter?: DetailedFilter) => void;
   tables: CommonWindowProps["tables"];

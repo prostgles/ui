@@ -115,7 +115,7 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
                   options: {
                     type,
                     columns: [],
-                    osmLayerQuery,
+                    dataSource: { type: "osm", osmLayerQuery },
                   },
                   last_updated: undefined as any,
                   user_id: undefined as any,

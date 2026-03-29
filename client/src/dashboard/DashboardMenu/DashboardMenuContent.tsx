@@ -153,7 +153,7 @@ export const DashboardMenuContent = (props: P) => {
         />
       )}
 
-      <TableList workspace={workspace} />
+      <TableList workspace={workspace} onClose={onClose} />
 
       {detailedMethods.length > 0 && (
         <SearchList

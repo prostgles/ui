@@ -222,7 +222,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
       l1Opts = {
         ...(tableMeta && {
           "Table info": {
-            label: table?.info.isView ? "View info" : undefined,
+            label: table?.isView ? "View info" : undefined,
             leftIconPath: mdiInformationOutline,
             disabledText: sql ? undefined : "Not enough privileges",
             content: <W_TableMenu_TableInfo {...commonProps} />,

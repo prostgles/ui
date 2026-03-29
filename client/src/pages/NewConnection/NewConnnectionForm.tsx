@@ -21,7 +21,7 @@ import {
 import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router";
-import type { AppContextProps } from "../../App";
+import type { AppContextProps, Prgl } from "../../App";
 import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
 import { CodeConfirmation } from "../../dashboard/BackupAndRestore/CodeConfirmation";
 import RTComp from "../../dashboard/RTComp";
@@ -86,8 +86,8 @@ export const DEFAULT_CONNECTION = {
 } as const;
 
 type NewConnectionProps = {
-  db: FullExtraProps["dbProject"] | undefined;
-  sql: FullExtraProps["dbSql"] | undefined;
+  db: Prgl["db"] | undefined;
+  sql: Prgl["sql"] | undefined;
   connectionId: string | undefined;
   prglState: Pick<
     AppContextProps,
@@ -404,7 +404,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                         newRowDataHandler={undefined}
                         newRowData={undefined}
                         style={{ padding: 0 }}
-                        db={prglState.dbs as DBHandlerClient}
+                        db={prglState.dbs}
                         sql={prglState.dbsSql}
                         rowFilter={[{ fieldName: "id", value: this.conId }]}
                         showRelated="descendants"

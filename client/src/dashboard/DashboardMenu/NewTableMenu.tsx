@@ -1,4 +1,10 @@
-import { mdiFileUploadOutline, mdiFunction, mdiPlus, mdiTable } from "@mdi/js";
+import {
+  mdiCube,
+  mdiFileUploadOutline,
+  mdiFunction,
+  mdiPlus,
+  mdiTable,
+} from "@mdi/js";
 import React, { useState } from "react";
 import type { FullOption } from "@components/Select/Select";
 import { Select } from "@components/Select/Select";
@@ -7,6 +13,7 @@ import { NewMethod } from "../W_Method/NewMethod";
 import { CreateTable } from "./CreateTable";
 import type { DashboardMenuProps } from "./DashboardMenu";
 import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
+import { useAlert } from "@components/AlertProvider";
 
 const items = [
   { key: "new table", label: "Create table", iconPath: mdiTable },
@@ -22,6 +29,11 @@ const items = [
     subLabel: "(Experimental)",
     iconPath: mdiFunction,
   },
+  {
+    key: "agentic workflow",
+    label: "Create Agentic Workflow",
+    iconPath: mdiCube,
+  },
 ] as const satisfies FullOption[];
 
 export const NewTableMenu = (
@@ -31,6 +43,7 @@ export const NewTableMenu = (
   const { sql } = prgl;
   const [show, setShow] = useState<(typeof items)[number]["key"]>();
   const { addViewToWorkspace } = useAddViewToWorkspace();
+  const { addAlert } = useAlert();
   if (!sql) return null;
 
   return (
@@ -50,7 +63,19 @@ export const NewTableMenu = (
         }}
         fullOptions={items}
         onChange={(o) => {
-          setShow(o);
+          if (o === "agentic workflow") {
+            addAlert({
+              children: (
+                <>
+                  Agentic workflows are created through the{" "}
+                  <strong>Create workflow</strong> prompt in the AI Assistant
+                  chat.
+                </>
+              ),
+            });
+          } else {
+            setShow(o);
+          }
         }}
       />
       {show === "new table" && (

@@ -3,7 +3,6 @@ import type {
   DetailedJoinedFilter,
   FilterType,
 } from "@common/filterUtils";
-import "./FilterWrapper.css";
 import {
   CORE_FILTER_TYPES,
   DATE_FILTER_TYPES,
@@ -17,14 +16,19 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { Select } from "@components/Select/Select";
 import { mdiCheckBold, mdiDelete } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
 import { includes } from "prostgles-types";
 import React from "react";
+import type { Prgl } from "src/App";
 import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";
 import RTComp from "../RTComp";
+import { JOIN_FILTER_TYPES } from "../SmartFilter/AddJoinFilter";
+import { MinimisedFilter } from "../SmartFilter/MinimisedFilter";
+import {
+  DEFAULT_VALIDATED_COLUMN_INFO,
+  type FilterColumn,
+} from "../SmartFilter/smartFilterUtils";
 import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
-import { JOIN_FILTER_TYPES } from "../SmartFilter/AddJoinFilter";
 import {
   AgeFilterTypes,
   getDefaultAgeFilter,
@@ -33,14 +37,10 @@ import {
   GeoFilterTypes,
   getDefaultGeoFilter,
 } from "./DetailedFilterBaseTypes/GeoFilter";
-import { MinimisedFilter } from "../SmartFilter/MinimisedFilter";
-import {
-  DEFAULT_VALIDATED_COLUMN_INFO,
-  type FilterColumn,
-} from "../SmartFilter/smartFilterUtils";
+import "./FilterWrapper.css";
 
 export type FilterWrapperProps = {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   tableName: string;
   onChange: (filter?: DetailedFilterBase) => void;
   filter?: DetailedFilterBase;

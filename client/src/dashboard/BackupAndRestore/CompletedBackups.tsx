@@ -93,7 +93,7 @@ export const CompletedBackups = ({
         </FlexCol>
       }
       onSetData={(items) => setHasBackups(!!items.length)}
-      db={dbs as DBHandlerClient}
+      db={dbs}
       methods={dbsMethodSchema}
       tableName="backups"
       tables={dbsTables}

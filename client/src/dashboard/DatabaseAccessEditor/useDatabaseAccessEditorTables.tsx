@@ -41,8 +41,11 @@ export const useDatabaseAccessEditorTables = ({
             .map(
               (t) =>
                 ({
+                  oid: NEW_OBJECT_OID,
+                  isView: false,
                   joins: [],
                   joinsV2: [],
+                  publishInfo: {},
                   label: t.name,
                   name: t.name,
                   ddlState: getTableSchemaDriftState(
@@ -50,7 +53,6 @@ export const useDatabaseAccessEditorTables = ({
                     t,
                     newTablesDdl,
                   ),
-                  info: { oid: NEW_OBJECT_OID, isView: false },
                   columns: t.columns.map(
                     ({ name, dataType }) =>
                       ({

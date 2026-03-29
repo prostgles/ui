@@ -110,7 +110,7 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
     );
     const res = allowedTables
       .map((t) => {
-        const viewDefinition = viewDefinitonsMap.get(t.info.oid.toString());
+        const viewDefinition = viewDefinitonsMap.get(t.oid.toString());
         if (viewDefinition) {
           return {
             query: `CREATE VIEW ${t.name} AS ${viewDefinition}`,
@@ -119,7 +119,7 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
         }
 
         const constraints = tableConstraints.filter(
-          (c) => c.table_oid === t.info.oid,
+          (c) => c.table_oid === t.oid,
         );
 
         const singlePkeyConstraints = new Set<string>();

@@ -25,7 +25,7 @@ export const TableList = ({
   onClose,
 }: {
   workspace: DBSSchema["workspaces"];
-  onClose?: VoidFunction;
+  onClose: VoidFunction | undefined;
 }) => {
   const {
     tables,
@@ -104,7 +104,7 @@ export const TableList = ({
           contentLeft: (
             <div
               data-command={
-                table.info.isFileTable ? "dashboard.menu.fileTable" : undefined
+                table.isFileTable ? "dashboard.menu.fileTable" : undefined
               }
               className="flex-col ai-start f-0 text-1"
             >
@@ -112,13 +112,13 @@ export const TableList = ({
                 <SvgIcon icon={table.icon} />
               : <Icon
                   title={
-                    table.info.isFileTable ? "File table"
-                    : table.info.isView ?
+                    table.isFileTable ? "File table"
+                    : table.isView ?
                       "View"
                     : "Table"
                   }
                   path={
-                    table.info.isFileTable ? mdiFile
+                    table.isFileTable ? mdiFile
                     : db[table.name]?.insert ?
                       mdiTableEdit
                     : mdiTableEye
@@ -129,7 +129,7 @@ export const TableList = ({
           ),
           key: table.name,
           label: table.label,
-          title: table.info.comment,
+          title: table.comment,
           contentRight: table.endText.length > 0 && (
             <span title={table.endTitle} className="text-2 ml-auto">
               {table.endText}

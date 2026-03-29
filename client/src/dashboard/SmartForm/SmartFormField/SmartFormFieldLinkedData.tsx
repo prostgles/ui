@@ -96,7 +96,7 @@ const useSmartFieldForeignKeyOptionsState = ({
   const isUpsertingFile = column.file && action !== "view" && isObject(value);
   return useMemo(() => {
     const ref = getPossibleNestedInsert(column, tables);
-    const fileTableName = tables[0]?.info.fileTableName;
+    const fileTableName = tables[0]?.fileTableName;
     const ftable =
       ref?.ftable ?? (column.file && fileTableName ? fileTableName : undefined);
     const ftableInfo =

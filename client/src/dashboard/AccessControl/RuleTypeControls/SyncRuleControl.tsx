@@ -58,7 +58,7 @@ export const SyncRuleControl = ({
     : undefined;
 
   const cannotEnableError =
-    table.info.isView ? "Only tables can be synced"
+    table.isView ? "Only tables can be synced"
     : !tableRules.select ? "Cannot enable sync without select rule"
     : !(tableRules.update || tableRules.insert || tableRules.delete) ?
       "Cannot enable sync without at least one of the following rules: insert, update, delete"

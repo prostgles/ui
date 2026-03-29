@@ -15,6 +15,7 @@ import type { DashboardState } from "../../Dashboard/Dashboard";
 import RTComp from "../../RTComp";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
 import { onSearchItems } from "./onSearchItems";
+import type { Prgl } from "src/App";
 
 export type SmartSearchOnChangeArgs = {
   filter: DetailedFilter[];
@@ -34,7 +35,7 @@ export type SmartSearchOnChangeArgs = {
 
 type P = {
   id?: string;
-  db: DBHandlerClient;
+  db: Prgl["db"];
   tableName: string;
   columns?: string[];
   column?: string | ColumnConfig;

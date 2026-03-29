@@ -103,7 +103,7 @@ export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
 
   const modeType = mode?.type;
   const displayedColumns = useMemo(() => {
-    if (table?.info.isFileTable && modeType === "insert") {
+    if (table?.isFileTable && modeType === "insert") {
       return [];
     }
 
@@ -117,7 +117,7 @@ export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
           (c.update || (!hideNonUpdateableColumns && c.select))) ||
         (modeType === "insert" && c.insert),
     );
-  }, [smartCols, modeType, hideNonUpdateableColumns, table?.info.isFileTable]);
+  }, [smartCols, modeType, hideNonUpdateableColumns, table?.isFileTable]);
 
   return {
     columns: smartCols,

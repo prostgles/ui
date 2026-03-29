@@ -22,6 +22,7 @@ import { getEditColumn } from "./getEditColumn";
 import { getFullColumnConfig } from "./getFullColumnConfig";
 import { onRenderColumn } from "./onRenderColumn";
 import { getCellStyle } from "./StyledTableColumn";
+import type { TableHandlerClient } from "prostgles-client";
 
 export type ProstglesTableColumn = ProstglesColumn & ColumnConfigWInfo;
 
@@ -223,7 +224,7 @@ export const getTableCols = ({
 
     return tableColumn;
   });
-  const tableHandler = db[tableName];
+  const tableHandler = db[tableName] as TableHandlerClient | undefined;
 
   /* Can update table. Add update button */
   if (tableHandler && !hideEditRow && !w.options.hideEditRow) {

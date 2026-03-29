@@ -1,21 +1,19 @@
-import React from "react";
 import Loading from "@components/Loader/Loading";
+import React from "react";
 
 import type { CommonWindowProps } from "../../dashboard/Dashboard/Dashboard";
 import { Dashboard } from "../../dashboard/Dashboard/Dashboard";
 
-import type { DBHandlerClient } from "prostgles-client";
 import type { AppContextProps, Prgl } from "../../App";
 
-import { useParams, useSearchParams } from "react-router";
 import type { DBSSchema } from "@common/publishUtils";
+import type { SQLHandler } from "prostgles-client";
+import type { ClientFunctionHandler } from "prostgles-client/dist/getMethods";
+import { useParams, useSearchParams } from "react-router";
 import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionConfig";
+import { PrglProvider } from "./PrglContextProvider";
 import { ProjectConnectionError } from "./ProjectConnectionError";
 import { useProjectDb } from "./useProjectDb";
-import { PrglProvider } from "./PrglContextProvider";
-import type { ClientFunctionHandler } from "prostgles-client/dist/getMethods";
-import type { SQLHandler } from "prostgles-client";
-import { LLMSetupProvider } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -25,7 +23,7 @@ export type ProjectProps = {
 
 export type FullExtraProps = AppContextProps & {
   projectPath?: string;
-  dbProject: DBHandlerClient;
+  dbProject: Prgl["db"];
   dbMethods: ClientFunctionHandler;
   dbTables: CommonWindowProps["tables"];
   dbSql: SQLHandler | undefined;

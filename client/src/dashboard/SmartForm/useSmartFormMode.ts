@@ -73,7 +73,6 @@ export const useSmartFormMode = (
     props;
   const [loading, setLoading] = useState(false);
   const tableHandler = db[tableName] as Partial<TableHandlerClient> | undefined;
-  const tableInfo = table?.info;
   const [localRowFilter, setLocalRowFilter] = useState(rowFilter);
   useEffectDeep(() => {
     setLocalRowFilter(rowFilter);
@@ -101,7 +100,7 @@ export const useSmartFormMode = (
   const activeRowFilter = localRowFilter || rowFilter;
 
   const modeOrError: ModeOrError = useMemo(() => {
-    if (!tableHandlerGetInfo || !tableHandlerGetColumns || !tableInfo) {
+    if (!tableHandlerGetInfo || !tableHandlerGetColumns || !table) {
       return ("Table getInfo/getColumns hooks not available/published: " +
         tableName) satisfies ModeOrError;
     }
@@ -141,12 +140,12 @@ export const useSmartFormMode = (
       const select = { "*": 1 } as const;
 
       if (
-        tableInfo.fileTableName &&
-        tableInfo.fileTableName !== tableName &&
-        tableInfo.hasFiles &&
-        db[tableInfo.fileTableName]?.find
+        table.fileTableName &&
+        table.fileTableName !== tableName &&
+        table.hasFiles &&
+        db[table.fileTableName]?.find
       ) {
-        select[tableInfo.fileTableName] = "*";
+        select[table.fileTableName] = "*";
       }
 
       return {
@@ -183,7 +182,7 @@ export const useSmartFormMode = (
     }
     //@ts-ignore
   }, [
-    tableInfo,
+    table,
     rowFilter,
     tableName,
     isManuallyControlled,

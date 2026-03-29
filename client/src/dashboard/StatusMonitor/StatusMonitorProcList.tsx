@@ -114,7 +114,7 @@ export const StatusMonitorProcList = (
   return (
     <SmartCardList
       sql={dbsSql}
-      db={dbs as DBHandlerClient}
+      db={dbs}
       methods={dbsMethodSchema}
       tables={dbsTables}
       tableName="stats"

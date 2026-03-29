@@ -5,10 +5,9 @@ import type {
   FileTableConfig,
   ProstglesInitOptions,
 } from "prostgles-server/dist/ProstglesTypes";
-import type { DbTableInfo } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { DB, OnInitReason } from "prostgles-server/dist/initProstgles";
-import type { FileColumnConfig } from "prostgles-types";
+import type { FileColumnConfig, TableSchema } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
 import type { DatabaseConfigs, DBS } from "..";
@@ -187,7 +186,7 @@ export type FileTableConfigReferences = Record<
 
 type AlertIfReferencedFileColumnsRemovedArgs = {
   reason: OnInitReason;
-  tables: DbTableInfo[];
+  tables: TableSchema[];
   connId: string;
   db: DB;
 };

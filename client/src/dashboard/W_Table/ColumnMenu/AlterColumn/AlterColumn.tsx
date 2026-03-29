@@ -333,7 +333,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
               }
             }}
           />
-          {table.info.fileTableName && (
+          {table.fileTableName && (
             <AlterColumnFileOptions
               columnName={col.name}
               tableName={tableName}

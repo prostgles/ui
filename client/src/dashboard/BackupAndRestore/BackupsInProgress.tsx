@@ -78,7 +78,7 @@ export const BackupsInProgress = ({
 
   return (
     <SmartCardList<DBSSchema["backups"]>
-      db={dbs as DBHandlerClient}
+      db={dbs}
       sql={dbsSql}
       methods={dbsMethodSchema}
       tableName="backups"

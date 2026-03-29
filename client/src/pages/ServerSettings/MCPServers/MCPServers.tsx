@@ -83,7 +83,7 @@ export const MCPServers = ({ chatId }: MCPServersProps) => {
           )}
           <SmartCardList<MCPServerWithToolAndConfigs>
             sql={dbsSql}
-            db={dbs as DBHandlerClient}
+            db={dbs}
             methods={dbsMethodSchema}
             className={mcp_servers_disabled ? "no-interaction" : undefined}
             tableName="mcp_servers"

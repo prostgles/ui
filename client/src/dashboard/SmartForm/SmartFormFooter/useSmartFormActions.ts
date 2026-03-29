@@ -110,7 +110,7 @@ export const useSmartFormActions = ({
               }
 
               const doInsert = async () => {
-                if (table.info.isFileTable && parentForm) {
+                if (table.isFileTable && parentForm) {
                   const { table: parentTable, rowFilter: parentRowFilter } =
                     parentForm;
                   const pkeyColumns = parentTable.columns

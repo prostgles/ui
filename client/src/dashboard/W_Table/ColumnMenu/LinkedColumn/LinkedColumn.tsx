@@ -88,7 +88,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
   useEffect(() => {
     if (!localColumn) return;
     const shownCols = localColumn.nested?.columns.filter((c) => c.show) ?? [];
-    const width = shownCols.length > 2 || table?.info.isFileTable ? 250 : 150;
+    const width = shownCols.length > 2 || table?.isFileTable ? 250 : 150;
     if (localColumn.width !== width) {
       setLocalColumn({ ...localColumn, width });
     }
@@ -154,7 +154,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
              */
             const nestedColumns = getColWInfo(table, null).map((c, i) => ({
               ...c,
-              show: !!table.info.isFileTable || i < 5,
+              show: !!table.isFileTable || i < 5,
             }));
             const newCol: ColumnConfig = {
               name: newColName,

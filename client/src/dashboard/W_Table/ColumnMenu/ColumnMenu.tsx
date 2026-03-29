@@ -15,7 +15,6 @@ import {
   mdiTools,
   mdiViewColumnOutline,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
 import React, { useEffect, useState } from "react";
 
 import type {
@@ -34,12 +33,14 @@ import { ColumnStyleControls } from "./ColumnStyleControls/ColumnStyleControls";
 
 import type { DetailedFilter } from "@common/filterUtils";
 import Popup from "@components/Popup/Popup";
+import { useIsMounted } from "prostgles-client";
 import {
   includes,
   pickKeys,
   type ParsedJoinPath,
   type ValidatedColumnInfo,
 } from "prostgles-types";
+import type { Prgl } from "src/App";
 import { useReactiveState } from "../../../appUtils";
 import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
@@ -62,8 +63,6 @@ import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import type { FuncDef } from "./FunctionSelector/functions";
 import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
-import { useIsMounted } from "prostgles-client";
-import { sql } from "sql-formatter";
 
 export type ColumnConfig = {
   idx?: number;
@@ -126,7 +125,7 @@ export type ColumnConfig = {
 };
 
 type P = Pick<CommonWindowProps, "suggestions" | "tables" | "prgl"> & {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   dbs: DBS;
   w: WindowSyncItem<"table">;
   columnMenuState: W_Table["columnMenuState"];

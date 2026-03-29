@@ -186,7 +186,7 @@ export const Sessions = ({ displayType, className = "" }: SessionsProps) => {
   return (
     <SmartCardList
       className={"min-h-0 f-1 " + className}
-      db={dbs as DBHandlerClient}
+      db={dbs}
       sql={dbsSql}
       methods={dbsMethodSchema}
       tableName="sessions"

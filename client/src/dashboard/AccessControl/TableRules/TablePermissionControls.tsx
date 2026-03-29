@@ -137,7 +137,7 @@ export const TablePermissionControls = (
           : undefined;
 
         const disabledInfo =
-          table?.info.isView && ruleType !== "select" ?
+          table?.isView && ruleType !== "select" ?
             "Can only select from a view"
           : undefined;
 
@@ -162,7 +162,7 @@ export const TablePermissionControls = (
                 ...(fileRefRules ? { gap: "8px" } : {}),
               }}
               onClick={() => {
-                if (table?.info.isFileTable) {
+                if (table?.isFileTable) {
                   setEditedRuleType(ruleType);
                   return;
                 }

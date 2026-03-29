@@ -7,6 +7,7 @@ import { getTableSelect } from "../../W_Table/tableUtils/getTableSelect";
 import type { BaseFilterProps } from "../../SmartFilter/SmartFilter";
 import { _PG_numbers } from "prostgles-types";
 import { FlexRowWrap } from "@components/Flex";
+import type { TableHandlerClient } from "prostgles-client";
 
 type NumberOrDateFilterProps = BaseFilterProps & {
   type: "number" | "date";
@@ -32,7 +33,7 @@ export class NumberOrDateFilter extends RTComp<
   onDelta = async (dP, dS, dD) => {
     const { db, column, tableName, filter, tables } = this.props;
 
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as TableHandlerClient | undefined;
     if (
       !this.state.limits &&
       tableName &&

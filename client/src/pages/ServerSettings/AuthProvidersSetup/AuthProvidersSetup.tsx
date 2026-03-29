@@ -134,7 +134,7 @@ export const AuthProviderSetup = ({
                 >
               }
               disabledActions={["clone", "delete"]}
-              db={dbs as DBHandlerClient}
+              db={dbs}
               sql={dbsSql}
               methods={{}}
               tables={dbsTables}

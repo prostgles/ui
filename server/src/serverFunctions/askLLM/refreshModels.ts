@@ -133,7 +133,7 @@ export const refreshModels = async (dbs: DBS) => {
     //     ),
     // );
     if (newModels.length) {
-      await dbTx.llm_models.insert(newModels, { onConflict: "DoUpdate" });
+      await dbTx.llm_models.insertMany(newModels, { onConflict: "DoUpdate" });
     }
   });
 };

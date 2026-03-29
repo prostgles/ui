@@ -1,5 +1,5 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBHandlerClient } from "prostgles-client";
+import type { DBHandlerClient, TableHandlerClient } from "prostgles-client";
 import {
   asName,
   type PG_COLUMN_UDT_DATA_TYPE,
@@ -26,6 +26,7 @@ import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
 import { getTimechartExtentFilter } from "./getTimechartExtentFilter";
 import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
 import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import type { Prgl } from "src/App";
 
 type getTChartLayerArgs = Pick<
   W_TimeChartState,
@@ -36,7 +37,7 @@ type getTChartLayerArgs = Pick<
     bin: FetchedLayerData["binSize"];
     binSize: FetchedLayerData["binSize"] | "auto";
     desiredBinCount: number;
-    db: DBHandlerClient;
+    db: Prgl["db"];
     sql: SQLHandler | undefined;
     w: SyncDataItem<Required<WindowData<"timechart">>, true>;
   };
@@ -75,7 +76,9 @@ export async function fetchTimechartLayer({
         (layer.joinPath?.at(-1)?.table ?? layer.tableName)
       : layer.localTableName;
 
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as
+      | Partial<TableHandlerClient>
+      | undefined;
     if (!tableHandler?.findOne || !tableHandler.find) {
       throw `Cannot query table ${tableName}: Missing or disallowed`;
     }

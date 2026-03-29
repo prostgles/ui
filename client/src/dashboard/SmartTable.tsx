@@ -21,6 +21,7 @@ import type { ColumnSort } from "./W_Table/ColumnMenu/ColumnMenu";
 import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
 import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
 import type { ProstglesColumn } from "./W_Table/W_Table";
+import type { TableHandlerClient } from "prostgles-client";
 
 type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
   Pick<PopupProps, "clickCatchStyle"> & {
@@ -88,7 +89,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       allowEdit = true,
       selectedColumns,
     } = this.props;
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as TableHandlerClient | undefined;
     let _tableCols = tableCols ?? [];
     if (!tableCols) {
       const onClickEditRow = (editRowFilter) => {
@@ -150,7 +151,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     const { filter = {}, tableName, db, realtime } = this.props;
 
     void (async () => {
-      const tableHandler = db[tableName];
+      const tableHandler = db[tableName] as TableHandlerClient | undefined;
       if (
         tableHandler?.subscribe &&
         (JSON.stringify(realtime) !==
@@ -191,7 +192,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
   ) => {
     try {
       const { tableName, db } = this.props;
-      const tableHandler = db[tableName];
+      const tableHandler = db[tableName] as TableHandlerClient | undefined;
       if (!tableHandler) return;
 
       const _filter = getSmartGroupFilter(
@@ -199,9 +200,9 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
         undefined,
         this.props.filterOperand,
       );
-      const totalRows = await tableHandler.count!();
-      const filteredRows = await tableHandler.count!(_filter);
-      const rows = await tableHandler.find!(_filter, {
+      const totalRows = await tableHandler.count();
+      const filteredRows = await tableHandler.count(_filter);
+      const rows = await tableHandler.find(_filter, {
         limit: pageSize,
         orderBy: sort,
         offset: page * pageSize,

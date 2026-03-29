@@ -6,7 +6,7 @@ import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { usePromise } from "prostgles-client";
+import { usePromise, type TableHandlerClient } from "prostgles-client";
 import { omitKeys, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useEffect, useMemo, useState } from "react";
 import { pluralise } from "../../../pages/Connections/Connection";
@@ -98,14 +98,14 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
     [detailedFilter, isAnd],
   );
 
-  const tableHandler = db[tableName];
+  const tableHandler = db[tableName] as TableHandlerClient | undefined;
   const rowCount = usePromise(async () => {
     const filter = getSmartGroupFilter(
       filters,
       undefined,
       isAnd ? "and" : "or",
     );
-    const rowCount = await tableHandler!.count!(filter);
+    const rowCount = await tableHandler?.count(filter);
     return rowCount;
   }, [tableHandler, filters, isAnd]);
   const isCheck = mode === "checkFilter";

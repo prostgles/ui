@@ -7,8 +7,9 @@ import {
   mdiTableColumnPlusAfter,
   mdiTableEdit,
 } from "@mdi/js";
-import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { SQLHandler } from "prostgles-client";
 import React, { useMemo, useState } from "react";
+import type { Prgl } from "src/App";
 import { t } from "../../../i18n/i18nUtils";
 import type {
   DBSchemaTablesWJoins,
@@ -21,7 +22,6 @@ import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColu
 import { CreateColumn } from "./AlterColumn/CreateColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
-import type { SQLHandler } from "prostgles-client";
 
 const options = [
   {
@@ -55,7 +55,7 @@ const options = [
 export type AddColumnMenuProps = {
   w: WindowSyncItem<"table">;
   tables: DBSchemaTablesWJoins;
-  db: DBHandlerClient;
+  db: Prgl["db"];
   sql: SQLHandler | undefined;
   suggestions: LoadedSuggestions | undefined;
   variant?: "detailed";
@@ -101,7 +101,7 @@ export const AddColumnMenu = ({
 
   const cannotCreateColumns =
     !sql ? t.AddColumnMenu["Not enough privileges"]
-    : table.info.isView ?
+    : table.isView ?
       t.AddColumnMenu["This is a view. Cannot create columns, must recreate"]
     : undefined;
   const onClose = () => setColType();
@@ -131,7 +131,7 @@ export const AddColumnMenu = ({
               t.AddColumnMenu[
                 "Aggregates and/or Count not allowed with linked "
               ]
-            : o.key === "CreateFileColumn" && table.info.isFileTable ?
+            : o.key === "CreateFileColumn" && table.isFileTable ?
               "Cannot add file column to a file table"
             : undefined,
         }))}
@@ -141,7 +141,7 @@ export const AddColumnMenu = ({
         null
       : colType === "CreateFileColumn" ?
         <CreateFileColumn
-          fileTable={tables[0]?.info.fileTableName}
+          fileTable={tables[0]?.fileTableName}
           tableName={table.name}
           onClose={() => setColType(undefined)}
         />

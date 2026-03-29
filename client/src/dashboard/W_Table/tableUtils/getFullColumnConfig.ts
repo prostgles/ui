@@ -22,7 +22,7 @@ export const getFullColumnConfig = (
     /* Show file columns as Media format by default */
     colsWInfo = colsWInfo.map((r) => {
       const isFileColumn =
-        (table.info.isFileTable && r.name === "url") || r.info?.file;
+        (table.isFileTable && r.name === "url") || r.info?.file;
       return {
         ...r,
         format:
@@ -50,7 +50,7 @@ export const getFullColumnConfig = (
     }
 
     /* If media table then set url column display format to Media  */
-    if (!w.columns?.length && table.info.isFileTable) {
+    if (!w.columns?.length && table.isFileTable) {
       colsWInfo = structuredClone(colsWInfo);
       const urlColumnIndex = colsWInfo.findIndex((c) => c.name === "url");
       const urlColumn = colsWInfo.splice(urlColumnIndex, 1)[0];

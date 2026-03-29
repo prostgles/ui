@@ -42,7 +42,7 @@ export const InsertButton = ({
   }
 
   const table = tables.find((t) => t.name === tableName);
-  if (table?.info.isFileTable && !defaultFileData) {
+  if (table?.isFileTable && !defaultFileData) {
     return (
       <FileInput
         maxFileCount={1}

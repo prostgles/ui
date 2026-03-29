@@ -212,7 +212,7 @@ export const BackupsControls = () => {
         />
       </div>
       <SmartCardList
-        db={dbs as DBHandlerClient}
+        db={dbs}
         sql={dbsSql}
         methods={dbsMethodSchema}
         tableName="backups"

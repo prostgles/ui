@@ -99,7 +99,7 @@ export const RequestToolAccess = ({
         for (const serverName of serverNames) {
           await dbsMethods.reloadMcpServerTools?.({ serverName });
         }
-        await dbs.llm_chats_allowed_mcp_tools.insert(
+        await dbs.llm_chats_allowed_mcp_tools.insertMany(
           accessInfo.validatedTools.map(
             ({ id, server_name }) =>
               ({

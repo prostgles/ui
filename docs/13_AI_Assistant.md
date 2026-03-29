@@ -6,9 +6,9 @@ MCP Servers can be used to extend the AI capabilities with custom tools and inte
 
 <img src="./screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
 
-Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
+Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, Ollama and any other Local Models that support the openai spec. 
 
-*Note: AI providers are configured by administrators in Server Settings > LLM Providers*
+*Note: AI providers are configured in Server Settings > LLM Providers*
 
   - **Header actions**: Actions available in the header of the AI assistant popup.  
     - **Chat settings**: Allows editing all chat settings and data as well deleting or cloning the current chat.  

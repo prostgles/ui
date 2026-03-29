@@ -49,8 +49,7 @@ export const PCustomTables = ({
         dbPermissions.customTables.length > 0 &&
         dbPermissions.customTables.some((ct) => {
           const table = tables.find((t) => t.name === ct.tableName);
-          const ruleIsPossible =
-            table?.info.isView ? ruleType === "select" : true;
+          const ruleIsPossible = table?.isView ? ruleType === "select" : true;
           return !ruleIsPossible || ct[ruleType];
         });
       return [ruleType, allCustomTablesMatchRule];
@@ -107,7 +106,7 @@ export const PCustomTables = ({
                 );
                 const tableRules = existingRule ?? { tableName: t.name };
                 const toggledRuleName = getKeys(newTableRules)[0]!;
-                if (t.info.isView && toggledRuleName !== "select") {
+                if (t.isView && toggledRuleName !== "select") {
                   // Ignore non-select rule for views
                 } else {
                   tableRules[toggledRuleName] =
@@ -128,7 +127,7 @@ export const PCustomTables = ({
         limit={200}
         items={tablesWithRules
           .filter((t) => {
-            if (!hideNoRules || t.info.isFileTable) return true;
+            if (!hideNoRules || t.isFileTable) return true;
             return (
               t.rule &&
               ["select", "insert", "update", "delete"].some((ruleType) => {
@@ -178,11 +177,11 @@ export const PCustomTables = ({
             };
 
             const icon =
-              t.info.isFileTable ? { path: mdiFile, title: "File table" }
-              : t.info.isView ? { title: "View", path: mdiTableEye }
+              t.isFileTable ? { path: mdiFile, title: "File table" }
+              : t.isView ? { title: "View", path: mdiTableEye }
               : { title: "Table", path: mdiTable };
             const isNotFromWorkspaceTables =
-              !t.info.isFileTable &&
+              !t.isFileTable &&
               !editedRule?.newRule?.dbsPermissions?.createWorkspaces &&
               editedRule?.worspaceTableAndColumns?.length &&
               !editedRule.worspaceTableAndColumns.some(

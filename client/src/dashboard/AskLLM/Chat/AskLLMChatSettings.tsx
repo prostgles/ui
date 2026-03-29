@@ -74,7 +74,7 @@ export const AskLLMChatSettings = (props: LLMChatOptionsProps) => {
                 tableName="llm_chats"
                 contentClassname="p-1 pt-1"
                 {...formProps}
-                db={dbs as DBHandlerClient}
+                db={dbs}
                 tables={dbsTables}
                 methods={dbsMethodSchema}
                 sql={dbsSql}

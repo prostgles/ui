@@ -82,7 +82,7 @@ export type PrglStateCore = Pick<
 >;
 
 export type PrglCore = {
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   sql: SQLHandler | undefined;
   methods: ServerFunctionHandler;
   tables: CommonWindowProps["tables"];
