@@ -920,7 +920,8 @@ export const sendAskLLMMessage = async (
     await waitForAllMatchingLocatorsToDisappear(
       page
         .getByTestId("Chat.messageList")
-        .locator(".message.incoming .Loading")
+        .getByTestId("Loading")
+        // .locator(".message.incoming .Loading")
         .last(),
     );
   }
