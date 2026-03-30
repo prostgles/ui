@@ -1159,7 +1159,9 @@ test.describe("Main test", () => {
     await newChat(page);
     await toggleMCPTools(page, ["fetch"]);
     await sendAskLLMMessage(page, " mcp ");
-    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page
+      .getByTestId("AskLLMToolApprover.AllowOnce")
+      .click({ timeout: 10e3 });
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
     await expect(mcpToolUse).toContainText(

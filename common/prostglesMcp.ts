@@ -484,7 +484,8 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           databaseAccess: {
             optional: true,
             oneOf: [
-              { enum: ["execute_readonly_sql", "execute_sql"] },
+              { enum: ["execute_readonly_sql"] },
+              { enum: ["execute_sql"] },
               tablePermissionsSchema,
             ],
           },
