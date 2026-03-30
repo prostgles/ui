@@ -1570,7 +1570,9 @@ test.describe("Main test", () => {
       page,
       " I need you to create a user list component ",
     );
-    await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+    await page
+      .getByTestId("AskLLMToolApprover.AllowAlways")
+      .click({ timeout: 10e3 });
   });
 
   test("Agentic workflow", async ({ page: p }) => {
