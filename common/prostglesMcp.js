@@ -275,7 +275,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         
         {
           "indexTs": "import type { JSONB } from \"prostgles-types\"; console.log('hello world');",
-          "packageJson": {
+          "packageDependencies": {
             "prostgles-types": "^4.0.217",
           }
         }

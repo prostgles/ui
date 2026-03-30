@@ -31,7 +31,7 @@ export const getRunTypescriptInNodejsFiles = (
   packageDependencies: Record<string, string>,
 ) => {
   return {
-    ...getAgenticWorkflowDockerCoreFiles(packageDependencies, true),
+    ...getAgenticWorkflowDockerCoreFiles(packageDependencies),
     "index.ts": entrypointTs,
   };
 };
@@ -52,7 +52,7 @@ const handler = {
             {
               ...otherOpts,
               files: {
-                ...getAgenticWorkflowDockerCoreFiles(packageDependencies, true),
+                ...getAgenticWorkflowDockerCoreFiles(packageDependencies),
                 "index.ts": entrypointTs,
               },
             },

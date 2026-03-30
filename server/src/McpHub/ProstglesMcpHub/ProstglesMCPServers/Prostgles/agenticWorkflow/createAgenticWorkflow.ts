@@ -11,7 +11,7 @@ import type { McpCallContext } from "../../../ProstglesMCPServerTypes";
 import { validateAgenticWorkflowDefinitions } from "./definitionValidation/validateAgenticWorkflowDefinitions";
 import { startAgenticWorkflowContainer } from "./execution/startAgenticWorkflowContainer";
 import type { ProxyCallDataDefinitions } from "./runtimeSdk/defineAgenticWorkflowHandlers.types";
-import type { TableSchemaOpts } from "./runtimeSetup/getAgenticWorkflowFiles";
+import type { TableSchemaOpts } from "./runtimeSetup/getDefineAgenticWorkflowTsWithDbAndMcpTypes";
 
 type Args = JSONBObjectTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_agentic_workflow"]["schema"]["type"]

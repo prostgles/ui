@@ -19,7 +19,7 @@ import type {
 import { getOrchestrationContainerFiles } from "../runtimeSetup/getOrchestrationContainerFiles";
 import type { DBSSchema } from "@common/publishUtils";
 import { startAgenticWorkflowSchema } from "@common/startAgenticWorkflowSchema";
-import type { TableSchemaOpts } from "../runtimeSetup/getAgenticWorkflowFiles";
+import type { TableSchemaOpts } from "../runtimeSetup/getDefineAgenticWorkflowTsWithDbAndMcpTypes";
 
 export const startAgenticWorkflowContainer = async (
   dbs: DBS,
@@ -266,7 +266,6 @@ export const startAgenticWorkflowContainer = async (
                     .ddlStatements
                 : undefined,
             },
-        forDefinitions: mode.type === "definitions-only",
         connection_id,
       }),
       environment: {

@@ -1,9 +1,9 @@
 import { connectionManager } from "@src/index";
-import type { Statement } from "pgsql-ast-parser";
-import { includes, isDefined, type TableSchema } from "prostgles-types";
+import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
+import { parse, type Statement } from "pgsql-ast-parser";
+import { includes, isDefined } from "prostgles-types";
 import { ALLOWED_DDL_STATEMENT_TYPES } from "../runtimeSdk/defineAgenticWorkflow";
 import type { ProxyCallDataDefinitions } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
-import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
 import { quoteIdent } from "./quoteIdent";
 
 export const validateDatabaseAccessDefinitions = async ({
@@ -35,7 +35,6 @@ export const validateDatabaseAccessDefinitions = async ({
         if (!ddlStatements.trim()) {
           throw new Error("ddlStatements is an empty string");
         }
-        const { parse } = await import("pgsql-ast-parser");
         const statements = parse(ddlStatements);
         const statementIsAllowed = (
           statement: Statement,
@@ -146,55 +145,3 @@ export const validateDatabaseAccessDefinitions = async ({
 
   return result;
 };
-
-// const newTableWithEscapedNames = await runConnectionQuery<{
-//   table_schema: string;
-//   table_name: string;
-//   full_table_name: string;
-//   is_clashing: boolean;
-//   ifNotExists?: boolean;
-// }>(
-//   connection_id,
-//   `
-//     SELECT
-//       t.schema AS table_schema,
-//       t.name   AS table_name,
-//       t."ifNotExists",
-//       -- data type udt_name
-
-//       CASE
-//         WHEN current_schema() = t.schema
-//           THEN quote_ident(t.name)
-//         ELSE
-//           quote_ident(t.schema) || '.' || quote_ident(t.name)
-//       END AS full_table_name,
-//       EXISTS (
-//         SELECT 1
-//         FROM information_schema.tables
-//         WHERE
-//           table_schema = t.schema
-//           AND table_name = t.name
-//       ) AS is_clashing
-//     FROM jsonb_to_recordset($1::jsonb)
-//       AS t(schema text, name text, "ifNotExists" boolean);
-//   `,
-//   [
-//     JSON.stringify(
-//       newTables.map((t) => ({
-//         ...t,
-//         schema: t.schema || currentSchema,
-//       })),
-//     ),
-//   ],
-// );
-
-// const clashingTables = newTableWithEscapedNames.filter(
-//   (t) => t.is_clashing && !t.ifNotExists,
-// );
-// if (clashingTables.length) {
-//   throw `Validation error for databaseAccessDefinitions.ddlStatements: \nthe following tables already exist: ${clashingTables
-//     .map(({ table_name, table_schema }) =>
-//       !table_schema ? table_name : `${table_schema}.${table_name}`,
-//     )
-//     .join(", ")}`;
-// }

@@ -3,20 +3,18 @@ import { getAgenticWorkflowDockerCoreFiles } from "./getAgenticWorkflowDockerCor
 import {
   getAgenticWorkflowFiles,
   type TableSchemaOpts,
-} from "./getAgenticWorkflowFiles";
+} from "./getDefineAgenticWorkflowTsWithDbAndMcpTypes";
 
 export const getOrchestrationContainerFiles = async ({
   dbs,
   workflowTs,
   tableSchemaOpts,
-  forDefinitions,
   connection_id,
   package_dependencies,
 }: {
   dbs: DBS;
   workflowTs: string;
   tableSchemaOpts: TableSchemaOpts;
-  forDefinitions: boolean;
   connection_id: string;
   package_dependencies: Record<string, string> | undefined;
 }) => {
@@ -28,6 +26,6 @@ export const getOrchestrationContainerFiles = async ({
       tableSchemaOpts,
     )),
     "index.ts": workflowTs,
-    ...getAgenticWorkflowDockerCoreFiles(package_dependencies, forDefinitions),
+    ...getAgenticWorkflowDockerCoreFiles(package_dependencies),
   };
 };

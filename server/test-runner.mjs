@@ -22,6 +22,7 @@ const ac = new AbortController();
 const runner = run({ files: sortedFiles, signal: ac.signal });
 
 runner.on("test:fail", () => {
+  process.exitCode = 1;
   ac.abort();
 });
 runner.compose(spec).pipe(process.stdout);

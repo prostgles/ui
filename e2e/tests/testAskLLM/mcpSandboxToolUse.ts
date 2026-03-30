@@ -12,7 +12,7 @@ export const mcpSandboxToolUse: ToolUse = {
         name: "prostgles-ui--run_code_in_sandbox",
         arguments: stringify({
           files: {
-            Dockerfile: `FROM node:20 \nWORKDIR /app \nCOPY . . \nRUN npm install \nCMD ["npm", "start"]`,
+            Dockerfile: `FROM node:24 \nWORKDIR /app \nCOPY . . \nRUN npm install \nCMD ["npm", "start"]`,
             "package.json": JSON.stringify({
               name: "test-app",
               version: "1.0.0",

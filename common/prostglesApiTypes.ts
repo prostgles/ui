@@ -406,7 +406,7 @@ export type DeleteParams<T extends AnyObject | void = void, S extends DBSchema |
 /**
  * TODO: pick only joined tables from schema AND exclude parent fkey columns from the nested data
  */
-type InsertDataWithNested<TD extends AnyObject, S extends DBSchema | void> = UpsertDataToPGCast<TD> & (S extends DBSchema ? {
+export type InsertDataWithNested<TD extends AnyObject, S extends DBSchema | void> = UpsertDataToPGCast<TD> & (S extends DBSchema ? string extends keyof S ? {} : {
     [TableName in keyof S]?: Partial<InsertDataWithNested<S[TableName]["columns"], S>>[];
 } : {});
 /**

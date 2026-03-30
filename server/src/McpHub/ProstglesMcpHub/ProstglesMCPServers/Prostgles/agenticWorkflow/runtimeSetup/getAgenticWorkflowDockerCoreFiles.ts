@@ -1,8 +1,6 @@
 export const getAgenticWorkflowDockerCoreFiles = (
   package_dependencies: Record<string, string> | undefined,
-  forDefinitions = false,
 ) => {
-  const packageJson = getPackageJsonForAgenticWorkflow({ forDefinitions });
   if (package_dependencies) {
     for (const pkgName of Object.keys(package_dependencies)) {
       if (pkgName in packageJson.dependencies) {
@@ -84,7 +82,7 @@ RUN npm install --silent
 `;
 
 export const DockerfileForAgenticWorkflow = `
-FROM node:22-slim
+FROM node:24-slim
 WORKDIR /app
 
 COPY package*.json ./
@@ -97,11 +95,7 @@ RUN npm run build
 CMD ["npm", "start", "--silent"]
 `;
 
-const getPackageJsonForAgenticWorkflow = ({
-  forDefinitions,
-}: {
-  forDefinitions: boolean;
-}) => ({
+export const packageJson = {
   name: "agentic-workflow",
   version: "1.0.0",
   main: "index.js",
@@ -111,16 +105,17 @@ const getPackageJsonForAgenticWorkflow = ({
     start: "node index.js",
   },
   dependencies: {
-    "@types/node": "^22.15.2",
-    typescript: "^5.8.3",
+    typescript: "^5.9.3",
     tslib: "^2.8.1",
+    "prostgles-types": "^4.0.235",
+  },
+  devDependencies: {
+    "@types/node": "^22.19.15",
     eslint: "^9.39.4",
     "@eslint/js": "^9.39.1",
-    "prostgles-types": "^4.0.208",
     "typescript-eslint": "^8.57.1",
-    ...(forDefinitions ? { "pgsql-ast-parser": "^12.0.2" } : {}),
   },
-});
+} as const;
 
 const eslintConfigMjs = `
 import eslint from "@eslint/js";

@@ -37,9 +37,10 @@ type McpServerToolDefinitions = Record<
 // };
 //EndOfReplaceMcpServerToolDefinitions;
 
-export type DBGeneratedSchema = {
-  tbl1: { columns: { col1: string; col2: number } };
-}; //EndOfDBGeneratedSchema;
+export type DBGeneratedSchema = Record<
+  string,
+  { columns: Record<string, any> }
+>; //EndOfDBGeneratedSchema;
 
 /**
  * Defines which tools can be used.

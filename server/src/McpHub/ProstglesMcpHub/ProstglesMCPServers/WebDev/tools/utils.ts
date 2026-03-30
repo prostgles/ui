@@ -19,7 +19,7 @@ export const installDependenciesIfNeeded = async ({
     }
     const installDepsResult = await runDockerForWebApp({
       web_app_directory,
-      image: "node:20-slim",
+      image: "node:24-slim",
       shCommand: `cd client && ${commands.join(" && ")}`,
     });
 

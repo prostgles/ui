@@ -400,10 +400,15 @@ export type ViewHandler<TD extends AnyObject = AnyObject, S extends DBSchema | v
 };
 export type PartialLax<T = AnyObject> = Partial<T>;
 type UpsertDataToPGCastLax<T extends AnyObject> = PartialLax<UpsertDataToPGCast<T>>;
-export type InsertData<T extends AnyObject> = UpsertDataToPGCast<T> | UpsertDataToPGCast<T>[];
 export type DeleteParams<T extends AnyObject | void = void, S extends DBSchema | void = void> = {
     returning?: Select<T, S>;
 } & Pick<CommonSelectParams, "returnType">;
+/**
+ * TODO: pick only joined tables from schema AND exclude parent fkey columns from the nested data
+ */
+export type InsertDataWithNested<TD extends AnyObject, S extends DBSchema | void> = UpsertDataToPGCast<TD> & (S extends DBSchema ? string extends keyof S ? {} : {
+    [TableName in keyof S]?: Partial<InsertDataWithNested<S[TableName]["columns"], S>>[];
+} : {});
 /**
  * Methods for interacting with a table
  * - On client-side some methods are restricted (and undefined) based on publish rules on the server
@@ -422,7 +427,11 @@ export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | 
     /**
      * Inserts a new record into the table.
      */
-    insert: <P extends InsertParams<TD, S>, D extends InsertData<TD>>(data: D, params?: P) => Promise<InsertReturnType<D, P, TD, S>>;
+    insert: <P extends InsertParams<TD, S>>(data: InsertDataWithNested<TD, S>, params?: P) => Promise<GetReturningReturnType<P, TD, S>>;
+    /**
+     * Inserts new records into the table.
+     */
+    insertMany: <P extends InsertParams<TD, S>>(data: InsertDataWithNested<TD, S>[], params?: P) => Promise<GetReturningReturnType<P, TD, S>[]>;
     /**
      * Inserts or updates a record in the table.
      * - If a record matching the \`filter\` exists, it updates the record.

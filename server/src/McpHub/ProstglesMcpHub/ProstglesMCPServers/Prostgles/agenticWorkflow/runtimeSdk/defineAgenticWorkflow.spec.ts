@@ -2,13 +2,21 @@ import { describe, test } from "node:test";
 import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
 
 void describe("defineAgenticWorkflow", async () => {
-  await test("defineAgenticWorkflow init", () => {
+  await test("defineAgenticWorkflow type tests", () => {
     () => {
       void defineAgenticWorkflow(
         {
           name: "Test Workflow",
           containerConfiguration: { timeout: 60_000 },
-          // databaseAccessDefinitions: undefined,
+          databaseAccessDefinitions: {
+            mode: "custom",
+            tablePermissions: {
+              tbl1: {
+                select: true,
+                insert: true,
+              },
+            },
+          },
           agentDefinitions: {
             researcher: {
               prompt: "You are a research assistant.",
@@ -44,8 +52,7 @@ void describe("defineAgenticWorkflow", async () => {
           orchestratorToolHandlers,
           userInputValues: { test_input },
         }) => {
-          // @ts-expect-error
-          void tableHandlers.tbl1.insert({ col1: "value1", col2: 123 });
+          void tableHandlers.tbl1?.insert({ col1: "value1", col2: 123 });
           // @ts-expect-error
           void runSQL("SELECT * FROM tbl1");
           const result = await researcher("Prostgles");

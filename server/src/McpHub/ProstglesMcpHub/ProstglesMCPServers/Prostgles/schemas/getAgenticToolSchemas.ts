@@ -1,10 +1,10 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fixIndent } from "@common/utils";
 import type { DBS } from "@src/index";
+import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { getJSONBSchemaAsJSONSchema, omitKeys } from "prostgles-types";
-import { getDefineAgenticWorkflowTsSchema } from "../agenticWorkflow/runtimeSetup/getAgenticWorkflowFiles";
-import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
+import { getDefineAgenticWorkflowTsWithDbAndMcpTypes } from "../agenticWorkflow/runtimeSetup/getDefineAgenticWorkflowTsWithDbAndMcpTypes";
 
 const name = "create_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = async ({
@@ -26,11 +26,12 @@ export const getAgenticWorkflowToolSchema = async ({
 
   const args =
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"][name].schema.type;
-  const workflowTsSchema = await getDefineAgenticWorkflowTsSchema(
+  const workflowTsSchema = await getDefineAgenticWorkflowTsWithDbAndMcpTypes({
     dbs,
-    "agent",
-    connection_id,
-  );
+    purpose: "agent-prompt",
+    // connection_id,
+    dbGeneratedSchema: undefined,
+  });
   // Database table handler definition:
   //   ${"```typescript"}
   //   ${prostglesApiTypes}
