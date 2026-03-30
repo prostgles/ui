@@ -2,6 +2,7 @@ import {
   mdiArrowCollapse,
   mdiClose,
   mdiCog,
+  mdiCogOutline,
   mdiDotsVertical,
   mdiOpenInNew,
 } from "@mdi/js";
@@ -36,7 +37,7 @@ type P<W extends WindowSyncItem> = {
 };
 
 type S<W extends WindowSyncItem> = {
-  showMenu: boolean;
+  showMenu: HTMLButtonElement | undefined;
   w?: W;
 };
 
@@ -51,7 +52,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
   D
 > {
   state: S<W> = {
-    showMenu: false,
+    showMenu: undefined,
   };
 
   d: D = {};
@@ -129,29 +130,31 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
     if (getMenu && menuIconContainer) {
       menuPortal = ReactDOM.createPortal(
         <>
+          {this.getTitleIcon()}
           {layoutMode === "fixed" ?
             <div style={{ width: ".65em" }}></div>
           : <Btn
               className="f-0"
-              iconPath={mdiDotsVertical}
+              iconPath={mdiCogOutline}
               title={t.Window["Open menu"]}
               data-command="dashboard.window.menu"
               onContextMenu={(e) => {
                 navigator.clipboard.writeText(w.id);
               }}
-              onClick={() => {
-                this.setState({ showMenu: !showMenu });
+              onClick={(e) => {
+                this.setState({
+                  showMenu: showMenu ? undefined : e.currentTarget,
+                });
               }}
             />
           }
-          {this.getTitleIcon()}
         </>,
         menuIconContainer,
       );
     }
 
     const closeMenu = () => {
-      this.setState({ showMenu: false });
+      this.setState({ showMenu: undefined });
     };
 
     const windowContent = (
@@ -176,10 +179,10 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
 
         {showMenu && getMenu && (
           <Popup
-            title={window.isLowWidthScreen ? t.Window.Menu : undefined}
+            title={t.Window.Menu}
             fixedTopLeft={true}
-            anchorEl={this.ref}
-            positioning={"inside"}
+            anchorEl={showMenu}
+            positioning={"center"}
             rootStyle={{ padding: 0 }}
             clickCatchStyle={{ opacity: 0.5, backdropFilter: "blur(1px)" }}
             contentClassName=""
@@ -208,8 +211,10 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
               color="action"
               iconPath={mdiCog}
               data-command="dashboard.window.chartMenu"
-              onClick={() => {
-                this.setState({ showMenu: !showMenu });
+              onClick={({ currentTarget }) => {
+                this.setState({
+                  showMenu: showMenu ? undefined : currentTarget,
+                });
               }}
               children={
                 window.isLowWidthScreen ? null : t.Window["Chart options"]

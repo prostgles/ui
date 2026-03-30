@@ -455,7 +455,7 @@ export default class W_Table extends RTComp<
     };
   }
 
-  getMenu = (w, onClose) => {
+  getMenu = (w: WindowSyncItem<"table">, onClose: VoidFunction) => {
     const { prgl, onLinkTable, onAddChart } = this.props;
 
     const cols = w.columns;
@@ -466,7 +466,8 @@ export default class W_Table extends RTComp<
       <W_TableMenu
         prgl={prgl}
         workspace={this.props.workspace}
-        cols={cols.filter((c) => !c.computed)}
+        // cols={cols.filter((c) => !c.computedConfig)}
+        cols={cols}
         onAddChart={onAddChart}
         w={w}
         onLinkTable={onLinkTable}

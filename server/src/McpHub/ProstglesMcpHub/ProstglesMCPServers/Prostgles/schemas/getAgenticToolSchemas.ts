@@ -10,11 +10,9 @@ const name = "create_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = async ({
   availableMCPTools,
   dbs,
-  connection_id,
 }: {
   availableMCPTools: McpCallContextFetchTools["mcpTools"];
   dbs: DBS;
-  connection_id: string;
 }) => {
   const toolsByServer = new Map<string, string[]>();
 

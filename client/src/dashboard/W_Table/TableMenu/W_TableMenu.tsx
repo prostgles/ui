@@ -132,7 +132,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
 
   getTableInfo() {
     const {
-      prgl: { db, sql, dbs, databaseId },
+      prgl: { sql, dbs, databaseId },
       w,
     } = this.props;
     if (w.table_name && sql) {
@@ -319,6 +319,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
             (l1Key !== "Columns" ? " p-1 " : "") +
             (l1Key === "Columns" ? " " : " ")
           }
+          defaultActiveKey={Object.keys(l1Opts ?? {})[0]}
           items={l1Opts ?? {}}
           compactMode={window.isMobileDevice ? "hide-inactive" : undefined}
           activeKey={l1Key}

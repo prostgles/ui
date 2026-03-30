@@ -2,10 +2,7 @@ import React, { useRef, useState } from "react";
 import "./Table.css";
 
 import type { AnyObject } from "prostgles-types";
-import type {
-  ColumnSort,
-  ColumnSortSQL,
-} from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
 import { classOverride } from "../Flex";
@@ -175,25 +172,17 @@ export const Table = <Sort extends ColumnSortSQL>(
 
 export function closest<Num extends number>(
   v: number,
-  arr: readonly Num[] | Num[],
+  arr: readonly Num[],
 ): Num | undefined {
   return arr
     .map((av) => ({ av, diff: Math.abs(v - av) }))
     .sort((a, b) => a.diff - b.diff)[0]?.av;
 }
-export function closestIndexOf<Num extends number>(
-  v: number,
-  arr: readonly Num[] | Num[],
-): Num | undefined {
-  return arr
-    .map((av, i) => ({ i, av, diff: Math.abs(v - av) }))
-    .sort((a, b) => a.diff - b.diff)[0]?.i;
-}
 
 export const onWheelScroll =
   (parentClassname?: string): React.WheelEventHandler<HTMLElement> =>
   (e: React.WheelEvent<HTMLElement>) => {
-    if (e.shiftKey || e.ctrlKey || !e.currentTarget.contains(e.target as any))
+    if (e.shiftKey || e.ctrlKey || !e.currentTarget.contains(e.target as Node))
       return;
 
     const oFlowY = (el?: HTMLElement | null) => {

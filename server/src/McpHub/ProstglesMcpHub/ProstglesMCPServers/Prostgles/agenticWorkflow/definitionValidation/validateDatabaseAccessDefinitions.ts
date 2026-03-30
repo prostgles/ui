@@ -22,7 +22,7 @@ export const validateDatabaseAccessDefinitions = async ({
       connectionManager.connections?.find((c) => c.id === connection_id)
         ?.is_state_db
     ) {
-      throw "State DB connection not allowed";
+      throw "State DB connection not allowed for agentic workflows";
     }
     throw new Error("Connection not found for chat");
   }

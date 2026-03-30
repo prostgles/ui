@@ -948,6 +948,7 @@ export const getLLMResponses = async (
       response,
       isOk: !!response?.includes("Mocked response"),
     });
+    await page.waitForTimeout(3000);
   }
   if (openWindow) {
     await page.getByTestId("Popup.close").click();

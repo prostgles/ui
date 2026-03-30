@@ -100,7 +100,6 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
       ({ value, row }) => {
         return <MediaViewer key={value} url={value} />;
       }
-      // c.udt_name.startsWith("json")?  ({ row }) =>  <JsonRenderer value={row[c.name]} /> :
     : /** Not pretty enough */
     c.udt_name === "interval" ?
       ({ row }) =>

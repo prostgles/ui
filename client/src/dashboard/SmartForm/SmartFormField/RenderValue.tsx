@@ -167,8 +167,16 @@ export const RenderValue = ({
   }
 
   if (value && (c?.udt_name.startsWith("json") || isObject(value))) {
+    const title = (() => {
+      if (isObject(value)) {
+        try {
+          return JSON.stringify(value, null, 2);
+        } catch {}
+      }
+      return String(value);
+    })();
     return (
-      <span style={style}>
+      <span title={title} style={style}>
         <RenderJson value={value} maxLength={maxLength} />
       </span>
     );

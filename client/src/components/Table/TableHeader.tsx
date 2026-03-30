@@ -108,7 +108,7 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
             return (
               <div
                 key={iCol}
-                className={classOverride(className, "br b-color-1")}
+                className={classOverride(className, "jc-start br b-color-1")}
                 {...(col.onContextMenu ? iosContextMenuPolyfill() : {})}
                 onContextMenu={
                   !col.onContextMenu ? undefined : (

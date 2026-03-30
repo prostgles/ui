@@ -1,9 +1,8 @@
-import type { DBHandlerClient } from "prostgles-client";
 import type { DBSSchema } from "@common/publishUtils";
+import type { SQLHandler } from "prostgles-client";
 import { ACCESS_CONTROL_SELECT } from "../../AccessControl/AccessControl";
 import type { DBS } from "../../Dashboard/DBS";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
-import type { SQLHandler } from "prostgles-client";
 
 export type W_TableInfo = {
   comment: string;

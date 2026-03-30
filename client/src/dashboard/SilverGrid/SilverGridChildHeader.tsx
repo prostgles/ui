@@ -96,16 +96,6 @@ export const SilverGridChildHeader = (props: P) => {
         : {}
       }
     >
-      <div
-        className="silver-grid-item-header--icon flex-row f-0 o-hidden f-1 ai-center"
-        style={{
-          maxWidth: "fit-content",
-          minWidth: "42px",
-        }}
-      >
-        {headerIcon}
-      </div>
-
       <FlexRow
         className="SilverGridChildHeader_tabs flex-row f-1 min-w-0 ws-nowrap ai-end text-ellipsiss ml-p25 o-auto  no-scroll-bar"
         style={{
@@ -159,7 +149,7 @@ export const SilverGridChildHeader = (props: P) => {
                   onSetHeaderRef(r);
                 }
               }}
-              className={`gap-p25 pl-p5 pr-p25 ${bgActiveClass}`}
+              className={`f-0 gap-p25 pl-p5 pr-p25 ${bgActiveClass}`}
               style={{
                 height: `${height}px`,
                 lineHeight: `${lineHeight + 2}px`,
@@ -186,6 +176,19 @@ export const SilverGridChildHeader = (props: P) => {
         })}
       </FlexRow>
 
+      <div
+        className="silver-grid-item-header--icon flex-row f-0 o-hidden f-1 ai-center"
+        style={{
+          maxWidth: "fit-content",
+          minWidth: "42px",
+        }}
+      >
+        {headerIcon}
+      </div>
+      <div
+        className="divider ml-2 mr-1"
+        style={{ width: "1px", height: "60%", background: "var(--b-color)" }}
+      ></div>
       {!hideButtons.minimize && (
         <Btn
           {...dataCommand("dashboard.window.collapse")}

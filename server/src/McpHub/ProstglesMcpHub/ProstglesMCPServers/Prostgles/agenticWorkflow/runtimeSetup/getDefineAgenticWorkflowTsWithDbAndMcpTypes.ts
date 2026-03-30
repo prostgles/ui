@@ -5,6 +5,7 @@ import { readdirSync, readFileSync } from "fs";
 import { isDefined } from "prostgles-types";
 import { join } from "path";
 import { connectionManager } from "@src/index";
+import { statePrgl } from "@src/init/startProstgles";
 
 const defineAgenticWorkflowDirectory = join(
   __dirname,
@@ -155,7 +156,13 @@ export const getAgenticWorkflowFiles = async (
   connection_id: string,
   tableSchemaOpts: TableSchemaOpts,
 ) => {
-  const { prgl } = connectionManager.getActiveConnection(connection_id);
+  const stateDb = connectionManager.connections?.find(
+    (c) => c.id === connection_id && c.is_state_db,
+  );
+  const prgl =
+    stateDb ?
+      statePrgl!
+    : connectionManager.getActiveConnection(connection_id).prgl;
   let dbSchema = undefined as undefined | string;
   if (tableSchemaOpts.type === "full") {
     const futureSchema = await prgl.getTSSchema({
