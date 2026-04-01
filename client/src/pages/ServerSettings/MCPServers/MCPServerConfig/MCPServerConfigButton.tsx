@@ -1,12 +1,12 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
+import { mdiCogOutline } from "@mdi/js";
 import React from "react";
 import {
   useMCPServerConfig,
   type MCPServerConfigProps,
 } from "./MCPServerConfig";
-import { mdiCog } from "@mdi/js";
 
 export const MCPServerConfigButton = (
   props: Omit<MCPServerConfigProps, "onDone" | "variant"> & {
@@ -25,7 +25,7 @@ export const MCPServerConfigButton = (
         });
       }}
       style={{ flexShrink: 1 }}
-      iconPath={mdiCog}
+      iconPath={mdiCogOutline}
       data-command="MCPServerConfigButton"
     >
       {Object.entries(schema).map(([key, schema]) => (

@@ -42,7 +42,7 @@ export const useCodeEditorTsTypes = (
   }, [id, args, desc]);
 
   const tsLibrariesAndModelName = usePromise(async () => {
-    if (dbSchemaTypes && dbsMethods.getNodeTypes && connectionId && dbKey) {
+    if (dbSchemaTypes && connectionId && dbKey) {
       const methodTsLib =
         methodOpts &&
         (await fetchMethodDefinitionTypes({
@@ -51,13 +51,13 @@ export const useCodeEditorTsTypes = (
           description: methodOpts.desc ?? "",
           tables,
         }));
-      const libs = nodeLibs ?? (await dbsMethods.getNodeTypes());
-      nodeLibs = libs;
+      // const libs = nodeLibs ?? (await dbsMethods.getNodeTypes());
+      // nodeLibs = libs;
       const tsLibraries: TSLibrary[] = [
-        ...libs.map((l) => ({
-          ...l,
-          filePath: `file://${l.filePath}`,
-        })),
+        // ...libs.map((l) => ({
+        //   ...l,
+        //   filePath: `file://${l.filePath}`,
+        // })),
         /** Required to ensure dbo types work */
         {
           filePath: "file:///node_modules/@types/dbo/index.d.ts",
@@ -94,12 +94,13 @@ export const useCodeEditorTsTypes = (
           : `onMount_${connectionId}.ts`,
       };
     }
-  }, [dbsMethods, connectionId, dbKey, tables, dbs, dbSchemaTypes, methodOpts]);
+  }, [connectionId, dbKey, tables, dbs, dbSchemaTypes, methodOpts]);
 
   if (!tsLibrariesAndModelName) return;
 
   return {
     lang: "typescript",
+    environment: "nodejs",
     ...tsLibrariesAndModelName,
   };
 };

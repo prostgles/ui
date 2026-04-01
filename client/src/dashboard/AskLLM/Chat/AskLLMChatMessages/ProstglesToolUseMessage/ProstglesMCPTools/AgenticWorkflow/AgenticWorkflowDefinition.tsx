@@ -1,5 +1,4 @@
 import { type PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -9,7 +8,6 @@ import {
   MonacoEditor,
 } from "@components/MonacoEditor/MonacoEditor";
 import { useMonacoScrollToLastLine } from "@components/MonacoLogs/MonacoLogs";
-import { SegmentedToggle } from "@components/SegmentedToggle";
 import { mdiGraph, mdiLanguageTypescript, mdiText } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
@@ -25,14 +23,12 @@ export const AgenticWorkflowDefinition = ({
   workflow_function_definition,
   workflow_function_definition_summary,
   chatId,
-  // workflow,
   workflowId,
   tool_use_id,
 }: {
   workflow_function_definition: string;
   workflow_function_definition_summary: string;
   chatId: number;
-  // workflow: DBSSchema["agentic_workflows"] | undefined;
   tool_use_id: string;
   workflowId: number | undefined;
 }) => {
@@ -41,7 +37,7 @@ export const AgenticWorkflowDefinition = ({
     connectionId,
   } = usePrgl();
   const { onMount } = useMonacoScrollToLastLine(true);
-  // const workflowId = workflow?.id;
+
   const agentFilesInfo = usePromise(async () => {
     if (!getAgenticWorkflowTypes) return;
 
@@ -64,6 +60,7 @@ export const AgenticWorkflowDefinition = ({
     const { files } = agentFiles;
     return {
       lang: "typescript",
+      environment: "nodejs",
       modelFileName: `workflow_${tool_use_id}.ts`,
       tsLibraries: getEntries(files).map(([filePath, content]) => ({
         filePath: `file:///${filePath}`,

@@ -1,6 +1,5 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
-import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
 import { refreshModels } from "@src/serverFunctions/askLLM/refreshModels";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBS } from "..";
@@ -194,19 +193,8 @@ export const getPublishLLM = (
         }
       ),
     mcp_server_configs: isAdmin && {
-      insert: {
-        fields: "*",
-        postValidate: async ({ row, dbx }) => {
-          await testMCPServerConfig(dbx, row);
-        },
-      },
-      update: {
-        fields: "*",
-        postValidate: async ({ row, dbx }) => {
-          await testMCPServerConfig(dbx, row);
-          // await startMcpHub(dbx, row);
-        },
-      },
+      insert: "*",
+      update: "*",
       select: "*",
       delete: "*",
     },

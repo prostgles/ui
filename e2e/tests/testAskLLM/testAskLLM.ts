@@ -327,6 +327,7 @@ const toolResponses: Record<string, ToolUse> = {
   component: createComponentToolUse,
   agentic_workflow: agenticWorkflowToolUses.input,
   agentic_workflow_noinput: agenticWorkflowToolUses.noinput,
+  agentic_workflow_filesystem: agenticWorkflowToolUses.filesystem,
   agentic_workflow_clashing: agenticWorkflowToolUses.clashing,
   agentic_workflow_invalidTable: agenticWorkflowToolUses.invalidTable,
   agentic_workflow_invalidPermissionTable:

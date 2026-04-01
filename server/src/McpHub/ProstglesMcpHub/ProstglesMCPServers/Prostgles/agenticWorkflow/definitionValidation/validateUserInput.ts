@@ -1,5 +1,5 @@
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import { getProperty } from "@common/utils";
+import { getProperty, type ExtractBy } from "@common/utils";
 import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { isObject } from "prostgles-types";
 
@@ -15,7 +15,9 @@ export const validateUserInput = (
   const resultWithDefaults: Record<string, unknown> = {};
   for (const [key, definition] of Object.entries(userInputDefinition)) {
     const titleOrKey = definition.title || key;
-    const value = userInputValue[key] ?? definition.defaultValue;
+    const value =
+      userInputValue[key] ??
+      ("defaultValue" in definition ? definition.defaultValue : undefined);
     resultWithDefaults[key] = value;
     const prepareError = (message: string) =>
       ({
@@ -97,10 +99,24 @@ export const validateUserInput = (
           );
         }
       },
+      "folder-path": () => {
+        if (typeof value !== "string") {
+          return prepareError(
+            `Invalid type for user input. Expected string with folder path`,
+          );
+        }
+      },
+      "file-path": () => {
+        if (typeof value !== "string") {
+          return prepareError(
+            `Invalid type for user input. Expected string with file path`,
+          );
+        }
+      },
     } satisfies {
       [Type in UserInputItem["type"]]: (
         value: unknown,
-        definition: Extract<UserInputItem, { type: Type }>,
+        definition: ExtractBy<UserInputItem, "type", Type>,
       ) => { error: string } | undefined | void;
     };
 

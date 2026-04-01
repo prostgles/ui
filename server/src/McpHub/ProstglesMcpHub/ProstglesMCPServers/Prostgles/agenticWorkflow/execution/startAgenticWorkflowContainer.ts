@@ -1,3 +1,5 @@
+import type { DBSSchema } from "@common/publishUtils";
+import { startAgenticWorkflowSchema } from "@common/startAgenticWorkflowSchema";
 import type { DBS } from "@src/index";
 import {
   getJSONBSchemaValidationError,
@@ -16,10 +18,9 @@ import type {
   ProxyCallData,
   ProxyCallDataDefinitions,
 } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
-import { getOrchestrationContainerFiles } from "../runtimeSetup/getOrchestrationContainerFiles";
-import type { DBSSchema } from "@common/publishUtils";
-import { startAgenticWorkflowSchema } from "@common/startAgenticWorkflowSchema";
 import type { TableSchemaOpts } from "../runtimeSetup/getDefineAgenticWorkflowTsWithDbAndMcpTypes";
+import { getOrchestrationContainerFiles } from "../runtimeSetup/getOrchestrationContainerFiles";
+import { getVolumesFromUserInput } from "./getVolumesFromUserInput";
 
 export const startAgenticWorkflowContainer = async (
   dbs: DBS,
@@ -111,6 +112,13 @@ export const startAgenticWorkflowContainer = async (
       });
   };
 
+  const parsedUserInputValue =
+    mode.type === "definitions-only" ?
+      undefined
+    : await getVolumesFromUserInput({
+        userInput: mode.workflow.definition_data.userInput,
+        userInputValues: mode.userInputValue,
+      });
   const result = await runContainerWithProxyAccess(
     dbs,
     {
@@ -248,6 +256,7 @@ export const startAgenticWorkflowContainer = async (
         mode.type === "full" ?
           mode.definition.containerConfiguration.timeout
         : 30_000,
+      volumes: parsedUserInputValue?.volumes,
       files: await getOrchestrationContainerFiles({
         dbs,
         workflowTs: workflow_function_definition,
@@ -271,7 +280,9 @@ export const startAgenticWorkflowContainer = async (
       environment: {
         MODE: mode.type,
         USER_INPUT:
-          mode.type === "full" ? JSON.stringify(mode.userInputValue) : "{}",
+          mode.type === "full" ?
+            JSON.stringify(parsedUserInputValue?.userInputWithOverrides ?? {})
+          : "{}",
         EXECUTION_MODE: mode.type === "full" ? mode.executionMode : "series",
       },
     },

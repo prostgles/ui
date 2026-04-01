@@ -729,15 +729,11 @@
   min-width: 0;
 }
 
-.jc-center {
-  justify-content: center;
-}
-
 .ai-base {
   align-items: baseline;
 }
 .ai-center {
-  align-items: center;
+  align-items: safe center;
 }
 .ai-start {
   align-items: start;
@@ -1145,15 +1141,17 @@ textarea:focus {
   cursor: not-allowed;
 }
 
+.jc-center {
+  justify-content: safe center;
+}
+
 .jc-between {
   justify-content: space-between;
 }
 .jc-around {
   justify-content: space-around;
 }
-.jc-center {
-  justify-content: center;
-}
+
 .jc-fstart {
   justify-content: flex-start;
 }

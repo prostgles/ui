@@ -6,17 +6,18 @@ import { dirname, join } from "path";
 import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas";
 import { createBridgeInternalDockerNetwork } from "./createBridgeInternalDockerNetwork";
 import { executeDockerCommand, type ProcessLog } from "./executeDockerCommand";
-import { getDockerRunArgs } from "./getDockerRunArgs";
+import { getDockerRunArgs, type LocalDockerParams } from "./getDockerRunArgs";
 
 type CreateContainerResult = JSONBTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["run_code_in_sandbox"]["outputSchema"]
 >;
 
-type CreateContainerParamsWithBuildOptions = CreateContainerParams & {
-  signal?: AbortSignal;
-  buildNetworkMode?: CreateContainerParams["networkMode"];
-  buildEnvironment?: Record<string, string>;
-};
+type CreateContainerParamsWithBuildOptions = CreateContainerParams &
+  Pick<LocalDockerParams, "volumes"> & {
+    signal?: AbortSignal;
+    buildNetworkMode?: CreateContainerParams["networkMode"];
+    buildEnvironment?: Record<string, string>;
+  };
 
 export const createContainer = async (
   name: string,
@@ -87,7 +88,6 @@ export const createContainer = async (
     const { runArgs, config } = getDockerRunArgs({
       ...params,
       name,
-      localDir,
     });
 
     const runStartTime = Date.now();

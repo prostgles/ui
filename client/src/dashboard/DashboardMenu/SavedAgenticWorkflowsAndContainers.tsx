@@ -77,7 +77,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
           },
           contentLeft:
             workflow.agentic_workflow_runs.length ?
-              <Loading />
+              <Loading sizePx={16} className="mt-p25" />
             : <Icon path={mdiCubeOutline} />,
         } satisfies SearchListItem;
       });

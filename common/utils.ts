@@ -17,6 +17,16 @@ export type AGE = {
   seconds?: number;
   milliseconds?: number;
 };
+export type StrictOmit<T, K extends keyof T> = Omit<T, K>;
+
+export type ExtractBy<U, D extends keyof U, V extends U[D]> =
+  U extends any ?
+    D extends keyof U ?
+      U[D] extends V ? U
+      : V extends U[D] ? Omit<U, D> & Record<D, V>
+      : never
+    : never
+  : never;
 
 export const EXCLUDE_FROM_SCHEMA_WATCH =
   "prostgles internal query that should be excluded from schema watch ";

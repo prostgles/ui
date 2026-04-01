@@ -106,21 +106,14 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             outputSchema: outputSchemaArrayOfObjects,
         },
         insert: {
-            description: "Inserts rows into a table.",
+            description: "Inserts a row into a table.",
             annotations: { readOnlyHint: false },
             schema: {
                 type: {
                     tableName: "string",
                     data: {
                         description: "Data to insert into the table. Must satisfy the table schema.",
-                        oneOf: [
-                            {
-                                record: { values: "any" },
-                            },
-                            {
-                                arrayOf: { record: { values: "any" } },
-                            },
-                        ],
+                        record: { values: "any" },
                     },
                     onConflict: {
                         enum: ["DoNothing", "DoUpdate"],
@@ -135,16 +128,34 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
             },
             outputSchema: {
                 optional: true,
-                description: "Inserted rows returned based on the returning schema. Nothing will be returned if returning is not provided. Return type based on input data: if data is an array of objects, returns an array of objects. If data is a single object, returns a single object.",
-                oneOf: [
-                    {
-                        record: {
-                            values: "any",
-                        },
-                    },
-                    outputSchemaArrayOfObjects,
-                ],
+                description: "Inserted row returned based on the returning fields. Nothing will be returned if returning is not provided.",
+                record: {
+                    values: "any",
+                },
             },
+        },
+        insertMany: {
+            description: "Inserts rows into a table.",
+            annotations: { readOnlyHint: false },
+            schema: {
+                type: {
+                    tableName: "string",
+                    data: {
+                        description: "Data to insert into the table. Must satisfy the table schema.",
+                        arrayOf: { record: { values: "any" } },
+                    },
+                    onConflict: {
+                        enum: ["DoNothing", "DoUpdate"],
+                        optional: true,
+                        description: fixIndent(`
+              By default the insert may fail due to a unique/exclusion constraint violation error. To control this:
+              - DoNothing: will ignore the error and do nothing
+              - DoUpdate: will update all non conflicting columns of the conflicting row`),
+                    },
+                    returning: Object.assign({ description: "Fields to return for newly inserted data. Nothing will be returned otherwise" }, selectSchema),
+                },
+            },
+            outputSchema: Object.assign({ optional: true, description: "Inserted rows returned based on the returning fields. Nothing will be returned if returning is not provided." }, outputSchemaArrayOfObjects),
         },
         update: {
             description: "Updates rows in a table.",
@@ -425,7 +436,8 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                     databaseAccess: {
                         optional: true,
                         oneOf: [
-                            { enum: ["execute_readonly_sql", "execute_sql"] },
+                            { enum: ["execute_readonly_sql"] },
+                            { enum: ["execute_sql"] },
                             tablePermissionsSchema,
                         ],
                     },
@@ -476,6 +488,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
                 "Prefer series-first, human-in-the-loop flow: interleave agent steps and DB operations to enable feedback and safe re-runs.",
                 "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",
                 "Use least-privilege DB/tool scope; for custom DB mode, ensure all dbHandler tables are valid and included in tablePermissions.",
+                "When interacting with the DB avoid using repeated insert() calls where insertMany(arr) is possible.",
                 "Avoid gathering agent responses and then executing database operations at the end of the workflow unless absolutely necessary, as it can lead to a long feedback loop and more work if the workflow needs to be adjusted.",
             ].join("\n"),
             schema: {

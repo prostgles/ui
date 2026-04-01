@@ -174,7 +174,12 @@ export const RequestToolAccess = ({
         )}
 
         {input.data?.mcpServerTools && (
-          <McpToolAccess value={input.data.mcpServerTools} title="Mcp tools" />
+          <McpToolAccess
+            title="Mcp tools"
+            value={input.data.mcpServerTools}
+            configs={undefined}
+            onConfigChange={undefined}
+          />
         )}
 
         <ErrorComponent

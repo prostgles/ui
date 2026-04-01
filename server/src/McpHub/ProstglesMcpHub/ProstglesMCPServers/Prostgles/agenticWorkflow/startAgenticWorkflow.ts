@@ -6,6 +6,7 @@ import { getSerialisableError, omitKeys } from "prostgles-types";
 import { startAgenticWorkflowContainer } from "./execution/startAgenticWorkflowContainer";
 import type { AuthClientRequest } from "prostgles-server";
 import { KeyObjMap } from "@common/KeyObjMap";
+import { tout } from "@src/utils/tout";
 
 const abortersByUserId = new KeyObjMap<
   { userId: string; chatId: number; messageId: string },
@@ -27,23 +28,26 @@ export const stopAgenticWorkflow = async ({
   if (aborter) {
     aborter.abort();
     abortersByUserId.delete({ userId, chatId, messageId });
-    return { success: true };
-  } else {
-    await dbs.agentic_workflow_runs.update(
-      {
-        chat_id: chatId,
-        message_id: messageId,
-        state: { "@>": { status: "running" } },
-      },
-      {
-        state: {
-          status: "stopped",
-        },
-        finished: new Date(),
-      },
-    );
-    return { success: false, message: "No running workflow found" };
   }
+  await tout(2e3);
+  await dbs.agentic_workflow_runs.update(
+    {
+      chat_id: chatId,
+      message_id: messageId,
+      state: { "@>": { status: "running" } },
+    },
+    {
+      state: {
+        status: "stopped",
+      },
+      finished: new Date(),
+    },
+    {
+      returning: { id: 1 },
+    },
+  );
+
+  return { success: true };
 };
 
 export const startAgenticWorkflow = async ({
@@ -171,7 +175,7 @@ export const startAgenticWorkflow = async ({
     return {
       state: "init-error" as const,
       message: "Failed to start agentic workflow",
-      error,
+      error: getSerialisableError(error),
     };
   });
 

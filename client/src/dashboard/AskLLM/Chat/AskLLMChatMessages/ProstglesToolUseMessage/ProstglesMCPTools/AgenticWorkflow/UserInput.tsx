@@ -4,13 +4,16 @@ import { FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapper";
 import { Select, type FullOption } from "@components/Select/Select";
-import { mdiChevronDown, mdiChevronUp } from "@mdi/js";
+import { mdiChevronDown, mdiChevronUp, mdiFolderOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { getProperty } from "prostgles-types";
 import React, { useState } from "react";
 import { RenderFilter } from "src/dashboard/RenderFilter";
 import type { useUserInput } from "./hooks/useUserInput";
 import { UserInputColumnValues } from "./UserInputColumnValues";
+import { FileBrowser } from "@components/FileBrowser/FileBrowser";
+import PopupMenu from "@components/PopupMenu";
+import { InfoRow } from "@components/InfoRow";
 
 export const UserInput = ({
   setUserInputValue,
@@ -43,7 +46,10 @@ export const UserInput = ({
           <FlexRowWrap className="p-1 o-auto">
             {Object.entries(userInput).map(([inputKey, inputItem]) => {
               const currentValue =
-                userInputValue?.[inputKey] ?? inputItem.defaultValue;
+                userInputValue?.[inputKey] ??
+                ("defaultValue" in inputItem ?
+                  inputItem.defaultValue
+                : undefined);
               const title =
                 (inputItem.title || inputKey) +
                 (inputItem.optional ? " (optional)" : "");
@@ -66,6 +72,75 @@ export const UserInput = ({
                       }));
                     }}
                   />
+                );
+              }
+              if (
+                inputItem.type === "folder-path" ||
+                inputItem.type === "file-path"
+              ) {
+                const isFolder = inputItem.type === "folder-path";
+                return (
+                  <PopupMenu
+                    key={inputKey}
+                    title={title}
+                    headerRightContent={
+                      <InfoRow
+                        className="p-p5 mr-p5"
+                        color={
+                          inputItem.accessMode === "read-write" ?
+                            "danger"
+                          : undefined
+                        }
+                      >
+                        {inputItem.accessMode === "read-write" ?
+                          "Read-Write Access"
+                        : "Read-Only Access"}
+                      </InfoRow>
+                    }
+                    positioning="center"
+                    clickCatchStyle={{ opacity: 1 }}
+                    button={
+                      <Btn
+                        variant="faded"
+                        data-key={inputKey}
+                        iconPath={mdiFolderOutline}
+                        color={
+                          !currentValue ? undefined
+                          : inputItem.accessMode === "read-write" ?
+                            "danger"
+                          : "action"
+                        }
+                        label={{
+                          label:
+                            title +
+                            (inputItem.accessMode === "read-write" ?
+                              " (Read-Write)"
+                            : " (Read-Only)"),
+                          style: {
+                            lineHeight: "1em",
+                            fontWeight: "normal",
+                            fontSize: "inherit",
+                            color: "var(--text-1)",
+                            marginBottom: "0.25em",
+                          },
+                        }}
+                      >
+                        {currentValue ||
+                          (isFolder ? "Select folder..." : "Select file...")}
+                      </Btn>
+                    }
+                  >
+                    <FileBrowser
+                      path={currentValue}
+                      onChange={(newDir) => {
+                        setUserInputValue((prev) => ({
+                          ...prev,
+                          [inputKey]: newDir,
+                        }));
+                      }}
+                      mode={isFolder ? "directory" : "file"}
+                    />
+                  </PopupMenu>
                 );
               }
               if (inputItem.type === "custom") {
@@ -114,6 +189,9 @@ export const UserInput = ({
                       label: {
                         label: title,
                         variant: "normal",
+                        style: {
+                          lineHeight: "1em",
+                        },
                         className: "mb-p25",
                       },
                     }}

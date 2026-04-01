@@ -7,7 +7,11 @@ export const getToolTypescriptSchemas = async (
   mcpServerTools: Record<string, Record<string, 1>> | "*",
   mode: "full" | "basic" | "compact" = "full",
 ) => {
-  const mcpTools = await getValidatedMcpServerToolsAllowed(dbs, mcpServerTools);
+  const mcpTools = await getValidatedMcpServerToolsAllowed(
+    dbs,
+    mcpServerTools,
+    undefined,
+  );
 
   const getTsType = (schema: Record<string, unknown> | null | undefined) => {
     let res =

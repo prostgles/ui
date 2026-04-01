@@ -63,7 +63,7 @@ export const FileBrowser = ({
   }, [pathFiles?.result]);
 
   return (
-    <FlexCol className="min-h-0 gap-0 max-h-full">
+    <FlexCol className="min-h-0 gap-0 max-h-full" data-command="FileBrowser">
       {title && <Label className="mb-2">{title}</Label>}
       {currentPath !== undefined && mode === "directory" && (
         <FileBrowserCurrentDirectory
@@ -88,7 +88,7 @@ export const FileBrowser = ({
         limit={500}
         /** Directory mode needs file create button */
         noSearchLimit={mode === "directory" ? 0 : 9}
-        noResultsContent={<div className="p-1 bg-color-1">Empty folder</div>}
+        noResultsContent={<div className="p-1 bg-color-1">No matches</div>}
         items={
           sortedPathFiles?.map((item) => {
             const { type, created, lastModified, name, size } = item;

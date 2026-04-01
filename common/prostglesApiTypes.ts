@@ -483,8 +483,10 @@ export type ViewHandlerClient<T extends AnyObject = AnyObject, S extends DBSchem
     /**
      * Used internally to setup sync
      */
-    _sync?: (params: CoreParams, triggers: ClientSyncHandles) => Promise<void>;
-    _syncInfo?: AnyObject;
+    _sync?: (filter: EqualityFilter<AnyObject> | undefined, selectParams: {
+        select: AnyObject | "*";
+    }, triggers: ClientSyncHandles) => Promise<DbTableSync>;
+    _syncInfo?: SyncTableInfo;
     getSync?: AnyObject;
     /**
      * Retrieves a list of matching records from the view/table and subscribes to changes
@@ -511,15 +513,9 @@ export type ViewHandlerClient<T extends AnyObject = AnyObject, S extends DBSchem
      */
     useSize: <P extends SelectParams<T, S>>(filter?: FullFilter<T, S>, selectParams?: P, hookOptions?: HookOptions) => AsyncResult<string | undefined>;
 };
-export type TableHandlerClient<T extends AnyObject = AnyObject, S extends DBSchema | void = void> = ViewHandlerClient<T, S> & TableHandler<T, S> & {
-    _syncInfo?: any;
-    getSync?: any;
-    sync?: Sync<T>;
-    syncOne?: SyncOne<T>;
-    _sync?: any;
-};
+export type TableHandlerClient<T extends AnyObject = AnyObject, S extends DBSchema | void = void> = ViewHandlerClient<T, S> & TableHandler<T, S>;
 export type DBHandlerClient<Schema = void> = Schema extends DBSchema ? {
-    [tov_name in keyof Schema]: Schema[tov_name]["is_view"] extends true ? ViewHandlerClient<Schema[tov_name]["columns"], Schema> : TableHandlerClient<Schema[tov_name]["columns"], Schema>;
+    [tov_name in keyof Schema]: TableHandlerClient<Schema[tov_name]["columns"], Schema>;
 } : Record<string, Partial<TableHandlerClient>>;
 export type ClientOnReadyParams<DBSchema = void, FunctionHandler extends ClientFunctionHandler = ClientFunctionHandler, U extends UserLike = UserLike> = {
     /**

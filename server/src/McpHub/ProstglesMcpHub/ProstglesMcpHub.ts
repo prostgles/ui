@@ -125,11 +125,11 @@ const init = async (dbs: DBS) => {
         );
       }
 
-      const res = await toolMethod(args, context);
+      const toolCallResult = await toolMethod(args, context);
       const outputValidation =
         //@ts-ignore
         outputSchema ?
-          getJSONBSchemaValidationError(outputSchema, res, {
+          getJSONBSchemaValidationError(outputSchema, toolCallResult, {
             allowExtraProperties: true,
           })
         : undefined;
@@ -150,7 +150,7 @@ const init = async (dbs: DBS) => {
           ].join("\n"),
         );
       }
-      return res;
+      return toolCallResult;
     });
 
     const errorData =

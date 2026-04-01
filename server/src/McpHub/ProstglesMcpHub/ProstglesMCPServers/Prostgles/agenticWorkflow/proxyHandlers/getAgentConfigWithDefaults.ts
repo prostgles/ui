@@ -24,6 +24,7 @@ export const getAgentConfigWithDefaults = async (
     maxTokens = 6_000,
     temperature = 0.0,
     tools,
+    mcpServerConfigs,
   } = { ...agentConfig, ...definition_override?.agentDefinitions?.[agentName] };
   if (!prompt) {
     throw new Error(`Agent ${agentName} is missing a prompt`);
@@ -78,6 +79,7 @@ export const getAgentConfigWithDefaults = async (
     maxIterations,
     maxTokens,
     temperature,
+    mcpServerConfigs,
   };
 };
 

@@ -98,12 +98,13 @@ export const startAgent = async (
   );
   if (toolsWithInfo?.length) {
     await dbs.llm_chats_allowed_mcp_tools.insertMany(
-      toolsWithInfo.map(({ id, server_name }) => {
+      toolsWithInfo.map(({ id, server_name, configId }) => {
         return {
           chat_id: agentChat.id,
           tool_id: id,
           server_name,
           auto_approve: autoApproveAllTools,
+          server_config_id: configId,
         } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
       }),
     );

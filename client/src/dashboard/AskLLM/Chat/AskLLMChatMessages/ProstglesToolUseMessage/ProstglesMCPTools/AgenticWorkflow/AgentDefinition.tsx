@@ -24,7 +24,13 @@ export const AgentDefinition = ({
 }: {
   config: NonNullable<
     DBSSchema["agentic_workflows"]["definition_data"]["agentDefinitions"]
-  >[string];
+  >[string] &
+    NonNullable<
+      NonNullable<
+        DBSSchema["agentic_workflows"]["definition_override"]
+      >["agentDefinitions"]
+    >[string];
+
   agentName: string;
   onChange: (updatedFields: Partial<typeof config>) => void | Promise<void>;
 }) => {
@@ -122,7 +128,19 @@ export const AgentDefinition = ({
           }}
         />
       : isNotEmpty(agentTools) ?
-        <McpToolAccess title="Agent tools" value={agentTools} />
+        <McpToolAccess
+          title="Agent tools"
+          value={agentTools}
+          configs={config.mcpServerConfigs}
+          onConfigChange={(serverName, configId) => {
+            void onChange({
+              mcpServerConfigs: {
+                ...(config.mcpServerConfigs ?? {}),
+                [serverName]: { configId },
+              },
+            });
+          }}
+        />
       : null}
       <ScrollFade
         className="o-auto min-w-0"

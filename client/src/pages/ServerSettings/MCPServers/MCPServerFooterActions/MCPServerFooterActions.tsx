@@ -100,7 +100,6 @@ export const MCPServerFooterActions = ({
           return (
             <MCPServerConfigButton
               key={config.id}
-              dbs={dbs}
               schema={config_schema}
               existingConfig={{ id: config.id, value: config.config }}
               serverName={mcp_server.name}

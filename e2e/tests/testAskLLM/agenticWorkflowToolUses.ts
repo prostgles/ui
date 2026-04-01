@@ -1,9 +1,11 @@
+import { getProstglesMCPFullToolName } from "common/prostglesMcp";
 import type { DBSSchema } from "common/publishUtils";
 import { stringify, type ToolUse } from "./utils";
-import { getProstglesMCPFullToolName } from "common/prostglesMcp";
+import type { ExtractBy } from "common/utils";
 type UserInput = NonNullable<
   DBSSchema["agentic_workflows"]["definition_data"]["userInput"]
 >;
+type InputUnion = UserInput[keyof UserInput];
 
 const clashingTableDefinition = `
   CREATE TABLE users (
@@ -13,14 +15,30 @@ const clashingTableDefinition = `
   );
 `;
 
+const fileInputDefs = {
+  "folder-path": {
+    title: "Folder path",
+    type: "folder-path",
+    accessMode: "read",
+  },
+  "file-path": {
+    title: "File path",
+    type: "file-path",
+    accessMode: "read",
+  },
+} as const;
+
 export const research = "research" as const;
 type Mode =
   | "input"
   | "clashing"
   | "noinput"
+  | "filesystem"
   | "invalidTable"
   | "invalidPermissionTable";
 const getFunc = (mode: Mode) => `
+import { readdirSync, rmSync, } from "fs";
+import { readFile } from "fs/promises";
 import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
 export default defineAgenticWorkflow(
   ${JSON.stringify(
@@ -59,6 +77,12 @@ export default defineAgenticWorkflow(
         fetch: {
           fetch: 1,
         },
+        ...(mode === "filesystem" && {
+          filesystem: {
+            list_allowed_directories: 1,
+            read_text_file: 1,
+          },
+        }),
       },
       agentDefinitions: {
         researcher: {
@@ -121,7 +145,10 @@ export default defineAgenticWorkflow(
               type: "enum",
               values: ["value1", "value2", "value3"],
             },
-          } satisfies Record<UserInput[string]["type"], UserInput[string]>)
+            ...fileInputDefs,
+          } satisfies {
+            [K in InputUnion["type"]]: ExtractBy<InputUnion, "type", K>;
+          })
         ),
     } satisfies Partial<DBSSchema["agentic_workflows"]["definition_data"]> & {
       name: string;
@@ -153,16 +180,45 @@ export default defineAgenticWorkflow(
     console.log("Filter count:", filterCount);
     setProgress(1, "Finished database operation, starting research");
     ${mode === "invalidTable" ? "await tableHandlers.invalid_table.count();" : ""}
-    tableHandlers.users.find().then((users) => {
-      users.forEach(async (user, index) => {
-        setProgress((100/users.length) * index, "Processing user " + (index + 1) + "/" + users.length);
-        const result = await researcher(" ${research} Prostgles"); 
-        const sinceStart = Date.now() - start;
-        await tableHandlers.users.update({ id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });
-      })
-    })
+    const users = await tableHandlers.users.find();
+    for (const [index, user] of users.entries()) {
+      setProgress((100/users.length) * index, "Processing user " + (index + 1) + "/" + users.length);
+      const result = await researcher(" ${research} Prostgles"); 
+      const sinceStart = Date.now() - start;
+      await tableHandlers.users.update({ id: user.id }, { username: user.username + " "  + sinceStart + " " + result.summary });
+    } 
+    ${
+      mode === "filesystem" ? filesystemFunc
+      : mode === "input" ? volumesFunc
+      : ""
+    }
   },
 );
+`;
+
+const volumesFunc = `
+  console.log(readdirSync(userInputValues["folder-path"]!)); 
+  const filePath = userInputValues["file-path"]!;
+  try {
+    rmSync(filePath, { force: false });
+  } catch (err) {
+    if (err instanceof Error) {
+      // Will surface EROFS, EACCES, ENOENT etc.
+      console.error("Failed to remove package.json: ", err.message);
+    } 
+  }
+  readFile(filePath).then((content) => {
+    console.log("File content:", content.toString().slice(0, content.toString().indexOf("react-markdown")));
+  }).catch(console.error);
+`;
+
+const filesystemFunc = `
+await orchestratorToolHandlers.filesystem.list_allowed_directories({}).then(({ content  }) => {
+  const [_,allowedDir] = content.split(\"\\n\")
+  orchestratorToolHandlers.filesystem.read_text_file({
+    path: allowedDir + "/tsconfig.base.json"
+  }).then(({ content }) => console.log(content.slice(0, content.indexOf("resolveJsonModule"))));
+});
 `;
 
 export const agenticWorkflowToolUses = Object.fromEntries(
@@ -171,6 +227,7 @@ export const agenticWorkflowToolUses = Object.fromEntries(
       "input",
       "clashing",
       "noinput",
+      "filesystem",
       "invalidTable",
       "invalidPermissionTable",
     ] as const

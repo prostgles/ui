@@ -1,7 +1,7 @@
-import type { PageWIds } from "utils/utils";
+import type { LocatorWIds } from "utils/utils";
 
 export const fileBrowserGoToPath = async (
-  page: PageWIds,
+  locator: LocatorWIds,
   targetPath: string[],
 ) => {
   /**
@@ -16,7 +16,7 @@ export const fileBrowserGoToPath = async (
     ...targetPath,
   ] as const;
   for (const segment of path) {
-    await page.locator(`[data-label=${JSON.stringify(segment)}]`).click();
-    await page.waitForTimeout(1e3);
+    await locator.locator(`[data-label=${JSON.stringify(segment)}]`).click();
+    await locator.page().waitForTimeout(1e3);
   }
 };

@@ -151,7 +151,7 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
         };
         readonly insert: {
-            readonly description: "Inserts rows into a table.";
+            readonly description: "Inserts a row into a table.";
             readonly annotations: {
                 readonly readOnlyHint: false;
             };
@@ -160,17 +160,9 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly tableName: "string";
                     readonly data: {
                         readonly description: "Data to insert into the table. Must satisfy the table schema.";
-                        readonly oneOf: readonly [{
-                            readonly record: {
-                                readonly values: "any";
-                            };
-                        }, {
-                            readonly arrayOf: {
-                                readonly record: {
-                                    readonly values: "any";
-                                };
-                            };
-                        }];
+                        readonly record: {
+                            readonly values: "any";
+                        };
                     };
                     readonly onConflict: {
                         readonly enum: readonly ["DoNothing", "DoUpdate"];
@@ -195,18 +187,57 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             };
             readonly outputSchema: {
                 readonly optional: true;
-                readonly description: "Inserted rows returned based on the returning schema. Nothing will be returned if returning is not provided. Return type based on input data: if data is an array of objects, returns an array of objects. If data is a single object, returns a single object.";
-                readonly oneOf: readonly [{
+                readonly description: "Inserted row returned based on the returning fields. Nothing will be returned if returning is not provided.";
+                readonly record: {
+                    readonly values: "any";
+                };
+            };
+        };
+        readonly insertMany: {
+            readonly description: "Inserts rows into a table.";
+            readonly annotations: {
+                readonly readOnlyHint: false;
+            };
+            readonly schema: {
+                readonly type: {
+                    readonly tableName: "string";
+                    readonly data: {
+                        readonly description: "Data to insert into the table. Must satisfy the table schema.";
+                        readonly arrayOf: {
+                            readonly record: {
+                                readonly values: "any";
+                            };
+                        };
+                    };
+                    readonly onConflict: {
+                        readonly enum: readonly ["DoNothing", "DoUpdate"];
+                        readonly optional: true;
+                        readonly description: string;
+                    };
+                    readonly returning: {
+                        readonly optional: true;
+                        readonly oneOf: readonly [{
+                            readonly enum: readonly ["*"];
+                        }, {
+                            readonly description: "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }";
+                            readonly record: {
+                                readonly values: {
+                                    readonly enum: readonly [1, 0];
+                                };
+                            };
+                        }];
+                        readonly description: "Fields to return for newly inserted data. Nothing will be returned otherwise";
+                    };
+                };
+            };
+            readonly outputSchema: {
+                readonly arrayOf: {
                     readonly record: {
                         readonly values: "any";
                     };
-                }, {
-                    readonly arrayOf: {
-                        readonly record: {
-                            readonly values: "any";
-                        };
-                    };
-                }];
+                };
+                readonly optional: true;
+                readonly description: "Inserted rows returned based on the returning fields. Nothing will be returned if returning is not provided.";
             };
         };
         readonly update: {
@@ -519,6 +550,18 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                                         readonly type: "unknown";
                                         readonly optional: true;
                                     };
+                                }, {
+                                    readonly title: "string";
+                                    readonly optional: {
+                                        readonly type: "boolean";
+                                        readonly optional: true;
+                                    };
+                                    readonly type: {
+                                        readonly enum: readonly ["folder-path", "file-path"];
+                                    };
+                                    readonly accessMode: {
+                                        readonly enum: readonly ["read", "read-write"];
+                                    };
                                 }];
                             };
                         };
@@ -759,7 +802,9 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                     readonly databaseAccess: {
                         readonly optional: true;
                         readonly oneOf: readonly [{
-                            readonly enum: readonly ["execute_readonly_sql", "execute_sql"];
+                            readonly enum: readonly ["execute_readonly_sql"];
+                        }, {
+                            readonly enum: readonly ["execute_sql"];
                         }, {
                             readonly title: "Tables";
                             readonly description: "Tables the assistant can access";

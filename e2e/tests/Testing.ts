@@ -560,6 +560,8 @@ export const COMMANDS = {
   SavedAgenticWorkflowsAndContainers: "",
   ElectronSearchBar: "",
   "FullscreenWrapper.toggleMinimize": "",
+  "McpToolAccess.configure": "",
+  FileBrowser: "",
 } as const satisfies Record<
   string,
   | string

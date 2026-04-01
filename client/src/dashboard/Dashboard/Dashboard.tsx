@@ -324,7 +324,7 @@ export class _Dashboard extends RTComp<
       );
     }
 
-    this.checkIfNoOpenWindows();
+    void this.checkIfNoOpenWindows();
 
     const needToRecalculateCounts =
       "workspace" in delta &&

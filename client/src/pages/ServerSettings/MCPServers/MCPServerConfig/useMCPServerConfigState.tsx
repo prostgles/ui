@@ -2,9 +2,11 @@ import { useOnErrorAlert } from "@components/AlertProvider";
 import { isEqual } from "prostgles-types";
 import { useCallback, useMemo, useState } from "react";
 import type { MCPServerConfigProps } from "./MCPServerConfig";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 export const useMCPServerConfigState = (props: MCPServerConfigProps) => {
-  const { serverName, existingConfig, dbs, onDone, chatId } = props;
+  const { dbs } = usePrglCore();
+  const { serverName, existingConfig, onDone, chatId } = props;
   const [config, setConfig] = useState(existingConfig?.value ?? {});
   const canSave = useMemo(
     () => !isEqual(config, existingConfig?.value),

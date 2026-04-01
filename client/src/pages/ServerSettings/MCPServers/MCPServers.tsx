@@ -38,7 +38,7 @@ export const MCPServers = ({ chatId }: MCPServersProps) => {
 
   const [loaded, setLoaded] = useState(false);
   return (
-    <MCPServerConfigProvider dbs={dbs}>
+    <MCPServerConfigProvider>
       <FlexCol
         className="p-1 pt-0 min-w-0 f-1 max-w-800"
         style={{

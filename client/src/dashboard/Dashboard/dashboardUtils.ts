@@ -40,7 +40,8 @@ export type DBSSchemaForHandlers = {
 
 export const vibrateFeedback = (duration = 15) => {
   try {
-    navigator.vibrate(duration);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    navigator.vibrate?.(duration);
   } catch (e) {
     console.error(e);
   }

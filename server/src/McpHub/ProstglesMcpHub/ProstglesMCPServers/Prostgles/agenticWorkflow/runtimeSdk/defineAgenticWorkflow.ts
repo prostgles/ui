@@ -276,9 +276,6 @@ type DbTableHandler = {
  *   referencedTable: "*", // all fields from the referenced table will be included in an array under the "referencedTable" key
  * }
  *
- *
- *
- *
  * */
 type TableHandlers<
   AccessMode extends DatabaseAccessDefinition["mode"] | undefined,
@@ -303,28 +300,6 @@ type SqlHandler<
     ) => Promise<Record<string, unknown>[]>
   : never;
 
-// export type DatabaseHandlers<
-//   M extends DatabaseAccessDefinition["mode"] | void,
-// > =
-//   M extends "custom" | "execute_sql" | "execute_readonly_sql" ?
-//     {
-//       tableHandlers: DbTableHandler;
-//       runSQL: undefined;
-//     }
-//   : M extends "execute_sql" | "execute_readonly_sql" ?
-//     {
-//       tableHandlers: DbTableHandler;
-//       runSQL: (
-//         sql: string,
-//         params?: Record<string, any> | any[],
-//         timeout?: number,
-//       ) => Promise<Record<string, unknown>[]>;
-//     }
-//   : {
-//       tableHandlers: undefined;
-//       runSQL: undefined;
-//     };
-
 type UserInputBase<T> = T & {
   title: string;
   optional?: boolean;
@@ -334,6 +309,14 @@ type UserInputBase<T> = T & {
  * Prefer to use this over "custom" or "enum" to restrict the input and make it easier for the user to choose the correct value.
  */
 export type UserInputItem =
+  | UserInputBase<{
+      /**
+       * A path to a file/folder from the local system that will be mounted to the container.
+       * The agent can read and write depending on the accessMode value.
+       */
+      type: "folder-path" | "file-path";
+      accessMode: "read" | "read-write";
+    }>
   | UserInputBase<{
       type: "table-column-value";
       tableName: string;
@@ -382,6 +365,8 @@ export type UserInputOutputMapping = {
   "table-column-values": unknown[];
   "table-name": string;
   "table-column": string;
+  "folder-path": string;
+  "file-path": string;
   enum: string;
   custom: unknown;
 };
@@ -503,6 +488,13 @@ void defineAgenticWorkflow(
         },
       },
     },
+    userInput: {
+      documentsFolder: {
+        title: "Documents Folder",
+        type: "folder-path",
+        accessMode: "read-write",
+      }
+    }
   },
   async ({ agentHandlers: { researcher }, tableHandlers, orchestrationTools: { websearch } }) => {
 

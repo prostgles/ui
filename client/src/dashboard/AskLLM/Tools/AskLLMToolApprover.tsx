@@ -13,6 +13,7 @@ import type { useAskLLMToolApprove } from "./useAskLLMToolApprover";
 import { NavLink } from "react-router";
 import { getConnectionPaths } from "@common/utils";
 import { isDefined } from "@common/filterUtils";
+import type { BtnProps } from "@components/Btn";
 
 export type AskLLMToolsProps = {
   workspaceId: string | undefined;
@@ -50,8 +51,16 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     return null;
   }
 
-  const { chat_id, server_name, tool_name, input, tool_use_id, llm_messages } =
-    requestItem;
+  const {
+    chat_id,
+    server_name,
+    tool_name,
+    input,
+    tool_use_id,
+    llm_messages,
+    mcp_server_tools,
+  } = requestItem;
+  const { annotations } = mcp_server_tools[0] ?? {};
   const connections = requestItem.connections as
     | Pick<DBSSchema["connections"], "id" | "name">[]
     | undefined;
@@ -65,6 +74,25 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       connections?.find((c) => c.id === requestItem.connection_id)
     : undefined;
   const toolUseMessage = llm_messages[0];
+
+  const btnDestructiveToolHint: Pick<BtnProps, "title" | "color"> =
+    annotations?.readOnlyHint === false ?
+      {
+        title:
+          "Not read-only hint: This tool may perform actions that can modify data.",
+        color: "warn",
+      }
+    : annotations?.destructiveHint ?
+      {
+        title:
+          "Destructive hint: This tool may perform actions that can modify or delete data.",
+        color: "danger",
+      }
+    : {
+        color: "action",
+        title: undefined,
+      };
+
   return (
     <Popup
       title={
@@ -116,8 +144,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         },
         {
           label: "Allow once",
-          color: "action",
           variant: "filled",
+          ...btnDestructiveToolHint,
           "data-command": "AskLLMToolApprover.AllowOnce",
           onClickPromise: async () => {
             await respond({
@@ -129,8 +157,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         },
         {
           label: "Allow always",
-          color: "action",
           variant: "filled",
+          ...btnDestructiveToolHint,
           "data-command": "AskLLMToolApprover.AllowAlways",
           onClickPromise: async () => {
             await respond({

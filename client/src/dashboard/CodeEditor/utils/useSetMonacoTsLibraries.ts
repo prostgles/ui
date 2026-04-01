@@ -1,10 +1,13 @@
 import type { editor } from "monaco-editor";
-import type { CodeEditorProps, LanguageConfig } from "../CodeEditor";
-import { useEffect } from "react";
-import { useEffectDeep, useIsMounted } from "prostgles-client";
+import { useEffectDeep, useIsMounted, usePromise } from "prostgles-client";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import type { CodeEditorProps, LanguageConfig, TSLibrary } from "../CodeEditor";
 import { installGoToDefinition } from "./installGoToDefinition";
+import { useEffect } from "react";
 
 export type MonacoEditorImport = typeof import("monaco-editor");
+
+let cachedNodeLibs: TSLibrary[] | undefined;
 
 export const useSetMonacoTsLibraries = (
   editor: editor.IStandaloneCodeEditor | undefined,
@@ -14,16 +17,35 @@ export const useSetMonacoTsLibraries = (
   onTSLibraryChange: CodeEditorProps["onTSLibraryChange"],
 ) => {
   const getIsMounted = useIsMounted();
+  const { dbsMethods } = usePrglCore();
+  const isNodeEnv =
+    languageObj?.lang === "typescript" && languageObj.environment === "nodejs";
+  const nodeLibs = usePromise(async () => {
+    if (!isNodeEnv) return;
+    const nodeTypes =
+      cachedNodeLibs ?? (await dbsMethods.getNodeTypes?.()) ?? [];
+    cachedNodeLibs = nodeTypes;
+    return nodeTypes;
+  });
   useEffect(() => {
     if (!monaco) return;
-    setTSoptions(monaco);
-  }, [monaco]);
+    setTSoptions(monaco, isNodeEnv ? "node" : "react");
+  }, [monaco, dbsMethods, isNodeEnv]);
 
   useEffectDeep(() => {
     if (!monaco || !editor || languageObj?.lang !== "typescript") return;
-    const { tsLibraries, modelFileName, importedModels = {} } = languageObj;
-    if (!tsLibraries) return;
-    monaco.languages.typescript.typescriptDefaults.setExtraLibs(tsLibraries);
+    const {
+      environment,
+      tsLibraries,
+      modelFileName,
+      importedModels = {},
+    } = languageObj;
+    const extraLibs =
+      environment === "nodejs" ?
+        tsLibraries && [...(nodeLibs ?? []), ...tsLibraries]
+      : tsLibraries;
+    if (!extraLibs) return;
+    monaco.languages.typescript.typescriptDefaults.setExtraLibs(extraLibs);
     /* 
         THIS CLOSES ALL OTHER EDITORS 
         This is/was? needed to prevent this error: Type annotations can only be used in TypeScript files. 
@@ -55,15 +77,18 @@ export const useSetMonacoTsLibraries = (
     if (!getIsMounted()) return;
     try {
       editor.setModel(model);
-      installGoToDefinition(editor);
+      void installGoToDefinition(editor);
     } catch (e) {
       console.error(e);
     }
-    onTSLibraryChange?.(tsLibraries);
-  }, [editor, monaco, languageObj, onTSLibraryChange, getIsMounted]);
+    onTSLibraryChange?.(extraLibs);
+  }, [editor, monaco, languageObj, onTSLibraryChange, getIsMounted, nodeLibs]);
 };
 
-const setTSoptions = (monaco: MonacoEditorImport) => {
+const setTSoptions = (
+  monaco: MonacoEditorImport,
+  environment: "react" | "node",
+) => {
   monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
 
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -80,7 +105,7 @@ const setTSoptions = (monaco: MonacoEditorImport) => {
     jsx: monaco.languages.typescript.JsxEmit.React,
     reactNamespace: "React",
     /** Adding this line breaks inbuild functions (setTimeout, etc) */
-    // lib: ["ES2017", "es2019", "ES2021.String", "ES2020", "ES2022"],
+    // lib: ["DOM", "ES2017", "es2019", "ES2021.String", "ES2020", "ES2022"],
     esModuleInterop: true,
     allowSyntheticDefaultImports: true,
     declaration: true,

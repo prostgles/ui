@@ -15,7 +15,7 @@ import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import { prostglesServices } from "@src/ServiceManager/ServiceManagerTypes";
 import { FILE_TABLE_CONFIG_SCHEMA } from "@src/tableConfig/tableConfigDatabaseConfig";
 import { upsertConnection } from "@src/upsertConnection";
-import { existsSync, readdirSync, statSync } from "fs";
+import { existsSync, fstat, readdirSync, statSync } from "fs";
 import { mkdir } from "fs/promises";
 import { glob } from "glob";
 import * as os from "os";
@@ -445,7 +445,8 @@ export const getAdminServerFunctions = (
     }),
     getNodeTypes: defineAdminFunction({
       run: () => {
-        return getNodeTypes();
+        const pkgDeps = getNodeTypes();
+        return pkgDeps;
       },
     }),
     ...getMcpServerFunctions(context),

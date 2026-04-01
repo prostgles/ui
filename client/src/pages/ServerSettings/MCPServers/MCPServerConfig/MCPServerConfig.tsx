@@ -3,15 +3,14 @@ import { FileBrowser } from "@components/FileBrowser/FileBrowser";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
+import { mdiDelete, mdiDeleteOutline } from "@mdi/js";
 import React, { useContext, useState } from "react";
-import type { DBS } from "../../../../dashboard/Dashboard/DBS";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { useMCPServerConfigState } from "./useMCPServerConfigState";
-import { mdiDelete } from "@mdi/js";
 
 export type MCPServerEnabledConfig = { configId: number };
 
 export type MCPServerConfigProps = {
-  dbs: DBS;
   serverName: string;
   existingConfig: { id: number; value: Record<string, string> } | undefined;
   chatId: number | undefined;
@@ -22,6 +21,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
   const { serverName, existingConfig, onDone } = props;
   const { upsertConfig, canSave, schema, setConfig, config, existingConfigs } =
     useMCPServerConfigState(props);
+  const { dbs } = usePrglCore();
   if (!schema) return null;
 
   return (
@@ -103,6 +103,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
                   <FlexRow key={existingConfig.id} className="gap-0">
                     <Btn
                       variant="faded"
+                      size="small"
                       onClick={() => {
                         setConfig(existingConfig.config);
                       }}
@@ -110,10 +111,11 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
                       {values}
                     </Btn>
                     <Btn
-                      iconPath={mdiDelete}
+                      size="small"
+                      iconPath={mdiDeleteOutline}
                       title="Delete existing config (if not used in other chats)"
                       onClickPromise={async () => {
-                        await props.dbs.mcp_server_configs.delete({
+                        await dbs.mcp_server_configs.delete({
                           id: existingConfig.id,
                         });
                       }}
@@ -141,10 +143,8 @@ export const MCPServerConfigContext = React.createContext<
 
 export const MCPServerConfigProvider = ({
   children,
-  dbs,
 }: {
   children: React.ReactNode;
-  dbs: DBS;
 }) => {
   const [serverToConfigure, setServerToConfigure] =
     useState<MCPServerConfigProps>();
@@ -152,12 +152,11 @@ export const MCPServerConfigProvider = ({
   const value = React.useMemo(() => {
     return {
       setServerToConfigure: async (
-        props: Omit<MCPServerConfigProps, "onDone" | "dbs">,
+        props: Omit<MCPServerConfigProps, "onDone">,
       ) => {
         return new Promise<MCPServerEnabledConfig | void>((resolve) => {
           setServerToConfigure({
             ...props,
-            dbs,
             onDone: (enabled) => {
               resolve(enabled);
             },
@@ -165,7 +164,7 @@ export const MCPServerConfigProvider = ({
         });
       },
     };
-  }, [dbs]);
+  }, []);
 
   return (
     <MCPServerConfigContext.Provider value={value}>

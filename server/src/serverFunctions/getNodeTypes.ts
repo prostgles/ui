@@ -31,7 +31,12 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
   if (!projectPkgContent) {
     throw new Error(`Failed to read ${projectPkgPath}`);
   }
-  let projectPkg;
+  let projectPkg:
+    | undefined
+    | {
+        dependencies?: Record<string, string>;
+        devDependencies?: Record<string, string>;
+      };
   try {
     projectPkg = JSON.parse(projectPkgContent);
   } catch (err) {
@@ -40,13 +45,15 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
 
   // 2. Gather dependency names from "dependencies" and "devDependencies".
   const deps = {
-    ...(projectPkg.dependencies || {}),
+    ...(projectPkg?.dependencies || {}),
     /** Include node types */
-    ...(projectPkg.devDependencies || {}),
+    ...(projectPkg?.devDependencies || {}),
   };
-  const depNames = Object.keys(deps).filter(
-    (depName) => !depName.includes("prostgles-server"),
+  const toExclude = ["prostgles-server", "@aws-sdk", "@types/aws-sdk"];
+  const depNames = Object.keys(deps).filter((depName) =>
+    toExclude.every((excludedPkg) => !depName.includes(excludedPkg)),
   );
+  depNames.push("node");
 
   // 3. For each dependency, locate its package.json and check for a "types" or "typings" field.
   const rootTypeFiles: { pkgName: string; typesFilePath: string }[] = [];

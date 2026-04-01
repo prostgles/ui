@@ -1,17 +1,16 @@
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
 import {
   mdiClose,
   mdiFullscreen,
   mdiFullscreenExit,
-  mdiMenu,
   mdiUnfoldLessHorizontal,
   mdiUnfoldMoreHorizontal,
 } from "@mdi/js";
 import React from "react";
-import Btn from "@components/Btn";
-import type { SilverGridChildProps } from "./SilverGridChild";
 import { dataCommand } from "../../Testing";
 import { appTheme, useReactiveState } from "../../appUtils";
-import { FlexRow } from "@components/Flex";
+import type { SilverGridChildProps } from "./SilverGridChild";
 export const GridHeaderClassname = "silver-grid-item-header--title" as const;
 
 type P = SilverGridChildProps & {
@@ -186,7 +185,7 @@ export const SilverGridChildHeader = (props: P) => {
         {headerIcon}
       </div>
       <div
-        className="divider ml-2 mr-1"
+        className="divider mx-p5"
         style={{ width: "1px", height: "60%", background: "var(--b-color)" }}
       ></div>
       {!hideButtons.minimize && (

@@ -2,6 +2,7 @@ import { isDocker } from "@src/McpHub/utils";
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas";
+import type { StrictOmit } from "@common/utils";
 
 const CUSTOM_BRIDGE_NETWORK_NAME = "prostgles-bridge-net";
 export const INTERNAL_BRIDGE_NETWORK_NAME = "prostgles-bridge-internal-net";
@@ -22,7 +23,7 @@ if (process.env.NODE_ENV === "development") {
 
 const LABEL = "prostgles-docker-sandbox";
 
-type LocalDockerParams = {
+export type LocalDockerParams = {
   user?: string;
   workingDir?: string;
   volumes?: Array<{
@@ -52,10 +53,13 @@ export const getDockerRunArgs = ({
   workingDir = "/workspace",
   environment = {},
   volumes,
-  localDir,
   name,
   readOnly = true,
-}: CreateContainerParams & LocalDockerParams) => {
+}: Pick<
+  CreateContainerParams,
+  "cpus" | "memory" | "networkMode" | "environment" | "readOnly"
+> &
+  StrictOmit<LocalDockerParams, "localDir">) => {
   const runArgs = ["run", "--rm", "--interactive"];
 
   // Resource limits
@@ -85,17 +89,15 @@ export const getDockerRunArgs = ({
     runArgs.push("--env", `${key}=${value}`);
   });
 
-  // Volumes
-  // runArgs.push("-v", `${localDir}:${workingDir}`);
-  // if (volumes) {
-  //   volumes.forEach((volume) => {
-  //     const volumeStr =
-  //       volume.readOnly ?
-  //         `${volume.host}:${volume.container}:ro`
-  //       : `${volume.host}:${volume.container}`;
-  //     runArgs.push("-v", volumeStr);
-  //   });
-  // }
+  if (volumes) {
+    volumes.forEach((volume) => {
+      const volumeStr =
+        volume.readOnly ?
+          `${volume.host}:${volume.container}:ro`
+        : `${volume.host}:${volume.container}`;
+      runArgs.push("-v", volumeStr);
+    });
+  }
 
   runArgs.push("--label", LABEL, "--name", name);
 
@@ -107,6 +109,6 @@ export const getDockerRunArgs = ({
 
   return {
     runArgs,
-    config: { user, workingDir, volumes, localDir, name },
+    config: { user, workingDir, volumes, name },
   };
 };

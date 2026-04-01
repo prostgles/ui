@@ -87,6 +87,20 @@ const handler = {
           });
           return result;
         },
+        insertMany: async (
+          { tableName, data, returning, ...params },
+          context,
+        ) => {
+          const tableHandler = await getTableHandlerWithScope(
+            tableName,
+            context,
+          );
+          const result = await tableHandler.insertMany(data, {
+            ...params,
+            returning: returning as "*",
+          });
+          return result;
+        },
         update: async (
           { tableName, data, returning, filter, ...params },
           context,

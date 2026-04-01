@@ -3,10 +3,14 @@ import { getKeys, isEmpty } from "prostgles-types";
 import type { McpServerToolsAllowed } from "../runtimeSdk/defineAgenticWorkflow";
 import { getEntries } from "@common/utils";
 import { tout } from "@src/utils/tout";
+import type { DBSSchema } from "@common/publishUtils";
 
 export const getValidatedMcpServerToolsAllowed = async (
   dbs: DBS,
   toolsFilter: McpServerToolsAllowed | "*",
+  serverConfigs: NonNullable<
+    DBSSchema["agentic_workflows"]["definition_override"]
+  >["orchestratorMcpServerConfigs"],
 ) => {
   if (isEmpty(toolsFilter)) return [];
 
@@ -99,5 +103,13 @@ export const getValidatedMcpServerToolsAllowed = async (
         .flat()
     );
 
-  return workflowToolsWithInfo;
+  const toolsWithServerConfig = workflowToolsWithInfo.map((tool) => {
+    const configForServer = serverConfigs?.[tool.server_name];
+
+    return {
+      ...tool,
+      ...configForServer,
+    };
+  });
+  return toolsWithServerConfig;
 };

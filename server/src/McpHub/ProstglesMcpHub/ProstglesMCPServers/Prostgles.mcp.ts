@@ -101,7 +101,11 @@ const handler = {
                 name: `Agent for toolUseId ${toolUseId}`,
                 toolsWithInfo:
                   tools &&
-                  (await getValidatedMcpServerToolsAllowed(dbs, tools)),
+                  (await getValidatedMcpServerToolsAllowed(
+                    dbs,
+                    tools,
+                    undefined,
+                  )),
                 configWithDefaults,
                 autoApproveAllTools,
                 requestTimestamp: new Date(),
@@ -141,7 +145,11 @@ const handler = {
         ) => {
           const validatedTools =
             mcpServerTools &&
-            (await getValidatedMcpServerToolsAllowed(dbs, mcpServerTools));
+            (await getValidatedMcpServerToolsAllowed(
+              dbs,
+              mcpServerTools,
+              undefined,
+            ));
           if (mcpServerTools && !validatedTools?.length) {
             throw new Error(
               `mcpServerTools is empty. Either exclude it or provide valid tool server names.`,

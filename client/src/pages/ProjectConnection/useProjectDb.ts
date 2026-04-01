@@ -47,7 +47,9 @@ const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
       Date.now(),
       "onDebug",
       ev.type,
-      Object.keys(ev.type === "schemaChanged" ? ev.data : ev.data.db),
+      ev.type === "schemaChanged" ?
+        ev.data.tableSchema.map((s) => s.name)
+      : Object.keys(ev.data.db),
     );
   }
 };

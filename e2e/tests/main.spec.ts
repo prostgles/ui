@@ -797,7 +797,11 @@ test.describe("Main test", () => {
     /** Enable Web app */
     await page.getByTestId("config.webApp").click();
     await page.getByTestId("WebApp.directory").click();
-    await fileBrowserGoToPath(page, ["ui", "e2e", "demo"]);
+    await fileBrowserGoToPath(page.getByTestId("FileBrowser"), [
+      "ui",
+      "e2e",
+      "demo",
+    ]);
     await page.getByText("Select directory", { exact: true }).click();
   });
 
@@ -1297,7 +1301,11 @@ test.describe("Main test", () => {
     /** Test max speculative chat cost */
     await newChat(page);
     await enableMCPServers(page, ["filesystem"], true);
-    await fileBrowserGoToPath(page, ["ui", "client", "node_modules"]);
+    await fileBrowserGoToPath(page.getByTestId("FileBrowser"), [
+      "ui",
+      "client",
+      "node_modules",
+    ]);
 
     await page.getByTestId("MCPServerConfig.save").click();
     await page.getByTestId("Popup.close").last().click();
@@ -1668,10 +1676,32 @@ test.describe("Main test", () => {
     await page.locator(getDataKey("custom") + " input").fill("a");
 
     await startWorkFlowAndExpectError(
+      `Missing required user input: "File path"`,
+    );
+    await page.locator(getDataKey("file-path")).click();
+    await fileBrowserGoToPath(page.getByTestId("FileBrowser").first(), [
+      "ui",
+      "client",
+      "package.json",
+    ]);
+    await page.getByTestId("Popup.close").last().click();
+
+    await startWorkFlowAndExpectError(
       `Missing required user input: "Table name"`,
     );
     await page.locator(getDataKey("table-name")).click();
     await page.locator(`[data-key="example_table"]`).last().click();
+
+    await startWorkFlowAndExpectError(
+      `Missing required user input: "Folder path"`,
+    );
+    await page.locator(getDataKey("folder-path")).click();
+    await fileBrowserGoToPath(page.getByTestId("FileBrowser").last(), [
+      "ui",
+      "client",
+      "src",
+    ]);
+    await page.getByTestId("Popup.close").last().click();
 
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table column"`,
@@ -1711,6 +1741,7 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(1e3);
     await page.getByTestId("AgenticWorkflow.start").click();
+
     /** Progress bar works */
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Processing user 2/",
@@ -1731,18 +1762,9 @@ test.describe("Main test", () => {
       .getByText("OK", { exact: true })
       .click();
 
-    await runDbSql(
-      page,
-      `
-      DROP TABLE IF EXISTS new_users;
-      DELETE FROM users WHERE type = 'from-agent';
-      `,
-    );
-    await page.waitForTimeout(1e3);
-    await newChat(page);
-    await sendAskLLMMessage(page, " agentic_workflow_noinput ");
-
-    const runWorkflowAndExpectSuccess = async () => {
+    const runWorkflowAndExpectSuccess = async (
+      shownText: string | string[] = ["Contents of https://www.prostgles.com/"],
+    ) => {
       await page.getByTestId("AgenticWorkflow.start").click({
         timeout: 30e3,
       });
@@ -1753,10 +1775,60 @@ test.describe("Main test", () => {
           timeout: 120e3,
         },
       );
-      await expect(page.getByTestId("AgenticWorkflow")).toContainText(
-        "Contents of https://www.prostgles.com/",
-      );
+
+      await page
+        .getByTestId("AgenticWorkflow")
+        .getByTestId("FullscreenWrapper.toggleFullscreen")
+        .filter({ visible: true })
+        .click();
+      for (const text of Array.isArray(shownText) ? shownText : [shownText]) {
+        await expect(
+          page
+            .getByTestId("FullscreenWrapper")
+            .filter({ visible: true })
+            .last(),
+        ).toContainText(text);
+      }
+      await page
+        .getByTestId("FullscreenWrapper.toggleFullscreen")
+        .filter({ visible: true })
+        .last()
+        .click();
     };
+
+    /** Prevent constraint fail error */
+    await runDbSql(
+      page,
+      `
+      DROP TABLE IF EXISTS new_users;
+      DELETE FROM users WHERE type = 'from-agent';
+      `,
+    );
+    await page.waitForTimeout(1e3);
+    await runWorkflowAndExpectSuccess([
+      "App.css",
+      "loaders.gl",
+      "Failed to remove package.json",
+    ]);
+
+    await newChat(page);
+    await sendAskLLMMessage(page, " agentic_workflow_filesystem ");
+    await page.getByTestId("McpToolAccess.configure").click({ timeout: 60e3 });
+    await fileBrowserGoToPath(page.getByTestId("FileBrowser"), [
+      "ui",
+      "e2e",
+      "demo",
+    ]);
+    await page.getByText("Enable", { exact: true }).click();
+
+    await runWorkflowAndExpectSuccess([
+      "forceConsistentCasingInFileNames",
+      "tsconfig.base.json",
+    ]);
+
+    await page.waitForTimeout(1e3);
+    await newChat(page);
+    await sendAskLLMMessage(page, " agentic_workflow_noinput ");
     await runWorkflowAndExpectSuccess();
 
     /** Activity agent chats */
@@ -2032,25 +2104,6 @@ test.describe("Main test", () => {
     await page
       .getByText("my_new_value_1")
       .waitFor({ state: "visible", timeout: 15e3 });
-
-    /**
-     * Flaky test. Last failure logs
-     * 
-      {stack: Array(1), message: Invalid or disallowed table: table_name}
-      There was an issue reconnecting old subscriptions {stack: Array(1), message: Invalid or disallowed table: table_name} {lastData: Array(0), tableName: table_name, command: subscribe, param1: Object, param2: Object}
-      Uncaught error within running subscription 
-      _psqlWS_..table_name.{}.{"select":{"*":1},"limit":0}.m.sub {stack: Array(1), message: Invalid or disallowed table: table_name}
-      1751466146652 onDebug schemaChanged []
-      1751466146652 onDebug onReady.call [sql] 
-      Table not found: table_name 
-      Table not found: table_name
-      {message: Unexpected empty object select}
-      Subscribe failed {message: Unexpected empty object select} 
-      Table not found: table_name
-      Table not found: table_name
-      {message: Unexpected empty object select}
-      Subscribe failed {message: Unexpected empty object select}
-    */
 
     await page
       .getByText("my_new_value_3")

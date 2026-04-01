@@ -6,7 +6,7 @@ export const useMcpServerIcons = () => {
 
   const mcpServers = dbs.mcp_servers.useFind(
     {},
-    { select: { name: 1, icon_path: 1 } },
+    { select: { name: 1, icon_path: 1, config_schema: 1 } },
   );
   const mcpServerIcons = useMemo(() => {
     const iconMap = new Map<string, string>();
@@ -17,5 +17,5 @@ export const useMcpServerIcons = () => {
     });
     return iconMap;
   }, [mcpServers]);
-  return { mcpServerIcons };
+  return { mcpServers: mcpServers.data, mcpServerIcons };
 };

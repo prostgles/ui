@@ -1,5 +1,5 @@
 import { FlexCol } from "@components/Flex";
-import React from "react";
+import React, { useCallback } from "react";
 import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 import { UserInput } from "./UserInput";
 import type { useUserInput } from "./hooks/useUserInput";
@@ -24,9 +24,30 @@ export const AgenticWorkflowDetails = ({
     databaseAccessDefinitions,
     newTables,
   } = workflow.definition_data;
-  const { name, definition_summary } = workflow;
+  const { name, definition_summary, definition_override } = workflow;
   const dbAccess = databaseAccessDefinitions;
   const { dbs } = usePrgl();
+
+  const updateOverride = useCallback(
+    (
+      newOverride: Partial<
+        DBSSchema["agentic_workflows"]["definition_override"]
+      >,
+    ) => {
+      void dbs.agentic_workflows.update(
+        {
+          id: workflow.id,
+        },
+        {
+          definition_override: {
+            ...definition_override,
+            ...newOverride,
+          },
+        },
+      );
+    },
+    [dbs.agentic_workflows, definition_override, workflow.id],
+  );
 
   return (
     <FlexCol className="AgenticWorkflowDetails f-1 gap-0">
@@ -46,8 +67,17 @@ export const AgenticWorkflowDetails = ({
 
         {orchestrationTools && (
           <McpToolAccess
-            value={orchestrationTools}
             title="Orchestration tools"
+            value={orchestrationTools}
+            configs={definition_override?.orchestratorMcpServerConfigs}
+            onConfigChange={(serverName, configId) => {
+              void updateOverride({
+                orchestratorMcpServerConfigs: {
+                  ...(definition_override?.orchestratorMcpServerConfigs ?? {}),
+                  [serverName]: { configId },
+                },
+              });
+            }}
           />
         )}
 
@@ -58,7 +88,7 @@ export const AgenticWorkflowDetails = ({
 
               const agentInitialDefinition = agentDefinitions[agentName]!;
               const agentConfigOverride =
-                workflow.definition_override?.agentDefinitions?.[agentName];
+                definition_override?.agentDefinitions?.[agentName];
               const agentDefinition = {
                 ...agentInitialDefinition,
                 ...agentConfigOverride,
@@ -74,21 +104,14 @@ export const AgenticWorkflowDetails = ({
                       agentDefinition.prompt || agentInitialDefinition.prompt,
                   }}
                   onChange={(updatedFields) => {
-                    void dbs.agentic_workflows.update(
-                      {
-                        id: workflow.id,
-                      },
-                      {
-                        definition_override: {
-                          agentDefinitions: {
-                            [agentName]: {
-                              ...agentConfigOverride,
-                              ...updatedFields,
-                            },
-                          },
+                    updateOverride({
+                      agentDefinitions: {
+                        [agentName]: {
+                          ...agentConfigOverride,
+                          ...updatedFields,
                         },
                       },
-                    );
+                    });
                   }}
                 />
               );

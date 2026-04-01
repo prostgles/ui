@@ -89,6 +89,7 @@ export const AgenticWorkflowActions = ({
                 <span className="text-danger">{state.message ?? "Error"}</span>
               : (state?.message ?? capitalize(state?.status ?? ""))
             }
+            color={state?.status !== "running" ? "gray" : "active"}
             value={
               state?.status !== "running" ? 100 : (state.progressPercent ?? -1)
             }

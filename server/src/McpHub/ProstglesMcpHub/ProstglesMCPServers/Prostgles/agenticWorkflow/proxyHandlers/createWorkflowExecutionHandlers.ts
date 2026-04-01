@@ -85,10 +85,11 @@ export const createWorkflowExecutionHandlers = async <
 
     agentConfigsWithDefaults[agentName] = configWithDefaults;
 
-    const { tools } = configWithDefaults;
+    const { tools, mcpServerConfigs } = configWithDefaults;
 
     const toolsWithInfo =
-      tools && (await getValidatedMcpServerToolsAllowed(dbs, tools));
+      tools &&
+      (await getValidatedMcpServerToolsAllowed(dbs, tools, mcpServerConfigs));
 
     const agentHandler = (input: string, requestTimestamp: Date) => {
       const run = () => {
@@ -125,7 +126,11 @@ export const createWorkflowExecutionHandlers = async <
 
   const orchestrationToolsWithInfo =
     orchestrationTools &&
-    (await getValidatedMcpServerToolsAllowed(dbs, orchestrationTools));
+    (await getValidatedMcpServerToolsAllowed(
+      dbs,
+      orchestrationTools,
+      definition_override?.orchestratorMcpServerConfigs,
+    ));
 
   return {
     agentHandlers,

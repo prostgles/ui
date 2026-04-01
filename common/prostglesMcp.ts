@@ -117,7 +117,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       outputSchema: outputSchemaArrayOfObjects,
     },
     insert: {
-      description: "Inserts rows into a table.",
+      description: "Inserts a row into a table.",
       annotations: { readOnlyHint: false },
       schema: {
         type: {
@@ -125,14 +125,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
           data: {
             description:
               "Data to insert into the table. Must satisfy the table schema.",
-            oneOf: [
-              {
-                record: { values: "any" },
-              },
-              {
-                arrayOf: { record: { values: "any" } },
-              },
-            ],
+            record: { values: "any" },
           },
           onConflict: {
             enum: ["DoNothing", "DoUpdate"],
@@ -152,15 +145,43 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       outputSchema: {
         optional: true,
         description:
-          "Inserted rows returned based on the returning schema. Nothing will be returned if returning is not provided. Return type based on input data: if data is an array of objects, returns an array of objects. If data is a single object, returns a single object.",
-        oneOf: [
-          {
-            record: {
-              values: "any",
-            },
+          "Inserted row returned based on the returning fields. Nothing will be returned if returning is not provided.",
+        record: {
+          values: "any",
+        },
+      },
+    },
+    insertMany: {
+      description: "Inserts rows into a table.",
+      annotations: { readOnlyHint: false },
+      schema: {
+        type: {
+          tableName: "string",
+          data: {
+            description:
+              "Data to insert into the table. Must satisfy the table schema.",
+            arrayOf: { record: { values: "any" } },
           },
-          outputSchemaArrayOfObjects,
-        ],
+          onConflict: {
+            enum: ["DoNothing", "DoUpdate"],
+            optional: true,
+            description: fixIndent(`
+              By default the insert may fail due to a unique/exclusion constraint violation error. To control this:
+              - DoNothing: will ignore the error and do nothing
+              - DoUpdate: will update all non conflicting columns of the conflicting row`),
+          },
+          returning: {
+            description:
+              "Fields to return for newly inserted data. Nothing will be returned otherwise",
+            ...selectSchema,
+          },
+        },
+      },
+      outputSchema: {
+        optional: true,
+        description:
+          "Inserted rows returned based on the returning fields. Nothing will be returned if returning is not provided.",
+        ...outputSchemaArrayOfObjects,
       },
     },
     update: {
@@ -543,10 +564,15 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
         "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
         "Return workflow_function_definition as valid TypeScript that calls defineAgenticWorkflow(...) directly.",
         TYPESCRIPT_CODE_QUALITY,
+        "Any external dependencies must be listed in the package_dependencies field to ensure they get installed.",
+        "External dependencies should be reputable and kept to a minimum to reduce security risks. Always prefer using existing modules and tools instead of adding new dependencies, but if necessary, only add well-known and widely used packages.",
+        "Do not use external dependencies if there are more robust MCP tools available",
         "The user will initially execute it in series mode (agent calls and responses will be queued) to ensure it works as expected,",
         "Prefer series-first, human-in-the-loop flow: interleave agent steps and DB operations to enable feedback and safe re-runs.",
         "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",
         "Use least-privilege DB/tool scope; for custom DB mode, ensure all dbHandler tables are valid and included in tablePermissions.",
+        "Prefer to use folder/file access from userInput. This mounts the files to the container to allow interacting with native nodejs fs module for file operations instead of using MCP tools that allow filesystem access unless requested by the user.",
+        "When interacting with the DB avoid using repeated insert() calls where insertMany(arr) is possible.",
         "Avoid gathering agent responses and then executing database operations at the end of the workflow unless absolutely necessary, as it can lead to a long feedback loop and more work if the workflow needs to be adjusted.",
       ].join("\n"),
       schema: {

@@ -39,6 +39,7 @@ export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
         language={{
           lang: "typescript",
           modelFileName: "TableConfig.ts",
+          environment: "nodejs",
           tsLibraries: [
             {
               filePath: "TableConfig.ts",

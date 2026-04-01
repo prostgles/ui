@@ -122,6 +122,18 @@ export declare const userInputSchema: {
                     readonly type: "unknown";
                     readonly optional: true;
                 };
+            }, {
+                readonly title: "string";
+                readonly optional: {
+                    readonly type: "boolean";
+                    readonly optional: true;
+                };
+                readonly type: {
+                    readonly enum: readonly ["folder-path", "file-path"];
+                };
+                readonly accessMode: {
+                    readonly enum: readonly ["read", "read-write"];
+                };
             }];
         };
     };

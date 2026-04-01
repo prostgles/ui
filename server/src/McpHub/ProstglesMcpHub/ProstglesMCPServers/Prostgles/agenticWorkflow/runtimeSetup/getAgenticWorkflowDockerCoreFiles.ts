@@ -146,6 +146,8 @@ export default defineConfig(
     files: ["**/*.js", "**/*.ts"],
     rules: {
       "no-cond-assign": "error",
+      // Reduce noise and cost. Maybe make this configurable?
+      "@typescript-eslint/no-unnecessary-condition": "off",
       "@typescript-eslint/no-namespace": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
@@ -156,7 +158,6 @@ export default defineConfig(
       "@typescript-eslint/no-empty-object-type": "off",
       "no-async-promise-executor": "off",
       "@typescript-eslint/no-var-requires": "off",
-      "@typescript-eslint/no-unnecessary-condition": "error",
       "@typescript-eslint/no-floating-promises": "off",
       "@typescript-eslint/no-misused-promises": "off",
       "no-unused-vars": "off",

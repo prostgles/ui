@@ -82,7 +82,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         className={classOverride(
           "W_QuickMenu flex-row ai-center rounded bb-color h-fit w-fit m-auto f-1 min-w-0 o-auto no-scroll-bar ",
         )}
-        style={{ maxWidth: "fit-content", margin: "2px 0" }}
+        style={{ maxWidth: "fit-content", margin: "2px 0", gap: "1px" }}
         ref={divRef}
       >
         {onAddChart && addChartProps && !show && (

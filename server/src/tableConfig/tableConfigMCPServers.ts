@@ -1,8 +1,13 @@
 import type { DBSSchema } from "@common/publishUtils";
-import type { ValidateRowsArgsCommon } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import type {
+  ValidateRowArgsCommon,
+  ValidateRowsArgsCommon,
+} from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { DBS } from "..";
 import { isDefined } from "prostgles-types";
+import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -100,6 +105,20 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         type: "UNIQUE",
         content: "server_name, id",
       },
+    },
+    hooks: {
+      afterEach: [
+        {
+          commands: { update: 1 },
+          validate: async (args) => {
+            const { dbx, row } = args as unknown as ValidateRowArgsCommon<
+              DBSSchema["mcp_server_configs"],
+              DBS
+            >;
+            await testMCPServerConfig(dbx, row);
+          },
+        },
+      ],
     },
   },
   mcp_server_tools: {
@@ -210,6 +229,31 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
             const serverNames = Array.from(
               new Set(data.map((row) => row.server_name).filter(isDefined)),
             );
+            const serversWithoutConfigId = Array.from(
+              new Set(
+                data
+                  .map((row) =>
+                    row.server_config_id ? undefined : row.server_name,
+                  )
+                  .filter(isDefined),
+              ),
+            );
+            const serversThatNeedConfigs = await dbs.mcp_servers.find(
+              {
+                name: { $in: serversWithoutConfigId },
+                config_schema: { $ne: null },
+              },
+              { select: { name: 1 } },
+            );
+            if (serversThatNeedConfigs.length) {
+              throw new Error(
+                `MCP Servers ${serversThatNeedConfigs
+                  .map((s) => s.name)
+                  .join(
+                    ", ",
+                  )} require a server_config_id to be set for allowed tools. Please provide a valid server_config_id.`,
+              );
+            }
             if (serverNames.length) {
               await dbs.mcp_servers.update(
                 {

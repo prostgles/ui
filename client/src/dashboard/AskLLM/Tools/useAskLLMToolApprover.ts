@@ -26,6 +26,7 @@ export const useAskLLMToolApprove = () => {
         mcp_server_tools: {
           id: 1,
           description: 1,
+          annotations: 1,
         },
         connections: {
           id: 1,
@@ -81,7 +82,7 @@ export const useAskLLMToolApprove = () => {
           llm_messages: Pick<DBSSchema["llm_messages"], "id" | "message">[];
           mcp_server_tools: Pick<
             DBSSchema["mcp_server_tools"],
-            "id" | "description"
+            "id" | "description" | "annotations"
           >[];
           connections: Pick<DBSSchema["connections"], "id" | "name">[];
         })[]

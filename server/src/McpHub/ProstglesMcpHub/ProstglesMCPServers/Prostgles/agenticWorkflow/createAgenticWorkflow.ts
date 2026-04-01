@@ -91,7 +91,7 @@ const getValidWorkflowDefinition = async (
           clientReq,
           userId: user_id,
           messageId,
-        }).then(({ agentConfigsWithDefaults, tsSchema, newTables }) => {
+        }).then(({ agentConfigsWithDefaults, newTables }) => {
           const workflowInsertData: DBSSchemaForInsert["agentic_workflows"] = {
             user_id,
             name: definitions.name,
@@ -205,7 +205,15 @@ export const createAgenticWorkflow = async (
     if (workflowId) {
       const res = await dbs.agentic_workflows.update(
         { id: workflowId, chat_id: chat.id, user_id },
-        omitKeys(workflowInsertData, ["user_id", "chat_id"]),
+        omitKeys(
+          {
+            ...workflowInsertData,
+            definition_override: {
+              $merge: [workflowInsertData.definition_override],
+            },
+          },
+          ["user_id", "chat_id"],
+        ),
         { returning: { id: 1 } },
       );
       if (res?.length !== 1) {

@@ -56,6 +56,17 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
                   modelName: { type: "string", optional: true },
                   maxCostUSD: { type: "number", optional: true },
                   maxIterations: { type: "number", optional: true },
+                  mcpServerConfigs: {
+                    optional: true,
+                    record: {
+                      partial: true,
+                      values: {
+                        type: {
+                          configId: { type: "number" },
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -69,6 +80,18 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
                 return [key, { ...value, optional: true }] as const;
               }),
             ),
+          },
+
+          orchestratorMcpServerConfigs: {
+            optional: true,
+            record: {
+              partial: true,
+              values: {
+                type: {
+                  configId: { type: "number" },
+                },
+              },
+            },
           },
         },
       },

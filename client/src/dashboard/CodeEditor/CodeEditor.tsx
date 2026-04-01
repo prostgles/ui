@@ -104,6 +104,7 @@ export type LanguageConfig =
        * e.g.: 'myMethod2';
        * Must be unique for each model
        */
+      environment: "react" | "nodejs";
       modelFileName: string;
       importedModels?: { [modelName: string]: string };
       tsLibraries?: TSLibrary[];

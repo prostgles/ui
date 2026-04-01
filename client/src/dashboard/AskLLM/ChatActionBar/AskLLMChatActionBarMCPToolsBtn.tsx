@@ -153,7 +153,6 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
         <MCPServerConfig
           chatId={activeChat.id}
           existingConfig={undefined}
-          dbs={dbs}
           onDone={() => {
             setServerToConfigure(undefined);
           }}

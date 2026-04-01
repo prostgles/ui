@@ -10,6 +10,7 @@ type P = {
   value: number;
   totalValue: number;
   endContent?: React.ReactNode;
+  color?: "active" | "gray";
 } & Omit<DivProps, "children">;
 
 export const MINI_BARCHART_COLOR = "var(--active)";
@@ -20,6 +21,7 @@ export const ProgressBar = ({
   value,
   totalValue,
   endContent,
+  color,
   ...divProps
 }: P) => {
   const perc =
@@ -51,7 +53,9 @@ export const ProgressBar = ({
           style={{
             borderRadius: `${height / 2}px`,
             height: `${height}px`,
-            background: MINI_BARCHART_COLOR,
+            background: { active: MINI_BARCHART_COLOR, gray: "var(--text-2)" }[
+              color ?? "active"
+            ],
             minHeight: `${height}px`,
             minWidth: "2px",
             ...(isIndeterminate ?

@@ -66,6 +66,12 @@ export const userInputSchema = {
                     dataType: { enum: ["string", "number", "boolean", "Date"] },
                     defaultValue: { type: "unknown", optional: true },
                 },
+                {
+                    title: "string",
+                    optional: { type: "boolean", optional: true },
+                    type: { enum: ["folder-path", "file-path"] },
+                    accessMode: { enum: ["read", "read-write"] },
+                },
             ],
         },
     },

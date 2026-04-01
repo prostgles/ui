@@ -50,10 +50,11 @@ export const setupOrchestrationToolPermissions = async ({
 
   if (orchestrationToolsWithInfo?.length) {
     await dbs.llm_chats_allowed_mcp_tools.insertMany(
-      orchestrationToolsWithInfo.map(({ id, server_name }) => ({
+      orchestrationToolsWithInfo.map(({ id, server_name, configId }) => ({
         chat_id: workflowToolsChat.id,
         tool_id: id,
         server_name,
+        server_config_id: configId,
         auto_approve: autoApproveAllTools,
       })) satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"][],
     );
