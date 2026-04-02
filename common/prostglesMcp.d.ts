@@ -1,4 +1,3 @@
-import type { DBSSchema } from "./publishUtils";
 export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
     readonly db: {
         readonly execute_readonly_sql: {
@@ -1359,27 +1358,4 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
         };
     };
 };
-export type ProstglesDbTools = (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["db"];
-type ProstglesMcpTools = typeof PROSTGLES_MCP_SERVERS_AND_TOOLS;
-export type ProstglesMcpTool = {
-    [K in keyof ProstglesMcpTools]: {
-        type: K;
-        tool_name: keyof ProstglesMcpTools[K];
-    };
-}[keyof ProstglesMcpTools];
-declare const MCP_TOOL_NAME_SEPARATOR = "--";
-export declare const getMCPFullToolName: <Name extends string, ServerName extends string>(server_name: ServerName, name: Name) => `${ServerName}${typeof MCP_TOOL_NAME_SEPARATOR}${Name}`;
-export declare const getProstglesMCPFullToolName: <ServerName extends keyof ProstglesMcpTools, Name extends keyof ProstglesMcpTools[ServerName] & string>(server_name: ServerName, name: Name) => `${ServerName}--${Name}`;
-export declare const getMCPToolNameParts: (fullName: string) => {
-    serverName: string;
-    toolName: string;
-} | undefined;
-export type AllowedChatTool = Pick<DBSSchema["mcp_server_tools"], "server_name" | "mode" | "description"> & {
-    tool_id: number;
-    name: string;
-    tool_name: string;
-    input_schema: any;
-    auto_approve: boolean;
-};
-export {};
 //# sourceMappingURL=prostglesMcp.d.ts.map

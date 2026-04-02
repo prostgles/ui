@@ -129,6 +129,14 @@ export const CONNECTION_CONFIG_SECTIONS = [
     "webApp",
     "security",
 ];
+export const SERVER_SETTINGS_SECTIONS = [
+    "security",
+    "auth",
+    "cloud",
+    "mcpServers",
+    "llmProviders",
+    "services",
+];
 /**
  * Ensure that multi-line strings are indented correctly
  */

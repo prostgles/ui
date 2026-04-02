@@ -17,10 +17,7 @@ import React, { useMemo, useState } from "react";
 import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
 import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
-import {
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
-  ProstglesDbTools,
-} from "@common/prostglesMcp";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 
 export const AgenticWorkflowActivity = ({
   chatId,

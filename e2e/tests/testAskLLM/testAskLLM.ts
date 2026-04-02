@@ -1,9 +1,5 @@
 import { join } from "path";
 import type { JSONB } from "prostgles-types";
-import {
-  getProstglesMCPFullToolName,
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "../../../common/prostglesMcp";
 import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
 import { createComponentToolUse } from "./createComponentToolUse";
 import {
@@ -13,6 +9,8 @@ import {
 } from "./sampleToolUseData";
 import { stringify, type ToolUse } from "./utils";
 import { mcpSandboxToolUse } from "./mcpSandboxToolUse";
+import { getProstglesMCPFullToolName } from "common/mcpUtils";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "common/prostglesMcp";
 
 type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -265,16 +263,14 @@ const toolResponses: Record<string, ToolUse> = {
           name: getProstglesMCPFullToolName("db", "insert"),
           arguments: stringify({
             tableName: "receipts",
-            data: [
-              {
-                extracted_text: "Item1 $10.00\nItem2 $15.00\nTotal $25.00",
-                amount: 450,
-                currency: "USD",
-                company: "Grand Ocean Hotel",
-                date: "2025-09-12",
-                created_at: new Date().toISOString(),
-              },
-            ],
+            data: {
+              extracted_text: "Item1 $10.00\nItem2 $15.00\nTotal $25.00",
+              amount: 450,
+              currency: "USD",
+              company: "Grand Ocean Hotel",
+              date: "2025-09-12",
+              created_at: new Date().toISOString(),
+            },
           }),
         },
       },

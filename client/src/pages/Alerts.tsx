@@ -1,33 +1,57 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { ROUTES } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
 import { mdiBellBadgeOutline, mdiDelete } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
 import { NavLink } from "react-router";
-import type { Prgl } from "../App";
 import type { FieldConfig } from "../dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "../dashboard/SmartCardList/SmartCardList";
 import { StyledInterval } from "../dashboard/W_SQL/customRenderers";
+import { usePrgl } from "./ProjectConnection/PrglContextProvider";
 
-export const Alerts = (prgl: Prgl) => {
-  const { connectionId, dbs, user } = prgl;
+export const Alerts = () => {
+  const { connectionId, dbs, user, dbsSql, dbsMethodSchema, dbsTables } =
+    usePrgl();
   const user_id = user?.id;
   const alertsFilter = useMemo(() => {
     return {
-      $existsJoined: { "database_configs.connections": { id: connectionId } },
-      $notExistsJoined: { alert_viewed_by: { user_id } },
-    } as Record<string, any>;
+      $and: [
+        {
+          $notExistsJoined: { alert_viewed_by: { user_id } },
+        } as Record<string, any>,
+        {
+          $or: [
+            { connection_id: { $in: [connectionId, null] } },
+            {
+              $existsJoined: {
+                "database_configs.connections": { id: connectionId },
+              },
+            },
+          ],
+        },
+      ],
+    };
   }, [connectionId, user_id]);
   const { data: alerts } = dbs.alerts.useSubscribe(alertsFilter);
+  const highestSeverityColor = useMemo(() => {
+    let hasWarning = false;
+    for (const alertItem of alerts ?? []) {
+      if (alertItem.severity === "error") return "danger";
+      if (alertItem.severity === "warning") hasWarning = true;
+    }
+    return hasWarning ? "warn" : "action";
+  }, [alerts]);
 
   const listProps = useMemo(() => {
     const fieldConfigs = [
       {
         name: "severity",
+        hide: true,
+      },
+      {
+        name: "title",
         hide: true,
       },
       {
@@ -38,7 +62,7 @@ export const Alerts = (prgl: Prgl) => {
         hide: true,
       },
       {
-        name: "section",
+        name: "ui_path",
         hide: true,
       },
       {
@@ -47,7 +71,7 @@ export const Alerts = (prgl: Prgl) => {
       },
       {
         name: "message",
-        renderMode: "valueNode",
+        renderMode: "full",
         render: (message, row) => {
           const {
             severity,
@@ -55,7 +79,7 @@ export const Alerts = (prgl: Prgl) => {
             age,
             id: alert_id,
             connection_id,
-            section,
+            ui_path,
           } = row as DBSSchema["alerts"] & { age: any };
           return (
             <FlexRow className="ai-start">
@@ -68,16 +92,16 @@ export const Alerts = (prgl: Prgl) => {
                   : "info"
                 }
               >
-                <FlexCol>
+                <FlexCol className="gap-p5">
                   <StyledInterval
                     value={age}
                     style={{ color: "var(--text-0)" }}
                   />
                   {title && <div className="bold">{title}</div>}
                   <div>{message}</div>
-                  {connection_id && section && (
+                  {ui_path && (
                     <NavLink
-                      to={`${ROUTES.CONFIG}/${connection_id}?section=${section}`}
+                      to={`${ui_path.page}/${connection_id || ""}?section=${ui_path.section}`}
                     >
                       Go to issue
                     </NavLink>
@@ -119,9 +143,8 @@ export const Alerts = (prgl: Prgl) => {
         <div>
           <Btn
             variant="faded"
-            color={alerts.length ? "action" : undefined}
-            iconPath={alerts.length ? mdiBellBadgeOutline : mdiBellBadgeOutline}
-            disabledInfo={alerts.length ? undefined : "No alerts"}
+            color={highestSeverityColor}
+            iconPath={mdiBellBadgeOutline}
           />
         </div>
       }
@@ -139,9 +162,9 @@ export const Alerts = (prgl: Prgl) => {
       {!!alerts.length && (
         <SmartCardList
           db={dbs}
-          sql={prgl.dbsSql}
-          methods={prgl.dbsMethodSchema}
-          tables={prgl.dbsTables}
+          sql={dbsSql}
+          methods={dbsMethodSchema}
+          tables={dbsTables}
           tableName={"alerts"}
           realtime={true}
           filter={alertsFilter}

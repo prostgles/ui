@@ -1,6 +1,7 @@
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import type { DBS } from "../..";
 import type { DBSSchema } from "@common/publishUtils";
+import { isTesting } from "@src/init/utils";
 
 export const checkLLMLimit = async (
   dbs: DBS,
@@ -12,15 +13,24 @@ export const checkLLMLimit = async (
   if (!allowedUsedLLMCreds.length) {
     throw "LLM credential/prompt not allowed";
   }
-  if (!accessRules.length) throw "Access rules missing for non admin user";
+  if (!accessRules.length) {
+    throw "Access rules missing for non admin user";
+  }
   const usedRules = accessRules.filter((r) =>
     allowedUsedLLMCreds.some((c) => c.access_control_id === r.id),
   );
   const limits = usedRules.map((r) => r.llm_daily_limit);
-  if (!limits.length) throw "No limits found";
+  if (isTesting) {
+    console.log("LLM limits", JSON.stringify({ limits, usedRules }, null, 2));
+  }
+  if (!limits.length) {
+    throw "No limits found";
+  }
   if (limits.includes(0)) return;
   const totalLimit = limits.reduce((a, v) => a + v, 0);
-  if (totalLimit <= 0) throw "No limit found";
+  if (totalLimit <= 0) {
+    throw "No limit found";
+  }
 
   /** If normal user then check messages by user_id only */
   let userIds: string[] = [];
@@ -30,14 +40,24 @@ export const checkLLMLimit = async (
     /** If public user then must check all messages from the same IP */
   } else {
     const currentSession = await dbs.sessions.findOne({ user_id: user.id });
-    if (!currentSession) throw "Session not found";
+    if (!currentSession) {
+      throw "Session not found";
+    }
     const sameIpSessions = await dbs.sessions.find({
       ip_address: currentSession.ip_address,
     });
     userIds = sameIpSessions.map((s) => s.user_id).filter(Boolean);
+    if (isTesting) {
+      console.log(
+        "LLM limits info",
+        JSON.stringify({ currentSession, sameIpSessions, userIds }, null, 2),
+      );
+    }
   }
 
-  if (!userIds.length) throw "User id filter empty";
+  if (!userIds.length) {
+    throw "User id filter empty";
+  }
   const _messagesCount = await dbs.llm_messages.count({
     user_id: { $in: userIds },
     created: { $gte: new Date(Date.now() - 24 * HOUR).toISOString() },

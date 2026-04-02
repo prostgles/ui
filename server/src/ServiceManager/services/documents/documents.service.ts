@@ -1,4 +1,4 @@
-import { documentsServiceInputSchema } from "@common/documentsServiceInputSchema";
+import { documentsServiceInputSchema } from "@common/mcp/documentsServiceInputSchema";
 import type { ProstglesService } from "@src/ServiceManager/ServiceManagerTypes";
 
 const outputSchema = {

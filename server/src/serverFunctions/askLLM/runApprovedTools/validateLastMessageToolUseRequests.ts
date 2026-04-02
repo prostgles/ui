@@ -1,4 +1,4 @@
-import { getMCPFullToolName } from "@common/prostglesMcp";
+import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { ToolUseMessage } from "./runApprovedTools";
 

@@ -1,4 +1,4 @@
-import { getMCPFullToolName } from "@common/prostglesMcp";
+import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBS } from "@src/index";
 import type { MCPToolSchema } from "../getLLMToolsAllowedInThisChat";
 import type { DBSSchema } from "@common/publishUtils";

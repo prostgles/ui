@@ -13,8 +13,8 @@ ENV DOCLING_SERVE_ENABLE_UI=1
 ENV PYTHONUNBUFFERED=1
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:5001/health || exit 1
+# HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
+#   CMD curl -f http://localhost:5001/health || exit 1
 
 # Run docling-serve
 CMD ["docling-serve", "run"]

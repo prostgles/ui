@@ -347,6 +347,15 @@ export const CONNECTION_CONFIG_SECTIONS = [
   "security",
 ] as const;
 
+export const SERVER_SETTINGS_SECTIONS = [
+  "security",
+  "auth",
+  "cloud",
+  "mcpServers",
+  "llmProviders",
+  "services",
+] as const;
+
 /**
  * Ensure that multi-line strings are indented correctly
  */

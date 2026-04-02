@@ -2,7 +2,7 @@ import { fromEntries, getEntries } from "@common/utils";
 import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas";
 import type { TableConfig } from "prostgles-server";
 import { omitKeys, pickKeys } from "prostgles-types";
-import { startAgenticWorkflowSchema } from "../../../common/startAgenticWorkflowSchema";
+import { startAgenticWorkflowSchema } from "../../../common/mcp/startAgenticWorkflowSchema";
 
 export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
   agentic_workflows: {

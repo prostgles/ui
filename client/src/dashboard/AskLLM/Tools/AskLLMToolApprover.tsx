@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 
-import { getMCPFullToolName } from "@common/prostglesMcp";
+import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { Marked } from "@components/Chat/Marked";
 import { FlexCol, FlexRow } from "@components/Flex";

@@ -14,6 +14,7 @@ import { fileDemo } from "./scripts/fileDemo";
 import { sqlDemo } from "./scripts/sqlVideoDemo";
 import { schemaDiagramDemo } from "./scripts/schemaDiagramDemo";
 import { AIAssistantDemo } from "./scripts/AIAssistantDemo";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 const loadTest = () => {
   const dbs: DBS = (window as any).dbs;
@@ -46,7 +47,10 @@ const startVideoDemo = (videoName: string) => {
   };
 };
 
-export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
+export const AppVideoDemo = () => {
+  const {
+    connection: { db_name },
+  } = usePrgl();
   const isOnDemoDatabase = db_name === VIDEO_DEMO_DB_NAME;
   const {
     state: { demoStarted },

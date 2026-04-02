@@ -20,7 +20,7 @@ import { setupLLM } from "../serverFunctions/askLLM/setupLLM";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
 import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";
-import type { SQLHandler } from "prostgles-types";
+import { getSerialisableError, type SQLHandler } from "prostgles-types";
 
 let authSetupDataListener: AuthSetupDataListener | undefined;
 

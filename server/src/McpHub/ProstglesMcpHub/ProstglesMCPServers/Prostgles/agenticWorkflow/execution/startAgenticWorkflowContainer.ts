@@ -1,5 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { startAgenticWorkflowSchema } from "@common/startAgenticWorkflowSchema";
+import { startAgenticWorkflowSchema } from "@common/mcp/startAgenticWorkflowSchema";
 import type { DBS } from "@src/index";
 import {
   getJSONBSchemaValidationError,

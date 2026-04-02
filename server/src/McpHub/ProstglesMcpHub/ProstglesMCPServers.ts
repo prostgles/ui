@@ -7,6 +7,7 @@ import type {
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
 import { ProstglesDbMCPServer } from "./ProstglesMCPServers/ProstglesDb.mcp";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 
 export const ProstglesMCPServers = {
   websearch: WebSearchMCPServer,
@@ -25,4 +26,17 @@ export const getProstglesMCPServer = (serverName: string) => {
     return ProstglesMCPServers[serverName];
   }
   return undefined;
+};
+
+export const getProstglesMCPServerTool = (
+  serverName: string,
+  toolName: string,
+) => {
+  const server =
+    PROSTGLES_MCP_SERVERS_AND_TOOLS[
+      serverName as keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS
+    ];
+  if (toolName in server) {
+    return server[toolName as keyof typeof server];
+  }
 };

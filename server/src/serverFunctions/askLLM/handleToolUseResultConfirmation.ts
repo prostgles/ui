@@ -1,12 +1,10 @@
 import { filterArr } from "@common/llmUtils";
 import type { AskLLMArgs } from "./askLLM";
-import {
-  getMCPToolNameParts,
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "@common/prostglesMcp";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getProperty } from "@common/utils";
 import type { DBSSchema } from "@common/publishUtils";
 import { getJSONBSchemaValidationError } from "prostgles-types";
+import { getMCPToolNameParts } from "@common/mcpUtils";
 
 export const handleToolUseResultConfirmation = (
   args: Pick<AskLLMArgs, "userMessage">,

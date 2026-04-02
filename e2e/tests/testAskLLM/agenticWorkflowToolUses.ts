@@ -1,7 +1,7 @@
-import { getProstglesMCPFullToolName } from "common/prostglesMcp";
 import type { DBSSchema } from "common/publishUtils";
 import { stringify, type ToolUse } from "./utils";
 import type { ExtractBy } from "common/utils";
+import { getProstglesMCPFullToolName } from "common/mcpUtils";
 type UserInput = NonNullable<
   DBSSchema["agentic_workflows"]["definition_data"]["userInput"]
 >;

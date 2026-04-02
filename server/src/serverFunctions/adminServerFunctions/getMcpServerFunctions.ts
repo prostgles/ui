@@ -1,5 +1,5 @@
-import { documentsServiceInputSchema } from "@common/documentsServiceInputSchema";
-import { getMCPFullToolName } from "@common/prostglesMcp";
+import { documentsServiceInputSchema } from "@common/mcp/documentsServiceInputSchema";
+import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import {
   getMcpHostInfo,

@@ -1,5 +1,5 @@
 import { userInputSchema } from "./userInputSchema";
-import { fixIndent } from "./utils";
+import { fixIndent } from "../utils";
 export const USER_INPUT_VALUE_ENV_VARIABLE_NAME = "USER_INPUT_VALUE";
 const filesSchema = {
     description: fixIndent(`

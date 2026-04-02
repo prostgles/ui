@@ -1,10 +1,10 @@
-import type { ProstglesDbTools } from "@common/prostglesMcp";
+import type { ProstglesDbTools } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import type { ValidateRowArgsCommon } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { isDefined, type JSONB } from "prostgles-types";
-import { agentOutputSchemaType } from "../../../../common/startAgenticWorkflowSchema";
+import { agentOutputSchemaType } from "../../../../common/mcp/startAgenticWorkflowSchema";
 import { tablePermissionsSchema } from "../tablePermissionsSchema";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
 

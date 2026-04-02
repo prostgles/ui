@@ -184,9 +184,14 @@ export default class Loading extends RTComp<P, S> {
     const rootStyle: React.CSSProperties =
       !message ? { width: size, height: size } : {};
 
+    const fullStyle = {
+      ...style,
+      ...rootStyle,
+      ...commonStyle,
+    };
     return (
       <div
-        style={{ ...style, ...rootStyle, ...commonStyle }}
+        style={fullStyle}
         data-command="Loading"
         className={classOverride(
           "Loading spinner-loader ws-nowrap flex-row gap-1 ai-center ",

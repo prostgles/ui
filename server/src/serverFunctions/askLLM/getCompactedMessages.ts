@@ -1,11 +1,9 @@
 import { filterArr } from "@common/llmUtils";
-import {
-  getProstglesMCPFullToolName,
-  type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "@common/prostglesMcp";
+import { type PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { isDefined } from "prostgles-types";
 import type { LLMMessageWithRole } from "./fetchLLMResponse";
+import { getProstglesMCPFullToolName } from "@common/mcpUtils";
 
 type CompactionInput = JSONBTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["compact_context"]["schema"]

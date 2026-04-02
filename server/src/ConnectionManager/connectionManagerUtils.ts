@@ -233,6 +233,10 @@ export const alertIfReferencedFileColumnsRemoved = async function (
         message: `Some file column configs are missing from database schema: ${droppedFileColumns.map(({ tableName, missingCols }) => `${tableName}: ${missingCols.join(", ")}`).join(", ")}`,
         database_config_id: dbConf.id,
         data: droppedFileColumns,
+        ui_path: {
+          page: "/connection-config",
+          section: "file_storage",
+        },
       });
     }
   }

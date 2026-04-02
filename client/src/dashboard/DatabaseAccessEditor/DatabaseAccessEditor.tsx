@@ -1,4 +1,4 @@
-import type { databaseAccessSchema } from "@common/databaseAccessSchema";
+import type { databaseAccessSchema } from "@common/mcp/databaseAccessSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";

@@ -12,7 +12,7 @@ import {
   getMCPToolNameParts,
   getProstglesMCPFullToolName,
   type AllowedChatTool,
-} from "@common/prostglesMcp";
+} from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getAgentGoalTools } from "./agentConstants";

@@ -156,7 +156,10 @@ export const startConnection = async function (
             message: "Table config was disabled due to error",
             database_config_id: databaseConfig.id,
             connection_id: connection.id,
-            section: "table_config",
+            ui_path: {
+              page: "/connection-config",
+              section: "table_config",
+            },
             data: getSerialisableError(e),
           });
           void dbs.database_configs.update(
@@ -176,7 +179,10 @@ export const startConnection = async function (
               `\n\n${JSON.stringify(getErrorAsObject(e))}`,
             database_config_id: databaseConfig.id,
             connection_id: connection.id,
-            section: "methods",
+            ui_path: {
+              page: "/connection-config",
+              section: "methods",
+            },
           });
           void dbs.connections.update(
             { id: connection.id },

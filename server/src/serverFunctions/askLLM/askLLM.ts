@@ -20,10 +20,7 @@ import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
 import { getLLMToolsAllowedInThisChat } from "./getLLMToolsAllowedInThisChat";
 
-import {
-  getMCPToolNameParts,
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "@common/prostglesMcp";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 import { getFullPrompt } from "./getFullPrompt";
@@ -31,6 +28,7 @@ import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 import { handleToolUseResultConfirmation } from "./handleToolUseResultConfirmation";
 import { getPastMessages } from "./getPastMessages";
+import { getMCPToolNameParts } from "@common/mcpUtils";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,

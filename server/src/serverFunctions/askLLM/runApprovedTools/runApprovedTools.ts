@@ -1,10 +1,13 @@
 import {
   getMCPFullToolName,
   getMCPToolNameParts,
+  getProstglesMCPFullToolName,
   type AllowedChatTool,
-} from "@common/prostglesMcp";
+} from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
+import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
+import { getSerialisableError } from "prostgles-types";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
 import { AGENT_GOAL_TOOL_NAMES } from "../agentConstants";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
@@ -12,9 +15,9 @@ import {
   getAllToolNames,
   type getLLMToolsAllowedInThisChat,
 } from "../getLLMToolsAllowedInThisChat";
+import { getMostSimilar } from "./getMostSimilar";
 import { runAgentGoalTool } from "./runAgentGoalTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
-import { getMostSimilar } from "./getMostSimilar";
 
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
@@ -37,6 +40,12 @@ type ToolUseMessageWithInfo =
       tool: undefined;
       userApprovalResponse: DBSSchema["mcp_tool_approval_requests"] | undefined;
       state: "tool-missing";
+    })
+  | (ToolUseMessage & {
+      tool: AllowedChatTool;
+      userApprovalResponse: DBSSchema["mcp_tool_approval_requests"] | undefined;
+      state: "input-validation-error";
+      inputValidationError: string;
     });
 
 export type ToolResultMessage = Extract<
@@ -101,6 +110,7 @@ export const runApprovedTools = async ({
     });
   }
 
+  const prglMcpHub = await getProstglesMcpHub(dbs);
   const toolUseRequests = toolUseRequestMessages.map((toolUse) => {
     const tool = allowedTools?.find((t) => t.name === toolUse.name);
     if (!tool) {
@@ -116,6 +126,33 @@ export const runApprovedTools = async ({
         tool_use_id === toolUse.id &&
         toolUse.name === getMCPFullToolName(server_name, tool_name),
     );
+
+    let inputValidationError: string | undefined = undefined;
+    try {
+      if (
+        getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions") ===
+        toolUse.name
+      ) {
+        prglMcpHub.validateToolInput(
+          tool.server_name,
+          tool.tool_name,
+          toolUse.input,
+        );
+      }
+    } catch (e) {
+      inputValidationError = JSON.stringify(getSerialisableError(e));
+    }
+
+    if (inputValidationError) {
+      return {
+        ...toolUse,
+        userApprovalResponse,
+        tool,
+        inputValidationError,
+        state: "input-validation-error",
+      } satisfies ToolUseMessageWithInfo;
+    }
+
     return {
       ...toolUse,
       userApprovalResponse,
@@ -133,6 +170,31 @@ export const runApprovedTools = async ({
         : "needs-approval",
     } satisfies ToolUseMessageWithInfo;
   });
+
+  if (toolUseRequests.some((r) => r.state === "input-validation-error")) {
+    await askLLM({
+      ...args,
+      type: "tool-use-result",
+      userMessage: toolUseRequests.map((r) => {
+        return {
+          type: "tool_result",
+          is_error: true,
+          tool_name: r.name,
+          tool_use_id: r.id,
+          content: [
+            {
+              type: "text",
+              text:
+                r.state === "input-validation-error" ?
+                  `Input validation error for tool "${r.name}": ${r.inputValidationError}`
+                : `Tool request aborted.`,
+            },
+          ],
+        };
+      }),
+      aborter,
+    });
+  }
 
   /** Wait for user to approve/deny/respond to all pending requests */
   if (

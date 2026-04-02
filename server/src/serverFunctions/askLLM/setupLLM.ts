@@ -1,12 +1,10 @@
-import type { DBS } from "../..";
 import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
-import {
-  getProstglesMCPFullToolName,
-  type PROSTGLES_MCP_SERVERS_AND_TOOLS,
-} from "@common/prostglesMcp";
+import { type PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { getElectronConfig } from "@src/electronConfig";
+import type { DBS } from "../..";
 import { setupLLMProviders } from "./setupLLMProviders";
+import { getProstglesMCPFullToolName } from "@common/mcpUtils";
 
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];

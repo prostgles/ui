@@ -1,7 +1,7 @@
 import {
   fieldFilterSchema,
   forcedFilterSchema,
-} from "@common/tablePermissionsSchema";
+} from "@common/mcp/tablePermissionsSchema";
 import type { JSONB } from "prostgles-types";
 
 forcedFilterSchema satisfies JSONB.FieldType;

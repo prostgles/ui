@@ -84,9 +84,9 @@ export const TopControls = (props: TopControlsProps) => {
               maxWidth: "100%",
             }}
           >
-            {location === "workspace" && <AppVideoDemo {...prgl} />}
+            {location === "workspace" && <AppVideoDemo />}
 
-            {!!(prgl.dbs.alerts as any)?.subscribe && <Alerts {...prgl} />}
+            {!!(prgl.dbs.alerts as any)?.subscribe && <Alerts />}
 
             {prgl.dbsMethods.askLLM && (
               <AskLLM

@@ -2,7 +2,7 @@ import { mdiMagnify, mdiPlus, mdiStop, mdiTools } from "@mdi/js";
 import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocElement } from "../../UIDocs";
-import { DEFAULT_MCP_SERVER_NAMES } from "@common/mcp";
+import { DEFAULT_MCP_SERVER_NAMES } from "@common/mcpUtils";
 
 export const AIAssistantUIDoc = {
   type: "popup",

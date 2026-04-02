@@ -1,6 +1,6 @@
 import { isDefined } from "prostgles-types";
 
-import { getMCPToolNameParts } from "@common/prostglesMcp";
+import { getMCPToolNameParts } from "@common/mcpUtils";
 
 import type { DBSSchema } from "@common/publishUtils";
 import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";

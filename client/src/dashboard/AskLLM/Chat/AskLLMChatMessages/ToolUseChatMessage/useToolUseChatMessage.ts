@@ -1,4 +1,4 @@
-import { getMCPToolNameParts } from "@common/prostglesMcp";
+import { getMCPToolNameParts } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { MonacoCodeInMarkdownProps } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";

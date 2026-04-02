@@ -1,4 +1,8 @@
-import { CONNECTION_CONFIG_SECTIONS } from "@common/utils";
+import {
+  CONNECTION_CONFIG_SECTIONS,
+  ROUTES,
+  SERVER_SETTINGS_SECTIONS,
+} from "@common/utils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { loggerTableConfig } from "../Logger";
 import { tableConfigAccessControl } from "./tableConfigAccessControl";
@@ -136,7 +140,21 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       database_config_id:
         "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
       connection_id: "UUID REFERENCES connections(id) ON DELETE SET NULL",
-      section: { enum: CONNECTION_CONFIG_SECTIONS, nullable: true },
+      ui_path: {
+        jsonbSchema: {
+          oneOfType: [
+            {
+              page: { enum: [ROUTES.CONFIG] },
+              section: { enum: CONNECTION_CONFIG_SECTIONS },
+            },
+            {
+              page: { enum: [ROUTES.SERVER_SETTINGS] },
+              section: { enum: SERVER_SETTINGS_SECTIONS },
+            },
+          ],
+        },
+        nullable: true,
+      },
       data: "JSONB",
       created: "TIMESTAMPTZ DEFAULT NOW()",
     },

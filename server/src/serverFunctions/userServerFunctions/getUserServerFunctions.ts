@@ -1,5 +1,5 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import type { AllowedChatTool } from "@common/prostglesMcp";
+import type { AllowedChatTool } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { authenticator } from "@otplib/preset-default";
 import { getPasswordHash } from "@src/authConfig/authUtils";

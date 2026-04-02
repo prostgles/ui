@@ -1,4 +1,4 @@
-import { getProstglesMCPFullToolName } from "@common/prostglesMcp";
+import { getProstglesMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 import type {

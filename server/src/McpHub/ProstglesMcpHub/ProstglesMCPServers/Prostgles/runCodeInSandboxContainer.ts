@@ -3,7 +3,7 @@ import type { McpCallContext } from "../../ProstglesMCPServerTypes";
 import type { CreateContainerParams } from "./schemas/getContainerToolSchemas";
 import { getSerialisableError } from "prostgles-types";
 import { validateUserInput } from "./agenticWorkflow/definitionValidation/validateUserInput";
-import { USER_INPUT_VALUE_ENV_VARIABLE_NAME } from "@common/runCodeInSandboxSchema";
+import { USER_INPUT_VALUE_ENV_VARIABLE_NAME } from "@common/mcp/runCodeInSandboxSchema";
 import { connectionManager } from "@src/index";
 import { validateUserInputDefinitions } from "./agenticWorkflow/definitionValidation/validateUserInputDefinitions";
 

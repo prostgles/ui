@@ -1,4 +1,4 @@
-import type { DEFAULT_MCP_SERVER_NAMES, MCPServerInfo } from "@common/mcp";
+import type { DEFAULT_MCP_SERVER_NAMES, MCPServerInfo } from "@common/mcpUtils";
 import { mcpGithub } from "./mcpGithub";
 import { ProstglesMCPServers } from "../ProstglesMcpHub/ProstglesMCPServers";
 import { fromEntries, getEntries } from "@common/utils";
@@ -66,6 +66,10 @@ export const getDefaultMCPServers = (): Record<
     icon_path: "Web",
     command: "npx",
     args: ["@playwright/mcp@latest"],
+    env: {
+      PLAYWRIGHT_MCP_SAVE_SESSION: "false",
+      PLAYWRIGHT_MCP_SAVE_TRACE: "false",
+    },
   },
   slack: {
     icon_path: "Slack",

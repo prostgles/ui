@@ -8,7 +8,7 @@ import { pickKeys } from "prostgles-types";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { stopContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/runCodeInSandboxContainer";
-import { startAgenticWorkflowSchema } from "@common/startAgenticWorkflowSchema";
+import { startAgenticWorkflowSchema } from "@common/mcp/startAgenticWorkflowSchema";
 import {
   renderSummary,
   summariseWorkflowFile,

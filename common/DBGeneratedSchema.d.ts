@@ -101,9 +101,12 @@ export type DBGeneratedSchema = {
       database_config_id?: null | number;
       id?: string;
       message?: null | string;
-      section?: null | "authentication" | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API" | "webApp" | "security"
       severity: "info" | "warning" | "error"
       title?: null | string;
+      ui_path?: 
+       | null
+       |  {  page: "/connection-config";  section: "authentication" | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API" | "webApp" | "security"; }
+       |  {  page: "/server-settings";  section: "security" | "auth" | "cloud" | "mcpServers" | "llmProviders" | "services"; }
     };
   };
   backups: {

@@ -1,4 +1,4 @@
-import { getMCPFullToolName } from "@common/prostglesMcp";
+import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBS } from "@src/index";
 import {
   getJSONBSchemaTSTypes,
@@ -93,38 +93,51 @@ const init = async (dbs: DBS) => {
     return { server, serverDefinition };
   };
 
+  const validateToolInput = (
+    serverName: string,
+    toolName: string,
+    args: unknown,
+  ) => {
+    const name = getMCPFullToolName(serverName, toolName);
+    const { server, serverDefinition } = getExpectedServer(serverName);
+    const toolDefinition = getProperty(
+      (serverDefinition.definition as ProstglesMcpServerDefinition).tools,
+      toolName,
+    );
+    const toolMethod = getProperty(server.tools, toolName);
+    if (!toolMethod || !toolDefinition) {
+      throw new Error(`MCP server tool ${name} not found`);
+    }
+    const { schema, outputSchema } = toolDefinition;
+    const validation =
+      //@ts-ignore
+      schema ? getJSONBSchemaValidationError(schema, args) : undefined;
+    if (validation?.error !== undefined) {
+      throw new Error(
+        [
+          `Invalid arguments for MCP tool ${name}: ${validation.error}.`,
+          !schema ? "" : (
+            `Expected argument structure expressed in typescript types: ${getJSONBSchemaTSTypes(schema, {}, undefined, [])}`
+          ),
+        ].join("\n"),
+      );
+    }
+
+    return { name, toolMethod, outputSchema };
+  };
+
   const callTool = async (
     serverName: string,
     toolName: string,
     args: unknown,
     context: McpCallContext,
   ) => {
-    const name = getMCPFullToolName(serverName, toolName);
     const result = await tryCatchV2(async () => {
-      const { server, serverDefinition } = getExpectedServer(serverName);
-      const toolDefinition = getProperty(
-        (serverDefinition.definition as ProstglesMcpServerDefinition).tools,
+      const { name, toolMethod, outputSchema } = validateToolInput(
+        serverName,
         toolName,
+        args,
       );
-      const toolMethod = getProperty(server.tools, toolName);
-      if (!toolMethod || !toolDefinition) {
-        throw new Error(`MCP server tool ${name} not found`);
-      }
-      const { schema, outputSchema } = toolDefinition;
-      const validation =
-        //@ts-ignore
-        schema ? getJSONBSchemaValidationError(schema, args) : undefined;
-      if (validation?.error !== undefined) {
-        throw new Error(
-          [
-            `Invalid arguments for MCP tool ${name}: ${validation.error}.`,
-            !schema ? "" : (
-              `Expected argument structure expressed in typescript types: ${getJSONBSchemaTSTypes(schema, {}, undefined, [])}`
-            ),
-          ].join("\n"),
-        );
-      }
-
       const toolCallResult = await toolMethod(args, context);
       const outputValidation =
         //@ts-ignore
@@ -184,6 +197,7 @@ const init = async (dbs: DBS) => {
   return {
     destroy,
     callTool,
+    validateToolInput,
     fetchTools,
     getServer,
     getServers: () => Array.from(servers.entries()),

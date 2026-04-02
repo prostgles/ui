@@ -101,16 +101,15 @@ const handler = {
         get_snapshot: async (toolArguments) => {
           const mcpHub = new McpHub();
           await mcpHub.setServerConnections({
-            // fetch: {
-            //   command: "uvx",
-            //   args: ["mcp-server-fetch"],
-            //   server_name: "fetch",
-            //   onLog: () => {},
-            // },
             playwright: {
               command: "npx",
               args: ["@playwright/mcp@latest", "--isolated"],
               onLog: () => {},
+              env: {
+                /** Prevent snapshots being saved in .playwright */
+                PLAYWRIGHT_MCP_SAVE_SESSION: "false",
+                PLAYWRIGHT_MCP_SAVE_TRACE: "false",
+              },
               server_name: "playwright",
             },
           });

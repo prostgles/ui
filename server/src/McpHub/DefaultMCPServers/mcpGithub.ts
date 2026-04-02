@@ -1,4 +1,4 @@
-import type { MCPServerInfo } from "@common/mcp";
+import type { MCPServerInfo } from "@common/mcpUtils";
 
 export const mcpGithub: MCPServerInfo = {
   icon_path: "Github",

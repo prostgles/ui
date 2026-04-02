@@ -1,4 +1,4 @@
-import { getMCPToolNameParts } from "@common/prostglesMcp";
+import { getMCPToolNameParts } from "@common/mcpUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";

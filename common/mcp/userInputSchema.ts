@@ -1,4 +1,4 @@
-import { fixIndent } from "./utils";
+import { fixIndent } from "../utils";
 
 export const userInputSchema = {
   optional: true,

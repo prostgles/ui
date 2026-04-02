@@ -8,7 +8,6 @@ import { Select } from "@components/Select/Select";
 import { StatusChip } from "@components/StatusChip";
 import { SvgIcon } from "@components/SvgIcon";
 import { SwitchToggle } from "@components/SwitchToggle";
-import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
 import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "src/dashboard/SmartCardList/SmartCardList";
@@ -127,8 +126,8 @@ const useServicesFieldConfigs = ({
                     data-key="service-toggle"
                     title={isRunning ? "Stop service" : "Start service"}
                     checked={isRunning}
-                    onChange={() =>
-                      void onErrorAlert(async () => {
+                    onChange={async () =>
+                      await onErrorAlert(async () => {
                         await toggleService({
                           serviceName: name,
                           enable: !isRunning,

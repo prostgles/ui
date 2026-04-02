@@ -1,7 +1,4 @@
-import {
-  PROSTGLES_MCP_SERVERS_AND_TOOLS,
-  type ProstglesDbTools,
-} from "@common/prostglesMcp";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { fromEntries, getEntries } from "@common/utils";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
@@ -19,6 +16,7 @@ import type {
 } from "../ProstglesMCPServerTypes";
 import type { ProxyDbCallData } from "./Prostgles/agenticWorkflow/runtimeSdk/defineAgenticWorkflowHandlers.types";
 import { getClientDBHandlersForChat } from "./getClientDBHandlersForChat";
+import type { ProstglesDbTools } from "@common/mcpUtils";
 
 const serverName = "db" as const;
 const definition = {

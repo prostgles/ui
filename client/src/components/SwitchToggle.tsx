@@ -108,9 +108,22 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
               )
             }
           />
-          <span className={`Switch-thumb ${isLoading ? "loading" : ""}`}>
+          <span
+            className={`Switch-thumb ${isLoading ? "loading" : ""}`}
+            style={
+              isLoading && !checked ?
+                { background: "var(--bg-color-4)" }
+              : undefined
+            }
+          >
             {isLoading && (
-              <Loading sizePx={21} style={{ color: "var(--blue)" }} />
+              <Loading
+                sizePx={21}
+                style={{
+                  transform: `scale(0.8)`,
+                  color: "var(--blue)",
+                }}
+              />
             )}
           </span>
         </span>
