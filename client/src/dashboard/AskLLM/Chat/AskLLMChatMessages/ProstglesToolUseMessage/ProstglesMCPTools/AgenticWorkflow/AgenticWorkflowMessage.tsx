@@ -65,7 +65,7 @@ export const AgenticWorkflowMessage = ({
           endOfBoilerplate !== -1 &&
           startOfBuildFail !== -1 &&
           startOfBuildFail > endOfBoilerplate &&
-          buildFailContentMaybe.trim().length
+          buildFailContentMaybe?.trim().length
         ) ?
           buildFailContentMaybe
         : logs;
