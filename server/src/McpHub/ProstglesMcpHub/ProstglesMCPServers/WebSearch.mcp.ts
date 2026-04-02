@@ -10,11 +10,13 @@ import type {
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
 
+const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"];
+
 const definition = {
   icon_path: "Web",
   label: "Web Search",
   description: "Search the web for information",
-  tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"],
+  tools,
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {
@@ -137,20 +139,18 @@ const handler = {
       },
       fetchTools: () => {
         return fromEntries(
-          getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]).map(
-            ([name, { schema, description }]) => [
+          getEntries(tools).map(([name, { schema, description }]) => [
+            name,
+            {
               name,
-              {
-                name,
-                description,
-                inputSchema: getJSONBSchemaAsJSONSchema(
-                  "",
-                  "",
-                  schema,
-                ) as McpTool["inputSchema"],
-              },
-            ],
-          ),
+              description,
+              inputSchema: getJSONBSchemaAsJSONSchema(
+                "",
+                "",
+                schema,
+              ) as McpTool["inputSchema"],
+            },
+          ]),
         );
       },
     };

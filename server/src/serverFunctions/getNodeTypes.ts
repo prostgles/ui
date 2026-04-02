@@ -167,6 +167,9 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
     }
   }
 
+  console.error(
+    "Does not work in electron. Use docker-container or unpkg to extract types.",
+  );
   return Array.from(collected.values());
 }
 

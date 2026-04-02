@@ -10,10 +10,10 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 import { getMCPFullToolName } from "../mcpUtils";
+import { fixIndent } from "../utils";
 import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
 import { agentDefinitionsSchema, mcpServerToolsAllowed, } from "./startAgenticWorkflowSchema";
 import { tablePermissionsSchema } from "./tablePermissionsSchema";
-import { fixIndent } from "../utils";
 const _a = agentDefinitionsSchema.record.values.type, { outputSchema } = _a, agentSchemaWithoutOutput = __rest(_a, ["outputSchema"]);
 const _b = runCodeInSandboxSchema.type, { files, userInput, userInputValue } = _b, runTsSchema = __rest(_b, ["files", "userInput", "userInputValue"]);
 const TYPESCRIPT_CODE_QUALITY = "Ensure the typescript code compiles with no errors (assume strict tsconfig and recommended eslint rules). Use top level imports, not require or dynamic imports.";
@@ -299,14 +299,28 @@ export const uiMcpSchema = {
     create_agentic_workflow: {
         mode: "auto-approved-user-actionable",
         description: [
-            "Suggest an agent workflow to complete the specified task using MCP tools and database access if needed.",
+            `The workflow_function_definition must compile into valid typescript and call defineAgenticWorkflow().`,
+            `The file is an executable entry point. The code must be top-level execution only. You are prohibited from wrapping the defineAgenticWorkflow call in any functions`,
+            "Choose the minimum required database access and minimum required tools; prefer custom tablePermissions over broad SQL modes.",
+            "IMPORTANT: Do not provide CREATE statements for table names that are already present in the schema unless the user specifically asks for it.",
+            "If databaseAccessDefinitions.mode is custom, ensure every table used by dbHandler (find/count/insert/update/delete) exists in current schema or in ddlStatements, and that each used table is included in tablePermissions.",
+            "Take into account that the user has the ability to stop and re-run the workflow.",
+            "Prefer short iterative steps with progress updates via setProgress, and await async operations (avoid fire-and-forget promises) so stop/re-run works predictably.",
+            "Without over-engineering make the workflow resilient to re-runs unless it goes against the nature of the workflow.",
+            "Interleave agent steps and database writes; avoid collecting all agent output first and applying DB changes only at the end unless truly necessary.",
+            "When user requirements are ambiguous, ask targeted follow-up questions using ask_user_questions and include a best-guess default workflow.",
+            "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
+            "Do not add 'optional' to user input. It will be added automatically",
+            "Creates an agent workflow to complete the specified task using MCP tools and database access if needed.",
             "Return workflow_function_definition as valid TypeScript that calls defineAgenticWorkflow(...) directly.",
             TYPESCRIPT_CODE_QUALITY,
             "Any external dependencies must be listed in the package_dependencies field to ensure they get installed.",
-            "External dependencies should be reputable and kept to a minimum to reduce security risks. Always prefer using existing modules and tools instead of adding new dependencies, but if necessary, only add well-known and widely used packages.",
-            "Do not use external dependencies if there are more robust MCP tools available",
+            "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
+            "External dependencies should be reputable and kept to a minimum to reduce security risks. Do not forget to include corresponding @types/ package for any dependency that does not ship its own type declarations. Always prefer using existing modules and tools instead of adding new dependencies, but if necessary, only add well-known and widely used packages.",
+            "Do not use external dependencies if there are more robust MCP tools available.",
+            `Use ${getMCPFullToolName("prostgles-ui", "get_tool_schemas")} to check available tools that can be enabled and used.`,
+            "Avoid using external API if there are MCP tools or open source packages that can achieve the same result and reduce the amount of input required from user.",
             "The user will initially execute it in series mode (agent calls and responses will be queued) to ensure it works as expected,",
-            "Prefer series-first, human-in-the-loop flow: interleave agent steps and DB operations to enable feedback and safe re-runs.",
             "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",
             "Use least-privilege DB/tool scope; for custom DB mode, ensure all dbHandler tables are valid and included in tablePermissions.",
             `DO NOT INCLUDE CREATE STATEMENTS FOR TABLES THAT ALREADY EXIST IN THE DATABASE. ` +

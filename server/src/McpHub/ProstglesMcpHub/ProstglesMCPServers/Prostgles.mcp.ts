@@ -19,11 +19,12 @@ import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer
 import { startAgent } from "./Prostgles/startAgent";
 
 const serverName = "prostgles-ui" as const;
+const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName];
 const definition = {
   icon_path: "CubeOutline",
   label: "Prostgles",
   description: "Tools to assist with Prostgles UI tasks",
-  tools: PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
+  tools,
 } as const satisfies ProstglesMcpServerDefinition;
 
 export const getRunTypescriptInNodejsFiles = (

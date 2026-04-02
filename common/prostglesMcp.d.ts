@@ -1363,10 +1363,6 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
             readonly description: "Get text contents of a document/image. Based on docling. Supported formats: txt, pdf, docx, pptx, jpg, png, and more.";
             readonly schema: {
                 readonly type: {
-                    readonly file: "Blob";
-                    readonly contentType: {
-                        readonly enum: readonly ["application/pdf"];
-                    };
                     readonly from_formats: {
                         readonly optional: true;
                         readonly type: "string[]";
@@ -1436,6 +1432,10 @@ export declare const PROSTGLES_MCP_SERVERS_AND_TOOLS: {
                         readonly type: "string";
                         readonly optional: true;
                         readonly description: "Add this placeholder between pages in the markdown output.";
+                    };
+                    readonly fileAsBase64: "string";
+                    readonly contentType: {
+                        readonly enum: readonly ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "image/png", "image/jpeg", "image/tiff", "image/bmp", "image/webp"];
                     };
                 };
             };

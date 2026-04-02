@@ -1,8 +1,12 @@
 import { isDefined } from "@common/filterUtils";
 import type { LLMMessage } from "@common/llmUtils";
+import {
+  CONVERTABLE_DOCUMENT_TYPES,
+  CONVERTABLE_IMAGE_TYPES,
+} from "@common/mcp/documents.mcp.schema";
 import { useOnErrorAlert } from "@components/AlertProvider";
 import { usePromise } from "prostgles-client";
-import { getSerialisableError } from "prostgles-types";
+import { getSerialisableError, includes } from "prostgles-types";
 import { useCallback, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
@@ -20,7 +24,7 @@ export const useChatFileUpload = () => {
     return Promise.all(
       files.map(async (file) => {
         const base64Data = await blobToBase64(file);
-        const isDoc = CONVERTABLE_TYPES.includes(file.type);
+        const isDoc = includes(CONVERTABLE_TYPES, file.type);
         return {
           file,
           base64Data,
@@ -79,7 +83,7 @@ export const useChatFileUpload = () => {
     const docFiles =
       filesWithInfo
         ?.map((f) => {
-          if (!applicableTypes.includes(f.file.type)) {
+          if (!includes(applicableTypes, f.file.type)) {
             return undefined;
           }
           return f.docFile;
@@ -153,22 +157,6 @@ function blobToBase64(blob: File): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
-
-const CONVERTABLE_DOCUMENT_TYPES = [
-  // Documents
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // XLSX
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation", // PPTX
-];
-const CONVERTABLE_IMAGE_TYPES = [
-  // Images
-  "image/png",
-  "image/jpeg",
-  "image/tiff",
-  "image/bmp",
-  "image/webp",
-];
 
 const CONVERTABLE_TYPES = [
   ...CONVERTABLE_DOCUMENT_TYPES,

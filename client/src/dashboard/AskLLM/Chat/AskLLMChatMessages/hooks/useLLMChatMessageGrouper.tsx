@@ -71,7 +71,7 @@ export const useLLMChatMessageGrouper = (props: P) => {
           (m) => m.type === "tool_use",
         );
         const allowMinimise =
-          toolCalls.length >= 3 &&
+          toolCalls.length >= 2 &&
           !toolCalls.some(
             (m) => ProstglesMCPToolsWithUI[m.name]?.displayMode === "full",
           );

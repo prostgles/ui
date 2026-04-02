@@ -9,11 +9,13 @@ import type {
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
 
+const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["documents"];
+
 const definition = {
   icon_path: "FileDocumentMultipleOutline",
   label: "Documents",
   description: "Convert documents to text and extract information from them",
-  tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["documents"],
+  tools,
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {
@@ -46,20 +48,18 @@ const handler = {
       },
       fetchTools: () => {
         return fromEntries(
-          getEntries(PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]).map(
-            ([name, { schema, description }]) => [
+          getEntries(tools).map(([name, { schema, description }]) => [
+            name,
+            {
               name,
-              {
-                name,
-                description,
-                inputSchema: getJSONBSchemaAsJSONSchema(
-                  "",
-                  "",
-                  schema,
-                ) as McpTool["inputSchema"],
-              },
-            ],
-          ),
+              description,
+              inputSchema: getJSONBSchemaAsJSONSchema(
+                "",
+                "",
+                schema,
+              ) as McpTool["inputSchema"],
+            },
+          ]),
         );
       },
     };

@@ -18,8 +18,7 @@ export const tableHandlers = new Proxy({} as Record<string, unknown>, {
                 ...params,
               };
             });
-          }
-          if (command === "count") {
+          } else if (command === "count") {
             return callCommand(command, args, (filter, params) => {
               return {
                 type: `db/${command}` as const,
@@ -28,9 +27,7 @@ export const tableHandlers = new Proxy({} as Record<string, unknown>, {
                 ...params,
               };
             });
-          }
-
-          if (command === "update") {
+          } else if (command === "update") {
             return callCommand(command, args, (filter, data, params) => {
               return {
                 type: `db/${command}` as const,
@@ -40,9 +37,7 @@ export const tableHandlers = new Proxy({} as Record<string, unknown>, {
                 ...params,
               };
             });
-          }
-
-          if (command === "insert") {
+          } else if (command === "insert") {
             return callCommand(command, args, (data, params) => {
               return {
                 type: `db/${command}` as const,
@@ -51,8 +46,16 @@ export const tableHandlers = new Proxy({} as Record<string, unknown>, {
                 ...params,
               };
             });
-          }
-          if (command === "delete") {
+          } else if (command === "insertMany") {
+            return callCommand(command, args, (data, params) => {
+              return {
+                type: `db/${command}` as const,
+                tableName,
+                data,
+                ...params,
+              };
+            });
+          } else if (command === "delete") {
             return callCommand(command, args, (filter, params) => {
               return {
                 type: `db/${command}` as const,
@@ -61,6 +64,10 @@ export const tableHandlers = new Proxy({} as Record<string, unknown>, {
                 ...params,
               };
             });
+          } else {
+            throw new Error(
+              `Unsupported command ${command} on tableHandler. Only ${proxyTableHandlerCommands.join(", ")} are supported.`,
+            );
           }
         };
       },
@@ -82,3 +89,20 @@ const callCommand = <Command extends keyof TableHandler>(
   }
   return callWorkflowProxy(proxyData);
 };
+
+const proxyCommands: Record<ProxyDbCallData["type"], 1> = {
+  "db/count": 1,
+  "db/find": 1,
+  "db/insert": 1,
+  "db/insertMany": 1,
+  "db/update": 1,
+  "db/delete": 1,
+  "db/execute_sql": 1,
+  "db/execute_readonly_sql": 1,
+};
+export const proxyDbCommands = Object.keys(proxyCommands).map((c) =>
+  c.replace("db/", ""),
+);
+const proxyTableHandlerCommands = proxyDbCommands.filter(
+  (cmd) => !cmd.includes("execute_"),
+);

@@ -1,5 +1,5 @@
-const unhandled = require("electron-unhandled");
-unhandled();
+import { handleErrors } from "./handleErrors";
+handleErrors();
 import { app, shell, safeStorage as ss, type SafeStorage } from "electron";
 import * as path from "path";
 import {

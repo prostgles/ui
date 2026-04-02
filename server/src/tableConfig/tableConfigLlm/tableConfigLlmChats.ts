@@ -7,6 +7,7 @@ import { isDefined, type JSONB } from "prostgles-types";
 import { agentOutputSchemaType } from "../../../../common/mcp/startAgenticWorkflowSchema";
 import { tablePermissionsSchema } from "../tablePermissionsSchema";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
+import { proxyDbCommands } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/tableHandlers";
 
 const commonrunSQLOpts = {
   query_timeout: {
@@ -23,6 +24,23 @@ const commonrunSQLOpts = {
       "If true then the assistant can run queries without asking for approval",
   },
 } satisfies JSONB.ObjectType["type"];
+
+const ALL_TOOLS = [
+  "execute_readonly_sql",
+  "execute_sql",
+  "count",
+  "find",
+  "insert",
+  "insertMany",
+  "update",
+  "delete",
+];
+
+if (proxyDbCommands.sort().join() !== ALL_TOOLS.sort().join()) {
+  throw new Error(
+    `proxyDbCommands and ALL_TOOLS are out of sync. proxyDbCommands: ${proxyDbCommands.join(", ")} ALL_TOOLS: ${ALL_TOOLS.join(", ")}`,
+  );
+}
 
 export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
   llm_chats: {
@@ -268,15 +286,6 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
               chat_id: row.id,
               server_name: "db",
             });
-            const ALL_TOOLS = [
-              "execute_readonly_sql",
-              "execute_sql",
-              "count",
-              "find",
-              "insert",
-              "update",
-              "delete",
-            ];
             const dataAccess = row.db_data_permissions;
             if (dataAccess?.mode) {
               const toolsToAllow =
@@ -288,7 +297,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                           return [
                             ...(v.select ? ["find", "count"] : []),
                             ...(v.delete ? ["delete"] : []),
-                            ...(v.insert ? ["insert"] : []),
+                            ...(v.insert ? ["insert", "insertMany"] : []),
                             ...(v.update ? ["update"] : []),
                           ].filter(isDefined);
                         })

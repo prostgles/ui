@@ -1,5 +1,21 @@
 import { documentsServiceInputSchema } from "./documentsServiceInputSchema";
 
+export const CONVERTABLE_DOCUMENT_TYPES = [
+  // Documents
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // XLSX
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation", // PPTX
+] as const;
+export const CONVERTABLE_IMAGE_TYPES = [
+  // Images
+  "image/png",
+  "image/jpeg",
+  "image/tiff",
+  "image/bmp",
+  "image/webp",
+] as const;
+
 export const documentsMcpSchema = {
   get_document_text: {
     mode: undefined,
@@ -7,17 +23,11 @@ export const documentsMcpSchema = {
       "Get text contents of a document/image. Based on docling. Supported formats: txt, pdf, docx, pptx, jpg, png, and more.",
     schema: {
       type: {
-        ...documentsServiceInputSchema.type,
         fileAsBase64: "string",
         contentType: {
-          enum: [
-            "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            "image/jpeg",
-            "image/png",
-          ],
+          enum: [...CONVERTABLE_DOCUMENT_TYPES, ...CONVERTABLE_IMAGE_TYPES],
         },
+        ...documentsServiceInputSchema.type,
       },
     },
     outputSchema: {

@@ -8,6 +8,7 @@ import {
   getMCPFullToolName,
   getProstglesMCPFullToolName,
 } from "@common/mcpUtils";
+import { uiMcpSchema } from "@common/mcp/ui.mcp.schema";
 
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
@@ -110,24 +111,8 @@ export const setupLLM = async (dbs: DBS) => {
             `Always use the ${getProstglesMCPFullToolName("prostgles-ui", "create_agentic_workflow")} tool to return a workflow_function_definition instead of only describing the workflow in plain text.`,
             `Prefer to use ${getProstglesMCPFullToolName("prostgles-ui", "run_typescript_in_nodejs")} tool to perform exploratory work and data intensive tasks to prepare the workflow_function_definition.`,
             `Use ${getProstglesMCPFullToolName("prostgles-ui", "create_agent")} to delegate preliminary research to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
-            `The workflow_function_definition must compile into valid typescript and call defineAgenticWorkflow().`,
-            `The file is an executable entry point. The code must be top-level execution only. You are prohibited from wrapping the defineAgenticWorkflow call in any functions`,
-            "Choose the minimum required database access and minimum required tools; prefer custom tablePermissions over broad SQL modes.",
-            "IMPORTANT: Do not provide CREATE statements for table names that are already present in the schema unless the user specifically asks for it.",
-            "If databaseAccessDefinitions.mode is custom, ensure every table used by dbHandler (find/count/insert/update/delete) exists in current schema or in ddlStatements, and that each used table is included in tablePermissions.",
-            "Take into account that the user has the ability to stop and re-run the workflow.",
-            "Prefer short iterative steps with progress updates via setProgress, and await async operations (avoid fire-and-forget promises) so stop/re-run works predictably.",
-            `DO NOT INCLUDE CREATE STATEMENTS FOR TABLES THAT ALREADY EXIST IN THE DATABASE. ` +
-              `Any change to the existing table schema must be done through the ${getProstglesMCPFullToolName("db", "execute_sql")} before confirming it with the user.`,
-            `Inspect the existing table schemas and ensure the workflow function definition is compatible with them. If new tables are needed, confirm with the user first.`,
-            "Prefer to use folder/file access from userInput rather than mcp orchestrator tools. This mounts the files to the container to allow interacting with native nodejs fs module for file operations instead of using MCP tools that allow filesystem access unless requested by the user.",
-            "Without over-engineering make the workflow resilient to re-runs unless it goes against the nature of the workflow.",
-            "Interleave agent steps and database writes; avoid collecting all agent output first and applying DB changes only at the end unless truly necessary.",
-            "When user requirements are ambiguous, ask targeted follow-up questions using ask_user_questions and include a best-guess default workflow.",
-            "When writing typescript code, ensure it compiles and do not include type or eslint errors. Assume strict: true (including noImplicitAny, strictNullChecks).",
-            "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
-            "Do not add 'optional' to user input. It will be added automatically",
             "",
+            uiMcpSchema.create_agentic_workflow.description,
             LLM_PROMPT_VARIABLES.SCHEMA,
             "",
           ].join("\n"),

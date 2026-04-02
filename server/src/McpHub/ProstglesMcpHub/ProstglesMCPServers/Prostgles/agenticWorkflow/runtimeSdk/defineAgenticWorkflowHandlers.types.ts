@@ -17,7 +17,7 @@ export type ProxyDbCallData =
       offset?: any;
     }
   | {
-      type: "db/insert";
+      type: "db/insert" | "db/insertMany";
       tableName: string;
       data: any;
       returning?: any;
