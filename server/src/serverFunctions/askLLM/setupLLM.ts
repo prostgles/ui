@@ -4,7 +4,10 @@ import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { getElectronConfig } from "@src/electronConfig";
 import type { DBS } from "../..";
 import { setupLLMProviders } from "./setupLLMProviders";
-import { getProstglesMCPFullToolName } from "@common/mcpUtils";
+import {
+  getMCPFullToolName,
+  getProstglesMCPFullToolName,
+} from "@common/mcpUtils";
 
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
@@ -114,6 +117,10 @@ export const setupLLM = async (dbs: DBS) => {
             "If databaseAccessDefinitions.mode is custom, ensure every table used by dbHandler (find/count/insert/update/delete) exists in current schema or in ddlStatements, and that each used table is included in tablePermissions.",
             "Take into account that the user has the ability to stop and re-run the workflow.",
             "Prefer short iterative steps with progress updates via setProgress, and await async operations (avoid fire-and-forget promises) so stop/re-run works predictably.",
+            `DO NOT INCLUDE CREATE STATEMENTS FOR TABLES THAT ALREADY EXIST IN THE DATABASE. ` +
+              `Any change to the existing table schema must be done through the ${getProstglesMCPFullToolName("db", "execute_sql")} before confirming it with the user.`,
+            `Inspect the existing table schemas and ensure the workflow function definition is compatible with them. If new tables are needed, confirm with the user first.`,
+            "Prefer to use folder/file access from userInput rather than mcp orchestrator tools. This mounts the files to the container to allow interacting with native nodejs fs module for file operations instead of using MCP tools that allow filesystem access unless requested by the user.",
             "Without over-engineering make the workflow resilient to re-runs unless it goes against the nature of the workflow.",
             "Interleave agent steps and database writes; avoid collecting all agent output first and applying DB changes only at the end unless truly necessary.",
             "When user requirements are ambiguous, ask targeted follow-up questions using ask_user_questions and include a best-guess default workflow.",

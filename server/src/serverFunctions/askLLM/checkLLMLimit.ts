@@ -20,9 +20,6 @@ export const checkLLMLimit = async (
     allowedUsedLLMCreds.some((c) => c.access_control_id === r.id),
   );
   const limits = usedRules.map((r) => r.llm_daily_limit);
-  if (isTesting) {
-    console.log("LLM limits", JSON.stringify({ limits, usedRules }, null, 2));
-  }
   if (!limits.length) {
     throw "No limits found";
   }
@@ -47,12 +44,6 @@ export const checkLLMLimit = async (
       ip_address: currentSession.ip_address,
     });
     userIds = sameIpSessions.map((s) => s.user_id).filter(Boolean);
-    if (isTesting) {
-      console.log(
-        "LLM limits info",
-        JSON.stringify({ currentSession, sameIpSessions, userIds }, null, 2),
-      );
-    }
   }
 
   if (!userIds.length) {
@@ -62,6 +53,24 @@ export const checkLLMLimit = async (
     user_id: { $in: userIds },
     created: { $gte: new Date(Date.now() - 24 * HOUR).toISOString() },
   });
+  if (isTesting) {
+    console.log(
+      "LLM limits info",
+      JSON.stringify(
+        {
+          _messagesCount,
+          userIds,
+          totalLimit,
+          limits,
+          allMessagesForUser: await dbs.llm_messages.count({
+            user_id: { $in: userIds },
+          }),
+        },
+        null,
+        2,
+      ),
+    );
+  }
   const messagesCount = +_messagesCount;
   if (+messagesCount > totalLimit) {
     return "Daily limit reached" as const;

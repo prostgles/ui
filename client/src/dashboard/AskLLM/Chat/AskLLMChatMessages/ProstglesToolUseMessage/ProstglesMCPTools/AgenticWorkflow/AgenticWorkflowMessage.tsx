@@ -5,6 +5,7 @@ import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { useJSONBParsedData } from "../common/useJSONBParsedData";
 import { useTypedToolUseResultDataV2 } from "../common/useTypedToolUseResultData";
 import { AgenticWorkflow } from "./AgenticWorkflow";
+import { fixIndent } from "@common/utils";
 
 export const AgenticWorkflowMessage = ({
   message,
@@ -38,19 +39,35 @@ export const AgenticWorkflowMessage = ({
       }
       const { logs } = validatedWorkflowData;
 
-      const startOfActualError = logs.lastIndexOf(`] RUN npm run build:`);
+      const endOfBoilerplate = logs.lastIndexOf(`] RUN npm run build:`);
 
-      const startOfBoilerplate = logs.lastIndexOf(`------
+      const startOfBuildFail = logs.lastIndexOf(`tsc && npm run lint`);
+      const buildFailEndBoilerplate = logs.lastIndexOf(
+        fixIndent(`
+        ------
 
-Dockerfile`);
-
+        Dockerfile`),
+      );
+      const buildFailContentMaybe =
+        startOfBuildFail !== -1 ?
+          logs.slice(
+            startOfBuildFail,
+            (
+              buildFailEndBoilerplate !== -1 &&
+                buildFailEndBoilerplate > startOfBuildFail
+            ) ?
+              buildFailEndBoilerplate
+            : undefined,
+          )
+        : undefined;
       const errorLogs =
         (
-          startOfActualError !== -1 &&
-          startOfBoilerplate !== -1 &&
-          startOfBoilerplate > startOfActualError
+          endOfBoilerplate !== -1 &&
+          startOfBuildFail !== -1 &&
+          startOfBuildFail > endOfBoilerplate &&
+          buildFailContentMaybe.trim().length
         ) ?
-          logs.slice(0, startOfBoilerplate)
+          buildFailContentMaybe
         : logs;
 
       return { type: "error-logs", logs: errorLogs } as const;

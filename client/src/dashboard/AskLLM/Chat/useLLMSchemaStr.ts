@@ -140,13 +140,24 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
               : c.numeric_precision ?
                 `(${c.numeric_precision}${c.numeric_scale ? `, ${c.numeric_scale}` : ""})`
               : "";
+            /** Hacky. TODO: Must improve schema info */
+            const serialDataType =
+              c.is_pkey && c.has_default && !c.column_default ?
+                c.udt_name === "int4" ? "SERIAL"
+                : c.udt_name === "int8" ? "BIGSERIAL"
+                : ""
+              : "";
+
+            const dataTypeWIthPrecision =
+              serialDataType || `${c.udt_name}${dataTypePrecisionInfo}`;
             return [
-              `  ${addDoubleQuotesIfNeeded(c.name)} ${c.udt_name}${dataTypePrecisionInfo}`,
+              `  ${addDoubleQuotesIfNeeded(c.name)} ${dataTypeWIthPrecision}`,
               c.is_pkey && singlePkeyColPositions.has(c.ordinal_position) ?
                 "PRIMARY KEY"
               : "",
               !c.is_pkey && !c.is_nullable ? "NOT NULL" : "",
               !c.is_pkey && c.has_default ? `DEFAULT ${c.column_default}` : "",
+              c.is_generated ? "GENERATED" : "",
             ]
               .filter((v) => v)
               .join(" ");

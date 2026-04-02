@@ -118,6 +118,7 @@ export const FullScreenHeader = ({
       </Label>
       <Btn
         iconPath={mdiFullscreen}
+        size="small"
         onClick={() => setFullscreen(!fullscreen)}
       />
     </FlexRow>
