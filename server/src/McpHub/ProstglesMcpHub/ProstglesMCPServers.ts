@@ -8,12 +8,14 @@ import type {
 } from "./ProstglesMCPServerTypes";
 import { ProstglesDbMCPServer } from "./ProstglesMCPServers/ProstglesDb.mcp";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { DocumentsMCPServer } from "./ProstglesMCPServers/Documents.mcp";
 
 export const ProstglesMCPServers = {
   websearch: WebSearchMCPServer,
   webdev: WebDevMCPServer,
   "prostgles-ui": ProstglesUiMCPServer,
   db: ProstglesDbMCPServer,
+  documents: DocumentsMCPServer,
 } as const satisfies Record<
   string,
   {

@@ -487,3 +487,17 @@ export const getProperty = <T extends object, K extends string>(
     return undefined as K extends keyof T ? T[K] : undefined;
   return obj[key as keyof T] as K extends keyof T ? T[K] : undefined;
 };
+
+type OptionalKeys<T> = {
+  [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
+}[keyof T];
+
+type RequiredKeys<T> = Exclude<keyof T, OptionalKeys<T>>;
+
+type Simplify<T> = { [K in keyof T]: T[K] };
+
+export type RequiredKeepUndefined<T> = Simplify<
+  { [K in RequiredKeys<T>]: T[K] } & {
+    [K in OptionalKeys<T>]: T[K] | undefined;
+  }
+>;

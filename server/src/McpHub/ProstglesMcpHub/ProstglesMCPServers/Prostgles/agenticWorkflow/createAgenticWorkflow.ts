@@ -1,6 +1,10 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
-import { fromEntries, getEntries } from "@common/utils";
+import {
+  fromEntries,
+  getEntries,
+  type RequiredKeepUndefined,
+} from "@common/utils";
 import {
   getSerialisableError,
   isDefined,
@@ -25,7 +29,7 @@ const getValidWorkflowDefinition = async (
     connection_id,
     aborter,
     package_dependencies,
-  }: Args & {
+  }: RequiredKeepUndefined<Args> & {
     connection_id: string;
     aborter: AbortController;
     tableSchemaOpts: TableSchemaOpts;
@@ -185,6 +189,7 @@ export const createAgenticWorkflow = async (
       {
         workflow_function_definition,
         workflow_function_definition_summary,
+        package_dependencies,
         workflowId,
         connection_id,
         aborter,

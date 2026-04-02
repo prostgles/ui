@@ -1,6 +1,7 @@
 import type { DBS } from "@src/index";
-import { getJsonSchemaAsTs } from "../../../../../../../../common/getJsonSchemaAsTs";
+import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
 import { getValidatedMcpServerToolsAllowed } from "../definitionValidation/getValidatedMcpServerToolsAllowed";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 
 export const getToolTypescriptSchemas = async (
   dbs: DBS,
@@ -34,6 +35,10 @@ export const getToolTypescriptSchemas = async (
     outputSchema,
     description,
   } of mcpTools) {
+    const prglMcp = getPropertySafe(
+      PROSTGLES_MCP_SERVERS_AND_TOOLS,
+      server_name,
+    );
     const argsTsSchema = getTsType(inputSchema);
     const outputTsSchema = getTsType(outputSchema);
 
@@ -58,4 +63,11 @@ const escapeForJsDoc = (text: string) => {
   return text
     .replace(/\r\n?/g, "\n") // normalize newlines
     .replace(/\*\//g, "*\\/"); // prevent closing the comment
+};
+
+export const getPropertySafe = <T extends object>(
+  obj: T,
+  key: string,
+): T[keyof T] | undefined => {
+  return key in obj ? obj[key as keyof T] : undefined;
 };

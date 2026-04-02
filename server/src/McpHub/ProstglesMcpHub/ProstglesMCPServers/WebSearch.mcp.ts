@@ -1,5 +1,6 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fromEntries, getEntries } from "@common/utils";
+import { McpHub } from "@src/McpHub/AnthropicMcpHub/McpHub";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
@@ -8,9 +9,6 @@ import type {
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
-import { McpHub } from "@src/McpHub/AnthropicMcpHub/McpHub";
-import { tout } from "@src/utils/tout";
-import type { ProcessLog } from "@src/McpHub/DockerSandbox/executeDockerCommand";
 
 const definition = {
   icon_path: "Web",
@@ -19,61 +17,9 @@ const definition = {
   tools: PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"],
 } as const satisfies ProstglesMcpServerDefinition;
 
-const withRetries = async <T>(
-  fn: () => Promise<T>,
-  attempts = 3,
-  delay = 1000,
-): Promise<T> => {
-  try {
-    const success = await fn();
-    return success;
-  } catch (error) {
-    if (attempts <= 1) {
-      throw error;
-    }
-    console.warn(`Retrying in ${delay}ms...`);
-    await tout(delay);
-    return withRetries(fn, attempts - 1, delay);
-  }
-};
-
 const handler = {
   start: (dbs) => {
     const serviceManager = getServiceManager(dbs);
-
-    let logs: ProcessLog[] = [];
-
-    const getService = async <
-      S extends Parameters<typeof serviceManager.enableService>[0],
-    >(
-      serviceName: S,
-    ) => {
-      let serviceInstance = serviceManager.getService(serviceName);
-      if (serviceInstance?.status === "running") {
-        return serviceInstance;
-      }
-      await withRetries(() => {
-        return serviceManager.enableService(serviceName, (log) => {
-          logs = log;
-        });
-      }).catch((error) => {
-        console.error(
-          `Failed to start ${serviceName} service for Web Search MCP Server`,
-          { error, logs: logs.map((l) => l.text).join("\n") },
-        );
-        throw new Error(
-          "Failed to start ${serviceName} service for Web Search MCP Server. Check server logs for details.",
-        );
-      });
-
-      serviceInstance = serviceManager.getService(serviceName);
-      if (serviceInstance?.status !== "running") {
-        throw new Error(
-          `Failed to start ${serviceName} service for Web Search MCP Server`,
-        );
-      }
-      return serviceInstance;
-    };
 
     return {
       stop: () => {
@@ -85,7 +31,8 @@ const handler = {
             clientReq.httpReq?.ip ||
             clientReq.socket?.handshake.address ||
             "127.0.0.1";
-          const webSearchService = await getService("webSearchSearxng");
+          const webSearchService =
+            await serviceManager.getServiceWithRetries("webSearchSearxng");
           const result = await webSearchService.endpoints["/search"](
             { ...toolArguments, format: "json" },
             {
@@ -176,7 +123,8 @@ const handler = {
           );
         },
         get_document_text: async ({ url, ...otherOpts }) => {
-          const docsService = await getService("documents");
+          const docsService =
+            await serviceManager.getServiceWithRetries("documents");
           const result = await docsService.endpoints["/v1/convert/source"]({
             sources: [{ kind: "http", url }],
             options: {

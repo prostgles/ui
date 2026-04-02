@@ -225,5 +225,17 @@ export type FileTable = {
     original_name: string;
 };
 export declare const getProperty: <T extends object, K extends string>(obj: T, key: K | string) => K extends keyof T ? T[K] : K extends string ? T[keyof T] | undefined : undefined;
+type OptionalKeys<T> = {
+    [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
+}[keyof T];
+type RequiredKeys<T> = Exclude<keyof T, OptionalKeys<T>>;
+type Simplify<T> = {
+    [K in keyof T]: T[K];
+};
+export type RequiredKeepUndefined<T> = Simplify<{
+    [K in RequiredKeys<T>]: T[K];
+} & {
+    [K in OptionalKeys<T>]: T[K] | undefined;
+}>;
 export {};
 //# sourceMappingURL=utils.d.ts.map

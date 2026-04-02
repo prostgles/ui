@@ -1,6 +1,7 @@
 export const getAgenticWorkflowDockerCoreFiles = (
   package_dependencies: Record<string, string> | undefined,
 ) => {
+  const packageJson = structuredClone(packageJsonTemplate);
   if (package_dependencies) {
     for (const pkgName of Object.keys(package_dependencies)) {
       if (pkgName in packageJson.dependencies) {
@@ -95,7 +96,7 @@ RUN npm run build
 CMD ["npm", "start", "--silent"]
 `;
 
-export const packageJson = {
+export const packageJsonTemplate = {
   name: "agentic-workflow",
   version: "1.0.0",
   main: "index.js",

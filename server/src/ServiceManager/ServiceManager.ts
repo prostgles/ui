@@ -11,6 +11,8 @@ import {
 import { startService } from "./startService";
 import { stopService } from "./stopService";
 import { isTesting } from "@src/init/utils";
+import { withRetries } from "./withRetries";
+import type { ExtractBy } from "@common/utils";
 
 export class ServiceManager {
   dbs: DBS | undefined;
@@ -97,8 +99,42 @@ export class ServiceManager {
     serviceName: ServiceName,
   ): ServiceInstance<ExistingServices[ServiceName]> | undefined {
     const activeInstance = this.activeServices.get(serviceName);
+
     //@ts-ignore
     return activeInstance;
+  }
+
+  async getServiceWithRetries<
+    ServiceName extends keyof typeof prostglesServices,
+    ExistingServices extends typeof prostglesServices,
+  >(
+    serviceName: ServiceName,
+    onLogs?: (logs: ProcessLog[]) => void,
+  ): Promise<
+    ExtractBy<
+      ServiceInstance<ExistingServices[ServiceName]>,
+      "status",
+      "running"
+    >
+  > {
+    let serviceInstance = this.getService(serviceName);
+    if (serviceInstance?.status === "running") {
+      return serviceInstance;
+    }
+    await withRetries(() => {
+      return this.enableService(serviceName, onLogs ?? (() => {}));
+    }).catch((error) => {
+      console.error(error);
+      throw new Error(
+        `Failed to start ${serviceName} service. Check server logs for details.`,
+      );
+    });
+
+    serviceInstance = this.getService(serviceName);
+    if (serviceInstance?.status !== "running") {
+      throw new Error(`Failed to start ${serviceName} service.`);
+    }
+    return serviceInstance;
   }
 
   buildService = buildService.bind(this);
