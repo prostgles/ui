@@ -10,10 +10,11 @@ export const getNodeTypes = () => {
   }));
 };
 
-interface TypeFile {
+type TypeFile = {
   content: string;
   filePath: string;
-}
+  // virtualPath: string;
+};
 
 /**
  * Extracts type definitions for installed packages as specified by their package.json
@@ -43,25 +44,39 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
     throw new Error(`Failed to parse ${projectPkgPath}: ${err}`);
   }
 
+  const depsToInclude = ["prostgles-types", "@types/node"];
+
   // 2. Gather dependency names from "dependencies" and "devDependencies".
   const deps = {
     ...(projectPkg?.dependencies || {}),
     /** Include node types */
     ...(projectPkg?.devDependencies || {}),
   };
-  const toExclude = ["prostgles-server", "@aws-sdk", "@types/aws-sdk"];
-  const depNames = Object.keys(deps).filter((depName) =>
-    toExclude.every((excludedPkg) => !depName.includes(excludedPkg)),
+  const toExclude = ["@aws-sdk", "@types/aws-sdk"]; //"prostgles-server",
+  const depNames = new Set(
+    Object.keys(deps).filter((depName) =>
+      toExclude.every((excludedPkg) => !depName.includes(excludedPkg)),
+    ),
   );
-  depNames.push("node");
+  depsToInclude.forEach((pkg) => {
+    if (!depNames.has(pkg)) {
+      depNames.add(pkg);
+    }
+  });
 
   // 3. For each dependency, locate its package.json and check for a "types" or "typings" field.
-  const rootTypeFiles: { pkgName: string; typesFilePath: string }[] = [];
+  const rootTypeFiles: {
+    pkgName: string;
+    typesFilePath: string;
+    depPkgContent: string;
+    depPkgPath: string;
+  }[] = [];
   for (const depName of depNames) {
     // Assume package is at projectDir/node_modules/<depName>
     const depDir = path.join(projectDir, "node_modules", depName);
     const depPkgPath = path.join(depDir, "package.json");
     if (!ts.sys.fileExists(depPkgPath)) continue;
+
     const depPkgContent = ts.sys.readFile(depPkgPath);
     if (!depPkgContent) continue;
     let depPkg;
@@ -75,7 +90,8 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
     const typesFilePath = path.join(depDir, typesField);
     if (!ts.sys.fileExists(typesFilePath)) continue;
     const pkgName = depName.startsWith("@types/") ? depName.slice(7) : depName;
-    rootTypeFiles.push({ pkgName, typesFilePath });
+
+    rootTypeFiles.push({ pkgName, typesFilePath, depPkgContent, depPkgPath });
   }
 
   // If no package provides a types entry point, return an empty array.
@@ -86,7 +102,7 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
   // 4. Create a TS program using the type entry files as roots.
   const compilerOptions: ts.CompilerOptions = {
     allowJs: false,
-    moduleResolution: ts.ModuleResolutionKind.NodeJs,
+    moduleResolution: ts.ModuleResolutionKind.Node16,
     baseUrl: projectDir,
   };
   const program = ts.createProgram(
@@ -97,13 +113,37 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
   // 5. Recursively collect declaration files from each root.
   const collected = new Map<string, TypeFile>();
 
+  function addNearestPackageJson(fileName: string) {
+    let dir = path.dirname(fileName);
+
+    while (dir.startsWith(path.join(projectDir, "node_modules"))) {
+      const pkgJsonPath = path.join(dir, "package.json");
+      if (ts.sys.fileExists(pkgJsonPath)) {
+        if (!collected.has(pkgJsonPath)) {
+          const content = ts.sys.readFile(pkgJsonPath);
+          if (content?.includes('"types"') || content?.includes('"typings"')) {
+            collected.set(pkgJsonPath, {
+              filePath: pkgJsonPath,
+              content,
+            });
+          }
+        }
+        return; // stop at nearest package boundary
+      }
+
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  }
+
   function collectSourceFile(
     sf: ts.SourceFile,
     packageName?: string,
     parentPkgName?: string,
   ): void {
     if (collected.has(sf.fileName)) return;
-
+    addNearestPackageJson(sf.fileName);
     // Only include declaration files.
     if (sf.isDeclarationFile) {
       collected.set(sf.fileName, wrapIfNeeded(sf, packageName));
@@ -141,16 +181,13 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
                 !parentPkgName ? undefined : (
                   parentPkgName +
                   modSource.fileName
-                    .split(`${projectDir}/node_modules/${parentPkgName}`)[1]
+                    .split(
+                      path.normalize(
+                        `${projectDir}/node_modules/${parentPkgName}`,
+                      ),
+                    )[1]
                     ?.split(".d.ts")[0]
                 );
-              if (modSource.fileName.includes("prostgles-server")) {
-                console.log(
-                  projectDir,
-                  modSource.fileName,
-                  modFileNameForImport,
-                );
-              }
               collectSourceFile(modSource, modFileNameForImport, parentPkgName);
             }
           }
@@ -160,24 +197,41 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
   }
 
   // For each package's root type file, collect its source and any referenced files.
-  for (const rootFile of rootTypeFiles) {
-    const sf = program.getSourceFile(rootFile.typesFilePath);
+  for (const {
+    depPkgContent,
+    depPkgPath,
+    pkgName,
+    typesFilePath,
+  } of rootTypeFiles) {
+    const sf = program.getSourceFile(typesFilePath);
     if (sf) {
-      collectSourceFile(sf, rootFile.pkgName, rootFile.pkgName);
+      collectSourceFile(sf, pkgName, pkgName);
+    }
+
+    /** This is needed for monaco-editor to work out index.d.ts path */
+    if (
+      depPkgContent.includes('"types"') ||
+      depPkgContent.includes('"typings"')
+    ) {
+      collected.set(depPkgPath, {
+        content: depPkgContent,
+        filePath: depPkgPath,
+      });
     }
   }
 
-  console.error(
-    "Does not work in electron. Use docker-container or unpkg to extract types.",
-  );
-  return Array.from(collected.values());
+  const result = Array.from(collected.values()).map((file) => ({
+    ...file,
+    filePath: file.filePath.split(projectDir).at(-1)!,
+  }));
+  return result;
 }
 
 function shouldWrapFile(sourceFile: ts.SourceFile): boolean {
   // If the file is already an external module, it has top-level imports/exports.
-  // if (ts.isExternalModule(sourceFile)) {
-  //   return false;
-  // }
+  if (ts.isExternalModule(sourceFile)) {
+    return false;
+  }
 
   // Optionally, check if the file already starts with a 'declare module' statement.
   const [firstStmt] = sourceFile.statements;
@@ -192,7 +246,7 @@ function shouldWrapFile(sourceFile: ts.SourceFile): boolean {
 function wrapIfNeeded(
   sourceFile: ts.SourceFile,
   packageName: string | undefined,
-): { content: string; filePath: string } {
+): TypeFile {
   const fileContent = sourceFile.getFullText();
   if (packageName && shouldWrapFile(sourceFile)) {
     return {

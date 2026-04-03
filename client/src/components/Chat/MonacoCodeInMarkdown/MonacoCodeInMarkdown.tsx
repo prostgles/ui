@@ -73,6 +73,8 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
     [],
   );
 
+  const lang = LANGUAGE_FALLBACK.get(language) ?? language;
+
   return (
     <FlexCol
       className={classOverride(
@@ -90,12 +92,13 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
         className={"f-1"}
         title={<MarkdownMonacoCodeHeader {...props} {...runSQLState} />}
       >
+        {" "}
         <MonacoEditor
           key={codeString}
           className={"f-1"}
           loadedSuggestions={loadedSuggestions}
           value={codeString}
-          language={LANGUAGE_FALLBACK.get(language) ?? language}
+          language={lang}
           options={monacoOptions}
           onMount={onListenToContentHeightChange}
           minHeight={100}

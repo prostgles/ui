@@ -1,23 +1,19 @@
+import { startAgenticWorkflowSchema } from "@common/mcp/startAgenticWorkflowSchema";
 import { validateUserInput } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/definitionValidation/validateUserInput";
+import { instrumentWorkflowFile } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/addInstrumentationToTsLogic";
+import {
+  renderSummary,
+  summariseWorkflowFile,
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/getTsLogicSummary";
 import { getAgenticWorkflowFiles } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSetup/getDefineAgenticWorkflowTsWithDbAndMcpTypes";
 import {
   startAgenticWorkflow,
   stopAgenticWorkflow,
 } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/startAgenticWorkflow";
+import { stopContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/runCodeInSandboxContainer";
 import { pickKeys } from "prostgles-types";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
-import { stopContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/runCodeInSandboxContainer";
-import { startAgenticWorkflowSchema } from "@common/mcp/startAgenticWorkflowSchema";
-import {
-  renderSummary,
-  summariseWorkflowFile,
-} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/getTsLogicSummary";
-import { instrumentWorkflowFile } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/addInstrumentationToTsLogic";
-import { join } from "node:path";
-import { glob } from "glob";
-import { getRootDir } from "@src/electronConfig";
-import { readFile } from "node:fs/promises";
 
 export const getAgenticWorkflowFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
@@ -128,28 +124,6 @@ export const getAgenticWorkflowFunctions = (
             })
           );
 
-        // TODO: merge this prostgles-types logic with getNodeTypes and move to a cached GET route
-        const nodeModulesPath =
-          getRootDir() + "/node_modules/prostgles-types/dist/";
-        const pattern = join(nodeModulesPath, "**/*.d.ts");
-        const prostglesTypesFiles = await glob(pattern, {
-          signal: AbortSignal.timeout(5000),
-          withFileTypes: true,
-        });
-        const prostglesTypesFilesObj: Record<string, string> = {};
-        for (const file of prostglesTypesFiles) {
-          const absolutePath = file.fullpath();
-          const code = await readFile(absolutePath, "utf-8");
-
-          const relativePath = absolutePath
-            .slice(absolutePath.indexOf("/node_modules/"))
-            .replace(
-              "/node_modules/prostgles-types/dist/",
-              "node_modules/prostgles-types/",
-            );
-          prostglesTypesFilesObj[relativePath] = code;
-        }
-
         const files = await getAgenticWorkflowFiles(
           dbs,
           "runtime",
@@ -171,7 +145,7 @@ export const getAgenticWorkflowFunctions = (
           files["defineAgenticWorkflow.ts"],
         );
         return {
-          files: { ...files, ...prostglesTypesFilesObj },
+          files,
           astNodes: astInfo as any,
           summary,
           instrumentedFile,

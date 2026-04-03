@@ -1,10 +1,9 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { useMemoDeep, usePromise } from "prostgles-client";
 import { useRef } from "react";
-import type { DBSSchema } from "@common/publishUtils";
 import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { isDefined } from "../../../utils/utils";
 import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";
-import { dboLib, pgPromiseDb } from "../../CodeEditor/monacoTsLibs";
 import type { MethodDefinitionProps } from "./MethodDefinition";
 
 type Props = Pick<
@@ -51,22 +50,9 @@ export const useCodeEditorTsTypes = (
           description: methodOpts.desc ?? "",
           tables,
         }));
-      // const libs = nodeLibs ?? (await dbsMethods.getNodeTypes());
-      // nodeLibs = libs;
+
       const tsLibraries: TSLibrary[] = [
-        // ...libs.map((l) => ({
-        //   ...l,
-        //   filePath: `file://${l.filePath}`,
-        // })),
         /** Required to ensure dbo types work */
-        {
-          filePath: "file:///node_modules/@types/dbo/index.d.ts",
-          content: `declare global { ${dboLib} }; export {}`,
-        },
-        {
-          filePath: "file:///pgPromiseDb.ts",
-          content: pgPromiseDb,
-        },
         {
           filePath: "file:///DBGeneratedSchema.ts",
           content: `declare global {   ${dbSchemaTypes} }; export {}`,
@@ -77,7 +63,10 @@ export const useCodeEditorTsTypes = (
           /**
            * Function that will be called after the table is created and server started or schema changed
            */
-          export type ProstglesOnMount = (args: { dbo: Required<DBOFullyTyped<DBGeneratedSchema>>; db: pgPromise.DB; }) => void | Promise<void>; 
+          export type ProstglesOnMount = (args: { 
+            dbo: Required<import("prostgles-server").DBOFullyTyped<DBGeneratedSchema>>; 
+            db: import("prostgles-server").DB; 
+          }) => void | Promise<void>; 
         }; 
         export {} `,
         },
@@ -137,7 +126,7 @@ const fetchMethodDefinitionTypes = async ({
     argumentTypes.length ? `{ \n${argumentTypes.join("")} \n}` : "never";
 
   const userTypesTs = userTypes.map((t) => JSON.stringify(t.id)).join(" | ");
-  const tsMethodDef = fixIndent(`
+  const tsMethodDef = fixIndent(`  
     /**
      * Server-side function
      * ${description}
@@ -145,8 +134,8 @@ const fetchMethodDefinitionTypes = async ({
     type ProstglesMethod = (
       args: ${argumentType},
       ctx: {
-        db: pgPromise.DB;
-        dbo: DBOFullyTyped<DBGeneratedSchema>; 
+        db: import("prostgles-server").DB;
+        dbo: import("prostgles-server").DBOFullyTyped<DBGeneratedSchema>; 
         tables: any[];
         user: { id: string; type: ${userTypesTs}; };
         /**
@@ -154,7 +143,7 @@ const fetchMethodDefinitionTypes = async ({
          */
         callMCPServerTool: (serverName: string, toolName: string, args?: any) => Promise<any>;
       }
-    ) => Promise<any>`);
+    ) => Promise<any>  `);
 
   return {
     filePath: `file:///ProstglesMethod.ts`,

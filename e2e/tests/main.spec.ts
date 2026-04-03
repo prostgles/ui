@@ -1020,7 +1020,7 @@ test.describe("Main test", () => {
     );
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "9",
+      "10",
     );
 
     const dbToolsBtn = await page

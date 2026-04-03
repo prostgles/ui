@@ -9,6 +9,8 @@ export type MonacoEditorImport = typeof import("monaco-editor");
 
 let cachedNodeLibs: TSLibrary[] | undefined;
 
+let lastLoadedLibsEditor: editor.IStandaloneCodeEditor | undefined;
+
 export const useSetMonacoTsLibraries = (
   editor: editor.IStandaloneCodeEditor | undefined,
   languageObj: LanguageConfig | undefined,
@@ -25,12 +27,23 @@ export const useSetMonacoTsLibraries = (
     const nodeTypes =
       cachedNodeLibs ?? (await dbsMethods.getNodeTypes?.()) ?? [];
     cachedNodeLibs = nodeTypes;
-    return nodeTypes;
+    const badPathRecord = nodeTypes.find(
+      (t) => !t.filePath.startsWith("/node_modules/"),
+    );
+    if (badPathRecord) {
+      console.warn(
+        `Warning: The filePath for ${badPathRecord.filePath} does not start with /node_modules/. This may cause issues with Monaco's module resolution. Please ensure that the server is returning correct file paths for node types.`,
+      );
+    }
+    return nodeTypes.map((t) => ({
+      content: t.content,
+      filePath: `file://${t.filePath}`,
+    }));
   });
   useEffect(() => {
     if (!monaco) return;
-    setTSoptions(monaco, isNodeEnv ? "node" : "react");
-  }, [monaco, dbsMethods, isNodeEnv]);
+    setTSoptions(monaco);
+  }, [monaco, dbsMethods]);
 
   useEffectDeep(() => {
     if (!monaco || !editor || languageObj?.lang !== "typescript") return;
@@ -42,10 +55,19 @@ export const useSetMonacoTsLibraries = (
     } = languageObj;
     const extraLibs =
       environment === "nodejs" ?
-        tsLibraries && [...(nodeLibs ?? []), ...tsLibraries]
+        [...(nodeLibs ?? []), ...(tsLibraries ?? [])]
       : tsLibraries;
     if (!extraLibs) return;
-    monaco.languages.typescript.typescriptDefaults.setExtraLibs(extraLibs);
+    const setExtraLibs = () => {
+      monaco.languages.typescript.typescriptDefaults.setExtraLibs(extraLibs);
+      lastLoadedLibsEditor = editor;
+    };
+    editor.onDidFocusEditorText(() => {
+      if (lastLoadedLibsEditor !== editor) {
+        setExtraLibs();
+      }
+    });
+
     /* 
         THIS CLOSES ALL OTHER EDITORS 
         This is/was? needed to prevent this error: Type annotations can only be used in TypeScript files. 
@@ -85,10 +107,7 @@ export const useSetMonacoTsLibraries = (
   }, [editor, monaco, languageObj, onTSLibraryChange, getIsMounted, nodeLibs]);
 };
 
-const setTSoptions = (
-  monaco: MonacoEditorImport,
-  environment: "react" | "node",
-) => {
+const setTSoptions = (monaco: MonacoEditorImport) => {
   monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
 
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
