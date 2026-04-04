@@ -48,6 +48,7 @@ export const AlertProvider = ({ children }: { children: React.ReactNode }) => {
         <Popup
           data-command="Alert"
           clickCatchStyle={{ opacity: 1 }}
+          autoFocusFirst={{ selector: "button" }}
           footerButtons={[
             {
               label: "OK",

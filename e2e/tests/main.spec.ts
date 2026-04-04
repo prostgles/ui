@@ -1209,6 +1209,11 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " mcpplaywright ");
+    await page
+      .getByTestId("ToolUseMessage.toggleGroup")
+      .getByText("2 tool calls")
+      .last()
+      .click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is invalid. Try enabling and reloading the tools`,
     );
@@ -1224,6 +1229,11 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(2e3);
     await sendAskLLMMessage(page, " mcpplaywright ");
+    await page
+      .getByTestId("ToolUseMessage.toggleGroup")
+      .getByText("2 tool calls")
+      .last()
+      .click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is not allowed`,
     );
@@ -1239,6 +1249,11 @@ test.describe("Main test", () => {
     await page.waitForTimeout(200);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(10e3);
+    await page
+      .getByTestId("ToolUseMessage.toggleGroup")
+      .getByText("2 tool calls")
+      .last()
+      .click();
     const lastToolUseBtn = await page
       .getByTestId("Chat.messageList")
       .getByText("browser_snapshot")

@@ -66,6 +66,13 @@ export const startAgenticWorkflowContainer = async (
         ) => Promise<unknown>;
       },
 ) => {
+  const parsedUserInputValue =
+    mode.type === "definitions-only" ?
+      undefined
+    : await getVolumesFromUserInput({
+        userInput: mode.workflow.definition_data.userInput,
+        userInputValues: mode.userInputValue,
+      });
   const workflowRun =
     mode.type === "full" ?
       await dbs.agentic_workflow_runs.insert(
@@ -111,14 +118,6 @@ export const startAgenticWorkflowContainer = async (
         res.status(500).json(error);
       });
   };
-
-  const parsedUserInputValue =
-    mode.type === "definitions-only" ?
-      undefined
-    : await getVolumesFromUserInput({
-        userInput: mode.workflow.definition_data.userInput,
-        userInputValues: mode.userInputValue,
-      });
   const result = await runContainerWithProxyAccess(
     dbs,
     {

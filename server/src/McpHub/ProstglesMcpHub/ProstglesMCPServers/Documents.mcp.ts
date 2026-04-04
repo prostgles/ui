@@ -8,6 +8,7 @@ import type {
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
+import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
 
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["documents"];
 
@@ -24,7 +25,7 @@ const handler = {
 
     return {
       stop: () => {
-        serviceManager.stopService("webSearchSearxng");
+        serviceManager.stopService("documents");
       },
       tools: {
         get_document_text: async ({
@@ -38,10 +39,8 @@ const handler = {
           const blobWithType = new Blob([fileBuffer], { type: contentType });
           const result = await docsService.endpoints["/v1/convert/file"]({
             files: [blobWithType],
-            options: {
-              image_export_mode: "placeholder",
-              ...otherOpts,
-            },
+            ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
+            ...otherOpts,
           });
           return result.document.md_content || "";
         },

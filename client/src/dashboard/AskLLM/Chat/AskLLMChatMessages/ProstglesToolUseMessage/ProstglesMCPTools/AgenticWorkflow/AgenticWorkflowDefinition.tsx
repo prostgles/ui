@@ -1,4 +1,3 @@
-import { type PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getEntries } from "@common/utils";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -11,13 +10,13 @@ import { useMonacoScrollToLastLine } from "@components/MonacoLogs/MonacoLogs";
 import { mdiGraph, mdiLanguageTypescript, mdiText } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
-import type { JSONB } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import {
   type CodeEditorProps,
   type LanguageConfig,
 } from "src/dashboard/CodeEditor/CodeEditor";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
+import type { CreateAgenticWorkflowToolUseArgs } from "./AgenticWorkflow";
 
 export const AgenticWorkflowDefinition = ({
   workflow_function_definition,
@@ -25,12 +24,10 @@ export const AgenticWorkflowDefinition = ({
   chatId,
   workflowId,
   tool_use_id,
-}: {
-  workflow_function_definition: string;
-  workflow_function_definition_summary: string;
+  package_dependencies,
+}: CreateAgenticWorkflowToolUseArgs & {
   chatId: number;
   tool_use_id: string;
-  workflowId: number | undefined;
 }) => {
   const {
     dbsMethods: { getAgenticWorkflowTypes, reRunMCPServerTool },
@@ -74,6 +71,7 @@ export const AgenticWorkflowDefinition = ({
       ...MONACO_READONLY_DEFAULT_OPTIONS,
       lineNumbers: "on",
       lineNumbersMinChars: 4,
+      minimap: { enabled: true },
       readOnly: !reRunMCPServerTool,
     } as const;
     const onSave: CodeEditorProps["onSave"] =
@@ -87,9 +85,8 @@ export const AgenticWorkflowDefinition = ({
               workflow_function_definition_summary,
               workflow_function_definition: newValue,
               workflowId,
-            } satisfies JSONB.GetObjectType<
-              (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_agentic_workflow"]["schema"]["type"]
-            >,
+              package_dependencies,
+            } satisfies CreateAgenticWorkflowToolUseArgs,
             reRunToolUseId: tool_use_id,
           });
         }
@@ -101,6 +98,7 @@ export const AgenticWorkflowDefinition = ({
     tool_use_id,
     workflow_function_definition_summary,
     chatId,
+    package_dependencies,
   ]);
   const [tab, setTab] = useState<"Code" | "ASTSummary" | "AST" | "TextSummary">(
     "Code",

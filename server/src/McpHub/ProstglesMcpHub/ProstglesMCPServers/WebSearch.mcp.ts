@@ -9,6 +9,7 @@ import type {
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
 } from "../ProstglesMCPServerTypes";
+import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
 
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"];
 
@@ -130,7 +131,7 @@ const handler = {
           const result = await docsService.endpoints["/v1/convert/source"]({
             sources: [{ kind: "http", url }],
             options: {
-              image_export_mode: "placeholder",
+              ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
               ...otherOpts,
             },
           });

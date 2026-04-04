@@ -161,6 +161,7 @@ export default defineConfig(
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-floating-promises": "off",
       "@typescript-eslint/no-misused-promises": "off",
+      "no-useless-escape": "off",
       "no-unused-vars": "off",
       "global-require": "error",          // disallow require() except at top-level
       "@typescript-eslint/no-var-requires": "error", // disallow var require()

@@ -15,6 +15,15 @@ import { useUserInput } from "./hooks/useUserInput";
 import Btn from "@components/Btn";
 import { mdiBookmark, mdiBookmarkOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { RequiredKeepUndefined } from "@common/utils";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { JSONB } from "prostgles-types";
+
+export type CreateAgenticWorkflowToolUseArgs = RequiredKeepUndefined<
+  JSONB.GetObjectType<
+    (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_agentic_workflow"]["schema"]["type"]
+  >
+>;
 
 export const AgenticWorkflow = ({
   validatedWorkflowDataIsValid,
@@ -26,12 +35,7 @@ export const AgenticWorkflow = ({
 }: {
   chatId: number | undefined;
   tool_use_id: string | undefined;
-  inputData:
-    | {
-        workflow_function_definition: string;
-        workflow_function_definition_summary: string;
-      }
-    | undefined;
+  inputData: CreateAgenticWorkflowToolUseArgs | undefined;
   workflowValidationError:
     | {
         readonly type: "error";
@@ -73,6 +77,10 @@ export const AgenticWorkflow = ({
   const workflow_function_definition_summary =
     inputData?.workflow_function_definition_summary ??
     workflow?.definition_summary;
+  const package_dependencies =
+    inputData?.package_dependencies ??
+    workflow?.package_dependencies ??
+    undefined;
   const tool_use_id = toolUseIdFromProps ?? workflow?.tool_use_id;
   if (
     !chatId ||
@@ -141,6 +149,7 @@ export const AgenticWorkflow = ({
                 }
                 workflow_function_definition={workflow_function_definition}
                 tool_use_id={tool_use_id}
+                package_dependencies={package_dependencies}
               />
             ),
           },

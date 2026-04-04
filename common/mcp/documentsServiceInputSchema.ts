@@ -117,5 +117,10 @@ export const documentsServiceInputSchema = {
       optional: true,
       description: "Add this placeholder between pages in the markdown output.",
     },
+    images_scale: {
+      type: "number",
+      optional: true,
+      description: "Scale factor for images. Float. Optional, defaults to 2.0.",
+    },
   },
 } as const;

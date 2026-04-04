@@ -188,6 +188,7 @@ const toolResponses: Record<string, ToolUse> = {
       },
     ],
     content: `Here are the available tools and their input schemas.`,
+    result_content: "Fetched tool schemas successfully.",
   },
   dashboards: dashboardToolUse,
   funding: cryptoDashboardToolUse,
@@ -417,7 +418,7 @@ await new Promise(res => setTimeout(res, duration));
 const choicesItem = { 
   type: "text", 
   message: {
-    content,
+    content: !content && !tool_calls?.length?  [{ type: "text", text: " hmmm " }] : content,
     tool_calls 
   }
 };

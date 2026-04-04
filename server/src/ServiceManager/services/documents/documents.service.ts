@@ -1,5 +1,6 @@
 import { documentsServiceInputSchema } from "@common/mcp/documentsServiceInputSchema";
 import type { ProstglesService } from "@src/ServiceManager/ServiceManagerTypes";
+import type { JSONB } from "prostgles-types";
 
 const outputSchema = {
   type: {
@@ -107,7 +108,7 @@ export const documentsService = {
           //   type: "FileLike[]",
           //   mimeTypes: { "application/pdf": 1 },
           // },
-          options: documentsServiceInputSchema,
+          ...documentsServiceInputSchema.type,
         },
       },
       inputType: "FormData",
@@ -140,11 +141,6 @@ export const documentsService = {
                   bucket: "string",
                   key_prefix: "string",
                 },
-                {
-                  kind: { enum: ["file"] },
-                  filename: "string",
-                  base64_string: "string",
-                },
               ],
             },
           },
@@ -168,3 +164,13 @@ export const documentsService = {
     },
   },
 } as const satisfies ProstglesService;
+
+/**
+ * TODO: JSONB schema should allow default values
+ */
+export const CONVERT_DOCUMENT_DEFAULT_OPTIONS = {
+  ocr_engine: "auto",
+  image_export_mode: "placeholder",
+  to_formats: ["md"],
+  // images_scale: 4.17, // last thing to improve OCR accuracy. for ~300 DPI
+} satisfies Partial<JSONB.GetType<typeof documentsServiceInputSchema>>;

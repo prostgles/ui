@@ -11,6 +11,7 @@ import { getRunTypescriptInNodejsFiles } from "@src/McpHub/ProstglesMcpHub/Prost
 import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
+import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
 export const getMcpServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -181,9 +182,6 @@ export const getMcpServerFunctions = (
       },
       run: async ({ files, options }, { servicesManager }) => {
         const docService = servicesManager.getService("documents");
-        // if(user.type === "admin") {
-        //   await servicesManager.enableService("documents");
-        // }
         if (docService?.status !== "running") {
           throw "Document service is not enabled/running";
         }
@@ -192,7 +190,8 @@ export const getMcpServerFunctions = (
           files: files.map(
             ({ data }) => new Blob([data], { type: "application/pdf" }),
           ),
-          options,
+          ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
+          ...options,
         });
         return result;
       },

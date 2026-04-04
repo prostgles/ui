@@ -24,6 +24,7 @@ import React from "react";
 import { bytesToSize } from "src/dashboard/BackupAndRestore/BackupsControls";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { FileBrowserCurrentDirectory } from "./FileBrowserCurrentDirectory";
+import { FileSystemTree } from "./FileSystemTree";
 
 type P = {
   title?: string;
@@ -62,6 +63,15 @@ export const FileBrowser = ({
     });
   }, [pathFiles?.result]);
 
+  if (Math.PI && pathFiles) {
+    return (
+      <FileSystemTree
+        rootPath={pathFiles.path}
+        glob={glob!}
+        onFileSelect={console.warn}
+      />
+    );
+  }
   return (
     <FlexCol className="min-h-0 gap-0 max-h-full" data-command="FileBrowser">
       {title && <Label className="mb-2">{title}</Label>}
