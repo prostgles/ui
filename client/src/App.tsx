@@ -185,6 +185,7 @@ export const App = () => {
       </FlexCol>
     );
   }
+
   const isElectron = !!serverState.isElectron;
   return (
     <AppContextProvider appContextProps={appContextProps}>

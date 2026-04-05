@@ -55,12 +55,13 @@ export const getAdminServerFunctions = (
     }),
     glob: defineAdminFunction({
       input: {
-        path: { type: "string", optional: true },
+        pattern: { type: "string", optional: true },
+        cwd: { type: "string", optional: true },
         timeout: { type: "integer", optional: true },
       },
-      run: async ({ path, timeout = 10_000 }) => {
-        const currentPath = os.homedir();
-        const pattern = join(path || currentPath, "*");
+      run: async ({ cwd, pattern: argsPattern, timeout = 10_000 }) => {
+        const currentPath = cwd || os.homedir();
+        const pattern = argsPattern || "*";
         if (timeout <= 0 || timeout > 120_000) {
           throw "Timeout must be between 1 and 120 seconds";
         }
@@ -68,6 +69,8 @@ export const getAdminServerFunctions = (
         const resultItems = await glob(pattern, {
           signal: AbortSignal.timeout(timeout),
           withFileTypes: true,
+          cwd: currentPath,
+          // posix: true,
         });
         const result = Array.from(resultItems).map((r) => ({
           path: r.fullpath(),

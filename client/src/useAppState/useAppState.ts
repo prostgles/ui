@@ -1,5 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { type DBHandlerClient, useAsyncEffectQueue } from "prostgles-client";
+import { useAsyncEffectQueue } from "prostgles-client";
 import { useMemo, useState } from "react";
 import type { PrglReadyState } from "../App";
 import type { DBS, DBSMethods } from "../dashboard/Dashboard/DBS";

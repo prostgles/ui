@@ -1,31 +1,14 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FC,
-} from "react";
+import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { mdiClose, mdiMagnify } from "@mdi/js";
+import { isDefined } from "prostgles-types";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import { FileBrowserCurrentDirectory } from "./FileBrowserCurrentDirectory";
 import { FileTreeNode } from "./FileTreeNode";
-
-// ─── Types ─────────────────────────────────────────────────────────────────────
-
-type GlobResultItem = {
-  path: string;
-  name: string;
-  type: string;
-  size: number | undefined;
-  lastModified: number | undefined;
-  created: number | undefined;
-};
-
-type GlobFn = (args: {
-  path?: string | undefined;
-  timeout?: number | undefined;
-}) => Promise<{
-  pattern: string;
-  path: string;
-  result: GlobResultItem[];
-}>;
 
 export type FileNode = {
   name: string;
@@ -38,150 +21,84 @@ export type FileNode = {
 };
 
 export type FileSystemTreeProps = {
-  glob: GlobFn | undefined;
   rootPath?: string | undefined;
+  checkBoxes:
+    | undefined
+    | {
+        type: "all" | "directory" | "file";
+        checkedItems: string[] | undefined;
+        onCheckedChange: (paths: string[]) => void;
+      };
+
   onFileSelect?: (node: FileNode) => void;
 };
 
-// ─── File Extension → CSS Colour Variable ─────────────────────────────────────
-
-// ─── Glob → sorted FileNode[] (one level) ─────────────────────────────────────
-
-const parseLevel = (items: GlobResultItem[]): FileNode[] =>
-  [...items]
-    .sort((a, b) => {
-      if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    })
-    .map((item) => ({
-      name: item.name,
-      path: item.path,
-      type: item.type === "directory" ? "directory" : "file",
-      size: item.size,
-      lastModified: item.lastModified,
-      created: item.created,
-      children: item.type === "directory" ? null : [], // null = lazy, [] = leaf
-    }));
-
-// ─── Immutable tree update — sets children on the node matching `targetPath` ──
-
-const setChildren = (
-  nodes: FileNode[],
-  targetPath: string,
-  children: FileNode[],
-): FileNode[] =>
-  nodes.map((node) => {
-    if (node.path === targetPath) return { ...node, children };
-    if (node.children)
-      return {
-        ...node,
-        children: setChildren(node.children, targetPath, children),
-      };
-    return node;
-  });
-
-// ─── Search filter (only searches already-loaded nodes) ───────────────────────
-
-const filterTree = (nodes: FileNode[], query: string): FileNode[] => {
-  if (!query) return nodes;
-  const q = query.toLowerCase();
-  const go = (items: FileNode[]): FileNode[] =>
-    items.reduce<FileNode[]>((acc, node) => {
-      if (node.type === "directory") {
-        const ch = go(node.children ?? []);
-        if (ch.length || node.name.toLowerCase().includes(q))
-          acc.push({ ...node, children: ch });
-      } else if (node.name.toLowerCase().includes(q)) {
-        acc.push(node);
-      }
-      return acc;
-    }, []);
-  return go(nodes);
-};
-
-const countFiles = (nodes: FileNode[]): number => {
-  let n = 0;
-  const go = (items: FileNode[]): void => {
-    items.forEach((node) => {
-      if (node.type === "file") n++;
-      go(node.children ?? []);
-    });
-  };
-  go(nodes);
-  return n;
-};
-
-const SearchIcon: FC = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 14 14"
-    fill="none"
-    className="text-1"
-  >
-    <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-    <path
-      d="M9.5 9.5L12.5 12.5"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
-const XIcon: FC = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 12 12"
-    fill="none"
-    className="text-1"
-  >
-    <path
-      d="M2 2l8 8M10 2l-8 8"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
-export const FileSystemTree: FC<FileSystemTreeProps> = ({
-  glob,
-  rootPath = "",
+export const FileSystemTree = ({
+  rootPath: rootPathFromProps,
   onFileSelect,
-}) => {
+  checkBoxes,
+}: FileSystemTreeProps) => {
+  const {
+    dbsMethods: { glob },
+  } = usePrglCore();
+
   const [tree, setTree] = useState<FileNode[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string>();
   const [searchQuery, setSearchQuery] = useState("");
   const [rootError, setRootError] = useState<string | null>(null);
   const [rootLoading, setRootLoading] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  const [rootPath, setRootPath] = useState(rootPathFromProps);
+
   const fetchLevel = useCallback(
-    (path: string): Promise<FileNode[]> => {
+    (cwd: string, pattern: string): Promise<FileNode[]> => {
       if (!glob) return Promise.reject(new Error("glob not provided"));
-      return glob({ path }).then(({ result }) => parseLevel(result));
+      return glob({ cwd, pattern }).then(({ result, path }) => {
+        if (!rootPath && !path) setRootPath(path);
+        return parseLevel(result);
+      });
     },
-    [glob],
+    [glob, rootPath],
   );
 
-  // Initial root load
+  const fetchRoot = useCallback(
+    (pattern = "") => {
+      setRootLoading(true);
+      setRootError(null);
+      fetchLevel(rootPath ?? "", pattern)
+        .then((nodes) => {
+          setTree(nodes);
+        })
+        .catch((err: unknown) =>
+          setRootError(err instanceof Error ? err.message : "Failed to load"),
+        )
+        .finally(() => setRootLoading(false));
+    },
+    [fetchLevel, rootPath],
+  );
+
+  const [isLocalSearch, setIsLocalSearch] = useState(true);
   useEffect(() => {
-    setRootLoading(true);
-    setRootError(null);
-    fetchLevel(rootPath)
-      .then((nodes) => {
-        setTree(nodes);
-      })
-      .catch((err: unknown) =>
-        setRootError(err instanceof Error ? err.message : "Failed to load"),
-      )
-      .finally(() => setRootLoading(false));
-  }, [fetchLevel, rootPath]);
+    if (isLocalSearch) {
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      fetchRoot(
+        !searchQuery ? "" : (
+          `**/*${searchQuery.trim()}${searchQuery.includes(".") ? "" : "*"}`
+        ),
+      );
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [fetchRoot, isLocalSearch, searchQuery]);
+  useEffect(() => {
+    fetchRoot();
+  }, [fetchRoot]);
 
   const handleToggle = useCallback(
     (node: FileNode) => {
@@ -202,7 +119,7 @@ export const FileSystemTree: FC<FileSystemTreeProps> = ({
 
       setLoading((prev) => new Set(prev).add(path));
 
-      fetchLevel(path)
+      fetchLevel(path, "")
         .then((children) => {
           setTree((prev) => setChildren(prev, path, children));
           setErrors((prev) => {
@@ -259,7 +176,7 @@ export const FileSystemTree: FC<FileSystemTreeProps> = ({
     <>
       <style>{`
         @keyframes fst-spin { to { transform: rotate(360deg); } }
-        .fst-search:focus { border-color: var(--color-border-primary) !important; outline: none; }
+        .fst-search:focus { border-color: var(--active) !important; outline: none; }
         .fst-scroll::-webkit-scrollbar { width: 6px; }
         .fst-scroll::-webkit-scrollbar-thumb { background: var(--color-border-secondary); border-radius: 3px; }
       `}</style>
@@ -295,73 +212,59 @@ export const FileSystemTree: FC<FileSystemTreeProps> = ({
               alignItems: "center",
             }}
           >
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 500,
-                color: "var(--color-text-secondary)",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              Explorer
-            </span>
-            <span
-              style={{
-                fontSize: 11,
-                color: "currentColor",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: 160,
-              }}
-              title={rootPath}
-            >
-              {rootPath}
-            </span>
+            <FileBrowserCurrentDirectory
+              path={rootPath ?? "/"}
+              className="mb-p5"
+              onChange={(newDir) => setRootPath(newDir)}
+              existingFolderNames={tree
+                .map((p) => (p.type === "directory" ? p.name : undefined))
+                .filter(isDefined)}
+            />
           </div>
 
-          <div style={{ position: "relative" }} className="bg-color-1 rounded">
-            <span
+          <FlexRow
+            style={{ position: "relative" }}
+            className="bg-color-1 rounded"
+          >
+            <Btn
+              className="text-1"
+              size="small"
+              iconPath={mdiMagnify}
+              color={isLocalSearch ? undefined : "action"}
+              onClick={() => setIsLocalSearch((prev) => !prev)}
               style={{
                 position: "absolute",
-                left: 8,
+                left: 6,
                 top: "50%",
                 transform: "translateY(-50%)",
                 pointerEvents: "none",
               }}
-            >
-              <SearchIcon />
-            </span>
+            />
             <input
               ref={searchRef}
-              className="fst-search"
+              className="fst-search rounded bg-color-2 b b-color"
               type="text"
               placeholder="Search files… "
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 width: "100%",
-                background: "var(--color-background-secondary)",
-                border: "0.5px solid var(--color-border-tertiary)",
-                borderRadius: "var(--border-radius-md)",
-                padding: "5px 28px",
-                color: "var(--color-text-primary)",
-                fontSize: 12,
-                fontFamily: "var(--font-mono)",
+                padding: "12px 32px",
+                fontSize: 14,
                 boxSizing: "border-box",
                 transition: "border-color 0.15s",
               }}
             />
             {searchQuery && (
-              <button
+              <Btn
                 type="button"
+                iconPath={mdiClose}
+                size="small"
                 aria-label="Clear search"
                 onClick={() => setSearchQuery("")}
                 style={{
                   position: "absolute",
-                  right: 6,
+                  right: 0,
                   top: "50%",
                   transform: "translateY(-50%)",
                   background: "none",
@@ -371,11 +274,9 @@ export const FileSystemTree: FC<FileSystemTreeProps> = ({
                   display: "flex",
                   alignItems: "center",
                 }}
-              >
-                <XIcon />
-              </button>
+              />
             )}
-          </div>
+          </FlexRow>
         </div>
 
         <div
@@ -386,7 +287,6 @@ export const FileSystemTree: FC<FileSystemTreeProps> = ({
             flex: 1,
             overflowY: "auto",
             overflowX: "hidden",
-            padding: "4px 0",
           }}
         >
           {rootLoading && (
@@ -401,19 +301,10 @@ export const FileSystemTree: FC<FileSystemTreeProps> = ({
               Loading…
             </div>
           )}
-          {rootError && (
-            <div
-              style={{
-                padding: 16,
-                color: "var(--color-text-danger)",
-                fontSize: 12,
-              }}
-            >
-              ✗ {rootError}
-            </div>
-          )}
+          <ErrorComponent error={rootError ?? undefined} />
           {!rootLoading && !rootError && displayTree.length === 0 && (
             <div
+              className="text-1"
               style={{
                 padding: "24px 16px",
                 textAlign: "center",
@@ -432,12 +323,14 @@ export const FileSystemTree: FC<FileSystemTreeProps> = ({
             displayTree.map((node) => (
               <FileTreeNode
                 key={node.path}
+                tree={tree}
                 node={node}
                 depth={0}
                 expanded={expanded}
                 loading={loading}
                 errors={errors}
                 selected={selected}
+                checkBoxes={checkBoxes}
                 searchQuery={searchQuery}
                 onToggle={handleToggle}
                 onSelect={handleSelect}
@@ -445,39 +338,94 @@ export const FileSystemTree: FC<FileSystemTreeProps> = ({
             ))}
         </div>
 
-        <div
-          style={{
-            borderTop: "0.5px solid var(--color-border-tertiary)",
-            padding: "4px 12px",
-            fontSize: 11,
-            color: "currentColor",
-            display: "flex",
-            justifyContent: "space-between",
-            flexShrink: 0,
-            gap: 8,
-            fontFamily: "var(--font-sans)",
-          }}
-        >
-          <span>
-            {searchQuery ?
-              `${matchCount} match${matchCount !== 1 ? "es" : ""}`
-            : `${fileCount} file${fileCount !== 1 ? "s" : ""}`}
-          </span>
-          {selected && (
-            <span
-              title={selected}
-              style={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: 220,
-              }}
-            >
-              {selected}
-            </span>
-          )}
-        </div>
+        {checkBoxes && (
+          <FlexCol className="p-p5 ta-start">
+            <div>{checkBoxes.checkedItems?.length} items selected </div>
+            <ScrollFade className="o-auto" style={{ maxHeight: 100 }}>
+              {checkBoxes.checkedItems?.map((path) => {
+                return (
+                  <FlexRow key={path}>
+                    {path}
+                    <Btn
+                      variant="faded"
+                      size="micro"
+                      iconPath={mdiClose}
+                      onClick={() => {
+                        checkBoxes.onCheckedChange(
+                          checkBoxes.checkedItems?.filter((p) => p !== path) ??
+                            [],
+                        );
+                      }}
+                    />
+                  </FlexRow>
+                );
+              })}
+            </ScrollFade>
+          </FlexCol>
+        )}
       </div>
     </>
   );
+};
+
+const parseLevel = (
+  items: Awaited<ReturnType<GeneratedFunctionSchema["glob"]>>["result"],
+): FileNode[] =>
+  [...items]
+    .toSorted((a, b) => {
+      if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    })
+    .map((item) => ({
+      name: item.name,
+      path: item.path,
+      type: item.type === "directory" ? "directory" : "file",
+      size: item.size,
+      lastModified: item.lastModified,
+      created: item.created,
+      children: item.type === "directory" ? null : [], // null = lazy, [] = leaf
+    }));
+
+const setChildren = (
+  nodes: FileNode[],
+  targetPath: string,
+  children: FileNode[],
+): FileNode[] =>
+  nodes.map((node) => {
+    if (node.path === targetPath) return { ...node, children };
+    if (node.children)
+      return {
+        ...node,
+        children: setChildren(node.children, targetPath, children),
+      };
+    return node;
+  });
+
+const filterTree = (nodes: FileNode[], query: string): FileNode[] => {
+  if (!query) return nodes;
+  const q = query.toLowerCase();
+  const go = (items: FileNode[]): FileNode[] =>
+    items.reduce<FileNode[]>((acc, node) => {
+      if (node.type === "directory") {
+        const ch = go(node.children ?? []);
+        if (ch.length || node.name.toLowerCase().includes(q))
+          acc.push({ ...node, children: ch });
+      } else if (node.name.toLowerCase().includes(q)) {
+        acc.push(node);
+      }
+      return acc;
+    }, []);
+  return go(nodes);
+};
+
+const countFiles = (nodes: FileNode[]): number => {
+  let n = 0;
+  const go = (items: FileNode[]): void => {
+    items.forEach((node) => {
+      if (node.type === "file") n++;
+      go(node.children ?? []);
+    });
+  };
+  go(nodes);
+  return n;
 };

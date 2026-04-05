@@ -28,7 +28,7 @@ export const WebAppConfigFooterActions = ({
   const cannotTemplateError = usePromise(async () => {
     if (!web_app_directory) return "No directory set";
     if (web_app_templated) return "Already templated";
-    const existingFiles = await glob?.({ path: web_app_directory });
+    const existingFiles = await glob?.({ cwd: web_app_directory });
     if (!existingFiles) return "Cannot access directory";
     return existingFiles.result.length === 0 ?
         undefined

@@ -21,16 +21,26 @@ import { MCPServers } from "./MCPServers/MCPServers";
 import { SecuritySettings } from "./SecuritySettings";
 import { Services } from "./Services";
 import type { SERVER_SETTINGS_SECTIONS } from "@common/utils";
+import ErrorComponent from "@components/ErrorComponent";
 
 export type ServerSettingsProps = Pick<Prgl, "serverState">;
 export const ServerSettings = ({ serverState }: ServerSettingsProps) => {
   const { dbsMethodSchema, dbs, dbsSql, dbsTables } = usePrglCore();
 
-  const { data: stateConnection } = dbs.connections.useFindOne({
+  const { data: stateConnection, isLoading } = dbs.connections.useFindOne({
     is_state_db: true,
   });
 
-  if (!stateConnection) return <Loading />;
+  if (isLoading) return <Loading />;
+  if (!stateConnection) {
+    return (
+      <ErrorComponent
+        error={
+          "State connection not found. Might not have sufficient permissions"
+        }
+      />
+    );
+  }
 
   return (
     <div className="ServerSettings w-full o-auto">

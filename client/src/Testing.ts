@@ -562,6 +562,9 @@ export const COMMANDS = {
   "FullscreenWrapper.toggleMinimize": "",
   "McpToolAccess.configure": "",
   FileBrowser: "",
+  FileTreeNode: "",
+  "FileTreeNode.header": "",
+  "FileTreeNode.checkbox": "",
 } as const satisfies Record<
   string,
   | string

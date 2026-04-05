@@ -1,28 +1,42 @@
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import Loading from "@components/Loader/Loading";
+import {
+  mdiCheckboxBlankOutline,
+  mdiCheckboxMarked,
+  mdiChevronRight,
+  mdiFileDocument,
+  mdiFolder,
+  mdiFolderOpen,
+} from "@mdi/js";
 import React, {
   useCallback,
-  useState,
   type CSSProperties,
   type KeyboardEvent,
 } from "react";
-import type { FileNode } from "./FileSystemTree";
 import { bytesToSize } from "src/dashboard/BackupAndRestore/BackupsControls";
-import { Checkbox } from "@components/Checkbox";
+import { FILE_EXTENSION_TO_ICON_INFO } from "./FileBrowser";
+import type { FileNode, FileSystemTreeProps } from "./FileSystemTree";
+import { useFileSystemChecked } from "./useFileSystemChecked";
 
 const INDENT_PX = 8;
 
 type TreeNodeProps = {
+  tree: FileNode[];
   node: FileNode;
   depth: number;
   expanded: Set<string>;
   loading: Set<string>;
   errors: Map<string, string>;
-  selected: string | null;
+  selected: string | undefined;
   searchQuery: string;
   onToggle: (node: FileNode) => void;
   onSelect: (node: FileNode) => void;
-};
+} & Pick<FileSystemTreeProps, "checkBoxes">;
 
 export const FileTreeNode = ({
+  tree,
   node,
   depth,
   expanded,
@@ -32,63 +46,78 @@ export const FileTreeNode = ({
   searchQuery,
   onToggle,
   onSelect,
+  checkBoxes,
 }: TreeNodeProps) => {
   const isDir = node.type === "directory";
   const isOpen = expanded.has(node.path);
   const isLoading = loading.has(node.path);
   const isActive = selected === node.path;
   const fetchError = errors.get(node.path);
-  const [hovered, setHovered] = useState(false);
 
-  const click = useCallback(() => {
-    if (isDir) onToggle(node);
-    else onSelect(node);
-  }, [isDir, node, onToggle, onSelect]);
+  const checkState = useFileSystemChecked({ node, tree, checkBoxes });
+
+  const click = useCallback(
+    ({ currentTarget }: { currentTarget: EventTarget & HTMLDivElement }) => {
+      if (!isDir) {
+        onSelect(node);
+        return;
+      }
+
+      onToggle(node);
+      setTimeout(() => {
+        const scrollNode =
+          isOpen ? currentTarget : (
+            (currentTarget.parentElement?.nextSibling as HTMLElement)
+          );
+        scrollNode.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }, 100);
+    },
+    [isDir, onSelect, node, onToggle, isOpen],
+  );
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        click();
+        click(e);
       }
     },
     [click],
   );
 
+  const BASE_STICKY_Z = 1000;
   const rowStyle: CSSProperties = {
     display: "flex",
     alignItems: "center",
-    gap: 4,
+    position: "relative",
+    ...(isDir &&
+      isOpen && {
+        position: "sticky",
+        top: depth * INDENT_PX * 3,
+        zIndex: BASE_STICKY_Z - depth,
+      }),
     padding: `2px 8px 2px ${depth * INDENT_PX + 4}px`,
     cursor: "pointer",
     userSelect: "none",
-    position: "relative",
-    borderRadius: "var(--border-radius-md)",
     margin: "0 4px",
-    background:
-      isActive ? "var(--bg-active)"
-      : hovered ? "var(--bg-color-1)"
-      : "transparent",
-    color: "var(--color-text-primary)",
+    background: isActive ? "var(--bg-active)" : "var(--bg-color-0)",
     fontSize: 16,
-    fontFamily: "var(--font-mono)",
     lineHeight: "22px",
     transition: "background 0.08s",
   };
 
   return (
-    <div className="">
+    <div className="" data-command="FileTreeNode" data-key={node.path}>
       <div
-        className="ta-start"
+        className="ta-start hover-bg "
         role={isDir ? "button" : "option"}
         tabIndex={0}
         aria-expanded={isDir ? isOpen : undefined}
         aria-selected={isActive}
         style={rowStyle}
-        onClick={click}
-        onKeyDown={onKeyDown}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
       >
         {Array.from({ length: depth }, (_, i) => (
           <span
@@ -100,52 +129,75 @@ export const FileTreeNode = ({
               top: 0,
               bottom: 0,
               width: "0.5px",
-              background: "var(--color-border-tertiary)",
               pointerEvents: "none",
             }}
           />
         ))}
-        <Checkbox variant="micro" />
-        <span
-          style={{
-            width: 12,
-            display: "flex",
-            alignItems: "center",
-            flexShrink: 0,
-          }}
+        {node.type === "directory" && (
+          <FileTreeNodeCheckbox
+            checkBoxes={checkBoxes}
+            checkState={checkState}
+            node={node}
+          />
+        )}
+        <FlexRow
+          title={node.path}
+          data-command="FileTreeNode.header"
+          className="gap-p25 f-1"
+          onClick={click}
+          onKeyDown={onKeyDown}
         >
-          {isDir &&
-            (isLoading ? <SpinnerIcon /> : <ChevronIcon isOpen={isOpen} />)}
-        </span>
-
-        <span style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
-          {isDir ?
-            <FolderIcon isOpen={isOpen} />
-          : <FileIcon name={node.name} />}
-        </span>
-
-        <span
-          style={{
-            flex: 1,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <Highlighted text={node.name} query={searchQuery} />
-        </span>
-
-        {!isDir && node.size !== undefined && (
           <span
             style={{
-              fontSize: 11,
-              color: "currentColor",
+              width: checkState && !isDir ? 6 : 12,
+              display: "flex",
+              alignItems: "center",
               flexShrink: 0,
             }}
           >
-            {bytesToSize(node.size)}
+            {isDir &&
+              (isLoading ?
+                <Loading sizePx={14} />
+              : <ChevronIcon isOpen={isOpen} />)}
           </span>
-        )}
+          {node.type === "file" && (
+            <FileTreeNodeCheckbox
+              checkBoxes={checkBoxes}
+              checkState={checkState}
+              node={node}
+            />
+          )}
+          <span
+            style={{ display: "flex", alignItems: "center", flexShrink: 0 }}
+          >
+            {isDir ?
+              <FolderIcon isOpen={isOpen} />
+            : <FileIcon name={node.name} />}
+          </span>
+
+          <span
+            style={{
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <Highlighted text={node.name} query={searchQuery} />
+          </span>
+
+          {!isDir && node.size !== undefined && (
+            <span
+              style={{
+                fontSize: 11,
+                color: "currentColor",
+                flexShrink: 0,
+              }}
+            >
+              {bytesToSize(node.size)}
+            </span>
+          )}
+        </FlexRow>
       </div>
 
       {isDir && isOpen && (
@@ -166,11 +218,10 @@ export const FileTreeNode = ({
             node.children !== null &&
             node.children.length === 0 && (
               <div
-                className="ta-start"
+                className="ta-start text-1"
                 style={{
                   paddingLeft: (depth + 1) * INDENT_PX + 8 + 32,
                   fontSize: 12,
-                  color: "currentColor",
                   fontStyle: "italic",
                   lineHeight: "22px",
                 }}
@@ -183,12 +234,14 @@ export const FileTreeNode = ({
             node.children.map((child) => (
               <FileTreeNode
                 key={child.path}
+                tree={tree}
                 node={child}
                 depth={depth + 1}
                 expanded={expanded}
                 loading={loading}
                 errors={errors}
                 selected={selected}
+                checkBoxes={checkBoxes}
                 searchQuery={searchQuery}
                 onToggle={onToggle}
                 onSelect={onSelect}
@@ -200,19 +253,48 @@ export const FileTreeNode = ({
   );
 };
 
+const FileTreeNodeCheckbox = ({
+  node,
+  checkBoxes,
+  checkState,
+}: Pick<FileSystemTreeProps, "checkBoxes"> & {
+  checkState: ReturnType<typeof useFileSystemChecked>;
+  node: FileNode;
+}) => {
+  return (
+    checkState &&
+    checkBoxes &&
+    (checkBoxes.type === "all" ||
+      checkBoxes.type === node.type ||
+      checkState.isChecked) && (
+      <Btn
+        data-command="FileTreeNode.checkbox"
+        iconPath={
+          checkState.isChecked ? mdiCheckboxMarked : mdiCheckboxBlankOutline
+        }
+        style={{ padding: 0 }}
+        color={checkState.isChecked ? "action" : undefined}
+        size="micro"
+        className={checkState.isChecked ? "" : "show-on-parent-hover"}
+        onClick={checkState.onCheckItem}
+      />
+    )
+  );
+};
+
 const Highlighted = ({ text, query }: { text: string; query: string }) => {
   if (!query) return <span>{text}</span>;
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
   if (idx === -1) return <span>{text}</span>;
   return (
-    <span>
+    <span className="text-1">
       {text.slice(0, idx)}
       <mark
+        className="text-0 bold"
         style={{
-          background: "var(--color-background-info)",
-          color: "var(--color-text-info)",
           borderRadius: 2,
           padding: "0 1px",
+          background: "transparent",
         }}
       >
         {text.slice(idx, idx + query.length)}
@@ -222,123 +304,37 @@ const Highlighted = ({ text, query }: { text: string; query: string }) => {
   );
 };
 
-const formatSize = (bytes: number | undefined): string => {
-  if (bytes === undefined) return "";
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)}KB`;
-  return `${(bytes / 1048576).toFixed(1)}MB`;
-};
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
 const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 12 12"
-    fill="none"
-    className="text-1"
+  <Icon
+    path={mdiChevronRight}
+    className="text-1 mr-p25"
+    sizePx={20}
     style={{
       transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
       transition: "transform 0.15s ease",
       flexShrink: 0,
     }}
-  >
-    <path
-      d="M4.5 3L7.5 6L4.5 9"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const SpinnerIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 12 12"
-    className="text-1"
-    fill="none"
-    style={{ flexShrink: 0, animation: "fst-spin 0.7s linear infinite" }}
-  >
-    <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-    <path
-      d="M6 1.5A4.5 4.5 0 0 1 10.5 6"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-  </svg>
+  />
 );
 
 const FolderIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 16 16"
-    fill="none"
+  <Icon
+    path={isOpen ? mdiFolderOpen : mdiFolder}
+    color="rgb(225 130 20)"
+    sizePx={18}
     className="text-1"
-  >
-    <path
-      d="M1.5 3.5h4l1.5 1.5H14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"
-      fill="currentColor"
-      opacity={isOpen ? 0.85 : 0.55}
-    />
-  </svg>
+  />
 );
 
 const FileIcon = ({ name }: { name: string }) => {
-  const colorVar = fileColorVar(name);
+  const extension = name.toLowerCase().split(".").at(-1) ?? "";
+  const { iconPath, color } = FILE_EXTENSION_TO_ICON_INFO[extension] ?? {};
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
+    <Icon
+      color={color}
+      path={iconPath || mdiFileDocument}
+      sizePx={20}
       className="text-1"
-    >
-      <path
-        d="M4 2h5.5L13 5.5V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"
-        fill={"currentColor"}
-        opacity="0.15"
-      />
-      <path
-        d="M4 2h5.5L13 5.5V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"
-        stroke={"currentColor"}
-        strokeWidth="1"
-      />
-      <path d="M9.5 2v3.5H13" stroke={"currentColor"} strokeWidth="1" />
-    </svg>
+    />
   );
 };
-
-const EXT_VAR: Record<string, string> = {
-  ts: "--color-text-info",
-  tsx: "--color-text-info",
-  js: "--color-text-warning",
-  jsx: "--color-text-warning",
-  json: "--color-text-warning",
-  css: "--color-text-info",
-  scss: "--color-text-info",
-  html: "--color-text-danger",
-  py: "--color-text-success",
-  rb: "--color-text-danger",
-  rs: "--color-text-warning",
-  go: "--color-text-info",
-  yaml: "--color-text-secondary",
-  yml: "--color-text-secondary",
-  md: "--color-text-secondary",
-  mdx: "--color-text-secondary",
-  svg: "--color-text-success",
-  png: "--color-text-secondary",
-  jpg: "--color-text-secondary",
-  jpeg: "--color-text-secondary",
-  gif: "--color-text-secondary",
-  lock: "--color-text-tertiary",
-  gitignore: "--color-text-tertiary",
-};
-
-const fileColorVar = (name: string): string =>
-  EXT_VAR[name.split(".").pop()?.toLowerCase() ?? ""] ?? "--color-text-primary";

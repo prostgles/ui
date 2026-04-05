@@ -47,12 +47,7 @@ export const Icon = React.forwardRef<SVGSVGElement, IconProps>(
     if (sizePx) {
       style.width = `${sizePx}px`;
       style.height = style.width;
-    }
-    if (size) {
-      style.width = `${size * 1.5}rem`;
-      style.height = style.width;
-    }
-    if (sizeName) {
+    } else if (sizeName) {
       const sizePx = {
         large: 24,
         default: 22,
@@ -63,6 +58,9 @@ export const Icon = React.forwardRef<SVGSVGElement, IconProps>(
       style.width = `${sizePx}px`;
       style.height = style.width;
       style.transform = `scale(1.1)`;
+    } else if (size) {
+      style.width = `${size * 1.5}rem`;
+      style.height = style.width;
     }
     if (rotate !== 0) {
       transform.push(`rotate(${rotate}deg)`);

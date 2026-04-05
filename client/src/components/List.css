@@ -32,7 +32,7 @@ ul.no-decor {
 }
 
 .hover-bg:hover {
-  background-color: var(--li-hover-bg);
+  background-color: var(--li-hover-bg) !important;
 }
 
 .list-comp li:not(.no-hover, :active, :focus):hover,
