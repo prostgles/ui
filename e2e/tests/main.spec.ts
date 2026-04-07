@@ -797,7 +797,7 @@ test.describe("Main test", () => {
     /** Enable Web app */
     await page.getByTestId("config.webApp").click();
     await page.getByTestId("WebApp.directory").click();
-    await fileBrowserGoToPath(page.getByTestId("FileBrowser"), [
+    await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
       "e2e",
       "demo",
@@ -997,11 +997,6 @@ test.describe("Main test", () => {
 
     await setModelByText(page, "son");
 
-    /** Refresh tools */
-    await enableMCPServers(page, ["fetch"]);
-    await enableMCPServers(page, ["fetch"], false, false);
-    await page.getByTestId("Popup.close").last().click();
-
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
       "7",
     );
@@ -1200,11 +1195,11 @@ test.describe("Main test", () => {
     await page
       .getByTestId("ToolUseMessage.toggle")
       .getByText(
-        'prostgles-ui--get_tool_schemas\nmcpServerTools: {"fetch":{"fetch":1}}',
+        'prostgles-ui--get_tool_schemas\nmcpServerTools: {"web":{"fetch":1}}',
       )
       .click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Fetches a URL from the internet`,
+      `Fetches content from a URL`,
     );
 
     await page.waitForTimeout(1e3);
@@ -1276,7 +1271,7 @@ test.describe("Main test", () => {
     await expect(
       page
         .getByTestId("Chat.messageList")
-        .getByText(`Tool name "fetch--invalidfetch" is invalid`),
+        .getByText(`Tool name "web--invalidfetch" is invalid`),
     ).toHaveCount(5, { timeout: 30e3 });
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `failed consecutive tool requests reached`,
@@ -1316,7 +1311,7 @@ test.describe("Main test", () => {
     /** Test max speculative chat cost */
     await newChat(page);
     await enableMCPServers(page, ["filesystem"], true);
-    await fileBrowserGoToPath(page.getByTestId("FileBrowser"), [
+    await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
       "client",
       "node_modules",
@@ -1517,7 +1512,7 @@ test.describe("Main test", () => {
       page
         .getByTestId("Chat.messageList")
         .getByText(
-          'Tool name "fetch--fetch" is not allowed. Must enable it for this chat',
+          'Tool name "web--fetch" is not allowed. Must enable it for this chat',
         ),
     ).toHaveCount(3, { timeout: 30e3 });
 
@@ -1694,12 +1689,11 @@ test.describe("Main test", () => {
       `Missing required user input: "File path"`,
     );
     await page.locator(getDataKey("file-path")).click();
-    await fileBrowserGoToPath(page.getByTestId("FileBrowser").first(), [
+    await fileBrowserGoToPath(page.getByTestId("FileTree").first(), [
       "ui",
       "client",
       "package.json",
     ]);
-    await page.getByTestId("Popup.close").last().click();
 
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table name"`,
@@ -1711,12 +1705,11 @@ test.describe("Main test", () => {
       `Missing required user input: "Folder path"`,
     );
     await page.locator(getDataKey("folder-path")).click();
-    await fileBrowserGoToPath(page.getByTestId("FileBrowser").last(), [
+    await fileBrowserGoToPath(page.getByTestId("FileTree").last(), [
       "ui",
       "client",
       "src",
     ]);
-    await page.getByTestId("Popup.close").last().click();
 
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table column"`,
@@ -1778,7 +1771,7 @@ test.describe("Main test", () => {
       .click();
 
     const runWorkflowAndExpectSuccess = async (
-      shownText: string | string[] = ["Contents of https://www.prostgles.com/"],
+      shownText: string | string[] = ["ai_assistant_dashboards"],
     ) => {
       await page.getByTestId("AgenticWorkflow.start").click({
         timeout: 30e3,
@@ -1829,12 +1822,13 @@ test.describe("Main test", () => {
     await newChat(page);
     await sendAskLLMMessage(page, " agentic_workflow_filesystem ");
     await page.getByTestId("McpToolAccess.configure").click({ timeout: 60e3 });
-    await fileBrowserGoToPath(page.getByTestId("FileBrowser"), [
+    await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
       "e2e",
       "demo",
     ]);
     await page.getByText("Enable", { exact: true }).click();
+    await page.waitForTimeout(1e3);
 
     await runWorkflowAndExpectSuccess([
       "forceConsistentCasingInFileNames",
@@ -3344,16 +3338,20 @@ test.describe("Main test", () => {
     await expect(createFromTemplateBtn).toBeEnabled({ timeout: 5e3 });
     // Page will reload
     await page.waitForTimeout(500);
-    // await page.waitForEvent("load", { timeout: 15e3 });
     await clickAndWait(page.getByTestId("WebAppConfig.build"));
     await clickAndWait(page.getByTestId("WebAppConfig.test"));
+    await page.getByTestId("FullscreenWrapper.toggleFullscreen").click();
     await page.locator(getDataKey("Components")).click();
     await page.locator(getDataKey("SampleComponent")).click();
     await page.locator(getDataKey("Files")).click();
     await page.locator(getDataLabel("client")).click();
+    await page
+      .locator(getDataLabel("client") + " " + getDataLabel("package.json"))
+      .getByTestId("FileTreeNode.header")
+      .click();
     await page.waitForTimeout(1e3);
-    await page.keyboard.type("pack");
-    await page.keyboard.press("Enter");
+    // await page.getByTestId("FileTree").locator("input").fill("pack");
+    // await page.keyboard.press("Enter");
     await expect(page.getByTestId("MonacoEditor")).toContainText(
       "vite-project",
     );

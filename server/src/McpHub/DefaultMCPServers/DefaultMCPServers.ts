@@ -18,17 +18,12 @@ export const getDefaultMCPServers = (): Record<
     ],
     config_schema: {
       allowedDir: {
-        title: "Allowed Directory",
-        description: "Directory path to allow access to",
-        type: "arg",
-        renderWithComponent: "FileBrowser",
+        title: "Allowed Files/Directories",
+        description: "File/Directory paths to allow access to",
+        type: "...args",
+        renderWithComponent: "FileTree",
       },
     },
-  },
-  fetch: {
-    icon_path: "Web",
-    command: "uvx",
-    args: ["mcp-server-fetch"],
   },
   git: {
     icon_path: "Git",

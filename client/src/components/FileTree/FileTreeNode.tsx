@@ -1,14 +1,11 @@
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
 import Loading from "@components/Loader/Loading";
 import {
   mdiCheckboxBlankOutline,
   mdiCheckboxMarked,
-  mdiChevronRight,
-  mdiFileDocument,
-  mdiFolder,
-  mdiFolderOpen,
+  mdiRadioboxBlank,
+  mdiRadioboxMarked,
 } from "@mdi/js";
 import React, {
   useCallback,
@@ -16,9 +13,12 @@ import React, {
   type KeyboardEvent,
 } from "react";
 import { bytesToSize } from "src/dashboard/BackupAndRestore/BackupsControls";
-import { FILE_EXTENSION_TO_ICON_INFO } from "./FileBrowser";
-import type { FileNode, FileSystemTreeProps } from "./FileSystemTree";
+import { FileIcon } from "./FileIcon";
+import type { FileSystemTreeProps } from "./FileTree";
+import { FolderIcon } from "./FolderIcon";
 import { useFileSystemChecked } from "./useFileSystemChecked";
+import type { FileNode } from "./useFileSystemTree";
+import "./FileTreeNode.css";
 
 const INDENT_PX = 8;
 
@@ -29,11 +29,12 @@ type TreeNodeProps = {
   expanded: Set<string>;
   loading: Set<string>;
   errors: Map<string, string>;
-  selected: string | undefined;
   searchQuery: string;
   onToggle: (node: FileNode) => void;
-  onSelect: (node: FileNode) => void;
-} & Pick<FileSystemTreeProps, "checkBoxes">;
+} & Pick<
+  FileSystemTreeProps,
+  "checkBoxes" | "onFileSelect" | "selectedFilePath"
+>;
 
 export const FileTreeNode = ({
   tree,
@@ -42,24 +43,23 @@ export const FileTreeNode = ({
   expanded,
   loading,
   errors,
-  selected,
   searchQuery,
   onToggle,
-  onSelect,
+  onFileSelect,
   checkBoxes,
+  selectedFilePath,
 }: TreeNodeProps) => {
   const isDir = node.type === "directory";
   const isOpen = expanded.has(node.path);
   const isLoading = loading.has(node.path);
-  const isActive = selected === node.path;
+  const isActive = selectedFilePath === node.path;
   const fetchError = errors.get(node.path);
-
   const checkState = useFileSystemChecked({ node, tree, checkBoxes });
 
   const click = useCallback(
     ({ currentTarget }: { currentTarget: EventTarget & HTMLDivElement }) => {
       if (!isDir) {
-        onSelect(node);
+        onFileSelect?.(node);
         return;
       }
 
@@ -75,7 +75,7 @@ export const FileTreeNode = ({
         });
       }, 100);
     },
-    [isDir, onSelect, node, onToggle, isOpen],
+    [isDir, onFileSelect, node, onToggle, isOpen],
   );
 
   const onKeyDown = useCallback(
@@ -103,16 +103,20 @@ export const FileTreeNode = ({
     cursor: "pointer",
     userSelect: "none",
     margin: "0 4px",
-    background: isActive ? "var(--bg-active)" : "var(--bg-color-0)",
     fontSize: 16,
     lineHeight: "22px",
     transition: "background 0.08s",
   };
 
   return (
-    <div className="" data-command="FileTreeNode" data-key={node.path}>
+    <div
+      className=""
+      data-command="FileTreeNode"
+      data-label={node.name}
+      data-key={node.path}
+    >
       <div
-        className="ta-start hover-bg "
+        className={`fst-tree-row ta-start hover-bg`}
         role={isDir ? "button" : "option"}
         tabIndex={0}
         aria-expanded={isDir ? isOpen : undefined}
@@ -133,13 +137,11 @@ export const FileTreeNode = ({
             }}
           />
         ))}
-        {node.type === "directory" && (
-          <FileTreeNodeCheckbox
-            checkBoxes={checkBoxes}
-            checkState={checkState}
-            node={node}
-          />
-        )}
+        <FileTreeNodeCheckbox
+          checkBoxes={checkBoxes}
+          checkState={checkState}
+          node={node}
+        />
         <FlexRow
           title={node.path}
           data-command="FileTreeNode.header"
@@ -147,55 +149,25 @@ export const FileTreeNode = ({
           onClick={click}
           onKeyDown={onKeyDown}
         >
-          <span
-            style={{
-              width: checkState && !isDir ? 6 : 12,
-              display: "flex",
-              alignItems: "center",
-              flexShrink: 0,
-            }}
-          >
-            {isDir &&
-              (isLoading ?
-                <Loading sizePx={14} />
-              : <ChevronIcon isOpen={isOpen} />)}
-          </span>
-          {node.type === "file" && (
-            <FileTreeNodeCheckbox
-              checkBoxes={checkBoxes}
-              checkState={checkState}
-              node={node}
-            />
-          )}
-          <span
-            style={{ display: "flex", alignItems: "center", flexShrink: 0 }}
-          >
-            {isDir ?
-              <FolderIcon isOpen={isOpen} />
-            : <FileIcon name={node.name} />}
-          </span>
+          {isDir ?
+            isLoading ?
+              <Loading className="f-0" sizePx={14} />
+            : <FolderIcon className="f-0" isOpen={isOpen} />
+          : <FileIcon className="f-0" name={node.name} />}
 
           <span
-            style={{
-              flex: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
+            className={
+              "f-1 ws-nowrap text-ellipsis " +
+              (checkBoxes?.type === "directory" && node.type === "file" ?
+                "disabled"
+              : "")
+            }
           >
             <Highlighted text={node.name} query={searchQuery} />
           </span>
 
           {!isDir && node.size !== undefined && (
-            <span
-              style={{
-                fontSize: 11,
-                color: "currentColor",
-                flexShrink: 0,
-              }}
-            >
-              {bytesToSize(node.size)}
-            </span>
+            <span className="f-0 font-12">{bytesToSize(node.size)}</span>
           )}
         </FlexRow>
       </div>
@@ -240,11 +212,11 @@ export const FileTreeNode = ({
                 expanded={expanded}
                 loading={loading}
                 errors={errors}
-                selected={selected}
+                selectedFilePath={selectedFilePath}
                 checkBoxes={checkBoxes}
                 searchQuery={searchQuery}
                 onToggle={onToggle}
-                onSelect={onSelect}
+                onFileSelect={onFileSelect}
               />
             ))}
         </div>
@@ -270,9 +242,18 @@ const FileTreeNodeCheckbox = ({
       <Btn
         data-command="FileTreeNode.checkbox"
         iconPath={
-          checkState.isChecked ? mdiCheckboxMarked : mdiCheckboxBlankOutline
+          checkState.radioMode ?
+            checkState.isChecked ?
+              mdiRadioboxMarked
+            : mdiRadioboxBlank
+          : checkState.isChecked ?
+            mdiCheckboxMarked
+          : mdiCheckboxBlankOutline
         }
-        style={{ padding: 0 }}
+        style={{
+          padding: 0,
+          opacity: checkState.isChecked?.type === "inherited" ? 0.7 : 1,
+        }}
         color={checkState.isChecked ? "action" : undefined}
         size="micro"
         className={checkState.isChecked ? "" : "show-on-parent-hover"}
@@ -301,40 +282,5 @@ const Highlighted = ({ text, query }: { text: string; query: string }) => {
       </mark>
       {text.slice(idx + query.length)}
     </span>
-  );
-};
-
-const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <Icon
-    path={mdiChevronRight}
-    className="text-1 mr-p25"
-    sizePx={20}
-    style={{
-      transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
-      transition: "transform 0.15s ease",
-      flexShrink: 0,
-    }}
-  />
-);
-
-const FolderIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <Icon
-    path={isOpen ? mdiFolderOpen : mdiFolder}
-    color="rgb(225 130 20)"
-    sizePx={18}
-    className="text-1"
-  />
-);
-
-const FileIcon = ({ name }: { name: string }) => {
-  const extension = name.toLowerCase().split(".").at(-1) ?? "";
-  const { iconPath, color } = FILE_EXTENSION_TO_ICON_INFO[extension] ?? {};
-  return (
-    <Icon
-      color={color}
-      path={iconPath || mdiFileDocument}
-      sizePx={20}
-      className="text-1"
-    />
   );
 };

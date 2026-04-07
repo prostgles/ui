@@ -74,7 +74,7 @@ export default defineAgenticWorkflow(
         `,
       },
       orchestrationTools: {
-        fetch: {
+        web: {
           fetch: 1,
         },
         ...(mode === "filesystem" && {
@@ -89,7 +89,7 @@ export default defineAgenticWorkflow(
           prompt: "You are a research assistant. ",
           modelName: "anthropic/claude-sonnet-4",
           tools: {
-            fetch: { fetch: 1 },
+            web: { fetch: 1 },
           },
           outputSchema: {
             summary: { type: "string" },
@@ -175,7 +175,7 @@ export default defineAgenticWorkflow(
       runSQL("SELECT * FROM new_users").then((res) => console.log("Users:", res));
     */
     const start = Date.now();
-    orchestratorToolHandlers.fetch.fetch({ url: "https://www.prostgles.com" }).then(console.log).catch(console.log);
+    orchestratorToolHandlers.web.fetch({ url: "https://www.prostgles.com", max_length: 600 }).then(console.log).catch(console.log);
     const filterCount = ${mode !== "input" ? "undefined;//" : ""} await tableHandlers.users.count(userInputValues["table-filter"]);
     console.log("Filter count:", filterCount);
     setProgress(1, "Finished database operation, starting research");

@@ -1,5 +1,7 @@
 import { useCallback, useMemo } from "react";
-import type { FileNode, FileSystemTreeProps } from "./FileSystemTree";
+import type { FileSystemTreeProps } from "./FileTree";
+import { findNode } from "./fileSystemTreeUtils";
+import type { FileNode } from "./useFileSystemTree";
 
 type CheckBoxes = FileSystemTreeProps["checkBoxes"];
 type CheckBoxMode = NonNullable<CheckBoxes>["type"];
@@ -35,6 +37,12 @@ export const useFileSystemChecked = ({
     if (!checkBoxes) return;
 
     let nextChecked: string[];
+
+    if (checkBoxes.radioMode) {
+      nextChecked = isChecked ? [] : [path];
+      checkBoxes.onCheckedChange(nextChecked);
+      return;
+    }
 
     if (!isChecked) {
       nextChecked = compactSelections([...checkedItems, path]);
@@ -88,20 +96,6 @@ const compactSelections = (paths: string[]) =>
           .slice(0, index)
           .some((keptPath) => isSameOrDescendant(candidatePath, keptPath)),
     );
-
-const findNode = (
-  nodes: FileNode[],
-  targetPath: string,
-): FileNode | undefined => {
-  for (const node of nodes) {
-    if (node.path === targetPath) return node;
-    if (node.children) {
-      const found = findNode(node.children, targetPath);
-      if (found) return found;
-    }
-  }
-  return undefined;
-};
 
 const collectSelectionWithoutSubtree = (
   node: FileNode,

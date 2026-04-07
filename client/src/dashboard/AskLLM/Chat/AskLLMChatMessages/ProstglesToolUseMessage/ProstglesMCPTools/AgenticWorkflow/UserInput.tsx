@@ -1,8 +1,11 @@
 import { getTableFilterFromDetailedGroupFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
+import { FileTree } from "@components/FileTree/FileTree";
 import { FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapper";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import { Select, type FullOption } from "@components/Select/Select";
 import { mdiChevronDown, mdiChevronUp, mdiFolderOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -11,9 +14,6 @@ import React, { useState } from "react";
 import { RenderFilter } from "src/dashboard/RenderFilter";
 import type { useUserInput } from "./hooks/useUserInput";
 import { UserInputColumnValues } from "./UserInputColumnValues";
-import { FileBrowser } from "@components/FileBrowser/FileBrowser";
-import PopupMenu from "@components/PopupMenu";
-import { InfoRow } from "@components/InfoRow";
 
 export const UserInput = ({
   setUserInputValue,
@@ -99,6 +99,7 @@ export const UserInput = ({
                     }
                     positioning="center"
                     clickCatchStyle={{ opacity: 1 }}
+                    onClickClose={false}
                     button={
                       <Btn
                         variant="faded"
@@ -129,18 +130,30 @@ export const UserInput = ({
                           (isFolder ? "Select folder..." : "Select file...")}
                       </Btn>
                     }
-                  >
-                    <FileBrowser
-                      path={currentValue}
-                      onChange={(newDir) => {
-                        setUserInputValue((prev) => ({
-                          ...prev,
-                          [inputKey]: newDir,
-                        }));
-                      }}
-                      mode={isFolder ? "directory" : "file"}
-                    />
-                  </PopupMenu>
+                    render={(pClose) => (
+                      <FileTree
+                        rootPath={
+                          typeof currentValue === "string" ?
+                            currentValue.split("/").slice(0, -1).join("/")
+                          : undefined
+                        }
+                        checkBoxes={{
+                          type: isFolder ? "directory" : "file",
+                          radioMode: true,
+                          checkedItems:
+                            currentValue ? [currentValue] : undefined,
+                          onCheckedChange: (paths) => {
+                            const newPath = paths[0];
+                            setUserInputValue((prev) => ({
+                              ...prev,
+                              [inputKey]: newPath,
+                            }));
+                            pClose();
+                          },
+                        }}
+                      />
+                    )}
+                  />
                 );
               }
               if (inputItem.type === "custom") {

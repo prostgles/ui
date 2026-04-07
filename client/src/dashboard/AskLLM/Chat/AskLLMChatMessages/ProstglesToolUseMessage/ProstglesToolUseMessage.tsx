@@ -64,15 +64,15 @@ export const ProstglesMCPToolsWithUI = {
     component: ExecuteSQL,
     displayMode: "inline",
   },
-  [getProstglesMCPFullToolName("websearch", "websearch") as string]: {
+  [getProstglesMCPFullToolName("web", "websearch") as string]: {
     component: WebSearch,
     displayMode: "inline",
   },
-  [getProstglesMCPFullToolName("websearch", "get_snapshot") as string]: {
+  [getProstglesMCPFullToolName("web", "get_snapshot") as string]: {
     component: WebSnapshot,
     displayMode: "inline",
   },
-  [getProstglesMCPFullToolName("websearch", "get_document_text") as string]: {
+  [getProstglesMCPFullToolName("web", "get_document_text") as string]: {
     component: WebSnapshot,
     displayMode: "inline",
   },

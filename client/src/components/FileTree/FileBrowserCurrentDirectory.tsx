@@ -48,7 +48,7 @@ export const FileBrowserCurrentDirectory = ({
               className="underline-on-hover"
               style={{
                 paddingRight: 0,
-                fontSize: "18px",
+                fontSize: "14px",
                 minWidth: 0,
                 userSelect: "auto",
                 whiteSpace: "nowrap",

@@ -115,6 +115,7 @@ export async function pgRestore(
     );
 
     let chunkSum = 0;
+    const totalBytes = +(bkp.sizeInBytes ?? bkp.dbSizeInBytes);
     const throttledUpdate = throttle(async () => {
       if (!(await this.dbs.backups.findOne({ id: bkpId }))) {
         if (!is_state_db) {
@@ -123,23 +124,24 @@ export async function pgRestore(
           console.warn(`Backup with id ${bkpId} not found`);
         }
       } else {
-        const finished = chunkSum >= +(bkp.sizeInBytes ?? bkp.dbSizeInBytes);
+        const finished = chunkSum >= totalBytes;
+        const nowISO = new Date().toISOString();
         void this.dbs.backups.update(
           { id: bkpId },
           {
             restore_status:
               finished ?
                 {
-                  ok: `${new Date()}`,
+                  ok: nowISO,
                 }
               : {
                   loading: {
                     loaded: chunkSum,
-                    total: +(bkp.sizeInBytes ?? bkp.dbSizeInBytes),
+                    total: totalBytes,
                   },
                 },
             ...(finished && !(bkp.status as any)?.ok ?
-              { status: { ok: `${new Date()}` } }
+              { status: { ok: nowISO } }
             : {}),
           },
         );
@@ -167,9 +169,10 @@ export async function pgRestore(
     bkpStream.on("data", (chunk) => {
       chunkSum += chunk.length;
       if (is_state_db) {
-        if (typeof chunk === "string" || Buffer.byteLength(chunk) < 1e6) {
-          console.log(chunk.toString());
-        }
+        console.log(
+          "Restoring state db: ",
+          (totalBytes / chunkSum).toFixed(2) + "%",
+        );
       }
       throttledUpdate();
     });

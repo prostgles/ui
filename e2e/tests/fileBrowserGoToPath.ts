@@ -1,3 +1,4 @@
+import { getCommandElemSelector, getDataLabel } from "Testing";
 import type { LocatorWIds } from "utils/utils";
 
 export const fileBrowserGoToPath = async (
@@ -15,8 +16,18 @@ export const fileBrowserGoToPath = async (
     ...(process.env.CI === "true" ? githubWorkerPath : []),
     ...targetPath,
   ] as const;
-  for (const segment of path) {
-    await locator.locator(`[data-label=${JSON.stringify(segment)}]`).click();
+  const currentPath: string[] = [];
+  for (const [index, segment] of path.entries()) {
+    const segmentSelector = `${getCommandElemSelector("FileTreeNode")}${getDataLabel(segment)}`;
+    currentPath.push(segmentSelector);
+    const rowLocator = locator.locator(currentPath.join(" "));
+    const isLastSegment = index === path.length - 1;
+    if (isLastSegment) {
+      await rowLocator.getByTestId("FileTreeNode.checkbox").click();
+    } else {
+      await rowLocator.scrollIntoViewIfNeeded();
+      await rowLocator.click();
+    }
     await locator.page().waitForTimeout(1e3);
   }
 };

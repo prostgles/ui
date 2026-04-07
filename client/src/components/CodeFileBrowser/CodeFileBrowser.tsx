@@ -1,13 +1,9 @@
-import { FILE_EXTENSION_TO_ICON_INFO } from "@components/FileBrowser/FileBrowser";
+import { FILE_EXTENSION_TO_ICON_INFO } from "@components/FileTree/FileIcon";
 import { FlexRow } from "@components/Flex";
 import { MenuList } from "@components/MenuList";
-import {
-  MONACO_READONLY_DEFAULT_OPTIONS,
-  MonacoEditor,
-} from "@components/MonacoEditor/MonacoEditor";
+import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
 import { mdiText } from "@mdi/js";
 import React, { useState } from "react";
-import { CodeEditor } from "src/dashboard/CodeEditor/CodeEditor";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 
 export const CodeFileBrowser = ({

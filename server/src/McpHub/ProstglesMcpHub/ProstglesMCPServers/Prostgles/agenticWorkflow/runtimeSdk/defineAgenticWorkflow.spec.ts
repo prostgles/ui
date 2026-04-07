@@ -28,7 +28,7 @@ void describe("defineAgenticWorkflow", async () => {
             },
           },
           orchestrationTools: {
-            websearch: {
+            web: {
               search: 1,
               get_snapshot: 1,
             },
@@ -58,8 +58,8 @@ void describe("defineAgenticWorkflow", async () => {
           const result = await researcher("Prostgles");
           result.summary satisfies string;
 
-          void orchestratorToolHandlers.websearch.search({ q: "Prostgles" });
-          void orchestratorToolHandlers.websearch.get_snapshot({
+          void orchestratorToolHandlers.web.search({ q: "Prostgles" });
+          void orchestratorToolHandlers.web.get_snapshot({
             url: "https://www.example.com",
           });
 

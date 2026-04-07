@@ -12,12 +12,49 @@ const { SaveMdiIcons } = require("../setup-icons");
 const PRODUCTION = process.env.NODE_ENV === "production";
 
 const getLoader = () => {
+  const babelOptions = {
+    babelrc: false,
+    configFile: false,
+    presets: [
+      [
+        "@babel/env",
+        {
+          targets: {
+            esmodules: true,
+          },
+          modules: false,
+          bugfixes: true,
+        },
+      ],
+      "@babel/preset-react",
+      "@babel/preset-typescript",
+      ...(PRODUCTION ?
+        [
+          [
+            "minify",
+            {
+              builtIns: false,
+              evaluate: false,
+              mangle: false,
+            },
+          ],
+        ]
+      : []),
+    ],
+    plugins: ["dynamic-import-node"],
+  };
+
   const babel = {
     test: PRODUCTION ? /\.jsx?$/ : [/\.jsx?$/, /\.tsx?$/],
-    use: "babel-loader",
+    use: {
+      loader: "babel-loader",
+      options: babelOptions,
+    },
     exclude: /node_modules/,
   };
+
   if (!PRODUCTION) return [babel];
+
   return [
     babel,
     {
@@ -72,7 +109,7 @@ const debouncedProgressHandler = (percentage, message, ...args) => {
 module.exports = {
   target: ["web", "es2020"],
   resolve: {
-    extensions: [".js", ".jsx", ".ts", ".tsx"],
+    extensions: [".ts", ".tsx", ".js", ".jsx"],
     plugins: [
       new TsconfigPathsPlugin({
         /* options: see below */

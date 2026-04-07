@@ -52,7 +52,7 @@ export const useAddMCPServer = (showAddServer: boolean) => {
               description: schema.description,
               index: schema.index,
             } satisfies {
-              type: "arg";
+              type: "arg" | "...args";
               title?: string;
               optional?: boolean;
               description?: string;

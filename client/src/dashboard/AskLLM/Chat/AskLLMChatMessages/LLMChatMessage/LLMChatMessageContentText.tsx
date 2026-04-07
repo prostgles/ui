@@ -1,6 +1,6 @@
 import Btn from "@components/Btn";
 import { Marked } from "@components/Chat/Marked";
-import Expander from "@components/Expander";
+import { Expander } from "@components/Expander";
 import { mdiBrain } from "@mdi/js";
 import type { SQLHandler } from "prostgles-client";
 import React from "react";

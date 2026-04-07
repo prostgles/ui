@@ -561,7 +561,7 @@ export const COMMANDS = {
   ElectronSearchBar: "",
   "FullscreenWrapper.toggleMinimize": "",
   "McpToolAccess.configure": "",
-  FileBrowser: "",
+  FileTree: "",
   FileTreeNode: "",
   "FileTreeNode.header": "",
   "FileTreeNode.checkbox": "",

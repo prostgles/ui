@@ -4,7 +4,10 @@ import React, { useMemo } from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { useJSONBParsedData } from "../common/useJSONBParsedData";
 import { useTypedToolUseResultDataV2 } from "../common/useTypedToolUseResultData";
-import { AgenticWorkflow } from "./AgenticWorkflow";
+import {
+  AgenticWorkflow,
+  type CreateAgenticWorkflowToolUseArgs,
+} from "./AgenticWorkflow";
 import { fixIndent } from "@common/utils";
 
 export const AgenticWorkflowMessage = ({
@@ -87,7 +90,7 @@ export const AgenticWorkflowMessage = ({
   return (
     <AgenticWorkflow
       chatId={chatId}
-      inputData={inputValidation.data}
+      inputData={inputValidation.data as CreateAgenticWorkflowToolUseArgs}
       workflow_id={workflow_id}
       tool_use_id={message.id}
       validatedWorkflowDataIsValid={workflowValidation?.data?.isValid}

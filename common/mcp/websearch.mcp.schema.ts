@@ -1,6 +1,44 @@
 import { documentsServiceInputSchema } from "./documentsServiceInputSchema";
-
-export const websearchMcpSchema = {
+export const webMcpSchema = {
+  fetch: {
+    description:
+      "Fetches content from a URL, with optional conversion for documents",
+    schema: {
+      type: {
+        url: {
+          type: "string",
+          description: "URL of the content to fetch",
+        },
+        mode: {
+          enum: ["raw", "convert"],
+          optional: true,
+          description:
+            "Defaults to raw. raw = fetch raw content without conversion. convert = attempt document conversion if the URL points to a document. Supported formats include txt, pdf, docx, pptx, jpg, png, and more.",
+        },
+        headers: {
+          optional: true,
+          record: {
+            values: "string",
+          },
+        },
+        start_index: {
+          type: "integer",
+          optional: true,
+          description:
+            "Starting index for slicing the fetched content. Defaults to 0.",
+        },
+        max_length: {
+          type: "integer",
+          optional: true,
+          description:
+            "Maximum length of the returned content slice. Defaults to returning the full content.",
+        },
+      },
+    },
+    outputSchema: {
+      type: "string",
+    },
+  },
   websearch: {
     description: "Perform a web search and return results",
     schema: {

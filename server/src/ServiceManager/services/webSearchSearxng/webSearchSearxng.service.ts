@@ -4,7 +4,7 @@ import type { ProstglesService } from "../../ServiceManagerTypes";
 
 const inputSchema = {
   type: {
-    ...PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]["websearch"]["schema"].type,
+    ...PROSTGLES_MCP_SERVERS_AND_TOOLS["web"]["websearch"]["schema"].type,
     format: { enum: ["json"] },
   },
 } as const satisfies JSONB.FieldType;
@@ -24,7 +24,7 @@ export const webSearchSearxngService = {
       outputSchema: {
         type: {
           results: {
-            ...PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]["websearch"][
+            ...PROSTGLES_MCP_SERVERS_AND_TOOLS["web"]["websearch"][
               "outputSchema"
             ],
           },

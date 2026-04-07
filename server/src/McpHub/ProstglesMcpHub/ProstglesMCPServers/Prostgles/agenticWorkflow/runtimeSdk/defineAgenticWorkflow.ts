@@ -27,10 +27,10 @@ type McpServerToolDefinitions = Record<
   Record<string, (toolArguments?: unknown) => Promise<unknown>>
 >;
 // type McpServerToolDefinitions = {
-//   fetch: {
+//   web: {
 //     fetch_webpage: (args: { url: string }) => Promise<{ content: string }>;
 //   };
-//   websearch: {
+//   web: {
 //     search: (args: { q: string }) => Promise<{ results: string[] }>;
 //     get_snapshot: (args: { url: string }) => Promise<{ snapshot: string }>;
 //   };
@@ -476,12 +476,12 @@ void defineAgenticWorkflow(
       `,
     },
     orchestrationTools: {
-      websearch: { search: 1, get_snapshot: 1 },
+      web: { search: 1, get_snapshot: 1 },
     },
     agentDefinitions: {
       researcher: {
         prompt: "You are a research assistant.",
-        tools: { fetch: { fetch: 1 } },
+        tools: { web: { fetch: 1 } },
         outputSchema: {
           summary: { type: "string" },
           references: { type: "string[]" },
@@ -496,7 +496,7 @@ void defineAgenticWorkflow(
       }
     }
   },
-  async ({ agentHandlers: { researcher }, tableHandlers, orchestrationTools: { websearch } }) => {
+  async ({ agentHandlers: { researcher }, tableHandlers, orchestrationTools: { web } }) => {
 
     const doResearch = async () => {
       const result = await researcher(`research_topic: "Prostgles"`);
@@ -525,7 +525,7 @@ void defineAgenticWorkflow(
       await doResearch();
     }
 
-    await websearch.search({ q: "Prostgles" });
+    await web.search({ q: "Prostgles" });
   },
 );
 

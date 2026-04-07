@@ -1,7 +1,7 @@
 import { getKeys, includes } from "prostgles-types";
 import { ProstglesUiMCPServer } from "./ProstglesMCPServers/Prostgles.mcp";
 import { WebDevMCPServer } from "./ProstglesMCPServers/WebDev/WebDev.mcp";
-import { WebSearchMCPServer } from "./ProstglesMCPServers/WebSearch.mcp";
+import { WebMCPServer } from "./ProstglesMCPServers/Web.mcp";
 import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
@@ -11,7 +11,7 @@ import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { DocumentsMCPServer } from "./ProstglesMCPServers/Documents.mcp";
 
 export const ProstglesMCPServers = {
-  websearch: WebSearchMCPServer,
+  web: WebMCPServer,
   webdev: WebDevMCPServer,
   "prostgles-ui": ProstglesUiMCPServer,
   db: ProstglesDbMCPServer,

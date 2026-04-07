@@ -1,15 +1,15 @@
 import { useOnErrorAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
-import { FileBrowser } from "@components/FileBrowser/FileBrowser";
+import { FileTree } from "@components/FileTree/FileTree";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import Loading from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
 import { mdiFolderOutline } from "@mdi/js";
-import React from "react";
-import type { useWebAppConfigState } from "./hooks/useWebAppConfigState";
-import { SQLSmartEditor } from "src/dashboard/SQLEditor/SQLSmartEditor";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React from "react";
+import { SQLSmartEditor } from "src/dashboard/SQLEditor/SQLSmartEditor";
+import type { useWebAppConfigState } from "./hooks/useWebAppConfigState";
 
 export const WebAppConfigSetup = ({
   connection,
@@ -35,7 +35,6 @@ export const WebAppConfigSetup = ({
 
   const directory = edits?.web_app_directory ?? web_app_directory;
   const { port } = connection;
-
   const webAppUrl =
     !web_app_directory || !port ?
       undefined
@@ -86,11 +85,16 @@ export const WebAppConfigSetup = ({
             ]
         }
       >
-        <FileBrowser
-          path={directory || undefined}
-          onChange={(newDir) =>
-            setEdits((oldVal) => ({ ...oldVal, web_app_directory: newDir }))
-          }
+        <FileTree
+          rootPath={directory?.split("/").slice(0, -1).join("/")}
+          checkBoxes={{
+            type: "directory",
+            radioMode: true,
+            checkedItems: directory ? [directory] : [],
+            onCheckedChange: (v) => {
+              setEdits((oldVal) => ({ ...oldVal, web_app_directory: v[0] }));
+            },
+          }}
         />
       </PopupMenu>
       <FormFieldDebounced

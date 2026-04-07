@@ -1,4 +1,3 @@
-import type { DBSSchema } from "@common/publishUtils";
 import { FlexRow } from "@components/Flex";
 import { SearchList } from "@components/SearchList/SearchList";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -22,7 +21,7 @@ export const WebAppConfigComponents = ({
   const [selectedComponent, setSelectedComponent] = useState<string>();
 
   return (
-    <FlexRow className="h-full ai-start">
+    <FlexRow className="h-full w-full ai-start">
       <SearchList
         items={
           componentData?.components.map((c) => {

@@ -1,9 +1,9 @@
 import Btn from "@components/Btn";
-import { FileBrowser } from "@components/FileBrowser/FileBrowser";
-import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { FileTree } from "@components/FileTree/FileTree";
+import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
-import { mdiDelete, mdiDeleteOutline } from "@mdi/js";
+import { mdiDeleteOutline } from "@mdi/js";
 import React, { useContext, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { useMCPServerConfigState } from "./useMCPServerConfigState";
@@ -12,7 +12,9 @@ export type MCPServerEnabledConfig = { configId: number };
 
 export type MCPServerConfigProps = {
   serverName: string;
-  existingConfig: { id: number; value: Record<string, string> } | undefined;
+  existingConfig:
+    | { id: number; value: Record<string, string | string[]> }
+    | undefined;
   chatId: number | undefined;
   onDone: (res: void | MCPServerEnabledConfig) => void;
 };
@@ -53,17 +55,23 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
     >
       <FlexCol className="min-h-0">
         {Object.entries(schema).map(([key, schema]) => {
-          if (schema.renderWithComponent === "FileBrowser") {
+          if (schema.renderWithComponent === "FileTree") {
+            const currentValue = config[key];
             return (
-              <FileBrowser
+              <FileTree
                 key={key}
-                title={schema.title ?? key}
-                path={config[key]}
-                onChange={(v) => {
-                  setConfig({
-                    ...config,
-                    [key]: v,
-                  });
+                checkBoxes={{
+                  type: "all",
+                  checkedItems:
+                    typeof currentValue === "string" ?
+                      [currentValue]
+                    : currentValue,
+                  onCheckedChange: (v) => {
+                    setConfig({
+                      ...config,
+                      [key]: v,
+                    });
+                  },
                 }}
               />
             );
@@ -74,7 +82,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
               key={key}
               label={schema.title ?? key}
               hint={schema.description}
-              value={config[key]}
+              value={config[key] as string | undefined}
               onChange={(v) =>
                 setConfig({
                   ...config,
@@ -85,11 +93,9 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
           );
         })}
         {Boolean(existingConfigs.length) && (
-          <FlexCol className="pt-1 pb-2 gap-p5">
-            <div className="ta-start">
-              Or select from existing configurations:
-            </div>
-            <FlexRowWrap>
+          <FlexCol className="p-1 pb-2 gap-p5 bt b-color ml-p5">
+            <div className="ta-start mb-1">Existing configurations:</div>
+            <FlexCol>
               {existingConfigs.map((existingConfig) => {
                 const renderableTypes = ["string", "number", "boolean"];
                 const values = Object.values(existingConfig.config)
@@ -123,7 +129,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
                   </FlexRow>
                 );
               })}
-            </FlexRowWrap>
+            </FlexCol>
           </FlexCol>
         )}
       </FlexCol>

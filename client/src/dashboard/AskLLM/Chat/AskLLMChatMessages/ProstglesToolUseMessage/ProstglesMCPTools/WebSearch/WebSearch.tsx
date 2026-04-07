@@ -6,7 +6,7 @@ import { useTypedToolUseResultData } from "../common/useTypedToolUseResultData";
 import { Favicon } from "./Favicon";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 const schema =
-  PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]["websearch"]["outputSchema"];
+  PROSTGLES_MCP_SERVERS_AND_TOOLS["web"]["websearch"]["outputSchema"];
 
 export const WebSearch = ({
   toolUseResult: toolResult,

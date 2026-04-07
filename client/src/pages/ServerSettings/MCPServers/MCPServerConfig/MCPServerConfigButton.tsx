@@ -25,18 +25,26 @@ export const MCPServerConfigButton = (
         });
       }}
       style={{ flexShrink: 1 }}
+      size="micro"
       iconPath={mdiCogOutline}
       data-command="MCPServerConfigButton"
     >
-      {Object.entries(schema).map(([key, schema]) => (
-        <FlexRow
-          key={key}
-          title={schema.title ?? key}
-          className="font-12 gap-p5 text-ellipsis ji-start"
-        >
-          <div className="bold">{existingConfig?.value[key]}</div>
-        </FlexRow>
-      ))}
+      {Object.entries(schema).map(([key, schema]) => {
+        const value = existingConfig?.value[key];
+        const displayValue =
+          typeof value === "string" ? value
+          : Array.isArray(value) ? value.join(", \n")
+          : "";
+        return (
+          <FlexRow
+            key={key}
+            title={schema.title ?? key}
+            className=" gap-p5 text-ellipsis ji-start"
+          >
+            {displayValue}
+          </FlexRow>
+        );
+      })}
     </Btn>
   );
 };

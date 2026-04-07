@@ -17,15 +17,17 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
   maxHeight,
   titleEndContent,
   titleWhenMinimised,
+  contentClassname,
 }: {
   items: T;
   defaultTab?: keyof T;
   className?: string;
   style?: React.CSSProperties;
+  contentClassname?: string;
   maxHeight?: number | string;
   controlled?: {
     activeTab: string;
-    setActiveTab: (tab: string) => void;
+    setActiveTab: (tab: keyof T) => void;
   };
   titleWhenMinimised: React.ReactNode;
   titleEndContent?: React.ReactNode;
@@ -74,6 +76,7 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
         {getEntries(items).map(([tabName, { content }]) => (
           <div
             key={tabName as string}
+            className={contentClassname}
             style={{
               /**
                * Avoid layout shift when switching tabs

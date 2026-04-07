@@ -32,7 +32,7 @@ const requestToolAccessArgs = {
     },
   },
   mcpServerTools: {
-    fetch: { fetch: 1 },
+    web: { fetch: 1 },
   },
 } satisfies RequestToolAccess;
 
@@ -60,10 +60,10 @@ const webSearchToolUse: ToolUse = {
   content: `To provide you with the most accurate and up-to-date information, I'll use the web search tool to look up recent data related to your query.`,
   tool: [
     {
-      id: "websearch-tool-use",
+      id: "web-tool-use",
       type: "function",
       function: {
-        name: getProstglesMCPFullToolName("websearch", "websearch"),
+        name: getProstglesMCPFullToolName("web", "websearch"),
         arguments: stringify({
           q: '"prostgles websearch"',
         }),
@@ -71,30 +71,30 @@ const webSearchToolUse: ToolUse = {
     },
     /** Must ensure parallel requests work */
     {
-      id: "websearch-tool-use2",
+      id: "web-tool-use2",
       type: "function",
       function: {
-        name: getProstglesMCPFullToolName("websearch", "websearch"),
+        name: getProstglesMCPFullToolName("web", "websearch"),
         arguments: stringify({
           q: '"prostgles docs"',
         }),
       },
     },
     {
-      id: "websearch-tool-use-snapshot",
+      id: "web-tool-use-snapshot",
       type: "function",
       function: {
-        name: getProstglesMCPFullToolName("websearch", "get_snapshot"),
+        name: getProstglesMCPFullToolName("web", "get_snapshot"),
         arguments: stringify({
           url: "http://127.0.0.1:3004/login",
         }),
       },
     },
     {
-      id: "websearch-tool-use-snapshot",
+      id: "web-tool-use-snapshot",
       type: "function",
       function: {
-        name: getProstglesMCPFullToolName("websearch", "get_snapshot"),
+        name: getProstglesMCPFullToolName("web", "get_snapshot"),
         arguments: stringify({
           url: "http://127.0.0.1:3004/manifest.json",
         }),
@@ -131,14 +131,14 @@ const cryptoDashboardToolUse: ToolUse = {
   ],
 };
 
-const mcpToolUse: ToolUse = {
+const mcpFetchToolUse: ToolUse = {
   content: `To assist you further, I'll use the fetch tool to access the  application.`,
   tool: [
     {
       id: "mcp-tool-use",
       type: "function",
       function: {
-        name: "fetch--fetch",
+        name: "web--fetch",
         arguments: stringify({
           url: "http://localhost:3004/login",
         }),
@@ -183,7 +183,7 @@ const toolResponses: Record<string, ToolUse> = {
         type: "function",
         function: {
           name: getProstglesMCPFullToolName("prostgles-ui", "get_tool_schemas"),
-          arguments: stringify({ mcpServerTools: { fetch: { fetch: 1 } } }),
+          arguments: stringify({ mcpServerTools: { web: { fetch: 1 } } }),
         },
       },
     ],
@@ -192,12 +192,12 @@ const toolResponses: Record<string, ToolUse> = {
   },
   dashboards: dashboardToolUse,
   funding: cryptoDashboardToolUse,
-  mcp: mcpToolUse,
+  mcp: mcpFetchToolUse,
   mcpfail: {
     content: "Hmm, the fetch tool encountered an error. Let's try again...",
-    tool: mcpToolUse.tool.map((t) => ({
+    tool: mcpFetchToolUse.tool.map((t) => ({
       ...t,
-      function: { ...t.function, name: "fetch--invalidfetch" },
+      function: { ...t.function, name: "web--invalidfetch" },
     })),
     duration: 1000,
     result_content: "... let's retry the failed tool",
@@ -206,12 +206,14 @@ const toolResponses: Record<string, ToolUse> = {
   mcpsandbox: mcpSandboxToolUse,
   parallel_calls: {
     content: "I'll fetch in parallel ",
-    tool: [mcpToolUse.tool[0], mcpToolUse.tool[0], mcpToolUse.tool[0]].map(
-      (t, i) => ({
-        ...t,
-        id: t.id + "_" + (i + 1),
-      }),
-    ),
+    tool: [
+      mcpFetchToolUse.tool[0],
+      mcpFetchToolUse.tool[0],
+      mcpFetchToolUse.tool[0],
+    ].map((t, i) => ({
+      ...t,
+      id: t.id + "_" + (i + 1),
+    })),
     duration: 2000,
     result_content: "Fetched in parallel successfully",
   },
@@ -305,7 +307,7 @@ const toolResponses: Record<string, ToolUse> = {
           ),
           arguments: stringify({
             mcpServerTools: {
-              websearch: { websearch: 1 },
+              web: { websearch: 1 },
             },
             databaseAccess: {
               receipts: {
@@ -402,7 +404,7 @@ const lastMsgText = lastMsg?.content?.[0]?.type === "image_url"? " receipt " : l
 const { tool_call_id, is_error } = lastMsg ?? {};
 const toolCallKeyResult = typeof tool_call_id === "string"? tool_call_id.split("#")[0] : undefined;
 const toolResult = toolCallKeyResult && toolResponses[toolCallKeyResult];
-const failedToolResult = toolCallKeyResult === "mcpfail";// typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("fetch--invalidfetch");
+const failedToolResult = toolCallKeyResult === "mcpfail";// typeof lastMsg.tool_call_id === "string" && lastMsg.tool_call_id.includes("web--invalidfetch");
 const msg = failedToolResult ? " mcpfail " : lastMsgText;
 
 const toolResponseKey = Object.keys(toolResponses).find(k => msg && msg.includes(" " + k + " ")); 

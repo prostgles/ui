@@ -232,7 +232,7 @@ export const uiMcpSchema = {
         mcpServerTools: {
           description: fixIndent(`
                 Which MCP server tools to get in this format: { [serverName]: { [toolName1]: 1, [toolName2]: 1 } } which means toolName1 and toolName2 from serverName. 
-                Leave empty to get all tools. Example: { fetch: { fetch: 1 } }`),
+                Leave empty to get all tools. Example: { web: { fetch: 1 } }`),
           optional: true,
           ...mcpServerToolsAllowed,
         },
@@ -265,7 +265,7 @@ export const uiMcpSchema = {
         },
         mcpServerTools: {
           description:
-            "List of MCP server tools to enable for this chat. Example: { fetch: { fetch: 1 } }",
+            "List of MCP server tools to enable for this chat. Example: { web: { fetch: 1 } }",
           optional: true,
           ...mcpServerToolsAllowed,
         },
@@ -307,7 +307,7 @@ export const uiMcpSchema = {
         ...agentSchemaWithoutOutput,
         tools: {
           description:
-            "List of MCP server tools available to the agent. Example: { fetch: { fetch: 1 } }",
+            "List of MCP server tools available to the agent. Example: { web: { fetch: 1 } }",
           optional: true,
           ...mcpServerToolsAllowed,
         },

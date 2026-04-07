@@ -11,7 +11,7 @@ import type {
 } from "../ProstglesMCPServerTypes";
 import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
 
-const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"];
+const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["web"];
 
 const definition = {
   icon_path: "Web",
@@ -29,6 +29,55 @@ const handler = {
         serviceManager.stopService("webSearchSearxng");
       },
       tools: {
+        fetch: async ({
+          url,
+          mode = "raw",
+          max_length = 5000,
+          start_index = 0,
+          headers,
+        }) => {
+          let content = "";
+
+          if (mode === "raw") {
+            const res = await fetch(url, {
+              redirect: "follow",
+              headers: {
+                "User-Agent": "Mozilla/5.0 ",
+              },
+              ...headers,
+            });
+
+            if (!res.ok) {
+              throw new Error(
+                `Failed to fetch ${url} - status code ${res.status}`,
+              );
+            }
+
+            content = await res.text();
+          } else {
+            const docsService =
+              await getServiceManager(dbs).getServiceWithRetries("documents");
+            const result = await docsService.endpoints["/v1/convert/source"]({
+              sources: [{ kind: "http", url }],
+              options: {
+                from_formats: ["html"],
+                ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
+              },
+            });
+
+            content =
+              result.document.md_content ||
+              result.document.text_content ||
+              result.document.html_content ||
+              "";
+          }
+
+          if (!content) {
+            return "<error>Page failed to be fetched or converted</error>";
+          }
+
+          return sliceFetchedContent(content, start_index, max_length);
+        },
         websearch: async (toolArguments, { clientReq }) => {
           const clientIp =
             clientReq.httpReq?.ip ||
@@ -158,7 +207,26 @@ const handler = {
   },
 } satisfies ProstglesMcpServerHandlerTyped<typeof definition>;
 
-export const WebSearchMCPServer = {
+export const WebMCPServer = {
   definition,
   handler: handler as ProstglesMcpServerHandler,
+};
+
+const sliceFetchedContent = (
+  content: string,
+  start_index = 0,
+  max_length = 5000,
+) => {
+  if (start_index >= content.length) {
+    return "<error>No more content available.</error>";
+  }
+
+  const sliced = content.slice(start_index, start_index + max_length);
+  const nextIndex = start_index + sliced.length;
+
+  if (nextIndex < content.length) {
+    return `${sliced}\n\n<error>Content truncated. Call the fetch tool with a start_index of ${nextIndex} to get more content.</error>`;
+  }
+
+  return sliced;
 };

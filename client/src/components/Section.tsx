@@ -78,7 +78,7 @@ export const Section = (props: SectionProps) => {
       }
     >
       <div
-        className="Section__Header flex-row ai-center noselect pointer f-0 bb b-color bg-inherit"
+        className="Section__Header flex-row ai-center noselect pointer f-0 bb b-color bg-inherit bg-color-0"
         style={
           !open ?
             {
