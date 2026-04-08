@@ -1,11 +1,3 @@
-import { documentsServiceInputSchema } from "./documentsServiceInputSchema";
-import type { DBSSchema } from "../publishUtils";
-import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
-import {
-  agentDefinitionsSchema,
-  mcpServerToolsAllowed,
-} from "./startAgenticWorkflowSchema";
-import { tablePermissionsSchema } from "./tablePermissionsSchema";
 import { fixIndent } from "../utils";
 
 const runSQLSchema = {
@@ -57,13 +49,24 @@ const outputSchemaArrayOfObjects = {
   },
 } as const;
 
-const { outputSchema, ...agentSchemaWithoutOutput } =
-  agentDefinitionsSchema.record.values.type;
-
-const { files, userInput, userInputValue, ...runTsSchema } =
-  runCodeInSandboxSchema.type;
-
 export const dbMcpSchema = {
+  get_existing_tables_schema: {
+    description: fixIndent(`
+      Gets the schema of existing tables in the connected database.
+      Optionally can provide a list of table names to get the schema for specific tables. If not provided, the schema for all tables will be returned.
+      `),
+    schema: {
+      type: {
+        tableNames: {
+          optional: true,
+          type: "string[]",
+        },
+      },
+    },
+    outputSchema: {
+      type: "string",
+    },
+  },
   execute_readonly_sql: {
     annotations: { readOnlyHint: true },
     description:

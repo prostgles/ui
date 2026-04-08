@@ -25,7 +25,6 @@ export const fileBrowserGoToPath = async (
     if (isLastSegment) {
       await rowLocator.getByTestId("FileTreeNode.checkbox").click();
     } else {
-      await rowLocator.scrollIntoViewIfNeeded();
       await rowLocator.click();
     }
     await locator.page().waitForTimeout(1e3);

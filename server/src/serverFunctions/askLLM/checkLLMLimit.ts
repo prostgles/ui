@@ -1,7 +1,6 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import type { DBS } from "../..";
-import type { DBSSchema } from "@common/publishUtils";
-import { isTesting } from "@src/init/utils";
 
 export const checkLLMLimit = async (
   dbs: DBS,
@@ -49,29 +48,11 @@ export const checkLLMLimit = async (
   if (!userIds.length) {
     throw "User id filter empty";
   }
-  const _messagesCount = await dbs.llm_messages.count({
+  const messageCountForLast24Hours = await dbs.llm_messages.count({
     user_id: { $in: userIds },
     created: { $gte: new Date(Date.now() - 24 * HOUR).toISOString() },
   });
-  if (isTesting) {
-    console.log(
-      "LLM limits info",
-      JSON.stringify(
-        {
-          _messagesCount,
-          userIds,
-          totalLimit,
-          limits,
-          allMessagesForUser: await dbs.llm_messages.count({
-            user_id: { $in: userIds },
-          }),
-        },
-        null,
-        2,
-      ),
-    );
-  }
-  const messagesCount = +_messagesCount;
+  const messagesCount = +messageCountForLast24Hours;
   if (+messagesCount > totalLimit) {
     return "Daily limit reached" as const;
   }

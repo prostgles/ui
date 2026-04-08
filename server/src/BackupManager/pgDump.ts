@@ -1,7 +1,6 @@
-import type { ChildProcess } from "child_process";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
-import { isDefined, omitKeys, pickKeys } from "prostgles-types";
 import type { DumpOpts, PGDumpParams } from "@common/utils";
+import type { ChildProcess } from "child_process";
+import { isDefined, omitKeys, pickKeys } from "prostgles-types";
 import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
 import { envToStr, pipeFromCommand } from "./pipeFromCommand";
@@ -31,15 +30,16 @@ export async function pgDump(
   let proc: ChildProcess | undefined;
 
   const setError = (err: any) => {
-    console.error(
-      new Date().toISOString() + " pg_dump err for connection " + conId,
-      err,
-    );
+    const nowIso = new Date().toISOString();
+    console.error(nowIso + " pg_dump err for connection " + conId, err);
     proc?.kill();
     if (backup_id) {
       void this.dbs.backups.update(
         { id: backup_id },
-        { status: { err }, last_updated: new Date() },
+        {
+          status: { state: "error", timestamp: nowIso, message: String(err) },
+          last_updated: nowIso,
+        },
       );
     } else {
       throw err;
@@ -124,7 +124,7 @@ export async function pgDump(
           dumpCommand.command +
           " " +
           dumpCommand.args.join(" "),
-        status: { loading: { loaded: 0, total: 0 } },
+        status: { state: "loading", loaded: 0, total: 0 },
         options: omitKeys(o as any, ["credentialID"]) as DumpOpts,
         content_type,
       },
@@ -151,11 +151,13 @@ export async function pgDump(
           {
             $and: [
               { id: backup_id },
-              { "status->>ok": null },
-              { "status->>err": null },
-            ] as Filter[],
+              { status: { "@>": { state: "loading" } } },
+            ],
           },
-          { status: { loading }, last_updated: new Date() },
+          {
+            status: { state: "loading", ...loading },
+            last_updated: new Date(),
+          },
         );
       },
       setError,
@@ -166,13 +168,14 @@ export async function pgDump(
               await fileMgr.deleteFile(bkp.id);
             } catch {}
           } else {
+            const nowIso = new Date().toISOString();
             void this.dbs.backups.update(
               { id: backup_id },
               {
                 sizeInBytes: item.content_length,
-                uploaded: new Date(),
-                status: { ok: "1" },
-                last_updated: new Date(),
+                uploaded: nowIso,
+                status: { state: "finished", timestamp: nowIso },
+                last_updated: nowIso,
                 local_filepath: item.filePath,
               },
             );
@@ -198,7 +201,7 @@ export async function pgDump(
           async ({ chunk: _dump_logs }, isStdErr) => {
             if (!isStdErr) return;
             const currBkp = await this.dbs.backups.findOne({ id: backup_id });
-            if (!currBkp || "err" in currBkp.status) {
+            if (!currBkp || currBkp.status.state === "error") {
               proc?.kill();
               return;
             }
@@ -208,7 +211,7 @@ export async function pgDump(
               currBkp.created,
             );
             void this.dbs.backups.update(
-              { id: backup_id, "status->>ok": null } as Filter,
+              { id: backup_id },
               {
                 dump_logs,
                 last_updated: new Date(),

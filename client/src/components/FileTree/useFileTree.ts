@@ -1,7 +1,7 @@
 import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
-import type { FileSystemTreeProps } from "./FileTree";
+import type { FileTreeProps } from "./FileTree";
 
 export type FileNode = {
   name: string;
@@ -13,32 +13,50 @@ export type FileNode = {
   children: FileNode[] | null; // null = not yet fetched
 };
 
-export const useFileSystemTree = ({
-  rootPath: rootPathFromProps,
-  onFileSelect,
-  checkBoxes,
-  selectedFilePath,
-}: FileSystemTreeProps) => {
+export type FileTreeState = ReturnType<typeof useFileTree>;
+
+export const useFileTree = ({ rootPath: rootPathFromProps }: FileTreeProps) => {
   const {
     dbsMethods: { glob },
   } = usePrglCore();
 
-  const [tree, setTree] = useState<FileNode[]>([]);
+  const [sortBy, setSortBy] = useState<"name" | "size" | "lastModified">(
+    "lastModified",
+  );
+  const [unsortedTree, setUnsortedTree] = useState<FileNode[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
   const [searchQuery, setSearchQuery] = useState("");
-  const [rootError, setRootError] = useState<string | null>(null);
+  const [rootError, setRootError] = useState<unknown>();
   const [rootLoading, setRootLoading] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const [rootPath, setRootPath] = useState(rootPathFromProps);
 
+  const getSortedNodes = useCallback(
+    (nodes: FileNode[]): FileNode[] => {
+      return [...nodes].toSorted((a, b) => {
+        if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+        if (sortBy === "name") return a.name.localeCompare(b.name);
+        const aVal = a[sortBy] ?? 0;
+        const bVal = b[sortBy] ?? 0;
+        return bVal - aVal; // Descending
+      });
+    },
+    [sortBy],
+  );
+
+  const tree = useMemo(() => {
+    if (sortBy === "name") return unsortedTree;
+    return getSortedNodes(unsortedTree);
+  }, [sortBy, unsortedTree, getSortedNodes]);
+
   const fetchLevel = useCallback(
     (cwd: string, pattern: string): Promise<FileNode[]> => {
       if (!glob) return Promise.reject(new Error("glob not provided"));
-      return glob({ cwd, pattern }).then(({ result, path }) => {
-        if (!rootPath && !path) setRootPath(path);
+      return glob({ cwd, pattern, timeout: 5_000 }).then(({ result, path }) => {
+        if (!rootPath) setRootPath(path);
         return parseLevel(result);
       });
     },
@@ -48,14 +66,12 @@ export const useFileSystemTree = ({
   const fetchRoot = useCallback(
     (pattern = "") => {
       setRootLoading(true);
-      setRootError(null);
+      setRootError(undefined);
       fetchLevel(rootPath ?? "", pattern)
         .then((nodes) => {
-          setTree(nodes);
+          setUnsortedTree(nodes);
         })
-        .catch((err: unknown) =>
-          setRootError(err instanceof Error ? err.message : "Failed to load"),
-        )
+        .catch((err: unknown) => setRootError(err))
         .finally(() => setRootLoading(false));
     },
     [fetchLevel, rootPath],
@@ -76,6 +92,7 @@ export const useFileSystemTree = ({
     }, 400);
     return () => clearTimeout(handler);
   }, [fetchRoot, isLocalSearch, searchQuery]);
+
   useEffect(() => {
     fetchRoot();
   }, [fetchRoot]);
@@ -101,7 +118,7 @@ export const useFileSystemTree = ({
 
       fetchLevel(path, "")
         .then((children) => {
-          setTree((prev) => setChildren(prev, path, children));
+          setUnsortedTree((prev) => setChildren(prev, path, children));
           setErrors((prev) => {
             const next = new Map(prev);
             next.delete(path);
@@ -130,7 +147,7 @@ export const useFileSystemTree = ({
   );
 
   useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent): void => {
+    const onKey = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && e.key === "f") {
         e.preventDefault();
         searchRef.current?.focus();
@@ -140,17 +157,21 @@ export const useFileSystemTree = ({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const displayTree = searchQuery ? filterTree(tree, searchQuery) : tree;
-  const fileCount = countFiles(tree);
-  const matchCount = searchQuery ? countFiles(displayTree) : fileCount;
+  const displayTree = useMemo(
+    () => (searchQuery ? filterTree(tree, searchQuery) : tree),
+    [searchQuery, tree],
+  );
+  const fileCount = useMemo(() => countFiles(tree), [tree]);
+  const matchCount = useMemo(
+    () => (searchQuery ? countFiles(displayTree) : fileCount),
+    [displayTree, fileCount, searchQuery],
+  );
 
   return {
     displayTree,
     expanded,
     loading,
     errors,
-    selectedFilePath,
-    onFileSelect,
     searchQuery,
     setSearchQuery,
     rootError,
@@ -164,26 +185,24 @@ export const useFileSystemTree = ({
     setRootPath,
     isLocalSearch,
     setIsLocalSearch,
+    sortBy,
+    setSortBy,
+    getSortedNodes,
   };
 };
 
 const parseLevel = (
   items: Awaited<ReturnType<GeneratedFunctionSchema["glob"]>>["result"],
 ): FileNode[] =>
-  [...items]
-    .toSorted((a, b) => {
-      if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    })
-    .map((item) => ({
-      name: item.name,
-      path: item.path,
-      type: item.type === "directory" ? "directory" : "file",
-      size: item.size,
-      lastModified: item.lastModified,
-      created: item.created,
-      children: item.type === "directory" ? null : [], // null = lazy, [] = leaf
-    }));
+  [...items].map((item) => ({
+    name: item.name,
+    path: item.path,
+    type: item.type === "directory" ? "directory" : "file",
+    size: item.size,
+    lastModified: item.lastModified,
+    created: item.created,
+    children: item.type === "directory" ? null : [], // null = lazy, [] = leaf
+  }));
 
 const setChildren = (
   nodes: FileNode[],
@@ -192,11 +211,12 @@ const setChildren = (
 ): FileNode[] =>
   nodes.map((node) => {
     if (node.path === targetPath) return { ...node, children };
-    if (node.children)
+    if (node.children) {
       return {
         ...node,
         children: setChildren(node.children, targetPath, children),
       };
+    }
     return node;
   });
 

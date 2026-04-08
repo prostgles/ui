@@ -111,6 +111,14 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await setModelByText(page, "sonn");
 
   await deletePreviousMessages();
+  await setPromptByText(page, "agent");
+  await typeSendAddScenes(page, addScene, "I need to import some pdf receipts");
+  const startWorkflow = await page.getByTestId("AgenticWorkflow.start").last();
+  await startWorkflow.waitFor({ state: "visible", timeout: 25000 });
+  await startWorkflow.click();
+
+  await deletePreviousMessages();
+  await setPromptByText(page, "chat");
   await typeSendAddScenes(
     page,
     addScene,

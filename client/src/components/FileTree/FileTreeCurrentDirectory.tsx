@@ -13,7 +13,7 @@ type P = {
   onChange: (filePath: string) => void;
 };
 
-export const FileBrowserCurrentDirectory = ({
+export const FileTreeCurrentDirectory = ({
   path,
   onChange,
   existingFolderNames,

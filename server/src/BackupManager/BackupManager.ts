@@ -1,6 +1,6 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import path from "path";
 import { PassThrough } from "stream";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getInstalledPsqlVersions } from "./getInstalledPrograms";
 import { pgDump } from "./pgDump";
 import { pgRestore } from "./pgRestore";
@@ -14,9 +14,11 @@ export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 type DBS = DBOFullyTyped<DBGeneratedSchema>;
 
+import type { InstalledPrograms } from "@common/electronInitTypes";
+import { ROUTES } from "@common/utils";
 import checkDiskSpace from "check-disk-space";
 import type { Request, Response } from "express";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type {
@@ -24,13 +26,10 @@ import type {
   SQLHandler,
   SubscriptionHandler,
 } from "prostgles-types";
-import type { InstalledPrograms } from "@common/electronInitTypes";
-import { ROUTES } from "@common/utils";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import { getRootDir } from "../electronConfig";
 import { checkAutomaticBackup } from "./checkAutomaticBackup";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 
 export const HOUR = 3600 * 1000;
 
@@ -59,9 +58,9 @@ export default class BackupManager {
     const checkAutomaticBackupsForEachConnection = async () => {
       const connections = await this.dbs.connections.find({
         $existsJoined: {
-          database_configs: { "backups_config->>enabled": "true" },
+          database_configs: { backups_config: { "@>": { enabled: true } } },
         },
-      } as FilterItem);
+      });
       for (const con of connections) {
         await this.checkAutomaticBackup(con);
       }
@@ -159,7 +158,7 @@ export default class BackupManager {
           clean: true,
           format: "c",
         },
-        status: { ok: new Date().toISOString() },
+        status: { state: "finished", timestamp: new Date().toISOString() },
       },
       { returning: "*" },
     );
@@ -173,7 +172,11 @@ export default class BackupManager {
         void this.dbs.backups.update(
           { id: bkp.id },
           {
-            restore_status: { loading: { total: sizeBytes, loaded: chunkSum } },
+            restore_status: {
+              state: "loading",
+              total: sizeBytes,
+              loaded: chunkSum,
+            },
           },
         );
       }
@@ -292,11 +295,11 @@ export default class BackupManager {
   getCurrentBackup = (conId: string) =>
     this.dbs.backups.findOne({
       connection_id: conId,
-      "status->loading.<>": null,
+      status: { "@>": { state: "loading" } },
       /* If not updated in last 5 minutes then consider it dead */
       // last_updated: { ">": new Date(Date.now() - HOUR/12)  }
       $filter: [{ $ageNow: ["last_updated"] }, "<", "2 seconds"],
-    } as Filter);
+    });
 
   checkAutomaticBackup = checkAutomaticBackup.bind(this);
 }

@@ -26,6 +26,26 @@ const fileInputDefs = {
     type: "file-path",
     accessMode: "read",
   },
+  "file-or-folder-path": {
+    title: "File or folder path",
+    type: "file-or-folder-path",
+    accessMode: "read",
+  },
+  "folder-paths": {
+    title: "Folder paths",
+    type: "folder-paths",
+    accessMode: "read",
+  },
+  "file-paths": {
+    title: "File paths",
+    type: "file-paths",
+    accessMode: "read",
+  },
+  "file-or-folder-paths": {
+    title: "File or folder paths",
+    type: "file-or-folder-paths",
+    accessMode: "read",
+  },
 } as const;
 
 export const research = "research" as const;

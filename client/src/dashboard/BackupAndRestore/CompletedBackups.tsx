@@ -12,7 +12,6 @@ import {
   mdiRefreshAuto,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { DBHandlerClient } from "prostgles-client";
 import { type AnyObject } from "prostgles-types";
 import React from "react";
 import type { Backups } from "../Dashboard/dashboardUtils";
@@ -46,7 +45,7 @@ export const CompletedBackups = ({
   BackupsControlsState,
   "backupsFilterType" | "setBackupsFilterType" | "completedBackupsFilter"
 >) => {
-  const { connectionId, dbs, dbsTables, dbsMethods, dbsMethodSchema, db, sql } =
+  const { connectionId, dbs, dbsTables, dbsMethods, dbsMethodSchema, sql } =
     usePrgl();
   const { bkpDelete } = dbsMethods;
   const connection_id = connectionId;
@@ -61,14 +60,17 @@ export const CompletedBackups = ({
     render: (logs, row) => (
       <RenderBackupLogs
         logs={logs}
-        completed={!(row.restore_status as any)?.loading}
+        completed={row.restore_status?.state !== "loading"}
       />
     ),
   };
   const dumpLogsFConf: FieldConfig<Backups> = {
     name: "dump_logs",
     render: (logs, row) => (
-      <RenderBackupLogs logs={logs} completed={!(row.status as any)?.loading} />
+      <RenderBackupLogs
+        logs={logs}
+        completed={row.status.state !== "loading"}
+      />
     ),
   };
 

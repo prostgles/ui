@@ -13,6 +13,7 @@ import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import {
   mdiDatabase,
+  mdiDatabaseCheck,
   mdiDatabaseEdit,
   mdiDatabaseEye,
   mdiDatabaseOff,
@@ -152,6 +153,13 @@ export const AskLLMChatActionBarDatabaseAccess = (
                 subLabel:
                   "Inherit schema scope from data access (Custom tables, or Full when SQL access allows it).",
                 iconPath: mdiLinkVariant,
+              },
+              {
+                key: "OnRequest",
+                label: "On request",
+                subLabel:
+                  "Only send schema when the LLM explicitly asks for it in the prompt.",
+                iconPath: mdiDatabaseCheck,
               },
             ] as const
           }

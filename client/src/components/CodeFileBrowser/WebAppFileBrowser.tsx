@@ -1,5 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { FILE_EXTENSION_TO_ICON_INFO } from "@components/FileTree/FileIcon";
+import { FILE_EXTENSION_TO_ICON_INFO } from "@components/FileTree/FILE_EXTENSION_TO_ICON_INFO";
 import { FileTree } from "@components/FileTree/FileTree";
 import { FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
@@ -20,9 +20,7 @@ export const WebAppFileBrowser = ({
     dbsMethods: { getWebAppFile },
   } = usePrgl();
 
-  const [currentDirectory, setCurrentDirectory] = useState(
-    connection.web_app_directory ?? "",
-  );
+  const currentDirectory = connection.web_app_directory ?? "";
   const [selectedFilePath, setSelectedFilePath] = useState<string>();
   const [selectedFileContent, setSelectedFileContent] = useState<{
     filePath: string;
@@ -63,7 +61,7 @@ export const WebAppFileBrowser = ({
     <FlexRow className="min-w-0 min-h-0 ai-start gap-p25 h-full w-full max-w-full f-1">
       <FileTree
         rootPath={currentDirectory}
-        checkBoxes={undefined}
+        mode={"explorer"}
         selectedFilePath={selectedFilePath}
         onFileSelect={(node) => {
           onOpenFile(node.path);

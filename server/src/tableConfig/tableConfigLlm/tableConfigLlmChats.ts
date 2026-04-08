@@ -3,11 +3,12 @@ import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import type { ValidateRowArgsCommon } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { isDefined, type JSONB } from "prostgles-types";
+import { getKeys, isDefined, type JSONB } from "prostgles-types";
 import { agentOutputSchemaType } from "../../../../common/mcp/startAgenticWorkflowSchema";
 import { tablePermissionsSchema } from "../tablePermissionsSchema";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
 import { proxyDbCommands } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/tableHandlers";
+import { dbMcpSchema } from "@common/mcp/db.mcp.schema";
 
 const commonrunSQLOpts = {
   query_timeout: {
@@ -25,18 +26,15 @@ const commonrunSQLOpts = {
   },
 } satisfies JSONB.ObjectType["type"];
 
-const ALL_TOOLS = [
-  "execute_readonly_sql",
-  "execute_sql",
-  "count",
-  "find",
-  "insert",
-  "insertMany",
-  "update",
-  "delete",
-];
+const ALL_TOOLS = getKeys(dbMcpSchema);
 
-if (proxyDbCommands.sort().join() !== ALL_TOOLS.sort().join()) {
+const toolsNotAllowedForProxyDbCalls = ["get_existing_tables_schema"];
+if (
+  proxyDbCommands.sort().join() !==
+  ALL_TOOLS.filter((v) => !toolsNotAllowedForProxyDbCalls.includes(v))
+    .sort()
+    .join()
+) {
   throw new Error(
     `proxyDbCommands and ALL_TOOLS are out of sync. proxyDbCommands: ${proxyDbCommands.join(", ")} ALL_TOOLS: ${ALL_TOOLS.join(", ")}`,
   );
@@ -179,6 +177,14 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
             },
             {
               type: {
+                enum: ["OnRequest"],
+                title: "Type",
+                description:
+                  "Schema information is not added to the chat prompt, but can be requested by the AI assistant as a tool call.",
+              },
+            },
+            {
+              type: {
                 enum: ["Full"],
                 title: "Type",
                 description: "All tables, columns and constraints",
@@ -276,7 +282,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
       afterEach: [
         {
           commands: { insert: 1, update: 1 },
-          changedFields: ["db_data_permissions"],
+          changedFields: ["db_data_permissions", "db_schema_permissions"],
           validate: async (args) => {
             const { row, dbx } = args as unknown as ValidateRowArgsCommon<
               DBSSchema["llm_chats"],
@@ -287,23 +293,24 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
               server_name: "db",
             });
             const dataAccess = row.db_data_permissions;
+            let toolsToAllow: (keyof typeof dbMcpSchema)[] = [];
             if (dataAccess?.mode) {
-              const toolsToAllow =
+              toolsToAllow =
                 dataAccess.mode === "custom" ?
                   Array.from(
-                    new Set(
-                      Object.values(dataAccess.tablePermissions)
-                        .map((v) => {
-                          return [
-                            ...(v.select ? ["find", "count"] : []),
-                            ...(v.delete ? ["delete"] : []),
-                            ...(v.insert ? ["insert", "insertMany"] : []),
-                            ...(v.update ? ["update"] : []),
-                          ].filter(isDefined);
-                        })
-                        .filter(isDefined)
-                        .flat(),
-                    ),
+                    Object.values(dataAccess.tablePermissions)
+                      .map((v) => {
+                        return [
+                          ...(v.select ? (["find", "count"] as const) : []),
+                          ...(v.delete ? (["delete"] as const) : []),
+                          ...(v.insert ?
+                            (["insert", "insertMany"] as const)
+                          : []),
+                          ...(v.update ? (["update"] as const) : []),
+                        ].filter(isDefined);
+                      })
+                      .filter(isDefined)
+                      .flat(),
                   )
                 : dataAccess.mode === "execute_sql" ? ALL_TOOLS
                 : ([
@@ -311,6 +318,19 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                     "count",
                     "find",
                   ] satisfies (keyof ProstglesDbTools)[]);
+            }
+
+            const schemaAccess = row.db_schema_permissions;
+            if (schemaAccess && schemaAccess.type !== "None") {
+              if (schemaAccess.type === "SameAsData" && !toolsToAllow.length) {
+                // If schema access is same as data access but no data access tools are allowed then don't allow schema access tools either
+              } else {
+                toolsToAllow.push("get_existing_tables_schema");
+              }
+            }
+
+            if (toolsToAllow.length) {
+              toolsToAllow = Array.from(new Set(toolsToAllow));
               const tools = await dbx.mcp_server_tools.find({
                 server_name: "db",
                 name: { $in: toolsToAllow },
@@ -323,7 +343,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                   chat_id: row.id,
                   tool_id: tool.id,
                   server_name: tool.server_name,
-                  auto_approve: dataAccess.auto_approve,
+                  auto_approve: dataAccess?.auto_approve ?? false,
                 })),
               );
             }

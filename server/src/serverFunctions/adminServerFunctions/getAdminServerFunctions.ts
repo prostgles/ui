@@ -17,12 +17,13 @@ import { FILE_TABLE_CONFIG_SCHEMA } from "@src/tableConfig/tableConfigDatabaseCo
 import { upsertConnection } from "@src/upsertConnection";
 import { existsSync, readdirSync, statSync } from "fs";
 import { mkdir } from "fs/promises";
-import { glob } from "glob";
+import { globStream } from "glob";
 import * as os from "os";
 import path, { join } from "path";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import { getKeys, includes, isEmpty, type SQLHandler } from "prostgles-types";
 import { getSampleSchemas } from "../applySampleSchema";
+import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getDbConnectionWithPermissions";
 import { refreshModels } from "../askLLM/refreshModels";
 import { deleteConnection } from "../deleteConnection";
 import { getConnectionAndDatabaseConfig } from "../getConnectionAndDatabaseConfig";
@@ -35,7 +36,6 @@ import { getBackupServerFunctions } from "./getBackupServerFunctions";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { getMcpServerFunctions } from "./getMcpServerFunctions";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
-import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getDbConnectionWithPermissions";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -65,28 +65,45 @@ export const getAdminServerFunctions = (
         if (timeout <= 0 || timeout > 120_000) {
           throw "Timeout must be between 1 and 120 seconds";
         }
-        // pass in a signal to cancel the glob walk
-        const resultItems = await glob(pattern, {
-          signal: AbortSignal.timeout(timeout),
-          withFileTypes: true,
-          cwd: currentPath,
-          // posix: true,
-        });
-        const result = Array.from(resultItems).map((r) => ({
-          path: r.fullpath(),
-          name: r.name,
-          type:
-            r.isDirectory() ? "directory"
-            : r.isBlockDevice() ? "block"
-            : "file",
-          size: r.size,
-          lastModified: r.mtimeMs,
-          created: r.ctimeMs,
-        }));
+
+        const signal = AbortSignal.timeout(timeout);
+        const result: Array<{
+          path: string;
+          name: string;
+          type: string;
+          size: number | undefined;
+          lastModified: number | undefined;
+          created: number | undefined;
+        }> = [];
+
+        try {
+          for await (const r of globStream(pattern, {
+            signal,
+            withFileTypes: true,
+            cwd: currentPath,
+            stat: true,
+          })) {
+            result.push({
+              path: r.fullpath(),
+              name: r.name,
+              type:
+                r.isDirectory() ? "directory"
+                : r.isBlockDevice() ? "block"
+                : "file",
+              size: r.size,
+              lastModified: r.mtimeMs,
+              created: r.ctimeMs,
+            });
+          }
+        } catch (err) {
+          if (!signal.aborted) throw err;
+        }
+
         return {
           pattern,
           path: currentPath,
           result,
+          timedOut: signal.aborted,
         };
       },
     }),

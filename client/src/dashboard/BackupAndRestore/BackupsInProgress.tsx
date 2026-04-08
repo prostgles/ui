@@ -1,7 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { mdiStop } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { Prgl } from "../../App";
@@ -27,7 +26,9 @@ export const BackupsInProgress = ({
   const props = useMemo(() => {
     return {
       style: { minHeight: "250px" },
-      filter: { $and: [backupFilter, { "status->ok": null }] },
+      filter: {
+        $and: [backupFilter, { status: { "@>": { state: "loading" } } }],
+      },
       fieldConfigs: [
         { name: "id", hide: true },
         { name: "sizeInBytes", hide: true },
@@ -50,7 +51,7 @@ export const BackupsInProgress = ({
           render: (logs: string, row) => (
             <RenderBackupLogs
               logs={logs}
-              completed={!(row.status as any)?.loading}
+              completed={row.status.state !== "loading"}
             />
           ),
         },

@@ -314,7 +314,14 @@ export type UserInputItem =
        * A path to a file/folder from the local system that will be mounted to the container.
        * The agent can read and write depending on the accessMode value.
        */
-      type: "folder-path" | "file-path";
+      type: "folder-path" | "file-path" | "file-or-folder-path";
+      accessMode: "read" | "read-write";
+    }>
+  | UserInputBase<{
+      /**
+       * Same as above but allows multiple paths to be provided. The agent will receive an array of paths.
+       */
+      type: "folder-paths" | "file-paths" | "file-or-folder-paths";
       accessMode: "read" | "read-write";
     }>
   | UserInputBase<{
@@ -366,7 +373,11 @@ export type UserInputOutputMapping = {
   "table-name": string;
   "table-column": string;
   "folder-path": string;
+  "file-or-folder-path": string;
   "file-path": string;
+  "folder-paths": string;
+  "file-or-folder-paths": string;
+  "file-paths": string;
   enum: string;
   custom: unknown;
 };

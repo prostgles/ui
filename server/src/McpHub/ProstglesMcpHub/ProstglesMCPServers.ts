@@ -6,7 +6,7 @@ import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
-import { ProstglesDbMCPServer } from "./ProstglesMCPServers/ProstglesDb.mcp";
+import { DbMcpServer } from "./ProstglesMCPServers/Db.mcp";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { DocumentsMCPServer } from "./ProstglesMCPServers/Documents.mcp";
 
@@ -14,7 +14,7 @@ export const ProstglesMCPServers = {
   web: WebMCPServer,
   webdev: WebDevMCPServer,
   "prostgles-ui": ProstglesUiMCPServer,
-  db: ProstglesDbMCPServer,
+  db: DbMcpServer,
   documents: DocumentsMCPServer,
 } as const satisfies Record<
   string,

@@ -1,4 +1,4 @@
-import { FILE_EXTENSION_TO_ICON_INFO } from "@components/FileTree/FileIcon";
+import { FILE_EXTENSION_TO_ICON_INFO } from "@components/FileTree/FILE_EXTENSION_TO_ICON_INFO";
 import { FlexRow } from "@components/Flex";
 import { MenuList } from "@components/MenuList";
 import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";

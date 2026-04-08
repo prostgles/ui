@@ -82,7 +82,10 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
       return "";
     }
     const allowedTables =
-      cachedSchemaPermissions.type === "Full" ?
+      (
+        cachedSchemaPermissions.type === "Full" ||
+        cachedSchemaPermissions.type === "OnRequest"
+      ) ?
         tables
       : tables.filter((t) => {
           if (cachedSchemaPermissions.type === "SameAsData") {
@@ -108,80 +111,88 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
     const viewDefinitonsMap = new Map(
       viewDefinitions.map((v) => [v.oid.toString(), v.view_definition]),
     );
-    const res = allowedTables
-      .map((t) => {
-        const viewDefinition = viewDefinitonsMap.get(t.oid.toString());
-        if (viewDefinition) {
-          return {
-            query: `CREATE VIEW ${t.name} AS ${viewDefinition}`,
-            constraints: [],
-          };
-        }
+    const res =
+      cachedSchemaPermissions.type === "OnRequest" ?
+        `The following tables currently exist in the database: ${allowedTables.map((t) => JSON.stringify(t.name))}`
+      : allowedTables
+          .map((t) => {
+            const viewDefinition = viewDefinitonsMap.get(t.oid.toString());
+            if (viewDefinition) {
+              return {
+                query: `CREATE VIEW ${t.name} AS ${viewDefinition}`,
+                constraints: [],
+              };
+            }
 
-        const constraints = tableConstraints.filter(
-          (c) => c.table_oid === t.oid,
-        );
+            const constraints = tableConstraints.filter(
+              (c) => c.table_oid === t.oid,
+            );
 
-        const singlePkeyConstraints = new Set<string>();
-        const singlePkeyColPositions = new Set<number>();
-        constraints
-          .filter((c) => c.contype === "p" && c.conkey.length === 1)
-          .forEach((c) => {
-            singlePkeyConstraints.add(c.conname);
-            singlePkeyColPositions.add(c.conkey[0]!);
-          });
-
-        const colDefs = t.columns
-          .sort((a, b) => a.ordinal_position - b.ordinal_position)
-          .map((c) => {
-            const dataTypePrecisionInfo =
-              c.udt_name.startsWith("int") ? ""
-              : c.character_maximum_length ? `(${c.character_maximum_length})`
-              : c.numeric_precision ?
-                `(${c.numeric_precision}${c.numeric_scale ? `, ${c.numeric_scale}` : ""})`
-              : "";
-            /** Hacky. TODO: Must improve schema info */
-            const serialDataType =
-              c.is_pkey && c.has_default && !c.column_default ?
-                c.udt_name === "int4" ? "SERIAL"
-                : c.udt_name === "int8" ? "BIGSERIAL"
-                : ""
-              : "";
-
-            const dataTypeWIthPrecision =
-              serialDataType || `${c.udt_name}${dataTypePrecisionInfo}`;
-            return [
-              `  ${addDoubleQuotesIfNeeded(c.name)} ${dataTypeWIthPrecision}`,
-              c.is_pkey && singlePkeyColPositions.has(c.ordinal_position) ?
-                "PRIMARY KEY"
-              : "",
-              !c.is_pkey && !c.is_nullable ? "NOT NULL" : "",
-              !c.is_pkey && c.has_default ? `DEFAULT ${c.column_default}` : "",
-              c.is_generated ? "GENERATED" : "",
-            ]
-              .filter((v) => v)
-              .join(" ");
-          })
-          .concat(
+            const singlePkeyConstraints = new Set<string>();
+            const singlePkeyColPositions = new Set<number>();
             constraints
-              .filter((c) => !singlePkeyConstraints.has(c.conname))
-              .map((c) => `  CONSTRAINT ${c.escaped_conname} ${c.definition}`),
-          )
-          .join(",\n");
-        const query = `CREATE TABLE ${t.name} (\n${colDefs}\n)`;
-        return {
-          query,
-          constraints,
-        };
-      })
-      /** Tables will least fkeys first */
-      .sort((a, b) => {
-        const aFkeys = a.constraints.filter((c) => c.contype === "f");
-        const bFkeys = b.constraints.filter((c) => c.contype === "f");
-        return aFkeys.length - bFkeys.length;
-      })
-      .map((t) => t.query)
-      .join(";\n");
+              .filter((c) => c.contype === "p" && c.conkey.length === 1)
+              .forEach((c) => {
+                singlePkeyConstraints.add(c.conname);
+                singlePkeyColPositions.add(c.conkey[0]!);
+              });
+
+            const colDefs = t.columns
+              .sort((a, b) => a.ordinal_position - b.ordinal_position)
+              .map((c) => {
+                const dataTypePrecisionInfo =
+                  c.udt_name.startsWith("int") ? ""
+                  : c.character_maximum_length ?
+                    `(${c.character_maximum_length})`
+                  : c.numeric_precision ?
+                    `(${c.numeric_precision}${c.numeric_scale ? `, ${c.numeric_scale}` : ""})`
+                  : "";
+                /** Hacky. TODO: Must improve schema info */
+                const serialDataType =
+                  c.is_pkey && c.has_default && !c.column_default ?
+                    c.udt_name === "int4" ? "SERIAL"
+                    : c.udt_name === "int8" ? "BIGSERIAL"
+                    : ""
+                  : "";
+
+                const dataTypeWIthPrecision =
+                  serialDataType || `${c.udt_name}${dataTypePrecisionInfo}`;
+                return [
+                  `  ${addDoubleQuotesIfNeeded(c.name)} ${dataTypeWIthPrecision}`,
+                  c.is_pkey && singlePkeyColPositions.has(c.ordinal_position) ?
+                    "PRIMARY KEY"
+                  : "",
+                  !c.is_pkey && !c.is_nullable ? "NOT NULL" : "",
+                  !c.is_pkey && c.has_default ?
+                    `DEFAULT ${c.column_default}`
+                  : "",
+                  c.is_generated ? "GENERATED" : "",
+                ]
+                  .filter((v) => v)
+                  .join(" ");
+              })
+              .concat(
+                constraints
+                  .filter((c) => !singlePkeyConstraints.has(c.conname))
+                  .map(
+                    (c) => `  CONSTRAINT ${c.escaped_conname} ${c.definition}`,
+                  ),
+              )
+              .join(",\n");
+            const query = `CREATE TABLE ${t.name} (\n${colDefs}\n)`;
+            return {
+              query,
+              constraints,
+            };
+          })
+          /** Tables will least fkeys first */
+          .sort((a, b) => {
+            const aFkeys = a.constraints.filter((c) => c.contype === "f");
+            const bFkeys = b.constraints.filter((c) => c.contype === "f");
+            return aFkeys.length - bFkeys.length;
+          })
+          .map((t) => t.query)
+          .join(";\n");
 
     return res;
   }, [definitions, cachedSchemaPermissions, tables, db_data_permissions]);

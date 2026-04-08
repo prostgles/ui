@@ -87,13 +87,11 @@ export const WebAppConfigSetup = ({
       >
         <FileTree
           rootPath={directory?.split("/").slice(0, -1).join("/")}
-          checkBoxes={{
-            type: "directory",
-            radioMode: true,
-            checkedItems: directory ? [directory] : [],
-            onCheckedChange: (v) => {
-              setEdits((oldVal) => ({ ...oldVal, web_app_directory: v[0] }));
-            },
+          mode="pick-one"
+          type="directory"
+          value={directory ?? undefined}
+          onChange={(newDir) => {
+            setEdits((oldVal) => ({ ...oldVal, web_app_directory: newDir }));
           }}
         />
       </PopupMenu>

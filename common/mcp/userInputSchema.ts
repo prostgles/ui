@@ -70,7 +70,15 @@ export const userInputSchema = {
         {
           title: "string",
           optional: { type: "boolean", optional: true },
-          type: { enum: ["folder-path", "file-path"] },
+          type: { enum: ["folder-path", "file-path", "file-or-folder-path"] },
+          accessMode: { enum: ["read", "read-write"] },
+        },
+        {
+          title: "string",
+          optional: { type: "boolean", optional: true },
+          type: {
+            enum: ["folder-paths", "file-paths", "file-or-folder-paths"],
+          },
           accessMode: { enum: ["read", "read-write"] },
         },
       ],

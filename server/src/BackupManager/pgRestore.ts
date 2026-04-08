@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { throttle } from "@common/utils";
 import { asName } from "prostgles-types";
 import type { Readable } from "stream";
@@ -36,7 +37,9 @@ export async function pgRestore(
         { id: bkpId },
         {
           restore_status: {
-            err: (err ?? "").toString(),
+            state: "error",
+            timestamp: new Date().toISOString(),
+            message: String(err ?? ""),
           },
           last_updated: new Date(),
         },
@@ -109,7 +112,7 @@ export async function pgRestore(
           restoreCmd.command +
           " " +
           restoreCmd.opts.join(" "),
-        restore_status: { loading: { loaded: 0, total: 0 } },
+        restore_status: { state: "loading", loaded: 0, total: 0 },
         last_updated: new Date(),
       },
     );
@@ -132,17 +135,18 @@ export async function pgRestore(
             restore_status:
               finished ?
                 {
-                  ok: nowISO,
+                  state: "finished",
+                  timestamp: nowISO,
                 }
               : {
-                  loading: {
-                    loaded: chunkSum,
-                    total: totalBytes,
-                  },
+                  state: "loading",
+                  loaded: chunkSum,
+                  total: totalBytes,
                 },
-            ...(finished && !(bkp.status as any)?.ok ?
-              { status: { ok: nowISO } }
-            : {}),
+            /** How can a restore succeed on a non finished backup? */
+            // ...(finished && !(bkp.status as any)?.ok ?
+            //   { status: { state: "finished", timestamp: nowISO } }
+            // : {}),
           },
         );
 
@@ -194,7 +198,10 @@ export async function pgRestore(
             { id: bkpId },
             {
               restore_end: new Date(),
-              restore_status: { ok: `${new Date()}` },
+              restore_status: {
+                state: "finished",
+                timestamp: new Date().toISOString(),
+              },
               last_updated: new Date(),
             },
           );
@@ -204,7 +211,8 @@ export async function pgRestore(
         /** Full logs are always provided */
         if (!isStdErr) return;
         const currBkp = await this.dbs.backups.findOne({ id: bkpId });
-        if ((currBkp as any)?.restore_status.err) {
+        const { state } = currBkp?.restore_status ?? {};
+        if (state === "error" || state === "stopped-by-user") {
           proc.kill();
           return;
         }
@@ -215,7 +223,7 @@ export async function pgRestore(
           const restore_logs = makeLogs(
             _restore_logs,
             currBkp.restore_logs,
-            currBkp.restore_start as any,
+            currBkp.restore_start ?? undefined,
           );
           void this.dbs.backups.update(
             { id: bkpId },

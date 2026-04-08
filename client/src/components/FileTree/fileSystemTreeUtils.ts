@@ -1,4 +1,4 @@
-import type { FileNode } from "./useFileSystemTree";
+import type { FileNode } from "./useFileTree";
 
 export const findNode = (
   nodes: FileNode[],

@@ -72,7 +72,8 @@ export type DBGeneratedSchema = {
  |  {  title: string;  optional?: boolean;  type: "table-and-column";  defaultValue?: {  tableName: string;  columnName: string; }; }
  |  {  title: string;  optional?: boolean;  type: "enum";  values: string[];  defaultValue?: string; }
  |  {  title: string;  optional?: boolean;  type: "custom";  dataType: "string" | "number" | "boolean" | "Date";  defaultValue?: unknown; }
- |  {  title: string;  optional?: boolean;  type: "folder-path" | "file-path";  accessMode: "read" | "read-write"; }>;   newTables?: (  {  name: string;  schema?: string;  columns: (  {  name: string;  dataType: string;  nullable?: boolean;  isPrimaryKey?: boolean; } )[]; } )[];   orchestrationTools?: | undefined
+ |  {  title: string;  optional?: boolean;  type: "folder-path" | "file-path" | "file-or-folder-path";  accessMode: "read" | "read-write"; }
+ |  {  title: string;  optional?: boolean;  type: "folder-paths" | "file-paths" | "file-or-folder-paths";  accessMode: "read" | "read-write"; }>;   newTables?: (  {  name: string;  schema?: string;  columns: (  {  name: string;  dataType: string;  nullable?: boolean;  isPrimaryKey?: boolean; } )[]; } )[];   orchestrationTools?: | undefined
  |  Partial<Record<string,  Partial<Record<string, 1>>>>;  };
       definition_override?: null | {    agentDefinitions?: Partial<Record<string,  {  prompt?: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  tools?: Partial<Record<string,  Partial<Record<string, 1>>>>;  maxTokens?: number;  temperature?: number;  mcpServerConfigs?: Partial<Record<string,  {  configId: number; }>>; }>>;   containerConfiguration?: {  timeout?: number;  cpus?: string;  memory?: string;  readOnly?: boolean;  internetAccess?: "none" | "bridge" | "host"; };   orchestratorMcpServerConfigs?: Partial<Record<string,  {  configId: number; }>>;  };
       definition_summary?: string;
@@ -136,14 +137,14 @@ export type DBGeneratedSchema = {
       restore_start?: null | string;
       restore_status?: 
        | null
-       |  {  ok: string; }
-       |  {  err: string; }
-       |  {  loading: {  loaded: number;  total: number; }; }
+       |  {  state: "finished" | "stopped-by-user";  timestamp: string; }
+       |  {  state: "error";  timestamp: string;  message: string; }
+       |  {  state: "loading";  loaded: number;  total: number; }
       sizeInBytes?: null | string;
       status: 
-       |  {  ok: string; }
-       |  {  err: string; }
-       |  {  loading?: {  loaded: number;  total?: number; }; }
+       |  {  state: "finished" | "stopped-by-user";  timestamp: string; }
+       |  {  state: "error";  timestamp: string;  message: string; }
+       |  {  state: "loading";  loaded: number;  total?: number; }
       uploaded?: null | string;
     };
   };
@@ -266,7 +267,8 @@ export type DBGeneratedSchema = {
  |  {  title: string;  optional?: boolean;  type: "table-and-column";  defaultValue?: {  tableName: string;  columnName: string; }; }
  |  {  title: string;  optional?: boolean;  type: "enum";  values: string[];  defaultValue?: string; }
  |  {  title: string;  optional?: boolean;  type: "custom";  dataType: "string" | "number" | "boolean" | "Date";  defaultValue?: unknown; }
- |  {  title: string;  optional?: boolean;  type: "folder-path" | "file-path";  accessMode: "read" | "read-write"; }>;  };
+ |  {  title: string;  optional?: boolean;  type: "folder-path" | "file-path" | "file-or-folder-path";  accessMode: "read" | "read-write"; }
+ |  {  title: string;  optional?: boolean;  type: "folder-paths" | "file-paths" | "file-or-folder-paths";  accessMode: "read" | "read-write"; }>;  };
       created?: string;
       finished?: null | string;
       id?: number;
@@ -326,6 +328,7 @@ export type DBGeneratedSchema = {
        | null
        |  {  type: "None"; }
        |  {  type: "SameAsData"; }
+       |  {  type: "OnRequest"; }
        |  {  type: "Full"; }
        |  {  type: "Custom";  tables: string[]; }
       disabled_message?: null | string;
@@ -818,7 +821,7 @@ export type GeneratedFunctionSchema = {
   "getWebAppFile": (args: {    connectionId: string;   relativePath: string;  }) => Promise<string>;
   "saveWebAppFile": (args: {    connectionId: string;   fileName: string;   content: string;  }) => Promise<boolean>;
   "makeDirectory": (args: {    path: string;   folderName: string;  }) => Promise<string>;
-  "glob": (args: {    pattern?: string;   cwd?: string;   timeout?: number;  }) => Promise<{ pattern: string; path: string; result: Array<{ path: string; name: string; type: string; size: (undefined | number); lastModified: (undefined | number); created: (undefined | number) }> }>;
+  "glob": (args: {    pattern?: string;   cwd?: string;   timeout?: number;  }) => Promise<{ pattern: string; path: string; result: Array<{ path: string; name: string; type: string; size: (undefined | number); lastModified: (undefined | number); created: (undefined | number) }>; timedOut: boolean }>;
   "disablePasswordless": (args: {    username: string;   password: string;   origin: string;  }) => Promise<void>;
   "getConnectionDBTypes": (args: {    conId?: string;  }) => Promise<string>;
   "runSql": (args: {    connectionId: string;   query: string;   mode?: "default" | "readOnly";   args?: any;  }) => Promise<{ command: string; fields: Array<{ tsDataType: ("string" | "number" | "boolean" | "number[]" | "boolean[]" | "string[]" | "any[]" | "any"); dataType: ("name" | "time" | "timestamp" | "text" | "json" | "path" | "bpchar" | "char" | "varchar" | "citext" | "uuid" | "bytea" | "timetz" | "interval" | "cidr" | "inet" | "macaddr" | "macaddr8" | "int4range" | "int8range" | "numrange" | "tsvector" | "int2" | "int4" | "float4" | "float8" | "oid" | "int8" | "numeric" | "money" | "point" | "line" | "lseg" | "box" | "polygon" | "circle" | "jsonb" | "bool" | "date" | "timestamptz" | "geometry" | "geography"); udt_name: ("name" | "time" | "timestamp" | "text" | "json" | "path" | "bpchar" | "char" | "varchar" | "citext" | "uuid" | "bytea" | "timetz" | "interval" | "cidr" | "inet" | "macaddr" | "macaddr8" | "int4range" | "int8range" | "numrange" | "tsvector" | "int2" | "int4" | "float4" | "float8" | "oid" | "int8" | "numeric" | "money" | "point" | "line" | "lseg" | "box" | "polygon" | "circle" | "jsonb" | "bool" | "date" | "timestamptz" | "geometry" | "geography"); tableName: (undefined | string); tableSchema: (undefined | string); columnName: (undefined | string); name: string; oid: number; dataTypeID: number; tableID: number; columnID: number; dataTypeSize: number; dataTypeModifier: number; format: string }>; rowCount: number; rows: Array<unknown>; duration: (undefined | number) }>;

@@ -1,25 +1,34 @@
 import { useCallback, useMemo } from "react";
-import type { FileSystemTreeProps } from "./FileTree";
+import type { FileTreeProps } from "./FileTree";
 import { findNode } from "./fileSystemTreeUtils";
-import type { FileNode } from "./useFileSystemTree";
+import type { FileNode } from "./useFileTree";
+import { isDefined } from "@common/filterUtils";
 
-type CheckBoxes = FileSystemTreeProps["checkBoxes"];
-type CheckBoxMode = NonNullable<CheckBoxes>["type"];
+type CheckBoxMode = "all" | "directory" | "file";
 
-export const useFileSystemChecked = ({
+export const useFileTreeChecked = ({
   node,
   tree,
-  checkBoxes,
+  props,
 }: {
   node: FileNode;
   tree: FileNode[];
-  checkBoxes: CheckBoxes;
+  props: FileTreeProps;
 }) => {
   const { path } = node;
 
+  const checkBoxes = useMemo(() => {
+    if (props.mode === "explorer") return undefined;
+    return props;
+  }, [props]);
+
   const checkedItems = useMemo(() => {
     if (!checkBoxes) return [];
-    return compactSelections(checkBoxes.checkedItems ?? []);
+    return compactSelections(
+      checkBoxes.mode === "pick-one" ?
+        [checkBoxes.value].filter(isDefined)
+      : (checkBoxes.value ?? []),
+    );
   }, [checkBoxes]);
 
   const inheritedFrom = useMemo(
@@ -38,9 +47,8 @@ export const useFileSystemChecked = ({
 
     let nextChecked: string[];
 
-    if (checkBoxes.radioMode) {
-      nextChecked = isChecked ? [] : [path];
-      checkBoxes.onCheckedChange(nextChecked);
+    if (checkBoxes.mode === "pick-one") {
+      checkBoxes.onChange(path);
       return;
     }
 
@@ -60,7 +68,7 @@ export const useFileSystemChecked = ({
       ]);
     }
 
-    checkBoxes.onCheckedChange(nextChecked);
+    checkBoxes.onChange(nextChecked);
   }, [checkBoxes, checkedItems, isChecked, path, tree]);
 
   if (!checkBoxes) return;

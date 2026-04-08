@@ -1,7 +1,10 @@
 import { sliceText } from "@common/utils";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
 import { Icon } from "@components/Icon/Icon";
 import Loading from "@components/Loader/Loading";
 import Popup from "@components/Popup/Popup";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import {
   SearchList,
   type SearchListItem,
@@ -11,10 +14,8 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflow } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
 import { useLLMSetup } from "../AskLLM/Setup/LLMSetupProvider";
-import Btn from "@components/Btn";
-import { FlexRowWrap } from "@components/Flex";
-import Chip from "@components/Chip";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import type { DBSSchema } from "@common/publishUtils";
+import type { FilterItem, Select } from "prostgles-types";
 
 export const SavedAgenticWorkflowsAndContainers = () => {
   const { dbs, connectionId } = usePrgl();
@@ -33,10 +34,10 @@ export const SavedAgenticWorkflowsAndContainers = () => {
           select: {
             state: 1,
             created: 1,
-          },
+          } satisfies Select<DBSSchema["agentic_workflow_runs"]>,
           filter: {
-            "state->>status": "running",
-          },
+            state: { "@>": { status: "running" } },
+          } satisfies FilterItem<DBSSchema["agentic_workflow_runs"]>,
         },
       },
     },

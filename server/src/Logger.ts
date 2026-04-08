@@ -97,7 +97,9 @@ export const addLog = (e: EventInfo, connection_id: string | null) => {
       if (e.type === "table" || e.type === "sync") {
         const { clientReq } = e.localParams ?? {};
         return (
-          clientReq?.socket ? clientReq.socket.__prglCache?.session.sid
+          clientReq?.socket ?
+            Array.from(clientReq.socket.__prglCache?.values() ?? [])[0]?.session
+              .sid
           : clientReq?.httpReq ?
             (clientReq.httpReq.cookies as Record<string, string>)["sid"]
           : null

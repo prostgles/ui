@@ -186,7 +186,7 @@ export const runApprovedTools = async ({
               type: "text",
               text:
                 r.state === "input-validation-error" ?
-                  `Input validation error for tool "${r.name}": ${r.inputValidationError}`
+                  r.inputValidationError
                 : `Tool request aborted.`,
             },
           ],

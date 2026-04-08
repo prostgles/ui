@@ -1,4 +1,3 @@
-//@ts-no-check
 import ts from "typescript";
 type RootRenderTree = {
   name: string;
@@ -24,8 +23,6 @@ export const getReactRenderTree = (program: ts.Program): RenderTree[] => {
   }
 
   return results;
-
-  // ---------------- helpers ----------------
 
   function buildComponentTree(node: ts.Node): RenderTree | undefined {
     const name = getComponentName(node);

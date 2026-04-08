@@ -10,11 +10,10 @@ import {
   mdiFileUploadOutline,
   mdiStop,
 } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client";
-import { omitKeys, type AnyObject } from "prostgles-types";
+import { omitKeys, type AnyObject, type FilterItem } from "prostgles-types";
 import React, { useState } from "react";
-import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { Backups } from "../Dashboard/dashboardUtils";
@@ -30,7 +29,6 @@ import { RenderBackupLogs } from "./RenderBackupLogs";
 import { RenderBackupStatus } from "./RenderBackupStatus";
 import { Restore } from "./Restore/Restore";
 import { useBackupsControlsState } from "./useBackupsControlsState";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const orderByCreated = {
   key: "created",
@@ -78,7 +76,7 @@ export const BackupsControls = () => {
     render: (logs, row) => (
       <RenderBackupLogs
         logs={logs}
-        completed={!(row.restore_status as any)?.loading}
+        completed={row.restore_status?.state !== "loading"}
       />
     ),
   };
@@ -97,8 +95,6 @@ export const BackupsControls = () => {
       </div>
     );
   }
-
-  const restoreStoppedError = "Stopped by user";
 
   return (
     <div className="flex-col gap-2 f-1 min-h-0 w-fit">
@@ -224,13 +220,11 @@ export const BackupsControls = () => {
         filter={{
           $and: [
             backupFilter,
-            { "restore_status.<>": null },
-            { "restore_status->loading.<>": null },
             {
               $or: [
-                { "restore_status->err": null },
-                { "restore_status->>err.<>": restoreStoppedError },
-              ],
+                { restore_status: { "@>": { state: "loading" } } },
+                { restore_status: { "@>": { state: "error" } } },
+              ] satisfies FilterItem<Backups>[],
             },
           ],
         }}
@@ -264,7 +258,12 @@ export const BackupsControls = () => {
               onClickPromise={async () => {
                 await dbs.backups.update(
                   { id: row.id },
-                  { restore_status: { err: restoreStoppedError } },
+                  {
+                    restore_status: {
+                      state: "stopped-by-user",
+                      timestamp: new Date().toISOString(),
+                    },
+                  },
                 );
               }}
             >

@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: DB-Dockerfile 
+      dockerfile: DB.Dockerfile 
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

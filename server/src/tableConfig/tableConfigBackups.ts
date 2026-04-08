@@ -96,35 +96,42 @@ export const tableConfigBackups: TableConfig<{ en: 1 }> = {
       status: {
         jsonbSchema: {
           oneOfType: [
-            { ok: { type: "string" } },
-            { err: { type: "string" } },
-            // { cancelled: { type: "number" } },
             {
-              loading: {
-                optional: true,
-                type: {
-                  loaded: { type: "number" },
-                  total: { type: "number", optional: true },
-                },
-              },
+              state: { enum: ["finished", "stopped-by-user"] },
+              timestamp: "Date",
+            },
+            {
+              state: { enum: ["error"] },
+              timestamp: "Date",
+              message: "string",
+            },
+            {
+              state: { enum: ["loading"] },
+              loaded: "number",
+              total: { type: "number", optional: true },
             },
           ],
         },
       },
       uploaded: { sqlDefinition: `TIMESTAMPTZ` },
+      /** TODO: create and move to a db_restores table */
       restore_status: {
         nullable: true,
         jsonbSchema: {
           oneOfType: [
-            { ok: { type: "string" } },
-            { err: { type: "string" } },
             {
-              loading: {
-                type: {
-                  loaded: { type: "number" },
-                  total: { type: "number" },
-                },
-              },
+              state: { enum: ["finished", "stopped-by-user"] },
+              timestamp: "Date",
+            },
+            {
+              state: { enum: ["error"] },
+              timestamp: "Date",
+              message: "string",
+            },
+            {
+              state: { enum: ["loading"] },
+              loaded: "number",
+              total: "number",
             },
           ],
         },

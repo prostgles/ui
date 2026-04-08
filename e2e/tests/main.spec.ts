@@ -796,6 +796,7 @@ test.describe("Main test", () => {
 
     /** Enable Web app */
     await page.getByTestId("config.webApp").click();
+    await page.waitForTimeout(1500);
     await page.getByTestId("WebApp.directory").click();
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
@@ -998,7 +999,7 @@ test.describe("Main test", () => {
     await setModelByText(page, "son");
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "7",
+      "8",
     );
     await sendAskLLMMessage(page, " task ");
 
@@ -1015,7 +1016,7 @@ test.describe("Main test", () => {
     );
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "10",
+      "11",
     );
 
     const dbToolsBtn = await page
@@ -1685,15 +1686,27 @@ test.describe("Main test", () => {
     );
     await page.locator(getDataKey("custom") + " input").fill("a");
 
-    await startWorkFlowAndExpectError(
-      `Missing required user input: "File path"`,
-    );
-    await page.locator(getDataKey("file-path")).click();
-    await fileBrowserGoToPath(page.getByTestId("FileTree").first(), [
-      "ui",
-      "client",
-      "package.json",
-    ]);
+    const selectFileOrFolderPath = async (fileTreeKey: string) => {
+      const capitalizeFirstLetter = (s: string) =>
+        s.charAt(0).toUpperCase() + s.slice(1);
+      const label = capitalizeFirstLetter(fileTreeKey.replace(/-/g, " ")); // + " (Read-Only)";
+      await startWorkFlowAndExpectError(
+        `Missing required user input: ${JSON.stringify(label)}`,
+      );
+      const isMultiple = fileTreeKey.endsWith("s");
+      await page.locator(getDataKey(fileTreeKey)).click();
+      const path =
+        fileTreeKey.includes("file") ?
+          ["ui", "client", "package.json"]
+        : ["ui", "client", "src"];
+      await fileBrowserGoToPath(page.getByTestId("FileTree").first(), path);
+      if (isMultiple) {
+        await page.getByText("Done").first().click();
+      }
+    };
+
+    await selectFileOrFolderPath("file-path");
+    await selectFileOrFolderPath("file-paths");
 
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table name"`,
@@ -1701,15 +1714,8 @@ test.describe("Main test", () => {
     await page.locator(getDataKey("table-name")).click();
     await page.locator(`[data-key="example_table"]`).last().click();
 
-    await startWorkFlowAndExpectError(
-      `Missing required user input: "Folder path"`,
-    );
-    await page.locator(getDataKey("folder-path")).click();
-    await fileBrowserGoToPath(page.getByTestId("FileTree").last(), [
-      "ui",
-      "client",
-      "src",
-    ]);
+    await selectFileOrFolderPath("folder-path");
+    await selectFileOrFolderPath("folder-paths");
 
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table column"`,
@@ -1739,13 +1745,16 @@ test.describe("Main test", () => {
     await page.locator(getDataKey("table-column-value")).click();
     await page.locator(`[data-key="regular"]`).last().click();
 
+    await selectFileOrFolderPath("file-or-folder-path");
+
     await startWorkFlowAndExpectError(
       `Missing required user input: "Table column values"`,
     );
     await page.locator(getDataKey("table-column-values")).click();
     await page.locator(`[data-key="regular"]`).last().click();
-
     await page.keyboard.press("Escape"); // close multi select dropdown
+
+    await selectFileOrFolderPath("file-or-folder-paths");
 
     await page.waitForTimeout(1e3);
     await page.getByTestId("AgenticWorkflow.start").click();
@@ -3222,10 +3231,6 @@ test.describe("Main test", () => {
   test("Public user can access all allowed sections without issues", async ({
     page: p,
   }) => {
-    if (process.env.CI) {
-      console.log("needs investigation");
-      return;
-    }
     const page = p as PageWIds;
     await goTo(page, "localhost:3004/connections");
     await page.reload();

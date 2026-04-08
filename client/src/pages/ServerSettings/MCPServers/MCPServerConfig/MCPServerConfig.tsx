@@ -60,18 +60,14 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
             return (
               <FileTree
                 key={key}
-                checkBoxes={{
-                  type: "all",
-                  checkedItems:
-                    typeof currentValue === "string" ?
-                      [currentValue]
-                    : currentValue,
-                  onCheckedChange: (v) => {
-                    setConfig({
-                      ...config,
-                      [key]: v,
-                    });
-                  },
+                mode="pick-multiple"
+                type="all"
+                value={currentValue as string[] | undefined}
+                onChange={(newValue) => {
+                  setConfig({
+                    ...config,
+                    [key]: newValue,
+                  });
                 }}
               />
             );

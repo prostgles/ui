@@ -17,6 +17,7 @@ import type {
 import type { ProxyDbCallData } from "./Prostgles/agenticWorkflow/runtimeSdk/defineAgenticWorkflowHandlers.types";
 import { getClientDBHandlersForChat } from "./getClientDBHandlersForChat";
 import type { ProstglesDbTools } from "@common/mcpUtils";
+import { getExistingTablesSchema } from "./getExistingTablesSchema";
 
 const serverName = "db" as const;
 const definition = {
@@ -44,6 +45,9 @@ const handler = {
             connectionId: context.connection_id,
             chat: context.chat,
           });
+        },
+        get_existing_tables_schema: async ({ tableNames }, ctx) => {
+          return getExistingTablesSchema(tableNames, ctx);
         },
         count: async ({ tableName, filter }, context) => {
           const tableHandler = await getTableHandlerWithScope(
@@ -256,7 +260,7 @@ sdkCheck satisfies {
   } & JSONB.GetObjectType<ProstglesDbTools[K]["schema"]["type"]>;
 }[ProxyDbCallData["type"]];
 
-export const ProstglesDbMCPServer = {
+export const DbMcpServer = {
   definition,
   handler: handler as ProstglesMcpServerHandler,
 };

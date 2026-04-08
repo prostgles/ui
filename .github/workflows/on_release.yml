@@ -17,7 +17,7 @@ jobs:
           - image_name: ui
             dockerfile: Dockerfile
           - image_name: ui-db
-            dockerfile: DB-Dockerfile
+            dockerfile: DB.Dockerfile
           # Add more entries here if you have more images to build
     steps:
       - name: Checkout

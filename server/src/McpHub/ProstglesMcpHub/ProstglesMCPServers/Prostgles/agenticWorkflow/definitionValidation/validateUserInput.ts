@@ -113,6 +113,34 @@ export const validateUserInput = (
           );
         }
       },
+      "file-or-folder-path": () => {
+        if (typeof value !== "string") {
+          return prepareError(
+            `Invalid type for user input. Expected string with file or folder path`,
+          );
+        }
+      },
+      "folder-paths": () => {
+        if (!Array.isArray(value) || value.some((v) => typeof v !== "string")) {
+          return prepareError(
+            `Invalid type for user input. Expected array of strings with folder paths`,
+          );
+        }
+      },
+      "file-paths": () => {
+        if (!Array.isArray(value) || value.some((v) => typeof v !== "string")) {
+          return prepareError(
+            `Invalid type for user input. Expected array of strings with file paths`,
+          );
+        }
+      },
+      "file-or-folder-paths": () => {
+        if (!Array.isArray(value) || value.some((v) => typeof v !== "string")) {
+          return prepareError(
+            `Invalid type for user input. Expected array of strings with file or folder paths`,
+          );
+        }
+      },
     } satisfies {
       [Type in UserInputItem["type"]]: (
         value: unknown,

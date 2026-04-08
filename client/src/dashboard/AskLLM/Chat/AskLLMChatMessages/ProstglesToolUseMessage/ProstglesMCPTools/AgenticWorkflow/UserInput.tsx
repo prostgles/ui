@@ -7,7 +7,12 @@ import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapp
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
 import { Select, type FullOption } from "@components/Select/Select";
-import { mdiChevronDown, mdiChevronUp, mdiFolderOutline } from "@mdi/js";
+import {
+  mdiChevronDown,
+  mdiChevronUp,
+  mdiFileDocument,
+  mdiFolderOutline,
+} from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { getProperty } from "prostgles-types";
 import React, { useState } from "react";
@@ -75,10 +80,19 @@ export const UserInput = ({
                 );
               }
               if (
+                inputItem.type === "file-path" ||
                 inputItem.type === "folder-path" ||
-                inputItem.type === "file-path"
+                inputItem.type === "file-or-folder-path" ||
+                inputItem.type === "file-paths" ||
+                inputItem.type === "folder-paths" ||
+                inputItem.type === "file-or-folder-paths"
               ) {
-                const isFolder = inputItem.type === "folder-path";
+                const type =
+                  inputItem.type.includes("file-or-folder") ? "all"
+                  : inputItem.type.includes("folder") ? "directory"
+                  : "file";
+                const isMultiple =
+                  inputItem.type.endsWith("-paths") ? true : false;
                 return (
                   <PopupMenu
                     key={inputKey}
@@ -100,11 +114,22 @@ export const UserInput = ({
                     positioning="center"
                     clickCatchStyle={{ opacity: 1 }}
                     onClickClose={false}
+                    footerButtons={[
+                      {
+                        label: "Done",
+                        color: "action",
+                        onClickClose: true,
+                        variant: "filled",
+                        className: "ml-auto",
+                      },
+                    ]}
                     button={
                       <Btn
                         variant="faded"
                         data-key={inputKey}
-                        iconPath={mdiFolderOutline}
+                        iconPath={
+                          type === "file" ? mdiFileDocument : mdiFolderOutline
+                        }
                         color={
                           !currentValue ? undefined
                           : inputItem.accessMode === "read-write" ?
@@ -127,7 +152,9 @@ export const UserInput = ({
                         }}
                       >
                         {currentValue ||
-                          (isFolder ? "Select folder..." : "Select file...")}
+                          (type === "all" ? "Select..."
+                          : type === "directory" ? "Select folder..."
+                          : "Select file...")}
                       </Btn>
                     }
                     render={(pClose) => (
@@ -137,19 +164,17 @@ export const UserInput = ({
                             currentValue.split("/").slice(0, -1).join("/")
                           : undefined
                         }
-                        checkBoxes={{
-                          type: isFolder ? "directory" : "file",
-                          radioMode: true,
-                          checkedItems:
-                            currentValue ? [currentValue] : undefined,
-                          onCheckedChange: (paths) => {
-                            const newPath = paths[0];
-                            setUserInputValue((prev) => ({
-                              ...prev,
-                              [inputKey]: newPath,
-                            }));
+                        mode={isMultiple ? "pick-multiple" : "pick-one"}
+                        type={type}
+                        value={currentValue}
+                        onChange={(newValue) => {
+                          setUserInputValue((prev) => ({
+                            ...prev,
+                            [inputKey]: newValue,
+                          }));
+                          if (!isMultiple) {
                             pClose();
-                          },
+                          }
                         }}
                       />
                     )}
