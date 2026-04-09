@@ -251,7 +251,7 @@ export const setupLLMProviders = async (dbs: DBS) => {
             model_created: "2025-03-07 12:19:04.913961",
           },
           {
-            name: "anthropic/claude-sonnet-4",
+            name: "anthropic/claude-4.6-sonnet",
             pricing_info: {
               input: 3,
               output: 15,
@@ -269,7 +269,7 @@ export const setupLLMProviders = async (dbs: DBS) => {
         logo_url: "/v2.svg",
         llm_models: [
           {
-            name: "anthropic/claude-sonnet-4",
+            name: "anthropic/claude-4.6-sonnet",
             pricing_info: {
               input: 3,
               output: 15,

@@ -67,7 +67,10 @@ export const AskUserQuestions = ({
           selectedAnswers.get(question)?.values() ?? [],
         );
         return (
-          <FlexCol key={question + questionIndex} className="">
+          <FlexCol
+            key={question + questionIndex}
+            data-key={String(questionIndex)}
+          >
             <p className="p-0 m-0 bold">{question}</p>
             <FlexRowWrap
               className="ml-p5 "
@@ -86,7 +89,7 @@ export const AskUserQuestions = ({
                   return (
                     <Select
                       label={table.label}
-                      data-key={question}
+                      data-key={questionData.type}
                       options={table.columns.map((c) => c.name)}
                       multiSelect={true}
                       value={questionResponseValues}
@@ -108,7 +111,7 @@ export const AskUserQuestions = ({
                 })()}
               {questionData.type === "table-name" && (
                 <Select
-                  data-key={question}
+                  data-key={questionData.type}
                   options={tables.map((t) => t.name)}
                   value={selectedAnswers.get(question)?.values().next().value}
                   btnProps={{
@@ -130,7 +133,7 @@ export const AskUserQuestions = ({
                   !questionData.suggestedAnswers.length)) && (
                 <FormField
                   type="text"
-                  data-key={question}
+                  data-key={questionData.type}
                   value={questionResponseValues[0] || ""}
                   readOnly={Boolean(sentAnswers)}
                   onChange={(newAnswer) => {
@@ -156,7 +159,7 @@ export const AskUserQuestions = ({
                   return (
                     <Btn
                       key={answer + answerIndex}
-                      data-key={question}
+                      data-key={answer}
                       iconPath={iconPath}
                       iconPosition="left"
                       variant={checked ? "faded" : "icon"}

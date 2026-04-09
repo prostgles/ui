@@ -90,7 +90,7 @@ export const fetchLLMResponse = async (
       responseData,
     );
     throw new Error(
-      `Error parsing LLM response from ${provider} for model ${model}: ${JSON.stringify(getSerialisableError(e))}`,
+      `Error parsing LLM response from ${provider} for model ${model}: ${JSON.stringify(getSerialisableError(e))} statusText:${responseClone.statusText}`,
     );
   }
 };

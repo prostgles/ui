@@ -107,7 +107,7 @@ export default defineAgenticWorkflow(
       agentDefinitions: {
         researcher: {
           prompt: "You are a research assistant. ",
-          modelName: "anthropic/claude-sonnet-4",
+          modelName: "anthropic/claude-4.6-sonnet",
           tools: {
             web: { fetch: 1 },
           },

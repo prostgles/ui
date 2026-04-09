@@ -3,6 +3,7 @@ import { getTemplatedWebAppConnection } from "./getTemplatedWebAppConnection";
 import { rmSync } from "fs";
 import { join } from "path";
 import { runDockerForWebApp } from "./runDockerForWebApp";
+import { isTesting } from "@src/init/utils";
 
 export const buildWebApp = async (
   { connectionId, clean }: { connectionId: string; clean?: boolean },
@@ -26,7 +27,7 @@ export const buildWebApp = async (
   const result = await runDockerForWebApp({
     web_app_directory,
     image: "node:24-slim",
-    shCommand: "cd client && npm install --silent && npm run build",
+    shCommand: `cd client && npm install ${isTesting ? "" : "--silent"} && npm run build`,
   });
 
   // let testResult:

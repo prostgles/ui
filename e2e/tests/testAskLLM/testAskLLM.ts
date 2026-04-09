@@ -7,10 +7,13 @@ import {
   prostglesUICryptoDashboardSample,
   prostglesUIFoodDeliveryDashboardSample,
 } from "./sampleToolUseData";
-import { stringify, type ToolUse } from "./utils";
+import { stringify, type Scenario, type ToolUse } from "./utils";
 import { mcpSandboxToolUse } from "./mcpSandboxToolUse";
 import { getProstglesMCPFullToolName } from "common/mcpUtils";
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "common/prostglesMcp";
+import { runDbsSql, type PageWIds } from "utils/utils";
+import type { DBSSchema } from "common/publishUtils";
+import { receiptImport } from "./scenarios/receiptImport/receiptImport.scenario";
 
 type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -172,7 +175,14 @@ const playwrightMCPToolUse: ToolUse = {
     },
   ],
 };
-const isDocker = Boolean(process.env.IS_DOCKER);
+
+const scenarios: Record<string, Scenario> = {};
+Object.values([receiptImport]).forEach(({ firstMessage, steps }) => {
+  if (scenarios[firstMessage]) {
+    throw new Error(`Duplicate scenario firstMessage: ${firstMessage}`);
+  }
+  scenarios[firstMessage] = { firstMessage, steps };
+});
 
 const toolResponses: Record<string, ToolUse> = {
   task: taskToolUse,
@@ -398,7 +408,10 @@ const toolResponses: Record<string, ToolUse> = {
 export const testAskLLMCode = `
 
 const toolResponses = ${stringify(toolResponses)};
+const scenarios = ${stringify(scenarios)};
+const agentMessageCount = args.messages.filter(m => m.role === "assistant").length;
 
+const firstMsgText = args.messages[1].content?.[0]?.text;
 const lastMsg = args.messages.at(-1);
 const lastMsgText = lastMsg?.content?.[0]?.type === "image_url"? " receipt " : lastMsg?.content?.[0]?.text;
 const { tool_call_id, is_error } = lastMsg ?? {};
@@ -408,7 +421,7 @@ const failedToolResult = toolCallKeyResult === "mcpfail";// typeof lastMsg.tool_
 const msg = failedToolResult ? " mcpfail " : lastMsgText;
 
 const toolResponseKey = Object.keys(toolResponses).find(k => msg && msg.includes(" " + k + " ")); 
-const toolResponse = toolResponses[toolResponseKey];
+const toolResponse = scenarios[firstMsgText]?.steps[agentMessageCount] ?? toolResponses[toolResponseKey];
 
 const defaultContent = !msg && !failedToolResult? undefined : ("free ai assistant" + (msg ?? " empty message") + (failedToolResult ? "... let's retry the failed tool" : ""));
 const content = is_error? "Tool call failed. Will not retry" : toolResult?.result_content ?? toolResponse?.content ?? defaultContent;
@@ -436,3 +449,26 @@ return {
     total_tokens: 0, 
   },
 };//`;
+
+export const updateAskLLMToolUseCode = async (page: PageWIds) => {
+  const existingFunc: DBSSchema["published_methods"] | undefined =
+    await runDbsSql(
+      page,
+      `SELECT * FROM published_methods WHERE name = 'askLLM'`,
+      {},
+      { returnType: "row" },
+    );
+  if (!existingFunc) {
+    throw new Error("askLLM function not found in the database");
+  }
+  const newDefinition = [
+    `export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {`,
+    testAskLLMCode,
+    `}`,
+  ].join("\n");
+  await runDbsSql(
+    page,
+    "UPDATE published_methods SET run = ${run} WHERE name = 'askLLM'",
+    { run: newDefinition },
+  );
+};

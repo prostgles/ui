@@ -16,7 +16,10 @@ import {
 import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
-import { testAskLLMCode } from "./testAskLLM/testAskLLM";
+import {
+  testAskLLMCode,
+  updateAskLLMToolUseCode,
+} from "./testAskLLM/testAskLLM";
 import { getCommandElemSelector, getDataKey, getDataLabel } from "./Testing";
 import {
   clickAndWait,
@@ -1601,6 +1604,8 @@ test.describe("Main test", () => {
     await openConnection(page, "cloud");
     await closeWorkspaceWindows(page);
     await page.getByTestId("AskLLM").click();
+
+    await updateAskLLMToolUseCode(page);
 
     await newChat(page);
 

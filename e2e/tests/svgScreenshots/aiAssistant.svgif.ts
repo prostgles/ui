@@ -11,6 +11,8 @@ import {
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { typeSendAddScenes } from "./utils/typeSendAddScenes";
+import { updateAskLLMToolUseCode } from "testAskLLM/testAskLLM";
+import { receiptImport } from "testAskLLM/scenarios/receiptImport/receiptImport.scenario";
 
 export const aiAssistantSvgif: OnBeforeScreenshot = async (
   page,
@@ -31,6 +33,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await openConnection("food_delivery");
   await page.getByTestId("AskLLM").click();
   await page.waitForTimeout(1000);
+  await updateAskLLMToolUseCode(page);
   const UnloadSuggestedDashboards = await page.getByTestId(
     "AskLLMChat.UnloadSuggestedDashboards",
   );
@@ -111,8 +114,23 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await setModelByText(page, "sonn");
 
   await deletePreviousMessages();
-  await setPromptByText(page, "agent");
-  await typeSendAddScenes(page, addScene, "I need to import some pdf receipts");
+  await setPromptByText(page, "Create workflow");
+  const { filePath } = await createReceipt(page);
+  console.log("Receipt created at:", filePath);
+  await typeSendAddScenes(page, addScene, receiptImport.firstMessage);
+
+  await addSceneAnimation(getDataKey("Insert automatically without preview"));
+  await addSceneAnimation(
+    getDataKey(
+      "Skip likely duplicates (vendor + date + total + receipt_number)",
+    ),
+  );
+  await addSceneAnimation(
+    getDataKey("Skip that file and report it (recommended)"),
+  );
+
+  await addSceneAnimation(getCommandElemSelector("AskUserQuestions.confirm"));
+
   const startWorkflow = await page.getByTestId("AgenticWorkflow.start").last();
   await startWorkflow.waitFor({ state: "visible", timeout: 25000 });
   await startWorkflow.click();
@@ -138,7 +156,6 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     animations: [{ type: "wait", duration: 1000 }],
   });
   await page.waitForTimeout(4000);
-  const { filePath } = await createReceipt(page);
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.getByTestId("Chat.addFiles").click();
   const fileChooser = await fileChooserPromise;
